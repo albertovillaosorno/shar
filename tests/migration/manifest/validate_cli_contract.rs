@@ -58,6 +58,7 @@ fn run_validator(
     }
     fs::create_dir_all(&root)?;
     let result = (|| {
+        fs::create_dir_all(root.join("manifest"))?;
         fs::write(root.join(MANIFEST_FILE_NAME), manifest)?;
         let mut command = Command::new(env!("CARGO_BIN_EXE_validate-game"));
         if empty_argument {

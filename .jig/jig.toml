@@ -622,7 +622,7 @@ paths = [".cargo/"]
 paths = ["docs/"]
 
 [taxonomy.role.game_manifest]
-paths = ["game/manifest.jsonl"]
+paths = ["game/manifest/game.jsonl"]
 
 [taxonomy.role.github]
 paths = [".github/"]
@@ -706,7 +706,7 @@ selectors = ["exact:Cargo.lock"]
 [code_ownership.override.generated_game_manifest]
 authority = "generate-manifest"
 kind = "generated"
-selectors = ["exact:game/manifest.jsonl"]
+selectors = ["exact:game/manifest/game.jsonl"]
 
 [code_ownership.override.generated_jig_catalogs]
 authority = "jig"

@@ -36,7 +36,7 @@ use std::path::Path;
 use std::process::Command;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use game_manifest::EXPANDED_SCHEMA_LINE;
+use game_manifest::{EXPANDED_SCHEMA_LINE, MANIFEST_FILE_NAME};
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 
@@ -123,7 +123,10 @@ fn nested_manifest_names_remain_source_files() {
 fn expanded_output_cannot_replace_minimum_manifest() {
     let result = with_fixture("minimum-overwrite", |_, game, extracted| {
         fs::write(game.join("asset.p3d"), b"fixture")?;
-        let output_path = game.join("manifest.jsonl");
+        let output_path = game.join(MANIFEST_FILE_NAME);
+        fs::create_dir_all(output_path.parent().ok_or_else(|| {
+            io::Error::other("minimum manifest has no parent")
+        })?)?;
         fs::write(&output_path, b"minimum-ledger")?;
         let output = run_generator(game, extracted, &output_path)?;
         let remaining = fs::read_to_string(output_path)?;
@@ -143,7 +146,10 @@ fn expanded_output_alias_cannot_replace_minimum_manifest() {
         with_fixture("minimum-alias-overwrite", |_, game, extracted| {
             fs::create_dir_all(game.join("sub"))?;
             fs::write(game.join("asset.p3d"), b"fixture")?;
-            let minimum_path = game.join("manifest.jsonl");
+            let minimum_path = game.join(MANIFEST_FILE_NAME);
+            fs::create_dir_all(minimum_path.parent().ok_or_else(|| {
+                io::Error::other("minimum manifest has no parent")
+            })?)?;
             let original = format!(
                 "minimum-ledger
 {EXPANDED_SCHEMA_LINE}
@@ -151,7 +157,7 @@ fn expanded_output_alias_cannot_replace_minimum_manifest() {
             );
             fs::write(&minimum_path, original.as_bytes())?;
             let aliased_output =
-                game.join("sub").join("..").join("manifest.jsonl");
+                game.join("sub").join("..").join(MANIFEST_FILE_NAME);
             let output = run_generator(game, extracted, &aliased_output)?;
             let remaining = fs::read_to_string(minimum_path)?;
             Ok((output, remaining, original))

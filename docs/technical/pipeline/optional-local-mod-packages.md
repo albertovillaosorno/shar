@@ -66,7 +66,7 @@ launcher resources, and every other non-audio member are skipped.
 
 ## Invariants
 
-- `game/manifest.jsonl` remains the frozen minimum installation baseline.
+- `game/manifest/game.jsonl` remains the frozen minimum installation baseline.
 - The optional package set is exactly none, `m.lmlm`, `j.lmlm`, or both.
 - Unknown LMLM filenames fail closed instead of receiving inferred behavior.
 - Package titles and versions never select executable behavior.

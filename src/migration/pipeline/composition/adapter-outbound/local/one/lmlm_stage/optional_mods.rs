@@ -386,6 +386,7 @@ fn is_excluded_game_path(relative: &Path) -> bool {
     if first.is_some_and(|value| {
         value.eq_ignore_ascii_case("mods")
             || value.eq_ignore_ascii_case("extracted")
+            || value.eq_ignore_ascii_case("manifest")
     }) {
         return true;
     }

@@ -40,8 +40,9 @@ producer.
 
 ## Evidence
 
-The canonical `game/manifest.jsonl` requires at least one root `.ico`, and the
-supported `tools/build/check.py` preflight delegates the complete game check to
+The canonical `game/manifest/game.jsonl` requires at least one root `.ico`, and
+the supported `tools/build/check.py` preflight delegates the complete game check
+to
 the SHA-256-pinned `validate-game` binary provisioned by `dependencies.py`.
 Therefore a zero-icon source installation fails before any build mutation.
 

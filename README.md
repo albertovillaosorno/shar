@@ -161,8 +161,9 @@ python tools/build/auto.py --reselect
 
 ## Maximum supported local installation
 
-The frozen `game/manifest.jsonl` remains the minimum installation baseline. A
-local workspace may additionally contain every supported official language and
+The frozen `game/manifest/game.jsonl` remains the minimum installation
+baseline. A local workspace may additionally contain every supported official
+language and
 zero, one, or both optional packages below `game/mods/`:
 
 - `m.lmlm`: *The Simpsons: Hit & Run Remastered*, created by Muckluck; latest

@@ -131,9 +131,9 @@ def _check_game(root: Path) -> tuple[Path, Path]:
             f"{example} layout"
         )
 
-    manifest = game / "manifest.jsonl"
+    manifest = game / "manifest" / "game.jsonl"
     if not manifest.is_file():
-        raise CheckFailure("game/manifest.jsonl is missing")
+        raise CheckFailure("game/manifest/game.jsonl is missing")
     return game, manifest
 
 

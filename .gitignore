@@ -279,7 +279,9 @@ target/
 # Original game copy and pipeline input (never committed)
 # Exception: Content manifest is tracked for version-controlled file contracts.
 /game/*
-!/game/manifest.jsonl
+!/game/manifest/
+/game/manifest/*
+!/game/manifest/game.jsonl
 no-git/
 extracted/
 

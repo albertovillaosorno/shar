@@ -37,7 +37,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::{
     is_pipeline_run_report, obfuscated_route, parse_component_line,
-    read_number_field, source_object_key, write_manifest_minor_units,
+    read_number_field, should_skip_local_game_file, source_object_key,
+    write_manifest_minor_units,
 };
 
 /// Distinguishes concurrent synthetic manifest cases within one process.
@@ -81,8 +82,24 @@ fn write_game_manifest_ledger(game_root: &Path) -> Result<(), String> {
         r#"{"dir":"","ext":"lmlm","min":0,"kind":"language_mod"}"#,
         r#"{"dir":"","ext":"png","min":0,"kind":"generated_artifact"}"#,
     );
-    write_sample(game_root, "manifest.jsonl", manifest.as_bytes())
+    write_sample(
+        game_root,
+        game_manifest::MANIFEST_FILE_NAME,
+        manifest.as_bytes(),
+    )
 }
+
+#[test]
+fn game_manifest_directory_is_repository_metadata() {
+    for path in ["manifest/game.jsonl", "MANIFEST/UNREAL.JSONL"] {
+        assert!(should_skip_local_game_file(Path::new(path), "jsonl"));
+    }
+    assert!(!should_skip_local_game_file(
+        Path::new("scripts/manifest.jsonl"),
+        "jsonl",
+    ));
+}
+
 
 #[test]
 fn pipeline_report_exclusion_matches_only_the_extracted_root() {
@@ -151,7 +168,11 @@ fn run_prepared_root_shortfall_case() -> Result<(), String> {
         r#"{"dir":"","ext":"mfk","min":2,"kind":"script"}"#,
         r#"{"dir":"","ext":"png","min":0,"kind":"generated_artifact"}"#,
     );
-    write_sample(&game_root, "manifest.jsonl", manifest.as_bytes())?;
+    write_sample(
+        &game_root,
+        game_manifest::MANIFEST_FILE_NAME,
+        manifest.as_bytes(),
+    )?;
     write_sample(&game_root, "sample.mfk", b"SelectMission(\"m1\");")?;
     write_sample(&extracted_root, "game/accepted.txt", b"accepted")?;
 
