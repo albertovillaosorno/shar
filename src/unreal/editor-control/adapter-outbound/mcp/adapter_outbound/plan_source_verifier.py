@@ -105,10 +105,9 @@ class FilesystemPlanSourceVerifier:
                 != bundle.report.source_manifest_revision
             ):
                 fail_protocol("construction source revision is stale")
-            base, namespace = _source_base(
+            base, namespace, physical_source_path = _source_location(
                 operation,
                 repository_root=repository_root,
-                staging_root=staging_root,
             )
             cache_key = (namespace, operation.source_path)
             revision_key = f"{namespace}/{operation.source_path}"
@@ -120,7 +119,7 @@ class FilesystemPlanSourceVerifier:
                 fail_protocol("plan source path has conflicting revisions")
             cached_source = cached.get(cache_key)
             if cached_source is None:
-                source = base.joinpath(*operation.source_path.split("/"))
+                source = base.joinpath(*physical_source_path.split("/"))
                 byte_count = _verify_source(
                     source,
                     base=base,
@@ -140,17 +139,32 @@ class FilesystemPlanSourceVerifier:
         return VerifiedPlanSources(report, verified_paths)
 
 
-def _source_base(
+def _source_location(
     operation: PlanOperation,
     *,
     repository_root: Path,
-    staging_root: Path,
-) -> tuple[Path, str]:
+) -> tuple[Path, str, str]:
     if operation.plan_id == "asset-construction-plan":
         if operation.source_path != "manifest.jsonl":
             fail_protocol("construction operation source is not canonical")
-        return staging_root, "staging"
-    return repository_root, "repository"
+        return (
+            repository_root,
+            "unreal-manifest",
+            "game/manifest/unreal.jsonl",
+        )
+    if operation.source_path.startswith("extracted/"):
+        return (
+            repository_root,
+            "extracted",
+            f".cache/pipeline/{operation.source_path}",
+        )
+    if operation.source_path.startswith("fbx-assets/"):
+        return (
+            repository_root,
+            "fbx-assets",
+            f".cache/pipeline/{operation.source_path}",
+        )
+    return repository_root, "repository", operation.source_path
 
 
 def _verify_source(

@@ -130,10 +130,13 @@ world assembly, runtime binding,
 validation, cook, and packaging remain explicit blocked work until their
 complete native routes exist. Generic or abstract `DataAsset` creation is not a
 substitute for compiling normalized source into the project-owned typed runtime
-contract. Source
-verification reads generated files without following links,
-streams SHA-256 from stable file descriptors, and keeps physical paths out of
-public reports. If an import response is lost after the asset appears,
+contract. Source verification keeps portable plan identities separate from
+physical
+workspace locations: `extracted/...` and `fbx-assets/...` resolve below
+`.cache/pipeline/`, while logical `manifest.jsonl` resolves to
+`game/manifest/unreal.jsonl`. Reads do not follow links, SHA-256 streams from
+stable file descriptors, and physical paths stay out of public reports. If an
+import response is lost after the asset appears,
 `plan-apply` treats that destination as created and compensates it. A lost delete
 response is accepted only when independent existence read-back proves the asset
 is already absent.

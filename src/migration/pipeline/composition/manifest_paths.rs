@@ -33,3 +33,7 @@
 
 /// Canonical complete FBX catalog manifest.
 pub(crate) const FBX_MANIFEST_PATH: &str = "game/manifest/fbx.jsonl";
+
+/// Canonical Unreal import ledger beneath one game root.
+pub(crate) const UNREAL_MANIFEST_GAME_RELATIVE_PATH: &str =
+    "manifest/unreal.jsonl";
