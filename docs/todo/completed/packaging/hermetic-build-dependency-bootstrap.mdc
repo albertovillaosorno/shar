@@ -1,0 +1,55 @@
+---
+schema: shar.todo.v1
+id: hermetic-build-dependency-bootstrap
+status: completed
+priority: P4
+lane: packaging
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Hermetic build dependency bootstrap
+
+Implement `tools/build/dependencies.py` with CPython 3.14.6 as the declared
+bootstrap and install public project dependencies into repository-owned pinned
+locations without mutating global packages; validate proprietary or platform
+toolchains as explicit external prerequisites instead of silently using
+arbitrary host state.
+
+## Acceptance criteria
+
+- [x] Require CPython 3.14.6 for the supported workflow and emit a clear
+  user-facing diagnostic for any other version.
+- [x] Install or verify public dependencies deterministically under
+  repository-owned `.dependencies/` and `.cache/` locations without global
+  package mutation.
+- [x] Treat Unreal Engine and unavoidable platform SDK or signing material as
+  declared external prerequisites whose exact versions are checked rather
+  than vendored.
+- [x] Make repeated successful runs idempotent and persist machine-readable
+  dependency evidence for later build steps.
+
+## Dependencies
+
+No explicit task dependency is required beyond the declared repository and
+platform prerequisites.
+
+## Evidence
+
+`tools/build/dependencies.py` requires CPython 3.14.6, pins Rustup 1.29.0 with
+per-host SHA-256 digests, installs Rust/Cargo 1.97.1 below
+`.dependencies/build/`, and uses `.cache/build/` for Cargo registry/build state.
+It builds `validate-game` with `Cargo.lock` under `--locked`, publishes the
+validator atomically, and writes `shar.build.dependencies.v1` evidence. Unreal,
+platform SDKs, signing material, and Windows Visual Studio C++ tools remain
+explicit external prerequisites instead of vendored state.
+
+On Windows AMD64, the default no-toolchain-argument flow installed the
+repo-local
+MSVC Rust toolchain, initialized Visual Studio only for the child build process,
+built the validator, and validated all 111 canonical game-manifest minimums. A
+second run completed without reinstalling or changing the validator hash. The
+explicit GNU 1.97.1 override path also remained functional, while Python 3.14.7
+was rejected before success evidence could be published.

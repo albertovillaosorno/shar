@@ -386,17 +386,6 @@ Add parity tests for gameplay behavior and state transitions.
 
 ## P4 — Build, packaging, mods, and product surface
 
-### TODO - Hermetic build dependency bootstrap
-
-Implement `tools/build/dependencies.py` with CPython 3.14.6 as the declared
-bootstrap and install public project dependencies into repository-owned pinned
-locations without mutating global packages; validate proprietary or platform
-toolchains as explicit external prerequisites instead of silently using
-arbitrary host state.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/packaging/hermetic-build-dependency-bootstrap.mdc](docs/todo/open/packaging/hermetic-build-dependency-bootstrap.mdc)
-
 ### TODO - Build preflight and saved check evidence
 
 Implement `tools/build/check.py` as the supported preflight: validate the
