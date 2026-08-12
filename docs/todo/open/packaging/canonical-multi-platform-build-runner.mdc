@@ -30,7 +30,7 @@ successful architecture.
   build-host constraints instead of hiding them.
 - [x] Use candidate output followed by atomic publication so a failed target
   never appears as a complete `dist/<ARCH>/` result.
-- [ ] Keep cook, staging, logs, manifests, and tool state under `.cache/`; keep
+- [x] Keep cook, staging, logs, manifests, and tool state under `.cache/`; keep
   final `dist/` output minimal and platform-native.
 - [ ] Make each published `dist/<ARCH>/` self-contained enough to copy elsewhere
   before deleting the repository workspace if the user wants.
@@ -67,6 +67,23 @@ successful package size. The packaged Shipping executable remained alive for an
 8-second NullRHI/no-audio/unattended liveness probe, after which the exact test
 PID was terminated cleanly.
 
-Keep this task open until the remaining platform packages are exercised,
-project `Saved/`/`Intermediate/` build state is fully canonicalized, and copied
-published output is verified independently of the source workspace.
+Project-generated `Binaries/`, `DerivedDataCache/`, `Intermediate/`, and
+`Saved/` now resolve through persistent directory links to
+`.cache/build/project-state/`. Migration preflights all four identities, adopts
+legacy real directories by same-filesystem rename, rejects competing canonical
+state, and rolls back earlier moves if a later link fails. Standard-library
+regressions cover adoption, reuse, dual-authority rejection, and injected
+partial failure. On the real Windows workspace the first `Intermediate` rename
+hit a transient `WinError 5`; rollback restored all four original directories,
+and one controlled retry migrated all four successfully. A pinned Python 3.14.6
+`run.py --validate-only` then revalidated build evidence and Turnkey reported
+`windows-x64` SDK valid with all four junctions still targeting the cache.
+
+The dependency bootstrap now also binds `validate-game` evidence to a SHA-256
+fingerprint of its local Rust source closure, workspace manifest, and lockfile.
+This prevents an old byte-intact validator from surviving a checkout that
+changes the canonical game-manifest contract; tests prove source drift and
+legacy evidence both fail closed.
+
+Keep this task open until the remaining platform packages are exercised and a
+copied published output is verified independently of the source workspace.
