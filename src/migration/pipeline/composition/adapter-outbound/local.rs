@@ -171,10 +171,14 @@ impl PipelineOperations for LocalPipeline {
         &self,
         index_path: &Path,
         output_dir: &Path,
+        manifest_path: &Path,
         base_root: &Path,
     ) -> PipelineOutcome<StageReport> {
         fbx_catalog_publish::export_complete_fbx_catalog(
-            index_path, output_dir, base_root,
+            index_path,
+            output_dir,
+            manifest_path,
+            base_root,
         )
     }
 

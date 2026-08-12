@@ -61,7 +61,7 @@ use super::mission_locator_context::{
 };
 use super::mission_music_context::preflight_mission_music_states;
 use super::mission_order_context::build_mission_order_source_reports;
-use super::unreal_fbx_catalog::verified_fbx_catalog;
+use super::unreal_fbx_catalog::verified_fbx_catalog_at;
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
@@ -91,6 +91,7 @@ use crate::domain::{
     preflight_mission_traffic_groups,
     preflight_mission_vehicle_attributes, preflight_mission_vehicle_selects,
 };
+use crate::manifest_paths::FBX_MANIFEST_PATH;
 use crate::workspace::{FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT};
 
 /// Canonical import-manifest filename.
@@ -163,7 +164,10 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     let summary_json = unreal_manifest.summary_json();
     validate_rendered_output(&manifest_jsonl, &summary_json)?;
     let manifest_revision = digest_hex(manifest_jsonl.as_bytes());
-    let fbx_catalog = verified_fbx_catalog(Path::new(FBX_WORKSPACE_ROOT))?;
+    let fbx_catalog = verified_fbx_catalog_at(
+        Path::new(FBX_WORKSPACE_ROOT),
+        Path::new(FBX_MANIFEST_PATH),
+    )?;
     let verified_fbx_count = fbx_catalog.as_ref().map_or(0, Vec::len);
     let plan_bundle = fbx_catalog
         .as_deref()

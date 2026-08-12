@@ -45,6 +45,7 @@ use crate::domain::{
     PhaseThreePackageSelector, PipelineConfig, PipelineError, PipelineReport,
     StageReport,
 };
+use crate::manifest_paths::FBX_MANIFEST_PATH;
 use crate::ports::FbxExportOptions;
 use crate::workspace::{
     EXTRACTED_WORKSPACE_ROOT, FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT,
@@ -475,6 +476,7 @@ fn run_complete_fbx_catalog(arguments: &[String]) -> CommandOutcome {
     let result = one_stage(application.export_complete_fbx_catalog(
         Path::new(index_path),
         Path::new(output_dir),
+        Path::new(FBX_MANIFEST_PATH),
         Path::new(base_root),
     ));
     render_result(result, Path::new(output_dir))

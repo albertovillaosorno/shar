@@ -60,6 +60,28 @@ const FBX_MAGIC: &[u8] = b"Kaydara FBX Binary  \0\x1a\0";
 pub(super) fn verified_fbx_catalog(
     root: &Path,
 ) -> PipelineOutcome<Option<Vec<UnrealFbxArtifactEvidence>>> {
+    verified_fbx_catalog_impl(root, &root.join(CATALOG_FILE), true)
+}
+
+/// Read and verify artifacts against a catalog stored outside the artifact
+/// root.
+///
+/// # Errors
+///
+/// Returns the same failures as [`verified_fbx_catalog`], while requiring the
+/// artifact inventory to contain only catalog-declared payloads.
+pub(super) fn verified_fbx_catalog_at(
+    root: &Path,
+    catalog_path: &Path,
+) -> PipelineOutcome<Option<Vec<UnrealFbxArtifactEvidence>>> {
+    verified_fbx_catalog_impl(root, catalog_path, false)
+}
+
+fn verified_fbx_catalog_impl(
+    root: &Path,
+    catalog_path: &Path,
+    catalog_is_inventory_member: bool,
+) -> PipelineOutcome<Option<Vec<UnrealFbxArtifactEvidence>>> {
     match fs::symlink_metadata(root) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             return Ok(None);
@@ -70,9 +92,8 @@ pub(super) fn verified_fbx_catalog(
         Ok(metadata) => validate_directory_metadata(&metadata)?,
     }
 
-    let catalog_path = root.join(CATALOG_FILE);
-    validate_regular_file(&catalog_path, "generated FBX catalog")?;
-    let catalog = fs::read_to_string(&catalog_path)
+    validate_regular_file(catalog_path, "generated FBX catalog")?;
+    let catalog = fs::read_to_string(catalog_path)
         .map_err(|error| io_error("read generated FBX catalog", &error))?;
     if !catalog.ends_with('\n') || catalog.contains('\r') {
         return Err(PipelineError::new(
@@ -237,7 +258,7 @@ pub(super) fn verified_fbx_catalog(
             "generated FBX texture has no owning package",
         ));
     }
-    verify_inventory(root, &paths)?;
+    verify_inventory(root, &paths, catalog_is_inventory_member)?;
     evidence.sort_by(|left, right| left.package_id.cmp(&right.package_id));
     Ok(Some(evidence))
 }
@@ -431,11 +452,14 @@ fn validate_digest(value: &str) -> PipelineOutcome<()> {
 fn verify_inventory(
     root: &Path,
     declared_paths: &BTreeSet<String>,
+    catalog_is_inventory_member: bool,
 ) -> PipelineOutcome<()> {
     let mut actual = BTreeSet::new();
     collect_inventory(root, root, &mut actual)?;
     let mut expected = declared_paths.clone();
-    let _inserted = expected.insert(CATALOG_FILE.to_owned());
+    if catalog_is_inventory_member {
+        let _inserted = expected.insert(CATALOG_FILE.to_owned());
+    }
     if actual != expected {
         return Err(PipelineError::new(
             "generated FBX catalog inventory is not exact",
