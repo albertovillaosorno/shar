@@ -1,0 +1,44 @@
+---
+schema: shar.todo.v1
+id: convert-decompilable-lmlm-mods-into-open-shar-mod-packages
+status: open
+priority: P4
+lane: mods
+active: true
+parent: null
+dependencies: [keep-the-base-pipeline-pristine-and-remove-game-mods-from-supported-input]
+children: []
+---
+
+# Convert decompilable LMLM mods into open SHAR mod packages
+
+Provide `scripts/lmlm-to-shar.py` as a separate compatibility tool. It extracts
+an eligible legacy LMLM package, reconstructs a SHAR-format folder/ZIP from the
+available source/assets, and reports anything that cannot be translated.
+
+## Acceptance criteria
+
+- [ ] Keep conversion completely outside the faithful base pipeline.
+- [ ] Default converter policy to `decompilable-mods-only=true`; treat that one
+  local policy as authoritative. Any user change is an explicit local decision,
+  and the user assumes responsibility for the content they inspect, convert,
+  modify, or redistribute.
+- [ ] Test first with the local Jebano and Muckluck packages as fixtures, without
+  auto-installing or auto-injecting either mod into the game.
+- [ ] Never promise arbitrary LMLM compatibility; unsupported legacy behavior
+  must be reported so authors can adapt the resulting open package.
+- [ ] Produce inspectable SHAR folders/ZIPs whose assets and source are not
+  intentionally locked or obfuscated.
+- [ ] Preserve provenance and require users/distributors to have rights to the
+  content they convert or redistribute.
+- [ ] Update README conversion instructions and known limitations whenever the
+  converter contract changes.
+
+## Dependencies
+
+Depends on the new SHAR mod-package schema and removal of LMLM from base input.
+
+## Evidence
+
+Jebano and Muckluck are compatibility test cases only, not bundled first-party
+mods and not a promise of support for every legacy LMLM package.

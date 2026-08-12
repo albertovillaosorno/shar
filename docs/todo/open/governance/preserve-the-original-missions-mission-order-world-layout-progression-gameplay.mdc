@@ -19,7 +19,8 @@ gameplay structure, models, textures, audio, cinematics, UI, and localization.
 
 - [ ] Preserve the original missions, mission order, world layout, progression,
   gameplay structure, models, textures, audio, cinematics, UI, and
-  localization.
+  localization, with English in the canonical base and other supported official
+  languages preserved through deterministic language mods.
 
 ## Dependencies
 

@@ -1,0 +1,40 @@
+---
+schema: shar.todo.v1
+id: keep-the-base-pipeline-pristine-and-remove-game-mods-from-supported-input
+status: open
+priority: P0
+lane: governance
+active: true
+parent: null
+dependencies: []
+children: []
+---
+
+# Keep the base pipeline pristine and remove `game/mods` from supported input
+
+The canonical port pipeline builds only the faithful base game. `game/mods/`
+must stop being an officially supported pipeline input; legacy mod packages are
+handled later by separate user-facing conversion/import tooling.
+
+## Acceptance criteria
+
+- [ ] Remove `game/mods/`, `m.lmlm`, `j.lmlm`, and any optional-mod approval
+  path from the canonical base extraction/conversion/build pipeline.
+- [ ] Preserve existing files while migrating/removing pipeline behavior; never
+  silently delete user-owned mod packages.
+- [ ] Keep Jebano and Muckluck packages only as explicit converter test fixtures
+  or local test inputs, never automatic content injected into the base game.
+- [ ] Ensure a normal base build is byte/provenance independent of whether any
+  local mod package exists elsewhere on the machine.
+- [ ] Update README mod/install language when implementation lands so it never
+  tells users to place legacy mods in the source-game pipeline.
+
+## Dependencies
+
+No dependency: this is a P0 product-authority correction.
+
+## Evidence
+
+Current code still contains optional LMLM paths in the migration pipeline. This
+TODO intentionally supersedes that product direction without deleting any user
+files during the planning-only documentation change.

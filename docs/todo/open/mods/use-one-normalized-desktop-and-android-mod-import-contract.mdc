@@ -4,25 +4,47 @@ id: use-one-normalized-desktop-and-android-mod-import-contract
 status: open
 priority: P4
 lane: mods
-active: false
+active: true
 parent: null
-dependencies: []
+dependencies: [define-deterministic-mod-identity-dependencies-priority-compatibility-supersession, validate-schemas-paths-integrity-limits-references-and-load-order]
 children: []
 ---
 
-# Use one normalized desktop and Android mod import contract
+# Use one normalized portable mod import contract
 
-Use one normalized desktop and Android mod import contract.
+Use one inspectable SHAR mod-package contract across desktop and mobile. A mod is
+provided as either a directory or `.zip` containing its manifest, source and/or
+assets; opaque precompiled payloads are not the preferred canonical format.
 
 ## Acceptance criteria
 
-- [ ] Use one normalized desktop and Android mod import contract.
+- [ ] Accept one mod directory or one `.zip` package without requiring authors
+  to rebuild the faithful base pipeline.
+- [ ] On desktop, use the portable game installation's `mods/` directory as the
+  normal drop location.
+- [ ] On Android and iOS, define one exact app-owned external/user-visible mods
+  location after final application identities and platform storage rules are
+  fixed; publish those exact paths in README and in-app help.
+- [ ] Keep the same logical mod identity, manifest schema, dependency rules,
+  integrity checks, and load-order semantics across all supported platforms.
+- [ ] Keep mod source/assets inspectable and editable. “Open” here means not
+  intentionally locked or obfuscated; it does not impose GPL or any other
+  license on third-party mod authors.
+- [ ] Let each mod declare its own license/provenance and require distributors to
+  have the rights needed for assets and code they redistribute.
+- [ ] Warn users to trust the author/distributor they choose; hashes can prove an
+  exact package matches a known hash, but cannot prove that unknown code is
+  harmless.
+- [ ] Keep generated official-language mods and converted legacy LMLM mods on
+  this same package contract instead of inventing private special cases.
+- [ ] Update README whenever desktop/mobile locations or package shape changes.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+Depends on deterministic mod identity and package validation contracts.
 
 ## Evidence
 
-Open work migrated from the canonical TODO. Add implementation and
-validation evidence here as the task advances.
+The previous task title mentioned desktop and Android only. The product contract
+now explicitly includes iOS and macOS/Linux/Windows while preserving one logical
+mod format.

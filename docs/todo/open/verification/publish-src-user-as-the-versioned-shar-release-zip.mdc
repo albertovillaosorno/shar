@@ -1,0 +1,40 @@
+---
+schema: shar.todo.v1
+id: publish-src-user-as-the-versioned-shar-release-zip
+status: open
+priority: P5
+lane: verification
+active: true
+parent: null
+dependencies: [build-the-lightweight-src-user-exporter-and-cross-platform-gui]
+children: []
+---
+
+# Publish `src/user` as the versioned SHAR release ZIP
+
+Publish exactly the intended `src/user/` release surface as
+`shar-v<version>.zip`, with no repository caches, proprietary source, original
+game assets, Unreal source tree, or developer-only build state.
+
+## Acceptance criteria
+
+- [ ] Produce the ZIP exclusively from the declared `src/user/` release tree.
+- [ ] Include integrity hashes for the ZIP and generated/reconstructed binaries
+  as user-verifiable tamper/modification evidence; hashes are never algorithm
+  input and a matching hash is not a general antivirus verdict.
+- [ ] Verify every selected supported target can be produced from a clean ZIP
+  plus lawful local source and required external platform toolchains.
+- [ ] Verify desktop folders can be copied elsewhere and launched independently;
+  verify APK/IPA outputs use the documented platform flow.
+- [ ] Keep handwritten player/modder changelogs nontechnical and separate from
+  build evidence.
+- [ ] Update README from TODO-labelled future tense to exact release behavior as
+  each promised surface becomes real.
+
+## Dependencies
+
+Depends on the complete `src/user` exporter/GUI and final platform verification.
+
+## Evidence
+
+P5 owns the public ZIP publication proof; it does not own base-game conversion.

@@ -18,7 +18,8 @@ localization behavior.
 ## Acceptance criteria
 
 - [ ] Reproduce original HUD, menus, navigation, subtitles, audio, cinematics,
-  and localization behavior.
+  and localization behavior; English is the base runtime language and other
+  official localizations must reproduce that behavior when their mods are active.
 
 ## Dependencies
 

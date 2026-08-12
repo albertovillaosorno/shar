@@ -4,25 +4,47 @@ id: validate-a-user-supplied-lawful-source-installation
 status: open
 priority: P1
 lane: conversion
-active: false
+active: true
 parent: null
-dependencies: []
+dependencies: [pin-exact-minimum-source-identities-for-simpsons-exe-and-simpsons-ico, define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window, make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods]
 children: []
 ---
 
 # Validate a user-supplied lawful source installation
 
-Validate a user-supplied lawful source installation.
+Validate a lawful local installation in place without copying it into the
+repository and without ever writing, replacing, renaming, deleting, or patching
+anything inside the original installation directory.
 
 ## Acceptance criteria
 
-- [ ] Validate a user-supplied lawful source installation.
+- [ ] Accept a selected installation folder, a pasted/typed path, or a dropped
+  `Simpsons.exe` and resolve it to one candidate game root.
+- [ ] Require the exact canonical source identities owned by the dedicated
+  minimum-source TODO, including `Simpsons.exe` and `Simpsons.ico`; keep
+  `uninst.ico` optional.
+- [ ] Require the English source identities needed by the canonical base game.
+- [ ] Treat other supported original languages as optional source that can later
+  be exported as language mods rather than required base-game evidence.
+- [ ] Run a fast public-manifest gate for user feedback, then run deeper
+  deterministic structural/provenance validation before any reconstruction.
+- [ ] Never let editing a public JSON manifest turn source that fails the deep
+  validator into accepted source.
+- [ ] Apply the finalized source-similarity policy only after its 45-55% planning
+  window has been empirically calibrated; similarity never substitutes for
+  exact mandatory files or required source bytes.
+- [ ] Keep every validator operation read-only against the original game path.
+- [ ] Report why validation failed without exposing private absolute paths in
+  tracked evidence, release artifacts, or telemetry.
+- [ ] Update README whenever the user-visible source requirements change.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+Depends on exact minimum identities, canonical English authority, and the
+public-safe reconstruction/similarity policy.
 
 ## Evidence
 
-Open work migrated from the canonical TODO. Add implementation and
-validation evidence here as the task advances.
+The lightweight release will point at the user's existing lawful installation;
+normal players will not be instructed to copy the complete game into the SHAR
+repository or release directory.

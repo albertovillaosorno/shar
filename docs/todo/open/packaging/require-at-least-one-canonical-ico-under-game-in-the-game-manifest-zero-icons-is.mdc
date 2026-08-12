@@ -2,53 +2,44 @@
 schema: shar.todo.v1
 id: require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is
 status: open
-priority: P4
+priority: P0
 lane: packaging
 active: true
 parent: null
-dependencies: [build-preflight-and-saved-check-evidence, canonical-multi-platform-build-runner]
+dependencies: [build-preflight-and-saved-check-evidence]
 children: []
 ---
 
-# Canonical game icon build integration
+# Preserve the canonical source icon without replacing or regenerating it
 
-Require at least one canonical `.ico` under `game/` in the game manifest and
-feed repository-generated icon outputs into Unreal staging and packaging through
-the same hermetic build evidence as every other generated input.
+`Simpsons.ico` is authoritative source evidence. SHAR must not replace it with a
+new artistic asset and must not keep a separate icon-generation subsystem merely
+to restyle the game. Icon work is relevant only to from-scratch packaging where
+a platform requires a derived representation of that same source icon.
 
 ## Acceptance criteria
 
-- [x] Treat zero canonical game icons as invalid source evidence during the
-  supported preflight.
-- [ ] Consume the final repository-owned icon producer under `src/unreal/icon`
-  without duplicating or bypassing that producer inside `tools/build/`.
-- [ ] Record generated icon identities, paths, hashes, and target-specific
-  transformations in build evidence before Unreal or platform packaging uses
-  them.
-- [ ] Make `tools/build/run.py` consume only validated generated icon outputs
-  for
-  the selected platforms; do not reach into arbitrary host or editor caches.
-- [ ] Keep intermediate icon conversion output under the canonical `.cache/`
-  workspace and publish only the platform-native icon data required by the
-  final package.
+- [ ] Require exact root `Simpsons.ico` as canonical source evidence.
+- [ ] Treat `uninst.ico` as optional source evidence rather than a normal-player
+  requirement.
+- [ ] Do not replace, redraw, synthesize, or artistically transform the game
+  icon.
+- [ ] Retire unnecessary icon-generation code where safe. If executable format
+  conversion remains necessary, move the reusable logic under `src/user/code/`;
+  if the operation can be declarative, make the relevant `build.txt` procedure
+  authoritative instead. Never duplicate the same icon logic in both places.
+- [ ] Do not duplicate icon logic between repository build tooling and the
+  lightweight user release.
+- [ ] Keep README from-scratch icon notes technical and terse; normal players do
+  not need icon-build instructions.
+- [ ] Update README if the final build-only icon procedure changes.
 
 ## Dependencies
 
-Depends on build preflight, the canonical build runner, and completion of the
-repository-owned icon producer. This record does not own or modify that
-producer.
+Depends on source preflight and final platform packaging requirements only.
 
 ## Evidence
 
-The canonical `game/manifest/game.jsonl` requires at least one root `.ico`, and
-the supported `tools/build/check.py` preflight delegates the complete game check
-to
-the SHA-256-pinned `validate-game` binary provisioned by `dependencies.py`.
-Therefore a zero-icon source installation fails before any build mutation.
-
-The repository-owned producer under `src/unreal/icon` now emits Windows ICO,
-macOS ICNS/iconset, Linux hicolor, Android adaptive/legacy resources, and iOS
-AppIcon assets. Build integration remains open: Unreal 5.8 expects a Windows
-project icon at `Build/Windows/Application.ico` by default, while SHAR requires
-generated intermediates to stay under `.cache`; the runner must bridge that
-boundary explicitly rather than copying generated files into source state.
+This record supersedes the earlier direction that expected a repository-owned
+icon producer to generate replacement platform icon assets. The product
+requirement is now preservation, not replacement.
