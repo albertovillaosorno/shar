@@ -1,0 +1,54 @@
+---
+schema: shar.todo.v1
+id: define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window
+status: open
+priority: P0
+lane: security
+active: true
+parent: null
+dependencies: []
+children: []
+---
+
+# Define a public-safe reconstruction algorithm gate with bounded similarity
+
+Treat the maintainer's complete lawful installation as the internal 100%
+reference for coverage analysis, but do not generate the distributable algorithm
+directly from that complete installation and do not publish an artifact that
+embeds or reconstructs it without the user's lawful local source. Treat roughly
+60% as the current planning estimate for a possible minimum installation and
+45–55% as the tentative candidate-similarity window; validate both concepts
+empirically before code uses them.
+
+## Acceptance criteria
+
+- [ ] Specify what “100% installation”, “minimum installation”, and “similarity”
+  mean in measurable, content-safe terms before choosing a production metric;
+  treat the current ~60% minimum-installation estimate as planning only.
+- [ ] Do not generate `build.txt` by serializing, full-tree diffing, or otherwise
+  turning the complete 100% reference installation into direct recipe material.
+- [ ] Keep the original user installation read-only throughout validation and
+  reconstruction; algorithm execution writes only to SHAR-owned output/cache.
+- [ ] Evaluate the tentative 45–55% similarity window; do not hardcode it until
+  false-positive and false-negative evidence exists across lawful installs.
+- [ ] Ensure passing similarity can never replace required local source bytes,
+  exact-file gates, hashes, structural validation, or cryptographic/provenance
+  checks.
+- [ ] Ensure distributable `algorithms/<arch>/<os>/build.txt` contains procedure
+  and public-safe metadata only, not original-game payloads or a reversible
+  encoding of the maintainer's complete installation.
+- [ ] Keep `hash.txt` informational for exact integrity/modification comparison;
+  users may combine it with separate security checks, but it is not an antivirus
+  verdict and must never be consumed as reconstruction input.
+- [ ] Document the finalized metric and limitations in README when implemented;
+  do not describe the tentative percentage as a legal safe harbor.
+
+## Dependencies
+
+Depends on representative source-installation evidence and final algorithm
+serialization design.
+
+## Evidence
+
+The ~60% minimum-installation estimate and 45–55% similarity window are current
+design targets, not validated production evidence and not legal conclusions.

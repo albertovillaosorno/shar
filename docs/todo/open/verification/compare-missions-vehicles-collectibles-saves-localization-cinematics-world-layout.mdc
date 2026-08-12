@@ -18,7 +18,8 @@ world layout, and the ending against the original game.
 ## Acceptance criteria
 
 - [ ] Compare missions, vehicles, collectibles, saves, localization, cinematics,
-  world layout, and the ending against the original game.
+  world layout, and the ending against the original game, checking English in
+  the base package and each exported official-language mod separately.
 
 ## Dependencies
 

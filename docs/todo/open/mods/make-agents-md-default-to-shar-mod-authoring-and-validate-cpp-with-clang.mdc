@@ -1,0 +1,43 @@
+---
+schema: shar.todo.v1
+id: make-agents-md-default-to-shar-mod-authoring-and-validate-cpp-with-clang
+status: open
+priority: P4
+lane: mods
+active: true
+parent: null
+dependencies: [finish-user-facing-and-ai-agent-modding-skills]
+children: []
+---
+
+# Make `AGENTS.md` default to SHAR mod authoring and validate C++ with Clang
+
+Split agent guidance between repository engineering and a default mod-authoring
+personality. A user who downloads the repository and opens it in a coding agent
+should be guided toward making or repairing a SHAR mod unless they explicitly
+request repository-development work.
+
+## Acceptance criteria
+
+- [ ] Make the mod-authoring reading path the default user-facing agent posture
+  while preserving a clearly separated repository-engineering path.
+- [ ] Include prompt examples for repairing incomplete LMLM conversions,
+  creating a boss fight after a mission, and changing world/mission coordinates.
+- [ ] Teach agents to request missing lawful assets and ask how the mod should
+  behave instead of inventing unavailable legacy behavior.
+- [ ] Do not add an agent-only guardrail that pretends a local mod is impossible
+  to inspect; actual converter policy is enforced by converter code/config.
+- [ ] Make C++ the supported native mod-code language and run the same strict
+  Clang-family validation contract used by SHAR before recommending release.
+- [ ] Allow manual mod authorship "for some reason"; source can be written by
+  hand, but published validation should clearly report lint/compiler failures.
+- [ ] Update README examples when the final agent workflow changes.
+
+## Dependencies
+
+Depends on final user-facing mod skills and the SHAR mod package contract.
+
+## Evidence
+
+This TODO captures the intended AI-agent UX without changing `AGENTS.md` during
+the current planning-only pass.

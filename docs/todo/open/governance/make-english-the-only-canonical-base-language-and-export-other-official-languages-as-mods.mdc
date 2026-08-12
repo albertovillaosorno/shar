@@ -1,0 +1,39 @@
+---
+schema: shar.todo.v1
+id: make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods
+status: open
+priority: P0
+lane: governance
+active: true
+parent: null
+dependencies: []
+children: []
+---
+
+# Make English the only canonical base language
+
+English is mandatory base-game input. Other official original-game languages
+are preserved and supported, but exported as SHAR mods rather than compiled
+into the canonical base package.
+
+## Acceptance criteria
+
+- [ ] Define and validate the exact English source identities required by the
+  faithful base pipeline.
+- [ ] Treat English as required, not optional and not merely a minimum-count
+  language bucket.
+- [ ] Export every supported non-English official language as a deterministic,
+  inspectable SHAR mod without losing original content.
+- [ ] Keep base gameplay/content identity independent from optional language
+  mods and make language-mod composition deterministic.
+- [ ] Update README installation, validation, modding, and troubleshooting text
+  when the implementation lands.
+
+## Dependencies
+
+Coordinate with source validation and normalized mod-package contracts.
+
+## Evidence
+
+This record captures the new product authority: one English canonical base plus
+language mods for other official localizations.

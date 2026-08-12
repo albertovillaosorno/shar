@@ -1,0 +1,42 @@
+---
+schema: shar.todo.v1
+id: define-the-portable-dist-layout-and-machine-readable-dist-manifest
+status: open
+priority: P4
+lane: packaging
+active: true
+parent: null
+dependencies: [canonical-multi-platform-build-runner]
+children: []
+---
+
+# Define the portable `dist/` layout and `game/manifest/dist.json`
+
+Define one machine-readable product contract for the final per-platform package
+without freezing incidental Unreal DLL inventories. The manifest describes
+entrypoints, required runtime roots, mod directory, launcher helpers, package
+kind, and integrity expectations for each target.
+
+## Acceptance criteria
+
+- [ ] Add tracked `game/manifest/dist.json` with a versioned schema covering all
+  supported target identities and their required layout invariants.
+- [ ] Model Windows/Linux/macOS as portable game directories, Android as APK,
+  and iOS as unsigned/local-sideload IPA output.
+- [ ] Require a `mods/` directory in portable runtime layouts where the platform
+  supports external mod placement.
+- [ ] Do not imitate Fortnite launcher/EAC/Epic metadata (`.egstore`, Cloud,
+  launcher, anti-cheat) unless SHAR independently acquires a real requirement.
+- [ ] Avoid hardcoding every Engine/runtime DLL name; validate semantic roots,
+  native entrypoints, packaged content, notices, and platform-native runtime
+  dependencies instead.
+- [ ] Update README examples whenever the versioned dist contract changes.
+
+## Dependencies
+
+Depends on final package evidence from the canonical multi-platform runner.
+
+## Evidence
+
+The Windows package already proves the useful Unreal shape is a small portable
+runtime, not a Fortnite-sized launcher installation.

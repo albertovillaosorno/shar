@@ -1,0 +1,50 @@
+---
+schema: shar.todo.v1
+id: build-the-lightweight-src-user-exporter-and-cross-platform-gui
+status: open
+priority: P4
+lane: packaging
+active: true
+parent: null
+dependencies: [define-the-portable-dist-layout-and-machine-readable-dist-manifest]
+children: []
+---
+
+# Build the lightweight `src/user` exporter and cross-platform GUI
+
+Create the end-user Python surface under `src/user/`. It validates a lawful
+installed game in place, asks for target platforms, runs public-safe
+reconstruction/build procedures, and writes only to its own extracted release
+workspace and `dist/`; it never writes into the original game installation.
+
+## Acceptance criteria
+
+- [ ] Support CPython 3.12+ for the public user tool independently of the
+  exact repository-development Python pin.
+- [ ] Ship `shar.py`, `CHANGELOG.md`, `NOTICES.md`, `game.jsonl`, `dist.json`,
+  `code/*.py`, `scripts/*`, `mods/`, and
+  `algorithms/<arch>/<os>/{build.txt,hash.txt}` from `src/user/`.
+- [ ] Keep helper Python modules under `code/` and keep executable/script
+  construction entry code at the end of the owning `.py` file.
+- [ ] Provide `scripts/windows/shar.ps1` and
+  `scripts/macos-linux/shar.sh` launch helpers.
+- [ ] Provide a lightweight GUI for selecting/dragging/pasting the original game
+  path and selecting any supported target without auto-selecting the host.
+- [ ] Save choices in release-local `user.json`, with all target toggles on by
+  default until the user disables them.
+- [ ] Never modify, overwrite, patch, or clean the original installed-game path.
+- [ ] Show progress/ETA without claiming resumability until resumable state is
+  actually implemented.
+- [ ] Keep `CHANGELOG.md` handwritten and player/modder-facing; do not generate
+  it from commits, compiler output, or technical build logs.
+- [ ] Update README command names, file tree, and platform instructions whenever
+  the release contract changes.
+
+## Dependencies
+
+Depends on stable source validation, algorithms, and package-layout contracts.
+
+## Evidence
+
+This is the intended lightweight path for ordinary players; from-scratch Unreal
+repository builds remain an expert/developer workflow.

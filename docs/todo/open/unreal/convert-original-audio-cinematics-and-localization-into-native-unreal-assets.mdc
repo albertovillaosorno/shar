@@ -18,7 +18,8 @@ assets.
 ## Acceptance criteria
 
 - [ ] Convert original audio, cinematics, and localization into native Unreal
-  assets.
+  assets while compiling English into the canonical base and emitting other
+  supported official languages through the language-mod path.
 
 ## Dependencies
 

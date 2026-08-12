@@ -18,7 +18,8 @@ data in deterministic normalized forms.
 ## Acceptance criteria
 
 - [ ] Preserve original audio, cinematics, localization, UI, mission, and tuning
-  data in deterministic normalized forms.
+  data in deterministic normalized forms; keep English as canonical base input
+  and preserve other official languages as deterministic language-mod sources.
 
 ## Dependencies
 

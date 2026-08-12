@@ -15,6 +15,46 @@ labels belong here.
 
 ## P0 — Authority and repository governance
 
+### TODO - Keep the base pipeline pristine and remove `game/mods` from supported input
+
+Build only the faithful base game in the canonical pipeline; move all legacy
+mod conversion/import behavior to later user-facing tooling.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/governance/keep-the-base-pipeline-pristine-and-remove-game-mods-from-supported-input.mdc](docs/todo/open/governance/keep-the-base-pipeline-pristine-and-remove-game-mods-from-supported-input.mdc)
+
+### TODO - Make English the only canonical base language
+
+Require English for the base game and export every other supported official
+localization as a deterministic SHAR language mod.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/governance/make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods.mdc](docs/todo/open/governance/make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods.mdc)
+
+### TODO - Pin exact minimum source identities for `Simpsons.exe` and `Simpsons.ico`
+
+Require exact root `Simpsons.exe` and `Simpsons.ico`; record `uninst.ico` as
+optional instead of treating any root executable/icon as equivalent evidence.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/conversion/pin-exact-minimum-source-identities-for-simpsons-exe-and-simpsons-ico.mdc](docs/todo/open/conversion/pin-exact-minimum-source-identities-for-simpsons-exe-and-simpsons-ico.mdc)
+
+### TODO - Define a public-safe reconstruction algorithm gate with bounded similarity
+
+Define and test the tentative 45–55% source-similarity window against a lawful
+100% reference without publishing payloads or reversible full-install evidence.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc](docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc)
+
+### TODO - Preserve the canonical source icon without replacing or regenerating it
+
+Preserve `Simpsons.ico` as source identity; retire replacement-art/icon-generator
+work and keep any required platform container conversion build-only.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc](docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc)
+
 ### TODO - Preserve the original missions, mission order, world layout, progression, gameplay…
 
 Preserve the original missions, mission order, world layout, progression,
@@ -386,6 +426,38 @@ Add parity tests for gameplay behavior and state transitions.
 
 ## P4 — Build, packaging, mods, and product surface
 
+### TODO - Define the portable `dist/` layout and `game/manifest/dist.json`
+
+Define a semantic per-platform package contract without freezing incidental
+Unreal runtime filenames or copying Fortnite launcher/anti-cheat structure.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/define-the-portable-dist-layout-and-machine-readable-dist-manifest.mdc](docs/todo/open/packaging/define-the-portable-dist-layout-and-machine-readable-dist-manifest.mdc)
+
+### TODO - Build the lightweight `src/user` exporter and cross-platform GUI
+
+Create the ordinary-player Python release surface that reads the original game
+in place, selects targets, and writes only to its own workspace and `dist/`.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/build-the-lightweight-src-user-exporter-and-cross-platform-gui.mdc](docs/todo/open/packaging/build-the-lightweight-src-user-exporter-and-cross-platform-gui.mdc)
+
+### TODO - Convert decompilable LMLM mods into open SHAR mod packages
+
+Provide the separate `lmlm-to-shar.py` compatibility converter, tested first on
+Jebano/Muckluck fixtures and never auto-injected into the faithful base build.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/convert-decompilable-lmlm-mods-into-open-shar-mod-packages.mdc](docs/todo/open/mods/convert-decompilable-lmlm-mods-into-open-shar-mod-packages.mdc)
+
+### TODO - Make `AGENTS.md` default to SHAR mod authoring and validate C++ with Clang
+
+Make mod authoring the default user-facing agent posture, preserve a separate
+repository-engineering mode, and validate native mod C++ with strict Clang gates.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/make-agents-md-default-to-shar-mod-authoring-and-validate-cpp-with-clang.mdc](docs/todo/open/mods/make-agents-md-default-to-shar-mod-authoring-and-validate-cpp-with-clang.mdc)
+
 ### TODO - Canonical multi-platform build runner
 
 Implement `tools/build/run.py` to consume saved preflight and architecture
@@ -413,16 +485,6 @@ Apple signing or build-host constraints explicitly.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-submission.mdc](docs/todo/open/packaging/produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-submission.mdc)
 
-### TODO - Require at least one canonical `.ico` under `game/` in the game manifest; zero icons is…
-
-Require at least one canonical `.ico` under `game/` in the game manifest; zero
-icons is invalid. Unreal staging must consume the generated icon outputs after
-the current icon producer is moved to its final repository-owned location,
-expected under `src/unreal/icon`.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc](docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc)
-
 ### TODO - Define deterministic mod identity, dependencies, priority, compatibility, supersession,…
 
 Define deterministic mod identity, dependencies, priority, compatibility,
@@ -445,9 +507,9 @@ Keep the unmodified faithful port as the default base-game package.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/mods/keep-the-unmodified-faithful-port-as-the-default-base-game-package.mdc](docs/todo/open/mods/keep-the-unmodified-faithful-port-as-the-default-base-game-package.mdc)
 
-### TODO - Use one normalized desktop and Android mod import contract
+### TODO - Use one normalized portable mod import contract
 
-Use one normalized desktop and Android mod import contract.
+Use one inspectable SHAR mod-package contract across desktop and mobile.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/mods/use-one-normalized-desktop-and-android-mod-import-contract.mdc](docs/todo/open/mods/use-one-normalized-desktop-and-android-mod-import-contract.mdc)
@@ -688,6 +750,21 @@ quality-of-life improvements second, richer community mod content third.
 [docs/todo/open/product/preserve-the-delivery-order-faithful-port-first-compatibility-and-quality-of-life.mdc](docs/todo/open/product/preserve-the-delivery-order-faithful-port-first-compatibility-and-quality-of-life.mdc)
 
 ## P5 — Final verification and publication
+
+### TODO - Publish `src/user` as the versioned SHAR release ZIP
+
+Publish only the declared lightweight user tree as `shar-v<version>.zip`, with
+integrity hashes and clean end-to-end platform evidence.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/publish-src-user-as-the-versioned-shar-release-zip.mdc](docs/todo/open/verification/publish-src-user-as-the-versioned-shar-release-zip.mdc)
+
+### TODO - Add final player-facing README screenshots
+
+Add screenshots only after the player GUI and final package layout stabilize.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/add-final-player-facing-readme-screenshots.mdc](docs/todo/open/verification/add-final-player-facing-readme-screenshots.mdc)
 
 ### TODO - Complete a start-to-finish playthrough without progression-blocking defects
 

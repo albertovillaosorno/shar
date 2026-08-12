@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: add-final-player-facing-readme-screenshots
+status: open
+priority: P5
+lane: verification
+active: false
+parent: null
+dependencies: [build-the-lightweight-src-user-exporter-and-cross-platform-gui]
+children: []
+---
+
+# Add final player-facing README screenshots
+
+Add screenshots only after the lightweight GUI and final output layout are
+stable so the README does not fossilize obsolete UI.
+
+## Acceptance criteria
+
+- [ ] Add concise screenshots for source-path selection, target selection,
+  progress, and final `dist/` discovery.
+- [ ] Keep screenshots free of private local paths, original-game assets that
+  should not be redistributed, credentials, and unrelated desktop content.
+- [ ] Update or remove screenshots whenever the matching UI materially changes.
+
+## Dependencies
+
+Depends on a stable user GUI.
+
+## Evidence
+
+Explicitly deferred during the current documentation pass.
