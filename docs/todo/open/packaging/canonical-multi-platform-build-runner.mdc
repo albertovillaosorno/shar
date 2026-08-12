@@ -22,13 +22,13 @@ successful architecture.
 - [ ] Produce Android ARM64 as APK, iOS ARM64 as IPA, and native packaged
   outputs for selected Linux ARM64/AMD64, macOS ARM64, and Windows
   ARM64/AMD64 architectures.
-- [ ] Keep tvOS and macOS Intel / x86-64 outside the planned build matrix unless
+- [x] Keep tvOS and macOS Intel / x86-64 outside the planned build matrix unless
   a future high-traction issue or pull request brings enough testing support to
   admit them explicitly.
-- [ ] Keep iOS packaging local and sideload-oriented with no App Store
+- [x] Keep iOS packaging local and sideload-oriented with no App Store
   submission workflow; document unavoidable Apple SDK, signing, or
   build-host constraints instead of hiding them.
-- [ ] Use candidate output followed by atomic publication so a failed target
+- [x] Use candidate output followed by atomic publication so a failed target
   never appears as a complete `dist/<ARCH>/` result.
 - [ ] Keep cook, staging, logs, manifests, and tool state under `.cache/`; keep
   final `dist/` output minimal and platform-native.
@@ -42,5 +42,26 @@ platform prerequisites.
 
 ## Evidence
 
-Add implementation, deterministic validation, and supported-host evidence here
-as the task advances.
+`tools/build/run.py` now validates exact `shar.build.check.v1` and
+`shar.build.arch.v1` decisions, reruns `check.py --revalidate`, and rejects
+duplicate
+or drifted target records, and verifies each selected platform through Turnkey
+without `UpdateIfNeeded` before invoking `BuildCookRun`. The canonical matrix
+maps x86-64 to Unreal `x64`, ARM64 to `arm64`, and Linux ARM64 to the dedicated
+`LinuxArm64` target; tvOS and macOS Intel are not admitted.
+
+A real Windows AMD64 Shipping integration build completed successfully through
+C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its
+unpublished test candidate contained 30 files totaling about 689 MiB, including
+`shar.exe`, project content, required Engine files, manifests, and notices. The
+integration driver intentionally stopped before `_publish`, so it did not create
+`dist/` or persist a test architecture choice.
+
+Fixture validation proved empty candidates cannot replace an existing published
+target and valid candidates replace it transactionally with rollback support.
+Turnkey validation also confirmed the installed Windows x64 SDK as valid. UAT
+logs are now redirected beneath `.cache/build/run/<target>/automation-saved/`;
+a second real build is validating the repository-local DDC override. Keep this
+task open until the remaining platform packages are exercised, build/cook state
+is fully canonicalized under `.cache/`, and copied published output is launched
+or otherwise verified independently of the source workspace.
