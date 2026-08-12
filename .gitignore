@@ -397,3 +397,8 @@ dist/
 build/
 Backup/
 /coverage/
+
+# Icon tool local evidence, authored masters, and generated outputs.
+src/unreal/icon/composition/algorithm/out/
+src/unreal/icon/composition/algorithm/assets/
+src/unreal/icon/*/export/
