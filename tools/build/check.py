@@ -50,6 +50,8 @@ _PYTHON_VERSION = (3, 14, 6)
 _UNREAL_VERSION = (5, 8, 1)
 _UNREAL_ASSOCIATION = "5.8"
 _DATA_PATH = Path(".cache/build/data/check.json")
+_DEPENDENCIES_PATH = Path(".cache/build/data/dependencies.json")
+_DEPENDENCIES_SCHEMA = "shar.build.dependencies.v1"
 _PROJECT_PATH = Path(
     "src/unreal/project/composition/uproject/shar.uproject"
 )
@@ -135,15 +137,50 @@ def _check_game(root: Path) -> tuple[Path, Path]:
     return game, manifest
 
 
-def _validator_candidates(root: Path) -> list[Path]:
-    """Return repository-owned manifest-validator candidates."""
-    base = root / ".dependencies" / "build" / "bin"
-    names = ["validate-game.exe", "validate-game"]
-    return [base / name for name in names]
+def _dependency_evidence(root: Path) -> tuple[Path, dict[str, object]]:
+    """Read and validate the dependency bootstrap evidence."""
+    path = root / _DEPENDENCIES_PATH
+    data = _read_json_object(path, "dependency evidence")
+    if data.get("schema") != _DEPENDENCIES_SCHEMA:
+        raise CheckFailure(
+            f"dependency evidence schema must be {_DEPENDENCIES_SCHEMA}"
+        )
+    return path, data
 
 
-def _resolve_validator(root: Path, explicit: Path | None) -> Path:
-    """Resolve the already-provisioned canonical game manifest validator."""
+def _dependency_validator(
+    root: Path,
+    data: dict[str, object],
+) -> Path:
+    """Require the hashed repository-owned validator from bootstrap evidence."""
+    value = data.get("validator")
+    if not isinstance(value, dict):
+        raise CheckFailure("dependency evidence has no validator object")
+    raw_path = value.get("path")
+    expected_hash = value.get("sha256")
+    if not isinstance(raw_path, str) or not isinstance(expected_hash, str):
+        raise CheckFailure("dependency validator evidence is incomplete")
+    validator = Path(raw_path).resolve()
+    owned = (root / ".dependencies" / "build" / "bin").resolve()
+    if validator.parent != owned:
+        raise CheckFailure(
+            "dependency validator must be under .dependencies/build/bin"
+        )
+    if not validator.is_file():
+        raise CheckFailure(f"dependency validator is missing: {validator}")
+    actual_hash = _sha256(validator)
+    if actual_hash != expected_hash:
+        message = "dependency validator SHA-256 no longer matches evidence"
+        raise CheckFailure(message)
+    return validator
+
+
+def _resolve_validator(
+    root: Path,
+    explicit: Path | None,
+    dependencies: dict[str, object],
+) -> Path:
+    """Resolve the canonical validator or an explicit testing override."""
     if explicit is not None:
         candidate = explicit if explicit.is_absolute() else root / explicit
         if not candidate.is_file():
@@ -151,17 +188,7 @@ def _resolve_validator(root: Path, explicit: Path | None) -> Path:
                 f"manifest validator does not exist: {candidate.resolve()}"
             )
         return candidate.resolve()
-
-    for candidate in _validator_candidates(root):
-        if candidate.is_file():
-            return candidate.resolve()
-    for name in ("validate-game.exe", "validate-game"):
-        resolved = shutil.which(name)
-        if resolved:
-            return Path(resolved).resolve()
-    raise CheckFailure(
-        "validate-game is unavailable; run tools/build/dependencies.py first"
-    )
+    return _dependency_validator(root, dependencies)
 
 
 def _validator_command(validator: Path, game: Path) -> list[str]:
@@ -298,7 +325,40 @@ def _check_engine(explicit: Path | None) -> EngineEvidence:
     )
 
 
-def _host_evidence() -> dict[str, object]:
+def _dependency_host_tools(
+    dependencies: dict[str, object],
+) -> dict[str, object]:
+    """Revalidate host build tools recorded by dependency bootstrap."""
+    if os.name != "nt":
+        return {}
+    external = dependencies.get("external_prerequisites")
+    if not isinstance(external, dict):
+        raise CheckFailure("dependency evidence has no external prerequisites")
+    visual_studio = external.get("visual_studio")
+    if not isinstance(visual_studio, dict):
+        raise CheckFailure(
+            "Visual Studio C++ Build Tools were not validated by "
+            "dependencies.py"
+        )
+    result: dict[str, str] = {}
+    for name in ("compiler", "linker"):
+        raw = visual_studio.get(name)
+        if not isinstance(raw, str) or not raw:
+            raise CheckFailure(f"Visual Studio evidence has no {name} path")
+        path = Path(raw).resolve()
+        if not path.is_file():
+            raise CheckFailure(f"Visual Studio {name} is missing: {path}")
+        result[name] = _normalized(path)
+    installation = visual_studio.get("installation")
+    if not isinstance(installation, str) or not Path(installation).is_dir():
+        raise CheckFailure("Visual Studio installation evidence is invalid")
+    result["installation"] = _normalized(Path(installation))
+    return {"visual_studio": result}
+
+
+def _host_evidence(
+    dependencies: dict[str, object],
+) -> dict[str, object]:
     """Record current host identity and basic command prerequisites."""
     required = ["git"]
     if os.name == "nt":
@@ -322,6 +382,7 @@ def _host_evidence() -> dict[str, object]:
         )
     return {
         "architecture": platform.machine().casefold(),
+        "build_tools": _dependency_host_tools(dependencies),
         "commands": commands,
         "system": platform.system().casefold(),
     }
@@ -345,11 +406,21 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
     python = _check_python()
     game, manifest = _check_game(root)
     project = _check_project(root)
-    validator = _resolve_validator(root, args.manifest_validator)
+    dependencies_path, dependencies = _dependency_evidence(root)
+    validator = _resolve_validator(
+        root,
+        args.manifest_validator,
+        dependencies,
+    )
     manifest_result = _check_manifest(validator, game)
     engine = _check_engine(args.engine_root)
-    host = _host_evidence()
+    host = _host_evidence(dependencies)
     return {
+        "dependencies": {
+            "path": _normalized(dependencies_path),
+            "schema": _DEPENDENCIES_SCHEMA,
+            "sha256": _sha256(dependencies_path),
+        },
         "game": {
             "manifest": _normalized(manifest),
             "manifest_sha256": _sha256(manifest),
@@ -366,6 +437,35 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         },
         "validator": _normalized(validator),
     }
+
+
+def _saved_engine_root(saved: dict[str, object]) -> Path:
+    """Read the engine root needed to reproduce one saved preflight."""
+    unreal = saved.get("unreal")
+    if not isinstance(unreal, dict):
+        raise CheckFailure("saved check evidence has no unreal object")
+    raw_root = unreal.get("root")
+    if not isinstance(raw_root, str) or not raw_root:
+        raise CheckFailure("saved check evidence has no Unreal root")
+    return Path(raw_root)
+
+
+def _revalidate(path: Path) -> None:
+    """Recompute preflight evidence and require exact saved equality."""
+    saved = _read_json_object(path, "saved check evidence")
+    if saved.get("schema") != _SCHEMA:
+        raise CheckFailure(f"saved check evidence schema must be {_SCHEMA}")
+    engine_root = _saved_engine_root(saved)
+    arguments = argparse.Namespace(
+        engine_root=engine_root,
+        manifest_validator=None,
+    )
+    current = _run(arguments)
+    if saved != current:
+        raise CheckFailure(
+            "saved check evidence no longer matches validated state; "
+            "rerun tools/build/check.py"
+        )
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -388,6 +488,11 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="override .cache/build/data/check.json for testing",
     )
+    parser.add_argument(
+        "--revalidate",
+        action="store_true",
+        help="revalidate the saved check JSON instead of replacing it",
+    )
     return parser
 
 
@@ -399,10 +504,23 @@ def main() -> int:
     if not output.is_absolute():
         output = root / output
     try:
+        if args.revalidate:
+            has_override = (
+                args.engine_root is not None
+                or args.manifest_validator is not None
+            )
+            if has_override:
+                raise CheckFailure(
+                    "--revalidate cannot be combined with preflight overrides"
+                )
+            _revalidate(output)
+            print(f"check: revalidated saved evidence at {output.resolve()}")
+            return 0
         evidence = _run(args)
         _write_json(output, evidence)
     except (CheckFailure, OSError) as error:
-        output.unlink(missing_ok=True)
+        if not args.revalidate:
+            output.unlink(missing_ok=True)
         print(f"check: {error}", file=sys.stderr)
         return 1
     print(f"check: clean; saved evidence to {output.resolve()}")
