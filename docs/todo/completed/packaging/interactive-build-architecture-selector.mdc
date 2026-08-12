@@ -1,10 +1,10 @@
 ---
 schema: shar.todo.v1
 id: interactive-build-architecture-selector
-status: open
+status: completed
 priority: P4
 lane: packaging
-active: true
+active: false
 parent: null
 dependencies: []
 children: []
@@ -18,22 +18,22 @@ user select one or more supported build targets and saves the decision to
 
 ## Acceptance criteria
 
-- [ ] Offer Android ARM64, iOS ARM64, Linux ARM64, Linux AMD64, macOS ARM64,
+- [x] Offer Android ARM64, iOS ARM64, Linux ARM64, Linux AMD64, macOS ARM64,
   Windows ARM64, and Windows AMD64 as the canonical initial target set.
-- [ ] Present AMD64 targets with a user-facing label such as
+- [x] Present AMD64 targets with a user-facing label such as
   `AMD64 / x86-64 (64-bit PC)` so users do not need to know the architecture
   alias; keep the canonical machine-readable architecture value as `amd64`.
-- [ ] Detect the current host operating system and architecture and annotate the
+- [x] Detect the current host operating system and architecture and annotate the
   exact matching selectable target with a clear marker such as
   `← this is your system`; do not silently select or exclude other targets.
-- [ ] Do not offer tvOS or macOS Intel / x86-64 as planned canonical targets;
+- [x] Do not offer tvOS or macOS Intel / x86-64 as planned canonical targets;
   keep macOS ARM64 in the supported target set.
-- [ ] Revisit tvOS or macOS Intel / x86-64 only through an explicit issue or
+- [x] Revisit tvOS or macOS Intel / x86-64 only through an explicit issue or
   pull request with substantial user demand and contributors able to test the
   target; neither target may block the canonical build flow.
-- [ ] Require at least one selected target, permit selecting every supported
+- [x] Require at least one selected target, permit selecting every supported
   target, and expose one minimal Save action.
-- [ ] Write a versioned `.cache/build/data/arch.json`; manual edits are
+- [x] Write a versioned `.cache/build/data/arch.json`; manual edits are
   unsupported but must remain schema-validatable by the build runner.
 
 ## Dependencies
@@ -43,5 +43,9 @@ platform prerequisites.
 
 ## Evidence
 
-Add implementation, deterministic validation, and supported-host evidence here
-as the task advances.
+Implemented by `tools/build/arch.py`. The selector exposes exactly seven
+canonical targets, keeps every checkbox initially clear, annotates the exact
+Windows AMD64 host as `← this is your system`, rejects tvOS and unknown target
+identifiers, and atomically writes `shar.build.arch.v1` decision JSON. CLI
+validation exercised multi-target persistence and rejection paths without
+opening the interactive window.

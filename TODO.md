@@ -408,15 +408,6 @@ steps.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/build-preflight-and-saved-check-evidence.mdc](docs/todo/open/packaging/build-preflight-and-saved-check-evidence.mdc)
 
-### TODO - Interactive build architecture selector
-
-Implement `tools/build/arch.py` as a minimal checklist window that lets the
-user select one or more supported build targets and saves the decision to
-`.cache/build/data/arch.json`.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/packaging/interactive-build-architecture-selector.mdc](docs/todo/open/packaging/interactive-build-architecture-selector.mdc)
-
 ### TODO - Canonical multi-platform build runner
 
 Implement `tools/build/run.py` to consume saved preflight and architecture
