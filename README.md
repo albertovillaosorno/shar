@@ -152,6 +152,13 @@ the same saved JSON decisions:
 python tools/build/auto.py
 ```
 
+If `.cache/build/data/arch.json` already exists, `auto.py` validates and reuses
+that saved target selection. To open the architecture checklist again, run:
+
+```text
+python tools/build/auto.py --reselect
+```
+
 ## Maximum supported local installation
 
 The frozen `game/manifest.jsonl` remains the minimum installation baseline. A
