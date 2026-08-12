@@ -91,11 +91,11 @@ use crate::domain::{
     preflight_mission_traffic_groups,
     preflight_mission_vehicle_attributes, preflight_mission_vehicle_selects,
 };
-use crate::manifest_paths::FBX_MANIFEST_PATH;
+use crate::manifest_paths::{
+    FBX_MANIFEST_PATH, UNREAL_MANIFEST_GAME_RELATIVE_PATH,
+};
 use crate::workspace::{FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT};
 
-/// Canonical import-manifest filename.
-const MANIFEST_FILE: &str = "manifest.jsonl";
 /// Canonical import-summary filename.
 const SUMMARY_FILE: &str = "summary.json";
 /// Canonical mission definition-core bundle filename.
@@ -105,8 +105,7 @@ const PLAN_ROOT: &str = "plans";
 /// Canonical generated plan-bundle index filename.
 const PLAN_INDEX_FILE: &str = "plans/index.json";
 /// Complete set of files published by one prepare-unreal transaction.
-const PUBLISHED_FILES: [&str; 10] = [
-    MANIFEST_FILE,
+const PUBLISHED_FILES: [&str; 9] = [
     SUMMARY_FILE,
     MISSION_DEFINITIONS_FILE,
     PLAN_INDEX_FILE,
@@ -117,6 +116,8 @@ const PUBLISHED_FILES: [&str; 10] = [
     "plans/validation-plan.json",
     "plans/package-plan.json",
 ];
+/// Total files published across staging plus the external Unreal manifest.
+const PUBLISHED_FILE_COUNT: usize = PUBLISHED_FILES.len().saturating_add(1);
 /// Expected successful minor-unit audit schema.
 const AUDIT_SCHEMA: &str = "shar-schoenwald.minor-unit-audit.v2";
 
@@ -178,15 +179,18 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             },
         )
         .map_err(|error| PipelineError::new(format!("Unreal plan generation failed: {error}")))?;
+    let unreal_manifest_path =
+        config.game_root.join(UNREAL_MANIFEST_GAME_RELATIVE_PATH);
     publish_staging(
         &manifest_jsonl,
         &summary_json,
         &mission_definitions_jsonl,
         &plan_bundle,
+        &unreal_manifest_path,
     )?;
     Ok(StageReport {
         name: "prepare-unreal",
-        files: PUBLISHED_FILES.len(),
+        files: PUBLISHED_FILE_COUNT,
         bytes: published_byte_count(
             &manifest_jsonl,
             &summary_json,
@@ -2314,13 +2318,19 @@ fn publish_staging(
     summary: &str,
     mission_definitions: &str,
     plans: &PlanBundle,
+    manifest_destination: &Path,
 ) -> PipelineOutcome<()> {
     let destination = PathBuf::from(UNREAL_STAGING_WORKSPACE_ROOT);
     let temporary_root = PathBuf::from(".temp");
     let pipeline_root = temporary_root.join("pipeline");
     let transaction_root = pipeline_root.join("unreal-prepare");
-    let staging = transaction_root.join(format!("staging-{}", std::process::id()));
-    let backup = transaction_root.join(format!("backup-{}", std::process::id()));
+    let process_id = std::process::id();
+    let staging = transaction_root.join(format!("staging-{process_id}"));
+    let backup = transaction_root.join(format!("backup-{process_id}"));
+    let manifest_staging =
+        transaction_root.join(format!("manifest-staging-{process_id}.jsonl"));
+    let manifest_backup =
+        transaction_root.join(format!("manifest-backup-{process_id}.jsonl"));
     ensure_generated_directory(&temporary_root, "create Unreal temporary root")?;
     ensure_generated_directory(&pipeline_root, "create Unreal pipeline root")?;
     ensure_generated_directory(&transaction_root, "create Unreal transaction root")?;
@@ -2329,14 +2339,26 @@ fn publish_staging(
         pipeline_root.as_path(),
         transaction_root.as_path(),
     ])?;
+    validate_manifest_parent(manifest_destination)?;
     remove_generated_directory(&staging)?;
     remove_generated_directory(&backup)?;
-    fs::create_dir_all(&staging).map_err(path_error("create Unreal staging directory"))?;
+    remove_generated_file(&manifest_staging)?;
+    remove_generated_file(&manifest_backup)?;
+    fs::create_dir_all(&staging)
+        .map_err(path_error("create Unreal staging directory"))?;
     let plan_root = staging.join(PLAN_ROOT);
-    fs::create_dir_all(&plan_root).map_err(path_error("create Unreal plan directory"))?;
+    fs::create_dir_all(&plan_root)
+        .map_err(path_error("create Unreal plan directory"))?;
+    fs::write(&manifest_staging, manifest)
+        .map_err(path_error("write Unreal manifest staging"))?;
+    verify_staged_file(
+        &manifest_staging,
+        UNREAL_MANIFEST_GAME_RELATIVE_PATH,
+        manifest.as_bytes(),
+    )?;
+
     let mut published_paths = BTreeSet::new();
     for (relative_path, content) in [
-        (MANIFEST_FILE, manifest),
         (SUMMARY_FILE, summary),
         (MISSION_DEFINITIONS_FILE, mission_definitions),
         (PLAN_INDEX_FILE, plans.index_json()),
@@ -2366,14 +2388,82 @@ fn publish_staging(
         fs::rename(&destination, &backup)
             .map_err(|error| prepare_io_error("back up Unreal staging root", &error))?;
     }
+    let had_manifest = manifest_destination.exists();
+    if had_manifest {
+        validate_generated_file(manifest_destination)?;
+        if let Err(error) = fs::rename(manifest_destination, &manifest_backup) {
+            restore_previous_publication(
+                &destination,
+                &backup,
+                had_destination,
+                manifest_destination,
+                &manifest_backup,
+                false,
+                false,
+            )?;
+            return Err(prepare_io_error("back up Unreal manifest", &error));
+        }
+    }
     if let Err(error) = fs::rename(&staging, &destination) {
-        let rollback_error = had_destination
-            .then(|| fs::rename(&backup, &destination).err())
-            .flatten();
-        return Err(publication_error(&error, rollback_error.as_ref()));
+        restore_previous_publication(
+            &destination,
+            &backup,
+            had_destination,
+            manifest_destination,
+            &manifest_backup,
+            had_manifest,
+            false,
+        )?;
+        return Err(publication_error(&error, None));
+    }
+    if let Err(error) = fs::rename(&manifest_staging, manifest_destination) {
+        restore_previous_publication(
+            &destination,
+            &backup,
+            had_destination,
+            manifest_destination,
+            &manifest_backup,
+            had_manifest,
+            true,
+        )?;
+        return Err(prepare_io_error("publish Unreal manifest", &error));
     }
     if had_destination {
         remove_generated_directory(&backup)?;
+    }
+    if had_manifest {
+        remove_generated_file(&manifest_backup)?;
+    }
+    Ok(())
+}
+
+fn restore_previous_publication(
+    destination: &Path,
+    backup: &Path,
+    had_destination: bool,
+    manifest_destination: &Path,
+    manifest_backup: &Path,
+    had_manifest: bool,
+    remove_published_destination: bool,
+) -> PipelineOutcome<()> {
+    let mut failed = false;
+    if remove_published_destination
+        && remove_generated_directory(destination).is_err()
+    {
+        failed = true;
+    }
+    if had_destination && fs::rename(backup, destination).is_err() {
+        failed = true;
+    }
+    if had_manifest
+        && fs::rename(manifest_backup, manifest_destination).is_err()
+    {
+        failed = true;
+    }
+    if failed {
+        return Err(PipelineError::new(
+            "restore previous Unreal publication failed",
+        ));
     }
     Ok(())
 }
@@ -2406,6 +2496,66 @@ fn verify_staged_file(path: &Path, public_path: &str, expected: &[u8]) -> Pipeli
         )));
     }
     Ok(())
+}
+
+fn validate_manifest_parent(manifest_path: &Path) -> PipelineOutcome<()> {
+    let parent = manifest_path.parent().ok_or_else(|| {
+        PipelineError::new("Unreal manifest has no parent directory")
+    })?;
+    let metadata = fs::symlink_metadata(parent)
+        .map_err(path_error("inspect Unreal manifest directory"))?;
+    if !metadata.is_dir() || metadata.file_type().is_symlink() {
+        return Err(PipelineError::new(
+            "Unreal manifest parent is not a regular directory",
+        ));
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt as _;
+        const REPARSE_POINT: u32 = 0x400;
+        if metadata.file_attributes() & REPARSE_POINT != 0 {
+            return Err(PipelineError::new(
+                "Unreal manifest parent is a reparse boundary",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_generated_file(path: &Path) -> PipelineOutcome<()> {
+    let metadata = fs::symlink_metadata(path)
+        .map_err(path_error("inspect generated Unreal file"))?;
+    if !metadata.is_file() || metadata.file_type().is_symlink() {
+        return Err(PipelineError::new(
+            "generated Unreal path is not a regular file",
+        ));
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt as _;
+        const REPARSE_POINT: u32 = 0x400;
+        if metadata.file_attributes() & REPARSE_POINT != 0 {
+            return Err(PipelineError::new(
+                "generated Unreal file is a reparse boundary",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn remove_generated_file(path: &Path) -> PipelineOutcome<()> {
+    match fs::symlink_metadata(path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(prepare_io_error(
+            "inspect generated Unreal file",
+            &error,
+        )),
+        Ok(_metadata) => {
+            validate_generated_file(path)?;
+            fs::remove_file(path)
+                .map_err(path_error("remove generated Unreal file"))
+        },
+    }
 }
 
 fn remove_generated_directory(path: &Path) -> PipelineOutcome<()> {

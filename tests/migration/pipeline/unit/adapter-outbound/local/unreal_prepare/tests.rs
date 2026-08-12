@@ -40,10 +40,11 @@ use serde_json::json;
 use shar_sha256::digest_hex;
 
 use super::{
-    MANIFEST_FILE, MISSION_DEFINITIONS_FILE, PLAN_INDEX_FILE,
+    MISSION_DEFINITIONS_FILE, PLAN_INDEX_FILE, PUBLISHED_FILE_COUNT,
     PUBLISHED_FILES, SUMMARY_FILE, SourceEvidenceInput,
     ensure_generated_directory, open_stable_source, parallel_source_evidence, prepare_io_error,
-    publication_error, read_utf8, retain_source_ids, source_worker_count_for, stream_source_digest,
+    publication_error, read_utf8, restore_previous_publication,
+    retain_source_ids, source_worker_count_for, stream_source_digest,
     validate_audit, validate_generated_chain,
     validate_mission_definition_bundle, validate_public_identifier,
     validate_publication_inventory, validate_relative_path,
@@ -523,7 +524,6 @@ fn clean_audit(manifest: &str, rows: usize) -> String {
 fn stage_report_counts_exact_published_files() -> Result<(), String> {
     if PUBLISHED_FILES
         != [
-            MANIFEST_FILE,
             SUMMARY_FILE,
             MISSION_DEFINITIONS_FILE,
             PLAN_INDEX_FILE,
@@ -537,8 +537,11 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
     {
         return Err("prepare-unreal publication inventory drifted".to_owned());
     }
-    if PUBLISHED_FILES.len() != 10 {
-        return Err("prepare-unreal must report exactly ten files".to_owned());
+    if PUBLISHED_FILES.len() != 9 || PUBLISHED_FILE_COUNT != 10 {
+        return Err(
+            "prepare-unreal must publish nine cache files plus one manifest"
+                .to_owned(),
+        );
     }
     Ok(())
 }
@@ -724,6 +727,51 @@ fn publication_failure_reports_failed_rollback_without_raw_text() -> Result<(), 
         || rendered.contains("private-backup-path")
     {
         return Err(format!("rollback diagnostic is unsafe: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn publication_rollback_restores_cache_and_manifest() -> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "shar-unreal-publication-rollback-{}",
+        std::process::id(),
+    ));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let destination = root.join("accepted");
+    let backup = root.join("backup");
+    let manifest = root.join("unreal.jsonl");
+    let manifest_backup = root.join("manifest-backup.jsonl");
+    fs::create_dir_all(&destination).map_err(|error| error.to_string())?;
+    fs::write(destination.join("new.txt"), b"new")
+        .map_err(|error| error.to_string())?;
+    fs::create_dir_all(&backup).map_err(|error| error.to_string())?;
+    fs::write(backup.join("old.txt"), b"old")
+        .map_err(|error| error.to_string())?;
+    fs::write(&manifest_backup, b"old-manifest")
+        .map_err(|error| error.to_string())?;
+
+    let result = restore_previous_publication(
+        &destination,
+        &backup,
+        true,
+        &manifest,
+        &manifest_backup,
+        true,
+        true,
+    )
+    .map_err(|error| error.to_string());
+    let old_cache = fs::read(destination.join("old.txt"))
+        .map_err(|error| error.to_string())?;
+    let old_manifest = fs::read(&manifest).map_err(|error| error.to_string())?;
+    let new_exists = destination.join("new.txt").exists();
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    result?;
+    if old_cache != b"old" || old_manifest != b"old-manifest" || new_exists {
+        return Err("Unreal publication rollback was not atomic".to_owned());
     }
     Ok(())
 }

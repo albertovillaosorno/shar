@@ -131,11 +131,12 @@ def test_verifies_unique_sources_and_reuses_shared_manifest(
     tmp_path: Path,
 ) -> None:
     repository, plan_root = _roots(tmp_path)
-    image = repository / "extracted" / "image.png"
-    image.parent.mkdir()
+    image = repository / ".cache" / "pipeline" / "extracted" / "image.png"
+    image.parent.mkdir(parents=True)
     image_bytes = b"verified-image"
     image.write_bytes(image_bytes)
-    manifest = plan_root.parent / "manifest.jsonl"
+    manifest = repository / "game" / "manifest" / "unreal.jsonl"
+    manifest.parent.mkdir(parents=True)
     manifest_bytes = b'{"schema":"fixture"}\n'
     manifest.write_bytes(manifest_bytes)
 
@@ -189,8 +190,8 @@ def test_rejects_digest_mismatch_without_disclosing_physical_path(
     tmp_path: Path,
 ) -> None:
     repository, plan_root = _roots(tmp_path)
-    source = repository / "extracted" / "image.png"
-    source.parent.mkdir()
+    source = repository / ".cache" / "pipeline" / "extracted" / "image.png"
+    source.parent.mkdir(parents=True)
     source.write_bytes(b"unexpected")
     operation = _operation(
         "operation-0000000000000005",
@@ -211,8 +212,8 @@ def test_rejects_linked_source_without_reading_external_bytes(
     tmp_path: Path,
 ) -> None:
     repository, plan_root = _roots(tmp_path)
-    source = repository / "extracted" / "image.png"
-    source.parent.mkdir()
+    source = repository / ".cache" / "pipeline" / "extracted" / "image.png"
+    source.parent.mkdir(parents=True)
     external = tmp_path / "external.png"
     external_bytes = b"external-source"
     external.write_bytes(external_bytes)

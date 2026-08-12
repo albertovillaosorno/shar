@@ -122,11 +122,15 @@ catalog entries. A partial catalog never produces a mixed ready/pending bundle.
 
 ## Published files
 
-One successful transaction publishes exactly nine files:
+One successful transaction publishes exactly ten files across two accepted
+identities: one canonical manifest plus nine cache artifacts.
 
 ```text
+game/manifest/
+└── unreal.jsonl
+
 .cache/pipeline/unreal-staging/
-├── manifest.jsonl
+├── mission-definitions.jsonl
 ├── summary.json
 └── plans/
     ├── index.json
@@ -168,10 +172,12 @@ Rust hashing contract.
 The first gate also validates exact plan order, filenames, dependency revisions,
 operation identities, source/readiness mappings, generated destinations,
 outputs, validation requirements, case-insensitive collisions, dependency
-family order, and cycle freedom. Construction operations must reference exactly
-`.cache/pipeline/unreal-staging/manifest.jsonl` through the portable
-`manifest.jsonl` source and
-must repeat the bundle source-manifest revision.
+family order, and cycle freedom. Construction operations retain the portable
+`manifest.jsonl` source identity
+and must repeat the bundle source-manifest revision. The MCP verifier resolves
+that identity physically to `game/manifest/unreal.jsonl`; `extracted/...` and
+`fbx-assets/...` plan identities similarly resolve beneath `.cache/pipeline/`
+without changing their canonical operation hashes.
 
 `plan-execution-preflight` remains local. It verifies every applicable source as
 a regular non-linked file beneath its declared generated root, streams SHA-256
