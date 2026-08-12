@@ -38,6 +38,7 @@ pub mod application;
 #[path = "../domain/mod.rs"]
 pub mod domain;
 mod package_index;
+mod workspace;
 #[rustfmt::skip]
 #[path = "../port-outbound/mod.rs"]
 pub mod ports;

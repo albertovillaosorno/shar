@@ -46,6 +46,9 @@ use crate::domain::{
     StageReport,
 };
 use crate::ports::FbxExportOptions;
+use crate::workspace::{
+    EXTRACTED_WORKSPACE_ROOT, FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT,
+};
 
 mod options;
 
@@ -357,7 +360,7 @@ fn run_optional_mod_preview(arguments: &[String]) -> CommandOutcome {
         .map_or_else(|| PathBuf::from("game"), PathBuf::from);
     let extracted_root = arguments
         .get(1)
-        .map_or_else(|| PathBuf::from("extracted"), PathBuf::from);
+        .map_or_else(|| PathBuf::from(EXTRACTED_WORKSPACE_ROOT), PathBuf::from);
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
     match application.preview_optional_mods(&game_root, &extracted_root) {
@@ -383,9 +386,9 @@ fn run_pipeline_command(
         .map_or_else(|| PathBuf::from("game"), PathBuf::from);
     let extracted_root = arguments
         .get(1)
-        .map_or_else(|| PathBuf::from("extracted"), PathBuf::from);
+        .map_or_else(|| PathBuf::from(EXTRACTED_WORKSPACE_ROOT), PathBuf::from);
     let summary_root = if command == "prepare-unreal" {
-        PathBuf::from("unreal-staging")
+        PathBuf::from(UNREAL_STAGING_WORKSPACE_ROOT)
     } else {
         extracted_root.clone()
     };
@@ -463,9 +466,9 @@ fn run_complete_fbx_catalog(arguments: &[String]) -> CommandOutcome {
     let Some(index_path) = arguments.first() else {
         return missing_argument("package index path");
     };
-    let Some(output_dir) = arguments.get(1) else {
-        return missing_argument("output directory");
-    };
+    let output_dir = arguments
+        .get(1)
+        .map_or(FBX_WORKSPACE_ROOT, String::as_str);
     let base_root = arguments.get(2).map_or(".", String::as_str);
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);

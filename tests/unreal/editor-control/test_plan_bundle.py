@@ -37,6 +37,7 @@ import os
 from pathlib import Path
 import re
 
+from mcp.adapter_inbound.arguments import parse_plan_root
 from mcp.adapter_inbound.cli import main
 from mcp.adapter_outbound.plan_bundle_reader import FilesystemPlanBundleReader
 from mcp.domain.errors import ProtocolError
@@ -74,6 +75,12 @@ def _create_file_link(target: Path, link: Path) -> None:
             pytest.skip("file symlinks require Windows developer mode")
         raise
 
+
+
+def test_default_plan_root_uses_generated_cache() -> None:
+    assert parse_plan_root(()) == Path(
+        ".cache/pipeline/unreal-staging/plans"
+    )
 
 def test_domain_accepts_canonical_six_plan_bundle() -> None:
     index, plans = _split_bundle()

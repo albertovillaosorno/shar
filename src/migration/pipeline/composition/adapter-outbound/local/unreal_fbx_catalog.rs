@@ -42,8 +42,8 @@ use crate::domain::{
     PipelineError, PipelineOutcome, UnrealFbxArtifactEvidence,
 };
 
-/// Canonical generated FBX catalog root.
-pub(super) const FBX_CATALOG_ROOT: &str = "fbx-assets";
+/// Stable logical FBX artifact prefix stored in generated plans.
+const FBX_ARTIFACT_LOGICAL_ROOT: &str = "fbx-assets";
 const CATALOG_FILE: &str = "catalog.jsonl";
 pub(super) const CATALOG_SCHEMA: &str = "shar-schoenwald.fbx-catalog.v2";
 const PNG_MAGIC: &[u8] = &[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
@@ -269,7 +269,7 @@ fn verify_fbx(
     let version = binary_fbx_version(&bytes)?;
     Ok(UnrealFbxArtifactEvidence {
         package_id: package_id.to_owned(),
-        path: format!("{FBX_CATALOG_ROOT}/{relative_path}"),
+        path: format!("{FBX_ARTIFACT_LOGICAL_ROOT}/{relative_path}"),
         size_bytes: actual_size,
         sha256: actual_sha256,
         fbx_version: version,

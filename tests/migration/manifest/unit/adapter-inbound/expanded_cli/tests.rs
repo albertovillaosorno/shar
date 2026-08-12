@@ -32,7 +32,15 @@
 
 use schoenwald_cli::CliProgram;
 
-use super::{GenerateExpandedManifestCli, USAGE};
+use super::{EXTRACTED_RCF_WORKSPACE_ROOT, GenerateExpandedManifestCli, USAGE};
+
+#[test]
+fn default_extracted_rcf_workspace_is_cached() {
+    assert_eq!(
+        EXTRACTED_RCF_WORKSPACE_ROOT,
+        ".cache/pipeline/extracted/rcf",
+    );
+}
 
 #[test]
 fn excess_arguments_return_expanded_usage_without_storage_access()

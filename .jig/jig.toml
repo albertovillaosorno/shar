@@ -376,7 +376,7 @@ config_path = ".jig/cspell/cspell.json"
 dictionary_root = ".jig/cspell"
 files = ["**/*.{cpp,cs,h,ini,json,jsonc,md,mdc,py,rs,toml,txt,yml,yaml}"]
 # jig-ignore-next-line: closed TOML parser requires one physical value
-ignore_paths = [".cache/**", ".dependencies/**", ".git/**", ".logs/**", ".temp/**", "Cargo.lock", "extracted/**", "game/**", "src/unreal/project/composition/uproject/Content/**", "target/**", "tests/fixtures/**", "unreal-staging/**"]
+ignore_paths = [".cache/**", ".dependencies/**", ".git/**", ".logs/**", ".temp/**", "Cargo.lock", "game/**", "src/unreal/project/composition/uproject/Content/**", "target/**", "tests/fixtures/**"]
 language = "en-US,en-GB"
 min_word_length = 3
 # jig-ignore-next-line: canonical schema URL is indivisible
@@ -589,9 +589,9 @@ timeout_seconds = 3600
 # jig-ignore-next-line: closed TOML parser requires one physical value
 forbidden_roots = [".jig-cache", ".turbo", "cache", "dependencies", "logs", "target", "temp", "tmp"]
 # jig-ignore-next-line: closed TOML parser requires one physical value
-required_roots = [".cache", ".dependencies", ".logs", ".temp", "extracted", "unreal-staging"]
+required_roots = [".cache", ".dependencies", ".logs", ".temp"]
 # jig-ignore-next-line: closed TOML parser requires one physical value
-runtime_roots = [".cache", ".dependencies", ".logs", ".temp", "extracted", "unreal-staging"]
+runtime_roots = [".cache", ".dependencies", ".logs", ".temp"]
 
 [portability.rust]
 cargo_config = ".cargo/config.toml"

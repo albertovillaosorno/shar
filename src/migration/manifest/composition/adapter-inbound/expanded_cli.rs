@@ -46,6 +46,9 @@ const USAGE: &str = concat!(
     "[extracted-rcf-directory] [output-path]",
 );
 
+/// Default physical extracted RCF workspace.
+const EXTRACTED_RCF_WORKSPACE_ROOT: &str = ".cache/pipeline/extracted/rcf";
+
 /// Process-neutral expanded-manifest CLI program.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct GenerateExpandedManifestCli;
@@ -60,7 +63,10 @@ impl CliProgram for GenerateExpandedManifestCli {
             .map_or_else(|| PathBuf::from("game"), PathBuf::from);
         let extracted_rcf_dir = arguments
             .get(1)
-            .map_or_else(|| PathBuf::from("extracted/rcf"), PathBuf::from);
+            .map_or_else(
+                || PathBuf::from(EXTRACTED_RCF_WORKSPACE_ROOT),
+                PathBuf::from,
+            );
         let output_path = arguments.get(2).map_or_else(
             || game_dir.join(EXPANDED_MANIFEST_FILE_NAME),
             PathBuf::from,

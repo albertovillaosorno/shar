@@ -61,7 +61,7 @@ use super::mission_locator_context::{
 };
 use super::mission_music_context::preflight_mission_music_states;
 use super::mission_order_context::build_mission_order_source_reports;
-use super::unreal_fbx_catalog::{FBX_CATALOG_ROOT, verified_fbx_catalog};
+use super::unreal_fbx_catalog::verified_fbx_catalog;
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
@@ -91,9 +91,8 @@ use crate::domain::{
     preflight_mission_traffic_groups,
     preflight_mission_vehicle_attributes, preflight_mission_vehicle_selects,
 };
+use crate::workspace::{FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT};
 
-/// Canonical generated Unreal staging root.
-pub(super) const UNREAL_STAGING_ROOT: &str = "unreal-staging";
 /// Canonical import-manifest filename.
 const MANIFEST_FILE: &str = "manifest.jsonl";
 /// Canonical import-summary filename.
@@ -164,7 +163,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     let summary_json = unreal_manifest.summary_json();
     validate_rendered_output(&manifest_jsonl, &summary_json)?;
     let manifest_revision = digest_hex(manifest_jsonl.as_bytes());
-    let fbx_catalog = verified_fbx_catalog(Path::new(FBX_CATALOG_ROOT))?;
+    let fbx_catalog = verified_fbx_catalog(Path::new(FBX_WORKSPACE_ROOT))?;
     let verified_fbx_count = fbx_catalog.as_ref().map_or(0, Vec::len);
     let plan_bundle = fbx_catalog
         .as_deref()
@@ -200,7 +199,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             unreal_manifest.package_count(),
             verified_fbx_count,
             mission_definitions_jsonl.lines().count(),
-            UNREAL_STAGING_ROOT,
+            UNREAL_STAGING_WORKSPACE_ROOT,
             plan_bundle.index_revision(),
         ),
     })
@@ -2312,7 +2311,7 @@ fn publish_staging(
     mission_definitions: &str,
     plans: &PlanBundle,
 ) -> PipelineOutcome<()> {
-    let destination = PathBuf::from(UNREAL_STAGING_ROOT);
+    let destination = PathBuf::from(UNREAL_STAGING_WORKSPACE_ROOT);
     let temporary_root = PathBuf::from(".temp");
     let pipeline_root = temporary_root.join("pipeline");
     let transaction_root = pipeline_root.join("unreal-prepare");

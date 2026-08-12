@@ -29,14 +29,15 @@ native asset exists merely because an operation was planned.
 The canonical command is:
 
 ```text
-pipeline prepare-unreal game extracted
+pipeline prepare-unreal game .cache/pipeline/extracted
 ```
 
 The command verifies the successful minor-unit audit, rebuilds the import
 manifest from source evidence, derives every plan revision from canonical
 content, writes into a transaction-specific staging directory, verifies each
-file, and atomically replaces the accepted `unreal-staging/` root only after the
-complete publication succeeds. Normalized JSON metadata preserves the exact
+file, and atomically replaces the accepted
+`.cache/pipeline/unreal-staging/` root only after the complete publication
+succeeds. Normalized JSON metadata preserves the exact
 schema revision declared by its physical producer; recognized straggler families
 fail closed when that bounded schema identity is missing, malformed, or belongs
 to a different family.
@@ -52,9 +53,10 @@ Manifest rows are parsed and validated before worker dispatch, completed results
 are restored to manifest order before planning, and therefore worker scheduling
 cannot alter published ordering or which earlier row owns an error.
 
-`unreal-staging/` is generated, disposable, and ignored by Git. Every
-published plan targets Unreal Engine 5.8.1 exactly; changing the engine patch
-version requires a deliberate contract revision and regenerated evidence.
+`.cache/pipeline/unreal-staging/` is generated, disposable, and ignored by
+Git. Every published plan targets Unreal Engine 5.8.1 exactly; changing the
+engine patch version requires a deliberate contract revision and regenerated
+evidence.
 
 ## Generated FBX catalog
 
@@ -66,11 +68,12 @@ independently reserve a mesh asset. Non-geometry packages remain at their
 concrete native target or `requires-semantic-conversion` boundary instead of
 producing placeholder FBX.
 
-Model operations use the ignored `fbx-assets/` root as their only generated FBX
-authority:
+Model operations use `.cache/pipeline/fbx-assets/` as their only physical
+generated FBX authority. Published plan identities intentionally retain the
+stable logical `fbx-assets/...` prefix:
 
 ```text
-fbx-assets/
+.cache/pipeline/fbx-assets/
 ├── catalog.jsonl
 └── packages/
     └── <package_name>/
@@ -118,7 +121,7 @@ catalog entries. A partial catalog never produces a mixed ready/pending bundle.
 One successful transaction publishes exactly nine files:
 
 ```text
-unreal-staging/
+.cache/pipeline/unreal-staging/
 ├── manifest.jsonl
 ├── summary.json
 └── plans/
@@ -162,7 +165,8 @@ The first gate also validates exact plan order, filenames, dependency revisions,
 operation identities, source/readiness mappings, generated destinations,
 outputs, validation requirements, case-insensitive collisions, dependency
 family order, and cycle freedom. Construction operations must reference exactly
-`unreal-staging/manifest.jsonl` through the portable `manifest.jsonl` source and
+`.cache/pipeline/unreal-staging/manifest.jsonl` through the portable
+`manifest.jsonl` source and
 must repeat the bundle source-manifest revision.
 
 `plan-execution-preflight` remains local. It verifies every applicable source as

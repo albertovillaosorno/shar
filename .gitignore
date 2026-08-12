@@ -283,17 +283,12 @@ target/
 /game/manifest/*
 !/game/manifest/game.jsonl
 no-git/
-extracted/
 
 # Recoverable whole-root extraction transaction artifacts.
 .*.pipeline-staging
 .*.pipeline-backup
 .*.pipeline-transaction.json
 .*.pipeline-lock
-unreal-staging/
-fbx-assets/
-# Local Blender re-exports used only to derive per-FBX Rust repairs.
-fbx-assets/world-edited/
 
 # Extracted legacy/game assets (local evidence, not public repository content)
 *.bin

@@ -35,8 +35,32 @@ use std::fs;
 use schoenwald_cli::{CliProgram, ExitStatus, OutputStream};
 
 use crate::domain::PipelineReport;
+use crate::workspace::{
+    EXTRACTED_WORKSPACE_ROOT, FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT,
+};
 
 use super::{PipelineCli, USAGE, render_success};
+
+#[test]
+fn generated_workspace_defaults_are_cached() {
+    assert_eq!(EXTRACTED_WORKSPACE_ROOT, ".cache/pipeline/extracted");
+    assert_eq!(FBX_WORKSPACE_ROOT, ".cache/pipeline/fbx-assets");
+    assert_eq!(
+        UNREAL_STAGING_WORKSPACE_ROOT,
+        ".cache/pipeline/unreal-staging",
+    );
+}
+
+#[test]
+fn complete_fbx_catalog_uses_default_output_when_omitted() {
+    let outcome = super::run_complete_fbx_catalog(&[
+        "missing-index.jsonl".to_owned(),
+    ]);
+    assert_eq!(outcome.status(), ExitStatus::Failure);
+    assert!(outcome.output().iter().all(|chunk| {
+        !chunk.text().contains("missing required output directory")
+    }));
+}
 
 #[test]
 fn manifest_rejects_extra_positionals() -> Result<(), String> {

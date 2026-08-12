@@ -12,8 +12,8 @@ process interruption.
 It applies to complete extraction commands:
 
 ```text
-pipeline extract-game game extracted
-pipeline extract-game-resume game extracted
+pipeline extract-game game .cache/pipeline/extracted
+pipeline extract-game-resume game .cache/pipeline/extracted
 ```
 
 The partial `export-movies` and `export-lmlm` commands share the same output
@@ -123,9 +123,11 @@ canonical game-manifest validator, including taxonomy, ledger shape, and every
 minimum-count requirement. A missing, malformed, stale, or short game manifest
 fails before normalized straggler output is touched.
 
-Direct minor-unit regeneration also gives `extracted/game` its own generated
-publication transaction. Loose script and RSD normalization writes to a hidden
-staging sibling while the accepted `extracted/game` remains unchanged. A
+Direct minor-unit regeneration also gives
+`.cache/pipeline/extracted/game` its own generated publication transaction.
+Loose
+script and RSD normalization writes to a hidden staging sibling while the
+accepted `.cache/pipeline/extracted/game` remains unchanged. A
 successful run moves the accepted root to a temporary backup, publishes the
 complete staging root, and removes the backup. A failed conversion removes only
 staging; a failed publish restores the accepted backup; startup recovery restores
