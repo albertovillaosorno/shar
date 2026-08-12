@@ -32,7 +32,7 @@ successful architecture.
   never appears as a complete `dist/<ARCH>/` result.
 - [x] Keep cook, staging, logs, manifests, and tool state under `.cache/`; keep
   final `dist/` output minimal and platform-native.
-- [ ] Make each published `dist/<ARCH>/` self-contained enough to copy elsewhere
+- [x] Make each published `dist/<ARCH>/` self-contained enough to copy elsewhere
   before deleting the repository workspace if the user wants.
 
 ## Dependencies
@@ -85,5 +85,25 @@ This prevents an old byte-intact validator from surviving a checkout that
 changes the canonical game-manifest contract; tests prove source drift and
 legacy evidence both fail closed.
 
-Keep this task open until the remaining platform packages are exercised and a
-copied published output is verified independently of the source workspace.
+A current full Windows x64 Shipping run then published `dist/windows-x64`
+through the canonical runner. The unpruned publication contained 30 files and
+721,654,073 bytes. An exact copy under `.cache/build/copy-probe/` matched every
+source path, byte count, and SHA-256; with the original `dist/windows-x64`
+temporarily hidden, the copied `shar-Win64-Shipping.exe` remained alive for an
+8-second NullRHI/no-audio/unattended probe. The original publication was
+restored
+in `finally` and the 722 MB probe tree was removed.
+
+The runner now moves UAT `Manifest_*.txt` publication metadata and Windows PDBs
+out of the candidate before atomic publication, retaining them under the target
+build cache. Applying that rule to the accepted Windows package reduced final
+`dist/windows-x64` to 26 runtime/licensing files and 488,530,675 bytes. A second
+exact copy produced inventory SHA-256
+`ee8b3f00772c898fab52bf1ae11f81874aea334b840335b94e76fcb7255b4e95`;
+the minimal copied Shipping executable again remained alive for eight seconds
+while the original `dist` directory was hidden, after which publication was
+restored and the copy probe deleted. This verifies the published Windows package
+can be copied away from its repository publication path without depending on
+that path.
+
+Keep this task open until the remaining platform packages are exercised.
