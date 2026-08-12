@@ -18,14 +18,15 @@ the same hermetic build evidence as every other generated input.
 
 ## Acceptance criteria
 
-- [ ] Treat zero canonical game icons as invalid source evidence during the
+- [x] Treat zero canonical game icons as invalid source evidence during the
   supported preflight.
 - [ ] Consume the final repository-owned icon producer under `src/unreal/icon`
   without duplicating or bypassing that producer inside `tools/build/`.
 - [ ] Record generated icon identities, paths, hashes, and target-specific
   transformations in build evidence before Unreal or platform packaging uses
   them.
-- [ ] Make `tools/build/run.py` consume only validated generated icon outputs for
+- [ ] Make `tools/build/run.py` consume only validated generated icon outputs
+  for
   the selected platforms; do not reach into arbitrary host or editor caches.
 - [ ] Keep intermediate icon conversion output under the canonical `.cache/`
   workspace and publish only the platform-native icon data required by the
@@ -34,9 +35,19 @@ the same hermetic build evidence as every other generated input.
 ## Dependencies
 
 Depends on build preflight, the canonical build runner, and completion of the
-repository-owned icon producer. This record does not own or modify that producer.
+repository-owned icon producer. This record does not own or modify that
+producer.
 
 ## Evidence
 
-Add manifest, generated-icon, Unreal staging, and packaged-target validation
-evidence here once integration lands.
+The canonical `game/manifest.jsonl` requires at least one root `.ico`, and the
+supported `tools/build/check.py` preflight delegates the complete game check to
+the SHA-256-pinned `validate-game` binary provisioned by `dependencies.py`.
+Therefore a zero-icon source installation fails before any build mutation.
+
+The repository-owned producer under `src/unreal/icon` now emits Windows ICO,
+macOS ICNS/iconset, Linux hicolor, Android adaptive/legacy resources, and iOS
+AppIcon assets. Build integration remains open: Unreal 5.8 expects a Windows
+project icon at `Build/Windows/Application.ico` by default, while SHAR requires
+generated intermediates to stay under `.cache`; the runner must bridge that
+boundary explicitly rather than copying generated files into source state.
