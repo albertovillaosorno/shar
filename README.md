@@ -48,14 +48,23 @@ work, but that is unsupported and at your own risk. While SHAR is actively
 maintained, its tooling may move to a newer Unreal version. You are also welcome
 to fork the repository or update your local copy for a newer engine yourself.
 
+On **Windows**, building this C++ project also requires a compatible Visual
+Studio C++ toolchain and Windows SDK. Epic's Unreal Engine 5.8 setup guide lists
+Visual Studio 2022 17.14 or later as supported. SHAR validates the installed
+compiler and linker; it does not modify Visual Studio for you. Mobile SDKs and
+signing credentials are likewise explicit platform prerequisites rather than
+packages installed globally by SHAR.
+
 5. From the repository root, install the project dependencies:
 
 ```text
 python tools/build/dependencies.py
 ```
 
-The supported bootstrap keeps project dependencies in repository-owned
-locations instead of modifying global packages.
+The supported bootstrap pins and installs its public Rust build tooling in
+repository-owned `.dependencies/` and `.cache/` locations instead of modifying
+global packages. Proprietary or platform-owned toolchains remain external and
+are validated before use.
 
 6. Check the installation:
 
