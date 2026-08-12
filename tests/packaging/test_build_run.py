@@ -159,6 +159,45 @@ class ProjectStateMigrationTests(unittest.TestCase):
             self._unlink_project_state(project)
             temporary.cleanup()
 
+class PublicationArtifactTests(unittest.TestCase):
+    """Keep runtime publication separate from cached build diagnostics."""
+
+    def test_windows_publication_caches_manifests_and_pdbs(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-publication-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            work = root / "work"
+            binary = candidate / "shar/Binaries/Win64/shar.exe"
+            symbols = candidate / "shar/Binaries/Win64/shar.pdb"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"runtime")
+            symbols.write_bytes(b"symbols")
+            (candidate / "Manifest_UFSFiles_Win64.txt").write_text(
+                "manifest\n",
+                encoding="utf-8",
+            )
+            stale = work / "symbols/stale.pdb"
+            stale.parent.mkdir(parents=True)
+            stale.write_bytes(b"stale")
+
+            target = _RUN._TARGETS_BY_ID["windows-x64"]
+            _RUN._cache_nonruntime_artifacts(candidate, work, target)
+
+            self.assertEqual(binary.read_bytes(), b"runtime")
+            self.assertFalse(symbols.exists())
+            self.assertFalse(
+                (candidate / "Manifest_UFSFiles_Win64.txt").exists()
+            )
+            self.assertEqual(
+                (work / "symbols/shar/Binaries/Win64/shar.pdb").read_bytes(),
+                b"symbols",
+            )
+            self.assertEqual(
+                (work / "publication-metadata/Manifest_UFSFiles_Win64.txt")
+                .read_text(encoding="utf-8"),
+                "manifest\n",
+            )
+            self.assertFalse(stale.exists())
 
 if __name__ == "__main__":
     unittest.main()
