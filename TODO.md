@@ -386,17 +386,6 @@ Add parity tests for gameplay behavior and state transitions.
 
 ## P4 — Build, packaging, mods, and product surface
 
-### TODO - Build preflight and saved check evidence
-
-Implement `tools/build/check.py` as the supported preflight: validate the
-lawful game installation and manifest, require `game/Simpsons.exe` directly
-under the repository game root, verify Python 3.14.6, Unreal Engine 5.8.1, and
-host prerequisites, then write `.cache/build/data/check.json` for later build
-steps.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/packaging/build-preflight-and-saved-check-evidence.mdc](docs/todo/open/packaging/build-preflight-and-saved-check-evidence.mdc)
-
 ### TODO - Canonical multi-platform build runner
 
 Implement `tools/build/run.py` to consume saved preflight and architecture
