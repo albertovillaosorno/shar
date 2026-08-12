@@ -45,11 +45,14 @@ use crate::domain::{
     PhaseThreePackageSelector, PipelineConfig, PipelineError, PipelineReport,
     StageReport,
 };
-use crate::manifest_paths::FBX_MANIFEST_PATH;
+use crate::manifest_paths::{
+    FBX_MANIFEST_PATH, UNREAL_MANIFEST_GAME_RELATIVE_PATH,
+};
 use crate::ports::FbxExportOptions;
 use crate::workspace::{
     EXTRACTED_WORKSPACE_ROOT, FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT,
-    migrate_legacy_extracted_workspace,
+    migrate_legacy_extracted_workspace, migrate_legacy_fbx_workspace,
+    migrate_legacy_unreal_workspace,
 };
 
 mod options;
@@ -407,6 +410,20 @@ fn run_pipeline_command(
                 .stderr_line(format!("pipeline failed: {error}"));
         },
     };
+    if command == "prepare-unreal" {
+        let unreal_manifest =
+            game_root.join(UNREAL_MANIFEST_GAME_RELATIVE_PATH);
+        let compatibility = migrate_legacy_fbx_workspace(Path::new(
+            FBX_MANIFEST_PATH,
+        ))
+        .and_then(|_migrated| {
+            migrate_legacy_unreal_workspace(&unreal_manifest)
+        });
+        if let Err(error) = compatibility {
+            return CommandOutcome::failure()
+                .stderr_line(format!("pipeline failed: {error}"));
+        }
+    }
     let summary_root = if command == "prepare-unreal" {
         PathBuf::from(UNREAL_STAGING_WORKSPACE_ROOT)
     } else {

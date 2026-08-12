@@ -36,7 +36,11 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
     EXTRACTED_LOCK_NAME, EXTRACTED_TRANSACTION_BLOCKERS,
-    EXTRACTED_WORKSPACE_ROOT, migrate_legacy_extracted_workspace_at,
+    EXTRACTED_WORKSPACE_ROOT, FBX_STAGING_NAME, FBX_WORKSPACE_ROOT,
+    LEGACY_FBX_MANIFEST_NAME, LEGACY_FBX_WORKSPACE_ROOT,
+    LEGACY_UNREAL_MANIFEST_NAME, LEGACY_UNREAL_WORKSPACE_ROOT,
+    UNREAL_STAGING_WORKSPACE_ROOT, migrate_legacy_extracted_workspace_at,
+    migrate_legacy_payload_workspace_at,
 };
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -188,6 +192,151 @@ fn active_legacy_extraction_lock_blocks_migration() -> TestResult {
     cleanup_root(&root)?;
     if !error.contains("active legacy extraction transaction") || !legacy_exists {
         return Err("active extraction transaction did not block migration".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn complete_legacy_fbx_workspace_moves_payload_and_manifest() -> TestResult {
+    let root = case_root("fbx-complete");
+    prepare_root(&root)?;
+    let legacy = root.join(LEGACY_FBX_WORKSPACE_ROOT);
+    fs::create_dir_all(legacy.join("packages/sample"))
+        .map_err(|error| error.to_string())?;
+    fs::write(legacy.join("packages/sample/sample.fbx"), b"fbx")
+        .map_err(|error| error.to_string())?;
+    fs::write(legacy.join(LEGACY_FBX_MANIFEST_NAME), b"catalog
+")
+        .map_err(|error| error.to_string())?;
+    let manifest = root.join("game/manifest/fbx.jsonl");
+
+    let migrated = migrate_legacy_payload_workspace_at(
+        &root,
+        LEGACY_FBX_WORKSPACE_ROOT,
+        FBX_WORKSPACE_ROOT,
+        Some(LEGACY_FBX_MANIFEST_NAME),
+        &manifest,
+        &[FBX_STAGING_NAME],
+        "FBX",
+    )
+    .map_err(|error| error.to_string())?;
+    let canonical = root.join(FBX_WORKSPACE_ROOT);
+    let payload = fs::read(canonical.join("packages/sample/sample.fbx"))
+        .map_err(|error| error.to_string())?;
+    let manifest_bytes =
+        fs::read(&manifest).map_err(|error| error.to_string())?;
+    let detached = !canonical.join(LEGACY_FBX_MANIFEST_NAME).exists();
+    cleanup_root(&root)?;
+    if !migrated || payload != b"fbx" || manifest_bytes != b"catalog
+" || !detached {
+        return Err("complete FBX workspace migration drifted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn fbx_publication_staging_blocks_legacy_migration() -> TestResult {
+    let root = case_root("fbx-staging");
+    prepare_root(&root)?;
+    fs::create_dir_all(root.join(LEGACY_FBX_WORKSPACE_ROOT))
+        .map_err(|error| error.to_string())?;
+    fs::create_dir_all(root.join(FBX_STAGING_NAME))
+        .map_err(|error| error.to_string())?;
+    let manifest = root.join("game/manifest/fbx.jsonl");
+    let error = migrate_legacy_payload_workspace_at(
+        &root,
+        LEGACY_FBX_WORKSPACE_ROOT,
+        FBX_WORKSPACE_ROOT,
+        Some(LEGACY_FBX_MANIFEST_NAME),
+        &manifest,
+        &[FBX_STAGING_NAME],
+        "FBX",
+    )
+    .expect_err("FBX staging must block migration")
+    .to_string();
+    let preserved = root.join(LEGACY_FBX_WORKSPACE_ROOT).is_dir();
+    cleanup_root(&root)?;
+    if !error.contains("publication staging exists") || !preserved {
+        return Err(
+            "FBX interrupted publication did not fail closed".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn complete_legacy_unreal_workspace_moves_payload_and_manifest() -> TestResult {
+    let root = case_root("unreal-complete");
+    prepare_root(&root)?;
+    let legacy = root.join(LEGACY_UNREAL_WORKSPACE_ROOT);
+    fs::create_dir_all(legacy.join("plans"))
+        .map_err(|error| error.to_string())?;
+    fs::write(legacy.join("plans/index.json"), b"{}")
+        .map_err(|error| error.to_string())?;
+    fs::write(legacy.join(LEGACY_UNREAL_MANIFEST_NAME), b"unreal
+")
+        .map_err(|error| error.to_string())?;
+    let manifest = root.join("game/manifest/unreal.jsonl");
+
+    let migrated = migrate_legacy_payload_workspace_at(
+        &root,
+        LEGACY_UNREAL_WORKSPACE_ROOT,
+        UNREAL_STAGING_WORKSPACE_ROOT,
+        Some(LEGACY_UNREAL_MANIFEST_NAME),
+        &manifest,
+        &[],
+        "Unreal",
+    )
+    .map_err(|error| error.to_string())?;
+    let canonical = root.join(UNREAL_STAGING_WORKSPACE_ROOT);
+    let plan = fs::read(canonical.join("plans/index.json"))
+        .map_err(|error| error.to_string())?;
+    let manifest_bytes =
+        fs::read(&manifest).map_err(|error| error.to_string())?;
+    let detached = !canonical.join(LEGACY_UNREAL_MANIFEST_NAME).exists();
+    cleanup_root(&root)?;
+    if !migrated || plan != b"{}" || manifest_bytes != b"unreal
+" || !detached {
+        return Err("complete Unreal workspace migration drifted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn canonical_manifest_blocks_legacy_payload_migration() -> TestResult {
+    let root = case_root("manifest-conflict");
+    prepare_root(&root)?;
+    let legacy = root.join(LEGACY_UNREAL_WORKSPACE_ROOT);
+    fs::create_dir_all(&legacy).map_err(|error| error.to_string())?;
+    fs::write(legacy.join(LEGACY_UNREAL_MANIFEST_NAME), b"legacy")
+        .map_err(|error| error.to_string())?;
+    let manifest = root.join("game/manifest/unreal.jsonl");
+    fs::create_dir_all(manifest.parent().unwrap())
+        .map_err(|error| error.to_string())?;
+    fs::write(&manifest, b"canonical").map_err(|error| error.to_string())?;
+
+    let error = migrate_legacy_payload_workspace_at(
+        &root,
+        LEGACY_UNREAL_WORKSPACE_ROOT,
+        UNREAL_STAGING_WORKSPACE_ROOT,
+        Some(LEGACY_UNREAL_MANIFEST_NAME),
+        &manifest,
+        &[],
+        "Unreal",
+    )
+    .expect_err("canonical manifest must block legacy migration")
+    .to_string();
+    let old_manifest = fs::read(legacy.join(LEGACY_UNREAL_MANIFEST_NAME))
+        .map_err(|error| error.to_string())?;
+    let accepted = fs::read(&manifest).map_err(|error| error.to_string())?;
+    cleanup_root(&root)?;
+    if !error.contains("canonical Unreal manifest already exists")
+        || old_manifest != b"legacy"
+        || accepted != b"canonical"
+    {
+        return Err(
+            "manifest conflict did not preserve both authorities".to_owned()
+        );
     }
     Ok(())
 }

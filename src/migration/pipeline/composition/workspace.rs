@@ -36,7 +36,7 @@
 //! Canonical generated workspace paths and legacy compatibility migration.
 
 use std::fs::{self, File, OpenOptions, TryLockError};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::domain::{PipelineError, PipelineOutcome};
 use schoenwald_filesystem::adapters::driving::local as local_filesystem;
@@ -266,6 +266,244 @@ fn path_present(path: &Path) -> PipelineOutcome<bool> {
 
 fn io_failure(operation: &str, error: &std::io::Error) -> PipelineError {
     PipelineError::new(format!("{operation} failed ({:?})", error.kind()))
+}
+
+const LEGACY_FBX_WORKSPACE_ROOT: &str = "fbx-assets";
+const LEGACY_UNREAL_WORKSPACE_ROOT: &str = "unreal-staging";
+const LEGACY_FBX_MANIFEST_NAME: &str = "catalog.jsonl";
+const LEGACY_UNREAL_MANIFEST_NAME: &str = "manifest.jsonl";
+const FBX_STAGING_NAME: &str = ".fbx-assets.complete-staging";
+
+/// Move one complete legacy FBX workspace and ledger into canonical storage.
+///
+/// # Errors
+///
+/// Returns a deterministic failure when legacy and canonical state compete,
+/// transaction staging exists, a path changes kind, or rename fails.
+pub(crate) fn migrate_legacy_fbx_workspace(
+    manifest_destination: &Path,
+) -> PipelineOutcome<bool> {
+    migrate_legacy_payload_workspace_at(
+        Path::new("."),
+        LEGACY_FBX_WORKSPACE_ROOT,
+        FBX_WORKSPACE_ROOT,
+        Some(LEGACY_FBX_MANIFEST_NAME),
+        manifest_destination,
+        &[FBX_STAGING_NAME],
+        "FBX",
+    )
+}
+
+/// Move one legacy Unreal staging root and ledger into canonical storage.
+///
+/// # Errors
+///
+/// Returns a deterministic failure when legacy and canonical state compete, a
+/// path changes kind, or rename fails.
+pub(crate) fn migrate_legacy_unreal_workspace(
+    manifest_destination: &Path,
+) -> PipelineOutcome<bool> {
+    migrate_legacy_payload_workspace_at(
+        Path::new("."),
+        LEGACY_UNREAL_WORKSPACE_ROOT,
+        UNREAL_STAGING_WORKSPACE_ROOT,
+        Some(LEGACY_UNREAL_MANIFEST_NAME),
+        manifest_destination,
+        &[],
+        "Unreal",
+    )
+}
+
+#[derive(Debug)]
+struct PayloadMigration<'a> {
+    legacy_root: PathBuf,
+    canonical_root: PathBuf,
+    legacy_manifest: Option<PathBuf>,
+    manifest_destination: &'a Path,
+    label: &'a str,
+}
+
+fn migrate_legacy_payload_workspace_at(
+    repository_root: &Path,
+    legacy_relative: &str,
+    canonical_relative: &str,
+    legacy_manifest_name: Option<&str>,
+    manifest_destination: &Path,
+    transaction_blockers: &[&str],
+    label: &str,
+) -> PipelineOutcome<bool> {
+    let legacy_root = repository_root.join(legacy_relative);
+    if !path_present(&legacy_root)? {
+        return Ok(false);
+    }
+    ensure_real_directory(&legacy_root, &format!("legacy {label} workspace"))?;
+    let canonical_root = repository_root.join(canonical_relative);
+    reject_competing_payload_root(&canonical_root, label)?;
+
+    let legacy_parent = legacy_root.parent().unwrap_or(repository_root);
+    let canonical_parent = canonical_root.parent().ok_or_else(|| {
+        PipelineError::new(format!("canonical {label} workspace has no parent"))
+    })?;
+    reject_payload_transaction_blockers(
+        legacy_parent,
+        canonical_parent,
+        transaction_blockers,
+        label,
+    )?;
+    let legacy_manifest = if let Some(name) = legacy_manifest_name {
+        let path = legacy_root.join(name);
+        path_present(&path)?.then_some(path)
+    } else {
+        None
+    };
+    if path_present(manifest_destination)? {
+        return Err(PipelineError::new(format!(
+            concat!(
+                "canonical {} manifest already exists while a legacy ",
+                "workspace needs migration"
+            ),
+            label,
+        )));
+    }
+    reject_manifest_staging(manifest_destination, label)?;
+    if let Some(path) = legacy_manifest.as_deref() {
+        ensure_real_file(path, &format!("legacy {label} manifest"))?;
+    }
+    ensure_cache_parent(canonical_parent)?;
+    if legacy_manifest.is_some() {
+        ensure_real_parent(manifest_destination, label)?;
+    }
+    migrate_payload_and_manifest(PayloadMigration {
+        legacy_root,
+        canonical_root,
+        legacy_manifest,
+        manifest_destination,
+        label,
+    })?;
+    Ok(true)
+}
+
+fn migrate_payload_and_manifest(
+    migration: PayloadMigration<'_>,
+) -> PipelineOutcome<()> {
+    if let Some(source) = migration.legacy_manifest.as_ref() {
+        fs::rename(source, migration.manifest_destination).map_err(|error| {
+            io_failure("move legacy generated manifest", &error)
+        })?;
+    }
+
+    match fs::rename(&migration.legacy_root, &migration.canonical_root) {
+        Ok(()) => Ok(()),
+        Err(error) => {
+            let manifest_restore = migration.legacy_manifest.as_ref().map_or(
+                Ok(()),
+                |source| fs::rename(migration.manifest_destination, source),
+            );
+            match manifest_restore {
+                Ok(()) => Err(io_failure(
+                    "move legacy generated workspace",
+                    &error,
+                )),
+                Err(rollback) => Err(PipelineError::new(format!(
+                    concat!(
+                        "move legacy {} workspace failed ({:?}); ",
+                        "restore legacy manifest failed ({:?})"
+                    ),
+                    migration.label,
+                    error.kind(),
+                    rollback.kind(),
+                ))),
+            }
+        },
+    }
+}
+
+fn reject_competing_payload_root(
+    canonical_root: &Path,
+    label: &str,
+) -> PipelineOutcome<()> {
+    if path_present(canonical_root)? {
+        Err(PipelineError::new(format!(
+            concat!(
+                "legacy and canonical {} workspaces both exist; ",
+                "reconcile them before retrying"
+            ),
+            label,
+        )))
+    } else {
+        Ok(())
+    }
+}
+
+fn reject_payload_transaction_blockers(
+    legacy_parent: &Path,
+    canonical_parent: &Path,
+    names: &[&str],
+    label: &str,
+) -> PipelineOutcome<()> {
+    for parent in [legacy_parent, canonical_parent] {
+        for name in names {
+            if path_present(&parent.join(name))? {
+                return Err(PipelineError::new(format!(
+                    concat!(
+                        "{} publication staging exists; inspect the ",
+                        "interrupted transaction before migration"
+                    ),
+                    label,
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn reject_manifest_staging(
+    manifest_destination: &Path,
+    label: &str,
+) -> PipelineOutcome<()> {
+    let Some(parent) = manifest_destination.parent() else {
+        return Err(PipelineError::new(format!(
+            "canonical {label} manifest has no parent"
+        )));
+    };
+    let Some(name) = manifest_destination.file_name() else {
+        return Err(PipelineError::new(format!(
+            "canonical {label} manifest has no file name"
+        )));
+    };
+    let mut staging_name = std::ffi::OsString::from(".");
+    staging_name.push(name);
+    staging_name.push(".complete-staging");
+    if path_present(&parent.join(staging_name))? {
+        return Err(PipelineError::new(format!(
+            concat!(
+                "canonical {} manifest staging exists; inspect the ",
+                "interrupted transaction before migration"
+            ),
+            label,
+        )));
+    }
+    Ok(())
+}
+
+fn ensure_real_parent(path: &Path, label: &str) -> PipelineOutcome<()> {
+    let parent = path.parent().ok_or_else(|| {
+        PipelineError::new(format!("canonical {label} manifest has no parent"))
+    })?;
+    local_filesystem::create_dir_all(parent).map_err(|error| {
+        io_failure("create canonical manifest parent", &error)
+    })?;
+    ensure_real_directory(parent, &format!("canonical {label} manifest parent"))
+}
+
+fn ensure_real_file(path: &Path, label: &str) -> PipelineOutcome<()> {
+    let metadata = fs::symlink_metadata(path)
+        .map_err(|error| io_failure("inspect workspace file", &error))?;
+    if metadata.is_file() && !metadata.file_type().is_symlink() {
+        Ok(())
+    } else {
+        Err(PipelineError::new(format!("{label} must be a real file")))
+    }
 }
 
 #[cfg(test)]
