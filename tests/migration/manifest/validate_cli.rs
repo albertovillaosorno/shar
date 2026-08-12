@@ -54,6 +54,7 @@ fn validate_manifest(manifest: &str) -> io::Result<Output> {
     }
     fs::create_dir_all(&root)?;
     let result = (|| {
+        fs::create_dir_all(root.join("manifest"))?;
         fs::write(root.join(MANIFEST_FILE_NAME), manifest)?;
         Command::new(env!("CARGO_BIN_EXE_validate-game"))
             .arg(&root)

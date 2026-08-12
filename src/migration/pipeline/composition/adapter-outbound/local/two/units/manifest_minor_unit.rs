@@ -376,9 +376,15 @@ fn collect_files(root: &Path) -> PipelineOutcome<Vec<PathBuf>> {
     Ok(files)
 }
 
-/// Should skip local game file.
+/// Returns whether one local game file is repository metadata or non-asset
+/// input.
 fn should_skip_local_game_file(relative: &Path, extension: &str) -> bool {
-    relative == Path::new("manifest.jsonl")
+    let is_manifest_metadata = relative
+        .components()
+        .next()
+        .and_then(|component| component.as_os_str().to_str())
+        .is_some_and(|value| value.eq_ignore_ascii_case("manifest"));
+    is_manifest_metadata
         || matches!(extension, "dll" | "exe" | "ico" | "iso")
         || extension == "png"
         || extension == "schoenwald-original"

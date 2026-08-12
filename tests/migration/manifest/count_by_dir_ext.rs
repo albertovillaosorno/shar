@@ -75,10 +75,11 @@ impl Drop for FixtureRoot {
 
 fn nested_manifest_counts() -> io::Result<DirExtCounts> {
     let fixture = FixtureRoot::new("nested-manifests")?;
+    fs::create_dir_all(fixture.path().join("manifest"))?;
     fs::write(fixture.path().join(MANIFEST_FILE_NAME), b"root")?;
     fs::write(fixture.path().join(EXPANDED_MANIFEST_FILE_NAME), b"root")?;
     let nested = fixture.path().join("area");
-    fs::create_dir_all(&nested)?;
+    fs::create_dir_all(nested.join("manifest"))?;
     fs::write(nested.join(MANIFEST_FILE_NAME), b"nested")?;
     fs::write(nested.join(EXPANDED_MANIFEST_FILE_NAME), b"nested")?;
     count_by_dir_ext(fixture.path())
@@ -92,7 +93,10 @@ fn output_names_are_excluded_only_at_root() {
         return;
     };
 
-    assert_eq!(counts.get(&("aa".to_owned(), "jsonl".to_owned())), Some(&2));
+    assert_eq!(
+        counts.get(&("aa/mt".to_owned(), "jsonl".to_owned())),
+        Some(&2)
+    );
     assert!(!counts.contains_key(&(String::new(), "jsonl".to_owned())));
 }
 
@@ -165,10 +169,10 @@ fn parent_traversal_file_evidence_is_ignored() {
 }
 
 #[test]
-fn root_manifest_case_aliases_are_excluded() {
+fn root_manifest_directory_case_aliases_are_excluded() {
     let root = Path::new("game");
-    for file_name in ["MANIFEST.JSONL", "MANIFEST-EXPANDED.JSONL"] {
-        let counts = count_by_dir_ext_paths(root, &[root.join(file_name)]);
+    for path in ["MANIFEST/GAME.JSONL", "Manifest/fbx.jsonl"] {
+        let counts = count_by_dir_ext_paths(root, &[root.join(path)]);
 
         assert!(counts.is_empty());
     }

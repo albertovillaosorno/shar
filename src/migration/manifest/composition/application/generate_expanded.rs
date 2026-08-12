@@ -38,7 +38,7 @@ use super::ManifestError;
 use super::path_evidence::deduplicate_paths;
 use super::rcf_evidence::load_extracted_rcf_files;
 use crate::domain::{
-    BACKUP_EXTENSION, EXPANDED_MANIFEST_FILE_NAME, MANIFEST_FILE_NAME,
+    BACKUP_EXTENSION, MANIFEST_FILE_NAME,
     classify_manifest_bucket, extension_of, kind_taxonomy_jsonl,
 };
 use crate::ports::{GameTree, PathKind, TextArtifactStore};
@@ -266,18 +266,13 @@ fn collect_game_files(
             continue;
         }
         let extension = extension_of(path);
-        let file_name = path
-            .file_name()
-            .and_then(|value| value.to_str())
-            .ok_or_else(|| {
-                ManifestError::Invalid(
-                    "expanded file name is not valid UTF-8".to_owned(),
-                )
-            })?;
-        let is_root_output_name = path.parent() == Some(root)
-            && (file_name == MANIFEST_FILE_NAME
-                || file_name == EXPANDED_MANIFEST_FILE_NAME);
-        if is_root_output_name
+        let is_manifest_artifact = path
+            .strip_prefix(root)
+            .ok()
+            .and_then(|relative| relative.components().next())
+            .and_then(|component| component.as_os_str().to_str())
+            .is_some_and(|value| value.eq_ignore_ascii_case("manifest"));
+        if is_manifest_artifact
             || extension == "rcf"
             || extension == BACKUP_EXTENSION
         {

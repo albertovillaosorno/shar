@@ -397,7 +397,7 @@ fn verify_manifest(
     game_root: &Path,
     extracted_root: &Path,
 ) -> PipelineOutcome<StageReport> {
-    let manifest = game_root.join("manifest.jsonl");
+    let manifest = game_root.join("manifest/game.jsonl");
     let text = fs::read_to_string(&manifest).map_err(io_error(&manifest))?;
     let rules = text
         .lines()
@@ -445,7 +445,7 @@ fn verify_manifest(
         name: "manifest",
         files: rules.len(),
         bytes: fs::metadata(&manifest).map_err(io_error(&manifest))?.len(),
-        note: "game/manifest.jsonl verified".to_owned(),
+        note: "game/manifest/game.jsonl verified".to_owned(),
     })
 }
 

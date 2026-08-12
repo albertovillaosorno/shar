@@ -23,8 +23,8 @@ evidence, and JSON Lines files containing one independent JSON value per line.
 ## Repository Use And Scope
 
 SHAR emits and validates strict JSON through Serde JSON and repository-owned
-serializers. `game/manifest.jsonl` and other line-oriented outputs require each
-line to be a complete JSON value with deterministic ordering and newline
+serializers. `game/manifest/game.jsonl` and other line-oriented outputs require
+each line to be a complete JSON value with deterministic ordering and newline
 handling.
 
 ## Provenance And Version History

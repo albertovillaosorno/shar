@@ -38,12 +38,12 @@ mod json;
 
 pub use classification::classify_manifest_bucket;
 
-/// File name of the manifest itself, relative to the game directory. It is
-/// excluded from the counts and skipped by consumers.
-pub const MANIFEST_FILE_NAME: &str = "manifest.jsonl";
+/// Relative path of the minimum manifest beneath the game directory. It is
+/// excluded from source counts and skipped by consumers.
+pub const MANIFEST_FILE_NAME: &str = "manifest/game.jsonl";
 
-/// File name of the expanded manifest, relative to the game directory.
-pub const EXPANDED_MANIFEST_FILE_NAME: &str = "manifest-expanded.jsonl";
+/// Relative path of the expanded manifest beneath the game directory.
+pub const EXPANDED_MANIFEST_FILE_NAME: &str = "manifest/game-expanded.jsonl";
 
 /// Controlled taxonomy of manifest file kinds.
 pub const KIND_TAXONOMY: &[&str] = &[
@@ -178,17 +178,16 @@ struct ManifestSource {
     extension: String,
 }
 
-/// Returns whether one root file is a generated manifest ledger.
-fn is_root_manifest(root: &Path, path: &Path) -> bool {
-    if path.parent() != Some(root) {
-        return false;
-    }
-    let Some(name) = path.file_name().and_then(|value| value.to_str()) else {
+/// Returns whether one path is beneath the generated manifest directory.
+fn is_manifest_artifact(root: &Path, path: &Path) -> bool {
+    let Ok(relative) = path.strip_prefix(root) else {
         return false;
     };
-    let is_minimum = name.eq_ignore_ascii_case(MANIFEST_FILE_NAME);
-    let is_expanded = name.eq_ignore_ascii_case(EXPANDED_MANIFEST_FILE_NAME);
-    is_minimum || is_expanded
+    relative
+        .components()
+        .next()
+        .and_then(|component| component.as_os_str().to_str())
+        .is_some_and(|value| value.eq_ignore_ascii_case("manifest"))
 }
 
 /// Returns whether one relative source coordinate stays beneath its root.
@@ -240,7 +239,7 @@ fn manifest_source(root: &Path, path: &Path) -> Option<ManifestSource> {
     if extension == BACKUP_EXTENSION {
         return None;
     }
-    if is_root_manifest(root, path) {
+    if is_manifest_artifact(root, path) {
         return None;
     }
     let parent = path.parent()?;
