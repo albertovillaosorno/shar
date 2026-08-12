@@ -20,14 +20,14 @@ steps.
 
 ## Acceptance criteria
 
-- [ ] Reject a missing `game/Simpsons.exe` and reject an extra nested game
+- [x] Reject a missing `game/Simpsons.exe` and reject an extra nested game
   directory such as `game/SomeFolder/Simpsons.exe` as the supported input
   layout.
-- [ ] Validate the complete game root against the canonical manifest before any
+- [x] Validate the complete game root against the canonical manifest before any
   extraction or build mutation.
 - [ ] Verify Python 3.14.6, Unreal Engine 5.8.1, and target-relevant host
   prerequisites with actionable user-facing diagnostics.
-- [ ] Write a versioned `.cache/build/data/check.json` containing normalized
+- [x] Write a versioned `.cache/build/data/check.json` containing normalized
   paths, versions, manifest identity, and validation results.
 - [ ] Permit manual JSON edits only as an explicitly unsupported override; later
   steps must still schema-check and revalidate safety-critical paths.
@@ -39,5 +39,13 @@ platform prerequisites.
 
 ## Evidence
 
-Add implementation, deterministic validation, and supported-host evidence here
-as the task advances.
+`tools/build/check.py` now rejects missing or nested `Simpsons.exe` layouts,
+requires the exact running CPython 3.14.6, delegates game-root validation to an
+already-provisioned canonical `validate-game`, verifies the project association
+and Unreal `Build.version` as 5.8.1, records basic host commands, and atomically
+writes `shar.build.check.v1` evidence. A local integration run passed with the
+real Python 3.14.6 interpreter and real installed Unreal 5.8.1; the manifest
+orchestration used a success stub because the cached validator binary was not
+runnable standalone. Keep this task open until dependency bootstrap provisions
+that validator reproducibly and later build stages revalidate target-specific
+host prerequisites and safety-critical paths.
