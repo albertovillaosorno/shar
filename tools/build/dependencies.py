@@ -564,7 +564,11 @@ def _write_json(path: Path, value: dict[str, object]) -> None:
         candidate.unlink(missing_ok=True)
 
 
-def _run(args: argparse.Namespace) -> dict[str, object]:
+def _run(
+    args: argparse.Namespace,
+    *,
+    publish_validator: bool,
+) -> dict[str, object]:
     """Validate the bootstrap and prepare the canonical public validator."""
     root = _root()
     python = _require_python()
@@ -591,7 +595,11 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         binutils,
         environment,
     )
-    validator = _publish_validator(root, built)
+    validator = (
+        _publish_validator(root, built)
+        if publish_validator
+        else built.resolve()
+    )
     return {
         "cargo": {
             "executable": str(cargo),
@@ -657,8 +665,13 @@ def main() -> int:
     output = args.output or (root / _DATA_PATH)
     if not output.is_absolute():
         output = root / output
+    canonical_output = (root / _DATA_PATH).resolve()
+    publish_validator = output.resolve() == canonical_output
     try:
-        evidence = _run(args)
+        evidence = _run(
+            args,
+            publish_validator=publish_validator,
+        )
         _write_json(output, evidence)
     except (BootstrapFailure, OSError, tomllib.TOMLDecodeError) as error:
         output.unlink(missing_ok=True)
