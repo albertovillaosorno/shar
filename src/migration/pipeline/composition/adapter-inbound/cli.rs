@@ -503,9 +503,23 @@ fn run_complete_fbx_catalog(arguments: &[String]) -> CommandOutcome {
     let Some(index_path) = arguments.first() else {
         return missing_argument("package index path");
     };
-    let output_dir = arguments
-        .get(1)
-        .map_or(FBX_WORKSPACE_ROOT, String::as_str);
+    let output_dir = if let Some(path) = arguments.get(1) {
+        path.as_str()
+    } else {
+        match migrate_legacy_fbx_workspace(Path::new(FBX_MANIFEST_PATH)) {
+            Ok(true) => {
+                return CommandOutcome::failure().stderr_line(concat!(
+                    "legacy FBX catalog migrated to canonical cache; ",
+                    "remove the accepted catalog explicitly before rebuilding",
+                ));
+            },
+            Ok(false) => FBX_WORKSPACE_ROOT,
+            Err(error) => {
+                return CommandOutcome::failure()
+                    .stderr_line(format!("pipeline failed: {error}"));
+            },
+        }
+    };
     let base_root = arguments.get(2).map_or(".", String::as_str);
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
