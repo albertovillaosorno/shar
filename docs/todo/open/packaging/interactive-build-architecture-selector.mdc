@@ -26,9 +26,11 @@ user select one or more supported build targets and saves the decision to
 - [ ] Detect the current host operating system and architecture and annotate the
   exact matching selectable target with a clear marker such as
   `← this is your system`; do not silently select or exclude other targets.
-- [ ] Investigate macOS x86-64 only as an optional compatibility target if
-  current Unreal and toolchain support makes it straightforward; do not
-  block macOS ARM64 on it.
+- [ ] Do not offer tvOS or macOS Intel / x86-64 as planned canonical targets;
+  keep macOS ARM64 in the supported target set.
+- [ ] Revisit tvOS or macOS Intel / x86-64 only through an explicit issue or
+  pull request with substantial user demand and contributors able to test the
+  target; neither target may block the canonical build flow.
 - [ ] Require at least one selected target, permit selecting every supported
   target, and expose one minimal Save action.
 - [ ] Write a versioned `.cache/build/data/arch.json`; manual edits are
