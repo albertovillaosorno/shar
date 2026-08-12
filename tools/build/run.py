@@ -83,10 +83,49 @@ def _root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def _unique_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Reject duplicate keys at every JSON object depth."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise RunFailure(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _unique_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Reject duplicate keys at every JSON object depth."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise RunFailure(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _unique_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Reject duplicate keys at every JSON object depth."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise RunFailure(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def _read_object(path: Path, label: str) -> dict[str, object]:
     """Read one required UTF-8 JSON object."""
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_unique_json_object,
+        )
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
         raise RunFailure(f"cannot read {label} {path}: {error}") from error
     if not isinstance(value, dict):
@@ -214,10 +253,19 @@ def _run_uat(
     """Run one bounded UAT command and persist its complete output."""
     log.parent.mkdir(parents=True, exist_ok=True)
     command = _uat_command(uat, arguments)
+    automation_saved = log.parent / "automation-saved"
+    automation_logs = automation_saved / "logs"
+    automation_logs.mkdir(parents=True, exist_ok=True)
+    environment = os.environ.copy()
+    environment["uebp_EngineSavedFolder"] = str(automation_saved)
+    environment["uebp_FinalLogFolder"] = str(automation_logs)
+    environment["uebp_LogFolder"] = str(automation_logs)
+    environment["UE-LocalDataCachePath"] = str(log.parent / "ddc")
     with log.open("w", encoding="utf-8", newline="\n") as handle:
         result = subprocess.run(
             command,
             cwd=root,
+            env=environment,
             check=False,
             stdout=handle,
             stderr=subprocess.STDOUT,
