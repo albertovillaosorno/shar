@@ -180,8 +180,8 @@ fn normalize_game_stragglers_into(
         files,
         bytes,
         note: concat!(
-            "loose game stragglers normalized under extracted/game as ",
-            "semantic JSON or WAV"
+            "loose game stragglers normalized to logical extracted/game ",
+            "paths as semantic JSON or WAV"
         )
         .to_owned(),
     })
