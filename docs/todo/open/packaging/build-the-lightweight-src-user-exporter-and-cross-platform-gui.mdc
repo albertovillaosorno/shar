@@ -10,6 +10,8 @@ dependencies: [define-the-portable-dist-layout-and-machine-readable-dist-manifes
 children: []
 ---
 
+<!-- CSpell:ignore gui resumability -->
+
 # Build the lightweight `src/user` exporter and cross-platform GUI
 
 Create the end-user Python surface under `src/user/`. It validates a lawful

@@ -10,6 +10,8 @@ dependencies: [canonical-multi-platform-build-runner]
 children: []
 ---
 
+<!-- CSpell:ignore apk EAC egstore sideload -->
+
 # Define the portable `dist/` layout and `game/manifest/dist.json`
 
 Define one machine-readable product contract for the final per-platform package
