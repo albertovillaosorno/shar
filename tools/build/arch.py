@@ -182,11 +182,50 @@ def _selected_targets(identifiers: list[str]) -> list[Target]:
     return [target for target in _TARGETS if target.identifier in requested]
 
 
+def _unique_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Reject duplicate keys at every JSON object depth."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _unique_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Reject duplicate keys at every JSON object depth."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _unique_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Reject duplicate keys at every JSON object depth."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def _revalidate_selection(path: Path) -> int:
     """Require saved architecture evidence to match canonical current policy."""
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_unique_json_object,
+        )
+    except (OSError, UnicodeError, ValueError) as error:
         message = f"arch: cannot read saved selection: {error}"
         raise SystemExit(message) from error
     if not isinstance(value, dict):
