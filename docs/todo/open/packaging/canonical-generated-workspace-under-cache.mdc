@@ -25,7 +25,7 @@ generated `assets/` root.
   subpaths with compatibility handling for existing local workspaces.
 - [ ] Update commands, manifests, tests, documentation, and validators so
   root-level legacy generated directories are no longer authoritative.
-- [ ] Keep `game/` outside `.cache/` because it is user-supplied source evidence
+- [x] Keep `game/` outside `.cache/` because it is user-supplied source evidence
   and keep `dist/` outside `.cache/` because it is the final user
   deliverable.
 - [ ] Preserve resumability, provenance, deterministic hashes, and transaction
@@ -38,5 +38,16 @@ platform prerequisites.
 
 ## Evidence
 
-Add implementation, deterministic validation, and supported-host evidence here
-as the task advances.
+The supported build tools keep user-supplied `game/` outside `.cache`, use
+`.cache/build/data/` for versioned decisions, `.cache/build/cargo-*` for Cargo
+state, and `.cache/build/run/<target>/` for Turnkey reports, UAT/UBA logs,
+staging candidates, and platform build evidence. Final publication remains
+`dist/<target-id>/`; no generic generated `assets/` root is introduced.
+
+A real Windows AMD64 cook verified `UE-LocalDataCachePath` with Zen data rooted
+under `.cache/build/run/windows-x64/build-hermetic-test/ddc/Zen`; UAT logs were
+also redirected under that build workspace. The migration adapters still own
+physical root-level `extracted/`, `fbx-assets/`, and `unreal-staging/` defaults,
+and Unreal itself still uses project `Saved/`/`Intermediate/` during cook. Those
+surfaces remain open and must be migrated coherently without changing logical
+manifest identities such as `extracted/...`.
