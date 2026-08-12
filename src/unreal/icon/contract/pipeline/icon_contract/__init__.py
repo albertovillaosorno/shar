@@ -35,6 +35,7 @@
 from .profiles import (
     ANDROID_DENSITY_SCALE,
     ANDROID_LEGACY,
+    IOS_APPICON_SIZE,
     LINUX_SIZES,
     MAC_ICONSET,
     WINDOWS_SIZES,
@@ -43,6 +44,7 @@ from .profiles import (
 __all__ = [
     "ANDROID_DENSITY_SCALE",
     "ANDROID_LEGACY",
+    "IOS_APPICON_SIZE",
     "LINUX_SIZES",
     "MAC_ICONSET",
     "WINDOWS_SIZES",

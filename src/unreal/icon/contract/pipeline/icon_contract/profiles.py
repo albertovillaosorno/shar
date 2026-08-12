@@ -34,6 +34,8 @@
 
 WINDOWS_SIZES = (16, 20, 24, 32, 40, 48, 64, 72, 96, 128, 256)
 
+IOS_APPICON_SIZE = 1024
+
 MAC_ICONSET = {
     "icon_16x16.png": 16,
     "icon_16x16@2x.png": 32,
