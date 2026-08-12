@@ -55,7 +55,7 @@ def _run_step(root: Path, name: str, arguments: list[str]) -> None:
     """Run one canonical build script using the current exact Python."""
     script = root / "tools" / "build" / name
     command = [sys.executable, str(script), *arguments]
-    print(f"auto: running {name}")
+    print(f"auto: running {name}", flush=True)
     result = subprocess.run(command, cwd=root, check=False)
     if result.returncode:
         raise AutoFailure(f"{name} failed with exit code {result.returncode}")
