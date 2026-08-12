@@ -42,8 +42,10 @@ step. It does not duplicate child validation or packaging policy. An existing
 the normal checklist, while `--reselect` explicitly requests a new selection.
 
 A real Windows AMD64 `auto.py --validate-only` run completed all four canonical
-steps, including the repo-local dependency bootstrap, real game/Unreal preflight,
+steps, including the repo-local dependency bootstrap and real game/Unreal
+preflight,
 saved architecture revalidation, and Turnkey SDK verification. The temporary
 architecture decision used for that integration test was removed afterward, so
-no test target remained as user state. Unit fixtures also verified command order,
+no test target remained as user state. Unit fixtures also verified command
+order,
 resume behavior, and `--validate-only` forwarding.
