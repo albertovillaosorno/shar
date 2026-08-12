@@ -289,11 +289,13 @@ The default converter policy is:
 decompilable-mods-only=true
 ```
 
-This is a local converter policy. If a user changes that policy, the resulting
-conversion choice and its legal, licensing, and redistribution consequences are
-the user's responsibility. The converter will initially be tested with the
-Jebano and Muckluck mods; that does **not** mean all LMLM mods are supported or
-that SHAR will maintain custom conversion logic for every legacy package.
+This is a local converter policy. Setting it to `false` allows the converter to
+attempt any locally supplied LMLM package that its parser can read. That does not
+grant redistribution rights or promise compatibility; the resulting conversion
+choice and its legal, licensing, and redistribution consequences are the user's
+responsibility. The converter will initially be tested with the Jebano and
+Muckluck mods; that does **not** mean all LMLM mods are supported or that SHAR
+will maintain custom conversion logic for every legacy package.
 Community conversion tools are welcome.
 
 **TODO: Convert decompilable LMLM mods into open SHAR mod packages.**
