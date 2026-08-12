@@ -235,30 +235,6 @@ def _unique_json_object(
     return result
 
 
-def _unique_json_object(
-    pairs: list[tuple[str, object]],
-) -> dict[str, object]:
-    """Reject duplicate keys at every JSON object depth."""
-    result: dict[str, object] = {}
-    for key, value in pairs:
-        if key in result:
-            raise CheckFailure(f"duplicate JSON key: {key}")
-        result[key] = value
-    return result
-
-
-def _unique_json_object(
-    pairs: list[tuple[str, object]],
-) -> dict[str, object]:
-    """Reject duplicate keys at every JSON object depth."""
-    result: dict[str, object] = {}
-    for key, value in pairs:
-        if key in result:
-            raise CheckFailure(f"duplicate JSON key: {key}")
-        result[key] = value
-    return result
-
-
 def _read_json_object(path: Path, label: str) -> dict[str, object]:
     """Read one required JSON object with a user-facing source label."""
     try:
