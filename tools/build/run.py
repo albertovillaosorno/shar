@@ -477,6 +477,35 @@ def _has_payload(path: Path) -> bool:
     return path.is_dir() and any(item.is_file() for item in path.rglob("*"))
 
 
+def _cache_nonruntime_artifacts(
+    candidate: Path,
+    work: Path,
+    target: Target,
+) -> None:
+    """Keep packaging metadata and debug symbols out of final dist output."""
+    metadata = work / "publication-metadata"
+    symbols = work / "symbols"
+    shutil.rmtree(metadata, ignore_errors=True)
+    shutil.rmtree(symbols, ignore_errors=True)
+
+    manifests = sorted(candidate.glob("Manifest_*.txt"))
+    if manifests:
+        metadata.mkdir(parents=True)
+        for source in manifests:
+            os.replace(source, metadata / source.name)
+
+    debug_files: list[Path] = []
+    if target.system == "windows":
+        debug_files = sorted(candidate.rglob("*.pdb"))
+    if debug_files:
+        symbols.mkdir(parents=True)
+        for source in debug_files:
+            relative = source.relative_to(candidate)
+            destination = symbols / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(source, destination)
+
+
 def _publish(candidate: Path, destination: Path) -> None:
     """Replace one published target without exposing a partial candidate."""
     if not _has_payload(candidate):
@@ -522,6 +551,7 @@ def _build_target(
     log = work / "build.log"
     arguments = _build_arguments(project, target, candidate, staging)
     _run_uat(root, uat, arguments, log)
+    _cache_nonruntime_artifacts(candidate, work, target)
     destination = root / _DIST_ROOT / target.identifier
     _publish(candidate, destination)
     print(f"run: {target.identifier}: published {destination}")
