@@ -33,7 +33,10 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use super::{cleanup_directory, export_complete_fbx_catalog, staging_path};
+use super::{
+    cleanup_directory, export_complete_fbx_catalog, manifest_staging_path,
+    staging_path,
+};
 
 fn case_root(label: &str) -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -59,6 +62,17 @@ fn catalog_staging_is_hidden_sibling() -> Result<(), String> {
 }
 
 #[test]
+fn manifest_staging_is_hidden_sibling() -> Result<(), String> {
+    let manifest = Path::new("game/manifest/fbx.jsonl");
+    let staging =
+        manifest_staging_path(manifest).map_err(|error| error.to_string())?;
+    if staging != Path::new("game/manifest/.fbx.jsonl.complete-staging") {
+        return Err(format!("unexpected manifest staging path: {staging:?}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn existing_output_fails_before_index_access() -> Result<(), String> {
     let root = case_root("existing-output");
     clean(&root)?;
@@ -69,6 +83,7 @@ fn existing_output_fails_before_index_access() -> Result<(), String> {
     let result = export_complete_fbx_catalog(
         &root.join("missing-index.jsonl"),
         &output,
+        &root.join("fbx.jsonl"),
         &root,
     );
     let sentinel = fs::read(output.join("sentinel")).map_err(|error| error.to_string())?;
@@ -78,6 +93,32 @@ fn existing_output_fails_before_index_access() -> Result<(), String> {
     };
     if !error.to_string().contains("output already exists") || sentinel != b"accepted" {
         return Err("existing catalog did not fail before build".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn existing_manifest_fails_before_index_access() -> Result<(), String> {
+    let root = case_root("existing-manifest");
+    clean(&root)?;
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let manifest = root.join("fbx.jsonl");
+    fs::write(&manifest, b"accepted").map_err(|error| error.to_string())?;
+    let result = export_complete_fbx_catalog(
+        &root.join("missing-index.jsonl"),
+        &root.join("accepted"),
+        &manifest,
+        &root,
+    );
+    let contents = fs::read(&manifest).map_err(|error| error.to_string())?;
+    clean(&root)?;
+    let Err(error) = result else {
+        return Err("existing accepted manifest was replaced".to_owned());
+    };
+    if !error.to_string().contains("manifest already exists")
+        || contents != b"accepted"
+    {
+        return Err("existing manifest did not fail before build".to_owned());
     }
     Ok(())
 }

@@ -72,9 +72,12 @@ Model operations use `.cache/pipeline/fbx-assets/` as their only physical
 generated FBX authority. Published plan identities intentionally retain the
 stable logical `fbx-assets/...` prefix:
 
+The complete FBX ledger is published separately at
+`game/manifest/fbx.jsonl`; it is verified together with the payload-only cache
+root before Unreal planning accepts any FBX evidence.
+
 ```text
 .cache/pipeline/fbx-assets/
-├── catalog.jsonl
 └── packages/
     └── <package_name>/
         ├── <package_name>.fbx
@@ -85,10 +88,11 @@ stable logical `fbx-assets/...` prefix:
 The `fbx-export-catalog` command selects every current package whose planner
 target is directly importable as `StaticMesh` or `SkeletalMesh`, reuses the
 package FBX writers, hashes every generated FBX and external PNG, verifies the
-complete catalog in staging, publishes the root with one rename, and reads the
-published root back through the same verifier. Any package failure prevents
-publication; a failed post-rename read-back removes the rejected root. Existing
-accepted roots are never silently replaced by this command.
+complete catalog in staging, then atomically separates the payload-only cache
+root from `game/manifest/fbx.jsonl` and reads both back through the same
+verifier.
+Any package or manifest failure rolls back both accepted identities. Existing
+accepted roots or manifests are never silently replaced by this command.
 
 The JSONL header uses schema `shar-schoenwald.fbx-catalog.v2`, record type
 `header`, status `complete`, the exact FBX package count, and the exact declared

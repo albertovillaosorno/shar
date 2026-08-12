@@ -37,7 +37,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use shar_sha256::digest_hex;
 
-use super::{FBX_VERSION, verified_fbx_catalog};
+use super::{
+    FBX_VERSION, verified_fbx_catalog, verified_fbx_catalog_at,
+};
 
 static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
 const PACKAGE_ID: &str = "extracted-art-cars-model";
@@ -179,6 +181,27 @@ fn absent_catalog_keeps_fbx_conversion_pending() -> Result<(), String> {
         .is_some()
     {
         return Err("absent generated FBX catalog produced evidence".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn verifies_catalog_stored_outside_artifact_root() -> Result<(), String> {
+    let root = TempRoot::new("external-manifest")?;
+    let artifacts = root.path().join("artifacts");
+    let _bytes = write_valid_catalog(&artifacts)?;
+    let manifest_dir = root.path().join("manifest");
+    fs::create_dir_all(&manifest_dir).map_err(|error| error.to_string())?;
+    let manifest = manifest_dir.join("fbx.jsonl");
+    fs::rename(artifacts.join("catalog.jsonl"), &manifest)
+        .map_err(|error| error.to_string())?;
+    let evidence = verified_fbx_catalog_at(&artifacts, &manifest)
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "external FBX manifest was not returned".to_owned())?;
+    if evidence.len() != 1 {
+        return Err(
+            "external FBX manifest returned partial evidence".to_owned()
+        );
     }
     Ok(())
 }

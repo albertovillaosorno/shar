@@ -203,10 +203,15 @@ where
         &self,
         index_path: &Path,
         output_dir: &Path,
+        manifest_path: &Path,
         base_root: &Path,
     ) -> PipelineOutcome<StageReport> {
-        self.provider
-            .export_complete_fbx_catalog(index_path, output_dir, base_root)
+        self.provider.export_complete_fbx_catalog(
+            index_path,
+            output_dir,
+            manifest_path,
+            base_root,
+        )
     }
 
     /// Exports every skinned character package as a verified FBX catalog.

@@ -37,6 +37,7 @@ pub mod application;
 #[rustfmt::skip]
 #[path = "../domain/mod.rs"]
 pub mod domain;
+mod manifest_paths;
 mod package_index;
 mod workspace;
 #[rustfmt::skip]

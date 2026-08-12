@@ -180,6 +180,7 @@ pub trait PipelineOperations {
         &self,
         index_path: &Path,
         output_dir: &Path,
+        manifest_path: &Path,
         base_root: &Path,
     ) -> PipelineOutcome<StageReport>;
 

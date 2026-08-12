@@ -40,6 +40,7 @@ use shar_sha256::digest_hex;
 use super::fbx_export::export_catalog_package;
 use super::unreal_fbx_catalog::{
     CATALOG_SCHEMA, FBX_VERSION, verified_fbx_catalog,
+    verified_fbx_catalog_at,
 };
 use crate::domain::package::{
     FbxTargetKind, PhaseThreePackageIndex, PhaseThreePackagePlanner,
@@ -59,11 +60,16 @@ const CATALOG_FILE: &str = "catalog.jsonl";
 pub(super) fn export_complete_fbx_catalog(
     index_path: &Path,
     output_root: &Path,
+    manifest_path: &Path,
     base_root: &Path,
 ) -> Result<StageReport, PipelineError> {
     ensure_missing(output_root, "complete FBX catalog output")?;
+    ensure_missing(manifest_path, "complete FBX catalog manifest")?;
+    ensure_manifest_parent(manifest_path)?;
     let staging = staging_path(output_root)?;
+    let manifest_staging = manifest_staging_path(manifest_path)?;
     ensure_missing(&staging, "complete FBX catalog staging")?;
+    ensure_missing(&manifest_staging, "complete FBX manifest staging")?;
     fs::create_dir_all(staging.join("packages")).map_err(|error| {
         public_io_error("create complete FBX catalog staging", &error)
     })?;
@@ -75,15 +81,56 @@ pub(super) fn export_complete_fbx_catalog(
             return Err(error);
         },
     };
+    let staged_manifest = staging.join(CATALOG_FILE);
+    if let Err(error) = stage_external_manifest(
+        &staged_manifest,
+        &manifest_staging,
+    ) {
+        let _cleanup = cleanup_directory(&staging);
+        let _manifest_cleanup = cleanup_file(&manifest_staging);
+        return Err(error);
+    }
+    if let Err(error) = fs::remove_file(&staged_manifest) {
+        let _cleanup = cleanup_directory(&staging);
+        let _manifest_cleanup = cleanup_file(&manifest_staging);
+        return Err(public_io_error("detach complete FBX manifest", &error));
+    }
     if let Err(error) = fs::rename(&staging, output_root) {
         let _cleanup = cleanup_directory(&staging);
+        let _manifest_cleanup = cleanup_file(&manifest_staging);
         return Err(public_io_error("publish complete FBX catalog", &error));
     }
-    let readback = verify_published_catalog(output_root, &staged_evidence);
-    if let Err(error) = readback {
-        if let Err(cleanup_error) = cleanup_directory(output_root) {
+    if let Err(error) = fs::rename(&manifest_staging, manifest_path) {
+        let cleanup = cleanup_directory(output_root);
+        let _manifest_cleanup = cleanup_file(&manifest_staging);
+        if let Err(cleanup_error) = cleanup {
             return Err(PipelineError::new(format!(
-                "{error}; failed to remove rejected FBX catalog: {cleanup_error}"
+                "{}; failed to roll back FBX artifacts: {cleanup_error}",
+                public_io_error("publish complete FBX manifest", &error)
+            )));
+        }
+        return Err(public_io_error("publish complete FBX manifest", &error));
+    }
+    let readback = verify_published_catalog(
+        output_root,
+        manifest_path,
+        &staged_evidence,
+    );
+    if let Err(error) = readback {
+        let artifact_cleanup = cleanup_directory(output_root);
+        let manifest_cleanup = cleanup_file(manifest_path);
+        if let Err(cleanup_error) = artifact_cleanup {
+            return Err(PipelineError::new(format!(
+                "{}; failed to remove rejected FBX artifacts: {}",
+                error,
+                cleanup_error,
+            )));
+        }
+        if let Err(cleanup_error) = manifest_cleanup {
+            return Err(PipelineError::new(format!(
+                "{}; failed to remove rejected FBX manifest: {}",
+                error,
+                cleanup_error,
             )));
         }
         return Err(error);
@@ -100,13 +147,15 @@ pub(super) fn export_complete_fbx_catalog(
 
 fn verify_published_catalog(
     output_root: &Path,
+    manifest_path: &Path,
     staged_evidence: &[crate::domain::UnrealFbxArtifactEvidence],
 ) -> Result<(), PipelineError> {
-    let published = verified_fbx_catalog(output_root)?.ok_or_else(|| {
-        PipelineError::new(
-            "published complete FBX catalog disappeared during read-back",
-        )
-    })?;
+    let published = verified_fbx_catalog_at(output_root, manifest_path)?
+        .ok_or_else(|| {
+            PipelineError::new(
+                "published complete FBX catalog disappeared during read-back",
+            )
+        })?;
     if published != staged_evidence {
         return Err(PipelineError::new(
             "published complete FBX catalog changed during read-back",
@@ -301,6 +350,46 @@ fn read_artifact(path: &Path, action: &str) -> Result<Vec<u8>, PipelineError> {
     fs::read(path).map_err(|error| public_io_error(action, &error))
 }
 
+fn ensure_manifest_parent(manifest_path: &Path) -> Result<(), PipelineError> {
+    let parent = manifest_path.parent().ok_or_else(|| {
+        PipelineError::new("complete FBX manifest has no parent directory")
+    })?;
+    let metadata = fs::symlink_metadata(parent).map_err(|error| {
+        public_io_error("inspect complete FBX manifest directory", &error)
+    })?;
+    if !metadata.is_dir() {
+        return Err(PipelineError::new(
+            "complete FBX manifest parent is not a directory",
+        ));
+    }
+    Ok(())
+}
+
+fn manifest_staging_path(
+    manifest_path: &Path,
+) -> Result<PathBuf, PipelineError> {
+    let name = manifest_path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| {
+            PipelineError::new("complete FBX manifest has no portable name")
+        })?;
+    let parent = manifest_path.parent().ok_or_else(|| {
+        PipelineError::new("complete FBX manifest has no parent directory")
+    })?;
+    Ok(parent.join(format!(".{name}.complete-staging")))
+}
+
+fn stage_external_manifest(
+    source: &Path,
+    destination: &Path,
+) -> Result<(), PipelineError> {
+    let bytes = fs::read(source)
+        .map_err(|error| public_io_error("read staged FBX manifest", &error))?;
+    fs::write(destination, bytes)
+        .map_err(|error| public_io_error("stage complete FBX manifest", &error))
+}
+
 fn staging_path(output_root: &Path) -> Result<PathBuf, PipelineError> {
     let name = output_root.file_name().and_then(|name| name.to_str()).ok_or_else(
         || PipelineError::new("complete FBX catalog output has no portable name"),
@@ -325,6 +414,18 @@ fn cleanup_directory(path: &Path) -> Result<(), PipelineError> {
             .map_err(|error| public_io_error("clean catalog staging", &error)),
         Ok(_metadata) => Err(PipelineError::new(
             "complete FBX catalog staging changed file kind",
+        )),
+    }
+}
+
+fn cleanup_file(path: &Path) -> Result<(), PipelineError> {
+    match fs::symlink_metadata(path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(public_io_error("inspect manifest cleanup", &error)),
+        Ok(metadata) if metadata.is_file() => fs::remove_file(path)
+            .map_err(|error| public_io_error("clean FBX manifest", &error)),
+        Ok(_metadata) => Err(PipelineError::new(
+            "complete FBX manifest staging changed file kind",
         )),
     }
 }

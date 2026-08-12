@@ -35,6 +35,7 @@ use std::fs;
 use schoenwald_cli::{CliProgram, ExitStatus, OutputStream};
 
 use crate::domain::PipelineReport;
+use crate::manifest_paths::FBX_MANIFEST_PATH;
 use crate::workspace::{
     EXTRACTED_WORKSPACE_ROOT, FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT,
 };
@@ -45,6 +46,7 @@ use super::{PipelineCli, USAGE, render_success};
 fn generated_workspace_defaults_are_cached() {
     assert_eq!(EXTRACTED_WORKSPACE_ROOT, ".cache/pipeline/extracted");
     assert_eq!(FBX_WORKSPACE_ROOT, ".cache/pipeline/fbx-assets");
+    assert_eq!(FBX_MANIFEST_PATH, "game/manifest/fbx.jsonl");
     assert_eq!(
         UNREAL_STAGING_WORKSPACE_ROOT,
         ".cache/pipeline/unreal-staging",

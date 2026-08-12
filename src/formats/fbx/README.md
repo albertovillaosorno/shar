@@ -100,8 +100,10 @@ classified `requires-fbx`, not only representative examples. Canonical physical
 artifacts live at `.cache/pipeline/fbx-assets/packages/<package_name>/` with the
 package FBX named `<package_name>.fbx` and deterministic
 external PNG evidence below each package's `textures/` directory when present.
-The v2 `catalog.jsonl` records exact FBX package identities plus every declared
-artifact path, size, and SHA-256 digest; FBX rows also pin binary version 7.7.
+The canonical v2 ledger is `game/manifest/fbx.jsonl`. It records exact FBX
+package identities plus every declared artifact path, size, and SHA-256 digest;
+FBX rows also pin binary version 7.7. The physical cache root contains payloads
+only after publication.
 Publication is all-or-nothing across the manifest packages currently eligible
 for direct FBX conversion. Skeletal bundles and composite geometry remain outside
 that catalog until their companion-aware or semantic conversion contracts exist.
