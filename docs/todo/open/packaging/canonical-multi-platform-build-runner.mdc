@@ -60,8 +60,13 @@ integration driver intentionally stopped before `_publish`, so it did not create
 Fixture validation proved empty candidates cannot replace an existing published
 target and valid candidates replace it transactionally with rollback support.
 Turnkey validation also confirmed the installed Windows x64 SDK as valid. UAT
-logs are now redirected beneath `.cache/build/run/<target>/automation-saved/`;
-a second real build is validating the repository-local DDC override. Keep this
-task open until the remaining platform packages are exercised, build/cook state
-is fully canonicalized under `.cache/`, and copied published output is launched
-or otherwise verified independently of the source workspace.
+logs are redirected beneath `.cache/build/run/<target>/automation-saved/`. A
+second real Shipping build completed successfully in 16m58s with the local DDC
+and Zen data rooted under `.cache`; its stage and archive matched the first
+successful package size. The packaged Shipping executable remained alive for an
+8-second NullRHI/no-audio/unattended liveness probe, after which the exact test
+PID was terminated cleanly.
+
+Keep this task open until the remaining platform packages are exercised,
+project `Saved/`/`Intermediate/` build state is fully canonicalized, and copied
+published output is verified independently of the source workspace.
