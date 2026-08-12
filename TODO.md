@@ -396,17 +396,6 @@ successful architecture.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/canonical-multi-platform-build-runner.mdc](docs/todo/open/packaging/canonical-multi-platform-build-runner.mdc)
 
-### TODO - Canonical generated workspace under .cache
-
-Move regenerable extraction, FBX conversion, Unreal staging, build
-intermediates, logs, and decision data out of the repository root into one
-documented `.cache/` hierarchy; keep `game/` as user-supplied source evidence
-and `dist/` as final copied output instead of introducing an ambiguous
-generated `assets/` root.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/packaging/canonical-generated-workspace-under-cache.mdc](docs/todo/open/packaging/canonical-generated-workspace-under-cache.mdc)
-
 ### TODO - Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM target that…
 
 Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM target

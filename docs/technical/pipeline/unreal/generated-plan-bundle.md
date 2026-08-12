@@ -94,6 +94,23 @@ verifier.
 Any package or manifest failure rolls back both accepted identities. Existing
 accepted roots or manifests are never silently replaced by this command.
 
+Default-path compatibility accepts the immediately preceding complete-catalog
+layout only: root-level `fbx-assets/` with `catalog.jsonl`. When no canonical
+FBX root or central ledger exists, both identities move into
+`.cache/pipeline/fbx-assets` and `game/manifest/fbx.jsonl` before current
+verification. Competing roots or manifests and leftover complete-catalog
+staging fail closed. A direct `fbx-export-catalog` invocation that performs
+this adoption stops before rebuilding; replacing the accepted catalog requires
+an explicit removal decision rather than an implicit overwrite.
+
+`prepare-unreal` applies the same compatibility rule to the immediately
+preceding root-level `unreal-staging/manifest.jsonl` layout, moving the payload
+root to `.cache/pipeline/unreal-staging` and the ledger to
+`game/manifest/unreal.jsonl` before current manifest, source, mission, FBX, and
+plan validation proceeds. Neither compatibility path changes the portable
+`extracted/...`, `fbx-assets/...`, or logical `manifest.jsonl` identities stored
+inside accepted evidence.
+
 The JSONL header uses schema `shar-schoenwald.fbx-catalog.v2`, record type
 `header`, status `complete`, the exact FBX package count, and the exact declared
 artifact file count. Each `fbx` record contains the canonical package identity,

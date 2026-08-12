@@ -1,10 +1,10 @@
 ---
 schema: shar.todo.v1
 id: canonical-generated-workspace-under-cache
-status: open
+status: completed
 priority: P4
 lane: packaging
-active: true
+active: false
 parent: null
 dependencies: []
 children: []
@@ -20,7 +20,7 @@ generated `assets/` root.
 
 ## Acceptance criteria
 
-- [ ] Migrate `extracted/`, `fbx-assets/`, `unreal-staging/`, build
+- [x] Migrate `extracted/`, `fbx-assets/`, `unreal-staging/`, build
   intermediates, logs, and transient decision files to stable `.cache/`
   subpaths with compatibility handling for existing local workspaces.
 - [x] Update commands, manifests, tests, documentation, and validators so
@@ -63,6 +63,16 @@ Unreal ledger preserved its exact SHA-256
 matches every published plan source-manifest revision. Extraction keeps its
 sibling transaction lock under `.cache/pipeline`, FBX publication rolls back
 payload and ledger together, and Unreal publication now rolls back the cache
-root and central ledger together. Automatic compatibility migration for an
-arbitrary pre-existing legacy workspace remains open, so the first acceptance
-criterion is intentionally unchecked.
+root and central ledger together.
+
+Default-path compatibility now migrates clean legacy extraction, complete FBX,
+and Unreal workspaces into `.cache/pipeline` without changing portable
+evidence identities. Extraction moves its persistent lease with the accepted
+tree; FBX and Unreal move their complete generated ledgers into
+`game/manifest/` with the payload root. Competing roots or manifests, active
+extraction leases, interrupted extraction state, and FBX publication staging
+fail closed without merging or deleting either authority. Explicit non-default
+output paths remain caller-owned and are never rewritten. A default
+`fbx-export-catalog` run that adopts a legacy accepted catalog stops before
+rebuilding and requires an explicit removal decision; `prepare-unreal`
+validates adopted evidence through the normal current gates before use.
