@@ -1,10 +1,10 @@
 ---
 schema: shar.todo.v1
 id: build-preflight-and-saved-check-evidence
-status: open
+status: completed
 priority: P4
 lane: packaging
-active: true
+active: false
 parent: null
 dependencies: []
 children: []
@@ -30,7 +30,7 @@ steps.
   remain the selected-target runner's responsibility.
 - [x] Write a versioned `.cache/build/data/check.json` containing normalized
   paths, versions, manifest identity, and validation results.
-- [ ] Permit manual JSON edits only as an explicitly unsupported override; later
+- [x] Permit manual JSON edits only as an explicitly unsupported override; later
   steps must still schema-check and revalidate safety-critical paths.
 
 ## Dependencies
@@ -51,6 +51,7 @@ identities.
 
 `check.py --revalidate` now recomputes the safety-critical evidence and requires
 exact equality with the saved JSON. A deliberately modified manifest hash was
-rejected while leaving the edited JSON available for diagnosis. Keep this task
-open only until `tools/build/run.py` schema-checks its inputs and invokes this
-revalidation before using manually editable decision evidence.
+rejected while leaving the edited JSON available for diagnosis.
+`tools/build/run.py` now validates both saved schemas and invokes
+`check.py --revalidate` before consuming saved project, engine, or build-target
+paths, completing the fail-closed handoff to later build stages.
