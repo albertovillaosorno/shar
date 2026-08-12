@@ -23,9 +23,6 @@ available source/assets, and reports anything that cannot be translated.
   local policy as authoritative. Any user change is an explicit local decision,
   and the user assumes responsibility for the content they inspect, convert,
   modify, or redistribute.
-- [ ] When the policy is set to `false`, allow the converter to attempt any
-  locally supplied LMLM package that the parser can read; this changes converter
-  eligibility only and does not grant rights or promise compatibility.
 - [ ] Test first with the local Jebano and Muckluck packages as fixtures, without
   auto-installing or auto-injecting either mod into the game.
 - [ ] Never promise arbitrary LMLM compatibility; unsupported legacy behavior
