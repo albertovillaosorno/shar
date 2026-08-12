@@ -52,6 +52,13 @@ _UNREAL_ASSOCIATION = "5.8"
 _DATA_PATH = Path(".cache/build/data/check.json")
 _DEPENDENCIES_PATH = Path(".cache/build/data/dependencies.json")
 _DEPENDENCIES_SCHEMA = "shar.build.dependencies.v1"
+_VALIDATOR_SOURCE_INPUTS = (
+    Path("Cargo.toml"),
+    Path("Cargo.lock"),
+    Path("src/migration/manifest"),
+    Path("src/foundation/command-line"),
+    Path("src/foundation/filesystem"),
+)
 _PROJECT_PATH = Path(
     "src/unreal/project/composition/uproject/shar.uproject"
 )
@@ -84,6 +91,36 @@ def _sha256(path: Path) -> str:
     with path.open("rb") as handle:
         while chunk := handle.read(1024 * 1024):
             digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _validator_source_sha256(root: Path) -> str:
+    """Hash every local source input that can change validate-game."""
+    digest = hashlib.sha256()
+    files: list[Path] = []
+    for relative in _VALIDATOR_SOURCE_INPUTS:
+        source = root / relative
+        if source.is_file():
+            files.append(source)
+            continue
+        if not source.is_dir():
+            raise FileNotFoundError(source)
+        files.extend(
+            candidate
+            for candidate in source.rglob("*")
+            if candidate.is_file() and not candidate.is_symlink()
+        )
+    ordered = sorted(
+        files,
+        key=lambda path: path.relative_to(root).as_posix(),
+    )
+    for source in ordered:
+        relative = source.relative_to(root).as_posix().encode("utf-8")
+        payload = source.read_bytes()
+        digest.update(len(relative).to_bytes(8, "big"))
+        digest.update(relative)
+        digest.update(len(payload).to_bytes(8, "big"))
+        digest.update(payload)
     return digest.hexdigest()
 
 
@@ -158,7 +195,12 @@ def _dependency_validator(
         raise CheckFailure("dependency evidence has no validator object")
     raw_path = value.get("path")
     expected_hash = value.get("sha256")
-    if not isinstance(raw_path, str) or not isinstance(expected_hash, str):
+    expected_source_hash = value.get("source_sha256")
+    if (
+        not isinstance(raw_path, str)
+        or not isinstance(expected_hash, str)
+        or not isinstance(expected_source_hash, str)
+    ):
         raise CheckFailure("dependency validator evidence is incomplete")
     validator = Path(raw_path).resolve()
     owned = (root / ".dependencies" / "build" / "bin").resolve()
@@ -172,6 +214,12 @@ def _dependency_validator(
     if actual_hash != expected_hash:
         message = "dependency validator SHA-256 no longer matches evidence"
         raise CheckFailure(message)
+    actual_source_hash = _validator_source_sha256(root)
+    if actual_source_hash != expected_source_hash:
+        raise CheckFailure(
+            "dependency validator source inputs no longer match evidence; "
+            "rerun tools/build/dependencies.py"
+        )
     return validator
 
 

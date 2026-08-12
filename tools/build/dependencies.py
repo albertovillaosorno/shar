@@ -54,6 +54,13 @@ _DATA_PATH = Path(".cache/build/data/dependencies.json")
 _CARGO_HOME = Path(".cache/build/cargo-home")
 _CARGO_TARGET = Path(".cache/build/cargo-target")
 _BIN_ROOT = Path(".dependencies/build/bin")
+_VALIDATOR_SOURCE_INPUTS = (
+    Path("Cargo.toml"),
+    Path("Cargo.lock"),
+    Path("src/migration/manifest"),
+    Path("src/foundation/command-line"),
+    Path("src/foundation/filesystem"),
+)
 _RUSTUP_VERSION = "1.29.0"
 _RUSTUP_HOME = Path(".dependencies/build/rustup")
 _RUSTUP_CARGO_HOME = Path(".dependencies/build/rustup-cargo")
@@ -95,6 +102,36 @@ def _sha256(path: Path) -> str:
     with path.open("rb") as handle:
         while chunk := handle.read(1024 * 1024):
             digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _validator_source_sha256(root: Path) -> str:
+    """Hash every local source input that can change validate-game."""
+    digest = hashlib.sha256()
+    files: list[Path] = []
+    for relative in _VALIDATOR_SOURCE_INPUTS:
+        source = root / relative
+        if source.is_file():
+            files.append(source)
+            continue
+        if not source.is_dir():
+            raise FileNotFoundError(source)
+        files.extend(
+            candidate
+            for candidate in source.rglob("*")
+            if candidate.is_file() and not candidate.is_symlink()
+        )
+    ordered = sorted(
+        files,
+        key=lambda path: path.relative_to(root).as_posix(),
+    )
+    for source in ordered:
+        relative = source.relative_to(root).as_posix().encode("utf-8")
+        payload = source.read_bytes()
+        digest.update(len(relative).to_bytes(8, "big"))
+        digest.update(relative)
+        digest.update(len(payload).to_bytes(8, "big"))
+        digest.update(payload)
     return digest.hexdigest()
 
 
@@ -626,6 +663,7 @@ def _run(
         "validator": {
             "path": str(validator),
             "sha256": _sha256(validator),
+            "source_sha256": _validator_source_sha256(root),
         },
     }
 
