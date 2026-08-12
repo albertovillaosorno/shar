@@ -48,15 +48,19 @@ the matching local game ICO evidence.
 - a macOS ICNS and iconset from `macos-linux.svg`;
 - Linux hicolor PNG/SVG trees, with `windows-linux.svg` as the primary style and
   `macos-linux.svg` as an alternate style; and
-- Android launcher/adaptive resources plus a 512 px store asset from
-  `android.svg`.
+- Android adaptive resources with `android.svg` as the transparent
+  foreground, a separate black background, black-backed legacy icons, and
+  both opaque and transparent-reference 512 px store assets; and
+- an iOS `Assets.xcassets/AppIcon.appiconset` generated from `ios.svg`,
+  using the current single-size 1024 px asset-catalog workflow.
 
 The Linux tree preserves a scalable SVG and supplies common raster sizes for
-launchers that do not render SVG application icons directly. The Android SVG is
-authored as one full-bleed square layer. Launchers apply their own adaptive
-mask,
-so important artwork must remain within the central safe area while background
-art may extend to the edges.
+launchers that do not render SVG application icons directly. The authored
+`android.svg` intentionally keeps transparency around its circular artwork;
+the exporter fits that artwork inside Android's adaptive safe zone, supplies
+black as a separate background, and composites the same black below
+legacy/store rasters. The authored `ios.svg` remains the
+single source for the iOS icon; the platform applies its own final mask.
 
 ## Dependencies
 

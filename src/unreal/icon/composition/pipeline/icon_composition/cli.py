@@ -53,7 +53,7 @@ def _parser() -> argparse.ArgumentParser:
         prog="main.py",
         description=(
             "Author a source-bound SVG transform and export Windows, macOS, "
-            "Linux, and Android icons. All paths derive from main.py."
+            "Linux, Android, and iOS icons. All paths derive from main.py."
         ),
     )
     parser.add_argument(
