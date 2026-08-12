@@ -20,7 +20,11 @@ successful architecture.
 ## Acceptance criteria
 
 - [ ] Produce Android ARM64 as APK, iOS ARM64 as IPA, and native packaged
-  outputs for selected Linux, macOS, and Windows architectures.
+  outputs for selected Linux ARM64/AMD64, macOS ARM64, and Windows
+  ARM64/AMD64 architectures.
+- [ ] Keep tvOS and macOS Intel / x86-64 outside the planned build matrix unless
+  a future high-traction issue or pull request brings enough testing support to
+  admit them explicitly.
 - [ ] Keep iOS packaging local and sideload-oriented with no App Store
   submission workflow; document unavoidable Apple SDK, signing, or
   build-host constraints instead of hiding them.
