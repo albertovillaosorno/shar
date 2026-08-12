@@ -223,10 +223,49 @@ def _check_manifest(validator: Path, game: Path) -> str:
     return result.stdout.strip()
 
 
+def _unique_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Reject duplicate keys at every JSON object depth."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise CheckFailure(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _unique_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Reject duplicate keys at every JSON object depth."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise CheckFailure(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
+def _unique_json_object(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Reject duplicate keys at every JSON object depth."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise CheckFailure(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def _read_json_object(path: Path, label: str) -> dict[str, object]:
     """Read one required JSON object with a user-facing source label."""
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        value = json.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=_unique_json_object,
+        )
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
         raise CheckFailure(f"cannot read {label} {path}: {error}") from error
     if not isinstance(value, dict):
