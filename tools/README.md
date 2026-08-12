@@ -14,4 +14,5 @@ Does not own source crates, generated artifacts, or local dependencies.
 
 ## Navigation
 
-- No tool functions are currently registered.
+- [`vwj/main.py`](vwj/main.py) runs the configured external validation
+  gates when the Jig executable is unavailable.
