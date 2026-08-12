@@ -396,16 +396,6 @@ successful architecture.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/canonical-multi-platform-build-runner.mdc](docs/todo/open/packaging/canonical-multi-platform-build-runner.mdc)
 
-### TODO - One-command build orchestration
-
-Implement `tools/build/auto.py` as an optional one-command user flow that runs
-dependency bootstrap, preflight, architecture selection, and build in order
-while persisting each decision JSON so repeated or interrupted runs use
-explicit evidence instead of hidden process state.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/packaging/one-command-build-orchestration.mdc](docs/todo/open/packaging/one-command-build-orchestration.mdc)
-
 ### TODO - Canonical generated workspace under .cache
 
 Move regenerable extraction, FBX conversion, Unreal staging, build
