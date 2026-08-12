@@ -182,6 +182,42 @@ def _selected_targets(identifiers: list[str]) -> list[Target]:
     return [target for target in _TARGETS if target.identifier in requested]
 
 
+def _revalidate_selection(path: Path) -> int:
+    """Require saved architecture evidence to match canonical current policy."""
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        message = f"arch: cannot read saved selection: {error}"
+        raise SystemExit(message) from error
+    if not isinstance(value, dict):
+        raise SystemExit("arch: saved selection must be a JSON object")
+    if set(value) != {"host", "schema", "targets"}:
+        raise SystemExit("arch: saved selection has invalid top-level keys")
+    if value.get("schema") != _SCHEMA:
+        raise SystemExit(f"arch: saved selection schema must be {_SCHEMA}")
+    raw_targets = value.get("targets")
+    if not isinstance(raw_targets, list) or not raw_targets:
+        raise SystemExit("arch: saved selection must contain target records")
+    identifiers: list[str] = []
+    for raw in raw_targets:
+        if not isinstance(raw, dict):
+            raise SystemExit("arch: saved target must be a JSON object")
+        identifier = raw.get("id")
+        if not isinstance(identifier, str) or identifier not in _TARGETS_BY_ID:
+            raise SystemExit(f"arch: unsupported saved target: {identifier!r}")
+        identifiers.append(identifier)
+    selected = _selected_targets(identifiers)
+    if len(selected) != len(identifiers):
+        raise SystemExit("arch: saved selection contains duplicate targets")
+    expected = _payload(selected)
+    if value != expected:
+        raise SystemExit(
+            "arch: saved selection no longer matches this host or target policy"
+        )
+    print(f"arch: revalidated {len(selected)} saved target(s) at {path}")
+    return 0
+
+
 def _print_targets() -> int:
     """Print the canonical target inventory with the exact host annotation."""
     host = _host_target()
@@ -303,6 +339,11 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="override the decision path for testing or tooling",
     )
+    parser.add_argument(
+        "--revalidate",
+        action="store_true",
+        help="revalidate the saved selection without opening the checklist",
+    )
     return parser
 
 
@@ -315,12 +356,17 @@ def main() -> int:
     elif not output.is_absolute():
         output = _root() / output
 
+    modes = int(args.list) + int(bool(args.select)) + int(args.revalidate)
+    if modes > 1:
+        raise SystemExit(
+            "arch: --list, --select, and --revalidate cannot be combined"
+        )
     if args.list:
-        if args.select:
-            raise SystemExit("arch: --list and --select cannot be combined")
         return _print_targets()
     if args.select:
         return _save_cli(args.select, output)
+    if args.revalidate:
+        return _revalidate_selection(output)
     return _show_gui(output)
 
 
