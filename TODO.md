@@ -15,7 +15,7 @@ labels belong here.
 
 ## P0 — Authority and repository governance
 
-### TODO - Keep the base pipeline pristine and remove `game/mods` from supported input
+### TODO - Keep base pipeline pristine; remove `game/mods` input
 
 Build only the faithful base game in the canonical pipeline; move all legacy
 mod conversion/import behavior to later user-facing tooling.
@@ -47,7 +47,7 @@ Define and test the tentative 45–55% source-similarity window against a lawful
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc](docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc)
 
-### TODO - Preserve the canonical source icon without replacing or regenerating it
+### TODO - Preserve `Simpsons.ico`; no replacement icon pipeline
 
 Preserve `Simpsons.ico` as source identity; retire replacement-art/icon-generator
 work and keep any required platform container conversion build-only.
@@ -450,7 +450,7 @@ Jebano/Muckluck fixtures and never auto-injected into the faithful base build.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/mods/convert-decompilable-lmlm-mods-into-open-shar-mod-packages.mdc](docs/todo/open/mods/convert-decompilable-lmlm-mods-into-open-shar-mod-packages.mdc)
 
-### TODO - Make `AGENTS.md` default to SHAR mod authoring and validate C++ with Clang
+### TODO - Make `AGENTS.md` mod-first; validate C++ with Clang
 
 Make mod authoring the default user-facing agent posture, preserve a separate
 repository-engineering mode, and validate native mod C++ with strict Clang gates.

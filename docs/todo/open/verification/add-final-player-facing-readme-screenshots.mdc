@@ -10,6 +10,8 @@ dependencies: [build-the-lightweight-src-user-exporter-and-cross-platform-gui]
 children: []
 ---
 
+<!-- CSpell:ignore gui -->
+
 # Add final player-facing README screenshots
 
 Add screenshots only after the lightweight GUI and final output layout are

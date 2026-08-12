@@ -10,6 +10,8 @@ dependencies: [build-the-lightweight-src-user-exporter-and-cross-platform-gui]
 children: []
 ---
 
+<!-- CSpell:ignore apk gui -->
+
 # Publish `src/user` as the versioned SHAR release ZIP
 
 Publish exactly the intended `src/user/` release surface as

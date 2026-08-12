@@ -1,5 +1,7 @@
 # SHAR
 
+<!-- CSpell:ignore apk ipa ios Paks resumability sideload uninst -->
+
 SHAR rebuilds a lawful local copy of *The Simpsons: Hit & Run* as a native
 Unreal Engine game. This repository does not include the original game or its
 assets.

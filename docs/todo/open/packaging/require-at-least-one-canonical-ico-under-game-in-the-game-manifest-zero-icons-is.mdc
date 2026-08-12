@@ -10,6 +10,8 @@ dependencies: [build-preflight-and-saved-check-evidence]
 children: []
 ---
 
+<!-- CSpell:ignore uninst -->
+
 # Preserve the canonical source icon without replacing or regenerating it
 
 `Simpsons.ico` is authoritative source evidence. SHAR must not replace it with a

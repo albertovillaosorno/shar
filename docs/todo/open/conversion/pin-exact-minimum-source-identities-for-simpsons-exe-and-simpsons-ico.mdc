@@ -10,6 +10,8 @@ dependencies: []
 children: []
 ---
 
+<!-- CSpell:ignore uninst -->
+
 # Pin exact minimum source identities for `Simpsons.exe` and `Simpsons.ico`
 
 The source manifest must express exact root-file identities in addition to

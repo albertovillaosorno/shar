@@ -10,6 +10,8 @@ dependencies: [pin-exact-minimum-source-identities-for-simpsons-exe-and-simpsons
 children: []
 ---
 
+<!-- CSpell:ignore uninst -->
+
 # Validate a user-supplied lawful source installation
 
 Validate a lawful local installation in place without copying it into the
