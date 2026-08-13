@@ -86,7 +86,11 @@ def measure(
 
 def _validate(values: Mapping[Coordinate, int]) -> None:
     for key, count in values.items():
-        if len(key) != 2 or not all(isinstance(value, str) for value in key):
+        if (
+            not isinstance(key, tuple)
+            or len(key) != 2
+            or not all(isinstance(value, str) for value in key)
+        ):
             raise ValueError("coordinate must be a pair of strings")
         if isinstance(count, bool) or not isinstance(count, int) or count < 0:
             raise ValueError("coordinate count must be a nonnegative integer")
