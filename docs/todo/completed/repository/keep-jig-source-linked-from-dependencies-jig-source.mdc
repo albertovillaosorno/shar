@@ -1,0 +1,36 @@
+---
+schema: shar.todo.v1
+id: keep-jig-source-linked-from-dependencies-jig-source
+status: completed
+priority: P0
+lane: repository
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Keep Jig source-linked from `.dependencies/jig/source`
+
+Keep Jig source-linked from `.dependencies/jig/source`.
+
+## Acceptance criteria
+
+- [x] Keep Jig source-linked from `.dependencies/jig/source`.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+The local development installation resolves `.dependencies/jig/source` to the
+sibling Jig checkout. Tracked `.jig/jig.toml` routes CSpell, Git, Markdownlint,
+nightly Cargo/Clippy/rustfmt, and stable Cargo through that source-linked
+boundary. A repository architecture test parses the tracked TOML and fails if
+those shared tool paths bypass `.dependencies/jig/source/`.
+
+`docs/technical/validation/deterministic-validation.md` now documents which Jig
+state is tracked versus ignored/local and keeps source code out of SHAR. The
+source link itself remains machine-local dependency state rather than a tracked
+repository symlink.

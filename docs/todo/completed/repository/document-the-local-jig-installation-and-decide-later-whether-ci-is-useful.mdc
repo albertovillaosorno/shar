@@ -1,0 +1,34 @@
+---
+schema: shar.todo.v1
+id: document-the-local-jig-installation-and-decide-later-whether-ci-is-useful
+status: completed
+priority: P0
+lane: repository
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Document the local Jig installation and decide later whether CI is useful
+
+Document the local Jig installation and decide later whether CI is useful.
+
+## Acceptance criteria
+
+- [x] Document the local Jig installation and decide later whether CI is useful.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+The deterministic-validation specification documents the source-linked local
+Jig checkout, ignored launchers/runtime, tracked `.jig/` authority, integration
+refresh command, and canonical `jig validate --fail-fast --root .` invocation.
+
+CI is explicitly deferred. The current local Jig workflow is the only canonical
+validation surface; a future CI service is warranted only by a concrete public
+contribution or release-automation need and must invoke the same tracked Jig
+policy instead of defining independent gates.
