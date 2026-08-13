@@ -18,9 +18,9 @@ into the canonical base package.
 
 ## Acceptance criteria
 
-- [ ] Define and validate the exact English source identities required by the
+- [x] Define and validate the exact English source identities required by the
   faithful base pipeline.
-- [ ] Treat English as required, not optional and not merely a minimum-count
+- [x] Treat English as required, not optional and not merely a minimum-count
   language bucket.
 - [ ] Export every supported non-English official language as a deterministic,
   inspectable SHAR mod without losing original content.
@@ -35,5 +35,22 @@ Coordinate with source validation and normalized mod-package contracts.
 
 ## Evidence
 
-This record captures the new product authority: one English canonical base plus
-language mods for other official localizations.
+The minimum ledger now owns exact mandatory English/base identities instead of
+letting alternate-language counts substitute for English: `README.rtf`,
+`dialog.rcf`, the English `srr2.E` character-set sidecar, and the multilingual
+`srr2.txt` source table that carries the canonical `E`/`ENGLISH` column. The
+original game source independently identifies `dialog.rcf` as English and the
+`dialogf/g/i/s.rcf` files as alternate-language dialogue archives.
+
+French, German, Italian, and Spanish TextBible sidecars and dialogue archives
+are represented as exact optional identities (`min: 0`), as are the localized
+readmes observed in the installation. They no longer contribute generic
+language minimum buckets. Root runtime DLL/INI/save-state files are excluded by
+narrow source rules so they cannot become accidental base requirements.
+
+The canonical manifest validator now runs as the first extraction-stage gate,
+closing the previous exact-header bypass. `cargo test -p game_manifest` and the
+794-test pipeline library suite pass, and the local `game/` passes
+`validate-game` with 103 curated generic minimums plus exact required sources.
+The task remains open for deterministic non-English language-mod export and the
+corresponding user documentation.

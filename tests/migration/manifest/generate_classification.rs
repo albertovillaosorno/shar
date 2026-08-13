@@ -56,6 +56,12 @@ fn generated_manifest(extension: &str) -> io::Result<String> {
     let result = (|| {
         fs::write(root.join("Simpsons.exe"), b"fixture")?;
         fs::write(root.join("Simpsons.ico"), b"fixture")?;
+        fs::write(root.join("README.rtf"), b"fixture")?;
+        fs::write(root.join("dialog.rcf"), b"fixture")?;
+        let english = root.join("art/frontend/scrooby2/resource/txtbible");
+        fs::create_dir_all(&english)?;
+        fs::write(english.join("srr2.E"), b"fixture")?;
+        fs::write(english.join("srr2.txt"), b"fixture")?;
         fs::write(root.join(format!("asset.{extension}")), b"fixture")?;
         let output = Command::new(env!("CARGO_BIN_EXE_generate-manifest"))
             .arg(&root)

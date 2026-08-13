@@ -257,7 +257,7 @@ fn failed_clean_and_resume_runs_preserve_accepted_output() -> TestResult {
             }
             Err(error) => error.to_string(),
         };
-        if !error.contains("manifest/game.jsonl") {
+        if !error.contains("game manifest validation failed") {
             return Err(format!("unexpected staged extraction error: {error}"));
         }
         let bytes = fs::read(&sentinel).map_err(|error| error.to_string())?;

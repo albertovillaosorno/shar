@@ -1,7 +1,6 @@
-{"schema":"shar-schoenwald.game-manifest-ledger.v2","kind_taxonomy":["error","language_textbible","movie","p3d_container","rcf_container","audio","music_arrangement","script","image","generated_artifact","character_outfit","build-log","document","ui-resource","sound-type","metadata","json-ledger"],"required_files":[{"path":"Simpsons.exe","min":1},{"path":"Simpsons.ico","min":1},{"path":"uninst.ico","min":0}]}
+{"schema":"shar-schoenwald.game-manifest-ledger.v2","kind_taxonomy":["error","language_textbible","movie","p3d_container","rcf_container","audio","music_arrangement","script","image","generated_artifact","character_outfit","build-log","document","ui-resource","sound-type","metadata","json-ledger"],"required_files":[{"path":"README.rtf","min":1},{"path":"Simpsons.exe","min":1},{"path":"Simpsons.ico","min":1},{"path":"art/frontend/scrooby2/resource/txtbible/srr2.E","min":1},{"path":"art/frontend/scrooby2/resource/txtbible/srr2.F","min":0},{"path":"art/frontend/scrooby2/resource/txtbible/srr2.G","min":0},{"path":"art/frontend/scrooby2/resource/txtbible/srr2.I","min":0},{"path":"art/frontend/scrooby2/resource/txtbible/srr2.S","min":0},{"path":"art/frontend/scrooby2/resource/txtbible/srr2.txt","min":1},{"path":"dialog.rcf","min":1},{"path":"dialogf.rcf","min":0},{"path":"dialogg.rcf","min":0},{"path":"dialogi.rcf","min":0},{"path":"dialogs.rcf","min":0},{"path":"Liesmich.rtf","min":0},{"path":"Lisez-moi.rtf","min":0},{"path":"Léeme.rtf","min":0},{"path":"uninst.ico","min":0}]}
 {"dir":"","ext":"png","min":0,"kind":"generated_artifact"}
-{"dir":"","ext":"rcf","min":10,"kind":"rcf_container"}
-{"dir":"","ext":"rtf","min":1,"kind":"document"}
+{"dir":"","ext":"rcf","min":9,"kind":"rcf_container"}
 {"dir":"at","ext":"p3d","min":152,"kind":"p3d_container"}
 {"dir":"at/ac","ext":"p3d","min":1,"kind":"p3d_container"}
 {"dir":"at/cs~01","ext":"p3d","min":89,"kind":"p3d_container"}
@@ -52,13 +51,8 @@
 {"dir":"at/fd/s2/re/fs","ext":"p3d","min":5,"kind":"p3d_container"}
 {"dir":"at/fd/s2/re/pd","ext":"p3d","min":49,"kind":"p3d_container"}
 {"dir":"at/fd/s2/re/pd/_s","ext":"p3d","min":1,"kind":"p3d_container"}
-{"dir":"at/fd/s2/re/te","ext":"e","min":1,"kind":"language_textbible"}
-{"dir":"at/fd/s2/re/te","ext":"f","min":1,"kind":"language_textbible"}
-{"dir":"at/fd/s2/re/te","ext":"g","min":1,"kind":"language_textbible"}
-{"dir":"at/fd/s2/re/te","ext":"i","min":1,"kind":"language_textbible"}
 {"dir":"at/fd/s2/re/te","ext":"p3d","min":1,"kind":"language_textbible"}
-{"dir":"at/fd/s2/re/te","ext":"s","min":1,"kind":"language_textbible"}
-{"dir":"at/fd/s2/re/te","ext":"txt","min":2,"kind":"language_textbible"}
+{"dir":"at/fd/s2/re/te","ext":"txt","min":1,"kind":"language_textbible"}
 {"dir":"at/fd/s2/re/te","ext":"x","min":1,"kind":"language_textbible"}
 {"dir":"at/fd/s2/ss","ext":"scr","min":68,"kind":"ui-resource"}
 {"dir":"at/fd/sy","ext":"p3d","min":13,"kind":"p3d_container"}

@@ -115,12 +115,15 @@ is never reconstruction input and it does not itself prove software is safe.
    validation/reconstruction checks. Editing `game.jsonl` is not a way to make
    an invalid installation valid.
 
-   The exact root requirements are:
+   The exact source requirements include:
 
-   - `Simpsons.exe`: mandatory, minimum 1.
-   - `Simpsons.ico`: mandatory, minimum 1.
+   - `Simpsons.exe` and `Simpsons.ico`: mandatory.
+   - `README.rtf` and `dialog.rcf`: mandatory English/base sources.
+   - `art/frontend/scrooby2/resource/txtbible/srr2.E`: mandatory English
+     character-set evidence.
+   - `art/frontend/scrooby2/resource/txtbible/srr2.txt`: mandatory source table
+     containing the canonical `E` / `ENGLISH` text column.
    - `uninst.ico`: optional; relevant only to some from-scratch workflows.
-   - English game data: mandatory canonical base language.
    - Other official original languages: preserved/exported as SHAR language
      mods, not compiled into the canonical base package.
 
