@@ -22,11 +22,11 @@ anything inside the original installation directory.
 
 - [ ] Accept a selected installation folder, a pasted/typed path, or a dropped
   `Simpsons.exe` and resolve it to one candidate game root.
-- [ ] Require the exact canonical source identities owned by the dedicated
+- [x] Require the exact canonical source identities owned by the dedicated
   minimum-source TODO, including `Simpsons.exe` and `Simpsons.ico`; keep
   `uninst.ico` optional.
-- [ ] Require the English source identities needed by the canonical base game.
-- [ ] Treat other supported original languages as optional source that can later
+- [x] Require the English source identities needed by the canonical base game.
+- [x] Treat other supported original languages as optional source that can later
   be exported as language mods rather than required base-game evidence.
 - [ ] Run a fast public-manifest gate for user feedback, then run deeper
   deterministic structural/provenance validation before any reconstruction.
@@ -50,3 +50,25 @@ public-safe reconstruction/similarity policy.
 The lightweight release will point at the user's existing lawful installation;
 normal players will not be instructed to copy the complete game into the SHAR
 repository or release directory.
+
+The minimum validator no longer requires SHAR policy files inside the source
+installation. `ValidateManifest::execute_with_manifest` receives the source tree
+and the SHAR-owned minimum manifest as separate inputs; an integration fixture
+validates a source directory with no `manifest/` child and proves validation does
+not create one. The `validate-game` CLI accepts an optional explicit manifest
+path while preserving the developer `game/` default.
+
+`tools/build/check.py` now accepts `--game` as either an installation directory
+or `Simpsons.exe`, resolves both to the same source root, and invokes the validator
+with the repository-owned `game/manifest/game.jsonl` as a separate argument. The
+saved local preflight reuses that selected source during revalidation. Focused
+packaging tests cover directory/executable resolution, wrong-file rejection,
+private-path-safe missing-source diagnostics, separate validator inputs, and
+saved-source evidence.
+
+The canonical manifest itself already enforces exact `Simpsons.exe`,
+`Simpsons.ico`, English `README.rtf`, `dialog.rcf`, `srr2.E`, and `srr2.txt` while
+keeping `uninst.ico` plus other official-language sources optional. The remaining
+unchecked criteria are intentionally open: the final `src/user/` GUI/drop surface,
+deep structural/provenance validation, calibrated similarity admission, and
+end-to-end proof that every future validator remains source-read-only.

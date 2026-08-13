@@ -139,21 +139,38 @@ def _check_python() -> dict[str, str]:
     }
 
 
-def _check_game(root: Path) -> tuple[Path, Path]:
-    """Require the supported flat game layout and canonical manifest file."""
-    game = root / "game"
+def _game_candidate(root: Path, selected: Path | None) -> Path:
+    """Resolve a selected source directory or dropped Simpsons.exe to its root."""
+    if selected is None:
+        return (root / "game").resolve()
+    candidate = selected.expanduser()
+    if not candidate.is_absolute():
+        candidate = (Path.cwd() / candidate).resolve()
+    else:
+        candidate = candidate.resolve()
+    if candidate.is_file():
+        if candidate.name.casefold() != "simpsons.exe":
+            raise CheckFailure("selected source file must be Simpsons.exe")
+        return candidate.parent
+    if candidate.is_dir():
+        return candidate
+    raise CheckFailure("selected source path does not exist")
+
+
+def _check_game(root: Path, selected: Path | None) -> Path:
+    """Require one flat source installation without modifying it."""
+    game = _game_candidate(root, selected)
     executable = game / "Simpsons.exe"
     if not executable.is_file():
         nested = sorted(game.rglob("Simpsons.exe")) if game.is_dir() else []
         if nested:
             example = nested[0].relative_to(game)
             raise CheckFailure(
-                "game/Simpsons.exe is required directly under game/; "
+                "Simpsons.exe must be directly inside the selected source; "
                 f"found nested {example}"
             )
         raise CheckFailure(
-            "game/Simpsons.exe is missing; copy the installed game contents "
-            "directly into game/"
+            "selected source does not contain a direct Simpsons.exe"
         )
 
     nested = [
@@ -164,14 +181,10 @@ def _check_game(root: Path) -> tuple[Path, Path]:
     if nested:
         example = sorted(nested)[0].relative_to(game)
         raise CheckFailure(
-            "nested game copies are unsupported; remove the extra "
-            f"{example} layout"
+            "selected source contains another nested Simpsons.exe; "
+            f"remove or separately select {example}"
         )
-
-    manifest = game / "manifest" / "game.jsonl"
-    if not manifest.is_file():
-        raise CheckFailure("game/manifest/game.jsonl is missing")
-    return game, manifest
+    return game
 
 
 def _dependency_evidence(root: Path) -> tuple[Path, dict[str, object]]:
@@ -239,7 +252,11 @@ def _resolve_validator(
     return _dependency_validator(root, dependencies)
 
 
-def _validator_command(validator: Path, game: Path) -> list[str]:
+def _validator_command(
+    validator: Path,
+    game: Path,
+    manifest: Path,
+) -> list[str]:
     """Build a portable command for an executable or Windows cmd wrapper."""
     if os.name == "nt" and validator.suffix.casefold() == ".cmd":
         return [
@@ -248,15 +265,16 @@ def _validator_command(validator: Path, game: Path) -> list[str]:
             "/c",
             str(validator),
             str(game),
+            str(manifest),
         ]
-    return [str(validator), str(game)]
+    return [str(validator), str(game), str(manifest)]
 
 
-def _check_manifest(validator: Path, game: Path) -> str:
+def _check_manifest(validator: Path, game: Path, manifest: Path) -> str:
     """Run the canonical manifest validator without compiling or mutating."""
     try:
         result = subprocess.run(
-            _validator_command(validator, game),
+            _validator_command(validator, game, manifest),
             check=False,
             capture_output=True,
             text=True,
@@ -467,7 +485,10 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
     """Execute all preflight checks before producing saved evidence."""
     root = _root()
     python = _check_python()
-    game, manifest = _check_game(root)
+    game = _check_game(root, args.game)
+    manifest = root / "game" / "manifest" / "game.jsonl"
+    if not manifest.is_file():
+        raise CheckFailure("canonical game/manifest/game.jsonl is missing")
     project = _check_project(root)
     dependencies_path, dependencies = _dependency_evidence(root)
     validator = _resolve_validator(
@@ -475,7 +496,7 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         args.manifest_validator,
         dependencies,
     )
-    manifest_result = _check_manifest(validator, game)
+    manifest_result = _check_manifest(validator, game, manifest)
     engine = _check_engine(args.engine_root)
     host = _host_evidence(dependencies)
     return {
@@ -502,6 +523,17 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
     }
 
 
+def _saved_game_root(saved: dict[str, object]) -> Path:
+    """Read the source root needed to reproduce one saved preflight."""
+    game = saved.get("game")
+    if not isinstance(game, dict):
+        raise CheckFailure("saved check evidence has no game object")
+    raw_root = game.get("path")
+    if not isinstance(raw_root, str) or not raw_root:
+        raise CheckFailure("saved check evidence has no source game root")
+    return Path(raw_root)
+
+
 def _saved_engine_root(saved: dict[str, object]) -> Path:
     """Read the engine root needed to reproduce one saved preflight."""
     unreal = saved.get("unreal")
@@ -519,8 +551,10 @@ def _revalidate(path: Path) -> None:
     if saved.get("schema") != _SCHEMA:
         raise CheckFailure(f"saved check evidence schema must be {_SCHEMA}")
     engine_root = _saved_engine_root(saved)
+    game_root = _saved_game_root(saved)
     arguments = argparse.Namespace(
         engine_root=engine_root,
+        game=game_root,
         manifest_validator=None,
     )
     current = _run(arguments)
@@ -535,6 +569,11 @@ def _parser() -> argparse.ArgumentParser:
     """Build the supported preflight command-line interface."""
     parser = argparse.ArgumentParser(
         description="Validate SHAR game and build prerequisites.",
+    )
+    parser.add_argument(
+        "--game",
+        type=Path,
+        help="lawful source directory or Simpsons.exe path",
     )
     parser.add_argument(
         "--engine-root",
@@ -570,6 +609,7 @@ def main() -> int:
         if args.revalidate:
             has_override = (
                 args.engine_root is not None
+                or args.game is not None
                 or args.manifest_validator is not None
             )
             if has_override:
