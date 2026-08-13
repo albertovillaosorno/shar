@@ -92,7 +92,7 @@ def _target(value: str | None, root: Path) -> Path:
     return path
 
 
-def _approved(target: Path, assume_yes: bool) -> bool:
+def _approved(target: Path, *, assume_yes: bool) -> bool:
     if assume_yes:
         return True
     answer = input(
@@ -172,7 +172,7 @@ def main() -> int:
         return 2
     args = _parser().parse_args()
     target = _target(args.target, _root())
-    if not _approved(target, args.yes):
+    if not _approved(target, assume_yes=args.yes):
         print("shortcut: cancelled; no shortcut was created")
         return 0
     link = _create_shortcut(target, args.name)

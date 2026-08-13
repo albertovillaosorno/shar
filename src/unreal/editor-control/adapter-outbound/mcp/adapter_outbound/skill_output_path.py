@@ -33,8 +33,8 @@
 from __future__ import annotations
 
 import os
-import stat
 from pathlib import Path
+import stat
 
 from mcp.domain.errors import fail_protocol
 
@@ -64,7 +64,9 @@ def ensure_output_root(output_root: Path) -> None:
     try:
         output_root.mkdir(parents=True, exist_ok=True)
     except OSError as error:
-        fail_protocol("failed to create generated skill output root", cause=error)
+        fail_protocol(
+            "failed to create generated skill output root", cause=error
+        )
     validate_existing_output_surface(output_root)
 
 
@@ -73,7 +75,9 @@ def ensure_owned_directory(output_root: Path, directory: Path) -> None:
     try:
         relative = directory.relative_to(output_root)
     except ValueError as error:
-        fail_protocol("generated skill target escaped its output root", cause=error)
+        fail_protocol(
+            "generated skill target escaped its output root", cause=error
+        )
     current = output_root
     root_metadata = _path_metadata(current)
     if root_metadata is None:
@@ -162,7 +166,7 @@ def _validate_regular_tree(directory: Path) -> None:
         metadata,
         "generated capability directory",
     )
-    try:
+    try:  # noqa: PLW0717 - one walk owns the regular-tree transaction.
         with os.scandir(directory) as entries:
             for entry in entries:
                 path = Path(entry.path)

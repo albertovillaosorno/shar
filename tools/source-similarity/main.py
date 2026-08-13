@@ -14,7 +14,8 @@
 #   - Admit installations, read game payloads, use hashes as source, or encode
 #     proprietary file names/bytes into reconstruction procedures.
 # - Allows:
-#   - JSONL manifest coordinates containing directory aliases, extensions, counts.
+#   - JSONL manifest coordinates containing directory aliases, extensions,
+#     and counts.
 # - Split-When:
 #   - A calibrated production admission policy gains an independent lifecycle.
 # - Merge-When:
@@ -33,9 +34,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from fractions import Fraction
-from typing import Mapping
 
 Coordinate = tuple[str, str]
 
@@ -65,12 +66,10 @@ def measure(
         raise ValueError("reference count vector must not be empty")
     coordinates = set(reference) | set(candidate)
     shared = sum(
-        min(reference.get(key, 0), candidate.get(key, 0))
-        for key in coordinates
+        min(reference.get(key, 0), candidate.get(key, 0)) for key in coordinates
     )
     union = sum(
-        max(reference.get(key, 0), candidate.get(key, 0))
-        for key in coordinates
+        max(reference.get(key, 0), candidate.get(key, 0)) for key in coordinates
     )
     if union == 0:
         raise ValueError("count-vector union must not be empty")

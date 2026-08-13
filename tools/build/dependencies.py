@@ -38,6 +38,7 @@ import argparse
 import hashlib
 import json
 import os
+from pathlib import Path
 import platform
 import re
 import shutil
@@ -45,8 +46,8 @@ import subprocess
 import sys
 import tomllib
 import urllib.error
+import urllib.parse
 import urllib.request
-from pathlib import Path
 
 _SCHEMA = "shar.build.dependencies.v1"
 _PYTHON_VERSION = (3, 14, 6)
@@ -212,10 +213,22 @@ def _download_rustup(root: Path, target: str) -> Path:
         f"{_RUSTUP_VERSION}/{target}/{source_name}"
     )
     candidate = installer.with_name(f".{installer.name}.{os.getpid()}.tmp")
+    parsed = urllib.parse.urlsplit(url)
+    if parsed.scheme != "https" or parsed.hostname != "static.rust-lang.org":
+        raise BootstrapFailure(
+            "rustup installer URL is not an approved HTTPS origin"
+        )
+    request = urllib.request.Request(  # noqa: S310 - origin checked above.
+        url, method="GET"
+    )
     try:
-        with urllib.request.urlopen(url, timeout=120) as response:
-            with candidate.open("wb") as handle:
-                shutil.copyfileobj(response, handle)
+        with (
+            urllib.request.urlopen(  # noqa: S310 - URL origin checked above.
+                request, timeout=120
+            ) as response,
+            candidate.open("wb") as handle,
+        ):
+            shutil.copyfileobj(response, handle)
         actual = _sha256(candidate)
         if actual != expected:
             raise BootstrapFailure(
@@ -224,7 +237,7 @@ def _download_rustup(root: Path, target: str) -> Path:
             )
         if os.name != "nt":
             candidate.chmod(candidate.stat().st_mode | 0o111)
-        os.replace(candidate, installer)
+        Path(candidate).replace(installer)
     except urllib.error.URLError as error:
         message = f"cannot download pinned rustup: {error}"
         raise BootstrapFailure(message) from error
@@ -357,7 +370,7 @@ def _tool_version(tool: Path, name: str, required: str) -> str:
     expected = f"{name} {required} "
     if version != f"{name} {required}" and not version.startswith(expected):
         raise BootstrapFailure(
-            f"{name} {required} is required; found {version or 'unknown'}"
+            f"{name} {required} is required; found {version or "unknown"}"
         )
     return version
 
@@ -403,7 +416,7 @@ def _resolve_binutils(
     )
 
 
-def _visual_studio_environment(
+def _visual_studio_environment(  # noqa: PLR0912, PLR0914
     root: Path,
     host: str,
 ) -> tuple[dict[str, str], dict[str, str] | None]:
@@ -461,24 +474,20 @@ def _visual_studio_environment(
     command_root.mkdir(parents=True, exist_ok=True)
     batch = command_root / f"vsenv-{os.getpid()}.cmd"
     newline = chr(13) + chr(10)
-    batch_text = newline.join(
-        (
-            "@echo off",
-            f'call "{script}" >nul',
-            "if errorlevel 1 exit /b %errorlevel%",
-            "set",
-            "",
-        )
-    )
+    batch_text = newline.join((
+        "@echo off",
+        f'call "{script}" >nul',
+        "if errorlevel 1 exit /b %errorlevel%",
+        "set",
+        "",
+    ))
     system_root = Path(environment.get("SystemRoot", r"C:\Windows"))
     bootstrap_environment = environment.copy()
-    bootstrap_environment["PATH"] = os.pathsep.join(
-        (
-            str(system_root / "System32"),
-            str(system_root),
-            str(system_root / "System32" / "Wbem"),
-        )
-    )
+    bootstrap_environment["PATH"] = os.pathsep.join((
+        str(system_root / "System32"),
+        str(system_root),
+        str(system_root / "System32" / "Wbem"),
+    ))
     try:
         batch.write_text(
             batch_text,
@@ -578,12 +587,10 @@ def _publish_validator(root: Path, built: Path) -> Path:
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.is_file() and _sha256(destination) == _sha256(built):
         return destination.resolve()
-    candidate = destination.with_name(
-        f".{destination.name}.{os.getpid()}.tmp"
-    )
+    candidate = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
     try:
         shutil.copy2(built, candidate)
-        os.replace(candidate, destination)
+        Path(candidate).replace(destination)
     finally:
         candidate.unlink(missing_ok=True)
     return destination.resolve()
@@ -596,7 +603,7 @@ def _write_json(path: Path, value: dict[str, object]) -> None:
     text = json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
     try:
         candidate.write_text(text + "\n", encoding="utf-8", newline="\n")
-        os.replace(candidate, path)
+        Path(candidate).replace(path)
     finally:
         candidate.unlink(missing_ok=True)
 

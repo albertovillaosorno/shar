@@ -36,13 +36,13 @@ import hashlib
 import importlib.util
 from pathlib import Path
 import tempfile
+from types import ModuleType
 import unittest
-
 
 _ROOT = Path(__file__).resolve().parents[2]
 
 
-def _load(name: str, relative: str):
+def _load(name: str, relative: str) -> ModuleType:
     path = _ROOT / relative
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
@@ -152,7 +152,9 @@ if __name__ == "__main__":
 class SourceSelectionTests(unittest.TestCase):
     """Exercise read-only source-root selection without build toolchains."""
 
-    def test_directory_and_simpsons_exe_resolve_to_same_source_root(self) -> None:
+    def test_directory_and_simpsons_exe_resolve_to_same_source_root(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-source-select-") as value:
             root = Path(value)
             repository = root / "repository"
@@ -186,7 +188,9 @@ class SourceSelectionTests(unittest.TestCase):
                 _CHECK._check_game(repository, other)
 
     def test_missing_source_diagnostic_does_not_echo_private_path(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="shar-source-missing-") as value:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-source-missing-"
+        ) as value:
             root = Path(value)
             repository = root / "repository"
             repository.mkdir()
@@ -198,7 +202,9 @@ class SourceSelectionTests(unittest.TestCase):
             self.assertNotIn(str(missing), message)
             self.assertIn("selected source path does not exist", message)
 
-    def test_validator_command_keeps_manifest_separate_from_source(self) -> None:
+    def test_validator_command_keeps_manifest_separate_from_source(
+        self,
+    ) -> None:
         validator = Path("validate-game.exe")
         source = Path("external-source")
         manifest = Path("repository/game/manifest/game.jsonl")

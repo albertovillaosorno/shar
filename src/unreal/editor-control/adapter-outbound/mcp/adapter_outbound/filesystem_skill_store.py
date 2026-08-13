@@ -49,7 +49,9 @@ from mcp.adapter_outbound.skill_native_identity import (
 )
 from mcp.adapter_outbound.skill_output_path import ensure_output_root
 from mcp.adapter_outbound.skill_output_path import ensure_owned_directory
-from mcp.adapter_outbound.skill_output_path import validate_existing_output_surface
+from mcp.adapter_outbound.skill_output_path import (
+    validate_existing_output_surface,
+)
 from mcp.adapter_outbound.skill_output_path import validate_regular_file
 from mcp.adapter_outbound.skill_output_path import validate_regular_target
 from mcp.adapter_outbound.skill_output_path import validate_temporary_target

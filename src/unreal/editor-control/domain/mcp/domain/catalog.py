@@ -87,7 +87,9 @@ class ToolsetDefinition(NamedTuple):
         for tool in self.tools:
             if tool.name == identity:
                 return tool
-        fail_protocol(f"toolset {self.name}: requested tool is not available")
+        return fail_protocol(
+            f"toolset {self.name}: requested tool is not available"
+        )
 
 
 def parse_toolset_catalog(text: str) -> tuple[ToolsetSummary, ...]:

@@ -48,52 +48,54 @@ from mcp.domain.json_types import require_json_object
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-_JSON_TYPES = frozenset(
-    {"array", "boolean", "integer", "null", "number", "object", "string"}
-)
-_ANNOTATION_KEYWORDS = frozenset(
-    {
-        "$comment",
-        "$id",
-        "$schema",
-        "default",
-        "deprecated",
-        "description",
-        "examples",
-        "format",
-        "readOnly",
-        "title",
-        "writeOnly",
-    }
-)
-_ASSERTION_KEYWORDS = frozenset(
-    {
-        "additionalProperties",
-        "allOf",
-        "anyOf",
-        "const",
-        "enum",
-        "exclusiveMaximum",
-        "exclusiveMinimum",
-        "items",
-        "maxItems",
-        "maxLength",
-        "maxProperties",
-        "maximum",
-        "minItems",
-        "minLength",
-        "minProperties",
-        "minimum",
-        "multipleOf",
-        "not",
-        "oneOf",
-        "pattern",
-        "properties",
-        "required",
-        "type",
-        "uniqueItems",
-    }
-)
+_JSON_TYPES = frozenset({
+    "array",
+    "boolean",
+    "integer",
+    "null",
+    "number",
+    "object",
+    "string",
+})
+_ANNOTATION_KEYWORDS = frozenset({
+    "$comment",
+    "$id",
+    "$schema",
+    "default",
+    "deprecated",
+    "description",
+    "examples",
+    "format",
+    "readOnly",
+    "title",
+    "writeOnly",
+})
+_ASSERTION_KEYWORDS = frozenset({
+    "additionalProperties",
+    "allOf",
+    "anyOf",
+    "const",
+    "enum",
+    "exclusiveMaximum",
+    "exclusiveMinimum",
+    "items",
+    "maxItems",
+    "maxLength",
+    "maxProperties",
+    "maximum",
+    "minItems",
+    "minLength",
+    "minProperties",
+    "minimum",
+    "multipleOf",
+    "not",
+    "oneOf",
+    "pattern",
+    "properties",
+    "required",
+    "type",
+    "uniqueItems",
+})
 _SUPPORTED_KEYWORDS = _ANNOTATION_KEYWORDS | _ASSERTION_KEYWORDS
 _MAX_SCHEMA_DEPTH = 64
 
@@ -110,9 +112,6 @@ def validate_tool_arguments(
         schema: Exact input schema returned by the live Toolset Registry.
         arguments: Strict JSON object supplied by the caller.
         context: Stable diagnostic identity that contains no argument values.
-
-    Raises:
-        ProtocolError: When the schema is unsupported or arguments do not match.
 
     """
     _validate_schema(schema, context=f"{context}.schema", depth=0)
@@ -163,9 +162,13 @@ def _validate_numeric_schema(schema: JsonObject, *, context: str) -> None:
         fail_protocol(f"{context}.multipleOf must be positive")
     minimum = schema.get("minimum")
     maximum = schema.get("maximum")
-    if minimum is not None and maximum is not None:
-        if _decimal(minimum, context=context) > _decimal(maximum, context=context):
-            fail_protocol(f"{context}: minimum exceeds maximum")
+    if (
+        minimum is not None
+        and maximum is not None
+        and _decimal(minimum, context=context)
+        > _decimal(maximum, context=context)
+    ):
+        fail_protocol(f"{context}: minimum exceeds maximum")
 
 
 def _validate_size_schema(schema: JsonObject, *, context: str) -> None:
@@ -216,7 +219,9 @@ def _validate_object_schema(
     properties = (
         {}
         if properties_value is None
-        else require_json_object(properties_value, context=f"{context}.properties")
+        else require_json_object(
+            properties_value, context=f"{context}.properties"
+        )
     )
     for name, value in properties.items():
         child = require_json_object(
@@ -350,7 +355,9 @@ def _validate_composed_value(
         if keyword == "anyOf" and matches == 0:
             fail_protocol(f"{context}: value does not satisfy anyOf")
         if keyword == "oneOf" and matches != 1:
-            fail_protocol(f"{context}: value does not satisfy exactly one branch")
+            fail_protocol(
+                f"{context}: value does not satisfy exactly one branch"
+            )
     negated = schema.get("not")
     if isinstance(negated, dict) and _branch_matches(
         cast("JsonObject", negated),
@@ -390,9 +397,7 @@ def _validate_object_value(
         fail_protocol(f"{context}: object has too many properties")
     properties_value = schema.get("properties")
     properties = (
-        {}
-        if properties_value is None
-        else cast("JsonObject", properties_value)
+        {} if properties_value is None else cast("JsonObject", properties_value)
     )
     required = schema.get("required", [])
     if isinstance(required, list):
@@ -431,7 +436,9 @@ def _validate_array_value(
         fail_protocol(f"{context}: array has too few items")
     if maximum is not None and len(value) > maximum:
         fail_protocol(f"{context}: array has too many items")
-    if schema.get("uniqueItems") is True and _contains_duplicate_json_values(value):
+    if schema.get("uniqueItems") is True and _contains_duplicate_json_values(
+        value
+    ):
         fail_protocol(f"{context}: array items are not unique")
     items = schema.get("items")
     if isinstance(items, dict):
@@ -464,7 +471,7 @@ def _validate_string_value(
 
 def _validate_number_value(
     schema: JsonObject,
-    value: int | float,
+    value: float,
     *,
     context: str,
 ) -> None:
@@ -511,7 +518,10 @@ def _schema_types(schema: JsonObject, *, context: str) -> tuple[str, ...]:
     return names
 
 
-def _matches_type(value: JsonValue, name: str) -> bool:
+def _matches_type(  # noqa: PLR0911 - JSON Schema has seven primitive branches.
+    value: JsonValue,
+    name: str,
+) -> bool:
     if name == "null":
         return value is None
     if name == "boolean":
@@ -558,23 +568,30 @@ def _contains_duplicate_json_values(values: Iterable[JsonValue]) -> bool:
     return False
 
 
-def _json_equal(left: object, right: object) -> bool:
+def _json_equal(  # noqa: PLR0911 - equality mirrors JSON's value families.
+    left: object,
+    right: object,
+) -> bool:
     if left is None or right is None:
         return left is None and right is None
     if isinstance(left, bool) or isinstance(right, bool):
-        return isinstance(left, bool) and isinstance(right, bool) and left == right
+        return (
+            isinstance(left, bool) and isinstance(right, bool) and left == right
+        )
     if _is_json_number(left) and _is_json_number(right):
         return _decimal(left, context="JSON equality") == _decimal(
             right, context="JSON equality"
         )
     if isinstance(left, str) or isinstance(right, str):
-        return isinstance(left, str) and isinstance(right, str) and left == right
+        return (
+            isinstance(left, str) and isinstance(right, str) and left == right
+        )
     if isinstance(left, list) or isinstance(right, list):
         return (
             isinstance(left, list)
             and isinstance(right, list)
             and len(left) == len(right)
-            and all(_json_equal(a, b) for a, b in zip(left, right, strict=True))
+            and all(map(_json_equal, left, right, strict=True))
         )
     if isinstance(left, dict) or isinstance(right, dict):
         if not isinstance(left, dict) or not isinstance(right, dict):

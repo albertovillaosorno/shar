@@ -33,8 +33,8 @@
 from __future__ import annotations
 
 import os
-import stat
 from pathlib import Path
+import stat
 
 from mcp.domain.errors import fail_protocol
 from mcp.domain.plan_bundle import PlanBundleReport
@@ -42,16 +42,14 @@ from mcp.domain.plan_bundle import ValidatedPlanBundle
 from mcp.domain.plan_bundle import parse_plan_bundle
 
 _INDEX_FILE = "index.json"
-_PLAN_FILES = frozenset(
-    {
-        "asset-import-plan.json",
-        "asset-construction-plan.json",
-        "world-assembly-plan.json",
-        "runtime-binding-plan.json",
-        "validation-plan.json",
-        "package-plan.json",
-    }
-)
+_PLAN_FILES = frozenset({
+    "asset-import-plan.json",
+    "asset-construction-plan.json",
+    "world-assembly-plan.json",
+    "runtime-binding-plan.json",
+    "validation-plan.json",
+    "package-plan.json",
+})
 _EXPECTED_FILES = _PLAN_FILES | {_INDEX_FILE}
 _MAX_INDEX_BYTES = 1024 * 1024
 _MAX_PLAN_BYTES = 512 * 1024 * 1024
@@ -70,7 +68,7 @@ class FilesystemPlanBundleReader:
         return self.read_bundle().report
 
     def read_bundle(self) -> ValidatedPlanBundle:
-        """Read exactly seven regular files into immutable validated evidence."""
+        """Read seven regular files into immutable validated evidence."""
         root = self._root.absolute()
         _validate_existing_directory_chain(root)
         metadata = _metadata(root)
@@ -100,7 +98,7 @@ class FilesystemPlanBundleReader:
 
 def _exact_inventory(root: Path) -> dict[str, Path]:
     observed: dict[str, Path] = {}
-    try:
+    try:  # noqa: PLW0717 - one atomic inventory transaction owns this loop.
         with os.scandir(root) as entries:
             for entry in entries:
                 path = Path(entry.path)

@@ -61,7 +61,7 @@ def _run_step(root: Path, name: str, arguments: list[str]) -> None:
         raise AutoFailure(f"{name} failed with exit code {result.returncode}")
 
 
-def _architecture_arguments(root: Path, reselect: bool) -> list[str]:
+def _architecture_arguments(root: Path, *, reselect: bool) -> list[str]:
     """Choose interactive selection or explicit saved-decision validation."""
     if reselect or not (root / _ARCH_PATH).is_file():
         return []
@@ -90,7 +90,7 @@ def main() -> int:
     """Run every canonical build step in declared order and stop on failure."""
     args = _parser().parse_args()
     root = _root()
-    architecture_args = _architecture_arguments(root, args.reselect)
+    architecture_args = _architecture_arguments(root, reselect=args.reselect)
     runner_args = ["--validate-only"] if args.validate_only else []
     try:
         _run_step(root, "dependencies.py", [])

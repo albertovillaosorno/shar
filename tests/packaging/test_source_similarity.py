@@ -15,7 +15,10 @@ import unittest
 
 _ROOT = Path(__file__).resolve().parents[2]
 _PATH = _ROOT / "tools/source-similarity/main.py"
-_SPEC = importlib.util.spec_from_file_location("shar_source_similarity_test", _PATH)
+_SPEC = importlib.util.spec_from_file_location(
+    "shar_source_similarity_test",
+    _PATH,
+)
 if _SPEC is None or _SPEC.loader is None:
     raise RuntimeError("cannot load source similarity calibrator")
 _MOD = importlib.util.module_from_spec(_SPEC)
@@ -30,7 +33,9 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(evidence.reference_coverage, Fraction(1, 1))
         self.assertEqual(evidence.weighted_jaccard, Fraction(1, 1))
 
-    def test_missing_counts_reduce_coverage_without_admission_result(self) -> None:
+    def test_missing_counts_reduce_coverage_without_admission_result(
+        self,
+    ) -> None:
         reference = {("aa", "p3d"): 8, ("bb", "rcf"): 2}
         candidate = {("aa", "p3d"): 4, ("bb", "rcf"): 2}
         evidence = _MOD.measure(reference, candidate)
@@ -38,7 +43,9 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(evidence.weighted_jaccard, Fraction(3, 5))
         self.assertFalse(hasattr(evidence, "accepted"))
 
-    def test_extra_candidate_content_affects_similarity_not_reference_coverage(self) -> None:
+    def test_extra_candidate_content_affects_similarity_not_reference_coverage(
+        self,
+    ) -> None:
         reference = {("aa", "p3d"): 4}
         candidate = {("aa", "p3d"): 4, ("zz", "bin"): 4}
         evidence = _MOD.measure(reference, candidate)

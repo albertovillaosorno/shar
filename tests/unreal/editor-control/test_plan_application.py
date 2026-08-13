@@ -32,7 +32,7 @@
 
 from __future__ import annotations
 
-# ruff: noqa: EM101, EM102, FBT003, PLR0911, PLR0912, TRY003
+# ruff: noqa: FBT003, PLR0911, PLR0912
 # cspell:ignore FBT
 from pathlib import Path
 from typing import NamedTuple

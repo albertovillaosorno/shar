@@ -38,11 +38,11 @@ import argparse
 import hashlib
 import json
 import os
+from pathlib import Path
 import platform
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 from typing import NamedTuple
 
 _SCHEMA = "shar.build.check.v1"
@@ -59,9 +59,7 @@ _VALIDATOR_SOURCE_INPUTS = (
     Path("src/foundation/command-line"),
     Path("src/foundation/filesystem"),
 )
-_PROJECT_PATH = Path(
-    "src/unreal/project/composition/uproject/shar.uproject"
-)
+_PROJECT_PATH = Path("src/unreal/project/composition/uproject/shar.uproject")
 
 
 class CheckFailure(RuntimeError):
@@ -140,7 +138,7 @@ def _check_python() -> dict[str, str]:
 
 
 def _game_candidate(root: Path, selected: Path | None) -> Path:
-    """Resolve a selected source directory or dropped Simpsons.exe to its root."""
+    """Resolve a selected source directory or Simpsons.exe to its root."""
     if selected is None:
         return (root / "game").resolve()
     candidate = selected.expanduser()
@@ -179,7 +177,7 @@ def _check_game(root: Path, selected: Path | None) -> Path:
         if path.resolve() != executable.resolve()
     ]
     if nested:
-        example = sorted(nested)[0].relative_to(game)
+        example = min(nested).relative_to(game)
         raise CheckFailure(
             "selected source contains another nested Simpsons.exe; "
             f"remove or separately select {example}"
@@ -339,9 +337,7 @@ def _engine_candidates(explicit: Path | None) -> list[Path]:
     if os.name == "nt":
         program_files = os.environ.get("PROGRAMFILES")
         if program_files:
-            candidates.append(
-                Path(program_files) / "Epic Games" / "UE_5.8"
-            )
+            candidates.append(Path(program_files) / "Epic Games" / "UE_5.8")
     elif sys.platform == "darwin":
         candidates.append(Path("/Users/Shared/Epic Games/UE_5.8"))
     return candidates
@@ -389,16 +385,16 @@ def _check_engine(explicit: Path | None) -> EngineEvidence:
     """Resolve an exact 5.8.1 engine installation with a host editor."""
     checked: list[str] = []
     for candidate in _engine_candidates(explicit):
-        candidate = candidate.expanduser().resolve()
-        checked.append(str(candidate))
-        build_version = candidate / "Engine" / "Build" / "Build.version"
+        resolved = candidate.expanduser().resolve()
+        checked.append(str(resolved))
+        build_version = resolved / "Engine" / "Build" / "Build.version"
         if not build_version.is_file():
             continue
-        version = _engine_version(candidate)
-        editor = _editor_path(candidate)
+        version = _engine_version(resolved)
+        editor = _editor_path(resolved)
         if editor is not None and not editor.exists():
             raise CheckFailure(f"Unreal editor executable is missing: {editor}")
-        return EngineEvidence(candidate, version)
+        return EngineEvidence(resolved, version)
     searched = ", ".join(checked) if checked else "no default location"
     raise CheckFailure(
         "Unreal Engine 5.8.1 was not found; use --engine-root or set "
@@ -476,7 +472,7 @@ def _write_json(path: Path, value: dict[str, object]) -> None:
     text = json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
     try:
         candidate.write_text(text + "\n", encoding="utf-8", newline="\n")
-        os.replace(candidate, path)
+        Path(candidate).replace(path)
     finally:
         candidate.unlink(missing_ok=True)
 
@@ -598,6 +594,19 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _reject_revalidate_overrides(args: argparse.Namespace) -> None:
+    """Reject options that would replace saved preflight evidence."""
+    has_override = (
+        args.engine_root is not None
+        or args.game is not None
+        or args.manifest_validator is not None
+    )
+    if has_override:
+        raise CheckFailure(
+            "--revalidate cannot be combined with preflight overrides"
+        )
+
+
 def main() -> int:
     """Fail closed or atomically save complete preflight evidence."""
     args = _parser().parse_args()
@@ -607,15 +616,7 @@ def main() -> int:
         output = root / output
     try:
         if args.revalidate:
-            has_override = (
-                args.engine_root is not None
-                or args.game is not None
-                or args.manifest_validator is not None
-            )
-            if has_override:
-                raise CheckFailure(
-                    "--revalidate cannot be combined with preflight overrides"
-                )
+            _reject_revalidate_overrides(args)
             _revalidate(output)
             print(f"check: revalidated saved evidence at {output.resolve()}")
             return 0

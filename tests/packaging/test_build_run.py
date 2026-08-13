@@ -38,7 +38,6 @@ import tempfile
 import unittest
 from unittest import mock
 
-
 _RUN_PATH = Path(__file__).resolve().parents[2] / "tools" / "build" / "run.py"
 _SPEC = importlib.util.spec_from_file_location("shar_build_run", _RUN_PATH)
 if _SPEC is None or _SPEC.loader is None:
@@ -96,9 +95,7 @@ class ProjectStateMigrationTests(unittest.TestCase):
             second = _RUN._prepare_project_state(root, project)
             self.assertEqual(first, second)
             for name in _RUN._PROJECT_STATE_NAMES:
-                self.assertTrue(
-                    _RUN._is_directory_link(project.parent / name)
-                )
+                self.assertTrue(_RUN._is_directory_link(project.parent / name))
         finally:
             self._unlink_project_state(project)
             temporary.cleanup()
@@ -139,13 +136,15 @@ class ProjectStateMigrationTests(unittest.TestCase):
                     raise _RUN.RunFailure("injected link failure")
                 original(link, target)
 
-            with mock.patch.object(
-                _RUN,
-                "_create_directory_link",
-                side_effect=fail_on_intermediate,
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_create_directory_link",
+                    side_effect=fail_on_intermediate,
+                ),
+                self.assertRaisesRegex(_RUN.RunFailure, "injected"),
             ):
-                with self.assertRaisesRegex(_RUN.RunFailure, "injected"):
-                    _RUN._prepare_project_state(root, project)
+                _RUN._prepare_project_state(root, project)
 
             for name in _RUN._PROJECT_STATE_NAMES:
                 source = project.parent / name
@@ -158,6 +157,7 @@ class ProjectStateMigrationTests(unittest.TestCase):
         finally:
             self._unlink_project_state(project)
             temporary.cleanup()
+
 
 class PublicationArtifactTests(unittest.TestCase):
     """Keep runtime publication separate from cached build diagnostics."""
@@ -193,11 +193,13 @@ class PublicationArtifactTests(unittest.TestCase):
                 b"symbols",
             )
             self.assertEqual(
-                (work / "publication-metadata/Manifest_UFSFiles_Win64.txt")
-                .read_text(encoding="utf-8"),
+                (
+                    work / "publication-metadata/Manifest_UFSFiles_Win64.txt"
+                ).read_text(encoding="utf-8"),
                 "manifest\n",
             )
             self.assertFalse(stale.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

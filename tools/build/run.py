@@ -278,7 +278,7 @@ def _create_directory_link(link: Path, target: Path) -> None:
 def _remove_directory_link(path: Path) -> None:
     """Remove one link or junction without deleting its target."""
     if os.path.isjunction(path):
-        os.rmdir(path)
+        Path(path).rmdir()
     else:
         path.unlink()
 
@@ -296,14 +296,14 @@ def _adopt_project_state_path(
     source_was_directory = _path_present(link)
     canonical_was_present = _path_present(canonical)
     if source_was_directory:
-        os.replace(link, canonical)
+        Path(link).replace(canonical)
     elif not canonical_was_present:
         canonical.mkdir()
     try:
         _create_directory_link(link, canonical.resolve())
-    except (OSError, RunFailure):
+    except OSError, RunFailure:
         if source_was_directory:
-            os.replace(canonical, link)
+            Path(canonical).replace(link)
         elif not canonical_was_present and canonical.exists():
             canonical.rmdir()
         raise
@@ -323,7 +323,7 @@ def _rollback_project_state(actions: list[_ProjectStateAction]) -> None:
             if _is_directory_link(action.link):
                 _remove_directory_link(action.link)
             if action.source_was_directory:
-                os.replace(action.canonical, action.link)
+                Path(action.canonical).replace(action.link)
             elif not action.canonical_was_present:
                 action.canonical.rmdir()
         except OSError as error:
@@ -367,10 +367,7 @@ def _prepare_project_state(root: Path, project: Path) -> Path:
 def _uat_path(engine_root: Path) -> Path:
     """Resolve the native RunUAT launcher for the current host."""
     batch = engine_root / "Engine" / "Build" / "BatchFiles"
-    if os.name == "nt":
-        path = batch / "RunUAT.bat"
-    else:
-        path = batch / "RunUAT.sh"
+    path = batch / "RunUAT.bat" if os.name == "nt" else batch / "RunUAT.sh"
     if not path.is_file():
         raise RunFailure(f"Unreal AutomationTool launcher is missing: {path}")
     return path
@@ -492,7 +489,7 @@ def _cache_nonruntime_artifacts(
     if manifests:
         metadata.mkdir(parents=True)
         for source in manifests:
-            os.replace(source, metadata / source.name)
+            Path(source).replace(metadata / source.name)
 
     debug_files: list[Path] = []
     if target.system == "windows":
@@ -503,7 +500,7 @@ def _cache_nonruntime_artifacts(
             relative = source.relative_to(candidate)
             destination = symbols / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
-            os.replace(source, destination)
+            Path(source).replace(destination)
 
 
 def _publish(candidate: Path, destination: Path) -> None:
@@ -516,12 +513,12 @@ def _publish(candidate: Path, destination: Path) -> None:
         shutil.rmtree(backup)
     had_previous = destination.exists()
     if had_previous:
-        os.replace(destination, backup)
+        Path(destination).replace(backup)
     try:
-        os.replace(candidate, destination)
+        Path(candidate).replace(destination)
     except OSError:
         if had_previous and backup.exists() and not destination.exists():
-            os.replace(backup, destination)
+            Path(backup).replace(destination)
         raise
     if backup.exists():
         shutil.rmtree(backup)
@@ -532,6 +529,7 @@ def _build_target(
     uat: Path,
     project: Path,
     target: Target,
+    *,
     validate_only: bool,
 ) -> None:
     """Verify and optionally package one selected target transactionally."""
@@ -580,6 +578,14 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _require_unreal_evidence(check: dict[str, object]) -> dict[str, object]:
+    """Return the saved Unreal evidence object or fail closed."""
+    unreal = check.get("unreal")
+    if not isinstance(unreal, dict):
+        raise RunFailure("check evidence has no unreal object")
+    return unreal
+
+
 def main() -> int:
     """Revalidate saved decisions and build every selected target."""
     args = _parser().parse_args()
@@ -594,9 +600,7 @@ def main() -> int:
         targets = _selected_targets(arch_path)
         _revalidate_check(root, check_path)
         check = _check_evidence(check_path)
-        unreal = check["unreal"]
-        if not isinstance(unreal, dict):
-            raise RunFailure("check evidence has no unreal object")
+        unreal = _require_unreal_evidence(check)
         engine_root = Path(str(unreal["root"])).resolve()
         project = Path(str(unreal["project"])).resolve()
         _prepare_project_state(root, project)
@@ -607,7 +611,7 @@ def main() -> int:
                 uat,
                 project,
                 target,
-                args.validate_only,
+                validate_only=args.validate_only,
             )
     except (RunFailure, OSError) as error:
         print(f"run: {error}", file=sys.stderr)
