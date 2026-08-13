@@ -16,8 +16,6 @@ Does not own source crates, generated artifacts, or local dependencies.
 
 - [`lmlm/`](lmlm/) is the Rust-only LMLM compatibility boundary (Rust 1.97.1) for users
   who explicitly choose to inspect or convert supported legacy LMLM mods.
-- [`language-mods/`](language-mods/) exports original non-English official
-  localization evidence into deterministic source bundles outside the base.
 - [`source-similarity/`](source-similarity/) measures content-free structural
   calibration evidence without choosing an admission threshold.
 - [`vwj/main.py`](vwj/main.py) runs the configured external validation

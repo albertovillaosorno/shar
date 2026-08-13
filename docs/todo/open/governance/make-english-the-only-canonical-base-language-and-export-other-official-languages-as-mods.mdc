@@ -52,9 +52,9 @@ The canonical manifest validator now runs as the first extraction-stage gate,
 closing the previous exact-header bypass. `cargo test -p game_manifest` and the
 794-test pipeline library suite pass, and the local `game/` passes
 `validate-game` with 103 curated generic minimums plus exact required sources.
-A separate stdlib Python exporter now lives under `tools/language-mods/`. It
-preserves the original text-table bytes, selected character-set sidecar,
-dialogue RCF, and localized readme while also publishing deterministic UTF-8
+Canonical language-mod generation now lives under `src/mods/languages/`, not
+as an external tool. It preserves the original text-table bytes, selected
+character-set sidecar, dialogue RCF, and localized readme while also publishing deterministic UTF-8
 `text.jsonl` plus SHA-256/size evidence. Synthetic tests prove byte-deterministic
 output and source-root isolation. Real disposable probes exported French,
 German, and Spanish bundles with 1,632 text records each and then cleaned all
@@ -66,4 +66,6 @@ Italian column is `???` and `dialogi.rcf` is absent. The exporter keeps the
 Italian mapping for installations that actually contain translated source, but
 will not invent a usable language from placeholders. The task remains open
 because these outputs are source bundles pending the shared final SHAR
-mod-package schema, not runtime mod packages yet.
+mod-package schema. Their ownership is already canonical: the
+final exporter should place generated official-language mods directly in the
+result rather than asking users to run a separate tool.
