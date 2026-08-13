@@ -1,0 +1,31 @@
+[package]
+name = "shar_source_audit"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Read-only deep structural audit of supported lawful source containers."
+publish = false
+
+[dependencies]
+p3d = { path = "../../formats/p3d" }
+rcf = { path = "../../formats/rcf" }
+rmv = { path = "../../formats/rmv" }
+rsd = { path = "../../formats/rsd" }
+schoenwald_cli = { path = "../../foundation/command-line" }
+schoenwald_filesystem = { path = "../../foundation/filesystem" }
+
+[lib]
+name = "shar_source_audit"
+path = "composition/lib.rs"
+
+[[bin]]
+name = "validate-source-deep"
+path = "composition/main.rs"
+
+[[test]]
+name = "deep_source_cli_contract"
+path = "../../../tests/migration/source-audit/deep_source_cli_contract.rs"
+
+[lints]
+workspace = true
