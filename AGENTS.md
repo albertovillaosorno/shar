@@ -77,11 +77,11 @@ invoke those applications are not supported evidence.
 
 ## Validation
 
-Use the canonical repository validator for final evidence. Do not replace it
-with direct formatter, compiler, linter, or test commands. In particular, never
-run direct Rust formatting commands; the canonical validator owns formatting.
-Report uncertainty and failures exactly, and never convert missing evidence into
-invented success.
+Use Jig as the canonical repository validator for final evidence. Run
+`jig validate --fail-fast --root .`; do not replace it with direct formatter,
+compiler, linter, or test commands. In particular, never run direct Rust
+formatting commands; Jig owns canonical formatting evidence. Report uncertainty
+and failures exactly, and never convert missing evidence into invented success.
 
 ## Versioning and collaboration
 

@@ -18,5 +18,3 @@ Does not own source crates, generated artifacts, or local dependencies.
   who explicitly choose to inspect or convert supported legacy LMLM mods.
 - [`source-similarity/`](source-similarity/) measures content-free structural
   calibration evidence without choosing an admission threshold.
-- [`vwj/main.py`](vwj/main.py) runs the configured external validation
-  gates when the Jig executable is unavailable.
