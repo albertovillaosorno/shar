@@ -15,6 +15,14 @@ labels belong here.
 
 ## P0 — Authority and repository governance
 
+### TODO - Implement a generic configurable Rust algorithm creator and replayer
+
+Create one source-agnostic Rust foundation tool that records source-bound
+reconstruction algorithms as durable `.txt` data and replays them safely.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/security/implement-a-generic-configurable-rust-algorithm-creator-and-replayer.mdc](docs/todo/open/security/implement-a-generic-configurable-rust-algorithm-creator-and-replayer.mdc)
+
 ### TODO - Make English the only canonical base language
 
 Require English for the base game and export every other supported official
@@ -47,6 +55,14 @@ Validate a user-supplied lawful source installation.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/validate-a-user-supplied-lawful-source-installation.mdc](docs/todo/open/conversion/validate-a-user-supplied-lawful-source-installation.mdc)
+
+### TODO - Migrate icon reconstruction to the canonical algorithm format
+
+Preserve the authored cross-platform SVG assets while replacing the temporary
+generated-Rust reconstruction MVP with the shared text algorithm format.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc](docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc)
 
 ### TODO - Preserve original asset identities, package relationships, and ordering
 

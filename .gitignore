@@ -396,6 +396,8 @@ Backup/
 /coverage/
 
 # Icon tool local evidence, authored masters, and generated outputs.
+src/migration/icon/assets
+src/migration/icon/out
 
 # ==============================================================================
 # Local LMLM Compatibility Inputs / Outputs

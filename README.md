@@ -353,10 +353,11 @@ logs. If you only want to play, use the lightweight release flow above.
 1. Run `python tools/build/run.py`.
 1. Validate the repository with Jig.
 
-`Simpsons.ico` is preserved as canonical source identity. SHAR does not need an
-artistic replacement icon system. If a target needs a different icon container,
-that should be a deterministic build-only representation of the original icon,
-not a replacement artwork pipeline.
+`Simpsons.ico` is preserved as canonical source identity. Cross-platform icon
+reconstruction and export are owned by `src/migration/icon/`: its local
+`assets/` and generated `out/` trees stay ignored, while the durable
+`icon_algorithm.txt` plan is replayed through the generic Rust algorithm
+foundation. `uninst.ico` is never icon-reconstruction input.
 
 
 ## Release and changelog policy
