@@ -1,0 +1,41 @@
+---
+schema: shar.todo.v1
+id: limit-base-asset-changes-to-deterministic-conversion-unreal-compatibility-import
+status: completed
+priority: P0
+lane: governance
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Limit base-asset changes to deterministic conversion, Unreal compatibility, import…
+
+Limit base-asset changes to deterministic conversion, Unreal compatibility,
+import correctness, and fixes for defects introduced by the port.
+
+## Acceptance criteria
+
+- [x] Limit base-asset changes to deterministic conversion, Unreal
+  compatibility, import correctness, and fixes for defects introduced by the
+  port.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+The accepted [faithful-base governance ADR](../../../adr/governance/faithful-base-and-optional-mod-boundary.md)
+defines the complete admission set for canonical base changes: deterministic
+conversion of validated source, a required Unreal/target representation change,
+import/runtime correctness required to reproduce source behavior, or correction
+of a defect introduced by SHAR itself. Every admitted change must keep source
+fact, conversion rule, and result distinguishable.
+
+The policy fails closed on missing or contradictory evidence and explicitly
+states that an editor session, AI suggestion, screenshot, aesthetic preference,
+convenience heuristic, or third-party mod is not source authority. Existing P1
+conversion audits remain responsible for proving any disputed transform or asset
+correction before it can enter base output.

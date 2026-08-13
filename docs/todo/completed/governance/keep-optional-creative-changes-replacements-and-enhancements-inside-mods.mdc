@@ -1,0 +1,38 @@
+---
+schema: shar.todo.v1
+id: keep-optional-creative-changes-replacements-and-enhancements-inside-mods
+status: completed
+priority: P0
+lane: governance
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Keep optional creative changes, replacements, and enhancements inside mods
+
+Keep optional creative changes, replacements, and enhancements inside mods.
+
+## Acceptance criteria
+
+- [x] Keep optional creative changes, replacements, and enhancements inside
+  mods.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+The accepted [faithful-base governance ADR](../../../adr/governance/faithful-base-and-optional-mod-boundary.md)
+assigns new/redesigned missions, worlds, geometry, textures, audio, UI, balance,
+abilities, presentation, quality-of-life behavior, replacement media, and other
+non-parity enhancements to SHAR mods. A mod can use registered extension and
+replacement points but cannot become evidence for canonical base identity.
+
+The existing drop-in mod ADR and platform extension contract provide the
+reviewable package, activation, replacement, rollback, and conflict boundaries
+for that optional work. `AGENTS.md` now points agents and operators at the same
+faithful-base decision so AI-assisted authoring cannot silently promote a
+creative mod change into base reconstruction.

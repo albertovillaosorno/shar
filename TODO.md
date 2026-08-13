@@ -39,29 +39,6 @@ gameplay structure, models, textures, audio, cinematics, UI, and localization.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/governance/preserve-the-original-missions-mission-order-world-layout-progression-gameplay.mdc](docs/todo/open/governance/preserve-the-original-missions-mission-order-world-layout-progression-gameplay.mdc)
 
-### TODO - Do not manually redesign terrain, missions, models, textures, or world content for the…
-
-Do not manually redesign terrain, missions, models, textures, or world content
-for the base project.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/governance/do-not-manually-redesign-terrain-missions-models-textures-or-world-content-for-the.mdc](docs/todo/open/governance/do-not-manually-redesign-terrain-missions-models-textures-or-world-content-for-the.mdc)
-
-### TODO - Limit base-asset changes to deterministic conversion, Unreal compatibility, import…
-
-Limit base-asset changes to deterministic conversion, Unreal compatibility,
-import correctness, and fixes for defects introduced by the port.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/governance/limit-base-asset-changes-to-deterministic-conversion-unreal-compatibility-import.mdc](docs/todo/open/governance/limit-base-asset-changes-to-deterministic-conversion-unreal-compatibility-import.mdc)
-
-### TODO - Keep optional creative changes, replacements, and enhancements inside mods
-
-Keep optional creative changes, replacements, and enhancements inside mods.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/governance/keep-optional-creative-changes-replacements-and-enhancements-inside-mods.mdc](docs/todo/open/governance/keep-optional-creative-changes-replacements-and-enhancements-inside-mods.mdc)
-
 ## P1 — Source extraction and deterministic conversion
 
 ### TODO - Validate a user-supplied lawful source installation
