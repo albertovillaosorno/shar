@@ -147,3 +147,77 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SourceSelectionTests(unittest.TestCase):
+    """Exercise read-only source-root selection without build toolchains."""
+
+    def test_directory_and_simpsons_exe_resolve_to_same_source_root(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-source-select-") as value:
+            root = Path(value)
+            repository = root / "repository"
+            source = root / "installed-game"
+            repository.mkdir()
+            source.mkdir()
+            executable = source / "Simpsons.exe"
+            executable.write_bytes(b"fixture")
+
+            self.assertEqual(
+                _CHECK._check_game(repository, source),
+                source.resolve(),
+            )
+            self.assertEqual(
+                _CHECK._check_game(repository, executable),
+                source.resolve(),
+            )
+
+    def test_non_game_file_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-source-file-") as value:
+            root = Path(value)
+            repository = root / "repository"
+            repository.mkdir()
+            other = root / "README.rtf"
+            other.write_bytes(b"fixture")
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "selected source file must be Simpsons.exe",
+            ):
+                _CHECK._check_game(repository, other)
+
+    def test_missing_source_diagnostic_does_not_echo_private_path(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-source-missing-") as value:
+            root = Path(value)
+            repository = root / "repository"
+            repository.mkdir()
+            missing = root / "private-user-installation"
+
+            with self.assertRaises(_CHECK.CheckFailure) as raised:
+                _CHECK._check_game(repository, missing)
+            message = str(raised.exception)
+            self.assertNotIn(str(missing), message)
+            self.assertIn("selected source path does not exist", message)
+
+    def test_validator_command_keeps_manifest_separate_from_source(self) -> None:
+        validator = Path("validate-game.exe")
+        source = Path("external-source")
+        manifest = Path("repository/game/manifest/game.jsonl")
+
+        command = _CHECK._validator_command(validator, source, manifest)
+
+        self.assertEqual(
+            command,
+            [str(validator), str(source), str(manifest)],
+        )
+
+    def test_saved_source_root_is_required_for_revalidation(self) -> None:
+        expected = Path("C:/lawful/source")
+        self.assertEqual(
+            _CHECK._saved_game_root({"game": {"path": str(expected)}}),
+            expected,
+        )
+        with self.assertRaisesRegex(
+            _CHECK.CheckFailure,
+            "no source game root",
+        ):
+            _CHECK._saved_game_root({"game": {}})
