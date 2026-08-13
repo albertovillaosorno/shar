@@ -48,14 +48,6 @@ Validate a user-supplied lawful source installation.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/validate-a-user-supplied-lawful-source-installation.mdc](docs/todo/open/conversion/validate-a-user-supplied-lawful-source-installation.mdc)
 
-### TODO - Migrate icon reconstruction to the canonical algorithm format
-
-Preserve the authored cross-platform SVG assets while replacing the temporary
-generated-Rust reconstruction MVP with the shared text algorithm format.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc](docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc)
-
 ### TODO - Preserve original asset identities, package relationships, and ordering
 
 Preserve original asset identities, package relationships, and ordering.

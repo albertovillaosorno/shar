@@ -1,0 +1,74 @@
+---
+schema: shar.todo.v1
+id: require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is
+status: completed
+priority: P1
+lane: packaging
+active: false
+parent: implement-a-generic-configurable-rust-algorithm-creator-and-replayer
+dependencies: [build-preflight-and-saved-check-evidence, implement-a-generic-configurable-rust-algorithm-creator-and-replayer]
+children: []
+---
+
+<!-- CSpell:ignore uninst -->
+
+# Migrate icon reconstruction and platform export to the migration boundary
+
+Preserve the useful cross-platform icon pipeline while replacing only its giant
+generated-Rust reconstruction representation. The durable reconstruction plan is
+text data owned by `src/migration/icon/`, and local authored/recovered SVGs remain
+ignored evidence rather than distributable repository content.
+
+## Acceptance criteria
+
+- [x] Keep exact root `Simpsons.ico` mandatory in the lawful source manifest and
+  keep `uninst.ico` optional for the game installation.
+- [x] Recover the seven SVG assets from the pre-migration authenticated transform
+  into local `src/migration/icon/assets/` evidence before replacing the old
+  representation; keep that directory ignored by Git.
+- [x] Make `game/Simpsons.ico` the sole icon reconstruction input. `uninst.ico`
+  must not participate in icon authoring, replay, or generated platform output.
+- [x] Use the generic Rust function at `src/foundation/algorithm/` to record and
+  replay `src/migration/icon/icon_algorithm.txt`; do not generate source code as
+  reconstruction data.
+- [x] Preserve the useful SVG renderer, platform profiles, and Windows, macOS,
+  Linux, Android, and iOS export behavior under `src/migration/icon/` rather
+  than deleting it.
+- [x] Keep `src/migration/icon/assets/` and `src/migration/icon/out/` ignored;
+  never commit the authored/recovered SVGs or generated platform icon products.
+- [x] Replay `icon_algorithm.txt` from only lawful `Simpsons.ico` evidence and
+  prove all seven local SVG outputs are byte-identical to the recovered oracle.
+- [x] Keep `src/unreal/icon/` retired after parity is proven; icon migration and
+  export ownership belongs only to `src/migration/icon/`.
+- [x] Remove the temporary algorithm reference directory only after generic
+  algorithm parity and icon exporter preservation are both complete.
+
+## Evidence
+
+`8c6d8878` established `src/migration/icon/` as the only icon migration
+boundary. The tracked `icon_algorithm.txt` is a `shar.algorithm.v1` document
+whose single source record is exactly 5,806 bytes with SHA-256
+`3b0b72f7b2eff173a81669ee465625e67e70dda8c18282bdeeda6d2a203df328`,
+matching `game/Simpsons.ico`. The distinct `game/uninst.ico` identity is absent
+from the plan and architecture coverage rejects any plaintext uninstall-icon or
+SVG payload marker in the tracked algorithm.
+
+The same commit preserved the SVG renderer, platform profiles, PNG-backed
+Windows ICO writer, PNG-backed macOS ICNS writer, Linux hicolor export, Android
+adaptive/legacy resources, and iOS AppIcon catalog under the migration function.
+`src/migration/icon/assets` and `src/migration/icon/out` are exact Git-ignore
+entries; neither local authored/recovered SVG evidence nor generated platform
+products is tracked.
+
+A fresh source-bound replay with the current Rust engine reconstructed all seven
+ignored SVG targets from only `game/Simpsons.ico`; every byte length and SHA-256
+matched `icon_algorithm.txt`. Exporting that recovered tree then produced 58
+platform files including Windows `icon.ico`, macOS `icon.icns`, Linux scalable
+and raster resources, Android store/resources, and the iOS AppIcon catalog. The
+canonical source icon hash was unchanged before and after replay/export.
+
+`src/unreal/icon/` remains retired, and the temporary generic-algorithm reference
+directory was removed only after the reusable exporter had been preserved.
+`c7b5eac2` documents the exact local replay/export commands and explicitly
+forbids `game/*.ico`, `game/uninst.ico`, or the ignored SVG oracle as substitute
+reconstruction evidence.
