@@ -1,0 +1,35 @@
+---
+schema: shar.todo.v1
+id: remove-obsolete-files-and-workspace-references
+status: completed
+priority: P0
+lane: repository
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Remove obsolete files and workspace references
+
+Remove obsolete files and workspace references.
+
+## Acceptance criteria
+
+- [x] Remove obsolete files and workspace references.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+The obsolete replacement-icon function and the VWJ fallback validator have been
+removed after proving they had no remaining product consumers. Earlier cleanup
+also retired the external Python language tool, `src/mods/languages`, and other
+superseded compatibility paths without reintroducing them as workspace members.
+
+`tests/architecture/test_repository_paths.py` now parses the root Cargo workspace
+and fails when any declared member lacks its `Cargo.toml`. The current workspace
+has no missing members. The same guard keeps known retired repository paths
+absent, so obsolete compatibility/tooling directories cannot silently return.

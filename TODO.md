@@ -69,20 +69,6 @@ Finish the canonical `src/<domain>/<function>/<kind>/<part>` migration.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/repository/finish-the-canonical-src-domain-function-kind-part-migration.mdc](docs/todo/open/repository/finish-the-canonical-src-domain-function-kind-part-migration.mdc)
 
-### TODO - Update stale paths in documentation, tests, manifests, and commands
-
-Update stale paths in documentation, tests, manifests, and commands.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/repository/update-stale-paths-in-documentation-tests-manifests-and-commands.mdc](docs/todo/open/repository/update-stale-paths-in-documentation-tests-manifests-and-commands.mdc)
-
-### TODO - Remove obsolete files and workspace references
-
-Remove obsolete files and workspace references.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/repository/remove-obsolete-files-and-workspace-references.mdc](docs/todo/open/repository/remove-obsolete-files-and-workspace-references.mdc)
-
 ### TODO - Complete the tracked `.jig/` policy, taxonomy, adapters, and projections
 
 Complete the tracked `.jig/` policy, taxonomy, adapters, and projections.
