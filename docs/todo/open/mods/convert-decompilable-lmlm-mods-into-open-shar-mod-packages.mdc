@@ -25,15 +25,15 @@ to the final SHAR mod-package schema.
   local policy as authoritative. Any user change is an explicit local decision,
   and the user assumes responsibility for the content they inspect, convert,
   modify, or redistribute.
-- [ ] Test first with the local Jebano and Muckluck packages as fixtures, without
+- [x] Test first with the local Jebano and Muckluck packages as fixtures, without
   auto-installing or auto-injecting either mod into the game.
-- [ ] Never promise arbitrary LMLM compatibility; unsupported legacy behavior
+- [x] Never promise arbitrary LMLM compatibility; unsupported legacy behavior
   must be reported so authors can adapt the resulting open package.
 - [ ] Produce inspectable SHAR packages whose assets and source are not intentionally
   locked or obfuscated; packaging format follows the final shared mod contract.
-- [ ] Preserve provenance and require users/distributors to have rights to the
+- [x] Preserve provenance and require users/distributors to have rights to the
   content they convert or redistribute.
-- [ ] Update README conversion instructions and known limitations whenever the
+- [x] Update README conversion instructions and known limitations whenever the
   converter contract changes.
 
 ## Dependencies
@@ -49,8 +49,12 @@ reused from existing repository crates instead of duplicated. It has no dependen
 base extraction/build pipeline or the original game installation.
 
 Synthetic Rust tests cover path safety, portable collisions, payload overlap,
-zero-padding, atomic publication, overwrite refusal, shared P3D analysis, and
-CLI behavior. Read-only `inspect` also
-validated the local Jebano `j.lmlm` (1,540 entries) and Muckluck `m.lmlm` (32
-entries) inputs without installing or extracting either package. Final SHAR
-package adaptation remains open until the mod-package schema is authoritative.
+zero-padding, atomic publication, overwrite refusal, folder-driven WIP/export
+reuse, shared P3D decompilation, and CLI behavior. Read-only `inspect` also
+validated the local Jebano `j.lmlm` (1,540 entries, 7 valid P3D payloads) and
+Muckluck `m.lmlm` (32 entries, 29 valid P3D payloads) inputs without installing
+either package. An architecture guard rejects any LMLM reference under `src/`. The compatibility
+tool remains outside the reconstruction pipeline. Folder-driven conversion uses `tools/lmlm/import/`,
+preserves WIP state under `.cache/lmlm/wip/`, and publishes local results under
+`tools/lmlm/export/`. Final SHAR package adaptation remains open until the
+mod-package schema is authoritative.

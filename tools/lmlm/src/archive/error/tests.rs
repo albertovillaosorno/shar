@@ -35,8 +35,14 @@ use super::LmlmError;
 #[test]
 fn public_diagnostics_are_single_line() {
     let errors = [
-        LmlmError::NonZeroReservedContainerBlock { offset: 0x200, value: 1 },
-        LmlmError::NonZeroMetadataPadding { offset: 0x800, value: 2 },
+        LmlmError::NonZeroReservedContainerBlock {
+            offset: 0x200,
+            value: 1,
+        },
+        LmlmError::NonZeroMetadataPadding {
+            offset: 0x800,
+            value: 2,
+        },
         LmlmError::EntryPayloadOverlapsTable {
             path: "entry.bin".to_owned(),
             offset: 0x600,

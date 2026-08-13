@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use schoenwald_cli::CliProgram;
+use shar_lmlm::batch::convert_folders;
 use shar_lmlm::cli::LmlmProgram;
 use shar_lmlm::convert::{convert, inspect};
 
@@ -40,11 +41,13 @@ fn fixture(payload: &[u8], name: &str) -> Vec<u8> {
         encoded.extend_from_slice(&unit.to_le_bytes());
     }
     encoded.extend_from_slice(&0_u16.to_le_bytes());
-    archive[FIRST_ENTRY + 2..FIRST_ENTRY + 2 + encoded.len()]
-        .copy_from_slice(&encoded);
+    archive[FIRST_ENTRY + 2..FIRST_ENTRY + 2 + encoded.len()].copy_from_slice(&encoded);
     let metadata = FIRST_ENTRY + BLOCK;
-    archive[metadata + 0x0c..metadata + 0x14]
-        .copy_from_slice(&u64::try_from(payload.len()).unwrap_or(u64::MAX).to_le_bytes());
+    archive[metadata + 0x0c..metadata + 0x14].copy_from_slice(
+        &u64::try_from(payload.len())
+            .unwrap_or(u64::MAX)
+            .to_le_bytes(),
+    );
     archive[metadata + 0x14..metadata + 0x1c]
         .copy_from_slice(&(PAYLOAD_OFFSET as u64).to_le_bytes());
     archive[PAYLOAD_OFFSET..PAYLOAD_OFFSET + payload.len()].copy_from_slice(payload);
@@ -111,16 +114,57 @@ fn p3d_entries_use_shared_parser_and_cli_usage_is_stable() -> Result<(), String>
         .p3d
         .as_ref()
         .ok_or_else(|| "missing shared P3D evidence".to_owned())?;
-    let usage = LmlmProgram.execute(&[]);
+    let usage = LmlmProgram.execute(&["invalid".to_owned()]);
     let result = if !evidence.valid
         && evidence.diagnostic.is_some()
         && usage.is_failure_with_stderr_line(
-            "usage: shar-lmlm <inspect INPUT.lmlm | convert INPUT.lmlm OUTPUT_DIR>",
-        )
-    {
+            "usage: shar-lmlm [batch] | inspect INPUT.lmlm | convert INPUT.lmlm OUTPUT_DIR",
+        ) {
         Ok(())
     } else {
         Err(format!("unexpected P3D/CLI evidence: {report:?}"))
+    };
+    remove_if_present(&root)?;
+    result
+}
+
+#[test]
+fn batch_conversion_keeps_wip_and_export_separate() -> Result<(), String> {
+    let root = temp_root("batch");
+    remove_if_present(&root)?;
+    let import = root.join("tools/lmlm/import");
+    let export = root.join("tools/lmlm/export");
+    let wip = root.join(".cache/lmlm/wip");
+    fs::create_dir_all(&import).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&export).map_err(|error| error.to_string())?;
+    let input = import.join("Example Legacy.lmlm");
+    fs::write(&input, fixture(b"payload", "Meta.ini")).map_err(|error| error.to_string())?;
+
+    let first =
+        convert_folders(&root, &import, &export, &wip).map_err(|error| error.to_string())?;
+    let second =
+        convert_folders(&root, &import, &export, &wip).map_err(|error| error.to_string())?;
+
+    let item = first
+        .packages
+        .first()
+        .ok_or_else(|| "missing first batch package".to_owned())?;
+    let second_item = second
+        .packages
+        .first()
+        .ok_or_else(|| "missing second batch package".to_owned())?;
+    let result = if first.packages.len() == 1
+        && !item.wip_reused
+        && !item.export_reused
+        && second_item.wip_reused
+        && second_item.export_reused
+        && root.join(&item.wip).join("content/Meta.ini").is_file()
+        && root.join(&item.export).join("content/Meta.ini").is_file()
+        && input.is_file()
+    {
+        Ok(())
+    } else {
+        Err(format!("unexpected batch reports: {first:?} / {second:?}"))
     };
     remove_if_present(&root)?;
     result

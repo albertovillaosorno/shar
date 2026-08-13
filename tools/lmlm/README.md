@@ -1,59 +1,76 @@
 # LMLM compatibility tool
 
-This directory is the complete LMLM compatibility boundary. It is intentionally
-separate from SHAR's faithful base extraction/build pipeline and does not install
-or inject mods into the game.
+This is a small legacy-conversion base I made because I wanted to migrate the
+Jebano and Muckluck mods. Those are the packages I test. I do **not** claim broad
+LMLM compatibility, and a complete converter for every historical mod is outside
+my scope. If you need more, fork or extend this directory; you are welcome to use
+it as a starting point.
 
-Do **not** start a new mod in LMLM. This tool exists only to recover supported
-legacy packages into inspectable material that can be adapted with modern SHAR
-tools.
+If you have never made an LMLM mod, start a new project directly for SHAR. That
+avoids legacy format limitations and converter-specific design constraints.
+
+This tool is intentionally separate from `src/` and from SHAR's reconstruction
+pipeline. The product never invokes it. LMLM-specific parsing stays here, while
+shared Rust behavior such as Pure3D decompilation, filesystem safety, CLI
+handling, and SHA-256 is reused from the repository crates instead of copied.
 
 ## Requirements
 
-- Rust **1.97.1**
-- A SHAR repository checkout
+Install Rust **1.97.1** yourself. There is no Rust installer, bootstrapper, or
+automatic toolchain setup in this directory.
 
-The converter does not install Rust, download a toolchain, or provide a
-bootstrapper. It deliberately reuses the repository's Rust crates instead of
-copying their implementations: Pure3D inspection comes from `src/formats/p3d`,
-filesystem/path handling from `src/foundation/filesystem`, command-line behavior
-from `src/foundation/command-line`, and SHA-256 from `src/foundation/sha256`.
-LSPA/LMLM parsing remains local because that legacy container is specific to this
-tool.
+## Convert your imports
 
-## Inspect a legacy package
+Put legacy `.lmlm` files directly in:
 
 ```text
-cargo run --manifest-path tools/lmlm/Cargo.toml -- inspect MyLegacyMod.lmlm
+tools/lmlm/import/
 ```
 
-Inspection is read-only. It validates the LSPA v5 container, prints deterministic
-JSON evidence, hashes the source and entries, and asks SHAR's existing Pure3D
-parser to inspect `.p3d` payloads without executing archive content.
-
-## Create a conversion workspace
+Then run from the repository root:
 
 ```text
-cargo run --manifest-path tools/lmlm/Cargo.toml -- convert MyLegacyMod.lmlm converted-mod
+cargo run --manifest-path tools/lmlm/Cargo.toml
 ```
 
-The converter publishes an atomic `converted-mod/` workspace containing the
-validated original payloads under `content/` plus `conversion-report.json`. It
-refuses an existing destination. The current status remains
-`extracted-needs-shar-package-adaptation` until SHAR's final portable mod package
-schema is authoritative.
+With no arguments, `main` orchestrates the whole compatibility flow. Each import
+is validated as an LSPA v5 archive, extracted into a persistent WIP workspace,
+and valid `.p3d` payloads are decompiled through SHAR's existing Rust `p3d`
+crate.
 
-There is intentionally no ZIP helper, installer, automatic game import, or
-one-command toolchain setup here. Those are not part of the compatibility
-problem.
+WIP state is deliberately retained at:
+
+```text
+.cache/lmlm/wip/
+```
+
+User-facing converted workspaces are published under:
+
+```text
+tools/lmlm/export/
+```
+
+Imports are read-only. Existing WIP/export state is verified against the current
+source package and is never silently overwritten. Lua and other legacy source
+files are treated as data; archive content is never executed.
 
 ## Scope
 
-The converter is conservative and decompilable-only. Jebano and Muckluck are the
-initial compatibility fixtures, not a promise that arbitrary historical LMLM
-packages or behaviors will translate automatically. Lua and other legacy source
-files are treated as data and are never executed by this tool. Unsupported
-behavior should remain visible so an author can recreate it intentionally.
+The current converter is conservative and decompilable-only. A successful
+extraction does not imply every legacy behavior already has a native SHAR
+translation. Unsupported behavior remains visible so an author can rebuild it
+intentionally.
 
-Users are responsible for having the rights required to inspect, convert, modify,
-or redistribute the content they provide to the tool.
+Jebano and Muckluck are compatibility fixtures, not endorsements, dependencies,
+or promises of future official SHAR versions. If either author later publishes a
+native SHAR mod, prefer their version over a legacy conversion.
+
+Manual commands remain available for debugging:
+
+```text
+cargo run --manifest-path tools/lmlm/Cargo.toml -- inspect MyLegacyMod.lmlm
+cargo run --manifest-path tools/lmlm/Cargo.toml -- convert MyLegacyMod.lmlm output
+```
+
+Users are responsible for having the rights required to inspect, convert,
+modify, or redistribute content they provide to the tool.

@@ -83,9 +83,7 @@ pub(crate) fn read_name(data: &[u8], pos: usize) -> Result<String, LmlmError> {
         .checked_add(2)
         .and_then(|start| start.checked_add(padding_start))
         .ok_or(LmlmError::Truncated)?;
-    if let Some((offset, value)) =
-        first_nonzero_byte(data, archive_padding_start, padding_len)?
-    {
+    if let Some((offset, value)) = first_nonzero_byte(data, archive_padding_start, padding_len)? {
         return Err(LmlmError::NonZeroNamePadding { offset, value });
     }
     String::from_utf16(&units).map_err(|error| LmlmError::InvalidNameEncoding {
@@ -114,17 +112,7 @@ fn reserved_device_name(name: &str) -> bool {
         };
         if matches!(
             suffix,
-            "1" | "2"
-                | "3"
-                | "4"
-                | "5"
-                | "6"
-                | "7"
-                | "8"
-                | "9"
-                | "¹"
-                | "²"
-                | "³"
+            "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "¹" | "²" | "³"
         ) {
             return true;
         }
@@ -183,9 +171,7 @@ pub(crate) fn register_path(
         return Err(LmlmError::UnsafePath(full_path));
     }
     let portable_identity = portable_identity(&full_path);
-    if let Some(first_path) =
-        seen_paths.insert(portable_identity, full_path.clone())
-    {
+    if let Some(first_path) = seen_paths.insert(portable_identity, full_path.clone()) {
         return Err(LmlmError::PathCollision {
             first_path,
             second_path: full_path,

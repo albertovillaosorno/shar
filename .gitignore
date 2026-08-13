@@ -399,3 +399,13 @@ Backup/
 src/unreal/icon/composition/algorithm/out/
 src/unreal/icon/composition/algorithm/assets/
 src/unreal/icon/*/export/
+
+# ==============================================================================
+# Local LMLM Compatibility Inputs / Outputs
+# Legacy compatibility is isolated under tools/lmlm; packages and generated
+# conversion results are local artifacts and must never be committed.
+# ==============================================================================
+/tools/lmlm/import/*
+!/tools/lmlm/import/README.md
+/tools/lmlm/export/*
+!/tools/lmlm/export/README.md
