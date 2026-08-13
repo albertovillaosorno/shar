@@ -38,9 +38,11 @@ use schoenwald_cli::{CliProgram, CommandOutcome, run_process};
 use super::support::reject_extra_arguments;
 use crate::adapters::driven::{FilesystemGameTree, FilesystemTextStore};
 use crate::application::ValidateManifest;
+use crate::domain::MANIFEST_FILE_NAME;
 
 /// Exact usage contract for manifest validation.
-const USAGE: &str = "usage: validate-game [game-directory]";
+const USAGE: &str =
+    "usage: validate-game [game-directory] [manifest-path]";
 
 /// Process-neutral minimum-manifest validation CLI program.
 #[derive(Debug, Default, Clone, Copy)]
@@ -48,16 +50,21 @@ pub struct ValidateManifestCli;
 
 impl CliProgram for ValidateManifestCli {
     fn execute(&self, arguments: &[String]) -> CommandOutcome {
-        if let Some(outcome) = reject_extra_arguments(arguments, 1, USAGE) {
+        if let Some(outcome) = reject_extra_arguments(arguments, 2, USAGE) {
             return outcome;
         }
         let game_dir = arguments
             .first()
             .map_or_else(|| PathBuf::from("game"), PathBuf::from);
-        match ValidateManifest::execute(
+        let manifest_path = arguments.get(1).map_or_else(
+            || game_dir.join(MANIFEST_FILE_NAME),
+            PathBuf::from,
+        );
+        match ValidateManifest::execute_with_manifest(
             &FilesystemGameTree,
             &FilesystemTextStore,
             &game_dir,
+            &manifest_path,
         ) {
             Ok(report) if report.shortfalls.is_empty() => {
                 CommandOutcome::success().stdout_line(format!(

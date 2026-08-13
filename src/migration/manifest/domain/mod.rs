@@ -165,10 +165,9 @@ pub fn exact_file_shortfalls(root: &Path, files: &[PathBuf]) -> Vec<String> {
     EXACT_FILE_REQUIREMENTS
         .iter()
         .filter(|(_, minimum)| *minimum > 0)
-        .filter_map(|(path, minimum)| {
-            (!present.contains(*path)).then(|| {
-                format!("  {path}: have 0, need at least {minimum}")
-            })
+        .filter(|(path, _)| !present.contains(*path))
+        .map(|(path, minimum)| {
+            format!("  {path}: have 0, need at least {minimum}")
         })
         .collect()
 }

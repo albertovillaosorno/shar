@@ -71,6 +71,24 @@ impl ValidateManifest {
         store: &impl TextArtifactStore,
         game_dir: &Path,
     ) -> Result<ValidateManifestReport, ManifestError> {
+        let manifest_path = game_dir.join(MANIFEST_FILE_NAME);
+        Self::execute_with_manifest(tree, store, game_dir, &manifest_path)
+    }
+
+    /// Validates one game directory against an explicit manifest artifact.
+    ///
+    /// The manifest is policy owned by SHAR and may live outside the source
+    /// directory. This keeps validation read-only for a normal installed game.
+    ///
+    /// # Errors
+    ///
+    /// Returns a typed path, read, scan, or manifest-shape failure.
+    pub fn execute_with_manifest(
+        tree: &impl GameTree,
+        store: &impl TextArtifactStore,
+        game_dir: &Path,
+        manifest_path: &Path,
+    ) -> Result<ValidateManifestReport, ManifestError> {
         let kind = tree.kind(game_dir).map_err(|error| {
             ManifestError::io("inspect", game_dir.to_path_buf(), error)
         })?;
@@ -80,16 +98,15 @@ impl ValidateManifest {
                 super::diagnostic_path::escaped_path(game_dir)
             )));
         }
-        let manifest_path = game_dir.join(MANIFEST_FILE_NAME);
         let manifest = store
-            .read_optional(&manifest_path)
+            .read_optional(manifest_path)
             .map_err(|error| {
-                ManifestError::io("read", manifest_path.clone(), error)
+                ManifestError::io("read", manifest_path.to_path_buf(), error)
             })?
             .ok_or_else(|| {
                 ManifestError::Invalid(format!(
                     "manifest not found: {}",
-                    super::diagnostic_path::escaped_path(&manifest_path)
+                    super::diagnostic_path::escaped_path(manifest_path)
                 ))
             })?;
         let parsed = parse_manifest(&manifest);

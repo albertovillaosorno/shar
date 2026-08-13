@@ -76,6 +76,7 @@ fn run_validator(
             let _argument = command.arg(&root);
         }
         if let Some(extra) = extra_argument {
+            let _manifest = command.arg(root.join(MANIFEST_FILE_NAME));
             let _extra = command.arg(extra);
         }
         command.output()
@@ -154,4 +155,58 @@ fn validator_rejects_crlf_line_endings() {
         return;
     };
     assert!(!output.status.success());
+}
+
+
+#[test]
+fn validator_accepts_manifest_outside_source_tree() -> io::Result<()> {
+    let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "game-manifest-external-policy-{}-{sequence}",
+        std::process::id()
+    ));
+    match fs::remove_dir_all(&root) {
+        Ok(()) => {},
+        Err(error) if error.kind() == ErrorKind::NotFound => {},
+        Err(error) => return Err(error),
+    }
+    let source = root.join("source");
+    let policy = root.join("policy/game.jsonl");
+    fs::create_dir_all(source.join(
+        "art/frontend/scrooby2/resource/txtbible",
+    ))?;
+    fs::create_dir_all(
+        policy
+            .parent()
+            .ok_or_else(|| io::Error::other("policy path has no parent"))?,
+    )?;
+    fs::write(source.join("Simpsons.exe"), b"fixture")?;
+    fs::write(source.join("Simpsons.ico"), b"fixture")?;
+    fs::write(source.join("README.rtf"), b"fixture")?;
+    fs::write(source.join("dialog.rcf"), b"fixture")?;
+    let english = source.join("art/frontend/scrooby2/resource/txtbible");
+    fs::write(english.join("srr2.E"), b"fixture")?;
+    fs::write(english.join("srr2.txt"), b"fixture")?;
+    let row = concat!(
+        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,",
+        "\"kind\":\"generated_artifact\"}"
+    );
+    let manifest = format!("{}\n{row}\n", kind_taxonomy_jsonl());
+    fs::write(&policy, manifest)?;
+
+    let output = Command::new(env!("CARGO_BIN_EXE_validate-game"))
+        .arg(&source)
+        .arg(&policy)
+        .output()?;
+    let source_manifest = source.join("manifest");
+    let result = if output.status.success() && !source_manifest.exists() {
+        Ok(())
+    } else {
+        Err(io::Error::other(format!(
+            "external manifest validation failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )))
+    };
+    drop(fs::remove_dir_all(&root));
+    result
 }
