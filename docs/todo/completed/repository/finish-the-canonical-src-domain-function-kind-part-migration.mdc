@@ -1,0 +1,42 @@
+---
+schema: shar.todo.v1
+id: finish-the-canonical-src-domain-function-kind-part-migration
+status: completed
+priority: P0
+lane: repository
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Finish the canonical `src/<domain>/<function>/<kind>/<part>` migration
+
+Finish the canonical `src/<domain>/<function>/<kind>/<part>` migration.
+
+## Acceptance criteria
+
+- [x] Finish the canonical `src/<domain>/<function>/<kind>/<part>` migration.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Canonical product source now has five explicit domains: `formats`, `foundation`,
+`localization`, `migration`, and `unreal`. Every domain owns `README.md` plus
+`shar-boundary/v1` metadata, and every immediate function directory owns a
+`shar-function/v1` record declaring the canonical
+`src/<domain>/<function>/<kind>/<part>` route.
+
+The language-mod implementation moved from the noncanonical `src/languages/`
+root to `src/localization/languages/` without changing its Rust package API.
+Metadata for `json-text`, `sha256`, and `asset-conversion` was corrected to
+include the physical `composition` kind that already existed.
+
+Architecture tests now fail if a domain lacks boundary metadata, a function lacks
+`function.yml`, identity domain/path diverges from the filesystem, the canonical
+route changes, or declared kinds differ from physical nonlocal kind directories.
+The current audit covers all five domains and 16 functions; the moved language
+crate retains all nine localization tests.
