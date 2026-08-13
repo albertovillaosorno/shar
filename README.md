@@ -231,12 +231,18 @@ but that estimate must be measured across lawful installations before it becomes
 a product rule. The current design target is to investigate a **45–55% minimum
 similarity window** for accepting candidate source layouts.
 
-Those numbers are deliberately not production policy yet: “similarity” must
-first be defined and tested so the gate cannot substitute for required original
-bytes, exact identities, deeper structure, hashes, or provenance validation.
-The algorithm generator must not serialize or full-tree-diff the private 100%
-reference into a recipe. The published algorithm must not contain a reversible
-encoding of the complete reference installation.
+Those numbers are deliberately not production policy. Calibration now defines
+reference coverage as shared structural count units divided by private-reference
+count units, and evaluates weighted-Jaccard similarity over the same public-safe
+obfuscated directory/extension count vectors. `tools/source-similarity/main.py`
+reports those values but has no acceptance threshold or pass/fail result.
+
+Similarity can never substitute for required original bytes, exact identities,
+deeper structure, hashes, or provenance validation. The algorithm generator
+must not serialize or full-tree-diff the private 100% reference into a recipe,
+and the published algorithm must not contain a reversible encoding of it. See
+`docs/technical/security/public-safe-reconstruction-gate.md` for the measurable
+definitions and publication boundary.
 
 **TODO: Define a public-safe reconstruction algorithm gate with bounded
 similarity.**
