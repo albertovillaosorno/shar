@@ -68,6 +68,18 @@ for a real external, substitution, or isolation boundary. Keep domain policy out
 of process, storage, serialization, protocol, and engine adapters. Do not create
 layers as ceremony.
 
+## Faithful base boundary
+
+The canonical base is source-backed. Base changes are limited to deterministic
+conversion, target/Unreal representation requirements, import/runtime
+correctness, and corrections for defects introduced by SHAR. Do not manually
+redesign terrain, missions, models, textures, materials, audio, cinematics, UI,
+world layout, progression, tuning, or localization for the base. Optional
+creative changes, replacements, and enhancements belong in mods. Follow the accepted
+[faithful-base governance ADR](docs/adr/governance/faithful-base-and-optional-mod-boundary.md)
+rather than treating editor output,
+aesthetic preference, AI suggestions, or third-party mods as source authority.
+
 ## Model conversion
 
 The canonical FBX artifact is generated from first principles by the

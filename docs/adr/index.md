@@ -86,6 +86,8 @@ repository reference must point to the current owning decision.
 
 ## Governance
 
+- [Faithful base and optional mod
+  boundary](governance/faithful-base-and-optional-mod-boundary.md) — Accepted
 - [AI-first repository communication](governance/ai-first-repository.md) —
   Accepted
 <!-- markdownlint-disable-next-line MD013 -->
