@@ -7,6 +7,7 @@ members = [
   "src/localization/languages",
   "src/migration/pipeline",
   "src/migration/manifest",
+  "src/migration/source-audit",
   "src/foundation/json-text",
   "src/foundation/sha256",
   "src/formats/fbx",

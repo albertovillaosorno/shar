@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/migration/source-audit/Cargo.toml
+function: source-audit
+kind: project
+authority: Cargo.toml

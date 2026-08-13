@@ -1,0 +1,21 @@
+schema: shar-function/v1
+identity:
+  id: source-audit
+  path: src/migration/source-audit
+  domain: migration
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - composition
+    - domain
+capabilities:
+  - math
+  - rust
+projects:
+  - Cargo.toml
+tests:
+  root: tests/migration/source-audit
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

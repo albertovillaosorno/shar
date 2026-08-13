@@ -421,6 +421,18 @@ name = "shar_sha256"
 version = "26.7.0"
 
 [[package]]
+name = "shar_source_audit"
+version = "26.7.0"
+dependencies = [
+ "p3d",
+ "rcf",
+ "rmv",
+ "rsd",
+ "schoenwald_cli",
+ "schoenwald_filesystem",
+]
+
+[[package]]
 name = "shar_unreal_conversion"
 version = "26.7.0"
 dependencies = [
