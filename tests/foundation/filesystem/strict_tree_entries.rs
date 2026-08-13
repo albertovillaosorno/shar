@@ -76,3 +76,29 @@ fn ordinary_traversal_still_ignores_nested_directory_redirect() -> Result<(), St
     }
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn strict_traversal_rejects_special_socket_entry() -> Result<(), String> {
+    use std::os::unix::net::UnixListener;
+
+    let root = case_root("special-socket");
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let socket = root.join("entry.socket");
+    let listener = UnixListener::bind(&socket).map_err(|error| error.to_string())?;
+
+    let result = local::strict_regular_files(&root);
+    drop(listener);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+
+    let Err(error) = result else {
+        return Err("strict traversal accepted a special socket entry".to_owned());
+    };
+    if error.kind() != io::ErrorKind::InvalidInput {
+        return Err(format!(
+            "unexpected strict special-entry error kind: {:?}",
+            error.kind()
+        ));
+    }
+    Ok(())
+}

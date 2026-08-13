@@ -454,3 +454,99 @@ fn source_tree_redirect_is_rejected() {
         "source redirect rejection failed: {result:?}"
     );
 }
+
+fn run_existing_replay_output_is_preserved() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("existing-output")?;
+    let source = temp.path.join("source.bin");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    let output = temp.path.join("output.bin");
+    fs::write(&source, vec![0x22_u8; 2048])?;
+    fs::write(&target, b"synthetic target")?;
+    fs::write(&output, b"preserve me")?;
+    let settings = settings()?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+
+    let result = replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &algorithm,
+        &output,
+    );
+    if result.is_ok() {
+        return Err("existing replay output must be rejected".into());
+    }
+    if fs::read(&output)? != b"preserve me" {
+        return Err("existing replay output was modified".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn existing_replay_output_collision_is_preserved() {
+    let result = run_existing_replay_output_is_preserved();
+    assert!(
+        result.is_ok(),
+        "output collision handling failed: {result:?}"
+    );
+}
+
+fn run_tampered_target_hash_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("target-hash-tamper")?;
+    let source = temp.path.join("source.bin");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    let output = temp.path.join("output.bin");
+    fs::write(&source, vec![0x77_u8; 2048])?;
+    fs::write(&target, b"synthetic target")?;
+    let settings = settings()?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+    let text = fs::read_to_string(&algorithm)?;
+    let mut document: serde_json::Value = serde_json::from_str(&text)?;
+    let first_target = document
+        .get_mut("target")
+        .and_then(serde_json::Value::as_array_mut)
+        .and_then(|targets| targets.first_mut())
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or("algorithm target record missing")?;
+    let Some(_previous_hash) = first_target.insert(
+        "sha256".to_owned(),
+        serde_json::Value::String("0".repeat(64)),
+    ) else {
+        return Err("algorithm target hash missing".into());
+    };
+    fs::write(&algorithm, serde_json::to_vec_pretty(&document)?)?;
+
+    let result = replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &algorithm,
+        &output,
+    );
+    if result.is_ok() {
+        return Err("tampered target hash must be rejected".into());
+    }
+    if output.exists() {
+        return Err("tampered target hash must not create output".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn tampered_target_hash_is_rejected_before_output() {
+    let result = run_tampered_target_hash_is_rejected();
+    assert!(
+        result.is_ok(),
+        "target-hash tamper rejection failed: {result:?}"
+    );
+}
