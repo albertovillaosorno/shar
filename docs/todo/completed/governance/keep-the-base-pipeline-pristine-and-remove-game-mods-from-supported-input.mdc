@@ -1,0 +1,56 @@
+---
+schema: shar.todo.v1
+id: keep-the-base-pipeline-pristine-and-remove-game-mods-from-supported-input
+status: completed
+priority: P0
+lane: governance
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Keep the base pipeline pristine and remove `game/mods` from supported input
+
+The canonical port pipeline builds only the faithful base game. `game/mods/`
+must stop being an officially supported pipeline input; legacy mod packages are
+handled later by separate user-facing conversion/import tooling.
+
+## Acceptance criteria
+
+- [x] Remove `game/mods/`, `m.lmlm`, `j.lmlm`, and any optional-mod approval
+  path from the canonical base extraction/conversion/build pipeline.
+- [x] Preserve existing files while migrating/removing pipeline behavior; never
+  silently delete user-owned mod packages.
+- [x] Keep Jebano and Muckluck packages only as explicit converter test fixtures
+  or local test inputs, never automatic content injected into the base game.
+- [x] Ensure a normal base build is byte/provenance independent of whether any
+  local mod package exists elsewhere on the machine.
+- [x] Update README mod/install language when implementation lands so it never
+  tells users to place legacy mods in the source-game pipeline.
+
+## Dependencies
+
+No dependency: this is a P0 product-authority correction.
+
+## Evidence
+
+The canonical pipeline no longer exposes `export-lmlm`, optional-mod preview,
+or approval-token paths, and its complete extraction is nine faithful-base
+stages. Phase-two metadata/index routing contains no LMLM override categories,
+and the game-manifest taxonomy contains no `language_mod` kind or synthetic
+`.lmlm` requirement. The scanner gives `.lmlm` no special exemption, so legacy
+packages inside a claimed base source are unclassified rather than supported.
+
+Legacy compatibility now lives only in the separately downloadable,
+standard-library-only `tools/lmlm/` Python boundary. Its read-only inspector
+validated the local Jebano and Muckluck inputs without installing or extracting
+them. No user-owned package was moved or deleted by the repository migration.
+
+Validation evidence: `cargo test -p game_manifest` passed; the full pipeline
+library suite passed after removal; the retired CLI commands have an explicit
+unknown-command contract test; `tools/lmlm` has ten passing stdlib tests; and
+the canonical local `game/` passes `validate-game` with 109 base folder/type
+minimums plus exact root-file requirements. Source traversal remains rooted in
+the caller-selected game directory, so packages elsewhere on the machine are
+not base-build evidence.

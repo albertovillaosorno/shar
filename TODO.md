@@ -15,14 +15,6 @@ labels belong here.
 
 ## P0 — Authority and repository governance
 
-### TODO - Keep base pipeline pristine; remove `game/mods` input
-
-Build only the faithful base game in the canonical pipeline; move all legacy
-mod conversion/import behavior to later user-facing tooling.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/governance/keep-the-base-pipeline-pristine-and-remove-game-mods-from-supported-input.mdc](docs/todo/open/governance/keep-the-base-pipeline-pristine-and-remove-game-mods-from-supported-input.mdc)
-
 ### TODO - Make English the only canonical base language
 
 Require English for the base game and export every other supported official

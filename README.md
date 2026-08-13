@@ -240,9 +240,6 @@ similarity.**
 > be silently injected into the base build. Jebano and Muckluck are converter
 > test cases only.
 
-**TODO: Keep the base pipeline pristine and remove `game/mods` from supported
-input.**
-
 On desktop, go to the exported game's installation directory and place a SHAR
 mod **folder or `.zip`** inside:
 
