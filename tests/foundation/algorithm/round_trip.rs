@@ -294,3 +294,163 @@ fn non_txt_algorithm_output_is_rejected() {
     let result = run_non_txt_algorithm_output_is_rejected();
     assert!(result.is_ok(), "extension rejection failed: {result:?}");
 }
+
+fn run_algorithm_output_inside_source_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("source-overlap")?;
+    let source = temp.path.join("source");
+    let target = temp.path.join("target.bin");
+    let algorithm = source.join("plan.txt");
+    fs::create_dir_all(&source)?;
+    fs::write(source.join("evidence.bin"), vec![0x61_u8; 2048])?;
+    fs::write(&target, b"synthetic target")?;
+
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    );
+    if result.is_ok() {
+        return Err("algorithm output inside source must be rejected".into());
+    }
+    if algorithm.exists() {
+        return Err("rejected source-overlap output must not be created".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn algorithm_output_inside_source_is_rejected() {
+    let result = run_algorithm_output_inside_source_is_rejected();
+    assert!(
+        result.is_ok(),
+        "source-overlap rejection failed: {result:?}"
+    );
+}
+
+fn run_replay_parent_traversal_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("replay-parent")?;
+    let source = temp.path.join("source.bin");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    let output = temp.path.join("safe").join("..").join("escaped.bin");
+    fs::write(&source, vec![0x33_u8; 2048])?;
+    fs::write(&target, b"synthetic target")?;
+    let settings = settings()?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+
+    let result = replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &algorithm,
+        &output,
+    );
+    if result.is_ok() {
+        return Err("parent-traversing replay output must be rejected".into());
+    }
+    if temp.path.join("escaped.bin").exists() {
+        return Err("parent-traversing replay created escaped output".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn replay_parent_traversal_is_rejected() {
+    let result = run_replay_parent_traversal_is_rejected();
+    assert!(result.is_ok(), "replay path rejection failed: {result:?}");
+}
+
+fn tamper_first_target_path(text: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let marker = "\"path\": \"alpha.txt\"";
+    if !text.contains(marker) {
+        return Err("target path marker missing".into());
+    }
+    Ok(text.replacen(marker, "\"path\": \"../escape.txt\"", 1))
+}
+
+fn run_tampered_target_path_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("target-path-tamper")?;
+    let (source, target) = write_fixture_tree(&temp.path)?;
+    let algorithm = temp.path.join("plan.txt");
+    let output = temp.path.join("output");
+    let settings = settings()?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+    let text = fs::read_to_string(&algorithm)?;
+    fs::write(&algorithm, tamper_first_target_path(&text)?)?;
+
+    let result = replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &algorithm,
+        &output,
+    );
+    if result.is_ok() {
+        return Err("tampered target path must be rejected".into());
+    }
+    if output.exists() || temp.path.join("escape.txt").exists() {
+        return Err("tampered target path must not create output".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn tampered_target_path_is_rejected_before_output() {
+    let result = run_tampered_target_path_is_rejected();
+    assert!(
+        result.is_ok(),
+        "target-path tamper rejection failed: {result:?}"
+    );
+}
+
+#[cfg(windows)]
+#[path = "../filesystem/support/junction.rs"]
+pub mod junction_support;
+
+#[cfg(windows)]
+fn run_source_tree_redirect_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("source-redirect")?;
+    let source = temp.path.join("source");
+    let outside = temp.path.join("outside");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    fs::create_dir_all(&source)?;
+    fs::create_dir_all(&outside)?;
+    fs::write(source.join("evidence.bin"), vec![0x55_u8; 2048])?;
+    fs::write(outside.join("private.bin"), b"private")?;
+    fs::write(&target, b"synthetic target")?;
+    junction_support::create_junction(&source.join("linked"), &outside)?;
+
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    );
+    if result.is_ok() {
+        return Err("source tree redirect must be rejected".into());
+    }
+    if algorithm.exists() {
+        return Err("redirected source must not create algorithm output".into());
+    }
+    Ok(())
+}
+
+#[cfg(windows)]
+#[test]
+fn source_tree_redirect_is_rejected() {
+    let result = run_source_tree_redirect_is_rejected();
+    assert!(
+        result.is_ok(),
+        "source redirect rejection failed: {result:?}"
+    );
+}
