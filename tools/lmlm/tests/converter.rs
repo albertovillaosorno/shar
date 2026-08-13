@@ -169,3 +169,25 @@ fn batch_conversion_keeps_wip_and_export_separate() -> Result<(), String> {
     remove_if_present(&root)?;
     result
 }
+
+#[test]
+fn unsupported_p3d_decompilation_keeps_raw_payload_and_diagnostic() -> Result<(), String> {
+    let root = temp_root("p3d-decompile-diagnostic");
+    remove_if_present(&root)?;
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let input = root.join("fixture.lmlm");
+    let output = root.join("converted");
+    fs::write(&input, fixture(b"not-p3d", "model.p3d")).map_err(|error| error.to_string())?;
+
+    convert(&input, &output).map_err(|error| error.to_string())?;
+
+    let raw = fs::read(output.join("content/model.p3d")).map_err(|error| error.to_string())?;
+    let diagnostic = output.join("decompiled/p3d/model.decompile-error.txt");
+    let result = if raw == b"not-p3d" && diagnostic.is_file() {
+        Ok(())
+    } else {
+        Err("unsupported P3D was not preserved with diagnostic evidence".to_owned())
+    };
+    remove_if_present(&root)?;
+    result
+}

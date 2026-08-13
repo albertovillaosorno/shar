@@ -22,8 +22,6 @@ pub enum ConvertError {
     Archive(LmlmError),
     /// JSON report serialization failed.
     Json(serde_json::Error),
-    /// Shared Pure3D decompilation failed.
-    P3d(p3d::P3dError),
 }
 
 impl fmt::Display for ConvertError {
@@ -33,7 +31,6 @@ impl fmt::Display for ConvertError {
             Self::Io(error) => write!(formatter, "{error}"),
             Self::Archive(error) => write!(formatter, "{error}"),
             Self::Json(error) => write!(formatter, "{error}"),
-            Self::P3d(error) => write!(formatter, "{error}"),
         }
     }
 }
@@ -55,12 +52,6 @@ impl From<LmlmError> for ConvertError {
 impl From<serde_json::Error> for ConvertError {
     fn from(error: serde_json::Error) -> Self {
         Self::Json(error)
-    }
-}
-
-impl From<p3d::P3dError> for ConvertError {
-    fn from(error: p3d::P3dError) -> Self {
-        Self::P3d(error)
     }
 }
 
@@ -116,8 +107,34 @@ fn decompile_p3d(root: &Path, entry: &FileEntry, input_path: &Path) -> Result<()
     if let Some(parent) = output.parent().filter(|path| !path.as_os_str().is_empty()) {
         local::create_dir_all(parent)?;
     }
+    let file_name = output
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| ConvertError::Contract("P3D output has no portable name".to_owned()))?;
+    let staging = output.with_file_name(format!(".{file_name}.decompile.tmp"));
     let exporter = p3d::LosslessPackageExporter;
-    p3d::ExportPackage::execute(&exporter, input_path, &output)?;
+    match p3d::ExportPackage::execute(&exporter, input_path, &staging) {
+        Ok(()) => {
+            fs::rename(&staging, &output)?;
+        }
+        Err(error) => {
+            if let Ok(metadata) = fs::symlink_metadata(&staging)
+                && metadata.is_dir()
+                && !metadata.file_type().is_symlink()
+            {
+                fs::remove_dir_all(&staging)?;
+            }
+            let diagnostic = output.with_extension("decompile-error.txt");
+            local::write_text(
+                &diagnostic,
+                &format!(
+                    "{error}
+"
+                ),
+                false,
+            )?;
+        }
+    }
     Ok(())
 }
 
