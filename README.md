@@ -127,9 +127,10 @@ is never reconstruction input and it does not itself prove software is safe.
 
    **TODO: Make English the only canonical base language.**
 
-   Original French, German, Italian, and Spanish source export is kept outside
-   the base pipeline under `tools/language-mods/`. The exporter fails closed
-   when an installation does not contain actual translated content for the
+   Official French, German, Italian, and Spanish language mods are owned under
+   `src/mods/languages/` and are emitted as canonical mods in the final result,
+   not distributed as a separate conversion tool. Generation fails closed when
+   the lawful source installation has no actual translated content for a
    selected language.
 
 1. Select any targets you want:

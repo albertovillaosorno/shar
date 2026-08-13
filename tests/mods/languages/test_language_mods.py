@@ -15,10 +15,10 @@ import tempfile
 import unittest
 
 _ROOT = Path(__file__).resolve().parents[3]
-_TOOL = _ROOT / "tools" / "language-mods" / "main.py"
+_TOOL = _ROOT / "src" / "mods" / "languages" / "export.py"
 _spec = importlib.util.spec_from_file_location("shar_language_mod_test", _TOOL)
 if _spec is None or _spec.loader is None:
-    raise RuntimeError("cannot load language-mod exporter")
+    raise RuntimeError("cannot load canonical language-mod exporter")
 _MOD = importlib.util.module_from_spec(_spec)
 sys.modules[_spec.name] = _MOD
 _spec.loader.exec_module(_MOD)

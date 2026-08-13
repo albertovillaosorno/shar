@@ -1,14 +1,14 @@
-# Official language source exporter
+# Canonical official-language mods
 
-SHAR's canonical base language is English. This standalone Python tool exports
+SHAR's canonical base language is English. This source-owned generator emits
 original non-English localization evidence into deterministic, inspectable
-source bundles outside the base pipeline.
+source bundles as canonical language-mod content for the final result.
 
 ```text
-python main.py french  <game-root> <output>
-python main.py german  <game-root> <output>
-python main.py italian <game-root> <output>
-python main.py spanish <game-root> <output>
+python src/mods/languages/export.py french  <game-root> <output>
+python src/mods/languages/export.py german  <game-root> <output>
+python src/mods/languages/export.py italian <game-root> <output>
+python src/mods/languages/export.py spanish <game-root> <output>
 ```
 
 Each bundle preserves the original `srr2.txt` bytes, the selected character-set

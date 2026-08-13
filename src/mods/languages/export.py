@@ -7,7 +7,7 @@
 # License-File:
 #   - LICENSE-MIT
 
-"""Export original non-English localization evidence outside the base game."""
+"""Emit canonical non-English SHAR language-mod source content."""
 
 from __future__ import annotations
 
@@ -173,7 +173,7 @@ def export_language(game: Path, output: Path, language: Language) -> dict[str, o
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="shar-language-mod",
-        description="Export one official non-English localization source bundle.",
+        description="Emit one canonical official-language SHAR mod source bundle.",
         allow_abbrev=False,
     )
     parser.add_argument("language", choices=sorted(LANGUAGES))
