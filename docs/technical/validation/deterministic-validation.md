@@ -35,7 +35,35 @@ Unavailable required tools, changed authority, stale cache identity, missing
 decision targets, invalid documentation boundaries, private-data leakage, or any
 underlying gate failure produce a non-success result.
 
+## Local Jig installation
+
+SHAR uses a source-linked Jig development installation. Machine-local
+`.dependencies/jig/source` resolves to the sibling Jig source checkout; the
+ignored `.dependencies/jig/bin/` launchers and `.dependencies/jig/runtime/`
+artifacts are refreshed from that source. Tracked repository policy lives only
+under `.jig/` and must not vendor or copy Jig source into SHAR.
+
+Shared validation-tool paths in `.jig/jig.toml` intentionally resolve through
+`.dependencies/jig/source/` so Jig's reviewed local toolchain remains one
+authority. Repository-specific pytest and Ruff shims remain under SHAR's own
+ignored `.dependencies/python/` environment.
+
+After installing or updating the local Jig checkout, refresh owned integrations
+with `jig integrations refresh --root .`. Final repository evidence is produced
+with `jig validate --fail-fast --root .`. The commit hook is a Jig-owned local
+projection and must not gain a repository-authored fallback validator.
+
+## CI posture
+
+No CI service is canonical today. Local Jig validation is sufficient for the
+current single-maintainer development flow, and adding a second execution surface
+would create maintenance cost without new acceptance evidence. CI remains a
+future option if public contribution or release automation creates a concrete
+need; if added, it must invoke the same tracked Jig policy rather than define a
+parallel validation contract.
+
 ## Verification
 
 Validator self-tests, focused gate tests, no-cache runs, cache invalidation
-tests, and full repository runs prove the contract.
+tests, and full repository runs prove the contract. Architecture tests also pin
+shared tool paths to the source-linked Jig boundary.

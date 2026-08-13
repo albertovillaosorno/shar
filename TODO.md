@@ -83,26 +83,12 @@ Remove obsolete files and workspace references.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/repository/remove-obsolete-files-and-workspace-references.mdc](docs/todo/open/repository/remove-obsolete-files-and-workspace-references.mdc)
 
-### TODO - Keep Jig source-linked from `.dependencies/jig/source`
-
-Keep Jig source-linked from `.dependencies/jig/source`.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/repository/keep-jig-source-linked-from-dependencies-jig-source.mdc](docs/todo/open/repository/keep-jig-source-linked-from-dependencies-jig-source.mdc)
-
 ### TODO - Complete the tracked `.jig/` policy, taxonomy, adapters, and projections
 
 Complete the tracked `.jig/` policy, taxonomy, adapters, and projections.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/repository/complete-the-tracked-jig-policy-taxonomy-adapters-and-projections.mdc](docs/todo/open/repository/complete-the-tracked-jig-policy-taxonomy-adapters-and-projections.mdc)
-
-### TODO - Document the local Jig installation and decide later whether CI is useful
-
-Document the local Jig installation and decide later whether CI is useful.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/repository/document-the-local-jig-installation-and-decide-later-whether-ci-is-useful.mdc](docs/todo/open/repository/document-the-local-jig-installation-and-decide-later-whether-ci-is-useful.mdc)
 
 ## P1 — Source extraction and deterministic conversion
 
