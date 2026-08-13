@@ -127,11 +127,11 @@ is never reconstruction input and it does not itself prove software is safe.
 
    **TODO: Make English the only canonical base language.**
 
-   Official French, German, Italian, and Spanish language mods are owned under
-   `src/mods/languages/` and are emitted as canonical mods in the final result,
-   not distributed as a separate conversion tool. Generation fails closed when
-   the lawful source installation has no actual translated content for a
-   selected language.
+   Official non-English localization is owned under `src/languages/` and is
+   emitted as canonical language mods in the final result. The Rust implementation
+   covers the complete language surface available in the lawful source: text,
+   dialogue/audio archives, localized UI art, and localized cinematic audio
+   tracks. Missing language content fails closed instead of being invented.
 
 1. Select any targets you want:
 
@@ -248,21 +248,26 @@ similarity.**
 
 ## How to install mods
 
-> **The base SHAR pipeline does not consume `game/mods/` anymore.** It builds the
-> pure faithful game. Mods are a later runtime/user-tool concern and must never
-> be silently injected into the base build. Jebano and Muckluck are converter
-> test cases only.
+This section is only for **native SHAR mods after SHAR is installed**. There is
+no user mod drop directory in this repository, and mods never participate in
+source reconstruction or the base-game pipeline.
 
-On desktop, go to the exported game's installation directory and place a SHAR
-mod **folder or `.zip`** inside:
+Desktop installations accept a SHAR mod as either a folder or `.zip` under the
+installed game's own:
 
 ```text
 mods/
 ```
 
-Android and iOS require platform-specific writable locations. Those exact paths
-will be documented only after the final application identities and packaged-device
-tests prove them; the README will not invent mobile paths in advance.
+Mobile installations use the installed app's writable container:
+
+```text
+Android: /storage/emulated/0/Android/data/<application-id>/files/mods/
+iOS:     /var/mobile/Containers/Data/Application/<app-uuid>/Documents/mods/
+```
+
+The Android application id and iOS container UUID belong to the installed app;
+the app resolves its own container at runtime.
 
 **TODO: Use one normalized portable mod import contract.**
 
@@ -276,6 +281,10 @@ shape; it does **not** force GPL or any other specific license on a mod author.
 
 > This authoring workflow is still WIP.
 
+> Made mods with LMLM and want to migrate them? See
+> [`tools/lmlm/`](tools/lmlm/README.md). I only built that starter converter for
+> the Jebano and Muckluck packages I needed; fork or extend it if you need more.
+
 Download the SHAR repository ZIP and open it with your preferred coding agent.
 Popular examples include Cursor, Antigravity, Codex, and Claude. `AGENTS.md` is
 intended to contain two clearly separated modes: technical repository/build
@@ -284,8 +293,8 @@ engineering and a **default SHAR mod-authoring personality**.
 Example prompts:
 
 ```text
-I am working on a mod. I converted an LMLM package, but some things are missing
-and some missions are broken.
+I am working on a mod. Some imported assets are missing and some missions are
+broken.
 ```
 
 A useful agent should explain that unsupported legacy behavior may not translate,
@@ -326,31 +335,6 @@ too short to turn syntax entry into a purity test.
 
 **TODO: Make `AGENTS.md` default to SHAR mod authoring and validate C++ with
 Clang.**
-
-## How to convert LMLM mods to SHAR
-
-> Converting an old LMLM mod? Use the separate [`tools/lmlm/`](tools/lmlm/README.md)
-> compatibility tool. Do not start a new project in LMLM; its legacy constraints
-> only add work that a native SHAR mod does not need.
-
-Legacy LMLM conversion is intentionally separate from the faithful base release.
-The compatibility tool lives in [`tools/lmlm/`](tools/lmlm/README.md) and is for
-recovering supported old mods into inspectable material that can be adapted to
-SHAR. It is not a recommended authoring environment and it is not part of the
-base game pipeline.
-
-The converter is Rust-only and documents the exact Rust version it requires. It
-does not install Rust, bootstrap a toolchain, auto-install a mod, or inject one
-into the game. It reuses SHAR's existing Rust format/foundation crates where
-possible and keeps LMLM-specific parsing and compatibility behavior inside the
-tool.
-
-The converter is deliberately conservative: Jebano and Muckluck are initial
-compatibility fixtures, not a promise that every historical LMLM package or
-behavior will translate automatically. Unsupported legacy behavior should remain
-visible so a mod author can recreate it intentionally with modern SHAR tools.
-
-**TODO: Convert decompilable LMLM mods into open SHAR mod packages.**
 
 ## How to build SHAR from scratch
 
