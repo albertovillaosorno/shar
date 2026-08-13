@@ -58,6 +58,11 @@ path = "../../../tests/foundation/filesystem/read_destination.rs"
 name = "trait_object_ports"
 path = "../../../tests/foundation/filesystem/trait_object_ports.rs"
 
+
+[[test]]
+name = "strict_tree_entries"
+path = "../../../tests/foundation/filesystem/strict_tree_entries.rs"
+
 [[test]]
 name = "tree_containment"
 path = "../../../tests/foundation/filesystem/tree_containment.rs"

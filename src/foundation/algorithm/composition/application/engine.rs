@@ -125,7 +125,7 @@ fn collect_one_root(
             Ok((canonical, vec![file]))
         }
         PathKind::Directory => {
-            let paths = local::regular_files(&canonical).map_err(|error| {
+            let paths = local::strict_regular_files(&canonical).map_err(|error| {
                 AlgorithmError::new(format!("cannot traverse input directory: {error}"))
             })?;
             let mut files = Vec::with_capacity(paths.len());
@@ -211,7 +211,7 @@ fn collect_target(
             vec![inspect_file(0, String::new(), canonical.clone(), settings)?],
         ),
         PathKind::Directory => {
-            let paths = local::regular_files(&canonical).map_err(|error| {
+            let paths = local::strict_regular_files(&canonical).map_err(|error| {
                 AlgorithmError::new(format!("cannot traverse target directory: {error}"))
             })?;
             let mut files = Vec::with_capacity(paths.len());

@@ -34,7 +34,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use crate::application::{
-    CollectRegularFiles, InspectPath, ReadFile, WriteFile,
+    CollectRegularFiles, CollectStrictRegularFiles, InspectPath, ReadFile, WriteFile,
 };
 use crate::domain::PathKind;
 use crate::std_filesystem::StdFilesystem;
@@ -71,11 +71,7 @@ pub fn read_optional_utf8(path: &Path) -> io::Result<Option<String>> {
 /// # Errors
 ///
 /// Returns the local provider I/O error.
-pub fn write_bytes(
-    path: &Path,
-    bytes: &[u8],
-    create_parents: bool,
-) -> io::Result<()> {
+pub fn write_bytes(path: &Path, bytes: &[u8], create_parents: bool) -> io::Result<()> {
     WriteFile::bytes(&StdFilesystem, path, bytes, create_parents)
 }
 
@@ -84,11 +80,7 @@ pub fn write_bytes(
 /// # Errors
 ///
 /// Returns the local provider I/O error.
-pub fn write_text(
-    path: &Path,
-    text: &str,
-    create_parents: bool,
-) -> io::Result<()> {
+pub fn write_text(path: &Path, text: &str, create_parents: bool) -> io::Result<()> {
     WriteFile::text(&StdFilesystem, path, text, create_parents)
 }
 
@@ -135,6 +127,16 @@ pub fn canonicalize(path: &Path) -> io::Result<PathBuf> {
 /// Returns the local provider I/O error when traversal fails.
 pub fn regular_files(root: &Path) -> io::Result<Vec<PathBuf>> {
     CollectRegularFiles::execute(&StdFilesystem, root)
+}
+
+/// Collects sorted regular files and rejects redirects or special entries.
+///
+/// # Errors
+///
+/// Returns the local provider I/O error when traversal or strict validation
+/// fails.
+pub fn strict_regular_files(root: &Path) -> io::Result<Vec<PathBuf>> {
+    CollectStrictRegularFiles::execute(&StdFilesystem, root)
 }
 
 #[cfg(test)]

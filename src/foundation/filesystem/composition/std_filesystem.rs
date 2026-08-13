@@ -51,11 +51,9 @@ fn reject_existing_link(path: &Path) -> io::Result<()> {
             } else {
                 Ok(())
             }
-        },
+        }
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
-        Err(source) => {
-            Err(with_path("inspect path link metadata", path, source))
-        },
+        Err(source) => Err(with_path("inspect path link metadata", path, source)),
     }
 }
 
@@ -107,9 +105,7 @@ impl FileWriter for StdFilesystem {
         reject_links_in_path(path)?;
         match fs::create_dir_all(path) {
             Ok(()) => Ok(()),
-            Err(source) => {
-                Err(with_path("create directory tree", path, source))
-            },
+            Err(source) => Err(with_path("create directory tree", path, source)),
         }
     }
 
@@ -127,12 +123,8 @@ impl PathInspector for StdFilesystem {
         reject_links_in_parents(path)?;
         match fs::symlink_metadata(path) {
             Ok(metadata) => Ok(path_kind_from_metadata(&metadata)),
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {
-                Ok(PathKind::Missing)
-            },
-            Err(source) => {
-                Err(with_path("inspect path metadata", path, source))
-            },
+            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(PathKind::Missing),
+            Err(source) => Err(with_path("inspect path metadata", path, source)),
         }
     }
 
@@ -142,7 +134,7 @@ impl PathInspector for StdFilesystem {
             Ok(metadata) => metadata,
             Err(source) => {
                 return Err(with_path("inspect file metadata", path, source));
-            },
+            }
         };
         if !metadata.is_file() {
             return Err(invalid_input(
@@ -162,71 +154,80 @@ impl PathInspector for StdFilesystem {
     }
 }
 
-impl TreeReader for StdFilesystem {
-    #[expect(
-        clippy::filetype_is_file,
-        // jig-ignore-next-line: exact syntax is indivisible
-        reason = "Traversal accepts regular files only and intentionally ignores symlinks and special entries"
-    )]
-    fn regular_files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
-        reject_links_in_path(root)?;
-        let root_metadata = match fs::symlink_metadata(root) {
-            Ok(metadata) => metadata,
-            Err(source) => {
-                return Err(with_path("inspect traversal root", root, source));
-            },
-        };
-        let root_type = root_metadata.file_type();
-        if root_type.is_symlink() || !root_type.is_dir() {
-            return Err(invalid_input(
-                "inspect traversal root",
-                root,
-                "traversal root must be a real directory",
-            ));
+#[expect(
+    clippy::filetype_is_file,
+    reason = "Strict traversal must distinguish regular files from redirects and special entries."
+)]
+fn collect_regular_files(root: &Path, strict: bool) -> io::Result<Vec<PathBuf>> {
+    reject_links_in_path(root)?;
+    let root_metadata = match fs::symlink_metadata(root) {
+        Ok(metadata) => metadata,
+        Err(source) => {
+            return Err(with_path("inspect traversal root", root, source));
         }
-        let mut pending = vec![root.to_path_buf()];
-        let mut files = Vec::new();
-        while let Some(directory) = pending.pop() {
-            let entries = match fs::read_dir(&directory) {
-                Ok(entries) => entries,
+    };
+    let root_type = root_metadata.file_type();
+    if root_type.is_symlink() || !root_type.is_dir() {
+        return Err(invalid_input(
+            "inspect traversal root",
+            root,
+            "traversal root must be a real directory",
+        ));
+    }
+    let mut pending = vec![root.to_path_buf()];
+    let mut files = Vec::new();
+    while let Some(directory) = pending.pop() {
+        let entries = match fs::read_dir(&directory) {
+            Ok(entries) => entries,
+            Err(source) => {
+                return Err(with_path("read directory", &directory, source));
+            }
+        };
+        for entry_result in entries {
+            let entry = match entry_result {
+                Ok(entry) => entry,
                 Err(source) => {
-                    return Err(with_path(
-                        "read directory",
-                        &directory,
-                        source,
-                    ));
-                },
-            };
-            for entry_result in entries {
-                let entry = match entry_result {
-                    Ok(entry) => entry,
-                    Err(source) => {
-                        return Err(with_path(
-                            "read directory entry",
-                            &directory,
-                            source,
-                        ));
-                    },
-                };
-                let path = entry.path();
-                let file_type = match entry.file_type() {
-                    Ok(file_type) => file_type,
-                    Err(source) => {
-                        return Err(with_path(
-                            "inspect directory entry",
-                            &path,
-                            source,
-                        ));
-                    },
-                };
-                if file_type.is_dir() {
-                    pending.push(path);
-                } else if file_type.is_file() {
-                    files.push(path);
+                    return Err(with_path("read directory entry", &directory, source));
                 }
+            };
+            let path = entry.path();
+            let file_type = match entry.file_type() {
+                Ok(file_type) => file_type,
+                Err(source) => {
+                    return Err(with_path("inspect directory entry", &path, source));
+                }
+            };
+            if file_type.is_symlink() {
+                if strict {
+                    return Err(invalid_input(
+                        "validate strict traversal entry",
+                        &path,
+                        "strict traversal rejects redirects and special entries",
+                    ));
+                }
+            } else if file_type.is_dir() {
+                pending.push(path);
+            } else if file_type.is_file() {
+                files.push(path);
+            } else if strict {
+                return Err(invalid_input(
+                    "validate strict traversal entry",
+                    &path,
+                    "strict traversal rejects redirects and special entries",
+                ));
             }
         }
-        files.sort();
-        Ok(files)
+    }
+    files.sort();
+    Ok(files)
+}
+
+impl TreeReader for StdFilesystem {
+    fn regular_files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
+        collect_regular_files(root, false)
+    }
+
+    fn strict_regular_files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
+        collect_regular_files(root, true)
     }
 }

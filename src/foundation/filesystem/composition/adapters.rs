@@ -40,9 +40,8 @@ pub mod driving {
     /// Local filesystem operations backed by the standard provider.
     pub mod local {
         pub use crate::local::{
-            canonicalize, create_dir_all, file_len, path_kind, read_bytes,
-            read_optional_utf8, read_utf8, regular_files, write_bytes,
-            write_text,
+            canonicalize, create_dir_all, file_len, path_kind, read_bytes, read_optional_utf8,
+            read_utf8, regular_files, strict_regular_files, write_bytes, write_text,
         };
     }
 }
