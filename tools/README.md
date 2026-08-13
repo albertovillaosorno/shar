@@ -14,7 +14,7 @@ Does not own source crates, generated artifacts, or local dependencies.
 
 ## Navigation
 
-- [`lmlm/`](lmlm/) is the standalone Python compatibility boundary for users
+- [`lmlm/`](lmlm/) is the Rust-only LMLM compatibility boundary (Rust 1.97.1) for users
   who explicitly choose to inspect or convert supported legacy LMLM mods.
 - [`language-mods/`](language-mods/) exports original non-English official
   localization evidence into deterministic source bundles outside the base.

@@ -1,7 +1,5 @@
 # SHAR
 
-<!-- CSpell:ignore apk ipa ios Paks resumability sideload uninst -->
-
 SHAR rebuilds a lawful local copy of *The Simpsons: Hit & Run* as a native
 Unreal Engine game. This repository does not include the original game or its
 assets.
@@ -273,40 +271,6 @@ you package. SHAR mods are intended to stay inspectable: assets and source are
 not intentionally locked or obfuscated. “Inspectable/open” describes the package
 shape; it does **not** force GPL or any other specific license on a mod author.
 
-## How to convert LMLM mods to SHAR
-
-> **Never start a new mod in LMLM.** Its legacy limitations will constrain your
-> creativity and make complex work harder. Start new mods directly for SHAR so
-> you can use the broader modern toolset instead.
-
-Legacy conversion is intentionally separate from the faithful base release.
-Anyone who wants it downloads the standalone Python directory:
-
-```text
-tools/lmlm/
-```
-
-Run `python main.py inspect <mod.lmlm>` for read-only validation or
-`python main.py convert <mod.lmlm> <output>` to create an inspectable open
-conversion workspace. The current converter extracts recoverable content and
-records SHA-256 provenance; final SHAR-package adaptation remains gated on the
-mod-package schema instead of pretending every legacy behavior translates.
-
-The default converter policy is:
-
-```text
-decompilable-mods-only=true
-```
-
-This is a local converter policy. If a user changes that policy, the resulting
-conversion choice and its legal, licensing, and redistribution consequences are
-the user's responsibility. The converter will initially be tested with the
-Jebano and Muckluck mods; that does **not** mean all LMLM mods are supported or
-that SHAR will maintain custom conversion logic for every legacy package.
-Community conversion tools are welcome.
-
-**TODO: Convert decompilable LMLM mods into open SHAR mod packages.**
-
 ## How to make mods — coding or no coding, it does not matter
 
 > This authoring workflow is still WIP.
@@ -344,13 +308,48 @@ wrong, and what you want changed. Repository skills provide the technical game
 and Unreal knowledge so the agent does not have to rediscover every convention.
 
 Native mod code is C++. Published source should pass the same strict
-Clang-family validation expected by SHAR. If you want to write a mod by hand
-**for some reason**, you can; source is still source. A package may physically
-exist without a clean lint result, but the tooling must report that clearly and
-agents should produce clean code by default.
+Clang-family validation expected by SHAR. Write it by hand, generate parts of it,
+or work through AI agents: the important engineering work is the architecture,
+contracts, invariants, problem modeling, testing, and the result—not how many
+tokens were entered manually. A package may physically exist without a clean
+lint result, but the tooling must report that clearly and agents should produce
+clean code by default.
+
+If somebody calls a mod “slop” or says it lacks soul merely because automation or
+AI helped make it, that is not a useful engineering criterion. Make things you
+enjoy, learn from the bugs you create, fix them, and iterate. Manual coding is a
+perfectly valid craft; it is simply one execution mechanism among many. SHAR is
+interested in what a mod does, how safely and coherently it is built, and whether
+its author had fun creating it—not in gatekeeping the author’s keyboard. Life is
+too short to turn syntax entry into a purity test.
 
 **TODO: Make `AGENTS.md` default to SHAR mod authoring and validate C++ with
 Clang.**
+
+## How to convert LMLM mods to SHAR
+
+> Converting an old LMLM mod? Use the separate [`tools/lmlm/`](tools/lmlm/README.md)
+> compatibility tool. Do not start a new project in LMLM; its legacy constraints
+> only add work that a native SHAR mod does not need.
+
+Legacy LMLM conversion is intentionally separate from the faithful base release.
+The compatibility tool lives in [`tools/lmlm/`](tools/lmlm/README.md) and is for
+recovering supported old mods into inspectable material that can be adapted to
+SHAR. It is not a recommended authoring environment and it is not part of the
+base game pipeline.
+
+The converter is Rust-only and documents the exact Rust version it requires. It
+does not install Rust, bootstrap a toolchain, auto-install a mod, or inject one
+into the game. It reuses SHAR's existing Rust format/foundation crates where
+possible and keeps LMLM-specific parsing and compatibility behavior inside the
+tool.
+
+The converter is deliberately conservative: Jebano and Muckluck are initial
+compatibility fixtures, not a promise that every historical LMLM package or
+behavior will translate automatically. Unsupported legacy behavior should remain
+visible so a mod author can recreate it intentionally with modern SHAR tools.
+
+**TODO: Convert decompilable LMLM mods into open SHAR mod packages.**
 
 ## How to build SHAR from scratch
 
@@ -413,3 +412,5 @@ Screenshots will be added after the final player GUI and output layout stop
 moving.
 
 **TODO: Add final player-facing README screenshots.**
+
+<!-- CSpell:ignore apk ipa ios Paks resumability sideload uninst -->

@@ -428,8 +428,8 @@ in place, selects targets, and writes only to its own workspace and `dist/`.
 
 ### TODO - Convert decompilable LMLM mods into open SHAR mod packages
 
-Keep legacy conversion under the separately downloadable `tools/lmlm/` Python
-boundary, tested first on Jebano/Muckluck inputs and never injected into base.
+Keep legacy conversion under the Rust-only `tools/lmlm/` boundary (Rust 1.97.1),
+tested first on Jebano/Muckluck inputs and never treated as base-game source.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/mods/convert-decompilable-lmlm-mods-into-open-shar-mod-packages.mdc](docs/todo/open/mods/convert-decompilable-lmlm-mods-into-open-shar-mod-packages.mdc)
