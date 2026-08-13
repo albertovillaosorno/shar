@@ -32,7 +32,7 @@
 
 from __future__ import annotations
 
-# ruff: noqa: EM101, PLC0415, PLR6301, TRY003
+# ruff: noqa: PLC0415
 import hashlib
 import json
 from pathlib import Path
@@ -205,13 +205,15 @@ def test_cli_plan_apply_completes_one_texture_over_streamable_http(
 ) -> None:
     source_bytes = b"synthetic-texture-source"
     source_revision = hashlib.sha256(source_bytes).hexdigest()
-    plan_root = tmp_path / "unreal-staging" / "plans"
+    plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
     _ = write_plan_bundle(
         plan_root,
         with_texture_operation=True,
         texture_source_revision=source_revision,
     )
-    source = tmp_path / "extracted" / "texture" / "image.png"
+    source = (
+        tmp_path / ".cache" / "pipeline" / "extracted" / "texture" / "image.png"
+    )
     source.parent.mkdir(parents=True)
     source.write_bytes(source_bytes)
     monkeypatch.chdir(tmp_path)
@@ -265,13 +267,15 @@ def test_cli_plan_apply_completes_one_static_mesh_over_streamable_http(
 ) -> None:
     source_bytes = b"Kaydara FBX Binary synthetic-static-source"
     source_revision = hashlib.sha256(source_bytes).hexdigest()
-    plan_root = tmp_path / "unreal-staging" / "plans"
+    plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
     _ = write_plan_bundle(
         plan_root,
         with_static_mesh_operation=True,
         static_mesh_source_revision=source_revision,
     )
-    source = tmp_path / "fbx-assets" / "static" / "model.fbx"
+    source = (
+        tmp_path / ".cache" / "pipeline" / "fbx-assets" / "static" / "model.fbx"
+    )
     source.parent.mkdir(parents=True)
     source.write_bytes(source_bytes)
     monkeypatch.chdir(tmp_path)
@@ -322,13 +326,20 @@ def test_cli_plan_apply_completes_one_skeletal_mesh_with_companion_over_http(
 ) -> None:
     source_bytes = b"Kaydara FBX Binary synthetic-skeletal-source"
     source_revision = hashlib.sha256(source_bytes).hexdigest()
-    plan_root = tmp_path / "unreal-staging" / "plans"
+    plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
     _ = write_plan_bundle(
         plan_root,
         with_skeletal_mesh_operation=True,
         skeletal_mesh_source_revision=source_revision,
     )
-    source = tmp_path / "fbx-assets" / "skeletal" / "model.fbx"
+    source = (
+        tmp_path
+        / ".cache"
+        / "pipeline"
+        / "fbx-assets"
+        / "skeletal"
+        / "model.fbx"
+    )
     source.parent.mkdir(parents=True)
     source.write_bytes(source_bytes)
     monkeypatch.chdir(tmp_path)
@@ -389,13 +400,15 @@ def test_cli_plan_apply_completes_one_sound_wave_over_streamable_http(
 ) -> None:
     source_bytes = b"RIFF-synthetic-wave-source"
     source_revision = hashlib.sha256(source_bytes).hexdigest()
-    plan_root = tmp_path / "unreal-staging" / "plans"
+    plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
     _ = write_plan_bundle(
         plan_root,
         with_import_operation=True,
         import_source_revision=source_revision,
     )
-    source = tmp_path / "extracted" / "dialog" / "audio.wav"
+    source = (
+        tmp_path / ".cache" / "pipeline" / "extracted" / "dialog" / "audio.wav"
+    )
     source.parent.mkdir(parents=True)
     source.write_bytes(source_bytes)
     monkeypatch.chdir(tmp_path)
@@ -445,13 +458,21 @@ def test_cli_plan_apply_completes_one_file_media_source_over_http(
 ) -> None:
     source_bytes = b"synthetic-hap-mov-source"
     source_revision = hashlib.sha256(source_bytes).hexdigest()
-    plan_root = tmp_path / "unreal-staging" / "plans"
+    plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
     _ = write_plan_bundle(
         plan_root,
         with_media_operation=True,
         media_source_revision=source_revision,
     )
-    source = tmp_path / "extracted" / "movies" / "intro" / "movie.mov"
+    source = (
+        tmp_path
+        / ".cache"
+        / "pipeline"
+        / "extracted"
+        / "movies"
+        / "intro"
+        / "movie.mov"
+    )
     source.parent.mkdir(parents=True)
     source.write_bytes(source_bytes)
     monkeypatch.chdir(tmp_path)
