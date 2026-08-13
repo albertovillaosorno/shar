@@ -1,0 +1,37 @@
+---
+schema: shar.todo.v1
+id: update-stale-paths-in-documentation-tests-manifests-and-commands
+status: completed
+priority: P0
+lane: repository
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Update stale paths in documentation, tests, manifests, and commands
+
+Update stale paths in documentation, tests, manifests, and commands.
+
+## Acceptance criteria
+
+- [x] Update stale paths in documentation, tests, manifests, and commands.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+A repository path-integrity guard now checks every `function.yml` identity path
+against its actual directory and validates repository-relative Markdown links in
+`README.md`, `TODO.md`, and all `docs/**/*.md`/`*.mdc` files. The current audit
+finds 15/15 function identities synchronized and zero missing relative Markdown
+targets.
+
+Current authority was also searched for retired paths from the language, LMLM,
+VWJ, icon, and repository-root mod transitions. No stale active reference remains;
+historical completed TODO evidence may still name retired paths to explain what
+was removed. Future stale path changes fail the architecture tests instead of
+relying on a manual cleanup sweep.
