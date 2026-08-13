@@ -22,7 +22,7 @@ empirically before code uses them.
 
 ## Acceptance criteria
 
-- [ ] Specify what “100% installation”, “minimum installation”, and “similarity”
+- [x] Specify what “100% installation”, “minimum installation”, and “similarity”
   mean in measurable, content-safe terms before choosing a production metric;
   treat the current ~60% minimum-installation estimate as planning only.
 - [ ] Do not generate `build.txt` by serializing, full-tree diffing, or otherwise
@@ -50,5 +50,20 @@ serialization design.
 
 ## Evidence
 
-The ~60% minimum-installation estimate and 45–55% similarity window are current
-design targets, not validated production evidence and not legal conclusions.
+`docs/technical/security/public-safe-reconstruction-gate.md` now defines the
+100% reference, minimum installation, reference coverage, and a candidate
+weighted-Jaccard similarity metric in content-safe count-vector terms. The
+private reference contributes aggregate obfuscated directory/extension counts,
+not payload bytes, file names, or a reversible full-tree recipe.
+
+`tools/source-similarity/main.py` implements only evidence measurement using
+exact rational arithmetic. Four stdlib tests cover complete, missing, extra,
+and invalid vectors and prove the evidence object has no admission result. No
+45–55% threshold exists in that code. The technical contract also pins the
+read-only source boundary, `build.txt` publication restrictions, and the rule
+that similarity cannot substitute for any hard source gate.
+
+The ~60% minimum-installation estimate and 45–55% similarity window remain
+design targets, not validated production evidence, legal conclusions, or safe
+harbors. The task remains open for representative-install calibration and final
+algorithm serialization/admission integration.
