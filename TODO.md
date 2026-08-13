@@ -15,14 +15,6 @@ labels belong here.
 
 ## P0 — Authority and repository governance
 
-### TODO - Implement a generic configurable Rust algorithm creator and replayer
-
-Create one source-agnostic Rust foundation tool that records source-bound
-reconstruction algorithms as durable `.txt` data and replays them safely.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/security/implement-a-generic-configurable-rust-algorithm-creator-and-replayer.mdc](docs/todo/open/security/implement-a-generic-configurable-rust-algorithm-creator-and-replayer.mdc)
-
 ### TODO - Make English the only canonical base language
 
 Require English for the base game and export every other supported official
