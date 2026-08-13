@@ -123,6 +123,20 @@ def _metadata_scalar(function_file: Path, section: str, key: str) -> str | None:
     return None
 
 
+def _exact_ignored_directories() -> set[str]:
+    """Return exact root-relative directory ignores, excluding pattern rules."""
+    ignored: set[str] = set()
+    for raw_line in (_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(("#", "!")):
+            continue
+        candidate = line.removeprefix("/").removesuffix("/")
+        if not candidate or any(token in candidate for token in ("*", "?", "[")):
+            continue
+        ignored.add(candidate)
+    return ignored
+
+
 def _declared_kinds(function_file: Path) -> list[str]:
     """Read the architecture.kinds sequence from function.yml."""
     lines = function_file.read_text(encoding="utf-8").splitlines()
@@ -173,10 +187,13 @@ def test_function_metadata_matches_canonical_route_and_kinds() -> None:
         declared_domain = _metadata_scalar(function_file, "identity", "domain")
         route = _metadata_scalar(function_file, "architecture", "route")
         declared_kinds = sorted(_declared_kinds(function_file))
+        ignored_directories = _exact_ignored_directories()
         physical_kinds = sorted(
             path.name
             for path in function_root.iterdir()
-            if path.is_dir() and not path.name.startswith(".")
+            if path.is_dir()
+            and not path.name.startswith(".")
+            and path.relative_to(_ROOT).as_posix() not in ignored_directories
         )
         if declared_path != relative:
             mismatches.append(f"{relative}: identity.path={declared_path!r}")
