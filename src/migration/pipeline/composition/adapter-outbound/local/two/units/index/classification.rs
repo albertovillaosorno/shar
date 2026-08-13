@@ -52,7 +52,6 @@ pub(in super::super) enum PackageCategory {
     /// UI vehicle preview packages.
     UiVehiclePreviews,
     /// UI component packages.
-    UiComponents,
     /// Language and localization packages.
     Language,
     /// Non-interactive sequence or cinematic art packages.
@@ -95,7 +94,6 @@ impl PackageCategory {
             Self::UiImages => "ui-images",
             Self::UiResources => "ui-resources",
             Self::UiVehiclePreviews => "ui-vehicle-previews",
-            Self::UiComponents => "ui-components",
             Self::Language => "language",
             Self::Cinematics => "cinematics",
             Self::Music => "music",
@@ -362,12 +360,6 @@ fn dialog_subcategory(package_root: &str) -> Option<String> {
     if let Some(character) = root.strip_prefix("extracted/dialog/") {
         return Some(format!("dialog/{}/ad-lib", speaker_name(character)));
     }
-    if let Some(character) = root.strip_prefix("extracted/lmlm/customfiles/") {
-        return Some(format!(
-            "dialog/{}/mod-override",
-            speaker_name(character)
-        ));
-    }
     None
 }
 
@@ -443,9 +435,6 @@ fn script_subcategory(package_root: &str) -> Option<String> {
 /// classification boundary.
 fn language_subcategory(package_root: &str) -> Option<String> {
     let root = package_root.to_ascii_lowercase();
-    if root.starts_with("extracted/lmlm/customtext") {
-        return Some("language/mod-overrides".to_owned());
-    }
     if root.ends_with("/language") || root.contains("/language/") {
         if root.contains("/scrooby2/") {
             return Some("language/ui-text/scene-layouts".to_owned());
@@ -583,7 +572,6 @@ pub(in super::super) fn category_from_root(
         PackageCategory::UiResources
     } else if root.ends_with("/language")
         || root.contains("/language/")
-        || root.starts_with("extracted/lmlm/customtext")
     {
         PackageCategory::Language
     } else if root.starts_with("extracted/art/frontend/scrooby/")
@@ -592,8 +580,6 @@ pub(in super::super) fn category_from_root(
         || root.starts_with("extracted/game/art/frontend/scrooby2")
     {
         PackageCategory::UiScreens
-    } else if root == "extracted/lmlm" {
-        PackageCategory::UiComponents
     } else if root.starts_with("extracted/art/missions/") {
         PackageCategory::Missions
     } else if root == "extracted/art/cards"
@@ -606,13 +592,9 @@ pub(in super::super) fn category_from_root(
         PackageCategory::Cinematics
     } else if root.starts_with("extracted/music") {
         PackageCategory::Music
-    } else if root.starts_with("extracted/dialog")
-        || root.starts_with("extracted/lmlm/customfiles/")
-    {
+    } else if root.starts_with("extracted/dialog") {
         PackageCategory::Dialog
-    } else if root.starts_with("extracted/movies/")
-        || root.starts_with("extracted/lmlm/movies/")
-    {
+    } else if root.starts_with("extracted/movies/") {
         PackageCategory::Movies
     } else if root == "extracted/game/scripts/cars"
         || root.starts_with("extracted/game/scripts/cars/")

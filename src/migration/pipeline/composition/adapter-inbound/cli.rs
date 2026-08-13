@@ -61,10 +61,9 @@ mod options;
 const USAGE: &str = concat!(
     "usage: pipeline active | pipeline cancel <run-id|all> | pipeline ",
     "extract-game|extract-game-resume|export-movies|",
-    "export-lmlm|manifest-minor-units|",
+    "manifest-minor-units|",
     "metadata-fill-minor-units|edit-minor-unit-metadata|",
-    "index-minor-units|audit-minor-units|prepare-unreal|",
-    "preview-optional-mods|dry-run-optional-mods ",
+    "index-minor-units|audit-minor-units|prepare-unreal ",
     "[game-root] [extracted-root] | ",
     "plan-fbx-package [index-jsonl] [selector] [output-dir] | ",
     "fbx-export-catalog [index-jsonl] [output-dir] [base-root] | ",
@@ -82,7 +81,6 @@ const USAGE: &str = concat!(
     "[--embed-textures (legacy compatibility)] ",
     "[--verbosity detailed|minimal] ",
     "[--log <path>|--no-log] ",
-    "[--approve-optional-mods <preview-token>] ",
     "[--run-label <portable-label>] [--allow-concurrent]",
 );
 
@@ -124,24 +122,8 @@ impl CliProgram for PipelineCli {
                 "invalid arguments: --embed-textures requires fbx-export",
             );
         }
-        if parsed.optional_mod_approval.is_some()
-            && !command_accepts_optional_mod_approval(command)
-        {
-            return CommandOutcome::failure().stderr_line(concat!(
-                "invalid arguments: --approve-optional-mods requires ",
-                "extract-game, extract-game-resume, or export-lmlm"
-            ));
-        }
         run_registered_command(command, &parsed)
     }
-}
-
-/// Returns whether one command may apply approved optional packages.
-fn command_accepts_optional_mod_approval(command: &str) -> bool {
-    matches!(
-        command,
-        "extract-game" | "extract-game-resume" | "export-lmlm"
-    )
 }
 
 /// List every active pipeline process with progress and timing evidence.
@@ -224,9 +206,6 @@ fn dispatch_known_command(
     command: &str,
     parsed: &ParsedArguments,
 ) -> CommandOutcome {
-    if matches!(command, "preview-optional-mods" | "dry-run-optional-mods") {
-        return run_optional_mod_preview(&parsed.positionals);
-    }
     if command == "plan-fbx-package" {
         return run_fbx_manifest(&parsed.positionals);
     }
@@ -265,11 +244,7 @@ fn dispatch_known_command(
             },
         );
     }
-    run_pipeline_command(
-        command,
-        &parsed.positionals,
-        parsed.optional_mod_approval.clone(),
-    )
+    run_pipeline_command(command, &parsed.positionals)
 }
 
 /// Render one blocked start with active-run evidence and safe next commands.
@@ -320,15 +295,12 @@ fn is_known_command(command: &str) -> bool {
         "extract-game"
             | "extract-game-resume"
             | "export-movies"
-            | "export-lmlm"
             | "manifest-minor-units"
             | "metadata-fill-minor-units"
             | "edit-minor-unit-metadata"
             | "index-minor-units"
             | "audit-minor-units"
             | "prepare-unreal"
-            | "preview-optional-mods"
-            | "dry-run-optional-mods"
             | "plan-fbx-package"
             | "fbx-export-catalog"
             | "fbx-export-characters"
@@ -365,38 +337,8 @@ fn default_extracted_root(
     Ok(PathBuf::from(EXTRACTED_WORKSPACE_ROOT))
 }
 
-/// Previews supported optional packages without extraction writes.
-fn run_optional_mod_preview(arguments: &[String]) -> CommandOutcome {
-    if let Some(outcome) = reject_extra_positionals(arguments, 2) {
-        return outcome;
-    }
-    let game_root = arguments
-        .first()
-        .map_or_else(|| PathBuf::from("game"), PathBuf::from);
-    let extracted_root = match default_extracted_root(arguments.get(1)) {
-        Ok(root) => root,
-        Err(error) => {
-            return CommandOutcome::failure()
-                .stderr_line(format!("optional-mod preview failed: {error}"));
-        },
-    };
-    let provider = LocalPipeline;
-    let application = PipelineService::new(&provider);
-    match application.preview_optional_mods(&game_root, &extracted_root) {
-        Ok(preview) => {
-            CommandOutcome::success().stdout_line(preview.json().to_owned())
-        }
-        Err(error) => CommandOutcome::failure()
-            .stderr_line(format!("optional-mod preview failed: {error}")),
-    }
-}
-
 /// Runs one command that uses the standard game and extracted roots.
-fn run_pipeline_command(
-    command: &str,
-    arguments: &[String],
-    optional_mod_approval: Option<String>,
-) -> CommandOutcome {
+fn run_pipeline_command(command: &str, arguments: &[String]) -> CommandOutcome {
     if let Some(outcome) = reject_extra_positionals(arguments, 2) {
         return outcome;
     }
@@ -433,13 +375,11 @@ fn run_pipeline_command(
         game_root,
         extracted_root,
         clean_extracted: command == "extract-game",
-        optional_mod_approval,
     };
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
     let result = match command {
         "export-movies" => application.export_movies(&config),
-        "export-lmlm" => application.export_lmlm(&config),
         "manifest-minor-units" => {
             one_stage(application.manifest_minor_units(
                 &config.game_root,

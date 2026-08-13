@@ -43,47 +43,6 @@ static CASE_ID: AtomicUsize = AtomicUsize::new(0);
 type TestResult = Result<(), String>;
 
 #[test]
-fn partial_lmlm_recovery_precedes_package_approval() -> TestResult {
-    let root = case_root("partial-lmlm-recovery-before-approval");
-    prepare_root(&root)?;
-    let game_root = root.join("game");
-    let mods_root = game_root.join("mods");
-    let extracted_root = root.join("extracted");
-    fs::create_dir_all(&mods_root).map_err(|error| error.to_string())?;
-    fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
-    fs::write(mods_root.join("m.lmlm"), b"fixture")
-        .map_err(|error| error.to_string())?;
-    let sentinel = extracted_root.join("accepted.txt");
-    fs::write(&sentinel, b"accepted").map_err(|error| error.to_string())?;
-    let paths = transaction_paths(&extracted_root)?;
-    write_transaction_state(&paths.state)?;
-    fs::rename(&extracted_root, &paths.backup)
-        .map_err(|error| error.to_string())?;
-    fs::create_dir_all(&paths.staging).map_err(|error| error.to_string())?;
-    fs::write(paths.staging.join("partial.txt"), b"partial")
-        .map_err(|error| error.to_string())?;
-    let config = PipelineConfig {
-        game_root,
-        extracted_root: extracted_root.clone(),
-        clean_extracted: true,
-        optional_mod_approval: None,
-    };
-
-    let error = match ExtractGameAssets::export_lmlm_only(&config) {
-        Ok(_report) => {
-            return Err("unapproved partial package export passed".to_owned());
-        }
-        Err(error) => error.to_string(),
-    };
-    if !error.contains("approval token") {
-        return Err(format!("unexpected package approval error: {error}"));
-    }
-    require_restored_accepted_output(&extracted_root, &sentinel)?;
-    require_transaction_absent(&extracted_root)?;
-    fs::remove_dir_all(root).map_err(|error| error.to_string())
-}
-
-#[test]
 fn partial_export_respects_active_full_transaction_lease() -> TestResult {
     let root = case_root("partial-export-active-lease");
     prepare_root(&root)?;
@@ -99,7 +58,6 @@ fn partial_export_respects_active_full_transaction_lease() -> TestResult {
         game_root,
         extracted_root: extracted_root.clone(),
         clean_extracted: true,
-        optional_mod_approval: None,
     };
 
     let error = match ExtractGameAssets::export_movies_only(&config) {
@@ -141,7 +99,6 @@ fn partial_export_recovers_interrupted_full_transaction() -> TestResult {
         game_root,
         extracted_root: extracted_root.clone(),
         clean_extracted: true,
-        optional_mod_approval: None,
     };
 
     let error = match ExtractGameAssets::export_movies_only(&config) {
@@ -173,7 +130,6 @@ fn partial_export_rejects_symlinked_parent_prefix() -> TestResult {
         game_root,
         extracted_root,
         clean_extracted: true,
-        optional_mod_approval: None,
     };
 
     let error = match ExtractGameAssets::export_movies_only(&config) {
@@ -293,7 +249,6 @@ fn failed_clean_and_resume_runs_preserve_accepted_output() -> TestResult {
             game_root,
             extracted_root: extracted_root.clone(),
             clean_extracted,
-            optional_mod_approval: None,
         };
 
         let error = match ExtractGameAssets::run(&config) {
@@ -302,7 +257,7 @@ fn failed_clean_and_resume_runs_preserve_accepted_output() -> TestResult {
             }
             Err(error) => error.to_string(),
         };
-        if !error.contains("manifest.jsonl") {
+        if !error.contains("manifest/game.jsonl") {
             return Err(format!("unexpected staged extraction error: {error}"));
         }
         let bytes = fs::read(&sentinel).map_err(|error| error.to_string())?;
@@ -313,98 +268,6 @@ fn failed_clean_and_resume_runs_preserve_accepted_output() -> TestResult {
         fs::remove_dir_all(root).map_err(|error| error.to_string())?;
     }
     Ok(())
-}
-
-#[test]
-fn recovery_precedes_optional_package_approval() -> TestResult {
-    let root = case_root("recovery-before-approval");
-    prepare_root(&root)?;
-    let game_root = root.join("game");
-    let mods_root = game_root.join("mods");
-    let extracted_root = root.join("extracted");
-    fs::create_dir_all(&mods_root).map_err(|error| error.to_string())?;
-    fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
-    fs::write(mods_root.join("m.lmlm"), b"fixture")
-        .map_err(|error| error.to_string())?;
-    let sentinel = extracted_root.join("accepted.txt");
-    fs::write(&sentinel, b"accepted").map_err(|error| error.to_string())?;
-    let paths = transaction_paths(&extracted_root)?;
-    write_transaction_state(&paths.state)?;
-    fs::rename(&extracted_root, &paths.backup)
-        .map_err(|error| error.to_string())?;
-    fs::create_dir_all(&paths.staging).map_err(|error| error.to_string())?;
-    fs::write(paths.staging.join("partial.txt"), b"partial")
-        .map_err(|error| error.to_string())?;
-    let config = PipelineConfig {
-        game_root,
-        extracted_root: extracted_root.clone(),
-        clean_extracted: false,
-        optional_mod_approval: None,
-    };
-
-    let error = match ExtractGameAssets::run(&config) {
-        Ok(_report) => return Err("unapproved package resumed".to_owned()),
-        Err(error) => error.to_string(),
-    };
-    if !error.contains("approval token") {
-        return Err(format!("unexpected approval error: {error}"));
-    }
-    require_restored_accepted_output(&extracted_root, &sentinel)?;
-    require_transaction_absent(&extracted_root)?;
-    fs::remove_dir_all(root).map_err(|error| error.to_string())
-}
-
-#[test]
-fn recovery_precedes_resume_package_continuity() -> TestResult {
-    let root = case_root("recovery-before-continuity");
-    prepare_root(&root)?;
-    let game_root = root.join("game");
-    let extracted_root = root.join("extracted");
-    let lmlm_root = extracted_root.join("lmlm");
-    fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
-    fs::create_dir_all(&lmlm_root).map_err(|error| error.to_string())?;
-    let sentinel = extracted_root.join("accepted.txt");
-    fs::write(&sentinel, b"accepted").map_err(|error| error.to_string())?;
-    fs::write(
-        lmlm_root.join("manifest.json"),
-        format!(
-            concat!(
-                "{{\"schema\":",
-                "\"shar-schoenwald.optional-mod-extract.v3\",",
-                "\"approval_token\":\"{}\"}}"
-            ),
-            "a".repeat(64)
-        ),
-    )
-    .map_err(|error| error.to_string())?;
-    let paths = transaction_paths(&extracted_root)?;
-    fs::write(
-        &paths.state,
-        b"{\"schema\":\"shar-schoenwald.extraction-transaction.v1\"}\n",
-    )
-    .map_err(|error| error.to_string())?;
-    fs::rename(&extracted_root, &paths.backup)
-        .map_err(|error| error.to_string())?;
-    fs::create_dir_all(&paths.staging).map_err(|error| error.to_string())?;
-    fs::write(paths.staging.join("partial.txt"), b"partial")
-        .map_err(|error| error.to_string())?;
-    let config = PipelineConfig {
-        game_root,
-        extracted_root: extracted_root.clone(),
-        clean_extracted: false,
-        optional_mod_approval: None,
-    };
-
-    let error = match ExtractGameAssets::run(&config) {
-        Ok(_report) => return Err("removed package set resumed".to_owned()),
-        Err(error) => error.to_string(),
-    };
-    if !error.contains("optional package set changed") {
-        return Err(format!("unexpected continuity error: {error}"));
-    }
-    require_restored_accepted_output(&extracted_root, &sentinel)?;
-    require_transaction_absent(&extracted_root)?;
-    fs::remove_dir_all(root).map_err(|error| error.to_string())
 }
 
 fn write_transaction_state(path: &Path) -> TestResult {

@@ -41,8 +41,6 @@ pub struct PipelineConfig {
     pub extracted_root: PathBuf,
     /// Whether existing extracted output is removed before execution.
     pub clean_extracted: bool,
-    /// Exact preview token approved for optional package application.
-    pub optional_mod_approval: Option<String>,
 }
 
 /// Complete ordered report for one pipeline execution.

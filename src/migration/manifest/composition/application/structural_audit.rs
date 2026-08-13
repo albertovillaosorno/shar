@@ -44,7 +44,6 @@ const IGNORED_EXTENSIONS: &[&str] = &[
     "rcf",
     "p3d",
     "rmv",
-    "lmlm",
     "ico",
     "rtf",
     "jsonl",

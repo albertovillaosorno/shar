@@ -12,14 +12,15 @@ children: []
 
 # Convert decompilable LMLM mods into open SHAR mod packages
 
-Provide `scripts/lmlm-to-shar.py` as a separate compatibility tool. It extracts
-an eligible legacy LMLM package, reconstructs a SHAR-format folder/ZIP from the
-available source/assets, and reports anything that cannot be translated.
+Keep the compatibility tool in the separately downloadable `tools/lmlm/`
+Python directory. It extracts an eligible legacy LMLM package, reconstructs an
+inspectable open conversion workspace, and reports what still needs adaptation
+to the final SHAR mod-package schema.
 
 ## Acceptance criteria
 
-- [ ] Keep conversion completely outside the faithful base pipeline.
-- [ ] Default converter policy to `decompilable-mods-only=true`; treat that one
+- [x] Keep conversion completely outside the faithful base pipeline.
+- [x] Default converter policy to `decompilable-mods-only=true`; treat that one
   local policy as authoritative. Any user change is an explicit local decision,
   and the user assumes responsibility for the content they inspect, convert,
   modify, or redistribute.
@@ -40,5 +41,13 @@ Depends on the new SHAR mod-package schema and removal of LMLM from base input.
 
 ## Evidence
 
-Jebano and Muckluck are compatibility test cases only, not bundled first-party
-mods and not a promise of support for every legacy LMLM package.
+`tools/lmlm/` is now a standard-library-only Python boundary with strict LSPA v5
+parsing, read-only inspection, atomic open-workspace conversion, optional ZIP
+publication, and SHA-256 source/per-file evidence. It has no dependency on the
+base extraction/build pipeline or the original game installation.
+
+Synthetic stdlib tests cover path safety, portable collisions, payload overlap,
+zero-padding, atomic publication, and ZIP containment. Read-only `inspect` also
+validated the local Jebano `j.lmlm` (1,540 entries) and Muckluck `m.lmlm` (32
+entries) inputs without installing or extracting either package. Final SHAR
+package adaptation remains open until the mod-package schema is authoritative.

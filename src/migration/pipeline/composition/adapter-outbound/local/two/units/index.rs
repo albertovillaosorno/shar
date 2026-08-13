@@ -1039,14 +1039,12 @@ fn dialog_subcategory_from_evidence(
         return None;
     }
     let package_id = package.package_id.as_str();
-    if !package_id.starts_with("extracted-dialog")
-        && !package_id.starts_with("extracted-lmlm-customfiles")
-    {
+    if !package_id.starts_with("extracted-dialog") {
         return None;
     }
     let tokens = package_id_tokens(package);
     let speaker = dialog_speaker_from_tokens(&tokens).unwrap_or("unknown");
-    let kind = dialog_kind_from_tokens(package_id, &tokens);
+    let kind = dialog_kind_from_tokens(&tokens);
     let context = dialog_context_from_tokens(&tokens);
     let detail = dialog_detail_from_tokens(&tokens);
     let archive = dialog_archive_detail_from_tokens(&tokens);
@@ -1290,10 +1288,8 @@ fn dialog_speaker_from_tokens(tokens: &[&str]) -> Option<&'static str> {
 
 /// Supports the `dialog_kind_from_tokens` operation within this deterministic
 /// classification boundary.
-fn dialog_kind_from_tokens(package_id: &str, tokens: &[&str]) -> &'static str {
-    if package_id.starts_with("extracted-lmlm-customfiles") {
-        "mod-override"
-    } else if tokens.contains(&"conversations") {
+fn dialog_kind_from_tokens(tokens: &[&str]) -> &'static str {
+    if tokens.contains(&"conversations") {
         "conversation"
     } else {
         "ad-lib"

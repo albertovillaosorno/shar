@@ -57,9 +57,6 @@ use super::extraction_transaction::{
     ExtractionOutputLease, ExtractionTransaction,
 };
 use super::json_output::validate_generated_text_file;
-use super::lmlm_stage::{
-    ensure_optional_mod_transition, extract_lmlm, require_optional_mod_approval,
-};
 use super::media_dependencies::{ensure_ffmpeg_dependency, media_tool_path};
 use super::{rms, spt};
 use crate::adapters::driven::check_cancellation;
@@ -71,7 +68,7 @@ use crate::domain::{
 };
 
 /// Number of ordered stages in one complete extraction run.
-const FULL_EXTRACTION_STAGE_COUNT: usize = 10;
+const FULL_EXTRACTION_STAGE_COUNT: usize = 9;
 
 /// Reports RCF entry progress without exposing archive entry names.
 #[derive(Debug)]
@@ -129,16 +126,6 @@ impl ExtractGameAssets {
             guard_paths(&config.game_root, &config.extracted_root)?;
         let transaction = ExtractionTransaction::begin(&extracted_root)?;
         let result = (|| {
-            let current_optional_token = require_optional_mod_approval(
-                &config.game_root,
-                config.optional_mod_approval.as_deref(),
-            )?;
-            if !config.clean_extracted {
-                ensure_optional_mod_transition(
-                    &extracted_root,
-                    current_optional_token.as_deref(),
-                )?;
-            }
             let mut staged_config = config.clone();
             staged_config.extracted_root =
                 transaction.staging_root().to_path_buf();
@@ -184,36 +171,6 @@ impl ExtractGameAssets {
         Ok(report)
     }
 
-    /// Export lmlm only.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when validation, filesystem access, or output writing
-    /// fails.
-    pub(in crate::adapters::driven::local) fn export_lmlm_only(
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport> {
-        let extracted_root =
-            guard_paths(&config.game_root, &config.extracted_root)?;
-        let _output_lease = ExtractionOutputLease::acquire(&extracted_root)?;
-        let current_optional_token = require_optional_mod_approval(
-            &config.game_root,
-            config.optional_mod_approval.as_deref(),
-        )?;
-        ensure_optional_mod_transition(
-            &extracted_root,
-            current_optional_token.as_deref(),
-        )?;
-        local_create_dir_all(&extracted_root)
-            .map_err(io_error(&extracted_root))?;
-        let mut report = PipelineReport::default();
-        report.stages.push(extract_lmlm(
-            &config.game_root,
-            &extracted_root,
-            config.optional_mod_approval.as_deref(),
-        )?);
-        Ok(report)
-    }
 }
 
 /// Run every ordered extraction stage below one isolated candidate root.
@@ -241,13 +198,6 @@ fn run_staged_extraction(
     report
         .stages
         .push(extract_rcf(&config.game_root, &config.extracted_root)?);
-    check_cancellation()?;
-    progress.advance("apply optional mod packages");
-    report.stages.push(extract_lmlm(
-        &config.game_root,
-        &config.extracted_root,
-        config.optional_mod_approval.as_deref(),
-    )?);
     check_cancellation()?;
     progress.advance("convert rsd audio");
     report
@@ -1872,11 +1822,6 @@ mod component_ledger_tests;
 // jig-ignore-next-line: exact syntax is indivisible
 #[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/extract/movie_decoding_tests.rs"]
 mod movie_decoding_tests;
-
-#[cfg(test)]
-// jig-ignore-next-line: exact syntax is indivisible
-#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/one/extract/optional_mod_approval_tests.rs"]
-mod optional_mod_approval_tests;
 
 #[cfg(test)]
 // jig-ignore-next-line: exact syntax is indivisible

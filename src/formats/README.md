@@ -15,7 +15,6 @@ Does not own generated artifacts, local dependencies, or game content.
 ## Navigation
 
 - `fbx`
-- `lmlm`
 - `p3d`
 - `rcf`
 - `rmv`

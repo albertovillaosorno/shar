@@ -76,17 +76,17 @@ fn write_game_manifest_ledger(game_root: &Path) -> Result<(), String> {
     let manifest = format!(
         "{}
 {}
-{}
 ",
         game_manifest::kind_taxonomy_jsonl(),
-        r#"{"dir":"","ext":"lmlm","min":0,"kind":"language_mod"}"#,
         r#"{"dir":"","ext":"png","min":0,"kind":"generated_artifact"}"#,
     );
     write_sample(
         game_root,
         game_manifest::MANIFEST_FILE_NAME,
         manifest.as_bytes(),
-    )
+    )?;
+    write_sample(game_root, "Simpsons.exe", b"fixture")?;
+    write_sample(game_root, "Simpsons.ico", b"fixture")
 }
 
 #[test]
@@ -161,10 +161,8 @@ fn run_prepared_root_shortfall_case() -> Result<(), String> {
         "{}
 {}
 {}
-{}
 ",
         game_manifest::kind_taxonomy_jsonl(),
-        r#"{"dir":"","ext":"lmlm","min":0,"kind":"language_mod"}"#,
         r#"{"dir":"","ext":"mfk","min":2,"kind":"script"}"#,
         r#"{"dir":"","ext":"png","min":0,"kind":"generated_artifact"}"#,
     );

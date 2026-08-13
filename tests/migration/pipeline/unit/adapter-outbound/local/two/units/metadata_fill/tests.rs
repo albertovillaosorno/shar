@@ -106,7 +106,6 @@ fn only_content_classified_json_requires_header_inspection() {
         "extracted/movies/intro/decode-report.json",
         "extracted/movies/intro/source-video.ffprobe.json",
         "extracted/movies/intro/manifest.json",
-        "extracted/lmlm/manifest.json",
     ] {
         let extension = path.rsplit_once('.').map_or("", |(_, value)| value);
         assert!(!metadata_needs_header(extension, path));

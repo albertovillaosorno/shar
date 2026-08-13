@@ -163,11 +163,6 @@ fn parse_manifest(manifest: &str) -> Result<Vec<Requirement>, String> {
     if requirements.is_empty() {
         return Err("no directory-count records found".to_owned());
     }
-    let language_mod =
-        (String::new(), crate::domain::OPTIONAL_EXTENSION.to_owned());
-    if !seen.contains(&language_mod) {
-        return Err("missing synthetic root coordinate: .lmlm".to_owned());
-    }
     let generated_image = (
         String::new(),
         crate::domain::GENERATED_IMAGE_EXTENSION.to_owned(),

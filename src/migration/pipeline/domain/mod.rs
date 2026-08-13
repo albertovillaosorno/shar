@@ -31,8 +31,6 @@
 //! Domain domain module.
 
 mod json;
-#[rustfmt::skip]
-mod optional_mod_preview;
 mod output_summary;
 pub mod package;
 mod pipeline;
@@ -41,9 +39,6 @@ mod pipeline;
 pub(crate) fn escape_json(value: &str) -> String {
     json::escape(value)
 }
-pub use optional_mod_preview::{
-    OPTIONAL_MOD_PREVIEW_SCHEMA, OptionalModPreview,
-};
 pub use output_summary::{DirectorySummary, OutputSummary};
 pub use package::{
     ConversionFamily, DynaLoadData, DynaLoadOperation, DynaLoadOperationKind,

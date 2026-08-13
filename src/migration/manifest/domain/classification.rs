@@ -33,9 +33,6 @@
 #[must_use]
 /// Classify one manifest directory and extension into a stable bucket.
 pub fn classify_manifest_bucket(dir: &str, extension: &str) -> String {
-    if extension == "lmlm" {
-        return "language_mod".to_owned();
-    }
     if extension == "png" && dir.is_empty() {
         return "generated_artifact".to_owned();
     }

@@ -34,7 +34,6 @@ use std::process::ExitCode;
 
 use fbx as _;
 use game_manifest as _;
-use lmlm as _;
 use p3d as _;
 use rcf as _;
 use rmv as _;

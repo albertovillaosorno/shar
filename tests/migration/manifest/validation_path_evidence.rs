@@ -90,12 +90,6 @@ fn manifest() -> String {
     let rows = [
         DirCount {
             dir: String::new(),
-            extension: "lmlm".to_owned(),
-            min_count: 0,
-            kind: "language_mod".to_owned(),
-        },
-        DirCount {
-            dir: String::new(),
             extension: "png".to_owned(),
             min_count: 0,
             kind: "generated_artifact".to_owned(),

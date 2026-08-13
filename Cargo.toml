@@ -8,7 +8,6 @@ members = [
   "src/foundation/json-text",
   "src/foundation/sha256",
   "src/formats/fbx",
-  "src/formats/lmlm",
   "src/formats/p3d",
   "src/formats/rcf",
   "src/formats/rsd",

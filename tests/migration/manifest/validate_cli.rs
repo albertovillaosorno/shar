@@ -80,7 +80,7 @@ fn validator_rejects_empty_manifest() {
 fn validator_rejects_malformed_rows() {
     let manifest = format!(
         "{}
-{{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}}
+{{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}}
 not-json
 ",
         kind_taxonomy_jsonl()
@@ -96,7 +96,7 @@ not-json
 #[test]
 fn validator_requires_current_taxonomy_header() {
     let row =
-        "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
+        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
     for manifest in [row.to_owned(), format!("{{\"kind_taxonomy\":[]}}\n{row}")]
     {
         let result = validate_manifest(&manifest);
@@ -111,7 +111,7 @@ fn validator_requires_current_taxonomy_header() {
 #[test]
 fn validator_rejects_duplicate_coordinates() {
     let row =
-        "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
+        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
     let manifest = format!("{}\n{row}\n{row}\n", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
@@ -123,11 +123,14 @@ fn validator_rejects_duplicate_coordinates() {
 
 #[test]
 fn validator_rejects_unsorted_coordinates() {
-    let first = "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"\
-                 generated_artifact\"}";
+    let first =
+        "{\"dir\":\"aa\",\"ext\":\"p3d\",\"min\":0,\"kind\":\"p3d_container\"}";
     let second =
-        "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
-    let manifest = format!("{}\n{first}\n{second}\n", kind_taxonomy_jsonl());
+        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
+    let manifest = format!("{}
+{first}
+{second}
+", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
@@ -138,14 +141,15 @@ fn validator_rejects_unsorted_coordinates() {
 
 #[test]
 fn validator_accepts_zero_minimum_as_optional() {
-    let language_mod =
-        "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
-    let generated_image = "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"\
-                           generated_artifact\"}";
+    let generated_image =
+        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
     let optional =
         "{\"dir\":\"aa\",\"ext\":\"p3d\",\"min\":0,\"kind\":\"p3d_container\"}";
     let manifest = format!(
-        "{}\n{language_mod}\n{generated_image}\n{optional}\n",
+        "{}
+{generated_image}
+{optional}
+",
         kind_taxonomy_jsonl()
     );
     let result = validate_manifest(&manifest);
@@ -160,23 +164,11 @@ fn validator_accepts_zero_minimum_as_optional() {
     );
 }
 
-#[test]
-fn validator_requires_language_mod_root_coordinate() {
-    let row = "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"\
-               generated_artifact\"}";
-    let manifest = format!("{}\n{row}\n", kind_taxonomy_jsonl());
-    let result = validate_manifest(&manifest);
-    assert!(result.is_ok());
-    let Some(output) = result.ok() else {
-        return;
-    };
-    assert!(!output.status.success());
-}
 
 #[test]
 fn validator_requires_generated_image_root_coordinate() {
     let row =
-        "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
+        "{\"dir\":\"aa\",\"ext\":\"p3d\",\"min\":0,\"kind\":\"p3d_container\"}";
     let manifest = format!("{}\n{row}\n", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
