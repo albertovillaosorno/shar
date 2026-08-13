@@ -1,0 +1,50 @@
+---
+schema: shar.todo.v1
+id: complete-the-tracked-jig-policy-taxonomy-adapters-and-projections
+status: completed
+priority: P0
+lane: repository
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Complete the tracked `.jig/` policy, taxonomy, adapters, and projections
+
+Complete the tracked `.jig/` policy, taxonomy, adapters, and projections.
+
+## Acceptance criteria
+
+- [x] Complete the tracked `.jig/` policy, taxonomy, adapters, and projections.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Tracked `.jig/` authority now contains schema-20 repository policy, the graph
+taxonomy, CSpell dictionaries/configuration, Markdown policy, Python/Rust
+validator configuration, exact tool/version projections, and the Rust toolchain
+projection. `jig graph --root . --refresh` compiles the configured taxonomy with
+zero parse issues, and `jig doctor --root .` reports `status: ready`, graph state
+`ready`, and version evidence for all nine configured tools.
+
+The audit exposed two stale Python wrapper projections whose absolute recovery
+environment no longer existed. They were replaced with direct repository-local
+`pytest.exe` and `ruff.exe` paths. `tools/validation/python_dependencies.py`
+materializes that ignored environment from Jig's exact source-linked CPython
+3.14.6 using explicit pytest/Ruff and transitive dependency pins, with rollback
+when replacement fails. No global Python packages are installed.
+
+Canonical pytest now includes every tracked Python test root: architecture,
+packaging, Unreal editor-control, and Unreal project. An architecture guard
+compares filesystem roots with `validation.pytest.args`, pins direct Python tool
+paths, and preserves the source-linked Jig tool boundary.
+
+A full `jig validate --fail-fast --root .` after these changes passes CSpell,
+Markdownlint, all configured pytest roots, Ruff, nightly Clippy/rustfmt/tests,
+stable Rust check, and Jig-native rules. The only remaining diagnostic is the
+pre-existing published-history `JIG-COMMIT-013` for commit `13fc6414`; this task
+does not rewrite historical commits to manufacture a green result.

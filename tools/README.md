@@ -18,3 +18,5 @@ Does not own source crates, generated artifacts, or local dependencies.
   who explicitly choose to inspect or convert supported legacy LMLM mods.
 - [`source-similarity/`](source-similarity/) measures content-free structural
   calibration evidence without choosing an admission threshold.
+- [`validation/python_dependencies.py`](validation/python_dependencies.py)
+  materializes the exact repository-local pytest/Ruff environment used by Jig.

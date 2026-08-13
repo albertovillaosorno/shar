@@ -408,11 +408,11 @@ path = ".dependencies/jig/source/.dependencies/bin/markdownlint-cli2.cmd"
 version = "0.23.0"
 
 [tool.pytest]
-path = ".dependencies/python/3.14.6/Scripts/pytest-jig.cmd"
+path = ".dependencies/python/3.14.6/Scripts/pytest.exe"
 version = "9.1.1"
 
 [tool.ruff]
-path = ".dependencies/python/3.14.6/Scripts/ruff-jig.cmd"
+path = ".dependencies/python/3.14.6/Scripts/ruff.exe"
 version = "0.15.21"
 
 [tool.rust_nightly_cargo]
@@ -546,7 +546,7 @@ capability = "pytest"
 tool = "pytest"
 config_files = [".jig/lang/python/pytest.ini"]
 # jig-ignore-next-line: exact bounded Python suite roots
-args = ["-q", "-c", ".jig/lang/python/pytest.ini", "tests/unreal/editor-control", "tests/unreal/project"]
+args = ["-q", "-c", ".jig/lang/python/pytest.ini", "tests/architecture", "tests/packaging", "tests/unreal/editor-control", "tests/unreal/project"]
 timeout_seconds = 3600
 
 [validation.ruff]
