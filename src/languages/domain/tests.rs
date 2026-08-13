@@ -258,3 +258,50 @@ fn rejected_output_inside_game_creates_nothing() -> Result<(), String> {
     cleanup(&root);
     result
 }
+
+#[test]
+fn missing_dialogue_archive_fails_closed() -> Result<(), String> {
+    let root = temp_root("missing-dialogue");
+    cleanup(&root);
+    let (game, movies) = fixture(&root)?;
+    fs::remove_file(game.join("dialogs.rcf")).map_err(|error| error.to_string())?;
+
+    let error = export_language(&game, &movies, &root.join("out/spanish"), Language::Spanish)
+        .err()
+        .ok_or_else(|| "Spanish export without dialogue unexpectedly succeeded".to_owned())?;
+    let result = if error
+        .to_string()
+        .contains("required localization source is missing")
+    {
+        Ok(())
+    } else {
+        Err(error.to_string())
+    };
+    cleanup(&root);
+    result
+}
+
+#[test]
+fn missing_cinematic_language_track_fails_closed() -> Result<(), String> {
+    let root = temp_root("missing-movie-track");
+    cleanup(&root);
+    let (game, movies) = fixture(&root)?;
+    for movie in ["fmv2", "fmv3"] {
+        fs::remove_file(movies.join(movie).join("audio_track_02.wav"))
+            .map_err(|error| error.to_string())?;
+    }
+
+    let error = export_language(&game, &movies, &root.join("out/french"), Language::French)
+        .err()
+        .ok_or_else(|| "French export without movie audio unexpectedly succeeded".to_owned())?;
+    let result = if error
+        .to_string()
+        .contains("no normalized cinematic audio track")
+    {
+        Ok(())
+    } else {
+        Err(error.to_string())
+    };
+    cleanup(&root);
+    result
+}
