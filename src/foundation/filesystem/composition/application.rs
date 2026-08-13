@@ -36,9 +36,8 @@ use std::path::{Path, PathBuf};
 
 use crate::domain::PathKind;
 use crate::path_validation::{
-    has_file_destination, has_meaningful_component, has_named_destination,
-    path_error, require_explicit_path, require_tree_descendant,
-    require_tree_root, utf8_error,
+    has_file_destination, has_meaningful_component, has_named_destination, path_error,
+    require_explicit_path, require_tree_descendant, require_tree_root, utf8_error,
 };
 use crate::ports::{FileReader, FileWriter, PathInspector, TreeReader};
 
@@ -52,10 +51,7 @@ impl ReadFile {
     /// # Errors
     ///
     /// Returns the provider I/O error when reading fails.
-    pub fn bytes(
-        reader: &(impl FileReader + ?Sized),
-        path: &Path,
-    ) -> io::Result<Vec<u8>> {
+    pub fn bytes(reader: &(impl FileReader + ?Sized), path: &Path) -> io::Result<Vec<u8>> {
         require_explicit_path(path, "read file")?;
         if !has_file_destination(path) {
             return Err(path_error(
@@ -73,10 +69,7 @@ impl ReadFile {
     /// # Errors
     ///
     /// Returns an I/O error for read failures or invalid UTF-8.
-    pub fn utf8(
-        reader: &(impl FileReader + ?Sized),
-        path: &Path,
-    ) -> io::Result<String> {
+    pub fn utf8(reader: &(impl FileReader + ?Sized), path: &Path) -> io::Result<String> {
         let bytes = Self::bytes(reader, path)?;
         String::from_utf8(bytes).map_err(|error| utf8_error(path, error))
     }
@@ -152,10 +145,7 @@ impl WriteFile {
     /// # Errors
     ///
     /// Returns the provider I/O error when creation fails.
-    pub fn directory(
-        writer: &(impl FileWriter + ?Sized),
-        path: &Path,
-    ) -> io::Result<()> {
+    pub fn directory(writer: &(impl FileWriter + ?Sized), path: &Path) -> io::Result<()> {
         require_explicit_path(path, "create directory tree")?;
         if !has_named_destination(path) {
             return Err(path_error(
@@ -179,10 +169,7 @@ impl InspectPath {
     /// # Errors
     ///
     /// Returns the provider I/O error when inspection fails.
-    pub fn kind(
-        inspector: &(impl PathInspector + ?Sized),
-        path: &Path,
-    ) -> io::Result<PathKind> {
+    pub fn kind(inspector: &(impl PathInspector + ?Sized), path: &Path) -> io::Result<PathKind> {
         require_explicit_path(path, "inspect path metadata")?;
         inspector.path_kind(path)
     }
@@ -192,10 +179,7 @@ impl InspectPath {
     /// # Errors
     ///
     /// Returns the provider I/O error when metadata is unavailable.
-    pub fn len(
-        inspector: &(impl PathInspector + ?Sized),
-        path: &Path,
-    ) -> io::Result<u64> {
+    pub fn len(inspector: &(impl PathInspector + ?Sized), path: &Path) -> io::Result<u64> {
         require_explicit_path(path, "inspect file metadata")?;
         if !has_file_destination(path) {
             return Err(path_error(
@@ -222,6 +206,24 @@ impl InspectPath {
     }
 }
 
+fn validate_collected_files(root: &Path, mut files: Vec<PathBuf>) -> io::Result<Vec<PathBuf>> {
+    files.sort();
+    files.dedup();
+    let mut identities = BTreeSet::new();
+    for path in &files {
+        let identity = require_tree_descendant(root, path)?;
+        if !identities.insert(identity) {
+            return Err(path_error(
+                io::ErrorKind::InvalidData,
+                "validate tree identity",
+                path,
+                "path collides with an earlier portable identity",
+            ));
+        }
+    }
+    Ok(files)
+}
+
 /// Stateless regular-file collection use case.
 #[derive(Debug, Clone, Copy)]
 pub struct CollectRegularFiles;
@@ -232,26 +234,25 @@ impl CollectRegularFiles {
     /// # Errors
     ///
     /// Returns the provider I/O error when traversal fails.
-    pub fn execute(
-        reader: &(impl TreeReader + ?Sized),
-        root: &Path,
-    ) -> io::Result<Vec<PathBuf>> {
+    pub fn execute(reader: &(impl TreeReader + ?Sized), root: &Path) -> io::Result<Vec<PathBuf>> {
         require_tree_root(root)?;
-        let mut files = reader.regular_files(root)?;
-        files.sort();
-        files.dedup();
-        let mut identities = BTreeSet::new();
-        for path in &files {
-            let identity = require_tree_descendant(root, path)?;
-            if !identities.insert(identity) {
-                return Err(path_error(
-                    io::ErrorKind::InvalidData,
-                    "validate tree identity",
-                    path,
-                    "path collides with an earlier portable identity",
-                ));
-            }
-        }
-        Ok(files)
+        validate_collected_files(root, reader.regular_files(root)?)
+    }
+}
+
+/// Stateless fail-closed tree collection use case.
+#[derive(Debug, Clone, Copy)]
+pub struct CollectStrictRegularFiles;
+
+impl CollectStrictRegularFiles {
+    /// Collects sorted regular files while rejecting redirects and special entries.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider I/O error when traversal or strict entry validation
+    /// fails.
+    pub fn execute(reader: &(impl TreeReader + ?Sized), root: &Path) -> io::Result<Vec<PathBuf>> {
+        require_tree_root(root)?;
+        validate_collected_files(root, reader.strict_regular_files(root)?)
     }
 }

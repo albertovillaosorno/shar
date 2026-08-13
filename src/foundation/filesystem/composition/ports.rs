@@ -96,4 +96,17 @@ pub trait TreeReader {
     /// Returns an I/O error when the root is not a real directory or when
     /// traversal or entry inspection fails.
     fn regular_files(&self, root: &Path) -> io::Result<Vec<PathBuf>>;
+
+    /// Collects regular files while rejecting redirects and special entries.
+    ///
+    /// Providers that cannot distinguish strict tree membership may keep the
+    /// default behavior; security-sensitive concrete adapters should override
+    /// this method and fail closed on every non-file, non-directory entry.
+    ///
+    /// # Errors
+    ///
+    /// Returns an I/O error when traversal or strict entry validation fails.
+    fn strict_regular_files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
+        self.regular_files(root)
+    }
 }
