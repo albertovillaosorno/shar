@@ -41,3 +41,11 @@ def test_src_cannot_reference_lmlm() -> None:
         "LMLM compatibility is forbidden under src/; keep it isolated in "
         f"tools/lmlm/: {offenders}"
     )
+
+
+def test_repository_root_has_no_user_mod_drop_directory() -> None:
+    """Keep user mod installation paths outside the source repository."""
+    assert not (_ROOT / "mods").exists(), (
+        "repository-root mods/ is forbidden; native SHAR mods belong only in "
+        "the installed application's post-install mods directory"
+    )
