@@ -129,6 +129,11 @@ is never reconstruction input and it does not itself prove software is safe.
 
    **TODO: Make English the only canonical base language.**
 
+   Original French, German, Italian, and Spanish source export is kept outside
+   the base pipeline under `tools/language-mods/`. The exporter fails closed
+   when an installation does not contain actual translated content for the
+   selected language.
+
 1. Select any targets you want:
 
    - Android ARM64 — APK
