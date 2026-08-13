@@ -83,13 +83,6 @@ Remove obsolete files and workspace references.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/repository/remove-obsolete-files-and-workspace-references.mdc](docs/todo/open/repository/remove-obsolete-files-and-workspace-references.mdc)
 
-### TODO - Adopt Jig as the canonical repository validator
-
-Adopt Jig as the canonical repository validator.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/repository/adopt-jig-as-the-canonical-repository-validator.mdc](docs/todo/open/repository/adopt-jig-as-the-canonical-repository-validator.mdc)
-
 ### TODO - Keep Jig source-linked from `.dependencies/jig/source`
 
 Keep Jig source-linked from `.dependencies/jig/source`.
