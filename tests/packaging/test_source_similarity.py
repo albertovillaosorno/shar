@@ -50,6 +50,8 @@ class SourceSimilarityTests(unittest.TestCase):
             _MOD.measure({}, {("aa", "p3d"): 1})
         with self.assertRaisesRegex(ValueError, "nonnegative integer"):
             _MOD.measure({("aa", "p3d"): -1}, {})
+        with self.assertRaisesRegex(ValueError, "pair of strings"):
+            _MOD.measure({"aa": 1}, {})
 
 
 if __name__ == "__main__":
