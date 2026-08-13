@@ -1,6 +1,7 @@
 [workspace]
 resolver = "3"
 members = [
+  "src/foundation/algorithm",
   "src/foundation/command-line",
   "src/foundation/filesystem",
   "src/localization/languages",

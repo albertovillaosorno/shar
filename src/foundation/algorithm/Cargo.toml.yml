@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/foundation/algorithm/Cargo.toml
+function: algorithm
+kind: project
+authority: Cargo.toml

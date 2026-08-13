@@ -1,0 +1,31 @@
+[package]
+name = "shar_algorithm"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Generic source-bound reconstruction algorithm authoring and replay."
+publish = false
+
+[dependencies]
+chacha20poly1305 = "=0.11.0"
+schoenwald_cli = { path = "../command-line" }
+schoenwald_filesystem = { path = "../filesystem" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+shar_sha256 = { path = "../sha256" }
+
+[lib]
+name = "shar_algorithm"
+path = "composition/lib.rs"
+
+[[bin]]
+name = "algorithm"
+path = "composition/main.rs"
+
+[lints]
+workspace = true
+
+[[test]]
+name = "round_trip"
+path = "../../../tests/foundation/algorithm/round_trip.rs"
