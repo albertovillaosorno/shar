@@ -12,9 +12,10 @@ children: []
 
 # Convert decompilable LMLM mods into open SHAR mod packages
 
-Keep the compatibility tool in the separately downloadable `tools/lmlm/`
-Python directory. It extracts an eligible legacy LMLM package, reconstructs an
-inspectable open conversion workspace, and reports what still needs adaptation
+Keep the compatibility tool in the Rust-only `tools/lmlm/` boundary.
+It requires Rust 1.97.1 and does not install or bootstrap a toolchain. It
+extracts an eligible legacy LMLM package, reconstructs an inspectable open
+conversion workspace, and reports what still needs adaptation
 to the final SHAR mod-package schema.
 
 ## Acceptance criteria
@@ -28,8 +29,8 @@ to the final SHAR mod-package schema.
   auto-installing or auto-injecting either mod into the game.
 - [ ] Never promise arbitrary LMLM compatibility; unsupported legacy behavior
   must be reported so authors can adapt the resulting open package.
-- [ ] Produce inspectable SHAR folders/ZIPs whose assets and source are not
-  intentionally locked or obfuscated.
+- [ ] Produce inspectable SHAR packages whose assets and source are not intentionally
+  locked or obfuscated; packaging format follows the final shared mod contract.
 - [ ] Preserve provenance and require users/distributors to have rights to the
   content they convert or redistribute.
 - [ ] Update README conversion instructions and known limitations whenever the
@@ -41,13 +42,15 @@ Depends on the new SHAR mod-package schema and removal of LMLM from base input.
 
 ## Evidence
 
-`tools/lmlm/` is now a standard-library-only Python boundary with strict LSPA v5
-parsing, read-only inspection, atomic open-workspace conversion, optional ZIP
-publication, and SHA-256 source/per-file evidence. It has no dependency on the
+`tools/lmlm/` is now a Rust 1.97.1 boundary with strict LSPA v5 parsing,
+read-only inspection, atomic open-workspace conversion, and SHA-256
+source/per-file evidence. Shared P3D, filesystem, CLI, and SHA-256 behavior is
+reused from existing repository crates instead of duplicated. It has no dependency on the
 base extraction/build pipeline or the original game installation.
 
-Synthetic stdlib tests cover path safety, portable collisions, payload overlap,
-zero-padding, atomic publication, and ZIP containment. Read-only `inspect` also
+Synthetic Rust tests cover path safety, portable collisions, payload overlap,
+zero-padding, atomic publication, overwrite refusal, shared P3D analysis, and
+CLI behavior. Read-only `inspect` also
 validated the local Jebano `j.lmlm` (1,540 entries) and Muckluck `m.lmlm` (32
 entries) inputs without installing or extracting either package. Final SHAR
 package adaptation remains open until the mod-package schema is authoritative.

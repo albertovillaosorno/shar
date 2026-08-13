@@ -1,0 +1,23 @@
+[package]
+name = "shar-lmlm"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+license = "MIT"
+description = "Standalone SHAR converter for supported legacy LMLM mods."
+publish = false
+
+[dependencies]
+p3d = { path = "../../src/formats/p3d" }
+schoenwald_cli = { path = "../../src/foundation/command-line" }
+schoenwald_filesystem = { path = "../../src/foundation/filesystem" }
+shar_sha256 = { path = "../../src/foundation/sha256" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[workspace]
+resolver = "3"
+
+[lints.rust]
+unsafe_code = "forbid"
+warnings = "deny"
