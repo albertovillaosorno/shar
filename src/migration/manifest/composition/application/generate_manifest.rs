@@ -37,7 +37,7 @@ use super::path_evidence::require_rooted_paths;
 use crate::domain::{
     DirCount, DirExtCounts, GENERATED_IMAGE_EXTENSION, MANIFEST_FILE_NAME,
     OPTIONAL_EXTENSION, classify_manifest_bucket, count_by_dir_ext_paths,
-    kind_taxonomy_jsonl,
+    exact_file_shortfalls, kind_taxonomy_jsonl,
 };
 use crate::ports::{GameTree, PathKind, TextArtifactStore};
 
@@ -125,6 +125,15 @@ fn load_counts(
         ManifestError::io("scan", game_dir.to_path_buf(), error)
     })?;
     require_rooted_paths(game_dir, &files).map_err(ManifestError::Invalid)?;
+    let shortfalls = exact_file_shortfalls(game_dir, &files);
+    if !shortfalls.is_empty() {
+        return Err(ManifestError::Invalid(format!(
+            "game directory is missing exact required files:
+{}",
+            shortfalls.join("
+")
+        )));
+    }
     Ok(count_by_dir_ext_paths(game_dir, &files))
 }
 

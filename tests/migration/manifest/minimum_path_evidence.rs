@@ -49,6 +49,8 @@ impl GameTree for AmbiguousTree {
 
     fn files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
         Ok(vec![
+            root.join("Simpsons.exe"),
+            root.join("Simpsons.ico"),
             root.join("alpha/first.p3d"),
             root.join("agenda/second.p3d"),
         ])

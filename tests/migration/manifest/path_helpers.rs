@@ -30,9 +30,12 @@
 
 //! Path helpers test module.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use game_manifest::{NO_EXTENSION, extension_of, obfuscate_component};
+use game_manifest::{
+    NO_EXTENSION, exact_file_shortfalls, extension_of, kind_taxonomy_jsonl,
+    obfuscate_component,
+};
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 
@@ -49,4 +52,35 @@ fn extension_of_lowercases_unicode() {
 #[test]
 fn obfuscate_component_lowercases_unicode() {
     assert_eq!(obfuscate_component("ÄZ"), "äz");
+}
+
+#[test]
+fn exact_root_requirements_are_case_sensitive() {
+    let root = Path::new("game");
+    let files = vec![
+        PathBuf::from("game/simpsons.exe"),
+        PathBuf::from("game/Simpsons.ico"),
+    ];
+
+    assert_eq!(
+        exact_file_shortfalls(root, &files),
+        vec!["  <root> Simpsons.exe: have 0, need at least 1".to_owned()]
+    );
+}
+
+#[test]
+fn optional_uninstall_icon_is_not_a_shortfall() {
+    let root = Path::new("game");
+    let files = vec![
+        PathBuf::from("game/Simpsons.exe"),
+        PathBuf::from("game/Simpsons.ico"),
+    ];
+
+    assert!(exact_file_shortfalls(root, &files).is_empty());
+    assert!(kind_taxonomy_jsonl().contains(
+        "\"required_files\":[{\"path\":\"Simpsons.exe\",\"min\":1},"
+    ));
+    assert!(kind_taxonomy_jsonl().contains(
+        "{\"path\":\"uninst.ico\",\"min\":0}]"
+    ));
 }
