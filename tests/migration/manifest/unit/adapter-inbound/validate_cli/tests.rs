@@ -38,7 +38,11 @@ use super::{USAGE, ValidateManifestCli};
 fn excess_arguments_return_validator_usage_without_storage_access()
 -> Result<(), String> {
     let outcome =
-        ValidateManifestCli.execute(&["first".to_owned(), "second".to_owned()]);
+        ValidateManifestCli.execute(&[
+            "first".to_owned(),
+            "second".to_owned(),
+            "third".to_owned(),
+        ]);
     if outcome.status() != schoenwald_cli::ExitStatus::Failure {
         return Err("excess validator arguments must fail".to_owned());
     }
