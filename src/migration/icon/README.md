@@ -16,3 +16,21 @@ both remain ignored by Git. Platform export code lives under `composition/`.
 
 Icon reconstruction accepts `game/Simpsons.ico` only. `game/uninst.ico` is
 installation material and must never become icon reconstruction evidence.
+
+## Local reconstruction and export
+
+From the repository root, reconstruct only from the canonical game icon into the
+ignored output tree:
+
+```text
+cargo run -p shar_algorithm --bin algorithm -- replay --source game/Simpsons.ico --algorithm src/migration/icon/icon_algorithm.txt --output src/migration/icon/out/recovered
+```
+
+Then export the recovered SVGs to every supported platform icon layout:
+
+```text
+python src/migration/icon/composition/export_cli.py --assets src/migration/icon/out/recovered --out src/migration/icon/out/platform
+```
+
+Do not substitute `game/uninst.ico`, wildcard `game/*.ico`, or the ignored local
+`assets/` oracle as reconstruction evidence.
