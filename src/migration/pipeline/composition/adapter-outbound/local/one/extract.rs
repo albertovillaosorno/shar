@@ -36,7 +36,8 @@ use std::fs;
 use std::path::{Component, Path, PathBuf};
 use std::process::Command;
 
-use game_manifest::{DirCount, count_by_dir_ext};
+use game_manifest::{DirCount, ValidateManifest, count_by_dir_ext};
+use game_manifest::adapters::{FilesystemGameTree, FilesystemTextStore};
 use rcf::Extractor;
 use rcf::adapters::{FileArchiveSource, FileEntrySink};
 use rcf::domain::{ArchiveError, IndexRecord};
@@ -347,6 +348,18 @@ fn verify_manifest(
     game_root: &Path,
     extracted_root: &Path,
 ) -> PipelineOutcome<StageReport> {
+    let canonical = ValidateManifest::execute(
+        &FilesystemGameTree,
+        &FilesystemTextStore,
+        game_root,
+    )
+    .map_err(|_error| PipelineError::new("game manifest validation failed"))?;
+    if !canonical.shortfalls.is_empty() {
+        return Err(PipelineError::new(format!(
+            "game manifest validation failed: {} requirement shortfall(s)",
+            canonical.shortfalls.len()
+        )));
+    }
     let manifest = game_root.join("manifest/game.jsonl");
     let text = fs::read_to_string(&manifest).map_err(io_error(&manifest))?;
     let rules = text

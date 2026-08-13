@@ -60,27 +60,56 @@ fn exact_root_requirements_are_case_sensitive() {
     let files = vec![
         PathBuf::from("game/simpsons.exe"),
         PathBuf::from("game/Simpsons.ico"),
+        PathBuf::from("game/README.rtf"),
+        PathBuf::from("game/dialog.rcf"),
+        PathBuf::from("game/art/frontend/scrooby2/resource/txtbible/srr2.E"),
+        PathBuf::from("game/art/frontend/scrooby2/resource/txtbible/srr2.txt"),
     ];
 
     assert_eq!(
         exact_file_shortfalls(root, &files),
-        vec!["  <root> Simpsons.exe: have 0, need at least 1".to_owned()]
+        vec!["  Simpsons.exe: have 0, need at least 1".to_owned()]
     );
 }
 
 #[test]
-fn optional_uninstall_icon_is_not_a_shortfall() {
+fn optional_language_and_uninstall_sources_are_not_shortfalls() {
     let root = Path::new("game");
     let files = vec![
         PathBuf::from("game/Simpsons.exe"),
         PathBuf::from("game/Simpsons.ico"),
+        PathBuf::from("game/README.rtf"),
+        PathBuf::from("game/dialog.rcf"),
+        PathBuf::from("game/art/frontend/scrooby2/resource/txtbible/srr2.E"),
+        PathBuf::from("game/art/frontend/scrooby2/resource/txtbible/srr2.txt"),
     ];
 
     assert!(exact_file_shortfalls(root, &files).is_empty());
     assert!(kind_taxonomy_jsonl().contains(
-        "\"required_files\":[{\"path\":\"Simpsons.exe\",\"min\":1},"
+        "\"required_files\":[{\"path\":\"README.rtf\",\"min\":1},"
     ));
     assert!(kind_taxonomy_jsonl().contains(
         "{\"path\":\"uninst.ico\",\"min\":0}]"
     ));
+}
+
+#[test]
+fn nested_english_source_is_required_exactly() {
+    let root = Path::new("game");
+    let files = vec![
+        PathBuf::from("game/Simpsons.exe"),
+        PathBuf::from("game/Simpsons.ico"),
+        PathBuf::from("game/README.rtf"),
+        PathBuf::from("game/dialog.rcf"),
+        PathBuf::from("game/art/frontend/scrooby2/resource/txtbible/srr2.E"),
+        PathBuf::from("game/art/frontend/scrooby2/resource/txtbible/SRR2.txt"),
+    ];
+
+    assert_eq!(
+        exact_file_shortfalls(root, &files),
+        vec![
+            "  art/frontend/scrooby2/resource/txtbible/srr2.txt: have 0, need at least 1"
+                .to_owned()
+        ]
+    );
 }

@@ -45,11 +45,26 @@ pub const MANIFEST_FILE_NAME: &str = "manifest/game.jsonl";
 /// Relative path of the expanded manifest beneath the game directory.
 pub const EXPANDED_MANIFEST_FILE_NAME: &str = "manifest/game-expanded.jsonl";
 
-/// Exact root-file requirements embedded in the immutable manifest header.
+/// Exact source-file requirements embedded in the immutable manifest header.
 /// A zero minimum records an explicitly optional source identity.
 pub const EXACT_FILE_REQUIREMENTS: &[(&str, usize)] = &[
+    ("README.rtf", 1),
     ("Simpsons.exe", 1),
     ("Simpsons.ico", 1),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.E", 1),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.F", 0),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.G", 0),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.I", 0),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.S", 0),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.txt", 1),
+    ("dialog.rcf", 1),
+    ("dialogf.rcf", 0),
+    ("dialogg.rcf", 0),
+    ("dialogi.rcf", 0),
+    ("dialogs.rcf", 0),
+    ("Liesmich.rtf", 0),
+    ("Lisez-moi.rtf", 0),
+    ("Léeme.rtf", 0),
     ("uninst.ico", 0),
 ];
 
@@ -138,21 +153,21 @@ pub fn extension_of(path: &Path) -> String {
         .map_or_else(|| NO_EXTENSION.to_owned(), str::to_lowercase)
 }
 
-/// Returns immutable exact-root-file shortfalls in declaration order.
+/// Returns immutable exact-source-file shortfalls in declaration order.
 #[must_use]
 pub fn exact_file_shortfalls(root: &Path, files: &[PathBuf]) -> Vec<String> {
     let present = files
         .iter()
         .filter_map(|path| path.strip_prefix(root).ok())
-        .filter(|relative| relative.components().count() == 1)
         .filter_map(|relative| relative.to_str())
+        .map(|relative| relative.replace(std::path::MAIN_SEPARATOR, "/"))
         .collect::<BTreeSet<_>>();
     EXACT_FILE_REQUIREMENTS
         .iter()
         .filter(|(_, minimum)| *minimum > 0)
         .filter_map(|(path, minimum)| {
-            (!present.contains(path)).then(|| {
-                format!("  <root> {path}: have 0, need at least {minimum}")
+            (!present.contains(*path)).then(|| {
+                format!("  {path}: have 0, need at least {minimum}")
             })
         })
         .collect()
@@ -166,6 +181,7 @@ fn is_exact_file_requirement(root: &Path, path: &Path) -> bool {
     let Some(relative) = relative.to_str() else {
         return false;
     };
+    let relative = relative.replace(std::path::MAIN_SEPARATOR, "/");
     EXACT_FILE_REQUIREMENTS
         .iter()
         .any(|(required, _)| relative == *required)
@@ -247,11 +263,34 @@ fn is_safe_relative_source(relative: &Path) -> bool {
     has_descendant
 }
 
+/// Returns whether one root installation file is machine/runtime state.
+fn is_root_non_asset_installation_file(root: &Path, path: &Path) -> bool {
+    if path.parent() != Some(root) {
+        return false;
+    }
+    matches!(extension_of(path).as_str(), "dll" | "ini" | "iso")
+}
+
+/// Returns whether one root file is original runtime save-state output.
+fn is_root_runtime_save(root: &Path, path: &Path) -> bool {
+    if path.parent() != Some(root) || path.extension().is_some() {
+        return false;
+    }
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .and_then(|name| name.strip_prefix("Save"))
+        .is_some_and(|slot| {
+            !slot.is_empty() && slot.bytes().all(|byte| byte.is_ascii_digit())
+        })
+}
+
 /// Returns one countable source coordinate for a rooted source path.
 fn manifest_source(root: &Path, path: &Path) -> Option<ManifestSource> {
     let relative = path.strip_prefix(root).ok()?;
     if !is_safe_relative_source(relative)
         || is_exact_file_requirement(root, path)
+        || is_root_non_asset_installation_file(root, path)
+        || is_root_runtime_save(root, path)
     {
         return None;
     }

@@ -51,6 +51,10 @@ impl GameTree for AmbiguousTree {
         Ok(vec![
             root.join("Simpsons.exe"),
             root.join("Simpsons.ico"),
+            root.join("README.rtf"),
+            root.join("dialog.rcf"),
+            root.join("art/frontend/scrooby2/resource/txtbible/srr2.E"),
+            root.join("art/frontend/scrooby2/resource/txtbible/srr2.txt"),
             root.join("alpha/first.p3d"),
             root.join("agenda/second.p3d"),
         ])

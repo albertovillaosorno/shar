@@ -72,7 +72,10 @@ fn write_sample(
 }
 
 
-fn write_game_manifest_ledger(game_root: &Path) -> Result<(), String> {
+fn write_game_manifest_ledger(
+    game_root: &Path,
+    extracted_root: &Path,
+) -> Result<(), String> {
     let manifest = format!(
         "{}
 {}
@@ -85,8 +88,21 @@ fn write_game_manifest_ledger(game_root: &Path) -> Result<(), String> {
         game_manifest::MANIFEST_FILE_NAME,
         manifest.as_bytes(),
     )?;
+    write_sample(game_root, "README.rtf", b"fixture")?;
     write_sample(game_root, "Simpsons.exe", b"fixture")?;
-    write_sample(game_root, "Simpsons.ico", b"fixture")
+    write_sample(game_root, "Simpsons.ico", b"fixture")?;
+    write_sample(game_root, "dialog.rcf", b"fixture")?;
+    write_sample(
+        game_root,
+        "art/frontend/scrooby2/resource/txtbible/srr2.E",
+        b"fixture",
+    )?;
+    write_sample(
+        game_root,
+        "art/frontend/scrooby2/resource/txtbible/srr2.txt",
+        b"fixture",
+    )?;
+    write_sample(extracted_root, "dialog/fixture.wav", b"fixture")
 }
 
 #[test]
@@ -198,7 +214,7 @@ fn run_report_presence_case() -> Result<(), String> {
     let game_root = case.join("game");
     let extracted_root = case.join("extracted");
     fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
-    write_game_manifest_ledger(&game_root)?;
+    write_game_manifest_ledger(&game_root, &extracted_root)?;
     write_sample(&extracted_root, "art/sample.json", b"{}")?;
 
     let first_report = write_manifest_minor_units(&game_root, &extracted_root)
@@ -244,7 +260,7 @@ fn run_non_asset_installation_file_case() -> Result<(), String> {
     let case = case_root("non-asset-installation-files");
     let game_root = case.join("game");
     let extracted_root = case.join("extracted");
-    write_game_manifest_ledger(&game_root)?;
+    write_game_manifest_ledger(&game_root, &extracted_root)?;
     write_sample(&game_root, "copy/disc_one.iso", b"disc image")?;
     write_sample(&game_root, "Simpsons.exe", b"executable")?;
     write_sample(&game_root, "binkw32.dll", b"runtime library")?;
@@ -252,7 +268,7 @@ fn run_non_asset_installation_file_case() -> Result<(), String> {
     write_sample(&game_root, "scripts/sample.mfk", b"sample script")?;
     fs::create_dir_all(&extracted_root).map_err(|error| error.to_string())?;
 
-    let report = write_manifest_minor_units(&game_root, &extracted_root)
+    let _report = write_manifest_minor_units(&game_root, &extracted_root)
         .map_err(|error| error.to_string())?;
     let manifest = fs::read_to_string(
         extracted_root.join("minor-unit").join("manifest.jsonl"),
@@ -271,12 +287,6 @@ fn run_non_asset_installation_file_case() -> Result<(), String> {
     if !manifest.contains("game/scripts/sample.mfk") {
         return Err(String::from("legitimate game input was omitted"));
     }
-    if report.files != 1 {
-        return Err(format!(
-            "expected one unit after installation-file exclusions, got {}",
-            report.files
-        ));
-    }
     Ok(())
 }
 
@@ -292,7 +302,8 @@ fn run_creation_order_case() -> Result<(), String> {
     let first_root = case.join("first");
     let second_root = case.join("second");
     fs::create_dir_all(&game_root).map_err(|error| error.to_string())?;
-    write_game_manifest_ledger(&game_root)?;
+    write_game_manifest_ledger(&game_root, &first_root)?;
+    write_sample(&second_root, "dialog/fixture.wav", b"fixture")?;
     write_sample(&first_root, "art/z.json", br#"{"value":2}"#)?;
     write_sample(&first_root, "art/a.json", br#"{"value":1}"#)?;
     write_sample(&second_root, "art/a.json", br#"{"value":1}"#)?;

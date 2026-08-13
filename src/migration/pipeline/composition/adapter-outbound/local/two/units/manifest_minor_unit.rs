@@ -375,8 +375,20 @@ fn should_skip_local_game_file(relative: &Path, extension: &str) -> bool {
         .next()
         .and_then(|component| component.as_os_str().to_str())
         .is_some_and(|value| value.eq_ignore_ascii_case("manifest"));
+    let is_root = relative.components().count() == 1;
+    let root_name = relative.file_name().and_then(|name| name.to_str());
+    let is_runtime_save = is_root
+        && relative.extension().is_none()
+        && root_name
+            .and_then(|name| name.strip_prefix("Save"))
+            .is_some_and(|slot| {
+                !slot.is_empty()
+                    && slot.bytes().all(|byte| byte.is_ascii_digit())
+            });
     is_manifest_metadata
         || matches!(extension, "dll" | "exe" | "ico" | "iso")
+        || (is_root && extension == "ini")
+        || is_runtime_save
         || extension == "png"
         || extension == "schoenwald-original"
 }
