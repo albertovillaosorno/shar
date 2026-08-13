@@ -358,8 +358,6 @@ artistic replacement icon system. If a target needs a different icon container,
 that should be a deterministic build-only representation of the original icon,
 not a replacement artwork pipeline.
 
-**TODO: Preserve the canonical source icon without replacing or regenerating
-it.**
 
 ## Release and changelog policy
 

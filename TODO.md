@@ -31,14 +31,6 @@ Define and test the tentative 45–55% source-similarity window against a lawful
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc](docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc)
 
-### TODO - Preserve `Simpsons.ico`; no replacement icon pipeline
-
-Preserve `Simpsons.ico` as source identity; retire replacement-art/icon-generator
-work and keep any required platform container conversion build-only.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc](docs/todo/open/packaging/require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is.mdc)
-
 ### TODO - Preserve the original missions, mission order, world layout, progression, gameplay…
 
 Preserve the original missions, mission order, world layout, progression,
