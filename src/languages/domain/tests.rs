@@ -233,3 +233,28 @@ fn repeated_exports_are_byte_deterministic() -> Result<(), String> {
     cleanup(&root);
     result
 }
+
+#[test]
+fn rejected_output_inside_game_creates_nothing() -> Result<(), String> {
+    let root = temp_root("read-only-containment");
+    cleanup(&root);
+    let (game, movies) = fixture(&root)?;
+    let forbidden_parent = game.join("generated/languages");
+    let output = forbidden_parent.join("french");
+
+    let error = export_language(&game, &movies, &output, Language::French)
+        .err()
+        .ok_or_else(|| "output inside source game unexpectedly succeeded".to_owned())?;
+
+    let result = if error.to_string().contains("outside the source game")
+        && !game.join("generated").exists()
+    {
+        Ok(())
+    } else {
+        Err(format!(
+            "containment rejection modified source or returned wrong error: {error}"
+        ))
+    };
+    cleanup(&root);
+    result
+}

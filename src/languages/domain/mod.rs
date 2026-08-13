@@ -457,6 +457,26 @@ fn remove_staging(path: &Path) {
     }
 }
 
+fn nearest_existing_directory(path: &Path) -> Result<PathBuf, ExportError> {
+    for candidate in path.ancestors() {
+        if candidate.as_os_str().is_empty() {
+            continue;
+        }
+        match local::path_kind(candidate)? {
+            PathKind::Directory => return Ok(candidate.to_path_buf()),
+            PathKind::Missing => {}
+            PathKind::File | PathKind::Other => {
+                return Err(ExportError::Contract(
+                    "output parent chain contains a non-directory path".to_owned(),
+                ));
+            }
+        }
+    }
+    Err(ExportError::Contract(
+        "output has no existing directory ancestor".to_owned(),
+    ))
+}
+
 fn reject_output_inside_input(
     output: &Path,
     input_root: &Path,
@@ -467,8 +487,8 @@ fn reject_output_inside_input(
         .parent()
         .filter(|path| !path.as_os_str().is_empty())
         .unwrap_or_else(|| Path::new("."));
-    local::create_dir_all(parent)?;
-    let parent_identity = local::canonicalize(parent)?;
+    let existing_parent = nearest_existing_directory(parent)?;
+    let parent_identity = local::canonicalize(&existing_parent)?;
     if parent_identity == input || parent_identity.starts_with(&input) {
         return Err(ExportError::Contract(format!(
             "output must be outside the {label} directory"
