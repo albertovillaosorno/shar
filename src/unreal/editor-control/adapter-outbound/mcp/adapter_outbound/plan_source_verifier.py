@@ -34,10 +34,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import os
-import stat
 from pathlib import Path
+import stat
 from typing import NamedTuple
 
 from mcp.domain.errors import fail_protocol
@@ -83,7 +84,10 @@ class FilesystemPlanSourceVerifier:
         self._repository_root = repository_root
         self._plan_root = plan_root
 
-    def verify(self, bundle: ValidatedPlanBundle) -> VerifiedPlanSources:
+    def verify(  # noqa: PLR0914 - one pass owns cross-operation evidence.
+        self,
+        bundle: ValidatedPlanBundle,
+    ) -> VerifiedPlanSources:
         """Verify every source not explicitly awaiting upstream conversion."""
         repository_root = self._repository_root.absolute()
         plan_root = self._plan_root.absolute()
@@ -180,7 +184,7 @@ def _verify_source(
     _require_regular_file(path, metadata)
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
     descriptor: int | None = None
-    try:
+    try:  # noqa: PLW0717 - one descriptor lifetime owns byte verification.
         descriptor = os.open(path, flags)
         opened = os.fstat(descriptor)
         _require_same_file(metadata, opened)
@@ -197,10 +201,8 @@ def _verify_source(
         fail_protocol("failed to read plan source file", cause=error)
     finally:
         if descriptor is not None:
-            try:
+            with contextlib.suppress(OSError):
                 os.close(descriptor)
-            except OSError:
-                pass
     final_metadata = _metadata(path)
     if final_metadata is None:
         fail_protocol("plan source file disappeared during verification")

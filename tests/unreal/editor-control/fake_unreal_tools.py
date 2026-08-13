@@ -32,7 +32,7 @@
 
 from __future__ import annotations
 
-# ruff: noqa: EM101, EM102, PLR0911, PLR0912, PLR0913, TRY003
+# ruff: noqa: PLR0911, PLR0912, PLR0913
 import json
 
 from mcp.domain.json_types import JsonObject

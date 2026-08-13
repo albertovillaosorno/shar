@@ -32,11 +32,10 @@
 
 from __future__ import annotations
 
-import pytest
-
 from mcp.domain.argument_schema import validate_tool_arguments
 from mcp.domain.errors import ProtocolError
 from mcp.domain.json_types import JsonObject
+import pytest
 
 _CONTEXT = "tool EditorToolset.create_asset arguments"
 
@@ -103,7 +102,7 @@ def test_accepts_supported_nested_schema_constraints() -> None:
     [
         (lambda value: value.pop("name"), "required property is missing"),
         (lambda value: value.__setitem__("name", "bad"), "match pattern"),
-        (lambda value: value.__setitem__("count", True), "declared type"),
+        (lambda value: value.update(count=True), "declared type"),
         (lambda value: value.__setitem__("count", 9), "above maximum"),
         (lambda value: value.__setitem__("mode", "delete"), "declared enum"),
         (

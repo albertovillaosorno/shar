@@ -37,10 +37,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
 import platform
 import sys
 import tkinter as tk
-from pathlib import Path
 from tkinter import messagebox
 from typing import NamedTuple
 
@@ -167,7 +167,7 @@ def _write_selection(path: Path, selected: list[Target]) -> None:
     )
     try:
         candidate.write_text(data + "\n", encoding="utf-8", newline="\n")
-        os.replace(candidate, path)
+        Path(candidate).replace(path)
     finally:
         candidate.unlink(missing_ok=True)
 
@@ -294,7 +294,7 @@ def _show_gui(output: Path) -> int:
         return 2
 
     window.title("SHAR build targets")
-    window.resizable(False, False)
+    window.resizable(width=False, height=False)
     frame = tk.Frame(window, padx=18, pady=16)
     frame.pack(fill="both", expand=True)
 
@@ -327,7 +327,12 @@ def _show_gui(output: Path) -> int:
         width=12,
     )
     save.pack(anchor="e", pady=(12, 0))
-    window.bind("<Return>", lambda _event: save.invoke())
+
+    def invoke_save(event: object) -> None:
+        del event
+        save.invoke()
+
+    window.bind("<Return>", invoke_save)
     window.mainloop()
     return 0
 

@@ -54,9 +54,11 @@ if TYPE_CHECKING:
     from mcp.domain.tool_outcome import ToolCallOutcome
     from mcp.port_outbound.transport import McpTransport
 
-_REQUIRED_META_TOOLS = frozenset(
-    {"call_tool", "describe_toolset", "list_toolsets"}
-)
+_REQUIRED_META_TOOLS = frozenset({
+    "call_tool",
+    "describe_toolset",
+    "list_toolsets",
+})
 
 
 class DoctorReport(NamedTuple):
@@ -289,7 +291,8 @@ class UnrealMcpTranslator:
             tool
             for definition in self.discover_catalog()
             for tool in definition.tools
-            if tool.name == requested or tool.name.rsplit(".", 1)[-1] == requested
+            if tool.name == requested
+            or tool.name.rsplit(".", 1)[-1] == requested
         )
         if len(matches) != 1:
             fail_protocol(
@@ -316,7 +319,9 @@ class UnrealMcpTranslator:
         if not normalized_name:
             fail_protocol("top-level tool name must not be empty")
         if normalized_name == "call_tool":
-            fail_protocol("raw call cannot invoke the native mutation meta-tool")
+            fail_protocol(
+                "raw call cannot invoke the native mutation meta-tool"
+            )
         return self._transport.call_tool(
             self._require_session(),
             normalized_name,

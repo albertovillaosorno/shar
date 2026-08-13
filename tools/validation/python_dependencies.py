@@ -31,10 +31,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
 _PYTHON_VERSION = "3.14.6"
 _PYTEST_VERSION = "9.1.1"
@@ -82,7 +82,9 @@ def _ruff_path(environment: Path) -> Path:
     return environment / ("Scripts/ruff.exe" if os.name == "nt" else "bin/ruff")
 
 
-def _run(command: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+def _run(
+    command: list[str], *, cwd: Path | None = None
+) -> subprocess.CompletedProcess[str]:
     try:
         return subprocess.run(
             command,
@@ -98,13 +100,11 @@ def _run(command: list[str], *, cwd: Path | None = None) -> subprocess.Completed
 
 
 def _python_version(executable: Path) -> str:
-    result = _run(
-        [
-            str(executable),
-            "-c",
-            "import platform; print(platform.python_version())",
-        ]
-    )
+    result = _run([
+        str(executable),
+        "-c",
+        "import platform; print(platform.python_version())",
+    ])
     return result.stdout.strip()
 
 
@@ -118,11 +118,14 @@ def _validate_source_python(executable: Path) -> None:
     actual = _python_version(executable)
     if actual != _PYTHON_VERSION:
         raise BootstrapError(
-            f"CPython {_PYTHON_VERSION} is required; source reports {actual or 'unknown'}"
+            f"CPython {_PYTHON_VERSION} is required; "
+            f"source reports {actual or "unknown"}"
         )
 
 
-def _evidence(environment: Path, python: Path, pytest: Path, ruff: Path) -> dict[str, str]:
+def _evidence(
+    environment: Path, python: Path, pytest: Path, ruff: Path
+) -> dict[str, str]:
     if not python.is_file() or not pytest.is_file() or not ruff.is_file():
         raise BootstrapError("validation environment is incomplete")
     python_version = _python_version(python)
@@ -147,11 +150,15 @@ def _remove_real_directory(path: Path) -> None:
     if not path.exists():
         return
     if path.is_symlink() or not path.is_dir():
-        raise BootstrapError(f"refusing to replace non-directory dependency path: {path}")
+        raise BootstrapError(
+            f"refusing to replace non-directory dependency path: {path}"
+        )
     shutil.rmtree(path)
 
 
-def prepare(root: Path, source_python: Path, *, replace: bool) -> dict[str, str]:
+def prepare(
+    root: Path, source_python: Path, *, replace: bool
+) -> dict[str, str]:
     """Create or verify the exact local Python validation environment."""
     root = root.resolve(strict=True)
     source_python = source_python.resolve(strict=False)
@@ -165,37 +172,38 @@ def prepare(root: Path, source_python: Path, *, replace: bool) -> dict[str, str]
     parent.mkdir(parents=True, exist_ok=True)
     backup = parent / f".{environment.name}.validation-{os.getpid()}.backup"
     if backup.exists():
-        raise BootstrapError("validation environment backup path already exists")
+        raise BootstrapError(
+            "validation environment backup path already exists"
+        )
 
     had_previous = environment.exists()
     if had_previous:
         if environment.is_symlink() or not environment.is_dir():
             raise BootstrapError(
-                f"refusing to replace non-directory dependency path: {environment}"
+                "refusing to replace non-directory dependency path: "
+                f"{environment}"
             )
-        os.replace(environment, backup)
+        Path(environment).replace(backup)
 
     try:
         _run([str(source_python), "-m", "venv", str(environment)])
-        _run(
-            [
-                str(python),
-                "-m",
-                "pip",
-                "install",
-                "--disable-pip-version-check",
-                "--no-input",
-                "--only-binary=:all:",
-                "--no-deps",
-                *_REQUIREMENTS,
-            ]
-        )
+        _run([
+            str(python),
+            "-m",
+            "pip",
+            "install",
+            "--disable-pip-version-check",
+            "--no-input",
+            "--only-binary=:all:",
+            "--no-deps",
+            *_REQUIREMENTS,
+        ])
         result = _evidence(environment, python, pytest, ruff)
     except BaseException:
         if environment.exists():
             _remove_real_directory(environment)
         if had_previous and backup.exists():
-            os.replace(backup, environment)
+            Path(backup).replace(environment)
         raise
 
     if backup.exists():
@@ -204,6 +212,7 @@ def prepare(root: Path, source_python: Path, *, replace: bool) -> dict[str, str]
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Prepare or verify the exact local Python validation environment."""
     parser = argparse.ArgumentParser(
         prog="shar-validation-python",
         description="Prepare exact local pytest/Ruff dependencies for Jig.",

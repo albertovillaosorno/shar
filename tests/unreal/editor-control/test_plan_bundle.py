@@ -76,11 +76,9 @@ def _create_file_link(target: Path, link: Path) -> None:
         raise
 
 
-
 def test_default_plan_root_uses_generated_cache() -> None:
-    assert parse_plan_root(()) == Path(
-        ".cache/pipeline/unreal-staging/plans"
-    )
+    assert parse_plan_root(()) == Path(".cache/pipeline/unreal-staging/plans")
+
 
 def test_domain_accepts_canonical_six_plan_bundle() -> None:
     index, plans = _split_bundle()

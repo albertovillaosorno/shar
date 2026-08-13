@@ -3,13 +3,13 @@
 # SPDX-License-Identifier:
 #   - MIT
 
-"""Repository path-integrity guards for tracked architecture and documentation."""
+"""Path-integrity guards for tracked architecture and documentation."""
 
 from __future__ import annotations
 
+from pathlib import Path
 import re
 import tomllib
-from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
 _MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
@@ -28,7 +28,9 @@ def test_workspace_members_have_cargo_manifests() -> None:
     with (_ROOT / "Cargo.toml").open("rb") as stream:
         config = tomllib.load(stream)
     workspace = config.get("workspace")
-    assert isinstance(workspace, dict), "root Cargo.toml must declare [workspace]"
+    assert isinstance(workspace, dict), (
+        "root Cargo.toml must declare [workspace]"
+    )
     members = workspace.get("members")
     assert isinstance(members, list), "workspace.members must be a list"
 
@@ -62,14 +64,15 @@ def test_function_metadata_paths_match_directories() -> None:
         declared = _identity_path(function_file)
         actual = function_file.parent.relative_to(_ROOT).as_posix()
         if declared != actual:
-            mismatches.append(f"{function_file.relative_to(_ROOT)}: {declared!r} != {actual!r}")
+            mismatches.append(
+                f"{function_file.relative_to(_ROOT)}: "
+                f"{declared!r} != {actual!r}"
+            )
     assert not mismatches, f"stale function.yml paths: {mismatches}"
 
 
-
-
 def _flat_yaml_values(path: Path) -> dict[str, str]:
-    """Parse the repository's flat boundary-metadata YAML without dependencies."""
+    """Parse flat boundary metadata without external YAML dependencies."""
     values: dict[str, str] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line or line.startswith("#") or ": " not in line:
@@ -82,7 +85,9 @@ def _flat_yaml_values(path: Path) -> dict[str, str]:
 def test_source_domains_have_boundary_metadata() -> None:
     """Require canonical README authority for every src/<domain> boundary."""
     mismatches: list[str] = []
-    for domain in sorted(path for path in (_ROOT / "src").iterdir() if path.is_dir()):
+    for domain in sorted(
+        path for path in (_ROOT / "src").iterdir() if path.is_dir()
+    ):
         relative = domain.relative_to(_ROOT).as_posix()
         readme = domain / "README.md"
         metadata = domain / "README.md.yml"
@@ -98,7 +103,10 @@ def test_source_domains_have_boundary_metadata() -> None:
         }
         if values != expected:
             mismatches.append(f"{relative}: metadata={values!r}")
-    assert not mismatches, f"noncanonical source domain boundaries: {mismatches}"
+    assert not mismatches, (
+        f"noncanonical source domain boundaries: {mismatches}"
+    )
+
 
 def _metadata_scalar(function_file: Path, section: str, key: str) -> str | None:
     """Read one scalar from a top-level mapping in function.yml."""
@@ -141,15 +149,21 @@ def _declared_kinds(function_file: Path) -> list[str]:
 def test_source_tree_uses_domain_function_boundaries() -> None:
     """Require metadata for every src/<domain>/<function> directory."""
     missing: list[str] = []
-    for domain in sorted(path for path in (_ROOT / "src").iterdir() if path.is_dir()):
-        for function in sorted(path for path in domain.iterdir() if path.is_dir()):
-            if not (function / "function.yml").is_file():
-                missing.append(function.relative_to(_ROOT).as_posix())
+    for domain in sorted(
+        path for path in (_ROOT / "src").iterdir() if path.is_dir()
+    ):
+        missing.extend(
+            function.relative_to(_ROOT).as_posix()
+            for function in sorted(
+                path for path in domain.iterdir() if path.is_dir()
+            )
+            if not (function / "function.yml").is_file()
+        )
     assert not missing, f"source functions missing function.yml: {missing}"
 
 
 def test_function_metadata_matches_canonical_route_and_kinds() -> None:
-    """Keep function metadata synchronized with canonical physical boundaries."""
+    """Keep function metadata synchronized with physical boundaries."""
     mismatches: list[str] = []
     for function_file in sorted((_ROOT / "src").glob("*/*/function.yml")):
         function_root = function_file.parent
@@ -167,14 +181,20 @@ def test_function_metadata_matches_canonical_route_and_kinds() -> None:
         if declared_path != relative:
             mismatches.append(f"{relative}: identity.path={declared_path!r}")
         if declared_domain != domain:
-            mismatches.append(f"{relative}: identity.domain={declared_domain!r}")
+            mismatches.append(
+                f"{relative}: identity.domain={declared_domain!r}"
+            )
         if route != "src/<domain>/<function>/<kind>/<part>":
             mismatches.append(f"{relative}: architecture.route={route!r}")
         if declared_kinds != physical_kinds:
             mismatches.append(
-                f"{relative}: kinds={declared_kinds!r} physical={physical_kinds!r}"
+                f"{relative}: kinds={declared_kinds!r} "
+                f"physical={physical_kinds!r}"
             )
-    assert not mismatches, f"noncanonical source function metadata: {mismatches}"
+    assert not mismatches, (
+        f"noncanonical source function metadata: {mismatches}"
+    )
+
 
 def _documentation_files() -> list[Path]:
     files = [_ROOT / "README.md", _ROOT / "TODO.md"]
@@ -190,15 +210,20 @@ def test_repository_relative_markdown_links_exist() -> None:
         text = document.read_text(encoding="utf-8")
         for match in _MARKDOWN_LINK.finditer(text):
             target = match.group(1).strip()
-            if not target or target.startswith(("#", "http:", "https:", "mailto:", "<http:", "<https:")):
+            if not target or target.startswith((
+                "#",
+                "http:",
+                "https:",
+                "mailto:",
+                "<http:",
+                "<https:",
+            )):
                 continue
             target = target.strip("<>").split("#", 1)[0]
             if not target:
                 continue
             destination = (document.parent / target).resolve()
-            try:
-                destination.relative_to(_ROOT.resolve())
-            except ValueError:
+            if not destination.is_relative_to(_ROOT.resolve()):
                 continue
             if not destination.exists():
                 line = text.count("\n", 0, match.start()) + 1
@@ -208,6 +233,6 @@ def test_repository_relative_markdown_links_exist() -> None:
 
 
 def test_retired_repository_paths_stay_absent() -> None:
-    """Prevent removed compatibility and replacement subsystems from returning."""
+    """Prevent retired compatibility and replacement paths from returning."""
     present = [path for path in _RETIRED_PATHS if (_ROOT / path).exists()]
     assert not present, f"retired repository paths returned: {present}"

@@ -7,8 +7,8 @@
 
 from __future__ import annotations
 
-import tomllib
 from pathlib import Path
+import tomllib
 
 _ROOT = Path(__file__).resolve().parents[2]
 _CONFIG = _ROOT / ".jig" / "jig.toml"
@@ -54,7 +54,7 @@ _PROJECT_PYTHON_TOOLS = {
 
 
 def test_project_python_tools_use_materialized_environment() -> None:
-    """Keep pytest/Ruff on direct repository-local executables, not stale shims."""
+    """Keep pytest/Ruff on direct local executables, not stale shims."""
     with _CONFIG.open("rb") as stream:
         config = tomllib.load(stream)
     tools = config.get("tool")
@@ -75,24 +75,31 @@ def test_pytest_gate_covers_all_python_test_roots() -> None:
     with _CONFIG.open("rb") as stream:
         config = tomllib.load(stream)
     validation = config.get("validation")
-    pytest_gate = validation.get("pytest") if isinstance(validation, dict) else None
+    pytest_gate = (
+        validation.get("pytest") if isinstance(validation, dict) else None
+    )
     args = pytest_gate.get("args") if isinstance(pytest_gate, dict) else None
     assert isinstance(args, list), "validation.pytest.args must be configured"
-    configured = {value for value in args if isinstance(value, str) and value.startswith("tests/")}
+    configured = {
+        value
+        for value in args
+        if isinstance(value, str) and value.startswith("tests/")
+    }
     required = {
-        path.parent.as_posix()
-        for path in (_ROOT / "tests").glob("*/test_*.py")
+        path.parent.as_posix() for path in (_ROOT / "tests").glob("*/test_*.py")
     }
     required.update(
         path.parent.as_posix()
         for path in (_ROOT / "tests" / "unreal").glob("*/test_*.py")
     )
-    normalized = {
-        str(Path(value).as_posix()) for value in configured
-    }
+    normalized = {str(Path(value).as_posix()) for value in configured}
     relative_required = {
-        Path(value).relative_to(_ROOT).as_posix() if Path(value).is_absolute() else value
+        Path(value).relative_to(_ROOT).as_posix()
+        if Path(value).is_absolute()
+        else value
         for value in required
     }
     missing = sorted(relative_required - normalized)
-    assert not missing, f"Python test roots missing from Jig pytest gate: {missing}"
+    assert not missing, (
+        f"Python test roots missing from Jig pytest gate: {missing}"
+    )
