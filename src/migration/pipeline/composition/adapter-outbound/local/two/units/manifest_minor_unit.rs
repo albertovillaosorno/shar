@@ -189,15 +189,6 @@ fn collect_game_first_units(
                     units,
                 )?;
             },
-            "lmlm" => {
-                let extracted_dir = config.extracted_root.join("lmlm");
-                collect_required_extracted_tree(
-                    &config.extracted_root,
-                    &extracted_dir,
-                    units,
-                    "LMLM",
-                )?;
-            },
             "rsd" => {
                 let normalized = stragglers::normalized_wav_path(
                     &config.extracted_root,

@@ -187,7 +187,6 @@ const ORIGIN_VALUES: &[&str] = &[
     "p3d-package",
     "rmv-decode",
     "rsd-decode",
-    "lmlm-override",
     "spt-decode",
     "rms-decode",
     "readme-rtf-decode",

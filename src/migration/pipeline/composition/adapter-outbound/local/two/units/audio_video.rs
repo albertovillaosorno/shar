@@ -212,9 +212,6 @@ fn movie_classification(
 fn movie_scope(tokens: &[&str]) -> Option<String> {
     let movie_index = tokens.iter().position(|token| *token == "movies")?;
     let name = tokens.get(movie_index.saturating_add(1)).copied()?;
-    if tokens.contains(&"lmlm") {
-        return Some(format!("mod-audio/{name}"));
-    }
     if name == "credits" {
         Some("credits".to_owned())
     } else if movie_logo_token(name) {

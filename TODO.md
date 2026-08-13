@@ -436,8 +436,8 @@ in place, selects targets, and writes only to its own workspace and `dist/`.
 
 ### TODO - Convert decompilable LMLM mods into open SHAR mod packages
 
-Provide the separate `lmlm-to-shar.py` compatibility converter, tested first on
-Jebano/Muckluck fixtures and never auto-injected into the faithful base build.
+Keep legacy conversion under the separately downloadable `tools/lmlm/` Python
+boundary, tested first on Jebano/Muckluck inputs and never injected into base.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/mods/convert-decompilable-lmlm-mods-into-open-shar-mod-packages.mdc](docs/todo/open/mods/convert-decompilable-lmlm-mods-into-open-shar-mod-packages.mdc)

@@ -33,8 +33,8 @@
 use std::path::Path;
 
 use crate::domain::{
-    OptionalModPreview, PhaseThreePackageSelector, PipelineConfig,
-    PipelineOutcome, PipelineReport, StageReport,
+    PhaseThreePackageSelector, PipelineConfig, PipelineOutcome, PipelineReport,
+    StageReport,
 };
 use crate::ports::{FbxExportOptions, PipelineOperations};
 
@@ -85,21 +85,6 @@ impl PipelineOperations for LocalPipeline {
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
         one::extract::ExtractGameAssets::export_movies_only(config)
-    }
-
-    fn export_lmlm(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport> {
-        one::extract::ExtractGameAssets::export_lmlm_only(config)
-    }
-
-    fn preview_optional_mods(
-        &self,
-        game_root: &Path,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<OptionalModPreview> {
-        one::preview_optional_mods(game_root, extracted_root)
     }
 
     fn manifest_minor_units(

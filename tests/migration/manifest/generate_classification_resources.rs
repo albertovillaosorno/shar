@@ -67,8 +67,8 @@ fn err_buckets_are_build_logs() {
 }
 
 #[test]
-fn lmlm_buckets_are_language_mods_at_any_depth() {
-    assert_eq!(classify_manifest_bucket("aa", "lmlm"), "language_mod");
+fn lmlm_buckets_are_unclassified_in_the_base_manifest() {
+    assert_eq!(classify_manifest_bucket("aa", "lmlm"), "error");
 }
 
 #[test]

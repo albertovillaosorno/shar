@@ -33,8 +33,8 @@
 use std::path::Path;
 
 use crate::domain::{
-    OptionalModPreview, PhaseThreePackageSelector, PipelineConfig,
-    PipelineOutcome, PipelineReport, StageReport,
+    PhaseThreePackageSelector, PipelineConfig, PipelineOutcome, PipelineReport,
+    StageReport,
 };
 use crate::ports::{FbxExportOptions, PipelineOperations};
 
@@ -77,32 +77,6 @@ where
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport> {
         self.provider.export_movies(config)
-    }
-
-    /// Exports only LMLM packages.
-    ///
-    /// # Errors
-    ///
-    /// Returns the provider's validated pipeline failure.
-    pub fn export_lmlm(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport> {
-        self.provider.export_lmlm(config)
-    }
-
-    /// Previews supported optional packages without persistent writes.
-    ///
-    /// # Errors
-    ///
-    /// Returns the provider's validated preview failure.
-    pub fn preview_optional_mods(
-        &self,
-        game_root: &Path,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<OptionalModPreview> {
-        self.provider
-            .preview_optional_mods(game_root, extracted_root)
     }
 
     /// Writes the phase-two minor-unit manifest.

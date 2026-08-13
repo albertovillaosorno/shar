@@ -100,7 +100,7 @@ fn output_names_are_excluded_only_at_root() {
     assert!(!counts.contains_key(&(String::new(), "jsonl".to_owned())));
 }
 
-fn nested_optional_mod_counts() -> io::Result<DirExtCounts> {
+fn nested_legacy_lmlm_counts() -> io::Result<DirExtCounts> {
     let fixture = FixtureRoot::new("nested-optional")?;
     fs::write(fixture.path().join("language.lmlm"), b"root")?;
     let nested = fixture.path().join("area");
@@ -110,15 +110,15 @@ fn nested_optional_mod_counts() -> io::Result<DirExtCounts> {
 }
 
 #[test]
-fn optional_mods_are_excluded_only_at_root() {
-    let result = nested_optional_mod_counts();
+fn legacy_lmlm_has_no_special_counting_rule() {
+    let result = nested_legacy_lmlm_counts();
     assert!(result.is_ok());
     let Some(counts) = result.ok() else {
         return;
     };
 
     assert_eq!(counts.get(&("aa".to_owned(), "lmlm".to_owned())), Some(&1));
-    assert!(!counts.contains_key(&(String::new(), "lmlm".to_owned())));
+    assert_eq!(counts.get(&(String::new(), "lmlm".to_owned())), Some(&1));
 }
 
 fn nested_png_counts() -> io::Result<DirExtCounts> {

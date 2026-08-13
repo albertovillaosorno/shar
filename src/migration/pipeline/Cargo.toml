@@ -31,9 +31,6 @@ rmv = { path = "../../formats/rmv" }
 # p3d decodes validated Pure3D components required by pipeline package planning and streamed world reconstruction.
 p3d = { path = "../../formats/p3d" }
 # jig-ignore-next-line: exact value is indivisible
-# lmlm extracts embedded package content required by pipeline manifest reconstruction and duplicate comparison stages.
-lmlm = { path = "../../formats/lmlm" }
-# jig-ignore-next-line: exact value is indivisible
 # fbx translates decoded package components into deterministic FBX interchange artifacts for phase-three model export.
 fbx = { path = "../../formats/fbx" }
 # jig-ignore-next-line: exact value is indivisible

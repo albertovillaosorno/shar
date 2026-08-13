@@ -16,22 +16,21 @@ pipeline extract-game game .cache/pipeline/extracted
 pipeline extract-game-resume game .cache/pipeline/extracted
 ```
 
-The partial `export-movies` and `export-lmlm` commands share the same output
-lease and startup recovery. They update their admitted subtrees in place rather
-than publishing a complete candidate root.
+The partial `export-movies` command shares the same output lease and startup
+recovery. It updates its admitted subtree in place rather than publishing a
+complete candidate root. Legacy LMLM conversion is not an extraction command;
+it lives independently under `tools/lmlm/`.
 
-Both complete commands execute the same ten ordered extraction stages from the
-beginning.
-`extract-game-resume` does not skip stages or trust partially generated stage
-output. Its additional meaning is that package continuity from the accepted
-output must remain valid before the rebuild proceeds.
+Both complete commands execute the same nine ordered base-extraction stages
+from the beginning. `extract-game-resume` does not skip stages or trust
+partially generated stage output.
 
 ## Publication boundary
 
 Every complete extraction writes below an empty sibling candidate directory.
 The accepted output root remains unchanged while source validation, decoding,
-optional-package application, normalization, output verification, minor-unit
-manifest generation, and the run report execute.
+normalization, output verification, minor-unit manifest generation, and the run
+report execute.
 
 After every stage succeeds, publication uses sibling directory renames:
 
@@ -88,8 +87,7 @@ mtime or age heuristic chooses between competing outputs.
 ## Startup recovery
 
 Recovery is the first operation after validating the source and output root
-relationship. It runs before optional-package approval and before package-set
-continuity checks.
+relationship, before any candidate-stage work begins.
 
 The following states are accepted:
 
@@ -120,17 +118,11 @@ The command stops without choosing an output when:
 Unknown artifacts are never inferred to be safe merely from their names or
 ages. No stale timeout can override a live lease.
 
-## Stage and package ordering
+## Stage ordering
 
-A recovered accepted root is available before optional-package approval is
-evaluated. A missing or stale approval token therefore cannot strand the prior
-accepted tree under the backup identity.
-
-For `extract-game-resume`, optional-package manifest continuity is checked
-against the recovered accepted tree. A changed, removed, or legacy package set
-still requires a clean `extract-game` invocation. The new candidate receives the
-same approved package token, but no stage reads generated files from the old
-accepted tree.
+A recovered accepted root is available before the nine base-extraction stages
+begin. Resume mode rebuilds the same faithful base candidate and never reads
+legacy mod packages or generated mod-conversion output.
 
 ## Direct minor-unit regeneration
 
@@ -181,7 +173,7 @@ Unit and integration tests prove:
 - interruption after candidate publication keeps the complete candidate;
 - active lease contention preserves both accepted and candidate data;
 - malformed state and unowned artifacts fail without mutation;
-- recovery precedes both optional-package approval and continuity checks;
+- recovery precedes all base-extraction candidate stages;
 - partial exports respect an active full-extraction lease and recover an
   abandoned full publication before their own validation;
 - canonical output identity cannot alias a location inside the source tree;
@@ -192,8 +184,6 @@ Unit and integration tests prove:
 
 A maximum local extraction was externally terminated on 2026-08-05 during the
 normalized-output audit, before the candidate received the accepted name. The
-next invocation used the current transaction implementation to remove the
-abandoned 136,411-file candidate in 85 seconds before evaluating
-optional-package approval. It then rejected the missing approval token with no
-accepted output, no transient transaction artifacts, and one empty reusable
-lock file.
+next invocation used the transaction implementation to remove the abandoned
+136,411-file candidate in 85 seconds before beginning new stage work, leaving no
+transient transaction artifacts and one empty reusable lock file.

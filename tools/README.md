@@ -14,5 +14,7 @@ Does not own source crates, generated artifacts, or local dependencies.
 
 ## Navigation
 
+- [`lmlm/`](lmlm/) is the standalone Python compatibility boundary for users
+  who explicitly choose to inspect or convert supported legacy LMLM mods.
 - [`vwj/main.py`](vwj/main.py) runs the configured external validation
   gates when the Jig executable is unavailable.

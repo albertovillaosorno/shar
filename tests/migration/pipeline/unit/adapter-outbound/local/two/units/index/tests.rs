@@ -43,7 +43,7 @@ use super::{
 #[test]
 fn error_packages_publish_only_the_error_role() -> Result<(), String> {
     let mut package =
-        package_from_id("extracted-lmlm-latino-customfiles-apu", vec![
+        package_from_id("extracted-dialog-apu", vec![
             member_with_fields(
                 "latino-audio",
                 MinorUnitRole::Audio,
@@ -172,10 +172,6 @@ fn package_category_routes_export_domains() {
         PackageCategory::UiScreens
     );
     assert_eq!(
-        category_from_root("extracted/lmlm/CustomFiles/homer"),
-        PackageCategory::Dialog
-    );
-    assert_eq!(
         category_from_root("extracted"),
         PackageCategory::ExtractionReports
     );
@@ -203,10 +199,6 @@ fn package_category_routes_export_domains() {
     assert_eq!(
         category_from_root("extracted/scripts/sound/scripts"),
         PackageCategory::SoundScripts
-    );
-    assert_eq!(
-        category_from_root("extracted/lmlm/CustomText"),
-        PackageCategory::Language
     );
     assert_eq!(
         category_from_root("extracted/art/frontend/scrooby2/language"),
@@ -350,24 +342,6 @@ fn mission_runtime_assets_use_concrete_scope() -> Result<(), String> {
     )
 }
 
-#[test]
-fn manifest_evidence_routes_mod_conversation_overrides() -> Result<(), String> {
-    let package =
-        package_from_id("extracted-lmlm-customfiles-conversations", vec![
-            member_with_fields(
-                "mod-conversation-audio",
-                MinorUnitRole::Audio,
-                "audio",
-                "audio-override",
-                "none",
-            )?,
-        ]);
-    expect_package_classification(
-        &package,
-        PackageCategory::Dialog,
-        "dialog/mod-conversations/mod-override/free-roam",
-    )
-}
 
 #[test]
 fn manifest_evidence_routes_terrain_world_by_level_and_role()

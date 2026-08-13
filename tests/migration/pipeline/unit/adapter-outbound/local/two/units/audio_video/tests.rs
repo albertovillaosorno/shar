@@ -67,8 +67,4 @@ fn classifies_movie_scopes() {
         movie_scope(&["extracted", "movies", "radlogo"]),
         Some("logos/radlogo".to_owned())
     );
-    assert_eq!(
-        movie_scope(&["extracted", "lmlm", "movies", "intro"]),
-        Some("mod-audio/intro".to_owned())
-    );
 }

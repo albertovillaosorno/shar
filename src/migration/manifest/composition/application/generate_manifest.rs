@@ -36,7 +36,7 @@ use super::ManifestError;
 use super::path_evidence::require_rooted_paths;
 use crate::domain::{
     DirCount, DirExtCounts, GENERATED_IMAGE_EXTENSION, MANIFEST_FILE_NAME,
-    OPTIONAL_EXTENSION, classify_manifest_bucket, count_by_dir_ext_paths,
+    classify_manifest_bucket, count_by_dir_ext_paths,
     exact_file_shortfalls, kind_taxonomy_jsonl,
 };
 use crate::ports::{GameTree, PathKind, TextArtifactStore};
@@ -78,8 +78,6 @@ impl GenerateManifest {
         }
         let mut counts = load_counts(tree, game_dir)?;
         require_required_evidence(&counts)?;
-        let _optional_previous =
-            counts.insert((String::new(), OPTIONAL_EXTENSION.to_owned()), 0);
         let _generated_previous = counts
             .insert((String::new(), GENERATED_IMAGE_EXTENSION.to_owned()), 0);
         let mut text = kind_taxonomy_jsonl();

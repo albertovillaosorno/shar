@@ -33,8 +33,8 @@
 use std::path::Path;
 
 use crate::domain::{
-    OptionalModPreview, OutputSummary, PhaseThreePackageSelector,
-    PipelineConfig, PipelineOutcome, PipelineReport, StageReport,
+    OutputSummary, PhaseThreePackageSelector, PipelineConfig, PipelineOutcome,
+    PipelineReport, StageReport,
 };
 
 /// Optional storage policy requested for one phase-three FBX export.
@@ -76,27 +76,6 @@ pub trait PipelineOperations {
         &self,
         config: &PipelineConfig,
     ) -> PipelineOutcome<PipelineReport>;
-
-    /// Exports only LMLM packages.
-    ///
-    /// # Errors
-    ///
-    /// Returns a validated pipeline failure.
-    fn export_lmlm(
-        &self,
-        config: &PipelineConfig,
-    ) -> PipelineOutcome<PipelineReport>;
-
-    /// Previews every supported optional package without persistent writes.
-    ///
-    /// # Errors
-    ///
-    /// Returns a validated failure when package or source evidence is invalid.
-    fn preview_optional_mods(
-        &self,
-        game_root: &Path,
-        extracted_root: &Path,
-    ) -> PipelineOutcome<OptionalModPreview>;
 
     /// Writes the phase-two minor-unit manifest.
     ///

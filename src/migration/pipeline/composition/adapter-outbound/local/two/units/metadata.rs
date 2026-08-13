@@ -217,11 +217,7 @@ pub(super) fn classify_minor_unit(
             MetadataClassification::new(
                 "text",
                 "ini",
-                if route.has(RouteFeature::Lmlm) {
-                    "localization-override"
-                } else {
-                    "runtime-asset"
-                },
+                "runtime-asset",
                 "configuration or localization text",
                 route.text_origin(),
                 "import-as-data-asset",
@@ -266,8 +262,6 @@ pub(super) fn classify_minor_unit(
 /// Stable route features derived from one normalized manifest path.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum RouteFeature {
-    /// Route belongs to an LMLM override package.
-    Lmlm,
     /// Route belongs to a movie package.
     MoviePackage,
     /// Route names the movie video output.
@@ -296,9 +290,6 @@ impl RouteSignature {
         let segments = lower.split('/').collect::<Vec<_>>();
         let leaf = segments.last().copied().unwrap_or_default().to_owned();
         let mut features = BTreeSet::new();
-        if segments.contains(&"lmlm") {
-            let _ = features.insert(RouteFeature::Lmlm);
-        }
         let movie_package = segments.contains(&"movies");
         if movie_package {
             let _ = features.insert(RouteFeature::MoviePackage);
@@ -325,9 +316,7 @@ impl RouteSignature {
 
     /// Audio origin.
     fn audio_origin(&self) -> &'static str {
-        if self.has(RouteFeature::Lmlm) {
-            "lmlm-override"
-        } else if self.has(RouteFeature::MovieAudio) {
+        if self.has(RouteFeature::MovieAudio) {
             "rmv-decode"
         } else {
             "rsd-decode"
@@ -335,21 +324,13 @@ impl RouteSignature {
     }
 
     /// Audio kind.
-    fn audio_kind(&self) -> &'static str {
-        if self.has(RouteFeature::Lmlm) {
-            "audio-override"
-        } else {
-            "runtime-asset"
-        }
+    const fn audio_kind(&self) -> &'static str {
+        "runtime-asset"
     }
 
     /// Text origin.
-    fn text_origin(&self) -> &'static str {
-        if self.has(RouteFeature::Lmlm) {
-            "lmlm-override"
-        } else {
-            "game-root"
-        }
+    const fn text_origin(&self) -> &'static str {
+        "game-root"
     }
 }
 
@@ -375,9 +356,7 @@ pub(super) fn metadata_needs_header(
     {
         return false;
     }
-    !(route.leaf == "manifest.json"
-        && (route.has(RouteFeature::MoviePackage)
-            || route.has(RouteFeature::Lmlm)))
+    !(route.leaf == "manifest.json" && route.has(RouteFeature::MoviePackage))
 }
 
 /// Classify image.
@@ -453,19 +432,6 @@ fn classify_json_like(
         );
         "shar-schoenwald.radmusic-compiled.v3".clone_into(&mut meta.schema);
     } else if classify_movie_json(meta, route) {
-    } else if route.leaf == "manifest.json" && route.has(RouteFeature::Lmlm) {
-        apply_classification(
-            meta,
-            MetadataClassification::new(
-                "metadata",
-                "lmlm-manifest-json",
-                "package-manifest",
-                "override manifest",
-                "lmlm-override",
-                "editor-only-metadata",
-                "keep",
-            ),
-        );
     } else if route.has(RouteFeature::P3dComponent)
         || text.contains("schema_ref")
         || text.contains("payload_format")
@@ -758,8 +724,6 @@ fn schema_hint(ext: &str, route: &RouteSignature) -> &'static str {
 fn derived_from(path: &str) -> &str {
     if path.starts_with("extracted/game/") {
         "game-straggler"
-    } else if path.starts_with("extracted/lmlm/") {
-        "lmlm"
     } else if path.starts_with("extracted/movies/") {
         "rmv"
     } else if path.starts_with(&format!("{}/", "extracted")) {
@@ -824,9 +788,7 @@ fn size_value(
 impl RouteSignature {
     /// Origin for non straggler.
     fn origin_for_non_straggler(&self) -> &'static str {
-        if self.has(RouteFeature::Lmlm) {
-            "lmlm-override"
-        } else if self.has(RouteFeature::P3dComponent)
+        if self.has(RouteFeature::P3dComponent)
             || self.leaf == "components.jsonl"
         {
             "p3d-package"
@@ -837,9 +799,7 @@ impl RouteSignature {
 
     /// Container.
     fn container(&self) -> &'static str {
-        if self.has(RouteFeature::Lmlm) {
-            "lmlm-overlay"
-        } else if self.has(RouteFeature::MovieAudio)
+        if self.has(RouteFeature::MovieAudio)
             || self.has(RouteFeature::Timing)
             || self.has(RouteFeature::MovieVideo)
         {
@@ -855,9 +815,7 @@ impl RouteSignature {
 
     /// Note.
     fn note(&self) -> &'static str {
-        if self.has(RouteFeature::Lmlm) {
-            "classified-from-lmlm-overlay-route"
-        } else if self.has(RouteFeature::MovieAudio)
+        if self.has(RouteFeature::MovieAudio)
             || self.has(RouteFeature::MovieVideo)
         {
             "classified-from-movie-package-route"

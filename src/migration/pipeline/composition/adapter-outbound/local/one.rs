@@ -36,10 +36,6 @@ pub(in crate::adapters::driven::local) mod extract;
 mod extraction_transaction;
 /// Generated JSON validation.
 mod json_output;
-/// Lmlm stage.
-#[rustfmt::skip]
-mod lmlm_stage;
-pub(in crate::adapters::driven::local) use lmlm_stage::preview_optional_mods;
 /// Media dependencies.
 mod media_dependencies;
 /// Rms.

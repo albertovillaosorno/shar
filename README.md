@@ -90,7 +90,6 @@ is never reconstruction input and it does not itself prove software is safe.
      *.py
    mods/
    scripts/
-     lmlm-to-shar.py
      windows/shar.ps1
      macos-linux/shar.sh
    ```
@@ -269,16 +268,18 @@ shape; it does **not** force GPL or any other specific license on a mod author.
 > creativity and make complex work harder. Start new mods directly for SHAR so
 > you can use the broader modern toolset instead.
 
-The release will include:
+Legacy conversion is intentionally separate from the faithful base release.
+Anyone who wants it downloads the standalone Python directory:
 
 ```text
-scripts/lmlm-to-shar.py
+tools/lmlm/
 ```
 
-The converter decompiles/extracts an eligible legacy LMLM package and builds a
-SHAR-format folder/ZIP from what can actually be recovered. Some converted mods
-will not work immediately because legacy behavior or assets may not map cleanly
-to the new architecture; in that case, adapt the resulting open package.
+Run `python main.py inspect <mod.lmlm>` for read-only validation or
+`python main.py convert <mod.lmlm> <output>` to create an inspectable open
+conversion workspace. The current converter extracts recoverable content and
+records SHA-256 provenance; final SHAR-package adaptation remains gated on the
+mod-package schema instead of pretending every legacy behavior translates.
 
 The default converter policy is:
 

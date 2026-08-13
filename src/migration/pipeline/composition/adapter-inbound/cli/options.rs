@@ -52,8 +52,6 @@ pub(super) struct ParsedArguments {
     pub(super) logging_explicit: bool,
     /// Whether `fbx-export` should embed compatibility texture payloads.
     pub(super) embed_textures: bool,
-    /// Exact preview token approved for optional package application.
-    pub(super) optional_mod_approval: Option<String>,
     /// Cooperative process-registry selectors.
     run: RunOptions,
 }
@@ -87,7 +85,6 @@ impl Default for ParsedArguments {
             log_file: Some(PathBuf::from(DEFAULT_LOG_FILE)),
             logging_explicit: false,
             embed_textures: false,
-            optional_mod_approval: None,
             run: RunOptions::default(),
         }
     }
@@ -119,7 +116,6 @@ pub(super) fn parse_common_arguments(
     let mut parsed = ParsedArguments::default();
     let mut verbosity_selected = false;
     let mut logging_selected = false;
-    let mut approval_selected = false;
     let mut parse_options = true;
     let mut index = 0usize;
     while let Some(argument) = arguments.get(index) {
@@ -189,46 +185,6 @@ pub(super) fn parse_common_arguments(
             index = index.saturating_add(1);
             continue;
         }
-        if parse_options && argument == "--approve-optional-mods" {
-            if approval_selected {
-                return Err(String::from(
-                    "--approve-optional-mods may be specified only once",
-                ));
-            }
-            let value =
-                arguments.get(index.saturating_add(1)).ok_or_else(|| {
-                    String::from(
-                        "--approve-optional-mods requires a preview token",
-                    )
-                })?;
-            if value.starts_with('-') {
-                return Err(format!(
-                    concat!(
-                        "--approve-optional-mods requires a preview token ",
-                        "before {}"
-                    ),
-                    value
-                ));
-            }
-            parsed.optional_mod_approval = Some(parse_approval_token(value)?);
-            approval_selected = true;
-            index = index.saturating_add(2);
-            continue;
-        }
-        if parse_options
-            && let Some(value) =
-                argument.strip_prefix("--approve-optional-mods=")
-        {
-            if approval_selected {
-                return Err(String::from(
-                    "--approve-optional-mods may be specified only once",
-                ));
-            }
-            parsed.optional_mod_approval = Some(parse_approval_token(value)?);
-            approval_selected = true;
-            index = index.saturating_add(1);
-            continue;
-        }
         if parse_options
             && let Some(value) = argument.strip_prefix("--verbosity=")
         {
@@ -247,22 +203,6 @@ pub(super) fn parse_common_arguments(
         index = index.saturating_add(1);
     }
     Ok(parsed)
-}
-
-/// Validates one exact lowercase SHA-256 preview token.
-fn parse_approval_token(value: &str) -> Result<String, String> {
-    let valid = value.len() == 64
-        && value
-            .bytes()
-            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte));
-    if valid {
-        Ok(value.to_owned())
-    } else {
-        Err(String::from(concat!(
-            "--approve-optional-mods requires a 64-character lowercase ",
-            "hexadecimal preview token"
-        )))
-    }
 }
 
 /// Parse one exact supported verbosity value.

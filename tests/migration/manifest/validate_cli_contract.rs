@@ -85,7 +85,7 @@ fn validate_manifest(manifest: &str) -> io::Result<Output> {
 #[test]
 fn validator_rejects_missing_final_newline() {
     let row =
-        "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
+        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
     let manifest = format!("{}\n{row}", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
@@ -97,7 +97,7 @@ fn validator_rejects_missing_final_newline() {
 
 #[test]
 fn validator_rejects_mismatched_kind() {
-    let row = "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"audio\"}";
+    let row = "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"audio\"}";
     let manifest = format!("{}\n{row}\n", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
@@ -127,7 +127,7 @@ fn validator_rejects_error_classification_before_counting() {
 #[test]
 fn validator_rejects_extra_arguments() {
     let row =
-        "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
+        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
     let manifest = format!("{}\n{row}\n", kind_taxonomy_jsonl());
     let result = run_validator(&manifest, Some("unexpected"), false);
     assert!(result.is_ok());
@@ -140,7 +140,7 @@ fn validator_rejects_extra_arguments() {
 #[test]
 fn validator_rejects_crlf_line_endings() {
     let row =
-        "{\"dir\":\"\",\"ext\":\"lmlm\",\"min\":0,\"kind\":\"language_mod\"}";
+        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
     let manifest = format!("{}\r\n{row}\r\n", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());

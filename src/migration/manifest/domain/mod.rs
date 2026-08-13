@@ -56,7 +56,6 @@ pub const EXACT_FILE_REQUIREMENTS: &[(&str, usize)] = &[
 /// Controlled taxonomy of manifest file kinds.
 pub const KIND_TAXONOMY: &[&str] = &[
     "error",
-    "language_mod",
     "language_textbible",
     "movie",
     "p3d_container",
@@ -77,13 +76,6 @@ pub const KIND_TAXONOMY: &[&str] = &[
 
 /// Extension token used for files that have no extension.
 pub const NO_EXTENSION: &str = "(none)";
-
-/// Extension of an optional local mod package. Root package evidence is
-/// excluded from folder counts and recorded once with a minimum of zero.
-pub const OPTIONAL_EXTENSION: &str = "lmlm";
-
-/// Top-level directory containing optional local packages.
-const OPTIONAL_MOD_DIRECTORY: &str = "mods";
 
 /// Extension of generated image files that must not become required game input.
 /// Original texture/image payloads are supplied through P3D extraction instead.
@@ -255,35 +247,16 @@ fn is_safe_relative_source(relative: &Path) -> bool {
     has_descendant
 }
 
-/// Returns whether one source belongs to the optional local package tree.
-fn is_optional_mod_source(relative: &Path) -> bool {
-    relative
-        .components()
-        .next()
-        .and_then(|component| match component {
-            Component::Normal(value) => value.to_str(),
-            Component::CurDir
-            | Component::ParentDir
-            | Component::RootDir
-            | Component::Prefix(_) => None,
-        })
-        .is_some_and(|value| value.eq_ignore_ascii_case(OPTIONAL_MOD_DIRECTORY))
-}
-
 /// Returns one countable source coordinate for a rooted source path.
 fn manifest_source(root: &Path, path: &Path) -> Option<ManifestSource> {
     let relative = path.strip_prefix(root).ok()?;
     if !is_safe_relative_source(relative)
-        || is_optional_mod_source(relative)
         || is_exact_file_requirement(root, path)
     {
         return None;
     }
     let extension = extension_of(path);
     let at_root = path.parent() == Some(root);
-    if at_root && extension == OPTIONAL_EXTENSION {
-        return None;
-    }
     if at_root && extension == GENERATED_IMAGE_EXTENSION {
         return None;
     }
