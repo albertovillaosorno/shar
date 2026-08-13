@@ -1,0 +1,296 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+
+//! External round-trip and tamper tests for the generic algorithm engine.
+
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use chacha20poly1305 as _;
+use schoenwald_cli as _;
+use schoenwald_filesystem as _;
+use serde as _;
+use serde_json as _;
+use shar_algorithm::{Settings, create_algorithm, replay_algorithm};
+use shar_sha256 as _;
+
+static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+struct TempTree {
+    path: PathBuf,
+}
+
+impl TempTree {
+    fn create(label: &str) -> Result<Self, std::io::Error> {
+        let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "shar-algorithm-{label}-{}-{sequence}",
+            std::process::id()
+        ));
+        if path.exists() {
+            fs::remove_dir_all(&path)?;
+        }
+        fs::create_dir_all(&path)?;
+        Ok(Self { path })
+    }
+}
+
+impl Drop for TempTree {
+    fn drop(&mut self) {
+        let _cleanup_result = fs::remove_dir_all(&self.path);
+    }
+}
+
+fn settings() -> Result<Settings, Box<dyn std::error::Error>> {
+    let text = r#"{
+      "schema":"shar.algorithm.settings.v1",
+      "minimum_source_files":1,
+      "minimum_source_bytes":1024,
+      "maximum_source_files":16,
+      "maximum_target_files":16,
+      "maximum_file_bytes":1048576,
+      "maximum_source_bytes":4194304,
+      "maximum_target_bytes":4194304
+    }"#;
+    Ok(Settings::from_json(text)?)
+}
+
+fn write_fixture_tree(root: &Path) -> Result<(PathBuf, PathBuf), std::io::Error> {
+    let source = root.join("source");
+    let target = root.join("target");
+    fs::create_dir_all(source.join("nested"))?;
+    fs::create_dir_all(target.join("nested"))?;
+    fs::write(source.join("one.bin"), vec![0x31_u8; 1536])?;
+    fs::write(source.join("nested").join("two.bin"), vec![0x57_u8; 768])?;
+    fs::write(target.join("alpha.txt"), b"synthetic target alpha\n")?;
+    fs::write(
+        target.join("nested").join("beta.bin"),
+        [0_u8, 1, 2, 3, 250, 251, 252, 253],
+    )?;
+    Ok((source, target))
+}
+
+fn assert_tree_equal(left: &Path, right: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    for relative in ["alpha.txt", "nested/beta.bin"] {
+        let left_bytes = fs::read(left.join(relative))?;
+        let right_bytes = fs::read(right.join(relative))?;
+        if left_bytes != right_bytes {
+            return Err(format!("replayed file differs: {relative}").into());
+        }
+    }
+    Ok(())
+}
+
+fn run_directory_round_trip_is_deterministic() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("round-trip")?;
+    let (source, target) = write_fixture_tree(&temp.path)?;
+    let first = temp.path.join("first.txt");
+    let second = temp.path.join("second.txt");
+    let replayed = temp.path.join("replayed");
+    let settings = settings()?;
+
+    create_algorithm(&settings, std::slice::from_ref(&source), &target, &first)?;
+    create_algorithm(&settings, std::slice::from_ref(&source), &target, &second)?;
+    if fs::read(&first)? != fs::read(&second)? {
+        return Err("identical inputs must create byte-identical algorithms".into());
+    }
+    let plan_text = fs::read_to_string(&first)?;
+    if plan_text.contains("synthetic target alpha") {
+        return Err("protected target plaintext leaked into algorithm text".into());
+    }
+
+    replay_algorithm(&settings, std::slice::from_ref(&source), &first, &replayed)?;
+    assert_tree_equal(&target, &replayed)
+}
+
+#[test]
+fn directory_round_trip_is_deterministic() {
+    let result = run_directory_round_trip_is_deterministic();
+    assert!(result.is_ok(), "directory round trip failed: {result:?}");
+}
+
+fn run_wrong_source_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("wrong-source")?;
+    let (source, target) = write_fixture_tree(&temp.path)?;
+    let algorithm = temp.path.join("plan.txt");
+    let output = temp.path.join("output");
+    let settings = settings()?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+    fs::write(source.join("one.bin"), vec![0x32_u8; 1536])?;
+
+    let result = replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &algorithm,
+        &output,
+    );
+    if result.is_ok() {
+        return Err("wrong source must not replay".into());
+    }
+    if output.exists() {
+        return Err("wrong source must not create replay output".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn wrong_source_is_rejected_before_output() {
+    let result = run_wrong_source_is_rejected();
+    assert!(result.is_ok(), "wrong-source rejection failed: {result:?}");
+}
+
+fn tamper_first_ciphertext(text: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let marker = "\"ciphertext\": \"";
+    let Some(marker_start) = text.find(marker) else {
+        return Err("ciphertext marker missing".into());
+    };
+    let value_start = marker_start.saturating_add(marker.len());
+    let Some(original) = text.as_bytes().get(value_start).copied() else {
+        return Err("ciphertext value missing".into());
+    };
+    let replacement = if original == b'0' { '1' } else { '0' };
+    let mut tampered = text.to_owned();
+    tampered.replace_range(
+        value_start..value_start.saturating_add(1),
+        &replacement.to_string(),
+    );
+    Ok(tampered)
+}
+
+fn run_tampered_payload_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("tamper")?;
+    let (source, target) = write_fixture_tree(&temp.path)?;
+    let algorithm = temp.path.join("plan.txt");
+    let output = temp.path.join("output");
+    let settings = settings()?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+    let text = fs::read_to_string(&algorithm)?;
+    fs::write(&algorithm, tamper_first_ciphertext(&text)?)?;
+
+    let result = replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &algorithm,
+        &output,
+    );
+    if result.is_ok() {
+        return Err("tampered protected payload must not replay".into());
+    }
+    if output.exists() {
+        return Err("tampered payload must not create replay output".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn tampered_payload_is_rejected_before_output() {
+    let result = run_tampered_payload_is_rejected();
+    assert!(result.is_ok(), "tamper rejection failed: {result:?}");
+}
+
+fn run_file_target_round_trip() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("file")?;
+    let source = temp.path.join("source.bin");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    let output = temp.path.join("output.bin");
+    fs::write(&source, vec![0xA5_u8; 2048])?;
+    fs::write(&target, b"synthetic single-file target")?;
+    let settings = settings()?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+    replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &algorithm,
+        &output,
+    )?;
+    if fs::read(target)? != fs::read(output)? {
+        return Err("single-file replay differs from target".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn file_target_round_trip_is_exact() {
+    let result = run_file_target_round_trip();
+    assert!(result.is_ok(), "file round trip failed: {result:?}");
+}
+
+#[test]
+fn settings_reject_unknown_and_inconsistent_policy() {
+    let unknown = r#"{
+      "schema":"shar.algorithm.settings.v1",
+      "minimum_source_files":1,
+      "minimum_source_bytes":1,
+      "maximum_source_files":1,
+      "maximum_target_files":1,
+      "maximum_file_bytes":1,
+      "maximum_source_bytes":1,
+      "maximum_target_bytes":1,
+      "product_policy":"not-generic"
+    }"#;
+    let inconsistent = r#"{
+      "schema":"shar.algorithm.settings.v1",
+      "minimum_source_files":2,
+      "minimum_source_bytes":1,
+      "maximum_source_files":1,
+      "maximum_target_files":1,
+      "maximum_file_bytes":1,
+      "maximum_source_bytes":1,
+      "maximum_target_bytes":1
+    }"#;
+    assert!(
+        Settings::from_json(unknown).is_err(),
+        "unknown settings fields must fail closed"
+    );
+    assert!(
+        Settings::from_json(inconsistent).is_err(),
+        "inconsistent settings limits must fail closed"
+    );
+}
+
+fn run_non_txt_algorithm_output_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("extension")?;
+    let source = temp.path.join("source.bin");
+    let target = temp.path.join("target.bin");
+    let output = temp.path.join("plan.json");
+    fs::write(&source, vec![0x44_u8; 2048])?;
+    fs::write(&target, b"synthetic target")?;
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &target,
+        &output,
+    );
+    if result.is_ok() {
+        return Err("non-txt algorithm output must be rejected".into());
+    }
+    if output.exists() {
+        return Err("rejected algorithm output must not be created".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn non_txt_algorithm_output_is_rejected() {
+    let result = run_non_txt_algorithm_output_is_rejected();
+    assert!(result.is_ok(), "extension rejection failed: {result:?}");
+}

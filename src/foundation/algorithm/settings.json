@@ -1,0 +1,10 @@
+{
+  "schema": "shar.algorithm.settings.v1",
+  "minimum_source_files": 1,
+  "minimum_source_bytes": 1024,
+  "maximum_source_files": 4096,
+  "maximum_target_files": 4096,
+  "maximum_file_bytes": 268435456,
+  "maximum_source_bytes": 2147483648,
+  "maximum_target_bytes": 1073741824
+}
