@@ -1,0 +1,19 @@
+schema: shar-function/v1
+identity:
+  id: icon
+  path: src/migration/icon
+  domain: migration
+architecture:
+  route: src/<domain>/<function>/<kind>/<part>
+  kinds:
+    - composition
+capabilities:
+  - math
+  - python
+projects:
+tests:
+  root: tests/migration/icon
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active
