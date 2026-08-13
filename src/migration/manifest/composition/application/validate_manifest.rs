@@ -37,7 +37,7 @@ use super::ManifestError;
 use super::path_evidence::require_rooted_paths;
 use crate::domain::{
     DirCount, DirExtCounts, MANIFEST_FILE_NAME, classify_manifest_bucket,
-    count_by_dir_ext_paths, kind_taxonomy_jsonl,
+    count_by_dir_ext_paths, exact_file_shortfalls, kind_taxonomy_jsonl,
 };
 use crate::ports::{GameTree, PathKind, TextArtifactStore};
 
@@ -100,7 +100,11 @@ impl ValidateManifest {
         require_rooted_paths(game_dir, &files)
             .map_err(ManifestError::Invalid)?;
         let actual = count_by_dir_ext_paths(game_dir, &files);
-        Ok(compare_requirements(&requirements, &actual))
+        let mut report = compare_requirements(&requirements, &actual);
+        let mut exact_shortfalls = exact_file_shortfalls(game_dir, &files);
+        exact_shortfalls.append(&mut report.shortfalls);
+        report.shortfalls = exact_shortfalls;
+        Ok(report)
     }
 }
 

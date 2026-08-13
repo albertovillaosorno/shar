@@ -54,6 +54,8 @@ fn generated_manifest(extension: &str) -> io::Result<String> {
     }
     fs::create_dir_all(&root)?;
     let result = (|| {
+        fs::write(root.join("Simpsons.exe"), b"fixture")?;
+        fs::write(root.join("Simpsons.ico"), b"fixture")?;
         fs::write(root.join(format!("asset.{extension}")), b"fixture")?;
         let output = Command::new(env!("CARGO_BIN_EXE_generate-manifest"))
             .arg(&root)

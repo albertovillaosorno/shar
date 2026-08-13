@@ -1,5 +1,4 @@
-{"schema":"shar-schoenwald.game-manifest-ledger.v1","kind_taxonomy":["error","language_mod","language_textbible","movie","p3d_container","rcf_container","audio","music_arrangement","script","image","generated_artifact","character_outfit","build-log","document","ui-resource","sound-type","metadata","json-ledger"]}
-{"dir":"","ext":"ico","min":1,"kind":"image"}
+{"schema":"shar-schoenwald.game-manifest-ledger.v2","kind_taxonomy":["error","language_mod","language_textbible","movie","p3d_container","rcf_container","audio","music_arrangement","script","image","generated_artifact","character_outfit","build-log","document","ui-resource","sound-type","metadata","json-ledger"],"required_files":[{"path":"Simpsons.exe","min":1},{"path":"Simpsons.ico","min":1},{"path":"uninst.ico","min":0}]}
 {"dir":"","ext":"lmlm","min":0,"kind":"language_mod"}
 {"dir":"","ext":"png","min":0,"kind":"generated_artifact"}
 {"dir":"","ext":"rcf","min":10,"kind":"rcf_container"}

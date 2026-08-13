@@ -31,14 +31,6 @@ localization as a deterministic SHAR language mod.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/governance/make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods.mdc](docs/todo/open/governance/make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods.mdc)
 
-### TODO - Pin exact minimum source identities for `Simpsons.exe` and `Simpsons.ico`
-
-Require exact root `Simpsons.exe` and `Simpsons.ico`; record `uninst.ico` as
-optional instead of treating any root executable/icon as equivalent evidence.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/conversion/pin-exact-minimum-source-identities-for-simpsons-exe-and-simpsons-ico.mdc](docs/todo/open/conversion/pin-exact-minimum-source-identities-for-simpsons-exe-and-simpsons-ico.mdc)
-
 ### TODO - Define a public-safe reconstruction algorithm gate with bounded similarity
 
 Define and test the tentative 45–55% source-similarity window against a lawful

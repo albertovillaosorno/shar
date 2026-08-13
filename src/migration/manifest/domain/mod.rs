@@ -45,6 +45,14 @@ pub const MANIFEST_FILE_NAME: &str = "manifest/game.jsonl";
 /// Relative path of the expanded manifest beneath the game directory.
 pub const EXPANDED_MANIFEST_FILE_NAME: &str = "manifest/game-expanded.jsonl";
 
+/// Exact root-file requirements embedded in the immutable manifest header.
+/// A zero minimum records an explicitly optional source identity.
+pub const EXACT_FILE_REQUIREMENTS: &[(&str, usize)] = &[
+    ("Simpsons.exe", 1),
+    ("Simpsons.ico", 1),
+    ("uninst.ico", 0),
+];
+
 /// Controlled taxonomy of manifest file kinds.
 pub const KIND_TAXONOMY: &[&str] = &[
     "error",
@@ -113,12 +121,19 @@ pub fn kind_taxonomy_jsonl() -> String {
         .map(|kind| format!("\"{kind}\""))
         .collect::<Vec<_>>()
         .join(",");
+    let required_files = EXACT_FILE_REQUIREMENTS
+        .iter()
+        .map(|(path, minimum)| {
+            format!("{{\"path\":\"{path}\",\"min\":{minimum}}}")
+        })
+        .collect::<Vec<_>>()
+        .join(",");
     format!(
         concat!(
-            "{{\"schema\":\"shar-schoenwald.game-manifest-ledger.v1\",",
-            "\"kind_taxonomy\":[{}]}}",
+            "{{\"schema\":\"shar-schoenwald.game-manifest-ledger.v2\",",
+            "\"kind_taxonomy\":[{}],\"required_files\":[{}]}}",
         ),
-        values
+        values, required_files
     )
 }
 
@@ -129,6 +144,39 @@ pub fn extension_of(path: &Path) -> String {
         .and_then(|extension| extension.to_str())
         .filter(|extension| !extension.is_empty())
         .map_or_else(|| NO_EXTENSION.to_owned(), str::to_lowercase)
+}
+
+/// Returns immutable exact-root-file shortfalls in declaration order.
+#[must_use]
+pub fn exact_file_shortfalls(root: &Path, files: &[PathBuf]) -> Vec<String> {
+    let present = files
+        .iter()
+        .filter_map(|path| path.strip_prefix(root).ok())
+        .filter(|relative| relative.components().count() == 1)
+        .filter_map(|relative| relative.to_str())
+        .collect::<BTreeSet<_>>();
+    EXACT_FILE_REQUIREMENTS
+        .iter()
+        .filter(|(_, minimum)| *minimum > 0)
+        .filter_map(|(path, minimum)| {
+            (!present.contains(path)).then(|| {
+                format!("  <root> {path}: have 0, need at least {minimum}")
+            })
+        })
+        .collect()
+}
+
+/// Returns whether one path is owned by the exact-file header contract.
+fn is_exact_file_requirement(root: &Path, path: &Path) -> bool {
+    let Ok(relative) = path.strip_prefix(root) else {
+        return false;
+    };
+    let Some(relative) = relative.to_str() else {
+        return false;
+    };
+    EXACT_FILE_REQUIREMENTS
+        .iter()
+        .any(|(required, _)| relative == *required)
 }
 
 /// Reduces a folder name to its first and last character, lowercased.
@@ -225,7 +273,10 @@ fn is_optional_mod_source(relative: &Path) -> bool {
 /// Returns one countable source coordinate for a rooted source path.
 fn manifest_source(root: &Path, path: &Path) -> Option<ManifestSource> {
     let relative = path.strip_prefix(root).ok()?;
-    if !is_safe_relative_source(relative) || is_optional_mod_source(relative) {
+    if !is_safe_relative_source(relative)
+        || is_optional_mod_source(relative)
+        || is_exact_file_requirement(root, path)
+    {
         return None;
     }
     let extension = extension_of(path);

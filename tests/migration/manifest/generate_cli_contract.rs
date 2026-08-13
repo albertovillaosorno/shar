@@ -57,6 +57,10 @@ fn run_generator(
     }
     fs::create_dir_all(&root)?;
     let result = (|| {
+        if extension.is_some() {
+            fs::write(root.join("Simpsons.exe"), b"fixture")?;
+            fs::write(root.join("Simpsons.ico"), b"fixture")?;
+        }
         if let Some(file_extension) = extension {
             fs::write(
                 root.join(format!("asset.{file_extension}")),

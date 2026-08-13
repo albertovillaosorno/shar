@@ -116,7 +116,7 @@ is never reconstruction input and it does not itself prove software is safe.
    validation/reconstruction checks. Editing `game.jsonl` is not a way to make
    an invalid installation valid.
 
-   The intended exact root requirements are:
+   The exact root requirements are:
 
    - `Simpsons.exe`: mandatory, minimum 1.
    - `Simpsons.ico`: mandatory, minimum 1.
@@ -124,9 +124,6 @@ is never reconstruction input and it does not itself prove software is safe.
    - English game data: mandatory canonical base language.
    - Other official original languages: preserved/exported as SHAR language
      mods, not compiled into the canonical base package.
-
-   **TODO: Pin exact minimum source identities for `Simpsons.exe` and
-   `Simpsons.ico`.**
 
    **TODO: Make English the only canonical base language.**
 
