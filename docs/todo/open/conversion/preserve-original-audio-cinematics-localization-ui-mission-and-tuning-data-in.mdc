@@ -41,9 +41,10 @@ track. Language composition also preserves the exact TextBible table/sidecar,
 matching dialogue RCF, localized loading/license UI assets, optional localized
 readme, SHA-256 evidence, and UTF-8 text records. The current lawful source has
 21 localized loading/license assets for each of French/German/Spanish and real
-dialogue archives for all three. Six Rust tests cover all three cinematic-track
-mappings, fail-closed missing UI, fail-closed Italian placeholder-only source,
-and byte-deterministic repeated output.
+dialogue archives for all three. Nine Rust tests cover all three cinematic-track
+mappings, fail-closed missing UI/dialogue/cinematic audio, fail-closed Italian
+placeholder-only source, source-root read-only containment, and byte-deterministic
+repeated output.
 
 Italian remains intentionally unavailable from the current source: all 1,632
 Italian text records are `???`, `dialogi.rcf` is absent, and no Italian localized
