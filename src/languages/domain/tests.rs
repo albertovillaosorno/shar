@@ -159,3 +159,77 @@ fn missing_localized_ui_fails_closed() -> Result<(), String> {
     cleanup(&root);
     result
 }
+
+#[test]
+fn german_uses_normalized_track_three() -> Result<(), String> {
+    let root = temp_root("german");
+    cleanup(&root);
+    let (game, movies) = fixture(&root)?;
+    let output = root.join("out/german");
+    let manifest = export_language(&game, &movies, &output, Language::German)
+        .map_err(|error| error.to_string())?;
+    let result = if manifest
+        .cinematic_audio
+        .iter()
+        .all(|entry| entry.track == "audio_track_03.wav")
+        && output.join("source/dialogg.rcf").is_file()
+    {
+        Ok(())
+    } else {
+        Err(format!("unexpected German manifest: {manifest:?}"))
+    };
+    cleanup(&root);
+    result
+}
+
+#[test]
+fn italian_placeholder_only_source_fails_closed() -> Result<(), String> {
+    let root = temp_root("italian-placeholder");
+    cleanup(&root);
+    let (game, movies) = fixture(&root)?;
+    let table = game.join("art/frontend/scrooby2/resource/txtbible/srr2.txt");
+    let text = fs::read_to_string(&table)
+        .map_err(|error| error.to_string())?
+        .replace("Ciao", "???");
+    fs::write(&table, text).map_err(|error| error.to_string())?;
+    let error = export_language(&game, &movies, &root.join("out/italian"), Language::Italian)
+        .err()
+        .ok_or_else(|| "Italian placeholder-only export unexpectedly succeeded".to_owned())?;
+    let result = if error.to_string().contains("no translated text") {
+        Ok(())
+    } else {
+        Err(error.to_string())
+    };
+    cleanup(&root);
+    result
+}
+
+#[test]
+fn repeated_exports_are_byte_deterministic() -> Result<(), String> {
+    let root = temp_root("deterministic");
+    cleanup(&root);
+    let (game, movies) = fixture(&root)?;
+    let first = root.join("out/first");
+    let second = root.join("out/second");
+    let first_report = export_language(&game, &movies, &first, Language::Spanish)
+        .map_err(|error| error.to_string())?;
+    let second_report = export_language(&game, &movies, &second, Language::Spanish)
+        .map_err(|error| error.to_string())?;
+    if first_report != second_report {
+        cleanup(&root);
+        return Err("language manifests differ between repeated exports".to_owned());
+    }
+    let first_manifest =
+        fs::read(first.join("manifest.json")).map_err(|error| error.to_string())?;
+    let second_manifest =
+        fs::read(second.join("manifest.json")).map_err(|error| error.to_string())?;
+    let first_text = fs::read(first.join("text.jsonl")).map_err(|error| error.to_string())?;
+    let second_text = fs::read(second.join("text.jsonl")).map_err(|error| error.to_string())?;
+    let result = if first_manifest == second_manifest && first_text == second_text {
+        Ok(())
+    } else {
+        Err("language exports are not byte deterministic".to_owned())
+    };
+    cleanup(&root);
+    result
+}
