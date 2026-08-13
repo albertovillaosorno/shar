@@ -1,14 +1,13 @@
 schema: shar-function/v1
 identity:
-  id: asset-conversion
-  path: src/unreal/asset-conversion
-  domain: unreal
+  id: languages
+  path: src/localization/languages
+  domain: localization
 architecture:
   route: src/<domain>/<function>/<kind>/<part>
   kinds:
     - composition
     - domain
-    - port-outbound
 capabilities:
   - math
   - rust

@@ -62,13 +62,6 @@ Keep optional creative changes, replacements, and enhancements inside mods.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/governance/keep-optional-creative-changes-replacements-and-enhancements-inside-mods.mdc](docs/todo/open/governance/keep-optional-creative-changes-replacements-and-enhancements-inside-mods.mdc)
 
-### TODO - Finish the canonical `src/<domain>/<function>/<kind>/<part>` migration
-
-Finish the canonical `src/<domain>/<function>/<kind>/<part>` migration.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/repository/finish-the-canonical-src-domain-function-kind-part-migration.mdc](docs/todo/open/repository/finish-the-canonical-src-domain-function-kind-part-migration.mdc)
-
 ### TODO - Complete the tracked `.jig/` policy, taxonomy, adapters, and projections
 
 Complete the tracked `.jig/` policy, taxonomy, adapters, and projections.

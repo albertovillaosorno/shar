@@ -127,7 +127,7 @@ is never reconstruction input and it does not itself prove software is safe.
 
    **TODO: Make English the only canonical base language.**
 
-   Official non-English localization is owned under `src/languages/` and is
+   Official non-English localization is owned under `src/localization/languages/` and is
    emitted as canonical language mods in the final result. The Rust implementation
    covers the complete language surface available in the lawful source: text,
    dialogue/audio archives, localized UI art, and localized cinematic audio
