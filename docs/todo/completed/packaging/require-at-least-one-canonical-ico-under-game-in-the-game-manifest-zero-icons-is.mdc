@@ -1,0 +1,65 @@
+---
+schema: shar.todo.v1
+id: require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is
+status: completed
+priority: P0
+lane: packaging
+active: false
+parent: null
+dependencies: [build-preflight-and-saved-check-evidence]
+children: []
+---
+
+<!-- CSpell:ignore uninst -->
+
+# Preserve the canonical source icon without replacing or regenerating it
+
+`Simpsons.ico` is authoritative source evidence. SHAR must not replace it with a
+new artistic asset and must not keep a separate icon-generation subsystem merely
+to restyle the game. Icon work is relevant only to from-scratch packaging where
+a platform requires a derived representation of that same source icon.
+
+## Acceptance criteria
+
+- [x] Require exact root `Simpsons.ico` as canonical source evidence.
+- [x] Treat `uninst.ico` as optional source evidence rather than a normal-player
+  requirement.
+- [x] Do not replace, redraw, synthesize, or artistically transform the game
+  icon.
+- [x] Retire unnecessary icon-generation code where safe. If executable format
+  conversion remains necessary, move the reusable logic under `src/user/code/`;
+  if the operation can be declarative, make the relevant `build.txt` procedure
+  authoritative instead. Never duplicate the same icon logic in both places.
+- [x] Do not duplicate icon logic between repository build tooling and the
+  lightweight user release.
+- [x] Keep README from-scratch icon notes technical and terse; normal players do
+  not need icon-build instructions.
+- [x] Update README if the final build-only icon procedure changes.
+
+## Dependencies
+
+Depends on source preflight and final platform packaging requirements only.
+
+## Evidence
+
+This record supersedes the earlier direction that expected a repository-owned
+icon producer to generate replacement platform icon assets. The product
+requirement is now preservation, not replacement.
+
+The game manifest owns exact source identity: root `Simpsons.ico` is mandatory
+with minimum one and root `uninst.ico` is explicitly optional with minimum zero.
+Existing manifest unit/integration coverage proves the exact path/casing rule and
+accepts lawful installations without `uninst.ico`.
+
+The obsolete `src/unreal/icon/` function was fully disconnected from repository
+build consumers and has been removed. It reconstructed authored SVG replacement
+art and emitted platform-specific styled assets, so retaining or moving it would
+contradict the preservation contract. A repository architecture test now rejects
+reintroduction of that replacement pipeline.
+
+No executable icon-format converter is retained today because final packaging has
+not established one as necessary. If a target later proves it needs a different
+container, that work must be a deterministic build-only representation of the
+admitted `Simpsons.ico`, with one implementation owned by the final user/build
+contract rather than a second artwork source. README keeps this boundary terse
+and does not expose icon-building steps to normal players.
