@@ -22,6 +22,8 @@ pub enum ConvertError {
     Archive(LmlmError),
     /// JSON report serialization failed.
     Json(serde_json::Error),
+    /// Shared Pure3D decompilation failed.
+    P3d(p3d::P3dError),
 }
 
 impl fmt::Display for ConvertError {
@@ -31,6 +33,7 @@ impl fmt::Display for ConvertError {
             Self::Io(error) => write!(formatter, "{error}"),
             Self::Archive(error) => write!(formatter, "{error}"),
             Self::Json(error) => write!(formatter, "{error}"),
+            Self::P3d(error) => write!(formatter, "{error}"),
         }
     }
 }
@@ -52,6 +55,12 @@ impl From<LmlmError> for ConvertError {
 impl From<serde_json::Error> for ConvertError {
     fn from(error: serde_json::Error) -> Self {
         Self::Json(error)
+    }
+}
+
+impl From<p3d::P3dError> for ConvertError {
+    fn from(error: p3d::P3dError) -> Self {
+        Self::P3d(error)
     }
 }
 
@@ -86,36 +95,43 @@ fn staging_path(output: &Path) -> Result<PathBuf, ConvertError> {
         .file_name()
         .and_then(|value| value.to_str())
         .ok_or_else(|| {
-            ConvertError::Contract(
-                "output must have a portable final component".to_owned(),
-            )
+            ConvertError::Contract("output must have a portable final component".to_owned())
         })?;
-    Ok(output.with_file_name(format!(
-        ".{name}.lmlm-{}.tmp",
-        std::process::id()
-    )))
+    Ok(output.with_file_name(format!(".{name}.lmlm-{}.tmp", std::process::id())))
 }
 
-fn publish_workspace(
-    data: &[u8],
-    entries: &[FileEntry],
-    root: &Path,
-) -> Result<(), ConvertError> {
+fn is_p3d(path: &str) -> bool {
+    path.rsplit('.')
+        .next()
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("p3d"))
+}
+
+fn decompile_p3d(root: &Path, entry: &FileEntry, input_path: &Path) -> Result<(), ConvertError> {
+    if !is_p3d(&entry.path) {
+        return Ok(());
+    }
+    let decompiled_root = root.join("decompiled").join("p3d");
+    let output = schoenwald_filesystem::resolve_under(&decompiled_root, Path::new(&entry.path))
+        .map_err(|error| ConvertError::Contract(error.to_string()))?;
+    if let Some(parent) = output.parent().filter(|path| !path.as_os_str().is_empty()) {
+        local::create_dir_all(parent)?;
+    }
+    let exporter = p3d::LosslessPackageExporter;
+    p3d::ExportPackage::execute(&exporter, input_path, &output)?;
+    Ok(())
+}
+
+fn publish_workspace(data: &[u8], entries: &[FileEntry], root: &Path) -> Result<(), ConvertError> {
     let content = root.join("content");
     local::create_dir_all(&content)?;
     for entry in entries {
         let payload = entry_bytes(data, entry).ok_or_else(|| {
-            ConvertError::Contract(format!(
-                "invalid payload range for {}",
-                entry.path
-            ))
+            ConvertError::Contract(format!("invalid payload range for {}", entry.path))
         })?;
-        let destination = schoenwald_filesystem::resolve_under(
-            &content,
-            Path::new(&entry.path),
-        )
-        .map_err(|error| ConvertError::Contract(error.to_string()))?;
+        let destination = schoenwald_filesystem::resolve_under(&content, Path::new(&entry.path))
+            .map_err(|error| ConvertError::Contract(error.to_string()))?;
         local::write_bytes(&destination, payload, true)?;
+        decompile_p3d(root, entry, &destination)?;
     }
     let report = build_report(data, entries);
     let mut json = serde_json::to_string_pretty(&report)?;
@@ -125,10 +141,7 @@ fn publish_workspace(
 }
 
 /// Creates one atomic, inspectable conversion workspace without installing it.
-pub fn convert(
-    input: &Path,
-    output: &Path,
-) -> Result<ConversionReport, ConvertError> {
+pub fn convert(input: &Path, output: &Path) -> Result<ConversionReport, ConvertError> {
     if output.as_os_str().is_empty() {
         return Err(ConvertError::Contract(
             "output path must not be empty".to_owned(),
@@ -146,10 +159,7 @@ pub fn convert(
         ));
     }
     let (data, entries) = load(input)?;
-    if let Some(parent) = output
-        .parent()
-        .filter(|path| !path.as_os_str().is_empty())
-    {
+    if let Some(parent) = output.parent().filter(|path| !path.as_os_str().is_empty()) {
         local::create_dir_all(parent)?;
     }
     fs::create_dir(&staging)?;

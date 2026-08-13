@@ -69,11 +69,7 @@ fn write_file_entry(
         return Err("fixture entry name must fit".to_owned());
     }
     let metadata = position.saturating_add(BLOCK);
-    if !copy_fixture_bytes(
-        archive,
-        metadata.saturating_add(0x0c),
-        &size.to_le_bytes(),
-    ) {
+    if !copy_fixture_bytes(archive, metadata.saturating_add(0x0c), &size.to_le_bytes()) {
         return Err("fixture entry size must fit".to_owned());
     }
     if !copy_fixture_bytes(
@@ -112,9 +108,11 @@ fn write_directory_entry(
     ) {
         return Err("fixture child count must fit".to_owned());
     }
-    if !copy_fixture_bytes(archive, metadata.saturating_add(0x0e), &[u8::from(
-        contains_directory,
-    )]) {
+    if !copy_fixture_bytes(
+        archive,
+        metadata.saturating_add(0x0e),
+        &[u8::from(contains_directory)],
+    ) {
         return Err("fixture directory control must fit".to_owned());
     }
     Ok(())
@@ -208,11 +206,9 @@ fn rejects_nonzero_unclaimed_archive_bytes() -> Result<(), String> {
         return Err("fixture unclaimed byte must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::NonZeroUnclaimedData { offset, value: 1 })
-            if offset == unclaimed_offset =>
-        {
+        Err(LmlmError::NonZeroUnclaimedData { offset, value: 1 }) if offset == unclaimed_offset => {
             Ok(())
-        },
+        }
         other => Err(format!(
             "nonzero unclaimed archive byte must fail, got {other:?}"
         )),
@@ -230,11 +226,9 @@ fn rejects_nonzero_trailing_archive_padding() -> Result<(), String> {
         return Err("fixture trailing byte must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::NonZeroTrailingData { offset, value: 1 })
-            if offset == trailing_offset =>
-        {
+        Err(LmlmError::NonZeroTrailingData { offset, value: 1 }) if offset == trailing_offset => {
             Ok(())
-        },
+        }
         other => Err(format!(
             "nonzero trailing archive byte must fail, got {other:?}"
         )),
@@ -286,11 +280,7 @@ fn accepts_final_payload_immediately_after_metadata() -> Result<(), String> {
         return Err("fixture final payload must fit".to_owned());
     }
     match parse(&archive) {
-        Ok(entries)
-            if entries.iter().any(|entry| entry.path == "inline-final.bin") =>
-        {
-            Ok(())
-        },
+        Ok(entries) if entries.iter().any(|entry| entry.path == "inline-final.bin") => Ok(()),
         other => Err(format!(
             "final payload may replace its transition block: {other:?}"
         )),
@@ -309,14 +299,11 @@ fn rejects_unaligned_payload_offsets() -> Result<(), String> {
     }
     write_file_entry(&mut archive, TEST_ENTRY, "unaligned.bin", 0x3201, 1)?;
     match parse(&archive) {
-        Err(LmlmError::UnalignedEntryOffset { path, offset: 0x3201 })
-            if path == "unaligned.bin" =>
-        {
-            Ok(())
-        },
-        other => {
-            Err(format!("unaligned payload offset must fail, got {other:?}"))
-        },
+        Err(LmlmError::UnalignedEntryOffset {
+            path,
+            offset: 0x3201,
+        }) if path == "unaligned.bin" => Ok(()),
+        other => Err(format!("unaligned payload offset must fail, got {other:?}")),
     }
 }
 
@@ -327,9 +314,9 @@ fn accepts_supported_file_record_control_flag() -> Result<(), String> {
     if !copy_fixture_bytes(&mut archive, control_offset, &[1]) {
         return Err("fixture file transition control must fit".to_owned());
     }
-    parse(&archive).map(|_| ()).map_err(|error| {
-        format!("supported file transition control failed: {error}")
-    })
+    parse(&archive)
+        .map(|_| ())
+        .map_err(|error| format!("supported file transition control failed: {error}"))
 }
 
 #[test]
@@ -344,7 +331,7 @@ fn rejects_unsupported_file_record_control() -> Result<(), String> {
             if offset == control_offset =>
         {
             Ok(())
-        },
+        }
         other => Err(format!(
             "unsupported file transition control must fail: {other:?}"
         )),
@@ -365,7 +352,7 @@ fn rejects_nonzero_file_record_control_padding() -> Result<(), String> {
             if offset == padding_offset =>
         {
             Ok(())
-        },
+        }
         other => Err(format!(
             "nonzero file transition padding must fail: {other:?}"
         )),
@@ -373,8 +360,7 @@ fn rejects_nonzero_file_record_control_padding() -> Result<(), String> {
 }
 
 #[test]
-fn accepts_directory_control_for_immediate_subdirectory() -> Result<(), String>
-{
+fn accepts_directory_control_for_immediate_subdirectory() -> Result<(), String> {
     let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
         &mut archive,
@@ -391,9 +377,9 @@ fn accepts_directory_control_for_immediate_subdirectory() -> Result<(), String>
         0,
         false,
     )?;
-    parse(&archive).map(|_| ()).map_err(|error| {
-        format!("directory child-kind control failed: {error}")
-    })
+    parse(&archive)
+        .map(|_| ())
+        .map_err(|error| format!("directory child-kind control failed: {error}"))
 }
 
 #[test]
@@ -412,10 +398,11 @@ fn rejects_unsupported_directory_record_control() -> Result<(), String> {
         return Err("fixture directory control must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::UnsupportedDirectoryRecordControl {
-            offset,
-            value: 2,
-        }) if offset == control_offset => Ok(()),
+        Err(LmlmError::UnsupportedDirectoryRecordControl { offset, value: 2 })
+            if offset == control_offset =>
+        {
+            Ok(())
+        }
         other => Err(format!(
             "unsupported directory control must fail: {other:?}"
         )),
@@ -438,11 +425,9 @@ fn rejects_nonzero_directory_record_padding() -> Result<(), String> {
         return Err("fixture directory padding must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::NonZeroMetadataPadding { offset, value: 1 })
-            if offset == padding_offset =>
-        {
+        Err(LmlmError::NonZeroMetadataPadding { offset, value: 1 }) if offset == padding_offset => {
             Ok(())
-        },
+        }
         other => Err(format!("nonzero directory padding must fail: {other:?}")),
     }
 }
@@ -505,13 +490,13 @@ fn rejects_nonzero_reserved_metadata_bytes() -> Result<(), String> {
         }
         match parse(&archive) {
             Err(LmlmError::NonZeroMetadataPadding { offset, value: 1 })
-                if offset == metadata_offset => {},
+                if offset == metadata_offset => {}
             other => {
                 return Err(format!(
                     "reserved byte {relative_offset:#x} must fail, got \
                          {other:?}"
                 ));
-            },
+            }
         }
     }
     Ok(())
@@ -533,14 +518,10 @@ fn rejects_nonzero_metadata_padding() -> Result<(), String> {
         return Err("fixture metadata padding byte must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::NonZeroMetadataPadding { offset, value: 1 })
-            if offset == padding_offset =>
-        {
+        Err(LmlmError::NonZeroMetadataPadding { offset, value: 1 }) if offset == padding_offset => {
             Ok(())
-        },
-        other => {
-            Err(format!("nonzero metadata padding must fail, got {other:?}"))
-        },
+        }
+        other => Err(format!("nonzero metadata padding must fail, got {other:?}")),
     }
 }
 
@@ -560,11 +541,9 @@ fn rejects_nonzero_name_padding() -> Result<(), String> {
         return Err("fixture name padding byte must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::NonZeroNamePadding { offset, value: 1 })
-            if offset == padding_offset =>
-        {
+        Err(LmlmError::NonZeroNamePadding { offset, value: 1 }) if offset == padding_offset => {
             Ok(())
-        },
+        }
         other => Err(format!("nonzero name padding must fail, got {other:?}")),
     }
 }
@@ -583,11 +562,7 @@ fn rejects_unterminated_entry_names() -> Result<(), String> {
         return Err("fixture entry kind must fit".to_owned());
     }
     let name_bytes = vec![b'A'; BLOCK.saturating_sub(2)];
-    if !copy_fixture_bytes(
-        &mut archive,
-        TEST_ENTRY.saturating_add(2),
-        &name_bytes,
-    ) {
+    if !copy_fixture_bytes(&mut archive, TEST_ENTRY.saturating_add(2), &name_bytes) {
         return Err("fixture unterminated name must fit".to_owned());
     }
     let metadata = TEST_ENTRY.saturating_add(BLOCK);
@@ -607,9 +582,7 @@ fn rejects_unterminated_entry_names() -> Result<(), String> {
     }
     match parse(&archive) {
         Err(LmlmError::UnterminatedName { offset: TEST_ENTRY }) => Ok(()),
-        other => {
-            Err(format!("unterminated entry name must fail, got {other:?}"))
-        },
+        other => Err(format!("unterminated entry name must fail, got {other:?}")),
     }
 }
 
@@ -635,11 +608,9 @@ fn rejects_nonzero_reserved_root_bytes() -> Result<(), String> {
         return Err("fixture reserved root byte must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::NonZeroReservedRootBlock { offset, value: 1 })
-            if offset == ROOT_BLOCK =>
-        {
+        Err(LmlmError::NonZeroReservedRootBlock { offset, value: 1 }) if offset == ROOT_BLOCK => {
             Ok(())
-        },
+        }
         other => Err(format!(
             "nonzero reserved root byte must fail, got {other:?}"
         )),
@@ -653,11 +624,9 @@ fn rejects_nonzero_reserved_container_block() -> Result<(), String> {
         return Err("fixture reserved block byte must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::NonZeroReservedContainerBlock { offset, value: 1 })
-            if offset == BLOCK =>
-        {
+        Err(LmlmError::NonZeroReservedContainerBlock { offset, value: 1 }) if offset == BLOCK => {
             Ok(())
-        },
+        }
         other => Err(format!(
             "nonzero reserved container block must fail, got {other:?}"
         )),
@@ -671,7 +640,10 @@ fn rejects_nonzero_reserved_header_bytes() -> Result<(), String> {
         return Err("fixture reserved header byte must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::NonZeroReservedHeader { offset: 8, value: 1 }) => Ok(()),
+        Err(LmlmError::NonZeroReservedHeader {
+            offset: 8,
+            value: 1,
+        }) => Ok(()),
         other => Err(format!(
             "nonzero reserved header byte must fail, got {other:?}"
         )),
@@ -685,12 +657,11 @@ fn rejects_unsupported_header_flags() -> Result<(), String> {
         return Err("fixture header flags range must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::UnsupportedHeaderFlags { offset: 0x0c, value: 0 }) => {
-            Ok(())
-        },
-        other => {
-            Err(format!("unsupported header flags must fail, got {other:?}"))
-        },
+        Err(LmlmError::UnsupportedHeaderFlags {
+            offset: 0x0c,
+            value: 0,
+        }) => Ok(()),
+        other => Err(format!("unsupported header flags must fail, got {other:?}")),
     }
 }
 
@@ -701,7 +672,10 @@ fn rejects_unsupported_archive_version() -> Result<(), String> {
         return Err("fixture version range must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::UnsupportedVersion { offset: 4, value: 4 }) => Ok(()),
+        Err(LmlmError::UnsupportedVersion {
+            offset: 4,
+            value: 4,
+        }) => Ok(()),
         other => Err(format!(
             "unsupported archive version must fail, got {other:?}"
         )),
@@ -772,15 +746,12 @@ fn rejects_overlong_portable_paths() -> Result<(), String> {
     let expected = format!("{directory}/{file}");
     match parse(&archive) {
         Err(LmlmError::UnsafePath(path)) if path == expected => Ok(()),
-        other => {
-            Err(format!("overlong portable path must fail, got {other:?}"))
-        },
+        other => Err(format!("overlong portable path must fail, got {other:?}")),
     }
 }
 
 #[test]
-fn accepts_portable_unicode_paths_with_long_utf8_encodings()
--> Result<(), String> {
+fn accepts_portable_unicode_paths_with_long_utf8_encodings() -> Result<(), String> {
     let directory = "é".repeat(70);
     let file = "é".repeat(70);
     let expected = format!("{directory}/{file}");
@@ -801,18 +772,13 @@ fn accepts_portable_unicode_paths_with_long_utf8_encodings()
         1,
     )?;
     match parse(&archive) {
-        Ok(entries) if entries.iter().any(|entry| entry.path == expected) => {
-            Ok(())
-        },
-        other => {
-            Err(format!("portable Unicode path must parse, got {other:?}"))
-        },
+        Ok(entries) if entries.iter().any(|entry| entry.path == expected) => Ok(()),
+        other => Err(format!("portable Unicode path must parse, got {other:?}")),
     }
 }
 
 #[test]
-fn accepts_astral_unicode_components_within_the_utf16_limit()
--> Result<(), String> {
+fn accepts_astral_unicode_components_within_the_utf16_limit() -> Result<(), String> {
     let name = "😀".repeat(64);
     let mut archive = empty_archive_with(FIXTURE_METADATA);
     if !copy_fixture_bytes(
@@ -870,13 +836,13 @@ fn rejects_extended_windows_reserved_aliases() -> Result<(), String> {
         }
         write_file_entry(&mut archive, TEST_ENTRY, name, 0x3200, 1)?;
         match parse(&archive) {
-            Err(LmlmError::UnsafePath(path)) if path == name => {},
+            Err(LmlmError::UnsafePath(path)) if path == name => {}
             other => {
                 return Err(format!(
                     "Windows reserved alias {name:?} must fail, got \
                          {other:?}"
                 ));
-            },
+            }
         }
     }
     Ok(())
@@ -903,13 +869,13 @@ fn rejects_nonportable_entry_names() -> Result<(), String> {
         }
         write_file_entry(&mut archive, TEST_ENTRY, name, 0x3200, 1)?;
         match parse(&archive) {
-            Err(LmlmError::UnsafePath(path)) if path == name => {},
+            Err(LmlmError::UnsafePath(path)) if path == name => {}
             other => {
                 return Err(format!(
                     "nonportable entry name {name:?} must fail, got \
                          {other:?}"
                 ));
-            },
+            }
         }
     }
     Ok(())
@@ -935,9 +901,7 @@ fn rejects_portable_path_collisions() -> Result<(), String> {
     )?;
     match parse(&archive) {
         Err(LmlmError::PathCollision { .. }) => Ok(()),
-        other => {
-            Err(format!("colliding archive paths must fail, got {other:?}"))
-        },
+        other => Err(format!("colliding archive paths must fail, got {other:?}")),
     }
 }
 
@@ -1013,9 +977,13 @@ fn rejects_payload_past_archive_end() -> Result<(), String> {
     if !copy_fixture_bytes(&mut archive, TEST_ENTRY, &2_u16.to_le_bytes()) {
         return Err("fixture entry kind must fit".to_owned());
     }
-    if !copy_fixture_bytes(&mut archive, TEST_ENTRY.saturating_add(2), &[
-        b'b', 0, b'a', 0, b'd', 0, b'.', 0, b'b', 0, b'i', 0, b'n', 0, 0, 0,
-    ]) {
+    if !copy_fixture_bytes(
+        &mut archive,
+        TEST_ENTRY.saturating_add(2),
+        &[
+            b'b', 0, b'a', 0, b'd', 0, b'.', 0, b'b', 0, b'i', 0, b'n', 0, 0, 0,
+        ],
+    ) {
         return Err("fixture name range must fit".to_owned());
     }
     let metadata = TEST_ENTRY.saturating_add(BLOCK);
@@ -1052,9 +1020,11 @@ fn rejects_invalid_utf16_entry_name() -> Result<(), String> {
     if !copy_fixture_bytes(&mut archive, TEST_ENTRY, &2_u16.to_le_bytes()) {
         return Err("fixture entry kind must fit".to_owned());
     }
-    if !copy_fixture_bytes(&mut archive, TEST_ENTRY.saturating_add(2), &[
-        0x00, 0xd8, 0x00, 0x00,
-    ]) {
+    if !copy_fixture_bytes(
+        &mut archive,
+        TEST_ENTRY.saturating_add(2),
+        &[0x00, 0xd8, 0x00, 0x00],
+    ) {
         return Err("fixture name range must fit".to_owned());
     }
     let metadata = TEST_ENTRY.saturating_add(BLOCK);
@@ -1073,11 +1043,8 @@ fn rejects_invalid_utf16_entry_name() -> Result<(), String> {
         return Err("fixture data offset must fit".to_owned());
     }
     match parse(&archive) {
-        Err(LmlmError::InvalidNameEncoding { offset, message })
-            if offset == TEST_ENTRY =>
-        {
-            let diagnostic =
-                LmlmError::InvalidNameEncoding { offset, message }.to_string();
+        Err(LmlmError::InvalidNameEncoding { offset, message }) if offset == TEST_ENTRY => {
+            let diagnostic = LmlmError::InvalidNameEncoding { offset, message }.to_string();
             let expected_offset = format!("{TEST_ENTRY:#x}");
             if diagnostic.contains(&expected_offset) {
                 Ok(())
@@ -1087,7 +1054,7 @@ fn rejects_invalid_utf16_entry_name() -> Result<(), String> {
                          {diagnostic:?}"
                 ))
             }
-        },
+        }
         other => Err(format!("invalid UTF-16 name must fail, got {other:?}")),
     }
 }
@@ -1122,7 +1089,7 @@ fn rejects_unknown_root_overlay_flags() -> Result<(), String> {
             if offset == ROOT_BLOCK.saturating_add(4) && value == 2 =>
         {
             Ok(())
-        },
+        }
         other => Err(format!("unknown root flags must fail, got {other:?}")),
     }
 }
