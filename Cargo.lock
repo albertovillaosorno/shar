@@ -249,6 +249,16 @@ name = "shar_json_text"
 version = "26.7.0"
 
 [[package]]
+name = "shar_languages"
+version = "26.7.0"
+dependencies = [
+ "schoenwald_filesystem",
+ "serde",
+ "serde_json",
+ "shar_sha256",
+]
+
+[[package]]
 name = "shar_sha256"
 version = "26.7.0"
 

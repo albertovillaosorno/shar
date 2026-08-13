@@ -3,6 +3,7 @@ resolver = "3"
 members = [
   "src/foundation/command-line",
   "src/foundation/filesystem",
+  "src/languages",
   "src/migration/pipeline",
   "src/migration/manifest",
   "src/foundation/json-text",

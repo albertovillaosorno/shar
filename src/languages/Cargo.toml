@@ -1,0 +1,21 @@
+[package]
+name = "shar_languages"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Canonical official-language mod source composition for SHAR."
+publish = false
+
+[lib]
+name = "shar_languages"
+path = "composition/lib.rs"
+
+[dependencies]
+schoenwald_filesystem = { path = "../foundation/filesystem" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+shar_sha256 = { path = "../foundation/sha256" }
+
+[lints]
+workspace = true

@@ -52,19 +52,25 @@ The canonical manifest validator now runs as the first extraction-stage gate,
 closing the previous exact-header bypass. `cargo test -p game_manifest` and the
 794-test pipeline library suite pass, and the local `game/` passes
 `validate-game` with 103 curated generic minimums plus exact required sources.
-Canonical language-mod generation now lives under `src/mods/languages/`, not
-as an external tool. It preserves the original text-table bytes, selected
-character-set sidecar, dialogue RCF, and localized readme while also publishing deterministic UTF-8
-`text.jsonl` plus SHA-256/size evidence. Synthetic tests prove byte-deterministic
-output and source-root isolation. Real disposable probes exported French,
+Canonical language-mod generation now lives in the internal Rust crate
+`src/languages/`, not as a user-facing tool. The contract covers the original
+TextBible bytes/sidecar, dialogue RCF, localized readme, localized loading/license
+UI assets, and normalized cinematic audio. Original runtime FMV indexes 1/2/3
+map to extracted tracks 02/03/04 for French/German/Spanish. Rust tests prove
+French full-surface composition, Spanish track selection, and fail-closed UI
+requirements. A read-only probe of the current lawful source finds 21 localized
+loading/license assets for each of French/German/Spanish, dialogue archives of
+166,793,216 / 186,839,040 / 156,291,072 bytes respectively, and eight normalized
+movie packages carrying each localized track 02/03/04. English track 01 exists
+for all 16 normalized movie packages. Earlier disposable probes exported French,
 German, and Spanish bundles with 1,632 text records each and then cleaned all
 489 MiB of probe output. French/German each retain one authored `???` value;
 Spanish has none.
 
 The same real probe correctly rejected Italian: this installation's entire
-Italian column is `???` and `dialogi.rcf` is absent. The exporter keeps the
-Italian mapping for installations that actually contain translated source, but
-will not invent a usable language from placeholders. The task remains open
+Italian column is `???` and `dialogi.rcf` is absent. The Rust domain keeps the Italian language identity for installations that
+actually contain translated source, but will not invent usable text, dialogue,
+UI, or cinematic audio from placeholders or absent files. The task remains open
 because these outputs are source bundles pending the shared final SHAR
 mod-package schema. Their ownership is already canonical: the
 final exporter should place generated official-language mods directly in the
