@@ -8,6 +8,7 @@ members = [
   "src/migration/pipeline",
   "src/migration/manifest",
   "src/migration/source-audit",
+  "src/modding/package",
   "src/foundation/json-text",
   "src/foundation/sha256",
   "src/formats/fbx",

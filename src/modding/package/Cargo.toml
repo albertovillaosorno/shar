@@ -1,0 +1,26 @@
+[package]
+name = "shar_mod_package"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Portable deterministic SHAR mod-package contract and validation."
+publish = false
+
+[dependencies]
+schoenwald_filesystem = { path = "../../foundation/filesystem" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+shar_sha256 = { path = "../../foundation/sha256" }
+unicode-normalization = "0.1"
+
+[lib]
+name = "shar_mod_package"
+path = "composition/lib.rs"
+
+[[test]]
+name = "contract"
+path = "../../../tests/modding/package/contract.rs"
+
+[lints]
+workspace = true
