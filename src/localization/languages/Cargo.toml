@@ -16,6 +16,7 @@ schoenwald_filesystem = { path = "../../foundation/filesystem" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 shar_sha256 = { path = "../../foundation/sha256" }
+shar_mod_package = { path = "../../modding/package" }
 
 [lints]
 workspace = true

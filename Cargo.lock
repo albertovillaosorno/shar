@@ -413,6 +413,7 @@ dependencies = [
  "schoenwald_filesystem",
  "serde",
  "serde_json",
+ "shar_mod_package",
  "shar_sha256",
 ]
 
