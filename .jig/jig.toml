@@ -396,43 +396,43 @@ name = "custom-technical"
 path = ".jig/cspell/technical.txt"
 
 [tool.cspell]
-path = ".dependencies/jig/source/.dependencies/bin/cspell.cmd"
+path = ".dependencies/validation/bin/cspell.cmd"
 version = "10.0.1"
 
 [tool.git]
-path = ".dependencies/jig/source/.dependencies/git/2.54.0.windows.1/bin/git.exe"
-version = "2.54.0.windows.1"
+path = ".dependencies/validation/bin/git.cmd"
+version = "2.55.0"
 
 [tool.markdownlint]
-path = ".dependencies/jig/source/.dependencies/bin/markdownlint-cli2.cmd"
+path = ".dependencies/validation/bin/markdownlint.cmd"
 version = "0.23.0"
 
 [tool.pytest]
-path = ".dependencies/python/3.14.6/Scripts/pytest.exe"
+path = ".dependencies/validation/bin/pytest.cmd"
 version = "9.1.1"
 
 [tool.ruff]
-path = ".dependencies/python/3.14.6/Scripts/ruff.exe"
+path = ".dependencies/validation/bin/ruff.cmd"
 version = "0.15.21"
 
 [tool.rust_nightly_cargo]
-# jig-ignore-next-line: source-linked pinned tool path is indivisible
-path = ".dependencies/jig/source/.dependencies/rust/nightly-2026-07-14-x86_64-pc-windows-gnu/bin/cargo.exe"
+# jig-ignore-next-line: portable validation launcher path is indivisible
+path = ".dependencies/validation/bin/rust-nightly-cargo.cmd"
 version = "1.99.0-nightly"
 
 [tool.rust_nightly_cargo_clippy]
-# jig-ignore-next-line: source-linked pinned tool path is indivisible
-path = ".dependencies/jig/source/.dependencies/rust/nightly-2026-07-14-x86_64-pc-windows-gnu/bin/cargo-clippy.exe"
+# jig-ignore-next-line: portable validation launcher path is indivisible
+path = ".dependencies/validation/bin/rust-nightly-clippy.cmd"
 version = "0.1.99"
 
 [tool.rust_nightly_cargo_fmt]
-# jig-ignore-next-line: source-linked pinned tool path is indivisible
-path = ".dependencies/jig/source/.dependencies/rust/nightly-2026-07-14-x86_64-pc-windows-gnu/bin/cargo-fmt.exe"
+# jig-ignore-next-line: portable validation launcher path is indivisible
+path = ".dependencies/validation/bin/rust-nightly-fmt.cmd"
 version = "1.9.0-nightly"
 
 [tool.rust_stable_cargo]
-# jig-ignore-next-line: source-linked pinned tool path is indivisible
-path = ".dependencies/jig/source/.dependencies/rust/stable-1.97.1-x86_64-pc-windows-gnu/bin/cargo.exe"
+# jig-ignore-next-line: portable validation launcher path is indivisible
+path = ".dependencies/validation/bin/rust-stable-cargo.cmd"
 version = "1.97.1"
 
 [version.cspell]
@@ -445,8 +445,8 @@ target = "cspell"
 template = "{version}"
 
 [version.git]
-current = "2.54.0.windows.1"
-stable = "2.54.0.windows.1"
+current = "2.55.0"
+stable = "2.55.0"
 
 [version.git.projection.tool]
 kind = "tool"
@@ -614,6 +614,9 @@ unknown_paths = "deny"
 overlapping_roles = "deny"
 one_role_per_path = true
 spaces_in_paths = "deny"
+
+[taxonomy.role.algorithms]
+paths = ["algorithms/"]
 
 [taxonomy.role.cargo_configuration]
 paths = [".cargo/"]
