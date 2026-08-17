@@ -1,10 +1,10 @@
 ---
 schema: shar.todo.v1
 id: make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods
-status: open
+status: completed
 priority: P0
 lane: governance
-active: true
+active: false
 parent: null
 dependencies: []
 children: []
@@ -22,11 +22,11 @@ into the canonical base package.
   faithful base pipeline.
 - [x] Treat English as required, not optional and not merely a minimum-count
   language bucket.
-- [ ] Export every supported non-English official language as a deterministic,
+- [x] Export every supported non-English official language as a deterministic,
   inspectable SHAR mod without losing original content.
-- [ ] Keep base gameplay/content identity independent from optional language
+- [x] Keep base gameplay/content identity independent from optional language
   mods and make language-mod composition deterministic.
-- [ ] Update README installation, validation, modding, and troubleshooting text
+- [x] Update README installation, validation, modding, and troubleshooting text
   when the implementation lands.
 
 ## Dependencies
@@ -53,9 +53,9 @@ closing the previous exact-header bypass. `cargo test -p game_manifest` and the
 794-test pipeline library suite pass, and the local `game/` passes
 `validate-game` with 103 curated generic minimums plus exact required sources.
 Canonical language-mod generation now lives in the internal Rust crate
-`src/localization/languages/`, not as a user-facing tool. The contract covers the original
-TextBible bytes/sidecar, dialogue RCF, localized readme, localized loading/license
-UI assets, and normalized cinematic audio. Original runtime FMV indexes 1/2/3
+`src/localization/languages/`, not as a user-facing tool. The contract covers the
+original TextBible bytes/sidecar, dialogue RCF, localized readme, localized
+loading/license UI assets, and normalized cinematic audio. Original runtime FMV indexes 1/2/3
 map to extracted tracks 02/03/04 for French/German/Spanish. Rust tests prove
 French full-surface composition, Spanish track selection, and fail-closed UI
 requirements. A read-only probe of the current lawful source finds 21 localized
@@ -67,11 +67,26 @@ German, and Spanish bundles with 1,632 text records each and then cleaned all
 489 MiB of probe output. French/German each retain one authored `???` value;
 Spanish has none.
 
-The same real probe correctly rejected Italian: this installation's entire
-Italian column is `???` and `dialogi.rcf` is absent. The Rust domain keeps the Italian language identity for installations that
-actually contain translated source, but will not invent usable text, dialogue,
-UI, or cinematic audio from placeholders or absent files. The task remains open
-because these outputs are source bundles pending the shared final SHAR
-mod-package schema. Their ownership is already canonical: the
-final exporter should place generated official-language mods directly in the
-result rather than asking users to run a separate tool.
+The same real probe correctly rejected Italian: that installation's entire
+Italian column is `???` and `dialogi.rcf` is absent. The Rust domain keeps the
+Italian language identity for installations that actually contain translated
+source, but will not invent usable text, dialogue, UI, or cinematic audio from
+placeholders or absent files.
+
+`9079045c` introduced the shared storage-independent `shar.mod-package.v1`
+contract with canonical identity, deterministic content revision, explicit
+priority/conflicts, exact member lengths and SHA-256 identities, provenance,
+portable NFC path validation, and the content/native trust boundary. `3e194a40`
+then adapted official-language generation to that same contract: every published
+language bundle carries `mod.json`, `shar.localization.<language>` identity,
+content-only trust, exact package members, deterministic revision, and explicit
+conflicts with the other official language overlays. Repeated synthetic exports
+are byte-identical and the Rust suite now has 10 passing language tests including
+package-contract parsing and complete Spanish dialogue/text/cinematic membership.
+
+The README now states English as the sole canonical base language, explains the
+normalized official-language package shape in validation/mod installation text,
+and documents fail-closed troubleshooting for unavailable localization. No new
+real-game probe was claimed on the Fedora workstation: the lawful-source counts
+and French/German/Spanish full-surface evidence above remain the recorded real
+source evidence, while current synthetic tests prove the final package adapter.

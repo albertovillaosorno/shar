@@ -15,14 +15,6 @@ labels belong here.
 
 ## P0 — Authority and repository governance
 
-### TODO - Make English the only canonical base language
-
-Require English for the base game and export every other supported official
-localization as a deterministic SHAR language mod.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/governance/make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods.mdc](docs/todo/open/governance/make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods.mdc)
-
 ### TODO - Define a public-safe reconstruction algorithm gate with bounded similarity
 
 Define and test the tentative 45–55% source-similarity window against a lawful

@@ -125,13 +125,20 @@ is never reconstruction input and it does not itself prove software is safe.
    - Other official original languages: preserved/exported as SHAR language
      mods, not compiled into the canonical base package.
 
-   **TODO: Make English the only canonical base language.**
-
-   Official non-English localization is owned under `src/localization/languages/` and is
-   emitted as canonical language mods in the final result. The Rust implementation
-   covers the complete language surface available in the lawful source: text,
+   English is the only canonical base language. Official non-English localization
+   is owned under `src/localization/languages/` and is emitted as deterministic
+   content-only SHAR language mods. Each generated language overlay carries a
+   `shar.mod-package.v1` `mod.json` whose identity and content revision are
+   independent of its storage location. The Rust implementation covers the
+   complete language surface available in the lawful source: text,
    dialogue/audio archives, localized UI art, and localized cinematic audio
    tracks. Missing language content fails closed instead of being invented.
+
+   If an expected official language is not emitted, treat that as a source
+   validation result rather than copying another language into its place. For
+   example, the verified source used during development has only `???` Italian
+   TextBible values and no `dialogi.rcf`, so Italian generation is rejected until
+   a lawful source actually supplies usable Italian localization evidence.
 
 1. Select any targets you want:
 
