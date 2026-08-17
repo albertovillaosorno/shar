@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::{Language, export_language};
+use shar_mod_package::{PackageKind, PackageManifest, TrustLevel};
 
 static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
 
@@ -106,6 +107,7 @@ fn french_bundle_contains_dialogue_ui_and_cinematic_track_two() -> Result<(), St
             .join("source/art/frontend/dynaload/images/loading/french/loading1.p3d")
             .is_file()
         && output.join("cinematics/fmv2/audio_track_02.wav").is_file()
+        && output.join("mod.json").is_file()
     {
         Ok(())
     } else {
@@ -225,7 +227,12 @@ fn repeated_exports_are_byte_deterministic() -> Result<(), String> {
         fs::read(second.join("manifest.json")).map_err(|error| error.to_string())?;
     let first_text = fs::read(first.join("text.jsonl")).map_err(|error| error.to_string())?;
     let second_text = fs::read(second.join("text.jsonl")).map_err(|error| error.to_string())?;
-    let result = if first_manifest == second_manifest && first_text == second_text {
+    let first_package = fs::read(first.join("mod.json")).map_err(|error| error.to_string())?;
+    let second_package = fs::read(second.join("mod.json")).map_err(|error| error.to_string())?;
+    let result = if first_manifest == second_manifest
+        && first_text == second_text
+        && first_package == second_package
+    {
         Ok(())
     } else {
         Err("language exports are not byte deterministic".to_owned())
@@ -301,6 +308,49 @@ fn missing_cinematic_language_track_fails_closed() -> Result<(), String> {
         Ok(())
     } else {
         Err(error.to_string())
+    };
+    cleanup(&root);
+    result
+}
+
+#[test]
+fn official_language_package_uses_normalized_mod_contract() -> Result<(), String> {
+    let root = temp_root("mod-contract");
+    cleanup(&root);
+    let (game, movies) = fixture(&root)?;
+    let output = root.join("out/spanish");
+    let language = export_language(&game, &movies, &output, Language::Spanish)
+        .map_err(|error| error.to_string())?;
+    let text = fs::read_to_string(output.join("mod.json")).map_err(|error| error.to_string())?;
+    let package = PackageManifest::from_json(&text).map_err(|error| error.to_string())?;
+
+    let result = if package.canonical_id == "shar.localization.spanish"
+        && language.package_id == package.canonical_id
+        && package.package_kind == PackageKind::Content
+        && package.trust_level == TrustLevel::ContentOnly
+        && package.supported_targets.is_empty()
+        && package
+            .conflicts
+            .iter()
+            .all(|identity| identity != &package.canonical_id)
+        && package
+            .members
+            .iter()
+            .any(|member| member.path == "text.jsonl")
+        && package
+            .members
+            .iter()
+            .any(|member| member.path == "source/dialogs.rcf")
+        && package
+            .members
+            .iter()
+            .any(|member| member.path == "cinematics/fmv2/audio_track_04.wav")
+    {
+        Ok(())
+    } else {
+        Err(format!(
+            "unexpected normalized language package: {package:?}"
+        ))
     };
     cleanup(&root);
     result

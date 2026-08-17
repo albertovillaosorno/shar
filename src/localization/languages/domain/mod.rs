@@ -13,10 +13,15 @@ use std::path::{Path, PathBuf};
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
 use serde::Serialize;
+use shar_mod_package::{
+    CONTRACT_VERSION as MOD_CONTRACT_VERSION, Member, PackageKind, PackageManifest, Provenance,
+    TrustLevel, content_revision, member_from_bytes,
+};
 
 const TEXT_TABLE: &str = "art/frontend/scrooby2/resource/txtbible/srr2.txt";
 const UI_ROOT: &str = "art/frontend/dynaload/images";
-const SCHEMA: &str = "shar.language-mod-source.v2";
+const SCHEMA: &str = "shar.language-mod-source.v3";
+const LANGUAGE_MOD_PRIORITY: i32 = 100;
 
 /// One official non-English language carried by the original game source.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -130,7 +135,9 @@ pub struct LanguageManifest {
     pub cinematic_audio: Vec<CinematicAudioEvidence>,
     /// Optional original sources not present in this lawful installation.
     pub missing_optional_sources: Vec<String>,
-    /// Current final-package adaptation state.
+    /// Canonical SHAR package identity generated for this language.
+    pub package_id: String,
+    /// Current package-contract state.
     pub status: &'static str,
 }
 
@@ -143,6 +150,8 @@ pub enum ExportError {
     Io(io::Error),
     /// JSON serialization failed.
     Json(serde_json::Error),
+    /// Normalized SHAR mod-package validation failed.
+    Package(shar_mod_package::PackageError),
 }
 
 impl fmt::Display for ExportError {
@@ -151,6 +160,7 @@ impl fmt::Display for ExportError {
             Self::Contract(message) => formatter.write_str(message),
             Self::Io(error) => write!(formatter, "{error}"),
             Self::Json(error) => write!(formatter, "{error}"),
+            Self::Package(error) => write!(formatter, "{error}"),
         }
     }
 }
@@ -166,6 +176,12 @@ impl From<io::Error> for ExportError {
 impl From<serde_json::Error> for ExportError {
     fn from(error: serde_json::Error) -> Self {
         Self::Json(error)
+    }
+}
+
+impl From<shar_mod_package::PackageError> for ExportError {
+    fn from(error: shar_mod_package::PackageError) -> Self {
+        Self::Package(error)
     }
 }
 
@@ -382,7 +398,7 @@ fn copy_localized_ui(
                 relative_root.to_string_lossy()
             )));
         }
-        for source in local::regular_files(&source_root)? {
+        for source in local::strict_regular_files(&source_root)? {
             let tail = source.strip_prefix(game_root).map_err(|_error| {
                 ExportError::Contract("localized UI file escaped game root".to_owned())
             })?;
@@ -414,7 +430,7 @@ fn copy_cinematic_audio(
     }
     let track_name = format!("audio_track_{track_number:02}.wav");
     let mut cinematic_audio = Vec::new();
-    for source in local::regular_files(movies_root)? {
+    for source in local::strict_regular_files(movies_root)? {
         if source.file_name().and_then(|value| value.to_str()) != Some(track_name.as_str()) {
             continue;
         }
@@ -495,6 +511,88 @@ fn reject_output_inside_input(
         )));
     }
     Ok(())
+}
+
+fn language_package_id(spec: LanguageSpec) -> String {
+    format!("shar.localization.{}", spec.name)
+}
+
+fn language_conflicts(spec: LanguageSpec) -> Vec<String> {
+    let mut conflicts = ["french", "german", "italian", "spanish"]
+        .into_iter()
+        .filter(|language| *language != spec.name)
+        .map(|language| format!("shar.localization.{language}"))
+        .collect::<Vec<_>>();
+    conflicts.sort();
+    conflicts
+}
+
+fn package_member_metadata(path: &str) -> (&'static str, &'static str) {
+    if path == "text.jsonl" {
+        ("application/jsonl", "localization/text")
+    } else if path == "manifest.json" {
+        ("application/json", "localization/evidence")
+    } else if path.starts_with("cinematics/") {
+        ("audio/wav", "localization/cinematic-audio")
+    } else if Path::new(path)
+        .extension()
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("rtf"))
+    {
+        ("application/rtf", "localization/readme")
+    } else if Path::new(path)
+        .extension()
+        .is_some_and(|extension| extension.eq_ignore_ascii_case("rcf"))
+    {
+        ("application/octet-stream", "localization/dialogue")
+    } else if path.contains("/dynaload/images/") {
+        ("application/octet-stream", "localization/ui")
+    } else {
+        ("application/octet-stream", "localization/source")
+    }
+}
+
+fn package_members(staging: &Path) -> Result<Vec<Member>, ExportError> {
+    let mut members = Vec::new();
+    for path in local::strict_regular_files(staging)? {
+        let relative = path.strip_prefix(staging).map_err(|_error| {
+            ExportError::Contract("language package member escaped staging".to_owned())
+        })?;
+        let portable = relative.to_string_lossy().replace('\\', "/");
+        if portable == "mod.json" {
+            continue;
+        }
+        let bytes = local::read_bytes(&path)?;
+        let (media_type, role) = package_member_metadata(&portable);
+        members.push(member_from_bytes(&portable, media_type, role, &bytes)?);
+    }
+    members.sort_by(|left, right| left.path.cmp(&right.path));
+    Ok(members)
+}
+
+fn package_manifest(staging: &Path, spec: LanguageSpec) -> Result<PackageManifest, ExportError> {
+    let members = package_members(staging)?;
+    let package_revision = content_revision(&members)?;
+    let manifest = PackageManifest {
+        contract_version: MOD_CONTRACT_VERSION.to_owned(),
+        canonical_id: language_package_id(spec),
+        package_revision,
+        package_kind: PackageKind::Content,
+        priority: LANGUAGE_MOD_PRIORITY,
+        dependencies: Vec::new(),
+        conflicts: language_conflicts(spec),
+        supersedes: Vec::new(),
+        required_capabilities: vec!["localization.overlay.v1".to_owned()],
+        supported_targets: Vec::new(),
+        members,
+        provenance: Provenance {
+            authors: vec!["original-rightsholders".to_owned()],
+            source: "generated-from-user-supplied-lawful-original-game".to_owned(),
+            license: "NOASSERTION".to_owned(),
+        },
+        trust_level: TrustLevel::ContentOnly,
+    };
+    manifest.validate()?;
+    Ok(manifest)
 }
 
 /// Publishes one deterministic canonical language-mod source bundle.
@@ -581,11 +679,15 @@ pub fn export_language(
             included_sources,
             cinematic_audio,
             missing_optional_sources,
-            status: "canonical-language-mod-needs-final-package-adaptation",
+            package_id: language_package_id(spec),
+            status: "canonical-language-mod-v1",
         };
         let mut json = serde_json::to_string_pretty(&manifest)?;
         json.push('\n');
         local::write_text(&staging.join("manifest.json"), &json, false)?;
+
+        let package = package_manifest(&staging, spec)?;
+        local::write_text(&staging.join("mod.json"), &package.to_pretty_json()?, false)?;
         fs::rename(&staging, output)?;
         Ok(manifest)
     })();
