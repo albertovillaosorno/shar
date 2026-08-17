@@ -71,14 +71,6 @@ with an Unreal Landscape.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/import-the-original-world-through-source-authored-fbx-instead-of-replacing-it-with-an.mdc](docs/todo/open/conversion/import-the-original-world-through-source-authored-fbx-instead-of-replacing-it-with-an.mdc)
 
-### TODO - Reject heuristic map offsets, interior movements, global height raises, UV mirrors, and…
-
-Reject heuristic map offsets, interior movements, global height raises, UV
-mirrors, and other corrections not present in source evidence.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/conversion/reject-heuristic-map-offsets-interior-movements-global-height-raises-uv-mirrors-and.mdc](docs/todo/open/conversion/reject-heuristic-map-offsets-interior-movements-global-height-raises-uv-mirrors-and.mdc)
-
 ### TODO - Verify representative character, prop, vehicle, interior, and world imports
 
 Verify representative character, prop, vehicle, interior, and world imports.

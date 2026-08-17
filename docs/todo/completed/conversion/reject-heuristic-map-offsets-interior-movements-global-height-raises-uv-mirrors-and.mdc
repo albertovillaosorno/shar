@@ -1,0 +1,51 @@
+---
+schema: shar.todo.v1
+id: "reject-heuristic-map-offsets-interior-movements-global-height-raises-uv-\
+  mirrors-and"
+status: completed
+priority: P1
+lane: conversion
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Reject heuristic world corrections
+
+Reject heuristic map offsets, interior movements, global height raises, UV
+mirrors, and other corrections not present in source evidence.
+
+## Acceptance criteria
+
+- [x] Reject heuristic map offsets, interior movements, global height raises, UV
+  mirrors, and other corrections not present in source evidence.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+The world exporter publishes every normal exterior and interior FBX at the
+source-authored global origin. Narrative map-family labels carry no coordinate
+offset, source overlap is allowed, and bounds validation rejects only malformed
+or non-finite source geometry rather than applying extent or height policy.
+
+The production root policy performs one `ReflectX` basis conversion for FBX to
+Unreal while preserving authored UV coordinates. Exterior and interior meshes
+are copied into the structural guide with positions, normals, UVs, triangle
+order, materials, and textures unchanged. The guide manifest validator requires
+all spatial-correction flags to remain false and its Unreal import transform to
+stay at identity. Source-backed coordinate transplants require compatible
+topology and preserve the canonical material/UV presentation.
+
+Definition-only review meshes are the one intentional exception: they are moved
+into a deterministic gallery under `review/`, which is explicitly excluded from
+the normal world import set and cannot alter production package coordinates.
+
+Fresh stable-Rust tests passed the no-offset narrative grouping and the
+no-height-policy
+bounds validation, single-reflection UV contract, exact exterior/interior guide
+copy, authored nested scenegraph translation, structural-guide manifest policy,
+and source-backed coordinate-transplant regressions.
