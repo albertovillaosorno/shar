@@ -13,7 +13,7 @@
 # - Must-Not:
 #   - Extract game data, compile validators, or mutate build inputs.
 # - Allows:
-#   - Inputs: game, Python, Unreal, host, and manifest-validator evidence.
+#   - Inputs: game, Python, Unreal, host, and source-validator evidence.
 #   - Outputs: versioned build preflight JSON and diagnostics.
 #   - Side effects: atomically replaces only the selected check JSON.
 # - Split-When:
@@ -59,6 +59,19 @@ _VALIDATOR_SOURCE_INPUTS = (
     Path("src/foundation/command-line"),
     Path("src/foundation/filesystem"),
 )
+_DEEP_VALIDATOR_SOURCE_INPUTS = (
+    Path("Cargo.toml"),
+    Path("Cargo.lock"),
+    Path("src/migration/source-audit"),
+    Path("src/formats/p3d"),
+    Path("src/formats/rcf"),
+    Path("src/formats/rmv"),
+    Path("src/formats/rsd"),
+    Path("src/foundation/command-line"),
+    Path("src/foundation/filesystem"),
+    Path("src/foundation/json-text"),
+    Path("src/foundation/sha256"),
+)
 _PROJECT_PATH = Path("src/unreal/project/composition/uproject/shar.uproject")
 
 
@@ -92,11 +105,11 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _validator_source_sha256(root: Path) -> str:
-    """Hash every local source input that can change validate-game."""
+def _source_inputs_sha256(root: Path, inputs: tuple[Path, ...]) -> str:
+    """Hash one deterministic repository source closure."""
     digest = hashlib.sha256()
     files: list[Path] = []
-    for relative in _VALIDATOR_SOURCE_INPUTS:
+    for relative in inputs:
         source = root / relative
         if source.is_file():
             files.append(source)
@@ -120,6 +133,16 @@ def _validator_source_sha256(root: Path) -> str:
         digest.update(len(payload).to_bytes(8, "big"))
         digest.update(payload)
     return digest.hexdigest()
+
+
+def _validator_source_sha256(root: Path) -> str:
+    """Hash source inputs that can change validate-game."""
+    return _source_inputs_sha256(root, _VALIDATOR_SOURCE_INPUTS)
+
+
+def _deep_validator_source_sha256(root: Path) -> str:
+    """Hash source inputs that can change validate-source-deep."""
+    return _source_inputs_sha256(root, _DEEP_VALIDATOR_SOURCE_INPUTS)
 
 
 def _check_python() -> dict[str, str]:
@@ -234,6 +257,43 @@ def _dependency_validator(
     return validator
 
 
+def _dependency_deep_source_validator(
+    root: Path,
+    data: dict[str, object],
+) -> Path:
+    """Require the hashed repository-owned deep source validator."""
+    value = data.get("deep_source_validator")
+    if not isinstance(value, dict):
+        raise CheckFailure("dependency evidence has no deep source validator")
+    raw_path = value.get("path")
+    expected_hash = value.get("sha256")
+    expected_source_hash = value.get("source_sha256")
+    if (
+        not isinstance(raw_path, str)
+        or not isinstance(expected_hash, str)
+        or not isinstance(expected_source_hash, str)
+    ):
+        raise CheckFailure("deep source validator evidence is incomplete")
+    validator = Path(raw_path).resolve()
+    owned = (root / ".dependencies" / "build" / "bin").resolve()
+    if validator.parent != owned:
+        raise CheckFailure(
+            "deep source validator must be under .dependencies/build/bin"
+        )
+    if not validator.is_file():
+        raise CheckFailure(f"deep source validator is missing: {validator}")
+    if _sha256(validator) != expected_hash:
+        raise CheckFailure(
+            "deep source validator SHA-256 no longer matches evidence"
+        )
+    if _deep_validator_source_sha256(root) != expected_source_hash:
+        raise CheckFailure(
+            "deep source validator source inputs no longer match evidence; "
+            "rerun tools/build/dependencies.py"
+        )
+    return validator
+
+
 def _resolve_validator(
     root: Path,
     explicit: Path | None,
@@ -248,6 +308,22 @@ def _resolve_validator(
             )
         return candidate.resolve()
     return _dependency_validator(root, dependencies)
+
+
+def _resolve_deep_source_validator(
+    root: Path,
+    explicit: Path | None,
+    dependencies: dict[str, object],
+) -> Path:
+    """Resolve the canonical deep validator or a testing override."""
+    if explicit is not None:
+        candidate = explicit if explicit.is_absolute() else root / explicit
+        if not candidate.is_file():
+            raise CheckFailure(
+                f"deep source validator does not exist: {candidate.resolve()}"
+            )
+        return candidate.resolve()
+    return _dependency_deep_source_validator(root, dependencies)
 
 
 def _validator_command(
@@ -284,6 +360,38 @@ def _check_manifest(validator: Path, game: Path, manifest: Path) -> str:
     if result.returncode:
         detail = result.stderr.strip() or result.stdout.strip()
         raise CheckFailure(f"game manifest validation failed: {detail}")
+    return result.stdout.strip()
+
+
+def _deep_validator_command(validator: Path, game: Path) -> list[str]:
+    """Build a portable deep-source command without a manifest argument."""
+    if os.name == "nt" and validator.suffix.casefold() == ".cmd":
+        return [
+            os.environ.get("COMSPEC", "cmd.exe"),
+            "/d",
+            "/c",
+            str(validator),
+            str(game),
+        ]
+    return [str(validator), str(game)]
+
+
+def _check_deep_source(validator: Path, game: Path) -> str:
+    """Run deep structural source validation after the fast manifest gate."""
+    try:
+        result = subprocess.run(
+            _deep_validator_command(validator, game),
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+    except (OSError, subprocess.TimeoutExpired) as error:
+        message = f"deep source validation could not run: {error}"
+        raise CheckFailure(message) from error
+    if result.returncode:
+        detail = result.stderr.strip() or result.stdout.strip()
+        raise CheckFailure(f"deep source validation failed: {detail}")
     return result.stdout.strip()
 
 
@@ -492,7 +600,13 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         args.manifest_validator,
         dependencies,
     )
+    deep_validator = _resolve_deep_source_validator(
+        root,
+        args.deep_source_validator,
+        dependencies,
+    )
     manifest_result = _check_manifest(validator, game, manifest)
+    deep_result = _check_deep_source(deep_validator, game)
     engine = _check_engine(args.engine_root)
     host = _host_evidence(dependencies)
     return {
@@ -506,6 +620,7 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
             "manifest_sha256": _sha256(manifest),
             "path": _normalized(game),
             "validation": manifest_result,
+            "deep_validation": deep_result,
         },
         "host": host,
         "python": python,
@@ -516,6 +631,7 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
             "version": engine.version,
         },
         "validator": _normalized(validator),
+        "deep_source_validator": _normalized(deep_validator),
     }
 
 
@@ -552,6 +668,7 @@ def _revalidate(path: Path) -> None:
         engine_root=engine_root,
         game=game_root,
         manifest_validator=None,
+        deep_source_validator=None,
     )
     current = _run(arguments)
     if saved != current:
@@ -582,6 +699,11 @@ def _parser() -> argparse.ArgumentParser:
         help="explicit already-built validate-game executable",
     )
     parser.add_argument(
+        "--deep-source-validator",
+        type=Path,
+        help="explicit already-built validate-source-deep executable",
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         help="override .cache/build/data/check.json for testing",
@@ -600,6 +722,7 @@ def _reject_revalidate_overrides(args: argparse.Namespace) -> None:
         args.engine_root is not None
         or args.game is not None
         or args.manifest_validator is not None
+        or args.deep_source_validator is not None
     )
     if has_override:
         raise CheckFailure(

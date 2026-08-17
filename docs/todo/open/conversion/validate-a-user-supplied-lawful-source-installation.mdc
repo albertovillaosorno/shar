@@ -6,7 +6,12 @@ priority: P1
 lane: conversion
 active: true
 parent: null
-dependencies: [pin-exact-minimum-source-identities-for-simpsons-exe-and-simpsons-ico, define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window, make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods]
+dependencies:
+  - pin-exact-minimum-source-identities-for-simpsons-exe-and-simpsons-ico
+  - "define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-\
+    similarity-window"
+  - "make-english-the-only-canonical-base-language-and-export-other-official-\
+    languages-as-mods"
 children: []
 ---
 
@@ -28,14 +33,15 @@ anything inside the original installation directory.
 - [x] Require the English source identities needed by the canonical base game.
 - [x] Treat other supported original languages as optional source that can later
   be exported as language mods rather than required base-game evidence.
-- [ ] Run a fast public-manifest gate for user feedback, then run deeper
+- [x] Run a fast public-manifest gate for user feedback, then run deeper
   deterministic structural/provenance validation before any reconstruction.
-- [ ] Never let editing a public JSON manifest turn source that fails the deep
+- [x] Never let editing a public JSON manifest turn source that fails the deep
   validator into accepted source.
-- [ ] Apply the finalized source-similarity policy only after its 45-55% planning
+- [ ] Apply the finalized source-similarity policy only after its 45-55%
+  planning
   window has been empirically calibrated; similarity never substitutes for
   exact mandatory files or required source bytes.
-- [ ] Keep every validator operation read-only against the original game path.
+- [x] Keep every validator operation read-only against the original game path.
 - [ ] Report why validation failed without exposing private absolute paths in
   tracked evidence, release artifacts, or telemetry.
 - [ ] Update README whenever the user-visible source requirements change.
@@ -53,13 +59,14 @@ repository or release directory.
 
 The minimum validator no longer requires SHAR policy files inside the source
 installation. `ValidateManifest::execute_with_manifest` receives the source tree
-and the SHAR-owned minimum manifest as separate inputs; an integration fixture
-validates a source directory with no `manifest/` child and proves validation does
-not create one. The `validate-game` CLI accepts an optional explicit manifest
-path while preserving the developer `game/` default.
+and the SHAR-owned minimum manifest as separate inputs. An integration fixture
+validates a source directory with no `manifest/` child and proves the validator
+does not create one. The `validate-game` CLI accepts an optional explicit
+manifest path while preserving the developer `game/` default.
 
 `tools/build/check.py` now accepts `--game` as either an installation directory
-or `Simpsons.exe`, resolves both to the same source root, and invokes the validator
+or `Simpsons.exe`, resolves both to the same source root, and invokes the
+validator
 with the repository-owned `game/manifest/game.jsonl` as a separate argument. The
 saved local preflight reuses that selected source during revalidation. Focused
 packaging tests cover directory/executable resolution, wrong-file rejection,
@@ -67,8 +74,18 @@ private-path-safe missing-source diagnostics, separate validator inputs, and
 saved-source evidence.
 
 The canonical manifest itself already enforces exact `Simpsons.exe`,
-`Simpsons.ico`, English `README.rtf`, `dialog.rcf`, `srr2.E`, and `srr2.txt` while
-keeping `uninst.ico` plus other official-language sources optional. The remaining
-unchecked criteria are intentionally open: the final `src/user/` GUI/drop surface,
-deep structural/provenance validation, calibrated similarity admission, and
-end-to-end proof that every future validator remains source-read-only.
+`Simpsons.ico`, English `README.rtf`, `dialog.rcf`, `srr2.E`, and `srr2.txt`.
+It keeps `uninst.ico` plus other official-language sources optional.
+
+The build dependency bootstrap now publishes both `validate-game` and
+`validate-source-deep` with binary and source-closure SHA-256 evidence. Build
+preflight runs the exact manifest gate first and only then invokes the deep
+P3D/RCF/RSD/RMV audit, recording both results in saved evidence. A stale deep
+validator is rejected when its source closure changes, and focused packaging
+tests prove the ordered fast-then-deep call sequence. The deep validator's Rust
+contract tests prove malformed source failures do not modify source payloads and
+do not disclose the selected private path.
+
+The remaining unchecked criteria are intentionally open: the final `src/user/`
+GUI/drop surface, calibrated similarity admission, and broader user-facing
+diagnostic review.
