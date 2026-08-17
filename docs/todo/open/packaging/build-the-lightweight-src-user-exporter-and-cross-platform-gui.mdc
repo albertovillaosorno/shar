@@ -24,14 +24,20 @@ workspace and `dist/`; it never writes into the original game installation.
 - [ ] Support CPython 3.12+ for the public user tool independently of the
   exact repository-development Python pin.
 - [ ] Ship `shar.py`, `CHANGELOG.md`, `NOTICES.md`, `game.jsonl`, `dist.json`,
-  `code/*.py`, `scripts/*`, `mods/`, and
-  `algorithms/<arch>/<os>/{build.txt,hash.txt}` from `src/user/`.
+  `code/*.py`, `scripts/*`, `mods/`, and reviewed public
+  `algorithms/**/algorithm/*.txt` plans from `src/user/`; never ship authoring
+  `in/`, `master/`, or `out/` payloads.
 - [ ] Keep helper Python modules under `code/` and keep executable/script
   construction entry code at the end of the owning `.py` file.
 - [ ] Provide `scripts/windows/shar.ps1` and
   `scripts/macos-linux/shar.sh` launch helpers.
 - [ ] Provide a lightweight GUI for selecting/dragging/pasting the original game
   path and selecting any supported target without auto-selecting the host.
+- [ ] Discover required algorithm evidence by relative path under the selected
+  lawful source/search roots. Offer only targets and optional mod inputs that
+  the user actually possesses.
+- [ ] Present available language overlays individually and offer the Muckluck
+  compatibility mod only when its required local source evidence is present.
 - [ ] Save choices in release-local `user.json`, with all target toggles on by
   default until the user disables them.
 - [ ] Never modify, overwrite, patch, or clean the original installed-game path.

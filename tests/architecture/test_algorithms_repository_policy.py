@@ -95,3 +95,47 @@ def test_algorithm_workspace_has_one_taxonomy_role() -> None:
     assert isinstance(roles, dict)
     algorithms = roles.get("algorithms")
     assert algorithms == {"paths": ["algorithms/"]}
+
+
+def test_public_algorithm_docs_use_family_plan_layout() -> None:
+    """Reject the retired build/hash pair from current public authorities."""
+    authorities = (
+        "README.md",
+        (
+            "docs/technical/security/"
+            "public-safe-reconstruction-gate.md"
+        ),
+        (
+            "docs/todo/open/security/"
+            "define-a-public-safe-reconstruction-algorithm-gate-with-a-"
+            "bounded-source-similarity-window.mdc"
+        ),
+        (
+            "docs/todo/open/packaging/"
+            "build-the-lightweight-src-user-exporter-and-cross-platform-gui.mdc"
+        ),
+    )
+    legacy = (
+        "algorithms/<arch>/<os>/build.txt",
+        "algorithms/<arch>/<os>/hash.txt",
+        "{build.txt,hash.txt}",
+        "`build.txt`",
+        "`hash.txt`",
+    )
+    offenders: list[str] = []
+    for relative in authorities:
+        content = (_ROOT / relative).read_text(encoding="utf-8")
+        if any(token in content for token in legacy):
+            offenders.append(relative)
+    assert not offenders, f"legacy algorithm layout remains in: {offenders}"
+
+
+def test_public_algorithm_docs_name_source_bound_plan_schema() -> None:
+    """Keep current docs tied to the implemented generic plan contract."""
+    for relative in (
+        "README.md",
+        "docs/technical/security/public-safe-reconstruction-gate.md",
+    ):
+        content = (_ROOT / relative).read_text(encoding="utf-8")
+        assert "shar.algorithm.v1" in content
+        assert "algorithm/*.txt" in content

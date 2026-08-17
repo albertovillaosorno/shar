@@ -14,9 +14,10 @@ supply missing bytes, forgive a failed exact identity, or turn an invalid source
 into an accepted one.
 
 The original installation is read-only. Reconstruction and calibration write
-only to SHAR-owned cache/output locations. `hash.txt` remains informational
-integrity/modification evidence for expected distributable artifacts and is not
-reconstruction input.
+only to SHAR-owned cache/output locations. Exact hashes used by a
+`shar.algorithm.v1` document bind that plan to its required local evidence and
+protected target descriptors; they are not a separate source of reconstruction
+bytes and are not an antivirus verdict.
 
 ## Measurable terms
 
@@ -73,21 +74,31 @@ full-tree diff against the private complete installation. The private reference
 may produce aggregate count vectors for calibration; it must not become direct
 recipe material.
 
-## `build.txt` publication boundary
+## Source-bound plan publication boundary
 
-A future `algorithms/<arch>/<os>/build.txt` may contain procedure, schema/version
-metadata, public tool identities, deterministic operation parameters, and names
-of source evidence classes the user must supply locally. It must not contain:
+Distributable plans live below a family-owned `algorithm/` directory and use
+`shar.algorithm.v1`. Current family paths are:
 
-- original-game payload bytes, excerpts, or reversible encodings;
-- a serialized/full-tree diff of the maintainer's private installation;
-- private filenames or paths copied merely to reconstruct the reference tree;
-- source hashes used as substitutes for local source bytes; or
+```text
+algorithms/game/algorithm/*.txt
+algorithms/lang/<locale>/algorithm/*.txt
+algorithms/muckluck/algorithm/*.txt
+```
+
+A reviewed plan may contain its schema/version metadata, deterministic operation
+parameters, exact source-binding descriptors, protected target descriptors, and
+source-bound protected target material produced by the generic algorithm engine.
+It must not contain:
+
+- plaintext original-game payload bytes or excerpts;
+- a serialized/full-tree diff of the maintainer's private complete installation;
+- private reference filenames or paths copied merely to reconstruct that tree;
+- source hashes treated as substitutes for caller-supplied local source bytes; or
 - a hardcoded 45–55% gate before calibration is accepted and versioned.
 
-`build.txt` must remain useless as a substitute for a lawful local source copy.
-Its procedure can describe how SHAR transforms validated user-owned inputs into
-SHAR-owned outputs; it cannot carry the missing original content itself.
+The maintainer-only `in/`, `master/`, and shared `out/` workspace trees never
+ship as reconstruction plans. A published plan remains unusable without the
+local source evidence admitted by its source-bound replay contract.
 
 ## Current status
 
