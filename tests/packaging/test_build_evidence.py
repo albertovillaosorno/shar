@@ -268,6 +268,84 @@ class SourceSelectionTests(unittest.TestCase):
             self.assertNotIn(str(missing), message)
             self.assertIn("selected source path does not exist", message)
 
+    def test_redaction_covers_escaped_windows_source_path(self) -> None:
+        source = Path(r"C:\private\user\installed-game")
+        diagnostic = (
+            r"scan C:\private\user\installed-game: access denied"
+        )
+        escaped = diagnostic.replace("\\", "\\\\")
+
+        redacted = _CHECK._redact_selected_source(escaped, source)
+
+        self.assertNotIn("private", redacted)
+        self.assertIn("<selected-source>", redacted)
+
+    def test_manifest_failure_redacts_selected_source_path(self) -> None:
+        source = Path("/private/user/installed-game")
+        validator = Path("validate-game")
+        manifest = Path("repository/game/manifest/game.jsonl")
+        result = _CHECK.subprocess.CompletedProcess(
+            args=[],
+            returncode=1,
+            stdout="",
+            stderr=(
+                "game manifest FAILED: 1 of 2 records below minimum in "
+                f"{source}\n  <root> .rcf: have 0, need at least 9\n"
+            ),
+        )
+
+        with (
+            mock.patch.object(_CHECK.subprocess, "run", return_value=result),
+            self.assertRaises(_CHECK.CheckFailure) as raised,
+        ):
+            _CHECK._check_manifest(validator, source, manifest)
+
+        message = str(raised.exception)
+        self.assertNotIn(str(source), message)
+        self.assertIn("<selected-source>", message)
+        self.assertIn("have 0, need at least 9", message)
+
+    def test_manifest_success_redacts_selected_source_path(self) -> None:
+        source = Path("/private/user/installed-game")
+        result = _CHECK.subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=f"game manifest ok: all 2 minimums met in {source}\n",
+            stderr="",
+        )
+        with mock.patch.object(
+            _CHECK.subprocess,
+            "run",
+            return_value=result,
+        ):
+            message = _CHECK._check_manifest(
+                Path("validate-game"),
+                source,
+                Path("game.jsonl"),
+            )
+
+        self.assertNotIn(str(source), message)
+        self.assertIn("<selected-source>", message)
+
+    def test_deep_failure_redacts_selected_source_path(self) -> None:
+        source = Path("/private/user/installed-game")
+        result = _CHECK.subprocess.CompletedProcess(
+            args=[],
+            returncode=1,
+            stdout="",
+            stderr=f"deep audit failed while reading {source}\n",
+        )
+
+        with (
+            mock.patch.object(_CHECK.subprocess, "run", return_value=result),
+            self.assertRaises(_CHECK.CheckFailure) as raised,
+        ):
+            _CHECK._check_deep_source(Path("validate-source-deep"), source)
+
+        message = str(raised.exception)
+        self.assertNotIn(str(source), message)
+        self.assertIn("<selected-source>", message)
+
     def test_validator_command_keeps_manifest_separate_from_source(
         self,
     ) -> None:

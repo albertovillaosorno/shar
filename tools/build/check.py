@@ -344,6 +344,22 @@ def _validator_command(
     return [str(validator), str(game), str(manifest)]
 
 
+def _redact_selected_source(value: str, game: Path) -> str:
+    """Redact common native renderings of the selected private source root."""
+    raw = str(game)
+    spellings = {raw, game.as_posix()}
+    spellings.update(
+        spelling.replace("\\", "\\\\")
+        for spelling in tuple(spellings)
+        if "\\" in spelling
+    )
+    redacted = value
+    for spelling in sorted(spellings, key=len, reverse=True):
+        if spelling:
+            redacted = redacted.replace(spelling, "<selected-source>")
+    return redacted
+
+
 def _check_manifest(validator: Path, game: Path, manifest: Path) -> str:
     """Run the canonical manifest validator without compiling or mutating."""
     try:
@@ -355,12 +371,14 @@ def _check_manifest(validator: Path, game: Path, manifest: Path) -> str:
             timeout=180,
         )
     except (OSError, subprocess.TimeoutExpired) as error:
-        message = f"manifest validation could not run: {error}"
+        detail = _redact_selected_source(str(error), game)
+        message = f"manifest validation could not run: {detail}"
         raise CheckFailure(message) from error
     if result.returncode:
         detail = result.stderr.strip() or result.stdout.strip()
+        detail = _redact_selected_source(detail, game)
         raise CheckFailure(f"game manifest validation failed: {detail}")
-    return result.stdout.strip()
+    return _redact_selected_source(result.stdout.strip(), game)
 
 
 def _deep_validator_command(validator: Path, game: Path) -> list[str]:
@@ -387,12 +405,14 @@ def _check_deep_source(validator: Path, game: Path) -> str:
             timeout=300,
         )
     except (OSError, subprocess.TimeoutExpired) as error:
-        message = f"deep source validation could not run: {error}"
+        detail = _redact_selected_source(str(error), game)
+        message = f"deep source validation could not run: {detail}"
         raise CheckFailure(message) from error
     if result.returncode:
         detail = result.stderr.strip() or result.stdout.strip()
+        detail = _redact_selected_source(detail, game)
         raise CheckFailure(f"deep source validation failed: {detail}")
-    return result.stdout.strip()
+    return _redact_selected_source(result.stdout.strip(), game)
 
 
 def _unique_json_object(

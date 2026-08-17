@@ -42,7 +42,7 @@ anything inside the original installation directory.
   window has been empirically calibrated; similarity never substitutes for
   exact mandatory files or required source bytes.
 - [x] Keep every validator operation read-only against the original game path.
-- [ ] Report why validation failed without exposing private absolute paths in
+- [x] Report why validation failed without exposing private absolute paths in
   tracked evidence, release artifacts, or telemetry.
 - [ ] Update README whenever the user-visible source requirements change.
 
@@ -86,6 +86,13 @@ tests prove the ordered fast-then-deep call sequence. The deep validator's Rust
 contract tests prove malformed source failures do not modify source payloads and
 do not disclose the selected private path.
 
+Build preflight also redacts the selected source root from manifest and deep
+validator stdout, stderr, and execution errors before those messages are
+reported or stored as validation summaries. Regression tests preserve useful
+shortfall details while requiring the private root to become
+`<selected-source>`, and a real `validate-game` failure fixture confirms the
+wrapper does not echo its absolute source path.
+
 The remaining unchecked criteria are intentionally open: the final `src/user/`
-GUI/drop surface, calibrated similarity admission, and broader user-facing
-diagnostic review.
+GUI/drop surface, calibrated similarity admission, and README synchronization
+when user-visible source requirements change.
