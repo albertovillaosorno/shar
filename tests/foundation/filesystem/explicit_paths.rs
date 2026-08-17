@@ -35,7 +35,10 @@
 pub mod support;
 
 use std::path::Path;
-use std::{fs, io};
+use std::io;
+
+#[cfg(windows)]
+use std::fs;
 
 use schoenwald_filesystem::adapters::driving::local;
 
