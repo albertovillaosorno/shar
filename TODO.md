@@ -47,13 +47,6 @@ Preserve original asset identities, package relationships, and ordering.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/preserve-original-asset-identities-package-relationships-and-ordering.mdc](docs/todo/open/conversion/preserve-original-asset-identities-package-relationships-and-ordering.mdc)
 
-### TODO - Complete deterministic conversion of original models to binary FBX 7.7
-
-Complete deterministic conversion of original models to binary FBX 7.7.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/conversion/complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7.mdc](docs/todo/open/conversion/complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7.mdc)
-
 ### TODO - Preserve source topology, UVs, materials, textures, pivots, rigs, animations,…
 
 Preserve source topology, UVs, materials, textures, pivots, rigs, animations,
