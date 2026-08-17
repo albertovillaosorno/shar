@@ -14,15 +14,24 @@
 #   - Install global packages, alter the Jig checkout, or write outside SHAR's
 #     .dependencies/.cache roots.
 # - Allows:
-#   - Inputs: exact host Git/Node/npm and repo-local Python/Rust bootstrap state.
+#   - Inputs: exact host Git/Node/npm plus repo-local Python/Rust
+#     bootstrap state.
 #   - Outputs: .dependencies/validation tools and exact version evidence.
 #   - Side effects: pinned npm packages and Rust nightly below repository roots.
 # - Split-When:
 #   - Split when one native validation runtime gains an independent lifecycle.
 # - Merge-When:
-#   - Merge when the public dependency bootstrap owns identical validation state.
+#   - Merge when the public dependency bootstrap owns identical
+#     validation state.
 # - Summary:
 #   - Materializes portable Jig validation dependencies without global mutation.
+# - Description:
+#   - Owns host launchers plus Jig's isolated native Cargo runtime root.
+# - Usage:
+#   - Run before invoking Jig validation on a supported host.
+# - Defaults:
+#   - Uses pinned tool versions and repository-owned runtime directories.
+#
 
 """Prepare host-portable repository-local tools required by Jig."""
 
@@ -109,9 +118,11 @@ def _require_git(executable: Path) -> None:
     output = _run([str(executable), "--version"]).stdout.strip()
     match = re.fullmatch(r"git version (\S+)", output)
     actual = match.group(1) if match is not None else ""
-    if actual != _GIT_VERSION and not actual.startswith(f"{_GIT_VERSION}.windows."):
+    windows_version = actual.startswith(f"{_GIT_VERSION}.windows.")
+    if actual != _GIT_VERSION and not windows_version:
         raise BootstrapError(
-            f"Git {_GIT_VERSION} is required; host reports {actual or 'unknown'}"
+            f"Git {_GIT_VERSION} is required; "
+            f"host reports {actual or 'unknown'}"
         )
 
 
@@ -126,7 +137,8 @@ def _require_simple_version(
     actual = output.removeprefix(prefix)
     if actual != expected:
         raise BootstrapError(
-            f"{label} {expected} is required; host reports {actual or 'unknown'}"
+            f"{label} {expected} is required; "
+            f"host reports {actual or 'unknown'}"
         )
 
 
@@ -156,11 +168,13 @@ def _python_tools(root: Path) -> tuple[Path, Path]:
 def _rust_tools(root: Path) -> tuple[Path, dict[str, str]]:
     cargo_home = root / ".dependencies/build/rustup-cargo"
     rustup_home = root / ".dependencies/build/rustup"
-    rustup = cargo_home / "bin" / ("rustup.exe" if os.name == "nt" else "rustup")
+    rustup_name = "rustup.exe" if os.name == "nt" else "rustup"
+    rustup = cargo_home / "bin" / rustup_name
     cargo = cargo_home / "bin" / ("cargo.exe" if os.name == "nt" else "cargo")
     if not rustup.is_file() or not cargo.is_file():
         raise BootstrapError(
-            "repo-local Rust bootstrap is missing; run tools/build/dependencies.py"
+            "repo-local Rust bootstrap is missing; "
+            "run tools/build/dependencies.py"
         )
     environment = os.environ.copy()
     environment["RUSTUP_HOME"] = str(rustup_home)
@@ -212,7 +226,9 @@ def _install_javascript(root: Path, tools: HostTools) -> tuple[Path, Path]:
         timeout=1200,
     )
     cspell = install / "node_modules/cspell/bin.mjs"
-    markdownlint = install / "node_modules/markdownlint-cli2/markdownlint-cli2-bin.mjs"
+    markdownlint = (
+        install / "node_modules/markdownlint-cli2/markdownlint-cli2-bin.mjs"
+    )
     if not cspell.is_file() or not markdownlint.is_file():
         raise BootstrapError("npm validation packages are incomplete")
     return cspell, markdownlint
@@ -273,7 +289,24 @@ def _windows_launcher(launcher: Launcher) -> str:
     return "\r\n".join(lines) + "\r\n"
 
 
-def _write_launchers(root: Path, launchers: dict[str, Launcher]) -> dict[str, Path]:
+def _prepare_jig_cargo_home(root: Path) -> Path:
+    """Create Jig's real native Cargo runtime root without duplicating tools."""
+    cargo_home = root / ".dependencies/cargo-home"
+    is_junction = getattr(os.path, "isjunction", lambda _path: False)
+    if cargo_home.is_symlink() or is_junction(cargo_home):
+        raise BootstrapError(
+            f"Jig Cargo home may not be a redirect: {cargo_home}"
+        )
+    cargo_home.mkdir(parents=True, exist_ok=True)
+    if not cargo_home.is_dir():
+        raise BootstrapError(f"Jig Cargo home is not a directory: {cargo_home}")
+    return cargo_home
+
+
+def _write_launchers(
+    root: Path,
+    launchers: dict[str, Launcher],
+) -> dict[str, Path]:
     directory = root / ".dependencies/validation/bin"
     directory.mkdir(parents=True, exist_ok=True)
     paths: dict[str, Path] = {}
@@ -286,7 +319,8 @@ def _write_launchers(root: Path, launchers: dict[str, Launcher]) -> dict[str, Pa
         )
         path.write_text(contents, encoding="utf-8", newline="")
         if os.name != "nt":
-            path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            executable = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+            path.chmod(path.stat().st_mode | executable)
         paths[name] = path
     return paths
 
@@ -308,6 +342,7 @@ def _require_launcher_version(path: Path, expected: str, label: str) -> str:
 def prepare(root: Path) -> dict[str, object]:
     """Materialize and verify the complete host-portable Jig tool surface."""
     root = root.resolve(strict=True)
+    _prepare_jig_cargo_home(root)
     host = _host_tools()
     cargo, rust_environment = _rust_tools(root)
     cspell, markdownlint = _install_javascript(root, host)

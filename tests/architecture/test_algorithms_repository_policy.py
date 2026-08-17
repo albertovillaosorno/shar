@@ -2,67 +2,62 @@
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
+# Confidential:
+#   - false
+# License-File:
+#   - LICENSE-MIT
+#
+# Boundary-Contract:
+# - Owns:
+#   - Repository validation regression tests.
+# - Must-Not:
+#   - Publish private game inputs or mutate external repositories.
+# - Allows:
+#   - Repository-local policy and bootstrap inspection.
+# - Split-When:
+#   - One validation policy gains an independent lifecycle.
+# - Merge-When:
+#   - The guarded policies become one inseparable repository contract.
+# - Summary:
+#   - Guards repository validation policy.
+# - Description:
+#   - Exercises tracked configuration and repository-local validation behavior.
+# - Usage:
+#   - Run through the canonical Jig pytest gate or repository-local pytest.
+# - Defaults:
+#   - Reads the current repository and writes only test-managed temporary state.
+#
 
 """Repository guards for the local algorithm workspace publication boundary."""
 
 from __future__ import annotations
 
 from pathlib import Path
-import subprocess
+import tomllib
 
 _ROOT = Path(__file__).resolve().parents[2]
 
 
-def _is_ignored(relative_path: str) -> bool:
-    """Ask Git whether one repository-relative path is ignored."""
-    result = subprocess.run(
-        ["git", "check-ignore", "--quiet", "--no-index", "--", relative_path],
-        cwd=_ROOT,
-        check=False,
-    )
-    assert result.returncode in (0, 1), (
-        f"git check-ignore failed for {relative_path!r}: {result.returncode}"
-    )
-    return result.returncode == 0
+def _algorithm_ignore_rules() -> tuple[str, ...]:
+    """Return authored algorithm-workspace ignore rules in source order."""
+    lines = (_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    prefixes = ("/algorithms", "!/algorithms")
+    return tuple(line for line in lines if line.startswith(prefixes))
 
 
-def test_algorithm_workspace_blocks_private_and_generated_payloads() -> None:
-    """Keep lawful local evidence and generated outputs outside publication."""
-    private_paths = (
-        "algorithms/game/in/example.exe",
-        "algorithms/game/in/example.rcf",
-        "algorithms/game/master/content/example.bin",
-        "algorithms/lang/french/in/dialogf.rcf",
-        "algorithms/lang/french/master/content/example.bin",
-        "algorithms/muckluck/in/example.lmlm",
-        "algorithms/muckluck/master/content/example.bin",
-        "algorithms/out/The Simpsons Hit & Run/example.bin",
-        "algorithms/out/mods/example/mod.json",
+def test_algorithm_workspace_is_default_deny_with_public_exceptions() -> None:
+    """Keep payloads private while admitting public metadata and plans."""
+    assert _algorithm_ignore_rules() == (
+        "/algorithms/**",
+        "!/algorithms/**/",
+        "!/algorithms/**/README.md",
+        "!/algorithms/**/algorithm/*.txt",
     )
 
-    assert all(_is_ignored(path) for path in private_paths)
-
-
-def test_algorithm_workspace_admits_only_public_contract_files() -> None:
-    """Allow public README metadata and serialized algorithm plans."""
-    public_paths = (
-        "algorithms/README.md",
-        "algorithms/game/in/README.md",
-        "algorithms/game/master/README.md",
-        "algorithms/game/algorithm/windows-x64.txt",
-        "algorithms/lang/french/README.md",
-        "algorithms/lang/french/algorithm/windows-x64.txt",
-        "algorithms/muckluck/README.md",
-        "algorithms/muckluck/algorithm/windows-x64.txt",
-        "algorithms/out/README.md",
-        "algorithms/out/mods/README.md",
-    )
-
-    assert not any(_is_ignored(path) for path in public_paths)
 
 
 def test_algorithm_workspace_tracks_semantic_directory_anchors() -> None:
-    """Require README anchors for semantic directories that may be locally empty."""
+    """Require README anchors for semantic directories that may be empty."""
     required = {
         "algorithms/game/README.md",
         "algorithms/game/in/README.md",
@@ -85,4 +80,18 @@ def test_algorithm_workspace_tracks_semantic_directory_anchors() -> None:
         )
 
     missing = sorted(path for path in required if not (_ROOT / path).is_file())
-    assert not missing, f"algorithm workspace is missing README anchors: {missing}"
+    assert not missing, (
+        f"algorithm workspace is missing README anchors: {missing}"
+    )
+
+
+def test_algorithm_workspace_has_one_taxonomy_role() -> None:
+    """Keep the public workspace inside Jig's closed path taxonomy."""
+    with (_ROOT / ".jig" / "jig.toml").open("rb") as stream:
+        config = tomllib.load(stream)
+    taxonomy = config.get("taxonomy")
+    assert isinstance(taxonomy, dict)
+    roles = taxonomy.get("role")
+    assert isinstance(roles, dict)
+    algorithms = roles.get("algorithms")
+    assert algorithms == {"paths": ["algorithms/"]}
