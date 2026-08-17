@@ -62,6 +62,19 @@ _VALIDATOR_SOURCE_INPUTS = (
     Path("src/foundation/command-line"),
     Path("src/foundation/filesystem"),
 )
+_DEEP_VALIDATOR_SOURCE_INPUTS = (
+    Path("Cargo.toml"),
+    Path("Cargo.lock"),
+    Path("src/migration/source-audit"),
+    Path("src/formats/p3d"),
+    Path("src/formats/rcf"),
+    Path("src/formats/rmv"),
+    Path("src/formats/rsd"),
+    Path("src/foundation/command-line"),
+    Path("src/foundation/filesystem"),
+    Path("src/foundation/json-text"),
+    Path("src/foundation/sha256"),
+)
 _RUSTUP_VERSION = "1.29.0"
 _RUSTUP_HOME = Path(".dependencies/build/rustup")
 _RUSTUP_CARGO_HOME = Path(".dependencies/build/rustup-cargo")
@@ -106,11 +119,11 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _validator_source_sha256(root: Path) -> str:
-    """Hash every local source input that can change validate-game."""
+def _source_inputs_sha256(root: Path, inputs: tuple[Path, ...]) -> str:
+    """Hash one deterministic repository source closure."""
     digest = hashlib.sha256()
     files: list[Path] = []
-    for relative in _VALIDATOR_SOURCE_INPUTS:
+    for relative in inputs:
         source = root / relative
         if source.is_file():
             files.append(source)
@@ -134,6 +147,16 @@ def _validator_source_sha256(root: Path) -> str:
         digest.update(len(payload).to_bytes(8, "big"))
         digest.update(payload)
     return digest.hexdigest()
+
+
+def _validator_source_sha256(root: Path) -> str:
+    """Hash source inputs that can change validate-game."""
+    return _source_inputs_sha256(root, _VALIDATOR_SOURCE_INPUTS)
+
+
+def _deep_validator_source_sha256(root: Path) -> str:
+    """Hash source inputs that can change validate-source-deep."""
+    return _source_inputs_sha256(root, _DEEP_VALIDATOR_SOURCE_INPUTS)
 
 
 def _require_python() -> dict[str, str]:
@@ -529,14 +552,17 @@ def _visual_studio_environment(  # noqa: PLR0912, PLR0914
     return configured, evidence
 
 
-def _build_validator(
+def _build_cargo_binary(
     root: Path,
     cargo: Path,
     rustc: Path,
     binutils: Path | None,
     environment: dict[str, str],
+    *,
+    package: str,
+    binary: str,
 ) -> Path:
-    """Build the canonical manifest validator using locked Cargo inputs."""
+    """Build one canonical validator using locked Cargo inputs."""
     cargo_home = root / _CARGO_HOME
     target = root / _CARGO_TARGET
     cargo_home.mkdir(parents=True, exist_ok=True)
@@ -558,9 +584,9 @@ def _build_validator(
         "--locked",
         "--release",
         "-p",
-        "game_manifest",
+        package,
         "--bin",
-        "validate-game",
+        binary,
     ]
     try:
         subprocess.run(
@@ -571,10 +597,10 @@ def _build_validator(
         )
     except (OSError, subprocess.CalledProcessError) as error:
         raise BootstrapFailure(
-            "Cargo could not build validate-game; verify the exact Rust "
+            f"Cargo could not build {binary}; verify the exact Rust "
             "toolchain and host linker prerequisites"
         ) from error
-    name = "validate-game.exe" if os.name == "nt" else "validate-game"
+    name = f"{binary}.exe" if os.name == "nt" else binary
     built = target / "release" / name
     if not built.is_file():
         raise BootstrapFailure(f"Cargo did not produce {built}")
@@ -582,7 +608,7 @@ def _build_validator(
 
 
 def _publish_validator(root: Path, built: Path) -> Path:
-    """Atomically publish the validator only when its content changed."""
+    """Atomically publish one validator when its content changed."""
     destination = root / _BIN_ROOT / built.name
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.is_file() and _sha256(destination) == _sha256(built):
@@ -632,17 +658,33 @@ def _run(
     rust_host = _rust_host(rustc)
     binutils = _resolve_binutils(root, args.binutils, rust_host)
     environment, msvc = _visual_studio_environment(root, rust_host)
-    built = _build_validator(
+    built = _build_cargo_binary(
         root,
         cargo,
         rustc,
         binutils,
         environment,
+        package="game_manifest",
+        binary="validate-game",
+    )
+    deep_built = _build_cargo_binary(
+        root,
+        cargo,
+        rustc,
+        binutils,
+        environment,
+        package="shar_source_audit",
+        binary="validate-source-deep",
     )
     validator = (
         _publish_validator(root, built)
         if publish_validator
         else built.resolve()
+    )
+    deep_validator = (
+        _publish_validator(root, deep_built)
+        if publish_validator
+        else deep_built.resolve()
     )
     return {
         "cargo": {
@@ -671,6 +713,11 @@ def _run(
             "path": str(validator),
             "sha256": _sha256(validator),
             "source_sha256": _validator_source_sha256(root),
+        },
+        "deep_source_validator": {
+            "path": str(deep_validator),
+            "sha256": _sha256(deep_validator),
+            "source_sha256": _deep_validator_source_sha256(root),
         },
     }
 

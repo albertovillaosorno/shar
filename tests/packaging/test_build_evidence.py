@@ -38,6 +38,7 @@ from pathlib import Path
 import tempfile
 from types import ModuleType
 import unittest
+from unittest import mock
 
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -82,6 +83,71 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
                     encoding="utf-8",
                 )
         return temporary, root
+
+    def _deep_fixture(self) -> tuple[tempfile.TemporaryDirectory[str], Path]:
+        temporary = tempfile.TemporaryDirectory(
+            prefix="shar-deep-validator-evidence-"
+        )
+        root = Path(temporary.name)
+        for relative in _DEPENDENCIES._DEEP_VALIDATOR_SOURCE_INPUTS:
+            path = root / relative
+            if path.suffix:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(
+                    f"fixture:{relative.as_posix()}\n",
+                    encoding="utf-8",
+                )
+            else:
+                path.mkdir(parents=True, exist_ok=True)
+                (path / "fixture.rs").write_text(
+                    f"// {relative.as_posix()}\n",
+                    encoding="utf-8",
+                )
+        return temporary, root
+
+    def test_deep_bootstrap_and_preflight_compute_identical_source_digest(
+        self,
+    ) -> None:
+        temporary, root = self._deep_fixture()
+        try:
+            self.assertEqual(
+                _DEPENDENCIES._deep_validator_source_sha256(root),
+                _CHECK._deep_validator_source_sha256(root),
+            )
+        finally:
+            temporary.cleanup()
+
+    def test_deep_source_drift_rejects_byte_intact_validator(self) -> None:
+        temporary, root = self._deep_fixture()
+        try:
+            validator = (
+                root / ".dependencies/build/bin/validate-source-deep"
+            )
+            validator.parent.mkdir(parents=True)
+            validator.write_bytes(b"deep-validator")
+            evidence = {
+                "deep_source_validator": {
+                    "path": str(validator),
+                    "sha256": hashlib.sha256(b"deep-validator").hexdigest(),
+                    "source_sha256": (
+                        _CHECK._deep_validator_source_sha256(root)
+                    ),
+                }
+            }
+            self.assertEqual(
+                _CHECK._dependency_deep_source_validator(root, evidence),
+                validator.resolve(),
+            )
+            source = root / "src/migration/source-audit/fixture.rs"
+            source.write_text("// changed\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "deep source validator source inputs no longer match",
+            ):
+                _CHECK._dependency_deep_source_validator(root, evidence)
+        finally:
+            temporary.cleanup()
 
     def test_bootstrap_and_preflight_compute_identical_source_digest(
         self,
@@ -215,6 +281,100 @@ class SourceSelectionTests(unittest.TestCase):
             command,
             [str(validator), str(source), str(manifest)],
         )
+
+    def test_deep_validator_command_uses_only_source_root(self) -> None:
+        validator = Path("validate-source-deep")
+        source = Path("external-source")
+
+        command = _CHECK._deep_validator_command(validator, source)
+
+        self.assertEqual(command, [str(validator), str(source)])
+
+    def test_preflight_records_manifest_then_deep_validation(self) -> None:
+        root = Path("/synthetic/repository")
+        game = Path("/synthetic/game")
+        project = root / "src/unreal/project/shar.uproject"
+        dependency_path = root / ".cache/build/data/dependencies.json"
+        manifest_validator = root / ".dependencies/build/bin/validate-game"
+        deep_validator = (
+            root / ".dependencies/build/bin/validate-source-deep"
+        )
+        engine = _CHECK.EngineEvidence(Path("/synthetic/engine"), "5.8.1")
+        args = _CHECK.argparse.Namespace(
+            engine_root=None,
+            game=game,
+            manifest_validator=None,
+            deep_source_validator=None,
+        )
+        calls: list[str] = []
+
+        def manifest_gate(*_args: object) -> str:
+            calls.append("manifest")
+            return "manifest-ok"
+
+        def deep_gate(*_args: object) -> str:
+            calls.append("deep")
+            return "deep-source\tfiles=0\tp3d=0\trcf=0\trsd=0\trmv=0"
+
+        with (
+            mock.patch.object(_CHECK, "_root", return_value=root),
+            mock.patch.object(_CHECK, "_check_python", return_value={}),
+            mock.patch.object(_CHECK, "_check_game", return_value=game),
+            mock.patch.object(Path, "is_file", return_value=True),
+            mock.patch.object(_CHECK, "_check_project", return_value=project),
+            mock.patch.object(
+                _CHECK,
+                "_dependency_evidence",
+                return_value=(dependency_path, {}),
+            ),
+            mock.patch.object(
+                _CHECK,
+                "_resolve_validator",
+                return_value=manifest_validator,
+            ),
+            mock.patch.object(
+                _CHECK,
+                "_resolve_deep_source_validator",
+                return_value=deep_validator,
+            ),
+            mock.patch.object(
+                _CHECK, "_check_manifest", side_effect=manifest_gate
+            ),
+            mock.patch.object(
+                _CHECK,
+                "_check_deep_source",
+                side_effect=deep_gate,
+            ),
+            mock.patch.object(_CHECK, "_check_engine", return_value=engine),
+            mock.patch.object(_CHECK, "_host_evidence", return_value={}),
+            mock.patch.object(_CHECK, "_sha256", return_value="a" * 64),
+        ):
+            evidence = _CHECK._run(args)
+
+        self.assertEqual(calls, ["manifest", "deep"])
+        self.assertEqual(evidence["game"]["validation"], "manifest-ok")
+        self.assertEqual(
+            evidence["game"]["deep_validation"],
+            "deep-source\tfiles=0\tp3d=0\trcf=0\trsd=0\trmv=0",
+        )
+        self.assertEqual(
+            evidence["deep_source_validator"],
+            str(deep_validator.resolve()),
+        )
+
+    def test_revalidation_rejects_deep_validator_override(self) -> None:
+        args = _CHECK.argparse.Namespace(
+            engine_root=None,
+            game=None,
+            manifest_validator=None,
+            deep_source_validator=Path("validate-source-deep"),
+        )
+
+        with self.assertRaisesRegex(
+            _CHECK.CheckFailure,
+            "cannot be combined with preflight overrides",
+        ):
+            _CHECK._reject_revalidate_overrides(args)
 
     def test_saved_source_root_is_required_for_revalidation(self) -> None:
         expected = Path("C:/lawful/source")
