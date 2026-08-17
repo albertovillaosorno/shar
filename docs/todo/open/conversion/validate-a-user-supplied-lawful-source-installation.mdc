@@ -44,7 +44,7 @@ anything inside the original installation directory.
 - [x] Keep every validator operation read-only against the original game path.
 - [x] Report why validation failed without exposing private absolute paths in
   tracked evidence, release artifacts, or telemetry.
-- [ ] Update README whenever the user-visible source requirements change.
+- [x] Update README whenever the user-visible source requirements change.
 
 ## Dependencies
 
@@ -93,6 +93,10 @@ shortfall details while requiring the private root to become
 `<selected-source>`, and a real `validate-game` failure fixture confirms the
 wrapper does not echo its absolute source path.
 
+The root README is synchronized with the current exact minimum-source authority:
+it names the six mandatory base files, keeps `uninst.ico` optional, and explains
+that other official-language evidence is exported as language mods instead of
+becoming mandatory base input.
+
 The remaining unchecked criteria are intentionally open: the final `src/user/`
-GUI/drop surface, calibrated similarity admission, and README synchronization
-when user-visible source requirements change.
+GUI/drop surface and empirically calibrated similarity admission.
