@@ -12,12 +12,20 @@ audio indexes 1/2/3 for French/German/Spanish; faithful movie extraction maps
 those streams to `audio_track_02.wav`, `_03.wav`, and `_04.wav` because English
 stream 0 becomes `_01.wav`.
 
-Italian remains represented because the TextBible declares it, but the current
-lawful source contains only `???` Italian text and no `dialogi.rcf`. Generation
-therefore fails closed instead of inventing an Italian localization.
+Italian remains represented because the TextBible declares it, but the verified
+development source contains only `???` Italian text and no `dialogi.rcf`.
+Generation therefore fails closed instead of inventing an Italian localization.
 
 `export_language` receives the lawful game root plus the already-normalized
 movie package root, writes atomically outside both inputs, preserves exact source
 bytes with SHA-256 evidence, emits UTF-8 `text.jsonl`, and copies the selected
-movie WAV tracks into the language bundle. Final package adaptation remains open
-until the shared SHAR mod-package contract is authoritative.
+movie WAV tracks into the language bundle. It then emits `mod.json` through the
+shared `shar.mod-package.v1` contract with a storage-independent
+`shar.localization.<language>` identity, deterministic content revision,
+content-only trust boundary, exact member hashes, provenance, and explicit
+conflicts with the other official language overlays.
+
+If required translated text, dialogue, UI, or mapped cinematic audio is absent,
+package generation fails before publication and the staging directory is cleaned.
+That failure is source evidence, not permission to synthesize or substitute
+missing localization.
