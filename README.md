@@ -82,8 +82,9 @@ is never reconstruction input and it does not itself prove software is safe.
    dist.json
    user.json                  # created/updated locally
    algorithms/
-     <arch>/<os>/build.txt
-     <arch>/<os>/hash.txt
+     game/algorithm/<target>.txt
+     lang/<locale>/algorithm/<target>.txt
+     muckluck/algorithm/<target>.txt
    code/
      *.py
    mods/
@@ -216,19 +217,25 @@ submission. Installing an unsigned or locally signed IPA depends on Apple's
 current signing/device requirements; SHAR will document its package output, not
 pretend those external requirements do not exist.
 
-## Reconstruction algorithms and integrity files
+## Source-bound reconstruction plans
 
-Each target release uses separate files instead of one huge algorithm document:
+Public reconstruction plans are grouped by what they build, then by target:
 
 ```text
-algorithms/<arch>/<os>/build.txt
-algorithms/<arch>/<os>/hash.txt
+algorithms/game/algorithm/<target>.txt
+algorithms/lang/<locale>/algorithm/<target>.txt
+algorithms/muckluck/algorithm/<target>.txt
 ```
 
-`build.txt` describes the public-safe reconstruction/build procedure.
-`hash.txt` is only for exact integrity/modification comparison of expected
-distributable artifacts and can be combined with separate security checks.
-**The hash is never used to create game files.**
+A populated plan uses the implemented `shar.algorithm.v1` schema. The generic
+algorithm engine binds replay to caller-supplied local source evidence, validates
+its embedded source and target descriptors, and refuses wrong or tampered
+evidence before writing replay output. There is no parallel integrity file; the
+plan owns the hashes required by its own source-bound replay contract.
+
+The maintainer-only `in/`, `master/`, and shared `out/` directories described in
+`algorithms/README.md` are authoring workspace state, not public release payload.
+Only reviewed `algorithm/*.txt` plans and public metadata can cross that boundary.
 
 For coverage analysis, the maintainer's complete lawful installation is treated
 as the private internal **100% reference**. The current planning estimate treats
@@ -287,7 +294,7 @@ shape; it does **not** force GPL or any other specific license on a mod author.
 ## How to make mods — coding or no coding, it does not matter
 
 > This authoring workflow is still WIP.
-
+>
 > Made mods with LMLM and want to migrate them? See
 > [`tools/lmlm/`](tools/lmlm/README.md). I only built that starter converter for
 > the Jebano and Muckluck packages I needed; fork or extend it if you need more.
@@ -365,7 +372,6 @@ reconstruction and export are owned by `src/migration/icon/`: its local
 `assets/` and generated `out/` trees stay ignored, while the durable
 `icon_algorithm.txt` plan is replayed through the generic Rust algorithm
 foundation. `uninst.ico` is never icon-reconstruction input.
-
 
 ## Release and changelog policy
 

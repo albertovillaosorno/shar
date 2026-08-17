@@ -25,8 +25,9 @@ empirically before code uses them.
 - [x] Specify what “100% installation”, “minimum installation”, and “similarity”
   mean in measurable, content-safe terms before choosing a production metric;
   treat the current ~60% minimum-installation estimate as planning only.
-- [ ] Do not generate `build.txt` by serializing, full-tree diffing, or otherwise
-  turning the complete 100% reference installation into direct recipe material.
+- [ ] Do not author a distributable `algorithm/*.txt` plan by serializing,
+  full-tree diffing, or otherwise turning the complete 100% reference
+  installation into direct recipe material.
 - [ ] Keep the original user installation read-only throughout validation and
   reconstruction; algorithm execution writes only to SHAR-owned output/cache.
 - [ ] Evaluate the tentative 45–55% similarity window; do not hardcode it until
@@ -34,19 +35,20 @@ empirically before code uses them.
 - [ ] Ensure passing similarity can never replace required local source bytes,
   exact-file gates, hashes, structural validation, or cryptographic/provenance
   checks.
-- [ ] Ensure distributable `algorithms/<arch>/<os>/build.txt` contains procedure
-  and public-safe metadata only, not original-game payloads or a reversible
-  encoding of the maintainer's complete installation.
-- [ ] Keep `hash.txt` informational for exact integrity/modification comparison;
-  users may combine it with separate security checks, but it is not an antivirus
-  verdict and must never be consumed as reconstruction input.
+- [ ] Ensure distributable family plans under `algorithm/*.txt` use the
+  implemented `shar.algorithm.v1` source-bound contract and never become a
+  reversible encoding of the maintainer's private complete installation.
+- [ ] Keep plan-contained hashes limited to exact source binding and protected
+  target verification. They are not an antivirus verdict and must never replace
+  caller-supplied source bytes.
 - [ ] Document the finalized metric and limitations in README when implemented;
   do not describe the tentative percentage as a legal safe harbor.
 
 ## Dependencies
 
-Depends on representative source-installation evidence and final algorithm
-serialization design.
+Depends on representative source-installation evidence and final product
+admission integration. The generic `shar.algorithm.v1` serialization mechanism
+already exists and is not itself a similarity threshold.
 
 ## Evidence
 
@@ -60,8 +62,8 @@ not payload bytes, file names, or a reversible full-tree recipe.
 exact rational arithmetic. Four stdlib tests cover complete, missing, extra,
 and invalid vectors and prove the evidence object has no admission result. No
 45–55% threshold exists in that code. The technical contract also pins the
-read-only source boundary, `build.txt` publication restrictions, and the rule
-that similarity cannot substitute for any hard source gate.
+read-only source boundary, source-bound plan publication restrictions, and the
+rule that similarity cannot substitute for any hard source gate.
 
 The ~60% minimum-installation estimate and 45–55% similarity window remain
 design targets, not validated production evidence, legal conclusions, or safe
