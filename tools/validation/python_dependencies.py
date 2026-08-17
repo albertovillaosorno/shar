@@ -11,10 +11,10 @@
 # - Owns:
 #   - Repository-local Python environment used by Jig's pytest and Ruff gates.
 # - Must-Not:
-#   - Install global packages, mutate the source-linked Jig checkout, or use
-#     ambient Python package state as validation authority.
+#   - Install global packages or use ambient Python package state as validation
+#     authority.
 # - Allows:
-#   - Inputs: exact CPython 3.14.6 from the source-linked Jig dependency.
+#   - Inputs: one explicitly selected or currently-running exact CPython 3.14.6.
 #   - Outputs: .dependencies/python/3.14.6 and deterministic tool evidence.
 #   - Side effects: venv creation and pinned pip installs below .dependencies.
 # - Split-When:
@@ -59,14 +59,9 @@ def _root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _default_source_python(root: Path) -> Path:
-    if os.name == "nt":
-        return (
-            root
-            / ".dependencies/jig/source/.dependencies/python"
-            / f"{_PYTHON_VERSION}-windows-x86_64/python.exe"
-        )
-    raise BootstrapError("pass --python on non-Windows validation hosts")
+def _default_source_python(_root: Path) -> Path:
+    """Use the invoking interpreter; version validation remains fail-closed."""
+    return Path(sys.executable)
 
 
 def _venv_paths(root: Path) -> tuple[Path, Path, Path]:
