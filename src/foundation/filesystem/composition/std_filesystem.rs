@@ -52,7 +52,14 @@ fn reject_existing_link(path: &Path) -> io::Result<()> {
                 Ok(())
             }
         }
-        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
+        Err(error)
+            if matches!(
+                error.kind(),
+                io::ErrorKind::NotFound | io::ErrorKind::NotADirectory
+            ) =>
+        {
+            Ok(())
+        },
         Err(source) => Err(with_path("inspect path link metadata", path, source)),
     }
 }

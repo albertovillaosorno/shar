@@ -37,6 +37,7 @@ pub mod support;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{fs, io};
 
+#[cfg(windows)]
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
 

@@ -30,6 +30,8 @@
 
 //! Non unicode path test module.
 
+use schoenwald_filesystem as _;
+
 #[cfg(windows)]
 mod windows {
     use std::ffi::OsString;

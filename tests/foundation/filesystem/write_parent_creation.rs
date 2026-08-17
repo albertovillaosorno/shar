@@ -36,8 +36,11 @@ pub mod support;
 
 use std::cell::Cell;
 use std::path::Path;
-use std::{fs, io};
+use std::io;
 
+#[cfg(windows)]
+use std::fs;
+#[cfg(windows)]
 use schoenwald_filesystem::adapters::driving::local;
 use schoenwald_filesystem::application::WriteFile;
 use schoenwald_filesystem::ports::FileWriter;
