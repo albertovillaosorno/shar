@@ -408,3 +408,11 @@ src/migration/icon/out
 !/tools/lmlm/import/README.md
 /tools/lmlm/export/*
 !/tools/lmlm/export/README.md
+
+# ==============================================================================
+# Algorithms – local inputs/masters/outputs stay private; public metadata only
+# ==============================================================================
+/algorithms/**
+!/algorithms/**/
+!/algorithms/**/README.md
+!/algorithms/**/algorithm/*.txt
