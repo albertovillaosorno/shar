@@ -102,3 +102,5 @@ unreviewable
 unsolo
 unvalidated
 worldspace
+bootstrapper
+nonexpert
