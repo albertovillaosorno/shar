@@ -117,7 +117,7 @@ fn validates_metadata_schema_offsets_and_source_levels() -> Result<(), String> {
 }
 
 #[test]
-fn binding_accessors_preserve_exact_provenance() {
+fn binding_accessors_preserve_exact_provenance() -> Result<(), String> {
     let binding = MissionMusicStateBinding {
         source_path: "game/scripts/missions/level02/m2i.mfk.json".to_owned(),
         owner_stage_source_ordinal: 8,
@@ -136,7 +136,7 @@ fn binding_accessors_preserve_exact_provenance() {
         bindings: vec![binding],
     };
     let [binding] = report.bindings() else {
-        panic!("music binding count changed");
+        return Err("music binding count changed".to_owned());
     };
     assert_eq!(
         binding.source_path(),
@@ -152,4 +152,5 @@ fn binding_accessors_preserve_exact_provenance() {
     assert_eq!(binding.script_id(), "script-l2");
     assert_eq!(binding.script_path(), "extracted/music/l2_music.json");
     assert_eq!(binding.offsets(), (100, 109));
+    Ok(())
 }
