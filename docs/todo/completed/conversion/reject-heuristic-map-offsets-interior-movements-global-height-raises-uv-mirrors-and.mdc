@@ -37,8 +37,10 @@ Unreal while preserving authored UV coordinates. Exterior and interior meshes
 are copied into the structural guide with positions, normals, UVs, triangle
 order, materials, and textures unchanged. The guide manifest validator requires
 all spatial-correction flags to remain false and its Unreal import transform to
-stay at identity. Source-backed coordinate transplants require compatible
-topology and preserve the canonical material/UV presentation.
+stay at identity. Source-backed coordinate transplants now require exact owner
+and mesh identity plus compatible topology; owner-only and topology-only donor
+selection is rejected, and ambiguous exact donors fail closed. Canonical
+material/UV presentation remains unchanged by accepted coordinate evidence.
 
 Definition-only review meshes are the one intentional exception: they are moved
 into a deterministic gallery under `review/`, which is explicitly excluded from

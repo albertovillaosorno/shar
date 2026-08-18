@@ -148,7 +148,7 @@ impl PackageCoordinates {
     }
 }
 
-/// Match direct-world canonical meshes to coordinate-only reference meshes.
+/// Match direct-world canonical meshes to exact coordinate-reference identities.
 fn match_direct_reference_meshes(
     canonical_sources: &[LevelMeshSource],
     canonical_meshes: &[MeshAsset],
@@ -164,38 +164,12 @@ fn match_direct_reference_meshes(
         .zip(canonical_meshes)
         .filter(|(source, _mesh)| is_direct_world_mesh(source))
     {
-        let exact = reference_meshes
-            .iter()
-            .enumerate()
-            .find(|(index, (source, mesh))| {
-                !used.contains(index)
-                    && same_owner(canonical_source, source)
-                    && canonical_source.mesh_name == source.mesh_name
-                    && topology_matches(canonical_mesh, mesh)
-            })
-            .map(|(index, _)| index);
-        let selected = exact
-            .or_else(|| {
-                reference_meshes
-                    .iter()
-                    .enumerate()
-                    .find(|(index, (source, mesh))| {
-                        !used.contains(index)
-                            && same_owner(canonical_source, source)
-                            && topology_matches(canonical_mesh, mesh)
-                    })
-                    .map(|(index, _)| index)
-            })
-            .or_else(|| {
-                unique_topology_match(
-                    canonical_mesh,
-                    canonical_sources,
-                    canonical_meshes,
-                    &reference_meshes,
-                    &used,
-                )
-            });
-        let Some(index) = selected else {
+        let Some(index) = exact_reference_match(
+            canonical_source,
+            canonical_mesh,
+            &reference_meshes,
+            &used,
+        )? else {
             continue;
         };
         let _inserted = used.insert(index);
@@ -211,36 +185,30 @@ fn match_direct_reference_meshes(
     Ok(matched)
 }
 
-/// Select one topology-only reference only when both sides are unambiguous.
-fn unique_topology_match(
-    canonical: &MeshAsset,
-    canonical_sources: &[LevelMeshSource],
-    canonical_meshes: &[MeshAsset],
+/// Select one exact owner/name/topology reference and reject ambiguity.
+fn exact_reference_match(
+    canonical_source: &LevelMeshSource,
+    canonical_mesh: &MeshAsset,
     references: &[(LevelMeshSource, MeshAsset)],
     used: &BTreeSet<usize>,
-) -> Option<usize> {
-    let canonical_matches = canonical_sources
-        .iter()
-        .zip(canonical_meshes)
-        .filter(|(source, mesh)| {
-            is_direct_world_mesh(source) && topology_matches(canonical, mesh)
-        })
-        .count();
-    if canonical_matches != 1 {
-        return None;
-    }
+) -> Result<Option<usize>, PipelineError> {
     let matches = references
         .iter()
         .enumerate()
-        .filter(|(index, (_source, mesh))| {
-            !used.contains(index) && topology_matches(canonical, mesh)
+        .filter(|(index, (source, mesh))| {
+            !used.contains(index)
+                && same_owner(canonical_source, source)
+                && canonical_source.mesh_name == source.mesh_name
+                && topology_matches(canonical_mesh, mesh)
         })
         .map(|(index, _)| index)
         .collect::<Vec<_>>();
-    if matches.len() == 1 {
-        matches.first().copied()
-    } else {
-        None
+    match matches.as_slice() {
+        [] => Ok(None),
+        [index] => Ok(Some(*index)),
+        _ => Err(PipelineError::new(
+            "world coordinate reference identity is ambiguous",
+        )),
     }
 }
 
