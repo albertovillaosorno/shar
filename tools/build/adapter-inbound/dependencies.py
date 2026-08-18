@@ -672,16 +672,8 @@ def _validator_evidence(
     )
 
 
-def _validate_canonical_output_root(root: Path, output: Path) -> bool:
-    """Reject linked canonical ancestors and identify canonical output."""
-    canonical = root / _DATA_PATH
-    if output != canonical:
-        return False
-    roots = (
-        (root / ".cache", "repository cache root"),
-        (root / ".cache/build", "build cache root"),
-        (root / ".cache/build/data", "build data root"),
-    )
+def _require_real_storage_roots(roots: tuple[tuple[Path, str], ...]) -> None:
+    """Reject linked or malformed repository-owned storage roots."""
     for path, label in roots:
         if not os.path.lexists(path):
             continue
@@ -693,6 +685,33 @@ def _validate_canonical_output_root(root: Path, output: Path) -> bool:
         if is_real:
             continue
         raise BootstrapFailure(f"{label} must be a real directory: {path}")
+
+
+def _validate_dependency_storage_roots(root: Path) -> None:
+    """Keep bootstrap caches and installed build tools inside the repo."""
+    roots = (
+        (root / ".cache", "repository cache root"),
+        (root / ".cache/build", "build cache root"),
+        (root / _BOOTSTRAP_CACHE, "bootstrap cache root"),
+        (root / _CARGO_HOME, "Cargo cache root"),
+        (root / _CARGO_TARGET, "Cargo target root"),
+        (root / ".dependencies", "repository dependency root"),
+        (root / ".dependencies/build", "build dependency root"),
+        (root / _BIN_ROOT, "validator binary root"),
+        (root / _RUSTUP_HOME, "rustup home"),
+        (root / _RUSTUP_CARGO_HOME, "rustup Cargo home"),
+    )
+    _require_real_storage_roots(roots)
+
+
+def _validate_canonical_output_root(root: Path, output: Path) -> bool:
+    """Reject a linked canonical data root and identify canonical output."""
+    canonical = root / _DATA_PATH
+    if output != canonical:
+        return False
+    _require_real_storage_roots(
+        ((root / ".cache/build/data", "build data root"),)
+    )
     return True
 
 
@@ -806,6 +825,7 @@ def main() -> int:
         output = root / output
     output_safe_to_mutate = False
     try:
+        _validate_dependency_storage_roots(root)
         publish_validator = _validate_canonical_output_root(root, output)
         output_safe_to_mutate = True
         evidence = _run(
