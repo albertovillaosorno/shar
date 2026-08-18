@@ -66,7 +66,7 @@ pub(super) struct WorldPackageRecord {
     pub(super) map_group: Option<String>,
     /// Number of canonical source meshes considered.
     pub(super) source_meshes: usize,
-    /// Number of rejected degenerate render triangles.
+    /// Legacy render discard count; strict topology keeps this zero.
     pub(super) discarded_degenerate_triangles: usize,
     /// Number of authored mesh placements.
     pub(super) authored_placements: usize,
@@ -92,7 +92,7 @@ pub(super) struct WorldPackageRecord {
     pub(super) excluded_collision_meshes: usize,
     /// Number of excluded collision meshes with verified coordinates.
     pub(super) reference_excluded_collision_meshes: usize,
-    /// Number of rejected degenerate collision triangles.
+    /// Legacy collision discard count; strict topology keeps this zero.
     pub(super) discarded_collision_triangles: usize,
     /// Optional independently importable world-geometry artifact.
     pub(super) world_fbx: Option<WorldFbxRecord>,
@@ -234,7 +234,7 @@ pub(super) struct WorldCollectionCounts {
     pub(super) interior_halloween_fbx_files: usize,
     /// Number of canonical source meshes considered.
     pub(super) source_meshes: usize,
-    /// Number of rejected degenerate render triangles.
+    /// Legacy render discard count; strict topology keeps this zero.
     pub(super) discarded_degenerate_triangles: usize,
     /// Number of authored mesh placements.
     pub(super) authored_placements: usize,
@@ -260,6 +260,6 @@ pub(super) struct WorldCollectionCounts {
     pub(super) excluded_collision_meshes: usize,
     /// Number of excluded collision meshes with verified coordinates.
     pub(super) reference_excluded_collision_meshes: usize,
-    /// Number of rejected degenerate collision triangles.
+    /// Legacy collision discard count; strict topology keeps this zero.
     pub(super) discarded_collision_triangles: usize,
 }

@@ -43,13 +43,13 @@ use crate::domain::PipelineError;
 /// Canonical untextured collision material identity.
 pub(super) const COLLISION_MATERIAL: &str = "material-collision";
 
-/// One package's collision surfaces and sanitation accounting.
+/// One package's collision surfaces and compatibility accounting.
 pub(super) struct CollisionBatch {
     /// Canonical collision meshes decoded only for exclusion audit counts.
     pub(super) meshes: Vec<MeshAsset>,
     /// Meshes using topology-verified coordinate-reference positions.
     pub(super) reference_coordinate_meshes: usize,
-    /// Repeated-index triangles discarded from canonical topology.
+    /// Legacy discard count retained for catalog-schema compatibility.
     pub(super) discarded_triangles: usize,
 }
 
@@ -317,7 +317,6 @@ fn collision_mesh(
     canonical: IntersectDocument,
     reference_positions: Option<Vec<[f32; 3]>>,
 ) -> Result<(MeshAsset, usize), PipelineError> {
-    let (indices, discarded) = sanitized_indices(&canonical.indices)?;
     let positions = reference_positions.unwrap_or(canonical.positions);
     let name = portable_asset_name(
         &format!("collision-{package_id}-{stem}"),
@@ -329,7 +328,7 @@ fn collision_mesh(
         COLLISION_MATERIAL,
         positions,
         Vec::new(),
-        &indices,
+        &canonical.indices,
     )
     .map_err(|error| {
         PipelineError::new(format!(
@@ -341,7 +340,7 @@ fn collision_mesh(
             "world collision mesh construction failed: {error:?}"
         ))
     })?;
-    Ok((mesh, discarded))
+    Ok((mesh, 0))
 }
 
 /// Validate schema and declared array counts before topology conversion.
@@ -370,37 +369,6 @@ fn validate_document(
     Ok(())
 }
 
-/// Remove repeated-index triangles while preserving every valid triangle.
-fn sanitized_indices(
-    indices: &[u32],
-) -> Result<(Vec<u32>, usize), PipelineError> {
-    let (triangles, remainder) = indices.as_chunks::<3>();
-    if !remainder.is_empty() {
-        return Err(PipelineError::new(
-            "world collision index count is not divisible by three",
-        ));
-    }
-    let mut retained = Vec::with_capacity(indices.len());
-    let mut discarded = 0_usize;
-    for triangle in triangles {
-        let first = triangle[0];
-        let second = triangle[1];
-        let third = triangle[2];
-        if first == second || first == third || second == third {
-            discarded = discarded.checked_add(1).ok_or_else(|| {
-                PipelineError::new("world collision discard overflowed")
-            })?;
-            continue;
-        }
-        retained.extend_from_slice(triangle);
-    }
-    if retained.is_empty() {
-        return Err(PipelineError::new(
-            "world collision surface has no valid triangles",
-        ));
-    }
-    Ok((retained, discarded))
-}
 
 #[cfg(test)]
 // jig-ignore-next-line: exact syntax is indivisible

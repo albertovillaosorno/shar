@@ -35,5 +35,12 @@ repairs a malformed triangle list; the complete FBX package, strict FBX Clippy,
 and all 54 world-level tests pass. The legacy world-catalog discard-count field
 is retained for schema compatibility and is now zero for render meshes.
 
+Intersect collision meshes now follow the same fail-closed rule. Their decoded
+format is an explicit count-prefixed triangle index array with no strip/stitch
+selector, so repeated-index source triangles are no longer deleted before mesh
+construction. A focused collision regression proves the exact malformed source
+topology is rejected, and the legacy collision discard count remains zero for
+catalog compatibility.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
