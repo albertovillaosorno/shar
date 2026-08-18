@@ -718,8 +718,11 @@ fn resolve_objective_parameters(
         | MissionObjectiveParameters::RoadArrows(_)
         | MissionObjectiveParameters::Race { .. } => Ok(()),
     }?;
+    let references = participants.get_mut(first_reference..).ok_or_else(|| {
+        "mission parameter reference boundary drifted".to_owned()
+    })?;
     mark_objective_owner(
-        &mut participants[first_reference..],
+        references,
         stage_source_ordinal,
         stage_sequence_ordinal,
         binding.ordinal(),
@@ -837,8 +840,11 @@ fn resolve_objective(
             _ => {},
         }
     }
+    let references = participants.get_mut(first_reference..).ok_or_else(|| {
+        "mission objective reference boundary drifted".to_owned()
+    })?;
     mark_objective_owner(
-        &mut participants[first_reference..],
+        references,
         binding.owner_stage_source_ordinal(),
         binding.owner_stage_sequence_ordinal(),
         binding.source_ordinal(),
@@ -881,7 +887,10 @@ fn resolve_condition(
             )?;
         }
     }
-    for reference in &mut participants[first_reference..] {
+    let references = participants.get_mut(first_reference..).ok_or_else(|| {
+        "mission condition reference boundary drifted".to_owned()
+    })?;
+    for reference in references {
         reference.owner_stage_source_ordinal =
             Some(binding.owner_stage_source_ordinal());
         reference.owner_stage_sequence_ordinal =
@@ -955,7 +964,10 @@ fn resolve_stage(
     for directive in binding.directives() {
         resolve_stage_directive(catalog, directive, participants)?;
     }
-    for reference in &mut participants[first_reference..] {
+    let references = participants.get_mut(first_reference..).ok_or_else(|| {
+        "mission stage reference boundary drifted".to_owned()
+    })?;
+    for reference in references {
         reference.owner_stage_source_ordinal = Some(binding.source_ordinal());
         reference.owner_stage_sequence_ordinal =
             Some(binding.sequence_ordinal());
