@@ -37,12 +37,8 @@ use std::path::Path;
 use fbx::adapters::driven::decoded_component_source::{
     DecodedComponentError, DecodedComponentSource,
 };
-use fbx::adapters::driven::semantic_texture_png::{
-    decode_png_bytes, encode_png_bytes,
-};
 use fbx::domain::character::CharacterAsset;
 use fbx::domain::mesh::MeshAsset;
-use fbx::domain::texture::semantic::{Rgba8, RgbaImage};
 use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 use fbx::ports::component_source::ComponentSource as _;
 use shar_sha256::digest_hex;
@@ -337,20 +333,11 @@ fn resolve_materials(
                                          {source_name}: {error}"
                         ))
                     })?;
-                let bytes = corrected_texture_bytes(
-                    &shader,
-                    &source_name,
-                    source_bytes,
-                )?;
-                let digest = digest_hex(&bytes);
-                let file_name = format!("texture-{digest}.png");
-                let _published_texture = textures
-                    .entry(file_name.clone())
-                    .or_insert_with(|| PreparedTexture {
-                        file_name: file_name.clone(),
-                        bytes,
-                        sha256: digest.clone(),
-                    });
+                let prepared = prepare_source_texture(source_bytes);
+                let digest = prepared.sha256.clone();
+                let file_name = prepared.file_name.clone();
+                let _published_texture =
+                    textures.entry(file_name.clone()).or_insert(prepared);
                 (
                     canonical_material_identity(
                         Some(&digest),
@@ -381,41 +368,15 @@ fn resolve_materials(
     ))
 }
 
-/// Apply one exact world-texture repair before content hashing.
-fn corrected_texture_bytes(
-    shader: &str,
-    source_name: &str,
-    bytes: Vec<u8>,
-) -> Result<Vec<u8>, PipelineError> {
-    if !shader.eq_ignore_ascii_case("lard_lad_m__")
-        || !source_name.eq_ignore_ascii_case("lard_lad.png")
-    {
-        return Ok(bytes);
+
+/// Preserve one recovered source texture and derive its content identity.
+fn prepare_source_texture(bytes: Vec<u8>) -> PreparedTexture {
+    let sha256 = digest_hex(&bytes);
+    PreparedTexture {
+        file_name: format!("texture-{sha256}.png"),
+        bytes,
+        sha256,
     }
-    let source = decode_png_bytes(&bytes).map_err(|error| {
-        PipelineError::new(format!("Lard Lad texture decode failed: {error:?}"))
-    })?;
-    let pixels = source
-        .pixels()
-        .iter()
-        .map(|pixel| {
-            Rgba8::new(
-                u8::MAX.saturating_sub(pixel.red),
-                u8::MAX.saturating_sub(pixel.green),
-                u8::MAX.saturating_sub(pixel.blue),
-                pixel.alpha,
-            )
-        })
-        .collect();
-    let corrected = RgbaImage::new(source.width(), source.height(), pixels)
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "Lard Lad texture correction failed: {error:?}"
-            ))
-        })?;
-    encode_png_bytes(&corrected).map_err(|error| {
-        PipelineError::new(format!("Lard Lad PNG encode failed: {error:?}"))
-    })
 }
 
 /// Build one content-derived material identity without merging semantic
