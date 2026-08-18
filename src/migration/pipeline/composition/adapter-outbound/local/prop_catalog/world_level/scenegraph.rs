@@ -37,7 +37,7 @@ use std::path::{Path, PathBuf};
 use serde_json::Value;
 
 use super::super::inventory_common::clean_identity;
-use super::transform::{Matrix, identity, matrix_key, multiply};
+use super::transform::{Matrix, identity, multiply};
 use crate::domain::PipelineError;
 
 /// Read every normalized scenegraph and group exact drawable transforms.
@@ -81,10 +81,6 @@ pub(super) fn placement_map(
                 })?;
             collect_scenegraphs(&value, &mut placements)?;
         }
-    }
-    for matrices in placements.values_mut() {
-        matrices.sort_by_key(matrix_key);
-        matrices.dedup_by_key(|matrix| matrix_key(matrix));
     }
     Ok(placements)
 }
