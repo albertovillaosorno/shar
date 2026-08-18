@@ -18,5 +18,8 @@ build state.
 
 ## Navigation
 
-No child boundary is implemented yet. The active exporter TODO defines the
-planned `code/`, `scripts/`, `mods/`, and reviewed `algorithms/` release surface.
+- `source-selection` owns read-only normalization of a user-selected lawful
+  installation folder or `Simpsons.exe`.
+
+The active exporter TODO still defines the planned `code/`, `scripts/`, `mods/`,
+and reviewed `algorithms/` release surface.
