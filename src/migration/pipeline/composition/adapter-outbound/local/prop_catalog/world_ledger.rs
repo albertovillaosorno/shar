@@ -115,5 +115,12 @@ pub(super) fn read_world_ledger(
         }
         groups.entry(row.container_ordinal).or_default().push(row);
     }
+    for owner_ordinal in groups.keys() {
+        if !owners.contains_key(owner_ordinal) {
+            return Err(PipelineError::new(format!(
+                "prop ledger references missing owner ordinal {owner_ordinal}"
+            )));
+        }
+    }
     Ok(WorldLedger { owners, groups })
 }

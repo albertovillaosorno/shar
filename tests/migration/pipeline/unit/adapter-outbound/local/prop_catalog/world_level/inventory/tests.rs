@@ -196,3 +196,19 @@ fn package_meshes_reject_duplicate_component_paths() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn package_meshes_reject_orphan_component_owner() -> Result<(), String> {
+    let rows = [mesh_row(2, 99, "orphan")];
+    let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
+    let root = ledger_root("orphan-owner", &borrowed)?;
+    let result = package_meshes(&root);
+    cleanup(&root);
+    let Err(error) = result else {
+        return Err("orphan component owner was accepted".to_owned());
+    };
+    if !error.to_string().contains("missing owner ordinal 99") {
+        return Err(format!("unexpected orphan owner error: {error}"));
+    }
+    Ok(())
+}
