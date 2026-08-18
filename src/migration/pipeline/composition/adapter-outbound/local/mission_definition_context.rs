@@ -120,8 +120,13 @@ impl MissionDefinitionCoreReport {
                     "mission definition core stage order is not dense",
                 ));
             }
+            let next_index = index.checked_add(1).ok_or_else(|| {
+                PipelineError::new(
+                    "mission definition core stage index overflowed",
+                )
+            })?;
             let expected_next =
-                (index + 1 < self.stages.len()).then_some(index + 1);
+                (next_index < self.stages.len()).then_some(next_index);
             if stage.next_authored_sequence_ordinal != expected_next {
                 return Err(PipelineError::new(
                     "mission definition core authored neighbor drifted",
@@ -152,18 +157,17 @@ impl MissionDefinitionCoreReport {
                 | MissionStageTerminalOutcome::ChapterTransition
                 | MissionStageTerminalOutcome::GameCompletion => {},
             }
-            if let Some(countdown) = &stage.countdown {
-                if countdown.stage_source_ordinal()
+            if let Some(countdown) = &stage.countdown
+                && (countdown.stage_source_ordinal()
                     != stage.stage_source_ordinal
                     || countdown.stage_sequence_ordinal()
                         != stage.sequence_ordinal
                     || countdown.start_source_ordinal()
-                        <= stage.stage_source_ordinal
-                {
-                    return Err(PipelineError::new(
-                        "mission definition core countdown owner drifted",
-                    ));
-                }
+                        <= stage.stage_source_ordinal)
+            {
+                return Err(PipelineError::new(
+                    "mission definition core countdown owner drifted",
+                ));
             }
             for event in &stage.stage_start_music_events {
                 if event.stage_source_ordinal() != stage.stage_source_ordinal
@@ -488,8 +492,9 @@ fn build_definition_core(
     conditions: &MissionConditionSemanticReport,
     topology: &MissionAuthoredStageTopologyReport,
 ) -> PipelineOutcome<MissionDefinitionCoreReport> {
-    if stages.stages().len() != topology.stages().len()
-        || stages.stages().len() != objectives.objectives().len()
+    let stage_count = stages.stages().len();
+    if stage_count != topology.stages().len()
+        || stage_count != objectives.objectives().len()
     {
         return Err(PipelineError::new(
             "mission definition core stage/objective/topology count drifted",
