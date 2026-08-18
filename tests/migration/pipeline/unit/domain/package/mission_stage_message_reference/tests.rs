@@ -181,8 +181,10 @@ fn rejects_missing_stage_message_key() -> Result<(), String> {
                 unused_argument: None,
             }],
         )]);
-    let error = preflight_mission_stage_message_references(&index()?, &report)
-        .expect_err("missing stage-message key must fail");
+    let result = preflight_mission_stage_message_references(&index()?, &report);
+    let Err(error) = result else {
+        return Err("missing stage-message key unexpectedly passed".to_owned());
+    };
     assert!(error.contains("MISSION_OBJECTIVE_41"));
     Ok(())
 }
@@ -222,8 +224,12 @@ fn rejects_ambiguous_stage_message_key() -> Result<(), String> {
                 unused_argument: None,
             }],
         )]);
-    let error = preflight_mission_stage_message_references(&index, &report)
-        .expect_err("ambiguous stage-message key must fail");
+    let result = preflight_mission_stage_message_references(&index, &report);
+    let Err(error) = result else {
+        return Err(
+            "ambiguous stage-message key unexpectedly passed".to_owned(),
+        );
+    };
     assert!(error.contains("ambiguous"));
     Ok(())
 }
