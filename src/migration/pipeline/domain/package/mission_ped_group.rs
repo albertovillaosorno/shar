@@ -51,7 +51,7 @@ pub struct MissionPedGroupMemberBinding {
 }
 
 impl MissionPedGroupMemberBinding {
-    /// Return the source AddPed command ordinal.
+    /// Return the source `AddPed` command ordinal.
     #[must_use]
     pub const fn source_ordinal(&self) -> usize {
         self.source_ordinal
@@ -92,13 +92,13 @@ impl MissionPedGroupBinding {
         self.group_index
     }
 
-    /// Return the CreatePedGroup source ordinal.
+    /// Return the `CreatePedGroup` source ordinal.
     #[must_use]
     pub const fn create_source_ordinal(&self) -> usize {
         self.create_source_ordinal
     }
 
-    /// Return the ClosePedGroup source ordinal.
+    /// Return the `ClosePedGroup` source ordinal.
     #[must_use]
     pub const fn close_source_ordinal(&self) -> usize {
         self.close_source_ordinal
@@ -134,7 +134,7 @@ pub struct MissionPedGroupSelectionBinding {
 }
 
 impl MissionPedGroupSelectionBinding {
-    /// Return the UsePedGroup source ordinal.
+    /// Return the `UsePedGroup` source ordinal.
     #[must_use]
     pub const fn source_ordinal(&self) -> usize {
         self.source_ordinal
@@ -146,14 +146,14 @@ impl MissionPedGroupSelectionBinding {
         self.group_index
     }
 
-    /// Return the matched CreatePedGroup source ordinal.
+    /// Return the matched `CreatePedGroup` source ordinal.
     #[must_use]
     pub const fn group_create_source_ordinal(&self) -> usize {
         self.group_create_source_ordinal
     }
 }
 
-/// Bind mission UsePedGroup directives to one explicit level group report.
+/// Bind mission `UsePedGroup` directives to one explicit level group report.
 ///
 /// # Errors
 ///
@@ -313,7 +313,7 @@ fn require_role(actual: &str, label: &str) -> Result<(), String> {
 fn parse_group_index(value: &str) -> Result<u8, String> {
     let index = value
         .parse::<u8>()
-        .map_err(|_| "ped group index is not unsigned".to_owned())?;
+        .map_err(|_error| "ped group index is not unsigned".to_owned())?;
     if index >= MAX_PED_GROUPS {
         return Err("ped group index exceeds runtime capacity".to_owned());
     }
@@ -323,7 +323,7 @@ fn parse_group_index(value: &str) -> Result<u8, String> {
 fn parse_positive(value: &str, label: &str) -> Result<u32, String> {
     let parsed = value
         .parse::<u32>()
-        .map_err(|_| format!("{label} is not unsigned"))?;
+        .map_err(|_error| format!("{label} is not unsigned"))?;
     if parsed == 0 {
         return Err(format!("{label} must be positive"));
     }

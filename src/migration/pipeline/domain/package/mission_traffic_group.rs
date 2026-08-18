@@ -52,7 +52,7 @@ pub struct MissionTrafficGroupMemberBinding {
 }
 
 impl MissionTrafficGroupMemberBinding {
-    /// Return the source AddTrafficModel command ordinal.
+    /// Return the source `AddTrafficModel` command ordinal.
     #[must_use]
     pub const fn source_ordinal(&self) -> usize {
         self.source_ordinal
@@ -105,13 +105,13 @@ impl MissionTrafficGroupBinding {
         self.group_index
     }
 
-    /// Return the CreateTrafficGroup source ordinal.
+    /// Return the `CreateTrafficGroup` source ordinal.
     #[must_use]
     pub const fn create_source_ordinal(&self) -> usize {
         self.create_source_ordinal
     }
 
-    /// Return the CloseTrafficGroup source ordinal.
+    /// Return the `CloseTrafficGroup` source ordinal.
     #[must_use]
     pub const fn close_source_ordinal(&self) -> usize {
         self.close_source_ordinal
@@ -208,7 +208,7 @@ pub fn preflight_mission_traffic_groups(
                     .map(|value| {
                         value
                             .parse::<i32>()
-                            .map_err(|_| {
+                            .map_err(|_error| {
                                 "traffic big flag is not numeric".to_owned()
                             })
                     })
@@ -283,7 +283,7 @@ fn require_role(actual: &str, label: &str) -> Result<(), String> {
 fn parse_group_index(value: &str) -> Result<u8, String> {
     let index = value
         .parse::<u8>()
-        .map_err(|_| "traffic group index is not unsigned".to_owned())?;
+        .map_err(|_error| "traffic group index is not unsigned".to_owned())?;
     if index >= MAX_TRAFFIC_GROUPS {
         return Err("traffic group index exceeds runtime capacity".to_owned());
     }
@@ -293,7 +293,7 @@ fn parse_group_index(value: &str) -> Result<u8, String> {
 fn parse_positive(value: &str, label: &str) -> Result<u32, String> {
     let parsed = value
         .parse::<u32>()
-        .map_err(|_| format!("{label} is not unsigned"))?;
+        .map_err(|_error| format!("{label} is not unsigned"))?;
     if parsed == 0 {
         return Err(format!("{label} must be positive"));
     }
