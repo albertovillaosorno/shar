@@ -595,6 +595,29 @@ def _host_evidence(
     }
 
 
+def _validate_canonical_output_root(root: Path, output: Path) -> None:
+    """Reject linked or malformed canonical build-data ancestors."""
+    canonical = root / _DATA_PATH
+    if output != canonical:
+        return
+    roots = (
+        (root / ".cache", "repository cache root"),
+        (root / ".cache/build", "build cache root"),
+        (root / ".cache/build/data", "build data root"),
+    )
+    for path, label in roots:
+        if not os.path.lexists(path):
+            continue
+        is_real = (
+            path.is_dir()
+            and not path.is_symlink()
+            and not os.path.isjunction(path)
+        )
+        if is_real:
+            continue
+        raise CheckFailure(f"{label} must be a real directory: {path}")
+
+
 def _write_json(path: Path, value: dict[str, object]) -> None:
     """Atomically replace saved preflight evidence."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -759,7 +782,10 @@ def main() -> int:
     output = args.output or (root / _DATA_PATH)
     if not output.is_absolute():
         output = root / output
+    output_safe_to_mutate = False
     try:
+        _validate_canonical_output_root(root, output)
+        output_safe_to_mutate = True
         if args.revalidate:
             _reject_revalidate_overrides(args)
             _revalidate(output)
@@ -768,7 +794,7 @@ def main() -> int:
         evidence = _run(args)
         _write_json(output, evidence)
     except (CheckFailure, OSError) as error:
-        if not args.revalidate:
+        if not args.revalidate and output_safe_to_mutate:
             output.unlink(missing_ok=True)
         print(f"check: {error}", file=sys.stderr)
         return 1
