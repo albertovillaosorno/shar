@@ -128,14 +128,17 @@ fn decoded_mesh_names(
     root: &Path,
     mesh_ids: &[String],
 ) -> Result<BTreeMap<String, String>, PipelineError> {
-    mesh_ids
-        .iter()
-        .map(|member| {
-            let path =
-                root.join("components/mesh").join(format!("{member}.json"));
-            Ok((read_component_name(&path)?, member.clone()))
-        })
-        .collect()
+    let mut names = BTreeMap::new();
+    for member in mesh_ids {
+        let path = root.join("components/mesh").join(format!("{member}.json"));
+        let name = read_component_name(&path)?;
+        if names.insert(name.clone(), member.clone()).is_some() {
+            return Err(PipelineError::new(format!(
+                "world prop repeats mesh identity {name}"
+            )));
+        }
+    }
+    Ok(names)
 }
 
 /// Associate one container with its exact composite, skeleton, and PTRN clip.
@@ -239,3 +242,8 @@ fn named_member(
     }
     Ok(matches.pop())
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/prop_catalog/world_inventory/tests.rs"]
+mod tests;
