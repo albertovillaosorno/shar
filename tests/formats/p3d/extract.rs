@@ -35,6 +35,7 @@ use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 use serde_json as _;
 use shar_json_text as _;
+use shar_sha256 as _;
 
 fn literal_p3dz(payload: &[u8]) -> Option<Vec<u8>> {
     let payload_len = u8::try_from(payload.len()).ok()?;

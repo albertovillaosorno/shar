@@ -37,6 +37,7 @@ use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 use serde_json as _;
 use shar_json_text as _;
+use shar_sha256 as _;
 
 #[test]
 fn subchunks_rejects_trailing_bytes() {

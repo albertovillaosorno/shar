@@ -16,6 +16,8 @@ schoenwald_filesystem = { path = "../../foundation/filesystem" }
 # jig-ignore-next-line: exact value is indivisible
 # shar_json_text owns lossless JSON string-content escaping shared across format boundaries.
 shar_json_text = { path = "../../foundation/json-text" }
+# shar_sha256 binds normalized package caches to exact source bytes.
+shar_sha256 = { path = "../../foundation/sha256" }
 
 # jig-ignore-next-line: exact value is indivisible
 # serde_json validates every generated component and manifest document before any P3D package publication.

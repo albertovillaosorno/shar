@@ -34,6 +34,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use schoenwald_filesystem::adapters::driving::local;
+use shar_sha256::digest_hex;
 
 use super::filesystem_batch_artifact::manifest_component_files_exist;
 
@@ -63,6 +64,7 @@ struct ComponentIdentity {
 }
 
 /// Returns whether an output directory has a complete component cache.
+#[cfg(test)]
 pub(super) fn is_cache_complete(output_dir: &Path) -> bool {
     let manifest = output_dir.join("components.jsonl");
     let Ok(Some(text)) = local::read_optional_utf8(&manifest) else {
@@ -72,6 +74,38 @@ pub(super) fn is_cache_complete(output_dir: &Path) -> bool {
         return false;
     }
     manifest_component_files_exist(output_dir, &text)
+}
+
+/// Returns whether a complete cache belongs to the current exact source bytes.
+pub(super) fn is_cache_current(output_dir: &Path, input_path: &Path) -> bool {
+    let manifest = output_dir.join("components.jsonl");
+    let Ok(Some(text)) = local::read_optional_utf8(&manifest) else {
+        return false;
+    };
+    let Ok(source_bytes) = local::read_bytes(input_path) else {
+        return false;
+    };
+    manifest_is_complete(&text)
+        && manifest_source_matches_bytes(&text, &source_bytes)
+        && manifest_component_files_exist(output_dir, &text)
+}
+
+/// Returns whether the package header binds to these exact raw source bytes.
+pub(super) fn manifest_source_matches_bytes(text: &str, source: &[u8]) -> bool {
+    let Some(header) = text.lines().map(str::trim).find(|line| !line.is_empty()) else {
+        return false;
+    };
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(header) else {
+        return false;
+    };
+    let Some(source_sha256) = value
+        .as_object()
+        .and_then(|object| object.get("source_sha256"))
+        .and_then(serde_json::Value::as_str)
+    else {
+        return false;
+    };
+    source_sha256 == digest_hex(source)
 }
 
 /// Returns whether one component manifest contains only complete rows.

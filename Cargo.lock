@@ -221,6 +221,7 @@ dependencies = [
  "schoenwald_filesystem",
  "serde_json",
  "shar_json_text",
+ "shar_sha256",
 ]
 
 [[package]]
