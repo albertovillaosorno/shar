@@ -111,9 +111,17 @@ fn definition_only_meshes_are_not_direct_world_geometry() {
 
 #[test]
 fn source_owner_kinds_preserve_world_interaction_roles() {
-    let mut tree = source("srr_dyna_phys_dsg");
-    tree.mesh_name = "l1_treesm_shape".to_owned();
-    assert_eq!(object_role(&tree), WorldObjectRole::Breakable);
+    assert_eq!(
+        object_role(&source("srr_tree_dsg")),
+        WorldObjectRole::Breakable
+    );
+    assert_eq!(
+        object_role(&source("srr_breakable_object")),
+        WorldObjectRole::Breakable
+    );
+    let mut named_tree = source("srr_dyna_phys_dsg");
+    named_tree.mesh_name = "l1_treesm_shape".to_owned();
+    assert_eq!(object_role(&named_tree), WorldObjectRole::Interactable);
     assert_eq!(
         object_role(&source("srr_static_phys_dsg")),
         WorldObjectRole::Interactable

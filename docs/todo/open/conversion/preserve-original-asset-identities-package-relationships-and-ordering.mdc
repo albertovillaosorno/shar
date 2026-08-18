@@ -54,5 +54,10 @@ same mesh identity, and compatible topology inside the same package identity;
 multiple exact donors fail closed. Focused tests prove owner-only and
 topology-only references are ignored while one exact donor remains admissible.
 
+World interaction roles now follow exact decoded container kinds rather than
+mesh/name substring inference. `srr_tree_dsg` and `srr_breakable_object` remain
+breakable, while dynamic/static-physics owners remain interactable even if their
+mesh name contains `tree`. A focused regression preserves that distinction.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
