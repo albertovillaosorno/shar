@@ -31,6 +31,11 @@
 
 //! Canonical repository-relative generated manifest paths.
 
+#![expect(
+    clippy::redundant_pub_crate,
+    reason = "crate-root private module shares paths with sibling adapters"
+)]
+
 /// Canonical complete FBX catalog manifest.
 pub(crate) const FBX_MANIFEST_PATH: &str = "game/manifest/fbx.jsonl";
 
