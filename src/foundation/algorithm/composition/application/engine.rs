@@ -587,6 +587,10 @@ pub fn create_algorithm(
         .map_err(|error| AlgorithmError::new(format!("cannot write algorithm output: {error}")))
 }
 
+fn portable_target_identity(path: &str) -> String {
+    path.chars().flat_map(char::to_uppercase).collect()
+}
+
 fn validate_document(
     document: &AlgorithmDocument,
     settings: &Settings,
@@ -647,7 +651,8 @@ fn validate_document(
                 ))
             })?;
         }
-        let candidate = Path::new(&target.descriptor.path);
+        let identity = portable_target_identity(&target.descriptor.path);
+        let candidate = Path::new(&identity);
         if paths.iter().any(|existing: &String| {
             let existing = Path::new(existing);
             candidate.starts_with(existing) || existing.starts_with(candidate)
@@ -656,7 +661,7 @@ fn validate_document(
                 "algorithm contains overlapping target paths",
             ));
         }
-        let _inserted = paths.insert(target.descriptor.path.clone());
+        let _inserted = paths.insert(identity);
         if target.descriptor.bytes > settings.maximum_file_bytes() {
             return Err(AlgorithmError::new(
                 "algorithm target file exceeds settings",
