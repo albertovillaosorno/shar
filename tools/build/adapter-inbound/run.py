@@ -541,7 +541,11 @@ def _publish(candidate: Path, destination: Path) -> None:
         raise RunFailure(f"candidate package is empty: {candidate}")
     if _path_present(destination):
         _require_real_directory(destination, "published target")
-    destination.parent.mkdir(parents=True, exist_ok=True)
+    publication_root = destination.parent
+    if _path_present(publication_root):
+        _require_real_directory(publication_root, "publication root")
+    else:
+        publication_root.mkdir(parents=True)
     backup = destination.with_name(f".{destination.name}.previous")
     if backup.exists():
         shutil.rmtree(backup)
