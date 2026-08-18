@@ -93,9 +93,14 @@ pub(super) fn manifest_is_complete(text: &str) -> bool {
         let Some(header) = header_evidence.as_ref() else {
             return false;
         };
+        let path_identity = component_identity
+            .path
+            .chars()
+            .flat_map(char::to_uppercase)
+            .collect::<String>();
         if component_identity.ordinal >= header.chunk_count
             || !component_ordinals.insert(component_identity.ordinal)
-            || !component_paths.insert(component_identity.path)
+            || !component_paths.insert(path_identity)
         {
             return false;
         }
