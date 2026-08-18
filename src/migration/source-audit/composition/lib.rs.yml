@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/migration/source-audit/composition/lib.rs
+function: source-audit
+kind: facade
+authority: composition/lib.rs
