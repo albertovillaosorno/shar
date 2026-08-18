@@ -67,7 +67,7 @@ impl MissionVehicleAttributeBinding {
 
     /// Return the four exact positional source lexemes.
     #[must_use]
-    pub fn source_values(&self) -> &[String; 4] {
+    pub const fn source_values(&self) -> &[String; 4] {
         &self.source_values
     }
 }

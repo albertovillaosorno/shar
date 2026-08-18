@@ -190,9 +190,11 @@ pub fn preflight_mission_collectible_waypoints(
                 continue;
             };
             let collectible_position = usize::try_from(*collectible_index)
-                .map_err(|_| "mission collectible index exceeds host range")?;
+                .map_err(|_error| {
+                    "mission collectible index exceeds host range"
+                })?;
             let waypoint_position = usize::try_from(*waypoint_index)
-                .map_err(|_| "mission waypoint index exceeds host range")?;
+                .map_err(|_error| "mission waypoint index exceeds host range")?;
             let (collectible_source_ordinal, collectible_locator_id) =
                 collectibles
                     .get(collectible_position)
