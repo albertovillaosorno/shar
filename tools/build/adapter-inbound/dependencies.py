@@ -712,6 +712,12 @@ def _validate_canonical_output_root(root: Path, output: Path) -> bool:
     _require_real_storage_roots(
         ((root / ".cache/build/data", "build data root"),)
     )
+    if os.path.lexists(output) and (
+        not output.is_file() or output.is_symlink()
+    ):
+        raise BootstrapFailure(
+            f"dependency evidence must be a real file: {output}"
+        )
     return True
 
 

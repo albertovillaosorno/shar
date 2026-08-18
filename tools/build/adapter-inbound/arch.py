@@ -175,6 +175,12 @@ def _validate_canonical_output_root(root: Path, output: Path) -> None:
         if is_real:
             continue
         raise SystemExit(f"arch: {label} must be a real directory: {path}")
+    if os.path.lexists(output) and (
+        not output.is_file() or output.is_symlink()
+    ):
+        raise SystemExit(
+            f"arch: architecture evidence must be a real file: {output}"
+        )
 
 
 def _write_selection(path: Path, selected: list[Target]) -> None:
