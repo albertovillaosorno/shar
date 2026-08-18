@@ -316,3 +316,112 @@ fn texture_font_recovery_rejects_glyph_stride_mismatch() -> Result<(), String> {
     assert!(recover_component(&component, &source, 1).is_err());
     Ok(())
 }
+
+fn publication_chunk(parent_ordinal: Option<usize>) -> ChunkRecord {
+    ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal,
+        id: 0,
+        kind: crate::ChunkKind::Mesh,
+        offset: 0,
+        header_size: 12,
+        total_size: 12,
+        payload_offset: 12,
+        payload_size: 0,
+        child_count: 0,
+    }
+}
+
+fn recovered_publication(path: &str, bytes: &[u8]) -> RecoveredComponent {
+    RecoveredComponent {
+        name: "fixture".to_owned(),
+        relative_path: PathBuf::from(path),
+        bytes: bytes.to_vec(),
+        payload_format: "schema_json".to_owned(),
+        recovery_status: "decoded_schema_payload".to_owned(),
+    }
+}
+
+#[test]
+fn publication_registry_reuses_only_identical_nested_exact_path() -> Result<(), String> {
+    let mut paths = BTreeMap::new();
+    let first = recovered_publication("mesh/shared.json", b"same");
+    let nested = recovered_publication("mesh/shared.json", b"same");
+    let first_publish = register_recovered_path(
+        &mut paths,
+        &publication_chunk(Some(0)),
+        &first,
+    )
+    .map_err(|error| error.to_string())?;
+    let nested_publish = register_recovered_path(
+        &mut paths,
+        &publication_chunk(Some(1)),
+        &nested,
+    )
+    .map_err(|error| error.to_string())?;
+    if !first_publish || nested_publish {
+        return Err("identical nested exact-path reuse changed publication policy".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn publication_registry_rejects_nested_payload_conflict() -> Result<(), String> {
+    let mut paths = BTreeMap::new();
+    let first = recovered_publication("mesh/shared.json", b"first");
+    let nested = recovered_publication("mesh/shared.json", b"second");
+    let first_publish = register_recovered_path(
+        &mut paths,
+        &publication_chunk(Some(0)),
+        &first,
+    )
+    .map_err(|error| error.to_string())?;
+    if !first_publish {
+        return Err("first component path claim was skipped".to_owned());
+    }
+    if register_recovered_path(&mut paths, &publication_chunk(Some(1)), &nested).is_ok() {
+        return Err("different nested payload reused one component path".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn publication_registry_rejects_direct_root_duplicate() -> Result<(), String> {
+    let mut paths = BTreeMap::new();
+    let first = recovered_publication("mesh/shared.json", b"same");
+    let second = recovered_publication("mesh/shared.json", b"same");
+    let first_publish = register_recovered_path(
+        &mut paths,
+        &publication_chunk(Some(0)),
+        &first,
+    )
+    .map_err(|error| error.to_string())?;
+    if !first_publish {
+        return Err("first component path claim was skipped".to_owned());
+    }
+    if register_recovered_path(&mut paths, &publication_chunk(Some(0)), &second).is_ok() {
+        return Err("direct root duplicate component path was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn publication_registry_rejects_case_equivalent_path() -> Result<(), String> {
+    let mut paths = BTreeMap::new();
+    let first = recovered_publication("mesh/Shared.json", b"same");
+    let nested = recovered_publication("MESH/shared.json", b"same");
+    let first_publish = register_recovered_path(
+        &mut paths,
+        &publication_chunk(Some(0)),
+        &first,
+    )
+    .map_err(|error| error.to_string())?;
+    if !first_publish {
+        return Err("first component path claim was skipped".to_owned());
+    }
+    if register_recovered_path(&mut paths, &publication_chunk(Some(1)), &nested).is_ok() {
+        return Err("case-equivalent component path was accepted".to_owned());
+    }
+    Ok(())
+}
