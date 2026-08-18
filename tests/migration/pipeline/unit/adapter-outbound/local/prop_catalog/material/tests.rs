@@ -30,15 +30,11 @@
 
 //! Tests unit tests.
 
-use fbx::adapters::driven::semantic_texture_png::{
-    decode_png_bytes, encode_png_bytes,
-};
 use fbx::domain::texture::MaterialSemantics;
-use fbx::domain::texture::semantic::{Rgba8, RgbaImage};
 
 use super::{
-    canonical_material_identity, corrected_texture_bytes,
-    is_world_analysis_default_shader,
+    canonical_material_identity, is_world_analysis_default_shader,
+    prepare_source_texture,
 };
 
 #[test]
@@ -74,35 +70,17 @@ fn canonical_material_identity_separates_surface_semantics() {
 }
 
 #[test]
-fn lard_lad_texture_is_complemented_without_changing_alpha()
--> Result<(), String> {
-    let source = RgbaImage::new(1, 1, vec![Rgba8::new(10, 20, 30, 40)])
-        .map_err(|error| format!("source image failed: {error:?}"))?;
-    let encoded = encode_png_bytes(&source)
-        .map_err(|error| format!("source PNG failed: {error:?}"))?;
-    let corrected =
-        corrected_texture_bytes("lard_lad_m__", "lard_lad.png", encoded)
-            .map_err(|error| error.to_string())?;
-    let decoded = decode_png_bytes(&corrected)
-        .map_err(|error| format!("corrected PNG failed: {error:?}"))?;
-    let expected = [Rgba8::new(245, 235, 225, 40)];
-    if decoded.pixels() != expected {
-        return Err(format!(
-            "unexpected corrected Lard Lad pixel: {:?}",
-            decoded.pixels()
-        ));
+fn prepared_texture_preserves_exact_source_bytes() -> Result<(), String> {
+    let bytes = vec![10_u8, 20, 30, 40];
+    let prepared = prepare_source_texture(bytes.clone());
+    if prepared.bytes != bytes {
+        return Err("source texture bytes were rewritten".to_owned());
     }
-    Ok(())
-}
-
-#[test]
-fn texture_complement_recipe_is_exact_identity_only() -> Result<(), String> {
-    let bytes = vec![1_u8, 2, 3];
-    let unchanged =
-        corrected_texture_bytes("other_m", "lard_lad.png", bytes.clone())
-            .map_err(|error| error.to_string())?;
-    if unchanged != bytes {
-        return Err("nonmatching texture bytes changed".to_owned());
+    let expected_digest = shar_sha256::digest_hex(&bytes);
+    if prepared.sha256 != expected_digest
+        || prepared.file_name != format!("texture-{expected_digest}.png")
+    {
+        return Err("source texture content identity changed".to_owned());
     }
     Ok(())
 }

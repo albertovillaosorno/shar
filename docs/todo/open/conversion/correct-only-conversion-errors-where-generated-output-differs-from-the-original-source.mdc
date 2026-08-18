@@ -26,5 +26,13 @@ No explicit task dependency was recorded in the legacy TODO.
 
 ## Evidence
 
-Open work migrated from the canonical TODO. Add implementation and
-validation evidence here as the task advances.
+World material publication no longer applies the historical identity-specific
+Lard Lad RGB-complement recipe. P3D texture extraction already copies embedded
+image payload bytes directly, and no tracked source or conversion evidence
+authorized rewriting one shader/file-name pair after extraction. Recovered PNG
+bytes are now content-addressed and published unchanged. A typed regression
+requires the prepared texture payload to equal the source bytes and derives its
+SHA-256/file identity from those same bytes. Strict pipeline Clippy is clean.
+
+This umbrella task remains open for other reported conversion differences that
+need direct source-backed evidence before any correction is admitted.
