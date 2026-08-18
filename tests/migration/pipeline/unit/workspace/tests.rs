@@ -79,7 +79,10 @@ fn clean_legacy_extraction_workspace_moves_with_persistent_lock() -> TestResult 
         .map_err(|error| error.to_string())?;
     let legacy_exists = root.join("extracted").exists();
     let legacy_lock_exists = root.join(EXTRACTED_LOCK_NAME).exists();
-    let canonical_lock = canonical.parent().unwrap().join(EXTRACTED_LOCK_NAME);
+    let canonical_parent = canonical
+        .parent()
+        .ok_or_else(|| "canonical extraction root lost its parent".to_owned())?;
+    let canonical_lock = canonical_parent.join(EXTRACTED_LOCK_NAME);
     let canonical_lock_len = fs::metadata(&canonical_lock)
         .map_err(|error| error.to_string())?
         .len();
@@ -104,7 +107,10 @@ fn legacy_extraction_without_lock_gains_canonical_lock() -> TestResult {
     let migrated = migrate_legacy_extracted_workspace_at(&root)
         .map_err(|error| error.to_string())?;
     let canonical = root.join(EXTRACTED_WORKSPACE_ROOT);
-    let canonical_lock = canonical.parent().unwrap().join(EXTRACTED_LOCK_NAME);
+    let canonical_parent = canonical
+        .parent()
+        .ok_or_else(|| "canonical extraction root lost its parent".to_owned())?;
+    let canonical_lock = canonical_parent.join(EXTRACTED_LOCK_NAME);
     let lock_len = fs::metadata(&canonical_lock)
         .map_err(|error| error.to_string())?
         .len();
@@ -128,9 +134,11 @@ fn competing_extraction_workspaces_fail_without_mutation() -> TestResult {
     fs::write(canonical.join("canonical.txt"), b"canonical")
         .map_err(|error| error.to_string())?;
 
-    let error = migrate_legacy_extracted_workspace_at(&root)
-        .expect_err("competing roots must fail")
-        .to_string();
+    let result = migrate_legacy_extracted_workspace_at(&root);
+    let Err(error) = result else {
+        return Err("competing roots must fail".to_owned());
+    };
+    let error = error.to_string();
     let legacy = fs::read(root.join("extracted/legacy.txt"))
         .map_err(|error| error.to_string())?;
     let accepted = fs::read(canonical.join("canonical.txt"))
@@ -151,12 +159,17 @@ fn interrupted_legacy_extraction_transaction_fails_closed() -> TestResult {
     prepare_root(&root)?;
     fs::create_dir_all(root.join("extracted"))
         .map_err(|error| error.to_string())?;
-    let blocker = root.join(EXTRACTED_TRANSACTION_BLOCKERS[0]);
+    let blocker_name = EXTRACTED_TRANSACTION_BLOCKERS
+        .first()
+        .ok_or_else(|| "extraction blocker fixture is empty".to_owned())?;
+    let blocker = root.join(blocker_name);
     fs::create_dir_all(&blocker).map_err(|error| error.to_string())?;
 
-    let error = migrate_legacy_extracted_workspace_at(&root)
-        .expect_err("interrupted transaction must fail")
-        .to_string();
+    let result = migrate_legacy_extracted_workspace_at(&root);
+    let Err(error) = result else {
+        return Err("interrupted transaction must fail".to_owned());
+    };
+    let error = error.to_string();
     let legacy_exists = root.join("extracted").is_dir();
     let blocker_exists = blocker.is_dir();
     cleanup_root(&root)?;
@@ -184,9 +197,11 @@ fn active_legacy_extraction_lock_blocks_migration() -> TestResult {
         .map_err(|error| error.to_string())?;
     lock.try_lock().map_err(|error| error.to_string())?;
 
-    let error = migrate_legacy_extracted_workspace_at(&root)
-        .expect_err("active lock must fail")
-        .to_string();
+    let result = migrate_legacy_extracted_workspace_at(&root);
+    let Err(error) = result else {
+        return Err("active lock must fail".to_owned());
+    };
+    let error = error.to_string();
     drop(lock);
     let legacy_exists = root.join("extracted").is_dir();
     cleanup_root(&root)?;
@@ -243,7 +258,7 @@ fn fbx_publication_staging_blocks_legacy_migration() -> TestResult {
     fs::create_dir_all(root.join(FBX_STAGING_NAME))
         .map_err(|error| error.to_string())?;
     let manifest = root.join("game/manifest/fbx.jsonl");
-    let error = migrate_legacy_payload_workspace_at(
+    let result = migrate_legacy_payload_workspace_at(
         &root,
         LEGACY_FBX_WORKSPACE_ROOT,
         FBX_WORKSPACE_ROOT,
@@ -251,9 +266,11 @@ fn fbx_publication_staging_blocks_legacy_migration() -> TestResult {
         &manifest,
         &[FBX_STAGING_NAME],
         "FBX",
-    )
-    .expect_err("FBX staging must block migration")
-    .to_string();
+    );
+    let Err(error) = result else {
+        return Err("FBX staging must block migration".to_owned());
+    };
+    let error = error.to_string();
     let preserved = root.join(LEGACY_FBX_WORKSPACE_ROOT).is_dir();
     cleanup_root(&root)?;
     if !error.contains("publication staging exists") || !preserved {
@@ -311,11 +328,13 @@ fn canonical_manifest_blocks_legacy_payload_migration() -> TestResult {
     fs::write(legacy.join(LEGACY_UNREAL_MANIFEST_NAME), b"legacy")
         .map_err(|error| error.to_string())?;
     let manifest = root.join("game/manifest/unreal.jsonl");
-    fs::create_dir_all(manifest.parent().unwrap())
-        .map_err(|error| error.to_string())?;
+    let manifest_parent = manifest
+        .parent()
+        .ok_or_else(|| "canonical manifest lost its parent".to_owned())?;
+    fs::create_dir_all(manifest_parent).map_err(|error| error.to_string())?;
     fs::write(&manifest, b"canonical").map_err(|error| error.to_string())?;
 
-    let error = migrate_legacy_payload_workspace_at(
+    let result = migrate_legacy_payload_workspace_at(
         &root,
         LEGACY_UNREAL_WORKSPACE_ROOT,
         UNREAL_STAGING_WORKSPACE_ROOT,
@@ -323,9 +342,11 @@ fn canonical_manifest_blocks_legacy_payload_migration() -> TestResult {
         &manifest,
         &[],
         "Unreal",
-    )
-    .expect_err("canonical manifest must block legacy migration")
-    .to_string();
+    );
+    let Err(error) = result else {
+        return Err("canonical manifest must block legacy migration".to_owned());
+    };
+    let error = error.to_string();
     let old_manifest = fs::read(legacy.join(LEGACY_UNREAL_MANIFEST_NAME))
         .map_err(|error| error.to_string())?;
     let accepted = fs::read(&manifest).map_err(|error| error.to_string())?;
