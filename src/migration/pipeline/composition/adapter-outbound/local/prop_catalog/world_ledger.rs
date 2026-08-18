@@ -30,7 +30,7 @@
 
 //! World ledger outbound adapter.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::Path;
 
@@ -80,6 +80,7 @@ pub(super) fn read_world_ledger(
     })?;
     let mut owners = BTreeMap::new();
     let mut groups: BTreeMap<usize, Vec<LedgerRow>> = BTreeMap::new();
+    let mut ordinals = BTreeSet::new();
     for line in text.lines().filter(|line| line.contains("\"path\"")) {
         let value: serde_json::Value =
             serde_json::from_str(line).map_err(|error| {
@@ -96,11 +97,14 @@ pub(super) fn read_world_ledger(
             path: required_string(&value, "path")?,
             kind: required_string(&value, "kind")?,
         };
-        if row.depth == 1 && owners.insert(row.ordinal, row.clone()).is_some() {
+        if !ordinals.insert(row.ordinal) {
             return Err(PipelineError::new(format!(
-                "prop ledger repeats owner ordinal {}",
+                "prop ledger repeats component ordinal {}",
                 row.ordinal
             )));
+        }
+        if row.depth == 1 {
+            let _previous = owners.insert(row.ordinal, row.clone());
         }
         groups.entry(row.container_ordinal).or_default().push(row);
     }

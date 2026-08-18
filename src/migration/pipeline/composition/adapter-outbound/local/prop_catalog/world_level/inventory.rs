@@ -187,14 +187,7 @@ pub(super) fn package_meshes(
             });
         }
     }
-    meshes.sort_by(|left, right| {
-        (&left.owner_kind, &left.owner_name, left.ordinal).cmp(&(
-            &right.owner_kind,
-            &right.owner_name,
-            right.ordinal,
-        ))
-    });
-    meshes.dedup();
+    meshes.sort_by_key(|source| source.ordinal);
     Ok(meshes)
 }
 
