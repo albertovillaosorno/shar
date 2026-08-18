@@ -98,7 +98,7 @@ impl LosslessPackageExporter {
             .map_err(|error| P3dError::invalid_source(error.to_string()))?;
         let components_dir = reset_components_directory(output_dir)?;
         let mut kind_counts = BTreeMap::<&'static str, usize>::new();
-        let mut published_paths = BTreeMap::<PathBuf, Vec<u8>>::new();
+        let mut published_paths = BTreeMap::<String, (PathBuf, Vec<u8>)>::new();
         let mut outputs = Vec::new();
         for component in document
             .chunks
@@ -109,15 +109,13 @@ impl LosslessPackageExporter {
             let next_index = kind_counts.entry(kind).or_insert(0);
             *next_index += 1;
             let recovered = recover_component(component, &bytes, *next_index)?;
-            if component.parent_ordinal != Some(0)
-                && published_paths.contains_key(&recovered.relative_path)
-            {
+            if !register_recovered_path(
+                &mut published_paths,
+                component,
+                &recovered,
+            )? {
                 continue;
             }
-            drop(published_paths.insert(
-                recovered.relative_path.clone(),
-                recovered.bytes.clone(),
-            ));
             outputs.push(publish_recovered_component(
                 component,
                 top_level_ancestor_ordinal(component, &document.chunks)?,
@@ -139,6 +137,44 @@ impl LosslessPackageExporter {
             .map_err(|error| P3dError::invalid_source(error.to_string()))?;
         Ok(())
     }
+}
+
+/// Register one recovered component under a portable output-path identity.
+///
+/// Byte-identical nested repeats of the exact same path are references to the
+/// already-published component. Every other collision fails closed so source
+/// evidence cannot be overwritten or become host-filesystem dependent.
+fn register_recovered_path(
+    published_paths: &mut BTreeMap<String, (PathBuf, Vec<u8>)>,
+    component: &ChunkRecord,
+    recovered: &RecoveredComponent,
+) -> Result<bool, P3dError> {
+    let relative = recovered.relative_path.to_str().ok_or_else(|| {
+        P3dError::invalid_source("recovered component path is not valid Unicode")
+    })?;
+    let identity = relative
+        .chars()
+        .flat_map(char::to_uppercase)
+        .collect::<String>();
+    if let Some((existing_path, existing_bytes)) = published_paths.get(&identity)
+    {
+        if existing_path == &recovered.relative_path
+            && existing_bytes == &recovered.bytes
+            && component.parent_ordinal != Some(0)
+        {
+            return Ok(false);
+        }
+        return Err(P3dError::invalid_source(format!(
+            "recovered component paths collide on portable identity: {} and {}",
+            existing_path.display(),
+            recovered.relative_path.display()
+        )));
+    }
+    drop(published_paths.insert(
+        identity,
+        (recovered.relative_path.clone(), recovered.bytes.clone()),
+    ));
+    Ok(true)
 }
 
 /// Recreate the normalized component directory for one package export.

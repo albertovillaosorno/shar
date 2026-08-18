@@ -85,7 +85,11 @@ published parent belongs to container 1 while the child claims container 2.
 P3D normalized-package cache validation now also treats recovered component
 paths by portable case-insensitive identity. A manifest cannot declare both
 `components/mesh.json` and `COMPONENTS/MESH.json` as distinct complete
-artifacts, matching the repository filesystem boundary on every host.
+artifacts, matching the repository filesystem boundary on every host. P3D
+extraction now applies the same identity before filesystem publication: only a
+byte-identical nested repeat of the exact same path may reuse an already
+published artifact. Different nested payloads, duplicate direct-root paths, and
+case-equivalent paths fail closed instead of dropping or overwriting evidence.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
