@@ -23,9 +23,9 @@ The canonical base is source-backed. A base asset or gameplay change is admitted
 only when it is one of the following:
 
 1. deterministic conversion of validated lawful source evidence;
-2. a representation change required for Unreal or a supported target platform;
-3. an import/runtime correctness change required to reproduce source behavior;
-4. a correction for a defect introduced by SHAR's own conversion or port.
+1. a representation change required for Unreal or a supported target platform;
+1. an import/runtime correctness change required to reproduce source behavior;
+1. a correction for a defect introduced by SHAR's own conversion or port.
 
 Every admitted base change must retain enough evidence to distinguish the source
 fact from the conversion rule and resulting artifact. When evidence is missing,
