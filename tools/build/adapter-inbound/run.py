@@ -245,6 +245,12 @@ def _require_real_directory(path: Path, label: str) -> None:
         raise RunFailure(f"{label} must be a real directory: {path}")
 
 
+def _require_real_file(path: Path, label: str) -> None:
+    """Require one existing regular file that is not a symbolic link."""
+    if not path.is_file() or path.is_symlink():
+        raise RunFailure(f"{label} must be a real file: {path}")
+
+
 def _ensure_real_directory(path: Path, label: str) -> None:
     """Create one directory or require an existing real directory."""
     if _path_present(path):
@@ -414,16 +420,22 @@ def _run_uat(
     log: Path,
 ) -> None:
     """Run one bounded UAT command and persist its complete output."""
-    log.parent.mkdir(parents=True, exist_ok=True)
+    work = log.parent
+    _ensure_real_directory(work, "UAT work root")
+    if _path_present(log):
+        _require_real_file(log, "UAT log")
     command = _uat_command(uat, arguments)
-    automation_saved = log.parent / "automation-saved"
+    automation_saved = work / "automation-saved"
+    _ensure_real_directory(automation_saved, "UAT saved root")
     automation_logs = automation_saved / "logs"
-    automation_logs.mkdir(parents=True, exist_ok=True)
+    _ensure_real_directory(automation_logs, "UAT log root")
+    ddc = work / "ddc"
+    _ensure_real_directory(ddc, "UAT DDC root")
     environment = os.environ.copy()
     environment["uebp_EngineSavedFolder"] = str(automation_saved)
     environment["uebp_FinalLogFolder"] = str(automation_logs)
     environment["uebp_LogFolder"] = str(automation_logs)
-    environment["UE-LocalDataCachePath"] = str(log.parent / "ddc")
+    environment["UE-LocalDataCachePath"] = str(ddc)
     with log.open("w", encoding="utf-8", newline="\n") as handle:
         result = subprocess.run(
             command,

@@ -296,6 +296,101 @@ class BuildWorkRootTests(unittest.TestCase):
             verify_sdk.assert_not_called()
 
 
+class UatWorkPathTests(unittest.TestCase):
+    """Keep UAT logs and caches under real work-root identities."""
+
+    def test_rejects_linked_log_before_subprocess(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-log-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            log = work / "build.log"
+            log.write_text("sentinel\n", encoding="utf-8")
+            original = Path.is_symlink
+
+            def report_log_as_link(path: Path) -> bool:
+                return path == log or original(path)
+
+            with (
+                mock.patch.object(Path, "is_symlink", report_log_as_link),
+                mock.patch.object(_RUN.subprocess, "run") as process,
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "UAT log must be a real file",
+                ),
+            ):
+                _RUN._run_uat(root, Path("/uat"), ["probe"], log)
+
+            self.assertEqual(log.read_text(encoding="utf-8"), "sentinel\n")
+            process.assert_not_called()
+
+    def test_rejects_linked_automation_saved_before_subprocess(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-saved-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            automation = work / "automation-saved"
+            automation.mkdir()
+            original = _RUN._is_directory_link
+
+            def report_automation_as_link(path: Path) -> bool:
+                return path == automation or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_automation_as_link,
+                ),
+                mock.patch.object(_RUN.subprocess, "run") as process,
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "UAT saved root must be a real directory",
+                ),
+            ):
+                _RUN._run_uat(
+                    root,
+                    Path("/uat"),
+                    ["probe"],
+                    work / "build.log",
+                )
+
+            process.assert_not_called()
+
+    def test_rejects_linked_ddc_before_subprocess(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-ddc-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            ddc = work / "ddc"
+            ddc.mkdir()
+            original = _RUN._is_directory_link
+
+            def report_ddc_as_link(path: Path) -> bool:
+                return path == ddc or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_ddc_as_link,
+                ),
+                mock.patch.object(_RUN.subprocess, "run") as process,
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "UAT DDC root must be a real directory",
+                ),
+            ):
+                _RUN._run_uat(
+                    root,
+                    Path("/uat"),
+                    ["probe"],
+                    work / "build.log",
+                )
+
+            process.assert_not_called()
+
+
 class PublicationTransactionTests(unittest.TestCase):
     """Keep malformed existing publications unchanged on rejection."""
 

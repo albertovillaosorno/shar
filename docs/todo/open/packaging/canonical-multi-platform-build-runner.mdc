@@ -94,6 +94,10 @@ being truncated or removed before the final atomic replace.
 The shared `.cache/build/run` directory and each per-target work root are also
 required to be real directories before Turnkey or UAT writes reports, logs,
 staging data, or candidate packages.
+Each UAT invocation now also validates its own child write roots: existing log
+files must be real files, while `automation-saved/`, its `logs/` child, and the
+local DDC must be real directories. Linked identities fail before UAT starts, so
+cached tool output cannot be redirected through a pre-existing work-tree link.
 After UAT returns, the complete candidate tree is traversed without following
 links and rejects symbolic links, junctions, or special filesystem entries
 before manifests/debug symbols are moved or the package is published.
