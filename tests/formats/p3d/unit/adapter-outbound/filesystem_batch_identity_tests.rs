@@ -254,7 +254,7 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
         shar_sha256::digest_hex(component_bytes),
     );
     let manifest = format!("{header}\n{row}\n");
-    fs::write(output.join("components.jsonl"), manifest)
+    fs::write(output.join("components.jsonl"), &manifest)
         .map_err(|error| error.to_string())?;
 
     let manifest_text = fs::read_to_string(output.join("components.jsonl"))
@@ -270,6 +270,18 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
             "complete source-bound cache was rejected: structural={structural} raw={raw_matches} normalized={normalized_matches} components={components_exist}"
         ));
     }
+    let wrong_kind = manifest.replace(
+        r#""kind":"mesh","schema_ref":"mesh""#,
+        r#""kind":"texture","schema_ref":"texture""#,
+    );
+    fs::write(output.join("components.jsonl"), &wrong_kind)
+        .map_err(|error| error.to_string())?;
+    if is_cache_current(&output, &input) {
+        drop(fs::remove_dir_all(&root));
+        return Err("component kind drift from normalized source was accepted".to_owned());
+    }
+    fs::write(output.join("components.jsonl"), &manifest)
+        .map_err(|error| error.to_string())?;
     fs::write(&component, br#"{"name":"changed"}"#)
         .map_err(|error| error.to_string())?;
     if is_cache_current(&output, &input) {
@@ -321,7 +333,7 @@ fn nested_p3d(depth: usize) -> Result<Vec<u8>, String> {
             .checked_mul(12)
             .and_then(|value| u32::try_from(value).ok())
             .ok_or_else(|| "fixture total size overflowed".to_owned())?;
-        let id = if level == 0 { 0xff44_3350_u32 } else { 0xdead_beef_u32 };
+        let id = if level == 0 { 0xff44_3350_u32 } else { 0x0001_0000_u32 };
         bytes.extend_from_slice(&id.to_le_bytes());
         bytes.extend_from_slice(&12_u32.to_le_bytes());
         bytes.extend_from_slice(&total_size.to_le_bytes());

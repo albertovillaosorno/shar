@@ -122,7 +122,11 @@ JSON or image bytes forces regeneration instead of silently accepting the edit.
 Normalized-source verification now parses the exact verified `source.p3d` as a
 P3D document and replays both parser-derived byte length and chunk count against
 the manifest header. An edited `chunk_count` therefore cannot remain current
-merely because the normalized artifact digest still matches.
+merely because the normalized artifact digest still matches. Source-aware cache
+admission now also binds each published row's parser-derived provenance back to
+that exact normalized document: ordinal lookup, depth, immediate parent,
+top-level container, and decoded chunk kind must agree. A regression proves an
+internally valid `texture` row cannot replace a source `mesh` row.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
