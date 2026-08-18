@@ -747,17 +747,6 @@ pub fn replay_algorithm(
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{decode_hex, hex_bytes};
-
-    #[test]
-    fn hexadecimal_round_trip_is_exact() {
-        let input = b"source-bound\0payload";
-        let encoded = hex_bytes(input);
-        assert_eq!(
-            decode_hex(&encoded),
-            Ok(input.to_vec()),
-            "hex round trip must preserve bytes"
-        );
-    }
-}
+// jig-ignore-next-line: exact test module path is indivisible
+#[path = "../../../../../tests/foundation/algorithm/unit/application/engine/tests.rs"]
+mod tests;

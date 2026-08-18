@@ -140,22 +140,6 @@ pub fn run_env() -> ExitCode {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::{Mode, parse};
-
-    #[test]
-    fn create_shape_accepts_repeated_sources() {
-        let arguments = [
-            "create", "--source", "one", "--source", "two", "--target", "target", "--output",
-            "plan.txt",
-        ]
-        .map(str::to_owned);
-        let parsed =
-            parse(&arguments).map(|invocation| (invocation.mode, invocation.sources.len()));
-        assert_eq!(
-            parsed,
-            Ok((Mode::Create, 2)),
-            "valid create invocation should retain both sources"
-        );
-    }
-}
+// jig-ignore-next-line: exact test module path is indivisible
+#[path = "../../../../../tests/foundation/algorithm/unit/adapter-inbound/cli/tests.rs"]
+mod tests;
