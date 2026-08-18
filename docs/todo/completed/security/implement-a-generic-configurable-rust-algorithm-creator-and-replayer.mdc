@@ -10,6 +10,8 @@ dependencies: []
 children: [require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is]
 ---
 
+<!-- CSpell:ignore Malbolge replayer -->
+
 # Implement a generic configurable Rust algorithm creator and replayer
 
 Replace research-specific reconstruction generators with one source-agnostic
@@ -22,7 +24,8 @@ source evidence.
 - [x] Own the implementation at `src/foundation/algorithm/` as a Rust workspace
   crate with no game-, icon-, Doom-, or Malbolge-specific behavior.
 - [x] Load generic authoring controls from
-  `src/foundation/algorithm/settings.json`; settings define mechanism limits and
+  `src/foundation/algorithm/composition/adapter-inbound/settings.json`; settings
+  define mechanism limits and
   defaults, never product-specific source identities or similarity policy.
 - [x] Provide a small CLI that accepts one or more source files or directories,
   a target file or directory to record, and an explicit output path whose file

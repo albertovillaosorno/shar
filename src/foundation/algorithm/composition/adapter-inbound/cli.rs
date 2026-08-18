@@ -11,7 +11,8 @@ use crate::{Settings, create_algorithm, replay_algorithm};
 const USAGE: &str = "usage: algorithm <create|replay> --source <PATH>... \
 [--settings <SETTINGS.json>] (--target <PATH> | --algorithm <FILE.txt>) \
 --output <PATH>";
-const DEFAULT_SETTINGS: &str = "src/foundation/algorithm/settings.json";
+const DEFAULT_SETTINGS: &str =
+    "src/foundation/algorithm/composition/adapter-inbound/settings.json";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Mode {

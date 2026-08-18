@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Authors and replays generic deterministic source-bound reconstruction algorithms.
+Authors and replays generic deterministic source-bound reconstruction
+algorithms.
 
 ## Ownership
 
@@ -20,4 +21,4 @@ target bytes into a public algorithm document.
 
 - `composition`
 - `domain`
-- `settings.json`
+- `composition/adapter-inbound/settings.json`
