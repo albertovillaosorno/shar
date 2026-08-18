@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Decision date: 2026-07-12
-- Last reviewed: 2026-08-03
+- Last reviewed: 2026-08-18
 - Scope: World reconstruction
 
 ## Context
@@ -15,7 +15,10 @@ proprietary editor project or inventing a replacement terrain model.
 The Unreal world consumes deterministic FBX packages generated from decoded
 original geometry and source-authored placement evidence. The pipeline preserves
 source positions, transforms, pivots, UVs, materials, textures, and package
-identity.
+identity. One decoded source mesh remains one FBX mesh regardless of the spatial
+distance between disconnected components. Source owner and placement records
+govern independent, breakable, and interactable roles; spatial proximity is not
+object-identity authority.
 
 Narrative levels may share stable family labels for catalog, streaming, mission,
 and progression purposes. Those labels are metadata only. They do not translate,
