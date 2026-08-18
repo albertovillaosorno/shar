@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Classify mods as visual-only, additive/story, gameplay-extension, or native-code, with…
+# Classify mods as visual-only, additive/story, gameplay-extension, or…
 
 Classify mods as visual-only, additive/story, gameplay-extension, or
 native-code, with explicit compatibility and save-impact declarations.

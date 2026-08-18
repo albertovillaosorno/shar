@@ -10,7 +10,7 @@ dependencies: [map-every-reviewed-participant-route-timing-load-checkpoint-prese
 children: []
 ---
 
-# Compile all 611 direct objective and 408 direct condition parameter shapes into typed…
+# Compile all 611 direct objective and 408 direct condition parameter shapes…
 
 Compile all 611 direct objective and 408 direct condition parameter shapes
 into typed evidence; preserve the one noncanonical `niether` route token and

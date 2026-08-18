@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Keep native C++ mods behind a trust scanner that reports filesystem, process, network,…
+# Keep native C++ mods behind a trust scanner that reports filesystem, process,…
 
 Keep native C++ mods behind a trust scanner that reports filesystem, process,
 network, platform, save, and engine-surface access before the user decides

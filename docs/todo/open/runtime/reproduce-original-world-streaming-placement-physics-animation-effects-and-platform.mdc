@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Reproduce original world streaming, placement, physics, animation, effects, and platform…
+# Reproduce original world streaming, placement, physics, animation, effects,…
 
 Reproduce original world streaming, placement, physics, animation, effects,
 and platform input behavior.

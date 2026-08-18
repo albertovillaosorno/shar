@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Deduplicate identical generated skeletons, textures, models, and other assets only when…
+# Deduplicate identical generated skeletons, textures, models, and other assets…
 
 Deduplicate identical generated skeletons, textures, models, and other assets
 only when deterministic evidence proves equivalence. Never assume all

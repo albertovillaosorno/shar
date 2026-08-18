@@ -10,7 +10,7 @@ dependencies: [map-every-reviewed-participant-route-timing-load-checkpoint-prese
 children: []
 ---
 
-# Compile all 811 direct mission-scope commands into typed restart, load, vehicle, camera,…
+# Compile all 811 direct mission-scope commands into typed restart, load,…
 
 Compile all 811 direct mission-scope commands into typed restart, load,
 vehicle, camera, presentation, hint, HUD, pedestrian-group, and street-race

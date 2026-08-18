@@ -10,7 +10,7 @@ dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-
 children: []
 ---
 
-# Replay normalized mission context and producer-derived summaries, then project a…
+# Replay normalized mission context and producer-derived summaries, then…
 
 Replay normalized mission context and producer-derived summaries, then project
 a lossless mission/stage/objective/condition source-scope graph with one root

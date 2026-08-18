@@ -10,7 +10,7 @@ dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
 children: []
 ---
 
-# Parse accepted bundles into immutable typed operations without changing their canonical…
+# Parse accepted bundles into immutable typed operations without changing their…
 
 Parse accepted bundles into immutable typed operations without changing their
 canonical revisions.

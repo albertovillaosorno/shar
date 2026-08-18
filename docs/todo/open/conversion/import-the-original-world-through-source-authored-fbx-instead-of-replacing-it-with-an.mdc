@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Import the original world through source-authored FBX instead of replacing it with an…
+# Import the original world through source-authored FBX instead of replacing it…
 
 Import the original world through source-authored FBX instead of replacing it
 with an Unreal Landscape.

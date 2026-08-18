@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Make mission, model, material, texture, skeleton, coordinate, gameplay, achievement, and…
+# Make mission, model, material, texture, skeleton, coordinate, gameplay,…
 
 Make mission, model, material, texture, skeleton, coordinate, gameplay,
 achievement, and UI definitions data-addressable for nonexpert mod authors.

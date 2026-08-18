@@ -10,7 +10,7 @@ dependencies: [import-meshes-skeletons-physics-assets-and-animations-correctly]
 children: []
 ---
 
-# Import package-level skeletal FBX through a companion-aware transaction that owns the…
+# Import package-level skeletal FBX through a companion-aware transaction that…
 
 Import package-level skeletal FBX through a companion-aware transaction that
 owns the SkeletalMesh and new Skeleton together, verifies both classes and

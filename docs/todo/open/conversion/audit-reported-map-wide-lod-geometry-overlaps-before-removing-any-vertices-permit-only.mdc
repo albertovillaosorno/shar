@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Audit reported map-wide LOD/geometry overlaps before removing any vertices; permit only…
+# Audit reported map-wide LOD/geometry overlaps before removing any vertices;…
 
 Audit reported map-wide LOD/geometry overlaps before removing any vertices;
 permit only deterministic source-backed conversion corrections.

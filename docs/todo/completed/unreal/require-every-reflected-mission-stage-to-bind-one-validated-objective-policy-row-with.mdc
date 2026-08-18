@@ -10,7 +10,7 @@ dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-
 children: []
 ---
 
-# Require every reflected mission stage to bind one validated objective policy row with…
+# Require every reflected mission stage to bind one validated objective policy…
 
 Require every reflected mission stage to bind one validated objective policy
 row with explicit start, completion, failure, recovery, route, target,

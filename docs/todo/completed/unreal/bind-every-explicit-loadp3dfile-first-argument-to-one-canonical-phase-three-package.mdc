@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Bind every explicit `LoadP3DFile` first argument to one canonical phase-three package…
+# Bind every explicit `LoadP3DFile` first argument to one canonical phase-three…
 
 Bind every explicit `LoadP3DFile` first argument to one canonical phase-three
 package and keep only that path in P3D summaries. Preserve the source loader's

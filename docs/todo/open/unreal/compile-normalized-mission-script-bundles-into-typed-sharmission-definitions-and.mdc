@@ -10,7 +10,7 @@ dependencies: [convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-da
 children: [version-normalized-mfk-command-evidence-to-v3-strip-trailing-source-comments-from, fail-semantic-intake-before-unreal-planning-on-stale-mission-evidence-inconsistent, require-every-reflected-mission-stage-to-bind-one-validated-objective-policy-row-with, resolve-the-two-observed-legacy-context-defects-through-exact-path-and-command-window, close-the-observed-objective-and-condition-alias-registries-plus-exact, replay-normalized-mission-context-and-producer-derived-summaries-then-project-a, map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward, emit-lossless-usharmissiondefinition-assets-only-after-the-complete-mission-graph]
 ---
 
-# Compile normalized mission-script bundles into typed `SharMission` definitions and…
+# Compile normalized mission-script bundles into typed `SharMission`…
 
 Compile normalized mission-script bundles into typed `SharMission` definitions
 and bindings for the shared mission StateTree contract.

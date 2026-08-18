@@ -10,7 +10,7 @@ dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-
 children: []
 ---
 
-# Emit lossless `USharMissionDefinition` assets only after the complete mission graph…
+# Emit lossless `USharMissionDefinition` assets only after the complete mission…
 
 Emit lossless `USharMissionDefinition` assets only after the complete mission
 graph passes reference and topology validation.

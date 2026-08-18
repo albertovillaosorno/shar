@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Allow visual-only mods to be reordered, enabled, disabled, or replaced from the main…
+# Allow visual-only mods to be reordered, enabled, disabled, or replaced from…
 
 Allow visual-only mods to be reordered, enabled, disabled, or replaced from
 the main menu without invalidating the active save.
