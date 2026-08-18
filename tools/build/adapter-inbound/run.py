@@ -259,6 +259,14 @@ def _ensure_real_directory(path: Path, label: str) -> None:
     path.mkdir()
 
 
+def _remove_real_directory_if_present(path: Path, label: str) -> None:
+    """Remove one stale repository directory without following links."""
+    if not _path_present(path):
+        return
+    _require_real_directory(path, label)
+    shutil.rmtree(path)
+
+
 def _reset_real_directory(path: Path, label: str) -> None:
     """Replace one repository scratch directory without following links."""
     if _path_present(path):
@@ -569,8 +577,11 @@ def _cache_nonruntime_artifacts(
     """Keep packaging metadata and debug symbols out of final dist output."""
     metadata = work / "publication-metadata"
     symbols = work / "symbols"
-    shutil.rmtree(metadata, ignore_errors=True)
-    shutil.rmtree(symbols, ignore_errors=True)
+    _remove_real_directory_if_present(
+        metadata,
+        "publication metadata cache",
+    )
+    _remove_real_directory_if_present(symbols, "symbol cache")
 
     manifests = sorted(candidate.glob("Manifest_*.txt"))
     if manifests:
