@@ -33,8 +33,8 @@ impl Fixture {
             std::process::id()
         ));
         match fs::remove_dir_all(&root) {
-            Ok(()) => {}
-            Err(error) if error.kind() == ErrorKind::NotFound => {}
+            Ok(()) => {},
+            Err(error) if error.kind() == ErrorKind::NotFound => {},
             Err(error) => return Err(error),
         }
         fs::create_dir_all(&root)?;
