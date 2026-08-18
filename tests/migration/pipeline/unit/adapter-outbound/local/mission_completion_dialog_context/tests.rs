@@ -105,11 +105,13 @@ fn groups_participant_packages_for_one_conversation() -> Result<(), String> {
         resolve_conversation(&index, 7, "toxic").map_err(|e| e.to_string())?;
     assert_eq!(mode, "noboxconv");
     assert_eq!(conversation, "l7m3-toxic");
-    assert_eq!(packages.len(), 2);
-    assert_eq!(packages[0].participant_id(), "frink");
-    assert_eq!(packages[1].participant_id(), "homer");
-    assert_eq!(packages[0].audio_ids(), &["audio-frink"]);
-    assert_eq!(packages[1].audio_ids(), &["audio-homer"]);
+    let [frink_package, homer_package] = packages.as_slice() else {
+        return Err("conversation package count changed".to_owned());
+    };
+    assert_eq!(frink_package.participant_id(), "frink");
+    assert_eq!(homer_package.participant_id(), "homer");
+    assert_eq!(frink_package.audio_ids(), &["audio-frink"]);
+    assert_eq!(homer_package.audio_ids(), &["audio-homer"]);
     Ok(())
 }
 
@@ -164,9 +166,7 @@ fn keeps_character_independent_from_audio_packages() -> Result<(), String> {
         "character-frink",
         "characters/frink/base-model",
     )]);
-    let character = catalog
-        .resolve_character("frink_m")
-        .map_err(|error| error.to_string())?;
+    let character = catalog.resolve_character("frink_m")?;
     let package = MissionCompletionDialogPackageBinding {
         participant_id: "homer".to_owned(),
         package_id: "toxic-homer".to_owned(),
@@ -210,7 +210,9 @@ fn keeps_character_independent_from_audio_packages() -> Result<(), String> {
     assert_eq!(binding.mode(), "noboxconv");
     assert_eq!(binding.conversation_id(), "l7m3-toxic");
     assert_eq!(
-        binding.character().map(|value| value.participant_id()),
+        binding
+            .character()
+            .map(MissionCharacterCatalogReference::participant_id),
         Some("frink")
     );
     let [package] = binding.packages() else {
