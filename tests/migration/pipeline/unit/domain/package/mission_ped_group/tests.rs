@@ -70,7 +70,7 @@ fn scopes(commands: &[(&str, &[&str])]) -> Result<MissionScopeReport, String> {
         .map(|(index, (name, arguments))| {
             let args_raw = render_args(arguments);
             serde_json::json!({
-                "ordinal": index + 1,
+                "ordinal": index.saturating_add(1),
                 "name": name,
                 "args_raw": args_raw,
                 "semantic_role": "mission-script",
