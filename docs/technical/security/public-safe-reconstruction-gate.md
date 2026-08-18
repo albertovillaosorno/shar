@@ -103,7 +103,9 @@ ship as reconstruction plans. Generic algorithm authoring also requires the
 canonical target root to be disjoint from every canonical source root in both
 containment directions; source payloads therefore cannot be republished merely
 by selecting the source tree, or one of its descendants/ancestors, as the
-protected target. A published plan remains unusable without the local source
+protected target. Authoring also compares cross-platform physical file identity,
+so a disjoint hard-link alias of a source file cannot become protected target
+material. A published plan remains unusable without the local source
 evidence admitted by its source-bound replay contract. The generic engine's
 external round-trip tests require caller-supplied source at replay and verify
 that create/replay does not change the caller's source bytes or layout.

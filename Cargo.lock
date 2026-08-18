@@ -396,6 +396,7 @@ name = "shar_algorithm"
 version = "26.7.0"
 dependencies = [
  "chacha20poly1305",
+ "same-file",
  "schoenwald_cli",
  "schoenwald_filesystem",
  "serde",

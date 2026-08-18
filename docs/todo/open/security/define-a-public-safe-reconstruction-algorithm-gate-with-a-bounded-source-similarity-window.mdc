@@ -74,10 +74,12 @@ unchanged. Existing overlap guards continue to reject algorithm output inside a
 source root. Authoring additionally rejects exact or nested source/target root
 overlap in either containment direction before plan publication, preventing a
 caller from turning source payloads into protected target material merely by
-pointing the target back at the source tree. These tests establish engine-level
-source binding and read-only behavior; they do not certify the still-placeholder
-distributable family plans or replace the pending representative-install
-similarity calibration.
+pointing the target back at the source tree. Authoring also rejects target files
+that are hard-link aliases of any source file by cross-platform physical file
+identity, closing a path-disjoint alias of the same payload. These tests
+establish engine-level source binding and read-only behavior; they do not certify
+the still-placeholder distributable family plans or replace the pending
+representative-install similarity calibration.
 
 The ~60% minimum-installation estimate and 45–55% similarity window remain
 design targets, not validated production evidence, legal conclusions, or safe

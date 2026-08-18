@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use chacha20poly1305 as _;
+use same_file as _;
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 use serde as _;
@@ -481,6 +482,35 @@ fn run_target_parent_overlap_is_rejected() -> Result<(), Box<dyn std::error::Err
 fn target_parent_containing_source_is_rejected_before_publication() {
     let result = run_target_parent_overlap_is_rejected();
     assert!(result.is_ok(), "target parent overlap rejection failed: {result:?}");
+}
+
+fn run_hard_link_target_alias_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("hard-link-target-alias")?;
+    let source = temp.path.join("source.bin");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    fs::write(&source, vec![0x41_u8; 2048])?;
+    fs::hard_link(&source, &target)?;
+
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    );
+    if result.is_ok() {
+        return Err("hard-linked source alias was accepted as target".into());
+    }
+    if algorithm.exists() {
+        return Err("hard-link source alias created an algorithm".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn hard_link_target_alias_is_rejected_before_publication() {
+    let result = run_hard_link_target_alias_is_rejected();
+    assert!(result.is_ok(), "hard-link target rejection failed: {result:?}");
 }
 
 fn run_replay_parent_traversal_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
