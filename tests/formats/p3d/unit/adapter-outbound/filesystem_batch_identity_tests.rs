@@ -241,14 +241,17 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
     fs::write(&input, raw).map_err(|error| error.to_string())?;
     fs::write(output.join("source.p3d"), normalized)
         .map_err(|error| error.to_string())?;
-    fs::write(&component, br#"{"name":"mesh"}"#)
-        .map_err(|error| error.to_string())?;
+    let component_bytes = br#"{"name":"mesh"}"#;
+    fs::write(&component, component_bytes).map_err(|error| error.to_string())?;
     let header = format!(
         r#"{{"schema":"p3d.package.v1","source_sha256":"{}","normalized_sha256":"{}","byte_len":24,"chunk_count":2,"component_count":1}}"#,
         shar_sha256::digest_hex(raw),
         shar_sha256::digest_hex(normalized),
     );
-    let row = r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"mesh","payload_format":"schema_json","kind":"mesh","schema_ref":"mesh","recovery_status":"decoded_schema_payload","path":"mesh/mesh.json"}"#;
+    let row = format!(
+        r#"{{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"mesh","payload_format":"schema_json","kind":"mesh","schema_ref":"mesh","recovery_status":"decoded_schema_payload","path":"mesh/mesh.json","sha256":"{}"}}"#,
+        shar_sha256::digest_hex(component_bytes),
+    );
     let manifest = format!("{header}\n{row}\n");
     fs::write(output.join("components.jsonl"), manifest)
         .map_err(|error| error.to_string())?;
@@ -266,6 +269,13 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
             "complete source-bound cache was rejected: structural={structural} raw={raw_matches} normalized={normalized_matches} components={components_exist}"
         ));
     }
+    fs::write(&component, br#"{"name":"changed"}"#)
+        .map_err(|error| error.to_string())?;
+    if is_cache_current(&output, &input) {
+        drop(fs::remove_dir_all(&root));
+        return Err("valid but changed component artifact was accepted".to_owned());
+    }
+    fs::write(&component, component_bytes).map_err(|error| error.to_string())?;
     fs::write(output.join("source.p3d"), b"corrupted-source")
         .map_err(|error| error.to_string())?;
     if is_cache_current(&output, &input) {

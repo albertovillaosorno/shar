@@ -318,6 +318,7 @@ fn publish_recovered_component(
     }
     local::write_bytes(&path, &recovered.bytes, true)
         .map_err(|error| P3dError::invalid_source(error.to_string()))?;
+    let artifact_sha256 = digest_hex(&recovered.bytes);
     if kind == "texture"
         && let Some(metadata) = texture_metadata_json(component, source)
     {
@@ -341,6 +342,7 @@ fn publish_recovered_component(
         payload_format: recovered.payload_format,
         schema_ref: kind_schema(kind).to_owned(),
         recovery_status: recovered.recovery_status,
+        sha256: artifact_sha256,
     })
 }
 

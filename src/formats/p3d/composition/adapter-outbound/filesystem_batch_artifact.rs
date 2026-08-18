@@ -35,10 +35,12 @@ use std::path::{Path, PathBuf};
 #[cfg(test)]
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
+use shar_sha256::digest_hex;
 
 use super::image::detect_image_extension;
 
 /// Returns whether every manifest row references a complete component file.
+#[cfg(test)]
 pub(super) fn manifest_component_files_exist(
     output_dir: &Path,
     text: &str,
@@ -87,6 +89,61 @@ pub(super) fn manifest_component_files_exist(
     has_header && has_rows
 }
 
+/// Returns whether every current manifest artifact matches its exact digest.
+pub(super) fn manifest_component_files_match_digests(
+    output_dir: &Path,
+    text: &str,
+) -> bool {
+    let mut has_header = false;
+    let mut has_rows = false;
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if !has_header {
+            has_header = true;
+            continue;
+        }
+        let Ok(value) = serde_json::from_str::<serde_json::Value>(trimmed) else {
+            return false;
+        };
+        let Some(object) = value.as_object() else {
+            return false;
+        };
+        let Some(relative_path) = object.get("path").and_then(serde_json::Value::as_str)
+        else {
+            return false;
+        };
+        let Some(payload_format) = object
+            .get("payload_format")
+            .and_then(serde_json::Value::as_str)
+        else {
+            return false;
+        };
+        let Some(expected_sha256) = object
+            .get("sha256")
+            .and_then(serde_json::Value::as_str)
+        else {
+            return false;
+        };
+        let Some(component_path) = cache_component_path(output_dir, relative_path)
+        else {
+            return false;
+        };
+        let Ok(bytes) = local::read_bytes(&component_path) else {
+            return false;
+        };
+        if !payload_bytes_are_complete(&bytes, payload_format)
+            || digest_hex(&bytes) != expected_sha256
+        {
+            return false;
+        }
+        has_rows = true;
+    }
+    has_header && has_rows
+}
+
 /// Returns whether one manifest component resolves to a nonempty file.
 #[cfg(test)]
 pub(super) fn cache_component_exists(
@@ -101,6 +158,7 @@ pub(super) fn cache_component_exists(
 }
 
 /// Returns whether one cached component contains valid payload evidence.
+#[cfg(test)]
 fn cache_component_is_complete(
     output_dir: &Path,
     relative_path: &str,
@@ -113,16 +171,21 @@ fn cache_component_is_complete(
     let Ok(bytes) = local::read_bytes(&component_path) else {
         return false;
     };
+    payload_bytes_are_complete(&bytes, payload_format)
+}
+
+/// Returns whether artifact bytes satisfy their declared payload encoding.
+fn payload_bytes_are_complete(bytes: &[u8], payload_format: &str) -> bool {
     if bytes.is_empty() {
         return false;
     }
     if payload_format == "schema_json" {
-        return serde_json::from_slice::<serde_json::Value>(&bytes).is_ok();
+        return serde_json::from_slice::<serde_json::Value>(bytes).is_ok();
     }
     let Some(subtype) = payload_format.strip_prefix("image/") else {
         return false;
     };
-    detect_image_extension(&bytes) == Some(subtype)
+    detect_image_extension(bytes) == Some(subtype)
 }
 
 /// Resolves one manifest path beneath the package components directory.

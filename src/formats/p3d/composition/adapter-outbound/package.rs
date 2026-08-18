@@ -56,6 +56,8 @@ pub struct ComponentOutput {
     pub schema_ref: String,
     /// Recovery status.
     pub recovery_status: String,
+    /// Exact SHA-256 of the published primary artifact bytes.
+    pub sha256: String,
 }
 
 /// Write lossless package.
@@ -120,6 +122,8 @@ pub fn component_line(component: &ComponentOutput) -> String {
     json.push_str(&escape(&component.schema_ref));
     json.push_str("\",\"recovery_status\":\"");
     json.push_str(&escape(&component.recovery_status));
+    json.push_str("\",\"sha256\":\"");
+    json.push_str(&component.sha256);
     json.push_str("\"}");
     json
 }
