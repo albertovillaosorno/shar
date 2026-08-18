@@ -65,8 +65,9 @@ use super::unreal_fbx_catalog::verified_fbx_catalog_at;
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
-    MISSION_SCRIPT_SCHEMA, MissionCameraCatalog, MissionLocatorCatalog,
-    MissionP3dReferenceCatalog, MissionReferenceCatalog, PhaseThreePackageIndex,
+    MISSION_SCRIPT_SCHEMA, MissionCameraCatalog, MissionInitializationBinding,
+    MissionLocatorCatalog, MissionP3dReferenceCatalog, MissionReferenceCatalog,
+    PhaseThreePackageIndex,
     PipelineConfig, PipelineError, PipelineOutcome, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
     UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
     compile_mission_scope_graphs,
@@ -431,6 +432,10 @@ fn parallel_source_evidence(
 
 /// Re-bind typed mission locator references across the exact source snapshot
 /// that was already hashed for Unreal import planning.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "Explicit catalogs keep cross-source mission preflight auditable."
+)]
 fn preflight_cross_source_mission_locators(
     inputs: &[SourceEvidenceInput],
     verified: &[UnrealSourceEvidence],
@@ -604,7 +609,7 @@ fn preflight_cross_source_mission_locators(
         let has_ped_group_selection = initialization
             .missions()
             .iter()
-            .flat_map(|mission| mission.directives())
+            .flat_map(MissionInitializationBinding::directives)
             .any(|directive| matches!(
                 directive,
                 crate::domain::MissionInitializationDirective::PedGroup { .. }
@@ -909,6 +914,11 @@ fn source_worker_count_for(available: usize, source_count: usize) -> usize {
         .min(source_count.max(1))
 }
 
+#[expect(
+    clippy::too_many_arguments,
+    reason = "Explicit source identity fields keep mission validation \
+              auditable."
+)]
 fn validate_normalized_mission_source(
     source_id: &str,
     kind: &str,
@@ -1111,6 +1121,10 @@ fn validate_normalized_mission_source(
     Ok(mission_definition)
 }
 
+const fn display_position(index: usize) -> usize {
+    index.saturating_add(1)
+}
+
 fn validate_mission_definition_bundle(
     rows: &[String],
     verified: &[UnrealSourceEvidence],
@@ -1130,7 +1144,10 @@ fn validate_mission_definition_bundle(
                 "mission definition row is not one canonical JSONL record",
             ));
         }
-        let label = format!("mission definition row {}", index + 1);
+        let label = format!(
+            "mission definition row {}",
+            display_position(index)
+        );
         let object = parse_object(
             row.trim_end_matches(char::from(10)),
             &label,
@@ -1205,10 +1222,12 @@ fn validate_mission_definition_stages(
             "{label} has no authored stages"
         )));
     }
-    let last_index = stages.len() - 1;
+    let last_index = stages.len().checked_sub(1).ok_or_else(|| {
+        PipelineError::new("mission definition stage count underflowed")
+    })?;
     let mut previous_source_ordinal = None;
     for (index, value) in stages.iter().enumerate() {
-        let stage_label = format!("{label} stage {}", index + 1);
+        let stage_label = format!("{label} stage {}", display_position(index));
         let stage = value.as_object().ok_or_else(|| {
             PipelineError::new(format!("{stage_label} is not an object"))
         })?;
@@ -1231,8 +1250,13 @@ fn validate_mission_definition_stages(
         }
         previous_source_ordinal = Some(source_ordinal);
 
+        let next_index = index.checked_add(1).ok_or_else(|| {
+            PipelineError::new(format!(
+                "{stage_label} sequence index overflowed"
+            ))
+        })?;
         let expected_next = (index < last_index)
-            .then(|| u64::try_from(index + 1).unwrap_or(u64::MAX));
+            .then_some(u64::try_from(next_index).unwrap_or(u64::MAX));
         let actual_next = match stage.get("next_authored_sequence_ordinal") {
             Some(Value::Null) => None,
             Some(value) => Some(value.as_u64().ok_or_else(|| {
@@ -1428,7 +1452,10 @@ fn validate_mission_definition_conditions(
         })?;
     let mut previous_source_ordinal = None;
     for (index, value) in conditions.iter().enumerate() {
-        let condition_label = format!("{stage_label} condition {}", index + 1);
+        let condition_label = format!(
+            "{stage_label} condition {}",
+            display_position(index)
+        );
         let condition = value.as_object().ok_or_else(|| {
             PipelineError::new(format!("{condition_label} is not an object"))
         })?;
@@ -1550,7 +1577,10 @@ fn validate_mission_definition_countdown(
         })?;
     let mut previous_source_ordinal = start_source_ordinal;
     for (index, value) in entries.iter().enumerate() {
-        let entry_label = format!("{stage_label} countdown entry {}", index + 1);
+        let entry_label = format!(
+            "{stage_label} countdown entry {}",
+            display_position(index)
+        );
         let entry = value.as_object().ok_or_else(|| {
             PipelineError::new(format!("{entry_label} is not an object"))
         })?;
@@ -1637,7 +1667,7 @@ fn validate_mission_definition_collectible_waypoints(
     for (index, value) in bindings.iter().enumerate() {
         let label = format!(
             "{stage_label} collectible waypoint {}",
-            index + 1
+            display_position(index)
         );
         let binding = value.as_object().ok_or_else(|| {
             PipelineError::new(format!("{label} is not an object"))
@@ -1692,7 +1722,10 @@ fn validate_mission_definition_npc_waypoints(
         })?;
     let mut previous_source_ordinal = None;
     for (index, value) in bindings.iter().enumerate() {
-        let label = format!("{stage_label} NPC waypoint {}", index + 1);
+        let label = format!(
+            "{stage_label} NPC waypoint {}",
+            display_position(index)
+        );
         let binding = value.as_object().ok_or_else(|| {
             PipelineError::new(format!("{label} is not an object"))
         })?;
@@ -1740,7 +1773,10 @@ fn validate_mission_definition_pickup_state_props(
         })?;
     let mut previous_target_source_ordinal = None;
     for (index, value) in bindings.iter().enumerate() {
-        let label = format!("{stage_label} pickup state prop {}", index + 1);
+        let label = format!(
+            "{stage_label} pickup state prop {}",
+            display_position(index)
+        );
         let binding = value.as_object().ok_or_else(|| {
             PipelineError::new(format!("{label} is not an object"))
         })?;
@@ -2446,21 +2482,16 @@ fn restore_previous_publication(
     had_manifest: bool,
     remove_published_destination: bool,
 ) -> PipelineOutcome<()> {
-    let mut failed = false;
-    if remove_published_destination
-        && remove_generated_directory(destination).is_err()
+    let remove_destination_failed = remove_published_destination
+        && remove_generated_directory(destination).is_err();
+    let restore_destination_failed =
+        had_destination && fs::rename(backup, destination).is_err();
+    let restore_manifest_failed = had_manifest
+        && fs::rename(manifest_backup, manifest_destination).is_err();
+    if remove_destination_failed
+        || restore_destination_failed
+        || restore_manifest_failed
     {
-        failed = true;
-    }
-    if had_destination && fs::rename(backup, destination).is_err() {
-        failed = true;
-    }
-    if had_manifest
-        && fs::rename(manifest_backup, manifest_destination).is_err()
-    {
-        failed = true;
-    }
-    if failed {
         return Err(PipelineError::new(
             "restore previous Unreal publication failed",
         ));
