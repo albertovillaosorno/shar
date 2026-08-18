@@ -126,7 +126,238 @@ fn geometry_key_ignores_vertex_order_but_preserves_position()
 }
 
 #[test]
-fn halloween_mixed_mesh_retains_only_new_triangles() -> Result<(), String> {
+fn exact_source_face_duplicate_is_deduplicated() -> Result<(), String> {
+    let first_group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![[0., 0.], [1., 0.], [0., 1.]],
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("first group failed: {error:?}"))?;
+    let reordered_group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![[0., 0.], [1., 0.], [0., 1.]],
+        &[1, 2, 0],
+    )
+    .map_err(|error| format!("reordered group failed: {error:?}"))?;
+    let first = MeshAsset::new("shared", vec![first_group])
+        .map_err(|error| format!("first mesh failed: {error:?}"))?;
+    let reordered = MeshAsset::new("shared", vec![reordered_group])
+        .map_err(|error| format!("reordered mesh failed: {error:?}"))?;
+    let mut owned = InteriorGeometryOwnership::default();
+    let (retained_first, removed_first) =
+        retain_unowned_triangles(first, &mut owned)
+            .map_err(|error| error.to_string())?;
+    let (retained_reordered, removed_reordered) =
+        retain_unowned_triangles(reordered, &mut owned)
+            .map_err(|error| error.to_string())?;
+    if retained_first.is_none() || removed_first != 0 {
+        return Err("first exact source face was removed".to_owned());
+    }
+    if retained_reordered.is_some() || removed_reordered != 1 {
+        return Err(format!(
+            "exact duplicate was not removed: removed={removed_reordered}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn reversed_source_winding_is_preserved() -> Result<(), String> {
+    let first_group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![[0., 0.], [1., 0.], [0., 1.]],
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("first group failed: {error:?}"))?;
+    let reversed_group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![[0., 0.], [1., 0.], [0., 1.]],
+        &[0, 2, 1],
+    )
+    .map_err(|error| format!("reversed group failed: {error:?}"))?;
+    let first = MeshAsset::new("shared", vec![first_group])
+        .map_err(|error| format!("first mesh failed: {error:?}"))?;
+    let reversed = MeshAsset::new("shared", vec![reversed_group])
+        .map_err(|error| format!("reversed mesh failed: {error:?}"))?;
+    let mut owned = InteriorGeometryOwnership::default();
+    let (retained_first, removed_first) =
+        retain_unowned_triangles(first, &mut owned)
+            .map_err(|error| error.to_string())?;
+    let (retained_reversed, removed_reversed) =
+        retain_unowned_triangles(reversed, &mut owned)
+            .map_err(|error| error.to_string())?;
+    if retained_first.is_none() || removed_first != 0 {
+        return Err("first authored winding was removed".to_owned());
+    }
+    if retained_reversed.is_none() || removed_reversed != 0 {
+        return Err("reversed authored winding was deduplicated".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn distinct_uv_on_same_surface_is_preserved() -> Result<(), String> {
+    let first_group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![[0., 0.], [1., 0.], [0., 1.]],
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("first group failed: {error:?}"))?;
+    let second_group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![[0.5, 0.5], [1., 0.], [0., 1.]],
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("second group failed: {error:?}"))?;
+    let first = MeshAsset::new("shared", vec![first_group])
+        .map_err(|error| format!("first mesh failed: {error:?}"))?;
+    let second = MeshAsset::new("shared", vec![second_group])
+        .map_err(|error| format!("second mesh failed: {error:?}"))?;
+    let mut owned = InteriorGeometryOwnership::default();
+    let (retained_first, removed_first) =
+        retain_unowned_triangles(first, &mut owned)
+            .map_err(|error| error.to_string())?;
+    let (retained_second, removed_second) =
+        retain_unowned_triangles(second, &mut owned)
+            .map_err(|error| error.to_string())?;
+    if retained_first.is_none() || removed_first != 0 {
+        return Err("first authored UV surface was removed".to_owned());
+    }
+    if retained_second.is_none() || removed_second != 0 {
+        return Err("distinct authored UV surface was removed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn distinct_material_on_same_surface_is_preserved() -> Result<(), String> {
+    let first_group = PrimitiveGroup::new(
+        0,
+        "first-material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("first group failed: {error:?}"))?;
+    let second_group = PrimitiveGroup::new(
+        0,
+        "second-material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("second group failed: {error:?}"))?;
+    let first = MeshAsset::new("shared", vec![first_group])
+        .map_err(|error| format!("first mesh failed: {error:?}"))?;
+    let second = MeshAsset::new("shared", vec![second_group])
+        .map_err(|error| format!("second mesh failed: {error:?}"))?;
+    let mut owned = InteriorGeometryOwnership::default();
+    let (retained_first, removed_first) =
+        retain_unowned_triangles(first, &mut owned)
+            .map_err(|error| error.to_string())?;
+    let (retained_second, removed_second) =
+        retain_unowned_triangles(second, &mut owned)
+            .map_err(|error| error.to_string())?;
+    if retained_first.is_none() || removed_first != 0 {
+        return Err("first authored surface was removed".to_owned());
+    }
+    if retained_second.is_none() || removed_second != 0 {
+        return Err("distinct authored material surface was removed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn nearby_source_positions_are_not_deduplicated() -> Result<(), String> {
+    let first_group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("first group failed: {error:?}"))?;
+    let shifted_group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0.004, 0., 0.], [1.004, 0., 0.], [0.004, 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("shifted group failed: {error:?}"))?;
+    let first = MeshAsset::new("shared", vec![first_group])
+        .map_err(|error| format!("first mesh failed: {error:?}"))?;
+    let shifted = MeshAsset::new("shared", vec![shifted_group])
+        .map_err(|error| format!("shifted mesh failed: {error:?}"))?;
+    let mut owned = InteriorGeometryOwnership::default();
+    let (retained_first, removed_first) =
+        retain_unowned_triangles(first, &mut owned)
+            .map_err(|error| error.to_string())?;
+    let (retained_shifted, removed_shifted) =
+        retain_unowned_triangles(shifted, &mut owned)
+            .map_err(|error| error.to_string())?;
+    if retained_first.is_none() || removed_first != 0 {
+        return Err("first authored surface was removed".to_owned());
+    }
+    if retained_shifted.is_none() || removed_shifted != 0 {
+        return Err("nearby authored geometry was deduplicated".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn alternate_source_triangulation_is_not_deduplicated() -> Result<(), String> {
+    let first_group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0., 0., 0.], [1., 0., 0.], [1., 1., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2, 0, 2, 3],
+    )
+    .map_err(|error| format!("first group failed: {error:?}"))?;
+    let alternate_group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0., 0., 0.], [1., 0., 0.], [1., 1., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 3, 1, 2, 3],
+    )
+    .map_err(|error| format!("alternate group failed: {error:?}"))?;
+    let first = MeshAsset::new("shared", vec![first_group])
+        .map_err(|error| format!("first mesh failed: {error:?}"))?;
+    let alternate = MeshAsset::new("shared", vec![alternate_group])
+        .map_err(|error| format!("alternate mesh failed: {error:?}"))?;
+    let mut owned = InteriorGeometryOwnership::default();
+    let (retained_first, removed_first) =
+        retain_unowned_triangles(first, &mut owned)
+            .map_err(|error| error.to_string())?;
+    let (retained_alternate, removed_alternate) =
+        retain_unowned_triangles(alternate, &mut owned)
+            .map_err(|error| error.to_string())?;
+    if retained_first.is_none() || removed_first != 0 {
+        return Err("first authored topology was removed".to_owned());
+    }
+    if retained_alternate.is_none() || removed_alternate != 0 {
+        return Err("alternate authored topology was deduplicated".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn halloween_mixed_mesh_preserves_source_authored_triangles()
+-> Result<(), String> {
     let base_group = PrimitiveGroup::new(
         0,
         "base-material",
@@ -161,20 +392,19 @@ fn halloween_mixed_mesh_retains_only_new_triangles() -> Result<(), String> {
             .map_err(|error| error.to_string())?;
     let retained_overlay = retained_overlay_option
         .ok_or_else(|| String::from("Halloween addition was removed"))?;
-    if removed_overlay != 1 {
+    if removed_overlay != 0 {
         return Err(format!(
-            "expected one repeated base triangle, found \
-                 {removed_overlay}"
+            "source-authored Halloween triangles were removed: {removed_overlay}"
         ));
     }
     let retained_group = retained_overlay
         .groups
         .first()
         .ok_or_else(|| String::from("Halloween overlay group is missing"))?;
-    if retained_overlay.groups.len() != 1 || retained_group.triangles.len() != 1
+    if retained_overlay.groups.len() != 1 || retained_group.triangles.len() != 2
     {
         return Err(String::from(
-            "Halloween overlay did not retain exactly one new triangle",
+            "Halloween overlay did not preserve both source triangles",
         ));
     }
     if retained_group.shader != "halloween-material" {
@@ -186,7 +416,8 @@ fn halloween_mixed_mesh_retains_only_new_triangles() -> Result<(), String> {
 }
 
 #[test]
-fn alternate_planar_triangulation_reuses_owned_surface() -> Result<(), String> {
+fn alternate_planar_triangulation_preserves_source_topology()
+-> Result<(), String> {
     let base_group = PrimitiveGroup::new(
         0,
         "base-material",
@@ -220,11 +451,19 @@ fn alternate_planar_triangulation_reuses_owned_surface() -> Result<(), String> {
     let (retained_alternate, removed_alternate) =
         retain_unowned_triangles(alternate, &mut owned)
             .map_err(|error| error.to_string())?;
-    if retained_alternate.is_some() || removed_alternate != 2 {
+    let retained_alternate = retained_alternate.ok_or_else(|| {
+        "alternate source triangulation was removed".to_owned()
+    })?;
+    let retained_group =
+        retained_alternate.groups.first().ok_or_else(|| {
+            "alternate source triangulation group was removed".to_owned()
+        })?;
+    if removed_alternate != 0
+        || retained_alternate.groups.len() != 1
+        || retained_group.triangles.len() != 2
+    {
         return Err(format!(
-            "alternate planar triangulation remained: retained={}, \
-                 removed={removed_alternate}",
-            retained_alternate.is_some(),
+            "alternate source topology changed: removed={removed_alternate}"
         ));
     }
     Ok(())
