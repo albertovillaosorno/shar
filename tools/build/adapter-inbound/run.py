@@ -192,6 +192,20 @@ def _check_evidence(path: Path) -> dict[str, object]:
     return value
 
 
+def _revalidate_arch(root: Path, arch_path: Path) -> None:
+    """Invoke canonical arch.py revalidation before using saved targets."""
+    command = [
+        sys.executable,
+        str(root / "tools" / "build" / "adapter-inbound" / "arch.py"),
+        "--revalidate",
+        "--output",
+        str(arch_path),
+    ]
+    result = subprocess.run(command, cwd=root, check=False)
+    if result.returncode:
+        raise RunFailure("saved architecture decision did not revalidate")
+
+
 def _revalidate_check(root: Path, check_path: Path) -> None:
     """Invoke the supported check.py revalidation before using saved paths."""
     command = [
@@ -598,6 +612,7 @@ def main() -> int:
     if not check_path.is_absolute():
         check_path = root / check_path
     try:
+        _revalidate_arch(root, arch_path)
         targets = _selected_targets(arch_path)
         _revalidate_check(root, check_path)
         check = _check_evidence(check_path)
