@@ -49,12 +49,15 @@ fn empty_initialization(mission_id: &str) -> MissionInitializationReport {
     )
 }
 
-fn reports() -> (
-    MissionStageSemanticReport,
-    MissionObjectiveSemanticReport,
-    MissionConditionSemanticReport,
-    MissionAuthoredStageTopologyReport,
-) {
+fn reports() -> Result<
+    (
+        MissionStageSemanticReport,
+        MissionObjectiveSemanticReport,
+        MissionConditionSemanticReport,
+        MissionAuthoredStageTopologyReport,
+    ),
+    String,
+> {
     let stages = MissionStageSemanticReport::from_topology_entries_for_tests(
         vec![
             (
@@ -149,14 +152,13 @@ fn reports() -> (
                 },
             ),
         ]);
-    let topology = preflight_mission_authored_stage_topology(&stages)
-        .expect("topology fixture must stay valid");
-    (stages, objectives, conditions, topology)
+    let topology = preflight_mission_authored_stage_topology(&stages)?;
+    Ok((stages, objectives, conditions, topology))
 }
 
 #[test]
 fn joins_source_backed_stage_definition_core() -> Result<(), String> {
-    let (stages, objectives, conditions, topology) = reports();
+    let (stages, objectives, conditions, topology) = reports()?;
     let report = build_definition_core(
         "m1",
         &empty_initialization("m1"),
@@ -271,28 +273,31 @@ fn joins_source_backed_stage_definition_core() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_objective_with_wrong_stage_owner() {
-    let (stages, _objectives, conditions, topology) = reports();
+fn rejects_objective_with_wrong_stage_owner() -> Result<(), String> {
+    let (stages, _objectives, conditions, topology) = reports()?;
     let objectives =
         MissionObjectiveSemanticReport::from_route_entries_for_tests(vec![
             (2, 1, 4, "goto".to_owned(), Vec::new()),
             (10, 1, 11, "dummy".to_owned(), Vec::new()),
         ]);
-    let error = build_definition_core(
+    let result = build_definition_core(
         "m1",
         &empty_initialization("m1"),
         &stages,
         &objectives,
         &conditions,
         &topology,
-    )
-    .expect_err("wrong objective owner must fail");
+    );
+    let Err(error) = result else {
+        return Err("wrong objective owner must fail".to_owned());
+    };
     assert!(error.to_string().contains("unique root objective"));
+    Ok(())
 }
 
 #[test]
-fn rejects_condition_with_unknown_stage_owner() {
-    let (stages, objectives, _conditions, topology) = reports();
+fn rejects_condition_with_unknown_stage_owner() -> Result<(), String> {
+    let (stages, objectives, _conditions, topology) = reports()?;
     let conditions =
         MissionConditionSemanticReport::from_owned_entries_for_tests(vec![(
             99,
@@ -303,21 +308,24 @@ fn rejects_condition_with_unknown_stage_owner() {
             MissionConditionScope::Stage,
             "legacy-mission-condition.timeout.v1",
         )]);
-    let error = build_definition_core(
+    let result = build_definition_core(
         "m1",
         &empty_initialization("m1"),
         &stages,
         &objectives,
         &conditions,
         &topology,
-    )
-    .expect_err("unknown condition owner must fail");
+    );
+    let Err(error) = result else {
+        return Err("unknown condition owner must fail".to_owned());
+    };
     assert!(error.to_string().contains("unknown stage owner"));
+    Ok(())
 }
 
 #[test]
-fn rejects_objective_condition_with_wrong_root_owner() {
-    let (stages, objectives, _conditions, topology) = reports();
+fn rejects_objective_condition_with_wrong_root_owner() -> Result<(), String> {
+    let (stages, objectives, _conditions, topology) = reports()?;
     let conditions =
         MissionConditionSemanticReport::from_owned_entries_for_tests(vec![(
             2,
@@ -328,18 +336,21 @@ fn rejects_objective_condition_with_wrong_root_owner() {
             MissionConditionScope::Objective,
             "legacy-mission-condition.timeout.v1",
         )]);
-    let error = build_definition_core(
+    let result = build_definition_core(
         "m1",
         &empty_initialization("m1"),
         &stages,
         &objectives,
         &conditions,
         &topology,
-    )
-    .expect_err("wrong condition objective owner must fail");
+    );
+    let Err(error) = result else {
+        return Err("wrong condition objective owner must fail".to_owned());
+    };
     assert!(error
         .to_string()
         .contains("condition owner disagrees"));
+    Ok(())
 }
 
 #[test]
@@ -378,8 +389,7 @@ fn joins_collectible_waypoint_source_evidence() -> Result<(), String> {
         )]);
     let conditions = MissionConditionSemanticReport::
         from_owned_entries_for_tests(Vec::new());
-    let topology = preflight_mission_authored_stage_topology(&stages)
-        .expect("topology fixture must stay valid");
+    let topology = preflight_mission_authored_stage_topology(&stages)?;
     let report = build_definition_core(
         "m1",
         &empty_initialization("m1"),
@@ -440,8 +450,7 @@ fn joins_pickup_state_prop_source_evidence() -> Result<(), String> {
         )]);
     let conditions = MissionConditionSemanticReport::
         from_owned_entries_for_tests(Vec::new());
-    let topology = preflight_mission_authored_stage_topology(&stages)
-        .expect("topology fixture must stay valid");
+    let topology = preflight_mission_authored_stage_topology(&stages)?;
     let report = build_definition_core(
         "m1",
         &initialization,
@@ -504,8 +513,7 @@ fn joins_mission_scope_pickup_state_prop_source_evidence(
         )]);
     let conditions = MissionConditionSemanticReport::
         from_owned_entries_for_tests(Vec::new());
-    let topology = preflight_mission_authored_stage_topology(&stages)
-        .expect("topology fixture must stay valid");
+    let topology = preflight_mission_authored_stage_topology(&stages)?;
     let report = build_definition_core(
         "m1",
         &initialization,
@@ -532,7 +540,7 @@ fn joins_mission_scope_pickup_state_prop_source_evidence(
 
 #[test]
 fn renders_definition_core_as_stable_versioned_json() -> Result<(), String> {
-    let (stages, objectives, conditions, topology) = reports();
+    let (stages, objectives, conditions, topology) = reports()?;
     let report = build_definition_core(
         "m1",
         &empty_initialization("m1"),
@@ -588,20 +596,23 @@ fn renders_definition_core_as_stable_versioned_json() -> Result<(), String> {
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| "rendered stage music events disappeared".to_owned())?;
     assert_eq!(music_events.len(), 1);
+    let music_event = music_events
+        .first()
+        .ok_or_else(|| "rendered stage music event disappeared".to_owned())?;
     assert_eq!(
-        music_events[0]
+        music_event
             .get("channel")
             .and_then(serde_json::Value::as_str),
         Some("mission-drama")
     );
     assert_eq!(
-        music_events[0]
+        music_event
             .get("key_transform")
             .and_then(serde_json::Value::as_str),
         Some("legacy-case-insensitive-key32")
     );
     assert_eq!(
-        music_events[0]
+        music_event
             .get("event_id")
             .and_then(serde_json::Value::as_str),
         Some("L7_drama")
@@ -621,8 +632,11 @@ fn renders_definition_core_as_stable_versioned_json() -> Result<(), String> {
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| "rendered conditions disappeared".to_owned())?;
     assert_eq!(conditions.len(), 1);
+    let condition = conditions
+        .first()
+        .ok_or_else(|| "rendered condition disappeared".to_owned())?;
     assert_eq!(
-        conditions[0]
+        condition
             .get("violation_effect")
             .and_then(serde_json::Value::as_str),
         Some("stage-failure")
@@ -631,8 +645,8 @@ fn renders_definition_core_as_stable_versioned_json() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_noncanonical_definition_source_identity() {
-    let (stages, objectives, conditions, topology) = reports();
+fn rejects_noncanonical_definition_source_identity() -> Result<(), String> {
+    let (stages, objectives, conditions, topology) = reports()?;
     let report = build_definition_core(
         "m1",
         &empty_initialization("m1"),
@@ -641,7 +655,7 @@ fn rejects_noncanonical_definition_source_identity() {
         &conditions,
         &topology,
     )
-    .expect("definition fixture must stay valid");
+    .map_err(|error| error.to_string())?;
     for source_id in [
         "../script",
         "Script-one",
@@ -649,8 +663,13 @@ fn rejects_noncanonical_definition_source_identity() {
         "script.one",
         "script--one",
     ] {
-        let error = render_definition_core(source_id, &report)
-            .expect_err("noncanonical source id must fail");
+        let result = render_definition_core(source_id, &report);
+        let Err(error) = result else {
+            return Err(format!(
+                "noncanonical source id must fail: {source_id}"
+            ));
+        };
         assert!(error.to_string().contains("not canonical"));
     }
+    Ok(())
 }
