@@ -221,6 +221,81 @@ class ProjectStateMigrationTests(unittest.TestCase):
             temporary.cleanup()
 
 
+class BuildWorkRootTests(unittest.TestCase):
+    """Keep Turnkey and UAT work below real repository cache roots."""
+
+    def test_rejects_linked_shared_run_root_before_sdk_verification(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-run-root-") as raw:
+            root = Path(raw)
+            build_root = root / ".cache/build"
+            build_root.mkdir(parents=True)
+            run_root = root / _RUN._WORK_ROOT
+            run_root.mkdir()
+            original = _RUN._is_directory_link
+
+            def report_run_as_link(path: Path) -> bool:
+                return path == run_root or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_run_as_link,
+                ),
+                mock.patch.object(_RUN, "_verify_sdk") as verify_sdk,
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "build run root must be a real directory",
+                ),
+            ):
+                _RUN._build_target(
+                    root,
+                    Path("/uat"),
+                    Path("/project/shar.uproject"),
+                    _RUN._TARGETS_BY_ID["linux-x64"],
+                    validate_only=True,
+                )
+            verify_sdk.assert_not_called()
+
+    def test_rejects_linked_target_work_root_before_sdk_verification(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-target-work-") as raw:
+            root = Path(raw)
+            run_root = root / _RUN._WORK_ROOT
+            run_root.mkdir(parents=True)
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+            work = run_root / target.identifier
+            work.mkdir()
+            original = _RUN._is_directory_link
+
+            def report_work_as_link(path: Path) -> bool:
+                return path == work or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_work_as_link,
+                ),
+                mock.patch.object(_RUN, "_verify_sdk") as verify_sdk,
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "target work root must be a real directory",
+                ),
+            ):
+                _RUN._build_target(
+                    root,
+                    Path("/uat"),
+                    Path("/project/shar.uproject"),
+                    target,
+                    validate_only=True,
+                )
+            verify_sdk.assert_not_called()
+
+
 class PublicationTransactionTests(unittest.TestCase):
     """Keep malformed existing publications unchanged on rejection."""
 

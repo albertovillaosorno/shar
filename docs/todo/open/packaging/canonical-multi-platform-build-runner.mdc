@@ -88,6 +88,9 @@ repository-owned side effects.
 Canonical `arch.json`, `check.json`, and `dependencies.json` identities are also
 required to be real regular files when already present. Linked or malformed
 saved evidence now fails before it can be consumed, replaced, or cleaned up.
+The shared `.cache/build/run` directory and each per-target work root are also
+required to be real directories before Turnkey or UAT writes reports, logs,
+staging data, or candidate packages.
 
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its

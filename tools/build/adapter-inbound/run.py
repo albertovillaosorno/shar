@@ -253,6 +253,15 @@ def _ensure_real_directory(path: Path, label: str) -> None:
     path.mkdir()
 
 
+def _ensure_build_cache_root(root: Path) -> Path:
+    """Create or validate canonical repository build-cache ancestors."""
+    cache_root = root / ".cache"
+    _ensure_real_directory(cache_root, "repository cache root")
+    build_root = cache_root / "build"
+    _ensure_real_directory(build_root, "build cache root")
+    return build_root
+
+
 def _preflight_project_state(project_dir: Path, state_root: Path) -> None:
     """Reject conflicting or malformed project build-state identities."""
     for name in _PROJECT_STATE_NAMES:
@@ -360,10 +369,7 @@ def _rollback_project_state(actions: list[_ProjectStateAction]) -> None:
 def _prepare_project_state(root: Path, project: Path) -> Path:
     """Keep Unreal project-generated state physically below repository cache."""
     project_dir = project.parent
-    cache_root = root / ".cache"
-    _ensure_real_directory(cache_root, "repository cache root")
-    build_root = cache_root / "build"
-    _ensure_real_directory(build_root, "build cache root")
+    _ensure_build_cache_root(root)
     state_root = root / _PROJECT_STATE_ROOT
     _ensure_real_directory(state_root, "project-state cache root")
     _preflight_project_state(project_dir, state_root)
@@ -580,8 +586,11 @@ def _build_target(
     validate_only: bool,
 ) -> None:
     """Verify and optionally package one selected target transactionally."""
-    work = root / _WORK_ROOT / target.identifier
-    work.mkdir(parents=True, exist_ok=True)
+    build_root = _ensure_build_cache_root(root)
+    run_root = build_root / "run"
+    _ensure_real_directory(run_root, "build run root")
+    work = run_root / target.identifier
+    _ensure_real_directory(work, "target work root")
     _verify_sdk(root, uat, project, target, work)
     if validate_only:
         print(f"run: {target.identifier}: SDK valid")
