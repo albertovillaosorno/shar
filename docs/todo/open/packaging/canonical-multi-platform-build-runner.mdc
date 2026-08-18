@@ -80,8 +80,11 @@ Regressions cover linked cache ancestors so build state cannot escape the repo.
 
 Canonical dependency, preflight, and architecture evidence writers now reject
 linked `.cache`, `.cache/build`, or `.cache/build/data` ancestors before any
-mutation. Regression coverage also proves rejection preserves existing evidence
-and explicit testing output overrides retain their intended independent scope.
+mutation. Rejection preserves existing evidence; architecture and preflight test
+output overrides remain independent. Dependency bootstrap additionally requires
+real `.dependencies` and `.dependencies/build` tool storage even when its JSON
+evidence path is overridden, because Cargo, rustup, and validator outputs remain
+repository-owned side effects.
 
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its

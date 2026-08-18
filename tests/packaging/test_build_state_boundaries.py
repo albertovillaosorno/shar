@@ -137,7 +137,7 @@ class CanonicalBuildStateBoundaryTests(unittest.TestCase):
                 self.assertEqual(_DEPENDENCIES.main(), 1)
             self.assertEqual(output.read_text(encoding="utf-8"), "sentinel\n")
 
-    def test_explicit_output_override_ignores_canonical_cache_identity(
+    def test_arch_and_check_output_overrides_ignore_canonical_cache_identity(
         self,
     ) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-override-state-") as raw:
@@ -148,12 +148,53 @@ class CanonicalBuildStateBoundaryTests(unittest.TestCase):
             with self._linked_cache_patch(cache_root):
                 _ARCH._validate_canonical_output_root(root, override)
                 _CHECK._validate_canonical_output_root(root, override)
-                self.assertFalse(
-                    _DEPENDENCIES._validate_canonical_output_root(
-                        root,
-                        override,
-                    )
-                )
+
+    def test_dependencies_override_still_rejects_linked_build_cache(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-dependency-override-state-",
+        ) as raw:
+            root = Path(raw)
+            cache_root = root / ".cache"
+            cache_root.mkdir()
+            with (
+                self._linked_cache_patch(cache_root),
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "repository cache root must be a real directory",
+                ),
+            ):
+                _DEPENDENCIES._validate_dependency_storage_roots(root)
+
+    def test_dependencies_reject_linked_dependency_root(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-dependency-root-state-",
+        ) as raw:
+            root = Path(raw)
+            dependency_root = root / ".dependencies"
+            dependency_root.mkdir()
+            original = Path.is_symlink
+
+            def report_dependency_as_link(path: Path) -> bool:
+                return path == dependency_root or original(path)
+
+            with (
+                mock.patch.object(_DEPENDENCIES, "_root", return_value=root),
+                mock.patch.object(_DEPENDENCIES, "_run", return_value={}),
+                mock.patch.object(
+                    Path,
+                    "is_symlink",
+                    report_dependency_as_link,
+                ),
+                mock.patch.object(
+                    sys,
+                    "argv",
+                    ["dependencies.py", "--output", "testing/output.json"],
+                ),
+            ):
+                self.assertEqual(_DEPENDENCIES.main(), 1)
+            self.assertFalse((root / "testing/output.json").exists())
 
 
 if __name__ == "__main__":
