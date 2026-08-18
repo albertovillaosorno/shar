@@ -88,6 +88,9 @@ repository-owned side effects.
 Canonical `arch.json`, `check.json`, and `dependencies.json` identities are also
 required to be real regular files when already present. Linked or malformed
 saved evidence now fails before it can be consumed, replaced, or cleaned up.
+Their PID-named atomic staging files are now created exclusively. A pre-existing
+staging identity is preserved and causes the writer to fail closed instead of
+being truncated or removed before the final atomic replace.
 The shared `.cache/build/run` directory and each per-target work root are also
 required to be real directories before Turnkey or UAT writes reports, logs,
 staging data, or candidate packages.
