@@ -2,6 +2,31 @@
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
+# Confidential:
+#   - false
+# License-File:
+#   - LICENSE-MIT
+#
+# Boundary-Contract:
+# - Owns:
+#   - Repository validation regression tests.
+# - Must-Not:
+#   - Publish private game inputs or mutate external repositories.
+# - Allows:
+#   - Repository-local policy and bootstrap inspection.
+# - Split-When:
+#   - One validation policy gains an independent lifecycle.
+# - Merge-When:
+#   - The guarded policies become one inseparable repository contract.
+# - Summary:
+#   - Guards repository validation policy.
+# - Description:
+#   - Exercises tracked configuration and repository-local validation behavior.
+# - Usage:
+#   - Run through the canonical Jig pytest gate or repository-local pytest.
+# - Defaults:
+#   - Reads the current repository and writes only test-managed temporary state.
+#
 
 """Repository guards for source-bound icon migration ownership."""
 
