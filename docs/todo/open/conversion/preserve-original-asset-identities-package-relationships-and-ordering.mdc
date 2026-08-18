@@ -66,7 +66,10 @@ duplicate `components/mesh/shared.json` ownership fails before mesh association.
 Every grouped component must also resolve its declared root-owner ordinal after
 the complete ledger is parsed. Orphan mesh rows no longer disappear through a
 silent downstream skip; a focused regression proves missing owner ordinal 99
-fails closed before package-mesh publication.
+fails closed before package-mesh publication. Direct root-owner rows additionally
+must self-own: their `container_ordinal` must equal their own source ordinal,
+matching the P3D extractor's deterministic top-level-ancestor contract. A
+focused regression rejects a root ordinal 1 that attempts to claim container 2.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

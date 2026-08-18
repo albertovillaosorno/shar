@@ -212,3 +212,26 @@ fn package_meshes_reject_orphan_component_owner() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn package_meshes_reject_root_owner_with_foreign_container() -> Result<(), String> {
+    let rows = [
+        r#"{"ordinal":1,"depth":1,"container_ordinal":2,"name":"foreign-owner","path":"srr_entity_dsg/001.json","kind":"srr_entity_dsg"}"#.to_owned(),
+        owner_row(2, "owner"),
+        mesh_row(3, 2, "mesh"),
+    ];
+    let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
+    let root = ledger_root("foreign-root-owner", &borrowed)?;
+    let result = package_meshes(&root);
+    cleanup(&root);
+    let Err(error) = result else {
+        return Err("root owner with foreign container was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("root component ordinal 1 declares container ordinal 2")
+    {
+        return Err(format!("unexpected root owner error: {error}"));
+    }
+    Ok(())
+}

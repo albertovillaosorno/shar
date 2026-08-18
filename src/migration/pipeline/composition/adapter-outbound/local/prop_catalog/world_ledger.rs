@@ -110,6 +110,12 @@ pub(super) fn read_world_ledger(
                 row.path
             )));
         }
+        if row.depth == 1 && row.container_ordinal != row.ordinal {
+            return Err(PipelineError::new(format!(
+                "prop root component ordinal {} declares container ordinal {}",
+                row.ordinal, row.container_ordinal
+            )));
+        }
         if row.depth == 1 {
             let _previous = owners.insert(row.ordinal, row.clone());
         }
