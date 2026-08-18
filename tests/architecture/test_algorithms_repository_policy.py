@@ -155,3 +155,33 @@ def test_algorithm_crate_is_declared_architecture_component() -> None:
         "schoenwald_filesystem",
         "shar_sha256",
     ]
+
+
+def test_algorithm_surfaces_and_settings_follow_registered_layout() -> None:
+    """Keep algorithm metadata and settings on declared surfaces."""
+    expected = {
+        "README.md.yml": (
+            "schema: shar-boundary/v1\n"
+            "path: src/foundation/algorithm/README.md\n"
+            "boundary: src/foundation/algorithm\n"
+            "authority: README.md\n"
+        ),
+        "composition/lib.rs.yml": (
+            "schema: shar-surface/v1\n"
+            "path: src/foundation/algorithm/composition/lib.rs\n"
+            "function: algorithm\n"
+            "kind: facade\n"
+            "authority: composition/lib.rs\n"
+        ),
+    }
+    boundary = _ROOT / "src" / "foundation" / "algorithm"
+    for relative, content in expected.items():
+        assert (boundary / relative).read_text() == content
+    settings = boundary / "composition" / "adapter-inbound" / "settings.json"
+    assert settings.is_file()
+    assert not (boundary / "settings.json").exists()
+    cli = (boundary / "composition" / "adapter-inbound" / "cli.rs").read_text()
+    default_settings = (
+        "src/foundation/algorithm/composition/adapter-inbound/settings.json"
+    )
+    assert default_settings in cli
