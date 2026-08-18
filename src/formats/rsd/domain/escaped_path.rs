@@ -112,9 +112,13 @@ fn write_path(
                 for character in valid_text.chars() {
                     write_character(formatter, character)?;
                 }
-                let invalid_length = error
-                    .error_len()
-                    .unwrap_or_else(|| remaining.len() - valid_length);
+                let invalid_length = match error.error_len() {
+                    Some(length) => length,
+                    None => remaining
+                        .len()
+                        .checked_sub(valid_length)
+                        .ok_or(core::fmt::Error)?,
+                };
                 let invalid_end = valid_length
                     .checked_add(invalid_length)
                     .ok_or(core::fmt::Error)?;
