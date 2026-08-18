@@ -163,7 +163,10 @@ in `finally` and the 722 MB probe tree was removed.
 
 The runner now moves UAT `Manifest_*.txt` publication metadata and Windows PDBs
 out of the candidate before atomic publication, retaining them under the target
-build cache. Applying that rule to the accepted Windows package reduced final
+build cache. Those metadata and symbol cache roots are preflighted as real
+directories before stale cache cleanup, so redirected identities fail before
+any manifest or debug-symbol file is moved. Applying that rule to the accepted Windows
+package reduced final
 `dist/windows-x64` to 26 runtime/licensing files and 488,530,675 bytes. A second
 exact copy produced inventory SHA-256
 `ee8b3f00772c898fab52bf1ae11f81874aea334b840335b94e76fcb7255b4e95`;

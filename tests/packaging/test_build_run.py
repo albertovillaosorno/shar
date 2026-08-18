@@ -691,6 +691,69 @@ class PublicationArtifactTests(unittest.TestCase):
             self.assertFalse(stale.exists())
 
 
+class ArtifactCachePathTests(unittest.TestCase):
+    """Reject redirected metadata and symbol cache roots before moving files."""
+
+    def _assert_linked_cache_rejected(
+        self,
+        target_id: str,
+        cache_name: str,
+        source_relative: str,
+        label: str,
+    ) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-artifact-cache-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            work = root / "work"
+            candidate.mkdir()
+            work.mkdir()
+            source = candidate / source_relative
+            source.parent.mkdir(parents=True, exist_ok=True)
+            source.write_bytes(b"artifact")
+            cache = work / cache_name
+            cache.mkdir()
+            original = _RUN._is_directory_link
+
+            def report_cache_as_link(path: Path) -> bool:
+                return path == cache or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_cache_as_link,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    f"{label} must be a real directory",
+                ),
+            ):
+                _RUN._cache_nonruntime_artifacts(
+                    candidate,
+                    work,
+                    _RUN._TARGETS_BY_ID[target_id],
+                )
+
+            self.assertTrue(source.is_file())
+            self.assertTrue(cache.is_dir())
+
+    def test_rejects_linked_publication_metadata_cache(self) -> None:
+        self._assert_linked_cache_rejected(
+            "linux-x64",
+            "publication-metadata",
+            "Manifest_UFSFiles_Linux.txt",
+            "publication metadata cache",
+        )
+
+    def test_rejects_linked_symbol_cache(self) -> None:
+        self._assert_linked_cache_rejected(
+            "windows-x64",
+            "symbols",
+            "shar/Binaries/Win64/shar.pdb",
+            "symbol cache",
+        )
+
+
 class CandidateTreeTests(unittest.TestCase):
     """Require packaged candidates to remain self-contained real trees."""
 
