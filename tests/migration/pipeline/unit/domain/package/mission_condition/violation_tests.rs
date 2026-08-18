@@ -36,7 +36,8 @@ use super::{
 use crate::domain::{MissionConditionScope, MissionConditionSemanticReport};
 
 #[test]
-fn binds_each_condition_to_stage_failure_without_recovery_policy() {
+fn binds_each_condition_to_stage_failure_without_recovery_policy(
+) -> Result<(), String> {
     let report = MissionConditionSemanticReport::from_owned_entries_for_tests(
         vec![
             (
@@ -59,29 +60,28 @@ fn binds_each_condition_to_stage_failure_without_recovery_policy() {
             ),
         ],
     );
-    let bindings = preflight_mission_condition_violations(&report)
-        .expect("reviewed condition consumers must bind");
-    assert_eq!(bindings.bindings().len(), 2);
+    let bindings = preflight_mission_condition_violations(&report)?;
+    let [first, second] = bindings.bindings() else {
+        return Err("condition violation binding count drifted".to_owned());
+    };
     assert_eq!(
-        bindings.bindings()[0].effect(),
+        first.effect(),
         MissionConditionViolationEffect::StageFailure,
     );
-    assert_eq!(bindings.bindings()[0].owner_stage_source_ordinal(), 2);
-    assert_eq!(bindings.bindings()[0].owner_stage_sequence_ordinal(), 0);
-    assert_eq!(bindings.bindings()[0].owner_objective_source_ordinal(), None);
-    assert_eq!(bindings.bindings()[0].source_ordinal(), 4);
-    assert_eq!(
-        bindings.bindings()[1].owner_objective_source_ordinal(),
-        Some(10),
-    );
+    assert_eq!(first.owner_stage_source_ordinal(), 2);
+    assert_eq!(first.owner_stage_sequence_ordinal(), 0);
+    assert_eq!(first.owner_objective_source_ordinal(), None);
+    assert_eq!(first.source_ordinal(), 4);
+    assert_eq!(second.owner_objective_source_ordinal(), Some(10));
+    Ok(())
 }
 
 #[test]
-fn empty_condition_report_has_no_violation_bindings() {
+fn empty_condition_report_has_no_violation_bindings() -> Result<(), String> {
     let report = MissionConditionSemanticReport::from_owned_entries_for_tests(
         Vec::new(),
     );
-    let bindings = preflight_mission_condition_violations(&report)
-        .expect("empty condition set must remain empty");
+    let bindings = preflight_mission_condition_violations(&report)?;
     assert!(bindings.bindings().is_empty());
+    Ok(())
 }
