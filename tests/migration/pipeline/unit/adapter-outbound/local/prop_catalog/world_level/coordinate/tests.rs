@@ -35,8 +35,8 @@ use std::collections::BTreeSet;
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 
 use super::{
-    LevelMeshSource, PackageCoordinates, topology_matches,
-    transplant_coordinates, unique_topology_match,
+    LevelMeshSource, PackageCoordinates, exact_reference_match, topology_matches,
+    transplant_coordinates,
 };
 
 fn mesh(shader: &str, offset: f32) -> Result<MeshAsset, String> {
@@ -52,6 +52,16 @@ fn mesh(shader: &str, offset: f32) -> Result<MeshAsset, String> {
     .map_err(|error| format!("normals failed: {error:?}"))?;
     MeshAsset::new("mesh", vec![group])
         .map_err(|error| format!("mesh failed: {error:?}"))
+}
+
+fn source(ordinal: usize, mesh_name: &str, owner_name: &str) -> LevelMeshSource {
+    LevelMeshSource {
+        ordinal,
+        member_id: format!("member-{ordinal}"),
+        mesh_name: mesh_name.to_owned(),
+        owner_name: owner_name.to_owned(),
+        owner_kind: "srr_entity_dsg".to_owned(),
+    }
 }
 
 type TestResult = Result<(), String>;
@@ -161,24 +171,82 @@ fn topology_mismatch_blocks_coordinate_transplant() -> TestResult {
 }
 
 #[test]
-fn unique_topology_match_handles_zero_reference_candidates() -> TestResult {
+fn topology_only_reference_identity_does_not_match() -> TestResult {
     let canonical = mesh("canonical-material", 0.)?;
-    let source = LevelMeshSource {
-        ordinal: 1,
-        member_id: "mesh".to_owned(),
-        mesh_name: "mesh".to_owned(),
-        owner_name: "mesh".to_owned(),
-        owner_kind: "srr_entity_dsg".to_owned(),
-    };
-    let matched = unique_topology_match(
+    let canonical_source = source(1, "canonical-mesh", "canonical-owner");
+    let reference_source = source(2, "reference-mesh", "reference-owner");
+    let references = vec![(reference_source, canonical.clone())];
+    let matched = exact_reference_match(
+        &canonical_source,
         &canonical,
-        &[source],
-        std::slice::from_ref(&canonical),
-        &[],
+        &references,
+        &BTreeSet::new(),
+    )
+    .map_err(|error| error.to_string())?;
+    if matched.is_some() {
+        return Err("topology-only reference identity was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn owner_only_reference_identity_does_not_match() -> TestResult {
+    let canonical = mesh("canonical-material", 0.)?;
+    let canonical_source = source(1, "canonical-mesh", "shared-owner");
+    let reference_source = source(2, "reference-mesh", "shared-owner");
+    let references = vec![(reference_source, canonical.clone())];
+    let matched = exact_reference_match(
+        &canonical_source,
+        &canonical,
+        &references,
+        &BTreeSet::new(),
+    )
+    .map_err(|error| error.to_string())?;
+    if matched.is_some() {
+        return Err("owner-only reference identity was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn exact_reference_identity_matches_once() -> TestResult {
+    let canonical = mesh("canonical-material", 0.)?;
+    let canonical_source = source(1, "mesh", "owner");
+    let reference_source = source(2, "mesh", "owner");
+    let references = vec![(reference_source, canonical.clone())];
+    let matched = exact_reference_match(
+        &canonical_source,
+        &canonical,
+        &references,
+        &BTreeSet::new(),
+    )
+    .map_err(|error| error.to_string())?;
+    if matched != Some(0) {
+        return Err(format!("exact reference identity did not match: {matched:?}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn ambiguous_exact_reference_identity_fails_closed() -> TestResult {
+    let canonical = mesh("canonical-material", 0.)?;
+    let canonical_source = source(1, "mesh", "owner");
+    let reference = source(2, "mesh", "owner");
+    let references = vec![
+        (reference.clone(), canonical.clone()),
+        (reference, canonical.clone()),
+    ];
+    let result = exact_reference_match(
+        &canonical_source,
+        &canonical,
+        &references,
         &BTreeSet::new(),
     );
-    if matched.is_some() {
-        return Err("zero reference candidates produced a match".to_owned());
+    let Err(error) = result else {
+        return Err("ambiguous exact coordinate references were accepted".to_owned());
+    };
+    if !error.to_string().contains("identity is ambiguous") {
+        return Err(format!("unexpected reference ambiguity error: {error}"));
     }
     Ok(())
 }
