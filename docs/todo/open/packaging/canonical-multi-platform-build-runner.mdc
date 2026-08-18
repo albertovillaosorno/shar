@@ -65,6 +65,11 @@ prove wrong mobile artifacts never create a completed `dist/<ARCH>/` target.
 Publication also preflights an existing `dist/<ARCH>/` identity as a real
 directory before any rename. A regression proves a colliding regular file is
 left unchanged and cannot trigger a failed cleanup after a new package appears.
+The hidden `.previous` publication identity is now checked for existence even
+when its link target is missing,
+so a broken symlink or other malformed stale backup cannot be ignored and left
+beside an otherwise successful target. Rejection happens before the candidate
+moves.
 
 The `dist/` publication root is also required to be a real directory rather
 than a symbolic link or Windows junction. A regression proves publication

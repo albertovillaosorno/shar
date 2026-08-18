@@ -620,7 +620,8 @@ def _publish(candidate: Path, destination: Path) -> None:
     else:
         publication_root.mkdir(parents=True)
     backup = destination.with_name(f".{destination.name}.previous")
-    if backup.exists():
+    if _path_present(backup):
+        _require_real_directory(backup, "publication backup")
         shutil.rmtree(backup)
     had_previous = destination.exists()
     if had_previous:
@@ -631,7 +632,7 @@ def _publish(candidate: Path, destination: Path) -> None:
         if had_previous and backup.exists() and not destination.exists():
             Path(backup).replace(destination)
         raise
-    if backup.exists():
+    if _path_present(backup):
         try:
             shutil.rmtree(backup)
         except OSError as error:
