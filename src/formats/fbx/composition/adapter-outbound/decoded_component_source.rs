@@ -38,7 +38,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::domain::mesh::{
-    MeshAsset, MeshError, PrimitiveGroup, triangulate_indices,
+    MeshAsset, MeshError, PrimitiveGroup,
     triangulate_strip,
 };
 use crate::domain::scene::identity::is_portable_path_segment;
@@ -266,19 +266,21 @@ fn is_single_path_segment(value: &str) -> bool {
 
 /// Load one mesh for static whole-level analysis.
 ///
-/// Repeated-index triangle-list records are discarded while every valid vertex,
-/// surface attribute, material binding, and triangle is preserved.
+/// Analysis uses the same strict authored-topology contract as ordinary mesh
+/// loading. Triangle-strip stitching degenerates are normalized by strip
+/// triangulation; malformed authored triangle lists fail closed.
 ///
 /// # Errors
 ///
-/// Returns an error when identity, schema, remaining topology, or surface
-/// evidence violates the decoded mesh contract.
+/// Returns an error when identity, schema, topology, or surface evidence
+/// violates the decoded mesh contract. The returned discard count is retained
+/// for catalog-schema compatibility and is always zero.
 pub fn read_mesh_for_analysis(
     package_root: &Path,
     mesh_member_id: &str,
 ) -> Result<(MeshAsset, usize), DecodedComponentError> {
     let path = component_path(package_root, "mesh", mesh_member_id, "json")?;
-    decode_mesh_document(&path, Some(mesh_member_id), true)
+    decode_mesh_document(&path, Some(mesh_member_id)).map(|mesh| (mesh, 0))
 }
 
 /// Read one decoded mesh from an exact package-index path.
@@ -295,7 +297,7 @@ pub fn read_mesh_for_analysis(
 pub fn read_indexed_mesh(
     path: &Path,
 ) -> Result<MeshAsset, DecodedComponentError> {
-    decode_mesh_document(path, None, false).map(|(mesh, _discarded)| mesh)
+    decode_mesh_document(path, None)
 }
 
 /// Read one decoded mesh from an explicit component path and authored identity.
@@ -303,34 +305,21 @@ pub(super) fn read_mesh(
     path: &Path,
     requested_id: &str,
 ) -> Result<MeshAsset, DecodedComponentError> {
-    decode_mesh_document(path, Some(requested_id), false)
-        .map(|(mesh, _discarded)| mesh)
+    decode_mesh_document(path, Some(requested_id))
 }
 
-/// Decode one mesh document with explicit topology sanitation behavior.
+/// Decode one mesh document under the strict authored-topology contract.
 fn decode_mesh_document(
     path: &Path,
     requested_id: Option<&str>,
-    discard_repeated_vertices: bool,
-) -> Result<(MeshAsset, usize), DecodedComponentError> {
+) -> Result<MeshAsset, DecodedComponentError> {
     let decoded: DecodedMesh = read_json(path)?;
     let decoded_name = validate_decoded_mesh(&decoded, requested_id)?;
     let mut groups = Vec::with_capacity(decoded.prim_groups.len());
-    let mut discarded_degenerate_triangles = 0_usize;
     for (index, group) in decoded.prim_groups.into_iter().enumerate() {
-        let (primitive_group, discarded) = decode_primitive_group(
-            index,
-            group,
-            &decoded_name,
-            discard_repeated_vertices,
-        )?;
-        discarded_degenerate_triangles =
-            discarded_degenerate_triangles.saturating_add(discarded);
-        groups.push(primitive_group);
+        groups.push(decode_primitive_group(index, group, &decoded_name)?);
     }
-    let mesh = MeshAsset::new(decoded_name, groups)
-        .map_err(DecodedComponentError::Mesh)?;
-    Ok((mesh, discarded_degenerate_triangles))
+    MeshAsset::new(decoded_name, groups).map_err(DecodedComponentError::Mesh)
 }
 
 /// Validate mesh schema, identity, and declared primitive-group count.
@@ -363,13 +352,12 @@ fn validate_decoded_mesh(
     Ok(decoded_name)
 }
 
-/// Decode one primitive group and report bounded analysis sanitation.
+/// Decode one primitive group under the strict authored-topology contract.
 fn decode_primitive_group(
     index: usize,
     group: DecodedPrimitiveGroup,
     decoded_name: &str,
-    discard_repeated_vertices: bool,
-) -> Result<(PrimitiveGroup, usize), DecodedComponentError> {
+) -> Result<PrimitiveGroup, DecodedComponentError> {
     validate_primitive_group_counts(index, &group, decoded_name)?;
     let uvs = decode_primary_uvs(index, group.uvs)?;
     let triangle_indices = decode_triangle_indices(
@@ -378,18 +366,12 @@ fn decode_primitive_group(
         group.indices,
         decoded_name,
     )?;
-    let (retained_indices, discarded) = if discard_repeated_vertices {
-        discard_repeated_triangle_indices(&triangle_indices)
-            .map_err(DecodedComponentError::Mesh)?
-    } else {
-        (triangle_indices, 0)
-    };
     let base_group = PrimitiveGroup::new(
         index,
         decoded_material_identity(&group.shader),
         group.positions,
         uvs,
-        &retained_indices,
+        &triangle_indices,
     )
     .map_err(DecodedComponentError::Mesh)?;
     let colors = group
@@ -397,8 +379,7 @@ fn decode_primitive_group(
         .into_iter()
         .map(decode_vertex_color)
         .collect::<Vec<_>>();
-    let final_group = attach_surface_layers(base_group, group.normals, colors)?;
-    Ok((final_group, discarded))
+    attach_surface_layers(base_group, group.normals, colors)
 }
 
 /// Validate declared vertex and index counts for one primitive group.
@@ -498,26 +479,6 @@ fn attach_surface_layers(
     }
 }
 
-/// Discard repeated-index triangle records after canonical list normalization.
-fn discard_repeated_triangle_indices(
-    indices: &[u32],
-) -> Result<(Vec<u32>, usize), MeshError> {
-    let triangles = triangulate_indices(indices)?;
-    let mut retained = Vec::with_capacity(indices.len());
-    let mut discarded = 0_usize;
-    for triangle in triangles {
-        let [first, second, third] = triangle;
-        if first == second || first == third || second == third {
-            discarded = discarded.saturating_add(1);
-        } else {
-            retained.extend_from_slice(&triangle);
-        }
-    }
-    if retained.is_empty() {
-        return Err(MeshError::UnsupportedIndexCount(0));
-    }
-    Ok((retained, discarded))
-}
 
 /// Internal helper for the adapter implementation.
 fn resolve_material(

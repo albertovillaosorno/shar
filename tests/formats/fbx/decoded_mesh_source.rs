@@ -156,7 +156,7 @@ fn rejects_mesh_identity_mismatches() {
 }
 
 #[test]
-fn analysis_loader_discards_repeated_index_triangles() -> Result<(), String> {
+fn analysis_loader_rejects_repeated_index_triangle_lists() -> Result<(), String> {
     let root = temp_root("analysis-degenerate-triangle");
     let mesh_dir = root.join("components").join("mesh");
     let mesh_json = concat!(
@@ -171,19 +171,10 @@ fn analysis_loader_discards_repeated_index_triangles() -> Result<(), String> {
     if source.load_mesh("mesh").is_ok() {
         return Err("strict mesh loading accepted repeated indices".to_owned());
     }
-    let recovery_result = read_mesh_for_analysis(&root, "mesh")
-        .map_err(|error| format!("analysis mesh failed: {error:?}"));
+    let analysis_result = read_mesh_for_analysis(&root, "mesh");
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
-    let (mesh, discarded) = recovery_result?;
-    if discarded != 1 {
-        return Err("analysis discarded triangle count differed".to_owned());
-    }
-    let group = mesh
-        .groups
-        .first()
-        .ok_or_else(|| "analysis mesh has no primitive group".to_owned())?;
-    if group.triangles != vec![[0, 1, 2]] {
-        return Err("analysis mesh retained unexpected triangles".to_owned());
+    if analysis_result.is_ok() {
+        return Err("analysis mesh altered repeated-index source topology".to_owned());
     }
     Ok(())
 }
