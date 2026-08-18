@@ -26,5 +26,14 @@ No explicit task dependency was recorded in the legacy TODO.
 
 ## Evidence
 
-Open work migrated from the canonical TODO. Add implementation and
-validation evidence here as the task advances.
+World-analysis mesh loading now uses the same strict authored-topology contract
+as ordinary FBX mesh loading. Triangle-strip stitching degenerates remain a
+deterministic topology conversion performed by strip triangulation, while an
+authored triangle-list record with repeated vertex indices fails closed instead
+of being silently deleted. A focused regression proves analysis no longer
+repairs a malformed triangle list; the complete FBX package, strict FBX Clippy,
+and all 54 world-level tests pass. The legacy world-catalog discard-count field
+is retained for schema compatibility and is now zero for render meshes.
+
+This umbrella task remains open for broader topology, UV, material, texture,
+pivot, rig, animation, placement, and transform evidence.
