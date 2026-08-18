@@ -67,29 +67,34 @@ fn binds_ordered_entries_to_prior_start() -> Result<(), String> {
     assert_eq!(countdown.start_source_ordinal(), 4);
     assert_eq!(countdown.sequence_id(), "count");
     assert_eq!(countdown.character_id(), Some("lisa"));
-    assert_eq!(countdown.entries().len(), 2);
-    assert_eq!(countdown.entries()[0].source_ordinal(), 5);
-    assert_eq!(countdown.entries()[0].token(), "3");
-    assert_eq!(countdown.entries()[0].duration_milliseconds(), 1_000);
-    assert_eq!(countdown.entries()[1].token(), "GO");
+    let [three, go] = countdown.entries() else {
+        return Err("countdown entry count drifted".to_owned());
+    };
+    assert_eq!(three.source_ordinal(), 5);
+    assert_eq!(three.token(), "3");
+    assert_eq!(three.duration_milliseconds(), 1_000);
+    assert_eq!(go.token(), "GO");
     Ok(())
 }
 
 #[test]
-fn rejects_orphan_countdown_entry() {
-    let error = preflight_mission_countdowns(&stages(vec![
+fn rejects_orphan_countdown_entry() -> Result<(), String> {
+    let result = preflight_mission_countdowns(&stages(vec![
         MissionStageDirective::CountdownSequenceEntry {
             source_ordinal: 4,
             token: "3".to_owned(),
             duration_milliseconds: 1_000,
         },
-    ]))
-    .expect_err("orphan countdown entry must fail");
+    ]));
+    let Err(error) = result else {
+        return Err("orphan countdown entry unexpectedly passed".to_owned());
+    };
     assert!(error.contains("precedes countdown start"));
+    Ok(())
 }
 
 #[test]
-fn rejects_duplicate_countdown_start() {
+fn rejects_duplicate_countdown_start() -> Result<(), String> {
     let first = MissionStageDirective::StartCountdown {
         source_ordinal: 4,
         sequence_id: "count".to_owned(),
@@ -100,7 +105,10 @@ fn rejects_duplicate_countdown_start() {
         sequence_id: "count".to_owned(),
         character_id: None,
     };
-    let error = preflight_mission_countdowns(&stages(vec![first, second]))
-        .expect_err("duplicate countdown start must fail");
+    let result = preflight_mission_countdowns(&stages(vec![first, second]));
+    let Err(error) = result else {
+        return Err("duplicate countdown start unexpectedly passed".to_owned());
+    };
     assert!(error.contains("more than one countdown"));
+    Ok(())
 }
