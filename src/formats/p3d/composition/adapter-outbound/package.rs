@@ -76,10 +76,13 @@ pub fn package_header(
     document: &P3dDocument,
     component_count: usize,
     source_sha256: &str,
+    normalized_sha256: &str,
 ) -> String {
     let mut json = String::from("{\"schema\":\"p3d.package.v1\",");
     json.push_str("\"source_sha256\":\"");
     json.push_str(source_sha256);
+    json.push_str("\",\"normalized_sha256\":\"");
+    json.push_str(normalized_sha256);
     json.push_str("\",\"byte_len\":");
     json.push_str(&document.byte_len.to_string());
     json.push_str(",\"chunk_count\":");

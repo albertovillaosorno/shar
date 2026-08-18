@@ -124,7 +124,7 @@ fn unknown_kind_uses_unknown_schema_identity() {
 }
 
 #[test]
-fn package_header_binds_exact_source_digest() {
+fn package_header_binds_source_and_normalized_digests() {
     let document = P3dDocument {
         endian: Endian::Little,
         compression: "none",
@@ -132,7 +132,12 @@ fn package_header_binds_exact_source_digest() {
         chunks: vec![component("root").chunk, component("child").chunk],
     };
     let digest = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-    let header = package_header(&document, 1, digest);
+    let normalized_digest =
+        "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789";
+    let header = package_header(&document, 1, digest, normalized_digest);
 
     assert!(header.contains(&format!(r#""source_sha256":"{digest}""#)));
+    assert!(header.contains(&format!(
+        r#""normalized_sha256":"{normalized_digest}""#
+    )));
 }

@@ -30,7 +30,16 @@
 
 //! Filesystem batch identity tests test module.
 
-use super::{manifest_is_complete, manifest_source_matches_bytes};
+use std::fs;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use super::{
+    is_cache_current, manifest_is_complete,
+    manifest_normalized_source_matches_bytes, manifest_source_matches_bytes,
+};
+use super::super::filesystem_batch_artifact::manifest_component_files_exist;
+
+static NEXT_CACHE_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
 const PACKAGE_HEADER_ONE: &str = concat!(
     r#"{"schema":"p3d.package.v1","#,
@@ -195,4 +204,81 @@ fn cache_source_digest_must_match_current_input_bytes() {
     assert!(manifest_source_matches_bytes(&header, source));
     assert!(!manifest_source_matches_bytes(&header, b"changed-source"));
     assert!(!manifest_source_matches_bytes(PACKAGE_HEADER_ONE, source));
+}
+
+#[test]
+fn cache_normalized_digest_must_match_published_source_bytes() {
+    let normalized = b"normalized-source";
+    let digest = shar_sha256::digest_hex(normalized);
+    let header = format!(
+        r#"{{"schema":"p3d.package.v1","normalized_sha256":"{digest}","byte_len":24,"chunk_count":2,"component_count":1}}"#
+    );
+    assert!(manifest_normalized_source_matches_bytes(&header, normalized));
+    assert!(!manifest_normalized_source_matches_bytes(
+        &header,
+        b"corrupted-source"
+    ));
+    assert!(!manifest_normalized_source_matches_bytes(
+        PACKAGE_HEADER_ONE,
+        normalized
+    ));
+}
+
+#[test]
+fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), String> {
+    let sequence = NEXT_CACHE_FIXTURE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "shar-p3d-cache-current-{}-{sequence}",
+        std::process::id()
+    ));
+    let input = root.join("input.p3d");
+    let output = root.join("output");
+    let component = output.join("components/mesh/mesh.json");
+    fs::create_dir_all(component.parent().ok_or("component has no parent")?)
+        .map_err(|error| error.to_string())?;
+    let raw = b"raw-source";
+    let normalized = b"normalized-source";
+    fs::write(&input, raw).map_err(|error| error.to_string())?;
+    fs::write(output.join("source.p3d"), normalized)
+        .map_err(|error| error.to_string())?;
+    fs::write(&component, br#"{"name":"mesh"}"#)
+        .map_err(|error| error.to_string())?;
+    let header = format!(
+        r#"{{"schema":"p3d.package.v1","source_sha256":"{}","normalized_sha256":"{}","byte_len":24,"chunk_count":2,"component_count":1}}"#,
+        shar_sha256::digest_hex(raw),
+        shar_sha256::digest_hex(normalized),
+    );
+    let row = r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"mesh","payload_format":"schema_json","kind":"mesh","schema_ref":"mesh","recovery_status":"decoded_schema_payload","path":"mesh/mesh.json"}"#;
+    let manifest = format!("{header}\n{row}\n");
+    fs::write(output.join("components.jsonl"), manifest)
+        .map_err(|error| error.to_string())?;
+
+    let manifest_text = fs::read_to_string(output.join("components.jsonl"))
+        .map_err(|error| error.to_string())?;
+    let structural = manifest_is_complete(&manifest_text);
+    let raw_matches = manifest_source_matches_bytes(&manifest_text, raw);
+    let normalized_matches =
+        manifest_normalized_source_matches_bytes(&manifest_text, normalized);
+    let components_exist = manifest_component_files_exist(&output, &manifest_text);
+    if !is_cache_current(&output, &input) {
+        drop(fs::remove_dir_all(&root));
+        return Err(format!(
+            "complete source-bound cache was rejected: structural={structural} raw={raw_matches} normalized={normalized_matches} components={components_exist}"
+        ));
+    }
+    fs::write(output.join("source.p3d"), b"corrupted-source")
+        .map_err(|error| error.to_string())?;
+    if is_cache_current(&output, &input) {
+        drop(fs::remove_dir_all(&root));
+        return Err("corrupted normalized source artifact was accepted".to_owned());
+    }
+    fs::write(output.join("source.p3d"), normalized)
+        .map_err(|error| error.to_string())?;
+    fs::remove_file(output.join("source.p3d")).map_err(|error| error.to_string())?;
+    let accepted_missing = is_cache_current(&output, &input);
+    drop(fs::remove_dir_all(&root));
+    if accepted_missing {
+        return Err("missing normalized source artifact was accepted".to_owned());
+    }
+    Ok(())
 }
