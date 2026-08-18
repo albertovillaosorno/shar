@@ -25,7 +25,7 @@
 # - Description:
 #   - Shows a minimal checklist and annotates the exact current host target.
 # - Usage:
-#   - Run tools/build/arch.py and choose at least one target.
+#   - Run tools/build/adapter-inbound/arch.py and choose at least one target.
 # - Defaults:
 #   - No target is selected automatically.
 #
@@ -85,7 +85,7 @@ _TARGETS_BY_ID = {target.identifier: target for target in _TARGETS}
 
 def _root() -> Path:
     """Return the repository root from this script's tracked location."""
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def _host_system() -> str | None:

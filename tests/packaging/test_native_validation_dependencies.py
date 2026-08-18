@@ -39,7 +39,13 @@ import tomllib
 import unittest
 
 _ROOT = Path(__file__).resolve().parents[2]
-_PATH = _ROOT / "tools" / "validation" / "native_dependencies.py"
+_PATH = (
+    _ROOT
+    / "tools"
+    / "validation"
+    / "adapter-inbound"
+    / "native_dependencies.py"
+)
 _SPEC = importlib.util.spec_from_file_location(
     "shar_native_validation_dependencies_test",
     _PATH,

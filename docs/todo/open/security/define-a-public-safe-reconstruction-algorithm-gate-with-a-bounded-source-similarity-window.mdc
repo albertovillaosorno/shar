@@ -1,6 +1,7 @@
 ---
 schema: shar.todo.v1
-id: define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window
+id: "define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-\
+  similarity-window"
 status: open
 priority: P0
 lane: security
@@ -58,7 +59,8 @@ weighted-Jaccard similarity metric in content-safe count-vector terms. The
 private reference contributes aggregate obfuscated directory/extension counts,
 not payload bytes, file names, or a reversible full-tree recipe.
 
-`tools/source-similarity/main.py` implements only evidence measurement using
+`tools/source-similarity/adapter-inbound/main.py` implements only evidence
+measurement using
 exact rational arithmetic. Four stdlib tests cover complete, missing, extra,
 and invalid vectors and prove the evidence object has no admission result. No
 45–55% threshold exists in that code. The technical contract also pins the

@@ -1,6 +1,7 @@
 ---
 schema: shar.todo.v1
-id: produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-submission
+id: "produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-\
+  submission"
 status: open
 priority: P4
 lane: packaging
@@ -18,7 +19,8 @@ Apple signing, SDK, entitlement, or build-host constraint explicit.
 
 ## Acceptance criteria
 
-- [ ] Offer iOS ARM64 as one selectable target in `tools/build/arch.py`.
+- [ ] Offer iOS ARM64 as one selectable target in
+  `tools/build/adapter-inbound/arch.py`.
 - [ ] Publish the successful native deliverable as an IPA beneath the canonical
   `dist/` architecture output.
 - [ ] Do not add App Store submission, review, notarization, or installation

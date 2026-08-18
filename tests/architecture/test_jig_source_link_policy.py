@@ -92,7 +92,13 @@ def test_project_python_tools_use_portable_launchers() -> None:
         actual = entry.get("path") if isinstance(entry, dict) else None
         if actual != expected:
             mismatches.append(f"{name}:{actual!r}")
-    bootstrap = _ROOT / "tools" / "validation" / "python_dependencies.py"
+    bootstrap = (
+        _ROOT
+        / "tools"
+        / "validation"
+        / "adapter-inbound"
+        / "python_dependencies.py"
+    )
     assert bootstrap.is_file(), "tracked Python validation bootstrap is missing"
     assert not mismatches, f"project Python tool path drift: {mismatches}"
 

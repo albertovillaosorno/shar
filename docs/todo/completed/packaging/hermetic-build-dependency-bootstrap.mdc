@@ -12,7 +12,8 @@ children: []
 
 # Hermetic build dependency bootstrap
 
-Implement `tools/build/dependencies.py` with CPython 3.14.6 as the declared
+Implement `tools/build/adapter-inbound/dependencies.py` with CPython 3.14.6 as
+the declared
 bootstrap and install public project dependencies into repository-owned pinned
 locations without mutating global packages; validate proprietary or platform
 toolchains as explicit external prerequisites instead of silently using
@@ -38,7 +39,8 @@ platform prerequisites.
 
 ## Evidence
 
-`tools/build/dependencies.py` requires CPython 3.14.6, pins Rustup 1.29.0 with
+`tools/build/adapter-inbound/dependencies.py` requires CPython 3.14.6, pins
+Rustup 1.29.0 with
 per-host SHA-256 digests, installs Rust/Cargo 1.97.1 below
 `.dependencies/build/`, and uses `.cache/build/` for Cargo registry/build state.
 It builds `validate-game` with `Cargo.lock` under `--locked`, publishes the

@@ -55,9 +55,9 @@ def _load(name: str, relative: str) -> ModuleType:
 
 _DEPENDENCIES = _load(
     "shar_build_dependencies_test",
-    "tools/build/dependencies.py",
+    "tools/build/adapter-inbound/dependencies.py",
 )
-_CHECK = _load("shar_build_check_test", "tools/build/check.py")
+_CHECK = _load("shar_build_check_test", "tools/build/adapter-inbound/check.py")
 
 
 class ValidatorSourceEvidenceTests(unittest.TestCase):

@@ -41,6 +41,42 @@ from fractions import Fraction
 Coordinate = tuple[str, str]
 
 
+class SimilarityInputError(ValueError):
+    """Base fail-closed source-similarity input error."""
+
+
+class EmptyReferenceError(SimilarityInputError):
+    """The reference count vector contains no units."""
+
+    def __init__(self) -> None:
+        """Initialize the canonical empty-reference failure."""
+        super().__init__("reference count vector must not be empty")
+
+
+class EmptyUnionError(SimilarityInputError):
+    """Reference and candidate produce no count-vector union."""
+
+    def __init__(self) -> None:
+        """Initialize the canonical empty-union failure."""
+        super().__init__("count-vector union must not be empty")
+
+
+class InvalidCoordinateError(SimilarityInputError):
+    """A count-vector coordinate is not a pair of strings."""
+
+    def __init__(self) -> None:
+        """Initialize the canonical coordinate-shape failure."""
+        super().__init__("coordinate must be a pair of strings")
+
+
+class InvalidCountError(SimilarityInputError):
+    """A coordinate count is not a nonnegative integer."""
+
+    def __init__(self) -> None:
+        """Initialize the canonical coordinate-count failure."""
+        super().__init__("coordinate count must be a nonnegative integer")
+
+
 @dataclass(frozen=True, slots=True)
 class SimilarityEvidence:
     """Pure calibration evidence with no admission decision."""
@@ -57,13 +93,19 @@ def measure(
     reference: Mapping[Coordinate, int],
     candidate: Mapping[Coordinate, int],
 ) -> SimilarityEvidence:
-    """Measure nonnegative count vectors without selecting a threshold."""
+    """Measure nonnegative count vectors without selecting a threshold.
+
+    Raises:
+        EmptyReferenceError: If the reference vector has no units.
+        EmptyUnionError: If both vectors produce an empty union.
+
+    """
     _validate(reference)
     _validate(candidate)
     reference_units = sum(reference.values())
     candidate_units = sum(candidate.values())
     if reference_units == 0:
-        raise ValueError("reference count vector must not be empty")
+        raise EmptyReferenceError
     coordinates = set(reference) | set(candidate)
     shared = sum(
         min(reference.get(key, 0), candidate.get(key, 0)) for key in coordinates
@@ -72,7 +114,7 @@ def measure(
         max(reference.get(key, 0), candidate.get(key, 0)) for key in coordinates
     )
     if union == 0:
-        raise ValueError("count-vector union must not be empty")
+        raise EmptyUnionError
     return SimilarityEvidence(
         reference_units=reference_units,
         candidate_units=candidate_units,
@@ -90,6 +132,6 @@ def _validate(values: Mapping[Coordinate, int]) -> None:
             or len(key) != 2
             or not all(isinstance(value, str) for value in key)
         ):
-            raise ValueError("coordinate must be a pair of strings")
+            raise InvalidCoordinateError
         if isinstance(count, bool) or not isinstance(count, int) or count < 0:
-            raise ValueError("coordinate count must be a nonnegative integer")
+            raise InvalidCountError

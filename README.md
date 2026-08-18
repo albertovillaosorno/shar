@@ -247,8 +247,9 @@ similarity window** for accepting candidate source layouts.
 Those numbers are deliberately not production policy. Calibration now defines
 reference coverage as shared structural count units divided by private-reference
 count units, and evaluates weighted-Jaccard similarity over the same public-safe
-obfuscated directory/extension count vectors. `tools/source-similarity/main.py`
-reports those values but has no acceptance threshold or pass/fail result.
+obfuscated directory/extension count vectors. The repository-owned calibration
+helper at `tools/source-similarity/adapter-inbound/main.py` reports those values
+but has no acceptance threshold or pass/fail result.
 
 Similarity can never substitute for required original bytes, exact identities,
 deeper structure, hashes, or provenance validation. The algorithm generator
@@ -361,10 +362,10 @@ logs. If you only want to play, use the lightweight release flow above.
    directory layer.
 1. Use the repository-pinned Python/toolchain versions and supported Unreal
    Engine version documented by the build tooling.
-1. Run `python tools/build/dependencies.py`.
-1. Run `python tools/build/check.py`.
-1. Run `python tools/build/arch.py`.
-1. Run `python tools/build/run.py`.
+1. Run `python tools/build/adapter-inbound/dependencies.py`.
+1. Run `python tools/build/adapter-inbound/check.py`.
+1. Run `python tools/build/adapter-inbound/arch.py`.
+1. Run `python tools/build/adapter-inbound/run.py`.
 1. Validate the repository with Jig.
 
 `Simpsons.ico` is preserved as canonical source identity. Cross-platform icon

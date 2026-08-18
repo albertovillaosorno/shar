@@ -32,6 +32,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import re
 import tomllib
@@ -275,6 +276,74 @@ def test_repository_relative_markdown_links_exist() -> None:
                 relative = document.relative_to(_ROOT).as_posix()
                 missing.append(f"{relative}:{line}: {target}")
     assert not missing, f"stale repository Markdown links: {missing}"
+
+
+def test_tool_python_parts_live_below_registered_kinds() -> None:
+    """Reject Python tool parts placed directly at a function root."""
+    misplaced = sorted(
+        path.relative_to(_ROOT).as_posix()
+        for function in (_ROOT / "tools").iterdir()
+        if function.is_dir()
+        for path in function.glob("*.py")
+    )
+    assert not misplaced, (
+        f"tool Python parts bypass a registered kind: {misplaced}"
+    )
+
+
+def test_tool_functions_publish_canonical_boundary_metadata() -> None:
+    """Require canonical boundary artifacts once a tool function has a kind."""
+    taxonomy = json.loads(
+        (_ROOT / ".jig" / "taxonomy.json").read_text(encoding="utf-8")
+    )
+    architecture = taxonomy.get("architecture")
+    kinds = (
+        architecture.get("kinds")
+        if isinstance(architecture, dict)
+        else None
+    )
+    assert isinstance(kinds, dict), "taxonomy must declare architecture kinds"
+    admitted = set(kinds)
+    missing: list[str] = []
+    functions = sorted(
+        path for path in (_ROOT / "tools").iterdir() if path.is_dir()
+    )
+    for function in functions:
+        physical = {
+            child.name
+            for child in function.iterdir()
+            if child.is_dir() and child.name in admitted
+        }
+        if not physical:
+            continue
+        required = (
+            function / "function.yml",
+            function / "README.md",
+            function / "README.md.yml",
+            function / f"{function.name}.jig",
+        )
+        missing.extend(
+            path.relative_to(_ROOT).as_posix()
+            for path in required
+            if not path.is_file()
+        )
+    assert not missing, (
+        f"tool function boundary artifacts missing: {missing}"
+    )
+
+
+def test_build_tool_source_is_explicitly_admitted_by_gitignore() -> None:
+    """Keep repository-owned build adapters trackable despite build ignores."""
+    lines = (_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    required = (
+        "!tools/build/",
+        "!tools/build/adapter-inbound/",
+        "!tools/build/adapter-inbound/**",
+    )
+    missing = tuple(rule for rule in required if rule not in lines)
+    assert not missing, (
+        f"build adapter source ignore exceptions missing: {missing}"
+    )
 
 
 def test_retired_repository_paths_stay_absent() -> None:

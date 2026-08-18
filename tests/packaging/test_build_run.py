@@ -38,7 +38,13 @@ import tempfile
 import unittest
 from unittest import mock
 
-_RUN_PATH = Path(__file__).resolve().parents[2] / "tools" / "build" / "run.py"
+_RUN_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "tools"
+    / "build"
+    / "adapter-inbound"
+    / "run.py"
+)
 _SPEC = importlib.util.spec_from_file_location("shar_build_run", _RUN_PATH)
 if _SPEC is None or _SPEC.loader is None:
     raise RuntimeError("cannot load build runner for tests")

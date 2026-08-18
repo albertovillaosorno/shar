@@ -63,7 +63,7 @@ class BootstrapError(RuntimeError):
 
 
 def _root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def _default_source_python(root: Path) -> Path:

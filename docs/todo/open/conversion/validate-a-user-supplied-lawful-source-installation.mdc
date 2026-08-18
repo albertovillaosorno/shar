@@ -64,7 +64,8 @@ validates a source directory with no `manifest/` child and proves the validator
 does not create one. The `validate-game` CLI accepts an optional explicit
 manifest path while preserving the developer `game/` default.
 
-`tools/build/check.py` now accepts `--game` as either an installation directory
+`tools/build/adapter-inbound/check.py` now accepts `--game` as either an
+installation directory
 or `Simpsons.exe`, resolves both to the same source root, and invokes the
 validator
 with the repository-owned `game/manifest/game.jsonl` as a separate argument. The

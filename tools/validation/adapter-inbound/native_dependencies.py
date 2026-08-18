@@ -84,7 +84,7 @@ class Launcher(NamedTuple):
 
 
 def _root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def _run(
@@ -160,7 +160,7 @@ def _python_tools(root: Path) -> tuple[Path, Path]:
     if not pytest.is_file() or not ruff.is_file():
         raise BootstrapError(
             "Python validation tools are missing; run "
-            "tools/validation/python_dependencies.py --replace"
+            "tools/validation/adapter-inbound/python_dependencies.py --replace"
         )
     return pytest, ruff
 
@@ -174,7 +174,7 @@ def _rust_tools(root: Path) -> tuple[Path, dict[str, str]]:
     if not rustup.is_file() or not cargo.is_file():
         raise BootstrapError(
             "repo-local Rust bootstrap is missing; "
-            "run tools/build/dependencies.py"
+            "run tools/build/adapter-inbound/dependencies.py"
         )
     environment = os.environ.copy()
     environment["RUSTUP_HOME"] = str(rustup_home)

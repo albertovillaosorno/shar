@@ -12,7 +12,8 @@ children: []
 
 # Interactive build architecture selector
 
-Implement `tools/build/arch.py` as a minimal checklist window that lets the
+Implement `tools/build/adapter-inbound/arch.py` as a minimal checklist window
+that lets the
 user select one or more supported build targets and saves the decision to
 `.cache/build/data/arch.json`.
 
@@ -43,7 +44,8 @@ platform prerequisites.
 
 ## Evidence
 
-Implemented by `tools/build/arch.py`. The selector exposes exactly seven
+Implemented by `tools/build/adapter-inbound/arch.py`. The selector exposes
+exactly seven
 canonical targets, keeps every checkbox initially clear, annotates the exact
 Windows AMD64 host as `← this is your system`, rejects tvOS and unknown target
 identifiers, and atomically writes `shar.build.arch.v1` decision JSON. CLI

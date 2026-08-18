@@ -49,7 +49,7 @@ _IGNORED_NAMES = {
 
 
 def _root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def _discover_target(root: Path) -> Path:

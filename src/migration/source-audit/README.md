@@ -18,8 +18,10 @@ inputs, or includes the selected private source path in public diagnostics.
 
 ## Build preflight integration
 
-`tools/build/dependencies.py` publishes the `validate-source-deep` binary with
+`tools/build/adapter-inbound/dependencies.py` publishes the
+`validate-source-deep` binary with
 its binary SHA-256 and repository source-closure SHA-256.
-`tools/build/check.py` first runs the exact minimum-manifest validator and only
+`tools/build/adapter-inbound/check.py` first runs the exact minimum-manifest
+validator and only
 then runs this deep audit. A deep-audit failure therefore cannot be bypassed by
 editing the public minimum manifest.

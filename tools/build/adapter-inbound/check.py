@@ -25,7 +25,7 @@
 # - Description:
 #   - Fails closed before saving paths used by later build stages.
 # - Usage:
-#   - Run tools/build/check.py after dependencies.py.
+#   - Run tools/build/adapter-inbound/check.py after dependencies.py.
 # - Defaults:
 #   - Requires Python 3.14.6 and Unreal Engine 5.8.1 exactly.
 #
@@ -88,7 +88,7 @@ class EngineEvidence(NamedTuple):
 
 def _root() -> Path:
     """Return the repository root from this script's tracked location."""
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def _normalized(path: Path) -> str:
@@ -252,7 +252,7 @@ def _dependency_validator(
     if actual_source_hash != expected_source_hash:
         raise CheckFailure(
             "dependency validator source inputs no longer match evidence; "
-            "rerun tools/build/dependencies.py"
+            "rerun tools/build/adapter-inbound/dependencies.py"
         )
     return validator
 
@@ -289,7 +289,7 @@ def _dependency_deep_source_validator(
     if _deep_validator_source_sha256(root) != expected_source_hash:
         raise CheckFailure(
             "deep source validator source inputs no longer match evidence; "
-            "rerun tools/build/dependencies.py"
+            "rerun tools/build/adapter-inbound/dependencies.py"
         )
     return validator
 
@@ -694,7 +694,7 @@ def _revalidate(path: Path) -> None:
     if saved != current:
         raise CheckFailure(
             "saved check evidence no longer matches validated state; "
-            "rerun tools/build/check.py"
+            "rerun tools/build/adapter-inbound/check.py"
         )
 
 

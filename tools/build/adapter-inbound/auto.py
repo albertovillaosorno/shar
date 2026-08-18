@@ -25,7 +25,7 @@
 # - Description:
 #   - Reuses persisted JSON evidence rather than hidden process state.
 # - Usage:
-#   - Run tools/build/auto.py from any location.
+#   - Run tools/build/adapter-inbound/auto.py from any location.
 # - Defaults:
 #   - Revalidates an existing architecture decision instead of reopening it.
 #
@@ -48,12 +48,12 @@ class AutoFailure(RuntimeError):
 
 def _root() -> Path:
     """Return the repository root from this tracked script location."""
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def _run_step(root: Path, name: str, arguments: list[str]) -> None:
     """Run one canonical build script using the current exact Python."""
-    script = root / "tools" / "build" / name
+    script = root / "tools" / "build" / "adapter-inbound" / name
     command = [sys.executable, str(script), *arguments]
     print(f"auto: running {name}", flush=True)
     result = subprocess.run(command, cwd=root, check=False)
