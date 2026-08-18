@@ -129,28 +129,33 @@ fn binds_stage_scope_state_prop() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_missing_or_forward_state_prop() {
+fn rejects_missing_or_forward_state_prop() -> Result<(), String> {
     let initialization =
         MissionInitializationReport::from_directives_for_tests("m3", vec![]);
-    let missing = preflight_mission_pickup_state_props(
+    let missing_result = preflight_mission_pickup_state_props(
         &initialization,
         &empty_stages(),
         &objective(15),
-    )
-    .expect_err("missing pickup state prop must fail");
+    );
+    let Err(missing) = missing_result else {
+        return Err("missing pickup state prop unexpectedly passed".to_owned());
+    };
     assert!(missing.contains("no unique prior state-prop declaration"));
 
-    let forward = preflight_mission_pickup_state_props(
+    let forward_result = preflight_mission_pickup_state_props(
         &mission_prop(20),
         &empty_stages(),
         &objective(15),
-    )
-    .expect_err("forward pickup state prop must fail");
+    );
+    let Err(forward) = forward_result else {
+        return Err("forward pickup state prop unexpectedly passed".to_owned());
+    };
     assert!(forward.contains("no unique prior state-prop declaration"));
+    Ok(())
 }
 
 #[test]
-fn rejects_ambiguous_prior_state_prop() {
+fn rejects_ambiguous_prior_state_prop() -> Result<(), String> {
     let initialization = MissionInitializationReport::from_directives_for_tests(
         "m3",
         vec![MissionInitializationDirective::CollectibleStateProp {
@@ -160,26 +165,36 @@ fn rejects_ambiguous_prior_state_prop() {
             source_state: 2,
         }],
     );
-    let error = preflight_mission_pickup_state_props(
+    let result = preflight_mission_pickup_state_props(
         &initialization,
         &stage_prop(10),
         &objective(15),
-    )
-    .expect_err("ambiguous pickup state prop must fail");
+    );
+    let Err(error) = result else {
+        return Err(
+            "ambiguous pickup state prop unexpectedly passed".to_owned(),
+        );
+    };
     assert!(error.contains("no unique prior state-prop declaration"));
+    Ok(())
 }
 
 #[test]
-fn rejects_target_before_owning_objective() {
+fn rejects_target_before_owning_objective() -> Result<(), String> {
     let initialization =
         MissionInitializationReport::from_directives_for_tests("m3", vec![]);
-    let error = preflight_mission_pickup_state_props(
+    let result = preflight_mission_pickup_state_props(
         &initialization,
         &empty_stages(),
         &objective(7),
-    )
-    .expect_err("pickup target before objective must fail");
+    );
+    let Err(error) = result else {
+        return Err(
+            "pre-objective pickup target unexpectedly passed".to_owned(),
+        );
+    };
     assert!(error.contains("precedes its owning objective"));
+    Ok(())
 }
 
 #[test]

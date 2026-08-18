@@ -95,33 +95,45 @@ fn resolves_collectible_and_waypoint_indices() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_out_of_range_indices() {
+fn rejects_out_of_range_indices() -> Result<(), String> {
     let (stages, objectives) = reports(5, 4, 6, 1, 0);
-    let error = preflight_mission_collectible_waypoints(&stages, &objectives)
-        .expect_err("out-of-range collectible index must fail");
+    let first = preflight_mission_collectible_waypoints(&stages, &objectives);
+    let Err(error) = first else {
+        return Err("out-of-range collectible unexpectedly passed".to_owned());
+    };
     assert!(error.contains("collectible binding index is out of range"));
 
     let (stages, objectives) = reports(5, 4, 6, 0, 1);
-    let error = preflight_mission_collectible_waypoints(&stages, &objectives)
-        .expect_err("out-of-range waypoint index must fail");
+    let second = preflight_mission_collectible_waypoints(&stages, &objectives);
+    let Err(error) = second else {
+        return Err("out-of-range waypoint unexpectedly passed".to_owned());
+    };
     assert!(error.contains("waypoint binding index is out of range"));
+    Ok(())
 }
 
 #[test]
-fn rejects_forward_index_targets() {
+fn rejects_forward_index_targets() -> Result<(), String> {
     let (stages, objectives) = reports(7, 4, 6, 0, 0);
-    let error = preflight_mission_collectible_waypoints(&stages, &objectives)
-        .expect_err("forward collectible reference must fail");
+    let first = preflight_mission_collectible_waypoints(&stages, &objectives);
+    let Err(error) = first else {
+        return Err(
+            "forward collectible reference unexpectedly passed".to_owned(),
+        );
+    };
     assert!(error.contains("later declaration"));
 
     let (stages, objectives) = reports(5, 7, 6, 0, 0);
-    let error = preflight_mission_collectible_waypoints(&stages, &objectives)
-        .expect_err("forward waypoint reference must fail");
+    let second = preflight_mission_collectible_waypoints(&stages, &objectives);
+    let Err(error) = second else {
+        return Err("forward waypoint reference unexpectedly passed".to_owned());
+    };
     assert!(error.contains("later declaration"));
+    Ok(())
 }
 
 #[test]
-fn rejects_objective_owner_drift() {
+fn rejects_objective_owner_drift() -> Result<(), String> {
     let (stages, _) = reports(5, 4, 6, 0, 0);
     let objectives =
         MissionObjectiveSemanticReport::from_route_entries_for_tests(vec![(
@@ -131,7 +143,10 @@ fn rejects_objective_owner_drift() {
             "dump".to_owned(),
             Vec::new(),
         )]);
-    let error = preflight_mission_collectible_waypoints(&stages, &objectives)
-        .expect_err("objective owner drift must fail");
+    let result = preflight_mission_collectible_waypoints(&stages, &objectives);
+    let Err(error) = result else {
+        return Err("objective owner drift unexpectedly passed".to_owned());
+    };
     assert!(error.contains("objective owner drifted"));
+    Ok(())
 }
