@@ -640,15 +640,23 @@ fn validate_document(
                     "directory target path must not be empty",
                 ));
             }
-            validate_portable_path(Path::new(&target.descriptor.path)).map_err(|error| {
-                AlgorithmError::new(format!("invalid algorithm target path: {error}"))
+            let target_path = Path::new(&target.descriptor.path);
+            validate_portable_path(target_path).map_err(|error| {
+                AlgorithmError::new(format!(
+                    "invalid algorithm target path: {error}"
+                ))
             })?;
         }
-        if !paths.insert(target.descriptor.path.clone()) {
+        let candidate = Path::new(&target.descriptor.path);
+        if paths.iter().any(|existing: &String| {
+            let existing = Path::new(existing);
+            candidate.starts_with(existing) || existing.starts_with(candidate)
+        }) {
             return Err(AlgorithmError::new(
-                "algorithm contains duplicate target paths",
+                "algorithm contains overlapping target paths",
             ));
         }
+        let _inserted = paths.insert(target.descriptor.path.clone());
         if target.descriptor.bytes > settings.maximum_file_bytes() {
             return Err(AlgorithmError::new(
                 "algorithm target file exceeds settings",
