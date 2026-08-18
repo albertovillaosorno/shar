@@ -695,7 +695,10 @@ fn resolve_stage(
             _ => {}
         }
     }
-    for binding in &mut out[first_reference..] {
+    let stage_references = out.get_mut(first_reference..).ok_or_else(|| {
+        "mission locator stage reference boundary drifted".to_owned()
+    })?;
+    for binding in stage_references {
         binding.owner_stage_source_ordinal = Some(stage.source_ordinal());
         binding.owner_stage_sequence_ordinal = Some(stage.sequence_ordinal());
     }
@@ -798,7 +801,10 @@ fn resolve_objective(
             _ => {}
         }
     }
-    for binding in &mut out[first_reference..] {
+    let objective_references = out.get_mut(first_reference..).ok_or_else(|| {
+        "mission locator objective reference boundary drifted".to_owned()
+    })?;
+    for binding in objective_references {
         binding.owner_stage_source_ordinal =
             Some(objective.owner_stage_source_ordinal());
         binding.owner_stage_sequence_ordinal =
@@ -809,7 +815,7 @@ fn resolve_objective(
     Ok(())
 }
 
-fn role_uses_script_visibility(role: MissionLocatorRole) -> bool {
+const fn role_uses_script_visibility(role: MissionLocatorRole) -> bool {
     matches!(
         role,
         MissionLocatorRole::InitializationResetVehicle

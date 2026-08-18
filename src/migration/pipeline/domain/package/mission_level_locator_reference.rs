@@ -254,14 +254,15 @@ fn push_level_vehicle_references(
                 "level player vehicle semantic role changed".to_owned(),
             );
         }
-        let arguments = command.arguments();
-        if arguments.len() != 3 && arguments.len() != 4 {
+        let ([_, locator_argument, _] | [_, locator_argument, _, _]) =
+            command.arguments()
+        else {
             return Err(
                 "InitLevelPlayerVehicle argument shape changed".to_owned(),
             );
-        }
+        };
         let locator = source_token(
-            &arguments[1],
+            locator_argument,
             "level player vehicle locator",
         )?;
         push_reference(
