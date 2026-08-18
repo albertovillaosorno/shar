@@ -118,21 +118,19 @@ def test_pytest_gate_covers_all_python_test_roots() -> None:
         for value in args
         if isinstance(value, str) and value.startswith("tests/")
     }
+    normalized = {Path(value) for value in configured}
     required = {
-        path.parent.as_posix() for path in (_ROOT / "tests").glob("*/test_*.py")
+        path.parent.relative_to(_ROOT)
+        for path in (_ROOT / "tests").rglob("test_*.py")
     }
-    required.update(
-        path.parent.as_posix()
-        for path in (_ROOT / "tests" / "unreal").glob("*/test_*.py")
+    missing = sorted(
+        root.as_posix()
+        for root in required
+        if not any(
+            root == configured_root or root.is_relative_to(configured_root)
+            for configured_root in normalized
+        )
     )
-    normalized = {str(Path(value).as_posix()) for value in configured}
-    relative_required = {
-        Path(value).relative_to(_ROOT).as_posix()
-        if Path(value).is_absolute()
-        else value
-        for value in required
-    }
-    missing = sorted(relative_required - normalized)
     assert not missing, (
         f"Python test roots missing from Jig pytest gate: {missing}"
     )

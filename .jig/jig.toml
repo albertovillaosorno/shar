@@ -546,7 +546,7 @@ capability = "pytest"
 tool = "pytest"
 config_files = [".jig/lang/python/pytest.ini"]
 # jig-ignore-next-line: exact bounded Python suite roots
-args = ["-q", "-c", ".jig/lang/python/pytest.ini", "tests/architecture", "tests/packaging", "tests/unreal/editor-control", "tests/unreal/project"]
+args = ["-q", "-c", ".jig/lang/python/pytest.ini", "tests/architecture", "tests/packaging", "tests/unreal/editor-control", "tests/unreal/project", "tests/user"]
 timeout_seconds = 3600
 
 [validation.ruff]
