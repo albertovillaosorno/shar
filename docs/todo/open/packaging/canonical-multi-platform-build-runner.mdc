@@ -91,6 +91,9 @@ saved evidence now fails before it can be consumed, replaced, or cleaned up.
 The shared `.cache/build/run` directory and each per-target work root are also
 required to be real directories before Turnkey or UAT writes reports, logs,
 staging data, or candidate packages.
+After UAT returns, the complete candidate tree is traversed without following
+links and rejects symbolic links, junctions, or special filesystem entries
+before manifests/debug symbols are moved or the package is published.
 
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its
