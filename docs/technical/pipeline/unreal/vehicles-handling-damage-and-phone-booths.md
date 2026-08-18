@@ -1,7 +1,7 @@
 # Vehicles, handling, damage, and phone booths
 
 - Status: Active
-- Last reviewed: 2026-07-18
+- Last reviewed: 2026-08-17
 
 ## Native asset set
 
@@ -43,6 +43,26 @@ A drivable rig profile maps semantic roles for chassis, each wheel, steering,
 required doors, lights, exhaust, camera anchors, seats, entry points, tow or
 hardpoints, and damage sections. Runtime code does not search arbitrary bone or
 node names.
+
+### Source-backed grounding
+
+Vehicle FBX publication derives its vertical normalization from source geometry;
+it does not apply an editor-authored or hand-tuned height correction. Ordinary
+road vehicles require exactly four authored road-wheel surfaces bound to `w0`
+through `w3`. The exporter finds their lowest finite authored Y coordinate and
+applies its negation to every vehicle part, the unique skeleton root bind, and
+root animation samples. The FBX writer preserves that authored Y axis while its
+character export root only rotates 180 degrees around Y.
+
+`mono-v` uses a separate source-backed strategy because its four authored wheel
+boxes are nonvisual proxies: their source rest surfaces stay unchanged while the
+visible body is grounded. The proxies remain published as deferred evidence.
+
+Every `vehicle.catalog.json` now records a `grounding` object with `source`,
+`offset_y`, and `root_bone`. `source` is `road-wheel-surfaces` for ordinary
+vehicles or `visible-body-with-authored-wheel-proxies` for `mono-v`. This makes
+the observed imported vertical offset auditable without inventing a second
+correction in Unreal.
 
 ## Geometry and LOD
 

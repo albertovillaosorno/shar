@@ -94,14 +94,6 @@ manual editor placement as world-layout authority.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/audit-distant-object-transforms-from-source-evidence-instead-of-accepting-manual-editor.mdc](docs/todo/open/conversion/audit-distant-object-transforms-from-source-evidence-instead-of-accepting-manual-editor.mdc)
 
-### TODO - Audit the reported vertical offset in imported vehicle FBX files, record its…
-
-Audit the reported vertical offset in imported vehicle FBX files, record its
-deterministic cause, and remove or preserve it only from source evidence.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/conversion/audit-the-reported-vertical-offset-in-imported-vehicle-fbx-files-record-its.mdc](docs/todo/open/conversion/audit-the-reported-vertical-offset-in-imported-vehicle-fbx-files-record-its.mdc)
-
 ### TODO - Recheck those conversion audits in-game after deterministic fixes land
 
 Recheck those conversion audits in-game after deterministic fixes land.

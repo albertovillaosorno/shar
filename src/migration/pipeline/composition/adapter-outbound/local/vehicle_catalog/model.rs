@@ -63,6 +63,17 @@ pub(super) struct TextureRecord {
     pub(super) sha256: String,
 }
 
+/// Source-backed vertical normalization recorded for one vehicle FBX.
+#[derive(Clone, Debug)]
+pub(super) struct GroundingRecord {
+    /// Stable source-evidence strategy used to derive the translation.
+    pub(super) source: &'static str,
+    /// Exact authored-axis translation applied before FBX serialization.
+    pub(super) offset_y: f64,
+    /// Authored skeleton root receiving the same translation.
+    pub(super) root_bone: String,
+}
+
 /// One completed vehicle artifact and catalog record.
 #[derive(Clone, Debug)]
 pub(super) struct VehicleRecord {
@@ -80,6 +91,8 @@ pub(super) struct VehicleRecord {
     pub(super) fbx_sha256: String,
     /// Binary FBX object-family summary.
     pub(super) summary: CharacterBinaryFbxSummary,
+    /// Source-backed vertical normalization applied to this FBX.
+    pub(super) grounding: GroundingRecord,
     /// Deterministically ordered semantic part records.
     pub(super) parts: Vec<PartRecord>,
     /// Source geometry intentionally preserved outside the main FBX.
