@@ -66,11 +66,7 @@ fn export_batch(
 ) -> Result<PackageExportReport, Box<dyn std::error::Error>> {
     local::create_dir_all(output_root)?;
     let report_path = output_root.join("p3d-batch-report.jsonl");
-    let cache_root = PathBuf::from("cache/p3d");
-    local::create_dir_all(&cache_root)?;
-    let cache_path = cache_root.join("batch-cache.jsonl");
     let mut report = String::new();
-    let mut cache = String::new();
     let mut totals = PackageExportReport::default();
     for input_root in input_roots {
         if local::path_kind(input_root)? == PathKind::Missing {
@@ -96,7 +92,6 @@ fn export_batch(
                     "",
                 );
                 report.push_str(&row);
-                cache.push_str(&row);
                 continue;
             }
             match ExportPackage::execute(
@@ -114,7 +109,6 @@ fn export_batch(
                     let row =
                         report_line(status, input_root, &file, &output_dir, "");
                     report.push_str(&row);
-                    cache.push_str(&row);
                 },
                 Err(error) => {
                     totals.failed = totals.failed.saturating_add(1);
@@ -126,13 +120,11 @@ fn export_batch(
                         &error.to_string(),
                     );
                     report.push_str(&row);
-                    cache.push_str(&row);
                 },
             }
         }
     }
     local::write_text(&report_path, &report, true)?;
-    local::write_text(&cache_path, &cache, true)?;
     Ok(totals)
 }
 
