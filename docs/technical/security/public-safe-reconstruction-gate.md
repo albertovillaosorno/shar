@@ -114,9 +114,11 @@ same Unicode-uppercase portable comparison as filesystem evidence, so paths
 that differ only by host-sensitive casing cannot collide at replay. A published
 plan remains
 unusable without the local source evidence admitted by its source-bound replay
-contract. The generic engine's
-external round-trip tests require caller-supplied source at replay and verify
-that create/replay does not change the caller's source bytes or layout.
+contract. Algorithm authoring publishes the plan with create-new persistence,
+so an existing plan path is rejected atomically instead of being replaced. The
+generic engine's external round-trip tests require caller-supplied source at
+replay and verify that create/replay does not change the caller's source bytes
+or layout.
 
 ## Current status
 

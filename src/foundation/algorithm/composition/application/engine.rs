@@ -583,7 +583,7 @@ pub fn create_algorithm(
     let mut text = serde_json::to_string_pretty(&document)
         .map_err(|error| AlgorithmError::new(format!("cannot serialize algorithm: {error}")))?;
     text.push('\n');
-    local::write_text(algorithm_path, &text, true)
+    local::write_new_text(algorithm_path, &text, true)
         .map_err(|error| AlgorithmError::new(format!("cannot write algorithm output: {error}")))
 }
 

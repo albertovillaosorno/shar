@@ -14,5 +14,6 @@ Does not own generated artifacts, local dependencies, or game content.
 
 ## Navigation
 
-- `composition`: local I/O wiring, compatibility APIs, and provider traits.
+- `composition`: local I/O wiring, replacement/create-new writes, and provider
+  traits.
 - `domain`: portable path identity and containment policy.

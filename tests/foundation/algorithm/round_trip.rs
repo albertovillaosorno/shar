@@ -398,6 +398,41 @@ fn non_txt_algorithm_output_is_rejected() {
     assert!(result.is_ok(), "extension rejection failed: {result:?}");
 }
 
+fn run_existing_algorithm_output_is_preserved(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("existing-algorithm-output")?;
+    let source = temp.path.join("source.bin");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    let sentinel = b"preserve existing plan\n";
+    fs::write(&source, vec![0x48_u8; 2048])?;
+    fs::write(&target, b"synthetic target")?;
+    fs::write(&algorithm, sentinel)?;
+
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    );
+    if result.is_ok() {
+        return Err("existing algorithm output was replaced".into());
+    }
+    if fs::read(&algorithm)? != sentinel {
+        return Err("existing algorithm output was modified".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn existing_algorithm_output_collision_is_preserved() {
+    let result = run_existing_algorithm_output_is_preserved();
+    assert!(
+        result.is_ok(),
+        "algorithm output collision handling failed: {result:?}"
+    );
+}
+
 fn run_algorithm_output_inside_source_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("source-overlap")?;
     let source = temp.path.join("source");

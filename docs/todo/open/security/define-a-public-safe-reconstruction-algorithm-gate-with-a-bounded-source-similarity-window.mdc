@@ -82,9 +82,10 @@ so hard-link aliases cannot inflate generic admission evidence. Replay document
 validation also rejects ancestor/descendant target path collisions before
 decryption or writes, requiring one realizable protected output tree. Target
 paths are compared by the repository's Unicode-uppercase portable identity, so
-case-equivalent paths also fail before replay. These tests establish engine-level
-source binding and read-only behavior; they do not
-certify
+case-equivalent paths also fail before replay. Algorithm creation uses an atomic
+create-new filesystem write, and a regression proves an existing plan remains
+byte-identical when publication collides. These tests establish engine-level
+source binding and read-only behavior; they do not certify
 the still-placeholder distributable family plans or replace the pending
 representative-install similarity calibration.
 

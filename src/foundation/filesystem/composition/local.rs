@@ -84,6 +84,20 @@ pub fn write_text(path: &Path, text: &str, create_parents: bool) -> io::Result<(
     WriteFile::text(&StdFilesystem, path, text, create_parents)
 }
 
+/// Creates one new UTF-8 text file at an explicit local path.
+///
+/// # Errors
+///
+/// Returns `AlreadyExists` when the destination exists, or another local
+/// provider I/O error.
+pub fn write_new_text(
+    path: &Path,
+    text: &str,
+    create_parents: bool,
+) -> io::Result<()> {
+    WriteFile::new_text(&StdFilesystem, path, text, create_parents)
+}
+
 /// Creates one local directory and every missing parent.
 ///
 /// # Errors

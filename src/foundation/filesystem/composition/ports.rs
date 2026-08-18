@@ -60,6 +60,14 @@ pub trait FileWriter {
     ///
     /// Returns the provider I/O error when writing fails.
     fn write_bytes(&self, path: &Path, bytes: &[u8]) -> io::Result<()>;
+
+    /// Creates one new file with the supplied complete bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns `AlreadyExists` when the destination exists, or another provider
+    /// I/O error when creation or writing fails.
+    fn write_new_bytes(&self, path: &Path, bytes: &[u8]) -> io::Result<()>;
 }
 
 /// Inspects explicit external paths.

@@ -31,6 +31,7 @@
 //! Std filesystem outbound adapter.
 
 use std::path::{Path, PathBuf};
+use std::io::Write as _;
 use std::{fs, io};
 
 use crate::domain::PathKind;
@@ -122,6 +123,17 @@ impl FileWriter for StdFilesystem {
             Ok(()) => Ok(()),
             Err(source) => Err(with_path("write file", path, source)),
         }
+    }
+
+    fn write_new_bytes(&self, path: &Path, bytes: &[u8]) -> io::Result<()> {
+        reject_links_in_path(path)?;
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(path)
+            .map_err(|source| with_path("create new file", path, source))?;
+        file.write_all(bytes)
+            .map_err(|source| with_path("write new file", path, source))
     }
 }
 
