@@ -36,8 +36,9 @@ No dependency: this is a P0 product-authority correction.
 ## Evidence
 
 The canonical base-source extraction no longer exposes `export-lmlm`,
-optional-mod preview, or approval-token paths, and its complete extraction is nine faithful-base
-stages. Phase-two metadata/index routing contains no LMLM override categories,
+optional-mod preview, or approval-token paths, and its complete extraction is nine
+faithful-base stages. Phase-two metadata/index routing contains no LMLM override
+categories,
 and the game-manifest taxonomy contains no `language_mod` kind or synthetic
 `.lmlm` requirement. The scanner gives `.lmlm` no special exemption, so legacy
 packages inside a claimed base source are unclassified rather than supported.
@@ -45,13 +46,15 @@ A separate repository-root `mods/` user-input boundary may be composed after the
 base extraction; it is not evidence for validating `game/`.
 
 Legacy compatibility now lives only in the separately downloadable,
-Rust-only `tools/lmlm/` compatibility boundary (Rust 1.97.1). Its read-only inspector
-validated the local Jebano and Muckluck inputs without installing or extracting
+Rust-only `tools/lmlm/` compatibility boundary (Rust 1.97.1). Its read-only
+inspector validated the local Jebano and Muckluck inputs without installing or
+extracting
 them. No user-owned package was moved or deleted by the repository migration.
 
 Validation evidence: `cargo test -p game_manifest` passed; the full pipeline
 library suite passed after removal; the retired CLI commands have an explicit
-unknown-command contract test; `tools/lmlm` has passing Rust parser/converter tests; and
+unknown-command contract test; `tools/lmlm` has passing Rust parser/converter
+tests; and
 the canonical local `game/` passes `validate-game` with 109 base folder/type
 minimums plus exact root-file requirements. Source traversal remains rooted in
 the caller-selected game directory, so packages elsewhere on the machine are
