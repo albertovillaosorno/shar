@@ -325,13 +325,15 @@ fn resolves_parameters_directives_and_stage_header_in_source_order()
 fn condition_participant_preserves_full_owner_chain() -> Result<(), String> {
     let binding =
         crate::domain::MissionConditionSemanticBinding::from_parts_for_tests(
-        3,
-        0,
-        Some(5),
-        8,
-        "damage",
-        crate::domain::MissionConditionScope::Objective,
-        "legacy-mission-condition.damage.v1",
+        (
+            3,
+            0,
+            Some(5),
+            8,
+            "damage",
+            crate::domain::MissionConditionScope::Objective,
+            "legacy-mission-condition.damage.v1",
+        ),
         vec![MissionConditionDirective::TargetVehicle {
             source_ordinal: 9,
             vehicle_id: "cletu_v".to_owned(),

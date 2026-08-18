@@ -37,6 +37,40 @@ use super::MissionConditionParameters;
 
 const LEGACY_HIT_AND_RUN_NO_OP: &str = "legacy-set-hit-n-run-dummy-command-v1";
 
+#[cfg(test)]
+type MissionConditionBindingTestParts<'a> = (
+    usize,
+    usize,
+    Option<usize>,
+    usize,
+    &'a str,
+    MissionConditionScope,
+    &'static str,
+);
+
+#[cfg(test)]
+type MissionConditionTestEntry = (
+    usize,
+    usize,
+    Option<usize>,
+    usize,
+    String,
+    MissionConditionScope,
+    &'static str,
+);
+
+#[cfg(test)]
+type MissionConditionParameterizedTestEntry = (
+    usize,
+    usize,
+    Option<usize>,
+    usize,
+    String,
+    MissionConditionScope,
+    &'static str,
+    MissionConditionParameters,
+);
+
 /// One typed command owned by a reviewed mission condition.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum MissionConditionDirective {
@@ -110,15 +144,18 @@ pub struct MissionConditionSemanticBinding {
 impl MissionConditionSemanticBinding {
     #[cfg(test)]
     pub(crate) fn from_parts_for_tests(
-        owner_stage_source_ordinal: usize,
-        owner_stage_sequence_ordinal: usize,
-        owner_objective_source_ordinal: Option<usize>,
-        source_ordinal: usize,
-        source_alias: &str,
-        scope: MissionConditionScope,
-        schema_id: &'static str,
+        parts: MissionConditionBindingTestParts<'_>,
         directives: Vec<MissionConditionDirective>,
     ) -> Self {
+        let (
+            owner_stage_source_ordinal,
+            owner_stage_sequence_ordinal,
+            owner_objective_source_ordinal,
+            source_ordinal,
+            source_alias,
+            scope,
+            schema_id,
+        ) = parts;
         Self {
             owner_stage_source_ordinal,
             owner_stage_sequence_ordinal,
@@ -202,15 +239,7 @@ impl MissionConditionSemanticReport {
 
     #[cfg(test)]
     pub(crate) fn from_owned_entries_for_tests(
-        entries: Vec<(
-            usize,
-            usize,
-            Option<usize>,
-            usize,
-            String,
-            MissionConditionScope,
-            &'static str,
-        )>,
+        entries: Vec<MissionConditionTestEntry>,
     ) -> Self {
         Self::from_owned_entries_with_parameters_for_tests(
             entries
@@ -241,16 +270,7 @@ impl MissionConditionSemanticReport {
 
     #[cfg(test)]
     pub(crate) fn from_owned_entries_with_parameters_for_tests(
-        entries: Vec<(
-            usize,
-            usize,
-            Option<usize>,
-            usize,
-            String,
-            MissionConditionScope,
-            &'static str,
-            MissionConditionParameters,
-        )>,
+        entries: Vec<MissionConditionParameterizedTestEntry>,
     ) -> Self {
         Self {
             conditions: entries
