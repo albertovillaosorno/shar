@@ -98,3 +98,42 @@ fn create_new_bytes_preserve_existing_destination() -> Result<(), String> {
     }
     Ok(())
 }
+#[cfg(unix)]
+#[test]
+fn create_new_bytes_reject_symlinked_parent_without_outside_write(
+) -> Result<(), String> {
+    use std::os::unix::fs::symlink;
+
+    let sequence = SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "schoenwald-create-new-link-{}-{sequence}",
+        std::process::id()
+    ));
+    let outside = root.join("outside");
+    let link = root.join("linked");
+    let destination = link.join("payload.bin");
+    let cleanup = || fs::remove_dir_all(&root);
+    drop(cleanup());
+    fs::create_dir_all(&outside).map_err(|error| error.to_string())?;
+    symlink(&outside, &link).map_err(|error| error.to_string())?;
+
+    let result = local::write_new_bytes(&destination, b"private", false);
+    let outside_destination = outside.join("payload.bin");
+    let outside_exists = outside_destination.exists();
+    drop(cleanup());
+
+    let Err(error) = result else {
+        return Err("create-new write followed a symlinked parent".to_owned());
+    };
+    if error.kind() != io::ErrorKind::InvalidInput {
+        return Err(format!(
+            "unexpected symlinked-parent error kind: {:?}",
+            error.kind()
+        ));
+    }
+    if outside_exists {
+        let message = "symlinked-parent write escaped the requested tree";
+        return Err(message.to_owned());
+    }
+    Ok(())
+}
