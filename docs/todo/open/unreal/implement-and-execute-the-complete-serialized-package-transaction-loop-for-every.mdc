@@ -1,6 +1,7 @@
 ---
 schema: shar.todo.v1
-id: implement-and-execute-the-complete-serialized-package-transaction-loop-for-every
+id: "implement-and-execute-the-complete-serialized-package-transaction-loop-\
+  for-every"
 status: open
 priority: P2
 lane: unreal
@@ -10,7 +11,7 @@ dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
 children: []
 ---
 
-# Implement and execute the complete serialized package transaction loop for every…
+# Implement the complete serialized package transaction loop
 
 Implement and execute the complete serialized package transaction loop for
 every operation family.
@@ -26,5 +27,27 @@ Parent task: `apply-conversion-plans-through-tested-native-unreal-mcp-commands`.
 
 ## Evidence
 
-Open work migrated from the canonical TODO. Add implementation and
-validation evidence here as the task advances.
+The repository-local MCP client and project-side Python contracts are healthy:
+all 267 editor-control tests pass with the canonical pytest configuration, and
+the project Python guards pass before native launch.
+
+A live UE 5.8.1 smoke on 2026-08-17 reached the native project boundary. The
+editor binary itself starts, but `shar.uproject` cannot load because its SHAR
+modules do not yet have Linux editor binaries for this source-engine build.
+A project target build demonstrated the cause rather than an MCP transport
+failure: UnrealBuildTool planned the missing native modules and their enabled
+plugin dependencies before the endpoint could start.
+
+The live build was stopped when its shared action graph began writing
+`libUnrealEditor-*` products into the external Engine installation. That is
+outside this repository's session boundary. `-NoEngineChanges` is insufficient
+for this constraint because UE 5.8.1 explicitly permits creation of new Engine
+files while blocking modification of existing ones. The required MCP Engine
+plugins (`ToolsetRegistry`, `ModelContextProtocol`, and
+`ModelContextProtocolServer`) also have no prebuilt Linux binaries in that
+installation, so a repository-only session cannot complete the live endpoint
+without an Engine installation prepared with those plugin binaries or a future
+build layout that keeps every output below this repository.
+
+The transaction loop therefore remains open. Fake-server and schema/plan tests
+are not being treated as a substitute for the blocked native MCP smoke.
