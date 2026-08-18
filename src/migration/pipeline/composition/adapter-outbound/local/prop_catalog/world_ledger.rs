@@ -81,7 +81,7 @@ pub(super) fn read_world_ledger(
     let mut owners = BTreeMap::new();
     let mut groups: BTreeMap<usize, Vec<LedgerRow>> = BTreeMap::new();
     let mut ordinals = BTreeSet::new();
-    let mut paths = BTreeSet::new();
+    let mut paths = BTreeMap::new();
     let mut relations: BTreeMap<usize, (usize, usize, usize)> = BTreeMap::new();
     for line in text.lines().filter(|line| line.contains("\"path\"")) {
         let value: serde_json::Value =
@@ -106,9 +106,20 @@ pub(super) fn read_world_ledger(
                 row.ordinal
             )));
         }
-        if !paths.insert(row.path.clone()) {
+        let path_identity = row
+            .path
+            .chars()
+            .flat_map(char::to_uppercase)
+            .collect::<String>();
+        if let Some(existing_path) = paths.insert(path_identity, row.path.clone()) {
+            if existing_path == row.path {
+                return Err(PipelineError::new(format!(
+                    "prop ledger repeats component path {}",
+                    row.path
+                )));
+            }
             return Err(PipelineError::new(format!(
-                "prop ledger repeats component path {}",
+                "prop ledger component paths collide portably: {existing_path} and {}",
                 row.path
             )));
         }

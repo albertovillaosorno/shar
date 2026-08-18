@@ -347,3 +347,26 @@ fn package_meshes_reject_published_parent_container_mismatch() -> Result<(), Str
     }
     Ok(())
 }
+
+#[test]
+fn package_meshes_reject_case_equivalent_component_paths() -> Result<(), String> {
+    let rows = [
+        owner_row(1, "owner"),
+        r#"{"ordinal":2,"depth":2,"parent_ordinal":1,"container_ordinal":1,"name":"first","path":"mesh/Shared.json","kind":"mesh"}"#.to_owned(),
+        r#"{"ordinal":3,"depth":2,"parent_ordinal":1,"container_ordinal":1,"name":"second","path":"mesh/shared.json","kind":"mesh"}"#.to_owned(),
+    ];
+    let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
+    let root = ledger_root("portable-path", &borrowed)?;
+    let result = package_meshes(&root);
+    cleanup(&root);
+    let Err(error) = result else {
+        return Err("case-equivalent component paths were accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("component paths collide portably: mesh/Shared.json and mesh/shared.json")
+    {
+        return Err(format!("unexpected portable path error: {error}"));
+    }
+    Ok(())
+}

@@ -93,7 +93,11 @@ case-equivalent paths fail closed instead of dropping or overwriting evidence.
 World prop inventory now also rejects two distinct mesh members that decode to
 the same source mesh identity instead of letting `BTreeMap` insertion silently
 choose one member before composite association. This matches the existing
-non-world component-map fail-closed identity rule.
+non-world component-map fail-closed identity rule. World component-ledger
+intake now applies the same portable case-insensitive path identity used by P3D
+publication and cache validation, while retaining a distinct diagnostic for an
+exact duplicate path. A focused regression rejects `mesh/Shared.json` alongside
+`mesh/shared.json` before either member can reach world assembly.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
