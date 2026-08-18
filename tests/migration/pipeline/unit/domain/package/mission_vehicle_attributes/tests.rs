@@ -85,7 +85,10 @@ fn binds_tuning_only_vehicle_without_reward_assumption() -> Result<(), String> {
             "3".to_owned(),
         ],
     )?;
-    assert_eq!(bindings[0].vehicle().package_id(), "vehicle-gramr");
+    let [binding] = bindings.as_slice() else {
+        return Err("vehicle attribute binding count changed".to_owned());
+    };
+    assert_eq!(binding.vehicle().package_id(), "vehicle-gramr");
     Ok(())
 }
 

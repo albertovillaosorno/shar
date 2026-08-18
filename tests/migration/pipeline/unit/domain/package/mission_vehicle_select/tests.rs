@@ -113,12 +113,14 @@ fn binds_vehicle_select_registration_canonically() -> Result<(), String> {
 #[test]
 fn rejects_symbolic_vehicle_select_registration() -> Result<(), String> {
     let (references, p3d) = catalogs();
-    let error = preflight_mission_vehicle_selects(
+    let result = preflight_mission_vehicle_selects(
         &evidence("current")?,
         &references,
         &p3d,
-    )
-    .expect_err("symbolic vehicle-select registration must fail");
+    );
+    let Err(error) = result else {
+        return Err("symbolic vehicle-select registration must fail".to_owned());
+    };
     assert!(error.contains("cannot be current"));
     Ok(())
 }
