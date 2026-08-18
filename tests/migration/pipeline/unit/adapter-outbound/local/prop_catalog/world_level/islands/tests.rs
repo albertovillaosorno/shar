@@ -72,6 +72,43 @@ fn distant_components_become_independent_objects() -> Result<(), String> {
 }
 
 #[test]
+fn distant_split_preserves_authored_positions_and_uvs() -> Result<(), String> {
+    let source = synthetic_mesh(20.)?;
+    let source_group = source
+        .groups
+        .first()
+        .ok_or_else(|| "source fixture group is missing".to_owned())?;
+    let mut expected_positions = source_group.positions.clone();
+    let mut expected_uvs = source_group.uvs.clone();
+
+    let separated = split_distant_islands(source)
+        .map_err(|error| error.to_string())?;
+    let mut actual_positions = separated
+        .iter()
+        .flat_map(|mesh| mesh.groups.iter())
+        .flat_map(|group| group.positions.iter().copied())
+        .collect::<Vec<_>>();
+    let mut actual_uvs = separated
+        .iter()
+        .flat_map(|mesh| mesh.groups.iter())
+        .flat_map(|group| group.uvs.iter().copied())
+        .collect::<Vec<_>>();
+
+    expected_positions.sort_by_key(|value| value.map(f32::to_bits));
+    actual_positions.sort_by_key(|value| value.map(f32::to_bits));
+    expected_uvs.sort_by_key(|value| value.map(f32::to_bits));
+    actual_uvs.sort_by_key(|value| value.map(f32::to_bits));
+
+    if actual_positions != expected_positions {
+        return Err("distant split changed authored positions".to_owned());
+    }
+    if actual_uvs != expected_uvs {
+        return Err("distant split changed authored UVs".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn nearby_components_remain_one_visual_object() -> Result<(), String> {
     let separated = split_distant_islands(synthetic_mesh(1.5)?)
         .map_err(|error| error.to_string())?;
