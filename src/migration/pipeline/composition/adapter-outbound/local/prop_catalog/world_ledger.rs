@@ -90,6 +90,7 @@ pub(super) fn read_world_ledger(
                     path.display()
                 ))
             })?;
+        let parent_ordinal = required_usize(&value, "parent_ordinal")?;
         let row = LedgerRow {
             ordinal: required_usize(&value, "ordinal")?,
             depth: required_usize(&value, "depth")?,
@@ -108,6 +109,18 @@ pub(super) fn read_world_ledger(
             return Err(PipelineError::new(format!(
                 "prop ledger repeats component path {}",
                 row.path
+            )));
+        }
+        if row.depth == 1 && parent_ordinal != 0 {
+            return Err(PipelineError::new(format!(
+                "prop root component ordinal {} declares parent ordinal {}",
+                row.ordinal, parent_ordinal
+            )));
+        }
+        if row.depth > 1 && parent_ordinal == 0 {
+            return Err(PipelineError::new(format!(
+                "prop nested component ordinal {} declares root parent",
+                row.ordinal
             )));
         }
         if row.depth == 1 && row.container_ordinal != row.ordinal {

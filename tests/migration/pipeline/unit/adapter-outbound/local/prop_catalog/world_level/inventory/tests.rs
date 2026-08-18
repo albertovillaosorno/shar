@@ -63,13 +63,13 @@ fn cleanup(root: &PathBuf) {
 
 fn owner_row(ordinal: usize, name: &str) -> String {
     format!(
-        r#"{{"ordinal":{ordinal},"depth":1,"container_ordinal":{ordinal},"name":"{name}","path":"srr_entity_dsg/{ordinal:03}.json","kind":"srr_entity_dsg"}}"#
+        r#"{{"ordinal":{ordinal},"depth":1,"parent_ordinal":0,"container_ordinal":{ordinal},"name":"{name}","path":"srr_entity_dsg/{ordinal:03}.json","kind":"srr_entity_dsg"}}"#
     )
 }
 
 fn mesh_row(ordinal: usize, owner: usize, name: &str) -> String {
     format!(
-        r#"{{"ordinal":{ordinal},"depth":2,"container_ordinal":{owner},"name":"{name}","path":"mesh/{ordinal:03}.json","kind":"mesh"}}"#
+        r#"{{"ordinal":{ordinal},"depth":2,"parent_ordinal":{owner},"container_ordinal":{owner},"name":"{name}","path":"mesh/{ordinal:03}.json","kind":"mesh"}}"#
     )
 }
 
@@ -181,8 +181,8 @@ fn package_meshes_reject_duplicate_component_ordinals() -> Result<(), String> {
 fn package_meshes_reject_duplicate_component_paths() -> Result<(), String> {
     let rows = [
         owner_row(1, "owner"),
-        r#"{"ordinal":2,"depth":2,"container_ordinal":1,"name":"first","path":"mesh/shared.json","kind":"mesh"}"#.to_owned(),
-        r#"{"ordinal":3,"depth":2,"container_ordinal":1,"name":"second","path":"mesh/shared.json","kind":"mesh"}"#.to_owned(),
+        r#"{"ordinal":2,"depth":2,"parent_ordinal":1,"container_ordinal":1,"name":"first","path":"mesh/shared.json","kind":"mesh"}"#.to_owned(),
+        r#"{"ordinal":3,"depth":2,"parent_ordinal":1,"container_ordinal":1,"name":"second","path":"mesh/shared.json","kind":"mesh"}"#.to_owned(),
     ];
     let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
     let root = ledger_root("duplicate-path", &borrowed)?;
@@ -216,7 +216,7 @@ fn package_meshes_reject_orphan_component_owner() -> Result<(), String> {
 #[test]
 fn package_meshes_reject_root_owner_with_foreign_container() -> Result<(), String> {
     let rows = [
-        r#"{"ordinal":1,"depth":1,"container_ordinal":2,"name":"foreign-owner","path":"srr_entity_dsg/001.json","kind":"srr_entity_dsg"}"#.to_owned(),
+        r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":2,"name":"foreign-owner","path":"srr_entity_dsg/001.json","kind":"srr_entity_dsg"}"#.to_owned(),
         owner_row(2, "owner"),
         mesh_row(3, 2, "mesh"),
     ];
@@ -240,7 +240,7 @@ fn package_meshes_reject_root_owner_with_foreign_container() -> Result<(), Strin
 fn package_meshes_reject_mesh_row_outside_mesh_family() -> Result<(), String> {
     let rows = [
         owner_row(1, "owner"),
-        r#"{"ordinal":2,"depth":2,"container_ordinal":1,"name":"mesh","path":"shader/shared.json","kind":"mesh"}"#.to_owned(),
+        r#"{"ordinal":2,"depth":2,"parent_ordinal":1,"container_ordinal":1,"name":"mesh","path":"shader/shared.json","kind":"mesh"}"#.to_owned(),
     ];
     let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
     let root = ledger_root("wrong-mesh-family", &borrowed)?;
@@ -254,6 +254,51 @@ fn package_meshes_reject_mesh_row_outside_mesh_family() -> Result<(), String> {
         .contains("prop ledger path does not match mesh: shader/shared.json")
     {
         return Err(format!("unexpected mesh path error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn package_meshes_reject_root_owner_with_non_root_parent() -> Result<(), String> {
+    let rows = [
+        r#"{"ordinal":1,"depth":1,"parent_ordinal":2,"container_ordinal":1,"name":"owner","path":"srr_entity_dsg/001.json","kind":"srr_entity_dsg"}"#.to_owned(),
+        owner_row(2, "other"),
+        mesh_row(3, 1, "mesh"),
+    ];
+    let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
+    let root = ledger_root("non-root-parent", &borrowed)?;
+    let result = package_meshes(&root);
+    cleanup(&root);
+    let Err(error) = result else {
+        return Err("root owner with non-root parent was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("root component ordinal 1 declares parent ordinal 2")
+    {
+        return Err(format!("unexpected root parent error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn package_meshes_reject_nested_component_with_root_parent() -> Result<(), String> {
+    let rows = [
+        owner_row(1, "owner"),
+        r#"{"ordinal":2,"depth":2,"parent_ordinal":0,"container_ordinal":1,"name":"mesh","path":"mesh/002.json","kind":"mesh"}"#.to_owned(),
+    ];
+    let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
+    let root = ledger_root("nested-root-parent", &borrowed)?;
+    let result = package_meshes(&root);
+    cleanup(&root);
+    let Err(error) = result else {
+        return Err("nested component with root parent was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("nested component ordinal 2 declares root parent")
+    {
+        return Err(format!("unexpected nested parent error: {error}"));
     }
     Ok(())
 }

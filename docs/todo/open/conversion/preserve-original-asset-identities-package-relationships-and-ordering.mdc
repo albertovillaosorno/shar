@@ -74,6 +74,10 @@ World-level mesh discovery also validates the extractor's exact relative path
 contract: a row labeled `mesh` must resolve as `mesh/<member>.json` before that
 member can be loaded from the mesh component directory. A focused regression
 rejects `kind: mesh` provenance that instead names `shader/shared.json`.
+Ledger intake now consumes the extractor's `parent_ordinal` ancestry evidence as
+well: direct root owners must declare parent 0, while nested published components
+must declare a non-root parent. Focused regressions reject a depth-1 owner whose
+parent is 2 and a depth-2 mesh that incorrectly names root parent 0.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
