@@ -12,10 +12,11 @@ use same_file::Handle;
 use schoenwald_filesystem::{PathKind, resolve_under, validate_portable_path};
 use shar_sha256::{Sha256, digest, digest_hex};
 
-use crate::domain::{
-    ALGORITHM_SCHEMA, AlgorithmDocument, AlgorithmError, AuthenticatedMetadata, ProtectedTarget,
-    Settings, SourceRecord, TargetDescriptor, TargetKind,
+use crate::document::{
+    ALGORITHM_SCHEMA, AlgorithmDocument, AuthenticatedMetadata, ProtectedTarget, SourceRecord,
+    TargetDescriptor, TargetKind, settings_json_bytes,
 };
+use crate::domain::{AlgorithmError, Settings};
 
 const SOURCE_KEY_DOMAIN: &[u8] = b"shar.algorithm.source-key.v1\0";
 const NONCE_DOMAIN: &[u8] = b"shar.algorithm.nonce.v1\0";
@@ -266,9 +267,7 @@ fn collect_target(
 }
 
 fn settings_sha256(settings: &Settings) -> Result<String, AlgorithmError> {
-    let bytes = serde_json::to_vec(settings)
-        .map_err(|error| AlgorithmError::new(format!("cannot serialize settings: {error}")))?;
-    Ok(digest_hex(&bytes))
+    Ok(digest_hex(&settings_json_bytes(settings)?))
 }
 
 fn update_frame(state: &mut Sha256, bytes: &[u8]) -> Result<(), AlgorithmError> {
