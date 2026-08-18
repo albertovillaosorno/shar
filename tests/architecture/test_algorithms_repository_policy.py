@@ -138,3 +138,20 @@ def test_public_algorithm_docs_name_source_bound_plan_schema() -> None:
         content = (_ROOT / relative).read_text(encoding="utf-8")
         assert "shar.algorithm.v1" in content
         assert "algorithm/*.txt" in content
+
+
+def test_algorithm_crate_is_declared_architecture_component() -> None:
+    """Keep the generic algorithm crate inside Jig's dependency graph."""
+    with (_ROOT / ".jig" / "jig.toml").open("rb") as stream:
+        config = tomllib.load(stream)
+    architecture = config.get("architecture")
+    assert isinstance(architecture, dict)
+    components = architecture.get("component")
+    assert isinstance(components, dict)
+    algorithm = components.get("shar_algorithm")
+    assert isinstance(algorithm, dict)
+    assert algorithm.get("depends_on") == [
+        "schoenwald_cli",
+        "schoenwald_filesystem",
+        "shar_sha256",
+    ]
