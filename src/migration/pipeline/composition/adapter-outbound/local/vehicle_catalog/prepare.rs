@@ -53,7 +53,7 @@ use serde_json::Value;
 use shar_sha256::digest_hex;
 
 use super::catalog::{recursive_files, write_new};
-use super::model::{PartRecord, TextureRecord, VehicleRecord};
+use super::model::{GroundingRecord, PartRecord, TextureRecord, VehicleRecord};
 use super::source::{
     VehicleTextureAuthority, common_headlight_quad_groups, decoded_name,
     png_files, relative_art_root, select_vehicle_composite,
@@ -135,11 +135,20 @@ pub(super) fn export_vehicle(
     })?;
     let hidden_proxy_indices =
         hidden_wheel_proxy_indices(&assembled_asset, &vehicle);
-    let (grounded_asset, ground_offset, root_bone) = if vehicle == "mono-v" {
-        ground_monorail_asset(assembled_asset, &hidden_proxy_indices)?
-    } else {
-        ground_vehicle_asset(assembled_asset)?
-    };
+    let (grounded_asset, ground_offset, root_bone, grounding_source) =
+        if vehicle == "mono-v" {
+            let (asset, offset, root) =
+                ground_monorail_asset(assembled_asset, &hidden_proxy_indices)?;
+            (
+                asset,
+                offset,
+                root,
+                "visible-body-with-authored-wheel-proxies",
+            )
+        } else {
+            let (asset, offset, root) = ground_vehicle_asset(assembled_asset)?;
+            (asset, offset, root, "road-wheel-surfaces")
+        };
     let (mut prepared_asset, wheel_proxy_sidecars, hidden_wheel_proxies) =
         mark_hidden_wheel_proxies(
             grounded_asset,
@@ -194,6 +203,11 @@ pub(super) fn export_vehicle(
         })?,
         fbx_sha256: digest_hex(&fbx_payload),
         summary,
+        grounding: GroundingRecord {
+            source: grounding_source,
+            offset_y: ground_offset,
+            root_bone,
+        },
         parts,
         deferred_geometry,
         hidden_wheel_proxies,

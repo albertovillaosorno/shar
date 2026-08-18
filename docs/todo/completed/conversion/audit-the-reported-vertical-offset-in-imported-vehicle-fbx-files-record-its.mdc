@@ -1,0 +1,50 @@
+---
+schema: shar.todo.v1
+id: "audit-the-reported-vertical-offset-in-imported-vehicle-fbx-files-record-\
+  its"
+status: completed
+priority: P1
+lane: conversion
+active: false
+parent: null
+dependencies: []
+children: []
+---
+
+# Audit imported vehicle FBX vertical grounding
+
+Audit the reported vertical offset in imported vehicle FBX files, record its
+deterministic cause, and remove or preserve it only from source evidence.
+
+## Acceptance criteria
+
+- [x] Audit the reported vertical offset in imported vehicle FBX files, record
+  its deterministic cause, and remove or preserve it only from source
+  evidence.
+
+## Dependencies
+
+No explicit task dependency was recorded in the legacy TODO.
+
+## Evidence
+
+Vehicle export already derived vertical grounding from source-authored geometry.
+Ordinary vehicles require four road-wheel surfaces bound to `w0` through `w3`;
+their lowest finite Y coordinate yields the exact offset applied to all parts,
+the unique root bind, and root animation samples. `mono-v` instead grounds its
+visible body while preserving four nonvisual authored wheel proxies as deferred
+source evidence. No manual editor offset or hardcoded vehicle height
+participates in either path.
+
+The vehicle catalog now publishes that cause for each generated FBX as a
+`grounding` object containing `source`, `offset_y`, and `root_bone`. Ordinary
+vehicles report `road-wheel-surfaces`; `mono-v` reports
+`visible-body-with-authored-wheel-proxies`. The technical vehicle contract names
+the same two strategies and explains why the source-axis Y translation is
+preserved rather than removed.
+
+Fresh stable-Rust validation passed the new catalog-evidence regression, all
+vehicle grounding regressions, and the broader vehicle-catalog test filter.
+Existing tests prove all parts and the root move together. Root animation
+samples receive the same offset, and monorail proxy rest surfaces remain
+unchanged.

@@ -171,6 +171,11 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
             "textures": record.summary.textures,
             "animations": record.summary.animations
         },
+        "grounding": {
+            "source": record.grounding.source,
+            "offset_y": record.grounding.offset_y,
+            "root_bone": record.grounding.root_bone,
+        },
         "surface_semantics": {
             "transparent_surfaces": record
                 .parts
@@ -312,3 +317,8 @@ pub(super) fn write_new(
     file.write_all(bytes)
         .map_err(|error| PipelineError::new(error.to_string()))
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: repository test module path is indivisible
+#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/vehicle_catalog/catalog/tests.rs"]
+mod tests;
