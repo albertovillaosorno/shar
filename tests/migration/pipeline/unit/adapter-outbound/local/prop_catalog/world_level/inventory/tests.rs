@@ -63,13 +63,13 @@ fn cleanup(root: &PathBuf) {
 
 fn owner_row(ordinal: usize, name: &str) -> String {
     format!(
-        r#"{{"ordinal":{ordinal},"depth":1,"container_ordinal":{ordinal},"name":"{name}","path":"components/srr_entity_dsg/{ordinal:03}.json","kind":"srr_entity_dsg"}}"#
+        r#"{{"ordinal":{ordinal},"depth":1,"container_ordinal":{ordinal},"name":"{name}","path":"srr_entity_dsg/{ordinal:03}.json","kind":"srr_entity_dsg"}}"#
     )
 }
 
 fn mesh_row(ordinal: usize, owner: usize, name: &str) -> String {
     format!(
-        r#"{{"ordinal":{ordinal},"depth":2,"container_ordinal":{owner},"name":"{name}","path":"components/mesh/{ordinal:03}.json","kind":"mesh"}}"#
+        r#"{{"ordinal":{ordinal},"depth":2,"container_ordinal":{owner},"name":"{name}","path":"mesh/{ordinal:03}.json","kind":"mesh"}}"#
     )
 }
 
@@ -181,8 +181,8 @@ fn package_meshes_reject_duplicate_component_ordinals() -> Result<(), String> {
 fn package_meshes_reject_duplicate_component_paths() -> Result<(), String> {
     let rows = [
         owner_row(1, "owner"),
-        r#"{"ordinal":2,"depth":2,"container_ordinal":1,"name":"first","path":"components/mesh/shared.json","kind":"mesh"}"#.to_owned(),
-        r#"{"ordinal":3,"depth":2,"container_ordinal":1,"name":"second","path":"components/mesh/shared.json","kind":"mesh"}"#.to_owned(),
+        r#"{"ordinal":2,"depth":2,"container_ordinal":1,"name":"first","path":"mesh/shared.json","kind":"mesh"}"#.to_owned(),
+        r#"{"ordinal":3,"depth":2,"container_ordinal":1,"name":"second","path":"mesh/shared.json","kind":"mesh"}"#.to_owned(),
     ];
     let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
     let root = ledger_root("duplicate-path", &borrowed)?;
@@ -191,7 +191,7 @@ fn package_meshes_reject_duplicate_component_paths() -> Result<(), String> {
     let Err(error) = result else {
         return Err("duplicate component path was accepted".to_owned());
     };
-    if !error.to_string().contains("repeats component path components/mesh/shared.json") {
+    if !error.to_string().contains("repeats component path mesh/shared.json") {
         return Err(format!("unexpected duplicate path error: {error}"));
     }
     Ok(())
@@ -232,6 +232,28 @@ fn package_meshes_reject_root_owner_with_foreign_container() -> Result<(), Strin
         .contains("root component ordinal 1 declares container ordinal 2")
     {
         return Err(format!("unexpected root owner error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn package_meshes_reject_mesh_row_outside_mesh_family() -> Result<(), String> {
+    let rows = [
+        owner_row(1, "owner"),
+        r#"{"ordinal":2,"depth":2,"container_ordinal":1,"name":"mesh","path":"shader/shared.json","kind":"mesh"}"#.to_owned(),
+    ];
+    let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
+    let root = ledger_root("wrong-mesh-family", &borrowed)?;
+    let result = package_meshes(&root);
+    cleanup(&root);
+    let Err(error) = result else {
+        return Err("mesh row outside mesh family was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("prop ledger path does not match mesh: shader/shared.json")
+    {
+        return Err(format!("unexpected mesh path error: {error}"));
     }
     Ok(())
 }

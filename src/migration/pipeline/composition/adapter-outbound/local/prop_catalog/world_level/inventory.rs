@@ -34,7 +34,7 @@ use std::collections::BTreeMap;
 use std::path::Path;
 
 use super::super::extraction::is_world_level_package;
-use super::super::inventory_common::clean_identity;
+use super::super::inventory_common::{clean_identity, ledger_member_id};
 use super::super::world_ledger::read_world_ledger;
 use super::transform::Matrix;
 use crate::domain::PipelineError;
@@ -158,16 +158,7 @@ pub(super) fn package_meshes(
             continue;
         };
         for row in rows.iter().filter(|row| row.kind == "mesh") {
-            let member_id = Path::new(&row.path)
-                .file_stem()
-                .and_then(|value| value.to_str())
-                .ok_or_else(|| {
-                    PipelineError::new(format!(
-                        "world level mesh path has no file stem: {}",
-                        row.path
-                    ))
-                })?
-                .to_owned();
+            let member_id = ledger_member_id(&row.path, "mesh")?;
             meshes.push(LevelMeshSource {
                 ordinal: row.ordinal,
                 member_id,
