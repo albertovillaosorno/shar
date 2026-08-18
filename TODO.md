@@ -23,7 +23,7 @@ Define and test the tentative 45–55% source-similarity window against a lawful
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc](docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc)
 
-### TODO - Preserve the original missions, mission order, world layout, progression, gameplay…
+### TODO - Preserve the original missions, mission order, world layout,…
 
 Preserve the original missions, mission order, world layout, progression,
 gameplay structure, models, textures, audio, cinematics, UI, and localization.
@@ -55,7 +55,7 @@ placements, and transforms without artistic edits.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/preserve-source-topology-uvs-materials-textures-pivots-rigs-animations.mdc](docs/todo/open/conversion/preserve-source-topology-uvs-materials-textures-pivots-rigs-animations.mdc)
 
-### TODO - Correct only conversion errors where generated output differs from the original source…
+### TODO - Correct only conversion errors where generated output differs from…
 
 Correct only conversion errors where generated output differs from the
 original source evidence.
@@ -63,7 +63,7 @@ original source evidence.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/correct-only-conversion-errors-where-generated-output-differs-from-the-original-source.mdc](docs/todo/open/conversion/correct-only-conversion-errors-where-generated-output-differs-from-the-original-source.mdc)
 
-### TODO - Import the original world through source-authored FBX instead of replacing it with an…
+### TODO - Import the original world through source-authored FBX instead of…
 
 Import the original world through source-authored FBX instead of replacing it
 with an Unreal Landscape.
@@ -78,7 +78,7 @@ Verify representative character, prop, vehicle, interior, and world imports.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/verify-representative-character-prop-vehicle-interior-and-world-imports.mdc](docs/todo/open/conversion/verify-representative-character-prop-vehicle-interior-and-world-imports.mdc)
 
-### TODO - Audit reported map-wide LOD/geometry overlaps before removing any vertices; permit only…
+### TODO - Audit reported map-wide LOD/geometry overlaps before removing any…
 
 Audit reported map-wide LOD/geometry overlaps before removing any vertices;
 permit only deterministic source-backed conversion corrections.
@@ -93,7 +93,7 @@ Recheck those conversion audits in-game after deterministic fixes land.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/recheck-those-conversion-audits-in-game-after-deterministic-fixes-land.mdc](docs/todo/open/conversion/recheck-those-conversion-audits-in-game-after-deterministic-fixes-land.mdc)
 
-### TODO - Preserve original audio, cinematics, localization, UI, mission, and tuning data in…
+### TODO - Preserve original audio, cinematics, localization, UI, mission, and…
 
 Preserve original audio, cinematics, localization, UI, mission, and tuning
 data in deterministic normalized forms.
@@ -117,7 +117,7 @@ Apply conversion plans through tested native Unreal MCP commands.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/apply-conversion-plans-through-tested-native-unreal-mcp-commands.mdc](docs/todo/open/unreal/apply-conversion-plans-through-tested-native-unreal-mcp-commands.mdc)
 
-### TODO - Implement and execute the complete serialized package transaction loop for every…
+### TODO - Implement and execute the complete serialized package transaction…
 
 Implement and execute the complete serialized package transaction loop for
 every operation family.
@@ -139,14 +139,14 @@ Recreate materials only as required to match the original presentation.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/recreate-materials-only-as-required-to-match-the-original-presentation.mdc](docs/todo/open/unreal/recreate-materials-only-as-required-to-match-the-original-presentation.mdc)
 
-### TODO - Import original textures without repainting, upscaling, or redesigning them
+### TODO - Import original textures without repainting, upscaling, or…
 
 Import original textures without repainting, upscaling, or redesigning them.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/import-original-textures-without-repainting-upscaling-or-redesigning-them.mdc](docs/todo/open/unreal/import-original-textures-without-repainting-upscaling-or-redesigning-them.mdc)
 
-### TODO - Convert original camera, mission, vehicle, gameplay, UI, and tuning data into native…
+### TODO - Convert original camera, mission, vehicle, gameplay, UI, and tuning…
 
 Convert original camera, mission, vehicle, gameplay, UI, and tuning data into
 native Unreal assets.
@@ -154,7 +154,7 @@ native Unreal assets.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native.mdc](docs/todo/open/unreal/convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native.mdc)
 
-### TODO - Compile normalized mission-script bundles into typed `SharMission` definitions and…
+### TODO - Compile normalized mission-script bundles into typed `SharMission`…
 
 Compile normalized mission-script bundles into typed `SharMission` definitions
 and bindings for the shared mission StateTree contract.
@@ -162,7 +162,7 @@ and bindings for the shared mission StateTree contract.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and.mdc](docs/todo/open/unreal/compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and.mdc)
 
-### TODO - Map every reviewed participant, route, timing, load, checkpoint, presentation, reward,…
+### TODO - Map every reviewed participant, route, timing, load, checkpoint,…
 
 Map every reviewed participant, route, timing, load, checkpoint, presentation,
 reward, transition, and typed objective/condition parameter reference.
@@ -179,7 +179,7 @@ definitions before asset emission.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical.mdc](docs/todo/open/unreal/resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical.mdc)
 
-### TODO - Emit lossless `USharMissionDefinition` assets only after the complete mission graph…
+### TODO - Emit lossless `USharMissionDefinition` assets only after the…
 
 Emit lossless `USharMissionDefinition` assets only after the complete mission
 graph passes reference and topology validation.
@@ -187,7 +187,7 @@ graph passes reference and topology validation.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/emit-lossless-usharmissiondefinition-assets-only-after-the-complete-mission-graph.mdc](docs/todo/open/unreal/emit-lossless-usharmissiondefinition-assets-only-after-the-complete-mission-graph.mdc)
 
-### TODO - Compile remaining normalized UI, font, localization, tuning, and other structured…
+### TODO - Compile remaining normalized UI, font, localization, tuning, and…
 
 Compile remaining normalized UI, font, localization, tuning, and other
 structured evidence into concrete Unreal types before enabling their editor
@@ -196,7 +196,7 @@ factories.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/compile-remaining-normalized-ui-font-localization-tuning-and-other-structured.mdc](docs/todo/open/unreal/compile-remaining-normalized-ui-font-localization-tuning-and-other-structured.mdc)
 
-### TODO - Convert original audio, cinematics, and localization into native Unreal assets
+### TODO - Convert original audio, cinematics, and localization into native…
 
 Convert original audio, cinematics, and localization into native Unreal
 assets.
@@ -204,7 +204,7 @@ assets.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/convert-original-audio-cinematics-and-localization-into-native-unreal-assets.mdc](docs/todo/open/unreal/convert-original-audio-cinematics-and-localization-into-native-unreal-assets.mdc)
 
-### TODO - Preserve source world placement through Unreal streaming and partitioning without…
+### TODO - Preserve source world placement through Unreal streaming and…
 
 Preserve source world placement through Unreal streaming and partitioning
 without changing the playable layout.
@@ -235,7 +235,7 @@ Complete startup, saves, profiles, settings, loading, and progression.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/runtime/complete-startup-saves-profiles-settings-loading-and-progression.mdc](docs/todo/open/runtime/complete-startup-saves-profiles-settings-loading-and-progression.mdc)
 
-### TODO - Reproduce original player movement, cameras, interactions, vehicles, traffic,…
+### TODO - Reproduce original player movement, cameras, interactions, vehicles,…
 
 Reproduce original player movement, cameras, interactions, vehicles, traffic,
 pedestrians, damage, and recovery.
@@ -243,7 +243,7 @@ pedestrians, damage, and recovery.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/runtime/reproduce-original-player-movement-cameras-interactions-vehicles-traffic.mdc](docs/todo/open/runtime/reproduce-original-player-movement-cameras-interactions-vehicles-traffic.mdc)
 
-### TODO - Reproduce original missions, objectives, triggers, dialogue, rewards, collectibles,…
+### TODO - Reproduce original missions, objectives, triggers, dialogue,…
 
 Reproduce original missions, objectives, triggers, dialogue, rewards,
 collectibles, races, and progression gates.
@@ -251,7 +251,7 @@ collectibles, races, and progression gates.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/runtime/reproduce-original-missions-objectives-triggers-dialogue-rewards-collectibles.mdc](docs/todo/open/runtime/reproduce-original-missions-objectives-triggers-dialogue-rewards-collectibles.mdc)
 
-### TODO - Reproduce original HUD, menus, navigation, subtitles, audio, cinematics, and…
+### TODO - Reproduce original HUD, menus, navigation, subtitles, audio,…
 
 Reproduce original HUD, menus, navigation, subtitles, audio, cinematics, and
 localization behavior.
@@ -259,7 +259,7 @@ localization behavior.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/runtime/reproduce-original-hud-menus-navigation-subtitles-audio-cinematics-and.mdc](docs/todo/open/runtime/reproduce-original-hud-menus-navigation-subtitles-audio-cinematics-and.mdc)
 
-### TODO - Reproduce original world streaming, placement, physics, animation, effects, and platform…
+### TODO - Reproduce original world streaming, placement, physics, animation,…
 
 Reproduce original world streaming, placement, physics, animation, effects,
 and platform input behavior.
@@ -267,7 +267,7 @@ and platform input behavior.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/runtime/reproduce-original-world-streaming-placement-physics-animation-effects-and-platform.mdc](docs/todo/open/runtime/reproduce-original-world-streaming-placement-physics-animation-effects-and-platform.mdc)
 
-### TODO - Preserve original mission timing, gameplay rules, and progression unless a technical…
+### TODO - Preserve original mission timing, gameplay rules, and progression…
 
 Preserve original mission timing, gameplay rules, and progression unless a
 technical compatibility fix is required.
@@ -334,7 +334,7 @@ successful architecture.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/canonical-multi-platform-build-runner.mdc](docs/todo/open/packaging/canonical-multi-platform-build-runner.mdc)
 
-### TODO - Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM target that…
+### TODO - Package Linux, macOS, Android, Windows x86-64, and any…
 
 Package Linux, macOS, Android, Windows x86-64, and any Windows-on-ARM target
 that current Unreal/toolchain support can validate.
@@ -342,7 +342,7 @@ that current Unreal/toolchain support can validate.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/package-linux-macos-android-windows-x86-64-and-any-windows-on-arm-target-that.mdc](docs/todo/open/packaging/package-linux-macos-android-windows-x86-64-and-any-windows-on-arm-target-that.mdc)
 
-### TODO - Produce a local iOS `.ipa` package for sideloading/testing without App Store submission…
+### TODO - Produce a local iOS `.ipa` package for sideloading/testing without…
 
 Produce a local iOS `.ipa` package for sideloading/testing without App Store
 submission or an Xcode-dependent authoring workflow; document any unavoidable
@@ -351,7 +351,7 @@ Apple signing or build-host constraints explicitly.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-submission.mdc](docs/todo/open/packaging/produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-submission.mdc)
 
-### TODO - Define deterministic mod identity, dependencies, priority, compatibility, supersession,…
+### TODO - Define deterministic mod identity, dependencies, priority,…
 
 Define deterministic mod identity, dependencies, priority, compatibility,
 supersession, and conflict rules.
@@ -415,7 +415,7 @@ Require packaged-build evidence instead of editor play or emulation.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/require-packaged-build-evidence-instead-of-editor-play-or-emulation.mdc](docs/todo/open/packaging/require-packaged-build-evidence-instead-of-editor-play-or-emulation.mdc)
 
-### TODO - Keep gameplay, saves, package identities, and mod contracts consistent across supported…
+### TODO - Keep gameplay, saves, package identities, and mod contracts…
 
 Keep gameplay, saves, package identities, and mod contracts consistent across
 supported targets.
@@ -430,7 +430,7 @@ Provide graphics and performance settings without changing base content.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/provide-graphics-and-performance-settings-without-changing-base-content.mdc](docs/todo/open/packaging/provide-graphics-and-performance-settings-without-changing-base-content.mdc)
 
-### TODO - Profile CPU, GPU, memory, storage, streaming, shaders, loading, and frame time
+### TODO - Profile CPU, GPU, memory, storage, streaming, shaders, loading, and…
 
 Profile CPU, GPU, memory, storage, streaming, shaders, loading, and frame
 time.
@@ -459,7 +459,7 @@ Report progress, failures, provenance, and final artifacts.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/report-progress-failures-provenance-and-final-artifacts.mdc](docs/todo/open/packaging/report-progress-failures-provenance-and-final-artifacts.mdc)
 
-### TODO - Ship four independent base save slots; add autosave only after faithful port parity is…
+### TODO - Ship four independent base save slots; add autosave only after…
 
 Ship four independent base save slots; add autosave only after faithful port
 parity is stable.
@@ -489,7 +489,7 @@ Ship a default, fully obtainable base achievement set suitable for
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/ship-a-default-fully-obtainable-base-achievement-set-suitable-for-100-platinum-style.mdc](docs/todo/open/product/ship-a-default-fully-obtainable-base-achievement-set-suitable-for-100-platinum-style.mdc)
 
-### TODO - Add an optional Discord boundary for display username, Rich Presence, parties/invites,…
+### TODO - Add an optional Discord boundary for display username, Rich…
 
 Add an optional Discord boundary for display username, Rich Presence,
 parties/invites, and achievement-facing presentation without making Discord
@@ -498,7 +498,7 @@ identity authoritative for saves or gameplay.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/add-an-optional-discord-boundary-for-display-username-rich-presence-parties-invites.mdc](docs/todo/open/product/add-an-optional-discord-boundary-for-display-username-rich-presence-parties-invites.mdc)
 
-### TODO - Expose base C++ extension points for boss encounters, health meters, combat, multiplayer…
+### TODO - Expose base C++ extension points for boss encounters, health meters,…
 
 Expose base C++ extension points for boss encounters, health meters, combat,
 multiplayer adapters, and future mod-owned gameplay systems without
@@ -514,7 +514,7 @@ Add a first-class `Mods` route when creating or loading a game.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/add-a-first-class-mods-route-when-creating-or-loading-a-game.mdc](docs/todo/open/product/add-a-first-class-mods-route-when-creating-or-loading-a-game.mdc)
 
-### TODO - Classify mods as visual-only, additive/story, gameplay-extension, or native-code, with…
+### TODO - Classify mods as visual-only, additive/story, gameplay-extension, or…
 
 Classify mods as visual-only, additive/story, gameplay-extension, or
 native-code, with explicit compatibility and save-impact declarations.
@@ -522,7 +522,7 @@ native-code, with explicit compatibility and save-impact declarations.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/classify-mods-as-visual-only-additive-story-gameplay-extension-or-native-code-with.mdc](docs/todo/open/product/classify-mods-as-visual-only-additive-story-gameplay-extension-or-native-code-with.mdc)
 
-### TODO - Allow visual-only mods to be reordered, enabled, disabled, or replaced from the main…
+### TODO - Allow visual-only mods to be reordered, enabled, disabled, or…
 
 Allow visual-only mods to be reordered, enabled, disabled, or replaced from
 the main menu without invalidating the active save.
@@ -530,7 +530,7 @@ the main menu without invalidating the active save.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/allow-visual-only-mods-to-be-reordered-enabled-disabled-or-replaced-from-the-main.mdc](docs/todo/open/product/allow-visual-only-mods-to-be-reordered-enabled-disabled-or-replaced-from-the-main.mdc)
 
-### TODO - Treat story/additive mods as mutually incompatible by default unless their manifests…
+### TODO - Treat story/additive mods as mutually incompatible by default unless…
 
 Treat story/additive mods as mutually incompatible by default unless their
 manifests explicitly declare a compatible composition contract.
@@ -538,7 +538,7 @@ manifests explicitly declare a compatible composition contract.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/treat-story-additive-mods-as-mutually-incompatible-by-default-unless-their-manifests.mdc](docs/todo/open/product/treat-story-additive-mods-as-mutually-incompatible-by-default-unless-their-manifests.mdc)
 
-### TODO - Permit nonvisual mods that do not mutate save/progression state, but show an explicit…
+### TODO - Permit nonvisual mods that do not mutate save/progression state, but…
 
 Permit nonvisual mods that do not mutate save/progression state, but show an
 explicit compatibility warning before activation.
@@ -546,7 +546,7 @@ explicit compatibility warning before activation.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/permit-nonvisual-mods-that-do-not-mutate-save-progression-state-but-show-an-explicit.mdc](docs/todo/open/product/permit-nonvisual-mods-that-do-not-mutate-save-progression-state-but-show-an-explicit.mdc)
 
-### TODO - Let mods declare deterministic hierarchy, load order, and override priority; unresolved…
+### TODO - Let mods declare deterministic hierarchy, load order, and override…
 
 Let mods declare deterministic hierarchy, load order, and override priority;
 unresolved conflicts fail closed.
@@ -554,7 +554,7 @@ unresolved conflicts fail closed.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/let-mods-declare-deterministic-hierarchy-load-order-and-override-priority-unresolved.mdc](docs/todo/open/product/let-mods-declare-deterministic-hierarchy-load-order-and-override-priority-unresolved.mdc)
 
-### TODO - Keep native C++ mods behind a trust scanner that reports filesystem, process, network,…
+### TODO - Keep native C++ mods behind a trust scanner that reports filesystem,…
 
 Keep native C++ mods behind a trust scanner that reports filesystem, process,
 network, platform, save, and engine-surface access before the user decides
@@ -563,7 +563,7 @@ whether to load them.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/keep-native-c-mods-behind-a-trust-scanner-that-reports-filesystem-process-network.mdc](docs/todo/open/product/keep-native-c-mods-behind-a-trust-scanner-that-reports-filesystem-process-network.mdc)
 
-### TODO - Make mission, model, material, texture, skeleton, coordinate, gameplay, achievement, and…
+### TODO - Make mission, model, material, texture, skeleton, coordinate,…
 
 Make mission, model, material, texture, skeleton, coordinate, gameplay,
 achievement, and UI definitions data-addressable for nonexpert mod authors.
@@ -571,7 +571,7 @@ achievement, and UI definitions data-addressable for nonexpert mod authors.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/make-mission-model-material-texture-skeleton-coordinate-gameplay-achievement-and.mdc](docs/todo/open/product/make-mission-model-material-texture-skeleton-coordinate-gameplay-achievement-and.mdc)
 
-### TODO - Deduplicate identical generated skeletons, textures, models, and other assets only when…
+### TODO - Deduplicate identical generated skeletons, textures, models, and…
 
 Deduplicate identical generated skeletons, textures, models, and other assets
 only when deterministic evidence proves equivalence. Never assume all
@@ -580,7 +580,7 @@ characters or mods share one skeleton or asset layout.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/deduplicate-identical-generated-skeletons-textures-models-and-other-assets-only-when.mdc](docs/todo/open/product/deduplicate-identical-generated-skeletons-textures-models-and-other-assets-only-when.mdc)
 
-### TODO - Let generated base characters opt into shared skeleton/material/model assets as an…
+### TODO - Let generated base characters opt into shared…
 
 Let generated base characters opt into shared skeleton/material/model assets
 as an optimization, with simple per-asset/per-mod overrides that can break
@@ -589,7 +589,7 @@ sharing without changing global contracts.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/let-generated-base-characters-opt-into-shared-skeleton-material-model-assets-as-an.mdc](docs/todo/open/product/let-generated-base-characters-opt-into-shared-skeleton-material-model-assets-as-an.mdc)
 
-### TODO - Keep multiplayer as an extension-ready base capability rather than a fully implemented…
+### TODO - Keep multiplayer as an extension-ready base capability rather than a…
 
 Keep multiplayer as an extension-ready base capability rather than a fully
 implemented first-party mode during the port; mods must be able to add
@@ -598,7 +598,7 @@ replicated modes, lobbies, servers, missions, and progression namespaces.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/keep-multiplayer-as-an-extension-ready-base-capability-rather-than-a-fully-implemented.mdc](docs/todo/open/product/keep-multiplayer-as-an-extension-ready-base-capability-rather-than-a-fully-implemented.mdc)
 
-### TODO - Keep DLSS and hardware-ray-tracing/RTX integrations behind optional capability adapters…
+### TODO - Keep DLSS and hardware-ray-tracing/RTX integrations behind optional…
 
 Keep DLSS and hardware-ray-tracing/RTX integrations behind optional capability
 adapters so graphics mods can target them without making proprietary GPU
@@ -639,7 +639,7 @@ Complete a start-to-finish playthrough without progression-blocking defects.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/verification/complete-a-start-to-finish-playthrough-without-progression-blocking-defects.mdc](docs/todo/open/verification/complete-a-start-to-finish-playthrough-without-progression-blocking-defects.mdc)
 
-### TODO - Compare missions, vehicles, collectibles, saves, localization, cinematics, world layout,…
+### TODO - Compare missions, vehicles, collectibles, saves, localization,…
 
 Compare missions, vehicles, collectibles, saves, localization, cinematics,
 world layout, and the ending against the original game.

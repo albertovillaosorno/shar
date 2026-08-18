@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Keep DLSS and hardware-ray-tracing/RTX integrations behind optional capability adapters…
+# Keep DLSS and hardware-ray-tracing/RTX integrations behind optional…
 
 Keep DLSS and hardware-ray-tracing/RTX integrations behind optional capability
 adapters so graphics mods can target them without making proprietary GPU

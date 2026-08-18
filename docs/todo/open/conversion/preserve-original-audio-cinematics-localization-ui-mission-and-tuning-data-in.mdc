@@ -10,7 +10,7 @@ dependencies: []
 children: [keep-movie-package-manifests-and-decode-reports-independent-of-local-source-extraction, keep-movie-tool-diagnostics-on-logical-identities-and-error-classes]
 ---
 
-# Preserve original audio, cinematics, localization, UI, mission, and tuning data in…
+# Preserve original audio, cinematics, localization, UI, mission, and tuning…
 
 Preserve original audio, cinematics, localization, UI, mission, and tuning
 data in deterministic normalized forms.

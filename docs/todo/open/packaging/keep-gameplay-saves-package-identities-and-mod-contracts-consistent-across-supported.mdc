@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Keep gameplay, saves, package identities, and mod contracts consistent across supported…
+# Keep gameplay, saves, package identities, and mod contracts consistent across…
 
 Keep gameplay, saves, package identities, and mod contracts consistent across
 supported targets.

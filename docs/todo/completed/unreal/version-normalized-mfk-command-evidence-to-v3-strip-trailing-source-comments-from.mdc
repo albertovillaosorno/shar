@@ -10,7 +10,7 @@ dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-
 children: []
 ---
 
-# Version normalized MFK command evidence to v3, strip trailing source comments from…
+# Version normalized MFK command evidence to v3, strip trailing source comments…
 
 Version normalized MFK command evidence to v3, strip trailing source comments
 from arguments, preserve nested calls, and publish deterministic

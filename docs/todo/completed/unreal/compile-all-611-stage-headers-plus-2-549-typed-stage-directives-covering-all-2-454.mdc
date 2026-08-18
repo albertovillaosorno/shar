@@ -10,7 +10,7 @@ dependencies: [map-every-reviewed-participant-route-timing-load-checkpoint-prese
 children: []
 ---
 
-# Compile all 611 stage headers plus 2,549 typed stage directives, covering all 2,454…
+# Compile all 611 stage headers plus 2,549 typed stage directives, covering all…
 
 Compile all 611 stage headers plus 2,549 typed stage directives, covering all
 2,454 direct-stage commands and all 95 objective commands explicitly delegated

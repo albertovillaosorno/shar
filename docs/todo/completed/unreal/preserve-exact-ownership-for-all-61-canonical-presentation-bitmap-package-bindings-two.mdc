@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Preserve exact ownership for all 61 canonical presentation bitmap package bindings: two…
+# Preserve exact ownership for all 61 canonical presentation bitmap package…
 
 Preserve exact ownership for all 61 canonical presentation bitmap package
 bindings: two mission-scope references remain intentionally unowned, six

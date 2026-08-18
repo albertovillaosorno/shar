@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Bind all 128 reviewed objective `SetDialogueInfo` records to canonical participants and…
+# Bind all 128 reviewed objective `SetDialogueInfo` records to canonical…
 
 Bind all 128 reviewed objective `SetDialogueInfo` records to canonical
 participants and one same-level `convinit` conversation group. All 256

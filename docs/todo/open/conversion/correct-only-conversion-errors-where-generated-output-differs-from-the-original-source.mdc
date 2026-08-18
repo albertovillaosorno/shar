@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Correct only conversion errors where generated output differs from the original source…
+# Correct only conversion errors where generated output differs from the…
 
 Correct only conversion errors where generated output differs from the
 original source evidence.

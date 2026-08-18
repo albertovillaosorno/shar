@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Publish the joined definition core as deterministic versioned staging data before native…
+# Publish the joined definition core as deterministic versioned staging data…
 
 Publish the joined definition core as deterministic versioned staging data
 before native asset construction. `prepare-unreal` now writes

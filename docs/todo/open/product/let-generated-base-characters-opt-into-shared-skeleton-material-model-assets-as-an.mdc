@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-# Let generated base characters opt into shared skeleton/material/model assets as an…
+# Let generated base characters opt into shared skeleton/material/model assets…
 
 Let generated base characters opt into shared skeleton/material/model assets
 as an optimization, with simple per-asset/per-mod overrides that can break

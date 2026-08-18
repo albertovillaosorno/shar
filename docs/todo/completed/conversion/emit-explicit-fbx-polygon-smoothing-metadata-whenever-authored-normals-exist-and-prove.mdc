@@ -10,7 +10,7 @@ dependencies: [complete-deterministic-conversion-of-original-models-to-binary-fb
 children: []
 ---
 
-# Emit explicit FBX polygon smoothing metadata whenever authored normals exist, and prove…
+# Emit explicit FBX polygon smoothing metadata whenever authored normals exist,…
 
 Emit explicit FBX polygon smoothing metadata whenever authored normals exist,
 and prove the representative static import no longer warns about missing

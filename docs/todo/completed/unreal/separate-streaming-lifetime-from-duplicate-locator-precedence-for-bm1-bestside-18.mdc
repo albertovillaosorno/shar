@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Separate streaming lifetime from duplicate-locator precedence for `bm1_bestside`: 18…
+# Separate streaming lifetime from duplicate-locator precedence for…
 
 Separate streaming lifetime from duplicate-locator precedence for
 `bm1_bestside`: 18 references face 10 Type-3 `CarStart` candidates, while all

@@ -10,7 +10,7 @@ dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
 children: []
 ---
 
-# Verify applicable source files, roots, links, sizes, and SHA-256 before native execution…
+# Verify applicable source files, roots, links, sizes, and SHA-256 before…
 
 Verify applicable source files, roots, links, sizes, and SHA-256 before native
 execution planning.

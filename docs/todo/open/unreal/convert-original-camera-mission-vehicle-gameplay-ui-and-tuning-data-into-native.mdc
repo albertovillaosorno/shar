@@ -10,7 +10,7 @@ dependencies: []
 children: [stop-treating-unresolved-normalized-source-as-a-generic-dataasset-or-one-bespoke, compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and, compile-remaining-normalized-ui-font-localization-tuning-and-other-structured]
 ---
 
-# Convert original camera, mission, vehicle, gameplay, UI, and tuning data into native…
+# Convert original camera, mission, vehicle, gameplay, UI, and tuning data into…
 
 Convert original camera, mission, vehicle, gameplay, UI, and tuning data into
 native Unreal assets.

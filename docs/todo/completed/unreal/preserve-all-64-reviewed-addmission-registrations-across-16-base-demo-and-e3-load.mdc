@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Preserve all 64 reviewed `AddMission` registrations across 16 base, demo, and E3 load…
+# Preserve all 64 reviewed `AddMission` registrations across 16 base, demo, and…
 
 Preserve all 64 reviewed `AddMission` registrations across 16 base, demo, and
 E3 load sources in exact authored order. Every declaration has an exact

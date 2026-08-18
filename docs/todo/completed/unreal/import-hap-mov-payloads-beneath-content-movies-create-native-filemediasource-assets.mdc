@@ -10,7 +10,7 @@ dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
 children: []
 ---
 
-# Import HAP MOV payloads beneath `Content/Movies`, create native FileMediaSource assets,…
+# Import HAP MOV payloads beneath `Content/Movies`, create native…
 
 Import HAP MOV payloads beneath `Content/Movies`, create native
 FileMediaSource assets, verify both effects, and compensate them together.

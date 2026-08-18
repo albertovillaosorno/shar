@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Bind all 90 reviewed `BindReward` P3D references through the shared canonical package…
+# Bind all 90 reviewed `BindReward` P3D references through the shared canonical…
 
 Bind all 90 reviewed `BindReward` P3D references through the shared canonical
 package catalog. Preserve the observed five/seven argument shapes plus exact

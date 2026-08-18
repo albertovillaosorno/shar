@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Bind all 180 reviewed objective NPC walking waypoints across 58 selected sources to one…
+# Bind all 180 reviewed objective NPC walking waypoints across 58 selected…
 
 Bind all 180 reviewed objective NPC walking waypoints across 58 selected
 sources to one unique prior `AddNPC` declaration with the same identity.

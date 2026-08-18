@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Type all 32 reviewed `AddPurchaseCarReward` storefronts from the source loader: preserve…
+# Type all 32 reviewed `AddPurchaseCarReward` storefronts from the source…
 
 Type all 32 reviewed `AddPurchaseCarReward` storefronts from the source
 loader: preserve exact action, choreo, position locator, trigger-radius

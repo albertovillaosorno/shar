@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Type all 118 reviewed ambient and 81 bonus-mission NPC declarations, bind each authored…
+# Type all 118 reviewed ambient and 81 bonus-mission NPC declarations, bind…
 
 Type all 118 reviewed ambient and 81 bonus-mission NPC declarations, bind each
 authored model to canonical character-package evidence, preserve

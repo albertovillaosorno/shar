@@ -10,7 +10,7 @@ dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-t
 children: []
 ---
 
-# Bind all 14 reviewed `StageStartMusicEvent` calls to their exact owning stage while…
+# Bind all 14 reviewed `StageStartMusicEvent` calls to their exact owning stage…
 
 Bind all 14 reviewed `StageStartMusicEvent` calls to their exact owning stage
 while preserving the authored event token. Source-runtime review identifies
