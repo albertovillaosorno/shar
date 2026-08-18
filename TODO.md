@@ -86,14 +86,6 @@ permit only deterministic source-backed conversion corrections.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/audit-reported-map-wide-lod-geometry-overlaps-before-removing-any-vertices-permit-only.mdc](docs/todo/open/conversion/audit-reported-map-wide-lod-geometry-overlaps-before-removing-any-vertices-permit-only.mdc)
 
-### TODO - Audit distant-object transforms from source evidence instead of accepting manual editor…
-
-Audit distant-object transforms from source evidence instead of accepting
-manual editor placement as world-layout authority.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/conversion/audit-distant-object-transforms-from-source-evidence-instead-of-accepting-manual-editor.mdc](docs/todo/open/conversion/audit-distant-object-transforms-from-source-evidence-instead-of-accepting-manual-editor.mdc)
-
 ### TODO - Recheck those conversion audits in-game after deterministic fixes land
 
 Recheck those conversion audits in-game after deterministic fixes land.
