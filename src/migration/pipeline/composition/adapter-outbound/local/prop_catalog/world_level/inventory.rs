@@ -81,18 +81,8 @@ impl WorldObjectRole {
 /// Resolve one mesh owner's interaction role from its exact container kind.
 #[must_use]
 pub(super) fn object_role(source: &LevelMeshSource) -> WorldObjectRole {
-    let identity = format!(
-        "{} {}",
-        source.owner_name.to_ascii_lowercase(),
-        source.mesh_name.to_ascii_lowercase(),
-    );
     match source.owner_kind.as_str() {
         "srr_breakable_object" | "srr_tree_dsg" => WorldObjectRole::Breakable,
-        "srr_dyna_phys_dsg" | "srr_insta_static_phys_dsg"
-            if identity.contains("tree") =>
-        {
-            WorldObjectRole::Breakable
-        },
         "srr_static_phys_dsg"
         | "srr_dyna_phys_dsg"
         | "srr_insta_anim_dyna_phys_dsg"
