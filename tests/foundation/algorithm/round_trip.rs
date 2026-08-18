@@ -433,6 +433,41 @@ fn existing_algorithm_output_collision_is_preserved() {
     );
 }
 
+fn run_missing_source_error_is_path_free(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("private-source-diagnostic")?;
+    let source = temp.path.join("private-user-installation").join("missing.bin");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    fs::write(&target, b"synthetic target")?;
+
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    );
+    let Err(error) = result else {
+        return Err("missing source path was accepted".into());
+    };
+    let message = error.to_string();
+    if message.contains(&source.display().to_string())
+        || message.contains("private-user-installation")
+    {
+        return Err("algorithm error disclosed the private source path".into());
+    }
+    if !message.contains("input") {
+        return Err("algorithm error lost its operation context".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn missing_source_error_does_not_disclose_private_path() {
+    let result = run_missing_source_error_is_path_free();
+    assert!(result.is_ok(), "private-path diagnostic failed: {result:?}");
+}
+
 fn run_algorithm_output_inside_source_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("source-overlap")?;
     let source = temp.path.join("source");

@@ -116,9 +116,10 @@ plan remains
 unusable without the local source evidence admitted by its source-bound replay
 contract. Algorithm authoring publishes the plan with create-new persistence,
 so an existing plan path is rejected atomically instead of being replaced. The
-generic engine's external round-trip tests require caller-supplied source at
-replay and verify that create/replay does not change the caller's source bytes
-or layout.
+generic engine's filesystem diagnostics preserve the failed operation and I/O
+error kind without embedding caller source, target, algorithm, or replay paths.
+Its external round-trip tests require caller-supplied source at replay and verify
+that create/replay does not change the caller's source bytes or layout.
 
 ## Current status
 
