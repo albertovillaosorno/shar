@@ -189,6 +189,36 @@ class PublicationTransactionTests(unittest.TestCase):
             self.assertTrue((candidate / "new.txt").is_file())
             self.assertFalse(backup.exists())
 
+    def test_rejects_linked_dist_root_before_candidate_moves(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-publish-link-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            candidate.mkdir()
+            (candidate / "new.txt").write_text("new", encoding="utf-8")
+            dist = root / "dist"
+            dist.mkdir()
+            destination = dist / "linux-x64"
+            original = _RUN._is_directory_link
+
+            def report_dist_as_link(path: Path) -> bool:
+                return path == dist or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_dist_as_link,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "publication root must be a real directory",
+                ),
+            ):
+                _RUN._publish(candidate, destination)
+
+            self.assertTrue((candidate / "new.txt").is_file())
+            self.assertFalse(destination.exists())
+
 
 class PublicationArtifactTests(unittest.TestCase):
     """Keep runtime publication separate from cached build diagnostics."""
