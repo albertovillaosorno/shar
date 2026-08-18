@@ -107,7 +107,9 @@ protected target. Authoring also compares cross-platform physical file identity,
 so a disjoint hard-link alias of a source file cannot become protected target
 material. Source evidence itself must also contain one record per physical file;
 hard-link aliases are rejected before source file/byte minima are evaluated and
-cannot inflate admission evidence. Directory replay also rejects target paths
+cannot inflate admission evidence. Target collection also rejects repeated
+physical files because this ordinary-file plan format cannot preserve hard-link
+topology faithfully. Directory replay also rejects target paths
 that overlap by ancestry, so one protected file cannot become the parent of
 another protected file during sequential persistence. Target identities use the
 same Unicode-uppercase portable comparison as filesystem evidence, so paths
