@@ -293,10 +293,10 @@ fn resolve_target_identity(path: &Path) -> PipelineOutcome<PathBuf> {
             })?
             .join(path)
     };
-    let mut existing = absolute.as_path();
+    let mut existing = absolute;
     let mut suffix = Vec::<OsString>::new();
     loop {
-        match fs::canonicalize(existing) {
+        match fs::canonicalize(&existing) {
             Ok(mut identity) => {
                 for component in suffix.iter().rev() {
                     if component == OsStr::new(".") {
@@ -315,18 +315,27 @@ fn resolve_target_identity(path: &Path) -> PipelineOutcome<PathBuf> {
                 return Ok(identity);
             }
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                let Some(name) = existing.file_name() else {
+                let Some(component) = existing.components().next_back() else {
                     return Err(PipelineError::new(
                         "extraction output path cannot be resolved",
                     ));
                 };
-                suffix.push(name.to_os_string());
-                let Some(parent) = existing.parent() else {
+                let suffix_component = match component {
+                    Component::Normal(name) => name.to_os_string(),
+                    Component::CurDir => OsString::from("."),
+                    Component::ParentDir => OsString::from(".."),
+                    Component::Prefix(_) | Component::RootDir => {
+                        return Err(PipelineError::new(
+                            "extraction output path cannot be resolved",
+                        ));
+                    }
+                };
+                suffix.push(suffix_component);
+                if !existing.pop() {
                     return Err(PipelineError::new(
                         "extraction output path cannot be resolved",
                     ));
-                };
-                existing = parent;
+                }
             }
             Err(error) => {
                 return Err(PipelineError::new(format!(
