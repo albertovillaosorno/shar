@@ -41,49 +41,70 @@ const PACKAGE_HEADER_TWO: &str = concat!(
     r#""byte_len":36,"chunk_count":3,"component_count":2}"#,
 );
 const COMPLETE_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"mesh","#,
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"components/mesh.json"}"#,
 );
 const DECODED_PATH_MISMATCH_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"mesh","#,
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"components/mesh.png"}"#,
 );
 const RECOVERED_PATH_MISMATCH_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"image/png","#,
     r#""kind":"texture","schema_ref":"texture","#,
     r#""recovery_status":"recovered_embedded_image_payload","#,
     r#""path":"texture/main.jpg"}"#,
 );
 const OUT_OF_RANGE_ORDINAL_ROW: &str = concat!(
-    r#"{"ordinal":2,"name":"value","#,
+    r#"{"ordinal":2,"depth":1,"parent_ordinal":0,"container_ordinal":2,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"mesh","#,
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"components/out-of-range.json"}"#,
 );
 const DUPLICATE_PATH_ROW: &str = concat!(
-    r#"{"ordinal":2,"name":"value","#,
+    r#"{"ordinal":2,"depth":1,"parent_ordinal":0,"container_ordinal":2,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"texture","schema_ref":"texture","#,
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"components/mesh.json"}"#,
 );
 const CASE_EQUIVALENT_PATH_ROW: &str = concat!(
-    r#"{"ordinal":2,"name":"value","#,
+    r#"{"ordinal":2,"depth":1,"parent_ordinal":0,"container_ordinal":2,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"texture","schema_ref":"texture","#,
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"COMPONENTS/MESH.json"}"#,
 );
-const DUPLICATE_ORDINAL_ROW: &str = concat!(
+const MISSING_ANCESTRY_ROW: &str = concat!(
     r#"{"ordinal":1,"name":"value","#,
+    r#""payload_format":"schema_json","#,
+    r#""kind":"mesh","schema_ref":"mesh","#,
+    r#""recovery_status":"decoded_schema_payload","#,
+    r#""path":"components/missing-ancestry.json"}"#,
+);
+const PARENT_DEPTH_MISMATCH_ROW: &str = concat!(
+    r#"{"ordinal":2,"depth":3,"parent_ordinal":1,"container_ordinal":1,"#,
+    r#""name":"value","payload_format":"schema_json","#,
+    r#""kind":"texture","schema_ref":"texture","#,
+    r#""recovery_status":"decoded_schema_payload","#,
+    r#""path":"components/depth.json"}"#,
+);
+const PARENT_CONTAINER_MISMATCH_ROW: &str = concat!(
+    r#"{"ordinal":2,"depth":2,"parent_ordinal":1,"container_ordinal":2,"#,
+    r#""name":"value","payload_format":"schema_json","#,
+    r#""kind":"texture","schema_ref":"texture","#,
+    r#""recovery_status":"decoded_schema_payload","#,
+    r#""path":"components/container.json"}"#,
+);
+const DUPLICATE_ORDINAL_ROW: &str = concat!(
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"texture","schema_ref":"texture","#,
     r#""recovery_status":"decoded_schema_payload","#,
@@ -139,4 +160,27 @@ fn rejects_case_equivalent_component_paths() {
         "{PACKAGE_HEADER_TWO}\n{COMPLETE_ROW}\n{CASE_EQUIVALENT_PATH_ROW}"
     );
     assert!(!manifest_is_complete(duplicate.as_str()));
+}
+
+#[test]
+fn rejects_missing_component_ancestry() {
+    let missing = format!("{PACKAGE_HEADER_ONE}
+{MISSING_ANCESTRY_ROW}");
+    assert!(!manifest_is_complete(missing.as_str()));
+}
+
+#[test]
+fn rejects_published_parent_relationship_mismatches() {
+    let depth = format!(
+        "{PACKAGE_HEADER_TWO}
+{COMPLETE_ROW}
+{PARENT_DEPTH_MISMATCH_ROW}"
+    );
+    let container = format!(
+        "{PACKAGE_HEADER_TWO}
+{COMPLETE_ROW}
+{PARENT_CONTAINER_MISMATCH_ROW}"
+    );
+    assert!(!manifest_is_complete(depth.as_str()));
+    assert!(!manifest_is_complete(container.as_str()));
 }

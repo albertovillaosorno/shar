@@ -67,83 +67,83 @@ const PACKAGE_HEADER_UNDERSIZED_CHUNKS: &str = concat!(
 );
 
 const UNKNOWN_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"unknown","schema_ref":"unknown","#,
     r#""recovery_status":"raw_schema_pending","path":"raw.bin"}"#,
 );
 const PENDING_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"mesh","#,
     r#""recovery_status":"raw_schema_pending","path":"raw.bin"}"#,
 );
 const EMPTY_KIND_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"","schema_ref":"mesh","#,
     r#""recovery_status":"decoded_schema_payload","path":"mesh.json"}"#,
 );
 const EMPTY_SCHEMA_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"","#,
     r#""recovery_status":"decoded_schema_payload","path":"mesh.json"}"#,
 );
 const MISMATCHED_SCHEMA_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"texture","#,
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"components/mismatched-schema.json"}"#,
 );
 const UNSUPPORTED_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"mesh","#,
     r#""recovery_status":"failed","path":"mesh.json"}"#,
 );
 const COMPLETE_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"mesh","#,
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"components/mesh.json"}"#,
 );
 const RECOVERED_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"image/png","#,
     r#""kind":"texture","schema_ref":"texture","#,
     r#""recovery_status":"recovered_embedded_image_payload","#,
     r#""path":"texture/main.png"}"#,
 );
 const DECODED_IMAGE_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"image/png","kind":"mesh","#,
     r#""schema_ref":"mesh","recovery_status":"decoded_schema_payload","#,
     r#""path":"components/decoded-image.json"}"#,
 );
 const RECOVERED_SCHEMA_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","kind":"texture","#,
     r#""schema_ref":"texture","#,
     r#""recovery_status":"recovered_embedded_image_payload","#,
     r#""path":"texture/recovered-schema.json"}"#,
 );
 const MISSING_PAYLOAD_FORMAT_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","kind":"mesh","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","kind":"mesh","#,
     r#""schema_ref":"mesh","#,
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"components/missing-format.json"}"#,
 );
 const EMPTY_PAYLOAD_FORMAT_ROW: &str = concat!(
-    r#"{"ordinal":1,"name":"value","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"","kind":"mesh","schema_ref":"mesh","#,
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"components/empty-format.json"}"#,
 );
 const MISSING_NAME_ROW: &str = concat!(
-    r#"{"ordinal":1,"payload_format":"schema_json","#,
+    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"mesh","#,
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"components/missing-name.json"}"#,
