@@ -97,7 +97,11 @@ non-world component-map fail-closed identity rule. World component-ledger
 intake now applies the same portable case-insensitive path identity used by P3D
 publication and cache validation, while retaining a distinct diagnostic for an
 exact duplicate path. A focused regression rejects `mesh/Shared.json` alongside
-`mesh/shared.json` before either member can reach world assembly.
+`mesh/shared.json` before either member can reach world assembly. P3D cache
+admission now requires the ancestry fields emitted by `component_line` and
+validates the same root/nested relationship invariants before reusing normalized
+artifacts. When an immediate published parent is present, depth and top-level
+container continuity must also agree; omitted intermediate chunks remain valid.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

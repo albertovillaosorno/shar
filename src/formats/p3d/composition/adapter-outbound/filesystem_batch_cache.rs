@@ -30,7 +30,7 @@
 
 //! Filesystem batch cache outbound adapter.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use schoenwald_filesystem::adapters::driving::local;
@@ -52,6 +52,12 @@ struct PackageHeaderEvidence {
 struct ComponentIdentity {
     /// Source chunk ordinal.
     ordinal: usize,
+    /// Source chunk depth below the root.
+    depth: usize,
+    /// Immediate source parent ordinal.
+    parent_ordinal: usize,
+    /// Direct root-child owner ordinal.
+    container_ordinal: usize,
     /// Published relative artifact path.
     path: String,
 }
@@ -73,6 +79,7 @@ pub(super) fn manifest_is_complete(text: &str) -> bool {
     let mut header_evidence = None;
     let mut component_ordinals = BTreeSet::new();
     let mut component_paths = BTreeSet::new();
+    let mut component_relations = BTreeMap::new();
     let mut parsed_components = 0_usize;
     for line in text.lines() {
         let trimmed = line.trim();
@@ -99,9 +106,23 @@ pub(super) fn manifest_is_complete(text: &str) -> bool {
             .flat_map(char::to_uppercase)
             .collect::<String>();
         if component_identity.ordinal >= header.chunk_count
+            || component_identity.parent_ordinal >= header.chunk_count
+            || component_identity.container_ordinal >= header.chunk_count
             || !component_ordinals.insert(component_identity.ordinal)
             || !component_paths.insert(path_identity)
+            || !component_relationship_is_locally_valid(&component_identity)
         {
+            return false;
+        }
+        let previous = component_relations.insert(
+            component_identity.ordinal,
+            (
+                component_identity.depth,
+                component_identity.parent_ordinal,
+                component_identity.container_ordinal,
+            ),
+        );
+        if previous.is_some() {
             return false;
         }
         let Some(next_count) = parsed_components.checked_add(1) else {
@@ -112,7 +133,9 @@ pub(super) fn manifest_is_complete(text: &str) -> bool {
     let Some(header) = header_evidence else {
         return false;
     };
-    parsed_components > 0 && parsed_components == header.component_count
+    parsed_components > 0
+        && parsed_components == header.component_count
+        && published_parent_relationships_are_valid(&component_relations)
 }
 
 /// Returns count evidence declared by one valid package header row.
@@ -139,8 +162,12 @@ fn manifest_header_evidence(line: &str) -> Option<PackageHeaderEvidence> {
 fn complete_component_identity(line: &str) -> Option<ComponentIdentity> {
     let value = serde_json::from_str::<serde_json::Value>(line).ok()?;
     let object = value.as_object()?;
-    let ordinal_u64 = object.get("ordinal")?.as_u64()?;
-    let ordinal = usize::try_from(ordinal_u64).ok()?;
+    let ordinal = usize::try_from(object.get("ordinal")?.as_u64()?).ok()?;
+    let depth = usize::try_from(object.get("depth")?.as_u64()?).ok()?;
+    let parent_ordinal =
+        usize::try_from(object.get("parent_ordinal")?.as_u64()?).ok()?;
+    let container_ordinal =
+        usize::try_from(object.get("container_ordinal")?.as_u64()?).ok()?;
     let _name = object.get("name")?.as_str()?;
     let payload_format = object.get("payload_format")?.as_str()?;
     let kind = object.get("kind")?.as_str()?;
@@ -165,8 +192,41 @@ fn complete_component_identity(line: &str) -> Option<ComponentIdentity> {
     }
     Some(ComponentIdentity {
         ordinal,
+        depth,
+        parent_ordinal,
+        container_ordinal,
         path: path.to_owned(),
     })
+}
+
+/// Returns whether one component's own ancestry fields are self-consistent.
+const fn component_relationship_is_locally_valid(component: &ComponentIdentity) -> bool {
+    match component.depth {
+        0 => false,
+        1 => {
+            component.parent_ordinal == 0
+                && component.container_ordinal == component.ordinal
+        },
+        _ => component.parent_ordinal != 0 && component.container_ordinal != 0,
+    }
+}
+
+/// Validate parent links only when both published rows are present.
+fn published_parent_relationships_are_valid(
+    relations: &BTreeMap<usize, (usize, usize, usize)>,
+) -> bool {
+    relations.iter().all(
+        |(ordinal, (depth, parent_ordinal, container_ordinal))| {
+            let Some((parent_depth, _parent_parent, parent_container)) =
+                relations.get(parent_ordinal)
+            else {
+                return true;
+            };
+            parent_depth.checked_add(1) == Some(*depth)
+                && container_ordinal == parent_container
+                && ordinal != parent_ordinal
+        },
+    )
 }
 
 /// Returns whether one artifact path extension matches its payload format.
