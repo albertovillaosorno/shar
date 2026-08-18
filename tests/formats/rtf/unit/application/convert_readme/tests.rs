@@ -51,8 +51,10 @@ impl RtfSource for ControlFailingSource {
     }
 }
 
+#[cfg(windows)]
 struct FailingSource;
 
+#[cfg(windows)]
 impl RtfSource for FailingSource {
     fn load(&self, _path: &Path) -> io::Result<RtfSnapshot> {
         Err(io::Error::other("read failure"))

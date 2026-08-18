@@ -467,7 +467,9 @@ def _engine_candidates(explicit: Path | None) -> list[Path]:
         if program_files:
             candidates.append(Path(program_files) / "Epic Games" / "UE_5.8")
     elif sys.platform == "darwin":
-        candidates.append(Path("/Users/Shared/Epic Games/UE_5.8"))
+        candidates.append(
+            Path("/") / "Users" / "Shared" / "Epic Games" / "UE_5.8"
+        )
     return candidates
 
 

@@ -39,7 +39,9 @@ use std::os::windows::ffi::OsStringExt as _;
 
 use schoenwald_cli::CliProgram;
 
-use super::{RtfConversionProgram, USAGE, run};
+use super::{RtfConversionProgram, USAGE};
+#[cfg(windows)]
+use super::run;
 
 #[test]
 fn excess_arguments_return_one_usage_diagnostic() -> Result<(), String> {
