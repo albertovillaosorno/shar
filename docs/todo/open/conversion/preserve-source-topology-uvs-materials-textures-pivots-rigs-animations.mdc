@@ -42,5 +42,11 @@ construction. A focused collision regression proves the exact malformed source
 topology is rejected, and the legacy collision discard count remains zero for
 catalog compatibility.
 
+World mesh publication now also preserves source mesh grouping itself. Spatial
+distance between disconnected components no longer triggers vertex compaction,
+primitive regrouping, or generated independent-object identities. Near and
+distant synthetic meshes remain byte-equivalent at the typed mesh boundary,
+and the position/UV preservation regression remains green.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

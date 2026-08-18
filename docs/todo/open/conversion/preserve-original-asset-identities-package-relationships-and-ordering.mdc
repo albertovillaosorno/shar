@@ -41,5 +41,12 @@ prove source ordinals 11 then 21 remain in that order even when owner names sort
 the opposite way, and duplicate nested ordinal 2 fails closed. The complete
 pipeline library now passes 804 tests with strict Clippy clean.
 
+World export no longer infers new mesh identities from component proximity. The
+old one-unit Blender grouping threshold could split one decoded source mesh into
+multiple generated objects solely because its disconnected geometry was far
+apart. Source mesh ownership is now preserved at every distance, while explicit
+source owner and placement metadata still carries independent/breakable/
+interactable roles.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

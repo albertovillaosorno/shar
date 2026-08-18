@@ -60,7 +60,7 @@ use super::inventory::{
     LevelMeshSource, is_direct_world_mesh, is_interior, object_role,
     package_meshes, package_scope,
 };
-use super::islands::split_distant_islands;
+use super::islands::preserve_source_mesh;
 use super::layout::{
     MapBounds, collection_bounds, placement_for_scope, record_group_bounds,
     validate_group_bounds,
@@ -867,7 +867,7 @@ fn append_source_mesh(
                 ),
             )?,
         )?;
-        content.meshes.extend(split_distant_islands(placed)?);
+        content.meshes.extend(preserve_source_mesh(placed));
         increment_package_count(
             &mut content.packages,
             package_index,
@@ -925,7 +925,7 @@ fn append_direct_or_omit(
             &role_marked_suffix(suffix, source, false),
         )?,
     )?;
-    content.meshes.extend(split_distant_islands(mesh)?);
+    content.meshes.extend(preserve_source_mesh(mesh));
     increment_package_count(
         &mut content.packages,
         package_index,
@@ -1140,9 +1140,7 @@ fn world_object_semantic_counts(meshes: &[MeshAsset]) -> (usize, usize, usize) {
     let mut interactable = 0_usize;
     for mesh in meshes {
         let geometries = mesh.groups.len();
-        if mesh.name.contains("__independent-item")
-            || mesh.name.contains("__independent-object")
-        {
+        if mesh.name.contains("__independent-item") {
             independent = independent.saturating_add(geometries);
         }
         if mesh.name.contains("__breakable") {

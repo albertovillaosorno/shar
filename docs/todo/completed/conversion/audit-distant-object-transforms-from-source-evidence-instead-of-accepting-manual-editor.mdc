@@ -28,16 +28,17 @@ No explicit task dependency was recorded in the legacy TODO.
 ## Evidence
 
 World placement is derived from authored scenegraph transforms before mesh
-publication. Distant-object handling only splits disconnected geometry into
-independent visual objects; it does not translate, rotate, scale, or rewrite UV
-coordinates. A new regression captures all source positions and UVs before the
-split and requires the exact bit-pattern sets after separation.
+publication. The former Blender-oriented distant-island splitter has been
+removed because its one-unit proximity threshold was not source identity
+evidence. Disconnected components now remain in their decoded source mesh at
+any distance; source owner and placement records govern independent object
+roles. Focused regressions require both near and distant components to preserve
+source mesh ownership, positions, and UVs.
 
-Existing tests also prove distant components become separate objects, nearby
-components stay together, and nested source transforms place drawables at their
-authored global position. Narrative map-family grouping adds no spatial offset.
-The generated world transform manifest keeps Unreal import translation and
-rotation at zero and scale at one, so manual editor placement is not a second
+Nested source transforms still place drawables at their authored global
+position, and narrative map-family grouping adds no spatial offset. The
+generated world transform manifest keeps Unreal import translation and rotation
+at zero and scale at one, so manual editor placement is not a second
 world-layout authority.
 
 Definition-only review meshes may receive deterministic gallery placement below

@@ -32,7 +32,7 @@
 
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 
-use super::split_distant_islands;
+use super::preserve_source_mesh;
 
 /// Build two disconnected triangles separated on the X axis.
 fn synthetic_mesh(second_origin: f32) -> Result<MeshAsset, String> {
@@ -56,23 +56,17 @@ fn synthetic_mesh(second_origin: f32) -> Result<MeshAsset, String> {
 }
 
 #[test]
-fn distant_components_become_independent_objects() -> Result<(), String> {
-    let separated = split_distant_islands(synthetic_mesh(20.)?)
-        .map_err(|error| error.to_string())?;
-    if separated.len() != 2 {
-        return Err(format!("expected two objects, got {}", separated.len()));
-    }
-    if separated
-        .iter()
-        .any(|mesh| !mesh.name.contains("__independent-object-"))
-    {
-        return Err("split objects lack stable semantic names".to_owned());
+fn distant_components_remain_in_their_source_mesh() -> Result<(), String> {
+    let source = synthetic_mesh(20.)?;
+    let preserved = preserve_source_mesh(source.clone());
+    if preserved != [source] {
+        return Err("distance changed source mesh ownership".to_owned());
     }
     Ok(())
 }
 
 #[test]
-fn distant_split_preserves_authored_positions_and_uvs() -> Result<(), String> {
+fn source_mesh_preservation_keeps_authored_positions_and_uvs() -> Result<(), String> {
     let source = synthetic_mesh(20.)?;
     let source_group = source
         .groups
@@ -81,8 +75,7 @@ fn distant_split_preserves_authored_positions_and_uvs() -> Result<(), String> {
     let mut expected_positions = source_group.positions.clone();
     let mut expected_uvs = source_group.uvs.clone();
 
-    let separated = split_distant_islands(source)
-        .map_err(|error| error.to_string())?;
+    let separated = preserve_source_mesh(source);
     let mut actual_positions = separated
         .iter()
         .flat_map(|mesh| mesh.groups.iter())
@@ -100,23 +93,20 @@ fn distant_split_preserves_authored_positions_and_uvs() -> Result<(), String> {
     actual_uvs.sort_by_key(|value| value.map(f32::to_bits));
 
     if actual_positions != expected_positions {
-        return Err("distant split changed authored positions".to_owned());
+        return Err("source mesh changed authored positions".to_owned());
     }
     if actual_uvs != expected_uvs {
-        return Err("distant split changed authored UVs".to_owned());
+        return Err("source mesh changed authored UVs".to_owned());
     }
     Ok(())
 }
 
 #[test]
-fn nearby_components_remain_one_visual_object() -> Result<(), String> {
-    let separated = split_distant_islands(synthetic_mesh(1.5)?)
-        .map_err(|error| error.to_string())?;
-    let first = separated
-        .first()
-        .ok_or_else(|| "nearby mesh disappeared".to_owned())?;
-    if separated.len() != 1 || first.name != "aggregate" {
-        return Err("nearby geometry was split apart".to_owned());
+fn nearby_components_remain_in_their_source_mesh() -> Result<(), String> {
+    let source = synthetic_mesh(1.5)?;
+    let preserved = preserve_source_mesh(source.clone());
+    if preserved != [source] {
+        return Err("proximity changed source mesh ownership".to_owned());
     }
     Ok(())
 }
