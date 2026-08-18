@@ -99,6 +99,9 @@ being truncated or removed before the final atomic replace.
 The shared `.cache/build/run` directory and each per-target work root are also
 required to be real directories before Turnkey or UAT writes reports, logs,
 staging data, or candidate packages.
+Candidate and staging scratch roots are now preflighted before cleanup and
+recreation too. Linked or malformed stale scratch identities fail before UAT,
+rather than surviving ignored cleanup and reaching packaging.
 Each UAT invocation now also validates its own child write roots: existing log
 files must be real files, while `automation-saved/`, its `logs/` child, and the
 local DDC must be real directories. Linked identities fail before UAT starts, so
