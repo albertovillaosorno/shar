@@ -25,7 +25,7 @@ anything inside the original installation directory.
 
 ## Acceptance criteria
 
-- [ ] Accept a selected installation folder, a pasted/typed path, or a dropped
+- [x] Accept a selected installation folder, a pasted/typed path, or a dropped
   `Simpsons.exe` and resolve it to one candidate game root.
 - [x] Require the exact canonical source identities owned by the dedicated
   minimum-source TODO, including `Simpsons.exe` and `Simpsons.ico`; keep
@@ -99,5 +99,15 @@ it names the six mandatory base files, keeps `uninst.ico` optional, and explains
 that other official-language evidence is exported as language mods instead of
 becoming mandatory base input.
 
-The remaining unchecked criteria are intentionally open: the final `src/user/`
-GUI/drop surface and empirically calibrated similarity admission.
+The player-facing `src/user/source-selection` boundary now normalizes a selected
+installation directory, pasted or typed path text, and a selected/dropped
+`Simpsons.exe` to one resolved flat source root. It requires one direct canonical
+executable, rejects another nested canonical executable, performs only read-only
+filesystem inspection, and reports path-free selection errors. Synthetic
+regressions cover directory, quoted text, executable, missing, wrong-file, and
+nested-only selections without proprietary source data. The future P4 GUI still
+owns concrete browse/text/drop event binding; this criterion now owns only the
+source-selection semantics shared by those events.
+
+The remaining unchecked criterion is intentionally open: empirically calibrated
+similarity admission.
