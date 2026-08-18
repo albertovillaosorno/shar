@@ -302,3 +302,48 @@ fn package_meshes_reject_nested_component_with_root_parent() -> Result<(), Strin
     }
     Ok(())
 }
+
+#[test]
+fn package_meshes_reject_published_parent_depth_mismatch() -> Result<(), String> {
+    let rows = [
+        owner_row(1, "owner"),
+        r#"{"ordinal":2,"depth":3,"parent_ordinal":1,"container_ordinal":1,"name":"mesh","path":"mesh/002.json","kind":"mesh"}"#.to_owned(),
+    ];
+    let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
+    let root = ledger_root("parent-depth", &borrowed)?;
+    let result = package_meshes(&root);
+    cleanup(&root);
+    let Err(error) = result else {
+        return Err("published parent depth mismatch was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("component ordinal 2 depth 3 disagrees with parent ordinal 1 depth 1")
+    {
+        return Err(format!("unexpected parent depth error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn package_meshes_reject_published_parent_container_mismatch() -> Result<(), String> {
+    let rows = [
+        owner_row(1, "first"),
+        owner_row(2, "second"),
+        r#"{"ordinal":3,"depth":2,"parent_ordinal":1,"container_ordinal":2,"name":"mesh","path":"mesh/003.json","kind":"mesh"}"#.to_owned(),
+    ];
+    let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
+    let root = ledger_root("parent-container", &borrowed)?;
+    let result = package_meshes(&root);
+    cleanup(&root);
+    let Err(error) = result else {
+        return Err("published parent container mismatch was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("component ordinal 3 container 2 disagrees with parent ordinal 1 container 1")
+    {
+        return Err(format!("unexpected parent container error: {error}"));
+    }
+    Ok(())
+}
