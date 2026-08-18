@@ -52,6 +52,11 @@ without `UpdateIfNeeded` before invoking `BuildCookRun`. The canonical matrix
 maps x86-64 to Unreal `x64`, ARM64 to `arm64`, and Linux ARM64 to the dedicated
 `LinuxArm64` target; tvOS and macOS Intel are not admitted.
 
+Direct runner invocation now delegates the saved architecture decision back to
+`arch.py --revalidate` before consuming any target records. Focused regressions
+prove the exact saved path is revalidated, a failed architecture revalidation
+stops the runner, and `main()` performs that gate before target consumption.
+
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its
 unpublished test candidate contained 30 files totaling about 689 MiB, including

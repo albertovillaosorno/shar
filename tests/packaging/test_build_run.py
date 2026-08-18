@@ -207,5 +207,79 @@ class PublicationArtifactTests(unittest.TestCase):
             self.assertFalse(stale.exists())
 
 
+class ArchitectureRevalidationTests(unittest.TestCase):
+    """Require direct runner use to revalidate saved target decisions."""
+
+    def test_invokes_arch_revalidation_for_exact_saved_path(self) -> None:
+        root = Path("/repo")
+        arch_path = root / ".cache/build/data/arch.json"
+        result = mock.Mock(returncode=0)
+
+        with mock.patch.object(
+            _RUN.subprocess,
+            "run",
+            return_value=result,
+        ) as run:
+            _RUN._revalidate_arch(root, arch_path)
+
+        run.assert_called_once_with(
+            [
+                _RUN.sys.executable,
+                str(root / "tools/build/adapter-inbound/arch.py"),
+                "--revalidate",
+                "--output",
+                str(arch_path),
+            ],
+            cwd=root,
+            check=False,
+        )
+
+    def test_rejects_failed_architecture_revalidation(self) -> None:
+        root = Path("/repo")
+        arch_path = root / ".cache/build/data/arch.json"
+        result = mock.Mock(returncode=7)
+
+        with (
+            mock.patch.object(_RUN.subprocess, "run", return_value=result),
+            self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "architecture decision did not revalidate",
+            ),
+        ):
+            _RUN._revalidate_arch(root, arch_path)
+
+    def test_main_revalidates_architecture_before_consuming_targets(
+        self,
+    ) -> None:
+        root = Path("/repo")
+        unreal = {
+            "project": "/repo/project/shar.uproject",
+            "root": "/engine",
+            "version": "5.8.1",
+        }
+        with (
+            mock.patch.object(_RUN, "_root", return_value=root),
+            mock.patch.object(_RUN, "_revalidate_arch") as revalidate_arch,
+            mock.patch.object(_RUN, "_selected_targets", return_value=[]),
+            mock.patch.object(_RUN, "_revalidate_check"),
+            mock.patch.object(
+                _RUN,
+                "_check_evidence",
+                return_value={"unreal": unreal},
+            ),
+            mock.patch.object(
+                _RUN,
+                "_require_unreal_evidence",
+                return_value=unreal,
+            ),
+            mock.patch.object(_RUN, "_prepare_project_state"),
+            mock.patch.object(_RUN, "_uat_path", return_value=Path("/uat")),
+            mock.patch.object(_RUN.sys, "argv", ["run.py", "--validate-only"]),
+        ):
+            self.assertEqual(_RUN.main(), 0)
+
+        revalidate_arch.assert_called_once_with(root, root / _RUN._ARCH_PATH)
+
+
 if __name__ == "__main__":
     unittest.main()
