@@ -32,7 +32,12 @@ image payload bytes directly, and no tracked source or conversion evidence
 authorized rewriting one shader/file-name pair after extraction. Recovered PNG
 bytes are now content-addressed and published unchanged. A typed regression
 requires the prepared texture payload to equal the source bytes and derives its
-SHA-256/file identity from those same bytes. Strict pipeline Clippy is clean.
+SHA-256/file identity from those same bytes. Decoded PDDI `DIFF` colour values
+now preserve all four authored `0xAARRGGBB` channels as well. The extractor
+publishes the source `COLOUR` value unchanged and no tracked format evidence
+marks alpha zero as an opaque sentinel, so FBX material conversion no longer
+rewrites `0x00112233` to alpha 255. A resolver-level regression requires
+`[0x11, 0x22, 0x33, 0x00]`. Strict FBX and pipeline Clippy are clean.
 
 This umbrella task remains open for other reported conversion differences that
 need direct source-backed evidence before any correction is admitted.
