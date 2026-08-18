@@ -107,6 +107,10 @@ integration driver intentionally stopped before `_publish`, so it did not create
 
 Fixture validation proved empty candidates cannot replace an existing published
 target and valid candidates replace it transactionally with rollback support.
+An injected failure while deleting the post-swap previous-package backup now
+rolls the swap back as well: the prior `dist/<ARCH>/` tree is restored, the new
+package returns to its cache candidate path, and no failed run leaves the new
+publication exposed.
 Turnkey validation also confirmed the installed Windows x64 SDK as valid. UAT
 logs are redirected beneath `.cache/build/run/<target>/automation-saved/`. A
 second real Shipping build completed successfully in 16m58s with the local DDC
