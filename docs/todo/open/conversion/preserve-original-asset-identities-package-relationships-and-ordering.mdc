@@ -24,5 +24,14 @@ No explicit task dependency was recorded in the legacy TODO.
 
 ## Evidence
 
-Open work migrated from the canonical TODO. Add implementation and
-validation evidence here as the task advances.
+World scenegraph placement collection now preserves authored traversal order and
+authored multiplicity instead of sorting placements by transform bits and
+deduplicating identical matrices. The normalized P3D decoders already preserve
+scenegraph child order and emit each contained instance graph once, so the extra
+post-collection sorting/deduplication was not source authority. Two focused regressions
+prove equal source transforms remain two placements and a source order of 9 then
+1 remains 9 then 1. The full pipeline library suite passes with 802 tests and
+strict pipeline Clippy is clean.
+
+This umbrella task remains open for broader asset/package identity and ordering
+evidence across the remaining conversion surfaces.

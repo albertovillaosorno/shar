@@ -78,7 +78,8 @@ pub(super) fn multiply(first: &Matrix, second: &Matrix) -> Matrix {
     product
 }
 
-/// Stable source-matrix identity for placement deduplication.
+/// Stable source-matrix identity for transform unit evidence.
+#[cfg(test)]
 #[must_use]
 pub(super) fn matrix_key(matrix: &Matrix) -> [u32; 16] {
     matrix.map(f32::to_bits)
