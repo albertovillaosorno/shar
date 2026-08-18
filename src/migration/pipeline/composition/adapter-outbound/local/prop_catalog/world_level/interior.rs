@@ -203,7 +203,8 @@ pub(super) fn retain_unowned_triangles(
 ///
 /// The ownership mesh is cloned from the unmodified source-space package.
 /// Fusion decisions therefore compare source-authored identity and channels,
-/// while the aligned render mesh remains the publication payload.
+/// while the source-space render mesh remains the publication payload. Base
+/// interior relocation is intentionally not performed here.
 ///
 /// # Errors
 ///
