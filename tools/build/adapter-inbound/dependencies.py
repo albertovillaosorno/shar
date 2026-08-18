@@ -672,6 +672,30 @@ def _validator_evidence(
     )
 
 
+def _validate_canonical_output_root(root: Path, output: Path) -> bool:
+    """Reject linked canonical ancestors and identify canonical output."""
+    canonical = root / _DATA_PATH
+    if output != canonical:
+        return False
+    roots = (
+        (root / ".cache", "repository cache root"),
+        (root / ".cache/build", "build cache root"),
+        (root / ".cache/build/data", "build data root"),
+    )
+    for path, label in roots:
+        if not os.path.lexists(path):
+            continue
+        is_real = (
+            path.is_dir()
+            and not path.is_symlink()
+            and not os.path.isjunction(path)
+        )
+        if is_real:
+            continue
+        raise BootstrapFailure(f"{label} must be a real directory: {path}")
+    return True
+
+
 def _write_json(path: Path, value: dict[str, object]) -> None:
     """Atomically persist machine-readable dependency evidence."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -780,16 +804,18 @@ def main() -> int:
     output = args.output or (root / _DATA_PATH)
     if not output.is_absolute():
         output = root / output
-    canonical_output = (root / _DATA_PATH).resolve()
-    publish_validator = output.resolve() == canonical_output
+    output_safe_to_mutate = False
     try:
+        publish_validator = _validate_canonical_output_root(root, output)
+        output_safe_to_mutate = True
         evidence = _run(
             args,
             publish_validator=publish_validator,
         )
         _write_json(output, evidence)
     except (BootstrapFailure, OSError, tomllib.TOMLDecodeError) as error:
-        output.unlink(missing_ok=True)
+        if output_safe_to_mutate:
+            output.unlink(missing_ok=True)
         print(f"dependencies: {error}", file=sys.stderr)
         return 1
     print(f"dependencies: clean; saved evidence to {output.resolve()}")

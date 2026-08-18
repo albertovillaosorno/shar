@@ -154,6 +154,29 @@ def _payload(selected: list[Target]) -> dict[str, object]:
     }
 
 
+def _validate_canonical_output_root(root: Path, output: Path) -> None:
+    """Reject linked or malformed canonical build-data ancestors."""
+    canonical = root / _DATA_PATH
+    if output != canonical:
+        return
+    roots = (
+        (root / ".cache", "repository cache root"),
+        (root / ".cache/build", "build cache root"),
+        (root / ".cache/build/data", "build data root"),
+    )
+    for path, label in roots:
+        if not os.path.lexists(path):
+            continue
+        is_real = (
+            path.is_dir()
+            and not path.is_symlink()
+            and not os.path.isjunction(path)
+        )
+        if is_real:
+            continue
+        raise SystemExit(f"arch: {label} must be a real directory: {path}")
+
+
 def _write_selection(path: Path, selected: list[Target]) -> None:
     """Atomically persist a non-empty canonical target selection."""
     if not selected:
@@ -397,6 +420,7 @@ def main() -> int:
         )
     if args.list:
         return _print_targets()
+    _validate_canonical_output_root(_root(), output)
     if args.select:
         return _save_cli(args.select, output)
     if args.revalidate:

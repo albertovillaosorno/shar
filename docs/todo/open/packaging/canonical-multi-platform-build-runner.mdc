@@ -78,6 +78,11 @@ Project-state migration now validates both `.cache` and `.cache/build` as real
 repository directories before creating or adopting Unreal-generated state.
 Regressions cover linked cache ancestors so build state cannot escape the repo.
 
+Canonical dependency, preflight, and architecture evidence writers now reject
+linked `.cache`, `.cache/build`, or `.cache/build/data` ancestors before any
+mutation. Regression coverage also proves rejection preserves existing evidence
+and explicit testing output overrides retain their intended independent scope.
+
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its
 unpublished test candidate contained 30 files totaling about 689 MiB, including
