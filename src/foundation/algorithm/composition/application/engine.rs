@@ -59,6 +59,7 @@ struct InputFile {
     path: PathBuf,
     bytes: u64,
     sha256: String,
+    data: Vec<u8>,
 }
 
 impl InputFile {
@@ -143,6 +144,7 @@ fn inspect_file(
         path,
         bytes,
         sha256: digest_hex(&data),
+        data,
     })
 }
 
@@ -317,14 +319,7 @@ fn source_key(files: &[InputFile]) -> Result<[u8; 32], AlgorithmError> {
     for file in files {
         state.update(&file.input.to_be_bytes());
         update_frame(&mut state, file.logical_path.as_bytes())?;
-        let bytes = local::read_bytes(&file.path)
-            .map_err(|error| io_failure("cannot read source file", &error))?;
-        if digest_hex(&bytes) != file.sha256 {
-            return Err(AlgorithmError::new(
-                "source changed while deriving its binding key",
-            ));
-        }
-        update_frame(&mut state, &bytes)?;
+        update_frame(&mut state, &file.data)?;
     }
     Ok(state.finalize())
 }
@@ -551,13 +546,7 @@ pub fn create_algorithm(
         .map_err(|_key_error| AlgorithmError::new("cannot initialize protected payload cipher"))?;
     let mut protected = Vec::with_capacity(target_files.len());
     for (file, descriptor) in target_files.iter().zip(target_descriptors) {
-        let plaintext = local::read_bytes(&file.path)
-            .map_err(|error| io_failure("cannot read target file", &error))?;
-        if digest_hex(&plaintext) != descriptor.sha256 {
-            return Err(AlgorithmError::new(
-                "target changed while authoring algorithm",
-            ));
-        }
+        let plaintext = &file.data;
         let nonce = nonce_for(&key, &metadata, &descriptor.path)?;
         let associated = aad(&metadata, &descriptor.path)?;
         let nonce_value = Nonce::try_from(nonce.as_slice())
@@ -566,7 +555,7 @@ pub fn create_algorithm(
             .encrypt(
                 &nonce_value,
                 Payload {
-                    msg: &plaintext,
+                    msg: plaintext,
                     aad: &associated,
                 },
             )

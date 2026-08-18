@@ -87,8 +87,10 @@ create-new filesystem write, and a regression proves an existing plan remains
 byte-identical when publication collides. Generic filesystem failures are
 projected as operation plus I/O error kind without caller paths, and a synthetic
 missing-source regression proves a private-looking source path is not disclosed.
-These tests establish engine-level source binding and read-only behavior; they do
-not certify
+Authoring captures each admitted source/target file once, and key derivation plus
+target encryption reuse those validated bytes rather than reopening paths during
+the operation. These tests establish engine-level source binding and read-only
+behavior; they do not certify
 the still-placeholder distributable family plans or replace the pending
 representative-install similarity calibration.
 

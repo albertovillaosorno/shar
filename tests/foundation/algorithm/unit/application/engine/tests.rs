@@ -37,7 +37,10 @@ use crate::document::{
 };
 use crate::domain::Settings;
 
-use super::{decode_hex, hex_bytes, settings_sha256, validate_document};
+use super::{
+    InputFile, decode_hex, hex_bytes, settings_sha256, source_key,
+    validate_document,
+};
 
 #[test]
 fn hexadecimal_round_trip_is_exact() {
@@ -125,4 +128,19 @@ fn directory_target_portable_identity_collision_is_rejected(
         return Err(message.to_owned());
     }
     Ok(())
+}
+#[test]
+fn source_key_uses_captured_bytes_without_reopening_path() -> Result<(), String> {
+    let file = InputFile {
+        input: 0,
+        logical_path: String::new(),
+        path: std::env::temp_dir().join("shar-algorithm-missing-source.bin"),
+        bytes: 4,
+        sha256: "unused-after-capture".to_owned(),
+        data: b"seed".to_vec(),
+    };
+
+    source_key(&[file])
+        .map(|_key| ())
+        .map_err(|error| error.to_string())
 }
