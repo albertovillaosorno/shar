@@ -1,6 +1,6 @@
 //! Source-bound algorithm authoring and replay service.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 use std::path::{Component, Path, PathBuf};
 
 use chacha20poly1305::{
@@ -8,6 +8,7 @@ use chacha20poly1305::{
     aead::{Aead, Payload},
 };
 use schoenwald_filesystem::adapters::driving::local;
+use same_file::Handle;
 use schoenwald_filesystem::{PathKind, resolve_under, validate_portable_path};
 use shar_sha256::{Sha256, digest, digest_hex};
 
@@ -438,6 +439,30 @@ fn reject_target_source_overlap(
     Ok(())
 }
 
+fn reject_physical_source_target_overlap(
+    source_files: &[InputFile],
+    target_files: &[InputFile],
+) -> Result<(), AlgorithmError> {
+    let source_identities = source_files
+        .iter()
+        .map(|file| {
+            Handle::from_path(&file.path).map_err(|_error| {
+                AlgorithmError::new("cannot identify source input file")
+            })
+        })
+        .collect::<Result<HashSet<_>, _>>()?;
+    for target in target_files {
+        let identity = Handle::from_path(&target.path)
+            .map_err(|_error| AlgorithmError::new("cannot identify target input file"))?;
+        if source_identities.contains(&identity) {
+            return Err(AlgorithmError::new(
+                "target file aliases a source input file",
+            ));
+        }
+    }
+    Ok(())
+}
+
 /// Authors one deterministic source-bound `.txt` algorithm.
 ///
 /// # Errors
@@ -453,6 +478,7 @@ pub fn create_algorithm(
     let source = collect_source(source_paths, settings)?;
     let (target_kind, target_files, target_root) = collect_target(target_path, settings)?;
     reject_target_source_overlap(&target_root, &source.roots)?;
+    reject_physical_source_target_overlap(&source.files, &target_files)?;
     reject_output_overlap(algorithm_path, &source.roots)?;
     reject_output_overlap(algorithm_path, &[target_root])?;
 

@@ -3,6 +3,7 @@
 use std::process::ExitCode;
 
 use chacha20poly1305 as _;
+use same_file as _;
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 use serde as _;
