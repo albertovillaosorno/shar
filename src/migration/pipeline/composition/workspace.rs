@@ -35,6 +35,12 @@
 
 //! Canonical generated workspace paths and legacy compatibility migration.
 
+#![expect(
+    clippy::redundant_pub_crate,
+    reason = "crate-root private module shares workspace helpers with sibling \
+               adapters"
+)]
+
 use std::fs::{self, File, OpenOptions, TryLockError};
 use std::path::{Path, PathBuf};
 
@@ -373,7 +379,7 @@ fn migrate_legacy_payload_workspace_at(
     if legacy_manifest.is_some() {
         ensure_real_parent(manifest_destination, label)?;
     }
-    migrate_payload_and_manifest(PayloadMigration {
+    migrate_payload_and_manifest(&PayloadMigration {
         legacy_root,
         canonical_root,
         legacy_manifest,
@@ -384,7 +390,7 @@ fn migrate_legacy_payload_workspace_at(
 }
 
 fn migrate_payload_and_manifest(
-    migration: PayloadMigration<'_>,
+    migration: &PayloadMigration<'_>,
 ) -> PipelineOutcome<()> {
     if let Some(source) = migration.legacy_manifest.as_ref() {
         fs::rename(source, migration.manifest_destination).map_err(|error| {

@@ -377,8 +377,35 @@ fn push_bonus(
         character, choreo, locator, mission, icon, dialogue, is_race, alternate,
     ) =
         match arguments {
-            [a, b, c, d, e, f, g] => (a, b, c, d, e, f, g, None),
-            [a, b, c, d, e, f, g, h] => (a, b, c, d, e, f, g, Some(h)),
+            [character, choreo, locator, mission, icon, dialogue, is_race] => (
+                character,
+                choreo,
+                locator,
+                mission,
+                icon,
+                dialogue,
+                is_race,
+                None,
+            ),
+            [
+                character,
+                choreo,
+                locator,
+                mission,
+                icon,
+                dialogue,
+                is_race,
+                alternate,
+            ] => (
+                character,
+                choreo,
+                locator,
+                mission,
+                icon,
+                dialogue,
+                is_race,
+                Some(alternate),
+            ),
             _ => {
                 return Err(
                     concat!(
