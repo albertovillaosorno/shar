@@ -1,3 +1,33 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Binary composition root for the algorithm CLI.
+// - Must-Not:
+//   - Own algorithm behavior beyond dependency composition.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - One responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Another module owns the identical responsibility.
+// - Summary:
+//   - Algorithm executable composition root.
+// - Description:
+//   - Binary composition root for the algorithm CLI.
+// - Usage:
+//   - Used through the owning algorithm function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
 //! Algorithm command composition root.
 
 use std::process::ExitCode;

@@ -1,3 +1,33 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Pure mechanism settings and stable algorithm errors.
+// - Must-Not:
+//   - Own JSON serialization, filesystem effects, or product policy.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - One responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Another module owns the identical responsibility.
+// - Summary:
+//   - Algorithm domain records.
+// - Description:
+//   - Pure mechanism settings and stable algorithm errors.
+// - Usage:
+//   - Used through the owning algorithm function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
 //! Generic algorithm domain records.
 
 use core::fmt;

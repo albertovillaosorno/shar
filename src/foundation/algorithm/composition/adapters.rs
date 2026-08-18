@@ -1,3 +1,33 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Adapter namespace composition for the algorithm function.
+// - Must-Not:
+//   - Own application or domain behavior.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - One responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Another module owns the identical responsibility.
+// - Summary:
+//   - Algorithm adapter composition.
+// - Description:
+//   - Adapter namespace composition for the algorithm function.
+// - Usage:
+//   - Used through the owning algorithm function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
 //! Algorithm adapter composition.
 
 /// Inbound command surfaces.

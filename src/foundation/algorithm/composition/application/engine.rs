@@ -1,3 +1,33 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Source-bound authoring and replay application behavior.
+// - Must-Not:
+//   - Own product-specific reconstruction policy.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - One responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Another module owns the identical responsibility.
+// - Summary:
+//   - Algorithm application engine.
+// - Description:
+//   - Source-bound authoring and replay application behavior.
+// - Usage:
+//   - Used through the owning algorithm function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
 //! Source-bound algorithm authoring and replay service.
 
 use std::collections::{BTreeSet, HashSet};
