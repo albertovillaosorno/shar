@@ -157,6 +157,20 @@ fn reject_root_overlap(roots: &[PathBuf]) -> Result<(), AlgorithmError> {
     Ok(())
 }
 
+fn reject_duplicate_physical_sources(files: &[InputFile]) -> Result<(), AlgorithmError> {
+    let mut identities = HashSet::new();
+    for file in files {
+        let identity = Handle::from_path(&file.path)
+            .map_err(|_error| AlgorithmError::new("cannot identify source input file"))?;
+        if !identities.insert(identity) {
+            return Err(AlgorithmError::new(
+                "source inputs repeat one physical file",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn collect_source(
     paths: &[PathBuf],
     settings: &Settings,
@@ -177,6 +191,7 @@ fn collect_source(
         files.append(&mut root_files);
     }
     reject_root_overlap(&roots)?;
+    reject_duplicate_physical_sources(&files)?;
     let file_count = usize_to_u64(files.len(), "source file count")?;
     if file_count < settings.minimum_source_files() {
         return Err(AlgorithmError::new(
