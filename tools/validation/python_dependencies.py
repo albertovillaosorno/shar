@@ -23,6 +23,13 @@
 #   - Merge when Jig directly owns project-specific Python environment creation.
 # - Summary:
 #   - Materializes SHAR's exact repository-local pytest and Ruff environment.
+# - Description:
+#   - Owns the pinned Python test/lint environment and executable evidence.
+# - Usage:
+#   - Run before Jig when repository-local Python tools are absent or stale.
+# - Defaults:
+#   - Uses the invoking CPython 3.14.6 and repository-owned dependency roots.
+#
 
 """Prepare the repository-local Python tools required by canonical Jig gates."""
 
