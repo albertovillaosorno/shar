@@ -126,13 +126,11 @@ impl ExtractGameAssets {
         let extracted_root =
             guard_paths(&config.game_root, &config.extracted_root)?;
         let transaction = ExtractionTransaction::begin(&extracted_root)?;
-        let result = (|| {
-            let mut staged_config = config.clone();
-            staged_config.extracted_root =
-                transaction.staging_root().to_path_buf();
-            staged_config.clean_extracted = false;
-            run_staged_extraction(&staged_config)
-        })();
+        let mut staged_config = config.clone();
+        staged_config.extracted_root =
+            transaction.staging_root().to_path_buf();
+        staged_config.clean_extracted = false;
+        let result = run_staged_extraction(&staged_config);
         match result {
             Ok(report) => {
                 transaction.publish()?;

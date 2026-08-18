@@ -59,7 +59,7 @@ struct SourceTextDocument {
     source_entries: Vec<String>,
 }
 
-/// Read exact source-table keys from normalized TextBible evidence.
+/// Read exact source-table keys from normalized `TextBible` evidence.
 pub(super) fn read_source_text_keys(
     path: &Path,
 ) -> PipelineOutcome<Vec<String>> {

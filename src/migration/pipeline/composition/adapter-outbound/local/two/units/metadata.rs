@@ -183,7 +183,7 @@ pub(super) fn classify_minor_unit(
             MetadataClassification::new(
                 "audio",
                 "wav-pcm",
-                route.audio_kind(),
+                RouteSignature::audio_kind(),
                 "decoded audio",
                 route.audio_origin(),
                 "import-after-conversion",
@@ -219,7 +219,7 @@ pub(super) fn classify_minor_unit(
                 "ini",
                 "runtime-asset",
                 "configuration or localization text",
-                route.text_origin(),
+                RouteSignature::text_origin(),
                 "import-as-data-asset",
                 "json-to-data-asset",
             ),
@@ -324,12 +324,12 @@ impl RouteSignature {
     }
 
     /// Audio kind.
-    const fn audio_kind(&self) -> &'static str {
+    const fn audio_kind() -> &'static str {
         "runtime-asset"
     }
 
     /// Text origin.
-    const fn text_origin(&self) -> &'static str {
+    const fn text_origin() -> &'static str {
         "game-root"
     }
 }
