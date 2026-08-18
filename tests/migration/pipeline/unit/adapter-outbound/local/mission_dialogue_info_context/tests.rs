@@ -73,12 +73,8 @@ fn preserves_participants_and_identity() -> Result<(), String> {
             "characters/homer/base-model",
         ),
     ]);
-    let player = catalog
-        .resolve_character("patty")
-        .map_err(|error| error.to_string())?;
-    let npc = catalog
-        .resolve_character("homer")
-        .map_err(|error| error.to_string())?;
+    let player = catalog.resolve_character("patty")?;
+    let npc = catalog.resolve_character("homer")?;
     let binding = MissionDialogueInfoBinding {
         source_path: "game/scripts/missions/level02/sr2i.mfk.json".to_owned(),
         owner_stage_source_ordinal: 60,

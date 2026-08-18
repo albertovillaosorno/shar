@@ -121,7 +121,7 @@ impl MissionCompletionDialogBinding {
     }
 
     #[cfg(test)]
-    pub(super) fn character(
+    pub(super) const fn character(
         &self,
     ) -> Option<&MissionCharacterCatalogReference> {
         self.character.as_ref()

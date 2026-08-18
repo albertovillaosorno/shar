@@ -116,12 +116,12 @@ impl MissionDialogueInfoBinding {
     }
 
     #[cfg(test)]
-    pub(super) fn player(&self) -> &MissionCharacterCatalogReference {
+    pub(super) const fn player(&self) -> &MissionCharacterCatalogReference {
         &self.player
     }
 
     #[cfg(test)]
-    pub(super) fn npc(&self) -> &MissionCharacterCatalogReference {
+    pub(super) const fn npc(&self) -> &MissionCharacterCatalogReference {
         &self.npc
     }
 
@@ -136,7 +136,7 @@ impl MissionDialogueInfoBinding {
     }
 
     #[cfg(test)]
-    pub(super) fn package_count(&self) -> usize {
+    pub(super) const fn package_count(&self) -> usize {
         self.packages.len()
     }
 }
