@@ -39,7 +39,10 @@ fn semantics(
     MissionStageSemanticReport::from_topology_entries_for_tests(entries)
 }
 
-fn rejection<T>(result: Result<T, String>, context: &str) -> Result<String, String> {
+fn rejection<T>(
+    result: Result<T, String>,
+    context: &str,
+) -> Result<String, String> {
     match result {
         Ok(_value) => Err(format!("{context} unexpectedly passed")),
         Err(error) => Ok(error),
@@ -84,7 +87,8 @@ fn accepts_sequence_without_explicit_final_marker() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_duplicate_checkpoint_markers_inside_one_stage() -> Result<(), String> {
+fn rejects_duplicate_checkpoint_markers_inside_one_stage(
+) -> Result<(), String> {
     let result = preflight_mission_authored_stage_topology(&semantics(vec![(
         2,
         0,
