@@ -71,3 +71,29 @@ fn create_new_text_preserves_existing_destination() -> Result<(), String> {
     }
     Ok(())
 }
+#[test]
+fn create_new_bytes_preserve_existing_destination() -> Result<(), String> {
+    let sequence = SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "schoenwald-create-new-bytes-{}-{sequence}",
+        std::process::id()
+    ));
+    let path = root.join("payload.bin");
+    let cleanup = || fs::remove_dir_all(&root);
+    drop(cleanup());
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+
+    local::write_new_bytes(&path, b"first", false)
+        .map_err(|error| error.to_string())?;
+    let second = local::write_new_bytes(&path, b"second", false);
+    let preserved = fs::read(&path).map_err(|error| error.to_string())?;
+    drop(cleanup());
+
+    let Err(error) = second else {
+        return Err("create-new bytes replaced existing data".to_owned());
+    };
+    if error.kind() != io::ErrorKind::AlreadyExists || preserved != b"first" {
+        return Err("create-new bytes did not preserve the destination".to_owned());
+    }
+    Ok(())
+}

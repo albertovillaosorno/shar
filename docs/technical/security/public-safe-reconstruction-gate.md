@@ -115,7 +115,11 @@ that differ only by host-sensitive casing cannot collide at replay. A published
 plan remains
 unusable without the local source evidence admitted by its source-bound replay
 contract. Algorithm authoring publishes the plan with create-new persistence,
-so an existing plan path is rejected atomically instead of being replaced. The
+so an
+existing plan path is rejected atomically instead of being replaced. Replay uses
+the same create-new byte persistence for every final recovered file, closing the
+absence-check/replacement race at the filesystem write itself.
+The
 generic engine's filesystem diagnostics preserve the failed operation and I/O
 error kind without embedding caller source, target, algorithm, or replay paths.
 Each source and target file is read once into a validated in-memory snapshot;

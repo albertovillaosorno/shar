@@ -75,6 +75,20 @@ pub fn write_bytes(path: &Path, bytes: &[u8], create_parents: bool) -> io::Resul
     WriteFile::bytes(&StdFilesystem, path, bytes, create_parents)
 }
 
+/// Creates one new local file with complete bytes.
+///
+/// # Errors
+///
+/// Returns `AlreadyExists` when the destination exists, or another local
+/// provider I/O error.
+pub fn write_new_bytes(
+    path: &Path,
+    bytes: &[u8],
+    create_parents: bool,
+) -> io::Result<()> {
+    WriteFile::new_bytes(&StdFilesystem, path, bytes, create_parents)
+}
+
 /// Writes complete UTF-8 text to one explicit local path.
 ///
 /// # Errors

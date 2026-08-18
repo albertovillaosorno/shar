@@ -774,7 +774,7 @@ pub fn replay_algorithm(
     }
 
     for (destination, bytes) in recovered {
-        local::write_bytes(&destination, &bytes, true)
+        local::write_new_bytes(&destination, &bytes, true)
             .map_err(|error| io_failure("cannot write replay output", &error))?;
     }
     Ok(())
