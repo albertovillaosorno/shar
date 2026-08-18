@@ -1,35 +1,25 @@
 //! Generic algorithm domain records.
 
 use core::fmt;
-use serde::{Deserialize, Serialize};
 
 const SETTINGS_SCHEMA: &str = "shar.algorithm.settings.v1";
-pub(crate) const ALGORITHM_SCHEMA: &str = "shar.algorithm.v1";
 
 /// Generic authoring and replay resource limits.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Settings {
-    schema: String,
-    minimum_source_files: u64,
-    minimum_source_bytes: u64,
-    maximum_source_files: u64,
-    maximum_target_files: u64,
-    maximum_file_bytes: u64,
-    maximum_source_bytes: u64,
-    maximum_target_bytes: u64,
+    pub(crate) schema: String,
+    pub(crate) minimum_source_files: u64,
+    pub(crate) minimum_source_bytes: u64,
+    pub(crate) maximum_source_files: u64,
+    pub(crate) maximum_target_files: u64,
+    pub(crate) maximum_file_bytes: u64,
+    pub(crate) maximum_source_bytes: u64,
+    pub(crate) maximum_target_bytes: u64,
 }
 
 impl Settings {
-    /// Parses and validates settings from UTF-8 JSON text.
-    ///
-    /// # Errors
-    /// Returns an error for malformed JSON or inconsistent limits.
-    pub fn from_json(text: &str) -> Result<Self, AlgorithmError> {
-        let settings: Self = serde_json::from_str(text)
-            .map_err(|error| AlgorithmError::new(format!("invalid settings JSON: {error}")))?;
-        settings.validate()?;
-        Ok(settings)
+    pub(crate) fn schema(&self) -> &str {
+        &self.schema
     }
 
     /// Returns the minimum admitted source-file count.
@@ -47,20 +37,24 @@ impl Settings {
     pub(crate) const fn maximum_source_files(&self) -> u64 {
         self.maximum_source_files
     }
+
     pub(crate) const fn maximum_target_files(&self) -> u64 {
         self.maximum_target_files
     }
+
     pub(crate) const fn maximum_file_bytes(&self) -> u64 {
         self.maximum_file_bytes
     }
+
     pub(crate) const fn maximum_source_bytes(&self) -> u64 {
         self.maximum_source_bytes
     }
+
     pub(crate) const fn maximum_target_bytes(&self) -> u64 {
         self.maximum_target_bytes
     }
 
-    fn validate(&self) -> Result<(), AlgorithmError> {
+    pub(crate) fn validate(&self) -> Result<(), AlgorithmError> {
         if self.schema != SETTINGS_SCHEMA {
             return Err(AlgorithmError::new(format!(
                 "unsupported settings schema: {}",
@@ -117,55 +111,3 @@ impl fmt::Display for AlgorithmError {
 }
 
 impl std::error::Error for AlgorithmError {}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub(crate) enum TargetKind {
-    File,
-    Directory,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct SourceRecord {
-    pub(crate) input: u64,
-    pub(crate) path: String,
-    pub(crate) bytes: u64,
-    pub(crate) sha256: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct TargetDescriptor {
-    pub(crate) path: String,
-    pub(crate) bytes: u64,
-    pub(crate) sha256: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct ProtectedTarget {
-    #[serde(flatten)]
-    pub(crate) descriptor: TargetDescriptor,
-    pub(crate) nonce: String,
-    pub(crate) ciphertext: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct AlgorithmDocument {
-    pub(crate) schema: String,
-    pub(crate) settings_sha256: String,
-    pub(crate) source: Vec<SourceRecord>,
-    pub(crate) target_kind: TargetKind,
-    pub(crate) target: Vec<ProtectedTarget>,
-}
-
-#[derive(Debug, Serialize)]
-pub(crate) struct AuthenticatedMetadata<'a> {
-    pub(crate) schema: &'a str,
-    pub(crate) settings_sha256: &'a str,
-    pub(crate) source: &'a [SourceRecord],
-    pub(crate) target_kind: TargetKind,
-    pub(crate) target: &'a [TargetDescriptor],
-}

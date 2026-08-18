@@ -185,3 +185,15 @@ def test_algorithm_surfaces_and_settings_follow_registered_layout() -> None:
         "src/foundation/algorithm/composition/adapter-inbound/settings.json"
     )
     assert default_settings in cli
+
+
+def test_algorithm_domain_is_serialization_free() -> None:
+    """Keep JSON wire ownership in composition rather than domain."""
+    boundary = _ROOT / "src" / "foundation" / "algorithm"
+    domain = (boundary / "domain" / "model.rs").read_text()
+    assert "serde" not in domain
+    document = boundary / "composition" / "document.rs"
+    assert document.is_file()
+    wire = document.read_text()
+    assert "serde::{Deserialize, Serialize}" in wire
+    assert "serde_json" in wire
