@@ -77,6 +77,19 @@ fn source(id: &str) -> UnrealSourceEvidence {
     }
 }
 
+trait RejectionResult<T, E> {
+    fn rejection(self, message: &str) -> Result<E, String>;
+}
+
+impl<T, E> RejectionResult<T, E> for Result<T, E> {
+    fn rejection(self, message: &str) -> Result<E, String> {
+        match self {
+            Err(error) => Ok(error),
+            Ok(_) => Err(message.to_owned()),
+        }
+    }
+}
+
 fn mission_source(id: &str) -> UnrealSourceEvidence {
     let mut value = source(id);
     value.kind = "mission-script".to_owned();
@@ -106,6 +119,18 @@ fn mission_definition_row(source_id: &str, mission_id: &str) -> String {
             "terminal": "none",
         })],
     )
+}
+
+fn first_array_object_mut<'a>(
+    value: &'a mut serde_json::Value,
+    field: &str,
+) -> Result<&'a mut serde_json::Map<String, serde_json::Value>, String> {
+    value
+        .get_mut(field)
+        .and_then(serde_json::Value::as_array_mut)
+        .and_then(|entries| entries.first_mut())
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or_else(|| format!("mission fixture field is malformed: {field}"))
 }
 
 fn mission_definition_relationship_stage() -> serde_json::Value {
@@ -193,13 +218,13 @@ fn mission_definition_row_with_stages(
             }
         }
     }
-    let mut value = serde_json::to_string(&json!({
+    let mut value = json!({
         "mission_id": mission_id,
         "schema": "shar-schoenwald.mission-definition-core.v3",
         "source_id": source_id,
         "stages": stages,
-    }))
-    .expect("definition JSON fixture must serialize");
+    })
+    .to_string();
     value.push(char::from(10));
     value
 }
@@ -1488,7 +1513,7 @@ fn accepts_source_distinct_mission_definition_rows() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_mission_definitions_out_of_verified_source_order() {
+fn rejects_mission_definitions_out_of_verified_source_order() -> Result<(), String> {
     let rows = vec![
         mission_definition_row("script-two", "m1"),
         mission_definition_row("script-one", "m1"),
@@ -1498,31 +1523,34 @@ fn rejects_mission_definitions_out_of_verified_source_order() {
         mission_source("script-two"),
     ];
     let error = validate_mission_definition_bundle(&rows, &verified)
-        .expect_err("out-of-order mission definition sources must fail");
+        .rejection("out-of-order mission definition sources must fail")?;
     assert!(error.to_string().contains("verified source order"));
+    Ok(())
 }
 
 #[test]
-fn rejects_duplicate_mission_definition_source() {
+fn rejects_duplicate_mission_definition_source() -> Result<(), String> {
     let row = mission_definition_row("script-one", "m1");
     let rows = vec![row.clone(), row];
     let verified = vec![mission_source("script-one")];
     let error = validate_mission_definition_bundle(&rows, &verified)
-        .expect_err("duplicate mission definition source must fail");
+        .rejection("duplicate mission definition source must fail")?;
     assert!(error.to_string().contains("duplicates a source id"));
+    Ok(())
 }
 
 #[test]
-fn rejects_unverified_mission_definition_source() {
+fn rejects_unverified_mission_definition_source() -> Result<(), String> {
     let rows = vec![mission_definition_row("script-one", "m1")];
     let verified = vec![source("script-one")];
     let error = validate_mission_definition_bundle(&rows, &verified)
-        .expect_err("non-mission verified source must fail");
+        .rejection("non-mission verified source must fail")?;
     assert!(error.to_string().contains("not verified mission evidence"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_with_sparse_stage_order() {
+fn rejects_mission_definition_with_sparse_stage_order() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -1549,12 +1577,13 @@ fn rejects_mission_definition_with_sparse_stage_order() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("sparse staged mission topology must fail");
+    .rejection("sparse staged mission topology must fail")?;
     assert!(error.to_string().contains("sequence ordinal is not dense"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_with_authored_neighbor_drift() {
+fn rejects_mission_definition_with_authored_neighbor_drift() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -1601,12 +1630,13 @@ fn rejects_mission_definition_with_authored_neighbor_drift() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("authored neighbor drift must fail");
+    .rejection("authored neighbor drift must fail")?;
     assert!(error.to_string().contains("authored neighbor drifted"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_with_early_terminal_outcome() {
+fn rejects_mission_definition_with_early_terminal_outcome() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -1653,12 +1683,13 @@ fn rejects_mission_definition_with_early_terminal_outcome() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("early terminal outcome must fail");
+    .rejection("early terminal outcome must fail")?;
     assert!(error.to_string().contains("before the final stage"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_with_invented_runtime_edge() {
+fn rejects_mission_definition_with_invented_runtime_edge() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -1686,12 +1717,13 @@ fn rejects_mission_definition_with_invented_runtime_edge() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("invented runtime edge must fail");
+    .rejection("invented runtime edge must fail")?;
     assert!(error.to_string().contains("invents unresolved runtime field"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_with_kind_final_drift() {
+fn rejects_mission_definition_with_kind_final_drift() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -1718,12 +1750,13 @@ fn rejects_mission_definition_with_kind_final_drift() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("stage kind final drift must fail");
+    .rejection("stage kind final drift must fail")?;
     assert!(error.to_string().contains("final marker disagrees"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_with_nonexclusive_objective_mapping() {
+fn rejects_mission_definition_with_nonexclusive_objective_mapping() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -1750,8 +1783,9 @@ fn rejects_mission_definition_with_nonexclusive_objective_mapping() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("nonexclusive objective mapping must fail");
+    .rejection("nonexclusive objective mapping must fail")?;
     assert!(error.to_string().contains("objective mapping is not exclusive"));
+    Ok(())
 }
 
 #[test]
@@ -1807,7 +1841,7 @@ fn accepts_owned_mission_definition_conditions() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_mission_definition_condition_owner_drift() {
+fn rejects_mission_definition_condition_owner_drift() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -1842,12 +1876,13 @@ fn rejects_mission_definition_condition_owner_drift() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("condition owner drift must fail");
+    .rejection("condition owner drift must fail")?;
     assert!(error.to_string().contains("objective owner drifted"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_condition_order_drift() {
+fn rejects_mission_definition_condition_order_drift() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -1892,12 +1927,13 @@ fn rejects_mission_definition_condition_order_drift() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("condition source order drift must fail");
+    .rejection("condition source order drift must fail")?;
     assert!(error.to_string().contains("source ordinal is malformed"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_condition_violation_drift() {
+fn rejects_mission_definition_condition_violation_drift() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -1932,8 +1968,9 @@ fn rejects_mission_definition_condition_violation_drift() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("condition violation drift must fail");
+    .rejection("condition violation drift must fail")?;
     assert!(error.to_string().contains("unknown violation effect"));
+    Ok(())
 }
 
 #[test]
@@ -1991,7 +2028,7 @@ fn accepts_owned_mission_definition_countdown() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_mission_definition_checkpoint_before_stage() {
+fn rejects_mission_definition_checkpoint_before_stage() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -2019,12 +2056,13 @@ fn rejects_mission_definition_checkpoint_before_stage() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("checkpoint at or before its stage must fail");
+    .rejection("checkpoint at or before its stage must fail")?;
     assert!(error.to_string().contains("checkpoint source ordinal is malformed"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_countdown_owner_drift() {
+fn rejects_mission_definition_countdown_owner_drift() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -2059,12 +2097,13 @@ fn rejects_mission_definition_countdown_owner_drift() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("countdown owner drift must fail");
+    .rejection("countdown owner drift must fail")?;
     assert!(error.to_string().contains("countdown owner drifted"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_countdown_entry_order_drift() {
+fn rejects_mission_definition_countdown_entry_order_drift() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -2110,8 +2149,9 @@ fn rejects_mission_definition_countdown_entry_order_drift() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("countdown entry order drift must fail");
+    .rejection("countdown entry order drift must fail")?;
     assert!(error.to_string().contains("identity or order is malformed"));
+    Ok(())
 }
 
 #[test]
@@ -2132,9 +2172,12 @@ fn accepts_owned_mission_definition_objective_bindings() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_mission_definition_collectible_owner_drift() {
+fn rejects_mission_definition_collectible_owner_drift() -> Result<(), String> {
     let mut stage = mission_definition_relationship_stage();
-    stage["collectible_waypoints"][0]["stage_sequence_ordinal"] = json!(1);
+    drop(first_array_object_mut(&mut stage, "collectible_waypoints")?.insert(
+        "stage_sequence_ordinal".to_owned(),
+        json!(1),
+    ));
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -2144,14 +2187,18 @@ fn rejects_mission_definition_collectible_owner_drift() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("collectible owner drift must fail");
+    .rejection("collectible owner drift must fail")?;
     assert!(error.to_string().contains("collectible waypoint 1 owner drifted"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_npc_declaration_order_drift() {
+fn rejects_mission_definition_npc_declaration_order_drift() -> Result<(), String> {
     let mut stage = mission_definition_relationship_stage();
-    stage["objective_npc_waypoints"][0]["declaration_source_ordinal"] = json!(8);
+    drop(first_array_object_mut(&mut stage, "objective_npc_waypoints")?.insert(
+        "declaration_source_ordinal".to_owned(),
+        json!(8),
+    ));
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -2161,15 +2208,20 @@ fn rejects_mission_definition_npc_declaration_order_drift() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("NPC declaration order drift must fail");
+    .rejection("NPC declaration order drift must fail")?;
     assert!(error.to_string().contains("NPC waypoint 1 relationship is malformed"));
+    Ok(())
 }
 
 #[test]
-fn rejects_mission_definition_pickup_scope_drift() {
+fn rejects_mission_definition_pickup_scope_drift() -> Result<(), String> {
     let mut stage = mission_definition_relationship_stage();
-    stage["pickup_state_props"][0]["declaration_scope"]["source_ordinal"] =
-        json!(8);
+    let pickup = first_array_object_mut(&mut stage, "pickup_state_props")?;
+    let scope = pickup
+        .get_mut("declaration_scope")
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or_else(|| "pickup declaration scope fixture is malformed".to_owned())?;
+    drop(scope.insert("source_ordinal".to_owned(), json!(8)));
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
         "m1",
@@ -2179,6 +2231,7 @@ fn rejects_mission_definition_pickup_scope_drift() {
         &rows,
         &[mission_source("script-one")],
     )
-    .expect_err("pickup declaration scope drift must fail");
+    .rejection("pickup declaration scope drift must fail")?;
     assert!(error.to_string().contains("declaration scope is malformed"));
+    Ok(())
 }
