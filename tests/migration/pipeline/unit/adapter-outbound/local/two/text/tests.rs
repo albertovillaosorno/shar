@@ -100,8 +100,10 @@ fn source_text_table_rejects_duplicate_key_identity() -> Result<(), String> {
             "FRONTEND\tDUPLICATE"
         ]
     });
-    let error = super::source::parse_source_text_keys(&json.to_string())
-        .expect_err("duplicate source-text key must fail");
+    let result = super::source::parse_source_text_keys(&json.to_string());
+    let Err(error) = result else {
+        return Err("duplicate source-text key unexpectedly passed".to_owned());
+    };
     if error.to_string().contains("duplicated") {
         Ok(())
     } else {
@@ -165,9 +167,10 @@ fn derives_source_text_keys_into_classified_packages() -> Result<(), String> {
             package.subcategory == "language/text/missions/objective-lines"
         })
         .ok_or_else(|| "objective source-text package disappeared".to_owned())?;
-    if objective.keys.len() != 1
-        || objective.keys[0].key != "MISSION_OBJECTIVE_00"
-    {
+    let [key] = objective.keys.as_slice() else {
+        return Err("objective source-text key count changed".to_owned());
+    };
+    if key.key != "MISSION_OBJECTIVE_00" {
         return Err("objective source-text key binding changed".to_owned());
     }
     if packages
