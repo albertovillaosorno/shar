@@ -75,6 +75,13 @@ const DUPLICATE_PATH_ROW: &str = concat!(
     r#""recovery_status":"decoded_schema_payload","#,
     r#""path":"components/mesh.json"}"#,
 );
+const CASE_EQUIVALENT_PATH_ROW: &str = concat!(
+    r#"{"ordinal":2,"name":"value","#,
+    r#""payload_format":"schema_json","#,
+    r#""kind":"texture","schema_ref":"texture","#,
+    r#""recovery_status":"decoded_schema_payload","#,
+    r#""path":"COMPONENTS/MESH.json"}"#,
+);
 const DUPLICATE_ORDINAL_ROW: &str = concat!(
     r#"{"ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
@@ -122,6 +129,14 @@ fn rejects_duplicate_component_ordinals() {
         "{PACKAGE_HEADER_TWO}
 {COMPLETE_ROW}
 {DUPLICATE_ORDINAL_ROW}"
+    );
+    assert!(!manifest_is_complete(duplicate.as_str()));
+}
+
+#[test]
+fn rejects_case_equivalent_component_paths() {
+    let duplicate = format!(
+        "{PACKAGE_HEADER_TWO}\n{COMPLETE_ROW}\n{CASE_EQUIVALENT_PATH_ROW}"
     );
     assert!(!manifest_is_complete(duplicate.as_str()));
 }

@@ -82,6 +82,10 @@ published child also has its immediate parent present in the ledger, intake now
 requires exactly one depth step and the same top-level container. Focused
 regressions reject both a depth-3 child of a depth-1 parent and a child whose
 published parent belongs to container 1 while the child claims container 2.
+P3D normalized-package cache validation now also treats recovered component
+paths by portable case-insensitive identity. A manifest cannot declare both
+`components/mesh.json` and `COMPONENTS/MESH.json` as distinct complete
+artifacts, matching the repository filesystem boundary on every host.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
