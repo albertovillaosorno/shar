@@ -207,6 +207,20 @@ fn reject_duplicate_physical_sources(files: &[InputFile]) -> Result<(), Algorith
     Ok(())
 }
 
+fn reject_duplicate_physical_targets(files: &[InputFile]) -> Result<(), AlgorithmError> {
+    let mut identities = HashSet::new();
+    for file in files {
+        let identity = Handle::from_path(&file.path)
+            .map_err(|_error| AlgorithmError::new("cannot identify target input file"))?;
+        if !identities.insert(identity) {
+            return Err(AlgorithmError::new(
+                "target inputs repeat one physical file",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn collect_source(
     paths: &[PathBuf],
     settings: &Settings,
@@ -287,6 +301,7 @@ fn collect_target(
             "target must contain at least one regular file",
         ));
     }
+    reject_duplicate_physical_targets(&files)?;
     let file_count = usize_to_u64(files.len(), "target file count")?;
     if file_count > settings.maximum_target_files() {
         return Err(AlgorithmError::new("target exceeds maximum_target_files"));

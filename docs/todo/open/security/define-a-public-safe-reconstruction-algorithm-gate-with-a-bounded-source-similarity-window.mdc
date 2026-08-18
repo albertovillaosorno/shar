@@ -78,8 +78,10 @@ pointing the target back at the source tree. Authoring also rejects target files
 that are hard-link aliases of any source file by cross-platform physical file
 identity, closing a path-disjoint alias of the same payload. Source collection
 also rejects repeated physical files before source file/byte limits are checked,
-so hard-link aliases cannot inflate generic admission evidence. Replay document
-validation also rejects ancestor/descendant target path collisions before
+so hard-link aliases cannot inflate generic admission evidence. Target
+collection rejects repeated physical files as unsupported hard-link topology
+rather than replaying them as independent copies. Replay document validation
+also rejects ancestor/descendant target path collisions before
 decryption or writes, requiring one realizable protected output tree. Target
 paths are compared by the repository's Unicode-uppercase portable identity, so
 case-equivalent paths also fail before replay. Algorithm creation uses an atomic

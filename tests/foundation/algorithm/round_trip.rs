@@ -641,6 +641,40 @@ fn duplicate_hard_link_source_is_rejected_before_publication() {
     assert!(result.is_ok(), "duplicate source rejection failed: {result:?}");
 }
 
+fn run_duplicate_hard_link_target_is_rejected(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("duplicate-hard-link-target")?;
+    let source = temp.path.join("source.bin");
+    let target = temp.path.join("target");
+    let algorithm = temp.path.join("plan.txt");
+    fs::write(&source, vec![0x53_u8; 2048])?;
+    fs::create_dir_all(&target)?;
+    let original = target.join("original.bin");
+    let alias = target.join("alias.bin");
+    fs::write(&original, b"target bytes")?;
+    fs::hard_link(&original, &alias)?;
+
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    );
+    if result.is_ok() {
+        return Err("duplicate physical target evidence was accepted".into());
+    }
+    if algorithm.exists() {
+        return Err("duplicate target evidence created an algorithm".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn duplicate_hard_link_target_is_rejected_before_publication() {
+    let result = run_duplicate_hard_link_target_is_rejected();
+    assert!(result.is_ok(), "duplicate target rejection failed: {result:?}");
+}
+
 fn run_replay_parent_traversal_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("replay-parent")?;
     let source = temp.path.join("source.bin");
