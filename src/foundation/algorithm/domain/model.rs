@@ -92,10 +92,14 @@ impl Settings {
             )));
         }
         if self.minimum_source_files == 0 {
-            return Err(AlgorithmError::new("minimum_source_files must be positive"));
+            return Err(AlgorithmError::new(
+                "minimum_source_files must be positive",
+            ));
         }
         if self.minimum_source_bytes == 0 {
-            return Err(AlgorithmError::new("minimum_source_bytes must be positive"));
+            return Err(AlgorithmError::new(
+                "minimum_source_bytes must be positive",
+            ));
         }
         if self.maximum_source_files < self.minimum_source_files {
             return Err(AlgorithmError::new(
@@ -103,10 +107,14 @@ impl Settings {
             ));
         }
         if self.maximum_target_files == 0 {
-            return Err(AlgorithmError::new("maximum_target_files must be positive"));
+            return Err(AlgorithmError::new(
+                "maximum_target_files must be positive",
+            ));
         }
         if self.maximum_file_bytes == 0 {
-            return Err(AlgorithmError::new("maximum_file_bytes must be positive"));
+            return Err(AlgorithmError::new(
+                "maximum_file_bytes must be positive",
+            ));
         }
         if self.maximum_source_bytes < self.minimum_source_bytes {
             return Err(AlgorithmError::new(
@@ -114,7 +122,9 @@ impl Settings {
             ));
         }
         if self.maximum_target_bytes == 0 {
-            return Err(AlgorithmError::new("maximum_target_bytes must be positive"));
+            return Err(AlgorithmError::new(
+                "maximum_target_bytes must be positive",
+            ));
         }
         Ok(())
     }
