@@ -45,16 +45,17 @@ Depends on the new SHAR mod-package schema and removal of LMLM from base input.
 `tools/lmlm/` is now a Rust 1.97.1 boundary with strict LSPA v5 parsing,
 read-only inspection, atomic open-workspace conversion, and SHA-256
 source/per-file evidence. Shared P3D, filesystem, CLI, and SHA-256 behavior is
-reused from existing repository crates instead of duplicated. It has no dependency on the
-base extraction/build pipeline or the original game installation.
+reused from existing repository crates instead of duplicated. It has no
+dependency on the base extraction/build pipeline or the original game installation.
 
 Synthetic Rust tests cover path safety, portable collisions, payload overlap,
 zero-padding, atomic publication, overwrite refusal, folder-driven WIP/export
 reuse, shared P3D decompilation, and CLI behavior. Read-only `inspect` also
 validated the local Jebano `j.lmlm` (1,540 entries, 7 valid P3D payloads) and
 Muckluck `m.lmlm` (32 entries, 29 valid P3D payloads) inputs without installing
-either package. An architecture guard rejects any LMLM reference under `src/`. The compatibility
-tool remains outside the reconstruction pipeline. Folder-driven conversion uses `tools/lmlm/import/`,
-preserves WIP state under `.cache/lmlm/wip/`, and publishes local results under
+either package. An architecture guard rejects any LMLM reference under `src/`.
+The compatibility tool remains outside the reconstruction pipeline. Folder-driven
+conversion uses `tools/lmlm/import/`, preserves WIP state under
+`.cache/lmlm/wip/`, and publishes local results under
 `tools/lmlm/export/`. Final SHAR package adaptation remains open until the
 mod-package schema is authoritative.
