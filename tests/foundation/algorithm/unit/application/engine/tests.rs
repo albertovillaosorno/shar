@@ -98,3 +98,31 @@ fn directory_target_ancestor_collision_is_rejected() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn directory_target_portable_identity_collision_is_rejected(
+) -> Result<(), String> {
+    let settings = settings()?;
+    let document = AlgorithmDocument {
+        schema: ALGORITHM_SCHEMA.to_owned(),
+        settings_sha256: settings_sha256(&settings)
+            .map_err(|error| error.to_string())?,
+        source: vec![SourceRecord {
+            input: 0,
+            path: String::new(),
+            bytes: 1024,
+            sha256: "0".repeat(64),
+        }],
+        target_kind: TargetKind::Directory,
+        target: vec![
+            protected_target("Folder/File.bin"),
+            protected_target("folder/file.bin"),
+        ],
+    };
+
+    if validate_document(&document, &settings).is_ok() {
+        let message = "portable target identity collision was accepted";
+        return Err(message.to_owned());
+    }
+    Ok(())
+}
