@@ -147,6 +147,83 @@ fn wrong_source_is_rejected_before_output() {
     assert!(result.is_ok(), "wrong-source rejection failed: {result:?}");
 }
 
+fn run_plan_without_source_is_rejected(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("missing-source")?;
+    let (source, target) = write_fixture_tree(&temp.path)?;
+    let algorithm = temp.path.join("plan.txt");
+    let output = temp.path.join("output");
+    let settings = settings()?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+
+    let result = replay_algorithm(&settings, &[], &algorithm, &output);
+    if result.is_ok() {
+        return Err("plan without caller source must not replay".into());
+    }
+    if output.exists() {
+        return Err("missing source must not create replay output".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn plan_without_caller_source_is_rejected_before_output() {
+    let result = run_plan_without_source_is_rejected();
+    assert!(result.is_ok(), "missing-source rejection failed: {result:?}");
+}
+
+fn run_source_tree_remains_unchanged(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("source-unchanged")?;
+    let (source, target) = write_fixture_tree(&temp.path)?;
+    let algorithm = temp.path.join("plan.txt");
+    let output = temp.path.join("output");
+    let before_one = fs::read(source.join("one.bin"))?;
+    let before_two = fs::read(source.join("nested").join("two.bin"))?;
+    let settings = settings()?;
+
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+    replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &algorithm,
+        &output,
+    )?;
+
+    if fs::read(source.join("one.bin"))? != before_one
+        || fs::read(source.join("nested").join("two.bin"))? != before_two
+    {
+        return Err("algorithm execution modified caller source bytes".into());
+    }
+    let source_entries = [
+        source.join("one.bin"),
+        source.join("nested"),
+        source.join("nested").join("two.bin"),
+    ];
+    for entry in source_entries {
+        if !entry.exists() {
+            return Err("algorithm execution changed caller source layout".into());
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn caller_source_tree_remains_unchanged_after_create_and_replay() {
+    let result = run_source_tree_remains_unchanged();
+    assert!(result.is_ok(), "source immutability failed: {result:?}");
+}
+
 fn tamper_first_ciphertext(text: &str) -> Result<String, Box<dyn std::error::Error>> {
     let marker = "\"ciphertext\": \"";
     let Some(marker_start) = text.find(marker) else {
