@@ -35,14 +35,18 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import os
 from pathlib import Path
 import platform
 import sys
-import tkinter as tk
-from tkinter import messagebox
+from types import ModuleType
 from typing import NamedTuple
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import tkinter as tk
 
 _SCHEMA = "shar.build.arch.v1"
 _DATA_PATH = Path(".cache/build/data/arch.json")
@@ -255,6 +259,7 @@ def _save_gui(
     window: tk.Tk,
     values: dict[str, tk.BooleanVar],
     output: Path,
+    messagebox: ModuleType,
 ) -> None:
     """Validate the checklist, persist it, and close the successful window."""
     identifiers = [
@@ -284,6 +289,15 @@ def _save_gui(
 
 def _show_gui(output: Path) -> int:
     """Show the minimal supported build-target checklist."""
+    try:
+        tk = importlib.import_module("tkinter")
+        messagebox = importlib.import_module("tkinter.messagebox")
+    except ImportError as error:
+        print(
+            f"arch: checklist GUI support is unavailable: {error}",
+            file=sys.stderr,
+        )
+        return 2
     try:
         window = tk.Tk()
     except tk.TclError as error:
@@ -322,7 +336,7 @@ def _show_gui(output: Path) -> int:
 
     save = tk.Button(
         frame,
-        command=lambda: _save_gui(window, values, output),
+        command=lambda: _save_gui(window, values, output, messagebox),
         text="Save",
         width=12,
     )
