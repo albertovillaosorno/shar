@@ -1,0 +1,4 @@
+schema: shar-boundary/v1
+path: tools/source-similarity/README.md
+boundary: tools/source-similarity
+authority: README.md

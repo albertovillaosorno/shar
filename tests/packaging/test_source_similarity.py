@@ -2,6 +2,31 @@
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
+# Confidential:
+#   - false
+# License-File:
+#   - LICENSE-MIT
+#
+# Boundary-Contract:
+# - Owns:
+#   - Source-similarity calibration regression tests.
+# - Must-Not:
+#   - Select production thresholds or serialize proprietary source content.
+# - Allows:
+#   - Content-free count-vector evidence and malformed-input fixtures.
+# - Split-When:
+#   - Calibration behavior gains independently versioned test surfaces.
+# - Merge-When:
+#   - Similarity measurement and admission become one inseparable contract.
+# - Summary:
+#   - Guards evidence-only structural similarity calibration.
+# - Description:
+#   - Exercises exact rational measurement without a production admission gate.
+# - Usage:
+#   - Run through the canonical Jig pytest gate or repository-local pytest.
+# - Defaults:
+#   - Loads the repository-owned source-similarity adapter directly.
+#
 
 """Regression tests for evidence-only source similarity calibration."""
 
@@ -14,7 +39,7 @@ import sys
 import unittest
 
 _ROOT = Path(__file__).resolve().parents[2]
-_PATH = _ROOT / "tools/source-similarity/main.py"
+_PATH = _ROOT / "tools/source-similarity/adapter-inbound/main.py"
 _SPEC = importlib.util.spec_from_file_location(
     "shar_source_similarity_test",
     _PATH,

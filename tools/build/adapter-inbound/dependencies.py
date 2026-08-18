@@ -25,7 +25,7 @@
 # - Description:
 #   - Uses Cargo.lock and repository-owned Cargo home/target directories.
 # - Usage:
-#   - Run tools/build/dependencies.py before check.py.
+#   - Run tools/build/adapter-inbound/dependencies.py before check.py.
 # - Defaults:
 #   - Requires CPython 3.14.6 and Rust/Cargo 1.97.1.
 #
@@ -117,7 +117,7 @@ class CargoBuildContext(NamedTuple):
 
 def _root() -> Path:
     """Return the repository root from this script's tracked location."""
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def _sha256(path: Path) -> str:
@@ -725,7 +725,10 @@ def _run(
         "external_prerequisites": {
             "platform_sdks": "validated by target build stages",
             "signing_material": "user-provided when a target requires it",
-            "unreal_engine": "5.8.1; validated by tools/build/check.py",
+            "unreal_engine": (
+                "5.8.1; validated by "
+                "tools/build/adapter-inbound/check.py"
+            ),
             "visual_studio": msvc,
         },
         "python": python,

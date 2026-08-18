@@ -1,0 +1,19 @@
+schema: shar-function/v1
+identity:
+  id: validation
+  path: tools/validation
+  domain: tools
+architecture:
+  route: tools/<function>/<kind>/<part>
+  kinds:
+    - adapter-inbound
+capabilities:
+  - math
+  - python
+projects:
+tests:
+  root: tests/packaging
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

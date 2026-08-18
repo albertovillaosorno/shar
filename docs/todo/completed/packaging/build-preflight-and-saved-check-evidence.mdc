@@ -12,7 +12,8 @@ children: []
 
 # Build preflight and saved check evidence
 
-Implement `tools/build/check.py` as the supported preflight: validate the
+Implement `tools/build/adapter-inbound/check.py` as the supported preflight:
+validate the
 lawful game installation and manifest, require `game/Simpsons.exe` directly
 under the repository game root, verify Python 3.14.6, Unreal Engine 5.8.1, and
 host prerequisites, then write `.cache/build/data/check.json` for later build
@@ -40,7 +41,8 @@ platform prerequisites.
 
 ## Evidence
 
-`tools/build/check.py` now rejects missing or nested `Simpsons.exe` layouts,
+`tools/build/adapter-inbound/check.py` now rejects missing or nested
+`Simpsons.exe` layouts,
 requires the exact running CPython 3.14.6, validates the complete game through
 the SHA-256-pinned repository-owned `validate-game`, verifies the project
 association and Unreal `Build.version` as 5.8.1, and revalidates current Windows
@@ -52,6 +54,7 @@ identities.
 `check.py --revalidate` now recomputes the safety-critical evidence and requires
 exact equality with the saved JSON. A deliberately modified manifest hash was
 rejected while leaving the edited JSON available for diagnosis.
-`tools/build/run.py` now validates both saved schemas and invokes
+`tools/build/adapter-inbound/run.py` now validates both saved schemas and
+invokes
 `check.py --revalidate` before consuming saved project, engine, or build-target
 paths, completing the fail-closed handoff to later build stages.

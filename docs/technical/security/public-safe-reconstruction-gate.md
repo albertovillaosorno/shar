@@ -56,8 +56,9 @@ sum(max(reference_count[k], candidate_count[k]))
 ```
 
 It is symmetric and penalizes both missing and extra structural counts. The
-stdlib Python helper `tools/source-similarity/main.py` computes these two exact
-rational values and deliberately exposes no acceptance result or threshold.
+repository-owned stdlib Python calibration helper computes these two
+exact rational values and deliberately exposes no acceptance result or
+threshold.
 
 ## Calibration requirements
 
@@ -93,7 +94,8 @@ It must not contain:
 - plaintext original-game payload bytes or excerpts;
 - a serialized/full-tree diff of the maintainer's private complete installation;
 - private reference filenames or paths copied merely to reconstruct that tree;
-- source hashes treated as substitutes for caller-supplied local source bytes; or
+- source hashes treated as substitutes for caller-supplied local source
+  bytes; or
 - a hardcoded 45–55% gate before calibration is accepted and versioned.
 
 The maintainer-only `in/`, `master/`, and shared `out/` workspace trees never

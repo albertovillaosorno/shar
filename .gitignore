@@ -392,6 +392,10 @@ Directory.Build.props
 artifacts/
 dist/
 build/
+# Repository-owned build CLI source follows the tools taxonomy.
+!tools/build/
+!tools/build/adapter-inbound/
+!tools/build/adapter-inbound/**
 Backup/
 /coverage/
 

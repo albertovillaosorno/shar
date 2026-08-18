@@ -25,7 +25,8 @@
 # - Description:
 #   - Revalidates every saved decision before Turnkey and BuildCookRun execute.
 # - Usage:
-#   - Run tools/build/run.py after dependencies.py, check.py, and arch.py.
+#   - Run tools/build/adapter-inbound/run.py after dependencies.py, check.py,
+#     and arch.py.
 # - Defaults:
 #   - Builds every selected target in Shipping configuration.
 #
@@ -82,7 +83,7 @@ _TARGETS_BY_ID = {target.identifier: target for target in _TARGETS}
 
 def _root() -> Path:
     """Return the repository root from this tracked script location."""
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def _unique_json_object(
@@ -195,7 +196,7 @@ def _revalidate_check(root: Path, check_path: Path) -> None:
     """Invoke the supported check.py revalidation before using saved paths."""
     command = [
         sys.executable,
-        str(root / "tools" / "build" / "check.py"),
+        str(root / "tools" / "build" / "adapter-inbound" / "check.py"),
         "--revalidate",
         "--output",
         str(check_path),

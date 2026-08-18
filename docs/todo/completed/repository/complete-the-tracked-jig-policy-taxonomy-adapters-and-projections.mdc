@@ -28,12 +28,14 @@ Tracked `.jig/` authority now contains schema-20 repository policy, the graph
 taxonomy, CSpell dictionaries/configuration, Markdown policy, Python/Rust
 validator configuration, exact tool/version projections, and the Rust toolchain
 projection. `jig graph --root . --refresh` compiles the configured taxonomy with
-zero parse issues, and `jig doctor --root .` reports `status: ready`, graph state
+zero parse issues, and `jig doctor --root .` reports `status: ready`, graph
+state
 `ready`, and version evidence for all nine configured tools.
 
 The audit exposed two stale Python wrapper projections whose absolute recovery
 environment no longer existed. They were replaced with direct repository-local
-`pytest.exe` and `ruff.exe` paths. `tools/validation/python_dependencies.py`
+`pytest.exe` and `ruff.exe` paths. The tracked validation bootstrap at
+`tools/validation/adapter-inbound/python_dependencies.py`
 materializes that ignored environment from Jig's exact source-linked CPython
 3.14.6 using explicit pytest/Ruff and transitive dependency pins, with rollback
 when replacement fails. No global Python packages are installed.

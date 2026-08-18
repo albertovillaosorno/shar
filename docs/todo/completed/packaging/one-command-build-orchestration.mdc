@@ -12,7 +12,8 @@ children: []
 
 # One-command build orchestration
 
-Implement `tools/build/auto.py` as an optional one-command user flow that runs
+Implement `tools/build/adapter-inbound/auto.py` as an optional one-command user
+flow that runs
 dependency bootstrap, preflight, architecture selection, and build in order
 while persisting each decision JSON so repeated or interrupted runs use
 explicit evidence instead of hidden process state.
@@ -35,7 +36,8 @@ platform prerequisites.
 
 ## Evidence
 
-`tools/build/auto.py` invokes `dependencies.py`, `check.py`, `arch.py`, then
+`tools/build/adapter-inbound/auto.py` invokes `dependencies.py`, `check.py`,
+`arch.py`, then
 `run.py` with the current exact Python and stops immediately on any failed child
 step. It does not duplicate child validation or packaging policy. An existing
 `arch.json` is passed through `arch.py --revalidate`; a missing decision opens

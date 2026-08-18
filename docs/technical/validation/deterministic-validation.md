@@ -46,10 +46,10 @@ under `.jig/` and must not vendor or copy Jig source into SHAR.
 Shared validation-tool paths in `.jig/jig.toml` intentionally resolve through
 `.dependencies/jig/source/` so Jig's reviewed local toolchain remains one
 authority. Repository-specific pytest and Ruff executables live in SHAR's own
-ignored `.dependencies/python/` virtual environment. Materialize or repair that
-environment with `python tools/validation/python_dependencies.py --replace`;
-the script itself uses the exact CPython 3.14.6 source-linked through Jig by
-default and never installs global packages.
+ignored `.dependencies/python/` virtual environment. The tracked Python
+validation bootstrap materializes or repairs that
+environment on request. It uses the exact CPython 3.14.6 source selected by the
+validation environment and never installs global packages.
 
 After installing or updating the local Jig checkout, refresh owned integrations
 with `jig integrations refresh --root .`. Final repository evidence is produced
@@ -59,8 +59,9 @@ projection and must not gain a repository-authored fallback validator.
 ## CI posture
 
 No CI service is canonical today. Local Jig validation is sufficient for the
-current single-maintainer development flow, and adding a second execution surface
-would create maintenance cost without new acceptance evidence. CI remains a
+current single-maintainer development flow, and adding a second execution
+surface would create maintenance cost without new acceptance evidence. CI
+remains a
 future option if public contribution or release automation creates a concrete
 need; if added, it must invoke the same tracked Jig policy rather than define a
 parallel validation contract.

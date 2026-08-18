@@ -325,7 +325,8 @@ repository-engineering mode, and validate native mod C++ with strict Clang gates
 
 ### TODO - Canonical multi-platform build runner
 
-Implement `tools/build/run.py` to consume saved preflight and architecture
+Implement `tools/build/adapter-inbound/run.py` to consume saved preflight and
+architecture
 decisions, revalidate them, build every selected target transactionally, and
 publish only the minimal native deliverable under `dist/<ARCH>/` for each
 successful architecture.
