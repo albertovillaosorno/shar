@@ -33,6 +33,18 @@
 
 use super::{MissionP3dReferenceCatalog, MissionScopeReport};
 
+#[cfg(test)]
+type MissionRewardReferenceTestEntry<'a> = (
+    usize,
+    &'a str,
+    &'a str,
+    &'a str,
+    &'a str,
+    Option<&'a str>,
+    Option<&'a str>,
+    &'a str,
+);
+
 /// One source `BindReward` command bound to one canonical P3D package.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct MissionRewardPackageReference {
@@ -125,16 +137,7 @@ impl MissionRewardReferenceReport {
 
     #[cfg(test)]
     pub(crate) fn from_entries_for_tests(
-        entries: &[(
-            usize,
-            &str,
-            &str,
-            &str,
-            &str,
-            Option<&str>,
-            Option<&str>,
-            &str,
-        )],
+        entries: &[MissionRewardReferenceTestEntry<'_>],
     ) -> Self {
         Self {
             bindings: entries
