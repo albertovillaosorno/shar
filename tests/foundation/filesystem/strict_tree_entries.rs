@@ -2,6 +2,31 @@
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Regression evidence for strict filesystem traversal entry validation.
+// - Must-Not:
+//   - Follow redirects or accept special entries during strict traversal.
+// - Allows:
+//   - Build disposable redirect and socket fixtures for traversal checks.
+// - Split-When:
+//   - Redirect and special-entry policies gain independent test lifecycles.
+// - Merge-When:
+//   - Another test module owns the identical strict traversal evidence.
+// - Summary:
+//   - Strict filesystem traversal entry-validation tests.
+// - Description:
+//   - Proves strict traversal rejects redirected and non-regular entries.
+// - Usage:
+//   - Run through the schoenwald_filesystem integration test target.
+// - Defaults:
+//   - Fixtures contain only synthetic local entries.
+//
 
 //! Strict filesystem traversal entry-validation tests.
 
@@ -35,7 +60,8 @@ fn strict_traversal_rejects_nested_directory_redirect() -> Result<(), String> {
     let link = source.join("linked");
     fs::create_dir_all(&source).map_err(|error| error.to_string())?;
     fs::create_dir_all(&outside).map_err(|error| error.to_string())?;
-    fs::write(outside.join("private.bin"), b"private").map_err(|error| error.to_string())?;
+    fs::write(outside.join("private.bin"), b"private")
+        .map_err(|error| error.to_string())?;
     support::create_junction(&link, &outside)?;
 
     let result = local::strict_regular_files(&source);
@@ -56,18 +82,22 @@ fn strict_traversal_rejects_nested_directory_redirect() -> Result<(), String> {
 
 #[cfg(windows)]
 #[test]
-fn ordinary_traversal_still_ignores_nested_directory_redirect() -> Result<(), String> {
+fn ordinary_traversal_still_ignores_nested_directory_redirect(
+) -> Result<(), String> {
     let root = case_root("ordinary-redirect");
     let source = root.join("source");
     let outside = root.join("outside");
     let link = source.join("linked");
     fs::create_dir_all(&source).map_err(|error| error.to_string())?;
     fs::create_dir_all(&outside).map_err(|error| error.to_string())?;
-    fs::write(source.join("inside.bin"), b"inside").map_err(|error| error.to_string())?;
-    fs::write(outside.join("private.bin"), b"private").map_err(|error| error.to_string())?;
+    fs::write(source.join("inside.bin"), b"inside")
+        .map_err(|error| error.to_string())?;
+    fs::write(outside.join("private.bin"), b"private")
+        .map_err(|error| error.to_string())?;
     support::create_junction(&link, &outside)?;
 
-    let files = local::regular_files(&source).map_err(|error| error.to_string())?;
+    let files = local::regular_files(&source)
+        .map_err(|error| error.to_string())?;
     let cleanup = fs::remove_dir_all(&root).map_err(|error| error.to_string());
     cleanup?;
 
@@ -85,14 +115,16 @@ fn strict_traversal_rejects_special_socket_entry() -> Result<(), String> {
     let root = case_root("special-socket");
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
     let socket = root.join("entry.socket");
-    let listener = UnixListener::bind(&socket).map_err(|error| error.to_string())?;
+    let listener = UnixListener::bind(&socket)
+        .map_err(|error| error.to_string())?;
 
     let result = local::strict_regular_files(&root);
     drop(listener);
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
 
     let Err(error) = result else {
-        return Err("strict traversal accepted a special socket entry".to_owned());
+        let message = "strict traversal accepted a special socket entry";
+        return Err(message.to_owned());
     };
     if error.kind() != io::ErrorKind::InvalidInput {
         return Err(format!(
