@@ -67,25 +67,31 @@ fn binds_event_to_reviewed_runtime_channel() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_event_before_owning_stage() {
-    let error = preflight_mission_stage_music_events(&stages(vec![
+fn rejects_event_before_owning_stage() -> Result<(), String> {
+    let result = preflight_mission_stage_music_events(&stages(vec![
         MissionStageDirective::StageStartMusicEvent {
             source_ordinal: 1,
             event_id: "M4_start".to_owned(),
         },
-    ]))
-    .expect_err("event before stage must fail");
+    ]));
+    let Err(error) = result else {
+        return Err("pre-stage music event unexpectedly passed".to_owned());
+    };
     assert!(error.contains("precedes its owning stage"));
+    Ok(())
 }
 
 #[test]
-fn rejects_nonportable_event_token() {
-    let error = preflight_mission_stage_music_events(&stages(vec![
+fn rejects_nonportable_event_token() -> Result<(), String> {
+    let result = preflight_mission_stage_music_events(&stages(vec![
         MissionStageDirective::StageStartMusicEvent {
             source_ordinal: 5,
             event_id: "drama\n".to_owned(),
         },
-    ]))
-    .expect_err("control-bearing event token must fail");
+    ]));
+    let Err(error) = result else {
+        return Err("nonportable music event unexpectedly passed".to_owned());
+    };
     assert!(error.contains("not portable"));
+    Ok(())
 }
