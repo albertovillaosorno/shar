@@ -2,6 +2,31 @@
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - External source-binding, tamper, and replay regression evidence.
+// - Must-Not:
+//   - Depend on proprietary source data or mutate caller source inputs.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - One responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Another module owns the identical responsibility.
+// - Summary:
+//   - Algorithm external round-trip tests.
+// - Description:
+//   - External source-binding, tamper, and replay regression evidence.
+// - Usage:
+//   - Used through the owning algorithm function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
 
 //! External round-trip and tamper tests for the generic algorithm engine.
 

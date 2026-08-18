@@ -1,3 +1,33 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Command-line parsing and process orchestration for algorithm operations.
+// - Must-Not:
+//   - Own source admission or reconstruction policy.
+// - Allows:
+//   - Inputs and outputs required by this module boundary.
+// - Split-When:
+//   - One responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Another module owns the identical responsibility.
+// - Summary:
+//   - Algorithm CLI adapter.
+// - Description:
+//   - Command-line parsing and process orchestration for algorithm operations.
+// - Usage:
+//   - Used through the owning algorithm function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
 //! Command-line adapter for generic algorithm authoring and replay.
 
 use std::path::PathBuf;
