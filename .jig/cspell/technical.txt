@@ -1493,3 +1493,13 @@ setspeed
 dfile
 dother
 setstagemusicnotalwayson
+bindreward
+defaultcar
+forsale
+setcondminhealth
+setconditionposition
+setcondtargetvehicle
+setcondtime
+setfollowdistances
+sethitnrun
+setobjtargetboss
