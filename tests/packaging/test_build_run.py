@@ -350,6 +350,47 @@ class PublicationTransactionTests(unittest.TestCase):
             self.assertTrue((candidate / "new.txt").is_file())
             self.assertFalse(destination.exists())
 
+    def test_cleanup_failure_rolls_back_publication_swap(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-publish-rollback-",
+        ) as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            destination = root / "dist/linux-x64"
+            candidate.mkdir()
+            destination.mkdir(parents=True)
+            (candidate / "new.txt").write_text("new", encoding="utf-8")
+            (destination / "old.txt").write_text("old", encoding="utf-8")
+            backup = destination.with_name(".linux-x64.previous")
+            original = _RUN.shutil.rmtree
+
+            def fail_backup_cleanup(
+                path: Path,
+                *args: object,
+                **kwargs: object,
+            ) -> None:
+                if Path(path) == backup:
+                    raise OSError("injected backup cleanup failure")
+                original(path, *args, **kwargs)
+
+            with (
+                mock.patch.object(
+                    _RUN.shutil,
+                    "rmtree",
+                    side_effect=fail_backup_cleanup,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "publication cleanup failed",
+                ),
+            ):
+                _RUN._publish(candidate, destination)
+
+            self.assertTrue((destination / "old.txt").is_file())
+            self.assertFalse((destination / "new.txt").exists())
+            self.assertTrue((candidate / "new.txt").is_file())
+            self.assertFalse(backup.exists())
+
     def test_rejects_linked_candidate_before_publication(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-candidate-link-") as raw:
             root = Path(raw)

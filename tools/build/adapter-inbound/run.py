@@ -569,6 +569,32 @@ def _cache_nonruntime_artifacts(
             Path(source).replace(destination)
 
 
+def _rollback_publication_swap(
+    candidate: Path,
+    destination: Path,
+    backup: Path,
+    error: OSError,
+) -> None:
+    """Restore the previous publication after post-swap cleanup fails."""
+    failures: list[str] = []
+    for source, target, label in (
+        (destination, candidate, "candidate"),
+        (backup, destination, "previous"),
+    ):
+        try:
+            Path(source).replace(target)
+        except OSError as rollback:
+            failures.append(f"{label}:{rollback.__class__.__name__}")
+    if failures:
+        detail = ", ".join(failures)
+        raise RunFailure(
+            "publication cleanup failed and rollback failed: " + detail
+        ) from error
+    raise RunFailure(
+        "publication cleanup failed; previous target restored"
+    ) from error
+
+
 def _publish(candidate: Path, destination: Path) -> None:
     """Replace one published target without exposing a partial candidate."""
     _require_real_directory(candidate, "candidate package")
@@ -594,7 +620,15 @@ def _publish(candidate: Path, destination: Path) -> None:
             Path(backup).replace(destination)
         raise
     if backup.exists():
-        shutil.rmtree(backup)
+        try:
+            shutil.rmtree(backup)
+        except OSError as error:
+            _rollback_publication_swap(
+                candidate,
+                destination,
+                backup,
+                error,
+            )
 
 
 def _build_target(
