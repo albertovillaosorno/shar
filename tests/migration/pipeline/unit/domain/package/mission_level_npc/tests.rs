@@ -73,8 +73,11 @@ fn types_ambient_declaration_and_waypoint() -> Result<(), String> {
         18,
         &["ralph".to_owned(), "ralph_walk1".to_owned()],
     )?;
-    assert_eq!(waypoints[0].runtime_character_id(), "ralph");
-    assert_eq!(waypoints[0].locator_id(), "ralph_walk1");
+    let [waypoint] = waypoints.as_slice() else {
+        return Err("ambient waypoint count changed".to_owned());
+    };
+    assert_eq!(waypoint.runtime_character_id(), "ralph");
+    assert_eq!(waypoint.locator_id(), "ralph_walk1");
     Ok(())
 }
 
@@ -93,8 +96,11 @@ fn accepts_source_default_and_zero_ambient_radius() -> Result<(), String> {
         2,
         &["ralph".to_owned(), "ambient_ralph_2".to_owned(), "0".to_owned()],
     )?;
-    assert_eq!(declarations[0].ambient_radius_source(), None);
-    assert_eq!(declarations[1].ambient_radius_source(), Some("0"));
+    let [default_radius, zero_radius] = declarations.as_slice() else {
+        return Err("ambient radius declaration count changed".to_owned());
+    };
+    assert_eq!(default_radius.ambient_radius_source(), None);
+    assert_eq!(zero_radius.ambient_radius_source(), Some("0"));
     Ok(())
 }
 
