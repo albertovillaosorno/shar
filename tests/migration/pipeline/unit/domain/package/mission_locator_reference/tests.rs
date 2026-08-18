@@ -216,8 +216,11 @@ fn post_dyna_exact_lookup_keeps_history_dependent_ambiguity() -> Result<(), Stri
         "walk_start",
         MissionLocatorTypeConstraint::Exact(CAR_START_LOCATOR_TYPE),
     )?;
+    let [binding] = references.as_slice() else {
+        return Err("post-Dyna locator binding count drifted".to_owned());
+    };
     if !matches!(
-        references[0].resolution(),
+        binding.resolution(),
         MissionLocatorResolution::Ambiguous(entries) if entries.len() == 2
     ) {
         return Err("post-Dyna exact lookup invented stable precedence".to_owned());
@@ -286,9 +289,10 @@ fn exact_script_lookup_uses_static_load_precedence() -> Result<(), String> {
         "shared_start",
         MissionLocatorTypeConstraint::Exact(CAR_START_LOCATOR_TYPE),
     )?;
-    let MissionLocatorResolution::Resolved(reference) =
-        references[0].resolution()
-    else {
+    let [binding] = references.as_slice() else {
+        return Err("exact script locator binding count drifted".to_owned());
+    };
+    let MissionLocatorResolution::Resolved(reference) = binding.resolution() else {
         return Err("exact script locator did not use load precedence".to_owned());
     };
     if reference.entry().package_root()
@@ -307,8 +311,11 @@ fn exact_script_lookup_uses_static_load_precedence() -> Result<(), String> {
         "shared_start",
         MissionLocatorTypeConstraint::Any,
     )?;
+    let [binding] = references.as_slice() else {
+        return Err("generic locator binding count drifted".to_owned());
+    };
     if !matches!(
-        references[0].resolution(),
+        binding.resolution(),
         MissionLocatorResolution::Ambiguous(entries) if entries.len() == 2
     ) {
         return Err("generic locator lookup invented subtype precedence".to_owned());
@@ -352,13 +359,16 @@ fn separates_script_and_post_dyna_locator_visibility() -> Result<(), String> {
         "late",
         MissionLocatorTypeConstraint::Any,
     )?;
+    let [script_binding, post_dyna_binding] = references.as_slice() else {
+        return Err("locator visibility binding count drifted".to_owned());
+    };
     if !matches!(
-        references[0].resolution(),
+        script_binding.resolution(),
         MissionLocatorResolution::Missing
     ) {
         return Err("script-time locator saw post-script Dyna package".to_owned());
     }
-    let MissionLocatorResolution::Resolved(reference) = references[1].resolution()
+    let MissionLocatorResolution::Resolved(reference) = post_dyna_binding.resolution()
     else {
         return Err("post-Dyna locator did not see initial Dyna package".to_owned());
     };
