@@ -92,7 +92,7 @@ fn evidence(
         .iter()
         .enumerate()
         .map(|(index, id)| json!({
-            "ordinal":index + 1,"name":name,
+            "ordinal":index.saturating_add(1),"name":name,
             "args_raw":format!("\"{id}\""),"semantic_role":"mission-script",
             "arguments":[id]
         }))
@@ -207,7 +207,13 @@ fn supports_demo_registration_family() -> Result<(), String> {
         )?,
     ];
     let reports = build_mission_order_source_reports(&snapshots)?;
-    assert_eq!(reports[0].registrations()[0].mission_id(), "d1");
+    let [report] = reports.as_slice() else {
+        return Err("demo registration report count drifted".to_owned());
+    };
+    let [registration] = report.registrations() else {
+        return Err("demo registration count drifted".to_owned());
+    };
+    assert_eq!(registration.mission_id(), "d1");
     Ok(())
 }
 
@@ -225,8 +231,10 @@ fn rejects_missing_or_mismatched_registration_siblings() -> Result<(), String> {
             &["m1"],
         )?,
     ];
-    let error = build_mission_order_source_reports(&missing_load)
-        .expect_err("missing mission load sibling must fail");
+    let missing_result = build_mission_order_source_reports(&missing_load);
+    let Err(error) = missing_result else {
+        return Err("missing load sibling unexpectedly passed".to_owned());
+    };
     assert!(error.contains("load sibling is missing"));
 
     let mismatch = vec![
@@ -246,8 +254,12 @@ fn rejects_missing_or_mismatched_registration_siblings() -> Result<(), String> {
             &[],
         )?,
     ];
-    let error = build_mission_order_source_reports(&mismatch)
-        .expect_err("mismatched mission selection must fail");
+    let mismatch_result = build_mission_order_source_reports(&mismatch);
+    let Err(error) = mismatch_result else {
+        return Err(
+            "mismatched mission selection unexpectedly passed".to_owned(),
+        );
+    };
     assert!(error.contains("selects a different id"));
     Ok(())
 }
