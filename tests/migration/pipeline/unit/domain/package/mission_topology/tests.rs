@@ -39,6 +39,13 @@ fn semantics(
     MissionStageSemanticReport::from_topology_entries_for_tests(entries)
 }
 
+fn rejection<T>(result: Result<T, String>, context: &str) -> Result<String, String> {
+    match result {
+        Ok(_value) => Err(format!("{context} unexpectedly passed")),
+        Err(error) => Ok(error),
+    }
+}
+
 #[test]
 fn exposes_authored_neighbors_and_last_final_marker() -> Result<(), String> {
     let report = preflight_mission_authored_stage_topology(&semantics(vec![
@@ -51,17 +58,18 @@ fn exposes_authored_neighbors_and_last_final_marker() -> Result<(), String> {
         ),
         (8, 2, true, vec![]),
     ]))?;
-    let stages = report.stages();
-    assert_eq!(stages.len(), 3);
-    assert_eq!(stages[0].source_ordinal(), 2);
-    assert_eq!(stages[0].sequence_ordinal(), 0);
-    assert_eq!(stages[0].next_authored_sequence_ordinal(), Some(1));
-    assert_eq!(stages[1].next_authored_sequence_ordinal(), Some(2));
-    assert_eq!(stages[1].checkpoint_source_ordinal(), Some(6));
-    assert_eq!(stages[2].next_authored_sequence_ordinal(), None);
-    assert_eq!(stages[2].checkpoint_source_ordinal(), None);
-    assert!(!stages[0].explicit_final());
-    assert!(stages[2].explicit_final());
+    let [first, second, third] = report.stages() else {
+        return Err("authored topology stage count changed".to_owned());
+    };
+    assert_eq!(first.source_ordinal(), 2);
+    assert_eq!(first.sequence_ordinal(), 0);
+    assert_eq!(first.next_authored_sequence_ordinal(), Some(1));
+    assert_eq!(second.next_authored_sequence_ordinal(), Some(2));
+    assert_eq!(second.checkpoint_source_ordinal(), Some(6));
+    assert_eq!(third.next_authored_sequence_ordinal(), None);
+    assert_eq!(third.checkpoint_source_ordinal(), None);
+    assert!(!first.explicit_final());
+    assert!(third.explicit_final());
     Ok(())
 }
 
@@ -76,8 +84,8 @@ fn accepts_sequence_without_explicit_final_marker() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_duplicate_checkpoint_markers_inside_one_stage() {
-    let report = preflight_mission_authored_stage_topology(&semantics(vec![(
+fn rejects_duplicate_checkpoint_markers_inside_one_stage() -> Result<(), String> {
+    let result = preflight_mission_authored_stage_topology(&semantics(vec![(
         2,
         0,
         false,
@@ -86,28 +94,25 @@ fn rejects_duplicate_checkpoint_markers_inside_one_stage() {
             MissionStageDirective::ResetCheckpoint { source_ordinal: 4 },
         ],
     )]));
-    assert!(
-        report
-            .expect_err("duplicate checkpoint markers must fail")
-            .contains("more than one checkpoint marker")
-    );
+    let error = rejection(result, "duplicate checkpoint marker fixture")?;
+    assert!(error.contains("more than one checkpoint marker"));
+    Ok(())
 }
 
-
-
 #[test]
-fn rejects_non_last_explicit_final_marker() {
-    let error = preflight_mission_authored_stage_topology(&semantics(vec![
+fn rejects_non_last_explicit_final_marker() -> Result<(), String> {
+    let result = preflight_mission_authored_stage_topology(&semantics(vec![
         (2, 0, true, vec![]),
         (5, 1, false, vec![]),
-    ]))
-    .expect_err("non-last final marker must fail");
+    ]));
+    let error = rejection(result, "non-last final marker fixture")?;
     assert!(error.contains("final stage is not authored last"));
+    Ok(())
 }
 
 #[test]
-fn rejects_non_last_explicit_terminal_marker() {
-    let error = preflight_mission_authored_stage_topology(&semantics(vec![
+fn rejects_non_last_explicit_terminal_marker() -> Result<(), String> {
+    let result = preflight_mission_authored_stage_topology(&semantics(vec![
         (
             2,
             0,
@@ -115,26 +120,27 @@ fn rejects_non_last_explicit_terminal_marker() {
             vec![MissionStageDirective::LevelOver { source_ordinal: 3 }],
         ),
         (5, 1, false, vec![]),
-    ]))
-    .expect_err("non-last terminal marker must fail");
+    ]));
+    let error = rejection(result, "non-last terminal marker fixture")?;
     assert!(error.contains("terminal stage is not authored last"));
+    Ok(())
 }
 
 #[test]
-fn rejects_non_dense_or_non_increasing_authored_order() {
+fn rejects_non_dense_or_non_increasing_authored_order() -> Result<(), String> {
     let sparse = preflight_mission_authored_stage_topology(&semantics(vec![
         (2, 0, false, vec![]),
         (5, 2, false, vec![]),
     ]));
-    assert!(sparse.expect_err("sparse order must fail").contains("dense"));
+    assert!(rejection(sparse, "sparse order fixture")?.contains("dense"));
 
     let reversed = preflight_mission_authored_stage_topology(&semantics(vec![
         (5, 0, false, vec![]),
         (2, 1, false, vec![]),
     ]));
     assert!(
-        reversed
-            .expect_err("reversed source order must fail")
+        rejection(reversed, "reversed source order fixture")?
             .contains("not increasing")
     );
+    Ok(())
 }
