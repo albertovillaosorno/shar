@@ -136,7 +136,7 @@ fn rejects_source_level_outside_observed_base_levels() {
                 11,
                 &[
                     "famil_v".to_owned(),
-                    r"art\carsamil_v.p3d".to_owned(),
+                    r"art\cars\\famil_v.p3d".to_owned(),
                     "car".to_owned(),
                     "defaultcar".to_owned(),
                     level.to_owned(),
