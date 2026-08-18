@@ -539,6 +539,8 @@ def _publish(candidate: Path, destination: Path) -> None:
     """Replace one published target without exposing a partial candidate."""
     if not _has_payload(candidate):
         raise RunFailure(f"candidate package is empty: {candidate}")
+    if _path_present(destination):
+        _require_real_directory(destination, "published target")
     destination.parent.mkdir(parents=True, exist_ok=True)
     backup = destination.with_name(f".{destination.name}.previous")
     if backup.exists():

@@ -62,6 +62,10 @@ any archive file as success. Android candidates must contain an APK and iOS
 candidates must contain an IPA before atomic publication; regression fixtures
 prove wrong mobile artifacts never create a completed `dist/<ARCH>/` target.
 
+Publication also preflights an existing `dist/<ARCH>/` identity as a real
+directory before any rename. A regression proves a colliding regular file is
+left unchanged and cannot trigger a failed cleanup after a new package appears.
+
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its
 unpublished test candidate contained 30 files totaling about 689 MiB, including

@@ -165,6 +165,31 @@ class ProjectStateMigrationTests(unittest.TestCase):
             temporary.cleanup()
 
 
+class PublicationTransactionTests(unittest.TestCase):
+    """Keep malformed existing publications unchanged on rejection."""
+
+    def test_rejects_existing_file_before_publication_mutation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-publish-file-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            candidate.mkdir()
+            (candidate / "new.txt").write_text("new", encoding="utf-8")
+            destination = root / "dist/linux-x64"
+            destination.parent.mkdir()
+            destination.write_text("old", encoding="utf-8")
+            backup = destination.with_name(".linux-x64.previous")
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "published target must be a real directory",
+            ):
+                _RUN._publish(candidate, destination)
+
+            self.assertEqual(destination.read_text(encoding="utf-8"), "old")
+            self.assertTrue((candidate / "new.txt").is_file())
+            self.assertFalse(backup.exists())
+
+
 class PublicationArtifactTests(unittest.TestCase):
     """Keep runtime publication separate from cached build diagnostics."""
 
