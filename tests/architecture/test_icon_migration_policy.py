@@ -1,3 +1,8 @@
+# Copyright:
+#   - Copyright (c) 2026 Alberto Villa Osorno.
+# SPDX-License-Identifier:
+#   - MIT
+
 """Repository guards for source-bound icon migration ownership."""
 
 from __future__ import annotations
@@ -11,16 +16,26 @@ _CANONICAL_SOURCE = {
     "input": 0,
     "path": "",
     "bytes": 5806,
-    "sha256": "3b0b72f7b2eff173a81669ee465625e67e70dda8c18282bdeeda6d2a203df328",
+    "sha256": (
+        "3b0b72f7b2eff173a81669ee465625e67e70dda8c18282bdeeda6d2a203df328"
+    ),
 }
 _TARGET_IDENTITIES = {
-    "android.svg": "0f533d54b75b87478843a64854be9aba4e639c596d2ba65deb5059c0fa0b00d3",
-    "ios.svg": "05acbec55cc6dc23b2eedbb576b382e6f94a7b1f82404158917ed8ab79dba9f0",
-    "macos-linux.svg": "6e123e2f0b70404aaedd4346beb0c272736de4f61e9ab26ea52802c84483ab3a",
+    "android.svg": (
+        "0f533d54b75b87478843a64854be9aba4e639c596d2ba65deb5059c0fa0b00d3"
+    ),
+    "ios.svg": (
+        "05acbec55cc6dc23b2eedbb576b382e6f94a7b1f82404158917ed8ab79dba9f0"
+    ),
+    "macos-linux.svg": (
+        "6e123e2f0b70404aaedd4346beb0c272736de4f61e9ab26ea52802c84483ab3a"
+    ),
     "master/hit-and-run.svg": (
         "4e501a914d7490bf87db48e2fa5b9c60e1a5711c726e7c14ece666f923210e79"
     ),
-    "master/sign.svg": "4dc6b32a838680aaf3bb026fb894ed51e2a68a8105ce27f43205844f4a6f112e",
+    "master/sign.svg": (
+        "4dc6b32a838680aaf3bb026fb894ed51e2a68a8105ce27f43205844f4a6f112e"
+    ),
     "master/the-simpsons.svg": (
         "002e160dc4f087d7d50d65a3ab245f9984428b649d7dd2509501af5c61ceaf02"
     ),
@@ -66,7 +81,9 @@ def test_icon_algorithm_contains_no_plaintext_svg_payload() -> None:
 def test_icon_local_assets_and_outputs_are_ignored() -> None:
     ignores = {
         line.strip()
-        for line in (_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+        for line in (_ROOT / ".gitignore")
+        .read_text(encoding="utf-8")
+        .splitlines()
         if line.strip() and not line.lstrip().startswith("#")
     }
 

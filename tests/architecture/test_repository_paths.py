@@ -126,12 +126,15 @@ def _metadata_scalar(function_file: Path, section: str, key: str) -> str | None:
 def _exact_ignored_directories() -> set[str]:
     """Return exact root-relative directory ignores, excluding pattern rules."""
     ignored: set[str] = set()
-    for raw_line in (_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines():
+    ignore_text = (_ROOT / ".gitignore").read_text(encoding="utf-8")
+    ignore_lines = ignore_text.splitlines()
+    for raw_line in ignore_lines:
         line = raw_line.strip()
         if not line or line.startswith(("#", "!")):
             continue
         candidate = line.removeprefix("/").removesuffix("/")
-        if not candidate or any(token in candidate for token in ("*", "?", "[")):
+        patterns = ("*", "?", "[")
+        if not candidate or any(token in candidate for token in patterns):
             continue
         ignored.add(candidate)
     return ignored
