@@ -71,9 +71,13 @@ The generic `shar.algorithm.v1` round-trip suite now includes explicit evidence
 that a serialized plan cannot replay with zero caller-supplied source roots and
 that successful create/replay leaves the caller source bytes and source layout
 unchanged. Existing overlap guards continue to reject algorithm output inside a
-source root. These tests establish engine-level source binding and read-only
-behavior; they do not certify the still-placeholder distributable family plans
-or replace the pending representative-install similarity calibration.
+source root. Authoring additionally rejects exact or nested source/target root
+overlap in either containment direction before plan publication, preventing a
+caller from turning source payloads into protected target material merely by
+pointing the target back at the source tree. These tests establish engine-level
+source binding and read-only behavior; they do not certify the still-placeholder
+distributable family plans or replace the pending representative-install
+similarity calibration.
 
 The ~60% minimum-installation estimate and 45–55% similarity window remain
 design targets, not validated production evidence, legal conclusions, or safe
