@@ -105,3 +105,5 @@ worldspace
 bootstrapper
 nonexpert
 nonlocal
+nonreproducible
+nonmonotonic
