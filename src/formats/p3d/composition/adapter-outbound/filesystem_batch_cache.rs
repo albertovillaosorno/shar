@@ -61,6 +61,8 @@ struct ComponentIdentity {
     parent_ordinal: usize,
     /// Direct root-child owner ordinal.
     container_ordinal: usize,
+    /// Decoded source chunk kind label.
+    kind: String,
     /// Published relative artifact path.
     path: String,
 }
@@ -94,6 +96,7 @@ pub(super) fn is_cache_current(output_dir: &Path, input_path: &Path) -> bool {
     manifest_is_complete(&text)
         && manifest_source_matches_bytes(&text, &source_bytes)
         && manifest_normalized_source_matches_bytes(&text, &normalized_bytes)
+        && manifest_components_match_normalized_source(&text, &normalized_bytes)
         && manifest_component_files_match_digests(output_dir, &text)
 }
 
@@ -155,6 +158,56 @@ pub(super) fn manifest_normalized_source_matches_bytes(
     byte_len == document.byte_len
         && chunk_count == document.chunks.len()
         && normalized_sha256 == digest_hex(normalized)
+}
+
+/// Returns whether published row provenance agrees with the normalized document.
+fn manifest_components_match_normalized_source(text: &str, normalized: &[u8]) -> bool {
+    let Ok(document) = crate::analyze_p3d(normalized) else {
+        return false;
+    };
+    let mut has_header = false;
+    let mut has_rows = false;
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if !has_header {
+            has_header = true;
+            continue;
+        }
+        let Some(component) = complete_component_identity(trimmed) else {
+            return false;
+        };
+        let Some(chunk) = document.chunks.get(component.ordinal) else {
+            return false;
+        };
+        if component.depth != chunk.depth
+            || chunk.parent_ordinal != Some(component.parent_ordinal)
+            || component.kind != chunk.kind.label()
+            || document_container_ordinal(chunk, &document.chunks)
+                != Some(component.container_ordinal)
+        {
+            return false;
+        }
+        has_rows = true;
+    }
+    has_header && has_rows
+}
+
+/// Resolve one parsed chunk to its direct root-child owner ordinal.
+fn document_container_ordinal(
+    component: &crate::ChunkRecord,
+    chunks: &[crate::ChunkRecord],
+) -> Option<usize> {
+    let mut current = component;
+    for _step in 0..chunks.len() {
+        match current.parent_ordinal {
+            Some(0) | None => return Some(current.ordinal),
+            Some(parent) => current = chunks.get(parent)?,
+        }
+    }
+    None
 }
 
 /// Returns whether one component manifest contains only complete rows.
@@ -278,6 +331,7 @@ fn complete_component_identity(line: &str) -> Option<ComponentIdentity> {
         depth,
         parent_ordinal,
         container_ordinal,
+        kind: kind.to_owned(),
         path: path.to_owned(),
     })
 }
