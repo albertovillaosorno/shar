@@ -537,6 +537,7 @@ def _cache_nonruntime_artifacts(
 
 def _publish(candidate: Path, destination: Path) -> None:
     """Replace one published target without exposing a partial candidate."""
+    _require_real_directory(candidate, "candidate package")
     if not _has_payload(candidate):
         raise RunFailure(f"candidate package is empty: {candidate}")
     if _path_present(destination):
