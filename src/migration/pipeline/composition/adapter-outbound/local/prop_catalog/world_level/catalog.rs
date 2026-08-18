@@ -212,8 +212,9 @@ fn catalog_value(
             ),
             "interior_policy": concat!(
                 "interior packages preserve source coordinates and authored ",
-                "UVs, fuse by stable identity, and publish Level 7 Halloween ",
-                "geometry only when absent from the canonical base"
+                "UVs without base-game relocation, fuse by stable identity, ",
+                "and publish Level 7 Halloween geometry only when absent from ",
+                "the canonical base; interior relocation belongs to mods"
             )
         },
         "map_groups": [

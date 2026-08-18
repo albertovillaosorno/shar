@@ -683,9 +683,9 @@ fn append_package(
 ) -> Result<(), PipelineError> {
     let relative = relative_art_root(package)?;
     let package_root = append_context.canonical_root.join(&relative);
-    let reference_root = append_context
-        .reference_packages
-        .contains(&package.package_id)
+    let interior = is_interior(package);
+    let reference_root = (!interior
+        && append_context.reference_packages.contains(&package.package_id))
         .then(|| append_context.coordinate_root.join(&relative));
     let sources = package_meshes(&package_root)?;
     let package_index = package_content.packages.len();
@@ -708,7 +708,7 @@ fn append_package(
         excluded_collision_meshes: 0,
         reference_excluded_collision_meshes: 0,
         discarded_collision_triangles: 0,
-        interior: is_interior(package),
+        interior,
         map_group: None,
         review_similarity_groups: 0,
         world_fbx: None,
@@ -737,12 +737,16 @@ fn append_package(
     let package_scratch = append_context.scratch_root.join(&package.package_id);
     let (mut meshes, discarded_degenerate_triangles) =
         load_analysis_meshes(&sources, &package_root)?;
-    let coordinates = PackageCoordinates::resolve(
-        &sources,
-        &meshes,
-        &package_root,
-        reference_root.as_deref(),
-    )?;
+    let coordinates = if interior {
+        PackageCoordinates::preserve_source()
+    } else {
+        PackageCoordinates::resolve(
+            &sources,
+            &meshes,
+            &package_root,
+            reference_root.as_deref(),
+        )?
+    };
     let package_record = package_content
         .packages
         .get_mut(package_index)

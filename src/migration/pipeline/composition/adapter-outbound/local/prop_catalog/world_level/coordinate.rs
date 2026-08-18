@@ -56,6 +56,21 @@ pub(super) struct PackageCoordinates {
 }
 
 impl PackageCoordinates {
+    /// Preserve one package exactly in its own source coordinate space.
+    ///
+    /// This policy intentionally exposes no placement matrices and no connected
+    /// reference mesh. Base-game interiors use it because interior relocation
+    /// belongs to optional mod behavior rather than faithful reconstruction.
+    #[must_use]
+    pub(super) const fn preserve_source() -> Self {
+        Self {
+            canonical_placements: BTreeMap::new(),
+            reference_placements: BTreeMap::new(),
+            direct_reference_meshes: BTreeMap::new(),
+            uses_reference: false,
+        }
+    }
+
     /// Resolve coordinate evidence for one canonical package.
     ///
     /// # Errors

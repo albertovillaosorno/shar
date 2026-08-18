@@ -35,8 +35,8 @@ use std::collections::BTreeSet;
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 
 use super::{
-    LevelMeshSource, topology_matches, transplant_coordinates,
-    unique_topology_match,
+    LevelMeshSource, PackageCoordinates, topology_matches,
+    transplant_coordinates, unique_topology_match,
 };
 
 fn mesh(shader: &str, offset: f32) -> Result<MeshAsset, String> {
@@ -75,6 +75,44 @@ fn first_group_mut(
 /// Compare exact deterministic float arrays by bit pattern.
 fn position_bits(value: [f32; 3]) -> [u32; 3] {
     value.map(f32::to_bits)
+}
+
+#[test]
+fn source_preserving_policy_rejects_precomputed_movement() -> TestResult {
+    let coordinates = PackageCoordinates::preserve_source();
+    let source = LevelMeshSource {
+        ordinal: 1,
+        member_id: "interior-mesh".to_owned(),
+        mesh_name: "interior-mesh".to_owned(),
+        owner_name: "interior-owner".to_owned(),
+        owner_kind: "srr_entity_dsg".to_owned(),
+    };
+    let original = mesh("interior-material", 7.)?;
+    let mut candidate = original.clone();
+
+    let (placements, uses_reference_placement) =
+        coordinates.placements(&source);
+    if !placements.is_empty() || uses_reference_placement {
+        return Err(
+            "source-only interior policy exposed a placement".to_owned(),
+        );
+    }
+    if coordinates.uses_reference {
+        return Err(
+            String::from(
+                "source-only interior policy exposed reference authority",
+            ),
+        );
+    }
+    let transplanted = coordinates
+        .apply_direct_reference(&source, &mut candidate)
+        .map_err(|error| error.to_string())?;
+    if transplanted || candidate != original {
+        return Err(
+            "source-only interior policy changed mesh coordinates".to_owned(),
+        );
+    }
+    Ok(())
 }
 
 #[test]
