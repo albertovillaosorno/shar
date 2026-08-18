@@ -684,6 +684,9 @@ depends_on = []
 [architecture.component.schoenwald_filesystem]
 depends_on = []
 
+[architecture.component.shar_algorithm]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem", "shar_sha256"]
+
 [architecture.component.shar_json_text]
 depends_on = []
 
