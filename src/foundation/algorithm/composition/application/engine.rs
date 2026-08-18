@@ -86,6 +86,10 @@ struct CollectedSource {
     roots: Vec<PathBuf>,
 }
 
+fn io_failure(context: &str, error: &std::io::Error) -> AlgorithmError {
+    AlgorithmError::new(format!("{context}: {:?}", error.kind()))
+}
+
 fn usize_to_u64(value: usize, context: &str) -> Result<u64, AlgorithmError> {
     u64::try_from(value).map_err(|_conversion_error| {
         AlgorithmError::new(format!("{context} exceeds 64-bit limits"))
@@ -121,12 +125,12 @@ fn inspect_file(
     settings: &Settings,
 ) -> Result<InputFile, AlgorithmError> {
     let bytes = local::file_len(&path)
-        .map_err(|error| AlgorithmError::new(format!("cannot inspect input file: {error}")))?;
+        .map_err(|error| io_failure("cannot inspect input file", &error))?;
     if bytes > settings.maximum_file_bytes() {
         return Err(AlgorithmError::new("input file exceeds maximum_file_bytes"));
     }
     let data = local::read_bytes(&path)
-        .map_err(|error| AlgorithmError::new(format!("cannot read input file: {error}")))?;
+        .map_err(|error| io_failure("cannot read input file", &error))?;
     let observed = usize_to_u64(data.len(), "input file length")?;
     if observed != bytes {
         return Err(AlgorithmError::new(
@@ -148,9 +152,9 @@ fn collect_one_root(
     settings: &Settings,
 ) -> Result<(PathBuf, Vec<InputFile>), AlgorithmError> {
     let kind = local::path_kind(root)
-        .map_err(|error| AlgorithmError::new(format!("cannot inspect input path: {error}")))?;
+        .map_err(|error| io_failure("cannot inspect input path", &error))?;
     let canonical = local::canonicalize(root)
-        .map_err(|error| AlgorithmError::new(format!("cannot canonicalize input path: {error}")))?;
+        .map_err(|error| io_failure("cannot canonicalize input path", &error))?;
     match kind {
         PathKind::File => {
             let file = inspect_file(input, String::new(), canonical.clone(), settings)?;
@@ -248,9 +252,9 @@ fn collect_target(
     settings: &Settings,
 ) -> Result<(TargetKind, Vec<InputFile>, PathBuf), AlgorithmError> {
     let kind = local::path_kind(path)
-        .map_err(|error| AlgorithmError::new(format!("cannot inspect target path: {error}")))?;
+        .map_err(|error| io_failure("cannot inspect target path", &error))?;
     let canonical = local::canonicalize(path).map_err(|error| {
-        AlgorithmError::new(format!("cannot canonicalize target path: {error}"))
+        io_failure("cannot canonicalize target path", &error)
     })?;
     let (target_kind, files) = match kind {
         PathKind::File => (
@@ -314,7 +318,7 @@ fn source_key(files: &[InputFile]) -> Result<[u8; 32], AlgorithmError> {
         state.update(&file.input.to_be_bytes());
         update_frame(&mut state, file.logical_path.as_bytes())?;
         let bytes = local::read_bytes(&file.path)
-            .map_err(|error| AlgorithmError::new(format!("cannot read source file: {error}")))?;
+            .map_err(|error| io_failure("cannot read source file", &error))?;
         if digest_hex(&bytes) != file.sha256 {
             return Err(AlgorithmError::new(
                 "source changed while deriving its binding key",
@@ -439,10 +443,10 @@ fn projected_identity(path: &Path) -> Result<PathBuf, AlgorithmError> {
     let absolute = absolute_lexical(path)?;
     for ancestor in absolute.ancestors() {
         let kind = local::path_kind(ancestor)
-            .map_err(|error| AlgorithmError::new(format!("cannot inspect output path: {error}")))?;
+            .map_err(|error| io_failure("cannot inspect output path", &error))?;
         if kind != PathKind::Missing {
             let canonical = local::canonicalize(ancestor).map_err(|error| {
-                AlgorithmError::new(format!("cannot canonicalize output ancestor: {error}"))
+                io_failure("cannot canonicalize output ancestor", &error)
             })?;
             let suffix = absolute.strip_prefix(ancestor).map_err(|_prefix_error| {
                 AlgorithmError::new("cannot resolve output path identity")
@@ -548,7 +552,7 @@ pub fn create_algorithm(
     let mut protected = Vec::with_capacity(target_files.len());
     for (file, descriptor) in target_files.iter().zip(target_descriptors) {
         let plaintext = local::read_bytes(&file.path)
-            .map_err(|error| AlgorithmError::new(format!("cannot read target file: {error}")))?;
+            .map_err(|error| io_failure("cannot read target file", &error))?;
         if digest_hex(&plaintext) != descriptor.sha256 {
             return Err(AlgorithmError::new(
                 "target changed while authoring algorithm",
@@ -584,7 +588,7 @@ pub fn create_algorithm(
         .map_err(|error| AlgorithmError::new(format!("cannot serialize algorithm: {error}")))?;
     text.push('\n');
     local::write_new_text(algorithm_path, &text, true)
-        .map_err(|error| AlgorithmError::new(format!("cannot write algorithm output: {error}")))
+        .map_err(|error| io_failure("cannot write algorithm output", &error))
 }
 
 fn portable_target_identity(path: &str) -> String {
@@ -688,7 +692,7 @@ fn validate_document(
 fn parse_document(path: &Path) -> Result<AlgorithmDocument, AlgorithmError> {
     validate_txt_path(path)?;
     let text = local::read_utf8(path)
-        .map_err(|error| AlgorithmError::new(format!("cannot read algorithm: {error}")))?;
+        .map_err(|error| io_failure("cannot read algorithm", &error))?;
     serde_json::from_str(&text)
         .map_err(|error| AlgorithmError::new(format!("invalid algorithm JSON: {error}")))
 }
@@ -731,7 +735,7 @@ pub fn replay_algorithm(
     }
     reject_output_overlap(output_path, &source.roots)?;
     let output_kind = local::path_kind(output_path)
-        .map_err(|error| AlgorithmError::new(format!("cannot inspect replay output: {error}")))?;
+        .map_err(|error| io_failure("cannot inspect replay output", &error))?;
     if output_kind != PathKind::Missing {
         return Err(AlgorithmError::new(
             "replay output path must not already exist",
@@ -784,7 +788,7 @@ pub fn replay_algorithm(
 
     for (destination, bytes) in recovered {
         local::write_bytes(&destination, &bytes, true)
-            .map_err(|error| AlgorithmError::new(format!("cannot write replay output: {error}")))?;
+            .map_err(|error| io_failure("cannot write replay output", &error))?;
     }
     Ok(())
 }

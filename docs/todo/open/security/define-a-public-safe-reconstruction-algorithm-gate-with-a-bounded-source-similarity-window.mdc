@@ -84,8 +84,11 @@ decryption or writes, requiring one realizable protected output tree. Target
 paths are compared by the repository's Unicode-uppercase portable identity, so
 case-equivalent paths also fail before replay. Algorithm creation uses an atomic
 create-new filesystem write, and a regression proves an existing plan remains
-byte-identical when publication collides. These tests establish engine-level
-source binding and read-only behavior; they do not certify
+byte-identical when publication collides. Generic filesystem failures are
+projected as operation plus I/O error kind without caller paths, and a synthetic
+missing-source regression proves a private-looking source path is not disclosed.
+These tests establish engine-level source binding and read-only behavior; they do
+not certify
 the still-placeholder distributable family plans or replace the pending
 representative-install similarity calibration.
 
