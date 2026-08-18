@@ -201,11 +201,14 @@ pub fn preflight_mission_authored_stage_topology(
             );
         }
 
+        let next_index = index.checked_add(1).ok_or_else(|| {
+            "mission stage sequence index overflowed".to_owned()
+        })?;
         stages.push(MissionAuthoredStageTopologyBinding {
             source_ordinal: stage.source_ordinal(),
             sequence_ordinal: index,
             next_authored_sequence_ordinal:
-                (index + 1 < semantics.stages().len()).then_some(index + 1),
+                (next_index < semantics.stages().len()).then_some(next_index),
             checkpoint_source_ordinal,
             explicit_final,
             terminal: transition.terminal(),
