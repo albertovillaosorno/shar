@@ -176,3 +176,23 @@ fn package_meshes_reject_duplicate_component_ordinals() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn package_meshes_reject_duplicate_component_paths() -> Result<(), String> {
+    let rows = [
+        owner_row(1, "owner"),
+        r#"{"ordinal":2,"depth":2,"container_ordinal":1,"name":"first","path":"components/mesh/shared.json","kind":"mesh"}"#.to_owned(),
+        r#"{"ordinal":3,"depth":2,"container_ordinal":1,"name":"second","path":"components/mesh/shared.json","kind":"mesh"}"#.to_owned(),
+    ];
+    let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
+    let root = ledger_root("duplicate-path", &borrowed)?;
+    let result = package_meshes(&root);
+    cleanup(&root);
+    let Err(error) = result else {
+        return Err("duplicate component path was accepted".to_owned());
+    };
+    if !error.to_string().contains("repeats component path components/mesh/shared.json") {
+        return Err(format!("unexpected duplicate path error: {error}"));
+    }
+    Ok(())
+}

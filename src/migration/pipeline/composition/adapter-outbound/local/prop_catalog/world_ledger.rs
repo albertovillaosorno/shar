@@ -67,7 +67,7 @@ pub(super) struct WorldLedger {
 ///
 /// # Errors
 ///
-/// Returns an error when JSONL fields are malformed or owner rows conflict.
+/// Returns an error when JSONL fields are malformed or component identities conflict.
 pub(super) fn read_world_ledger(
     root: &Path,
 ) -> Result<WorldLedger, PipelineError> {
@@ -81,6 +81,7 @@ pub(super) fn read_world_ledger(
     let mut owners = BTreeMap::new();
     let mut groups: BTreeMap<usize, Vec<LedgerRow>> = BTreeMap::new();
     let mut ordinals = BTreeSet::new();
+    let mut paths = BTreeSet::new();
     for line in text.lines().filter(|line| line.contains("\"path\"")) {
         let value: serde_json::Value =
             serde_json::from_str(line).map_err(|error| {
@@ -101,6 +102,12 @@ pub(super) fn read_world_ledger(
             return Err(PipelineError::new(format!(
                 "prop ledger repeats component ordinal {}",
                 row.ordinal
+            )));
+        }
+        if !paths.insert(row.path.clone()) {
+            return Err(PipelineError::new(format!(
+                "prop ledger repeats component path {}",
+                row.path
             )));
         }
         if row.depth == 1 {
