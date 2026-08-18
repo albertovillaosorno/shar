@@ -37,11 +37,13 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import shutil
-import subprocess
+import subprocess  # noqa: S404 -- Runs resolved local rasterizer executables.
 import sys
 import tempfile
+from types import TracebackType
+from typing import Self
 
-_RESVG_CHILD = (
+_RASTER_CHILD = (
     "import pathlib, sys, resvg_py; "
     "data=resvg_py.svg_to_bytes(svg_path=sys.argv[1], "
     "width=int(sys.argv[3]), height=int(sys.argv[3])); "
@@ -53,6 +55,7 @@ class AutoSvgRenderer:
     """Use Inkscape, else provision resvg_py into a disposable directory."""
 
     def __init__(self) -> None:
+        """Resolve a local renderer and prepare disposable fallback state."""
         self._inkscape = shutil.which("inkscape")
         self._uv = shutil.which("uv")
         self._temporary: tempfile.TemporaryDirectory[str] | None = None
@@ -63,19 +66,29 @@ class AutoSvgRenderer:
 
     @property
     def backend(self) -> str:
+        """Selected renderer backend identity."""
         if self._inkscape:
             return "inkscape"
         if self._uv:
             return "temporary-resvg-py-via-uv"
         return "temporary-resvg-py-via-pip"
 
-    def __enter__(self) -> "AutoSvgRenderer":
+    def __enter__(self) -> Self:
+        """Return this initialized renderer for context-managed use."""
         return self
 
-    def __exit__(self, _exc_type, _exc, _traceback) -> None:
+    def __exit__(
+        self,
+        exception_type: type[BaseException] | None,
+        exception: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        """Release disposable renderer state when leaving the context."""
+        del exception_type, exception, traceback
         self.close()
 
     def close(self) -> None:
+        """Release renderer caches and any disposable dependency directory."""
         self._cache.clear()
         if self._temporary is not None:
             self._temporary.cleanup()
@@ -122,7 +135,7 @@ class AutoSvgRenderer:
                 "resvg_py==0.3.3",
             ]
         try:
-            subprocess.run(
+            subprocess.run(  # noqa: S603 -- Command uses resolved executables.
                 command,
                 check=True,
                 env=environment,
@@ -130,18 +143,27 @@ class AutoSvgRenderer:
             )
         except (OSError, subprocess.CalledProcessError) as error:
             self.close()
-            raise RuntimeError(
+            message = (
                 "SVG rendering needs Inkscape or disposable resvg_py "
                 "provisioning"
-            ) from error
+            )
+            raise RuntimeError(message) from error
         self._site = site
 
     def render_png(self, svg: Path, size: int) -> bytes:
-        """Render exactly ``size`` square pixels directly from the SVG page."""
+        """Render exactly ``size`` square pixels directly from the SVG page.
+
+        Raises:
+            ValueError: If ``size`` is not positive.
+            RuntimeError: If the SVG is missing or rasterization fails.
+
+        """
         if size <= 0:
-            raise ValueError("icon raster size must be positive")
+            message = "icon raster size must be positive"
+            raise ValueError(message)
         if not svg.is_file():
-            raise RuntimeError(f"SVG input does not exist: {svg}")
+            message = f"SVG input does not exist: {svg}"
+            raise RuntimeError(message)
         stat = svg.stat()
         key = (str(svg.resolve()), stat.st_mtime_ns, size)
         cached = self._cache.get(key)
@@ -152,7 +174,7 @@ class AutoSvgRenderer:
             target = Path(handle.name)
         try:
             command, environment = self._render_command(svg, target, size)
-            subprocess.run(
+            subprocess.run(  # noqa: S603 -- Command uses resolved renderers.
                 command,
                 check=True,
                 env=environment,
@@ -161,7 +183,8 @@ class AutoSvgRenderer:
             )
             data = target.read_bytes()
         except (OSError, subprocess.CalledProcessError) as error:
-            raise RuntimeError(f"SVG rasterization failed for {svg}") from error
+            message = f"SVG rasterization failed for {svg}"
+            raise RuntimeError(message) from error
         finally:
             target.unlink(missing_ok=True)
         self._cache[key] = data
@@ -184,7 +207,8 @@ class AutoSvgRenderer:
                 None,
             )
         if self._site is None:
-            raise RuntimeError("temporary resvg_py environment is unavailable")
+            message = "temporary resvg_py environment is unavailable"
+            raise RuntimeError(message)
         environment = os.environ.copy()
         existing = environment.get("PYTHONPATH")
         environment["PYTHONPATH"] = (
@@ -197,7 +221,7 @@ class AutoSvgRenderer:
             [
                 sys.executable,
                 "-c",
-                _RESVG_CHILD,
+                _RASTER_CHILD,
                 str(svg),
                 str(target),
                 str(size),
