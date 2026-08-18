@@ -124,14 +124,23 @@ pub(super) fn manifest_normalized_source_matches_bytes(
     let Ok(value) = serde_json::from_str::<serde_json::Value>(header) else {
         return false;
     };
-    let Some(normalized_sha256) = value
-        .as_object()
-        .and_then(|object| object.get("normalized_sha256"))
+    let Some(object) = value.as_object() else {
+        return false;
+    };
+    let Some(normalized_sha256) = object
+        .get("normalized_sha256")
         .and_then(serde_json::Value::as_str)
     else {
         return false;
     };
-    normalized_sha256 == digest_hex(normalized)
+    let Some(byte_len) = object
+        .get("byte_len")
+        .and_then(serde_json::Value::as_u64)
+        .and_then(|value| usize::try_from(value).ok())
+    else {
+        return false;
+    };
+    byte_len == normalized.len() && normalized_sha256 == digest_hex(normalized)
 }
 
 /// Returns whether one component manifest contains only complete rows.

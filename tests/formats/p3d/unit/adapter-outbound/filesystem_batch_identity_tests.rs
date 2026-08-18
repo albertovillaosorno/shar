@@ -208,7 +208,7 @@ fn cache_source_digest_must_match_current_input_bytes() {
 
 #[test]
 fn cache_normalized_digest_must_match_published_source_bytes() {
-    let normalized = b"normalized-source";
+    let normalized = b"123456789012345678901234";
     let digest = shar_sha256::digest_hex(normalized);
     let header = format!(
         r#"{{"schema":"p3d.package.v1","normalized_sha256":"{digest}","byte_len":24,"chunk_count":2,"component_count":1}}"#
@@ -237,7 +237,7 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
     fs::create_dir_all(component.parent().ok_or("component has no parent")?)
         .map_err(|error| error.to_string())?;
     let raw = b"raw-source";
-    let normalized = b"normalized-source";
+    let normalized = b"123456789012345678901234";
     fs::write(&input, raw).map_err(|error| error.to_string())?;
     fs::write(output.join("source.p3d"), normalized)
         .map_err(|error| error.to_string())?;
@@ -281,4 +281,17 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
         return Err("missing normalized source artifact was accepted".to_owned());
     }
     Ok(())
+}
+
+#[test]
+fn normalized_cache_digest_requires_exact_declared_byte_length() {
+    let normalized = b"123456789012345678901234";
+    let digest = shar_sha256::digest_hex(normalized);
+    let wrong_length = format!(
+        r#"{{"schema":"p3d.package.v1","normalized_sha256":"{digest}","byte_len":25,"chunk_count":2,"component_count":1}}"#
+    );
+    assert!(!manifest_normalized_source_matches_bytes(
+        &wrong_length,
+        normalized
+    ));
 }
