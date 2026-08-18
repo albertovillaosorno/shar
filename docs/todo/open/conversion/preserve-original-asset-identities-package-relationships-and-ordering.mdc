@@ -59,5 +59,10 @@ mesh/name substring inference. `srr_tree_dsg` and `srr_breakable_object` remain
 breakable, while dynamic/static-physics owners remain interactable even if their
 mesh name contains `tree`. A focused regression preserves that distinction.
 
+World component-ledger intake now also requires each normalized component path
+to be unique in addition to its source ordinal. Two rows cannot claim one
+component/member identity under different ordinals; a focused regression proves
+duplicate `components/mesh/shared.json` ownership fails before mesh association.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
