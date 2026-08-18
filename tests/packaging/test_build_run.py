@@ -421,6 +421,64 @@ class PublicationArtifactTests(unittest.TestCase):
             self.assertFalse(stale.exists())
 
 
+class CandidateTreeTests(unittest.TestCase):
+    """Require packaged candidates to remain self-contained real trees."""
+
+    def test_rejects_nested_link_without_following_it(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-candidate-tree-") as raw:
+            candidate = Path(raw) / "candidate"
+            nested = candidate / "nested"
+            nested.mkdir(parents=True)
+            linked = nested / "runtime.bin"
+            linked.write_bytes(b"fixture")
+            original = _RUN._is_directory_link
+
+            def report_runtime_as_link(path: Path) -> bool:
+                return path == linked or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_runtime_as_link,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "candidate package contains a linked entry",
+                ),
+            ):
+                _RUN._validate_candidate_tree(candidate)
+
+    def test_build_validates_candidate_tree_before_artifact_caching(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-candidate-order-") as raw:
+            root = Path(raw)
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+            with (
+                mock.patch.object(_RUN, "_verify_sdk"),
+                mock.patch.object(_RUN, "_run_uat"),
+                mock.patch.object(
+                    _RUN,
+                    "_validate_candidate_tree",
+                    side_effect=_RUN.RunFailure("candidate tree drift"),
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_cache_nonruntime_artifacts",
+                ) as cache_artifacts,
+                self.assertRaisesRegex(_RUN.RunFailure, "candidate tree drift"),
+            ):
+                _RUN._build_target(
+                    root,
+                    Path("/uat"),
+                    Path("/project/shar.uproject"),
+                    target,
+                    validate_only=False,
+                )
+            cache_artifacts.assert_not_called()
+
+
 class CandidateArtifactTests(unittest.TestCase):
     """Require mobile candidates to contain their declared package kind."""
 

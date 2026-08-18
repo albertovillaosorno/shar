@@ -503,6 +503,26 @@ def _has_payload(path: Path) -> bool:
     return path.is_dir() and any(item.is_file() for item in path.rglob("*"))
 
 
+def _validate_candidate_tree(candidate: Path) -> None:
+    """Reject links and special entries without traversing outside candidate."""
+    _require_real_directory(candidate, "candidate package")
+    pending = [candidate]
+    while pending:
+        directory = pending.pop()
+        for item in sorted(directory.iterdir(), key=lambda path: path.name):
+            if _is_directory_link(item):
+                raise RunFailure(
+                    f"candidate package contains a linked entry: {item}"
+                )
+            if item.is_dir():
+                pending.append(item)
+                continue
+            if not item.is_file():
+                raise RunFailure(
+                    f"candidate package contains a special entry: {item}"
+                )
+
+
 def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
     """Require mobile UAT archives to contain their declared package kind."""
     expected = {
@@ -605,6 +625,7 @@ def _build_target(
     log = work / "build.log"
     arguments = _build_arguments(project, target, candidate, staging)
     _run_uat(root, uat, arguments, log)
+    _validate_candidate_tree(candidate)
     _cache_nonruntime_artifacts(candidate, work, target)
     _validate_candidate_artifact(candidate, target)
     destination = root / _DIST_ROOT / target.identifier
