@@ -36,7 +36,9 @@ use std::path::Path;
 use schoenwald_filesystem::adapters::driving::local;
 use shar_sha256::digest_hex;
 
+#[cfg(test)]
 use super::filesystem_batch_artifact::manifest_component_files_exist;
+use super::filesystem_batch_artifact::manifest_component_files_match_digests;
 
 /// Stable schema identity for the package header row.
 const PACKAGE_SCHEMA: &str = "p3d.package.v1";
@@ -92,7 +94,7 @@ pub(super) fn is_cache_current(output_dir: &Path, input_path: &Path) -> bool {
     manifest_is_complete(&text)
         && manifest_source_matches_bytes(&text, &source_bytes)
         && manifest_normalized_source_matches_bytes(&text, &normalized_bytes)
-        && manifest_component_files_exist(output_dir, &text)
+        && manifest_component_files_match_digests(output_dir, &text)
 }
 
 /// Returns whether the package header binds to these exact raw source bytes.

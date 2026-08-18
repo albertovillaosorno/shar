@@ -62,6 +62,7 @@ fn component(name: &str) -> ComponentOutput {
         payload_format: String::from("json"),
         schema_ref: String::from("schema"),
         recovery_status: String::from("decoded"),
+        sha256: "0".repeat(64),
     }
 }
 
@@ -140,4 +141,12 @@ fn package_header_binds_source_and_normalized_digests() {
     assert!(header.contains(&format!(
         r#""normalized_sha256":"{normalized_digest}""#
     )));
+}
+
+#[test]
+fn component_json_publishes_primary_artifact_digest() {
+    let value = component("value");
+    let json = component_line(&value);
+
+    assert!(json.contains(&format!(r#""sha256":"{}""#, value.sha256)));
 }

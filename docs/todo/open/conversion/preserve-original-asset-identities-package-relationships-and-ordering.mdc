@@ -114,7 +114,11 @@ even when the raw input and component files still match; a filesystem regression
 proves both corruption and deletion are rejected. The same normalized-artifact
 check now replays the manifest's declared `byte_len` against the exact verified
 `source.p3d` length, so a cache cannot remain current after editing that header
-fact independently of the artifact digest.
+fact independently of the artifact digest. Each published primary component row
+now also records the SHA-256 of the exact JSON/image bytes written beneath
+`components/`. Source-aware cache reuse requires those digests to match in
+addition to payload validity, so replacing one component with different valid
+JSON or image bytes forces regeneration instead of silently accepting the edit.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
