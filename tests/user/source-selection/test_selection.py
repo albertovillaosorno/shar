@@ -33,9 +33,12 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 from pathlib import Path
 import tempfile
 from types import ModuleType
+
+import pytest
 
 _ROOT = Path(__file__).resolve().parents[3]
 _MODULE = (
@@ -129,3 +132,16 @@ def test_directory_requires_one_direct_canonical_executable() -> None:
 
         assert str(source) not in message
         assert "direct Simpsons.exe" in message
+
+
+def test_redirected_wrong_file_name_is_rejected() -> None:
+    if os.name == "nt":
+        pytest.skip("symlink setup is Unix-focused")
+    module = _load()
+    with tempfile.TemporaryDirectory(prefix="shar-user-redirect-") as value:
+        source, executable = _source(Path(value))
+        redirect = source / "README.rtf"
+        redirect.symlink_to(executable.name)
+
+        with pytest.raises(module.SourceSelectionError, match=r"Simpsons\.exe"):
+            module.resolve_source_selection(redirect)

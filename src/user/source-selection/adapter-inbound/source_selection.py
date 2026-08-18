@@ -56,10 +56,14 @@ def _selection_path(selection: str | Path) -> Path:
         message = "selected source path does not exist"
         raise SourceSelectionError(message)
     try:
-        return Path(text).expanduser().resolve()
+        candidate = Path(text).expanduser()
+        if not candidate.is_absolute():
+            candidate = Path.cwd() / candidate
     except (OSError, RuntimeError) as error:
         message = "selected source path cannot be resolved"
         raise SourceSelectionError(message) from error
+    else:
+        return candidate
 
 
 def _candidate_root(selection: str | Path) -> Path:
@@ -75,9 +79,9 @@ def _candidate_root(selection: str | Path) -> Path:
             if candidate.name.casefold() != _EXECUTABLE_NAME.casefold():
                 message = "selected source file must be Simpsons.exe"
                 raise SourceSelectionError(message)
-            return candidate.parent
+            return candidate.resolve().parent
         if candidate.is_dir():
-            return candidate
+            return candidate.resolve()
     except OSError as error:
         message = "selected source path cannot be inspected"
         raise SourceSelectionError(message) from error

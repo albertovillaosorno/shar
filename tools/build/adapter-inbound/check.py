@@ -166,15 +166,13 @@ def _game_candidate(root: Path, selected: Path | None) -> Path:
         return (root / "game").resolve()
     candidate = selected.expanduser()
     if not candidate.is_absolute():
-        candidate = (Path.cwd() / candidate).resolve()
-    else:
-        candidate = candidate.resolve()
+        candidate = Path.cwd() / candidate
     if candidate.is_file():
         if candidate.name.casefold() != "simpsons.exe":
             raise CheckFailure("selected source file must be Simpsons.exe")
-        return candidate.parent
+        return candidate.resolve().parent
     if candidate.is_dir():
-        return candidate
+        return candidate.resolve()
     raise CheckFailure("selected source path does not exist")
 
 

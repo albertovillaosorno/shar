@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import os
 from pathlib import Path
 import tempfile
 from types import ModuleType
@@ -271,6 +272,27 @@ class SourceSelectionTests(unittest.TestCase):
                 "selected source file must be Simpsons.exe",
             ):
                 _CHECK._check_game(repository, other)
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_redirected_wrong_source_file_name_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-source-redirect-"
+        ) as value:
+            root = Path(value)
+            repository = root / "repository"
+            source = root / "installed-game"
+            repository.mkdir()
+            source.mkdir()
+            executable = source / "Simpsons.exe"
+            executable.write_bytes(b"fixture")
+            redirect = source / "README.rtf"
+            redirect.symlink_to(executable.name)
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "selected source file must be Simpsons.exe",
+            ):
+                _CHECK._check_game(repository, redirect)
 
     def test_missing_source_diagnostic_does_not_echo_private_path(self) -> None:
         with tempfile.TemporaryDirectory(
