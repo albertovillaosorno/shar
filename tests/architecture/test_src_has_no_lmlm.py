@@ -49,3 +49,19 @@ def test_repository_root_has_no_user_mod_drop_directory() -> None:
         "repository-root mods/ is forbidden; native SHAR mods belong only in "
         "the installed application's post-install mods directory"
     )
+
+
+def test_lmlm_local_inputs_and_outputs_are_ignored_with_public_readmes() -> None:
+    lines = (_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    relevant = tuple(
+        line
+        for line in lines
+        if line.startswith(("/tools/lmlm/import", "!/tools/lmlm/import",
+                            "/tools/lmlm/export", "!/tools/lmlm/export"))
+    )
+    assert relevant == (
+        "/tools/lmlm/import/*",
+        "!/tools/lmlm/import/README.md",
+        "/tools/lmlm/export/*",
+        "!/tools/lmlm/export/README.md",
+    )
