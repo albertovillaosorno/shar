@@ -423,6 +423,21 @@ fn reject_output_overlap(path: &Path, protected_roots: &[PathBuf]) -> Result<(),
     Ok(())
 }
 
+fn reject_target_source_overlap(
+    target_root: &Path,
+    source_roots: &[PathBuf],
+) -> Result<(), AlgorithmError> {
+    if source_roots
+        .iter()
+        .any(|root| target_root.starts_with(root) || root.starts_with(target_root))
+    {
+        return Err(AlgorithmError::new(
+            "target path overlaps a source input root",
+        ));
+    }
+    Ok(())
+}
+
 /// Authors one deterministic source-bound `.txt` algorithm.
 ///
 /// # Errors
@@ -437,6 +452,7 @@ pub fn create_algorithm(
     validate_txt_path(algorithm_path)?;
     let source = collect_source(source_paths, settings)?;
     let (target_kind, target_files, target_root) = collect_target(target_path, settings)?;
+    reject_target_source_overlap(&target_root, &source.roots)?;
     reject_output_overlap(algorithm_path, &source.roots)?;
     reject_output_overlap(algorithm_path, &[target_root])?;
 

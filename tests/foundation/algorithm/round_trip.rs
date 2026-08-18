@@ -405,6 +405,84 @@ fn algorithm_output_inside_source_is_rejected() {
     );
 }
 
+fn run_source_target_overlap_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("source-target-overlap")?;
+    let (source, _target) = write_fixture_tree(&temp.path)?;
+    let algorithm = temp.path.join("plan.txt");
+
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &source,
+        &algorithm,
+    );
+    if result.is_ok() {
+        return Err("source tree must not be accepted as algorithm target".into());
+    }
+    if algorithm.exists() {
+        return Err("source-target overlap must not create an algorithm".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn source_target_overlap_is_rejected_before_publication() {
+    let result = run_source_target_overlap_is_rejected();
+    assert!(result.is_ok(), "source-target overlap rejection failed: {result:?}");
+}
+
+fn run_nested_target_overlap_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("nested-target-overlap")?;
+    let (source, _target) = write_fixture_tree(&temp.path)?;
+    let nested_target = source.join("nested");
+    let algorithm = temp.path.join("plan.txt");
+
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &nested_target,
+        &algorithm,
+    );
+    if result.is_ok() || algorithm.exists() {
+        return Err("nested source target overlap must fail before output".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn nested_target_inside_source_is_rejected_before_publication() {
+    let result = run_nested_target_overlap_is_rejected();
+    assert!(result.is_ok(), "nested target overlap rejection failed: {result:?}");
+}
+
+fn run_target_parent_overlap_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("target-parent-overlap")?;
+    let target = temp.path.join("target");
+    let source = target.join("source.bin");
+    let sibling = target.join("sibling.bin");
+    let algorithm = temp.path.join("plan.txt");
+    fs::create_dir_all(&target)?;
+    fs::write(&source, vec![0x73_u8; 2048])?;
+    fs::write(&sibling, b"synthetic target sibling")?;
+
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    );
+    if result.is_ok() || algorithm.exists() {
+        return Err("target containing source input must fail before output".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn target_parent_containing_source_is_rejected_before_publication() {
+    let result = run_target_parent_overlap_is_rejected();
+    assert!(result.is_ok(), "target parent overlap rejection failed: {result:?}");
+}
+
 fn run_replay_parent_traversal_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("replay-parent")?;
     let source = temp.path.join("source.bin");
