@@ -67,6 +67,14 @@ and invalid vectors and prove the evidence object has no admission result. No
 read-only source boundary, source-bound plan publication restrictions, and the
 rule that similarity cannot substitute for any hard source gate.
 
+The generic `shar.algorithm.v1` round-trip suite now includes explicit evidence
+that a serialized plan cannot replay with zero caller-supplied source roots and
+that successful create/replay leaves the caller source bytes and source layout
+unchanged. Existing overlap guards continue to reject algorithm output inside a
+source root. These tests establish engine-level source binding and read-only
+behavior; they do not certify the still-placeholder distributable family plans
+or replace the pending representative-install similarity calibration.
+
 The ~60% minimum-installation estimate and 45–55% similarity window remain
 design targets, not validated production evidence, legal conclusions, or safe
 harbors. The task remains open for representative-install calibration and final

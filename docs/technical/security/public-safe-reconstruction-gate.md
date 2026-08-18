@@ -100,7 +100,9 @@ It must not contain:
 
 The maintainer-only `in/`, `master/`, and shared `out/` workspace trees never
 ship as reconstruction plans. A published plan remains unusable without the
-local source evidence admitted by its source-bound replay contract.
+local source evidence admitted by its source-bound replay contract. The generic
+engine's external round-trip tests require caller-supplied source at replay and
+verify that create/replay does not change the caller's source bytes or layout.
 
 ## Current status
 
