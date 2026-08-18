@@ -294,6 +294,28 @@ class SourceSelectionTests(unittest.TestCase):
             ):
                 _CHECK._check_game(repository, redirect)
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_nested_executable_redirect_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-source-nested-link-"
+        ) as value:
+            root = Path(value)
+            repository = root / "repository"
+            source = root / "installed-game"
+            repository.mkdir()
+            source.mkdir()
+            executable = source / "Simpsons.exe"
+            executable.write_bytes(b"fixture")
+            nested = source / "copy"
+            nested.mkdir()
+            (nested / "Simpsons.exe").symlink_to(executable)
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "selected source contains another nested Simpsons.exe",
+            ):
+                _CHECK._check_game(repository, source)
+
     def test_missing_source_diagnostic_does_not_echo_private_path(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-source-missing-"
