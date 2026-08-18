@@ -172,9 +172,7 @@ fn validator_accepts_manifest_outside_source_tree() -> io::Result<()> {
     }
     let source = root.join("source");
     let policy = root.join("policy/game.jsonl");
-    fs::create_dir_all(source.join(
-        "art/frontend/scrooby2/resource/txtbible",
-    ))?;
+    fs::create_dir_all(source.join("art/frontend/scrooby2/resource/txtbible"))?;
     fs::create_dir_all(
         policy
             .parent()
