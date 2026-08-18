@@ -2,6 +2,31 @@
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
+# Confidential:
+#   - false
+# License-File:
+#   - LICENSE-MIT
+#
+# Boundary-Contract:
+# - Owns:
+#   - Explicit local CLI for reconstructed SVG platform export.
+# - Must-Not:
+#   - Read lawful source files directly or write outside the requested output.
+# - Allows:
+#   - Parse explicit local paths and invoke the icon export application flow.
+# - Split-When:
+#   - Another icon export command gains an independent invocation contract.
+# - Merge-When:
+#   - Another adapter owns the identical platform-export CLI behavior.
+# - Summary:
+#   - Reconstructed SVG platform-export CLI.
+# - Description:
+#   - Parses export arguments and reports the selected local renderer backend.
+# - Usage:
+#   - Invoked explicitly after source-bound icon reconstruction.
+# - Defaults:
+#   - Function-local assets and output paths are used when omitted.
+#
 
 """Explicit local CLI for SVG-to-platform icon export."""
 
@@ -9,6 +34,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 
 from platform_export import PlatformExporter
 from svg_renderer import AutoSvgRenderer
@@ -46,7 +72,7 @@ def main() -> int:
     with AutoSvgRenderer() as renderer:
         exporter = PlatformExporter(renderer, icon_name=arguments.icon_name)
         exporter.export_all(arguments.assets, arguments.out)
-        print(f"icon export complete via {renderer.backend}")
+        sys.stdout.write(f"icon export complete via {renderer.backend}\n")
     return 0
 
 

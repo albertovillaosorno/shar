@@ -221,3 +221,4 @@ Wreckless
 wwii
 Zeidenberg
 zzyzwicz
+Inkscape

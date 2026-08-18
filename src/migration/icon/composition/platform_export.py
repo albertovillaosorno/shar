@@ -34,24 +34,26 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
+from contextlib import suppress
 import json
 from pathlib import Path
 import re
 import shutil
 import struct
 import tempfile
-from typing import Iterator
 
-from profiles import (
-    ANDROID_DENSITY_SCALE,
-    ANDROID_LEGACY,
-    IOS_APPICON_SIZE,
-    LINUX_SIZES,
-    MAC_ICONSET,
-    WINDOWS_SIZES,
-)
+from profiles import ANDROID_DENSITY_SCALE
+from profiles import ANDROID_LEGACY
+from profiles import IOS_APPICON_SIZE
+from profiles import LINUX_SIZES
+from profiles import MAC_ICONSET
+from profiles import WINDOWS_SIZES
 from rendering import SvgRenderer
+
+_ICO_DIRECTORY_ENTRY_FORMAT = "<" + ("B" * 4) + ("H" * 2) + ("I" * 2)
+_ICO_HEADER_FORMAT = "<" + ("H" * 3)
 
 
 class PlatformExporter:
@@ -61,7 +63,8 @@ class PlatformExporter:
         self,
         renderer: SvgRenderer,
         icon_name: str = "simpsons-hit-run",
-    ):
+    ) -> None:
+        """Initialize an exporter with its explicit rasterization dependency."""
         self.renderer = renderer
         self.icon_name = icon_name
 
@@ -70,6 +73,12 @@ class PlatformExporter:
         source_root: Path,
         output_root: Path,
     ) -> tuple[str, ...]:
+        """Export every supported platform layout from authored SVG masters.
+
+        Returns:
+            Stable source notes written beside the exported layouts.
+
+        """
         if output_root.exists():
             shutil.rmtree(output_root)
         output_root.mkdir(parents=True, exist_ok=True)
@@ -109,7 +118,8 @@ class PlatformExporter:
     @staticmethod
     def _required(path: Path, label: str) -> Path:
         if not path.is_file():
-            raise RuntimeError(f"required icon asset is missing: {label}")
+            message = f"required icon asset is missing: {label}"
+            raise RuntimeError(message)
         return path
 
     def _windows(self, svg: Path, folder: Path) -> None:
@@ -133,7 +143,7 @@ class PlatformExporter:
             width = 0 if size == 256 else size
             height = 0 if size == 256 else size
             directory += struct.pack(
-                "<BBBBHHII",
+                _ICO_DIRECTORY_ENTRY_FORMAT,
                 width,
                 height,
                 0,
@@ -147,7 +157,7 @@ class PlatformExporter:
             offset += len(data)
 
         with output.open("wb") as stream:
-            stream.write(struct.pack("<HHH", 0, 1, count))
+            stream.write(struct.pack(_ICO_HEADER_FORMAT, 0, 1, count))
             stream.write(directory)
             stream.write(payload)
 
@@ -214,10 +224,8 @@ echo "Installed icon into $TARGET"
 """,
             encoding="utf-8",
         )
-        try:
+        with suppress(OSError):
             script.chmod(0o755)
-        except OSError:
-            pass
 
     def _linux_hicolor(self, svg: Path, root: Path) -> None:
         for size in LINUX_SIZES:
@@ -331,9 +339,19 @@ android:roundIcon=\"@mipmap/ic_launcher_round\"
         svg: Path,
         ratio: float,
     ) -> Iterator[Path]:
-        """Zoom out an SVG page so authored art fits a centered safe zone."""
+        """Zoom out an SVG page so authored art fits a centered safe zone.
+
+        Yields:
+            Path to a temporary SVG carrying the expanded view box.
+
+        Raises:
+            ValueError: If ``ratio`` is outside the open-closed unit interval.
+            RuntimeError: If the source SVG has no parseable view box.
+
+        """
         if not 0 < ratio <= 1:
-            raise ValueError("safe-zone ratio must be in (0, 1]")
+            message = "safe-zone ratio must be in (0, 1]"
+            raise ValueError(message)
         source = svg.read_text(encoding="utf-8")
         pattern = re.compile(
             r'viewBox=["\']\s*'
@@ -344,7 +362,8 @@ android:roundIcon=\"@mipmap/ic_launcher_round\"
         )
         match = pattern.search(source)
         if match is None:
-            raise RuntimeError(f"SVG viewBox is missing: {svg}")
+            message = f"SVG viewBox is missing: {svg}"
+            raise RuntimeError(message)
         min_x, min_y, width, height = map(float, match.groups())
         expanded_width = width / ratio
         expanded_height = height / ratio
@@ -375,12 +394,21 @@ android:roundIcon=\"@mipmap/ic_launcher_round\"
         svg: Path,
         color: str,
     ) -> Iterator[Path]:
-        """Temporarily place an opaque rectangle below an authored SVG."""
+        """Temporarily place an opaque rectangle below an authored SVG.
+
+        Yields:
+            Path to a temporary SVG containing the background rectangle.
+
+        Raises:
+            RuntimeError: If the source SVG root element cannot be located.
+
+        """
         source = svg.read_text(encoding="utf-8")
         start = source.find("<svg")
         end = source.find(">", start)
         if start < 0 or end < 0:
-            raise RuntimeError(f"SVG root element is missing: {svg}")
+            message = f"SVG root element is missing: {svg}"
+            raise RuntimeError(message)
         rectangle = (
             f'\n<rect x="0" y="0" width="100%" height="100%" '
             f'fill="{color}"/>\n'
