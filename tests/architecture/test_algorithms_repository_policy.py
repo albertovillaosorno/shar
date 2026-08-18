@@ -55,7 +55,6 @@ def test_algorithm_workspace_is_default_deny_with_public_exceptions() -> None:
     )
 
 
-
 def test_algorithm_workspace_tracks_semantic_directory_anchors() -> None:
     """Require README anchors for semantic directories that may be empty."""
     required = {

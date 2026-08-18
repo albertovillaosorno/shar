@@ -45,6 +45,7 @@ import shutil
 import subprocess
 import sys
 import tomllib
+from typing import NamedTuple
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -103,6 +104,15 @@ _RUSTUP_SHA256 = {
 
 class BootstrapFailure(RuntimeError):
     """One actionable dependency-bootstrap failure."""
+
+
+class CargoBuildContext(NamedTuple):
+    """Exact Rust tools and process environment for one Cargo build."""
+
+    cargo: Path
+    rustc: Path
+    binutils: Path | None
+    environment: dict[str, str]
 
 
 def _root() -> Path:
@@ -554,10 +564,7 @@ def _visual_studio_environment(  # noqa: PLR0912, PLR0914
 
 def _build_cargo_binary(
     root: Path,
-    cargo: Path,
-    rustc: Path,
-    binutils: Path | None,
-    environment: dict[str, str],
+    context: CargoBuildContext,
     *,
     package: str,
     binary: str,
@@ -567,19 +574,19 @@ def _build_cargo_binary(
     target = root / _CARGO_TARGET
     cargo_home.mkdir(parents=True, exist_ok=True)
     target.mkdir(parents=True, exist_ok=True)
-    environment = environment.copy()
+    environment = context.environment.copy()
     environment["CARGO_HOME"] = str(cargo_home)
     environment["CARGO_TARGET_DIR"] = str(target)
-    environment["RUSTC"] = str(rustc)
-    path_parts = [str(rustc.parent)]
-    if binutils is not None:
-        path_parts.append(str(binutils))
+    environment["RUSTC"] = str(context.rustc)
+    path_parts = [str(context.rustc.parent)]
+    if context.binutils is not None:
+        path_parts.append(str(context.binutils))
     previous_path = environment.get("PATH")
     if previous_path:
         path_parts.append(previous_path)
     environment["PATH"] = os.pathsep.join(path_parts)
     command = [
-        str(cargo),
+        str(context.cargo),
         "build",
         "--locked",
         "--release",
@@ -622,6 +629,49 @@ def _publish_validator(root: Path, built: Path) -> Path:
     return destination.resolve()
 
 
+def _validator_evidence(
+    root: Path,
+    context: CargoBuildContext,
+    *,
+    publish_validator: bool,
+) -> tuple[dict[str, str], dict[str, str]]:
+    """Build both source validators and return their publication evidence."""
+    built = _build_cargo_binary(
+        root,
+        context,
+        package="game_manifest",
+        binary="validate-game",
+    )
+    deep_built = _build_cargo_binary(
+        root,
+        context,
+        package="shar_source_audit",
+        binary="validate-source-deep",
+    )
+    validator = (
+        _publish_validator(root, built)
+        if publish_validator
+        else built.resolve()
+    )
+    deep_validator = (
+        _publish_validator(root, deep_built)
+        if publish_validator
+        else deep_built.resolve()
+    )
+    return (
+        {
+            "path": str(validator),
+            "sha256": _sha256(validator),
+            "source_sha256": _validator_source_sha256(root),
+        },
+        {
+            "path": str(deep_validator),
+            "sha256": _sha256(deep_validator),
+            "source_sha256": _deep_validator_source_sha256(root),
+        },
+    )
+
+
 def _write_json(path: Path, value: dict[str, object]) -> None:
     """Atomically persist machine-readable dependency evidence."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -658,33 +708,11 @@ def _run(
     rust_host = _rust_host(rustc)
     binutils = _resolve_binutils(root, args.binutils, rust_host)
     environment, msvc = _visual_studio_environment(root, rust_host)
-    built = _build_cargo_binary(
+    context = CargoBuildContext(cargo, rustc, binutils, environment)
+    validator, deep_validator = _validator_evidence(
         root,
-        cargo,
-        rustc,
-        binutils,
-        environment,
-        package="game_manifest",
-        binary="validate-game",
-    )
-    deep_built = _build_cargo_binary(
-        root,
-        cargo,
-        rustc,
-        binutils,
-        environment,
-        package="shar_source_audit",
-        binary="validate-source-deep",
-    )
-    validator = (
-        _publish_validator(root, built)
-        if publish_validator
-        else built.resolve()
-    )
-    deep_validator = (
-        _publish_validator(root, deep_built)
-        if publish_validator
-        else deep_built.resolve()
+        context,
+        publish_validator=publish_validator,
     )
     return {
         "cargo": {
@@ -709,16 +737,8 @@ def _run(
             "version": rustc_version,
         },
         "schema": _SCHEMA,
-        "validator": {
-            "path": str(validator),
-            "sha256": _sha256(validator),
-            "source_sha256": _validator_source_sha256(root),
-        },
-        "deep_source_validator": {
-            "path": str(deep_validator),
-            "sha256": _sha256(deep_validator),
-            "source_sha256": _deep_validator_source_sha256(root),
-        },
+        "validator": validator,
+        "deep_source_validator": deep_validator,
     }
 
 

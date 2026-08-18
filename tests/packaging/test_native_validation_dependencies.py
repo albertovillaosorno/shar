@@ -133,10 +133,13 @@ class NativeValidationBootstrapTests(unittest.TestCase):
         launchers = _MODULE._launchers(
             _ROOT,
             host,
-            Path("/repo/cargo"),
-            {"CARGO_HOME": "/repo/cargo-home", "RUSTUP_HOME": "/repo/rustup"},
-            Path("/repo/cspell.mjs"),
-            Path("/repo/markdownlint.mjs"),
+            cargo=Path("/repo/cargo"),
+            rust_environment={
+                "CARGO_HOME": "/repo/cargo-home",
+                "RUSTUP_HOME": "/repo/rustup",
+            },
+            cspell=Path("/repo/cspell.mjs"),
+            markdownlint=Path("/repo/markdownlint.mjs"),
         )
         self.assertEqual(
             sorted(launchers),

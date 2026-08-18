@@ -237,6 +237,7 @@ def _install_javascript(root: Path, tools: HostTools) -> tuple[Path, Path]:
 def _launchers(
     root: Path,
     host: HostTools,
+    *,
     cargo: Path,
     rust_environment: dict[str, str],
     cspell: Path,
@@ -284,16 +285,16 @@ def _windows_launcher(launcher: Launcher) -> str:
     for key, value in launcher.environment:
         lines.append(f'set "{key}={value}"')
     command = " ".join(f'"{value}"' for value in launcher.command)
-    lines.append(f"{command} %*")
-    lines.append("exit /b %errorlevel%")
+    lines.extend((f"{command} %*", "exit /b %errorlevel%"))
     return "\r\n".join(lines) + "\r\n"
 
 
 def _prepare_jig_cargo_home(root: Path) -> Path:
     """Create Jig's real native Cargo runtime root without duplicating tools."""
     cargo_home = root / ".dependencies/cargo-home"
-    is_junction = getattr(os.path, "isjunction", lambda _path: False)
-    if cargo_home.is_symlink() or is_junction(cargo_home):
+    is_junction = getattr(os.path, "isjunction", None)
+    redirected = is_junction is not None and is_junction(cargo_home)
+    if cargo_home.is_symlink() or redirected:
         raise BootstrapError(
             f"Jig Cargo home may not be a redirect: {cargo_home}"
         )
@@ -329,8 +330,7 @@ def _require_launcher_version(path: Path, expected: str, label: str) -> str:
     output = _run([str(path), "--version"], timeout=60).stdout.strip()
     tokens = output.split()
     admitted = any(
-        token == expected
-        or token == f"v{expected}"
+        token in {expected, f"v{expected}"}
         or token.startswith(f"{expected}.windows.")
         for token in tokens
     )
@@ -348,7 +348,14 @@ def prepare(root: Path) -> dict[str, object]:
     cspell, markdownlint = _install_javascript(root, host)
     launchers = _write_launchers(
         root,
-        _launchers(root, host, cargo, rust_environment, cspell, markdownlint),
+        _launchers(
+            root,
+            host,
+            cargo=cargo,
+            rust_environment=rust_environment,
+            cspell=cspell,
+            markdownlint=markdownlint,
+        ),
     )
     expected = {
         "cspell.cmd": (_CSPELL_VERSION, "CSpell"),

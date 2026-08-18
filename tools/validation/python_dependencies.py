@@ -59,8 +59,9 @@ def _root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _default_source_python(_root: Path) -> Path:
+def _default_source_python(root: Path) -> Path:
     """Use the invoking interpreter; version validation remains fail-closed."""
+    del root  # Kept for the shared repository-bootstrap call shape.
     return Path(sys.executable)
 
 
