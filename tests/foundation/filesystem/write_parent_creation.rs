@@ -63,6 +63,12 @@ impl FileWriter for RecordingWriter {
         self.write_calls.set(next_count);
         Ok(())
     }
+
+    fn write_new_bytes(&self, _path: &Path, _bytes: &[u8]) -> io::Result<()> {
+        let next_count = self.write_calls.get().saturating_add(1);
+        self.write_calls.set(next_count);
+        Ok(())
+    }
 }
 
 #[test]

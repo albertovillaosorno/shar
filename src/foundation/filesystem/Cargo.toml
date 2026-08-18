@@ -23,6 +23,10 @@ name = "current_directory_creation"
 path = "../../../tests/foundation/filesystem/current_directory_creation.rs"
 
 [[test]]
+name = "create_new_write"
+path = "../../../tests/foundation/filesystem/create_new_write.rs"
+
+[[test]]
 name = "directory_creation"
 path = "../../../tests/foundation/filesystem/directory_creation.rs"
 

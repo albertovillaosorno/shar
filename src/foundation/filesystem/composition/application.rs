@@ -140,6 +140,51 @@ impl WriteFile {
         Self::bytes(writer, path, text.as_bytes(), create_parents)
     }
 
+    /// Creates one new file with complete bytes and optional missing parents.
+    ///
+    /// # Errors
+    ///
+    /// Returns `AlreadyExists` when the destination exists, or another provider
+    /// I/O error when validation, parent creation, or writing fails.
+    pub fn new_bytes(
+        writer: &(impl FileWriter + ?Sized),
+        path: &Path,
+        bytes: &[u8],
+        create_parents: bool,
+    ) -> io::Result<()> {
+        require_explicit_path(path, "create new file")?;
+        if !has_file_destination(path) {
+            return Err(path_error(
+                io::ErrorKind::InvalidInput,
+                "create new file",
+                path,
+                "path must identify an explicit file destination",
+            ));
+        }
+        if create_parents
+            && let Some(parent) = path.parent()
+            && !parent.as_os_str().is_empty()
+            && has_meaningful_component(parent)
+        {
+            writer.create_dir_all(parent)?;
+        }
+        writer.write_new_bytes(path, bytes)
+    }
+
+    /// Creates one new UTF-8 text file and optional missing parents.
+    ///
+    /// # Errors
+    ///
+    /// Returns the provider I/O error from [`Self::new_bytes`].
+    pub fn new_text(
+        writer: &(impl FileWriter + ?Sized),
+        path: &Path,
+        text: &str,
+        create_parents: bool,
+    ) -> io::Result<()> {
+        Self::new_bytes(writer, path, text.as_bytes(), create_parents)
+    }
+
     /// Creates one directory and every missing parent.
     ///
     /// # Errors
