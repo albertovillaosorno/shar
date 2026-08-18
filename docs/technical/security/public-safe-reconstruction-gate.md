@@ -107,9 +107,11 @@ protected target. Authoring also compares cross-platform physical file identity,
 so a disjoint hard-link alias of a source file cannot become protected target
 material. Source evidence itself must also contain one record per physical file;
 hard-link aliases are rejected before source file/byte minima are evaluated and
-cannot inflate admission evidence. A published plan remains unusable without
-the local source
-evidence admitted by its source-bound replay contract. The generic engine's
+cannot inflate admission evidence. Directory replay also rejects target paths
+that overlap by ancestry, so one protected file cannot become the parent of
+another protected file during sequential persistence. A published plan remains
+unusable without the local source evidence admitted by its source-bound replay
+contract. The generic engine's
 external round-trip tests require caller-supplied source at replay and verify
 that create/replay does not change the caller's source bytes or layout.
 

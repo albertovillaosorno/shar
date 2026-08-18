@@ -78,8 +78,11 @@ pointing the target back at the source tree. Authoring also rejects target files
 that are hard-link aliases of any source file by cross-platform physical file
 identity, closing a path-disjoint alias of the same payload. Source collection
 also rejects repeated physical files before source file/byte limits are checked,
-so hard-link aliases cannot inflate generic admission evidence. These tests
-establish engine-level source binding and read-only behavior; they do not certify
+so hard-link aliases cannot inflate generic admission evidence. Replay document
+validation also rejects ancestor/descendant target path collisions before
+decryption or writes, requiring one realizable protected output tree. These
+tests establish engine-level source binding and read-only behavior; they do not
+certify
 the still-placeholder distributable family plans or replace the pending
 representative-install similarity calibration.
 

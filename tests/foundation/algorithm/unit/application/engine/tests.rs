@@ -31,7 +31,13 @@
 
 //! Algorithm application codec unit tests.
 
-use super::{decode_hex, hex_bytes};
+use crate::document::{
+    ALGORITHM_SCHEMA, AlgorithmDocument, ProtectedTarget, SourceRecord,
+    TargetDescriptor, TargetKind,
+};
+use crate::domain::Settings;
+
+use super::{decode_hex, hex_bytes, settings_sha256, validate_document};
 
 #[test]
 fn hexadecimal_round_trip_is_exact() {
@@ -42,4 +48,53 @@ fn hexadecimal_round_trip_is_exact() {
         Ok(input.to_vec()),
         "hex round trip must preserve bytes"
     );
+}
+
+fn settings() -> Result<Settings, String> {
+    let text = r#"{
+      "schema":"shar.algorithm.settings.v1",
+      "minimum_source_files":1,
+      "minimum_source_bytes":1024,
+      "maximum_source_files":16,
+      "maximum_target_files":16,
+      "maximum_file_bytes":1048576,
+      "maximum_source_bytes":4194304,
+      "maximum_target_bytes":4194304
+    }"#;
+    Settings::from_json(text).map_err(|error| error.to_string())
+}
+
+fn protected_target(path: &str) -> ProtectedTarget {
+    ProtectedTarget {
+        descriptor: TargetDescriptor {
+            path: path.to_owned(),
+            bytes: 1,
+            sha256: "0".repeat(64),
+        },
+        nonce: "00".repeat(12),
+        ciphertext: "00".to_owned(),
+    }
+}
+
+#[test]
+fn directory_target_ancestor_collision_is_rejected() -> Result<(), String> {
+    let settings = settings()?;
+    let document = AlgorithmDocument {
+        schema: ALGORITHM_SCHEMA.to_owned(),
+        settings_sha256: settings_sha256(&settings)
+            .map_err(|error| error.to_string())?,
+        source: vec![SourceRecord {
+            input: 0,
+            path: String::new(),
+            bytes: 1024,
+            sha256: "0".repeat(64),
+        }],
+        target_kind: TargetKind::Directory,
+        target: vec![protected_target("a"), protected_target("a/b")],
+    };
+
+    if validate_document(&document, &settings).is_ok() {
+        return Err("ancestor target path collision was accepted".to_owned());
+    }
+    Ok(())
 }
