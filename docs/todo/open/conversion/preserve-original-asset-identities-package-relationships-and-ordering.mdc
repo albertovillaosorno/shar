@@ -70,6 +70,10 @@ fails closed before package-mesh publication. Direct root-owner rows additionall
 must self-own: their `container_ordinal` must equal their own source ordinal,
 matching the P3D extractor's deterministic top-level-ancestor contract. A
 focused regression rejects a root ordinal 1 that attempts to claim container 2.
+World-level mesh discovery also validates the extractor's exact relative path
+contract: a row labeled `mesh` must resolve as `mesh/<member>.json` before that
+member can be loaded from the mesh component directory. A focused regression
+rejects `kind: mesh` provenance that instead names `shader/shared.json`.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
