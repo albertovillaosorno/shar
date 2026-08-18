@@ -54,5 +54,9 @@ Depends on stable source validation, algorithms, and package-layout contracts.
 
 ## Evidence
 
+`src/user/README.md` and its boundary sidecar now establish the source-domain
+authority for the future lightweight release surface without claiming that any
+exporter, GUI, launcher, or release payload has been implemented yet.
+
 This is the intended lightweight path for ordinary players; from-scratch Unreal
 repository builds remain an expert/developer workflow.
