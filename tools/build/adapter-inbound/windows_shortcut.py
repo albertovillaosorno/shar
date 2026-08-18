@@ -164,13 +164,13 @@ def _parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     """Create the shortcut only on Windows and only after approval."""
+    args = _parser().parse_args()
     if os.name != "nt":
         print(
             "shortcut: this helper is available only on Windows",
             file=sys.stderr,
         )
         return 2
-    args = _parser().parse_args()
     target = _target(args.target, _root())
     if not _approved(target, assume_yes=args.yes):
         print("shortcut: cancelled; no shortcut was created")
