@@ -57,6 +57,11 @@ Direct runner invocation now delegates the saved architecture decision back to
 prove the exact saved path is revalidated, a failed architecture revalidation
 stops the runner, and `main()` performs that gate before target consumption.
 
+Mobile publication now consumes the declared artifact kind instead of treating
+any archive file as success. Android candidates must contain an APK and iOS
+candidates must contain an IPA before atomic publication; regression fixtures
+prove wrong mobile artifacts never create a completed `dist/<ARCH>/` target.
+
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its
 unpublished test candidate contained 30 files totaling about 689 MiB, including

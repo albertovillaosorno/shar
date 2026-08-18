@@ -489,6 +489,23 @@ def _has_payload(path: Path) -> bool:
     return path.is_dir() and any(item.is_file() for item in path.rglob("*"))
 
 
+def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
+    """Require mobile UAT archives to contain their declared package kind."""
+    expected = {
+        "apk": (".apk", "Android APK"),
+        "ipa": (".ipa", "iOS IPA"),
+    }.get(target.artifact)
+    if expected is None:
+        return
+    suffix, label = expected
+    if any(
+        item.is_file() and item.suffix.casefold() == suffix
+        for item in candidate.rglob("*")
+    ):
+        return
+    raise RunFailure(f"candidate package has no {label}: {candidate}")
+
+
 def _cache_nonruntime_artifacts(
     candidate: Path,
     work: Path,
@@ -565,6 +582,7 @@ def _build_target(
     arguments = _build_arguments(project, target, candidate, staging)
     _run_uat(root, uat, arguments, log)
     _cache_nonruntime_artifacts(candidate, work, target)
+    _validate_candidate_artifact(candidate, target)
     destination = root / _DIST_ROOT / target.identifier
     _publish(candidate, destination)
     print(f"run: {target.identifier}: published {destination}")

@@ -207,6 +207,97 @@ class PublicationArtifactTests(unittest.TestCase):
             self.assertFalse(stale.exists())
 
 
+class CandidateArtifactTests(unittest.TestCase):
+    """Require mobile candidates to contain their declared package kind."""
+
+    def test_android_candidate_requires_apk(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-android-candidate-",
+        ) as raw:
+            candidate = Path(raw)
+            (candidate / "not-an-apk.txt").write_text(
+                "wrong artifact\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["android-arm64"],
+                )
+
+    def test_ios_candidate_requires_ipa(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-ios-candidate-") as raw:
+            candidate = Path(raw)
+            (candidate / "not-an-ipa.txt").write_text(
+                "wrong artifact\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(_RUN.RunFailure, "iOS IPA"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["ios-arm64"],
+                )
+
+    def test_mobile_artifact_may_be_nested_in_uat_archive(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-mobile-candidate-",
+        ) as raw:
+            candidate = Path(raw)
+            nested = candidate / "package"
+            nested.mkdir()
+            (nested / "shar.apk").write_bytes(b"apk")
+
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["android-arm64"],
+            )
+
+    def test_build_rejects_wrong_mobile_artifact_before_publication(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-mobile-build-") as raw:
+            root = Path(raw)
+            target = _RUN._TARGETS_BY_ID["android-arm64"]
+
+            def write_wrong_archive(
+                _root: Path,
+                _uat: Path,
+                arguments: list[str],
+                _log: Path,
+            ) -> None:
+                archive = next(
+                    value
+                    for value in arguments
+                    if value.startswith("-ArchiveDirectory=")
+                )
+                candidate = Path(archive.split("=", 1)[1])
+                (candidate / "not-an-apk.txt").write_text(
+                    "wrong artifact\n",
+                    encoding="utf-8",
+                )
+
+            with (
+                mock.patch.object(_RUN, "_verify_sdk"),
+                mock.patch.object(
+                    _RUN,
+                    "_run_uat",
+                    side_effect=write_wrong_archive,
+                ),
+                self.assertRaisesRegex(_RUN.RunFailure, "Android APK"),
+            ):
+                _RUN._build_target(
+                    root,
+                    Path("/uat"),
+                    Path("/project/shar.uproject"),
+                    target,
+                    validate_only=False,
+                )
+
+            self.assertFalse((root / "dist/android-arm64").exists())
+
+
 class ArchitectureRevalidationTests(unittest.TestCase):
     """Require direct runner use to revalidate saved target decisions."""
 
