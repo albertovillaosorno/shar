@@ -52,6 +52,7 @@ use std::path::{Path, PathBuf};
 
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
+use shar_sha256::digest_hex;
 
 use super::expression::vertex_expression_json;
 use super::image::detect_image_extension;
@@ -91,6 +92,7 @@ impl LosslessPackageExporter {
     pub fn write(input_path: &Path, output_dir: &Path) -> Result<(), P3dError> {
         let input_bytes = local::read_bytes(input_path)
             .map_err(|error| P3dError::invalid_source(error.to_string()))?;
+        let source_sha256 = digest_hex(&input_bytes);
         let prepared = prepare_p3d_bytes(&input_bytes)?;
         let bytes = prepared.bytes.into_owned();
         let document = analyze_p3d(&bytes)?;
@@ -126,7 +128,7 @@ impl LosslessPackageExporter {
             )?);
         }
         let mut lines = String::new();
-        lines.push_str(&package_header(input_path, &document, outputs.len()));
+        lines.push_str(&package_header(&document, outputs.len(), &source_sha256));
         lines.push('\n');
         for output in &outputs {
             lines.push_str(&component_line(output));

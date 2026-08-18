@@ -30,7 +30,7 @@
 
 //! Filesystem batch identity tests test module.
 
-use super::manifest_is_complete;
+use super::{manifest_is_complete, manifest_source_matches_bytes};
 
 const PACKAGE_HEADER_ONE: &str = concat!(
     r#"{"schema":"p3d.package.v1","#,
@@ -183,4 +183,16 @@ fn rejects_published_parent_relationship_mismatches() {
     );
     assert!(!manifest_is_complete(depth.as_str()));
     assert!(!manifest_is_complete(container.as_str()));
+}
+
+#[test]
+fn cache_source_digest_must_match_current_input_bytes() {
+    let source = b"current-source";
+    let digest = shar_sha256::digest_hex(source);
+    let header = format!(
+        r#"{{"schema":"p3d.package.v1","source_sha256":"{digest}","byte_len":24,"chunk_count":2,"component_count":1}}"#
+    );
+    assert!(manifest_source_matches_bytes(&header, source));
+    assert!(!manifest_source_matches_bytes(&header, b"changed-source"));
+    assert!(!manifest_source_matches_bytes(PACKAGE_HEADER_ONE, source));
 }

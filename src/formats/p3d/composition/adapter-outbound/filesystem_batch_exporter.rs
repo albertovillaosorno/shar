@@ -36,7 +36,7 @@ use schoenwald_filesystem::adapters::driving::local;
 use schoenwald_filesystem::{DiagnosticPath, PathKind};
 
 use super::LosslessPackageExporter;
-use super::filesystem_batch_cache::is_cache_complete;
+use super::filesystem_batch_cache::is_cache_current;
 use super::json::escape_json;
 use super::root_identity::root_identity_path;
 use crate::application::ExportPackage;
@@ -86,7 +86,7 @@ fn export_batch(
             let output_dir = output_root
                 .join(root_identity_path(input_root))
                 .join(path_without_extension(relative));
-            if is_cache_complete(&output_dir) {
+            if is_cache_current(&output_dir, &file) {
                 totals.skipped = totals.skipped.saturating_add(1);
                 let row = report_line(
                     "skipped_complete",
@@ -106,7 +106,7 @@ fn export_batch(
             ) {
                 Ok(()) => {
                     totals.extracted = totals.extracted.saturating_add(1);
-                    let status = if is_cache_complete(&output_dir) {
+                    let status = if is_cache_current(&output_dir, &file) {
                         "ok_complete"
                     } else {
                         "ok_pending"

@@ -102,6 +102,11 @@ admission now requires the ancestry fields emitted by `component_line` and
 validates the same root/nested relationship invariants before reusing normalized
 artifacts. When an immediate published parent is present, depth and top-level
 container continuity must also agree; omitted intermediate chunks remain valid.
+Normalized P3D cache reuse is now bound to the current exact raw source bytes:
+new package headers record `source_sha256`, and the batch exporter skips a
+complete cache only when that local digest matches the current input. Replacing
+a source P3D in place therefore forces regeneration instead of reusing stale
+normalized evidence; no source path is added to the manifest.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

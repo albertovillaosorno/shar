@@ -31,13 +31,15 @@
 //! Package test module.
 
 use p3d::adapters::driven::package::{
-    ComponentOutput, component_line, kind_schema,
+    ComponentOutput, component_line, kind_schema, package_header,
 };
-use p3d::{ChunkKind, ChunkRecord};
+use p3d::domain::chunk::Endian;
+use p3d::{ChunkKind, ChunkRecord, P3dDocument};
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 use serde_json as _;
 use shar_json_text as _;
+use shar_sha256 as _;
 
 fn component(name: &str) -> ComponentOutput {
     ComponentOutput {
@@ -119,4 +121,18 @@ fn root_component_json_uses_null_parent_ordinal() {
 #[test]
 fn unknown_kind_uses_unknown_schema_identity() {
     assert_eq!(kind_schema("unregistered_kind"), "unknown");
+}
+
+#[test]
+fn package_header_binds_exact_source_digest() {
+    let document = P3dDocument {
+        endian: Endian::Little,
+        compression: "none",
+        byte_len: 24,
+        chunks: vec![component("root").chunk, component("child").chunk],
+    };
+    let digest = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    let header = package_header(&document, 1, digest);
+
+    assert!(header.contains(&format!(r#""source_sha256":"{digest}""#)));
 }
