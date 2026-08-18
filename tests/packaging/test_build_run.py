@@ -445,6 +445,45 @@ class PublicationTransactionTests(unittest.TestCase):
             self.assertTrue((candidate / "new.txt").is_file())
             self.assertFalse(destination.exists())
 
+    def test_rejects_broken_link_backup_before_candidate_moves(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-backup-link-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            destination = root / "dist/linux-x64"
+            candidate.mkdir()
+            destination.parent.mkdir()
+            (candidate / "new.txt").write_text("new", encoding="utf-8")
+            backup = destination.with_name(".linux-x64.previous")
+            backup.mkdir()
+            original_exists = Path.exists
+            original_link = _RUN._is_directory_link
+
+            def report_backup_missing(path: Path) -> bool:
+                if path == backup:
+                    return False
+                return original_exists(path)
+
+            def report_backup_as_link(path: Path) -> bool:
+                return path == backup or original_link(path)
+
+            with (
+                mock.patch.object(Path, "exists", report_backup_missing),
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_backup_as_link,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "publication backup must be a real directory",
+                ),
+            ):
+                _RUN._publish(candidate, destination)
+
+            self.assertTrue((candidate / "new.txt").is_file())
+            self.assertFalse(destination.exists())
+            self.assertTrue(backup.is_dir())
+
     def test_cleanup_failure_rolls_back_publication_swap(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-publish-rollback-",
