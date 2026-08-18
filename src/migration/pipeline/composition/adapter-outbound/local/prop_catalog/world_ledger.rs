@@ -82,6 +82,7 @@ pub(super) fn read_world_ledger(
     let mut groups: BTreeMap<usize, Vec<LedgerRow>> = BTreeMap::new();
     let mut ordinals = BTreeSet::new();
     let mut paths = BTreeSet::new();
+    let mut relations: BTreeMap<usize, (usize, usize, usize)> = BTreeMap::new();
     for line in text.lines().filter(|line| line.contains("\"path\"")) {
         let value: serde_json::Value =
             serde_json::from_str(line).map_err(|error| {
@@ -132,7 +133,33 @@ pub(super) fn read_world_ledger(
         if row.depth == 1 {
             let _previous = owners.insert(row.ordinal, row.clone());
         }
+        let _previous = relations.insert(
+            row.ordinal,
+            (row.depth, parent_ordinal, row.container_ordinal),
+        );
         groups.entry(row.container_ordinal).or_default().push(row);
+    }
+    for (ordinal, (depth, parent_ordinal, container_ordinal)) in &relations {
+        let Some((parent_depth, _parent_parent, parent_container)) =
+            relations.get(parent_ordinal)
+        else {
+            continue;
+        };
+        let expected_depth = parent_depth.checked_add(1).ok_or_else(|| {
+            PipelineError::new(format!(
+                "prop parent component ordinal {parent_ordinal} depth overflows"
+            ))
+        })?;
+        if *depth != expected_depth {
+            return Err(PipelineError::new(format!(
+                "prop component ordinal {ordinal} depth {depth} disagrees with parent ordinal {parent_ordinal} depth {parent_depth}"
+            )));
+        }
+        if container_ordinal != parent_container {
+            return Err(PipelineError::new(format!(
+                "prop component ordinal {ordinal} container {container_ordinal} disagrees with parent ordinal {parent_ordinal} container {parent_container}"
+            )));
+        }
     }
     for owner_ordinal in groups.keys() {
         if !owners.contains_key(owner_ordinal) {

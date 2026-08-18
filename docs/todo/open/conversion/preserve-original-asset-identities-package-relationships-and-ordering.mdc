@@ -77,7 +77,11 @@ rejects `kind: mesh` provenance that instead names `shader/shared.json`.
 Ledger intake now consumes the extractor's `parent_ordinal` ancestry evidence as
 well: direct root owners must declare parent 0, while nested published components
 must declare a non-root parent. Focused regressions reject a depth-1 owner whose
-parent is 2 and a depth-2 mesh that incorrectly names root parent 0.
+parent is 2 and a depth-2 mesh that incorrectly names root parent 0. When a
+published child also has its immediate parent present in the ledger, intake now
+requires exactly one depth step and the same top-level container. Focused
+regressions reject both a depth-3 child of a depth-1 parent and a child whose
+published parent belongs to container 1 while the child claims container 2.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
