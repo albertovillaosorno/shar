@@ -245,6 +245,14 @@ def _require_real_directory(path: Path, label: str) -> None:
         raise RunFailure(f"{label} must be a real directory: {path}")
 
 
+def _ensure_real_directory(path: Path, label: str) -> None:
+    """Create one directory or require an existing real directory."""
+    if _path_present(path):
+        _require_real_directory(path, label)
+        return
+    path.mkdir()
+
+
 def _preflight_project_state(project_dir: Path, state_root: Path) -> None:
     """Reject conflicting or malformed project build-state identities."""
     for name in _PROJECT_STATE_NAMES:
@@ -352,12 +360,12 @@ def _rollback_project_state(actions: list[_ProjectStateAction]) -> None:
 def _prepare_project_state(root: Path, project: Path) -> Path:
     """Keep Unreal project-generated state physically below repository cache."""
     project_dir = project.parent
+    cache_root = root / ".cache"
+    _ensure_real_directory(cache_root, "repository cache root")
+    build_root = cache_root / "build"
+    _ensure_real_directory(build_root, "build cache root")
     state_root = root / _PROJECT_STATE_ROOT
-    state_root.parent.mkdir(parents=True, exist_ok=True)
-    if _path_present(state_root):
-        _require_real_directory(state_root, "project-state cache root")
-    else:
-        state_root.mkdir()
+    _ensure_real_directory(state_root, "project-state cache root")
     _preflight_project_state(project_dir, state_root)
     actions: list[_ProjectStateAction] = []
     try:

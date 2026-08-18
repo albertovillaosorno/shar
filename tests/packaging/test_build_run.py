@@ -128,6 +128,62 @@ class ProjectStateMigrationTests(unittest.TestCase):
             self._unlink_project_state(project)
             temporary.cleanup()
 
+    def test_rejects_linked_repository_cache_root(self) -> None:
+        temporary, root, project = self._fixture()
+        try:
+            cache_root = root / ".cache"
+            cache_root.mkdir()
+            original = _RUN._is_directory_link
+
+            def report_cache_as_link(path: Path) -> bool:
+                return path == cache_root or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_cache_as_link,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "repository cache root must be a real directory",
+                ),
+            ):
+                _RUN._prepare_project_state(root, project)
+
+            self.assertFalse((root / _RUN._PROJECT_STATE_ROOT).exists())
+        finally:
+            self._unlink_project_state(project)
+            temporary.cleanup()
+
+    def test_rejects_linked_build_cache_root(self) -> None:
+        temporary, root, project = self._fixture()
+        try:
+            build_root = root / ".cache/build"
+            build_root.mkdir(parents=True)
+            original = _RUN._is_directory_link
+
+            def report_build_as_link(path: Path) -> bool:
+                return path == build_root or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_build_as_link,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "build cache root must be a real directory",
+                ),
+            ):
+                _RUN._prepare_project_state(root, project)
+
+            self.assertFalse((root / _RUN._PROJECT_STATE_ROOT).exists())
+        finally:
+            self._unlink_project_state(project)
+            temporary.cleanup()
+
     def test_rolls_back_when_a_later_link_creation_fails(self) -> None:
         temporary, root, project = self._fixture()
         try:

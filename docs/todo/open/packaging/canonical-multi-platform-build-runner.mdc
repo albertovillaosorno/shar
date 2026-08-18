@@ -74,6 +74,10 @@ The candidate side of the transaction is likewise required to remain a real
 cache-owned directory. A regression proves a linked candidate is rejected
 before it can become a `dist/<ARCH>/` symlink to external content.
 
+Project-state migration now validates both `.cache` and `.cache/build` as real
+repository directories before creating or adopting Unreal-generated state.
+Regressions cover linked cache ancestors so build state cannot escape the repo.
+
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its
 unpublished test candidate contained 30 files totaling about 689 MiB, including
