@@ -629,11 +629,19 @@ def _write_json(path: Path, value: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     candidate = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     text = json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
+    created = False
     try:
-        candidate.write_text(text + "\n", encoding="utf-8", newline="\n")
+        with candidate.open(
+            "x",
+            encoding="utf-8",
+            newline="\n",
+        ) as handle:
+            created = True
+            handle.write(text + "\n")
         Path(candidate).replace(path)
     finally:
-        candidate.unlink(missing_ok=True)
+        if created:
+            candidate.unlink(missing_ok=True)
 
 
 def _run(args: argparse.Namespace) -> dict[str, object]:

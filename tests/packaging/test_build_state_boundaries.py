@@ -67,6 +67,73 @@ _DEPENDENCIES = _load(
 )
 
 
+class AtomicBuildEvidenceWriteTests(unittest.TestCase):
+    """Never truncate a pre-existing atomic staging identity."""
+
+    @staticmethod
+    def _collision(output: Path, pid: int) -> Path:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        collision = output.with_name(f".{output.name}.{pid}.tmp")
+        collision.write_text("sentinel\n", encoding="utf-8")
+        return collision
+
+    def test_arch_write_preserves_preexisting_staging_file(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-arch-atomic-") as raw:
+            output = Path(raw) / "arch.json"
+            collision = self._collision(output, 4242)
+            with (
+                mock.patch.object(_ARCH.os, "getpid", return_value=4242),
+                self.assertRaises(FileExistsError),
+            ):
+                _ARCH._write_selection(
+                    output,
+                    [_ARCH._TARGETS_BY_ID["linux-x64"]],
+                )
+            self.assertEqual(
+                collision.read_text(encoding="utf-8"),
+                "sentinel\n",
+            )
+            self.assertFalse(output.exists())
+
+    def test_check_write_preserves_preexisting_staging_file(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-check-atomic-") as raw:
+            output = Path(raw) / "check.json"
+            collision = self._collision(output, 4242)
+            with (
+                mock.patch.object(_CHECK.os, "getpid", return_value=4242),
+                self.assertRaises(FileExistsError),
+            ):
+                _CHECK._write_json(output, {})
+            self.assertEqual(
+                collision.read_text(encoding="utf-8"),
+                "sentinel\n",
+            )
+            self.assertFalse(output.exists())
+
+    def test_dependency_write_preserves_preexisting_staging_file(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-dependency-atomic-",
+        ) as raw:
+            output = Path(raw) / "dependencies.json"
+            collision = self._collision(output, 4242)
+            with (
+                mock.patch.object(
+                    _DEPENDENCIES.os,
+                    "getpid",
+                    return_value=4242,
+                ),
+                self.assertRaises(FileExistsError),
+            ):
+                _DEPENDENCIES._write_json(output, {})
+            self.assertEqual(
+                collision.read_text(encoding="utf-8"),
+                "sentinel\n",
+            )
+            self.assertFalse(output.exists())
+
+
 class CanonicalBuildStateBoundaryTests(unittest.TestCase):
     """Keep canonical build evidence below real repository cache roots."""
 

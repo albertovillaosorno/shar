@@ -198,11 +198,19 @@ def _write_selection(path: Path, selected: list[Target]) -> None:
         indent=2,
         sort_keys=True,
     )
+    created = False
     try:
-        candidate.write_text(data + "\n", encoding="utf-8", newline="\n")
+        with candidate.open(
+            "x",
+            encoding="utf-8",
+            newline="\n",
+        ) as handle:
+            created = True
+            handle.write(data + "\n")
         Path(candidate).replace(path)
     finally:
-        candidate.unlink(missing_ok=True)
+        if created:
+            candidate.unlink(missing_ok=True)
 
 
 def _selected_targets(identifiers: list[str]) -> list[Target]:
