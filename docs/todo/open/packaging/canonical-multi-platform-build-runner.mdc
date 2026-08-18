@@ -85,6 +85,9 @@ output overrides remain independent. Dependency bootstrap additionally requires
 real `.dependencies` and `.dependencies/build` tool storage even when its JSON
 evidence path is overridden, because Cargo, rustup, and validator outputs remain
 repository-owned side effects.
+Canonical `arch.json`, `check.json`, and `dependencies.json` identities are also
+required to be real regular files when already present. Linked or malformed
+saved evidence now fails before it can be consumed, replaced, or cleaned up.
 
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its

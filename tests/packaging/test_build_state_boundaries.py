@@ -137,6 +137,68 @@ class CanonicalBuildStateBoundaryTests(unittest.TestCase):
                 self.assertEqual(_DEPENDENCIES.main(), 1)
             self.assertEqual(output.read_text(encoding="utf-8"), "sentinel\n")
 
+    def test_arch_rejects_linked_canonical_evidence_file(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-arch-file-") as raw:
+            root = Path(raw)
+            output = root / _ARCH._DATA_PATH
+            output.parent.mkdir(parents=True)
+            output.write_text("sentinel\n", encoding="utf-8")
+            original = Path.is_symlink
+
+            def report_output_as_link(path: Path) -> bool:
+                return path == output or original(path)
+
+            with (
+                mock.patch.object(Path, "is_symlink", report_output_as_link),
+                self.assertRaisesRegex(
+                    SystemExit,
+                    "architecture evidence must be a real file",
+                ),
+            ):
+                _ARCH._validate_canonical_output_root(root, output)
+
+    def test_check_rejects_linked_canonical_evidence_file(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-check-file-") as raw:
+            root = Path(raw)
+            output = root / _CHECK._DATA_PATH
+            output.parent.mkdir(parents=True)
+            output.write_text("sentinel\n", encoding="utf-8")
+            original = Path.is_symlink
+
+            def report_output_as_link(path: Path) -> bool:
+                return path == output or original(path)
+
+            with (
+                mock.patch.object(Path, "is_symlink", report_output_as_link),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "preflight evidence must be a real file",
+                ),
+            ):
+                _CHECK._validate_canonical_output_root(root, output)
+
+    def test_dependencies_reject_linked_canonical_evidence_file(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-dependency-file-") as raw:
+            root = Path(raw)
+            output = root / _DEPENDENCIES._DATA_PATH
+            output.parent.mkdir(parents=True)
+            output.write_text("sentinel\n", encoding="utf-8")
+            original = Path.is_symlink
+
+            def report_output_as_link(path: Path) -> bool:
+                return path == output or original(path)
+
+            with (
+                mock.patch.object(Path, "is_symlink", report_output_as_link),
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "dependency evidence must be a real file",
+                ),
+            ):
+                _DEPENDENCIES._validate_canonical_output_root(root, output)
+
     def test_arch_and_check_output_overrides_ignore_canonical_cache_identity(
         self,
     ) -> None:

@@ -616,6 +616,12 @@ def _validate_canonical_output_root(root: Path, output: Path) -> None:
         if is_real:
             continue
         raise CheckFailure(f"{label} must be a real directory: {path}")
+    if os.path.lexists(output) and (
+        not output.is_file() or output.is_symlink()
+    ):
+        raise CheckFailure(
+            f"preflight evidence must be a real file: {output}"
+        )
 
 
 def _write_json(path: Path, value: dict[str, object]) -> None:
