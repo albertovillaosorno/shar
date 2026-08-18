@@ -60,7 +60,9 @@ struct Invocation {
     output: PathBuf,
 }
 
-fn take_value<'a>(values: &mut impl Iterator<Item = &'a String>) -> Result<&'a str, ()> {
+fn take_value<'a>(
+    values: &mut impl Iterator<Item = &'a String>,
+) -> Result<&'a str, ()> {
     values
         .next()
         .map(String::as_str)
@@ -93,7 +95,9 @@ fn parse(arguments: &[String]) -> Result<Invocation, ()> {
             "--source" => sources.push(PathBuf::from(take_value(&mut values)?)),
             "--settings" => set_once(&mut settings, take_value(&mut values)?)?,
             "--target" => set_once(&mut target, take_value(&mut values)?)?,
-            "--algorithm" => set_once(&mut algorithm, take_value(&mut values)?)?,
+            "--algorithm" => {
+                set_once(&mut algorithm, take_value(&mut values)?)?;
+            },
             "--output" => set_once(&mut output, take_value(&mut values)?)?,
             _ => return Err(()),
         }
@@ -120,7 +124,8 @@ fn parse(arguments: &[String]) -> Result<Invocation, ()> {
 fn execute_invocation(invocation: &Invocation) -> Result<(), String> {
     let settings_text = local::read_utf8(&invocation.settings)
         .map_err(|error| format!("cannot read algorithm settings: {error}"))?;
-    let settings = Settings::from_json(&settings_text).map_err(|error| error.to_string())?;
+    let settings = Settings::from_json(&settings_text)
+        .map_err(|error| error.to_string())?;
     match invocation.mode {
         Mode::Create => create_algorithm(
             &settings,
@@ -157,7 +162,8 @@ impl CliProgram for AlgorithmProgram {
             return CommandOutcome::failure().stderr_line(USAGE);
         };
         match execute_invocation(&invocation) {
-            Ok(()) => CommandOutcome::success().stdout_line("algorithm operation completed"),
+            Ok(()) => CommandOutcome::success()
+                .stdout_line("algorithm operation completed"),
             Err(error) => CommandOutcome::failure().stderr_line(error),
         }
     }
