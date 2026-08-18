@@ -626,12 +626,13 @@ fn pins_external_semantic_owners_for_objective_commands() -> Result<(), String>
 
 
 #[test]
-fn semantic_binding_preserves_canonical_kind_and_unavailability() {
+fn semantic_binding_preserves_canonical_kind_and_unavailability(
+) -> Result<(), String> {
     let mapped = MissionObjectiveSemanticReport::from_route_entries_for_tests(
         vec![(2, 0, 3, "goto".to_owned(), Vec::new())],
     );
     let [mapped] = mapped.objectives() else {
-        panic!("mapped objective fixture changed count");
+        return Err("mapped objective fixture changed count".to_owned());
     };
     assert_eq!(mapped.owner_stage_source_ordinal(), 2);
     assert_eq!(mapped.owner_stage_sequence_ordinal(), 0);
@@ -648,7 +649,7 @@ fn semantic_binding_preserves_canonical_kind_and_unavailability() {
             Vec::new(),
         )]);
     let [unavailable] = unavailable.objectives() else {
-        panic!("unavailable objective fixture changed count");
+        return Err("unavailable objective fixture changed count".to_owned());
     };
     assert_eq!(unavailable.source_alias(), "dummy");
     assert_eq!(unavailable.canonical_kind(), None);
@@ -656,6 +657,7 @@ fn semantic_binding_preserves_canonical_kind_and_unavailability() {
         unavailable.unavailable_code(),
         Some("legacy-dummy-objective-unavailable-v1")
     );
+    Ok(())
 }
 
 #[test]
@@ -687,20 +689,22 @@ fn binds_objective_npc_waypoints_to_prior_declaration() -> Result<(), String> {
         )],
     );
     let result = preflight_mission_objective_npc_waypoints(&report)?;
-    assert_eq!(result.waypoints().len(), 2);
-    assert_eq!(result.waypoints()[0].owner_stage_source_ordinal(), 2);
-    assert_eq!(result.waypoints()[0].owner_stage_sequence_ordinal(), 0);
-    assert_eq!(result.waypoints()[0].objective_source_ordinal(), 3);
-    assert_eq!(result.waypoints()[0].source_ordinal(), 5);
-    assert_eq!(result.waypoints()[0].declaration_source_ordinal(), 4);
-    assert_eq!(result.waypoints()[0].npc_id(), "marge");
-    assert_eq!(result.waypoints()[0].npc_locator_id(), "marge_start");
-    assert_eq!(result.waypoints()[1].waypoint_locator_id(), "marge_walk_2");
+    let [first, second] = result.waypoints() else {
+        return Err("objective NPC waypoint count drifted".to_owned());
+    };
+    assert_eq!(first.owner_stage_source_ordinal(), 2);
+    assert_eq!(first.owner_stage_sequence_ordinal(), 0);
+    assert_eq!(first.objective_source_ordinal(), 3);
+    assert_eq!(first.source_ordinal(), 5);
+    assert_eq!(first.declaration_source_ordinal(), 4);
+    assert_eq!(first.npc_id(), "marge");
+    assert_eq!(first.npc_locator_id(), "marge_start");
+    assert_eq!(second.waypoint_locator_id(), "marge_walk_2");
     Ok(())
 }
 
 #[test]
-fn rejects_objective_waypoint_without_unique_prior_npc() {
+fn rejects_objective_waypoint_without_unique_prior_npc() -> Result<(), String> {
     let report = MissionObjectiveSemanticReport::from_route_entries_for_tests(
         vec![(
             2,
@@ -714,7 +718,10 @@ fn rejects_objective_waypoint_without_unique_prior_npc() {
             }],
         )],
     );
-    let error = preflight_mission_objective_npc_waypoints(&report)
-        .expect_err("orphan objective NPC waypoint must fail");
+    let result = preflight_mission_objective_npc_waypoints(&report);
+    let Err(error) = result else {
+        return Err("orphan objective NPC waypoint must fail".to_owned());
+    };
     assert!(error.contains("no unique prior declaration"));
+    Ok(())
 }
