@@ -259,6 +259,14 @@ def _ensure_real_directory(path: Path, label: str) -> None:
     path.mkdir()
 
 
+def _reset_real_directory(path: Path, label: str) -> None:
+    """Replace one repository scratch directory without following links."""
+    if _path_present(path):
+        _require_real_directory(path, label)
+        shutil.rmtree(path)
+    path.mkdir()
+
+
 def _ensure_build_cache_root(root: Path) -> Path:
     """Create or validate canonical repository build-cache ancestors."""
     cache_root = root / ".cache"
@@ -666,10 +674,8 @@ def _build_target(
 
     candidate = work / "candidate"
     staging = work / "stage"
-    shutil.rmtree(candidate, ignore_errors=True)
-    shutil.rmtree(staging, ignore_errors=True)
-    candidate.mkdir(parents=True)
-    staging.mkdir(parents=True)
+    _reset_real_directory(candidate, "candidate scratch root")
+    _reset_real_directory(staging, "staging scratch root")
     log = work / "build.log"
     arguments = _build_arguments(project, target, candidate, staging)
     _run_uat(root, uat, arguments, log)

@@ -296,6 +296,59 @@ class BuildWorkRootTests(unittest.TestCase):
             verify_sdk.assert_not_called()
 
 
+class BuildScratchPathTests(unittest.TestCase):
+    """Reject redirected UAT candidate and staging scratch identities."""
+
+    def _assert_linked_scratch_rejected(self, name: str, label: str) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-build-scratch-") as raw:
+            root = Path(raw)
+            work = root / _RUN._WORK_ROOT / "linux-x64"
+            work.mkdir(parents=True)
+            scratch = work / name
+            scratch.mkdir()
+            original = _RUN._is_directory_link
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+
+            def report_scratch_as_link(path: Path) -> bool:
+                return path == scratch or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_is_directory_link",
+                    side_effect=report_scratch_as_link,
+                ),
+                mock.patch.object(_RUN, "_verify_sdk"),
+                mock.patch.object(_RUN, "_run_uat") as process,
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    f"{label} must be a real directory",
+                ),
+            ):
+                _RUN._build_target(
+                    root,
+                    Path("/uat"),
+                    Path("/project"),
+                    target,
+                    validate_only=False,
+                )
+
+            process.assert_not_called()
+            self.assertTrue(scratch.is_dir())
+
+    def test_rejects_linked_candidate_scratch_before_cleanup(self) -> None:
+        self._assert_linked_scratch_rejected(
+            "candidate",
+            "candidate scratch root",
+        )
+
+    def test_rejects_linked_staging_scratch_before_cleanup(self) -> None:
+        self._assert_linked_scratch_rejected(
+            "stage",
+            "staging scratch root",
+        )
+
+
 class UatWorkPathTests(unittest.TestCase):
     """Keep UAT logs and caches under real work-root identities."""
 
