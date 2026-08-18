@@ -34,7 +34,7 @@
 
 //! Filesystem-backed mission music-state metadata context.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, btree_map::Entry};
 use std::path::{Component, Path, PathBuf};
 
 use schoenwald_filesystem::adapters::driving::local::read_utf8;
@@ -201,18 +201,14 @@ pub(super) fn preflight_mission_music_states(
             continue;
         }
         let level = source_level(snapshot.source_path())?;
-        if !cache.contains_key(&level) {
-            let metadata = load_level_music_metadata(
+        let metadata = match cache.entry(level) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => entry.insert(load_level_music_metadata(
                 score,
                 extracted_root,
                 level,
-            )?;
-            let previous = cache.insert(level, metadata);
-            debug_assert!(previous.is_none());
-        }
-        let metadata = cache.get(&level).ok_or_else(|| {
-            PipelineError::new("mission music metadata cache lost a level")
-        })?;
+            )?),
+        };
         for (
             owner_stage_source_ordinal,
             owner_stage_sequence_ordinal,

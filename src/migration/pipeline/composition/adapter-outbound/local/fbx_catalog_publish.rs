@@ -120,17 +120,19 @@ pub(super) fn export_complete_fbx_catalog(
         let artifact_cleanup = cleanup_directory(output_root);
         let manifest_cleanup = cleanup_file(manifest_path);
         if let Err(cleanup_error) = artifact_cleanup {
+            let cleanup_message = format!(
+                "failed to remove rejected FBX artifacts: {cleanup_error}"
+            );
             return Err(PipelineError::new(format!(
-                "{}; failed to remove rejected FBX artifacts: {}",
-                error,
-                cleanup_error,
+                "{error}; {cleanup_message}"
             )));
         }
         if let Err(cleanup_error) = manifest_cleanup {
+            let cleanup_message = format!(
+                "failed to remove rejected FBX manifest: {cleanup_error}"
+            );
             return Err(PipelineError::new(format!(
-                "{}; failed to remove rejected FBX manifest: {}",
-                error,
-                cleanup_error,
+                "{error}; {cleanup_message}"
             )));
         }
         return Err(error);
