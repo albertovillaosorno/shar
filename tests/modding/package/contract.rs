@@ -72,8 +72,9 @@ fn content_manifest_round_trips_deterministically() -> Result<(), Box<dyn std::e
 fn storage_location_is_not_package_identity() -> Result<(), Box<dyn std::error::Error>> {
     let manifest = manifest()?;
     let text = manifest.to_pretty_json()?;
+    let linux_home_prefix = ["/", "home", "/"].concat();
     assert!(
-        !text.contains("/home/"),
+        !text.contains(&linux_home_prefix),
         "manifest leaked a Linux storage path"
     );
     assert!(

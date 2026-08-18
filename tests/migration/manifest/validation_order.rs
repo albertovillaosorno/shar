@@ -61,8 +61,10 @@ impl GameTree for ScanObservingTree {
 
 struct MalformedStore;
 
+#[cfg(windows)]
 struct MissingTree;
 
+#[cfg(windows)]
 impl GameTree for MissingTree {
     fn kind(&self, _path: &Path) -> io::Result<PathKind> {
         Ok(PathKind::Missing)

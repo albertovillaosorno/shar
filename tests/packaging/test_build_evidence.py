@@ -215,6 +215,25 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class EngineSelectionTests(unittest.TestCase):
+    """Exercise portable default Unreal Engine candidate selection."""
+
+    def test_macos_default_engine_path_preserves_launcher_location(
+        self,
+    ) -> None:
+        with (
+            mock.patch.object(_CHECK.os, "name", "posix"),
+            mock.patch.object(_CHECK.sys, "platform", "darwin"),
+            mock.patch.dict(_CHECK.os.environ, {}, clear=True),
+        ):
+            candidates = _CHECK._engine_candidates(None)
+
+        expected = (
+            Path("/") / "Users" / "Shared" / "Epic Games" / "UE_5.8"
+        )
+        self.assertEqual(candidates, [expected])
+
+
 class SourceSelectionTests(unittest.TestCase):
     """Exercise read-only source-root selection without build toolchains."""
 
