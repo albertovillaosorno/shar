@@ -472,8 +472,9 @@ def _verify_sdk(
         f"-Project={project}",
     ]
     _run_uat(root, uat, arguments, log)
-    if not report.is_file():
+    if not _path_present(report):
         raise RunFailure(f"Turnkey did not produce an SDK report: {report}")
+    _require_real_file(report, "Turnkey SDK report")
     text = report.read_text(encoding="utf-8")
     expected = f"{target.unreal_platform}: (Status=Valid,"
     if expected not in text:

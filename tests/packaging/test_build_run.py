@@ -391,6 +391,48 @@ class UatWorkPathTests(unittest.TestCase):
             process.assert_not_called()
 
 
+class TurnkeyReportTests(unittest.TestCase):
+    """Require Turnkey SDK evidence to remain a real cache-owned file."""
+
+    def test_rejects_linked_sdk_report_after_uat(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            report = work / "turnkey.txt"
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+            original = Path.is_symlink
+
+            def write_linked_report(*_args: object, **_kwargs: object) -> None:
+                report.write_text(
+                    "Linux: (Status=Valid, MinAllowed=0)\n",
+                    encoding="utf-8",
+                )
+
+            def report_as_link(path: Path) -> bool:
+                return path == report or original(path)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_run_uat",
+                    side_effect=write_linked_report,
+                ),
+                mock.patch.object(Path, "is_symlink", report_as_link),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Turnkey SDK report must be a real file",
+                ),
+            ):
+                _RUN._verify_sdk(
+                    root,
+                    Path("/uat"),
+                    Path("/project"),
+                    target,
+                    work,
+                )
+
+
 class PublicationTransactionTests(unittest.TestCase):
     """Keep malformed existing publications unchanged on rejection."""
 
