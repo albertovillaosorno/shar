@@ -744,7 +744,7 @@ kind = "test"
 selectors = ["prefix:tests/formats/fbx/", "prefix:tests/formats/lmlm/", "prefix:tests/formats/p3d/unit/", "exact:tests/formats/p3d/chunk.rs", "exact:tests/formats/p3d/extract.rs", "exact:tests/formats/p3d/package.rs", "exact:tests/formats/p3d/reader.rs", "prefix:tests/formats/rcf/", "prefix:tests/formats/rmv/", "prefix:tests/formats/rsd/", "prefix:tests/formats/rtf/", "prefix:tests/foundation/", "prefix:tests/migration/", "prefix:tests/unreal/"]
 
 [commit]
-allowed_scopes = ["docs", "game-manifest", "jig", "layout", "repo"]
+allowed_scopes = ["docs", "game-manifest", "jig", "layout", "pipeline", "repo"]
 allowed_trailers = ["BREAKING CHANGE"]
 # jig-ignore-next-line: complete Conventional Commit type vocabulary
 allowed_types = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "release", "revert", "style", "test"]
