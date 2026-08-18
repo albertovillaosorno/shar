@@ -74,6 +74,7 @@ recordations
 recoverably
 redistributables
 replayable
+rightsholders
 reimplementation
 reparents
 requiredness

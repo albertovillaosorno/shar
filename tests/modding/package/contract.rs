@@ -2,19 +2,43 @@
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - External contract tests for normalized SHAR mod manifests.
+// - Must-Not:
+//   - Execute package code, inspect private game data, or mutate user content.
+// - Allows:
+//   - Synthetic package manifests, members, and deterministic assertions.
+// - Split-When:
+//   - Another package-contract version requires independent fixtures.
+// - Merge-When:
+//   - Another test module owns the identical normalized manifest contract.
+// - Summary:
+//   - Normalized SHAR mod-package external contract tests.
+// - Description:
+//   - Proves deterministic identity, path safety, trust, and relationships.
+// - Usage:
+//   - Runs as the mod-package crate's external contract test.
+// - Defaults:
+//   - Invalid, ambiguous, or nondeterministic manifests fail closed.
+//
 
 //! External contract tests for normalized SHAR mod manifests.
 
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
+use shar_mod_package::{
+    CONTRACT_VERSION, Dependency, PackageKind, PackageManifest, Provenance,
+    TrustLevel, content_revision, member_from_bytes,
+};
 use shar_sha256 as _;
 use unicode_normalization as _;
-
-use shar_mod_package::{
-    CONTRACT_VERSION, Dependency, PackageKind, PackageManifest, Provenance, TrustLevel,
-    content_revision, member_from_bytes,
-};
 
 fn manifest() -> Result<PackageManifest, Box<dyn std::error::Error>> {
     let mut members = vec![
@@ -47,7 +71,9 @@ fn manifest() -> Result<PackageManifest, Box<dyn std::error::Error>> {
         members,
         provenance: Provenance {
             authors: vec!["original-rightsholders".to_owned()],
-            source: "generated-from-user-supplied-lawful-original-game".to_owned(),
+            source: String::from(
+                "generated-from-user-supplied-lawful-original-game",
+            ),
             license: "NOASSERTION".to_owned(),
         },
         trust_level: TrustLevel::ContentOnly,
@@ -55,7 +81,8 @@ fn manifest() -> Result<PackageManifest, Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn content_manifest_round_trips_deterministically() -> Result<(), Box<dyn std::error::Error>> {
+fn content_manifest_round_trips_deterministically()
+-> Result<(), Box<dyn std::error::Error>> {
     let manifest = manifest()?;
     let first = manifest.to_pretty_json()?;
     let reparsed = PackageManifest::from_json(&first)?;
@@ -69,7 +96,8 @@ fn content_manifest_round_trips_deterministically() -> Result<(), Box<dyn std::e
 }
 
 #[test]
-fn storage_location_is_not_package_identity() -> Result<(), Box<dyn std::error::Error>> {
+fn storage_location_is_not_package_identity()
+-> Result<(), Box<dyn std::error::Error>> {
     let manifest = manifest()?;
     let text = manifest.to_pretty_json()?;
     let linux_home_prefix = ["/", "home", "/"].concat();
@@ -86,7 +114,8 @@ fn storage_location_is_not_package_identity() -> Result<(), Box<dyn std::error::
 }
 
 #[test]
-fn rejects_unknown_fields_and_noncanonical_identity() -> Result<(), Box<dyn std::error::Error>> {
+fn rejects_unknown_fields_and_noncanonical_identity()
+-> Result<(), Box<dyn std::error::Error>> {
     let text = manifest()?.to_pretty_json()?;
     let unknown = text.replacen(
         "\"contract_version\":",
@@ -108,7 +137,8 @@ fn rejects_unknown_fields_and_noncanonical_identity() -> Result<(), Box<dyn std:
 }
 
 #[test]
-fn rejects_path_aliases_collisions_and_traversal() -> Result<(), Box<dyn std::error::Error>> {
+fn rejects_path_aliases_collisions_and_traversal()
+-> Result<(), Box<dyn std::error::Error>> {
     let mut collision = manifest()?;
     collision.members.push(member_from_bytes(
         "content/SOURCE/Léeme.rtf",
@@ -148,7 +178,8 @@ fn rejects_path_aliases_collisions_and_traversal() -> Result<(), Box<dyn std::er
 }
 
 #[test]
-fn native_packages_require_explicit_targets_and_trust() -> Result<(), Box<dyn std::error::Error>> {
+fn native_packages_require_explicit_targets_and_trust()
+-> Result<(), Box<dyn std::error::Error>> {
     let mut native = manifest()?;
     native.package_kind = PackageKind::Native;
     assert!(
@@ -167,8 +198,8 @@ fn native_packages_require_explicit_targets_and_trust() -> Result<(), Box<dyn st
 }
 
 #[test]
-fn rejects_self_relationships_and_nondeterministic_lists() -> Result<(), Box<dyn std::error::Error>>
-{
+fn rejects_self_relationships_and_nondeterministic_lists()
+-> Result<(), Box<dyn std::error::Error>> {
     let mut self_dependency = manifest()?;
     self_dependency.dependencies = vec![Dependency {
         canonical_id: self_dependency.canonical_id.clone(),
