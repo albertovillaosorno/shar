@@ -145,3 +145,18 @@ def test_redirected_wrong_file_name_is_rejected() -> None:
 
         with pytest.raises(module.SourceSelectionError, match=r"Simpsons\.exe"):
             module.resolve_source_selection(redirect)
+
+
+def test_nested_executable_redirect_is_rejected() -> None:
+    if os.name == "nt":
+        pytest.skip("symlink setup is Unix-focused")
+    module = _load()
+    with tempfile.TemporaryDirectory(prefix="shar-user-nested-link-") as value:
+        source, executable = _source(Path(value))
+        nested = source / "copy"
+        nested.mkdir()
+        (nested / "Simpsons.exe").symlink_to(executable)
+
+        pattern = r"nested Simpsons\.exe"
+        with pytest.raises(module.SourceSelectionError, match=pattern):
+            module.resolve_source_selection(source)

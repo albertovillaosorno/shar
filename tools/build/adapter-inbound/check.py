@@ -195,7 +195,7 @@ def _check_game(root: Path, selected: Path | None) -> Path:
     nested = [
         path
         for path in game.rglob("Simpsons.exe")
-        if path.resolve() != executable.resolve()
+        if path != executable
     ]
     if nested:
         example = min(nested).relative_to(game)

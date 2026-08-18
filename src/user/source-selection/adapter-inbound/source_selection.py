@@ -109,7 +109,7 @@ def resolve_source_selection(selection: str | Path) -> Path:
         nested = tuple(
             path
             for path in root.rglob(_EXECUTABLE_NAME)
-            if path.resolve() != direct.resolve()
+            if path != direct
         )
     except OSError as error:
         message = "selected source cannot be inspected safely"
