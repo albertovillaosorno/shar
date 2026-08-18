@@ -95,6 +95,7 @@ impl LosslessPackageExporter {
         let source_sha256 = digest_hex(&input_bytes);
         let prepared = prepare_p3d_bytes(&input_bytes)?;
         let bytes = prepared.bytes.into_owned();
+        let normalized_sha256 = digest_hex(&bytes);
         let document = analyze_p3d(&bytes)?;
         local::write_bytes(&output_dir.join("source.p3d"), &bytes, true)
             .map_err(|error| P3dError::invalid_source(error.to_string()))?;
@@ -128,7 +129,12 @@ impl LosslessPackageExporter {
             )?);
         }
         let mut lines = String::new();
-        lines.push_str(&package_header(&document, outputs.len(), &source_sha256));
+        lines.push_str(&package_header(
+            &document,
+            outputs.len(),
+            &source_sha256,
+            &normalized_sha256,
+        ));
         lines.push('\n');
         for output in &outputs {
             lines.push_str(&component_line(output));

@@ -106,7 +106,12 @@ Normalized P3D cache reuse is now bound to the current exact raw source bytes:
 new package headers record `source_sha256`, and the batch exporter skips a
 complete cache only when that local digest matches the current input. Replacing
 a source P3D in place therefore forces regeneration instead of reusing stale
-normalized evidence; no source path is added to the manifest.
+normalized evidence; no source path is added to the manifest. Cache reuse now
+also binds the exact normalized `source.p3d` artifact separately through
+`normalized_sha256`, computed from the prepared bytes actually written by the
+extractor. Missing or corrupted normalized source evidence forces regeneration
+even when the raw input and component files still match; a filesystem regression
+proves both corruption and deletion are rejected.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

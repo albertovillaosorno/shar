@@ -85,8 +85,13 @@ pub(super) fn is_cache_current(output_dir: &Path, input_path: &Path) -> bool {
     let Ok(source_bytes) = local::read_bytes(input_path) else {
         return false;
     };
+    let Ok(normalized_bytes) = local::read_bytes(&output_dir.join("source.p3d"))
+    else {
+        return false;
+    };
     manifest_is_complete(&text)
         && manifest_source_matches_bytes(&text, &source_bytes)
+        && manifest_normalized_source_matches_bytes(&text, &normalized_bytes)
         && manifest_component_files_exist(output_dir, &text)
 }
 
@@ -106,6 +111,27 @@ pub(super) fn manifest_source_matches_bytes(text: &str, source: &[u8]) -> bool {
         return false;
     };
     source_sha256 == digest_hex(source)
+}
+
+/// Returns whether the package header binds to exact normalized source bytes.
+pub(super) fn manifest_normalized_source_matches_bytes(
+    text: &str,
+    normalized: &[u8],
+) -> bool {
+    let Some(header) = text.lines().map(str::trim).find(|line| !line.is_empty()) else {
+        return false;
+    };
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(header) else {
+        return false;
+    };
+    let Some(normalized_sha256) = value
+        .as_object()
+        .and_then(|object| object.get("normalized_sha256"))
+        .and_then(serde_json::Value::as_str)
+    else {
+        return false;
+    };
+    normalized_sha256 == digest_hex(normalized)
 }
 
 /// Returns whether one component manifest contains only complete rows.
