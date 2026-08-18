@@ -35,8 +35,8 @@ use crate::domain::{MissionStageKind, PhaseThreePackageIndex};
 
 fn physical_source_row() -> &'static str {
     concat!(
-        "{\"package_id\":\"zzz-source\",",
-        "\"package_root\":\"zzz-source\",",
+        "{\"package_id\":\"zeta-source\",",
+        "\"package_root\":\"zeta-source\",",
         "\"package_category\":\"cars\",",
         "\"package_subcategory\":\"cars/character-rigs/homer-v\",",
         "\"unit_count\":1,\"text_key_count\":0,",
@@ -95,7 +95,7 @@ fn index() -> Result<PhaseThreePackageIndex, String> {
             "MISSION_OBJECTIVE_42",
         ),
         derived_row(
-            "aab-locked",
+            "middle-locked",
             "language/text/ui/runtime",
             "text-locked",
             "INGAME_MESSAGE_03",
@@ -199,7 +199,7 @@ fn rejects_ambiguous_stage_message_key() -> Result<(), String> {
             "MISSION_OBJECTIVE_42",
         ),
         derived_row(
-            "aab-objective",
+            "beta-objective",
             "language/text/missions/objective-lines",
             "text-b",
             "MISSION_OBJECTIVE_42",

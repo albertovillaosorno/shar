@@ -1489,3 +1489,7 @@ streetracepropsunload
 swapindefaultcar
 useelapsedtime
 usepedgroup
+setspeed
+dfile
+dother
+setstagemusicnotalwayson
