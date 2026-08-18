@@ -493,3 +493,30 @@ fn rejects_non_numeric_shader_vertex_mask() {
     assert!(matches!(result, Err(DecodedComponentError::Parse { .. })));
     assert!(cleanup_result.is_ok());
 }
+
+#[test]
+fn preserves_zero_alpha_from_diffuse_colour_parameter() {
+    let root = temp_root("diffuse-zero-alpha");
+    let shader_dir = root.join("components").join("shader");
+    let setup_result = fs::create_dir_all(&shader_dir).and_then(|()| {
+        fs::write(
+            shader_dir.join("zero_alpha.json"),
+            r#"{"name":"zero_alpha","params":[{"kind":"colour","param":"DIFF","value":1122867}]}"#,
+        )
+    });
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+    let result = source.resolve_material("zero_alpha");
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Ok(fbx::domain::texture::MaterialBinding {
+            material_name: "zero_alpha".to_owned(),
+            texture_file_name: None,
+            semantics: fbx::domain::texture::MaterialSemantics::default(),
+            base_color_rgba8: [0x11, 0x22, 0x33, 0x00],
+        })
+    );
+    assert!(cleanup_result.is_ok());
+}

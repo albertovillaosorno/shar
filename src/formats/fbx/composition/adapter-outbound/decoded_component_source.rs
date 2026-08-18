@@ -827,11 +827,7 @@ fn decoded_shader_base_color(shader: &DecodedShader) -> [u8; 4] {
         u8::try_from((value >> 16) & 0xff).unwrap_or(u8::MAX),
         u8::try_from((value >> 8) & 0xff).unwrap_or(u8::MAX),
         u8::try_from(value & 0xff).unwrap_or(u8::MAX),
-        if alpha == 0 {
-            u8::MAX
-        } else {
-            alpha
-        },
+        alpha,
     ]
 }
 
