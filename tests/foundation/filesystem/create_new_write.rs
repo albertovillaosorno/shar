@@ -93,7 +93,8 @@ fn create_new_bytes_preserve_existing_destination() -> Result<(), String> {
         return Err("create-new bytes replaced existing data".to_owned());
     };
     if error.kind() != io::ErrorKind::AlreadyExists || preserved != b"first" {
-        return Err("create-new bytes did not preserve the destination".to_owned());
+        let message = "create-new bytes did not preserve the destination";
+        return Err(message.to_owned());
     }
     Ok(())
 }

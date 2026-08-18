@@ -130,7 +130,8 @@ fn directory_target_portable_identity_collision_is_rejected(
     Ok(())
 }
 #[test]
-fn source_key_uses_captured_bytes_without_reopening_path() -> Result<(), String> {
+fn source_key_uses_captured_bytes_without_reopening_path(
+) -> Result<(), String> {
     let file = InputFile {
         input: 0,
         logical_path: String::new(),
