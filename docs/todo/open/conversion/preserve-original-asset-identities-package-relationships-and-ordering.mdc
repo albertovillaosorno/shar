@@ -119,6 +119,10 @@ now also records the SHA-256 of the exact JSON/image bytes written beneath
 `components/`. Source-aware cache reuse requires those digests to match in
 addition to payload validity, so replacing one component with different valid
 JSON or image bytes forces regeneration instead of silently accepting the edit.
+Normalized-source verification now parses the exact verified `source.p3d` as a
+P3D document and replays both parser-derived byte length and chunk count against
+the manifest header. An edited `chunk_count` therefore cannot remain current
+merely because the normalized artifact digest still matches.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

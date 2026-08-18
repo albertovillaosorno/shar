@@ -207,21 +207,22 @@ fn cache_source_digest_must_match_current_input_bytes() {
 }
 
 #[test]
-fn cache_normalized_digest_must_match_published_source_bytes() {
-    let normalized = b"123456789012345678901234";
-    let digest = shar_sha256::digest_hex(normalized);
+fn cache_normalized_digest_must_match_published_source_bytes() -> Result<(), String> {
+    let normalized = nested_p3d(1)?;
+    let digest = shar_sha256::digest_hex(&normalized);
     let header = format!(
         r#"{{"schema":"p3d.package.v1","normalized_sha256":"{digest}","byte_len":24,"chunk_count":2,"component_count":1}}"#
     );
-    assert!(manifest_normalized_source_matches_bytes(&header, normalized));
+    assert!(manifest_normalized_source_matches_bytes(&header, &normalized));
     assert!(!manifest_normalized_source_matches_bytes(
         &header,
         b"corrupted-source"
     ));
     assert!(!manifest_normalized_source_matches_bytes(
         PACKAGE_HEADER_ONE,
-        normalized
+        &normalized
     ));
+    Ok(())
 }
 
 #[test]
@@ -237,16 +238,16 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
     fs::create_dir_all(component.parent().ok_or("component has no parent")?)
         .map_err(|error| error.to_string())?;
     let raw = b"raw-source";
-    let normalized = b"123456789012345678901234";
+    let normalized = nested_p3d(1)?;
     fs::write(&input, raw).map_err(|error| error.to_string())?;
-    fs::write(output.join("source.p3d"), normalized)
+    fs::write(output.join("source.p3d"), &normalized)
         .map_err(|error| error.to_string())?;
     let component_bytes = br#"{"name":"mesh"}"#;
     fs::write(&component, component_bytes).map_err(|error| error.to_string())?;
     let header = format!(
         r#"{{"schema":"p3d.package.v1","source_sha256":"{}","normalized_sha256":"{}","byte_len":24,"chunk_count":2,"component_count":1}}"#,
         shar_sha256::digest_hex(raw),
-        shar_sha256::digest_hex(normalized),
+        shar_sha256::digest_hex(&normalized),
     );
     let row = format!(
         r#"{{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"mesh","payload_format":"schema_json","kind":"mesh","schema_ref":"mesh","recovery_status":"decoded_schema_payload","path":"mesh/mesh.json","sha256":"{}"}}"#,
@@ -261,7 +262,7 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
     let structural = manifest_is_complete(&manifest_text);
     let raw_matches = manifest_source_matches_bytes(&manifest_text, raw);
     let normalized_matches =
-        manifest_normalized_source_matches_bytes(&manifest_text, normalized);
+        manifest_normalized_source_matches_bytes(&manifest_text, &normalized);
     let components_exist = manifest_component_files_exist(&output, &manifest_text);
     if !is_cache_current(&output, &input) {
         drop(fs::remove_dir_all(&root));
@@ -282,7 +283,7 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
         drop(fs::remove_dir_all(&root));
         return Err("corrupted normalized source artifact was accepted".to_owned());
     }
-    fs::write(output.join("source.p3d"), normalized)
+    fs::write(output.join("source.p3d"), &normalized)
         .map_err(|error| error.to_string())?;
     fs::remove_file(output.join("source.p3d")).map_err(|error| error.to_string())?;
     let accepted_missing = is_cache_current(&output, &input);
@@ -294,14 +295,49 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
 }
 
 #[test]
-fn normalized_cache_digest_requires_exact_declared_byte_length() {
-    let normalized = b"123456789012345678901234";
-    let digest = shar_sha256::digest_hex(normalized);
+fn normalized_cache_digest_requires_exact_declared_byte_length() -> Result<(), String> {
+    let normalized = nested_p3d(1)?;
+    let digest = shar_sha256::digest_hex(&normalized);
     let wrong_length = format!(
         r#"{{"schema":"p3d.package.v1","normalized_sha256":"{digest}","byte_len":25,"chunk_count":2,"component_count":1}}"#
     );
     assert!(!manifest_normalized_source_matches_bytes(
         &wrong_length,
-        normalized
+        &normalized
     ));
+    Ok(())
+}
+
+fn nested_p3d(depth: usize) -> Result<Vec<u8>, String> {
+    let chunk_count = depth
+        .checked_add(1)
+        .ok_or_else(|| "fixture chunk count overflowed".to_owned())?;
+    let mut bytes = Vec::new();
+    for level in 0..chunk_count {
+        let remaining = chunk_count
+            .checked_sub(level)
+            .ok_or_else(|| "fixture remaining count underflowed".to_owned())?;
+        let total_size = remaining
+            .checked_mul(12)
+            .and_then(|value| u32::try_from(value).ok())
+            .ok_or_else(|| "fixture total size overflowed".to_owned())?;
+        let id = if level == 0 { 0xff44_3350_u32 } else { 0xdead_beef_u32 };
+        bytes.extend_from_slice(&id.to_le_bytes());
+        bytes.extend_from_slice(&12_u32.to_le_bytes());
+        bytes.extend_from_slice(&total_size.to_le_bytes());
+    }
+    Ok(bytes)
+}
+
+#[test]
+fn normalized_cache_header_replays_document_chunk_count() -> Result<(), String> {
+    let normalized = nested_p3d(2)?;
+    let digest = shar_sha256::digest_hex(&normalized);
+    let header = format!(
+        r#"{{"schema":"p3d.package.v1","normalized_sha256":"{digest}","byte_len":36,"chunk_count":2,"component_count":1}}"#
+    );
+    if manifest_normalized_source_matches_bytes(&header, &normalized) {
+        return Err("edited chunk count matched exact normalized source".to_owned());
+    }
+    Ok(())
 }

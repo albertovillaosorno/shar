@@ -142,7 +142,19 @@ pub(super) fn manifest_normalized_source_matches_bytes(
     else {
         return false;
     };
-    byte_len == normalized.len() && normalized_sha256 == digest_hex(normalized)
+    let Some(chunk_count) = object
+        .get("chunk_count")
+        .and_then(serde_json::Value::as_u64)
+        .and_then(|value| usize::try_from(value).ok())
+    else {
+        return false;
+    };
+    let Ok(document) = crate::analyze_p3d(normalized) else {
+        return false;
+    };
+    byte_len == document.byte_len
+        && chunk_count == document.chunks.len()
+        && normalized_sha256 == digest_hex(normalized)
 }
 
 /// Returns whether one component manifest contains only complete rows.
