@@ -2,6 +2,31 @@
 //   - Copyright (c) 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Process-level regression evidence for deep source validation.
+// - Must-Not:
+//   - Depend on proprietary source data or disclose private fixture paths.
+// - Allows:
+//   - Build disposable synthetic source trees and invoke the validator binary.
+// - Split-When:
+//   - One deep-source CLI contract gains an independent test lifecycle.
+// - Merge-When:
+//   - Another integration test owns the same source-audit process evidence.
+// - Summary:
+//   - Deep source validator CLI contract tests.
+// - Description:
+//   - Proves read-only, path-free, fail-closed deep source validation.
+// - Usage:
+//   - Run through the shar_source_audit integration test target.
+// - Defaults:
+//   - Fixtures contain only synthetic local files.
+//
 
 //! Contract tests for read-only deep source validation.
 

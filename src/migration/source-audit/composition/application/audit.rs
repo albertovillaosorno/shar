@@ -1,3 +1,33 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Read-only deep structural validation of supported source containers.
+// - Must-Not:
+//   - Write source inputs or disclose private source paths.
+// - Allows:
+//   - Traverse source strictly and invoke supported format auditors.
+// - Split-When:
+//   - One responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Another module owns the identical responsibility.
+// - Summary:
+//   - Deep source-audit application service.
+// - Description:
+//   - Read-only deep structural validation of supported source containers.
+// - Usage:
+//   - Used through the owning source-audit function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
 //! Read-only structural validation of supported source container formats.
 
 use std::path::Path;
