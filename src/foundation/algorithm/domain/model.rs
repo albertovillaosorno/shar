@@ -121,6 +121,14 @@ impl Settings {
                 "maximum_source_bytes must admit minimum_source_bytes",
             ));
         }
+        let source_capacity = self
+            .maximum_source_files
+            .saturating_mul(self.maximum_file_bytes);
+        if source_capacity < self.minimum_source_bytes {
+            return Err(AlgorithmError::new(
+                "source file limits cannot satisfy minimum_source_bytes",
+            ));
+        }
         if self.maximum_target_bytes == 0 {
             return Err(AlgorithmError::new(
                 "maximum_target_bytes must be positive",

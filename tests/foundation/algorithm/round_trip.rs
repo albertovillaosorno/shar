@@ -422,6 +422,16 @@ fn settings_reject_unknown_and_inconsistent_policy() {
       "maximum_source_bytes":1,
       "maximum_target_bytes":1
     }"#;
+    let impossible_capacity = r#"{
+      "schema":"shar.algorithm.settings.v1",
+      "minimum_source_files":1,
+      "minimum_source_bytes":3,
+      "maximum_source_files":2,
+      "maximum_target_files":1,
+      "maximum_file_bytes":1,
+      "maximum_source_bytes":3,
+      "maximum_target_bytes":1
+    }"#;
     assert!(
         Settings::from_json(unknown).is_err(),
         "unknown settings fields must fail closed"
@@ -429,6 +439,10 @@ fn settings_reject_unknown_and_inconsistent_policy() {
     assert!(
         Settings::from_json(inconsistent).is_err(),
         "inconsistent settings limits must fail closed"
+    );
+    assert!(
+        Settings::from_json(impossible_capacity).is_err(),
+        "impossible source capacity must fail closed"
     );
 }
 
