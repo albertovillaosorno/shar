@@ -9,7 +9,7 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Adapter inbound inbound adapter.
+//   - Observed manifest composition module.
 // - Must-Not:
 //   - Own unrelated policy, persistence, or external effects.
 // - Allows:
@@ -19,20 +19,21 @@
 // - Merge-When:
 //   - Merge when another module owns the identical responsibility.
 // - Summary:
-//   - Adapter inbound inbound adapter.
+//   - Observed manifest composition module.
 // - Description:
-//   - Implements the declared inbound adapter responsibility for manifest.
+//   - Implements the declared composition module responsibility for manifest.
 // - Usage:
 //   - Used through the owning function boundary.
 // - Defaults:
 //   - Invalid or missing inputs fail explicitly.
 //
+//! Observed manifest composition module.
 
-//! Adapter inbound inbound adapter.
+use std::process::ExitCode;
 
-pub mod expanded_cli;
-pub mod generate_cli;
-pub mod observe_cli;
-pub mod structural_audit_cli;
-mod support;
-pub mod validate_cli;
+use schoenwald_cli as _;
+use schoenwald_filesystem as _;
+
+fn main() -> ExitCode {
+    game_manifest::adapters::driving::observe_cli::run_env()
+}

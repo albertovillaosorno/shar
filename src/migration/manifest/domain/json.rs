@@ -37,8 +37,21 @@ impl DirCount {
     /// trailing newline.
     #[must_use]
     pub fn to_jsonl(&self) -> String {
+        self.to_count_jsonl("min")
+    }
+
+    /// Serializes one ephemeral observed-count row for calibration.
+    ///
+    /// The `count` field distinguishes an observed source population from the
+    /// `min` field used by the public minimum-admission policy ledger.
+    #[must_use]
+    pub fn to_observation_jsonl(&self) -> String {
+        self.to_count_jsonl("count")
+    }
+
+    fn to_count_jsonl(&self, count_field: &str) -> String {
         let mut line = format!(
-            "{{\"dir\":\"{}\",\"ext\":\"{}\",\"min\":{}",
+            "{{\"dir\":\"{}\",\"ext\":\"{}\",\"{count_field}\":{}",
             escape(&self.dir),
             escape(&self.extension),
             self.min_count

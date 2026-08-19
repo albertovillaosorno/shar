@@ -139,18 +139,24 @@ def _is_schema_record(record: dict[str, Any], line_number: int) -> bool:
         return False
     if line_number != 1 or record.get("schema") != _MANIFEST_SCHEMA:
         raise LedgerInputError("count ledger schema record is invalid")
-    if any(field in record for field in ("dir", "ext", "min")):
+    if any(field in record for field in ("dir", "ext", "min", "count")):
         raise LedgerInputError("count ledger schema record mixes coordinates")
     return True
 
 
 def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
     """Project one manifest row to the public-safe calibration coordinate."""
-    if set(record) - {"dir", "ext", "min", "kind"}:
+    if set(record) - {"dir", "ext", "min", "count", "kind"}:
         raise LedgerInputError("count ledger record has unknown fields")
+    has_minimum = "min" in record
+    has_observed = "count" in record
+    if has_minimum == has_observed:
+        raise LedgerInputError(
+            "count ledger record must select one count field"
+        )
     directory = record.get("dir")
     extension = record.get("ext")
-    count = record.get("min")
+    count = record.get("count" if has_observed else "min")
     if not isinstance(directory, str) or not isinstance(extension, str):
         raise InvalidCoordinateError
     if isinstance(count, bool) or not isinstance(count, int) or count < 0:

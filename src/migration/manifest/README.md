@@ -16,3 +16,13 @@ Does not own generated artifacts, local dependencies, or game content.
 
 - `composition`
 - `domain`
+
+## Read-only count observation
+
+`observe-manifest-counts [game-directory]` validates the same exact root source
+evidence used by minimum-manifest generation, then writes only public-safe
+obfuscated directory/extension count rows to stdout. Observed rows use `count`
+rather than the tracked minimum-policy ledger's `min`, so empirical populations
+cannot be confused with admission minima. It never writes into the source tree,
+and source-path failures use a generic diagnostic so local private paths are not
+copied into calibration output.

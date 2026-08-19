@@ -35,6 +35,22 @@ use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 
 #[test]
+fn observation_jsonl_uses_count_not_minimum() {
+    let record = DirCount {
+        dir: "at/cs".to_owned(),
+        extension: "p3d".to_owned(),
+        min_count: 2,
+        kind: "p3d_container".to_owned(),
+    };
+
+    assert_eq!(
+        record.to_observation_jsonl(),
+        "{\"dir\":\"at/cs\",\"ext\":\"p3d\",\"count\":2,\"kind\":\"p3d_container\"}"
+    );
+    assert!(!record.to_observation_jsonl().contains("\"min\""));
+}
+
+#[test]
 fn dir_count_jsonl_escapes_quotes_in_directory() {
     let record = DirCount {
         dir: "a\"b".to_owned(),
