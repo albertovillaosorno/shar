@@ -61,7 +61,8 @@ Mobile publication now consumes the declared artifact kind instead of treating
 any archive file as success. Android candidates must contain a non-empty APK and
 iOS candidates must contain a non-empty IPA before atomic publication;
 regression fixtures prove wrong or zero-byte mobile artifacts never create a
-completed `dist/<ARCH>/` target.
+completed `dist/<ARCH>/` target. Windows candidates likewise require a non-empty
+SHAR `.exe`; engine helper executables alone cannot satisfy publication.
 
 Publication also preflights an existing `dist/<ARCH>/` identity as a real
 directory before any rename. A regression proves a colliding regular file is
