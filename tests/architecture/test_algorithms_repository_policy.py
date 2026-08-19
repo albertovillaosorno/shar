@@ -309,6 +309,29 @@ def _assert_target_layout(document: dict[str, object]) -> None:
         identities.append(identity)
 
 
+def _assert_source_layout(source: list[object]) -> None:
+    """Mirror the source collector's stable input grouping and identities."""
+    identities: set[tuple[int, str]] = set()
+    root_is_file: dict[int, bool] = {}
+    previous_input = -1
+    for record in source:
+        assert isinstance(record, dict)
+        input_index = record["input"]
+        path = record["path"]
+        assert isinstance(input_index, int)
+        assert isinstance(path, str)
+        assert input_index >= previous_input
+        previous_input = input_index
+        identity = (input_index, path)
+        assert identity not in identities
+        identities.add(identity)
+        is_file = not path
+        if input_index in root_is_file:
+            assert root_is_file[input_index] == is_file
+        else:
+            root_is_file[input_index] = is_file
+
+
 def _assert_plan_resource_limits(document: dict[str, object]) -> None:
     """Mirror replay's active integer, file-count, and byte-count limits."""
     settings = _active_settings()
@@ -406,6 +429,7 @@ def _assert_source_bound_plan(text: str) -> None:
         assert isinstance(ciphertext, str)
         assert len(ciphertext) == 2 * (record["bytes"] + 16)
         assert set(ciphertext) <= _HEX
+    _assert_source_layout(source)
     _assert_plan_resource_limits(document)
     _assert_target_layout(document)
 
@@ -429,6 +453,24 @@ def _synthetic_plan(*, path: str = "asset.bin") -> dict[str, object]:
             }
         ],
     }
+
+
+def _synthetic_source_rows(
+    *updates: dict[str, object],
+) -> dict[str, object]:
+    """Return a synthetic plan with explicit mutations for source rows."""
+    plan = _synthetic_plan()
+    source = plan["source"]
+    assert isinstance(source, list)
+    base = source[0]
+    assert isinstance(base, dict)
+    records: list[dict[str, object]] = []
+    for change in updates:
+        record = dict(base)
+        record.update(change)
+        records.append(record)
+    plan["source"] = records
+    return plan
 
 
 def _synthetic_source_plan(**updates: object) -> dict[str, object]:
@@ -468,6 +510,21 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
             json.dumps(_synthetic_source_plan(bytes=1)),
             json.dumps(_synthetic_source_plan(input=1 << 64)),
             json.dumps(_synthetic_source_plan(path="../private.bin")),
+        )
+    )
+
+    invalid.extend(
+        (
+            json.dumps(_synthetic_source_rows({}, {})),
+            json.dumps(
+                _synthetic_source_rows(
+                    {"input": 1},
+                    {"input": 0, "path": "asset.bin"},
+                )
+            ),
+            json.dumps(
+                _synthetic_source_rows({}, {"path": "asset.bin"})
+            ),
         )
     )
 
