@@ -83,9 +83,11 @@ The build dependency bootstrap now publishes both `validate-game` and
 preflight runs the exact manifest gate first and only then invokes the deep
 P3D/RCF/RSD/RMV audit, recording both results in saved evidence. A stale deep
 validator is rejected when its source closure changes, and focused packaging
-tests prove the ordered fast-then-deep call sequence. The deep validator's Rust
-contract tests prove malformed source failures do not modify source payloads and
-do not disclose the selected private path.
+tests prove the ordered fast-then-deep call sequence. The deep validator uses
+strict filesystem traversal, so redirects and special entries fail closed
+instead of being silently skipped. Its Rust contract tests prove redirected and
+malformed source failures do not modify source payloads or disclose the selected
+private path.
 
 Build preflight also redacts the selected source root from manifest and deep
 validator stdout, stderr, and execution errors before those messages are
