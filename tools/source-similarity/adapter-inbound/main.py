@@ -167,11 +167,17 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
 def parse_count_ledger(text: str) -> dict[Coordinate, int]:
     """Parse public manifest coordinates without retaining metadata payloads."""
     counts: dict[Coordinate, int] = {}
+    count_field: str | None = None
     for line_number, line in enumerate(text.splitlines(), start=1):
         record = _parse_jsonl_record(line, line_number)
         if _is_schema_record(record, line_number):
             continue
         coordinate, count = _coordinate_record(record)
+        record_count_field = "count" if "count" in record else "min"
+        if count_field is None:
+            count_field = record_count_field
+        elif count_field != record_count_field:
+            raise LedgerInputError("count ledger mixes count meanings")
         if coordinate in counts:
             raise LedgerInputError(
                 f"count ledger repeats a coordinate at line {line_number}"
