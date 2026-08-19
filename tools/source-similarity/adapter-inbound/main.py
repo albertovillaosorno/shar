@@ -106,12 +106,16 @@ def measure(
     candidate_units = sum(candidate.values())
     if reference_units == 0:
         raise EmptyReferenceError
-    coordinates = set(reference) | set(candidate)
+    comparable_reference = _collapse_collision_families(reference)
+    comparable_candidate = _collapse_collision_families(candidate)
+    coordinates = set(comparable_reference) | set(comparable_candidate)
     shared = sum(
-        min(reference.get(key, 0), candidate.get(key, 0)) for key in coordinates
+        min(comparable_reference.get(key, 0), comparable_candidate.get(key, 0))
+        for key in coordinates
     )
     union = sum(
-        max(reference.get(key, 0), candidate.get(key, 0)) for key in coordinates
+        max(comparable_reference.get(key, 0), comparable_candidate.get(key, 0))
+        for key in coordinates
     )
     if union == 0:
         raise EmptyUnionError
@@ -123,6 +127,27 @@ def measure(
         reference_coverage=Fraction(shared, reference_units),
         weighted_jaccard=Fraction(shared, union),
     )
+
+
+def _collision_family(directory: str) -> str:
+    base, marker, ordinal = directory.rpartition("~")
+    if not marker or not base:
+        return directory
+    if len(ordinal) < 2 or not ordinal.isascii() or not ordinal.isdigit():
+        return directory
+    if ordinal == "00" or (len(ordinal) > 2 and ordinal.startswith("0")):
+        return directory
+    return base
+
+
+def _collapse_collision_families(
+    values: Mapping[Coordinate, int],
+) -> dict[Coordinate, int]:
+    collapsed: dict[Coordinate, int] = {}
+    for (directory, extension), count in values.items():
+        key = (_collision_family(directory), extension)
+        collapsed[key] = collapsed.get(key, 0) + count
+    return collapsed
 
 
 def _validate(values: Mapping[Coordinate, int]) -> None:

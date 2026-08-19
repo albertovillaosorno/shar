@@ -60,12 +60,15 @@ private reference contributes aggregate obfuscated directory/extension counts,
 not payload bytes, file names, or a reversible full-tree recipe.
 
 `tools/source-similarity/adapter-inbound/main.py` implements only evidence
-measurement using
-exact rational arithmetic. Four stdlib tests cover complete, missing, extra,
-and invalid vectors and prove the evidence object has no admission result. No
-45–55% threshold exists in that code. The technical contract also pins the
-read-only source boundary, source-bound plan publication restrictions, and the
-rule that similarity cannot substitute for any hard source gate.
+measurement using exact rational arithmetic. Its regression suite covers
+complete, missing, extra, invalid, collision-disambiguated, and non-generated
+suffix vectors and proves the evidence object has no admission result. Generated
+manifest collision ordinals are aggregated into their structural family before
+comparison because a partial candidate can legitimately change those ordinals.
+Hard manifest and deep validation remain exact and unchanged. No 45–55%
+threshold exists in that code. The technical contract also pins the read-only
+source boundary, source-bound plan publication restrictions, and the rule that
+similarity cannot substitute for any hard source gate.
 
 Repository publication policy now parses the substantive tracked icon plan and
 every non-empty public family `algorithm/*.txt` plan, requiring the exact
