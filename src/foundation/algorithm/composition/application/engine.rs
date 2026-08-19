@@ -600,6 +600,91 @@ fn portable_target_identity(path: &str) -> String {
     path.chars().flat_map(char::to_uppercase).collect()
 }
 
+fn validate_record_path(
+    path: &str,
+    allow_empty: bool,
+    context: &str,
+) -> Result<(), AlgorithmError> {
+    if path.is_empty() {
+        if allow_empty {
+            return Ok(());
+        }
+        return Err(AlgorithmError::new(format!(
+            "{context} path must not be empty"
+        )));
+    }
+    let candidate = Path::new(path);
+    if candidate
+        .components()
+        .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return Err(AlgorithmError::new(format!(
+            "{context} path must be a canonical relative path"
+        )));
+    }
+    validate_portable_path(candidate).map_err(|error| {
+        AlgorithmError::new(format!("invalid {context} path: {error}"))
+    })
+}
+
+fn validate_source_records(
+    source: &[SourceRecord],
+    settings: &Settings,
+) -> Result<(), AlgorithmError> {
+    let mut identities = BTreeSet::new();
+    let mut file_inputs = HashSet::new();
+    let mut directory_inputs = HashSet::new();
+    let mut previous_input = None;
+    let mut source_bytes = 0_u64;
+    for record in source {
+        validate_record_path(&record.path, true, "algorithm source")?;
+        if record.bytes > settings.maximum_file_bytes() {
+            return Err(AlgorithmError::new(
+                "algorithm source file exceeds settings",
+            ));
+        }
+        source_bytes = source_bytes
+            .checked_add(record.bytes)
+            .ok_or_else(|| AlgorithmError::new("algorithm source length overflow"))?;
+        if let Some(previous) = previous_input
+            && record.input < previous
+        {
+            return Err(AlgorithmError::new(
+                "algorithm source inputs are out of order",
+            ));
+        }
+        previous_input = Some(record.input);
+        if !identities.insert((record.input, record.path.as_str())) {
+            return Err(AlgorithmError::new(
+                "algorithm contains duplicate source records",
+            ));
+        }
+        if record.path.is_empty() {
+            if directory_inputs.contains(&record.input) {
+                return Err(AlgorithmError::new(
+                    "algorithm source input mixes file and directory records",
+                ));
+            }
+            let _inserted = file_inputs.insert(record.input);
+        } else {
+            if file_inputs.contains(&record.input) {
+                return Err(AlgorithmError::new(
+                    "algorithm source input mixes file and directory records",
+                ));
+            }
+            let _inserted = directory_inputs.insert(record.input);
+        }
+    }
+    if source_bytes < settings.minimum_source_bytes()
+        || source_bytes > settings.maximum_source_bytes()
+    {
+        return Err(AlgorithmError::new(
+            "algorithm source bytes violate settings",
+        ));
+    }
+    Ok(())
+}
+
 fn validate_document(
     document: &AlgorithmDocument,
     settings: &Settings,
@@ -625,6 +710,7 @@ fn validate_document(
             "algorithm source count violates settings",
         ));
     }
+    validate_source_records(&document.source, settings)?;
     let target_count = usize_to_u64(document.target.len(), "algorithm target count")?;
     if target_count > settings.maximum_target_files() {
         return Err(AlgorithmError::new(
@@ -648,17 +734,11 @@ fn validate_document(
     let mut descriptors = Vec::with_capacity(document.target.len());
     for target in &document.target {
         if document.target_kind == TargetKind::Directory {
-            if target.descriptor.path.is_empty() {
-                return Err(AlgorithmError::new(
-                    "directory target path must not be empty",
-                ));
-            }
-            let target_path = Path::new(&target.descriptor.path);
-            validate_portable_path(target_path).map_err(|error| {
-                AlgorithmError::new(format!(
-                    "invalid algorithm target path: {error}"
-                ))
-            })?;
+            validate_record_path(
+                &target.descriptor.path,
+                false,
+                "algorithm target",
+            )?;
         }
         let identity = portable_target_identity(&target.descriptor.path);
         let candidate = Path::new(&identity);
