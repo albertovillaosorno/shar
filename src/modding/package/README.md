@@ -10,7 +10,8 @@ identity, exact revisions, explicit priority, dependency/conflict/supersession
 relations, content/native trust boundaries, portable member paths, byte lengths,
 SHA-256 identities, provenance, capabilities, and target declarations.
 
-Transport (`directory`, `.zip`, Android/iOS document selection), staging, preview,
+Transport (`directory`, `.zip`, Android/iOS document selection), staging,
+preview,
 and atomic activation remain separate adapters/use cases. This crate does not
 execute package-provided code and a structurally valid native package is not a
 claim of safety.
