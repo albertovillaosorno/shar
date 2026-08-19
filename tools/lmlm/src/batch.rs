@@ -81,7 +81,7 @@ fn direct_lmlm_files(import_root: &Path) -> Result<Vec<PathBuf>, BatchError> {
             "tools/lmlm/import must be a real directory".to_owned(),
         ));
     }
-    let mut files = local::regular_files(import_root)?
+    let mut files = local::strict_regular_files(import_root)?
         .into_iter()
         .filter(|path| {
             path.parent() == Some(import_root)
