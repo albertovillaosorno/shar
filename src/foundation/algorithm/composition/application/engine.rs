@@ -30,7 +30,7 @@
 
 //! Source-bound algorithm authoring and replay service.
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::path::{Component, Path, PathBuf};
 
 use chacha20poly1305::{
@@ -602,7 +602,7 @@ pub fn create_algorithm(
         .map_err(|error| io_failure("cannot write algorithm output", &error))
 }
 
-fn portable_target_identity(path: &str) -> String {
+fn portable_record_identity(path: &str) -> String {
     path.chars().flat_map(char::to_uppercase).collect()
 }
 
@@ -664,6 +664,7 @@ fn validate_source_records(
     let mut directory_inputs = HashSet::new();
     let mut previous_input: Option<u64> = None;
     let mut previous_path: Option<(u64, &str)> = None;
+    let mut portable_paths = BTreeMap::<u64, BTreeSet<String>>::new();
     let mut source_bytes = 0_u64;
     for record in source {
         validate_record_path(&record.path, true, "algorithm source")?;
@@ -714,6 +715,20 @@ fn validate_source_records(
             return Err(AlgorithmError::new(
                 "algorithm contains duplicate source records",
             ));
+        }
+        if !record.path.is_empty() {
+            let identity = portable_record_identity(&record.path);
+            let candidate = Path::new(&identity);
+            let paths = portable_paths.entry(record.input).or_default();
+            if paths.iter().any(|existing| {
+                let existing = Path::new(existing);
+                candidate.starts_with(existing) || existing.starts_with(candidate)
+            }) {
+                return Err(AlgorithmError::new(
+                    "algorithm contains overlapping source paths",
+                ));
+            }
+            let _inserted = paths.insert(identity);
         }
         if record.path.is_empty() {
             if directory_inputs.contains(&record.input) {
@@ -796,7 +811,7 @@ fn validate_document(
                 "algorithm target",
             )?;
         }
-        let identity = portable_target_identity(&target.descriptor.path);
+        let identity = portable_record_identity(&target.descriptor.path);
         let candidate = Path::new(&identity);
         if paths.iter().any(|existing: &String| {
             let existing = Path::new(existing);
