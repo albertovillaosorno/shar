@@ -160,3 +160,25 @@ def test_nested_executable_redirect_is_rejected() -> None:
         pattern = r"nested Simpsons\.exe"
         with pytest.raises(module.SourceSelectionError, match=pattern):
             module.resolve_source_selection(source)
+
+
+def test_direct_executable_redirect_is_rejected() -> None:
+    if os.name == "nt":
+        pytest.skip("symlink setup is Unix-focused")
+    module = _load()
+    with tempfile.TemporaryDirectory(prefix="shar-user-direct-link-") as value:
+        root = Path(value)
+        source = root / "installed-game"
+        outside = root / "outside"
+        source.mkdir()
+        outside.mkdir()
+        target = outside / "Simpsons.exe"
+        target.write_bytes(b"synthetic-executable")
+        redirect = source / "Simpsons.exe"
+        redirect.symlink_to(target)
+
+        pattern = r"real Simpsons\.exe"
+        with pytest.raises(module.SourceSelectionError, match=pattern):
+            module.resolve_source_selection(source)
+        with pytest.raises(module.SourceSelectionError, match=pattern):
+            module.resolve_source_selection(redirect)
