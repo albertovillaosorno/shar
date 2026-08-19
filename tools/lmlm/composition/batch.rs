@@ -30,10 +30,8 @@
 
 //! Folder-driven legacy conversion outside the SHAR product pipeline.
 
-use std::fmt;
-use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
+use std::{fmt, fs, io};
 
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
@@ -201,20 +199,20 @@ fn copy_workspace(
     local::create_dir_all(&staging)?;
     let copied = (|| -> Result<(), BatchError> {
         for source_file in local::strict_regular_files(source)? {
-            let relative = source_file.strip_prefix(source).map_err(|_error| {
-                BatchError::Contract("WIP member escaped its root".to_owned())
-            })?;
+            let relative =
+                source_file.strip_prefix(source).map_err(|_error| {
+                    BatchError::Contract(
+                        "WIP member escaped its root".to_owned(),
+                    )
+                })?;
             if relative == Path::new("mod.json") {
                 continue;
             }
-            let target = schoenwald_filesystem::resolve_under(
-                &staging,
-                relative,
-            )
-            .map_err(|error| BatchError::Contract(error.to_string()))?;
-            if let Some(parent) = target
-                .parent()
-                .filter(|path| !path.as_os_str().is_empty())
+            let target =
+                schoenwald_filesystem::resolve_under(&staging, relative)
+                    .map_err(|error| BatchError::Contract(error.to_string()))?;
+            if let Some(parent) =
+                target.parent().filter(|path| !path.as_os_str().is_empty())
             {
                 local::create_dir_all(parent)?;
             }
@@ -242,11 +240,12 @@ fn verify_workspace_report(
 ) -> Result<(), BatchError> {
     let path = workspace.join("conversion-report.json");
     let stored = local::read_utf8(&path)?;
-    let mut expected = serde_json::to_string_pretty(report).map_err(|error| {
-        BatchError::Contract(format!(
-            "render {label} report failed: {error}"
-        ))
-    })?;
+    let mut expected =
+        serde_json::to_string_pretty(report).map_err(|error| {
+            BatchError::Contract(format!(
+                "render {label} report failed: {error}"
+            ))
+        })?;
     expected.push(char::from(10));
     if stored != expected {
         return Err(BatchError::Contract(format!(
@@ -373,10 +372,8 @@ pub fn convert_folders(
 /// WIP, validation, or publication contract fails.
 pub fn run_default() -> Result<BatchReport, BatchError> {
     let tool_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let repository_root = tool_root
-        .parent()
-        .and_then(Path::parent)
-        .ok_or_else(|| {
+    let repository_root =
+        tool_root.parent().and_then(Path::parent).ok_or_else(|| {
             BatchError::Contract("cannot resolve repository root".to_owned())
         })?;
     convert_folders(
