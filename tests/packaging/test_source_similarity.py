@@ -160,6 +160,11 @@ class SourceSimilarityTests(unittest.TestCase):
                 '"required_files":[{"path":"README.rtf","min":1,'
                 '"private":"metadata"}]}'
             ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"required_files":[{"path":"README.rtf",'
+                '"min":18446744073709551616}]}'
+            ),
         )
         for record in records:
             with (
