@@ -77,3 +77,19 @@ def test_mod_package_facade_has_canonical_surface_sidecar() -> None:
     )
     sidecar = _ROOT / "src/modding/package/composition/lib.rs.yml"
     assert sidecar.read_text(encoding="utf-8") == expected
+
+
+def test_mod_package_domain_owns_no_external_effect_capabilities() -> None:
+    """Keep serialization, hashing, and path policy outside pure domain data."""
+    domain = (
+        _ROOT / "src/modding/package/domain/mod.rs"
+    ).read_text(encoding="utf-8")
+    forbidden = (
+        "serde",
+        "schoenwald_filesystem",
+        "shar_sha256",
+        "unicode_normalization",
+        "std::path",
+    )
+    for fragment in forbidden:
+        assert fragment not in domain
