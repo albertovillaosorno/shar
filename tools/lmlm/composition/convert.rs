@@ -1,3 +1,33 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Single-package LMLM inspection, extraction, and package publication.
+// - Must-Not:
+//   - Execute legacy payloads or overwrite an existing publication root.
+// - Allows:
+//   - Publish inspectable content with deterministic review-only metadata.
+// - Split-When:
+//   - Extraction and package adaptation gain independent lifecycles.
+// - Merge-When:
+//   - Another composition module owns the identical conversion workflow.
+// - Summary:
+//   - LMLM conversion composition.
+// - Description:
+//   - Converts reviewed archive entries into open SHAR package workspaces.
+// - Usage:
+//   - Used by batch and explicit conversion commands.
+// - Defaults:
+//   - Unsupported content remains preserved with explicit diagnostics.
+//
+
 //! Read-only inspection and contained conversion workspace publication.
 
 use std::fmt;

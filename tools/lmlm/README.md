@@ -32,7 +32,7 @@ tools/lmlm/import/
 Then run from the repository root:
 
 ```text
-cargo run --manifest-path tools/lmlm/Cargo.toml
+cargo run -p shar_lmlm
 ```
 
 With no arguments, `main` orchestrates the whole compatibility flow. Each import
@@ -83,8 +83,8 @@ native SHAR mod, prefer their version over a legacy conversion.
 Manual commands remain available for debugging:
 
 ```text
-cargo run --manifest-path tools/lmlm/Cargo.toml -- inspect MyLegacyMod.lmlm
-cargo run --manifest-path tools/lmlm/Cargo.toml -- \
+cargo run -p shar_lmlm -- inspect MyLegacyMod.lmlm
+cargo run -p shar_lmlm -- \
   convert MyLegacyMod.lmlm output
 ```
 

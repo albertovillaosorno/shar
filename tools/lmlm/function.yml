@@ -1,0 +1,22 @@
+schema: shar-function/v1
+identity:
+  id: lmlm
+  path: tools/lmlm
+  domain: tools
+architecture:
+  route: tools/<function>/<kind>/<part>
+  kinds:
+    - composition
+    - contract
+    - domain
+capabilities:
+  - math
+  - rust
+projects:
+  - Cargo.toml
+tests:
+  root: tests/tools/lmlm
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

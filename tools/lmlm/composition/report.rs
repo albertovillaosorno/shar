@@ -1,3 +1,33 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Serialized evidence records for inspected legacy packages.
+// - Must-Not:
+//   - Execute payloads or infer unsupported runtime compatibility.
+// - Allows:
+//   - Build deterministic report records from reviewed archive evidence.
+// - Split-When:
+//   - Report schemas gain independently versioned contracts.
+// - Merge-When:
+//   - Another composition module owns the same report representation.
+// - Summary:
+//   - LMLM conversion report composition.
+// - Description:
+//   - Produces deterministic review evidence for compatibility workspaces.
+// - Usage:
+//   - Used by inspection, conversion, and batch publication.
+// - Defaults:
+//   - Reports identify converted content as requiring review.
+//
+
 //! Deterministic evidence for inspected legacy packages.
 
 use serde::Serialize;
