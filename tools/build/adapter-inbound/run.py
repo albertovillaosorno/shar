@@ -246,9 +246,11 @@ def _require_real_directory(path: Path, label: str) -> None:
 
 
 def _require_real_file(path: Path, label: str) -> None:
-    """Require one existing regular file that is not a symbolic link."""
+    """Require one unshared regular file that is not a symbolic link."""
     if not path.is_file() or path.is_symlink():
         raise RunFailure(f"{label} must be a real file: {path}")
+    if path.stat(follow_symlinks=False).st_nlink != 1:
+        raise RunFailure(f"{label} must have one filesystem link: {path}")
 
 
 def _ensure_real_directory(path: Path, label: str) -> None:
