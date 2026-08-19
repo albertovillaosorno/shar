@@ -141,6 +141,29 @@ fn malformed_supported_formats_fail_without_private_paths() -> io::Result<()> {
 }
 
 #[test]
+fn rmv_signature_stubs_fail_deep_validation() -> io::Result<()> {
+    let mut xmv = [0_u8; 16];
+    xmv.get_mut(12..16)
+        .ok_or_else(|| io::Error::other("synthetic XMV stub lacks signature"))?
+        .copy_from_slice(b"xobX");
+    for (label, bytes) in [
+        ("ogg", b"OggS".as_slice()),
+        ("xmv", xmv.as_slice()),
+        ("radical", b"rmv".as_slice()),
+    ] {
+        let fixture = Fixture::create(label)?;
+        fs::write(fixture.root.join("stub.rmv"), bytes)?;
+        let output = run_validator(&fixture.root, None)?;
+        let stderr = String::from_utf8_lossy(&output.stderr);
+
+        assert!(!output.status.success(), "{label} signature stub must fail");
+        assert_eq!(stderr, "deep source validation failed for rmv input\n");
+        assert!(!stderr.contains(&fixture.root.display().to_string()));
+    }
+    Ok(())
+}
+
+#[test]
 fn extra_arguments_are_rejected_by_usage_contract() -> io::Result<()> {
     let fixture = Fixture::create("extra")?;
     let output = run_validator(&fixture.root, Some("unexpected"))?;
