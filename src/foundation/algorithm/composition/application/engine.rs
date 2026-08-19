@@ -631,6 +631,11 @@ fn validate_record_path(
             "{context} path must not be empty"
         )));
     }
+    if path.contains("//") || path.ends_with('/') {
+        return Err(AlgorithmError::new(format!(
+            "{context} path must use canonical separators"
+        )));
+    }
     let candidate = Path::new(path);
     if candidate
         .components()

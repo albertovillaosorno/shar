@@ -182,6 +182,18 @@ fn source_metadata_must_match_collector_contract() -> Result<(), String> {
         }],
         vec![SourceRecord {
             input: 0,
+            path: "folder//asset.bin".to_owned(),
+            bytes: 1024,
+            sha256: "0".repeat(64),
+        }],
+        vec![SourceRecord {
+            input: 0,
+            path: "folder/".to_owned(),
+            bytes: 1024,
+            sha256: "0".repeat(64),
+        }],
+        vec![SourceRecord {
+            input: 0,
             path: String::new(),
             bytes: 1,
             sha256: "0".repeat(64),
