@@ -79,6 +79,9 @@ def _candidate_root(selection: str | Path) -> Path:
             if candidate.name.casefold() != _EXECUTABLE_NAME.casefold():
                 message = "selected source file must be Simpsons.exe"
                 raise SourceSelectionError(message)
+            if candidate.is_symlink():
+                message = "selected source file must be a real Simpsons.exe"
+                raise SourceSelectionError(message)
             return candidate.resolve().parent
         if candidate.is_dir():
             return candidate.resolve()
@@ -103,6 +106,9 @@ def resolve_source_selection(selection: str | Path) -> Path:
     root = _candidate_root(selection)
     direct = root / _EXECUTABLE_NAME
     try:
+        if direct.is_symlink():
+            message = "selected source must contain a real Simpsons.exe"
+            raise SourceSelectionError(message)
         if not direct.is_file():
             message = "selected source does not contain a direct Simpsons.exe"
             raise SourceSelectionError(message)
