@@ -2,6 +2,31 @@
 #   - Copyright (c) 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
+# Confidential:
+#   - false
+# License-File:
+#   - LICENSE-MIT
+#
+# Boundary-Contract:
+# - Owns:
+#   - Repository-policy evidence isolating legacy LMLM compatibility.
+# - Must-Not:
+#   - Execute LMLM conversion or create user mod installation directories.
+# - Allows:
+#   - Inspect tracked source paths, ignore rules, and public README anchors.
+# - Split-When:
+#   - LMLM isolation policies gain independent validation lifecycles.
+# - Merge-When:
+#   - Another architecture test owns the same legacy-tool isolation contract.
+# - Summary:
+#   - Guards LMLM isolation from product source and user mod paths.
+# - Description:
+#   - Enforces repository boundaries for the legacy compatibility tool.
+# - Usage:
+#   - Run through the canonical repository pytest gate.
+# - Defaults:
+#   - Reads tracked repository content without external effects.
+#
 
 """Architecture guard: legacy LMLM compatibility must never enter src/."""
 
@@ -51,7 +76,7 @@ def test_repository_root_has_no_user_mod_drop_directory() -> None:
     )
 
 
-def test_lmlm_local_inputs_and_outputs_are_ignored_with_public_readmes() -> None:
+def test_lmlm_private_io_is_ignored_with_public_readmes() -> None:
     lines = (_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
     relevant = tuple(
         line
