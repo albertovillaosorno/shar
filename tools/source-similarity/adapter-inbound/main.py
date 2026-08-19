@@ -46,6 +46,7 @@ from typing import Any
 Coordinate = tuple[str, str]
 _MANIFEST_SCHEMA = "shar-schoenwald.game-manifest-ledger.v2"
 _MAX_COUNT = (1 << 64) - 1
+_MAX_COUNT_TEXT = str(_MAX_COUNT)
 
 
 class SimilarityInputError(ValueError):
@@ -294,6 +295,10 @@ def _collision_family(directory: str) -> str:
     if len(ordinal) < 2 or not ordinal.isascii() or not ordinal.isdigit():
         return directory
     if ordinal == "00" or (len(ordinal) > 2 and ordinal.startswith("0")):
+        return directory
+    if len(ordinal) > len(_MAX_COUNT_TEXT) or (
+        len(ordinal) == len(_MAX_COUNT_TEXT) and ordinal > _MAX_COUNT_TEXT
+    ):
         return directory
     return base
 

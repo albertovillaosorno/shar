@@ -96,7 +96,12 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(evidence.weighted_jaccard, Fraction(1, 1))
 
     def test_non_generated_suffix_remains_distinct(self) -> None:
-        for directory in ("aa~1", "aa~00", "aa~001"):
+        for directory in (
+            "aa~1",
+            "aa~00",
+            "aa~001",
+            "aa~18446744073709551616",
+        ):
             with self.subTest(directory=directory):
                 reference = {(directory, "p3d"): 2}
                 candidate = {("aa", "p3d"): 2}
