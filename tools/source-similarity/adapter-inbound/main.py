@@ -145,7 +145,7 @@ def _valid_required_file_metadata(value: object) -> bool:
         isinstance(value["path"], str)
         and not isinstance(minimum, bool)
         and isinstance(minimum, int)
-        and minimum >= 0
+        and 0 <= minimum <= _MAX_COUNT
     )
 
 
