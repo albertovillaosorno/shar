@@ -447,6 +447,38 @@ class UatWorkPathTests(unittest.TestCase):
 class TurnkeyReportTests(unittest.TestCase):
     """Require Turnkey SDK evidence to remain a real cache-owned file."""
 
+    def test_rejects_preexisting_linked_sdk_report_before_uat(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            report = work / "turnkey.txt"
+            report.write_text("sentinel\n", encoding="utf-8")
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+            original = Path.is_symlink
+
+            def report_as_link(path: Path) -> bool:
+                return path == report or original(path)
+
+            with (
+                mock.patch.object(Path, "is_symlink", report_as_link),
+                mock.patch.object(_RUN, "_run_uat") as process,
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Turnkey SDK report must be a real file",
+                ),
+            ):
+                _RUN._verify_sdk(
+                    root,
+                    Path("/uat"),
+                    Path("/project"),
+                    target,
+                    work,
+                )
+
+            self.assertEqual(report.read_text(encoding="utf-8"), "sentinel\n")
+            process.assert_not_called()
+
     def test_rejects_linked_sdk_report_after_uat(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
             root = Path(raw)

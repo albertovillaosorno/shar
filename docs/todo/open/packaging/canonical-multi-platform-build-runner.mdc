@@ -106,9 +106,10 @@ Each UAT invocation now also validates its own child write roots: existing log
 files must be real files, while `automation-saved/`, its `logs/` child, and the
 local DDC must be real directories. Linked identities fail before UAT starts, so
 cached tool output cannot be redirected through a pre-existing work-tree link.
-Turnkey SDK evidence is likewise required to be a real report file after UAT
-returns. A linked `turnkey.txt` can no longer make external content satisfy the
-SDK-validity gate.
+Turnkey SDK evidence is likewise required to be a real report file both before
+stale-report cleanup and after UAT returns. A pre-existing linked `turnkey.txt`
+is rejected before UAT, and a report redirected during UAT cannot make external
+content satisfy the SDK-validity gate.
 After UAT returns, the complete candidate tree is traversed without following
 links and rejects symbolic links, junctions, or special filesystem entries
 before manifests/debug symbols are moved or the package is published.
