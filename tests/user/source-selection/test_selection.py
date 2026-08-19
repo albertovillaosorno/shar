@@ -190,6 +190,24 @@ def test_redirected_source_directory_is_rejected() -> None:
                 module.resolve_source_selection(selection)
 
 
+def test_junction_source_directory_is_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load()
+    with tempfile.TemporaryDirectory(prefix="shar-user-junction-") as value:
+        source, executable = _source(Path(value))
+        monkeypatch.setattr(
+            module.os.path,
+            "isjunction",
+            lambda path: Path(path) == source,
+        )
+
+        pattern = r"real source directory"
+        for selection in (source, executable):
+            with pytest.raises(module.SourceSelectionError, match=pattern):
+                module.resolve_source_selection(selection)
+
+
 def test_direct_executable_redirect_is_rejected() -> None:
     if os.name == "nt":
         pytest.skip("symlink setup is Unix-focused")

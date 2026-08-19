@@ -303,6 +303,21 @@ class SourceSelectionTests(unittest.TestCase):
                 source.resolve(),
             )
 
+            with mock.patch.object(
+                _CHECK.os.path,
+                "isjunction",
+                side_effect=lambda path: Path(path) == source,
+            ):
+                for selection in (source, executable):
+                    with (
+                        self.subTest(selection=selection),
+                        self.assertRaisesRegex(
+                            _CHECK.CheckFailure,
+                            "real source directory",
+                        ),
+                    ):
+                        _CHECK._check_game(repository, selection)
+
     def test_non_game_file_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-source-file-") as value:
             root = Path(value)

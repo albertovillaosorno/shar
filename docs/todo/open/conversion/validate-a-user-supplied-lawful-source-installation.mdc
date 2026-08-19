@@ -104,12 +104,14 @@ becoming mandatory base input.
 The player-facing `src/user/source-selection` boundary now normalizes a selected
 installation directory, pasted or typed path text, and a selected/dropped
 `Simpsons.exe` to one resolved flat source root. It validates the user-selected
-file component before resolving filesystem redirects, requires one direct
-canonical executable, rejects another nested canonical executable, performs
-only read-only filesystem inspection, and reports path-free selection errors.
-Synthetic regressions cover directory, quoted text, executable, missing,
-wrong-file, redirected wrong-file, and nested-only selections without
-proprietary source data. The future P4 GUI still owns concrete browse/text/drop
+file component before resolving filesystem redirects, rejects symbolic links or
+Windows junctions in the selected directory's lexical prefix chain, requires one
+direct canonical executable, rejects another nested canonical executable,
+performs only read-only filesystem inspection, and reports path-free selection
+errors. Synthetic regressions cover directory, quoted text, executable, missing,
+wrong-file, redirected wrong-file, redirected directory/parent, mocked junction,
+and nested-only selections without proprietary source data. The future P4 GUI
+still owns concrete browse/text/drop
 event binding; this criterion now owns only the source-selection semantics
 shared by those events.
 
