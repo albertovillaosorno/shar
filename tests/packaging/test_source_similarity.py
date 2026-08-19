@@ -77,6 +77,22 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(evidence.reference_coverage, Fraction(1, 1))
         self.assertEqual(evidence.weighted_jaccard, Fraction(1, 2))
 
+    def test_collision_ordinals_do_not_hide_shared_structure(self) -> None:
+        reference = {("aa~01", "p3d"): 2, ("aa~02", "p3d"): 3}
+        candidate = {("aa", "p3d"): 3}
+        evidence = _MOD.measure(reference, candidate)
+        self.assertEqual(evidence.reference_coverage, Fraction(3, 5))
+        self.assertEqual(evidence.weighted_jaccard, Fraction(3, 5))
+
+    def test_non_generated_suffix_remains_distinct(self) -> None:
+        for directory in ("aa~1", "aa~00", "aa~001"):
+            with self.subTest(directory=directory):
+                reference = {(directory, "p3d"): 2}
+                candidate = {("aa", "p3d"): 2}
+                evidence = _MOD.measure(reference, candidate)
+                self.assertEqual(evidence.reference_coverage, Fraction(0, 1))
+                self.assertEqual(evidence.weighted_jaccard, Fraction(0, 1))
+
     def test_invalid_or_empty_reference_vectors_fail_closed(self) -> None:
         with self.assertRaisesRegex(ValueError, "must not be empty"):
             _MOD.measure({}, {("aa", "p3d"): 1})

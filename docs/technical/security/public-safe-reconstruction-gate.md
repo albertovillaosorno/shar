@@ -29,6 +29,15 @@ normalized extension. The percentage denominator is the sum of those reference
 counts. Original payload bytes, full source paths, filenames, and a reversible
 full-tree description are outside the metric and outside published recipes.
 
+Minimum-manifest collision suffixes are not stable comparison identities.
+When two private directories collapse to the same public alias, manifest
+generation adds `~01`, `~02`, and later ordinals according to the directories
+present in that scan. A candidate missing one colliding directory may therefore
+expose the same structural family without the suffix. Calibration strips only
+canonical generated ordinals and aggregates those family counts before
+comparison. Hard manifest and deep validation keep their exact coordinates; this
+normalization cannot admit a source.
+
 A **minimum installation** is not “an installation that reaches 60%.” It is a
 lawful candidate that first passes all hard source requirements and whose
 optional-source population is then measured against representative complete
