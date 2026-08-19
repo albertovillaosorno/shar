@@ -138,6 +138,8 @@ class SourceSimilarityTests(unittest.TestCase):
             '{"dir":"aa","ext":"p3d","min":1,"count":1}',
             '{"dir":"aa","ext":"p3d"}',
             '{"dir":"aa","ext":"p3d","min":1,"kind":{"private":1}}',
+            '{"dir":"aa","ext":"p3d","min":18446744073709551616}',
+            '{"dir":"aa","ext":"p3d","min":' + ("9" * 5000) + "}",
             (
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
                 '"private_metadata":"not-public"}'
@@ -157,7 +159,10 @@ class SourceSimilarityTests(unittest.TestCase):
             ),
         )
         for record in records:
-            with self.subTest(record=record), self.assertRaises(ValueError):
+            with (
+                self.subTest(record=record[:120]),
+                self.assertRaises(_MOD.SimilarityInputError),
+            ):
                 _MOD.parse_count_ledger(record)
 
     def test_parser_rejects_mixed_count_meanings(self) -> None:
