@@ -48,7 +48,7 @@ impl GameTree for FilesystemGameTree {
     }
 
     fn files(&self, root: &Path) -> io::Result<Vec<PathBuf>> {
-        local::regular_files(root)
+        local::strict_regular_files(root)
     }
 }
 

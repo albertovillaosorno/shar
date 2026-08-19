@@ -58,6 +58,10 @@ name = "error_display"
 path = "../../../tests/migration/manifest/error_display.rs"
 
 [[test]]
+name = "filesystem_tree_redirect"
+path = "../../../tests/migration/manifest/filesystem_tree_redirect.rs"
+
+[[test]]
 name = "expanded_backup_contract"
 path = "../../../tests/migration/manifest/expanded_backup_contract.rs"
 
