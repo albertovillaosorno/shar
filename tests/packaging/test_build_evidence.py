@@ -361,7 +361,7 @@ class SourceSelectionTests(unittest.TestCase):
                 _CHECK._check_game(repository, source)
 
     @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
-    def test_direct_executable_redirect_is_rejected(self) -> None:
+    def test_direct_source_redirects_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-source-direct-link-"
         ) as value:
@@ -381,6 +381,20 @@ class SourceSelectionTests(unittest.TestCase):
                 with self.subTest(selection=selection), self.assertRaisesRegex(
                     _CHECK.CheckFailure,
                     "real Simpsons.exe",
+                ):
+                    _CHECK._check_game(repository, selection)
+
+            real_source = root / "real-source"
+            real_source.mkdir()
+            (real_source / "Simpsons.exe").write_bytes(b"fixture")
+            selected = root / "selected-game"
+            selected.symlink_to(real_source, target_is_directory=True)
+            default = repository / "game"
+            default.symlink_to(real_source, target_is_directory=True)
+            for selection in (selected, None):
+                with self.subTest(selection=selection), self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "real source directory",
                 ):
                     _CHECK._check_game(repository, selection)
 

@@ -160,10 +160,24 @@ def _check_python() -> dict[str, str]:
     }
 
 
+def _real_source_directory(path: Path) -> Path:
+    """Resolve one source directory without accepting redirects.
+
+    Raises:
+        CheckFailure: If the directory is a symbolic link or junction.
+
+    """
+    if path.is_symlink() or os.path.isjunction(path):
+        raise CheckFailure(
+            "selected source directory must be a real source directory"
+        )
+    return path.resolve()
+
+
 def _game_candidate(root: Path, selected: Path | None) -> Path:
     """Resolve a selected source directory or Simpsons.exe to its root."""
     if selected is None:
-        return (root / "game").resolve()
+        return _real_source_directory(root / "game")
     candidate = selected.expanduser()
     if not candidate.is_absolute():
         candidate = Path.cwd() / candidate
@@ -176,7 +190,7 @@ def _game_candidate(root: Path, selected: Path | None) -> Path:
             )
         return candidate.resolve().parent
     if candidate.is_dir():
-        return candidate.resolve()
+        return _real_source_directory(candidate)
     raise CheckFailure("selected source path does not exist")
 
 
