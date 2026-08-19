@@ -32,6 +32,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import tomllib
 
@@ -197,3 +198,84 @@ def test_algorithm_domain_is_serialization_free() -> None:
     wire = document.read_text()
     assert "serde::{Deserialize, Serialize}" in wire
     assert "serde_json" in wire
+
+
+_HEX = frozenset("0123456789abcdef")
+
+
+def _is_lower_hex(value: object, length: int) -> bool:
+    """Return whether one JSON value is exact lowercase hexadecimal."""
+    return (
+        isinstance(value, str)
+        and len(value) == length
+        and set(value) <= _HEX
+    )
+
+
+def _assert_source_bound_plan(text: str) -> None:
+    """Require the publishable structural subset of shar.algorithm.v1."""
+    document = json.loads(text)
+    assert isinstance(document, dict)
+    assert set(document) == {
+        "schema",
+        "settings_sha256",
+        "source",
+        "target_kind",
+        "target",
+    }
+    assert document["schema"] == "shar.algorithm.v1"
+    assert _is_lower_hex(document["settings_sha256"], 64)
+    assert document["target_kind"] in {"file", "directory"}
+
+    source = document["source"]
+    assert isinstance(source, list)
+    assert source
+    for record in source:
+        assert isinstance(record, dict)
+        assert set(record) == {"input", "path", "bytes", "sha256"}
+        assert isinstance(record["input"], int)
+        assert record["input"] >= 0
+        assert isinstance(record["path"], str)
+        assert isinstance(record["bytes"], int)
+        assert record["bytes"] >= 0
+        assert _is_lower_hex(record["sha256"], 64)
+
+    target = document["target"]
+    assert isinstance(target, list)
+    assert target
+    for record in target:
+        assert isinstance(record, dict)
+        assert set(record) == {
+            "path",
+            "bytes",
+            "sha256",
+            "nonce",
+            "ciphertext",
+        }
+        assert isinstance(record["path"], str)
+        assert isinstance(record["bytes"], int)
+        assert record["bytes"] >= 0
+        assert _is_lower_hex(record["sha256"], 64)
+        assert _is_lower_hex(record["nonce"], 24)
+        ciphertext = record["ciphertext"]
+        assert isinstance(ciphertext, str)
+        assert ciphertext
+        assert len(ciphertext) % 2 == 0
+        assert set(ciphertext) <= _HEX
+
+
+def test_substantive_algorithm_example_matches_source_bound_contract() -> None:
+    """Exercise the publication guard against a real authored plan."""
+    example = _ROOT / "src/migration/icon/icon_algorithm.txt"
+    _assert_source_bound_plan(example.read_text(encoding="utf-8"))
+
+
+def test_public_family_plan_publication_contract() -> None:
+    """Reject arbitrary text from every publishable family plan path."""
+    plans = sorted((_ROOT / "algorithms").glob("**/algorithm/*.txt"))
+    assert plans
+    for plan in plans:
+        text = plan.read_text(encoding="utf-8")
+        if not text.strip():
+            continue
+        _assert_source_bound_plan(text)

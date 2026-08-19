@@ -67,6 +67,26 @@ and invalid vectors and prove the evidence object has no admission result. No
 read-only source boundary, source-bound plan publication restrictions, and the
 rule that similarity cannot substitute for any hard source gate.
 
+Repository publication policy now parses the substantive tracked icon plan and
+every non-empty public family `algorithm/*.txt` plan, requiring the exact
+`shar.algorithm.v1` top-level source/target structure, lowercase SHA-256 source
+bindings, 96-bit nonce encoding, and non-empty hexadecimal protected payloads.
+The current icon plan satisfies that guard with one source descriptor and seven
+protected targets. The three platform game-family files remain deliberate empty
+placeholders and are therefore not claimed as validated release plans. This
+structural publication guard narrows what can be committed publicly; it does not
+replace source-backed cryptographic replay evidence or the pending similarity
+calibration.
+
+A repository publication guard now rejects arbitrary substantive text below
+family `algorithm/*.txt` paths. Deliberate whitespace placeholders remain
+admitted but non-buildable; any substantive family plan must match the
+`shar.algorithm.v1` top-level source/target shape and exact hexadecimal evidence
+fields. The existing authored icon algorithm exercises the same guard as a real
+non-placeholder document. This adds publication-shape enforcement without
+claiming that the still-placeholder family plans have been authored or that the
+candidate similarity window is calibrated.
+
 The generic `shar.algorithm.v1` round-trip suite now includes explicit evidence
 that a serialized plan cannot replay with zero caller-supplied source roots and
 that successful create/replay leaves the caller source bytes and source layout
