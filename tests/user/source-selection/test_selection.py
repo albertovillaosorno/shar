@@ -162,6 +162,23 @@ def test_nested_executable_redirect_is_rejected() -> None:
             module.resolve_source_selection(source)
 
 
+def test_redirected_source_directory_is_rejected() -> None:
+    if os.name == "nt":
+        pytest.skip("symlink setup is Unix-focused")
+    module = _load()
+    with tempfile.TemporaryDirectory(
+        prefix="shar-user-directory-link-"
+    ) as value:
+        root = Path(value)
+        source, _ = _source(root)
+        redirect = root / "redirected-game"
+        redirect.symlink_to(source, target_is_directory=True)
+
+        pattern = r"real source directory"
+        with pytest.raises(module.SourceSelectionError, match=pattern):
+            module.resolve_source_selection(redirect)
+
+
 def test_direct_executable_redirect_is_rejected() -> None:
     if os.name == "nt":
         pytest.skip("symlink setup is Unix-focused")

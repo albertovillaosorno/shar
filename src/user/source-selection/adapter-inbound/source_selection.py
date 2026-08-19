@@ -32,6 +32,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 _EXECUTABLE_NAME = "Simpsons.exe"
@@ -40,6 +41,26 @@ _WRAPPERS = {'"': '"', "'": "'", "{": "}"}
 
 class SourceSelectionError(ValueError):
     """Source selection cannot resolve to one flat game installation root."""
+
+
+def _is_directory_redirect(path: Path) -> bool:
+    """Return whether one directory identity redirects."""
+    return path.is_symlink() or os.path.isjunction(path)
+
+
+def _real_directory_root(path: Path) -> Path:
+    """Resolve one real source directory without accepting redirects.
+
+    Raises:
+        SourceSelectionError: If the directory is a redirect.
+
+    """
+    if _is_directory_redirect(path):
+        message = (
+            "selected source directory must be a real source directory"
+        )
+        raise SourceSelectionError(message)
+    return path.resolve()
 
 
 def _selection_path(selection: str | Path) -> Path:
@@ -84,7 +105,7 @@ def _candidate_root(selection: str | Path) -> Path:
                 raise SourceSelectionError(message)
             return candidate.resolve().parent
         if candidate.is_dir():
-            return candidate.resolve()
+            return _real_directory_root(candidate)
     except OSError as error:
         message = "selected source path cannot be inspected"
         raise SourceSelectionError(message) from error
