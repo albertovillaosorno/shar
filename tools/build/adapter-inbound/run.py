@@ -581,7 +581,8 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
         and item.stat().st_size > 0
         and (
             stem_prefix is None
-            or item.stem.casefold().startswith(stem_prefix)
+            or item.stem.casefold() == stem_prefix
+            or item.stem.casefold().startswith(f"{stem_prefix}-")
         )
         for item in candidate.rglob("*")
     ):
