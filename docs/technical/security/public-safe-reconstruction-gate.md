@@ -119,7 +119,10 @@ non-buildable state; every substantive plan must decode as a
 lowercase source/target hashes, 12-byte nonce evidence, and hexadecimal
 protected target material whose encoded length includes the required 16-byte
 authentication tag and whose declared resource use fits the active generic
-algorithm settings. The authored icon reconstruction plan exercises the
+algorithm settings. Generic replay checks the fixed nonce and protected-payload
+encoded lengths before hex decoding, so malformed documents cannot expand those
+fields beyond their declared target size. The authored icon reconstruction plan
+exercises the
 same policy against a real non-placeholder document. Source and directory-target
 record paths must also be canonical forward-slash relatives, with an empty source
 path reserved for direct-file evidence. Source records also retain the collector's input order without decreases, unique
