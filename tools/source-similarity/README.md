@@ -4,9 +4,10 @@
 
 Defines the `tools/source-similarity` boundary for content-free structural
 similarity calibration over lawful source manifests. Comparison aggregates only
-canonical generated collision ordinals so optional directories cannot renumber
-otherwise shared structural evidence. The CLI accepts two public JSONL count
-ledgers and emits aggregate exact-rational evidence only.
+canonical generated collision ordinals within the unsigned 64-bit generator
+range so optional directories cannot renumber otherwise shared structural
+evidence. The CLI accepts two public JSONL count ledgers and emits aggregate
+exact-rational evidence only.
 
 ## Calibration invocation
 
@@ -23,9 +24,8 @@ manifest-header metadata must retain their public JSON shapes but are ignored by
 the metric. Coordinate extensions must be nonempty; files without extensions use
 the manifest's `(none)` token. Coordinate counts, required-file minima, and each
 ledger's total count must fit the unsigned 64-bit range used by the supported
-64-bit Rust manifest producers. The
-command never prints an admission result or embeds an acceptance threshold.
-Input failures omit local ledger paths.
+64-bit Rust manifest producers. The command never prints an admission result or
+embeds an acceptance threshold. Input failures omit local ledger paths.
 
 ## Ownership
 
