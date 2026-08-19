@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/localization/languages/Cargo.toml
+function: languages
+kind: project
+authority: Cargo.toml
