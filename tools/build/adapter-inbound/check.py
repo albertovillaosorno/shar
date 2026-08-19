@@ -186,7 +186,7 @@ def _game_candidate(root: Path, selected: Path | None) -> Path:
     if not candidate.is_absolute():
         candidate = Path.cwd() / candidate
     if candidate.is_file():
-        if candidate.name.casefold() != "simpsons.exe":
+        if candidate.name != "Simpsons.exe":
             raise CheckFailure("selected source file must be Simpsons.exe")
         if candidate.is_symlink():
             raise CheckFailure(
@@ -201,11 +201,20 @@ def _game_candidate(root: Path, selected: Path | None) -> Path:
 def _check_game(root: Path, selected: Path | None) -> Path:
     """Require one flat source installation without modifying it."""
     game = _game_candidate(root, selected)
-    executable = game / "Simpsons.exe"
-    if executable.is_symlink():
-        raise CheckFailure("selected source must contain a real Simpsons.exe")
-    if not executable.is_file():
-        nested = sorted(game.rglob("Simpsons.exe")) if game.is_dir() else []
+    executable = next(
+        (path for path in game.iterdir() if path.name == "Simpsons.exe"),
+        None,
+    ) if game.is_dir() else None
+    if executable is None or not executable.is_file():
+        nested = (
+            sorted(
+                path
+                for path in game.rglob("*")
+                if path.name == "Simpsons.exe"
+            )
+            if game.is_dir()
+            else []
+        )
         if nested:
             example = nested[0].relative_to(game)
             raise CheckFailure(
@@ -215,11 +224,13 @@ def _check_game(root: Path, selected: Path | None) -> Path:
         raise CheckFailure(
             "selected source does not contain a direct Simpsons.exe"
         )
+    if executable.is_symlink():
+        raise CheckFailure("selected source must contain a real Simpsons.exe")
 
     nested = [
         path
-        for path in game.rglob("Simpsons.exe")
-        if path != executable
+        for path in game.rglob("*")
+        if path != executable and path.name == "Simpsons.exe"
     ]
     if nested:
         example = min(nested).relative_to(game)

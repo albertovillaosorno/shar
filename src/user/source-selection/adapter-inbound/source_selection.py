@@ -100,7 +100,7 @@ def _candidate_root(selection: str | Path) -> Path:
     candidate = _selection_path(selection)
     try:
         if candidate.is_file():
-            if candidate.name.casefold() != _EXECUTABLE_NAME.casefold():
+            if candidate.name != _EXECUTABLE_NAME:
                 message = "selected source file must be Simpsons.exe"
                 raise SourceSelectionError(message)
             if candidate.is_symlink():
@@ -128,18 +128,21 @@ def resolve_source_selection(selection: str | Path) -> Path:
 
     """
     root = _candidate_root(selection)
-    direct = root / _EXECUTABLE_NAME
     try:
+        direct = next(
+            (path for path in root.iterdir() if path.name == _EXECUTABLE_NAME),
+            None,
+        )
+        if direct is None or not direct.is_file():
+            message = "selected source does not contain a direct Simpsons.exe"
+            raise SourceSelectionError(message)
         if direct.is_symlink():
             message = "selected source must contain a real Simpsons.exe"
             raise SourceSelectionError(message)
-        if not direct.is_file():
-            message = "selected source does not contain a direct Simpsons.exe"
-            raise SourceSelectionError(message)
         nested = tuple(
             path
-            for path in root.rglob(_EXECUTABLE_NAME)
-            if path != direct
+            for path in root.rglob("*")
+            if path != direct and path.name == _EXECUTABLE_NAME
         )
     except OSError as error:
         message = "selected source cannot be inspected safely"
