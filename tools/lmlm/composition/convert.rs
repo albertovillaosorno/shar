@@ -193,7 +193,7 @@ fn decompile_p3d(
                 ),
                 false,
             )?;
-        }
+        },
     }
     Ok(())
 }
