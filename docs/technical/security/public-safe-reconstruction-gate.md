@@ -132,9 +132,10 @@ path reserved for direct-file evidence. Source records also
 retain the collector's contiguous input numbering from zero, stable relative
 path order within each directory input, unique non-overlapping portable file
 identities, and one root kind per input. Directory targets retain the algorithm
-creator's stable relative-path order as well. This structural publication guard
-does not turn a placeholder into a reviewed plan and does not implement a
-similarity threshold.
+creator's stable portable UTF-8 relative-path order as well. Source directory
+records use that same portable order before hashing and serialization. This
+structural publication guard does not turn a placeholder into a reviewed plan
+and does not implement a similarity threshold.
 
 The maintainer-only `in/`, `master/`, and shared `out/` workspace trees never
 ship as reconstruction plans. Generic algorithm authoring also requires the

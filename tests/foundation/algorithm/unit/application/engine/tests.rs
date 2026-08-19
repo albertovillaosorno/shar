@@ -31,6 +31,8 @@
 
 //! Algorithm application codec unit tests.
 
+use std::path::PathBuf;
+
 use crate::document::{
     ALGORITHM_SCHEMA, AlgorithmDocument, ProtectedTarget, SourceRecord,
     TargetDescriptor, TargetKind,
@@ -38,9 +40,36 @@ use crate::document::{
 use crate::domain::Settings;
 
 use super::{
-    InputFile, decode_hex, hex_bytes, settings_sha256, source_key,
-    validate_document,
+    InputFile, decode_hex, hex_bytes, settings_sha256,
+    sort_files_by_logical_path, source_key, validate_document,
 };
+
+#[test]
+fn logical_file_order_is_portable_wire_order() {
+    let mut files = [
+        InputFile {
+            input: 0,
+            logical_path: "😀.bin".to_owned(),
+            path: PathBuf::from("unused-emoji"),
+            bytes: 0,
+            sha256: String::new(),
+            data: Vec::new(),
+        },
+        InputFile {
+            input: 0,
+            logical_path: "\u{e000}.bin".to_owned(),
+            path: PathBuf::from("unused-private-use"),
+            bytes: 0,
+            sha256: String::new(),
+            data: Vec::new(),
+        },
+    ];
+
+    sort_files_by_logical_path(&mut files);
+
+    assert_eq!(files[0].logical_path, "\u{e000}.bin");
+    assert_eq!(files[1].logical_path, "😀.bin");
+}
 
 #[test]
 fn hexadecimal_round_trip_is_exact() {

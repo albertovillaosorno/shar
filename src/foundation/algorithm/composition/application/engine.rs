@@ -152,6 +152,10 @@ fn inspect_file(
     })
 }
 
+fn sort_files_by_logical_path(files: &mut [InputFile]) {
+    files.sort_by(|left, right| left.logical_path.cmp(&right.logical_path));
+}
+
 fn collect_one_root(
     input: u64,
     root: &Path,
@@ -182,6 +186,7 @@ fn collect_one_root(
                 let logical = portable_relative(relative)?;
                 files.push(inspect_file(input, logical, path, settings)?);
             }
+            sort_files_by_logical_path(&mut files);
             Ok((canonical, files))
         }
         PathKind::Missing => Err(AlgorithmError::new("input path does not exist")),
@@ -296,6 +301,7 @@ fn collect_target(
                 let logical = portable_relative(relative)?;
                 files.push(inspect_file(0, logical, target_file, settings)?);
             }
+            sort_files_by_logical_path(&mut files);
             (TargetKind::Directory, files)
         }
         PathKind::Missing => return Err(AlgorithmError::new("target path does not exist")),
