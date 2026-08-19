@@ -98,6 +98,16 @@ It must not contain:
   bytes; or
 - a hardcoded 45–55% gate before calibration is accepted and versioned.
 
+Repository policy additionally scans every publishable family
+`algorithm/*.txt`. Whitespace-only placeholders remain admitted as explicitly
+non-buildable state; every substantive plan must decode as a
+`shar.algorithm.v1` object with the exact top-level source/target contract,
+lowercase source/target hashes, 12-byte nonce evidence, and hexadecimal
+protected target material. The authored icon reconstruction plan exercises the
+same policy against a real non-placeholder document. This structural publication
+guard does not turn a placeholder into a reviewed plan and does not implement a
+similarity threshold.
+
 The maintainer-only `in/`, `master/`, and shared `out/` workspace trees never
 ship as reconstruction plans. Generic algorithm authoring also requires the
 canonical target root to be disjoint from every canonical source root in both
