@@ -801,6 +801,7 @@ fn validate_document(
         }
     }
     let mut paths = BTreeSet::new();
+    let mut previous_target_path: Option<&str> = None;
     let mut target_bytes = 0_u64;
     let mut descriptors = Vec::with_capacity(document.target.len());
     for target in &document.target {
@@ -810,6 +811,14 @@ fn validate_document(
                 false,
                 "algorithm target",
             )?;
+            if previous_target_path
+                .is_some_and(|path| target.descriptor.path.as_str() < path)
+            {
+                return Err(AlgorithmError::new(
+                    "algorithm target paths are out of order",
+                ));
+            }
+            previous_target_path = Some(target.descriptor.path.as_str());
         }
         let identity = portable_record_identity(&target.descriptor.path);
         let candidate = Path::new(&identity);
