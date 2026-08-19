@@ -202,7 +202,7 @@ impl UnrealImportManifest {
             let plan = PhaseThreePackagePlanner::plan(package);
             let mut policy = package_policy(
                 plan.family,
-                plan.fbx.as_ref().map(|fbx| fbx.target_kind),
+                plan.fbx.as_ref().map(|model_plan| model_plan.target_kind),
                 plan.unreal.as_ref().map(|unreal| unreal.target_kind),
             );
             let package_name = unreal_name(&package.package_id);
