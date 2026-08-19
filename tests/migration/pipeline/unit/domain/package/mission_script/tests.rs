@@ -32,7 +32,8 @@
 
 use serde_json::{Value, json};
 
-use super::{MISSION_SCRIPT_SCHEMA, preflight_mission_script};
+use super::MISSION_SCRIPT_SCHEMA;
+use crate::preflight_mission_script;
 
 fn document() -> Value {
     json!({
@@ -572,8 +573,12 @@ fn load_p3d_document() -> Value {
         "schema": MISSION_SCRIPT_SCHEMA,
         "source_extension":"mfk","route_class":"mission","source_bytes":64,
         "context_command_count":0,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":1,"unique_command_count":1,"load_p3d_reference_count":1,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":1,
+        "unique_command_count":1,
+        "load_p3d_reference_count":1,
         "mission_flow_command_count":0,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script","command_counts":{"loadp3dfile":1},
         "source_statements":["LoadP3DFile(\"a.p3d\",\"b.p3d\");"],

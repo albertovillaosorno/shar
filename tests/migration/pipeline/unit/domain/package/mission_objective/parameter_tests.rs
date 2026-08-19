@@ -36,7 +36,7 @@ use super::{
     MissionObjectiveParameters, MissionRoadArrowBinding, MissionRoadArrowMode,
     preflight_mission_objective_parameters,
 };
-use crate::domain::preflight_mission_script;
+use crate::preflight_mission_script;
 
 fn objective_document(arguments: &[&str]) -> Result<String, String> {
     let args_raw = arguments

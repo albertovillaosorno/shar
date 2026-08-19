@@ -15,7 +15,8 @@ use super::{
     MissionStageDirective, MissionStageKind, MissionStageMessageKind,
     preflight_mission_stage_semantics,
 };
-use crate::domain::{compile_mission_scope_graphs, preflight_mission_script};
+use crate::domain::compile_mission_scope_graphs;
+use crate::preflight_mission_script;
 
 fn stage_document(
     stage_arguments: &[&str],

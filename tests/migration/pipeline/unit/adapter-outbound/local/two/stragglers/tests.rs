@@ -223,7 +223,7 @@ fn mission_v3_renderer_matches_semantic_preflight() -> Result<(), String> {
         source.as_bytes(),
         source,
     );
-    let evidence = crate::domain::preflight_mission_script(&rendered)?;
+    let evidence = crate::preflight_mission_script(&rendered)?;
     if evidence.statement_count() != 6 || evidence.invocations().len() != 6 {
         return Err(
             "rendered mission evidence changed during preflight".to_owned()
@@ -393,7 +393,7 @@ fn repository_mission_corpus_passes_semantic_registries() -> Result<(), String>
             &bytes,
             text.as_ref(),
         );
-        let evidence = crate::domain::preflight_mission_script(&rendered)
+        let evidence = crate::preflight_mission_script(&rendered)
             .map_err(|error| format!("{}: {error}", relative.display()))?;
         let objectives = crate::domain::preflight_mission_objectives(&evidence)
             .map_err(|error| format!("{}: {error}", relative.display()))?;

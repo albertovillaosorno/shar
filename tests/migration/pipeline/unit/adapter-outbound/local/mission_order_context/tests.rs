@@ -33,7 +33,8 @@
 use serde_json::json;
 
 use super::*;
-use crate::domain::{MissionScriptEvidence, preflight_mission_script};
+use crate::domain::MissionScriptEvidence;
+use crate::preflight_mission_script;
 
 fn evidence(
     name: Option<&str>,

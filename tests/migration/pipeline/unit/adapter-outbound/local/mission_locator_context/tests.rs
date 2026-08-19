@@ -35,7 +35,7 @@ use std::collections::BTreeSet;
 use serde_json::json;
 
 use super::*;
-use crate::domain::preflight_mission_script;
+use crate::preflight_mission_script;
 
 fn mission_evidence(mission_id: Option<&str>) -> Result<MissionScriptEvidence, String> {
     let (invocations, commands, statements, p3d_references, mission_flow_count, context_count) =

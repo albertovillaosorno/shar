@@ -33,7 +33,7 @@
 use serde_json::json;
 
 use super::*;
-use crate::domain::preflight_mission_script;
+use crate::preflight_mission_script;
 
 fn evidence(vehicle: &str) -> Result<MissionScriptEvidence, String> {
     let value = json!({

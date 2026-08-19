@@ -38,6 +38,7 @@ pub mod application;
 #[path = "../domain/mod.rs"]
 pub mod domain;
 mod manifest_paths;
+mod mission_script;
 mod package_index;
 mod workspace;
 #[rustfmt::skip]
@@ -45,6 +46,7 @@ mod workspace;
 pub mod ports;
 
 pub use application::{PipelineService, SummarizeOutput};
+pub use mission_script::preflight_mission_script;
 pub use domain::{
     ConversionFamily, DirectorySummary, FbxModelPlan, OutputSummary,
     PackageMemberRef, PackageRole, PhaseThreePackageIndex,

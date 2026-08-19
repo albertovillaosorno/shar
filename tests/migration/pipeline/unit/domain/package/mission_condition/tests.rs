@@ -87,7 +87,7 @@ use super::modifier::{CONDITION_MODIFIERS, condition_modifier_schema};
 use super::{
     preflight_mission_condition_commands, preflight_mission_conditions,
 };
-use crate::domain::preflight_mission_script;
+use crate::preflight_mission_script;
 
 fn mission_with_condition_modifier(
     condition_arguments: &[&str],
