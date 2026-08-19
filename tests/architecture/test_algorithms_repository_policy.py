@@ -32,9 +32,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 import tomllib
+
+import pytest
 
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -203,6 +206,36 @@ def test_algorithm_domain_is_serialization_free() -> None:
 _HEX = frozenset("0123456789abcdef")
 
 
+def _json_object_without_duplicates(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Build one JSON object while rejecting duplicate member names."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        assert key not in result, f"algorithm JSON repeats key: {key}"
+        result[key] = value
+    return result
+
+
+def _is_nonnegative_integer(value: object) -> bool:
+    """Match serde u64 admission rather than Python's bool-as-int rule."""
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def _active_settings_sha256() -> str:
+    """Hash the active algorithm settings using the Rust compact JSON shape."""
+    path = (
+        _ROOT
+        / "src/foundation/algorithm/composition/adapter-inbound/settings.json"
+    )
+    document = json.loads(
+        path.read_text(encoding="utf-8"),
+        object_pairs_hook=_json_object_without_duplicates,
+    )
+    encoded = json.dumps(document, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def _is_lower_hex(value: object, length: int) -> bool:
     """Return whether one JSON value is exact lowercase hexadecimal."""
     return (
@@ -219,9 +252,46 @@ def _read_public_plan(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _assert_target_layout(document: dict[str, object]) -> None:
+    """Mirror replay's file/directory target identity constraints."""
+    target_kind = document["target_kind"]
+    target = document["target"]
+    assert isinstance(target, list)
+    if target_kind == "file":
+        assert len(target) == 1
+        record = target[0]
+        assert isinstance(record, dict)
+        path = record.get("path")
+        assert isinstance(path, str)
+        assert not path
+        return
+
+    identities: list[tuple[str, ...]] = []
+    for record in target:
+        assert isinstance(record, dict)
+        path = record.get("path")
+        assert isinstance(path, str)
+        assert path
+        assert not path.startswith(("/", "\\"))
+        assert "\\" not in path
+        assert ":" not in path
+        parts = tuple(path.split("/"))
+        assert all(part not in {"", ".", ".."} for part in parts)
+        identity = tuple(part.upper() for part in parts)
+        assert not any(
+            identity[: len(existing)] == existing
+            or existing[: len(identity)] == identity
+            for existing in identities
+        )
+        identities.append(identity)
+
+
 def _assert_source_bound_plan(text: str) -> None:
     """Require the publishable structural subset of shar.algorithm.v1."""
-    document = json.loads(text)
+    document = json.loads(
+        text,
+        object_pairs_hook=_json_object_without_duplicates,
+    )
     assert isinstance(document, dict)
     assert set(document) == {
         "schema",
@@ -231,7 +301,7 @@ def _assert_source_bound_plan(text: str) -> None:
         "target",
     }
     assert document["schema"] == "shar.algorithm.v1"
-    assert _is_lower_hex(document["settings_sha256"], 64)
+    assert document["settings_sha256"] == _active_settings_sha256()
     assert document["target_kind"] in {"file", "directory"}
 
     source = document["source"]
@@ -240,11 +310,9 @@ def _assert_source_bound_plan(text: str) -> None:
     for record in source:
         assert isinstance(record, dict)
         assert set(record) == {"input", "path", "bytes", "sha256"}
-        assert isinstance(record["input"], int)
-        assert record["input"] >= 0
+        assert _is_nonnegative_integer(record["input"])
         assert isinstance(record["path"], str)
-        assert isinstance(record["bytes"], int)
-        assert record["bytes"] >= 0
+        assert _is_nonnegative_integer(record["bytes"])
         assert _is_lower_hex(record["sha256"], 64)
 
     target = document["target"]
@@ -260,8 +328,7 @@ def _assert_source_bound_plan(text: str) -> None:
             "ciphertext",
         }
         assert isinstance(record["path"], str)
-        assert isinstance(record["bytes"], int)
-        assert record["bytes"] >= 0
+        assert _is_nonnegative_integer(record["bytes"])
         assert _is_lower_hex(record["sha256"], 64)
         assert _is_lower_hex(record["nonce"], 24)
         ciphertext = record["ciphertext"]
@@ -269,6 +336,68 @@ def _assert_source_bound_plan(text: str) -> None:
         assert ciphertext
         assert len(ciphertext) % 2 == 0
         assert set(ciphertext) <= _HEX
+    _assert_target_layout(document)
+
+
+def _synthetic_plan(*, path: str = "asset.bin") -> dict[str, object]:
+    """Return one minimal structurally valid directory plan fixture."""
+    return {
+        "schema": "shar.algorithm.v1",
+        "settings_sha256": _active_settings_sha256(),
+        "source": [
+            {"input": 0, "path": "", "bytes": 1024, "sha256": "0" * 64}
+        ],
+        "target_kind": "directory",
+        "target": [
+            {
+                "path": path,
+                "bytes": 1,
+                "sha256": "0" * 64,
+                "nonce": "0" * 24,
+                "ciphertext": "00",
+            }
+        ],
+    }
+
+
+def test_public_plan_guard_matches_runtime_rejections() -> None:
+    """Reject JSON/path/settings shapes that generic replay will reject."""
+    invalid: list[str] = []
+    wrong_settings = _synthetic_plan()
+    wrong_settings["settings_sha256"] = "0" * 64
+    invalid.append(json.dumps(wrong_settings))
+
+    boolean_count = _synthetic_plan()
+    source = boolean_count["source"]
+    assert isinstance(source, list)
+    assert isinstance(source[0], dict)
+    source[0]["bytes"] = True
+    invalid.extend(
+        (
+            json.dumps(boolean_count),
+            json.dumps(_synthetic_plan(path="../escape.bin")),
+        )
+    )
+
+    overlap = _synthetic_plan(path="Folder")
+    target = overlap["target"]
+    assert isinstance(target, list)
+    child = dict(target[0])
+    child["path"] = "folder/child.bin"
+    target.append(child)
+    invalid.append(json.dumps(overlap))
+
+    duplicate_key = json.dumps(_synthetic_plan())
+    duplicate_key = duplicate_key.replace(
+        '{"schema": "shar.algorithm.v1",',
+        '{"schema": "shar.algorithm.v1", "schema": "shar.algorithm.v1",',
+        1,
+    )
+    invalid.append(duplicate_key)
+
+    for text in invalid:
+        with pytest.raises(AssertionError):
+            _assert_source_bound_plan(text)
 
 
 def test_substantive_algorithm_example_matches_source_bound_contract() -> None:
