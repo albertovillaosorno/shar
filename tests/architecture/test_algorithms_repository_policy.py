@@ -366,6 +366,7 @@ def _assert_source_layout(source: list[object]) -> None:
     identities: set[tuple[int, str]] = set()
     root_is_file: dict[int, bool] = {}
     previous_input: int | None = None
+    previous_path: tuple[int, str] | None = None
     for record in source:
         assert isinstance(record, dict)
         input_index = record["input"]
@@ -377,6 +378,14 @@ def _assert_source_layout(source: list[object]) -> None:
         elif input_index != previous_input:
             assert input_index == previous_input + 1
         previous_input = input_index
+        if (
+            previous_path is not None
+            and previous_path[0] == input_index
+            and previous_path[1]
+            and path
+        ):
+            assert path >= previous_path[1]
+        previous_path = (input_index, path)
         identity = (input_index, path)
         assert identity not in identities
         identities.add(identity)
@@ -586,6 +595,12 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
             ),
             json.dumps(
                 _synthetic_source_rows({}, {"path": "asset.bin"})
+            ),
+            json.dumps(
+                _synthetic_source_rows(
+                    {"path": "z.bin", "bytes": 512},
+                    {"path": "a.bin", "bytes": 512},
+                )
             ),
         )
     )
