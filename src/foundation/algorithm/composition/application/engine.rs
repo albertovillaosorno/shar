@@ -688,7 +688,9 @@ fn validate_document(
             .bytes
             .checked_add(PROTECTED_TAG_BYTES)
             .and_then(|bytes| bytes.checked_mul(HEX_CHARS_PER_BYTE))
-            .ok_or_else(|| AlgorithmError::new("algorithm target length overflow"))?;
+            .ok_or_else(|| {
+                AlgorithmError::new("algorithm target length overflow")
+            })?;
         let observed_ciphertext_hex = usize_to_u64(
             target.ciphertext.len(),
             "algorithm target ciphertext length",
