@@ -87,16 +87,19 @@ def test_non_game_file_is_rejected_without_private_path() -> None:
     with tempfile.TemporaryDirectory(prefix="shar-user-private-") as value:
         other = Path(value) / "README.rtf"
         other.write_bytes(b"synthetic")
+        wrong_case = Path(value) / "simpsons.exe"
+        wrong_case.write_bytes(b"synthetic")
 
-        try:
-            module.resolve_source_selection(other)
-        except module.SourceSelectionError as error:
-            message = str(error)
-        else:
-            raise AssertionError("non-game source file was accepted")
+        for selected in (other, wrong_case):
+            try:
+                module.resolve_source_selection(selected)
+            except module.SourceSelectionError as error:
+                message = str(error)
+            else:
+                raise AssertionError("non-canonical source file was accepted")
 
-        assert str(other) not in message
-        assert "Simpsons.exe" in message
+            assert str(selected) not in message
+            assert message == "selected source file must be Simpsons.exe"
 
 
 def test_missing_selection_is_rejected_without_private_path() -> None:

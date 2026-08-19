@@ -325,12 +325,15 @@ class SourceSelectionTests(unittest.TestCase):
             repository.mkdir()
             other = root / "README.rtf"
             other.write_bytes(b"fixture")
+            wrong_case = root / "simpsons.exe"
+            wrong_case.write_bytes(b"fixture")
 
-            with self.assertRaisesRegex(
-                _CHECK.CheckFailure,
-                "selected source file must be Simpsons.exe",
-            ):
-                _CHECK._check_game(repository, other)
+            for selected in (other, wrong_case):
+                with self.subTest(selected=selected), self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "selected source file must be Simpsons.exe",
+                ):
+                    _CHECK._check_game(repository, selected)
 
     @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
     def test_redirected_wrong_source_file_name_is_rejected(self) -> None:
