@@ -169,6 +169,11 @@ fn collect_one_root(
         PathKind::Directory => {
             let paths = local::strict_regular_files(&canonical)
                 .map_err(|error| io_failure("cannot traverse input directory", &error))?;
+            if paths.is_empty() {
+                return Err(AlgorithmError::new(
+                    "source directory must contain at least one regular file",
+                ));
+            }
             let mut files = Vec::with_capacity(paths.len());
             for path in paths {
                 let relative = path

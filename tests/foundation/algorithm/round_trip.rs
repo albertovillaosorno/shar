@@ -203,6 +203,38 @@ fn plan_without_caller_source_is_rejected_before_output() {
     assert!(result.is_ok(), "missing-source rejection failed: {result:?}");
 }
 
+fn run_empty_source_root_is_rejected(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("empty-source-root")?;
+    let empty = temp.path.join("empty");
+    let source = temp.path.join("source.bin");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    fs::create_dir_all(&empty)?;
+    fs::write(&source, vec![0x45_u8; 2048])?;
+    fs::write(&target, b"synthetic target")?;
+
+    let result = create_algorithm(
+        &settings()?,
+        &[empty, source],
+        &target,
+        &algorithm,
+    );
+    if result.is_ok() {
+        return Err("empty source root was accepted".into());
+    }
+    if algorithm.exists() {
+        return Err("empty source root created an algorithm".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn empty_source_root_is_rejected_before_publication() {
+    let result = run_empty_source_root_is_rejected();
+    assert!(result.is_ok(), "empty source rejection failed: {result:?}");
+}
+
 fn run_source_tree_remains_unchanged(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("source-unchanged")?;
