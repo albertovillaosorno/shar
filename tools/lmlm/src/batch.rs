@@ -9,7 +9,7 @@ use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
 use serde::Serialize;
 
-use crate::convert::{ConvertError, convert, inspect};
+use crate::convert::{ConvertError, convert, inspect, package_manifest};
 
 /// Stable report schema for one import-folder run.
 pub const BATCH_SCHEMA: &str = "shar.lmlm-folder-conversion.v1";
@@ -133,7 +133,11 @@ fn remove_staging(path: &Path) {
     }
 }
 
-fn copy_workspace(source: &Path, destination: &Path) -> Result<(), BatchError> {
+fn copy_workspace(
+    source: &Path,
+    destination: &Path,
+    source_sha256: &str,
+) -> Result<(), BatchError> {
     if local::path_kind(destination)? != PathKind::Missing {
         return Err(BatchError::Contract(
             "export destination unexpectedly exists".to_owned(),
@@ -158,17 +162,29 @@ fn copy_workspace(source: &Path, destination: &Path) -> Result<(), BatchError> {
     }
     local::create_dir_all(&staging)?;
     let copied = (|| -> Result<(), BatchError> {
-        for source_file in local::regular_files(source)? {
-            let relative = source_file
-                .strip_prefix(source)
-                .map_err(|_error| BatchError::Contract("WIP member escaped its root".to_owned()))?;
+        for source_file in local::strict_regular_files(source)? {
+            let relative = source_file.strip_prefix(source).map_err(|_error| {
+                BatchError::Contract("WIP member escaped its root".to_owned())
+            })?;
+            if relative == Path::new("mod.json") {
+                continue;
+            }
             let target = schoenwald_filesystem::resolve_under(&staging, relative)
                 .map_err(|error| BatchError::Contract(error.to_string()))?;
-            if let Some(parent) = target.parent().filter(|path| !path.as_os_str().is_empty()) {
+            if let Some(parent) = target
+                .parent()
+                .filter(|path| !path.as_os_str().is_empty())
+            {
                 local::create_dir_all(parent)?;
             }
             let _copied = fs::copy(&source_file, &target)?;
         }
+        let package = package_manifest(&staging, source_sha256)?;
+        local::write_text(
+            &staging.join("mod.json"),
+            &package.to_pretty_json().map_err(ConvertError::from)?,
+            false,
+        )?;
         fs::rename(&staging, destination)?;
         Ok(())
     })();
@@ -191,6 +207,23 @@ fn verify_workspace_report(
     if stored != expected {
         return Err(BatchError::Contract(format!(
             "{label} report does not match the current import"
+        )));
+    }
+    Ok(())
+}
+
+fn verify_workspace_package(
+    workspace: &Path,
+    report: &crate::report::ConversionReport,
+    label: &str,
+) -> Result<(), BatchError> {
+    let stored = local::read_utf8(&workspace.join("mod.json"))?;
+    let observed = shar_mod_package::PackageManifest::from_json(&stored)
+        .map_err(ConvertError::from)?;
+    let expected = package_manifest(workspace, &report.source_sha256)?;
+    if observed != expected {
+        return Err(BatchError::Contract(format!(
+            "{label} mod.json does not match the current workspace"
         )));
     }
     Ok(())
@@ -250,8 +283,9 @@ pub fn convert_folders(
         let export_reused = ensure_directory_or_missing(&export, "LMLM export")?;
         if export_reused {
             verify_workspace_report(&export, &report, "LMLM export")?;
+            verify_workspace_package(&export, &report, "LMLM export")?;
         } else {
-            copy_workspace(&wip, &export)?;
+            copy_workspace(&wip, &export, &report.source_sha256)?;
         }
         let input_name = input
             .file_name()

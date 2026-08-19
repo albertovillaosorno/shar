@@ -92,7 +92,7 @@ pub fn build_report(data: &[u8], entries: &[FileEntry]) -> ConversionReport {
     ConversionReport {
         schema: REPORT_SCHEMA,
         decompilable_mods_only: true,
-        status: "extracted-needs-shar-package-adaptation",
+        status: "open-shar-package-review-required",
         source_size: data.len(),
         source_sha256: shar_sha256::digest_hex(data),
         entries,

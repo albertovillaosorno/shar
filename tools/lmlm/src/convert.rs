@@ -7,6 +7,10 @@ use std::path::{Path, PathBuf};
 
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
+use shar_mod_package::{
+    CONTRACT_VERSION as MOD_CONTRACT_VERSION, Member, PackageKind,
+    PackageManifest, Provenance, TrustLevel, content_revision, member_from_bytes,
+};
 
 use crate::archive::{FileEntry, LmlmError, entry_bytes, parse};
 use crate::report::{ConversionReport, build_report};
@@ -22,6 +26,8 @@ pub enum ConvertError {
     Archive(LmlmError),
     /// JSON report serialization failed.
     Json(serde_json::Error),
+    /// Shared SHAR package validation or serialization failed.
+    Package(shar_mod_package::PackageError),
 }
 
 impl fmt::Display for ConvertError {
@@ -31,6 +37,7 @@ impl fmt::Display for ConvertError {
             Self::Io(error) => write!(formatter, "{error}"),
             Self::Archive(error) => write!(formatter, "{error}"),
             Self::Json(error) => write!(formatter, "{error}"),
+            Self::Package(error) => write!(formatter, "{error}"),
         }
     }
 }
@@ -52,6 +59,12 @@ impl From<LmlmError> for ConvertError {
 impl From<serde_json::Error> for ConvertError {
     fn from(error: serde_json::Error) -> Self {
         Self::Json(error)
+    }
+}
+
+impl From<shar_mod_package::PackageError> for ConvertError {
+    fn from(error: shar_mod_package::PackageError) -> Self {
+        Self::Package(error)
     }
 }
 
@@ -138,6 +151,66 @@ fn decompile_p3d(root: &Path, entry: &FileEntry, input_path: &Path) -> Result<()
     Ok(())
 }
 
+fn package_member_metadata(path: &str) -> (&'static str, &'static str) {
+    if path == "conversion-report.json" {
+        ("application/json", "legacy/evidence")
+    } else if path.starts_with("decompiled/") {
+        ("application/octet-stream", "legacy/decompiled")
+    } else {
+        ("application/octet-stream", "legacy/source")
+    }
+}
+
+fn package_members(root: &Path) -> Result<Vec<Member>, ConvertError> {
+    let mut members = Vec::new();
+    for path in local::strict_regular_files(root)? {
+        let relative = path.strip_prefix(root).map_err(|_error| {
+            ConvertError::Contract("package member escaped conversion root".to_owned())
+        })?;
+        let portable = relative.to_string_lossy().replace('\\', "/");
+        if portable == "mod.json" {
+            continue;
+        }
+        let bytes = local::read_bytes(&path)?;
+        let (media_type, role) = package_member_metadata(&portable);
+        members.push(member_from_bytes(&portable, media_type, role, &bytes)?);
+    }
+    members.sort_by(|left, right| left.path.cmp(&right.path));
+    Ok(members)
+}
+
+pub(crate) fn package_manifest(
+    root: &Path,
+    source_sha256: &str,
+) -> Result<PackageManifest, ConvertError> {
+    let source_prefix = source_sha256.get(..16).ok_or_else(|| {
+        ConvertError::Contract("source SHA-256 is unexpectedly short".to_owned())
+    })?;
+    let members = package_members(root)?;
+    let package_revision = content_revision(&members)?;
+    let manifest = PackageManifest {
+        contract_version: MOD_CONTRACT_VERSION.to_owned(),
+        canonical_id: format!("shar.legacy.lmlm.{source_prefix}"),
+        package_revision,
+        package_kind: PackageKind::Content,
+        priority: 0,
+        dependencies: Vec::new(),
+        conflicts: Vec::new(),
+        supersedes: Vec::new(),
+        required_capabilities: vec!["legacy.lmlm.review.v1".to_owned()],
+        supported_targets: Vec::new(),
+        members,
+        provenance: Provenance {
+            authors: vec!["source-package-rightsholders".to_owned()],
+            source: "converted-from-user-supplied-legacy-lmlm".to_owned(),
+            license: "NOASSERTION".to_owned(),
+        },
+        trust_level: TrustLevel::ContentOnly,
+    };
+    manifest.validate()?;
+    Ok(manifest)
+}
+
 fn publish_workspace(data: &[u8], entries: &[FileEntry], root: &Path) -> Result<(), ConvertError> {
     let content = root.join("content");
     local::create_dir_all(&content)?;
@@ -154,6 +227,12 @@ fn publish_workspace(data: &[u8], entries: &[FileEntry], root: &Path) -> Result<
     let mut json = serde_json::to_string_pretty(&report)?;
     json.push('\n');
     local::write_text(&root.join("conversion-report.json"), &json, false)?;
+    let package = package_manifest(root, &report.source_sha256)?;
+    local::write_text(
+        &root.join("mod.json"),
+        &package.to_pretty_json()?,
+        false,
+    )?;
     Ok(())
 }
 
