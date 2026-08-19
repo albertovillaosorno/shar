@@ -111,6 +111,8 @@ class SourceSimilarityTests(unittest.TestCase):
             _MOD.measure({("aa", "p3d"): -1}, {})
         with self.assertRaisesRegex(ValueError, "pair of strings"):
             _MOD.measure({"aa": 1}, {})
+        with self.assertRaises(_MOD.InvalidCoordinateError):
+            _MOD.measure({("aa", ""): 1}, {})
 
     def test_parser_accepts_generated_manifest_metadata_and_kind(self) -> None:
         ledger = (
@@ -137,6 +139,7 @@ class SourceSimilarityTests(unittest.TestCase):
             '{"dir":"aa","ext":"p3d","min":1,"extra":true}',
             '{"dir":"aa","ext":"p3d","min":1,"count":1}',
             '{"dir":"aa","ext":"p3d"}',
+            '{"dir":"aa","ext":"","min":1}',
             '{"dir":"aa","ext":"p3d","min":1,"kind":{"private":1}}',
             '{"dir":"aa","ext":"p3d","min":18446744073709551616}',
             '{"dir":"aa","ext":"p3d","min":' + ("9" * 5000) + "}",
