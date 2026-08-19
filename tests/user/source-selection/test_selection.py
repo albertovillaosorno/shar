@@ -178,6 +178,17 @@ def test_redirected_source_directory_is_rejected() -> None:
         with pytest.raises(module.SourceSelectionError, match=pattern):
             module.resolve_source_selection(redirect)
 
+        parent_target = root / "parent-target"
+        parent_target.mkdir()
+        nested_source, nested_executable = _source(parent_target)
+        parent_redirect = root / "parent-redirect"
+        parent_redirect.symlink_to(parent_target, target_is_directory=True)
+        redirected_source = parent_redirect / nested_source.name
+        redirected_executable = redirected_source / nested_executable.name
+        for selection in (redirected_source, redirected_executable):
+            with pytest.raises(module.SourceSelectionError, match=pattern):
+                module.resolve_source_selection(selection)
+
 
 def test_direct_executable_redirect_is_rejected() -> None:
     if os.name == "nt":
