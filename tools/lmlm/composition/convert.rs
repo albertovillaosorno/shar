@@ -176,7 +176,7 @@ fn decompile_p3d(
     match p3d::ExportPackage::execute(&exporter, input_path, &staging) {
         Ok(()) => {
             fs::rename(&staging, &output)?;
-        }
+        },
         Err(error) => {
             if let Ok(metadata) = fs::symlink_metadata(&staging)
                 && metadata.is_dir()
