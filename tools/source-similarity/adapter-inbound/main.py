@@ -228,6 +228,7 @@ def parse_count_ledger(text: str) -> dict[Coordinate, int]:
                 f"count ledger repeats a coordinate at line {line_number}"
             )
         counts[coordinate] = count
+    _validate(counts)
     return counts
 
 
@@ -304,6 +305,7 @@ def _collapse_collision_families(
 
 
 def _validate(values: Mapping[Coordinate, int]) -> None:
+    total = 0
     for key, count in values.items():
         if (
             not isinstance(key, tuple)
@@ -316,8 +318,10 @@ def _validate(values: Mapping[Coordinate, int]) -> None:
             or not isinstance(count, int)
             or count < 0
             or count > _MAX_COUNT
+            or count > _MAX_COUNT - total
         ):
             raise InvalidCountError
+        total += count
 
 
 def _fraction_text(value: Fraction) -> str:

@@ -20,9 +20,10 @@ coverage, and weighted-Jaccard similarity. Tracked policy rows use `min`;
 read-only observation rows use `count`. A row must select exactly one, and every
 coordinate row in one ledger must use the same count field. Optional `kind` and
 manifest-header metadata must retain their public JSON shapes but are ignored by
-the metric. Counts must fit the unsigned 64-bit range used by the supported
-64-bit Rust manifest producers. The command never prints an admission result or
-embeds an acceptance threshold. Input failures omit local ledger paths.
+the metric. Individual counts and each ledger's total count must fit the
+unsigned 64-bit range used by the supported 64-bit Rust manifest producers. The
+command never prints an admission result or embeds an acceptance threshold.
+Input failures omit local ledger paths.
 
 ## Ownership
 

@@ -165,6 +165,13 @@ class SourceSimilarityTests(unittest.TestCase):
             ):
                 _MOD.parse_count_ledger(record)
 
+        aggregate_overflow = (
+            '{"dir":"aa","ext":"p3d","min":18446744073709551615}\n'
+            '{"dir":"bb","ext":"p3d","min":1}\n'
+        )
+        with self.assertRaises(_MOD.InvalidCountError):
+            _MOD.parse_count_ledger(aggregate_overflow)
+
     def test_parser_rejects_mixed_count_meanings(self) -> None:
         ledger = (
             '{"dir":"aa","ext":"p3d","min":1}\n'
