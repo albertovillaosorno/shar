@@ -557,7 +557,10 @@ const fn fbx_policy(target: FbxTargetKind) -> PackagePolicy {
             importer: "asset-tools-fbx",
             import_profile: "shar-fbx-skeletal-v1",
             reason: Some(
-                "single skeletal-mesh package requires companion-aware FBX import",
+                concat!(
+                    "single skeletal-mesh package requires companion-aware ",
+                    "FBX import",
+                ),
             ),
         },
         FbxTargetKind::SemanticSplit => PackagePolicy {
@@ -567,7 +570,10 @@ const fn fbx_policy(target: FbxTargetKind) -> PackagePolicy {
             importer: "semantic-converter",
             import_profile: "shar-fbx-semantic-split-v1",
             reason: Some(
-                "geometry package requires deterministic native asset splitting",
+                concat!(
+                    "geometry package requires deterministic native asset ",
+                    "splitting",
+                ),
             ),
         },
     }
