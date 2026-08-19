@@ -307,14 +307,6 @@ in place, selects targets, and writes only to its own workspace and `dist/`.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/build-the-lightweight-src-user-exporter-and-cross-platform-gui.mdc](docs/todo/open/packaging/build-the-lightweight-src-user-exporter-and-cross-platform-gui.mdc)
 
-### TODO - Convert decompilable LMLM mods into open SHAR mod packages
-
-Keep legacy conversion under the Rust-only `tools/lmlm/` boundary (Rust 1.97.1),
-tested first on Jebano/Muckluck inputs and never treated as base-game source.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/mods/convert-decompilable-lmlm-mods-into-open-shar-mod-packages.mdc](docs/todo/open/mods/convert-decompilable-lmlm-mods-into-open-shar-mod-packages.mdc)
-
 ### TODO - Make `AGENTS.md` mod-first; validate C++ with Clang
 
 Make mod authoring the default user-facing agent posture, preserve a separate
