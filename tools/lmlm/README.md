@@ -50,8 +50,18 @@ User-facing converted workspaces are published under:
 tools/lmlm/export/
 ```
 
-Imports are read-only. Existing WIP/export state is verified against the current
-source package and is never silently overwritten. Lua and other legacy source
+Each converted export carries a `shar.mod-package.v1` `mod.json`. Its canonical
+identity is derived from the exact source-package SHA-256, while its content
+revision is derived from the current open workspace members. The package stays
+content-only and requires `legacy.lmlm.review.v1`: conversion makes the legacy
+payload inspectable, but does not claim unsupported legacy behavior is already
+native SHAR runtime behavior.
+
+Imports are read-only. Existing WIP state is verified against the current source
+package but remains intentionally editable. When an export is republished from
+edited WIP, `mod.json` is regenerated from those current members instead of
+copying stale package metadata. Existing exports are never silently overwritten,
+and a stale/tampered export package fails reuse. Lua and other legacy source
 files are treated as data; archive content is never executed.
 
 ## Scope

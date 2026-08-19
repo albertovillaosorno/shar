@@ -29,8 +29,9 @@ to the final SHAR mod-package schema.
   auto-installing or auto-injecting either mod into the game.
 - [x] Never promise arbitrary LMLM compatibility; unsupported legacy behavior
   must be reported so authors can adapt the resulting open package.
-- [ ] Produce inspectable SHAR packages whose assets and source are not intentionally
-  locked or obfuscated; packaging format follows the final shared mod contract.
+- [x] Produce inspectable SHAR packages whose assets and source are not
+  intentionally locked or obfuscated; packaging format follows the final shared
+  mod contract.
 - [x] Preserve provenance and require users/distributors to have rights to the
   content they convert or redistribute.
 - [x] Update README conversion instructions and known limitations whenever the
@@ -56,6 +57,12 @@ Muckluck `m.lmlm` (32 entries, 29 valid P3D payloads) inputs without installing
 either package. An architecture guard rejects any LMLM reference under `src/`.
 The compatibility tool remains outside the reconstruction pipeline. Folder-driven
 conversion uses `tools/lmlm/import/`, preserves WIP state under
-`.cache/lmlm/wip/`, and publishes local results under
-`tools/lmlm/export/`. Final SHAR package adaptation remains open until the
-mod-package schema is authoritative.
+`.cache/lmlm/wip/`, and publishes local results under `tools/lmlm/export/`.
+Each export now carries a validated `shar.mod-package.v1` `mod.json` whose
+canonical identity is source-hash-bound and whose revision covers the current
+open workspace members. Converted packages remain content-only and require the
+`legacy.lmlm.review.v1` capability so inspectability is not confused with native
+runtime compatibility. Export publication regenerates package metadata from
+edited WIP and rejects stale existing export manifests. Synthetic tests cover
+initial package publication, edited-WIP republishing, and stale-export rejection
+without reading local ignored compatibility inputs.

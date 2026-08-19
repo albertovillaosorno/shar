@@ -91,8 +91,24 @@ fn convert_publishes_content_and_refuses_overwrite() -> Result<(), String> {
     convert(&input, &output).map_err(|error| error.to_string())?;
     let payload = fs::read(output.join("content/Meta.ini")).map_err(|error| error.to_string())?;
     let report_exists = output.join("conversion-report.json").is_file();
+    let package_text = fs::read_to_string(output.join("mod.json"))
+        .map_err(|error| error.to_string())?;
+    let package = shar_mod_package::PackageManifest::from_json(&package_text)
+        .map_err(|error| error.to_string())?;
+    let member_paths = package
+        .members
+        .iter()
+        .map(|member| member.path.as_str())
+        .collect::<Vec<_>>();
     let second = convert(&input, &output);
-    let result = if payload == b"payload" && report_exists && second.is_err() {
+    let result = if payload == b"payload"
+        && report_exists
+        && package.canonical_id.starts_with("shar.legacy.lmlm.")
+        && member_paths.contains(&"content/Meta.ini")
+        && member_paths.contains(&"conversion-report.json")
+        && !member_paths.contains(&"mod.json")
+        && second.is_err()
+    {
         Ok(())
     } else {
         Err("conversion publication contract failed".to_owned())
@@ -165,6 +181,89 @@ fn batch_conversion_keeps_wip_and_export_separate() -> Result<(), String> {
         Ok(())
     } else {
         Err(format!("unexpected batch reports: {first:?} / {second:?}"))
+    };
+    remove_if_present(&root)?;
+    result
+}
+
+#[test]
+fn edited_wip_republishes_with_fresh_package_manifest() -> Result<(), String> {
+    let root = temp_root("batch-edited-wip");
+    remove_if_present(&root)?;
+    let import = root.join("tools/lmlm/import");
+    let export = root.join("tools/lmlm/export");
+    let wip = root.join(".cache/lmlm/wip");
+    fs::create_dir_all(&import).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&export).map_err(|error| error.to_string())?;
+    let input = import.join("Editable Legacy.lmlm");
+    fs::write(&input, fixture(b"payload", "Meta.ini"))
+        .map_err(|error| error.to_string())?;
+
+    let first = convert_folders(&root, &import, &export, &wip)
+        .map_err(|error| error.to_string())?;
+    let item = first
+        .packages
+        .first()
+        .ok_or_else(|| "missing first edited-WIP package".to_owned())?;
+    let wip_path = root.join(&item.wip);
+    let export_path = root.join(&item.export);
+    fs::write(wip_path.join("content/Meta.ini"), b"edited")
+        .map_err(|error| error.to_string())?;
+    remove_if_present(&export_path)?;
+
+    let second = convert_folders(&root, &import, &export, &wip)
+        .map_err(|error| error.to_string())?;
+    let second_item = second
+        .packages
+        .first()
+        .ok_or_else(|| "missing republished edited-WIP package".to_owned())?;
+    let package_text = fs::read_to_string(root.join(&second_item.export).join("mod.json"))
+        .map_err(|error| error.to_string())?;
+    let package = shar_mod_package::PackageManifest::from_json(&package_text)
+        .map_err(|error| error.to_string())?;
+    let source_member = package
+        .members
+        .iter()
+        .find(|member| member.path == "content/Meta.ini")
+        .ok_or_else(|| "republished package omitted edited source member".to_owned())?;
+    let result = if second_item.wip_reused
+        && !second_item.export_reused
+        && source_member.sha256 == shar_sha256::digest_hex(b"edited")
+    {
+        Ok(())
+    } else {
+        Err(format!("edited WIP package was stale: {package:?}"))
+    };
+    remove_if_present(&root)?;
+    result
+}
+
+#[test]
+fn stale_export_package_manifest_is_rejected() -> Result<(), String> {
+    let root = temp_root("batch-stale-export-package");
+    remove_if_present(&root)?;
+    let import = root.join("tools/lmlm/import");
+    let export = root.join("tools/lmlm/export");
+    let wip = root.join(".cache/lmlm/wip");
+    fs::create_dir_all(&import).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&export).map_err(|error| error.to_string())?;
+    let input = import.join("Stale Legacy.lmlm");
+    fs::write(&input, fixture(b"payload", "Meta.ini"))
+        .map_err(|error| error.to_string())?;
+
+    let first = convert_folders(&root, &import, &export, &wip)
+        .map_err(|error| error.to_string())?;
+    let item = first
+        .packages
+        .first()
+        .ok_or_else(|| "missing stale-export package".to_owned())?;
+    fs::write(root.join(&item.export).join("content/Meta.ini"), b"tampered")
+        .map_err(|error| error.to_string())?;
+
+    let second = convert_folders(&root, &import, &export, &wip);
+    let result = match second {
+        Err(error) if error.to_string().contains("mod.json does not match") => Ok(()),
+        other => Err(format!("stale export package was reused: {other:?}")),
     };
     remove_if_present(&root)?;
     result
