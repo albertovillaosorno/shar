@@ -89,8 +89,8 @@ publication guard also requires substantive plan paths to be real repository
 files rather than symbolic links, so external content cannot satisfy validation
 while Git publishes only a redirect. The same guard now mirrors key replay
 constraints: the active settings hash, integer wire types, duplicate-key
-rejection, protected-payload tag length, parent traversal, and case-equivalent
-target ancestor collisions.
+rejection, bounded integer/resource limits, protected-payload tag length,
+parent traversal, and case-equivalent target ancestor collisions.
 This structural guard narrows what can be committed publicly; it does not replace
 source-backed cryptographic replay evidence or the pending similarity calibration.
 
