@@ -75,7 +75,7 @@ fn protected_target(path: &str) -> ProtectedTarget {
             sha256: "0".repeat(64),
         },
         nonce: "00".repeat(12),
-        ciphertext: "00".to_owned(),
+        ciphertext: "00".repeat(17),
     }
 }
 
@@ -129,6 +129,33 @@ fn directory_target_portable_identity_collision_is_rejected(
     }
     Ok(())
 }
+#[test]
+fn protected_target_length_must_match_declared_bytes() -> Result<(), String> {
+    let settings = settings()?;
+    let document = AlgorithmDocument {
+        schema: ALGORITHM_SCHEMA.to_owned(),
+        settings_sha256: settings_sha256(&settings)
+            .map_err(|error| error.to_string())?,
+        source: vec![SourceRecord {
+            input: 0,
+            path: String::new(),
+            bytes: 1024,
+            sha256: "0".repeat(64),
+        }],
+        target_kind: TargetKind::Directory,
+        target: vec![{
+            let mut target = protected_target("asset.bin");
+            target.ciphertext = "00".to_owned();
+            target
+        }],
+    };
+
+    if validate_document(&document, &settings).is_ok() {
+        return Err("mismatched protected target length was accepted".to_owned());
+    }
+    Ok(())
+}
+
 #[test]
 fn source_key_uses_captured_bytes_without_reopening_path(
 ) -> Result<(), String> {

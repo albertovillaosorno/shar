@@ -51,6 +51,9 @@ use crate::domain::{AlgorithmError, Settings};
 const SOURCE_KEY_DOMAIN: &[u8] = b"shar.algorithm.source-key.v1\0";
 const NONCE_DOMAIN: &[u8] = b"shar.algorithm.nonce.v1\0";
 const AAD_DOMAIN: &[u8] = b"shar.algorithm.aad.v1\0";
+const PROTECTED_NONCE_HEX_LEN: usize = 24;
+const PROTECTED_TAG_BYTES: u64 = 16;
+const HEX_CHARS_PER_BYTE: u64 = 2;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct InputFile {
@@ -674,10 +677,25 @@ fn validate_document(
             ));
         }
         target_bytes = target_bytes.saturating_add(target.descriptor.bytes);
-        let nonce = decode_hex(&target.nonce)?;
-        if nonce.len() != 12 {
+        if target.nonce.len() != PROTECTED_NONCE_HEX_LEN {
             return Err(AlgorithmError::new(
                 "algorithm target nonce must be 12 bytes",
+            ));
+        }
+        let _nonce = decode_hex(&target.nonce)?;
+        let expected_ciphertext_hex = target
+            .descriptor
+            .bytes
+            .checked_add(PROTECTED_TAG_BYTES)
+            .and_then(|bytes| bytes.checked_mul(HEX_CHARS_PER_BYTE))
+            .ok_or_else(|| AlgorithmError::new("algorithm target length overflow"))?;
+        let observed_ciphertext_hex = usize_to_u64(
+            target.ciphertext.len(),
+            "algorithm target ciphertext length",
+        )?;
+        if observed_ciphertext_hex != expected_ciphertext_hex {
+            return Err(AlgorithmError::new(
+                "algorithm target ciphertext length does not match target",
             ));
         }
         let _ciphertext = decode_hex(&target.ciphertext)?;
