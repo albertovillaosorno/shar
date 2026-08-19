@@ -70,14 +70,16 @@ fn fixture(payload: &[u8], name: &str) -> Vec<u8> {
     archive[0..4].copy_from_slice(b"LSPA");
     archive[4..8].copy_from_slice(&5_u32.to_le_bytes());
     archive[0x0c..0x10].copy_from_slice(&0x0200_0000_u32.to_le_bytes());
-    archive[ROOT_BLOCK + 2..ROOT_BLOCK + 4].copy_from_slice(&1_u16.to_le_bytes());
+    archive[ROOT_BLOCK + 2..ROOT_BLOCK + 4]
+        .copy_from_slice(&1_u16.to_le_bytes());
     archive[FIRST_ENTRY..FIRST_ENTRY + 2].copy_from_slice(&2_u16.to_le_bytes());
     let mut encoded = Vec::new();
     for unit in name.encode_utf16() {
         encoded.extend_from_slice(&unit.to_le_bytes());
     }
     encoded.extend_from_slice(&0_u16.to_le_bytes());
-    archive[FIRST_ENTRY + 2..FIRST_ENTRY + 2 + encoded.len()].copy_from_slice(&encoded);
+    archive[FIRST_ENTRY + 2..FIRST_ENTRY + 2 + encoded.len()]
+        .copy_from_slice(&encoded);
     let metadata = FIRST_ENTRY + BLOCK;
     archive[metadata + 0x0c..metadata + 0x14].copy_from_slice(
         &u64::try_from(payload.len())
@@ -86,7 +88,8 @@ fn fixture(payload: &[u8], name: &str) -> Vec<u8> {
     );
     archive[metadata + 0x14..metadata + 0x1c]
         .copy_from_slice(&(PAYLOAD_OFFSET as u64).to_le_bytes());
-    archive[PAYLOAD_OFFSET..PAYLOAD_OFFSET + payload.len()].copy_from_slice(payload);
+    archive[PAYLOAD_OFFSET..PAYLOAD_OFFSET + payload.len()]
+        .copy_from_slice(payload);
     archive
 }
 
@@ -96,7 +99,8 @@ fn inspect_is_read_only_and_hashes_exact_payload() -> Result<(), String> {
     remove_if_present(&root)?;
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
     let input = root.join("fixture.lmlm");
-    fs::write(&input, fixture(b"payload", "Meta.ini")).map_err(|error| error.to_string())?;
+    fs::write(&input, fixture(b"payload", "Meta.ini"))
+        .map_err(|error| error.to_string())?;
     let before = fs::read(&input).map_err(|error| error.to_string())?;
 
     let report = inspect(&input).map_err(|error| error.to_string())?;
@@ -122,10 +126,12 @@ fn convert_publishes_content_and_refuses_overwrite() -> Result<(), String> {
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
     let input = root.join("fixture.lmlm");
     let output = root.join("converted");
-    fs::write(&input, fixture(b"payload", "Meta.ini")).map_err(|error| error.to_string())?;
+    fs::write(&input, fixture(b"payload", "Meta.ini"))
+        .map_err(|error| error.to_string())?;
 
     convert(&input, &output).map_err(|error| error.to_string())?;
-    let payload = fs::read(output.join("content/Meta.ini")).map_err(|error| error.to_string())?;
+    let payload = fs::read(output.join("content/Meta.ini"))
+        .map_err(|error| error.to_string())?;
     let report_exists = output.join("conversion-report.json").is_file();
     let package_text = fs::read_to_string(output.join("mod.json"))
         .map_err(|error| error.to_string())?;
@@ -154,12 +160,14 @@ fn convert_publishes_content_and_refuses_overwrite() -> Result<(), String> {
 }
 
 #[test]
-fn p3d_entries_use_shared_parser_and_cli_usage_is_stable() -> Result<(), String> {
+fn p3d_entries_use_shared_parser_and_cli_usage_is_stable() -> Result<(), String>
+{
     let root = temp_root("p3d");
     remove_if_present(&root)?;
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
     let input = root.join("fixture.lmlm");
-    fs::write(&input, fixture(b"not-p3d", "model.p3d")).map_err(|error| error.to_string())?;
+    fs::write(&input, fixture(b"not-p3d", "model.p3d"))
+        .map_err(|error| error.to_string())?;
 
     let report = inspect(&input).map_err(|error| error.to_string())?;
     let evidence = report.entries[0]
@@ -169,9 +177,10 @@ fn p3d_entries_use_shared_parser_and_cli_usage_is_stable() -> Result<(), String>
     let usage = LmlmProgram.execute(&["invalid".to_owned()]);
     let result = if !evidence.valid
         && evidence.diagnostic.is_some()
-        && usage.is_failure_with_stderr_line(
-            "usage: shar-lmlm [batch] | inspect INPUT.lmlm | convert INPUT.lmlm OUTPUT_DIR",
-        ) {
+        && usage.is_failure_with_stderr_line(concat!(
+            "usage: shar-lmlm [batch] | inspect INPUT.lmlm | ",
+            "convert INPUT.lmlm OUTPUT_DIR"
+        )) {
         Ok(())
     } else {
         Err(format!("unexpected P3D/CLI evidence: {report:?}"))
@@ -190,12 +199,13 @@ fn batch_conversion_keeps_wip_and_export_separate() -> Result<(), String> {
     fs::create_dir_all(&import).map_err(|error| error.to_string())?;
     fs::create_dir_all(&export).map_err(|error| error.to_string())?;
     let input = import.join("Example Legacy.lmlm");
-    fs::write(&input, fixture(b"payload", "Meta.ini")).map_err(|error| error.to_string())?;
+    fs::write(&input, fixture(b"payload", "Meta.ini"))
+        .map_err(|error| error.to_string())?;
 
-    let first =
-        convert_folders(&root, &import, &export, &wip).map_err(|error| error.to_string())?;
-    let second =
-        convert_folders(&root, &import, &export, &wip).map_err(|error| error.to_string())?;
+    let first = convert_folders(&root, &import, &export, &wip)
+        .map_err(|error| error.to_string())?;
+    let second = convert_folders(&root, &import, &export, &wip)
+        .map_err(|error| error.to_string())?;
 
     let item = first
         .packages
@@ -253,15 +263,18 @@ fn edited_wip_republishes_with_fresh_package_manifest() -> Result<(), String> {
         .packages
         .first()
         .ok_or_else(|| "missing republished edited-WIP package".to_owned())?;
-    let package_text = fs::read_to_string(root.join(&second_item.export).join("mod.json"))
-        .map_err(|error| error.to_string())?;
+    let package_text =
+        fs::read_to_string(root.join(&second_item.export).join("mod.json"))
+            .map_err(|error| error.to_string())?;
     let package = shar_mod_package::PackageManifest::from_json(&package_text)
         .map_err(|error| error.to_string())?;
     let source_member = package
         .members
         .iter()
         .find(|member| member.path == "content/Meta.ini")
-        .ok_or_else(|| "republished package omitted edited source member".to_owned())?;
+        .ok_or_else(|| {
+            "republished package omitted edited source member".to_owned()
+        })?;
     let result = if second_item.wip_reused
         && !second_item.export_reused
         && source_member.sha256 == shar_sha256::digest_hex(b"edited")
@@ -293,12 +306,17 @@ fn stale_export_package_manifest_is_rejected() -> Result<(), String> {
         .packages
         .first()
         .ok_or_else(|| "missing stale-export package".to_owned())?;
-    fs::write(root.join(&item.export).join("content/Meta.ini"), b"tampered")
-        .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join(&item.export).join("content/Meta.ini"),
+        b"tampered",
+    )
+    .map_err(|error| error.to_string())?;
 
     let second = convert_folders(&root, &import, &export, &wip);
     let result = match second {
-        Err(error) if error.to_string().contains("mod.json does not match") => Ok(()),
+        Err(error) if error.to_string().contains("mod.json does not match") => {
+            Ok(())
+        },
         other => Err(format!("stale export package was reused: {other:?}")),
     };
     remove_if_present(&root)?;
@@ -338,22 +356,27 @@ fn redirected_import_entry_is_rejected() -> Result<(), String> {
 }
 
 #[test]
-fn unsupported_p3d_decompilation_keeps_raw_payload_and_diagnostic() -> Result<(), String> {
+fn unsupported_p3d_decompilation_keeps_raw_payload_and_diagnostic()
+-> Result<(), String> {
     let root = temp_root("p3d-decompile-diagnostic");
     remove_if_present(&root)?;
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
     let input = root.join("fixture.lmlm");
     let output = root.join("converted");
-    fs::write(&input, fixture(b"not-p3d", "model.p3d")).map_err(|error| error.to_string())?;
+    fs::write(&input, fixture(b"not-p3d", "model.p3d"))
+        .map_err(|error| error.to_string())?;
 
     convert(&input, &output).map_err(|error| error.to_string())?;
 
-    let raw = fs::read(output.join("content/model.p3d")).map_err(|error| error.to_string())?;
+    let raw = fs::read(output.join("content/model.p3d"))
+        .map_err(|error| error.to_string())?;
     let diagnostic = output.join("decompiled/p3d/model.decompile-error.txt");
     let result = if raw == b"not-p3d" && diagnostic.is_file() {
         Ok(())
     } else {
-        Err("unsupported P3D was not preserved with diagnostic evidence".to_owned())
+        let message =
+            "unsupported P3D was not preserved with diagnostic evidence";
+        Err(message.to_owned())
     };
     remove_if_present(&root)?;
     result
