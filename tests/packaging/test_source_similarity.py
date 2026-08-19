@@ -137,6 +137,24 @@ class SourceSimilarityTests(unittest.TestCase):
             '{"dir":"aa","ext":"p3d","min":1,"extra":true}',
             '{"dir":"aa","ext":"p3d","min":1,"count":1}',
             '{"dir":"aa","ext":"p3d"}',
+            '{"dir":"aa","ext":"p3d","min":1,"kind":{"private":1}}',
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"private_metadata":"not-public"}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"kind_taxonomy":{},"required_files":[]}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"kind_taxonomy":[],"required_files":{}}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"required_files":[{"path":"README.rtf","min":1,'
+                '"private":"metadata"}]}'
+            ),
         )
         for record in records:
             with self.subTest(record=record), self.assertRaises(ValueError):

@@ -133,14 +133,48 @@ def _parse_jsonl_record(line: str, line_number: int) -> dict[str, Any]:
     return record
 
 
+def _valid_required_file_metadata(value: object) -> bool:
+    """Return whether one public required-file record has canonical shape."""
+    if not isinstance(value, dict) or set(value) != {"path", "min"}:
+        return False
+    minimum = value["min"]
+    return (
+        isinstance(value["path"], str)
+        and not isinstance(minimum, bool)
+        and isinstance(minimum, int)
+        and minimum >= 0
+    )
+
+
+def _validate_schema_metadata(record: dict[str, Any]) -> None:
+    """Require only public manifest header metadata shapes."""
+    if set(record) - {"schema", "kind_taxonomy", "required_files"}:
+        raise LedgerInputError("count ledger schema record has unknown fields")
+    taxonomy = record.get("kind_taxonomy")
+    if taxonomy is not None and (
+        not isinstance(taxonomy, list)
+        or not all(isinstance(kind, str) for kind in taxonomy)
+    ):
+        raise LedgerInputError("count ledger kind taxonomy is invalid")
+    required_files = record.get("required_files")
+    if required_files is None:
+        return
+    if not isinstance(required_files, list) or not all(
+        _valid_required_file_metadata(requirement)
+        for requirement in required_files
+    ):
+        raise LedgerInputError(
+            "count ledger required-files metadata is invalid"
+        )
+
+
 def _is_schema_record(record: dict[str, Any], line_number: int) -> bool:
     """Validate and identify an optional first-line manifest schema record."""
     if "schema" not in record:
         return False
     if line_number != 1 or record.get("schema") != _MANIFEST_SCHEMA:
         raise LedgerInputError("count ledger schema record is invalid")
-    if any(field in record for field in ("dir", "ext", "min", "count")):
-        raise LedgerInputError("count ledger schema record mixes coordinates")
+    _validate_schema_metadata(record)
     return True
 
 
@@ -157,8 +191,11 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
     directory = record.get("dir")
     extension = record.get("ext")
     count = record.get("count" if has_observed else "min")
+    kind = record.get("kind")
     if not isinstance(directory, str) or not isinstance(extension, str):
         raise InvalidCoordinateError
+    if kind is not None and not isinstance(kind, str):
+        raise LedgerInputError("count ledger kind metadata must be a string")
     if isinstance(count, bool) or not isinstance(count, int) or count < 0:
         raise InvalidCountError
     return (directory, extension), count
