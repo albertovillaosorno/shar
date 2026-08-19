@@ -365,14 +365,17 @@ def _assert_source_layout(source: list[object]) -> None:
     """Mirror the source collector's stable input grouping and identities."""
     identities: set[tuple[int, str]] = set()
     root_is_file: dict[int, bool] = {}
-    previous_input = -1
+    previous_input: int | None = None
     for record in source:
         assert isinstance(record, dict)
         input_index = record["input"]
         path = record["path"]
         assert isinstance(input_index, int)
         assert isinstance(path, str)
-        assert input_index >= previous_input
+        if previous_input is None:
+            assert input_index == 0
+        elif input_index != previous_input:
+            assert input_index == previous_input + 1
         previous_input = input_index
         identity = (input_index, path)
         assert identity not in identities
@@ -561,6 +564,7 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
         (
             json.dumps(_synthetic_source_plan(bytes=1)),
             json.dumps(_synthetic_source_plan(input=1 << 64)),
+            json.dumps(_synthetic_source_plan(input=1)),
             json.dumps(_synthetic_source_plan(path="../private.bin")),
             json.dumps(_synthetic_plan(path="CON")),
             json.dumps(_synthetic_source_plan(path="folder/PRN.txt")),
