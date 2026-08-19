@@ -39,7 +39,11 @@
 use super::LmlmError;
 
 /// Returns a checked byte range without allowing offset arithmetic to wrap.
-pub(crate) fn checked_slice(data: &[u8], start: usize, len: usize) -> Option<&[u8]> {
+pub(crate) fn checked_slice(
+    data: &[u8],
+    start: usize,
+    len: usize,
+) -> Option<&[u8]> {
     data.get(start..start.checked_add(len)?)
 }
 
@@ -59,7 +63,10 @@ pub(crate) fn first_nonzero_byte(
 }
 
 /// Adds a structural archive offset and converts overflow into malformed input.
-pub(crate) fn checked_offset(value: usize, delta: usize) -> Result<usize, LmlmError> {
+pub(crate) fn checked_offset(
+    value: usize,
+    delta: usize,
+) -> Result<usize, LmlmError> {
     value.checked_add(delta).ok_or(LmlmError::Truncated)
 }
 

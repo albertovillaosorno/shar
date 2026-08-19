@@ -98,7 +98,9 @@ fn sorted_entries(entries: &[FileEntry]) -> Vec<&FileEntry> {
 }
 
 /// Rejects aliases after entries are ordered by deterministic payload identity.
-fn validate_overlapping_ranges(entries: &[&FileEntry]) -> Result<(), LmlmError> {
+fn validate_overlapping_ranges(
+    entries: &[&FileEntry],
+) -> Result<(), LmlmError> {
     for pair in entries.windows(2) {
         let Some(first) = pair.first().copied() else {
             continue;
@@ -107,14 +109,13 @@ fn validate_overlapping_ranges(entries: &[&FileEntry]) -> Result<(), LmlmError> 
             continue;
         };
         let first_end =
-            first
-                .offset
-                .checked_add(first.size)
-                .ok_or_else(|| LmlmError::InvalidEntryRange {
+            first.offset.checked_add(first.size).ok_or_else(|| {
+                LmlmError::InvalidEntryRange {
                     path: first.path.clone(),
                     offset: first.offset,
                     size: first.size,
-                })?;
+                }
+            })?;
         if second.offset < first_end {
             return Err(LmlmError::OverlappingEntryRanges {
                 first_path: first.path.clone(),
@@ -151,8 +152,11 @@ fn validate_unclaimed_padding(
                 size: entry.size,
             });
         };
-        let gap_len = start.checked_sub(claimed_end).ok_or(LmlmError::Truncated)?;
-        if let Some((offset, value)) = first_nonzero_byte(data, claimed_end, gap_len)? {
+        let gap_len =
+            start.checked_sub(claimed_end).ok_or(LmlmError::Truncated)?;
+        if let Some((offset, value)) =
+            first_nonzero_byte(data, claimed_end, gap_len)?
+        {
             return Err(LmlmError::NonZeroUnclaimedData { offset, value });
         }
         claimed_end = start.checked_add(size).ok_or(LmlmError::Truncated)?;
@@ -195,7 +199,9 @@ fn validate_trailing_padding(
         .len()
         .checked_sub(payload_end)
         .ok_or(LmlmError::Truncated)?;
-    if let Some((offset, value)) = first_nonzero_byte(data, payload_end, trailing_len)? {
+    if let Some((offset, value)) =
+        first_nonzero_byte(data, payload_end, trailing_len)?
+    {
         return Err(LmlmError::NonZeroTrailingData { offset, value });
     }
     Ok(())
@@ -208,7 +214,13 @@ pub(crate) fn validate_entry_ranges(
     table_end: usize,
 ) -> Result<(), LmlmError> {
     for entry in entries {
-        validate_file_payload(data, &entry.path, entry.offset, entry.size, table_end)?;
+        validate_file_payload(
+            data,
+            &entry.path,
+            entry.offset,
+            entry.size,
+            table_end,
+        )?;
     }
     let sorted = sorted_entries(entries);
     validate_overlapping_ranges(&sorted)?;
