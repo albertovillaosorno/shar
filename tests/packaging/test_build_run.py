@@ -501,7 +501,9 @@ class TurnkeyReportTests(unittest.TestCase):
             self.assertEqual(report.read_text(encoding="utf-8"), "sentinel\n")
             process.assert_not_called()
 
-    def test_rejects_preexisting_hard_linked_sdk_report_before_uat(self) -> None:
+    def test_rejects_preexisting_hard_linked_sdk_report_before_uat(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
             root = Path(raw)
             work = root / "work"
