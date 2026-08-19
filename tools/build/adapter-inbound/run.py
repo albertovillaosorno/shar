@@ -495,9 +495,12 @@ def _verify_sdk(
     if not _path_present(report):
         raise RunFailure(f"Turnkey did not produce an SDK report: {report}")
     _require_real_file(report, "Turnkey SDK report")
-    text = report.read_text(encoding="utf-8")
+    try:
+        text = report.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        raise RunFailure(f"cannot read Turnkey SDK report: {report}") from error
     expected = f"{target.unreal_platform}: (Status=Valid,"
-    if expected not in text:
+    if not any(line.strip().startswith(expected) for line in text.splitlines()):
         raise RunFailure(
             f"Turnkey SDK is invalid for {target.identifier}; see {report}"
         )
