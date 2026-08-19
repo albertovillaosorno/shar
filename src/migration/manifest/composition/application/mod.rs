@@ -34,6 +34,7 @@ mod diagnostic_path;
 mod error;
 mod generate_expanded;
 mod generate_manifest;
+mod observe_manifest;
 mod path_evidence;
 mod rcf_evidence;
 mod structural_audit;
@@ -44,5 +45,6 @@ pub use generate_expanded::{
     EXPANDED_SCHEMA_LINE, GenerateExpandedManifest, GenerateExpandedReport,
 };
 pub use generate_manifest::{GenerateManifest, GenerateManifestReport};
+pub use observe_manifest::{ObserveManifest, ObserveManifestReport};
 pub use structural_audit::{StructuralAudit, StructuralAuditReport};
 pub use validate_manifest::{ValidateManifest, ValidateManifestReport};

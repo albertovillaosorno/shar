@@ -124,10 +124,19 @@ class SourceSimilarityTests(unittest.TestCase):
             {("aa", "p3d"): 2},
         )
 
+    def test_parser_accepts_observed_count_rows(self) -> None:
+        ledger = (
+            '{"dir":"aa","ext":"p3d","count":2,'
+            '"kind":"p3d_container"}'
+        )
+        self.assertEqual(_MOD.parse_count_ledger(ledger), {("aa", "p3d"): 2})
+
     def test_parser_rejects_ambiguous_jsonl_records(self) -> None:
         records = (
             '{"dir":"aa","dir":"bb","ext":"p3d","min":1}',
             '{"dir":"aa","ext":"p3d","min":1,"extra":true}',
+            '{"dir":"aa","ext":"p3d","min":1,"count":1}',
+            '{"dir":"aa","ext":"p3d"}',
         )
         for record in records:
             with self.subTest(record=record), self.assertRaises(ValueError):

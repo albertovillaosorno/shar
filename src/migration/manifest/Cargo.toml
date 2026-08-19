@@ -33,6 +33,10 @@ name = "generate-expanded-manifest"
 path = "composition/bin/generate_expanded.rs"
 
 [[bin]]
+name = "observe-manifest-counts"
+path = "composition/bin/observe.rs"
+
+[[bin]]
 name = "ephemeral_structural_audit"
 path = "composition/bin/ephemeral_structural_audit.rs"
 # Canonical external integration tests.
@@ -108,6 +112,10 @@ path = "../../../tests/migration/manifest/generate_cli_contract.rs"
 [[test]]
 name = "minimum_path_evidence"
 path = "../../../tests/migration/manifest/minimum_path_evidence.rs"
+
+[[test]]
+name = "observe_cli_contract"
+path = "../../../tests/migration/manifest/observe_cli_contract.rs"
 
 [[test]]
 name = "path_helpers"

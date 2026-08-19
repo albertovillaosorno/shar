@@ -66,9 +66,13 @@ sum(max(reference_count[k], candidate_count[k]))
 
 It is symmetric and penalizes both missing and extra structural counts. The
 repository-owned stdlib Python calibration helper computes these two exact
-rational values and deliberately exposes no acceptance result or threshold. Its
-CLI consumes only public JSONL count ledgers, reports aggregate units and ratios,
-and keeps local input paths out of validation diagnostics.
+rational values and deliberately exposes no acceptance result or threshold. The
+`observe-manifest-counts` source adapter can produce a public-safe count ledger
+from a lawful local installation without writing into it. Observation rows use
+`count` while tracked minimum-policy rows use `min`; the similarity CLI accepts
+either form but rejects rows that mix the two meanings. It reports only
+aggregate units and ratios and keeps local input paths out of validation
+diagnostics.
 
 ## Calibration requirements
 

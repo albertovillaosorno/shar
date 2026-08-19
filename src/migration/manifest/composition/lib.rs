@@ -42,7 +42,8 @@ pub mod ports;
 pub use adapters::count_by_dir_ext;
 pub use application::{
     EXPANDED_SCHEMA_LINE, GenerateExpandedManifest, GenerateExpandedReport,
-    GenerateManifest, GenerateManifestReport, ManifestError, StructuralAudit,
+    GenerateManifest, GenerateManifestReport, ManifestError, ObserveManifest,
+    ObserveManifestReport, StructuralAudit,
     StructuralAuditReport, ValidateManifest, ValidateManifestReport,
 };
 pub use domain::{

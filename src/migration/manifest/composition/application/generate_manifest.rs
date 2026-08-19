@@ -115,7 +115,7 @@ impl GenerateManifest {
 }
 
 /// Loads, validates, and counts one complete game snapshot.
-fn load_counts(
+pub(super) fn load_counts(
     tree: &impl GameTree,
     game_dir: &Path,
 ) -> Result<DirExtCounts, ManifestError> {

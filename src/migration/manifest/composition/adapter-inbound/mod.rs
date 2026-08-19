@@ -32,6 +32,7 @@
 
 pub mod expanded_cli;
 pub mod generate_cli;
+pub mod observe_cli;
 pub mod structural_audit_cli;
 mod support;
 pub mod validate_cli;
