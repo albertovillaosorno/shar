@@ -118,7 +118,8 @@ non-buildable state; every substantive plan must decode as a
 `shar.algorithm.v1` object with the exact top-level source/target contract,
 lowercase source/target hashes, 12-byte nonce evidence, and hexadecimal
 protected target material whose encoded length includes the required 16-byte
-authentication tag. The authored icon reconstruction plan exercises the
+authentication tag and whose declared resource use fits the active generic
+algorithm settings. The authored icon reconstruction plan exercises the
 same policy against a real non-placeholder document. This structural publication
 guard does not turn a placeholder into a reviewed plan and does not implement a
 similarity threshold.

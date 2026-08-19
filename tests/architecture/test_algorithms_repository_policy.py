@@ -204,6 +204,7 @@ def test_algorithm_domain_is_serialization_free() -> None:
 
 
 _HEX = frozenset("0123456789abcdef")
+_U64_MAX = (1 << 64) - 1
 
 
 def _json_object_without_duplicates(
@@ -219,11 +220,15 @@ def _json_object_without_duplicates(
 
 def _is_nonnegative_integer(value: object) -> bool:
     """Match serde u64 admission rather than Python's bool-as-int rule."""
-    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+    return (
+        isinstance(value, int)
+        and not isinstance(value, bool)
+        and 0 <= value <= _U64_MAX
+    )
 
 
-def _active_settings_sha256() -> str:
-    """Hash the active algorithm settings using the Rust compact JSON shape."""
+def _active_settings() -> dict[str, object]:
+    """Load active generic algorithm settings with duplicate-key rejection."""
     path = (
         _ROOT
         / "src/foundation/algorithm/composition/adapter-inbound/settings.json"
@@ -232,7 +237,13 @@ def _active_settings_sha256() -> str:
         path.read_text(encoding="utf-8"),
         object_pairs_hook=_json_object_without_duplicates,
     )
-    encoded = json.dumps(document, separators=(",", ":")).encode()
+    assert isinstance(document, dict)
+    return document
+
+
+def _active_settings_sha256() -> str:
+    """Hash the active algorithm settings using the Rust compact JSON shape."""
+    encoded = json.dumps(_active_settings(), separators=(",", ":")).encode()
     return hashlib.sha256(encoded).hexdigest()
 
 
@@ -286,6 +297,53 @@ def _assert_target_layout(document: dict[str, object]) -> None:
         identities.append(identity)
 
 
+def _assert_plan_resource_limits(document: dict[str, object]) -> None:
+    """Mirror replay's active integer, file-count, and byte-count limits."""
+    settings = _active_settings()
+    names = (
+        "minimum_source_files",
+        "maximum_source_files",
+        "minimum_source_bytes",
+        "maximum_source_bytes",
+        "maximum_target_files",
+        "maximum_target_bytes",
+        "maximum_file_bytes",
+    )
+    limits: dict[str, int] = {}
+    for name in names:
+        value = settings[name]
+        assert _is_nonnegative_integer(value)
+        assert isinstance(value, int)
+        limits[name] = value
+
+    source = document["source"]
+    target = document["target"]
+    assert isinstance(source, list)
+    assert isinstance(target, list)
+    assert limits["minimum_source_files"] <= len(source)
+    assert len(source) <= limits["maximum_source_files"]
+    assert len(target) <= limits["maximum_target_files"]
+
+    source_bytes = 0
+    for record in source:
+        assert isinstance(record, dict)
+        byte_count = record["bytes"]
+        assert isinstance(byte_count, int)
+        assert byte_count <= limits["maximum_file_bytes"]
+        source_bytes += byte_count
+    assert limits["minimum_source_bytes"] <= source_bytes
+    assert source_bytes <= limits["maximum_source_bytes"]
+
+    target_bytes = 0
+    for record in target:
+        assert isinstance(record, dict)
+        byte_count = record["bytes"]
+        assert isinstance(byte_count, int)
+        assert byte_count <= limits["maximum_file_bytes"]
+        target_bytes += byte_count
+    assert target_bytes <= limits["maximum_target_bytes"]
+
+
 def _assert_source_bound_plan(text: str) -> None:
     """Require the publishable structural subset of shar.algorithm.v1."""
     document = json.loads(
@@ -335,6 +393,7 @@ def _assert_source_bound_plan(text: str) -> None:
         assert isinstance(ciphertext, str)
         assert len(ciphertext) == 2 * (record["bytes"] + 16)
         assert set(ciphertext) <= _HEX
+    _assert_plan_resource_limits(document)
     _assert_target_layout(document)
 
 
@@ -384,6 +443,20 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
     assert isinstance(short_targets[0], dict)
     short_targets[0]["ciphertext"] = "00"
     invalid.append(json.dumps(short_ciphertext))
+
+    undersized_source = _synthetic_plan()
+    undersized_records = undersized_source["source"]
+    assert isinstance(undersized_records, list)
+    assert isinstance(undersized_records[0], dict)
+    undersized_records[0]["bytes"] = 1
+    invalid.append(json.dumps(undersized_source))
+
+    oversized_integer = _synthetic_plan()
+    oversized_records = oversized_integer["source"]
+    assert isinstance(oversized_records, list)
+    assert isinstance(oversized_records[0], dict)
+    oversized_records[0]["input"] = 1 << 64
+    invalid.append(json.dumps(oversized_integer))
 
     overlap = _synthetic_plan(path="Folder")
     target = overlap["target"]
