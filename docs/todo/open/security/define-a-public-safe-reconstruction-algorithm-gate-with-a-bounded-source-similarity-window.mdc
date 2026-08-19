@@ -84,10 +84,12 @@ every non-empty public family `algorithm/*.txt` plan, requiring the exact
 bindings, 96-bit nonce encoding, and non-empty hexadecimal protected payloads.
 The current icon plan satisfies that guard with one source descriptor and seven
 protected targets. The three platform game-family files remain deliberate empty
-placeholders and are therefore not claimed as validated release plans. This
-structural publication guard narrows what can be committed publicly; it does not
-replace source-backed cryptographic replay evidence or the pending similarity
-calibration.
+placeholders and are therefore not claimed as validated release plans. The
+publication guard also requires substantive plan paths to be real repository
+files rather than symbolic links, so external content cannot satisfy validation
+while Git publishes only a redirect. This structural guard narrows what can be
+committed publicly; it does not replace source-backed cryptographic replay
+evidence or the pending similarity calibration.
 
 The generic `shar.algorithm.v1` round-trip suite now includes explicit evidence
 that a serialized plan cannot replay with zero caller-supplied source roots and

@@ -212,6 +212,13 @@ def _is_lower_hex(value: object, length: int) -> bool:
     )
 
 
+def _read_public_plan(path: Path) -> str:
+    """Read one publishable plan only from a real repository file."""
+    assert path.is_file(), f"public algorithm plan is not a file: {path}"
+    assert not path.is_symlink(), f"public algorithm plan is linked: {path}"
+    return path.read_text(encoding="utf-8")
+
+
 def _assert_source_bound_plan(text: str) -> None:
     """Require the publishable structural subset of shar.algorithm.v1."""
     document = json.loads(text)
@@ -267,7 +274,7 @@ def _assert_source_bound_plan(text: str) -> None:
 def test_substantive_algorithm_example_matches_source_bound_contract() -> None:
     """Exercise the publication guard against a real authored plan."""
     example = _ROOT / "src/migration/icon/icon_algorithm.txt"
-    _assert_source_bound_plan(example.read_text(encoding="utf-8"))
+    _assert_source_bound_plan(_read_public_plan(example))
 
 
 def test_public_family_plan_publication_contract() -> None:
@@ -275,7 +282,7 @@ def test_public_family_plan_publication_contract() -> None:
     plans = sorted((_ROOT / "algorithms").glob("**/algorithm/*.txt"))
     assert plans
     for plan in plans:
-        text = plan.read_text(encoding="utf-8")
+        text = _read_public_plan(plan)
         if not text.strip():
             continue
         _assert_source_bound_plan(text)
