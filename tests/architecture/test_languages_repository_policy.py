@@ -92,3 +92,11 @@ def test_languages_facade_has_canonical_surface_sidecar() -> None:
     )
     sidecar = _BOUNDARY / "composition/lib.rs.yml"
     assert sidecar.read_text() == expected
+
+
+def test_languages_tests_live_under_repository_test_root() -> None:
+    """Keep executable language tests outside the production domain tree."""
+    function = (_BOUNDARY / "function.yml").read_text()
+    assert "root: tests/localization/languages" in function
+    assert not (_BOUNDARY / "domain/tests.rs").exists()
+    assert (_ROOT / "tests/localization/languages/contract.rs").is_file()
