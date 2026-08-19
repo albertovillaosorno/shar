@@ -34,9 +34,9 @@ use serde_json::{Value, json};
 
 use super::{MissionConditionScope, compile_mission_scope_graphs};
 use crate::domain::{
-    MissionObjectiveParameters, MissionRoadArrowBinding, MissionRoadArrowMode,
-    preflight_mission_script,
+    MissionObjectiveParameters, MissionRoadArrowBinding, MissionRoadArrowMode
 };
+use crate::preflight_mission_script;
 
 fn base_document(invocations: &Value, statement_count: usize) -> Value {
     let mut statements = (1..=statement_count)

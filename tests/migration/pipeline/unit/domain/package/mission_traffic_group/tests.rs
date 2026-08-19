@@ -31,7 +31,8 @@
 //! Unit evidence for traffic model-group declarations.
 
 use super::*;
-use crate::domain::{compile_mission_scope_graphs, preflight_mission_script};
+use crate::domain::compile_mission_scope_graphs;
+use crate::preflight_mission_script;
 
 fn catalog() -> MissionReferenceCatalog {
     MissionReferenceCatalog::from_vehicle_entries_for_tests(&[

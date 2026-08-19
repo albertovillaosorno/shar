@@ -28,13 +28,9 @@
 //   - Stale, malformed, inconsistent, or structurally ambiguous input fails.
 //
 
-// cspell:ignore selectmission closemission addstage closestage addobjective
-// cspell:ignore closeobjective addcondition closecondition
 //! Normalized mission-script semantic preflight.
 
 use std::collections::{BTreeMap, BTreeSet};
-
-use serde::Deserialize;
 
 /// Exact normalized mission-script schema accepted by semantic compilation.
 pub const MISSION_SCRIPT_SCHEMA: &str =
@@ -156,54 +152,50 @@ impl MissionScriptEvidence {
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct MissionScriptDocument {
-    schema: String,
-    source_extension: String,
-    route_class: String,
-    source_bytes: u64,
-    context_command_count: usize,
-    context_adaptation_count: usize,
-    context_adaptations: Vec<MissionContextAdaptationDocument>,
-    context_finding_count: usize,
-    context_findings: Vec<MissionContextFinding>,
-    statement_count: usize,
-    unique_command_count: usize,
-    load_p3d_reference_count: usize,
-    mission_flow_command_count: usize,
-    vehicle_physics_command_count: usize,
-    semantic_family: String,
-    command_counts: BTreeMap<String, usize>,
-    source_statements: Vec<String>,
-    p3d_references: Vec<String>,
-    command_invocations: Vec<MissionCommandDocument>,
+#[derive(Debug)]
+pub(crate) struct MissionScriptDocument {
+    pub(crate) schema: String,
+    pub(crate) source_extension: String,
+    pub(crate) route_class: String,
+    pub(crate) source_bytes: u64,
+    pub(crate) context_command_count: usize,
+    pub(crate) context_adaptation_count: usize,
+    pub(crate) context_adaptations: Vec<MissionContextAdaptationDocument>,
+    pub(crate) context_finding_count: usize,
+    pub(crate) context_findings: Vec<MissionContextFinding>,
+    pub(crate) statement_count: usize,
+    pub(crate) unique_command_count: usize,
+    pub(crate) load_p3d_reference_count: usize,
+    pub(crate) mission_flow_command_count: usize,
+    pub(crate) vehicle_physics_command_count: usize,
+    pub(crate) semantic_family: String,
+    pub(crate) command_counts: BTreeMap<String, usize>,
+    pub(crate) source_statements: Vec<String>,
+    pub(crate) p3d_references: Vec<String>,
+    pub(crate) command_invocations: Vec<MissionCommandDocument>,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct MissionContextFinding {
-    ordinal: usize,
-    command: String,
-    code: String,
+#[derive(Debug)]
+pub(crate) struct MissionContextFinding {
+    pub(crate) ordinal: usize,
+    pub(crate) command: String,
+    pub(crate) code: String,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct MissionContextAdaptationDocument {
-    ordinal: usize,
-    command: String,
-    code: String,
+#[derive(Debug)]
+pub(crate) struct MissionContextAdaptationDocument {
+    pub(crate) ordinal: usize,
+    pub(crate) command: String,
+    pub(crate) code: String,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct MissionCommandDocument {
-    ordinal: usize,
-    name: String,
-    args_raw: String,
-    semantic_role: String,
-    arguments: Vec<String>,
+#[derive(Debug)]
+pub(crate) struct MissionCommandDocument {
+    pub(crate) ordinal: usize,
+    pub(crate) name: String,
+    pub(crate) args_raw: String,
+    pub(crate) semantic_role: String,
+    pub(crate) arguments: Vec<String>,
 }
 
 /// Validate one normalized MFK document before semantic compilation.
@@ -212,13 +204,9 @@ struct MissionCommandDocument {
 ///
 /// Returns an error when schema, structure, findings, or command evidence
 /// drift.
-pub fn preflight_mission_script(
-    json: &str,
+pub(crate) fn preflight_mission_script_document(
+    document: MissionScriptDocument,
 ) -> Result<MissionScriptEvidence, String> {
-    let document = serde_json::from_str::<MissionScriptDocument>(json)
-        .map_err(|_error| {
-            "normalized mission script JSON is invalid".to_owned()
-        })?;
     validate_identity(&document)?;
     validate_context_evidence(&document)?;
     validate_context_structure(&document)?;
@@ -266,8 +254,11 @@ fn validate_identity(document: &MissionScriptDocument) -> Result<(), String> {
     }
     if (document.source_bytes == 0) != (document.statement_count == 0) {
         return Err(
-            "normalized mission script byte and statement evidence is inconsistent"
-                .to_owned(),
+            concat!(
+                "normalized mission script byte and statement evidence ",
+                "is inconsistent",
+            )
+            .to_owned(),
         );
     }
     Ok(())
@@ -312,8 +303,11 @@ fn validate_context_evidence(
     }
     if !document.context_findings.is_empty() {
         return Err(
-            "mission context findings must be resolved before semantic compilation"
-                .to_owned(),
+            concat!(
+                "mission context findings must be resolved before semantic ",
+                "compilation",
+            )
+            .to_owned(),
         );
     }
     let context_count = document
@@ -862,5 +856,6 @@ fn is_command_name(value: &str) -> bool {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/mission_script/tests.rs"]
 mod tests;

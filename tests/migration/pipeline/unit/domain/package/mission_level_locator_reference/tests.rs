@@ -33,8 +33,9 @@
 use super::*;
 use crate::domain::{
     MissionLocatorCatalogEntry, MissionScopeReport,
-    compile_mission_scope_graphs, preflight_mission_script,
+    compile_mission_scope_graphs
 };
+use crate::preflight_mission_script;
 
 fn entry(
     source_name: &str,

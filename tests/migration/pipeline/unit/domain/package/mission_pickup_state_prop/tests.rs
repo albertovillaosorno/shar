@@ -228,7 +228,7 @@ fn utility_source_without_selected_mission_is_empty() -> Result<(), String> {
     });
     let text = serde_json::to_string(&value)
         .map_err(|error| error.to_string())?;
-    let evidence = crate::domain::preflight_mission_script(&text)?;
+    let evidence = crate::preflight_mission_script(&text)?;
     let scopes = crate::domain::compile_mission_scope_graphs(&evidence)?;
     let initialization =
         crate::domain::preflight_mission_initialization(&scopes)?;

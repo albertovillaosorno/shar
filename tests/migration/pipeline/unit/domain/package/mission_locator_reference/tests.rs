@@ -119,7 +119,7 @@ fn reports() -> Result<
     ),
     String,
 > {
-    let evidence = crate::domain::preflight_mission_script(&mission_json()?)?;
+    let evidence = crate::preflight_mission_script(&mission_json()?)?;
     let scopes = crate::domain::compile_mission_scope_graphs(&evidence)?;
     let initialization = crate::domain::preflight_mission_initialization(&scopes)?;
     let stages = crate::domain::preflight_mission_stage_semantics(&scopes)?;

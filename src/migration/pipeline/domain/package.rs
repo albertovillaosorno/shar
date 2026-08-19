@@ -267,7 +267,7 @@ pub use mission_traffic_group::{
 };
 pub use mission_script::{
     MISSION_SCRIPT_SCHEMA, MissionCommandInvocation, MissionContextAdaptation,
-    MissionScriptEvidence, preflight_mission_script,
+    MissionScriptEvidence,
 };
 pub use mission_stage::{
     MissionStageDirective, MissionStageKind, MissionStageMessageKind,

@@ -28,5 +28,21 @@ No explicit task dependency was recorded in the legacy TODO.
 
 ## Evidence
 
-Open work migrated from the canonical TODO. Add implementation and
-validation evidence here as the task advances.
+Normalized mission-script intake is source-backed and fail-closed. JSON decoding
+now lives in pipeline composition, while the mission domain owns only typed
+normalized evidence plus structural and semantic validation. The crate-level
+intake rejects unknown or malformed wire fields before domain validation, and
+817 pipeline library tests cover the resulting mission graph, objective,
+condition, reference, ordering, and Unreal-preparation behavior without private
+game data in test fixtures.
+
+Canonical non-English localization remains outside the English base and
+publishes
+through deterministic normalized language-mod packages. Current language tests
+cover source read-only containment, official track mapping, missing-evidence
+failure, deterministic repeated output, package publication, and manifest/report
+agreement without synthesizing unavailable Italian content.
+
+This parent remains open because complete progression/gameplay verification and
+final cross-platform release evidence are broader than these preserved mission
+and localization boundaries.

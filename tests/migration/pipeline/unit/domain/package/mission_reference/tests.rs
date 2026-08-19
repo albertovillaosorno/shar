@@ -246,7 +246,7 @@ fn participant_mission_json() -> Result<String, String> {
 fn resolves_parameters_directives_and_stage_header_in_source_order()
 -> Result<(), String> {
     let text = participant_mission_json()?;
-    let evidence = crate::domain::preflight_mission_script(&text)?;
+    let evidence = crate::preflight_mission_script(&text)?;
     let scopes = crate::domain::compile_mission_scope_graphs(&evidence)?;
     let objectives =
         crate::domain::preflight_mission_objective_semantics(&scopes)?;

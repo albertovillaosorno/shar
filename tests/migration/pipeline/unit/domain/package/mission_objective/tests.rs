@@ -92,7 +92,7 @@ fn dummy_is_explicitly_unavailable_and_unknown_aliases_do_not_resolve()
 use serde_json::json;
 
 use super::{MissionObjectiveBinding, preflight_mission_objectives};
-use crate::domain::preflight_mission_script;
+use crate::preflight_mission_script;
 
 fn mission_with_objective(arguments: &[&str]) -> Result<String, String> {
     let invocation_arguments = arguments

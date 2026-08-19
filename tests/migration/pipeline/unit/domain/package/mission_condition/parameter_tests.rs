@@ -14,7 +14,7 @@ use serde_json::json;
 use super::{
     MissionConditionParameters, preflight_mission_condition_parameters,
 };
-use crate::domain::preflight_mission_script;
+use crate::preflight_mission_script;
 
 fn condition_document(arguments: &[&str]) -> Result<String, String> {
     let args_raw = arguments

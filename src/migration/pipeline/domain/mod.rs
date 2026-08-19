@@ -128,7 +128,7 @@ pub use package::{
     preflight_mission_objective_npc_waypoints,
     preflight_mission_objective_parameters,
     preflight_mission_objective_semantics, preflight_mission_objectives,
-    preflight_mission_references, preflight_mission_script,
+    preflight_mission_references,
     preflight_mission_stage_message_references,
     preflight_mission_stage_semantics, preflight_mission_stage_transitions,
     preflight_mission_traffic_groups,
