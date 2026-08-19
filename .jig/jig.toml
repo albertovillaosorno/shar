@@ -691,6 +691,9 @@ depends_on = ["schoenwald_cli", "schoenwald_filesystem", "shar_sha256"]
 # jig-ignore-next-line: exact Cargo workspace dependency declaration
 depends_on = ["p3d", "rcf", "rmv", "rsd", "schoenwald_cli", "schoenwald_filesystem"]
 
+[architecture.component.shar_mod_package]
+depends_on = ["schoenwald_filesystem", "shar_sha256"]
+
 [architecture.component.shar_json_text]
 depends_on = []
 

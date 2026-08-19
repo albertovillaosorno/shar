@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/modding/package/composition/lib.rs
+function: package
+kind: facade
+authority: composition/lib.rs
