@@ -574,11 +574,13 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
         return
     suffix, label = expected
     if any(
-        item.is_file() and item.suffix.casefold() == suffix
+        item.is_file()
+        and item.suffix.casefold() == suffix
+        and item.stat().st_size > 0
         for item in candidate.rglob("*")
     ):
         return
-    raise RunFailure(f"candidate package has no {label}: {candidate}")
+    raise RunFailure(f"candidate package has no non-empty {label}: {candidate}")
 
 
 def _cache_nonruntime_artifacts(

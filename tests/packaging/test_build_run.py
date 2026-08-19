@@ -1101,6 +1101,29 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["ios-arm64"],
                 )
 
+    def test_mobile_candidate_rejects_empty_declared_artifact(self) -> None:
+        cases = (
+            ("android-arm64", "shar.apk", "Android APK"),
+            ("ios-arm64", "shar.ipa", "iOS IPA"),
+        )
+        for target_id, filename, label in cases:
+            with (
+                self.subTest(target=target_id),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-empty-mobile-candidate-",
+                ) as raw,
+            ):
+                candidate = Path(raw)
+                (candidate / filename).write_bytes(b"")
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    f"no non-empty {label}",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
+
     def test_mobile_artifact_may_be_nested_in_uat_archive(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-mobile-candidate-",
