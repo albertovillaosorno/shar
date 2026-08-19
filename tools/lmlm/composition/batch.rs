@@ -118,7 +118,9 @@ fn direct_lmlm_files(import_root: &Path) -> Result<Vec<PathBuf>, BatchError> {
                 && path
                     .extension()
                     .and_then(|extension| extension.to_str())
-                    .is_some_and(|extension| extension.eq_ignore_ascii_case("lmlm"))
+                    .is_some_and(|extension| {
+                        extension.eq_ignore_ascii_case("lmlm")
+                    })
         })
         .collect::<Vec<_>>();
     files.sort();
@@ -147,7 +149,9 @@ fn safe_export_stem(input: &Path) -> String {
 
 fn relative_text(root: &Path, path: &Path) -> Result<String, BatchError> {
     let relative = path.strip_prefix(root).map_err(|_error| {
-        BatchError::Contract("conversion path escaped repository root".to_owned())
+        BatchError::Contract(
+            "conversion path escaped repository root".to_owned(),
+        )
     })?;
     Ok(relative
         .to_string_lossy()
@@ -176,9 +180,13 @@ fn copy_workspace(
     let name = destination
         .file_name()
         .and_then(|value| value.to_str())
-        .ok_or_else(|| BatchError::Contract("export has no portable name".to_owned()))?;
-    let staging =
-        destination.with_file_name(format!(".{name}.lmlm-export-{}.tmp", std::process::id()));
+        .ok_or_else(|| {
+            BatchError::Contract("export has no portable name".to_owned())
+        })?;
+    let staging = destination.with_file_name(format!(
+        ".{name}.lmlm-export-{}.tmp",
+        std::process::id(),
+    ));
     if local::path_kind(&staging)? != PathKind::Missing {
         return Err(BatchError::Contract(
             "export staging directory already exists".to_owned(),
@@ -199,8 +207,11 @@ fn copy_workspace(
             if relative == Path::new("mod.json") {
                 continue;
             }
-            let target = schoenwald_filesystem::resolve_under(&staging, relative)
-                .map_err(|error| BatchError::Contract(error.to_string()))?;
+            let target = schoenwald_filesystem::resolve_under(
+                &staging,
+                relative,
+            )
+            .map_err(|error| BatchError::Contract(error.to_string()))?;
             if let Some(parent) = target
                 .parent()
                 .filter(|path| !path.as_os_str().is_empty())
@@ -231,8 +242,11 @@ fn verify_workspace_report(
 ) -> Result<(), BatchError> {
     let path = workspace.join("conversion-report.json");
     let stored = local::read_utf8(&path)?;
-    let mut expected = serde_json::to_string_pretty(report)
-        .map_err(|error| BatchError::Contract(format!("render {label} report failed: {error}")))?;
+    let mut expected = serde_json::to_string_pretty(report).map_err(|error| {
+        BatchError::Contract(format!(
+            "render {label} report failed: {error}"
+        ))
+    })?;
     expected.push(char::from(10));
     if stored != expected {
         return Err(BatchError::Contract(format!(
@@ -259,7 +273,10 @@ fn verify_workspace_package(
     Ok(())
 }
 
-fn ensure_directory_or_missing(path: &Path, label: &str) -> Result<bool, BatchError> {
+fn ensure_directory_or_missing(
+    path: &Path,
+    label: &str,
+) -> Result<bool, BatchError> {
     match local::path_kind(path)? {
         PathKind::Missing => Ok(false),
         PathKind::Directory => Ok(true),
@@ -269,14 +286,16 @@ fn ensure_directory_or_missing(path: &Path, label: &str) -> Result<bool, BatchEr
     }
 }
 
-/// Converts explicit import/export/WIP roots without touching the product pipeline.
+/// Converts explicit import/export/WIP roots without touching the product
+/// pipeline.
 ///
 /// Existing WIP and export directories are preserved. Delete an export manually
 /// if you intentionally want to republish an edited persistent WIP workspace.
 ///
 /// # Errors
 ///
-/// Returns a deterministic failure for invalid folders, unsafe filesystem state,
+/// Returns a deterministic failure for invalid folders, unsafe filesystem
+/// state,
 /// unsupported archives, or failed conversion/publication.
 pub fn convert_folders(
     repository_root: &Path,
@@ -300,17 +319,22 @@ pub fn convert_folders(
         } else {
             let converted = convert(&input, &wip)?;
             if converted != report {
-                return Err(BatchError::Contract(
-                    "conversion report changed between inspection and publication".to_owned(),
-                ));
+                let message = concat!(
+                    "conversion report changed between inspection ",
+                    "and publication",
+                );
+                return Err(BatchError::Contract(message.to_owned()));
             }
         }
         let short_hash = report.source_sha256.get(..12).ok_or_else(|| {
-            BatchError::Contract("source SHA-256 is unexpectedly short".to_owned())
+            BatchError::Contract(
+                "source SHA-256 is unexpectedly short".to_owned(),
+            )
         })?;
         let export_name = format!("{}-{short_hash}", safe_export_stem(&input));
         let export = export_root.join(export_name);
-        let export_reused = ensure_directory_or_missing(&export, "LMLM export")?;
+        let export_reused =
+            ensure_directory_or_missing(&export, "LMLM export")?;
         if export_reused {
             verify_workspace_report(&export, &report, "LMLM export")?;
             verify_workspace_package(&export, &report, "LMLM export")?;
@@ -320,7 +344,11 @@ pub fn convert_folders(
         let input_name = input
             .file_name()
             .and_then(|value| value.to_str())
-            .ok_or_else(|| BatchError::Contract("import filename is not Unicode".to_owned()))?
+            .ok_or_else(|| {
+                BatchError::Contract(
+                    "import filename is not Unicode".to_owned(),
+                )
+            })?
             .to_owned();
         packages.push(BatchItem {
             input: input_name,
@@ -348,7 +376,9 @@ pub fn run_default() -> Result<BatchReport, BatchError> {
     let repository_root = tool_root
         .parent()
         .and_then(Path::parent)
-        .ok_or_else(|| BatchError::Contract("cannot resolve repository root".to_owned()))?;
+        .ok_or_else(|| {
+            BatchError::Contract("cannot resolve repository root".to_owned())
+        })?;
     convert_folders(
         repository_root,
         &tool_root.join("import"),

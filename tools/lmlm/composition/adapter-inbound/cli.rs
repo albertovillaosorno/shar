@@ -68,9 +68,11 @@ impl CliProgram for LmlmProgram {
                 Ok(report) => render(&report),
                 Err(error) => failure(&error),
             },
-            [command, input] if command == "inspect" => match inspect(Path::new(input)) {
-                Ok(report) => render(&report),
-                Err(error) => failure(&error),
+            [command, input] if command == "inspect" => {
+                match inspect(Path::new(input)) {
+                    Ok(report) => render(&report),
+                    Err(error) => failure(&error),
+                }
             },
             [command, input, output] if command == "convert" => {
                 match convert(Path::new(input), Path::new(output)) {
