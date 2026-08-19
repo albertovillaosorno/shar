@@ -120,9 +120,11 @@ lowercase source/target hashes, 12-byte nonce evidence, and hexadecimal
 protected target material whose encoded length includes the required 16-byte
 authentication tag and whose declared resource use fits the active generic
 algorithm settings. The authored icon reconstruction plan exercises the
-same policy against a real non-placeholder document. This structural publication
-guard does not turn a placeholder into a reviewed plan and does not implement a
-similarity threshold.
+same policy against a real non-placeholder document. Source and directory-target
+record paths must also be canonical forward-slash relatives, with an empty source
+path reserved for direct-file evidence. This structural publication guard does
+not turn a placeholder into a reviewed plan and does not implement a similarity
+threshold.
 
 The maintainer-only `in/`, `master/`, and shared `out/` workspace trees never
 ship as reconstruction plans. Generic algorithm authoring also requires the

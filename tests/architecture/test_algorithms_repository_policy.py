@@ -263,6 +263,23 @@ def _read_public_plan(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _assert_relative_record_path(
+    path: str,
+    *,
+    allow_empty: bool,
+) -> tuple[str, ...]:
+    """Require one canonical forward-slash relative record path."""
+    if not path:
+        assert allow_empty
+        return ()
+    assert not path.startswith(("/", "\\"))
+    assert "\\" not in path
+    assert ":" not in path
+    parts = tuple(path.split("/"))
+    assert all(part not in {"", ".", ".."} for part in parts)
+    return parts
+
+
 def _assert_target_layout(document: dict[str, object]) -> None:
     """Mirror replay's file/directory target identity constraints."""
     target_kind = document["target_kind"]
@@ -282,12 +299,7 @@ def _assert_target_layout(document: dict[str, object]) -> None:
         assert isinstance(record, dict)
         path = record.get("path")
         assert isinstance(path, str)
-        assert path
-        assert not path.startswith(("/", "\\"))
-        assert "\\" not in path
-        assert ":" not in path
-        parts = tuple(path.split("/"))
-        assert all(part not in {"", ".", ".."} for part in parts)
+        parts = _assert_relative_record_path(path, allow_empty=False)
         identity = tuple(part.upper() for part in parts)
         assert not any(
             identity[: len(existing)] == existing
@@ -370,6 +382,7 @@ def _assert_source_bound_plan(text: str) -> None:
         assert set(record) == {"input", "path", "bytes", "sha256"}
         assert _is_nonnegative_integer(record["input"])
         assert isinstance(record["path"], str)
+        _assert_relative_record_path(record["path"], allow_empty=True)
         assert _is_nonnegative_integer(record["bytes"])
         assert _is_lower_hex(record["sha256"], 64)
 
@@ -418,6 +431,17 @@ def _synthetic_plan(*, path: str = "asset.bin") -> dict[str, object]:
     }
 
 
+def _synthetic_source_plan(**updates: object) -> dict[str, object]:
+    """Return a synthetic plan with mutations on its only source record."""
+    plan = _synthetic_plan()
+    source = plan["source"]
+    assert isinstance(source, list)
+    record = source[0]
+    assert isinstance(record, dict)
+    record.update(updates)
+    return plan
+
+
 def test_public_plan_guard_matches_runtime_rejections() -> None:
     """Reject JSON/path/settings shapes that generic replay will reject."""
     invalid: list[str] = []
@@ -425,14 +449,9 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
     wrong_settings["settings_sha256"] = "0" * 64
     invalid.append(json.dumps(wrong_settings))
 
-    boolean_count = _synthetic_plan()
-    source = boolean_count["source"]
-    assert isinstance(source, list)
-    assert isinstance(source[0], dict)
-    source[0]["bytes"] = True
     invalid.extend(
         (
-            json.dumps(boolean_count),
+            json.dumps(_synthetic_source_plan(bytes=True)),
             json.dumps(_synthetic_plan(path="../escape.bin")),
         )
     )
@@ -444,19 +463,13 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
     short_targets[0]["ciphertext"] = "00"
     invalid.append(json.dumps(short_ciphertext))
 
-    undersized_source = _synthetic_plan()
-    undersized_records = undersized_source["source"]
-    assert isinstance(undersized_records, list)
-    assert isinstance(undersized_records[0], dict)
-    undersized_records[0]["bytes"] = 1
-    invalid.append(json.dumps(undersized_source))
-
-    oversized_integer = _synthetic_plan()
-    oversized_records = oversized_integer["source"]
-    assert isinstance(oversized_records, list)
-    assert isinstance(oversized_records[0], dict)
-    oversized_records[0]["input"] = 1 << 64
-    invalid.append(json.dumps(oversized_integer))
+    invalid.extend(
+        (
+            json.dumps(_synthetic_source_plan(bytes=1)),
+            json.dumps(_synthetic_source_plan(input=1 << 64)),
+            json.dumps(_synthetic_source_plan(path="../private.bin")),
+        )
+    )
 
     overlap = _synthetic_plan(path="Folder")
     target = overlap["target"]
