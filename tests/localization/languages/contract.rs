@@ -406,8 +406,7 @@ fn missing_cinematic_language_track_fails_closed() -> Result<(), String> {
 }
 
 #[test]
-fn official_language_package_uses_normalized_mod_contract(
-) -> Result<(), String> {
+fn language_package_uses_mod_contract() -> Result<(), String> {
     let root = temp_root("mod-contract");
     cleanup(&root);
     let (game, movies) = fixture(&root)?;
