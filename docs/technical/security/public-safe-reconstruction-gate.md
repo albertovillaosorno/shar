@@ -65,9 +65,10 @@ sum(max(reference_count[k], candidate_count[k]))
 ```
 
 It is symmetric and penalizes both missing and extra structural counts. The
-repository-owned stdlib Python calibration helper computes these two
-exact rational values and deliberately exposes no acceptance result or
-threshold.
+repository-owned stdlib Python calibration helper computes these two exact
+rational values and deliberately exposes no acceptance result or threshold. Its
+CLI consumes only public JSONL count ledgers, reports aggregate units and ratios,
+and keeps local input paths out of validation diagnostics.
 
 ## Calibration requirements
 

@@ -248,8 +248,9 @@ Those numbers are deliberately not production policy. Calibration now defines
 reference coverage as shared structural count units divided by private-reference
 count units, and evaluates weighted-Jaccard similarity over the same public-safe
 obfuscated directory/extension count vectors. The repository-owned calibration
-helper at `tools/source-similarity/adapter-inbound/main.py` reports those values
-but has no acceptance threshold or pass/fail result.
+helper at `tools/source-similarity/adapter-inbound/main.py` accepts reference and
+candidate public JSONL count ledgers and reports those values, but has no
+acceptance threshold or pass/fail result.
 
 Similarity can never substitute for required original bytes, exact identities,
 deeper structure, hashes, or provenance validation. The algorithm generator

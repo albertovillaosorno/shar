@@ -90,7 +90,7 @@ ignore = [
   "T201",
   "TRY003",
 ]
-"tools/source-similarity/main.py" = [
+"tools/source-similarity/adapter-inbound/main.py" = [
   "DOC501",
   "EM101",
   "EM102",

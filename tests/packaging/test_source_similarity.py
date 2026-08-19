@@ -32,10 +32,14 @@
 
 from __future__ import annotations
 
+from contextlib import redirect_stderr
+from contextlib import redirect_stdout
 from fractions import Fraction
 import importlib.util
+from io import StringIO
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 _ROOT = Path(__file__).resolve().parents[2]
@@ -107,6 +111,107 @@ class SourceSimilarityTests(unittest.TestCase):
             _MOD.measure({("aa", "p3d"): -1}, {})
         with self.assertRaisesRegex(ValueError, "pair of strings"):
             _MOD.measure({"aa": 1}, {})
+
+    def test_parser_accepts_generated_manifest_metadata_and_kind(self) -> None:
+        ledger = (
+            '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+            '"kind_taxonomy":[],"required_files":[]}\n'
+            '{"dir":"aa","ext":"p3d","min":2,'
+            '"kind":"p3d_container"}\n'
+        )
+        self.assertEqual(
+            _MOD.parse_count_ledger(ledger),
+            {("aa", "p3d"): 2},
+        )
+
+    def test_parser_rejects_ambiguous_jsonl_records(self) -> None:
+        records = (
+            '{"dir":"aa","dir":"bb","ext":"p3d","min":1}',
+            '{"dir":"aa","ext":"p3d","min":1,"extra":true}',
+        )
+        for record in records:
+            with self.subTest(record=record), self.assertRaises(ValueError):
+                _MOD.parse_count_ledger(record)
+
+    def test_cli_measures_public_jsonl_ledgers_without_admission(self) -> None:
+        metadata = '{"schema":"shar-schoenwald.game-manifest-ledger.v2"}\n'
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            reference = root / "reference.jsonl"
+            candidate = root / "candidate.jsonl"
+            reference.write_text(
+                metadata
+                + '{"dir":"aa~01","ext":"p3d","min":2}\n'
+                + '{"dir":"aa~02","ext":"p3d","min":3}\n',
+                encoding="utf-8",
+            )
+            candidate.write_text(
+                metadata + '{"dir":"aa","ext":"p3d","min":3}\n',
+                encoding="utf-8",
+            )
+            stdout = StringIO()
+            stderr = StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                return_code = _MOD.main([str(reference), str(candidate)])
+
+        self.assertEqual(return_code, 0, stderr.getvalue())
+        self.assertEqual(
+            stdout.getvalue(),
+            "source-similarity\treference_units=5\tcandidate_units=3"
+            "\tshared_units=3\tunion_units=5\treference_coverage=3/5"
+            "\tweighted_jaccard=3/5\n",
+        )
+        self.assertNotIn("accepted", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+
+    def test_duplicate_public_coordinates_fail_closed(self) -> None:
+        ledger = (
+            '{"dir":"aa","ext":"p3d","min":1}\n'
+            '{"dir":"aa","ext":"p3d","min":2}\n'
+        )
+        with self.assertRaisesRegex(ValueError, "repeats a coordinate"):
+            _MOD.parse_count_ledger(ledger)
+
+    def test_cli_rejects_unreadable_ledger_without_disclosing_path(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            reference = root / "private-missing-reference.jsonl"
+            candidate = root / "candidate.jsonl"
+            candidate.write_text(
+                '{"dir":"aa","ext":"p3d","min":1}\n',
+                encoding="utf-8",
+            )
+            stdout = StringIO()
+            stderr = StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                return_code = _MOD.main([str(reference), str(candidate)])
+
+        self.assertNotEqual(return_code, 0)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertNotIn(str(reference), stderr.getvalue())
+        self.assertIn("could not be read", stderr.getvalue())
+
+    def test_cli_rejects_malformed_ledger_without_disclosing_path(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            reference = root / "private-reference-name.jsonl"
+            candidate = root / "candidate.jsonl"
+            reference.write_text("not-json\n", encoding="utf-8")
+            candidate.write_text(
+                '{"dir":"aa","ext":"p3d","min":1}\n',
+                encoding="utf-8",
+            )
+            stdout = StringIO()
+            stderr = StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                return_code = _MOD.main([str(reference), str(candidate)])
+
+        self.assertNotEqual(return_code, 0)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertNotIn(str(reference), stderr.getvalue())
+        self.assertIn("invalid JSONL", stderr.getvalue())
 
 
 if __name__ == "__main__":
