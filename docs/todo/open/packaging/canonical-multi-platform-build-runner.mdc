@@ -62,7 +62,9 @@ any archive file as success. Android candidates must contain a non-empty APK and
 iOS candidates must contain a non-empty IPA before atomic publication;
 regression fixtures prove wrong or zero-byte mobile artifacts never create a
 completed `dist/<ARCH>/` target. Windows candidates likewise require a non-empty
-SHAR `.exe`; engine helper executables alone cannot satisfy publication.
+SHAR `.exe`; engine helper executables alone cannot satisfy publication. The
+optional Windows shortcut adapter applies the same SHAR executable identity, so
+original-game, helper, empty, or lookalike `.exe` files are never auto-selected.
 
 Publication also preflights an existing `dist/<ARCH>/` identity as a real
 directory before any rename. A regression proves a colliding regular file is
