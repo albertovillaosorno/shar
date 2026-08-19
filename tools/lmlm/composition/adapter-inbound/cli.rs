@@ -33,7 +33,6 @@
 use std::path::Path;
 
 use schoenwald_cli::{CliProgram, CommandOutcome};
-
 use shar_lmlm::batch::run_default;
 use shar_lmlm::convert::{convert, inspect};
 
