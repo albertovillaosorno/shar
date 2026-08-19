@@ -45,7 +45,7 @@ impl DeepSourceAudit {
         if kind != PathKind::Directory {
             return Err(SourceAuditError::new("source game directory not found"));
         }
-        let files = local::regular_files(source_root).map_err(|_error| {
+        let files = local::strict_regular_files(source_root).map_err(|_error| {
             SourceAuditError::new("deep source validation could not scan source directory")
         })?;
         let mut report = DeepSourceAuditReport::default();

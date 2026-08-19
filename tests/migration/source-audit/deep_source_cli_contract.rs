@@ -127,3 +127,28 @@ fn extra_arguments_are_rejected_by_usage_contract() -> io::Result<()> {
     );
     Ok(())
 }
+
+#[cfg(unix)]
+#[test]
+fn redirected_source_entry_fails_closed_without_private_path(
+) -> io::Result<()> {
+    use std::os::unix::fs::symlink;
+
+    let fixture = Fixture::create("redirect")?;
+    let outside = Fixture::create("redirect-outside")?;
+    let target = outside.root.join("outside.p3d");
+    fs::write(&target, b"not inspected through redirect")?;
+    symlink(&target, fixture.root.join("linked.p3d"))?;
+
+    let output = run_validator(&fixture.root, None)?;
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    assert!(!output.status.success(), "redirected source entry must fail");
+    assert_eq!(
+        stderr,
+        "deep source validation could not scan source directory\n"
+    );
+    assert!(!stderr.contains(&fixture.root.display().to_string()));
+    assert!(!stderr.contains(&outside.root.display().to_string()));
+    Ok(())
+}
