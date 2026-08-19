@@ -45,7 +45,10 @@ fn observation_jsonl_uses_count_not_minimum() {
 
     assert_eq!(
         record.to_observation_jsonl(),
-        "{\"dir\":\"at/cs\",\"ext\":\"p3d\",\"count\":2,\"kind\":\"p3d_container\"}"
+        concat!(
+            "{\"dir\":\"at/cs\",\"ext\":\"p3d\",",
+            "\"count\":2,\"kind\":\"p3d_container\"}"
+        )
     );
     assert!(!record.to_observation_jsonl().contains("\"min\""));
 }
