@@ -364,6 +364,7 @@ def _assert_target_layout(document: dict[str, object]) -> None:
 def _assert_source_layout(source: list[object]) -> None:
     """Mirror the source collector's stable input grouping and identities."""
     identities: set[tuple[int, str]] = set()
+    portable_paths: dict[int, list[tuple[str, ...]]] = {}
     root_is_file: dict[int, bool] = {}
     previous_input: int | None = None
     previous_path: tuple[int, str] | None = None
@@ -389,6 +390,16 @@ def _assert_source_layout(source: list[object]) -> None:
         identity = (input_index, path)
         assert identity not in identities
         identities.add(identity)
+        parts = _assert_relative_record_path(path, allow_empty=True)
+        if parts:
+            portable_identity = tuple(part.upper() for part in parts)
+            prior_paths = portable_paths.setdefault(input_index, [])
+            assert not any(
+                portable_identity[: len(existing)] == existing
+                or existing[: len(portable_identity)] == portable_identity
+                for existing in prior_paths
+            )
+            prior_paths.append(portable_identity)
         is_file = not path
         if input_index in root_is_file:
             assert root_is_file[input_index] == is_file
@@ -600,6 +611,18 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
                 _synthetic_source_rows(
                     {"path": "z.bin", "bytes": 512},
                     {"path": "a.bin", "bytes": 512},
+                )
+            ),
+            json.dumps(
+                _synthetic_source_rows(
+                    {"path": "A.bin", "bytes": 512},
+                    {"path": "a.bin", "bytes": 512},
+                )
+            ),
+            json.dumps(
+                _synthetic_source_rows(
+                    {"path": "a", "bytes": 512},
+                    {"path": "a/b", "bytes": 512},
                 )
             ),
         )
