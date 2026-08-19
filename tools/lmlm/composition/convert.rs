@@ -160,9 +160,8 @@ fn decompile_p3d(
         Path::new(&entry.path),
     )
     .map_err(|error| ConvertError::Contract(error.to_string()))?;
-    if let Some(parent) = output
-        .parent()
-        .filter(|path| !path.as_os_str().is_empty())
+    if let Some(parent) =
+        output.parent().filter(|path| !path.as_os_str().is_empty())
     {
         local::create_dir_all(parent)?;
     }
@@ -320,9 +319,8 @@ pub fn convert(
         ));
     }
     let (data, entries) = load(input)?;
-    if let Some(parent) = output
-        .parent()
-        .filter(|path| !path.as_os_str().is_empty())
+    if let Some(parent) =
+        output.parent().filter(|path| !path.as_os_str().is_empty())
     {
         local::create_dir_all(parent)?;
     }
