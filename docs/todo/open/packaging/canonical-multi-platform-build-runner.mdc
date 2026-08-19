@@ -114,8 +114,9 @@ gate. The report must decode as UTF-8 and contain a platform-anchored valid SDK
 row; a prefixed lookalike platform name cannot satisfy another target's gate.
 After UAT returns, the complete candidate tree is traversed without following
 links and rejects symbolic links, junctions, hard-linked regular files, or
-special filesystem entries before manifests/debug symbols are moved or the
-package is published.
+special filesystem entries before manifests/debug symbols are moved. The final
+publication transaction repeats that tree gate, so a direct or drifted caller
+cannot publish a redirected candidate between cache pruning and the atomic swap.
 
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its
