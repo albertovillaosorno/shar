@@ -645,7 +645,9 @@ fn validate_source_records(
         }
         source_bytes = source_bytes
             .checked_add(record.bytes)
-            .ok_or_else(|| AlgorithmError::new("algorithm source length overflow"))?;
+            .ok_or_else(|| {
+                AlgorithmError::new("algorithm source length overflow")
+            })?;
         if let Some(previous) = previous_input
             && record.input < previous
         {
