@@ -9,7 +9,8 @@ source tree before migration work consumes them.
 
 Owns aggregate deep validation for Pure3D packages, RCF archives, RSD audio, and
 RMV/Bink movie inputs. It reuses the repository's format parsers and reports
-only format-class diagnostics and aggregate counts.
+only format-class diagnostics and aggregate counts. Movie validation consumes
+complete bytes, so signature-only Ogg, XMV, Radical, or Bink stubs fail closed.
 
 ## Prohibitions
 

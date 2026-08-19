@@ -35,6 +35,57 @@ use super::MovieKind;
 /// Zeroed storage for one complete Bink header fixture.
 const BINK_HEADER_STORAGE: [u8; 36] = [0_u8; 36];
 
+fn ogg_crc(bytes: &[u8]) -> u32 {
+    let mut crc = 0_u32;
+    for value in bytes.iter().copied() {
+        crc ^= u32::from(value) << 24;
+        for _ in 0..8 {
+            crc = if crc & 0x8000_0000 != 0 {
+                (crc << 1) ^ 0x04c1_1db7
+            } else {
+                crc << 1
+            };
+        }
+    }
+    crc
+}
+
+fn ogg_page(payload: &[u8]) -> Result<Vec<u8>, String> {
+    let payload_len = u8::try_from(payload.len())
+        .map_err(|error| format!("test Ogg payload is too large: {error}"))?;
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(b"OggS");
+    bytes.extend_from_slice(&[0, 0x06]);
+    bytes.extend_from_slice(&[0; 16]);
+    bytes.extend_from_slice(&[0; 4]);
+    bytes.push(1);
+    bytes.push(payload_len);
+    bytes.extend_from_slice(payload);
+    let crc = ogg_crc(&bytes);
+    let checksum = bytes.get_mut(22..26).ok_or_else(|| {
+        "synthetic Ogg page lacks a checksum field".to_owned()
+    })?;
+    checksum.copy_from_slice(&crc.to_le_bytes());
+    Ok(bytes)
+}
+
+fn xmv_header() -> Result<[u8; 36], String> {
+    let mut bytes = [0_u8; 36];
+    bytes
+        .get_mut(4..8)
+        .ok_or_else(|| "synthetic XMV header lacks packet size".to_owned())?
+        .copy_from_slice(&36_u32.to_le_bytes());
+    bytes
+        .get_mut(12..16)
+        .ok_or_else(|| "synthetic XMV header lacks signature".to_owned())?
+        .copy_from_slice(b"xobX");
+    bytes
+        .get_mut(16..20)
+        .ok_or_else(|| "synthetic XMV header lacks version".to_owned())?
+        .copy_from_slice(&3_u32.to_le_bytes());
+    Ok(bytes)
+}
+
 fn bink_header(signature: [u8; 4]) -> [u8; 36] {
     let mut bytes = BINK_HEADER_STORAGE;
     for (target, source) in bytes.iter_mut().zip(signature) {
@@ -135,6 +186,47 @@ fn classifies_xbox_xmv_like_credit_movie_header() {
     let mut bytes = [0_u8; 32];
     bytes[12..16].copy_from_slice(b"xobX");
     assert_eq!(MovieKind::from_prefix(&bytes), MovieKind::XboxXmvLike);
+}
+
+#[test]
+fn complete_classification_rejects_signature_only_non_bink_inputs() {
+    let mut xbox = [0_u8; 16];
+    xbox[12..16].copy_from_slice(b"xobX");
+    for bytes in [b"OggS".as_slice(), xbox.as_slice(), b"rmv"] {
+        assert_eq!(MovieKind::from_bytes(bytes), MovieKind::Unknown);
+    }
+}
+
+#[test]
+fn complete_classification_accepts_structural_ogg_and_xmv_inputs()
+-> Result<(), String> {
+    assert_eq!(
+        MovieKind::from_bytes(&ogg_page(b"codec-header")?),
+        MovieKind::OggNamedRmv
+    );
+    assert_eq!(
+        MovieKind::from_bytes(&xmv_header()?),
+        MovieKind::XboxXmvLike
+    );
+    Ok(())
+}
+
+#[test]
+fn complete_classification_rejects_corrupt_ogg_and_xmv_headers()
+-> Result<(), String> {
+    let mut ogg = ogg_page(b"codec-header")?;
+    let payload_byte = ogg
+        .get_mut(28)
+        .ok_or_else(|| "synthetic Ogg page lacks payload data".to_owned())?;
+    *payload_byte ^= 1;
+    assert_eq!(MovieKind::from_bytes(&ogg), MovieKind::Unknown);
+
+    let mut xmv = xmv_header()?;
+    xmv.get_mut(16..20)
+        .ok_or_else(|| "synthetic XMV header lacks version".to_owned())?
+        .copy_from_slice(&0_u32.to_le_bytes());
+    assert_eq!(MovieKind::from_bytes(&xmv), MovieKind::Unknown);
+    Ok(())
 }
 
 #[test]
