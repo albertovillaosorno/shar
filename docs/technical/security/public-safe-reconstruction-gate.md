@@ -137,7 +137,8 @@ error kind without embedding caller source, target, algorithm, or replay paths.
 Each source and target file is read once into a validated in-memory snapshot;
 source-key derivation and target encryption use those captured bytes rather than
 reopening caller paths later in the same operation. Its external round-trip
-tests require caller-supplied source at replay and verify that create/replay does
+tests require caller-supplied source at replay and verify that create/replay
+does
 not change the caller's source bytes or layout.
 
 ## Current status
