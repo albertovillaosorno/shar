@@ -84,6 +84,13 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(evidence.reference_coverage, Fraction(3, 5))
         self.assertEqual(evidence.weighted_jaccard, Fraction(3, 5))
 
+    def test_wide_generated_collision_ordinal_joins_family(self) -> None:
+        reference = {("aa~100", "p3d"): 2}
+        candidate = {("aa", "p3d"): 2}
+        evidence = _MOD.measure(reference, candidate)
+        self.assertEqual(evidence.reference_coverage, Fraction(1, 1))
+        self.assertEqual(evidence.weighted_jaccard, Fraction(1, 1))
+
     def test_non_generated_suffix_remains_distinct(self) -> None:
         for directory in ("aa~1", "aa~00", "aa~001"):
             with self.subTest(directory=directory):
