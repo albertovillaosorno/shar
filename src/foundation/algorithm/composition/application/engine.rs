@@ -663,6 +663,7 @@ fn validate_source_records(
     let mut file_inputs = HashSet::new();
     let mut directory_inputs = HashSet::new();
     let mut previous_input: Option<u64> = None;
+    let mut previous_path: Option<(u64, &str)> = None;
     let mut source_bytes = 0_u64;
     for record in source {
         validate_record_path(&record.path, true, "algorithm source")?;
@@ -698,6 +699,17 @@ fn validate_source_records(
             _ => {},
         }
         previous_input = Some(record.input);
+        if let Some((path_input, path)) = previous_path
+            && path_input == record.input
+            && !path.is_empty()
+            && !record.path.is_empty()
+            && record.path.as_str() < path
+        {
+            return Err(AlgorithmError::new(
+                "algorithm source paths are out of order",
+            ));
+        }
+        previous_path = Some((record.input, record.path.as_str()));
         if !identities.insert((record.input, record.path.as_str())) {
             return Err(AlgorithmError::new(
                 "algorithm contains duplicate source records",

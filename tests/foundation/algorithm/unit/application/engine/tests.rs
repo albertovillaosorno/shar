@@ -218,6 +218,20 @@ fn source_metadata_must_match_collector_contract() -> Result<(), String> {
                 sha256: "0".repeat(64),
             },
         ],
+        vec![
+            SourceRecord {
+                input: 0,
+                path: "z.bin".to_owned(),
+                bytes: 512,
+                sha256: "0".repeat(64),
+            },
+            SourceRecord {
+                input: 0,
+                path: "a.bin".to_owned(),
+                bytes: 512,
+                sha256: "0".repeat(64),
+            },
+        ],
     ];
     for source in malformed {
         let document = AlgorithmDocument {
