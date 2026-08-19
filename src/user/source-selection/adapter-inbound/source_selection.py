@@ -43,9 +43,12 @@ class SourceSelectionError(ValueError):
     """Source selection cannot resolve to one flat game installation root."""
 
 
-def _is_directory_redirect(path: Path) -> bool:
-    """Return whether one directory identity redirects."""
-    return path.is_symlink() or os.path.isjunction(path)
+def _has_directory_redirect(path: Path) -> bool:
+    """Return whether a directory or lexical parent redirects."""
+    return any(
+        prefix.is_symlink() or os.path.isjunction(prefix)
+        for prefix in (path, *path.parents)
+    )
 
 
 def _real_directory_root(path: Path) -> Path:
@@ -55,7 +58,7 @@ def _real_directory_root(path: Path) -> Path:
         SourceSelectionError: If the directory is a redirect.
 
     """
-    if _is_directory_redirect(path):
+    if _has_directory_redirect(path):
         message = (
             "selected source directory must be a real source directory"
         )
@@ -103,7 +106,7 @@ def _candidate_root(selection: str | Path) -> Path:
             if candidate.is_symlink():
                 message = "selected source file must be a real Simpsons.exe"
                 raise SourceSelectionError(message)
-            return candidate.resolve().parent
+            return _real_directory_root(candidate.parent)
         if candidate.is_dir():
             return _real_directory_root(candidate)
     except OSError as error:
