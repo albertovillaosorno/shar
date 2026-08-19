@@ -110,7 +110,8 @@ cannot be redirected through a pre-existing work-tree identity. Turnkey SDK
 evidence is likewise required to be a real report file with one filesystem link
 both before stale-report cleanup and after UAT returns. Redirected or hard-linked
 `turnkey.txt` evidence cannot make external content satisfy the SDK-validity
-gate.
+gate. The report must decode as UTF-8 and contain a platform-anchored valid SDK
+row; a prefixed lookalike platform name cannot satisfy another target's gate.
 After UAT returns, the complete candidate tree is traversed without following
 links and rejects symbolic links, junctions, hard-linked regular files, or
 special filesystem entries before manifests/debug symbols are moved or the

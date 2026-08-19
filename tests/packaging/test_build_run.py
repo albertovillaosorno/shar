@@ -571,6 +571,98 @@ class TurnkeyReportTests(unittest.TestCase):
                     work,
                 )
 
+    def test_accepts_exact_platform_sdk_row(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            report = work / "turnkey.txt"
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+
+            def write_valid_report(*_args: object, **_kwargs: object) -> None:
+                report.write_text(
+                    "Turnkey report\nLinux: (Status=Valid, MinAllowed=0)\n",
+                    encoding="utf-8",
+                )
+
+            with mock.patch.object(
+                _RUN,
+                "_run_uat",
+                side_effect=write_valid_report,
+            ):
+                actual = _RUN._verify_sdk(
+                    root,
+                    Path("/uat"),
+                    Path("/project"),
+                    target,
+                    work,
+                )
+
+            self.assertEqual(actual, report)
+
+    def test_rejects_prefixed_platform_sdk_row(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            report = work / "turnkey.txt"
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+
+            def write_wrong_platform(*_args: object, **_kwargs: object) -> None:
+                report.write_text(
+                    "FakeLinux: (Status=Valid, MinAllowed=0)\n",
+                    encoding="utf-8",
+                )
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_run_uat",
+                    side_effect=write_wrong_platform,
+                ),
+                self.assertRaisesRegex(_RUN.RunFailure, "SDK is invalid"),
+            ):
+                _RUN._verify_sdk(
+                    root,
+                    Path("/uat"),
+                    Path("/project"),
+                    target,
+                    work,
+                )
+
+    def test_rejects_non_utf8_sdk_report(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            report = work / "turnkey.txt"
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+
+            def write_non_utf8_report(
+                *_args: object,
+                **_kwargs: object,
+            ) -> None:
+                report.write_bytes(bytes([255, 254, 253]))
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_run_uat",
+                    side_effect=write_non_utf8_report,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "cannot read Turnkey SDK report",
+                ),
+            ):
+                _RUN._verify_sdk(
+                    root,
+                    Path("/uat"),
+                    Path("/project"),
+                    target,
+                    work,
+                )
+
     def test_rejects_linked_sdk_report_after_uat(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
             root = Path(raw)
