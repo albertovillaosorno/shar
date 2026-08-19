@@ -520,8 +520,12 @@ def _check_engine(explicit: Path | None) -> EngineEvidence:
             continue
         version = _engine_version(resolved)
         editor = _editor_path(resolved)
-        if editor is not None and not editor.is_file():
-            raise CheckFailure(f"Unreal editor executable is missing: {editor}")
+        if editor is not None:
+            if not editor.is_file():
+                message = f"Unreal editor executable is missing: {editor}"
+                raise CheckFailure(message)
+            if os.name != "nt" and not os.access(editor, os.X_OK):
+                raise CheckFailure(f"Unreal editor is not executable: {editor}")
         return EngineEvidence(resolved, version)
     searched = ", ".join(checked) if checked else "no default location"
     raise CheckFailure(

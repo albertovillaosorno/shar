@@ -240,6 +240,29 @@ class EngineSelectionTests(unittest.TestCase):
             ):
                 _CHECK._check_engine(engine)
 
+    @unittest.skipIf(os.name == "nt", "POSIX execute bits are not portable")
+    def test_engine_rejects_non_executable_editor_file(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-engine-editor-") as raw:
+            engine = Path(raw) / "UE_5.8"
+            version = engine / "Engine/Build/Build.version"
+            version.parent.mkdir(parents=True)
+            version.write_text(
+                '{"MajorVersion":5,"MinorVersion":8,"PatchVersion":1}\n',
+                encoding="utf-8",
+            )
+            editor = engine / "fake-editor"
+            editor.write_bytes(b"editor")
+            editor.chmod(0o644)
+
+            with (
+                mock.patch.object(_CHECK, "_editor_path", return_value=editor),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "Unreal editor is not executable",
+                ),
+            ):
+                _CHECK._check_engine(engine)
+
     def test_macos_default_engine_path_preserves_launcher_location(
         self,
     ) -> None:
