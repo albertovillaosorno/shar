@@ -450,3 +450,57 @@ fn official_language_package_uses_normalized_mod_contract(
     cleanup(&root);
     result
 }
+
+#[test]
+fn published_manifest_json_matches_returned_report() -> Result<(), String> {
+    let root = temp_root("manifest-json");
+    cleanup(&root);
+    let (game, movies) = fixture(&root)?;
+    let output = root.join("out/spanish");
+    let report = export_language(&game, &movies, &output, Language::Spanish)
+        .map_err(|error| error.to_string())?;
+    let text = fs::read_to_string(output.join("manifest.json"))
+        .map_err(|error| error.to_string())?;
+    let value: serde_json::Value =
+        serde_json::from_str(&text).map_err(|error| error.to_string())?;
+
+    let included = value
+        .get("included_sources")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "manifest included_sources is not an array".to_owned())?;
+    let cinematic = value
+        .get("cinematic_audio")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "manifest cinematic_audio is not an array".to_owned())?;
+    let result = if value.get("schema").and_then(serde_json::Value::as_str)
+        == Some(report.schema)
+        && value
+            .get("base_language")
+            .and_then(serde_json::Value::as_str)
+            == Some(report.base_language)
+        && value.get("language").and_then(serde_json::Value::as_str)
+            == Some(report.language)
+        && value
+            .get("language_code")
+            .and_then(serde_json::Value::as_str)
+            == Some(report.language_code)
+        && value.get("records").and_then(serde_json::Value::as_u64)
+            == u64::try_from(report.records).ok()
+        && value
+            .get("untranslated_placeholders")
+            .and_then(serde_json::Value::as_u64)
+            == u64::try_from(report.untranslated_placeholders).ok()
+        && included.len() == report.included_sources.len()
+        && cinematic.len() == report.cinematic_audio.len()
+        && value.get("package_id").and_then(serde_json::Value::as_str)
+            == Some(report.package_id.as_str())
+        && value.get("status").and_then(serde_json::Value::as_str)
+            == Some(report.status)
+    {
+        Ok(())
+    } else {
+        Err(format!("published manifest drifted from report: {value}"))
+    };
+    cleanup(&root);
+    result
+}
