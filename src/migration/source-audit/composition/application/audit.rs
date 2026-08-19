@@ -67,16 +67,23 @@ impl DeepSourceAudit {
     ///
     /// # Errors
     /// Returns a format-class failure when a supported container is malformed
-    /// or unreadable, and a generic failure when the source tree cannot be read.
-    pub fn execute(source_root: &Path) -> Result<DeepSourceAuditReport, SourceAuditError> {
+    /// or unreadable. A generic failure reports source-tree read errors.
+    pub fn execute(
+        source_root: &Path,
+    ) -> Result<DeepSourceAuditReport, SourceAuditError> {
         let kind = local::path_kind(source_root).map_err(|_error| {
-            SourceAuditError::new("deep source validation could not inspect source directory")
+            SourceAuditError::new(
+                "deep source validation could not inspect source directory",
+            )
         })?;
         if kind != PathKind::Directory {
-            return Err(SourceAuditError::new("source game directory not found"));
+            let message = "source game directory not found";
+            return Err(SourceAuditError::new(message));
         }
         let files = local::strict_regular_files(source_root).map_err(|_error| {
-            SourceAuditError::new("deep source validation could not scan source directory")
+            SourceAuditError::new(
+                "deep source validation could not scan source directory",
+            )
         })?;
         let mut report = DeepSourceAuditReport::default();
         for path in files {
@@ -98,7 +105,9 @@ impl DeepSourceAudit {
             .checked_add(report.rcf)
             .and_then(|value| value.checked_add(report.rsd))
             .and_then(|value| value.checked_add(report.rmv))
-            .ok_or_else(|| SourceAuditError::new("deep source count overflow"))?;
+            .ok_or_else(|| {
+                SourceAuditError::new("deep source count overflow")
+            })?;
         Ok(report)
     }
 }
@@ -114,32 +123,52 @@ fn read_source(path: &Path, kind: &str) -> Result<Vec<u8>, SourceAuditError> {
 fn increment(value: &mut usize, kind: &str) -> Result<(), SourceAuditError> {
     *value = value
         .checked_add(1)
-        .ok_or_else(|| SourceAuditError::new(format!("{kind} count overflow")))?;
+        .ok_or_else(|| {
+            SourceAuditError::new(format!("{kind} count overflow"))
+        })?;
     Ok(())
 }
 
-fn validate_p3d(path: &Path, report: &mut DeepSourceAuditReport) -> Result<(), SourceAuditError> {
+fn validate_p3d(
+    path: &Path,
+    report: &mut DeepSourceAuditReport,
+) -> Result<(), SourceAuditError> {
     let bytes = read_source(path, "p3d")?;
     let _document = analyze_p3d(&bytes)
-        .map_err(|_error| SourceAuditError::new("deep source validation failed for p3d input"))?;
+        .map_err(|_error| {
+            SourceAuditError::new("deep source validation failed for p3d input")
+        })?;
     increment(&mut report.p3d, "p3d")
 }
 
-fn validate_rcf(path: &Path, report: &mut DeepSourceAuditReport) -> Result<(), SourceAuditError> {
+fn validate_rcf(
+    path: &Path,
+    report: &mut DeepSourceAuditReport,
+) -> Result<(), SourceAuditError> {
     let source = FileArchiveSource::new(path);
     let _archive = ArchiveParser::execute(&source)
-        .map_err(|_error| SourceAuditError::new("deep source validation failed for rcf input"))?;
+        .map_err(|_error| {
+            SourceAuditError::new("deep source validation failed for rcf input")
+        })?;
     increment(&mut report.rcf, "rcf")
 }
 
-fn validate_rsd(path: &Path, report: &mut DeepSourceAuditReport) -> Result<(), SourceAuditError> {
+fn validate_rsd(
+    path: &Path,
+    report: &mut DeepSourceAuditReport,
+) -> Result<(), SourceAuditError> {
     let bytes = read_source(path, "rsd")?;
     let _audio = RsdAudio::parse(&bytes)
-        .map_err(|_error| SourceAuditError::new("deep source validation failed for rsd input"))?;
+        .map_err(|_error| {
+            SourceAuditError::new("deep source validation failed for rsd input")
+        })?;
     increment(&mut report.rsd, "rsd")
 }
 
-fn validate_rmv(path: &Path, report: &mut DeepSourceAuditReport) -> Result<(), SourceAuditError> {
+fn validate_rmv(
+    path: &Path,
+    report: &mut DeepSourceAuditReport,
+) -> Result<(), SourceAuditError> {
     let bytes = read_source(path, "rmv")?;
     if MovieKind::from_bytes(&bytes) == MovieKind::Unknown {
         return Err(SourceAuditError::new(

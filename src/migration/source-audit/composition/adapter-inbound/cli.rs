@@ -56,7 +56,8 @@ impl CliProgram for DeepSourceCli {
                 "deep-source\tfiles={}\tp3d={}\trcf={}\trsd={}\trmv={}",
                 report.files, report.p3d, report.rcf, report.rsd, report.rmv
             )),
-            Err(error) => CommandOutcome::failure().stderr_line(error.to_string()),
+            Err(error) => CommandOutcome::failure()
+                .stderr_line(error.to_string()),
         }
     }
 }
