@@ -30,10 +30,8 @@
 
 //! Read-only inspection and contained conversion workspace publication.
 
-use std::fmt;
-use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
+use std::{fmt, fs, io};
 
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
@@ -134,10 +132,8 @@ fn staging_path(output: &Path) -> Result<PathBuf, ConvertError> {
                 "output must have a portable final component".to_owned(),
             )
         })?;
-    Ok(output.with_file_name(format!(
-        ".{name}.lmlm-{}.tmp",
-        std::process::id(),
-    )))
+    Ok(output
+        .with_file_name(format!(".{name}.lmlm-{}.tmp", std::process::id(),)))
 }
 
 fn is_p3d(path: &str) -> bool {
