@@ -45,6 +45,7 @@ from typing import Any
 
 Coordinate = tuple[str, str]
 _MANIFEST_SCHEMA = "shar-schoenwald.game-manifest-ledger.v2"
+_MAX_COUNT = (1 << 64) - 1
 
 
 class SimilarityInputError(ValueError):
@@ -80,7 +81,9 @@ class InvalidCountError(SimilarityInputError):
 
     def __init__(self) -> None:
         """Initialize the canonical coordinate-count failure."""
-        super().__init__("coordinate count must be a nonnegative integer")
+        super().__init__(
+            "coordinate count must be a nonnegative integer within 64-bit range"
+        )
 
 
 class LedgerInputError(SimilarityInputError):
@@ -122,7 +125,7 @@ def _parse_jsonl_record(line: str, line_number: int) -> dict[str, Any]:
             line,
             object_pairs_hook=_object_without_duplicates,
         )
-    except (json.JSONDecodeError, LedgerInputError) as error:
+    except ValueError as error:
         raise LedgerInputError(
             f"count ledger contains invalid JSONL at line {line_number}"
         ) from error
@@ -196,7 +199,12 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
         raise InvalidCoordinateError
     if kind is not None and not isinstance(kind, str):
         raise LedgerInputError("count ledger kind metadata must be a string")
-    if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+    if (
+        isinstance(count, bool)
+        or not isinstance(count, int)
+        or count < 0
+        or count > _MAX_COUNT
+    ):
         raise InvalidCountError
     return (directory, extension), count
 
@@ -303,7 +311,12 @@ def _validate(values: Mapping[Coordinate, int]) -> None:
             or not all(isinstance(value, str) for value in key)
         ):
             raise InvalidCoordinateError
-        if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+        if (
+            isinstance(count, bool)
+            or not isinstance(count, int)
+            or count < 0
+            or count > _MAX_COUNT
+        ):
             raise InvalidCountError
 
 
