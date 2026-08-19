@@ -130,6 +130,47 @@ fn directory_target_portable_identity_collision_is_rejected(
     Ok(())
 }
 #[test]
+fn hexadecimal_metadata_must_be_canonical_lowercase() -> Result<(), String> {
+    let settings = settings()?;
+    let source_hash = AlgorithmDocument {
+        schema: ALGORITHM_SCHEMA.to_owned(),
+        settings_sha256: settings_sha256(&settings)
+            .map_err(|error| error.to_string())?,
+        source: vec![SourceRecord {
+            input: 0,
+            path: String::new(),
+            bytes: 1024,
+            sha256: "A".repeat(64),
+        }],
+        target_kind: TargetKind::Directory,
+        target: vec![protected_target("asset.bin")],
+    };
+    if validate_document(&source_hash, &settings).is_ok() {
+        return Err("uppercase source hash was accepted".to_owned());
+    }
+
+    let mut protected = protected_target("asset.bin");
+    protected.nonce = "AA".repeat(12);
+    let protected_nonce = AlgorithmDocument {
+        schema: ALGORITHM_SCHEMA.to_owned(),
+        settings_sha256: settings_sha256(&settings)
+            .map_err(|error| error.to_string())?,
+        source: vec![SourceRecord {
+            input: 0,
+            path: String::new(),
+            bytes: 1024,
+            sha256: "0".repeat(64),
+        }],
+        target_kind: TargetKind::Directory,
+        target: vec![protected],
+    };
+    if validate_document(&protected_nonce, &settings).is_ok() {
+        return Err("uppercase protected nonce was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn source_metadata_must_match_collector_contract() -> Result<(), String> {
     let settings = settings()?;
     let malformed = [
