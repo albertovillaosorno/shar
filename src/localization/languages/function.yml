@@ -14,7 +14,7 @@ capabilities:
 projects:
   - Cargo.toml
 tests:
-  root: none
+  root: tests/localization/languages
 ownership:
   accountable: Alberto Villa Osorno
 validation:

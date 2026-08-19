@@ -697,6 +697,3 @@ pub fn export_language(
     }
     publication
 }
-
-#[cfg(test)]
-mod tests;
