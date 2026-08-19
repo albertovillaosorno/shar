@@ -347,10 +347,14 @@ def _assert_target_layout(document: dict[str, object]) -> None:
         return
 
     identities: list[tuple[str, ...]] = []
+    previous_path: str | None = None
     for record in target:
         assert isinstance(record, dict)
         path = record.get("path")
         assert isinstance(path, str)
+        if previous_path is not None:
+            assert path >= previous_path
+        previous_path = path
         parts = _assert_relative_record_path(path, allow_empty=False)
         identity = tuple(part.upper() for part in parts)
         assert not any(
@@ -627,6 +631,14 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
             ),
         )
     )
+
+    out_of_order = _synthetic_plan(path="z.bin")
+    ordered_targets = out_of_order["target"]
+    assert isinstance(ordered_targets, list)
+    later = dict(ordered_targets[0])
+    later["path"] = "a.bin"
+    ordered_targets.append(later)
+    invalid.append(json.dumps(out_of_order))
 
     overlap = _synthetic_plan(path="Folder")
     target = overlap["target"]

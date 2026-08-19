@@ -103,6 +103,29 @@ fn directory_target_ancestor_collision_is_rejected() -> Result<(), String> {
 }
 
 #[test]
+fn directory_target_records_must_match_collector_order() -> Result<(), String> {
+    let settings = settings()?;
+    let document = AlgorithmDocument {
+        schema: ALGORITHM_SCHEMA.to_owned(),
+        settings_sha256: settings_sha256(&settings)
+            .map_err(|error| error.to_string())?,
+        source: vec![SourceRecord {
+            input: 0,
+            path: String::new(),
+            bytes: 1024,
+            sha256: "0".repeat(64),
+        }],
+        target_kind: TargetKind::Directory,
+        target: vec![protected_target("z.bin"), protected_target("a.bin")],
+    };
+
+    if validate_document(&document, &settings).is_ok() {
+        return Err("out-of-order target records were accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn directory_target_portable_identity_collision_is_rejected(
 ) -> Result<(), String> {
     let settings = settings()?;
