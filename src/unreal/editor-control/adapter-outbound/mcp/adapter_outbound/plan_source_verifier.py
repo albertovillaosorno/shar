@@ -30,7 +30,6 @@
 
 """Read-only physical verification of generated plan source evidence."""
 
-# cspell:ignore RDONLY fstat
 
 from __future__ import annotations
 

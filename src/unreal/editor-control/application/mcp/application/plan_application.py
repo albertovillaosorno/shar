@@ -30,7 +30,6 @@
 
 """Serialized native application of one complete reviewed Unreal import plan."""
 
-# cspell:ignore BLE
 
 from __future__ import annotations
 
