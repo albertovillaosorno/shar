@@ -548,10 +548,15 @@ def _validate_candidate_tree(candidate: Path) -> None:
             if item.is_dir():
                 pending.append(item)
                 continue
-            if not item.is_file():
-                raise RunFailure(
-                    f"candidate package contains a special entry: {item}"
-                )
+            if item.is_file():
+                if item.stat(follow_symlinks=False).st_nlink > 1:
+                    raise RunFailure(
+                        f"candidate package contains a hard-linked file: {item}"
+                    )
+                continue
+            raise RunFailure(
+                f"candidate package contains a special entry: {item}"
+            )
 
 
 def _validate_candidate_artifact(candidate: Path, target: Target) -> None:

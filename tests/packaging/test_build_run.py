@@ -789,6 +789,21 @@ class ArtifactCachePathTests(unittest.TestCase):
 class CandidateTreeTests(unittest.TestCase):
     """Require packaged candidates to remain self-contained real trees."""
 
+    def test_rejects_hard_linked_file(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-candidate-tree-") as raw:
+            candidate = Path(raw) / "candidate"
+            candidate.mkdir()
+            source = candidate / "runtime.bin"
+            source.write_bytes(b"fixture")
+            alias = candidate / "runtime-copy.bin"
+            alias.hardlink_to(source)
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "candidate package contains a hard-linked file",
+            ):
+                _RUN._validate_candidate_tree(candidate)
+
     def test_rejects_nested_link_without_following_it(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-candidate-tree-") as raw:
             candidate = Path(raw) / "candidate"
