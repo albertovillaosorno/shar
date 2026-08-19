@@ -398,6 +398,22 @@ class SourceSelectionTests(unittest.TestCase):
                 ):
                     _CHECK._check_game(repository, selection)
 
+            parent_target = root / "parent-target"
+            nested_source = parent_target / "installed-game"
+            nested_source.mkdir(parents=True)
+            nested_executable = nested_source / "Simpsons.exe"
+            nested_executable.write_bytes(b"fixture")
+            parent_redirect = root / "parent-redirect"
+            parent_redirect.symlink_to(parent_target, target_is_directory=True)
+            redirected_source = parent_redirect / nested_source.name
+            redirected_executable = redirected_source / nested_executable.name
+            for selection in (redirected_source, redirected_executable):
+                with self.subTest(selection=selection), self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "real source directory",
+                ):
+                    _CHECK._check_game(repository, selection)
+
     def test_missing_source_diagnostic_does_not_echo_private_path(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-source-missing-"

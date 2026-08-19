@@ -164,10 +164,14 @@ def _real_source_directory(path: Path) -> Path:
     """Resolve one source directory without accepting redirects.
 
     Raises:
-        CheckFailure: If the directory is a symbolic link or junction.
+        CheckFailure: If the directory or a lexical parent redirects.
 
     """
-    if path.is_symlink() or os.path.isjunction(path):
+    redirected = any(
+        prefix.is_symlink() or os.path.isjunction(prefix)
+        for prefix in (path, *path.parents)
+    )
+    if redirected:
         raise CheckFailure(
             "selected source directory must be a real source directory"
         )
@@ -188,7 +192,7 @@ def _game_candidate(root: Path, selected: Path | None) -> Path:
             raise CheckFailure(
                 "selected source file must be a real Simpsons.exe"
             )
-        return candidate.resolve().parent
+        return _real_source_directory(candidate.parent)
     if candidate.is_dir():
         return _real_source_directory(candidate)
     raise CheckFailure("selected source path does not exist")
