@@ -40,12 +40,15 @@ from pathlib import Path
 import subprocess
 import sys
 
-_PREFERRED_NAMES = ("SHAR.exe", "Simpsons.exe")
-_IGNORED_NAMES = {
-    "CrashReportClient.exe",
-    "UnrealPrereqSetup_x64.exe",
-    "UnrealPrereqSetup_x86.exe",
-}
+
+def _is_shar_executable(path: Path) -> bool:
+    """Return whether one non-empty real file has a packaged SHAR exe name."""
+    if not path.is_file() or path.is_symlink() or path.stat().st_size == 0:
+        return False
+    if path.suffix.casefold() != ".exe":
+        return False
+    stem = path.stem.casefold()
+    return stem == "shar" or stem.startswith("shar-")
 
 
 def _root() -> Path:
@@ -62,21 +65,20 @@ def _discover_target(root: Path) -> Path:
 
     executables = sorted(
         path.resolve()
-        for path in dist.rglob("*.exe")
-        if path.name not in _IGNORED_NAMES
+        for path in dist.rglob("*")
+        if _is_shar_executable(path)
     )
-    for preferred in _PREFERRED_NAMES:
-        matches = [path for path in executables if path.name == preferred]
-        if len(matches) == 1:
-            return matches[0]
+    exact = [path for path in executables if path.name.casefold() == "shar.exe"]
+    if len(exact) == 1:
+        return exact[0]
     if len(executables) == 1:
         return executables[0]
     if not executables:
         raise SystemExit(
-            "shortcut: no packaged Windows executable found in dist/"
+            "shortcut: no packaged SHAR executable found in dist/"
         )
     raise SystemExit(
-        "shortcut: multiple Windows executables found; choose one with --target"
+        "shortcut: multiple SHAR executables found; choose one with --target"
     )
 
 
@@ -84,12 +86,11 @@ def _target(value: str | None, root: Path) -> Path:
     path = Path(value).expanduser() if value else _discover_target(root)
     if not path.is_absolute():
         path = root / path
-    path = path.resolve()
-    if not path.is_file():
-        raise SystemExit(f"shortcut: target does not exist: {path}")
-    if path.suffix.lower() != ".exe":
-        raise SystemExit("shortcut: target must be a Windows .exe")
-    return path
+    if not _is_shar_executable(path):
+        raise SystemExit(
+            "shortcut: target must be a non-empty packaged SHAR .exe"
+        )
+    return path.resolve()
 
 
 def _approved(target: Path, *, assume_yes: bool) -> bool:

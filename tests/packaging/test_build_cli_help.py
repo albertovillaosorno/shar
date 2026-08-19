@@ -40,6 +40,7 @@ from io import StringIO
 import os
 from pathlib import Path
 import sys
+import tempfile
 from types import ModuleType
 import unittest
 from unittest import mock
@@ -115,6 +116,88 @@ class BuildCliHelpTests(unittest.TestCase):
         self.assertEqual(raised.exception.code, 0)
         self.assertIn("--target", output.getvalue())
         self.assertEqual(errors.getvalue(), "")
+
+
+class WindowsShortcutTargetTests(unittest.TestCase):
+    """Keep shortcut discovery bound to the packaged SHAR executable."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.module = _load(_SHORTCUT, "shar_windows_shortcut_target_test")
+
+    def test_discovery_ignores_original_helpers_and_lookalikes(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-shortcut-target-") as raw:
+            root = Path(raw)
+            shipping = root / "dist/windows-x64/shar-Win64-Shipping.exe"
+            shipping.parent.mkdir(parents=True)
+            shipping.write_bytes(b"game")
+            preferred = shipping.parent / "SHAR.exe"
+            preferred.write_bytes(b"launcher")
+            for name in (
+                "CrashReportClient.exe",
+                "Simpsons.exe",
+                "shareware.exe",
+            ):
+                (shipping.parent / name).write_bytes(b"other")
+
+            self.assertEqual(
+                self.module._discover_target(root),
+                preferred.resolve(),
+            )
+
+    def test_discovery_accepts_shipping_executable_without_launcher(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-shortcut-target-") as raw:
+            root = Path(raw)
+            target = root / "dist/windows-x64/shar-Win64-Shipping.exe"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"game")
+
+            self.assertEqual(
+                self.module._discover_target(root),
+                target.resolve(),
+            )
+
+    def test_discovery_rejects_non_shar_only_executable(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-shortcut-target-") as raw:
+            root = Path(raw)
+            dist = root / "dist/windows-x64"
+            dist.mkdir(parents=True)
+            (dist / "Simpsons.exe").write_bytes(b"original")
+
+            with self.assertRaisesRegex(SystemExit, "no packaged SHAR"):
+                self.module._discover_target(root)
+
+    def test_explicit_target_rejects_empty_or_lookalike_executable(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-shortcut-target-") as raw:
+            root = Path(raw)
+            for name, payload in (
+                ("shareware.exe", b"lookalike"),
+                ("shar.exe", b""),
+            ):
+                with self.subTest(name=name):
+                    target = root / name
+                    target.write_bytes(payload)
+                    with self.assertRaisesRegex(
+                        SystemExit,
+                        "non-empty packaged SHAR",
+                    ):
+                        self.module._target(target.name, root)
+
+    def test_explicit_target_accepts_packaged_shar_names(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-shortcut-target-") as raw:
+            root = Path(raw)
+            for name in ("SHAR.exe", "shar-Win64-Shipping.exe"):
+                with self.subTest(name=name):
+                    target = root / name
+                    target.write_bytes(b"game")
+                    self.assertEqual(
+                        self.module._target(target.name, root),
+                        target.resolve(),
+                    )
 
 
 if __name__ == "__main__":
