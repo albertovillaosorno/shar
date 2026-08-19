@@ -1,10 +1,10 @@
 ---
 schema: shar.todo.v1
 id: convert-decompilable-lmlm-mods-into-open-shar-mod-packages
-status: open
+status: completed
 priority: P4
 lane: mods
-active: true
+active: false
 parent: null
 dependencies: [keep-the-base-pipeline-pristine-and-remove-game-mods-from-supported-input]
 children: []
