@@ -6,7 +6,8 @@ priority: P4
 lane: mods
 active: false
 parent: null
-dependencies: [keep-the-base-pipeline-pristine-and-remove-game-mods-from-supported-input]
+dependencies:
+  - keep-the-base-pipeline-pristine-and-remove-game-mods-from-supported-input
 children: []
 ---
 
@@ -25,7 +26,8 @@ to the final SHAR mod-package schema.
   local policy as authoritative. Any user change is an explicit local decision,
   and the user assumes responsibility for the content they inspect, convert,
   modify, or redistribute.
-- [x] Test first with the local Jebano and Muckluck packages as fixtures, without
+- [x] Test first with the local Jebano and Muckluck packages as fixtures,
+  without
   auto-installing or auto-injecting either mod into the game.
 - [x] Never promise arbitrary LMLM compatibility; unsupported legacy behavior
   must be reported so authors can adapt the resulting open package.
@@ -47,7 +49,8 @@ Depends on the new SHAR mod-package schema and removal of LMLM from base input.
 read-only inspection, atomic open-workspace conversion, and SHA-256
 source/per-file evidence. Shared P3D, filesystem, CLI, and SHA-256 behavior is
 reused from existing repository crates instead of duplicated. It has no
-dependency on the base extraction/build pipeline or the original game installation.
+dependency on the base extraction/build pipeline or the original game
+installation.
 
 Synthetic Rust tests cover path safety, portable collisions, payload overlap,
 zero-padding, atomic publication, overwrite refusal, folder-driven WIP/export
@@ -55,7 +58,8 @@ reuse, shared P3D decompilation, and CLI behavior. Read-only `inspect` also
 validated the local Jebano `j.lmlm` (1,540 entries, 7 valid P3D payloads) and
 Muckluck `m.lmlm` (32 entries, 29 valid P3D payloads) inputs without installing
 either package. An architecture guard rejects any LMLM reference under `src/`.
-The compatibility tool remains outside the reconstruction pipeline. Folder-driven
+The compatibility tool remains outside the reconstruction pipeline.
+Folder-driven
 conversion uses `tools/lmlm/import/`, preserves WIP state under
 `.cache/lmlm/wip/`, and publishes local results under `tools/lmlm/export/`.
 Each export now carries a validated `shar.mod-package.v1` `mod.json` whose
@@ -65,4 +69,6 @@ open workspace members. Converted packages remain content-only and require the
 runtime compatibility. Export publication regenerates package metadata from
 edited WIP and rejects stale existing export manifests. Synthetic tests cover
 initial package publication, edited-WIP republishing, and stale-export rejection
-without reading local ignored compatibility inputs.
+without reading local ignored compatibility inputs. Import-folder discovery now
+uses strict filesystem traversal as well; a synthetic redirect regression proves
+a linked `.lmlm` entry fails closed rather than being silently omitted.

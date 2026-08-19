@@ -1,9 +1,11 @@
 # LMLM compatibility tool
 
 This is a small legacy-conversion base I made because I wanted to migrate the
-Jebano and Muckluck mods. Those are the packages I test. I do **not** claim broad
+Jebano and Muckluck mods. Those are the packages I test. I do **not** claim
+broad
 LMLM compatibility, and a complete converter for every historical mod is outside
-my scope. If you need more, fork or extend this directory; you are welcome to use
+my scope. If you need more, fork or extend this directory; you are welcome to
+use
 it as a starting point.
 
 If you have never made an LMLM mod, start a new project directly for SHAR. That
@@ -57,10 +59,13 @@ content-only and requires `legacy.lmlm.review.v1`: conversion makes the legacy
 payload inspectable, but does not claim unsupported legacy behavior is already
 native SHAR runtime behavior.
 
-Imports are read-only. Existing WIP state is verified against the current source
-package but remains intentionally editable. When an export is republished from
+Imports are read-only, and redirected or special import entries fail closed
+instead of disappearing from the batch scan. Existing WIP state is verified
+against the current source package but remains intentionally editable. When an
+export is republished from
 edited WIP, `mod.json` is regenerated from those current members instead of
-copying stale package metadata. Existing exports are never silently overwritten,
+copying stale package metadata. Existing exports are never silently
+overwritten,
 and a stale/tampered export package fails reuse. Lua and other legacy source
 files are treated as data; archive content is never executed.
 
@@ -79,7 +84,8 @@ Manual commands remain available for debugging:
 
 ```text
 cargo run --manifest-path tools/lmlm/Cargo.toml -- inspect MyLegacyMod.lmlm
-cargo run --manifest-path tools/lmlm/Cargo.toml -- convert MyLegacyMod.lmlm output
+cargo run --manifest-path tools/lmlm/Cargo.toml -- \
+  convert MyLegacyMod.lmlm output
 ```
 
 Users are responsible for having the rights required to inspect, convert,

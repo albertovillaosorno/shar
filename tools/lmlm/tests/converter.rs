@@ -269,6 +269,38 @@ fn stale_export_package_manifest_is_rejected() -> Result<(), String> {
     result
 }
 
+#[cfg(unix)]
+#[test]
+fn redirected_import_entry_is_rejected() -> Result<(), String> {
+    use std::os::unix::fs::symlink;
+
+    let root = temp_root("batch-redirected-import");
+    remove_if_present(&root)?;
+    let import = root.join("tools/lmlm/import");
+    let export = root.join("tools/lmlm/export");
+    let wip = root.join(".cache/lmlm/wip");
+    let outside = root.join("outside");
+    fs::create_dir_all(&import).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&export).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&outside).map_err(|error| error.to_string())?;
+    let target = outside.join("legacy.lmlm");
+    fs::write(&target, fixture(b"payload", "Meta.ini"))
+        .map_err(|error| error.to_string())?;
+    symlink(&target, import.join("redirect.lmlm"))
+        .map_err(|error| error.to_string())?;
+
+    let result = convert_folders(&root, &import, &export, &wip);
+    let outcome = match result {
+        Err(error) if error.to_string().contains("redirect") => Ok(()),
+        Err(_error) => Ok(()),
+        Ok(report) => Err(format!(
+            "redirected import was silently ignored: {report:?}"
+        )),
+    };
+    remove_if_present(&root)?;
+    outcome
+}
+
 #[test]
 fn unsupported_p3d_decompilation_keeps_raw_payload_and_diagnostic() -> Result<(), String> {
     let root = temp_root("p3d-decompile-diagnostic");
