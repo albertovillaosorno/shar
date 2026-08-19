@@ -30,7 +30,6 @@
 
 //! Tests unit tests.
 
-// cspell:ignore gvuglogo
 
 use super::{
     ConversionFamily, FbxTargetKind, PhaseThreePackagePlanner, UnrealTargetKind,

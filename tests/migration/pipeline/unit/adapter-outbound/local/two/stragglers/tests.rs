@@ -28,8 +28,6 @@
 //   - Test setup and assertions fail explicitly.
 //
 
-// cspell:ignore selectmission closemission addstage closestage addobjective
-// cspell:ignore closeobjective
 //! Tests unit tests.
 
 use std::fs;
