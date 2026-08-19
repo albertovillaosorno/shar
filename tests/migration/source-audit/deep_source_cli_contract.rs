@@ -155,8 +155,7 @@ fn extra_arguments_are_rejected_by_usage_contract() -> io::Result<()> {
 
 #[cfg(unix)]
 #[test]
-fn redirected_source_entry_fails_closed_without_private_path(
-) -> io::Result<()> {
+fn redirected_source_entry_fails_closed() -> io::Result<()> {
     use std::os::unix::fs::symlink;
 
     let fixture = Fixture::create("redirect")?;
@@ -168,7 +167,10 @@ fn redirected_source_entry_fails_closed_without_private_path(
     let output = run_validator(&fixture.root, None)?;
     let stderr = String::from_utf8_lossy(&output.stderr);
 
-    assert!(!output.status.success(), "redirected source entry must fail");
+    assert!(
+        !output.status.success(),
+        "redirected source entry must fail"
+    );
     assert_eq!(
         stderr,
         "deep source validation could not scan source directory\n"
