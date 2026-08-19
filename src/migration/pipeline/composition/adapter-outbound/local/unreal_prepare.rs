@@ -36,7 +36,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read as _;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
-// cspell:ignore recv
 use std::sync::mpsc;
 use std::time::SystemTime;
 use std::{fs, thread};

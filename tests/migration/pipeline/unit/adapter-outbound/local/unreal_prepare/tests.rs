@@ -28,8 +28,6 @@
 //   - Stale or malformed evidence fails closed.
 //
 
-// cspell:ignore selectmission closemission addstage closestage addobjective
-// cspell:ignore closeobjective addcondition closecondition
 //! Prepare-Unreal adapter unit tests.
 
 use std::collections::BTreeSet;
