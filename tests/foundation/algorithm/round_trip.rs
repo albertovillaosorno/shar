@@ -235,6 +235,36 @@ fn empty_source_root_is_rejected_before_publication() {
     assert!(result.is_ok(), "empty source rejection failed: {result:?}");
 }
 
+fn run_empty_target_directory_is_rejected(
+) -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("empty-target-directory")?;
+    let source = temp.path.join("source.bin");
+    let target = temp.path.join("target");
+    let algorithm = temp.path.join("plan.txt");
+    fs::write(&source, vec![0x54_u8; 2048])?;
+    fs::create_dir_all(&target)?;
+
+    let result = create_algorithm(
+        &settings()?,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    );
+    if result.is_ok() {
+        return Err("empty target directory was accepted".into());
+    }
+    if algorithm.exists() {
+        return Err("empty target directory created an algorithm".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn empty_target_directory_is_rejected_before_publication() {
+    let result = run_empty_target_directory_is_rejected();
+    assert!(result.is_ok(), "empty target rejection failed: {result:?}");
+}
+
 fn run_source_tree_remains_unchanged(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("source-unchanged")?;
