@@ -170,6 +170,10 @@ def _game_candidate(root: Path, selected: Path | None) -> Path:
     if candidate.is_file():
         if candidate.name.casefold() != "simpsons.exe":
             raise CheckFailure("selected source file must be Simpsons.exe")
+        if candidate.is_symlink():
+            raise CheckFailure(
+                "selected source file must be a real Simpsons.exe"
+            )
         return candidate.resolve().parent
     if candidate.is_dir():
         return candidate.resolve()
@@ -180,6 +184,8 @@ def _check_game(root: Path, selected: Path | None) -> Path:
     """Require one flat source installation without modifying it."""
     game = _game_candidate(root, selected)
     executable = game / "Simpsons.exe"
+    if executable.is_symlink():
+        raise CheckFailure("selected source must contain a real Simpsons.exe")
     if not executable.is_file():
         nested = sorted(game.rglob("Simpsons.exe")) if game.is_dir() else []
         if nested:
