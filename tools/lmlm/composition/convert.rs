@@ -39,7 +39,8 @@ use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
 use shar_mod_package::{
     CONTRACT_VERSION as MOD_CONTRACT_VERSION, Member, PackageKind,
-    PackageManifest, Provenance, TrustLevel, content_revision, member_from_bytes,
+    PackageManifest, Provenance, TrustLevel, content_revision,
+    member_from_bytes,
 };
 
 use crate::archive::{FileEntry, LmlmError, entry_bytes, parse};
@@ -129,9 +130,14 @@ fn staging_path(output: &Path) -> Result<PathBuf, ConvertError> {
         .file_name()
         .and_then(|value| value.to_str())
         .ok_or_else(|| {
-            ConvertError::Contract("output must have a portable final component".to_owned())
+            ConvertError::Contract(
+                "output must have a portable final component".to_owned(),
+            )
         })?;
-    Ok(output.with_file_name(format!(".{name}.lmlm-{}.tmp", std::process::id())))
+    Ok(output.with_file_name(format!(
+        ".{name}.lmlm-{}.tmp",
+        std::process::id(),
+    )))
 }
 
 fn is_p3d(path: &str) -> bool {
@@ -140,20 +146,32 @@ fn is_p3d(path: &str) -> bool {
         .is_some_and(|extension| extension.eq_ignore_ascii_case("p3d"))
 }
 
-fn decompile_p3d(root: &Path, entry: &FileEntry, input_path: &Path) -> Result<(), ConvertError> {
+fn decompile_p3d(
+    root: &Path,
+    entry: &FileEntry,
+    input_path: &Path,
+) -> Result<(), ConvertError> {
     if !is_p3d(&entry.path) {
         return Ok(());
     }
     let decompiled_root = root.join("decompiled").join("p3d");
-    let output = schoenwald_filesystem::resolve_under(&decompiled_root, Path::new(&entry.path))
-        .map_err(|error| ConvertError::Contract(error.to_string()))?;
-    if let Some(parent) = output.parent().filter(|path| !path.as_os_str().is_empty()) {
+    let output = schoenwald_filesystem::resolve_under(
+        &decompiled_root,
+        Path::new(&entry.path),
+    )
+    .map_err(|error| ConvertError::Contract(error.to_string()))?;
+    if let Some(parent) = output
+        .parent()
+        .filter(|path| !path.as_os_str().is_empty())
+    {
         local::create_dir_all(parent)?;
     }
     let file_name = output
         .file_name()
         .and_then(|value| value.to_str())
-        .ok_or_else(|| ConvertError::Contract("P3D output has no portable name".to_owned()))?;
+        .ok_or_else(|| {
+            ConvertError::Contract("P3D output has no portable name".to_owned())
+        })?;
     let staging = output.with_file_name(format!(".{file_name}.decompile.tmp"));
     let exporter = p3d::LosslessPackageExporter;
     match p3d::ExportPackage::execute(&exporter, input_path, &staging) {
@@ -195,7 +213,9 @@ fn package_members(root: &Path) -> Result<Vec<Member>, ConvertError> {
     let mut members = Vec::new();
     for path in local::strict_regular_files(root)? {
         let relative = path.strip_prefix(root).map_err(|_error| {
-            ConvertError::Contract("package member escaped conversion root".to_owned())
+            ConvertError::Contract(
+                "package member escaped conversion root".to_owned(),
+            )
         })?;
         let portable = relative.to_string_lossy().replace('\\', "/");
         if portable == "mod.json" {
@@ -214,7 +234,9 @@ pub(crate) fn package_manifest(
     source_sha256: &str,
 ) -> Result<PackageManifest, ConvertError> {
     let source_prefix = source_sha256.get(..16).ok_or_else(|| {
-        ConvertError::Contract("source SHA-256 is unexpectedly short".to_owned())
+        ConvertError::Contract(
+            "source SHA-256 is unexpectedly short".to_owned(),
+        )
     })?;
     let members = package_members(root)?;
     let package_revision = content_revision(&members)?;
@@ -241,15 +263,25 @@ pub(crate) fn package_manifest(
     Ok(manifest)
 }
 
-fn publish_workspace(data: &[u8], entries: &[FileEntry], root: &Path) -> Result<(), ConvertError> {
+fn publish_workspace(
+    data: &[u8],
+    entries: &[FileEntry],
+    root: &Path,
+) -> Result<(), ConvertError> {
     let content = root.join("content");
     local::create_dir_all(&content)?;
     for entry in entries {
         let payload = entry_bytes(data, entry).ok_or_else(|| {
-            ConvertError::Contract(format!("invalid payload range for {}", entry.path))
+            ConvertError::Contract(format!(
+                "invalid payload range for {}",
+                entry.path,
+            ))
         })?;
-        let destination = schoenwald_filesystem::resolve_under(&content, Path::new(&entry.path))
-            .map_err(|error| ConvertError::Contract(error.to_string()))?;
+        let destination = schoenwald_filesystem::resolve_under(
+            &content,
+            Path::new(&entry.path),
+        )
+        .map_err(|error| ConvertError::Contract(error.to_string()))?;
         local::write_bytes(&destination, payload, true)?;
         decompile_p3d(root, entry, &destination)?;
     }
@@ -267,7 +299,10 @@ fn publish_workspace(data: &[u8], entries: &[FileEntry], root: &Path) -> Result<
 }
 
 /// Creates one atomic, inspectable conversion workspace without installing it.
-pub fn convert(input: &Path, output: &Path) -> Result<ConversionReport, ConvertError> {
+pub fn convert(
+    input: &Path,
+    output: &Path,
+) -> Result<ConversionReport, ConvertError> {
     if output.as_os_str().is_empty() {
         return Err(ConvertError::Contract(
             "output path must not be empty".to_owned(),
@@ -285,7 +320,10 @@ pub fn convert(input: &Path, output: &Path) -> Result<ConversionReport, ConvertE
         ));
     }
     let (data, entries) = load(input)?;
-    if let Some(parent) = output.parent().filter(|path| !path.as_os_str().is_empty()) {
+    if let Some(parent) = output
+        .parent()
+        .filter(|path| !path.as_os_str().is_empty())
+    {
         local::create_dir_all(parent)?;
     }
     fs::create_dir(&staging)?;
