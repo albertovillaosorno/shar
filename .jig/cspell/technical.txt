@@ -312,6 +312,7 @@ dynaload
 ebcend
 ebcstart
 Ecma
+EFGIS
 EGPD
 emdash
 EMIS
@@ -532,12 +533,14 @@ lfolevel
 LFS
 lfs
 licensepc
+Liesmich
 lightbar
 LIGHTGROUP
 Lightmap
 lightmap
 Lightmaps
 lightshape
+Lisez
 linkval
 linux
 listlevel

@@ -100,3 +100,21 @@ def test_languages_tests_live_under_repository_test_root() -> None:
     assert "root: tests/localization/languages" in function
     assert not (_BOUNDARY / "domain/tests.rs").exists()
     assert (_ROOT / "tests/localization/languages/contract.rs").is_file()
+
+
+def test_languages_domain_owns_no_effect_capabilities() -> None:
+    """Keep filesystem, serialization, and package effects in composition."""
+    domain = (_BOUNDARY / "domain/mod.rs").read_text()
+    forbidden = (
+        "std::fs",
+        "std::io",
+        "std::path",
+        "serde",
+        "schoenwald_filesystem",
+        "shar_mod_package",
+        "shar_sha256",
+    )
+    for fragment in forbidden:
+        assert fragment not in domain
+    assert "pub fn export_language" not in domain
+    assert (_BOUNDARY / "composition/export.rs").is_file()
