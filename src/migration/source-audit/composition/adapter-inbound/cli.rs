@@ -1,3 +1,33 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Process-neutral CLI adaptation for deep source validation.
+// - Must-Not:
+//   - Own source-audit domain policy or expose selected private paths.
+// - Allows:
+//   - Map command arguments and audit outcomes to process exit evidence.
+// - Split-When:
+//   - One responsibility gains an independent lifecycle.
+// - Merge-When:
+//   - Another module owns the identical responsibility.
+// - Summary:
+//   - Deep source validation CLI adapter.
+// - Description:
+//   - Process-neutral CLI adaptation for deep source validation.
+// - Usage:
+//   - Used through the owning source-audit function boundary.
+// - Defaults:
+//   - Invalid or missing inputs fail explicitly.
+//
+
 //! CLI for read-only deep source validation.
 
 use std::path::PathBuf;
