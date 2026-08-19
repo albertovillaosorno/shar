@@ -360,6 +360,30 @@ class SourceSelectionTests(unittest.TestCase):
             ):
                 _CHECK._check_game(repository, source)
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_direct_executable_redirect_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-source-direct-link-"
+        ) as value:
+            root = Path(value)
+            repository = root / "repository"
+            source = root / "installed-game"
+            outside = root / "outside"
+            repository.mkdir()
+            source.mkdir()
+            outside.mkdir()
+            target = outside / "Simpsons.exe"
+            target.write_bytes(b"fixture")
+            redirect = source / "Simpsons.exe"
+            redirect.symlink_to(target)
+
+            for selection in (source, redirect):
+                with self.subTest(selection=selection), self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "real Simpsons.exe",
+                ):
+                    _CHECK._check_game(repository, selection)
+
     def test_missing_source_diagnostic_does_not_echo_private_path(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-source-missing-"
