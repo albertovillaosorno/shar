@@ -60,9 +60,11 @@ private reference contributes aggregate obfuscated directory/extension counts,
 not payload bytes, file names, or a reversible full-tree recipe.
 
 `tools/source-similarity/adapter-inbound/main.py` implements only evidence
-measurement using exact rational arithmetic. Its regression suite covers
-complete, missing, extra, invalid, collision-disambiguated, and non-generated
-suffix vectors and proves the evidence object has no admission result. Generated
+measurement using exact rational arithmetic. Its command-line boundary reads two
+public-safe JSONL count ledgers, emits exact coverage/Jaccard fractions without
+an admission result, and keeps malformed-input diagnostics free of caller paths.
+Its regression suite covers complete, missing, extra, invalid,
+collision-disambiguated, and non-generated suffix vectors. Generated
 manifest collision ordinals are aggregated into their structural family before
 comparison because a partial candidate can legitimately change those ordinals.
 Hard manifest and deep validation remain exact and unchanged. No 45–55%

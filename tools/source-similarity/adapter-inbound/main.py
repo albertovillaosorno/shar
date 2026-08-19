@@ -35,10 +35,16 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from collections.abc import Sequence
 from dataclasses import dataclass
 from fractions import Fraction
+import json
+from pathlib import Path
+import sys
+from typing import Any
 
 Coordinate = tuple[str, str]
+_MANIFEST_SCHEMA = "shar-schoenwald.game-manifest-ledger.v2"
 
 
 class SimilarityInputError(ValueError):
@@ -77,6 +83,22 @@ class InvalidCountError(SimilarityInputError):
         super().__init__("coordinate count must be a nonnegative integer")
 
 
+class LedgerInputError(SimilarityInputError):
+    """A public JSONL count ledger is malformed or unreadable."""
+
+
+def _object_without_duplicates(
+    pairs: list[tuple[str, Any]],
+) -> dict[str, Any]:
+    """Build one JSON object while rejecting duplicate member names."""
+    record: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in record:
+            raise LedgerInputError("count ledger repeats a JSON object key")
+        record[key] = value
+    return record
+
+
 @dataclass(frozen=True, slots=True)
 class SimilarityEvidence:
     """Pure calibration evidence with no admission decision."""
@@ -87,6 +109,80 @@ class SimilarityEvidence:
     union_units: int
     reference_coverage: Fraction
     weighted_jaccard: Fraction
+
+
+def _parse_jsonl_record(line: str, line_number: int) -> dict[str, Any]:
+    """Parse one JSONL object while preserving a path-free line diagnostic."""
+    if not line.strip():
+        raise LedgerInputError(
+            f"count ledger has empty JSONL record at line {line_number}"
+        )
+    try:
+        record: Any = json.loads(
+            line,
+            object_pairs_hook=_object_without_duplicates,
+        )
+    except (json.JSONDecodeError, LedgerInputError) as error:
+        raise LedgerInputError(
+            f"count ledger contains invalid JSONL at line {line_number}"
+        ) from error
+    if not isinstance(record, dict):
+        raise LedgerInputError(
+            f"count ledger record must be an object at line {line_number}"
+        )
+    return record
+
+
+def _is_schema_record(record: dict[str, Any], line_number: int) -> bool:
+    """Validate and identify an optional first-line manifest schema record."""
+    if "schema" not in record:
+        return False
+    if line_number != 1 or record.get("schema") != _MANIFEST_SCHEMA:
+        raise LedgerInputError("count ledger schema record is invalid")
+    if any(field in record for field in ("dir", "ext", "min")):
+        raise LedgerInputError("count ledger schema record mixes coordinates")
+    return True
+
+
+def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
+    """Project one manifest row to the public-safe calibration coordinate."""
+    if set(record) - {"dir", "ext", "min", "kind"}:
+        raise LedgerInputError("count ledger record has unknown fields")
+    directory = record.get("dir")
+    extension = record.get("ext")
+    count = record.get("min")
+    if not isinstance(directory, str) or not isinstance(extension, str):
+        raise InvalidCoordinateError
+    if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+        raise InvalidCountError
+    return (directory, extension), count
+
+
+def parse_count_ledger(text: str) -> dict[Coordinate, int]:
+    """Parse public manifest coordinates without retaining metadata payloads."""
+    counts: dict[Coordinate, int] = {}
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        record = _parse_jsonl_record(line, line_number)
+        if _is_schema_record(record, line_number):
+            continue
+        coordinate, count = _coordinate_record(record)
+        if coordinate in counts:
+            raise LedgerInputError(
+                f"count ledger repeats a coordinate at line {line_number}"
+            )
+        counts[coordinate] = count
+    return counts
+
+
+def load_count_ledger(path: Path) -> dict[Coordinate, int]:
+    """Load one public JSONL ledger without disclosing its local path."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as error:
+        raise LedgerInputError(
+            "count ledger could not be read as UTF-8"
+        ) from error
+    return parse_count_ledger(text)
 
 
 def measure(
@@ -160,3 +256,42 @@ def _validate(values: Mapping[Coordinate, int]) -> None:
             raise InvalidCoordinateError
         if isinstance(count, bool) or not isinstance(count, int) or count < 0:
             raise InvalidCountError
+
+
+def _fraction_text(value: Fraction) -> str:
+    return f"{value.numerator}/{value.denominator}"
+
+
+def _evidence_text(evidence: SimilarityEvidence) -> str:
+    fields = (
+        f"reference_units={evidence.reference_units}",
+        f"candidate_units={evidence.candidate_units}",
+        f"shared_units={evidence.shared_units}",
+        f"union_units={evidence.union_units}",
+        f"reference_coverage={_fraction_text(evidence.reference_coverage)}",
+        f"weighted_jaccard={_fraction_text(evidence.weighted_jaccard)}",
+    )
+    return "source-similarity\t" + "\t".join(fields) + "\n"
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Measure two public count ledgers without making an admission decision."""
+    arguments = list(sys.argv[1:] if argv is None else argv)
+    if len(arguments) != 2:
+        sys.stderr.write(
+            "usage: source-similarity <reference.jsonl> <candidate.jsonl>\n"
+        )
+        return 2
+    try:
+        reference = load_count_ledger(Path(arguments[0]))
+        candidate = load_count_ledger(Path(arguments[1]))
+        evidence = measure(reference, candidate)
+    except SimilarityInputError as error:
+        sys.stderr.write(f"source-similarity: {error}\n")
+        return 1
+    sys.stdout.write(_evidence_text(evidence))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

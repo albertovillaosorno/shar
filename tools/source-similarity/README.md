@@ -5,7 +5,19 @@
 Defines the `tools/source-similarity` boundary for content-free structural
 similarity calibration over lawful source manifests. Comparison aggregates only
 canonical generated collision ordinals so optional directories cannot renumber
-otherwise shared structural evidence.
+otherwise shared structural evidence. The CLI accepts two public JSONL count
+ledgers and emits aggregate exact-rational evidence only.
+
+## Calibration invocation
+
+```text
+python tools/source-similarity/adapter-inbound/main.py \
+  reference.jsonl candidate.jsonl
+```
+
+The command prints reference/candidate/shared/union unit counts, reference
+coverage, and weighted-Jaccard similarity. It never prints an admission result
+or embeds an acceptance threshold. Input failures omit local ledger paths.
 
 ## Ownership
 
