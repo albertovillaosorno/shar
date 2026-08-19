@@ -122,12 +122,13 @@ authentication tag and whose declared resource use fits the active generic
 algorithm settings. Generic replay checks the fixed nonce and protected-payload
 encoded lengths before hex decoding, so malformed documents cannot expand those
 fields beyond their declared target size. The authored icon reconstruction plan
-exercises the
-same policy against a real non-placeholder document. Source and directory-target
-record paths must also be canonical forward-slash relatives, with an empty source
-path reserved for direct-file evidence. Source records also retain the collector's input order without decreases, unique
-input/path identities, and one root kind per input. This structural publication guard does not turn a placeholder into a
-reviewed plan and does not implement a similarity threshold.
+exercises the same policy against a real non-placeholder document. Source and
+directory-target record paths must also be canonical forward-slash relatives,
+with an empty source path reserved for direct-file evidence. Source records also
+retain the collector's input order without decreases, unique input/path
+identities, and one root kind per input. This structural publication guard does
+not turn a placeholder into a reviewed plan and does not implement a similarity
+threshold.
 
 The maintainer-only `in/`, `master/`, and shared `out/` workspace trees never
 ship as reconstruction plans. Generic algorithm authoring also requires the

@@ -151,7 +151,8 @@ fn protected_target_length_must_match_declared_bytes() -> Result<(), String> {
     };
 
     if validate_document(&document, &settings).is_ok() {
-        return Err("mismatched protected target length was accepted".to_owned());
+        let message = "mismatched protected target length was accepted";
+        return Err(message.to_owned());
     }
     Ok(())
 }
