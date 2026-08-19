@@ -836,6 +836,31 @@ class PublicationTransactionTests(unittest.TestCase):
             self.assertTrue((candidate / "new.txt").is_file())
             self.assertFalse(backup.exists())
 
+    def test_rejects_hard_linked_candidate_file_before_publication(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-candidate-hard-link-",
+        ) as raw:
+            root = Path(raw)
+            outside = root / "outside.bin"
+            outside.write_bytes(b"runtime")
+            candidate = root / "candidate"
+            candidate.mkdir()
+            linked = candidate / "runtime.bin"
+            linked.hardlink_to(outside)
+            destination = root / "dist/linux-x64"
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "candidate package contains a hard-linked file",
+            ):
+                _RUN._publish(candidate, destination)
+
+            self.assertEqual(outside.read_bytes(), b"runtime")
+            self.assertTrue(linked.is_file())
+            self.assertFalse(destination.exists())
+
     def test_rejects_linked_candidate_before_publication(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-candidate-link-") as raw:
             root = Path(raw)
