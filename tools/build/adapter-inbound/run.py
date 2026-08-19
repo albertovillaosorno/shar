@@ -565,18 +565,24 @@ def _validate_candidate_tree(candidate: Path) -> None:
 
 
 def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
-    """Require mobile UAT archives to contain their declared package kind."""
+    """Require UAT archives to contain their declared runnable artifact."""
     expected = {
-        "apk": (".apk", "Android APK"),
-        "ipa": (".ipa", "iOS IPA"),
+        "apk": (".apk", "Android APK", None),
+        "ipa": (".ipa", "iOS IPA", None),
     }.get(target.artifact)
+    if expected is None and target.system == "windows":
+        expected = (".exe", "Windows SHAR executable", "shar")
     if expected is None:
         return
-    suffix, label = expected
+    suffix, label, stem_prefix = expected
     if any(
         item.is_file()
         and item.suffix.casefold() == suffix
         and item.stat().st_size > 0
+        and (
+            stem_prefix is None
+            or item.stem.casefold().startswith(stem_prefix)
+        )
         for item in candidate.rglob("*")
     ):
         return

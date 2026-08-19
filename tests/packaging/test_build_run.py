@@ -1069,7 +1069,7 @@ class CandidateTreeTests(unittest.TestCase):
 
 
 class CandidateArtifactTests(unittest.TestCase):
-    """Require mobile candidates to contain their declared package kind."""
+    """Require each candidate to contain its declared runnable artifact."""
 
     def test_android_candidate_requires_apk(self) -> None:
         with tempfile.TemporaryDirectory(
@@ -1101,10 +1101,33 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["ios-arm64"],
                 )
 
-    def test_mobile_candidate_rejects_empty_declared_artifact(self) -> None:
+    def test_windows_candidate_requires_shar_executable(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-windows-candidate-",
+        ) as raw:
+            candidate = Path(raw)
+            (candidate / "CrashReportClient.exe").write_bytes(b"engine helper")
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
+            (candidate / "shar-Win64-Shipping.exe").write_bytes(b"game")
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["windows-x64"],
+            )
+
+    def test_candidate_rejects_empty_declared_artifact(self) -> None:
         cases = (
             ("android-arm64", "shar.apk", "Android APK"),
             ("ios-arm64", "shar.ipa", "iOS IPA"),
+            ("windows-x64", "shar.exe", "Windows SHAR executable"),
         )
         for target_id, filename, label in cases:
             with (
