@@ -108,7 +108,8 @@ is never reconstruction input and it does not itself prove software is safe.
    where the platform GUI supports file dropping. On Windows, if you do not know
    the location, the original shortcut's **Open file location** action is usually
    the easiest way
-   to find it.
+   to find it. SHAR rejects a source selection that reaches the installation
+   through a symbolic directory link or Windows junction.
 
 1. SHAR performs a fast minimum-source gate and then the deeper deterministic
    validation/reconstruction checks. Editing `game.jsonl` is not a way to make
