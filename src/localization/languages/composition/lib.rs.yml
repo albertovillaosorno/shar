@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: src/localization/languages/composition/lib.rs
+function: languages
+kind: facade
+authority: composition/lib.rs

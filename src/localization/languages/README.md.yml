@@ -1,0 +1,4 @@
+schema: shar-boundary/v1
+path: src/localization/languages/README.md
+boundary: src/localization/languages
+authority: README.md
