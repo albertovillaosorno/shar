@@ -28,7 +28,6 @@
 //   - Invalid, ambiguous, or replacement requests fail explicitly.
 //
 #include "Import/SharImportToolset.h"
-// cspell:ignore FBXIT FBXNIM
 
 #include "Import/SharImportValidation.h"
 
@@ -51,7 +50,6 @@
 #include "Misc/Paths.h"
 #include "ObjectTools.h"
 #include "PhysicsEngine/PhysicsAsset.h"
-// cspell:ignore FBXICT
 #include "UObject/Package.h"
 #include "UObject/StrongObjectPtr.h"
 #include "UObject/UObjectGlobals.h"

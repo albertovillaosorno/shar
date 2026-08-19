@@ -30,7 +30,6 @@
 
 #pragma once
 
-// cspell:ignore SHARIMPORTEDITOR
 
 #include "ToolsetRegistry/ToolsetDefinition.h"
 
