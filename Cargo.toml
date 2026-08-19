@@ -18,6 +18,7 @@ members = [
   "src/formats/rmv",
   "src/formats/rtf",
   "src/unreal/asset-conversion",
+  "tools/lmlm",
 ]
 
 [workspace.package]

@@ -1,3 +1,33 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Folder-driven LMLM WIP and export publication coordination.
+// - Must-Not:
+//   - Modify import packages or silently trust stale export metadata.
+// - Allows:
+//   - Coordinate local WIP reuse and review-only package publication.
+// - Split-When:
+//   - WIP and export lifecycles require independent services.
+// - Merge-When:
+//   - Another composition module owns the same batch workflow.
+// - Summary:
+//   - LMLM batch conversion composition.
+// - Description:
+//   - Coordinates read-only imports, editable WIP, and verified exports.
+// - Usage:
+//   - Used by the default compatibility-tool batch command.
+// - Defaults:
+//   - Redirects, collisions, and stale exports fail closed.
+//
+
 //! Folder-driven legacy conversion outside the SHAR product pipeline.
 
 use std::fmt;

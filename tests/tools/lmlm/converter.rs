@@ -1,11 +1,47 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - External compatibility tests for LMLM inspection and conversion.
+// - Must-Not:
+//   - Read ignored local compatibility packages or execute legacy payloads.
+// - Allows:
+//   - Build synthetic archives and temporary workspaces for assertions.
+// - Split-When:
+//   - CLI, batch, or package contracts require separate test binaries.
+// - Merge-When:
+//   - Another test module owns the identical compatibility scenarios.
+// - Summary:
+//   - LMLM compatibility integration tests.
+// - Description:
+//   - Proves read-only inspection, safe publication, reuse, and CLI behavior.
+// - Usage:
+//   - Runs as the root-workspace `shar_lmlm` integration target.
+// - Defaults:
+//   - Tests use synthetic data only and clean their temporary workspaces.
+//
+
+//! External integration tests for the LMLM compatibility tool.
+
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use schoenwald_cli::CliProgram;
 use shar_lmlm::batch::convert_folders;
-use shar_lmlm::cli::LmlmProgram;
 use shar_lmlm::convert::{convert, inspect};
+
+#[path = "../../../tools/lmlm/composition/adapter-inbound/cli.rs"]
+mod cli;
+
+use cli::LmlmProgram;
 
 static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
 

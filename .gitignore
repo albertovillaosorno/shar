@@ -412,10 +412,8 @@ src/migration/icon/out
 # Legacy compatibility is isolated under tools/lmlm; packages and generated
 # conversion results are local artifacts and must never be committed.
 # =============================================================================
-/tools/lmlm/import/*
-!/tools/lmlm/import/README.md
-/tools/lmlm/export/*
-!/tools/lmlm/export/README.md
+/tools/lmlm/import/
+/tools/lmlm/export/
 
 # =============================================================================
 # Algorithms – local inputs/masters/outputs stay private; public metadata only

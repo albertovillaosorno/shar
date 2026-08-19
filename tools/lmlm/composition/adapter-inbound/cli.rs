@@ -1,11 +1,41 @@
+// Copyright:
+//   - Copyright (c) 2026 Alberto Villa Osorno.
+// SPDX-License-Identifier:
+//   - MIT
+// Confidential:
+//   - false
+// License-File:
+//   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Command-line translation for LMLM compatibility operations.
+// - Must-Not:
+//   - Parse archives or publish files outside composition services.
+// - Allows:
+//   - Translate arguments into batch, inspect, and convert requests.
+// - Split-When:
+//   - A new inbound protocol requires an independent adapter.
+// - Merge-When:
+//   - Another inbound adapter owns the identical CLI contract.
+// - Summary:
+//   - LMLM command-line inbound adapter.
+// - Description:
+//   - Maps stable CLI commands to the compatibility library facade.
+// - Usage:
+//   - Included by the process root and CLI integration tests.
+// - Defaults:
+//   - Unknown argument shapes return the stable usage contract.
+//
+
 //! Thin CLI over folder conversion, inspection, and manual conversion.
 
 use std::path::Path;
 
 use schoenwald_cli::{CliProgram, CommandOutcome};
 
-use crate::batch::run_default;
-use crate::convert::{convert, inspect};
+use shar_lmlm::batch::run_default;
+use shar_lmlm::convert::{convert, inspect};
 
 const USAGE: &str = concat!(
     "usage: shar-lmlm [batch] | inspect INPUT.lmlm | ",
@@ -47,7 +77,7 @@ impl CliProgram for LmlmProgram {
                     Ok(report) => render(&report),
                     Err(error) => failure(&error),
                 }
-            }
+            },
             _ => CommandOutcome::failure().stderr_line(USAGE),
         }
     }

@@ -85,8 +85,6 @@ def test_lmlm_private_io_is_ignored_with_public_readmes() -> None:
                             "/tools/lmlm/export", "!/tools/lmlm/export"))
     )
     assert relevant == (
-        "/tools/lmlm/import/*",
-        "!/tools/lmlm/import/README.md",
-        "/tools/lmlm/export/*",
-        "!/tools/lmlm/export/README.md",
+        "/tools/lmlm/import/",
+        "/tools/lmlm/export/",
     )

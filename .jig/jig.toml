@@ -694,6 +694,10 @@ depends_on = ["p3d", "rcf", "rmv", "rsd", "schoenwald_cli", "schoenwald_filesyst
 [architecture.component.shar_mod_package]
 depends_on = ["schoenwald_filesystem", "shar_sha256"]
 
+[architecture.component.shar_lmlm]
+# jig-ignore-next-line: exact Cargo workspace dependency declaration
+depends_on = ["p3d", "schoenwald_cli", "schoenwald_filesystem", "shar_mod_package", "shar_sha256"]
+
 [architecture.component.shar_languages]
 # jig-ignore-next-line: exact Cargo workspace dependency declaration
 depends_on = ["schoenwald_filesystem", "shar_mod_package", "shar_sha256"]
@@ -756,7 +760,7 @@ selectors = ["prefix:tests/formats/p3d/fixtures/"]
 [code_ownership.override.tests]
 kind = "test"
 # jig-ignore-next-line: executable test roots exclude generated fixture trees
-selectors = ["prefix:tests/formats/fbx/", "prefix:tests/formats/lmlm/", "prefix:tests/formats/p3d/unit/", "exact:tests/formats/p3d/chunk.rs", "exact:tests/formats/p3d/extract.rs", "exact:tests/formats/p3d/package.rs", "exact:tests/formats/p3d/reader.rs", "prefix:tests/formats/rcf/", "prefix:tests/formats/rmv/", "prefix:tests/formats/rsd/", "prefix:tests/formats/rtf/", "prefix:tests/foundation/", "prefix:tests/migration/", "prefix:tests/unreal/"]
+selectors = ["prefix:tests/formats/fbx/", "prefix:tests/formats/lmlm/", "prefix:tests/formats/p3d/unit/", "exact:tests/formats/p3d/chunk.rs", "exact:tests/formats/p3d/extract.rs", "exact:tests/formats/p3d/package.rs", "exact:tests/formats/p3d/reader.rs", "prefix:tests/formats/rcf/", "prefix:tests/formats/rmv/", "prefix:tests/formats/rsd/", "prefix:tests/formats/rtf/", "prefix:tests/foundation/", "prefix:tests/migration/", "prefix:tests/tools/lmlm/", "prefix:tests/unreal/"]
 
 [commit]
 allowed_scopes = ["docs", "game-manifest", "jig", "layout", "pipeline", "repo"]

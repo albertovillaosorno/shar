@@ -1,5 +1,5 @@
 [package]
-name = "shar-lmlm"
+name = "shar_lmlm"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.97.1"
@@ -16,8 +16,18 @@ shar_mod_package = { path = "../../src/modding/package" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
-[workspace]
-resolver = "3"
+
+[lib]
+name = "shar_lmlm"
+path = "composition/lib.rs"
+
+[[bin]]
+name = "shar-lmlm"
+path = "composition/main.rs"
+
+[[test]]
+name = "converter"
+path = "../../tests/tools/lmlm/converter.rs"
 
 [lints.rust]
 unsafe_code = "forbid"

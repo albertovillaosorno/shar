@@ -420,6 +420,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "shar_lmlm"
+version = "0.1.0"
+dependencies = [
+ "p3d",
+ "schoenwald_cli",
+ "schoenwald_filesystem",
+ "serde",
+ "serde_json",
+ "shar_mod_package",
+ "shar_sha256",
+]
+
+[[package]]
 name = "shar_mod_package"
 version = "26.7.0"
 dependencies = [

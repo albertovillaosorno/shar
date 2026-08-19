@@ -1,0 +1,5 @@
+schema: shar-surface/v1
+path: tools/lmlm/composition/lib.rs
+function: lmlm
+kind: facade
+authority: composition/lib.rs

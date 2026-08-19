@@ -447,5 +447,5 @@ impl core::fmt::Display for LmlmError {
 impl std::error::Error for LmlmError {}
 
 #[cfg(test)]
-#[path = "error/tests.rs"]
+#[path = "../../../../tests/tools/lmlm/error.rs"]
 mod tests;
