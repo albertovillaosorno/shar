@@ -333,8 +333,7 @@ def _assert_source_bound_plan(text: str) -> None:
         assert _is_lower_hex(record["nonce"], 24)
         ciphertext = record["ciphertext"]
         assert isinstance(ciphertext, str)
-        assert ciphertext
-        assert len(ciphertext) % 2 == 0
+        assert len(ciphertext) == 2 * (record["bytes"] + 16)
         assert set(ciphertext) <= _HEX
     _assert_target_layout(document)
 
@@ -354,7 +353,7 @@ def _synthetic_plan(*, path: str = "asset.bin") -> dict[str, object]:
                 "bytes": 1,
                 "sha256": "0" * 64,
                 "nonce": "0" * 24,
-                "ciphertext": "00",
+                "ciphertext": "00" * 17,
             }
         ],
     }
@@ -378,6 +377,13 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
             json.dumps(_synthetic_plan(path="../escape.bin")),
         )
     )
+
+    short_ciphertext = _synthetic_plan()
+    short_targets = short_ciphertext["target"]
+    assert isinstance(short_targets, list)
+    assert isinstance(short_targets[0], dict)
+    short_targets[0]["ciphertext"] = "00"
+    invalid.append(json.dumps(short_ciphertext))
 
     overlap = _synthetic_plan(path="Folder")
     target = overlap["target"]
