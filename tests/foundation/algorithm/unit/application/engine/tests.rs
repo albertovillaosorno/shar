@@ -130,6 +130,53 @@ fn directory_target_portable_identity_collision_is_rejected(
     Ok(())
 }
 #[test]
+fn source_metadata_must_match_collector_contract() -> Result<(), String> {
+    let settings = settings()?;
+    let malformed = [
+        vec![SourceRecord {
+            input: 0,
+            path: "../private.bin".to_owned(),
+            bytes: 1024,
+            sha256: "0".repeat(64),
+        }],
+        vec![SourceRecord {
+            input: 0,
+            path: String::new(),
+            bytes: 1,
+            sha256: "0".repeat(64),
+        }],
+        vec![
+            SourceRecord {
+                input: 0,
+                path: String::new(),
+                bytes: 1024,
+                sha256: "0".repeat(64),
+            },
+            SourceRecord {
+                input: 0,
+                path: "asset.bin".to_owned(),
+                bytes: 1024,
+                sha256: "0".repeat(64),
+            },
+        ],
+    ];
+    for source in malformed {
+        let document = AlgorithmDocument {
+            schema: ALGORITHM_SCHEMA.to_owned(),
+            settings_sha256: settings_sha256(&settings)
+                .map_err(|error| error.to_string())?,
+            source,
+            target_kind: TargetKind::Directory,
+            target: vec![protected_target("asset.bin")],
+        };
+        if validate_document(&document, &settings).is_ok() {
+            return Err("malformed source metadata was accepted".to_owned());
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn protected_target_length_must_match_declared_bytes() -> Result<(), String> {
     let settings = settings()?;
     let document = AlgorithmDocument {
