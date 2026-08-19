@@ -36,6 +36,7 @@ import hashlib
 import json
 from pathlib import Path
 import tomllib
+import unicodedata
 
 import pytest
 
@@ -205,6 +206,14 @@ def test_algorithm_domain_is_serialization_free() -> None:
 
 _HEX = frozenset("0123456789abcdef")
 _U64_MAX = (1 << 64) - 1
+_MAX_PORTABLE_COMPONENT_UTF16_UNITS = 255
+_RESERVED_HOST_STEMS = frozenset(
+    {"AUX", "CLOCK$", "CON", "CONIN$", "CONOUT$", "NUL", "PRN"}
+)
+_RESERVED_HOST_SUFFIXES = frozenset(
+    {"1", "2", "3", "4", "5", "6", "7", "8", "9", "¹", "²", "³"}
+)
+_FORBIDDEN_HOST_CHARACTERS = frozenset('<>"|?*\\')
 
 
 def _json_object_without_duplicates(
@@ -263,6 +272,47 @@ def _read_public_plan(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _is_unicode_path_modifier(character: str) -> bool:
+    """Mirror the runtime's invisible portable-path modifier policy."""
+    value = ord(character)
+    return (
+        value == 0x061C
+        or 0x200B <= value <= 0x200F
+        or 0x2028 <= value <= 0x202E
+        or 0x2060 <= value <= 0x2064
+        or 0x2066 <= value <= 0x206F
+        or 0xFE00 <= value <= 0xFE0F
+        or value == 0xFEFF
+    )
+
+
+def _is_reserved_host_alias(name: str) -> bool:
+    """Mirror Windows-reserved portable host aliases."""
+    stem = name.split(".", maxsplit=1)[0].rstrip(" .").upper()
+    if stem in _RESERVED_HOST_STEMS:
+        return True
+    for prefix in ("COM", "LPT"):
+        suffix = stem[len(prefix) :]
+        if stem.startswith(prefix) and suffix in _RESERVED_HOST_SUFFIXES:
+            return True
+    return False
+
+
+def _assert_portable_component(name: str) -> None:
+    """Mirror the runtime portable component policy used during replay."""
+    assert not any(
+        character in _FORBIDDEN_HOST_CHARACTERS for character in name
+    )
+    assert not any(
+        unicodedata.category(character) == "Cc" for character in name
+    )
+    assert not any(_is_unicode_path_modifier(character) for character in name)
+    utf16_units = len(name.encode("utf-16-le")) // 2
+    assert utf16_units <= _MAX_PORTABLE_COMPONENT_UTF16_UNITS
+    assert not name.endswith((".", " "))
+    assert not _is_reserved_host_alias(name)
+
+
 def _assert_relative_record_path(
     path: str,
     *,
@@ -277,6 +327,8 @@ def _assert_relative_record_path(
     assert ":" not in path
     parts = tuple(path.split("/"))
     assert all(part not in {"", ".", ".."} for part in parts)
+    for part in parts:
+        _assert_portable_component(part)
     return parts
 
 
@@ -510,6 +562,12 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
             json.dumps(_synthetic_source_plan(bytes=1)),
             json.dumps(_synthetic_source_plan(input=1 << 64)),
             json.dumps(_synthetic_source_plan(path="../private.bin")),
+            json.dumps(_synthetic_plan(path="CON")),
+            json.dumps(_synthetic_source_plan(path="folder/PRN.txt")),
+            json.dumps(_synthetic_plan(path="folder/name.")),
+            json.dumps(
+                _synthetic_plan(path="folder/" + chr(8203) + "hidden.bin")
+            ),
         )
     )
 

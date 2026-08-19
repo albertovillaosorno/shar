@@ -126,8 +126,9 @@ input grouping before collecting
 caller source evidence, so malformed documents fail before private-source
 traversal. The authored icon reconstruction plan
 exercises the same policy against a real non-placeholder document. Source and
-directory-target record paths must also be canonical forward-slash relatives,
-with an empty source path reserved for direct-file evidence. Source records also
+directory-target record paths must also be canonical forward-slash relatives
+whose components satisfy the runtime portable-host policy, with an empty source
+path reserved for direct-file evidence. Source records also
 retain the collector's input order without decreases, unique input/path
 identities, and one root kind per input. This structural publication guard does
 not turn a placeholder into a reviewed plan and does not implement a similarity
