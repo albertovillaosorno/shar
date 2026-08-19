@@ -377,6 +377,28 @@ class UatWorkPathTests(unittest.TestCase):
             self.assertEqual(log.read_text(encoding="utf-8"), "sentinel\n")
             process.assert_not_called()
 
+    def test_rejects_hard_linked_log_before_subprocess(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-log-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            outside = root / "outside.log"
+            outside.write_text("sentinel\n", encoding="utf-8")
+            log = work / "build.log"
+            log.hardlink_to(outside)
+
+            with (
+                mock.patch.object(_RUN.subprocess, "run") as process,
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "UAT log must have one filesystem link",
+                ),
+            ):
+                _RUN._run_uat(root, Path("/uat"), ["probe"], log)
+
+            self.assertEqual(outside.read_text(encoding="utf-8"), "sentinel\n")
+            process.assert_not_called()
+
     def test_rejects_linked_automation_saved_before_subprocess(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-uat-saved-") as raw:
             root = Path(raw)
@@ -478,6 +500,74 @@ class TurnkeyReportTests(unittest.TestCase):
 
             self.assertEqual(report.read_text(encoding="utf-8"), "sentinel\n")
             process.assert_not_called()
+
+    def test_rejects_preexisting_hard_linked_sdk_report_before_uat(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            outside = root / "outside.txt"
+            outside.write_text("sentinel\n", encoding="utf-8")
+            report = work / "turnkey.txt"
+            report.hardlink_to(outside)
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+
+            with (
+                mock.patch.object(_RUN, "_run_uat") as process,
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Turnkey SDK report must have one filesystem link",
+                ),
+            ):
+                _RUN._verify_sdk(
+                    root,
+                    Path("/uat"),
+                    Path("/project"),
+                    target,
+                    work,
+                )
+
+            self.assertEqual(outside.read_text(encoding="utf-8"), "sentinel\n")
+            self.assertTrue(report.exists())
+            process.assert_not_called()
+
+    def test_rejects_hard_linked_sdk_report_after_uat(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            report = work / "turnkey.txt"
+            outside = root / "outside.txt"
+            outside.write_text(
+                "Linux: (Status=Valid, MinAllowed=0)\n",
+                encoding="utf-8",
+            )
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+
+            def write_hard_linked_report(
+                *_args: object,
+                **_kwargs: object,
+            ) -> None:
+                report.hardlink_to(outside)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_run_uat",
+                    side_effect=write_hard_linked_report,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Turnkey SDK report must have one filesystem link",
+                ),
+            ):
+                _RUN._verify_sdk(
+                    root,
+                    Path("/uat"),
+                    Path("/project"),
+                    target,
+                    work,
+                )
 
     def test_rejects_linked_sdk_report_after_uat(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
