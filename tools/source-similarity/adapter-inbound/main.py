@@ -195,7 +195,11 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
     extension = record.get("ext")
     count = record.get("count" if has_observed else "min")
     kind = record.get("kind")
-    if not isinstance(directory, str) or not isinstance(extension, str):
+    if (
+        not isinstance(directory, str)
+        or not isinstance(extension, str)
+        or not extension
+    ):
         raise InvalidCoordinateError
     if kind is not None and not isinstance(kind, str):
         raise LedgerInputError("count ledger kind metadata must be a string")
@@ -311,6 +315,7 @@ def _validate(values: Mapping[Coordinate, int]) -> None:
             not isinstance(key, tuple)
             or len(key) != 2
             or not all(isinstance(value, str) for value in key)
+            or not key[1]
         ):
             raise InvalidCoordinateError
         if (
