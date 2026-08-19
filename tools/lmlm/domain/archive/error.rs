@@ -223,7 +223,10 @@ pub enum LmlmError {
 
 impl LmlmError {
     /// Formats errors owned by the fixed container and package boundary.
-    fn fmt_container(&self, formatter: &mut core::fmt::Formatter<'_>) -> Option<core::fmt::Result> {
+    fn fmt_container(
+        &self,
+        formatter: &mut core::fmt::Formatter<'_>,
+    ) -> Option<core::fmt::Result> {
         let result = match self {
             Self::BadMagic { observed } => {
                 let observed_value = u32::from_be_bytes(*observed);
@@ -232,10 +235,10 @@ impl LmlmError {
                     "not an LSPA (.lmlm) archive; observed magic: \
                      {observed_value:#010x}"
                 )
-            }
+            },
             Self::Truncated => {
                 write!(formatter, "archive is truncated or malformed")
-            }
+            },
             Self::UnsupportedVersion { offset, value } => write!(
                 formatter,
                 "unsupported LSPA archive version at {offset:#x}: {value}"
@@ -256,7 +259,7 @@ impl LmlmError {
                     "reserved LSPA container byte at {offset:#x} is nonzero: \
                      {value:#04x}"
                 )
-            }
+            },
             Self::NonZeroReservedRootBlock { offset, value } => write!(
                 formatter,
                 "reserved LSPA root byte at {offset:#x} is nonzero: \
@@ -292,7 +295,7 @@ impl LmlmError {
                      {depth}",
                     EscapedText::new(path)
                 )
-            }
+            },
             Self::InvalidEntryKind { offset, value } => write!(
                 formatter,
                 "unsupported LSPA entry kind at {offset:#x}: {value}"
@@ -312,55 +315,54 @@ impl LmlmError {
                     "LSPA entry metadata padding at {offset:#x} is nonzero: \
                      {value:#04x}"
                 )
-            }
+            },
             Self::UnsupportedDirectoryRecordControl { offset, value } => {
                 write!(
                     formatter,
                     "unsupported LSPA directory child-kind control at \
                  {offset:#x}: {value:#04x}"
                 )
-            }
+            },
             Self::UnsupportedFileRecordControl { offset, value } => {
                 write!(
                     formatter,
                     "unsupported LSPA file transition control at {offset:#x}: \
                      {value:#04x}"
                 )
-            }
+            },
             Self::NonZeroFileRecordPadding { offset, value } => {
                 write!(
                     formatter,
                     "LSPA file transition padding at {offset:#x} is nonzero: \
                      {value:#04x}"
                 )
-            }
+            },
             Self::InvalidNameEncoding { offset, message } => {
                 write!(
                     formatter,
                     "archive entry name at {offset:#x} is not valid UTF-16: {}",
                     EscapedText::new(message)
                 )
-            }
+            },
             _ => return None,
         };
         Some(result)
     }
 
     /// Formats errors for validated payload ranges and aliases.
-    fn fmt_payload(&self, formatter: &mut core::fmt::Formatter<'_>) -> Option<core::fmt::Result> {
+    fn fmt_payload(
+        &self,
+        formatter: &mut core::fmt::Formatter<'_>,
+    ) -> Option<core::fmt::Result> {
         let result = match self {
-            Self::EntryPayloadOverlapsTable {
-                path,
-                offset,
-                table_end,
-            } => {
+            Self::EntryPayloadOverlapsTable { path, offset, table_end } => {
                 write!(
                     formatter,
                     "archive entry payload overlaps the table: {} at \
                      {offset}, table ends at {table_end}",
                     EscapedText::new(path)
                 )
-            }
+            },
             Self::UnalignedEntryOffset { path, offset } => {
                 write!(
                     formatter,
@@ -368,7 +370,7 @@ impl LmlmError {
                      {offset}",
                     EscapedText::new(path)
                 )
-            }
+            },
             Self::InvalidEntryRange { path, offset, size } => {
                 write!(
                     formatter,
@@ -376,7 +378,7 @@ impl LmlmError {
                      for {size} bytes",
                     EscapedText::new(path)
                 )
-            }
+            },
             Self::OverlappingEntryRanges {
                 first_path,
                 first_offset,
@@ -393,33 +395,33 @@ impl LmlmError {
                     EscapedText::new(first_path),
                     EscapedText::new(second_path)
                 )
-            }
+            },
             _ => return None,
         };
         Some(result)
     }
 
     /// Formats portable destination identity and containment errors.
-    fn fmt_path(&self, formatter: &mut core::fmt::Formatter<'_>) -> Option<core::fmt::Result> {
+    fn fmt_path(
+        &self,
+        formatter: &mut core::fmt::Formatter<'_>,
+    ) -> Option<core::fmt::Result> {
         let result = match self {
-            Self::PathCollision {
-                first_path,
-                second_path,
-            } => {
+            Self::PathCollision { first_path, second_path } => {
                 write!(
                     formatter,
                     "archive paths collide on a portable filesystem: {} and {}",
                     EscapedText::new(first_path),
                     EscapedText::new(second_path)
                 )
-            }
+            },
             Self::UnsafePath(path) => {
                 write!(
                     formatter,
                     "unsafe path in archive: {}",
                     EscapedText::new(path)
                 )
-            }
+            },
             _ => return None,
         };
         Some(result)
@@ -427,7 +429,10 @@ impl LmlmError {
 }
 
 impl core::fmt::Display for LmlmError {
-    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    fn fmt(
+        &self,
+        formatter: &mut core::fmt::Formatter<'_>,
+    ) -> core::fmt::Result {
         if let Some(result) = self.fmt_container(formatter) {
             return result;
         }

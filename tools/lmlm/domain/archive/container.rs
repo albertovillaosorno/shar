@@ -39,7 +39,8 @@
 use super::LmlmError;
 use super::binary::{checked_offset, first_nonzero_byte, read_u16, read_u32};
 use super::layout::{
-    BLOCK, HEADER_FLAGS, HEADER_FLAGS_OFFSET, MAGIC, ROOT_BLOCK, VERSION, VERSION_OFFSET,
+    BLOCK, HEADER_FLAGS, HEADER_FLAGS_OFFSET, MAGIC, ROOT_BLOCK, VERSION,
+    VERSION_OFFSET,
 };
 
 /// Validates fixed LSPA header fields before reading the directory table.
@@ -60,7 +61,8 @@ pub(crate) fn validate_header(data: &[u8]) -> Result<(), LmlmError> {
             value: version,
         });
     }
-    let flags = read_u32(data, HEADER_FLAGS_OFFSET).ok_or(LmlmError::Truncated)?;
+    let flags =
+        read_u32(data, HEADER_FLAGS_OFFSET).ok_or(LmlmError::Truncated)?;
     if flags != HEADER_FLAGS {
         return Err(LmlmError::UnsupportedHeaderFlags {
             offset: HEADER_FLAGS_OFFSET,

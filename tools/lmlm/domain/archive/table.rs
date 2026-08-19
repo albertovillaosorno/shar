@@ -44,9 +44,14 @@ use super::name::{read_name, register_path};
 use super::{FileEntry, LmlmError};
 
 /// Rejects bytes outside the timestamp, size, offset, and count fields.
-fn validate_metadata_reserved_bytes(data: &[u8], meta: usize) -> Result<(), LmlmError> {
+fn validate_metadata_reserved_bytes(
+    data: &[u8],
+    meta: usize,
+) -> Result<(), LmlmError> {
     for (start, len) in [(meta, 2), (checked_offset(meta, 0x0b)?, 1)] {
-        if let Some((padding_offset, value)) = first_nonzero_byte(data, start, len)? {
+        if let Some((padding_offset, value)) =
+            first_nonzero_byte(data, start, len)?
+        {
             return Err(LmlmError::NonZeroMetadataPadding {
                 offset: padding_offset,
                 value,
@@ -59,7 +64,8 @@ fn validate_metadata_reserved_bytes(data: &[u8], meta: usize) -> Result<(), Lmlm
 /// Reads the entry offset and validates the reserved metadata bytes.
 fn read_metadata_offset(data: &[u8], meta: usize) -> Result<u64, LmlmError> {
     validate_metadata_reserved_bytes(data, meta)?;
-    let offset = read_u64(data, checked_offset(meta, 0x14)?).ok_or(LmlmError::Truncated)?;
+    let offset = read_u64(data, checked_offset(meta, 0x14)?)
+        .ok_or(LmlmError::Truncated)?;
     if let Some((padding_offset, value)) = first_nonzero_byte(
         data,
         checked_offset(meta, 0x1c)?,
@@ -74,7 +80,10 @@ fn read_metadata_offset(data: &[u8], meta: usize) -> Result<u64, LmlmError> {
 }
 
 /// Reads a directory child-kind control and validates its reserved tail.
-fn read_directory_record_control(data: &[u8], meta: usize) -> Result<(), LmlmError> {
+fn read_directory_record_control(
+    data: &[u8],
+    meta: usize,
+) -> Result<(), LmlmError> {
     let control_offset = checked_offset(meta, 0x0e)?;
     let control = data
         .get(control_offset)
@@ -87,7 +96,9 @@ fn read_directory_record_control(data: &[u8], meta: usize) -> Result<(), LmlmErr
         });
     }
     let padding_start = checked_offset(control_offset, 1)?;
-    if let Some((padding_offset, value)) = first_nonzero_byte(data, padding_start, 5)? {
+    if let Some((padding_offset, value)) =
+        first_nonzero_byte(data, padding_start, 5)?
+    {
         return Err(LmlmError::NonZeroMetadataPadding {
             offset: padding_offset,
             value,
@@ -112,8 +123,10 @@ fn read_directory_record(
     depth: usize,
 ) -> Result<DirectoryRecord, LmlmError> {
     read_directory_record_control(data, meta)?;
-    let child_count =
-        usize::from(read_u16(data, checked_offset(meta, 0x0c)?).ok_or(LmlmError::Truncated)?);
+    let child_count = usize::from(
+        read_u16(data, checked_offset(meta, 0x0c)?)
+            .ok_or(LmlmError::Truncated)?,
+    );
     let child_depth = depth.checked_add(1).ok_or(LmlmError::Truncated)?;
     if child_depth > MAX_DIRECTORY_DEPTH {
         return Err(LmlmError::ExcessiveDirectoryDepth {
@@ -121,14 +134,14 @@ fn read_directory_record(
             depth: child_depth,
         });
     }
-    Ok(DirectoryRecord {
-        child_count,
-        child_depth,
-    })
+    Ok(DirectoryRecord { child_count, child_depth })
 }
 
 /// Validates one file transition block and returns its exclusive end.
-fn validate_file_record_control(data: &[u8], control_start: usize) -> Result<usize, LmlmError> {
+fn validate_file_record_control(
+    data: &[u8],
+    control_start: usize,
+) -> Result<usize, LmlmError> {
     let control = data
         .get(control_start)
         .copied()
@@ -167,7 +180,9 @@ fn file_record_end(
         .min()
         .and_then(|offset| usize::try_from(offset).ok());
     let control_end = checked_offset(metadata_end, BLOCK)?;
-    if earliest_payload.is_some_and(|payload_start| payload_start >= control_end) {
+    if earliest_payload
+        .is_some_and(|payload_start| payload_start >= control_end)
+    {
         return validate_file_record_control(data, metadata_end);
     }
     Ok(metadata_end)
@@ -190,7 +205,8 @@ pub(crate) fn parse_entries(
     table_end: &mut usize,
 ) -> Result<usize, LmlmError> {
     let mut state = (out, seen_paths, table_end);
-    parse_entries_at(data, pos, count, prefix, &mut state, 0, true).map(|parsed| parsed.next_pos)
+    parse_entries_at(data, pos, count, prefix, &mut state, 0, true)
+        .map(|parsed| parsed.next_pos)
 }
 
 /// Parses `count` sibling entries and their bounded descendants.
@@ -208,7 +224,8 @@ fn parse_entries_at(
     globally_final_branch: bool,
 ) -> Result<ParsedEntries, LmlmError> {
     for index in 0..count {
-        let globally_final = globally_final_branch && index.saturating_add(1) == count;
+        let globally_final =
+            globally_final_branch && index.saturating_add(1) == count;
         let kind = read_u16(data, pos).ok_or(LmlmError::Truncated)?;
         if kind != ENTRY_KIND {
             return Err(LmlmError::InvalidEntryKind {
@@ -216,13 +233,15 @@ fn parse_entries_at(
                 value: kind,
             });
         }
-        let full_path = register_path(read_name(data, pos)?, prefix, &mut *state.1)?;
+        let full_path =
+            register_path(read_name(data, pos)?, prefix, &mut *state.1)?;
         let meta = checked_offset(pos, BLOCK)?;
         let metadata_end = checked_offset(meta, BLOCK)?;
         *state.2 = (*state.2).max(metadata_end);
         let offset = read_metadata_offset(data, meta)?;
         if offset == 0 {
-            let directory = read_directory_record(data, meta, &full_path, depth)?;
+            let directory =
+                read_directory_record(data, meta, &full_path, depth)?;
             let child_prefix = format!("{full_path}/");
             let parsed_children = parse_entries_at(
                 data,
@@ -235,7 +254,8 @@ fn parse_entries_at(
             )?;
             pos = parsed_children.next_pos;
         } else {
-            let size = read_u64(data, checked_offset(meta, 0x0c)?).ok_or(LmlmError::Truncated)?;
+            let size = read_u64(data, checked_offset(meta, 0x0c)?)
+                .ok_or(LmlmError::Truncated)?;
             state.0.push(FileEntry {
                 path: full_path,
                 offset,
