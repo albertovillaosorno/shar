@@ -142,6 +142,14 @@ class SourceSimilarityTests(unittest.TestCase):
             with self.subTest(record=record), self.assertRaises(ValueError):
                 _MOD.parse_count_ledger(record)
 
+    def test_parser_rejects_mixed_count_meanings(self) -> None:
+        ledger = (
+            '{"dir":"aa","ext":"p3d","min":1}\n'
+            '{"dir":"bb","ext":"rcf","count":1}\n'
+        )
+        with self.assertRaisesRegex(ValueError, "mixes count meanings"):
+            _MOD.parse_count_ledger(ledger)
+
     def test_cli_measures_public_jsonl_ledgers_without_admission(self) -> None:
         metadata = '{"schema":"shar-schoenwald.game-manifest-ledger.v2"}\n'
         with tempfile.TemporaryDirectory() as directory:

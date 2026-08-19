@@ -17,8 +17,9 @@ python tools/source-similarity/adapter-inbound/main.py \
 
 The command prints reference/candidate/shared/union unit counts, reference
 coverage, and weighted-Jaccard similarity. Tracked policy rows use `min`;
-read-only observation rows use `count`, and a row must select exactly one. The
-command never prints an admission result or embeds an acceptance threshold.
+read-only observation rows use `count`. A row must select exactly one, and every
+coordinate row in one ledger must use the same count field. The command never
+prints an admission result or embeds an acceptance threshold.
 Input failures omit local ledger paths.
 
 ## Ownership
