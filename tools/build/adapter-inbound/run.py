@@ -478,7 +478,9 @@ def _verify_sdk(
     """Require Turnkey to report a valid SDK without installing anything."""
     report = work / "turnkey.txt"
     log = work / "turnkey.log"
-    report.unlink(missing_ok=True)
+    if _path_present(report):
+        _require_real_file(report, "Turnkey SDK report")
+        report.unlink()
     arguments = [
         "Turnkey",
         "-Command=VerifySdk",
