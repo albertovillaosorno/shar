@@ -657,7 +657,7 @@ fn validate_source_records(
     let mut identities = BTreeSet::new();
     let mut file_inputs = HashSet::new();
     let mut directory_inputs = HashSet::new();
-    let mut previous_input = None;
+    let mut previous_input: Option<u64> = None;
     let mut source_bytes = 0_u64;
     for record in source {
         validate_record_path(&record.path, true, "algorithm source")?;
@@ -676,12 +676,21 @@ fn validate_source_records(
             .ok_or_else(|| {
                 AlgorithmError::new("algorithm source length overflow")
             })?;
-        if let Some(previous) = previous_input
-            && record.input < previous
-        {
-            return Err(AlgorithmError::new(
-                "algorithm source inputs are out of order",
-            ));
+        match previous_input {
+            None if record.input != 0 => {
+                return Err(AlgorithmError::new(
+                    "algorithm source inputs must begin at zero",
+                ));
+            },
+            Some(previous)
+                if record.input != previous
+                    && previous.checked_add(1) != Some(record.input) =>
+            {
+                return Err(AlgorithmError::new(
+                    "algorithm source inputs must be contiguous",
+                ));
+            },
+            _ => {},
         }
         previous_input = Some(record.input);
         if !identities.insert((record.input, record.path.as_str())) {

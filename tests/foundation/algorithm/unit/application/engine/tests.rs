@@ -175,6 +175,12 @@ fn source_metadata_must_match_collector_contract() -> Result<(), String> {
     let settings = settings()?;
     let malformed = [
         vec![SourceRecord {
+            input: 1,
+            path: String::new(),
+            bytes: 1024,
+            sha256: "0".repeat(64),
+        }],
+        vec![SourceRecord {
             input: 0,
             path: "../private.bin".to_owned(),
             bytes: 1024,
