@@ -120,8 +120,9 @@ lowercase source/target hashes, 12-byte nonce evidence, and hexadecimal
 protected target material whose encoded length includes the required 16-byte
 authentication tag and whose declared resource use fits the active generic
 algorithm settings. Generic replay checks the fixed nonce and protected-payload
-encoded lengths before hex decoding. It also validates source record paths,
-resource limits, identity uniqueness, and input grouping before collecting
+encoded lengths and canonical lowercase hex without decoding protected payloads.
+It also validates source record paths, resource limits, identity uniqueness, and
+input grouping before collecting
 caller source evidence, so malformed documents fail before private-source
 traversal. The authored icon reconstruction plan
 exercises the same policy against a real non-placeholder document. Source and

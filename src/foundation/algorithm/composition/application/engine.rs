@@ -51,6 +51,7 @@ use crate::domain::{AlgorithmError, Settings};
 const SOURCE_KEY_DOMAIN: &[u8] = b"shar.algorithm.source-key.v1\0";
 const NONCE_DOMAIN: &[u8] = b"shar.algorithm.nonce.v1\0";
 const AAD_DOMAIN: &[u8] = b"shar.algorithm.aad.v1\0";
+const SHA256_HEX_LEN: usize = 64;
 const PROTECTED_NONCE_HEX_LEN: usize = 24;
 const PROTECTED_TAG_BYTES: u64 = 16;
 const HEX_CHARS_PER_BYTE: u64 = 2;
@@ -600,6 +601,23 @@ fn portable_target_identity(path: &str) -> String {
     path.chars().flat_map(char::to_uppercase).collect()
 }
 
+fn validate_lower_hex(
+    value: &str,
+    expected_len: Option<usize>,
+    context: &str,
+) -> Result<(), AlgorithmError> {
+    if expected_len.is_some_and(|length| value.len() != length)
+        || !value
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+    {
+        return Err(AlgorithmError::new(format!(
+            "{context} must be canonical lowercase hexadecimal"
+        )));
+    }
+    Ok(())
+}
+
 fn validate_record_path(
     path: &str,
     allow_empty: bool,
@@ -638,6 +656,11 @@ fn validate_source_records(
     let mut source_bytes = 0_u64;
     for record in source {
         validate_record_path(&record.path, true, "algorithm source")?;
+        validate_lower_hex(
+            &record.sha256,
+            Some(SHA256_HEX_LEN),
+            "algorithm source sha256",
+        )?;
         if record.bytes > settings.maximum_file_bytes() {
             return Err(AlgorithmError::new(
                 "algorithm source file exceeds settings",
@@ -759,12 +782,16 @@ fn validate_document(
             ));
         }
         target_bytes = target_bytes.saturating_add(target.descriptor.bytes);
-        if target.nonce.len() != PROTECTED_NONCE_HEX_LEN {
-            return Err(AlgorithmError::new(
-                "algorithm target nonce must be 12 bytes",
-            ));
-        }
-        let _nonce = decode_hex(&target.nonce)?;
+        validate_lower_hex(
+            &target.descriptor.sha256,
+            Some(SHA256_HEX_LEN),
+            "algorithm target sha256",
+        )?;
+        validate_lower_hex(
+            &target.nonce,
+            Some(PROTECTED_NONCE_HEX_LEN),
+            "algorithm target nonce",
+        )?;
         let expected_ciphertext_hex = target
             .descriptor
             .bytes
@@ -782,7 +809,11 @@ fn validate_document(
                 "algorithm target ciphertext length does not match target",
             ));
         }
-        let _ciphertext = decode_hex(&target.ciphertext)?;
+        validate_lower_hex(
+            &target.ciphertext,
+            None,
+            "algorithm target ciphertext",
+        )?;
         descriptors.push(target.descriptor.clone());
     }
     if target_bytes > settings.maximum_target_bytes() {
