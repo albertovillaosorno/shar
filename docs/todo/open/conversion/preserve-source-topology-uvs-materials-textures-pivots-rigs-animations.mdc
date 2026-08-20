@@ -48,5 +48,11 @@ primitive regrouping, or generated independent-object identities. Near and
 distant synthetic meshes remain byte-equivalent at the typed mesh boundary,
 and the position/UV preservation regression remains green.
 
+Rigid-prop rest-transform baking now applies the inverse-transpose affine basis
+to authored normals instead of reusing the position basis. Non-uniform authored
+joint scale therefore preserves surface orientation while positions still use
+the exact source rest transform; a focused regression proves a diagonal normal
+under 2x X scale resolves to the mathematically correct transformed direction.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
