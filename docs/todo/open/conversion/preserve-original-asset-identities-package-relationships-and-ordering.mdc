@@ -139,5 +139,11 @@ outbound model cannot represent independently. Focused prop-catalog regressions
 prove a source order of `zebra`, `alpha`, `middle` remains unchanged and padded
 duplicate `shared` identities fail closed; all 84 prop-catalog tests pass.
 
+FBX shader resolution now preserves the package-order `p3d-shader` member
+sequence instead of alphabetically sorting and deduplicating file-stem
+identities before material resolution. Duplicate shader identities fail closed,
+and focused FBX-export tests prove `zebra`, `alpha`, `middle` remains in authored
+order.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
