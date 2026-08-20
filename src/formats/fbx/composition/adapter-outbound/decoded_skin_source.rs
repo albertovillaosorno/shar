@@ -617,7 +617,8 @@ pub(super) struct CompositeBindings {
     pub(super) props: Vec<CompositePropBinding>,
     /// Skin identities explicitly marked translucent.
     pub(super) translucent_skins: BTreeSet<String>,
-    /// Decoded effect bindings retained as unsupported whole-character evidence.
+    /// Decoded effect bindings retained as unsupported whole-character
+    /// evidence.
     pub(super) effect_count: usize,
 }
 
