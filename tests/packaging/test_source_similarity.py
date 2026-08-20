@@ -124,6 +124,12 @@ class SourceSimilarityTests(unittest.TestCase):
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
                 _MOD.measure({coordinate: 1}, {})
+        for extension in ("P3D", "ÄBC"):
+            with (
+                self.subTest(extension=extension),
+                self.assertRaises(_MOD.InvalidCoordinateError),
+            ):
+                _MOD.measure({("aa", extension): 1}, {})
 
     def test_parser_accepts_generated_manifest_metadata_and_kind(self) -> None:
         ledger = (
@@ -157,6 +163,8 @@ class SourceSimilarityTests(unittest.TestCase):
             '{"dir":"aa","ext":"p3d","min":1,"count":1}',
             '{"dir":"aa","ext":"p3d"}',
             '{"dir":"aa","ext":"","min":1}',
+            '{"dir":"aa","ext":"P3D","min":1}',
+            '{"dir":"aa","ext":"ÄBC","min":1}',
             '{"dir":"aa","ext":"p3d","min":1,"kind":{"private":1}}',
             '{"dir":"\\ud800","ext":"p3d","min":1}',
             '{"dir":"aa","ext":"\\ud800","min":1}',
