@@ -64,7 +64,8 @@ regression fixtures prove wrong or zero-byte mobile artifacts never create a
 completed `dist/<ARCH>/` target. Windows candidates likewise require a non-empty
 SHAR `.exe`; engine helper executables alone cannot satisfy publication. The
 optional Windows shortcut adapter applies the same SHAR executable identity, so
-original-game, helper, empty, or lookalike `.exe` files are never auto-selected.
+original-game, helper, empty, prefixed-helper, or non-Shipping `.exe` files are
+never auto-selected.
 Linux candidates now require a non-empty SHAR native executable for both x64
 and ARM64, and macOS candidates require a `.app` bundle with a non-empty SHAR
 executable below `Contents/MacOS`. Plain data-only archives can no longer be

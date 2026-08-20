@@ -176,6 +176,8 @@ class WindowsShortcutTargetTests(unittest.TestCase):
             root = Path(raw)
             for name, payload in (
                 ("shareware.exe", b"lookalike"),
+                ("shar-helper.exe", b"prefixed helper"),
+                ("shar-Win64-Debug.exe", b"wrong configuration"),
                 ("shar.exe", b""),
             ):
                 with self.subTest(name=name):

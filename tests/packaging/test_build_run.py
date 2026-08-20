@@ -1169,6 +1169,7 @@ class CandidateArtifactTests(unittest.TestCase):
             candidate = Path(raw)
             (candidate / "CrashReportClient.exe").write_bytes(b"engine helper")
             (candidate / "shareware.exe").write_bytes(b"lookalike")
+            (candidate / "shar-helper.exe").write_bytes(b"prefixed helper")
 
             with self.assertRaisesRegex(
                 _RUN.RunFailure,
