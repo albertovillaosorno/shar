@@ -73,7 +73,8 @@ helper outside the published tree.
 Cached UAT manifests and Windows debug symbols are now required to be regular
 files before they can leave the candidate tree; directory entries that merely
 match `Manifest_*.txt` or `*.pdb` fail closed instead of becoming cached build
-evidence.
+evidence. Every matching entry is type-checked before any diagnostic is moved,
+so a malformed later entry cannot leave the candidate or cache partially moved.
 Linux candidates now require a non-empty SHAR native executable for both x64
 and ARM64, and macOS candidates require a `.app` bundle with a non-empty SHAR
 executable below `Contents/MacOS`. Plain data-only archives can no longer be

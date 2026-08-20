@@ -667,25 +667,26 @@ def _cache_nonruntime_artifacts(
     _remove_real_directory_if_present(symbols, "symbol cache")
 
     manifests = sorted(candidate.glob("Manifest_*.txt"))
-    if manifests:
-        metadata.mkdir(parents=True)
-        for source in manifests:
-            if not source.is_file():
-                raise RunFailure(
-                    f"packaging manifest must be a real file: {source}"
-                )
-            Path(source).replace(metadata / source.name)
+    for source in manifests:
+        if not source.is_file():
+            raise RunFailure(
+                f"packaging manifest must be a real file: {source}"
+            )
 
     debug_files: list[Path] = []
     if target.system == "windows":
         debug_files = sorted(candidate.rglob("*.pdb"))
+    for source in debug_files:
+        if not source.is_file():
+            raise RunFailure(f"debug symbol must be a real file: {source}")
+
+    if manifests:
+        metadata.mkdir(parents=True)
+        for source in manifests:
+            Path(source).replace(metadata / source.name)
     if debug_files:
         symbols.mkdir(parents=True)
         for source in debug_files:
-            if not source.is_file():
-                raise RunFailure(
-                    f"debug symbol must be a real file: {source}"
-                )
             relative = source.relative_to(candidate)
             destination = symbols / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
