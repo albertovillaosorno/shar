@@ -137,3 +137,41 @@ fn rejects_identity_control_characters() {
         Err(DecodedAnimationError::InvalidIdentityCharacter)
     );
 }
+
+#[test]
+fn rejects_unsupported_bound_channel_parameter() {
+    let bone = Bone {
+        id: "Root".to_owned(),
+        parent_id: None,
+        rest_matrix: [
+            1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+        ],
+    };
+    let group = DecodedGroup {
+        name: "Root".to_owned(),
+        channel_count: 1,
+        channels: vec![DecodedChannel {
+            kind: "vector3".to_owned(),
+            param: "SCAL".to_owned(),
+            mapping: None,
+            constants: None,
+            key_count: 0,
+            frames: Vec::new(),
+            values: Vec::new(),
+            compressed_values: Vec::new(),
+            channel_metadata: Vec::new(),
+        }],
+    };
+    let rest = LocalTransformSample {
+        translation: [0.; 3],
+        rotation_wxyz: [1., 0., 0., 0.],
+    };
+
+    assert_eq!(
+        sample_track(&bone, &group, rest, 1),
+        Err(DecodedAnimationError::UnsupportedChannelParameter {
+            group: "Root".to_owned(),
+            parameter: "SCAL".to_owned(),
+        })
+    );
+}

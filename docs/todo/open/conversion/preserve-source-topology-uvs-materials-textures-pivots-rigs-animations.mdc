@@ -54,5 +54,10 @@ joint scale therefore preserves surface orientation while positions still use
 the exact source rest transform; a focused regression proves a diagonal normal
 under 2x X scale resolves to the mathematically correct transformed direction.
 
+Skeletal PTRN binding now fails closed when a bound source group carries a
+transform property other than the explicitly preserved `TRAN` and `ROT_`
+channels. Unsupported authored transform data can no longer disappear from the
+export silently; unmatched helper groups remain retained as ignored evidence.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
