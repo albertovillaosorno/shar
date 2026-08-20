@@ -74,7 +74,9 @@ class InvalidCoordinateError(SimilarityInputError):
 
     def __init__(self) -> None:
         """Initialize the canonical coordinate-shape failure."""
-        super().__init__("coordinate must be a pair of strings")
+        super().__init__(
+            "coordinate must be a pair of strings with normalized extension"
+        )
 
 
 class InvalidCountError(SimilarityInputError):
@@ -346,6 +348,7 @@ def _validate(values: Mapping[Coordinate, int]) -> None:
             or len(key) != 2
             or not all(_valid_utf8_text(value) for value in key)
             or not key[1]
+            or key[1] != key[1].lower()
         ):
             raise InvalidCoordinateError
         if (
