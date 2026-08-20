@@ -564,8 +564,62 @@ def _validate_candidate_tree(candidate: Path) -> None:
             )
 
 
+def _is_shar_runtime_name(name: str) -> bool:
+    """Return whether one native filename identifies the SHAR runtime."""
+    normalized = name.casefold()
+    return normalized == "shar" or (
+        normalized.startswith("shar-")
+        and normalized.endswith("-shipping")
+    )
+
+
+def _has_linux_runtime(candidate: Path) -> bool:
+    """Return whether a Linux archive contains a non-empty SHAR binary."""
+    return any(
+        item.is_file()
+        and item.stat().st_size > 0
+        and _is_shar_runtime_name(item.name)
+        for item in candidate.rglob("*")
+    )
+
+
+def _has_macos_runtime(candidate: Path) -> bool:
+    """Return whether a macOS archive contains a runnable SHAR app bundle."""
+    for bundle in candidate.rglob("*"):
+        if not bundle.is_dir() or bundle.suffix.casefold() != ".app":
+            continue
+        executable_root = bundle / "Contents" / "MacOS"
+        if not executable_root.is_dir():
+            continue
+        if any(
+            item.is_file()
+            and item.stat().st_size > 0
+            and _is_shar_runtime_name(item.name)
+            for item in executable_root.iterdir()
+        ):
+            return True
+    return False
+
+
 def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
     """Require UAT archives to contain their declared runnable artifact."""
+    if target.system == "linux":
+        if _has_linux_runtime(candidate):
+            return
+        message = (
+            "candidate package has no non-empty Linux SHAR executable: "
+            f"{candidate}"
+        )
+        raise RunFailure(message)
+    if target.system == "macos":
+        if _has_macos_runtime(candidate):
+            return
+        message = (
+            "candidate package has no runnable macOS SHAR app bundle: "
+            f"{candidate}"
+        )
+        raise RunFailure(message)
+
     expected = {
         "apk": (".apk", "Android APK", None),
         "ipa": (".ipa", "iOS IPA", None),
