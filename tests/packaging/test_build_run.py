@@ -1374,6 +1374,10 @@ class CandidateArtifactTests(unittest.TestCase):
                     "_run_uat",
                     side_effect=write_wrong_archive,
                 ),
+                mock.patch.object(
+                    _RUN,
+                    "_cache_nonruntime_artifacts",
+                ) as cache_artifacts,
                 self.assertRaisesRegex(_RUN.RunFailure, "Android APK"),
             ):
                 _RUN._build_target(
@@ -1384,6 +1388,7 @@ class CandidateArtifactTests(unittest.TestCase):
                     validate_only=False,
                 )
 
+            cache_artifacts.assert_not_called()
             self.assertFalse((root / "dist/android-arm64").exists())
 
 
