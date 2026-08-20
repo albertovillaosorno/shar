@@ -77,6 +77,8 @@ dissimilarity.
 Direct programmatic count vectors are also captured once before validation and
 measurement, preventing a stateful mapping from presenting different counts to
 those two phases.
+JSONL calibration rows now also reject outer spaces or tabs, matching the
+canonical manifest producer instead of accepting whitespace-normalized aliases.
 Generated manifest
 collision
 ordinals are aggregated into their structural family before
