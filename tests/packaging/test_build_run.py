@@ -258,6 +258,54 @@ class ProjectStateMigrationTests(unittest.TestCase):
             temporary.cleanup()
 
 
+class UatLauncherTests(unittest.TestCase):
+    """Require the process launcher to be a real host-runnable file."""
+
+    def test_rejects_linked_uat_launcher(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-launcher-") as raw:
+            engine = Path(raw)
+            launcher = engine / "Engine/Build/BatchFiles/RunUAT.sh"
+            launcher.parent.mkdir(parents=True)
+            launcher.write_text("#!/bin/sh\n", encoding="utf-8")
+            launcher.chmod(0o755)
+            original = Path.is_symlink
+
+            def report_launcher_as_link(path: Path) -> bool:
+                return path == launcher or original(path)
+
+            with (
+                mock.patch.object(
+                    Path,
+                    "is_symlink",
+                    report_launcher_as_link,
+                ),
+                mock.patch.object(_RUN.os, "name", "posix"),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "launcher must be a real file",
+                ),
+            ):
+                _RUN._uat_path(engine)
+
+    @unittest.skipIf(_RUN.os.name == "nt", "POSIX launcher permission")
+    def test_requires_executable_uat_launcher(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-launcher-") as raw:
+            engine = Path(raw)
+            launcher = engine / "Engine/Build/BatchFiles/RunUAT.sh"
+            launcher.parent.mkdir(parents=True)
+            launcher.write_text("#!/bin/sh\n", encoding="utf-8")
+            launcher.chmod(0o644)
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "launcher is not executable",
+            ):
+                _RUN._uat_path(engine)
+
+            launcher.chmod(0o755)
+            self.assertEqual(_RUN._uat_path(engine), launcher)
+
+
 class BuildWorkRootTests(unittest.TestCase):
     """Keep Turnkey and UAT work below real repository cache roots."""
 
