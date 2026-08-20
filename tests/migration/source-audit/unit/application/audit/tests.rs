@@ -41,11 +41,11 @@ fn snapshot_reader_returns_exact_captured_ranges() -> Result<(), String> {
 
     let length = reader.len().map_err(|error| error.to_string())?;
     let range = reader
-        .read_exact_range(3, 5)
+        .read_exact_range(0, 8)
         .map_err(|error| error.to_string())?;
 
     assert_eq!(length, 15);
-    assert_eq!(range, b"tured");
+    assert_eq!(range, b"captured");
     Ok(())
 }
 
