@@ -138,6 +138,13 @@ class SourceSimilarityTests(unittest.TestCase):
         )
         self.assertEqual(_MOD.parse_count_ledger(ledger), {("aa", "p3d"): 2})
 
+    def test_parser_accepts_valid_json_surrogate_pair(self) -> None:
+        ledger = '{"dir":"\\ud83d\\ude80","ext":"p3d","min":1}'
+        self.assertEqual(
+            _MOD.parse_count_ledger(ledger),
+            {("🚀", "p3d"): 1},
+        )
+
     def test_parser_rejects_ambiguous_jsonl_records(self) -> None:
         records = (
             '{"dir":"aa","dir":"bb","ext":"p3d","min":1}',
@@ -146,6 +153,9 @@ class SourceSimilarityTests(unittest.TestCase):
             '{"dir":"aa","ext":"p3d"}',
             '{"dir":"aa","ext":"","min":1}',
             '{"dir":"aa","ext":"p3d","min":1,"kind":{"private":1}}',
+            '{"dir":"\\ud800","ext":"p3d","min":1}',
+            '{"dir":"aa","ext":"\\ud800","min":1}',
+            '{"dir":"aa","ext":"p3d","min":1,"kind":"\\ud800"}',
             '{"dir":"aa","ext":"p3d","min":18446744073709551616}',
             '{"dir":"aa","ext":"p3d","min":' + ("9" * 5000) + "}",
             (
@@ -154,11 +164,19 @@ class SourceSimilarityTests(unittest.TestCase):
             ),
             (
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"kind_taxonomy":["\\ud800"],"required_files":[]}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
                 '"kind_taxonomy":{},"required_files":[]}'
             ),
             (
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
                 '"kind_taxonomy":[],"required_files":{}}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"required_files":[{"path":"\\ud800","min":1}]}'
             ),
             (
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
