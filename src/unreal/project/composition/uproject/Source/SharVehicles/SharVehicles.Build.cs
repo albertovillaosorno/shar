@@ -1,7 +1,7 @@
 // File: SharVehicles.Build.cs
 // jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharVehicles/SharVehicles.Build.cs
-// Copyright (c) 2026 Alberto Villa Osorno.
+// Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier: MIT
 // Boundary: vehicle definition and runtime-state dependencies only.
 // jig-ignore-next-line: exact syntax is indivisible

@@ -3,7 +3,7 @@
 // Path: src/unreal/project/composition/uproject/Source/sharEditor.Target.cs
 //
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
