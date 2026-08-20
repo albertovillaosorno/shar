@@ -502,8 +502,20 @@ def _assert_source_bound_plan(text: str) -> None:
         assert _is_nonnegative_integer(record["bytes"])
         assert _is_lower_hex(record["sha256"], 64)
         assert _is_lower_hex(record["nonce"], 24)
-        ciphertext = record["ciphertext"]
-        assert isinstance(ciphertext, str)
+        ciphertext_wire = record["ciphertext"]
+        if isinstance(ciphertext_wire, str):
+            ciphertext = ciphertext_wire
+        else:
+            assert isinstance(ciphertext_wire, list)
+            assert ciphertext_wire
+            for index, chunk in enumerate(ciphertext_wire):
+                assert isinstance(chunk, str)
+                assert 0 < len(chunk) <= 64
+                assert len(chunk) % 2 == 0
+                if index + 1 < len(ciphertext_wire):
+                    assert len(chunk) == 64
+                assert set(chunk) <= _HEX
+            ciphertext = "".join(ciphertext_wire)
         assert len(ciphertext) == 2 * (record["bytes"] + 16)
         assert set(ciphertext) <= _HEX
     _assert_source_layout(source)
