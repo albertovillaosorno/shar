@@ -43,3 +43,7 @@ contradictory relationship shape.
 Deterministic content revisions now reuse the same canonical member validation
 as package manifests and member construction, including the reserved manifest
 path, portable identity, byte limits, digest shape, media type, and role.
+
+The content-revision digest also length-prefixes every variable-width member
+metadata field that participates in the hash, with regression coverage proving
+that different media-type/role boundaries cannot produce one revision.

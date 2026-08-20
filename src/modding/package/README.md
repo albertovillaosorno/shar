@@ -14,6 +14,8 @@ simultaneously required and declared conflicting or superseded.
 Member construction, whole-manifest validation, and content-revision derivation
 share the same reserved-path, portable-path, size, digest, media-type, and role
 rules so invalid member records cannot acquire a canonical package revision.
+Variable-length path, media-type, and role fields are length-prefixed in the
+content-revision digest so distinct canonical field boundaries cannot alias.
 
 Transport (`directory`, `.zip`, Android/iOS document selection), staging,
 preview,
