@@ -126,8 +126,9 @@ lowercase hashes for ordinary source records and all target records, validated
 projection metadata without a source hash when present, 12-byte nonce evidence,
 and hexadecimal protected target material whose encoded length includes the
 required 16-byte authentication tag and whose declared resource use fits the
-active generic algorithm settings. Generic replay checks the fixed nonce and protected-payload
-encoded lengths and canonical lowercase hex without decoding protected payloads.
+active generic algorithm settings. Generic replay checks the fixed nonce and
+protected-payload encoded lengths and canonical lowercase hex without decoding
+protected payloads.
 It also validates source record paths, resource limits, identity uniqueness, and
 input grouping before collecting
 caller source evidence, so malformed documents fail before private-source
@@ -153,8 +154,9 @@ same common-byte count, duplicate layouts collapse, one projected source input
 is allowed, and both spans and aggregate mask bytes remain under the active
 file limit. Replay reads the caller's file once, evaluates only layouts whose
 spans fit, derives a candidate source key from each selected byte sequence, and
-accepts the first candidate that authenticates the protected plan. The user's edition-specific
-whole executable hash is neither stored nor used for that source record.
+accepts the first candidate that authenticates the protected plan. The user's
+edition-specific whole executable hash is neither stored nor used for that
+source record.
 
 The private common-byte artifact and private comparison executables remain
 maintainer evidence rather than plan payload. Projection authoring may derive

@@ -24,4 +24,5 @@ from any represented variant without binding the user's whole executable
 hash. That local result does not certify variants that are not present in this
 workspace; additional known layouts require their own verified projection
 alternatives. These files do not by themselves define the final public
-source-admission gate, and users are not expected to supply every executable variant.
+source-admission gate, and users are not expected to supply every executable
+variant.
