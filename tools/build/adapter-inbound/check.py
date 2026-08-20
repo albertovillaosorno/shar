@@ -198,9 +198,8 @@ def _game_candidate(root: Path, selected: Path | None) -> Path:
     raise CheckFailure("selected source path does not exist")
 
 
-def _check_game(root: Path, selected: Path | None) -> Path:
-    """Require one flat source installation without modifying it."""
-    game = _game_candidate(root, selected)
+def _inspect_game_root(game: Path) -> None:
+    """Require one resolved source root to contain one direct executable."""
     executable = next(
         (path for path in game.iterdir() if path.name == "Simpsons.exe"),
         None,
@@ -238,7 +237,19 @@ def _check_game(root: Path, selected: Path | None) -> Path:
             "selected source contains another nested Simpsons.exe; "
             f"remove or separately select {example}"
         )
-    return game
+
+
+def _check_game(root: Path, selected: Path | None) -> Path:
+    """Require one flat source installation without modifying it."""
+    try:
+        game = _game_candidate(root, selected)
+        _inspect_game_root(game)
+    except OSError as error:
+        raise CheckFailure(
+            "selected source cannot be inspected safely"
+        ) from error
+    else:
+        return game
 
 
 def _dependency_evidence(root: Path) -> tuple[Path, dict[str, object]]:
