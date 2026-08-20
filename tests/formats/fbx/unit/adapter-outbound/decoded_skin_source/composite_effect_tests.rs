@@ -72,14 +72,9 @@ fn effect_evidence_blocks_whole_character_export() -> Result<(), String> {
         ));
     }
     let composite_paths = [composite_path.as_path()];
-    let error = load_character(
-        "character",
-        &skeleton_path,
-        &[],
-        &[],
-        &composite_paths,
-    )
-    .err();
+    let error =
+        load_character("character", &skeleton_path, &[], &[], &composite_paths)
+            .err();
 
     fs::remove_file(&composite_path)
         .and_then(|()| fs::remove_file(&skeleton_path))
