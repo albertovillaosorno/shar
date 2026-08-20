@@ -341,10 +341,7 @@ fn decoded_groups(
             source_order.push(identity);
         }
     }
-    Ok(DecodedGroups {
-        by_id,
-        source_order,
-    })
+    Ok(DecodedGroups { by_id, source_order })
 }
 
 /// Build one sampled bone track from matching decoded channels.
