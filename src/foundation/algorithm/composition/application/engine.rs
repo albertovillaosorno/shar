@@ -98,7 +98,8 @@ struct CollectedSource {
 #[derive(Debug)]
 struct ProjectedReplayCandidates {
     file_index: usize,
-    data: Vec<Vec<u8>>,
+    data: Vec<u8>,
+    projection: SourceProjection,
 }
 
 #[derive(Debug)]
@@ -222,7 +223,7 @@ fn inspect_projected_file(
     path: PathBuf,
     projection: &SourceProjection,
     settings: &Settings,
-) -> Result<(InputFile, Vec<Vec<u8>>), AlgorithmError> {
+) -> Result<(InputFile, Vec<u8>), AlgorithmError> {
     let bytes = local::file_len(&path)
         .map_err(|error| io_failure("cannot inspect input file", &error))?;
     if bytes > settings.maximum_file_bytes() {
@@ -239,26 +240,25 @@ fn inspect_projected_file(
         ));
     }
     let selected_bytes = projection.selected_bytes();
-    let candidates = projection
+    let (span_bytes, mask) = projection
         .alternatives()
-        .filter(|(span_bytes, _mask)| *span_bytes <= observed)
-        .map(|(span_bytes, mask)| {
-            project_source_bytes(&data, span_bytes, mask, selected_bytes)
-        })
-        .collect::<Result<Vec<_>, AlgorithmError>>()?;
-    let first = candidates.first().ok_or_else(|| {
-        AlgorithmError::new("source file is shorter than every projection span")
-    })?;
+        .find(|(span_bytes, _mask)| *span_bytes <= observed)
+        .ok_or_else(|| {
+            AlgorithmError::new(
+                "source file is shorter than every projection span",
+            )
+        })?;
+    let first = project_source_bytes(&data, span_bytes, mask, selected_bytes)?;
     let file = InputFile {
         input,
         logical_path: String::new(),
         path,
         bytes: selected_bytes,
-        sha256: digest_hex(first),
-        data: first.clone(),
+        sha256: digest_hex(&first),
+        data: first,
         projection: Some(projection.clone()),
     };
-    Ok((file, candidates))
+    Ok((file, data))
 }
 
 fn sort_files_by_logical_path(files: &mut [InputFile]) {
@@ -508,7 +508,7 @@ fn collect_replay_source(
                 io_failure("cannot canonicalize input path", &error)
             })?;
             let file_index = files.len();
-            let (file, candidates) = inspect_projected_file(
+            let (file, data) = inspect_projected_file(
                 input,
                 canonical.clone(),
                 &projection,
@@ -518,7 +518,8 @@ fn collect_replay_source(
             files.push(file);
             projected = Some(ProjectedReplayCandidates {
                 file_index,
-                data: candidates,
+                data,
+                projection,
             });
         } else {
             let (root, mut root_files) =
@@ -1363,7 +1364,21 @@ pub fn replay_algorithm(
     )?;
     let recovered = if let Some(projected) = projected {
         let mut authenticated = None;
-        for candidate in projected.data {
+        let observed = usize_to_u64(
+            projected.data.len(),
+            "projected replay source length",
+        )?;
+        for (span_bytes, mask) in projected
+            .projection
+            .alternatives()
+            .filter(|(span_bytes, _mask)| *span_bytes <= observed)
+        {
+            let candidate = project_source_bytes(
+                &projected.data,
+                span_bytes,
+                mask,
+                projected.projection.selected_bytes(),
+            )?;
             let file = source.files.get_mut(projected.file_index).ok_or_else(
                 || {
                     let message = "projected source file index is invalid";
