@@ -447,6 +447,23 @@ class SourceSelectionTests(unittest.TestCase):
             self.assertNotIn(str(missing), message)
             self.assertIn("selected source path does not exist", message)
 
+            source = root / "private-user-installation"
+            source.mkdir()
+            (source / "Simpsons.exe").write_bytes(b"fixture")
+            native = OSError(f"cannot scan {source}")
+            with (
+                mock.patch.object(Path, "iterdir", side_effect=native),
+                self.assertRaises(_CHECK.CheckFailure) as raised,
+            ):
+                _CHECK._check_game(repository, source)
+
+            message = str(raised.exception)
+            self.assertNotIn(str(source), message)
+            self.assertEqual(
+                message,
+                "selected source cannot be inspected safely",
+            )
+
     def test_redaction_covers_escaped_windows_source_path(self) -> None:
         source = Path(r"C:\private\user\installed-game")
         diagnostic = (
