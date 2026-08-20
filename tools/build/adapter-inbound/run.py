@@ -573,11 +573,19 @@ def _is_shar_runtime_name(name: str) -> bool:
     )
 
 
+def _is_nonempty_native_executable(path: Path) -> bool:
+    """Return whether one native runtime is nonempty and host-runnable."""
+    return (
+        path.is_file()
+        and path.stat().st_size > 0
+        and (os.name == "nt" or os.access(path, os.X_OK))
+    )
+
+
 def _has_linux_runtime(candidate: Path) -> bool:
     """Return whether a Linux archive contains a non-empty SHAR binary."""
     return any(
-        item.is_file()
-        and item.stat().st_size > 0
+        _is_nonempty_native_executable(item)
         and _is_shar_runtime_name(item.name)
         for item in candidate.rglob("*")
     )
@@ -592,8 +600,7 @@ def _has_macos_runtime(candidate: Path) -> bool:
         if not executable_root.is_dir():
             continue
         if any(
-            item.is_file()
-            and item.stat().st_size > 0
+            _is_nonempty_native_executable(item)
             and _is_shar_runtime_name(item.name)
             for item in executable_root.iterdir()
         ):

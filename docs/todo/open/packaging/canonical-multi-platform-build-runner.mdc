@@ -77,8 +77,10 @@ evidence. Every matching entry is type-checked before any diagnostic is moved,
 so a malformed later entry cannot leave the candidate or cache partially moved.
 Linux candidates now require a non-empty SHAR native executable for both x64
 and ARM64, and macOS candidates require a `.app` bundle with a non-empty SHAR
-executable below `Contents/MacOS`. Plain data-only archives can no longer be
-published as successful desktop packages on those platforms.
+executable below `Contents/MacOS`. On POSIX hosts those native runtimes must also
+retain execute permission, so a renamed data file cannot satisfy publication.
+Plain data-only archives can no longer be published as successful desktop
+packages on those platforms.
 
 Publication also preflights an existing `dist/<ARCH>/` identity as a real
 directory before any rename. A regression proves a colliding regular file is
