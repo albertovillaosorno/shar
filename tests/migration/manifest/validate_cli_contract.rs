@@ -113,12 +113,8 @@ fn executable_requirement_is_path_not_byte_identity() -> io::Result<()> {
 
     let variants = [b"edition-a".as_slice(), b"different-edition".as_slice()];
     for executable in variants {
-        let output = run_validator_with_executable(
-            &manifest,
-            None,
-            false,
-            executable,
-        )?;
+        let output =
+            run_validator_with_executable(&manifest, None, false, executable)?;
         assert!(
             output.status.success(),
             "{}",
