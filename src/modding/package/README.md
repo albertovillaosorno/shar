@@ -11,6 +11,9 @@ relations, content/native trust boundaries, portable member paths, byte lengths,
 SHA-256 identities, provenance, capabilities, and target declarations. One
 package identity can name at most one exact dependency revision and cannot be
 simultaneously required and declared conflicting or superseded.
+Member construction, whole-manifest validation, and content-revision derivation
+share the same reserved-path, portable-path, size, digest, media-type, and role
+rules so invalid member records cannot acquire a canonical package revision.
 
 Transport (`directory`, `.zip`, Android/iOS document selection), staging,
 preview,

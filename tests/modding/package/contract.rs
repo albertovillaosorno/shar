@@ -178,6 +178,42 @@ fn rejects_path_aliases_collisions_and_traversal()
 }
 
 #[test]
+fn member_construction_and_revision_share_manifest_validation()
+-> Result<(), Box<dyn std::error::Error>> {
+    assert!(
+        member_from_bytes(
+            "mod.json",
+            "application/json",
+            "content/manifest",
+            b"{}",
+        )
+        .is_err(),
+        "reserved manifest member was constructed"
+    );
+
+    let mut invalid_role = manifest()?.members;
+    let first = invalid_role
+        .first_mut()
+        .ok_or("fixture did not contain a member")?;
+    first.role = "Content/Invalid".to_owned();
+    assert!(
+        content_revision(&invalid_role).is_err(),
+        "revision hashed a noncanonical member role"
+    );
+
+    let mut oversized = manifest()?.members;
+    let first = oversized
+        .first_mut()
+        .ok_or("fixture did not contain a member")?;
+    first.bytes = 8 * 1024 * 1024 * 1024 + 1;
+    assert!(
+        content_revision(&oversized).is_err(),
+        "revision hashed an oversized member"
+    );
+    Ok(())
+}
+
+#[test]
 fn native_packages_require_explicit_targets_and_trust()
 -> Result<(), Box<dyn std::error::Error>> {
     let mut native = manifest()?;

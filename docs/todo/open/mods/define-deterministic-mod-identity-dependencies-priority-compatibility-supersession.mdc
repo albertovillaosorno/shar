@@ -39,3 +39,7 @@ The normalized v1 manifest now rejects multiple exact revisions of one
 dependency identity and rejects dependency identities that are also declared as
 conflicts or superseded packages. External contract tests cover each
 contradictory relationship shape.
+
+Deterministic content revisions now reuse the same canonical member validation
+as package manifests and member construction, including the reserved manifest
+path, portable identity, byte limits, digest shape, media type, and role.
