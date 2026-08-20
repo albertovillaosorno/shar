@@ -80,8 +80,12 @@ those two phases.
 JSONL calibration rows now also reject outer spaces or tabs, matching the
 canonical manifest producer instead of accepting whitespace-normalized aliases.
 Optional public metadata now distinguishes omission from explicit JSON `null`;
-present kind, taxonomy, and required-file fields must retain producer types.
-Ledger paths must also identify regular files before bytes are read, preventing
+present row kinds must belong to the producer's public taxonomy, taxonomy lists
+cannot introduce unknown or duplicate values, and required-file metadata must
+remain a portable source-relative path. These ignored metadata fields therefore
+cannot smuggle arbitrary private path or kind strings into an accepted
+calibration ledger. Ledger paths must also identify regular files before bytes
+are read, preventing
 calibration from treating devices or other special filesystem nodes as JSONL.
 The read-only observation adapter now fails when an exact-file-only source has
 no countable structural rows, so success cannot produce an empty unusable

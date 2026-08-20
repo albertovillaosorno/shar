@@ -48,6 +48,27 @@ Coordinate = tuple[str, str]
 _MANIFEST_SCHEMA = "shar-schoenwald.game-manifest-ledger.v2"
 _MAX_COUNT = (1 << 64) - 1
 _MAX_COUNT_TEXT = str(_MAX_COUNT)
+_MANIFEST_KINDS = frozenset(
+    {
+        "audio",
+        "build-log",
+        "character_outfit",
+        "document",
+        "error",
+        "generated_artifact",
+        "image",
+        "json-ledger",
+        "language_textbible",
+        "metadata",
+        "movie",
+        "music_arrangement",
+        "p3d_container",
+        "rcf_container",
+        "script",
+        "sound-type",
+        "ui-resource",
+    }
+)
 
 
 class SimilarityInputError(ValueError):
@@ -156,6 +177,11 @@ def _valid_utf8_text(value: object) -> bool:
     return True
 
 
+def _valid_manifest_kind(value: object) -> bool:
+    """Return whether one value is a public manifest kind token."""
+    return _valid_utf8_text(value) and value in _MANIFEST_KINDS
+
+
 def _valid_directory_alias(value: object) -> bool:
     """Return whether a directory coordinate matches producer normalization."""
     if not _valid_utf8_text(value):
@@ -180,13 +206,23 @@ def _valid_extension(value: object) -> bool:
     )
 
 
+def _valid_public_relative_path(value: object) -> bool:
+    """Return whether one metadata path is portable and source-root relative."""
+    if not _valid_utf8_text(value) or not value or chr(92) in value:
+        return False
+    if value.startswith("/") or value.endswith("/") or "//" in value:
+        return False
+    components = value.split("/")
+    return all(component not in {"", ".", ".."} for component in components)
+
+
 def _valid_required_file_metadata(value: object) -> bool:
     """Return whether one public required-file record has canonical shape."""
     if not isinstance(value, dict) or set(value) != {"path", "min"}:
         return False
     minimum = value["min"]
     return (
-        _valid_utf8_text(value["path"])
+        _valid_public_relative_path(value["path"])
         and not isinstance(minimum, bool)
         and isinstance(minimum, int)
         and 0 <= minimum <= _MAX_COUNT
@@ -199,8 +235,10 @@ def _validate_schema_metadata(record: dict[str, Any]) -> None:
         raise LedgerInputError("count ledger schema record has unknown fields")
     if "kind_taxonomy" in record:
         taxonomy = record["kind_taxonomy"]
-        if not isinstance(taxonomy, list) or not all(
-            _valid_utf8_text(kind) for kind in taxonomy
+        if (
+            not isinstance(taxonomy, list)
+            or not all(_valid_manifest_kind(kind) for kind in taxonomy)
+            or len(set(taxonomy)) != len(taxonomy)
         ):
             raise LedgerInputError("count ledger kind taxonomy is invalid")
     if "required_files" in record:
@@ -243,8 +281,8 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
         or not _valid_extension(extension)
     ):
         raise InvalidCoordinateError
-    if "kind" in record and not _valid_utf8_text(kind):
-        raise LedgerInputError("count ledger kind metadata must be valid text")
+    if "kind" in record and not _valid_manifest_kind(kind):
+        raise LedgerInputError("count ledger kind metadata is invalid")
     if (
         isinstance(count, bool)
         or not isinstance(count, int)

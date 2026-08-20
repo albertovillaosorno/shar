@@ -213,6 +213,7 @@ class SourceSimilarityTests(unittest.TestCase):
             '{"dir":"aa//bb","ext":"p3d","min":1}',
             '{"dir":"aa","ext":"p3d","min":1,"kind":null}',
             '{"dir":"aa","ext":"p3d","min":1,"kind":{"private":1}}',
+            '{"dir":"aa","ext":"p3d","min":1,"kind":"private-data"}',
             '{"dir":"\\ud800","ext":"p3d","min":1}',
             '{"dir":"aa","ext":"\\ud800","min":1}',
             '{"dir":"aa","ext":"p3d","min":1,"kind":"\\ud800"}',
@@ -240,6 +241,14 @@ class SourceSimilarityTests(unittest.TestCase):
             ),
             (
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"kind_taxonomy":["private-data"],"required_files":[]}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"kind_taxonomy":["audio","audio"],"required_files":[]}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
                 '"kind_taxonomy":[],"required_files":{}}'
             ),
             (
@@ -250,6 +259,18 @@ class SourceSimilarityTests(unittest.TestCase):
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
                 '"required_files":[{"path":"README.rtf","min":1,'
                 '"private":"metadata"}]}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"required_files":[{"path":"/private/source","min":1}]}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"required_files":[{"path":"../private","min":1}]}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"required_files":[{"path":"private\\source","min":1}]}'
             ),
             (
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
