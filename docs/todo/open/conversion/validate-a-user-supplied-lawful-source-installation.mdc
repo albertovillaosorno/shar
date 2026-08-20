@@ -101,8 +101,10 @@ Build preflight also redacts the selected source root from manifest and deep
 validator stdout, stderr, and execution errors before those messages are
 reported or stored as validation summaries. Source-root filesystem inspection
 errors are converted to a path-free preflight failure before they reach the
-public diagnostic. Windows path redaction is case-insensitive so native case
-normalization cannot expose the selected installation root. Regression tests
+public diagnostic. Nested executable failures likewise report only the source
+shape defect and never echo the private nested relative path. Windows path
+redaction is case-insensitive so native case normalization cannot expose the
+selected installation root. Regression tests
 preserve useful shortfall details while
 requiring the private root to become `<selected-source>`, and a real
 `validate-game` failure fixture confirms the wrapper does not echo its absolute

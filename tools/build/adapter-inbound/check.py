@@ -216,10 +216,8 @@ def _inspect_game_root(game: Path) -> None:
             else []
         )
         if nested:
-            example = nested[0].relative_to(game)
             raise CheckFailure(
-                "Simpsons.exe must be directly inside the selected source; "
-                f"found nested {example}"
+                "Simpsons.exe must be directly inside the selected source"
             )
         raise CheckFailure(
             "selected source does not contain a direct Simpsons.exe"
@@ -233,10 +231,8 @@ def _inspect_game_root(game: Path) -> None:
         if path != executable and path.name == "Simpsons.exe"
     ]
     if nested:
-        example = min(nested).relative_to(game)
         raise CheckFailure(
-            "selected source contains another nested Simpsons.exe; "
-            f"remove or separately select {example}"
+            "selected source contains another nested Simpsons.exe"
         )
 
 

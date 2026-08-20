@@ -372,11 +372,30 @@ class SourceSelectionTests(unittest.TestCase):
             nested.mkdir()
             (nested / "Simpsons.exe").symlink_to(executable)
 
-            with self.assertRaisesRegex(
-                _CHECK.CheckFailure,
-                "selected source contains another nested Simpsons.exe",
-            ):
+            with self.assertRaises(_CHECK.CheckFailure) as raised:
                 _CHECK._check_game(repository, source)
+
+            message = str(raised.exception)
+            self.assertEqual(
+                message,
+                "selected source contains another nested Simpsons.exe",
+            )
+            self.assertNotIn("copy", message)
+
+            nested_only = root / "nested-only"
+            private_copy = nested_only / "private-copy"
+            private_copy.mkdir(parents=True)
+            (private_copy / "Simpsons.exe").write_bytes(b"fixture")
+
+            with self.assertRaises(_CHECK.CheckFailure) as raised:
+                _CHECK._check_game(repository, nested_only)
+
+            message = str(raised.exception)
+            self.assertEqual(
+                message,
+                "Simpsons.exe must be directly inside the selected source",
+            )
+            self.assertNotIn("private-copy", message)
 
     @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
     def test_direct_source_redirects_are_rejected(self) -> None:
