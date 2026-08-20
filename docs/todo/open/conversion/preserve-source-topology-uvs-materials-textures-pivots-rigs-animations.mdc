@@ -68,5 +68,9 @@ Bound skeletal animation keys now must remain inside the declared clip frame
 range. Authored keys beyond the last exported frame fail closed instead of being
 silently truncated while interpolation samples only the shorter clip duration.
 
+Skeletal PTRN loading now also models decoder-produced top-level loose channels
+and legacy animation extras explicitly. Non-empty payloads fail closed instead
+of being silently discarded by Serde while grouped skeletal tracks are exported.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

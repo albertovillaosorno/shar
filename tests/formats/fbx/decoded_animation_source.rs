@@ -33,7 +33,9 @@
 use std::fs;
 use std::path::PathBuf;
 
-use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
+use fbx::adapters::driven::decoded_animation_source::{
+    DecodedAnimationError, load_animation_clips,
+};
 use fbx::domain::animation::BoneAnimationTrack;
 use fbx::domain::animation::quaternion::decode_signed_i16_wxyz;
 use fbx::domain::skeleton::Bone;
@@ -265,4 +267,46 @@ fn decodes_compressed_words_as_signed_wxyz_components() {
         return;
     };
     assert_quaternion_close(decoded, [-1f64, 0f64, 0f64, 0f64]);
+}
+
+#[test]
+fn rejects_unbound_top_level_animation_data() {
+    let cases = [
+        ("loose", "\"loose_channels\":[]", "\"loose_channels\":[{}]"),
+        (
+            "legacy",
+            "\"legacy_animation_extras\":[]",
+            "\"legacy_animation_extras\":[{}]",
+        ),
+    ];
+    for (label, empty, populated) in cases {
+        let root = temp_root().with_file_name(format!(
+            "fbx-decoded-animation-{label}-{}",
+            std::process::id()
+        ));
+        let path = root.join("animation.json");
+        let fixture = fixture_json().replace(empty, populated);
+        let setup = fs::create_dir_all(&root)
+            .and_then(|()| fs::write(&path, fixture));
+        assert!(
+            setup.is_ok(),
+            "synthetic top-level fixture should be writable"
+        );
+        let bones = [Bone {
+            id: "Root".to_owned(),
+            parent_id: None,
+            rest_matrix: rest_matrix([1., 2., 3.]),
+        }];
+        let result = load_animation_clips(&[path.as_path()], &bones);
+        let cleanup = fs::remove_dir_all(&root);
+        assert!(
+            cleanup.is_ok(),
+            "synthetic top-level fixture should be removed"
+        );
+
+        assert_eq!(
+            result,
+            Err(DecodedAnimationError::UnsupportedTopLevelAnimationData)
+        );
+    }
 }
