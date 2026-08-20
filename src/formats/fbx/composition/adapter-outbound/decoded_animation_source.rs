@@ -48,6 +48,7 @@ use std::path::Path;
 
 use schoenwald_filesystem::adapters::driving::local;
 use serde::Deserialize;
+use serde_json::Value;
 
 use crate::domain::animation::quaternion::{
     Error as QuaternionError, decode_signed_i16_wxyz, from_row_matrix,
@@ -82,6 +83,8 @@ pub enum DecodedAnimationError {
     UnsupportedSchema(String),
     /// Decoded animation was not a skeletal PTRN clip.
     UnsupportedAnimationType(String),
+    /// Top-level animation payloads cannot be preserved by skeletal FBX export.
+    UnsupportedTopLevelAnimationData,
     /// Fixed-width identity padding appeared before the end of an identity.
     InvalidIdentityPadding,
     /// Decoded identity contained a non-printing control character.
@@ -175,6 +178,12 @@ struct DecodedAnimation {
     /// Group-list containers in decoded source order.
     #[serde(default)]
     group_lists: Vec<DecodedGroupList>,
+    /// Channels attached directly to the animation instead of a target group.
+    #[serde(default)]
+    loose_channels: Vec<Value>,
+    /// Legacy top-level animation payloads outside the grouped PTRN contract.
+    #[serde(default)]
+    legacy_animation_extras: Vec<Value>,
 }
 
 /// Decoded group-list container.
@@ -279,6 +288,11 @@ fn load_clip(
         return Err(DecodedAnimationError::UnsupportedAnimationType(
             decoded.animation_type,
         ));
+    }
+    if !decoded.loose_channels.is_empty()
+        || !decoded.legacy_animation_extras.is_empty()
+    {
+        return Err(DecodedAnimationError::UnsupportedTopLevelAnimationData);
     }
     let frame_count = frame_count(decoded.frames)?;
     let groups = decoded_groups(decoded.group_lists)?;
