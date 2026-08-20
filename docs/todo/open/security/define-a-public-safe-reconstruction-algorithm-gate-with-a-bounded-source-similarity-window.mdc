@@ -120,7 +120,9 @@ grouping, and case-equivalent target ancestor collisions.
 This structural guard narrows what can be committed publicly; it does not
 replace
 source-backed cryptographic replay evidence or the pending similarity
-calibration.
+calibration. It also mirrors the runtime's single projected-source limit, so a
+plan with multiple otherwise valid projected inputs fails repository policy
+before publication instead of becoming a runtime-only rejection.
 
 A separate maintainer-only `source-variant-evidence` helper checks whether a
 private cross-variant common-byte artifact is an ordered subsequence of supplied
