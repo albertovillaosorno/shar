@@ -225,11 +225,21 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
     return (directory, extension), count
 
 
+def _ledger_lines(text: str) -> list[str]:
+    """Split JSONL only on LF while tolerating one terminal LF."""
+    if not text:
+        return []
+    lines = text.split("\n")
+    if text.endswith("\n"):
+        lines.pop()
+    return lines
+
+
 def parse_count_ledger(text: str) -> dict[Coordinate, int]:
     """Parse public manifest coordinates without retaining metadata payloads."""
     counts: dict[Coordinate, int] = {}
     count_field: str | None = None
-    for line_number, line in enumerate(text.splitlines(), start=1):
+    for line_number, line in enumerate(_ledger_lines(text), start=1):
         record = _parse_jsonl_record(line, line_number)
         if _is_schema_record(record, line_number):
             continue
@@ -249,13 +259,17 @@ def parse_count_ledger(text: str) -> dict[Coordinate, int]:
 
 
 def load_count_ledger(path: Path) -> dict[Coordinate, int]:
-    """Load one public JSONL ledger without disclosing its local path."""
+    """Load one canonical public JSONL ledger without disclosing its path."""
     try:
-        text = path.read_text(encoding="utf-8")
+        text = path.read_bytes().decode("utf-8")
     except (OSError, UnicodeError) as error:
         raise LedgerInputError(
             "count ledger could not be read as UTF-8"
         ) from error
+    if "\r" in text:
+        raise LedgerInputError("count ledger must use LF line endings")
+    if not text.endswith("\n"):
+        raise LedgerInputError("count ledger must end with LF")
     return parse_count_ledger(text)
 
 

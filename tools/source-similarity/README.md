@@ -24,8 +24,10 @@ manifest-header metadata must retain their public JSON shapes but are ignored by
 the metric. Coordinate extensions must be nonempty; files without extensions use
 the manifest's `(none)` token. Coordinate counts, required-file minima, and each
 ledger's total count must fit the unsigned 64-bit range used by the supported
-64-bit Rust manifest producers. The command never prints an admission result or
-embeds an acceptance threshold. Input failures omit local ledger paths.
+64-bit Rust manifest producers. File inputs preserve the canonical producer
+framing: UTF-8, LF-only record boundaries, and a final LF. The command never
+prints an admission result or embeds an acceptance threshold. Input failures
+omit local ledger paths.
 
 ## Ownership
 
