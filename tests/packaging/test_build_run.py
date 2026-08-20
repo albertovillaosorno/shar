@@ -1244,11 +1244,29 @@ class CandidateArtifactTests(unittest.TestCase):
                         candidate,
                         _RUN._TARGETS_BY_ID[target_id],
                     )
-                binary.write_bytes(b"\x7fELFsynthetic")
+                header = bytearray(20)
+                header[:4] = b"\x7fELF"
+                header[4] = 2
+                header[5] = 1
+                machine = 0x00B7 if target_id == "linux-arm64" else 0x003E
+                header[18:20] = machine.to_bytes(2, "little")
+                binary.write_bytes(header)
                 _RUN._validate_candidate_artifact(
                     candidate,
                     _RUN._TARGETS_BY_ID[target_id],
                 )
+
+                wrong_machine = 0x003E if machine == 0x00B7 else 0x00B7
+                header[18:20] = wrong_machine.to_bytes(2, "little")
+                binary.write_bytes(header)
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
 
     def test_macos_candidate_requires_shar_app_runtime(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-macos-candidate-") as raw:
@@ -1277,11 +1295,24 @@ class CandidateArtifactTests(unittest.TestCase):
                     candidate,
                     _RUN._TARGETS_BY_ID["macos-arm64"],
                 )
-            executable.write_bytes(bytes.fromhex("cffaedfe") + b"synthetic")
+            macho = bytearray(bytes.fromhex("cffaedfe"))
+            macho.extend(_RUN._MACHO_ARM64_CPU.to_bytes(4, "little"))
+            executable.write_bytes(macho)
             _RUN._validate_candidate_artifact(
                 candidate,
                 _RUN._TARGETS_BY_ID["macos-arm64"],
             )
+
+            macho[4:8] = (0x01000007).to_bytes(4, "little")
+            executable.write_bytes(macho)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
 
     def test_windows_candidate_requires_shar_executable(self) -> None:
         with tempfile.TemporaryDirectory(
@@ -1315,11 +1346,23 @@ class CandidateArtifactTests(unittest.TestCase):
             payload[:2] = b"MZ"
             payload[0x3C:0x40] = (0x80).to_bytes(4, "little")
             payload[0x80:0x84] = b"PE\0\0"
+            payload.extend((0x8664).to_bytes(2, "little"))
             executable.write_bytes(payload)
             _RUN._validate_candidate_artifact(
                 candidate,
                 _RUN._TARGETS_BY_ID["windows-x64"],
             )
+
+            payload[0x84:0x86] = (0xAA64).to_bytes(2, "little")
+            executable.write_bytes(payload)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
 
     def test_candidate_rejects_empty_declared_artifact(self) -> None:
         cases = (

@@ -623,43 +623,126 @@ def _is_shar_runtime_name(name: str) -> bool:
     )
 
 
-_MACHO_MAGICS = frozenset(
-    {
-        bytes.fromhex("cafebabe"),
-        bytes.fromhex("cafebabf"),
-        bytes.fromhex("cefaedfe"),
-        bytes.fromhex("cffaedfe"),
-        bytes.fromhex("bebafeca"),
-        bytes.fromhex("bfbafeca"),
-        bytes.fromhex("feedface"),
-        bytes.fromhex("feedfacf"),
-    }
-)
+_ELF_MACHINES = {"amd64": 0x003E, "arm64": 0x00B7}
+_PE_MACHINES = {"amd64": 0x8664, "arm64": 0xAA64}
+_MACHO_ARM64_CPU = 0x0100000C
+_MACHO_THIN_ENDIAN = {
+    bytes.fromhex("cffaedfe"): "little",
+    bytes.fromhex("feedfacf"): "big",
+}
+_MACHO_FAT = {
+    bytes.fromhex("cafebabe"): ("big", 20),
+    bytes.fromhex("cafebabf"): ("big", 32),
+    bytes.fromhex("bebafeca"): ("little", 20),
+    bytes.fromhex("bfbafeca"): ("little", 32),
+}
 
 
-def _has_native_binary_signature(path: Path, system: str) -> bool:
-    """Return whether one file begins with the declared native binary format."""
+def _matches_elf(stream: object, prefix: bytes, architecture: str) -> bool:
+    """Return whether one ELF header declares the selected architecture."""
+    header = prefix + stream.read(16)
+    if len(header) != 20 or header[4] != 2:
+        return False
+    byte_order = {1: "little", 2: "big"}.get(header[5])
+    expected = _ELF_MACHINES.get(architecture)
+    return (
+        byte_order is not None
+        and expected is not None
+        and int.from_bytes(header[18:20], byte_order) == expected
+    )
+
+
+def _matches_pe(stream: object, prefix: bytes, architecture: str) -> bool:
+    """Return whether one PE header declares the selected architecture."""
+    if prefix[:2] != b"MZ":
+        return False
+    stream.seek(0x3C)
+    offset_bytes = stream.read(4)
+    if len(offset_bytes) != 4:
+        return False
+    stream.seek(int.from_bytes(offset_bytes, "little"))
+    signature = stream.read(4)
+    machine = stream.read(2)
+    expected = _PE_MACHINES.get(architecture)
+    return (
+        signature == b"PE\0\0"
+        and len(machine) == 2
+        and expected is not None
+        and int.from_bytes(machine, "little") == expected
+    )
+
+
+def _matches_thin_macho(stream: object, byte_order: str) -> bool:
+    """Return whether one thin Mach-O header declares ARM64."""
+    cpu = stream.read(4)
+    return (
+        len(cpu) == 4
+        and int.from_bytes(cpu, byte_order) == _MACHO_ARM64_CPU
+    )
+
+
+def _fat_macho_contains_arm64(
+    stream: object,
+    byte_order: str,
+    entry_size: int,
+) -> bool:
+    """Return whether one bounded universal Mach-O header contains ARM64."""
+    count_bytes = stream.read(4)
+    if len(count_bytes) != 4:
+        return False
+    count = int.from_bytes(count_bytes, byte_order)
+    if count == 0 or count > 64:
+        return False
+    for _ in range(count):
+        cpu = stream.read(4)
+        rest = stream.read(entry_size - 4)
+        if len(cpu) != 4 or len(rest) != entry_size - 4:
+            return False
+        if int.from_bytes(cpu, byte_order) == _MACHO_ARM64_CPU:
+            return True
+    return False
+
+
+def _matches_macho(stream: object, prefix: bytes, architecture: str) -> bool:
+    """Return whether one Mach-O header contains the selected architecture."""
+    if architecture != "arm64":
+        return False
+    thin_order = _MACHO_THIN_ENDIAN.get(prefix)
+    if thin_order is not None:
+        return _matches_thin_macho(stream, thin_order)
+    fat = _MACHO_FAT.get(prefix)
+    if fat is None:
+        return False
+    byte_order, entry_size = fat
+    return _fat_macho_contains_arm64(stream, byte_order, entry_size)
+
+
+def _has_native_binary_signature(
+    path: Path,
+    system: str,
+    architecture: str,
+) -> bool:
+    """Return whether one file matches its declared native target format."""
     try:
         with path.open("rb") as stream:
             prefix = stream.read(4)
-            if system == "linux":
-                return prefix == b"\x7fELF"
+            if system == "linux" and prefix == b"\x7fELF":
+                return _matches_elf(stream, prefix, architecture)
             if system == "macos":
-                return prefix in _MACHO_MAGICS
-            if system != "windows" or prefix[:2] != b"MZ":
-                return False
-            stream.seek(0x3C)
-            offset = stream.read(4)
-            if len(offset) != 4:
-                return False
-            stream.seek(int.from_bytes(offset, "little"))
-            return stream.read(4) == b"PE\0\0"
+                return _matches_macho(stream, prefix, architecture)
+            if system == "windows":
+                return _matches_pe(stream, prefix, architecture)
+            return False
     except OSError:
         return False
 
 
-def _is_native_executable(path: Path, system: str) -> bool:
-    """Return whether one runtime is host-runnable and a native binary."""
+def _is_native_executable(
+    path: Path,
+    system: str,
+    architecture: str,
+) -> bool:
+    """Return whether one runtime is host-runnable and target-native."""
     permission_ok = (
         system == "windows" or os.name == "nt" or os.access(path, os.X_OK)
     )
@@ -667,20 +750,20 @@ def _is_native_executable(path: Path, system: str) -> bool:
         path.is_file()
         and path.stat().st_size > 0
         and permission_ok
-        and _has_native_binary_signature(path, system)
+        and _has_native_binary_signature(path, system, architecture)
     )
 
 
-def _has_linux_runtime(candidate: Path) -> bool:
+def _has_linux_runtime(candidate: Path, target: Target) -> bool:
     """Return whether a Linux archive contains a non-empty SHAR binary."""
     return any(
-        _is_native_executable(item, "linux")
+        _is_native_executable(item, "linux", target.architecture)
         and _is_shar_runtime_name(item.name)
         for item in candidate.rglob("*")
     )
 
 
-def _has_macos_runtime(candidate: Path) -> bool:
+def _has_macos_runtime(candidate: Path, target: Target) -> bool:
     """Return whether a macOS archive contains a runnable SHAR app bundle."""
     for bundle in candidate.rglob("*"):
         if not bundle.is_dir() or bundle.suffix.casefold() != ".app":
@@ -689,7 +772,7 @@ def _has_macos_runtime(candidate: Path) -> bool:
         if not executable_root.is_dir():
             continue
         if any(
-            _is_native_executable(item, "macos")
+            _is_native_executable(item, "macos", target.architecture)
             and _is_shar_runtime_name(item.name)
             for item in executable_root.iterdir()
         ):
@@ -700,7 +783,7 @@ def _has_macos_runtime(candidate: Path) -> bool:
 def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
     """Require UAT archives to contain their declared runnable artifact."""
     if target.system == "linux":
-        if _has_linux_runtime(candidate):
+        if _has_linux_runtime(candidate, target):
             return
         message = (
             "candidate package has no non-empty Linux SHAR executable: "
@@ -708,7 +791,7 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
         )
         raise RunFailure(message)
     if target.system == "macos":
-        if _has_macos_runtime(candidate):
+        if _has_macos_runtime(candidate, target):
             return
         message = (
             "candidate package has no runnable macOS SHAR app bundle: "
@@ -719,7 +802,7 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
     if target.system == "windows":
         if any(
             item.suffix.casefold() == ".exe"
-            and _is_native_executable(item, "windows")
+            and _is_native_executable(item, "windows", target.architecture)
             and _is_shar_runtime_name(item.stem)
             for item in candidate.rglob("*")
         ):
