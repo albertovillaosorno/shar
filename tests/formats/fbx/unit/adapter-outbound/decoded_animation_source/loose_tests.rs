@@ -175,3 +175,32 @@ fn rejects_unsupported_bound_channel_parameter() {
         })
     );
 }
+
+#[test]
+fn rest_rotation_ignores_nonuniform_scale() -> Result<(), String> {
+    let bone = Bone {
+        id: "Root".to_owned(),
+        parent_id: None,
+        rest_matrix: [
+            0., 2., 0., 0., -1., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+        ],
+    };
+    let transforms = rest_transforms(&[bone])
+        .map_err(|error| format!("rest transform failed: {error:?}"))?;
+    let rotation = transforms
+        .get("Root")
+        .ok_or("root rest transform is missing")?
+        .rotation_wxyz;
+    let expected = std::f64::consts::FRAC_1_SQRT_2;
+    let expected_rotation = [expected, 0., 0., expected];
+    if rotation
+        .iter()
+        .zip(expected_rotation)
+        .any(|(actual, expected)| (*actual - expected).abs() > 1e-6)
+    {
+        return Err(format!(
+            "rest rotation inherited nonuniform scale: {rotation:?}"
+        ));
+    }
+    Ok(())
+}

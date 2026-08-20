@@ -57,7 +57,7 @@ use crate::domain::animation::{
     AnimationClip, AnimationClipError, BoneAnimationTrack, LocalTransformSample,
 };
 use crate::domain::skeleton::Bone;
-use crate::domain::transform::matrix::widen;
+use crate::domain::transform::matrix::{MatrixError, compose, decompose, widen};
 
 /// Decoded animation adapter failure.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -146,6 +146,8 @@ pub enum DecodedAnimationError {
     InvalidValueWidth,
     /// One interpolation metadata value was unsupported or duplicated.
     InvalidInterpolationMode,
+    /// Skeleton rest-matrix decomposition failed.
+    Matrix(MatrixError),
     /// Quaternion reconstruction failed.
     Quaternion(QuaternionError),
     /// Domain clip validation failed.
@@ -763,10 +765,16 @@ fn rest_transforms(
         .iter()
         .map(|bone| {
             let matrix = widen(&bone.rest_matrix);
-            let rotation_wxyz = from_row_matrix(&matrix)
+            let mut parts =
+                decompose(&matrix).map_err(DecodedAnimationError::Matrix)?;
+            let translation = parts.translation;
+            parts.translation = [0.; 3];
+            parts.scale = [1.; 3];
+            let rotation_matrix = compose(&parts);
+            let rotation_wxyz = from_row_matrix(&rotation_matrix)
                 .map_err(DecodedAnimationError::Quaternion)?;
             Ok((bone.id.clone(), LocalTransformSample {
-                translation: [matrix[12], matrix[13], matrix[14]],
+                translation,
                 rotation_wxyz,
             }))
         })
