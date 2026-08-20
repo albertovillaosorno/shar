@@ -623,19 +623,58 @@ def _is_shar_runtime_name(name: str) -> bool:
     )
 
 
-def _is_nonempty_native_executable(path: Path) -> bool:
-    """Return whether one native runtime is nonempty and host-runnable."""
+_MACHO_MAGICS = frozenset(
+    {
+        bytes.fromhex("cafebabe"),
+        bytes.fromhex("cafebabf"),
+        bytes.fromhex("cefaedfe"),
+        bytes.fromhex("cffaedfe"),
+        bytes.fromhex("bebafeca"),
+        bytes.fromhex("bfbafeca"),
+        bytes.fromhex("feedface"),
+        bytes.fromhex("feedfacf"),
+    }
+)
+
+
+def _has_native_binary_signature(path: Path, system: str) -> bool:
+    """Return whether one file begins with the declared native binary format."""
+    try:
+        with path.open("rb") as stream:
+            prefix = stream.read(4)
+            if system == "linux":
+                return prefix == b"\x7fELF"
+            if system == "macos":
+                return prefix in _MACHO_MAGICS
+            if system != "windows" or prefix[:2] != b"MZ":
+                return False
+            stream.seek(0x3C)
+            offset = stream.read(4)
+            if len(offset) != 4:
+                return False
+            stream.seek(int.from_bytes(offset, "little"))
+            return stream.read(4) == b"PE\0\0"
+    except OSError:
+        return False
+
+
+def _is_native_executable(path: Path, system: str) -> bool:
+    """Return whether one runtime is host-runnable and a native binary."""
+    permission_ok = (
+        system == "windows" or os.name == "nt" or os.access(path, os.X_OK)
+    )
     return (
         path.is_file()
         and path.stat().st_size > 0
-        and (os.name == "nt" or os.access(path, os.X_OK))
+        and permission_ok
+        and _has_native_binary_signature(path, system)
     )
 
 
 def _has_linux_runtime(candidate: Path) -> bool:
     """Return whether a Linux archive contains a non-empty SHAR binary."""
     return any(
-        _is_nonempty_native_executable(item)
+        _is_native_executable(item, "linux")
         and _is_shar_runtime_name(item.name)
         for item in candidate.rglob("*")
     )
@@ -650,7 +689,7 @@ def _has_macos_runtime(candidate: Path) -> bool:
         if not executable_root.is_dir():
             continue
         if any(
-            _is_nonempty_native_executable(item)
+            _is_native_executable(item, "macos")
             and _is_shar_runtime_name(item.name)
             for item in executable_root.iterdir()
         ):
@@ -679,9 +718,8 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
 
     if target.system == "windows":
         if any(
-            item.is_file()
-            and item.suffix.casefold() == ".exe"
-            and item.stat().st_size > 0
+            item.suffix.casefold() == ".exe"
+            and _is_native_executable(item, "windows")
             and _is_shar_runtime_name(item.stem)
             for item in candidate.rglob("*")
         ):

@@ -1233,17 +1233,18 @@ class CandidateArtifactTests(unittest.TestCase):
                     / f"shar-{platform}-Shipping"
                 )
                 binary.parent.mkdir(parents=True)
-                binary.write_bytes(b"game")
+                binary.write_bytes(b"not an ELF")
                 if _RUN.os.name != "nt":
-                    with self.assertRaisesRegex(
-                        _RUN.RunFailure,
-                        "Linux SHAR executable",
-                    ):
-                        _RUN._validate_candidate_artifact(
-                            candidate,
-                            _RUN._TARGETS_BY_ID[target_id],
-                        )
                     binary.chmod(0o755)
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
+                binary.write_bytes(b"\x7fELFsynthetic")
                 _RUN._validate_candidate_artifact(
                     candidate,
                     _RUN._TARGETS_BY_ID[target_id],
@@ -1265,17 +1266,18 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["macos-arm64"],
                 )
 
-            executable.write_bytes(b"game")
+            executable.write_bytes(b"not Mach-O")
             if _RUN.os.name != "nt":
-                with self.assertRaisesRegex(
-                    _RUN.RunFailure,
-                    "macOS SHAR app bundle",
-                ):
-                    _RUN._validate_candidate_artifact(
-                        candidate,
-                        _RUN._TARGETS_BY_ID["macos-arm64"],
-                    )
                 executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+            executable.write_bytes(bytes.fromhex("cffaedfe") + b"synthetic")
             _RUN._validate_candidate_artifact(
                 candidate,
                 _RUN._TARGETS_BY_ID["macos-arm64"],
@@ -1299,7 +1301,21 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["windows-x64"],
                 )
 
-            (candidate / "shar-Win64-Shipping.exe").write_bytes(b"game")
+            executable = candidate / "shar-Win64-Shipping.exe"
+            executable.write_bytes(b"not PE")
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+            payload = bytearray(0x84)
+            payload[:2] = b"MZ"
+            payload[0x3C:0x40] = (0x80).to_bytes(4, "little")
+            payload[0x80:0x84] = b"PE\0\0"
+            executable.write_bytes(payload)
             _RUN._validate_candidate_artifact(
                 candidate,
                 _RUN._TARGETS_BY_ID["windows-x64"],
