@@ -57,6 +57,11 @@ def _root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
+def _is_directory_link(path: Path) -> bool:
+    """Return whether one directory identity redirects elsewhere."""
+    return path.is_symlink() or os.path.isjunction(path)
+
+
 def _discover_target(root: Path) -> Path:
     dist = root / "dist"
     if not dist.is_dir():
@@ -64,6 +69,8 @@ def _discover_target(root: Path) -> Path:
             "shortcut: dist/ does not exist; build Windows first or "
             "use --target"
         )
+    if _is_directory_link(dist):
+        raise SystemExit("shortcut: dist/ must be a real directory")
 
     executables = sorted(
         path.resolve()
