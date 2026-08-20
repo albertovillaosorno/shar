@@ -405,11 +405,18 @@ fn collect_authoring_source(
     }
     let mut roots = Vec::with_capacity(paths.len());
     let mut files = Vec::new();
+    let mut projected_source_seen = false;
     for (index, (path, projection)) in paths.iter().zip(projections).enumerate()
     {
         let input = usize_to_u64(index, "source input index")?;
         let (root, mut root_files) = collect_one_root(input, path, settings)?;
         if let Some(projection) = projection {
+            if projected_source_seen {
+                return Err(AlgorithmError::new(
+                    "algorithm supports at most one projected source input",
+                ));
+            }
+            projected_source_seen = true;
             if root_files.len() != 1 {
                 return Err(AlgorithmError::new(
                     "source projection requires one direct file input",
