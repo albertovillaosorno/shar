@@ -543,6 +543,12 @@ impl PackageManifest {
             },
         }
         self.validate_members()?;
+        let expected_revision = content_revision(&self.members)?;
+        if self.package_revision != expected_revision {
+            return Err(PackageError::new(
+                "package revision does not match canonical members",
+            ));
+        }
         self.validate_provenance()
     }
 

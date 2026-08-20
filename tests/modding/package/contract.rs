@@ -214,6 +214,29 @@ fn member_construction_and_revision_share_manifest_validation()
 }
 
 #[test]
+fn package_revision_must_bind_canonical_members()
+-> Result<(), Box<dyn std::error::Error>> {
+    let mut stale_token = manifest()?;
+    stale_token.package_revision = "1".to_owned();
+    assert!(
+        stale_token.validate().is_err(),
+        "arbitrary package revision token was accepted"
+    );
+
+    let mut stale_members = manifest()?;
+    let first = stale_members
+        .members
+        .first_mut()
+        .ok_or("fixture did not contain a member")?;
+    first.role = "localization/alternate".to_owned();
+    assert!(
+        stale_members.validate().is_err(),
+        "changed canonical members retained a stale package revision"
+    );
+    Ok(())
+}
+
+#[test]
 fn content_revision_frames_variable_member_metadata()
 -> Result<(), Box<dyn std::error::Error>> {
     let first =
