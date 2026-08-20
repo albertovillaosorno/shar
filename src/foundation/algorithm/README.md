@@ -22,6 +22,16 @@ Canonical v1 documents serialize protected ciphertext as deterministic
 repository gates. Replay also accepts the earlier monolithic ciphertext string
 representation and normalizes both forms to the same authenticated bytes.
 
+Direct-file source inputs may optionally use an authenticated
+`offset-mask-set-v1` projection. Authoring supplies compact canonical source
+bytes plus one or more positional masks. The plan stores only those masks and
+never stores a source hash for that projected record. Replay applies each mask
+to the caller's actual file, derives the source key from the selected bytes, and
+writes nothing unless one complete projected candidate authenticates every
+protected target. Distinct known layouts may use distinct alternatives as long
+as they select the same common-byte count. Raw, non-projected source records
+retain their existing exact SHA-256 binding for backward compatibility.
+
 ## Navigation
 
 - `composition`

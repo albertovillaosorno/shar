@@ -32,4 +32,7 @@
 
 mod engine;
 
-pub use engine::{create_algorithm, replay_algorithm};
+pub use engine::{
+    create_algorithm, create_algorithm_with_source_projections,
+    replay_algorithm,
+};

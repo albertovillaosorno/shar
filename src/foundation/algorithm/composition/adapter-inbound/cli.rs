@@ -36,11 +36,14 @@ use std::process::ExitCode;
 use schoenwald_cli::{CliProgram, CommandOutcome, run_process};
 use schoenwald_filesystem::adapters::driving::local;
 
-use crate::{Settings, create_algorithm, replay_algorithm};
+use crate::{
+    Settings, SourceProjection, create_algorithm_with_source_projections,
+    replay_algorithm,
+};
 
-const USAGE: &str = "usage: algorithm <create|replay> --source <PATH>... \
-[--settings <SETTINGS.json>] (--target <PATH> | --algorithm <FILE.txt>) \
---output <PATH>";
+const USAGE: &str = "usage: algorithm <create|replay> --source <PATH> \
+[--source-projection <PROJECTION.json>]... [--settings <SETTINGS.json>] \
+(--target <PATH> | --algorithm <FILE.txt>) --output <PATH>";
 const DEFAULT_SETTINGS: &str =
     "src/foundation/algorithm/composition/adapter-inbound/settings.json";
 
@@ -54,6 +57,7 @@ enum Mode {
 struct Invocation {
     mode: Mode,
     sources: Vec<PathBuf>,
+    source_projections: Vec<Option<PathBuf>>,
     settings: PathBuf,
     target: Option<PathBuf>,
     algorithm: Option<PathBuf>,
@@ -86,13 +90,21 @@ fn parse(arguments: &[String]) -> Result<Invocation, ()> {
         _ => return Err(()),
     };
     let mut sources = Vec::new();
+    let mut source_projections = Vec::new();
     let mut settings = None;
     let mut target = None;
     let mut algorithm = None;
     let mut output = None;
     while let Some(flag) = values.next() {
         match flag.as_str() {
-            "--source" => sources.push(PathBuf::from(take_value(&mut values)?)),
+            "--source" => {
+                sources.push(PathBuf::from(take_value(&mut values)?));
+                source_projections.push(None);
+            },
+            "--source-projection" => {
+                let projection = source_projections.last_mut().ok_or(())?;
+                set_once(projection, take_value(&mut values)?)?;
+            },
             "--settings" => set_once(&mut settings, take_value(&mut values)?)?,
             "--target" => set_once(&mut target, take_value(&mut values)?)?,
             "--algorithm" => {
@@ -106,7 +118,11 @@ fn parse(arguments: &[String]) -> Result<Invocation, ()> {
     let valid_shape = !sources.is_empty()
         && match mode {
             Mode::Create => target.is_some() && algorithm.is_none(),
-            Mode::Replay => target.is_none() && algorithm.is_some(),
+            Mode::Replay => {
+                target.is_none()
+                    && algorithm.is_some()
+                    && source_projections.iter().all(Option::is_none)
+            },
         };
     if !valid_shape {
         return Err(());
@@ -114,6 +130,7 @@ fn parse(arguments: &[String]) -> Result<Invocation, ()> {
     Ok(Invocation {
         mode,
         sources,
+        source_projections,
         settings: settings.unwrap_or_else(|| PathBuf::from(DEFAULT_SETTINGS)),
         target,
         algorithm,
@@ -127,15 +144,38 @@ fn execute_invocation(invocation: &Invocation) -> Result<(), String> {
     let settings = Settings::from_json(&settings_text)
         .map_err(|error| error.to_string())?;
     match invocation.mode {
-        Mode::Create => create_algorithm(
-            &settings,
-            &invocation.sources,
-            invocation
-                .target
-                .as_deref()
-                .ok_or_else(|| USAGE.to_owned())?,
-            &invocation.output,
-        ),
+        Mode::Create => {
+            let mut projections =
+                Vec::with_capacity(invocation.source_projections.len());
+            for path in &invocation.source_projections {
+                let projection = match path {
+                    Some(path) => {
+                        let text = local::read_utf8(path).map_err(|error| {
+                            format!(
+                                "cannot read source projection: {:?}",
+                                error.kind()
+                            )
+                        })?;
+                        Some(
+                            SourceProjection::from_json(&text)
+                                .map_err(|error| error.to_string())?,
+                        )
+                    },
+                    None => None,
+                };
+                projections.push(projection);
+            }
+            create_algorithm_with_source_projections(
+                &settings,
+                &invocation.sources,
+                &projections,
+                invocation
+                    .target
+                    .as_deref()
+                    .ok_or_else(|| USAGE.to_owned())?,
+                &invocation.output,
+            )
+        },
         Mode::Replay => replay_algorithm(
             &settings,
             &invocation.sources,

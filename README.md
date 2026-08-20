@@ -235,10 +235,13 @@ algorithms/muckluck/algorithm/<target>.txt
 
 A populated plan uses the implemented `shar.algorithm.v1` schema. The generic
 algorithm engine binds replay to caller-supplied local source evidence,
-validates
-its embedded source and target descriptors, and refuses wrong or tampered
-evidence before writing replay output. There is no parallel integrity file; the
-plan owns the hashes required by its own source-bound replay contract.
+validates its embedded source and target descriptors, and refuses wrong or
+tampered evidence before writing replay output. Ordinary source records retain
+exact SHA-256 binding. A direct-file variant source may instead carry a bounded
+projection without a source hash (`offset-mask-set-v1`). Replay extracts the
+common bytes from one authenticated positional layout and derives the source key
+from those bytes, not from the edition-specific executable hash. There is no
+parallel integrity file.
 
 The maintainer-only `in/`, `master/`, and shared `out/` directories described in
 `algorithms/README.md` are authoring workspace state, not public release

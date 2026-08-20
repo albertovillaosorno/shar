@@ -40,7 +40,10 @@ use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 use serde as _;
 use serde_json as _;
-use shar_algorithm::{Settings, create_algorithm, replay_algorithm};
+use shar_algorithm::{
+    Settings, SourceProjection, create_algorithm,
+    create_algorithm_with_source_projections, replay_algorithm,
+};
 use shar_sha256 as _;
 
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
@@ -323,6 +326,126 @@ fn noncanonical_ciphertext_chunks_are_rejected() {
     assert!(
         result.is_ok(),
         "noncanonical ciphertext rejection failed: {result:?}"
+    );
+}
+
+fn run_projected_source_replays_across_variants()
+-> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("projected-source")?;
+    let canonical = temp.path.join("canonical.bin");
+    let first_variant = temp.path.join("variant-a.bin");
+    let second_variant = temp.path.join("variant-b.bin");
+    let wrong_variant = temp.path.join("variant-wrong.bin");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    let first_output = temp.path.join("first-output.bin");
+    let second_output = temp.path.join("second-output.bin");
+    let wrong_output = temp.path.join("wrong-output.bin");
+    let common = (0_u16..1024)
+        .map(|index| u8::try_from(index % 251).unwrap_or_default())
+        .collect::<Vec<_>>();
+    let mut first = Vec::with_capacity(common.len().saturating_mul(2));
+    for value in &common {
+        first.push(*value);
+        first.push(0xfe);
+    }
+    let mut second = vec![0xff; 13];
+    for value in &common {
+        second.push(0xfd);
+        second.push(*value);
+        second.push(0xfc);
+    }
+    let mut wrong = second.clone();
+    let wrong_common = wrong
+        .len()
+        .checked_sub(2)
+        .and_then(|index| wrong.get_mut(index))
+        .ok_or("synthetic projected byte is missing")?;
+    *wrong_common = 0xfb;
+    fs::write(&canonical, &common)?;
+    fs::write(&first_variant, &first)?;
+    fs::write(&second_variant, &second)?;
+    fs::write(&wrong_variant, wrong)?;
+    fs::write(&target, b"synthetic projected target")?;
+    let projection = SourceProjection::ordered_subsequence(&common, &[
+        first.as_slice(),
+        second.as_slice(),
+    ])?;
+    create_algorithm_with_source_projections(
+        &settings()?,
+        std::slice::from_ref(&canonical),
+        &[Some(projection)],
+        &target,
+        &algorithm,
+    )?;
+
+    let plan: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&algorithm)?)?;
+    let source = plan
+        .get("source")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|records| records.first())
+        .and_then(serde_json::Value::as_object)
+        .ok_or("projected source record missing")?;
+    if source.contains_key("sha256") || !source.contains_key("projection") {
+        return Err("projected source retained a byte hash".into());
+    }
+    let alternatives = source
+        .get("projection")
+        .and_then(|projection| projection.get("alternatives"))
+        .and_then(serde_json::Value::as_array)
+        .ok_or("projection alternatives missing")?;
+    if alternatives.len() != 2 {
+        return Err("distinct variant layouts were not retained".into());
+    }
+
+    replay_algorithm(
+        &settings()?,
+        std::slice::from_ref(&first_variant),
+        &algorithm,
+        &first_output,
+    )?;
+    replay_algorithm(
+        &settings()?,
+        std::slice::from_ref(&second_variant),
+        &algorithm,
+        &second_output,
+    )?;
+    if fs::read(&first_output)? != fs::read(&target)?
+        || fs::read(&second_output)? != fs::read(&target)?
+    {
+        return Err("projected variants did not replay the same target".into());
+    }
+    let rejected = replay_algorithm(
+        &settings()?,
+        std::slice::from_ref(&wrong_variant),
+        &algorithm,
+        &wrong_output,
+    );
+    if rejected.is_ok() || wrong_output.exists() {
+        return Err("changed projected bytes replayed successfully".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn projected_source_replays_across_distinct_layouts() {
+    let result = run_projected_source_replays_across_variants();
+    assert!(result.is_ok(), "projected replay failed: {result:?}");
+}
+
+#[test]
+fn projected_source_descriptor_rejects_duplicate_layouts() {
+    let text = r#"{
+  "kind": "offset-mask-set-v1",
+  "alternatives": [
+    {"span_bytes": 8, "mask": ["80"]},
+    {"span_bytes": 8, "mask": ["80"]}
+  ]
+}"#;
+    assert!(
+        SourceProjection::from_json(text).is_err(),
+        "duplicate projection layouts must not survive canonical parsing"
     );
 }
 

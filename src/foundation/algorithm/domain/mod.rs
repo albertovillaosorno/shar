@@ -32,4 +32,4 @@
 
 pub mod model;
 
-pub use model::{AlgorithmError, Settings};
+pub use model::{AlgorithmError, Settings, SourceProjection};

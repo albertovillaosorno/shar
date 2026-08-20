@@ -38,5 +38,8 @@ pub mod document;
 #[path = "../domain/mod.rs"]
 pub mod domain;
 
-pub use application::{create_algorithm, replay_algorithm};
-pub use domain::{AlgorithmError, Settings};
+pub use application::{
+    create_algorithm, create_algorithm_with_source_projections,
+    replay_algorithm,
+};
+pub use domain::{AlgorithmError, Settings, SourceProjection};
