@@ -34,3 +34,8 @@ No explicit task dependency was recorded in the legacy TODO.
 
 Open work migrated from the canonical TODO. Add implementation and
 validation evidence here as the task advances.
+
+The normalized v1 manifest now rejects multiple exact revisions of one
+dependency identity and rejects dependency identities that are also declared as
+conflicts or superseded packages. External contract tests cover each
+contradictory relationship shape.

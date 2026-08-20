@@ -210,6 +210,44 @@ fn rejects_self_relationships_and_nondeterministic_lists()
         "self dependency was accepted"
     );
 
+    let mut duplicate_dependency = manifest()?;
+    duplicate_dependency.dependencies = vec![
+        Dependency {
+            canonical_id: "shar.core.example".to_owned(),
+            revision: "1".to_owned(),
+        },
+        Dependency {
+            canonical_id: "shar.core.example".to_owned(),
+            revision: "2".to_owned(),
+        },
+    ];
+    assert!(
+        duplicate_dependency.validate().is_err(),
+        "multiple exact revisions of one dependency id were accepted"
+    );
+
+    let mut conflicting_dependency = manifest()?;
+    conflicting_dependency.dependencies = vec![Dependency {
+        canonical_id: "shar.core.example".to_owned(),
+        revision: "1".to_owned(),
+    }];
+    conflicting_dependency.conflicts = vec!["shar.core.example".to_owned()];
+    assert!(
+        conflicting_dependency.validate().is_err(),
+        "dependency was also accepted as a conflict"
+    );
+
+    let mut superseded_dependency = manifest()?;
+    superseded_dependency.dependencies = vec![Dependency {
+        canonical_id: "shar.core.example".to_owned(),
+        revision: "1".to_owned(),
+    }];
+    superseded_dependency.supersedes = vec!["shar.core.example".to_owned()];
+    assert!(
+        superseded_dependency.validate().is_err(),
+        "dependency was also accepted as superseded"
+    );
+
     let mut unsorted = manifest()?;
     unsorted.required_capabilities = vec![
         "rendering.v1".to_owned(),

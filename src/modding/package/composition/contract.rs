@@ -444,12 +444,21 @@ impl PackageManifest {
                 "dependencies must be strictly sorted and unique",
             ));
         }
-        for dependency in &self.dependencies {
+        for (index, dependency) in self.dependencies.iter().enumerate() {
             validate_id(&dependency.canonical_id, "dependency id")?;
             validate_revision(&dependency.revision)?;
             if dependency.canonical_id == self.canonical_id {
                 return Err(PackageError::new(
                     "package must not depend on itself",
+                ));
+            }
+            if index > 0
+                && self.dependencies.get(index.saturating_sub(1)).is_some_and(
+                    |previous| previous.canonical_id == dependency.canonical_id,
+                )
+            {
+                return Err(PackageError::new(
+                    "dependency package ids must be unique",
                 ));
             }
         }
@@ -472,6 +481,26 @@ impl PackageManifest {
                 "one package id must not be both conflict and \
                  supersession data",
             ));
+        }
+        for dependency in &self.dependencies {
+            if self
+                .conflicts
+                .binary_search(&dependency.canonical_id)
+                .is_ok()
+            {
+                return Err(PackageError::new(
+                    "dependency package ids must not also be conflicts",
+                ));
+            }
+            if self
+                .supersedes
+                .binary_search(&dependency.canonical_id)
+                .is_ok()
+            {
+                return Err(PackageError::new(
+                    "dependency package ids must not also be superseded",
+                ));
+            }
         }
         validate_semantic_list(
             &self.required_capabilities,
