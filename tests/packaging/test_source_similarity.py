@@ -277,24 +277,40 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertIn("could not be read", stderr.getvalue())
 
     def test_cli_rejects_malformed_ledger_without_disclosing_path(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            reference = root / "private-reference-name.jsonl"
-            candidate = root / "candidate.jsonl"
-            reference.write_text("not-json\n", encoding="utf-8")
-            candidate.write_text(
-                '{"dir":"aa","ext":"p3d","min":1}\n',
-                encoding="utf-8",
-            )
-            stdout = StringIO()
-            stderr = StringIO()
-            with redirect_stdout(stdout), redirect_stderr(stderr):
-                return_code = _MOD.main([str(reference), str(candidate)])
+        malformed_ledgers = (
+            ("not-json\n", "invalid JSONL"),
+            ('{"dir":"aa","ext":"p3d","min":1}', "end with LF"),
+            ('{"dir":"aa","ext":"p3d","min":1}\r\n', "LF line endings"),
+            (
+                (
+                    '{"dir":"aa","ext":"p3d","min":1}'
+                    '\u2028{"dir":"bb","ext":"p3d","min":1}\n'
+                ),
+                "invalid JSONL",
+            ),
+        )
+        for contents, expected in malformed_ledgers:
+            with self.subTest(expected=expected):
+                with tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    reference = root / "private-reference-name.jsonl"
+                    candidate = root / "candidate.jsonl"
+                    reference.write_text(contents, encoding="utf-8")
+                    candidate.write_text(
+                        '{"dir":"aa","ext":"p3d","min":1}\n',
+                        encoding="utf-8",
+                    )
+                    stdout = StringIO()
+                    stderr = StringIO()
+                    with redirect_stdout(stdout), redirect_stderr(stderr):
+                        return_code = _MOD.main(
+                            [str(reference), str(candidate)]
+                        )
 
-        self.assertNotEqual(return_code, 0)
-        self.assertEqual(stdout.getvalue(), "")
-        self.assertNotIn(str(reference), stderr.getvalue())
-        self.assertIn("invalid JSONL", stderr.getvalue())
+                self.assertNotEqual(return_code, 0)
+                self.assertEqual(stdout.getvalue(), "")
+                self.assertNotIn(str(reference), stderr.getvalue())
+                self.assertIn(expected, stderr.getvalue())
 
 
 if __name__ == "__main__":
