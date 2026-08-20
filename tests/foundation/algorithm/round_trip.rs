@@ -434,6 +434,39 @@ fn projected_source_replays_across_distinct_layouts() {
     assert!(result.is_ok(), "projected replay failed: {result:?}");
 }
 
+fn run_multiple_projected_sources_are_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("multiple-projected-sources")?;
+    let first = temp.path.join("first.bin");
+    let second = temp.path.join("second.bin");
+    let target = temp.path.join("target.bin");
+    let algorithm = temp.path.join("plan.txt");
+    fs::write(&first, vec![0x31_u8; 1024])?;
+    fs::write(&second, vec![0x32_u8; 1024])?;
+    fs::write(&target, b"synthetic target")?;
+    let projection = SourceProjection::offset_mask(1024, vec![0xff; 128])?;
+    let result = create_algorithm_with_source_projections(
+        &settings()?,
+        &[first, second],
+        &[Some(projection.clone()), Some(projection)],
+        &target,
+        &algorithm,
+    );
+    if result.is_ok() || algorithm.exists() {
+        return Err("multiple projected sources were published".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn multiple_projected_sources_are_rejected_before_publication() {
+    let result = run_multiple_projected_sources_are_rejected();
+    assert!(
+        result.is_ok(),
+        "projection authoring limit failed: {result:?}"
+    );
+}
+
 #[test]
 fn projected_source_descriptor_rejects_duplicate_layouts() {
     let text = r#"{
