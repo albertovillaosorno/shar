@@ -214,6 +214,22 @@ fn member_construction_and_revision_share_manifest_validation()
 }
 
 #[test]
+fn content_revision_frames_variable_member_metadata()
+-> Result<(), Box<dyn std::error::Error>> {
+    let first =
+        member_from_bytes("content/item.bin", "a", "bc", b"same bytes")?;
+    let second =
+        member_from_bytes("content/item.bin", "ab", "c", b"same bytes")?;
+    let first_revision = content_revision(&[first])?;
+    let second_revision = content_revision(&[second])?;
+    assert_ne!(
+        first_revision, second_revision,
+        "metadata field boundaries collided in the content revision"
+    );
+    Ok(())
+}
+
+#[test]
 fn native_packages_require_explicit_targets_and_trust()
 -> Result<(), Box<dyn std::error::Error>> {
     let mut native = manifest()?;

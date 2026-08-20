@@ -642,6 +642,20 @@ pub fn member_from_bytes(
     Ok(member)
 }
 
+fn update_length_prefixed(
+    state: &mut Sha256,
+    value: &str,
+    label: &str,
+) -> Result<(), PackageError> {
+    let bytes = value.as_bytes();
+    let length = u64::try_from(bytes.len()).map_err(|_error| {
+        PackageError::new(format!("{label} length does not fit u64"))
+    })?;
+    state.update(&length.to_be_bytes());
+    state.update(bytes);
+    Ok(())
+}
+
 /// Derives one deterministic lowercase revision from an already-sorted member
 /// set.
 ///
@@ -686,17 +700,15 @@ pub fn content_revision(members: &[Member]) -> Result<String, PackageError> {
                 "revision package exceeds total byte limit",
             ));
         }
-        let path_bytes = member.path.as_bytes();
-        let path_length =
-            u64::try_from(path_bytes.len()).map_err(|_error| {
-                PackageError::new("member path length does not fit u64")
-            })?;
-        state.update(&path_length.to_be_bytes());
-        state.update(path_bytes);
+        update_length_prefixed(&mut state, &member.path, "member path")?;
         state.update(&member.bytes.to_be_bytes());
         state.update(member.sha256.as_bytes());
-        state.update(member.media_type.as_bytes());
-        state.update(member.role.as_bytes());
+        update_length_prefixed(
+            &mut state,
+            &member.media_type,
+            "member media type",
+        )?;
+        update_length_prefixed(&mut state, &member.role, "member role")?;
     }
     Ok(state.finalize_hex())
 }
