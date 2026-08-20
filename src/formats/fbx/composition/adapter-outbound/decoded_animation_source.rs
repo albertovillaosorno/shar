@@ -177,6 +177,14 @@ struct DecodedGroupList {
     groups: Vec<DecodedGroup>,
 }
 
+/// Validated decoded groups with lookup and authored-order evidence.
+struct DecodedGroups {
+    /// Groups keyed by canonical target identity.
+    by_id: BTreeMap<String, DecodedGroup>,
+    /// Canonical target identities in decoded source order.
+    source_order: Vec<String>,
+}
+
 /// One decoded animation target group.
 #[derive(Deserialize)]
 struct DecodedGroup {
@@ -266,13 +274,14 @@ fn load_clip(
     let bone_ids: BTreeSet<&str> =
         bones.iter().map(|bone| bone.id.as_str()).collect();
     let ignored_group_ids = groups
-        .keys()
+        .source_order
+        .iter()
         .filter(|group| !bone_ids.contains(group.as_str()))
         .cloned()
         .collect::<Vec<_>>();
     let mut tracks = Vec::new();
     for bone in bones {
-        let Some(group) = groups.get(&bone.id) else {
+        let Some(group) = groups.by_id.get(&bone.id) else {
             continue;
         };
         let rest = *rest_transforms
@@ -291,11 +300,12 @@ fn load_clip(
     .map_err(DecodedAnimationError::Clip)
 }
 
-/// Convert decoded groups into a unique canonical identity map.
+/// Validate decoded groups while retaining source order and keyed lookup.
 fn decoded_groups(
     group_lists: Vec<DecodedGroupList>,
-) -> Result<BTreeMap<String, DecodedGroup>, DecodedAnimationError> {
-    let mut groups = BTreeMap::new();
+) -> Result<DecodedGroups, DecodedAnimationError> {
+    let mut by_id = BTreeMap::new();
+    let mut source_order = Vec::new();
     for list in group_lists {
         let actual = list.groups.len();
         if list.group_count != actual {
@@ -325,12 +335,16 @@ fn decoded_groups(
                     });
                 }
             }
-            if groups.insert(identity.clone(), group).is_some() {
+            if by_id.insert(identity.clone(), group).is_some() {
                 return Err(DecodedAnimationError::DuplicateGroup(identity));
             }
+            source_order.push(identity);
         }
     }
-    Ok(groups)
+    Ok(DecodedGroups {
+        by_id,
+        source_order,
+    })
 }
 
 /// Build one sampled bone track from matching decoded channels.

@@ -164,5 +164,10 @@ sequence. Cluster objects and connections therefore retain source skeleton
 ordinals instead of lexical bone-name order; a focused regression proves a
 `z_root` parent remains before its lexically earlier `a_child` child.
 
+Decoded animation helper-group evidence now retains decoded source-group order
+alongside keyed lookup. Unbound helper identities no longer inherit lexical map
+order; the compact-channel fixture proves `Z_Helper` remains before
+`A_Helper` when that is the source sequence.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
