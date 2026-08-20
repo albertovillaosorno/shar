@@ -35,7 +35,7 @@ use serde as _;
 use serde_json as _;
 use shar_mod_package::{
     CONTRACT_VERSION, Dependency, PackageKind, PackageManifest, Provenance,
-    TrustLevel, content_revision, member_from_bytes,
+    TrustLevel, content_revision, dependency_load_order, member_from_bytes,
 };
 use shar_sha256 as _;
 use unicode_normalization as _;
@@ -249,6 +249,77 @@ fn content_revision_frames_variable_member_metadata()
         first_revision, second_revision,
         "metadata field boundaries collided in the content revision"
     );
+    Ok(())
+}
+
+fn package_with_identity(
+    canonical_id: &str,
+    dependencies: Vec<Dependency>,
+) -> Result<PackageManifest, Box<dyn std::error::Error>> {
+    let mut package = manifest()?;
+    package.canonical_id = canonical_id.to_owned();
+    package.dependencies = dependencies;
+    Ok(package)
+}
+
+#[test]
+fn dependency_order_is_exact_and_discovery_independent()
+-> Result<(), Box<dyn std::error::Error>> {
+    let core = package_with_identity("shar.core", Vec::new())?;
+    let core_revision = core.package_revision.clone();
+    let independent = package_with_identity("shar.independent", Vec::new())?;
+    let feature = package_with_identity("shar.feature", vec![Dependency {
+        canonical_id: core.canonical_id.clone(),
+        revision: core_revision.clone(),
+    }])?;
+    let expected = vec![
+        "shar.core".to_owned(),
+        "shar.feature".to_owned(),
+        "shar.independent".to_owned(),
+    ];
+    assert_eq!(
+        dependency_load_order(&[
+            independent.clone(),
+            feature.clone(),
+            core.clone(),
+        ])?,
+        expected
+    );
+    assert_eq!(
+        dependency_load_order(&[feature, core.clone(), independent])?,
+        expected
+    );
+
+    let missing =
+        package_with_identity("shar.missing-user", vec![Dependency {
+            canonical_id: "shar.absent".to_owned(),
+            revision: core_revision,
+        }])?;
+    assert!(dependency_load_order(&[missing]).is_err());
+
+    let wrong_revision =
+        package_with_identity("shar.wrong-user", vec![Dependency {
+            canonical_id: "shar.core".to_owned(),
+            revision: "wrong".to_owned(),
+        }])?;
+    assert!(dependency_load_order(&[core.clone(), wrong_revision]).is_err());
+    assert!(dependency_load_order(&[core.clone(), core]).is_err());
+    Ok(())
+}
+
+#[test]
+fn dependency_order_rejects_cycles() -> Result<(), Box<dyn std::error::Error>> {
+    let seed = manifest()?;
+    let revision = seed.package_revision;
+    let first = package_with_identity("shar.first", vec![Dependency {
+        canonical_id: "shar.second".to_owned(),
+        revision: revision.clone(),
+    }])?;
+    let second = package_with_identity("shar.second", vec![Dependency {
+        canonical_id: "shar.first".to_owned(),
+        revision,
+    }])?;
+    assert!(dependency_load_order(&[first, second]).is_err());
     Ok(())
 }
 
