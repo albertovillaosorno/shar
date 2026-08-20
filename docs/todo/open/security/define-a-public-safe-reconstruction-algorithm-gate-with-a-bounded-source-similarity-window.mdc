@@ -81,6 +81,8 @@ JSONL calibration rows now also reject outer spaces or tabs, matching the
 canonical manifest producer instead of accepting whitespace-normalized aliases.
 Optional public metadata now distinguishes omission from explicit JSON `null`;
 present kind, taxonomy, and required-file fields must retain producer types.
+Ledger paths must also identify regular files before bytes are read, preventing
+calibration from treating devices or other special filesystem nodes as JSONL.
 Generated manifest
 collision
 ordinals are aggregated into their structural family before

@@ -40,6 +40,7 @@ from dataclasses import dataclass
 from fractions import Fraction
 import json
 from pathlib import Path
+import stat
 import sys
 from typing import Any
 
@@ -289,6 +290,14 @@ def parse_count_ledger(text: str) -> dict[Coordinate, int]:
 
 def load_count_ledger(path: Path) -> dict[Coordinate, int]:
     """Load one canonical public JSONL ledger without disclosing its path."""
+    try:
+        mode = path.stat().st_mode
+    except OSError as error:
+        raise LedgerInputError(
+            "count ledger could not be read as UTF-8"
+        ) from error
+    if not stat.S_ISREG(mode):
+        raise LedgerInputError("count ledger must be a regular file")
     try:
         text = path.read_bytes().decode("utf-8")
     except (OSError, UnicodeError) as error:
