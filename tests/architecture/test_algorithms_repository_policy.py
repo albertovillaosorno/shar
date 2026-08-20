@@ -370,12 +370,16 @@ def _assert_source_layout(source: list[object]) -> None:
     root_is_file: dict[int, bool] = {}
     previous_input: int | None = None
     previous_path: tuple[int, str] | None = None
+    projected_source_seen = False
     for record in source:
         assert isinstance(record, dict)
         input_index = record["input"]
         path = record["path"]
         assert isinstance(input_index, int)
         assert isinstance(path, str)
+        if "projection" in record:
+            assert not projected_source_seen
+            projected_source_seen = True
         if previous_input is None:
             assert input_index == 0
         elif input_index != previous_input:
@@ -742,6 +746,31 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
     for text in invalid:
         with pytest.raises(AssertionError):
             _assert_source_bound_plan(text)
+
+
+def test_public_plan_guard_rejects_multiple_projected_sources() -> None:
+    """Mirror the runtime limit of one projected direct-file source input."""
+    plan = _synthetic_plan()
+    source = plan["source"]
+    assert isinstance(source, list)
+    first = source[0]
+    assert isinstance(first, dict)
+    del first["sha256"]
+    first["projection"] = {
+        "kind": "offset-mask-set-v1",
+        "alternatives": [
+            {
+                "span_bytes": 1024,
+                "mask": ["ff" * 32 for _ in range(4)],
+            }
+        ],
+    }
+    second = dict(first)
+    second["input"] = 1
+    plan["source"] = [first, second]
+
+    with pytest.raises(AssertionError):
+        _assert_source_bound_plan(json.dumps(plan))
 
 
 def test_public_plan_guard_accepts_projection_without_source_hash() -> None:
