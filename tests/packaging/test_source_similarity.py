@@ -41,6 +41,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 _ROOT = Path(__file__).resolve().parents[2]
 _PATH = _ROOT / "tools/source-similarity/adapter-inbound/main.py"
@@ -337,6 +338,22 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(stdout.getvalue(), "")
         self.assertNotIn(str(reference), stderr.getvalue())
         self.assertIn("could not be read", stderr.getvalue())
+
+        with tempfile.TemporaryDirectory() as directory:
+            special = Path(directory)
+            with (
+                mock.patch.object(
+                    Path,
+                    "read_bytes",
+                    side_effect=AssertionError("special ledger was read"),
+                ) as read_bytes,
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "regular file",
+                ),
+            ):
+                _MOD.load_count_ledger(special)
+            read_bytes.assert_not_called()
 
     def test_cli_rejects_malformed_ledger_without_disclosing_path(self) -> None:
         malformed_ledgers = (
