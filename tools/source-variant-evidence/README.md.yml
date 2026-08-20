@@ -1,0 +1,4 @@
+schema: shar-boundary/v1
+path: tools/source-variant-evidence/README.md
+boundary: tools/source-variant-evidence
+authority: README.md

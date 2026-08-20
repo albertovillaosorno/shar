@@ -16,8 +16,11 @@ The current maintainer reference set contains:
 
 These files describe this local authoring workspace. The common-byte artifact
 is derived comparison evidence, not an original executable edition and not a
-direct `shar.algorithm.v1` replay input. The generic algorithm contract binds
-exact source bytes, so cross-edition replay would first need a public-safe,
+direct `shar.algorithm.v1` replay input. The maintainer-only
+`source-variant-evidence` tool currently reports complete ordered-byte matches
+for all three retained executable variants. That local result does not certify
+variants that are not present in this workspace. The generic algorithm contract
+binds exact source bytes. Cross-edition replay would first need a public-safe
 deterministic projection from the user's lawful executable. These files do not
 by themselves define the final public source-admission gate, and users are not
 expected to supply every executable variant.
