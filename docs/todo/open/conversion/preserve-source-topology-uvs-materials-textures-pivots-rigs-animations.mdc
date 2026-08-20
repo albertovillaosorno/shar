@@ -64,5 +64,9 @@ quaternion recovery, removing scale from the rotation basis while retaining the
 exact decomposed translation. A 90-degree Z rest rotation with 2x authored X
 scale now recovers the original rotation instead of a scale-distorted angle.
 
+Bound skeletal animation keys now must remain inside the declared clip frame
+range. Authored keys beyond the last exported frame fail closed instead of being
+silently truncated while interpolation samples only the shorter clip duration.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
