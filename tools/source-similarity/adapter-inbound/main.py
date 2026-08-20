@@ -196,22 +196,21 @@ def _validate_schema_metadata(record: dict[str, Any]) -> None:
     """Require only public manifest header metadata shapes."""
     if set(record) - {"schema", "kind_taxonomy", "required_files"}:
         raise LedgerInputError("count ledger schema record has unknown fields")
-    taxonomy = record.get("kind_taxonomy")
-    if taxonomy is not None and (
-        not isinstance(taxonomy, list)
-        or not all(_valid_utf8_text(kind) for kind in taxonomy)
-    ):
-        raise LedgerInputError("count ledger kind taxonomy is invalid")
-    required_files = record.get("required_files")
-    if required_files is None:
-        return
-    if not isinstance(required_files, list) or not all(
-        _valid_required_file_metadata(requirement)
-        for requirement in required_files
-    ):
-        raise LedgerInputError(
-            "count ledger required-files metadata is invalid"
-        )
+    if "kind_taxonomy" in record:
+        taxonomy = record["kind_taxonomy"]
+        if not isinstance(taxonomy, list) or not all(
+            _valid_utf8_text(kind) for kind in taxonomy
+        ):
+            raise LedgerInputError("count ledger kind taxonomy is invalid")
+    if "required_files" in record:
+        required_files = record["required_files"]
+        if not isinstance(required_files, list) or not all(
+            _valid_required_file_metadata(requirement)
+            for requirement in required_files
+        ):
+            raise LedgerInputError(
+                "count ledger required-files metadata is invalid"
+            )
 
 
 def _is_schema_record(record: dict[str, Any], line_number: int) -> bool:
@@ -243,7 +242,7 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
         or not _valid_extension(extension)
     ):
         raise InvalidCoordinateError
-    if kind is not None and not _valid_utf8_text(kind):
+    if "kind" in record and not _valid_utf8_text(kind):
         raise LedgerInputError("count ledger kind metadata must be valid text")
     if (
         isinstance(count, bool)

@@ -20,8 +20,10 @@ The command prints reference/candidate/shared/union unit counts, reference
 coverage, and weighted-Jaccard similarity. Tracked policy rows use `min`;
 read-only observation rows use `count`. A row must select exactly one, and every
 coordinate row in one ledger must use the same count field. Optional `kind` and
-manifest-header metadata must retain their public JSON shapes but are ignored by
-the metric. Directory coordinates must retain the producer's lowercase,
+manifest-header metadata must retain their public JSON shapes when present;
+explicit JSON `null` is not treated as absence. Those metadata fields remain
+ignored by the metric. Directory coordinates must retain the producer's
+lowercase,
 forward-slash normalization (with the empty string reserved for the game root).
 Coordinate extensions must likewise be nonempty and lowercase; files without
 extensions use the manifest's `(none)` token. Coordinate counts, required-file
