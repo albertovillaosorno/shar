@@ -74,6 +74,51 @@ fn rejects_declared_joint_count_mismatch() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_unrepresentable_joint_rig_semantics() -> Result<(), String> {
+    let cases = [
+        (
+            "dof",
+            concat!(
+                r#"{"schema":"skeleton","name":"skeleton","version":0,"#,
+                r#""num_joints":1,"joints":[{"name":"root","parent":0,"#,
+                r#""dof":1,"free_axes":0,"primary_axis":0,"#,
+                r#""secondary_axis":0,"twist_axis":0,"#,
+                r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}]}"#,
+            ),
+        ),
+        (
+            "metadata",
+            concat!(
+                r#"{"schema":"skeleton","name":"skeleton","version":0,"#,
+                r#""num_joints":1,"joints":[{"name":"root","parent":0,"#,
+                r#""dof":0,"free_axes":0,"primary_axis":0,"#,
+                r#""secondary_axis":0,"twist_axis":0,"#,
+                r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],"#,
+                r#""joint_metadata":[{"kind":"joint_fix_flag","flags":1}]}]}"#,
+            ),
+        ),
+    ];
+    for (label, fixture) in cases {
+        let path = temp_path(&format!("skeleton-rig-{label}"));
+        fs::write(&path, fixture)
+            .map_err(|write_error| write_error.to_string())?;
+        let error = load_skeleton(&path).err();
+        fs::remove_file(&path)
+            .map_err(|remove_error| remove_error.to_string())?;
+        let expected = Some(SkinSourceError::UnsupportedJointRigSemantics {
+            path: path.display().to_string(),
+            joint: 0,
+        });
+        if error != expected {
+            return Err(format!(
+                "unrepresentable {label} joint semantics were accepted"
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_declared_primitive_group_count_mismatch() -> Result<(), String> {
     let path = temp_path("skin-group-count");
     let fixture = concat!(
