@@ -204,3 +204,38 @@ fn rest_rotation_ignores_nonuniform_scale() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn rejects_bound_keys_outside_clip_frame_count() {
+    let bone = Bone {
+        id: "Root".to_owned(),
+        parent_id: None,
+        rest_matrix: [
+            1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+        ],
+    };
+    let group = DecodedGroup {
+        name: "Root".to_owned(),
+        channel_count: 1,
+        channels: vec![DecodedChannel {
+            kind: "vector3".to_owned(),
+            param: "TRAN".to_owned(),
+            mapping: None,
+            constants: None,
+            key_count: 2,
+            frames: vec![0, 2],
+            values: vec![vec![0., 0., 0.], vec![2., 0., 0.]],
+            compressed_values: Vec::new(),
+            channel_metadata: Vec::new(),
+        }],
+    };
+    let rest = LocalTransformSample {
+        translation: [0.; 3],
+        rotation_wxyz: [1., 0., 0., 0.],
+    };
+
+    assert_eq!(
+        sample_track(&bone, &group, rest, 2),
+        Err(DecodedAnimationError::InvalidKeySeries)
+    );
+}

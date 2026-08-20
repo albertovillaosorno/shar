@@ -363,6 +363,7 @@ fn sample_track(
     frame_count: usize,
 ) -> Result<BoneAnimationTrack, DecodedAnimationError> {
     validate_bound_channel_parameters(group)?;
+    validate_bound_channel_frames(group, frame_count)?;
     let translation = unique_channel(group, "TRAN")?;
     let rotation = unique_channel(group, "ROT_")?;
     let mut samples = Vec::with_capacity(frame_count);
@@ -397,6 +398,22 @@ fn validate_bound_channel_parameters(
                 parameter: channel.param.clone(),
             });
         }
+    }
+    Ok(())
+}
+
+/// Reject bound keys outside the declared clip frame range.
+fn validate_bound_channel_frames(
+    group: &DecodedGroup,
+    frame_count: usize,
+) -> Result<(), DecodedAnimationError> {
+    if group.channels.iter().any(|channel| {
+        channel
+            .frames
+            .iter()
+            .any(|frame| usize::from(*frame) >= frame_count)
+    }) {
+        return Err(DecodedAnimationError::InvalidKeySeries);
     }
     Ok(())
 }
