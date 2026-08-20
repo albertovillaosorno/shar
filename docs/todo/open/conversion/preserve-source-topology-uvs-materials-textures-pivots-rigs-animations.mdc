@@ -59,5 +59,10 @@ transform property other than the explicitly preserved `TRAN` and `ROT_`
 channels. Unsupported authored transform data can no longer disappear from the
 export silently; unmatched helper groups remain retained as ignored evidence.
 
+Skeletal animation rest defaults now decompose the authored local matrix before
+quaternion recovery, removing scale from the rotation basis while retaining the
+exact decomposed translation. A 90-degree Z rest rotation with 2x authored X
+scale now recovers the original rotation instead of a scale-distorted angle.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
