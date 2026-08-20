@@ -310,14 +310,14 @@ def measure(
         EmptyUnionError: If both vectors produce an empty union.
 
     """
-    _validate(reference)
-    _validate(candidate)
-    reference_units = sum(reference.values())
-    candidate_units = sum(candidate.values())
+    reference_snapshot = _validated_snapshot(reference)
+    candidate_snapshot = _validated_snapshot(candidate)
+    reference_units = sum(reference_snapshot.values())
+    candidate_units = sum(candidate_snapshot.values())
     if reference_units == 0:
         raise EmptyReferenceError
-    comparable_reference = _collapse_collision_families(reference)
-    comparable_candidate = _collapse_collision_families(candidate)
+    comparable_reference = _collapse_collision_families(reference_snapshot)
+    comparable_candidate = _collapse_collision_families(candidate_snapshot)
     coordinates = set(comparable_reference) | set(comparable_candidate)
     shared = sum(
         min(comparable_reference.get(key, 0), comparable_candidate.get(key, 0))
@@ -362,6 +362,15 @@ def _collapse_collision_families(
         key = (_collision_family(directory), extension)
         collapsed[key] = collapsed.get(key, 0) + count
     return collapsed
+
+
+def _validated_snapshot(
+    values: Mapping[Coordinate, int],
+) -> dict[Coordinate, int]:
+    """Capture and validate one stable programmatic count-vector snapshot."""
+    snapshot = dict(values.items())
+    _validate(snapshot)
+    return snapshot
 
 
 def _validate(values: Mapping[Coordinate, int]) -> None:
