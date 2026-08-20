@@ -114,6 +114,67 @@ fn assert_tree_equal(
     Ok(())
 }
 
+fn assert_canonical_ciphertext_chunks(
+    text: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    if let Some(line) = text.lines().find(|line| line.len() > 80) {
+        return Err(format!("algorithm line exceeds 80 columns: {line}").into());
+    }
+    let document: serde_json::Value = serde_json::from_str(text)?;
+    let targets = document
+        .get("target")
+        .and_then(serde_json::Value::as_array)
+        .ok_or("algorithm target array missing")?;
+    for target in targets {
+        let chunks = target
+            .get("ciphertext")
+            .and_then(serde_json::Value::as_array)
+            .ok_or("canonical ciphertext chunks missing")?;
+        if chunks.is_empty() {
+            return Err("canonical ciphertext chunks are empty".into());
+        }
+        for chunk in chunks {
+            let chunk = chunk.as_str().ok_or("ciphertext chunk is not text")?;
+            if chunk.is_empty() || chunk.len() > 64 || chunk.len() % 2 != 0 {
+                return Err("ciphertext chunk width is not canonical".into());
+            }
+        }
+    }
+    Ok(())
+}
+
+fn collapse_ciphertext_chunks(
+    text: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let mut document: serde_json::Value = serde_json::from_str(text)?;
+    let targets = document
+        .get_mut("target")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or("algorithm target array missing")?;
+    for target in targets {
+        let object = target
+            .as_object_mut()
+            .ok_or("algorithm target is not an object")?;
+        let chunks = object
+            .get("ciphertext")
+            .and_then(serde_json::Value::as_array)
+            .ok_or("canonical ciphertext chunks missing")?;
+        let mut ciphertext = String::new();
+        for chunk in chunks {
+            ciphertext.push_str(
+                chunk.as_str().ok_or("ciphertext chunk is not text")?,
+            );
+        }
+        drop(object.insert(
+            "ciphertext".to_owned(),
+            serde_json::Value::String(ciphertext),
+        ));
+    }
+    let mut legacy = serde_json::to_string_pretty(&document)?;
+    legacy.push('\n');
+    Ok(legacy)
+}
+
 fn run_directory_round_trip_is_deterministic()
 -> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("round-trip")?;
@@ -146,6 +207,7 @@ fn run_directory_round_trip_is_deterministic()
             "protected target plaintext leaked into algorithm text".into()
         );
     }
+    assert_canonical_ciphertext_chunks(&plan_text)?;
 
     replay_algorithm(
         &settings,
@@ -160,6 +222,108 @@ fn run_directory_round_trip_is_deterministic()
 fn directory_round_trip_is_deterministic() {
     let result = run_directory_round_trip_is_deterministic();
     assert!(result.is_ok(), "directory round trip failed: {result:?}");
+}
+
+fn run_legacy_monolithic_ciphertext_replays()
+-> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("legacy-ciphertext")?;
+    let (source, target) = write_fixture_tree(&temp.path)?;
+    let algorithm = temp.path.join("legacy.txt");
+    let replayed = temp.path.join("replayed");
+    let settings = settings()?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+    let canonical = fs::read_to_string(&algorithm)?;
+    fs::write(&algorithm, collapse_ciphertext_chunks(&canonical)?)?;
+    replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &algorithm,
+        &replayed,
+    )?;
+    assert_tree_equal(&target, &replayed)
+}
+
+#[test]
+fn legacy_monolithic_ciphertext_replays() {
+    let result = run_legacy_monolithic_ciphertext_replays();
+    assert!(
+        result.is_ok(),
+        "legacy ciphertext replay failed: {result:?}"
+    );
+}
+
+fn run_noncanonical_ciphertext_chunks_are_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempTree::create("noncanonical-ciphertext")?;
+    let (source, target) = write_fixture_tree(&temp.path)?;
+    let algorithm = temp.path.join("plan.txt");
+    let output = temp.path.join("output");
+    let settings = settings()?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &algorithm,
+    )?;
+    let mut document: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&algorithm)?)?;
+    let chunks = document
+        .get_mut("target")
+        .and_then(serde_json::Value::as_array_mut)
+        .and_then(|targets| targets.first_mut())
+        .and_then(serde_json::Value::as_object_mut)
+        .and_then(|target| target.get_mut("ciphertext"))
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or("canonical ciphertext chunks missing")?;
+    let first = chunks
+        .first()
+        .and_then(serde_json::Value::as_str)
+        .ok_or("first ciphertext chunk missing")?
+        .to_owned();
+    if first.len() != 64 {
+        return Err("first ciphertext chunk is unexpectedly short".into());
+    }
+    let prefix = first
+        .get(..2)
+        .ok_or("ciphertext prefix is not an ASCII boundary")?
+        .to_owned();
+    let suffix = first
+        .get(2..)
+        .ok_or("ciphertext suffix is not an ASCII boundary")?
+        .to_owned();
+    let first_chunk =
+        chunks.first_mut().ok_or("first ciphertext chunk missing")?;
+    *first_chunk = serde_json::Value::String(prefix);
+    chunks.insert(1, serde_json::Value::String(suffix));
+    fs::write(&algorithm, serde_json::to_string_pretty(&document)?)?;
+
+    let result = replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &algorithm,
+        &output,
+    );
+    if result.is_ok() {
+        return Err("noncanonical ciphertext chunks replayed".into());
+    }
+    if output.exists() {
+        return Err("noncanonical chunks created replay output".into());
+    }
+    Ok(())
+}
+
+#[test]
+fn noncanonical_ciphertext_chunks_are_rejected() {
+    let result = run_noncanonical_ciphertext_chunks_are_rejected();
+    assert!(
+        result.is_ok(),
+        "noncanonical ciphertext rejection failed: {result:?}"
+    );
 }
 
 fn run_wrong_source_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
@@ -337,27 +501,48 @@ fn caller_source_tree_remains_unchanged_after_create_and_replay() {
     assert!(result.is_ok(), "source immutability failed: {result:?}");
 }
 
+fn flip_first_hex(
+    value: &mut String,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let Some(first) = value.as_bytes().first().copied() else {
+        return Err("ciphertext value is empty".into());
+    };
+    let replacement = if first == b'0' {
+        "1"
+    } else {
+        "0"
+    };
+    value.replace_range(0..1, replacement);
+    Ok(())
+}
+
 fn tamper_first_ciphertext(
     text: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let marker = "\"ciphertext\": \"";
-    let Some(marker_start) = text.find(marker) else {
-        return Err("ciphertext marker missing".into());
-    };
-    let value_start = marker_start.saturating_add(marker.len());
-    let Some(original) = text.as_bytes().get(value_start).copied() else {
-        return Err("ciphertext value missing".into());
-    };
-    let replacement = if original == b'0' {
-        '1'
-    } else {
-        '0'
-    };
-    let mut tampered = text.to_owned();
-    tampered.replace_range(
-        value_start..value_start.saturating_add(1),
-        &replacement.to_string(),
-    );
+    let mut document: serde_json::Value = serde_json::from_str(text)?;
+    let ciphertext = document
+        .get_mut("target")
+        .and_then(serde_json::Value::as_array_mut)
+        .and_then(|targets| targets.first_mut())
+        .and_then(serde_json::Value::as_object_mut)
+        .and_then(|target| target.get_mut("ciphertext"))
+        .ok_or("ciphertext value missing")?;
+    match ciphertext {
+        serde_json::Value::String(value) => flip_first_hex(value)?,
+        serde_json::Value::Array(chunks) => {
+            let first_chunk =
+                chunks.first_mut().ok_or("ciphertext chunk missing")?;
+            let mut changed = first_chunk
+                .as_str()
+                .ok_or("ciphertext chunk is not text")?
+                .to_owned();
+            flip_first_hex(&mut changed)?;
+            *first_chunk = serde_json::Value::String(changed);
+        },
+        _ => return Err("ciphertext value is invalid".into()),
+    }
+    let mut tampered = serde_json::to_string_pretty(&document)?;
+    tampered.push('\n');
     Ok(tampered)
 }
 

@@ -30,11 +30,14 @@
 
 //! Algorithm serialization records and settings codec.
 
+use serde::de::Deserializer;
+use serde::ser::{SerializeSeq, Serializer};
 use serde::{Deserialize, Serialize};
 
 use crate::domain::{AlgorithmError, Settings};
 
 pub(crate) const ALGORITHM_SCHEMA: &str = "shar.algorithm.v1";
+const CIPHERTEXT_CHUNK_HEX_LEN: usize = 64;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -121,12 +124,70 @@ pub(crate) struct TargetDescriptor {
     pub(crate) sha256: String,
 }
 
+fn serialize_ciphertext<S>(
+    ciphertext: &str,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let chunk_count = ciphertext.len().div_ceil(CIPHERTEXT_CHUNK_HEX_LEN);
+    let mut sequence = serializer.serialize_seq(Some(chunk_count))?;
+    for bytes in ciphertext.as_bytes().chunks(CIPHERTEXT_CHUNK_HEX_LEN) {
+        let chunk =
+            std::str::from_utf8(bytes).map_err(serde::ser::Error::custom)?;
+        sequence.serialize_element(chunk)?;
+    }
+    sequence.end()
+}
+
+fn deserialize_ciphertext<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum CiphertextWire {
+        Legacy(String),
+        Chunks(Vec<String>),
+    }
+
+    match CiphertextWire::deserialize(deserializer)? {
+        CiphertextWire::Legacy(ciphertext) => Ok(ciphertext),
+        CiphertextWire::Chunks(chunks) => {
+            if chunks.is_empty() {
+                return Err(serde::de::Error::custom(
+                    "ciphertext chunks must not be empty",
+                ));
+            }
+            for (index, chunk) in chunks.iter().enumerate() {
+                let is_last = index == chunks.len().saturating_sub(1);
+                let width = chunk.len();
+                if width == 0
+                    || width > CIPHERTEXT_CHUNK_HEX_LEN
+                    || width % 2 != 0
+                    || (!is_last && width != CIPHERTEXT_CHUNK_HEX_LEN)
+                {
+                    return Err(serde::de::Error::custom(
+                        "ciphertext chunks are not canonical",
+                    ));
+                }
+            }
+            Ok(chunks.concat())
+        },
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct ProtectedTarget {
     #[serde(flatten)]
     pub(crate) descriptor: TargetDescriptor,
     pub(crate) nonce: String,
+    #[serde(
+        serialize_with = "serialize_ciphertext",
+        deserialize_with = "deserialize_ciphertext"
+    )]
     pub(crate) ciphertext: String,
 }
 
@@ -147,4 +208,41 @@ pub(crate) struct AuthenticatedMetadata<'a> {
     pub(crate) source: &'a [SourceRecord],
     pub(crate) target_kind: TargetKind,
     pub(crate) target: &'a [TargetDescriptor],
+}
+
+fn is_hash_field_prefix(prefix: &str) -> bool {
+    matches!(prefix, "\"settings_sha256\":" | "\"sha256\":")
+}
+
+fn wrap_hash_fields(text: &str) -> String {
+    let mut bounded = String::with_capacity(text.len());
+    for line in text.lines() {
+        let trimmed = line.trim_start();
+        let indent = line.strip_suffix(trimmed).unwrap_or_default();
+        if line.len() > 80
+            && let Some((field, field_value)) = trimmed.split_once(' ')
+            && is_hash_field_prefix(field)
+        {
+            bounded.push_str(indent);
+            bounded.push_str(field);
+            bounded.push('\n');
+            bounded.push_str(indent);
+            bounded.push_str("  ");
+            bounded.push_str(field_value);
+            bounded.push('\n');
+            continue;
+        }
+        bounded.push_str(line);
+        bounded.push('\n');
+    }
+    bounded
+}
+
+pub(crate) fn algorithm_json_text(
+    document: &AlgorithmDocument,
+) -> Result<String, AlgorithmError> {
+    let text = serde_json::to_string_pretty(document).map_err(|error| {
+        AlgorithmError::new(format!("cannot serialize algorithm: {error}"))
+    })?;
+    Ok(wrap_hash_fields(&text))
 }

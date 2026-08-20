@@ -43,7 +43,7 @@ use shar_sha256::{Sha256, digest, digest_hex};
 use crate::document::{
     ALGORITHM_SCHEMA, AlgorithmDocument, AuthenticatedMetadata,
     ProtectedTarget, SourceRecord, TargetDescriptor, TargetKind,
-    settings_json_bytes,
+    algorithm_json_text, settings_json_bytes,
 };
 use crate::domain::{AlgorithmError, Settings};
 
@@ -652,11 +652,7 @@ pub fn create_algorithm(
         target_kind,
         target: protected,
     };
-    let mut text =
-        serde_json::to_string_pretty(&document).map_err(|error| {
-            AlgorithmError::new(format!("cannot serialize algorithm: {error}"))
-        })?;
-    text.push('\n');
+    let text = algorithm_json_text(&document)?;
     local::write_new_text(algorithm_path, &text, true)
         .map_err(|error| io_failure("cannot write algorithm output", &error))
 }

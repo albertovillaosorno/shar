@@ -97,6 +97,23 @@ def test_icon_algorithm_records_exact_recovered_target_identities() -> None:
     assert observed == _TARGET_IDENTITIES
 
 
+def test_icon_algorithm_uses_bounded_ciphertext_chunks() -> None:
+    plan = _plan()
+    targets = plan["target"]
+
+    assert isinstance(targets, list)
+    for target in targets:
+        assert isinstance(target, dict)
+        chunks = target["ciphertext"]
+        assert isinstance(chunks, list)
+        assert chunks
+        assert all(isinstance(chunk, str) for chunk in chunks)
+        assert all(0 < len(chunk) <= 64 for chunk in chunks)
+        assert all(len(chunk) % 2 == 0 for chunk in chunks)
+        assert all(len(chunk) == 64 for chunk in chunks[:-1])
+    assert max(map(len, _PLAN.read_text(encoding="utf-8").splitlines())) <= 80
+
+
 def test_icon_algorithm_contains_no_plaintext_svg_payload() -> None:
     plan_bytes = _PLAN.read_bytes()
 
