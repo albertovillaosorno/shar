@@ -40,6 +40,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -400,7 +401,12 @@ def _redact_selected_source(value: str, game: Path) -> str:
     redacted = value
     for spelling in sorted(spellings, key=len, reverse=True):
         if spelling:
-            redacted = redacted.replace(spelling, "<selected-source>")
+            redacted = re.sub(
+                re.escape(spelling),
+                "<selected-source>",
+                redacted,
+                flags=re.IGNORECASE,
+            )
     return redacted
 
 
