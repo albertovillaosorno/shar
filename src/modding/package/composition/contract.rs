@@ -30,7 +30,7 @@
 
 //! Validation and JSON composition for normalized SHAR mod packages.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -621,6 +621,120 @@ impl PackageManifest {
         }
         Ok(())
     }
+}
+
+/// Resolves exact package dependencies into one discovery-order-independent
+/// load order.
+///
+/// This helper orders only dependency precedence. Explicit priority,
+/// supersession, conflicts, capabilities, and activation policy remain separate
+/// admission concerns.
+///
+/// # Errors
+/// Returns a deterministic failure for invalid declarations, duplicate package
+/// identities, missing or mismatched exact dependencies, or dependency cycles.
+pub fn dependency_load_order(
+    packages: &[PackageManifest],
+) -> Result<Vec<String>, PackageError> {
+    if packages.len() > MAX_LIST_ITEMS {
+        return Err(PackageError::new(
+            "candidate package count exceeds contract limit",
+        ));
+    }
+    let mut ordered = packages.iter().collect::<Vec<_>>();
+    ordered.sort_by(|left, right| {
+        left.canonical_id
+            .cmp(&right.canonical_id)
+            .then_with(|| left.package_revision.cmp(&right.package_revision))
+    });
+    if ordered.windows(2).any(|pair| {
+        pair.first().is_some_and(|left| {
+            pair.get(1)
+                .is_some_and(|right| left.canonical_id == right.canonical_id)
+        })
+    }) {
+        return Err(PackageError::new(
+            "candidate packages contain duplicate canonical identities",
+        ));
+    }
+    for package in &ordered {
+        package.validate()?;
+    }
+
+    let by_id = ordered
+        .iter()
+        .map(|package| (package.canonical_id.as_str(), *package))
+        .collect::<BTreeMap<_, _>>();
+    let mut dependency_count = ordered
+        .iter()
+        .map(|package| {
+            (package.canonical_id.clone(), package.dependencies.len())
+        })
+        .collect::<BTreeMap<_, _>>();
+    let mut dependents = BTreeMap::<&str, Vec<&str>>::new();
+    for package in &ordered {
+        for dependency in &package.dependencies {
+            let dependency_id = dependency.canonical_id.as_str();
+            let Some(required) = by_id.get(dependency_id) else {
+                return Err(PackageError::new(format!(
+                    "missing dependency {} for {}",
+                    dependency.canonical_id, package.canonical_id
+                )));
+            };
+            if required.package_revision != dependency.revision {
+                return Err(PackageError::new(format!(
+                    "dependency revision mismatch for {} required by {}",
+                    dependency.canonical_id, package.canonical_id
+                )));
+            }
+            dependents
+                .entry(dependency.canonical_id.as_str())
+                .or_default()
+                .push(package.canonical_id.as_str());
+        }
+    }
+    for values in dependents.values_mut() {
+        values.sort_unstable();
+    }
+
+    let mut ready = BTreeSet::new();
+    for package in &ordered {
+        if dependency_count.get(&package.canonical_id).copied() == Some(0)
+            && !ready.insert(package.canonical_id.as_str())
+        {
+            return Err(PackageError::new(
+                "dependency ready queue contains a duplicate package",
+            ));
+        }
+    }
+    let mut result = Vec::with_capacity(ordered.len());
+    while let Some(next) = ready.pop_first() {
+        result.push(next.to_owned());
+        for dependent in dependents.get(next).into_iter().flatten() {
+            let Some(count) = dependency_count.get_mut(*dependent) else {
+                return Err(PackageError::new(
+                    "dependency graph lost a candidate package",
+                ));
+            };
+            let Some(updated) = count.checked_sub(1) else {
+                return Err(PackageError::new(
+                    "dependency graph count underflow",
+                ));
+            };
+            *count = updated;
+            if updated == 0 && !ready.insert(dependent) {
+                return Err(PackageError::new(
+                    "dependency package became ready more than once",
+                ));
+            }
+        }
+    }
+    if result.len() != ordered.len() {
+        return Err(PackageError::new(
+            "candidate package dependency graph contains a cycle",
+        ));
+    }
+    Ok(result)
 }
 
 /// Constructs one member identity directly from exact bytes.

@@ -31,3 +31,9 @@ The shared `shar.mod-package.v1` validator now recomputes the deterministic
 content revision from the canonical member set and rejects stale or arbitrary
 package revision tokens. External contract tests cover both forged revision
 metadata and member changes that retain an old revision.
+
+A pure dependency-order validator now rejects duplicate package identities,
+missing or mismatched exact dependency revisions, and dependency cycles. Its
+canonical-identity ready queue yields the same dependency order regardless of
+candidate discovery order; priority, conflicts, and supersession remain pending
+full activation-policy work.

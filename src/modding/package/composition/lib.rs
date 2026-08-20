@@ -34,7 +34,9 @@ mod contract;
 #[path = "../domain/mod.rs"]
 pub mod domain;
 
-pub use contract::{content_revision, member_from_bytes};
+pub use contract::{
+    content_revision, dependency_load_order, member_from_bytes,
+};
 pub use domain::{
     CONTRACT_VERSION, Dependency, Member, PackageError, PackageKind,
     PackageManifest, Provenance, TrustLevel,

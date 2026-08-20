@@ -18,6 +18,11 @@ Variable-length path, media-type, and role fields are length-prefixed in the
 content-revision digest so distinct canonical field boundaries cannot alias.
 Manifest validation recomputes that content revision from canonical members and
 rejects stale or arbitrary package revision tokens before serialization/import.
+The pure `dependency_load_order` helper validates a complete candidate slice,
+requires exact dependency revisions, rejects duplicate identities and cycles,
+and uses canonical identity to make dependency-ready ordering independent of
+package discovery order. Full priority/conflict/supersession activation policy
+remains outside this declaration-level helper.
 
 Transport (`directory`, `.zip`, Android/iOS document selection), staging,
 preview,
