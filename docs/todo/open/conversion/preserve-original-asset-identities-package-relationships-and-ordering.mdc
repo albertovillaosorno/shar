@@ -152,5 +152,11 @@ duplicate
 basenames fail closed instead of being silently deduplicated. Focused vehicle
 source tests prove both the retained order and collision rejection.
 
+Binary FBX material planning now preserves first-use order from the canonical
+primitive-group sequence when deduplicating exact semantic variants. Material
+object ids, object emission, and texture connections no longer inherit lexical
+`BTreeMap` key order; a focused binary artifact regression proves `zebra_m`
+remains before `alpha_m` when that is their first source-group use order.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

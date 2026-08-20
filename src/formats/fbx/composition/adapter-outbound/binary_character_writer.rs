@@ -240,7 +240,7 @@ fn binary_groups<'character>(
                 effective_material_semantics(&part.mesh.name, source_binding);
             let material_key = material_variant_key(&group.shader, semantics);
             let material =
-                material_plan.slots.get(&material_key).ok_or_else(|| {
+                material_plan.slot(&material_key).ok_or_else(|| {
                     CharacterBinaryFbxError::MissingMaterialBinding {
                         shader: group.shader.clone(),
                     }
@@ -610,7 +610,7 @@ fn build_character_document(
     let nodes = document_nodes(
         character,
         &groups,
-        &material_plan.slots,
+        &material_plan,
         &texture_payloads,
         &bone_transforms,
         &bone_ordinals,
@@ -629,7 +629,7 @@ fn build_character_document(
         materials: material_plan.slots.len(),
         textures: material_plan
             .slots
-            .values()
+            .iter()
             .filter(|slot| slot.binding.texture_file_name.is_some())
             .count(),
         animations: animations.len(),
@@ -646,7 +646,7 @@ fn build_character_document(
 fn document_nodes(
     character: &CharacterAsset,
     groups: &[BinaryGroup<'_>],
-    material_slots: &BTreeMap<String, MaterialSlot<'_>>,
+    material_plan: &MaterialPlan<'_>,
     texture_payloads: &TexturePayloadContext<'_, '_, '_>,
     bone_transforms: &[BoneTransform],
     bone_ordinals: &BTreeMap<&str, usize>,
@@ -670,7 +670,7 @@ fn document_nodes(
         BinaryNode::branch("References", Vec::new()),
         definitions(
             groups,
-            material_slots,
+            &material_plan.slots,
             character.bones.len(),
             animation_plan.counts,
             scene_kind,
@@ -678,7 +678,7 @@ fn document_nodes(
         objects(
             character,
             groups,
-            material_slots,
+            &material_plan.slots,
             texture_payloads,
             bone_transforms,
             bone_ordinals,
@@ -689,7 +689,7 @@ fn document_nodes(
         connections(
             character,
             groups,
-            material_slots,
+            material_plan,
             bone_ordinals,
             animation_plan,
             scene_kind,
@@ -793,13 +793,13 @@ fn documents(active_stack_name: &str) -> BinaryNode {
 // One ordered section keeps all object-family counts and ids auditable.
 fn definitions(
     groups: &[BinaryGroup<'_>],
-    material_slots: &BTreeMap<String, MaterialSlot<'_>>,
+    material_slots: &[MaterialSlot<'_>],
     bone_count: usize,
     animation_counts: BinaryAnimationCounts,
     scene_kind: BinarySceneKind,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let texture_count = material_slots
-        .values()
+        .iter()
         .filter(|slot| slot.binding.texture_file_name.is_some())
         .count();
     let cluster_total = if scene_kind.is_skinned() {
@@ -1044,7 +1044,7 @@ fn definition_property(
 fn objects(
     character: &CharacterAsset,
     groups: &[BinaryGroup<'_>],
-    material_slots: &BTreeMap<String, MaterialSlot<'_>>,
+    material_slots: &[MaterialSlot<'_>],
     texture_payloads: &TexturePayloadContext<'_, '_, '_>,
     bone_transforms: &[BoneTransform],
     bone_ordinals: &BTreeMap<&str, usize>,
@@ -1068,7 +1068,7 @@ fn objects(
             )?);
         }
     }
-    for slot in material_slots.values() {
+    for slot in material_slots {
         children.push(material_node(slot)?);
         if let Some(texture_file) = &slot.binding.texture_file_name {
             let relative_path =
@@ -1798,7 +1798,7 @@ fn pose_node(
 fn connections(
     character: &CharacterAsset,
     groups: &[BinaryGroup<'_>],
-    material_slots: &BTreeMap<String, MaterialSlot<'_>>,
+    material_plan: &MaterialPlan<'_>,
     bone_ordinals: &BTreeMap<&str, usize>,
     animation_plan: &BinaryAnimationPlan,
     scene_kind: BinarySceneKind,
@@ -1808,7 +1808,7 @@ fn connections(
         children.push(object_connection(group.ids.geometry, group.ids.model)?);
         children.push(object_connection(group.ids.model, EXPORT_ROOT_ID)?);
         let slot =
-            material_slots.get(&group.material_key).ok_or_else(|| {
+            material_plan.slot(&group.material_key).ok_or_else(|| {
                 CharacterBinaryFbxError::MissingMaterialBinding {
                     shader: group.group.shader.clone(),
                 }
@@ -1821,7 +1821,7 @@ fn connections(
             )?);
         }
     }
-    for slot in material_slots.values() {
+    for slot in &material_plan.slots {
         if slot.binding.texture_file_name.is_some() {
             children.push(object_connection(slot.ids.video, slot.ids.texture)?);
             children.push(property_connection(
