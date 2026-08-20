@@ -124,6 +124,10 @@ def _parse_jsonl_record(line: str, line_number: int) -> dict[str, Any]:
         raise LedgerInputError(
             f"count ledger has empty JSONL record at line {line_number}"
         )
+    if line.strip() != line:
+        raise LedgerInputError(
+            f"count ledger record has outer whitespace at line {line_number}"
+        )
     try:
         record: Any = json.loads(
             line,

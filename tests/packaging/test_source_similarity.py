@@ -194,6 +194,10 @@ class SourceSimilarityTests(unittest.TestCase):
         )
 
         records = (
+            ' {"dir":"aa","ext":"p3d","min":1}',
+            '{"dir":"aa","ext":"p3d","min":1} ',
+            '\t{"dir":"aa","ext":"p3d","min":1}',
+            '{"dir":"aa","ext":"p3d","min":1}\t',
             '{"dir":"aa","dir":"bb","ext":"p3d","min":1}',
             '{"dir":"aa","ext":"p3d","min":1,"extra":true}',
             '{"dir":"aa","ext":"p3d","min":1,"count":1}',
