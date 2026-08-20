@@ -206,14 +206,68 @@ def _valid_extension(value: object) -> bool:
     )
 
 
+_RESERVED_HOST_STEMS = frozenset(
+    {"AUX", "CLOCK$", "CON", "CONIN$", "CONOUT$", "NUL", "PRN"}
+)
+_RESERVED_HOST_SUFFIXES = frozenset(
+    {"1", "2", "3", "4", "5", "6", "7", "8", "9", "¹", "²", "³"}
+)
+
+
+def _is_unicode_path_modifier(character: str) -> bool:
+    """Return whether one character can conceal a portable path identity."""
+    code = ord(character)
+    return (
+        code == 0x061C
+        or 0x200B <= code <= 0x200F
+        or 0x2028 <= code <= 0x202E
+        or 0x2060 <= code <= 0x2064
+        or 0x2066 <= code <= 0x206F
+        or 0xFE00 <= code <= 0xFE0F
+        or code == 0xFEFF
+    )
+
+
+def _is_reserved_host_alias(component: str) -> bool:
+    """Return whether one component aliases a Windows device identity."""
+    stem = component.split(".", 1)[0].rstrip(" .").upper()
+    if stem in _RESERVED_HOST_STEMS:
+        return True
+    for prefix in ("COM", "LPT"):
+        suffix = stem.removeprefix(prefix)
+        if suffix != stem and suffix in _RESERVED_HOST_SUFFIXES:
+            return True
+    return False
+
+
+def _valid_public_path_component(component: str) -> bool:
+    """Return whether one component follows the portable filesystem policy."""
+    if component in {"", ".", ".."} or component.endswith((".", " ")):
+        return False
+    if any(character in '<>:"|?*' for character in component):
+        return False
+    if any(
+        ord(character) < 32 or 127 <= ord(character) <= 159
+        for character in component
+    ):
+        return False
+    if any(_is_unicode_path_modifier(character) for character in component):
+        return False
+    if len(component.encode("utf-16-le")) // 2 > 255:
+        return False
+    return not _is_reserved_host_alias(component)
+
+
 def _valid_public_relative_path(value: object) -> bool:
     """Return whether one metadata path is portable and source-root relative."""
     if not _valid_utf8_text(value) or not value or chr(92) in value:
         return False
     if value.startswith("/") or value.endswith("/") or "//" in value:
         return False
-    components = value.split("/")
-    return all(component not in {"", ".", ".."} for component in components)
+    return all(
+        _valid_public_path_component(component)
+        for component in value.split("/")
+    )
 
 
 def _valid_required_file_metadata(value: object) -> bool:
