@@ -173,7 +173,7 @@ class SourceSimilarityTests(unittest.TestCase):
             '{"dir":"aa","ext":"P3D","min":1}',
             '{"dir":"aa","ext":"ÄBC","min":1}',
             '{"dir":"AA","ext":"p3d","min":1}',
-            r'{"dir":"aa\u005cbb","ext":"p3d","min":1}',
+            '{"dir":"aa\\\\bb","ext":"p3d","min":1}',
             '{"dir":"/aa","ext":"p3d","min":1}',
             '{"dir":"aa/","ext":"p3d","min":1}',
             '{"dir":"aa//bb","ext":"p3d","min":1}',
