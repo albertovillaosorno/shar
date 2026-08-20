@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -97,14 +97,12 @@ fn discover_package(
     let mut referenced = BTreeSet::new();
     for composite_path in component_paths(root, "composite_drawable")? {
         let composite = read_composite(&composite_path)?;
-        let mut selected = composite
+        let selected = composite
             .prop_names
             .iter()
             .filter_map(|name| meshes.get(name))
             .cloned()
             .collect::<Vec<_>>();
-        selected.sort();
-        selected.dedup();
         if selected.is_empty() {
             continue;
         }

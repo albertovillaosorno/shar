@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -47,8 +47,8 @@ pub(super) struct CompositeEvidence {
     pub(super) name: String,
     /// Cleaned referenced skeleton identity.
     pub(super) skeleton_name: String,
-    /// Cleaned rigid prop identities owned by the composite.
-    pub(super) prop_names: BTreeSet<String>,
+    /// Cleaned rigid prop identities in authored composite order.
+    pub(super) prop_names: Vec<String>,
 }
 
 /// Return all JSON component paths in stable file-name order.
@@ -123,21 +123,28 @@ pub(super) fn read_composite(
                     path.display()
                 ))
             })?;
-    let prop_names = props
-        .iter()
-        .map(|prop| {
-            prop.get("name")
-                .and_then(Value::as_str)
-                .map(clean_identity)
-                .ok_or_else(|| {
-                    PipelineError::new(format!(
-                        "prop composite has malformed prop name: \
+    let mut seen = BTreeSet::new();
+    let mut prop_names = Vec::with_capacity(props.len());
+    for prop in props {
+        let name = prop
+            .get("name")
+            .and_then(Value::as_str)
+            .map(clean_identity)
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "prop composite has malformed prop name: \
                                      {}",
-                        path.display()
-                    ))
-                })
-        })
-        .collect::<Result<BTreeSet<_>, _>>()?;
+                    path.display()
+                ))
+            })?;
+        if !seen.insert(name.clone()) {
+            return Err(PipelineError::new(format!(
+                "prop composite repeats prop identity {name}: {}",
+                path.display()
+            )));
+        }
+        prop_names.push(name);
+    }
     Ok(CompositeEvidence {
         member_id: component_member_id(path)?,
         name: clean_identity(&required_string(&value, "name")?),
