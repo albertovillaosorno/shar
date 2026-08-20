@@ -72,7 +72,9 @@ from a lawful local installation without writing into it. Observation rows use
 `count` while tracked minimum-policy rows use `min`; the similarity CLI accepts
 either form but rejects rows that mix the two meanings. It reports only
 aggregate units and ratios and keeps local input paths out of validation
-diagnostics.
+diagnostics. Observation fails when exact mandatory files exist but no countable
+structural coordinate remains, so a successful observation always supplies a
+nonempty vector for calibration.
 
 ## Calibration requirements
 
