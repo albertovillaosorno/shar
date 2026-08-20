@@ -7,10 +7,12 @@ estimate or the tentative 45–55% investigation window.
 ## Hard validation remains authoritative
 
 Similarity is never source evidence. A candidate installation must independently
-satisfy exact-file requirements, the curated minimum manifest, format/structure
-validation, provenance rules, and any applicable cryptographic checks. A future
+satisfy exact relative-path requirements, the curated minimum manifest,
+format/structure validation, provenance rules, and any applicable cryptographic
+checks. The early required-file gate fixes canonical path/case identities; it
+does not pin `Simpsons.exe` to one edition-specific byte hash. A future
 similarity result may add diagnostic evidence only after those gates; it may not
-supply missing bytes, forgive a failed exact identity, or turn an invalid source
+supply missing bytes, forgive a failed required path, or turn an invalid source
 into an accepted one.
 
 The original installation is read-only. Reconstruction and calibration write
@@ -140,7 +142,17 @@ structural publication guard does not turn a placeholder into a reviewed plan
 and does not implement a similarity threshold.
 
 The maintainer-only `in/`, `master/`, and shared `out/` workspace trees never
-ship as reconstruction plans. Generic algorithm authoring also requires the
+ship as reconstruction plans. A maintainer-derived cross-variant byte artifact
+may support private compatibility analysis, but it is not automatically a
+replay source. `shar.algorithm.v1` source records bind exact bytes and
+hashes. Using such an artifact for a multi-edition public plan therefore
+requires a deterministic user-source projection that can reproduce the admitted
+bytes without embedding
+or publishing the private comparison corpus. Until that projection exists, the
+required `Simpsons.exe` path gate and algorithm byte binding remain separate
+contracts.
+
+Generic algorithm authoring also requires the
 canonical target root to be disjoint from every canonical source root in both
 containment directions; source payloads therefore cannot be republished merely
 by selecting the source tree, or one of its descendants/ancestors, as the

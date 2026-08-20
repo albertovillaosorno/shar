@@ -45,7 +45,7 @@ pub const MANIFEST_FILE_NAME: &str = "manifest/game.jsonl";
 /// Relative path of the expanded manifest beneath the game directory.
 pub const EXPANDED_MANIFEST_FILE_NAME: &str = "manifest/game-expanded.jsonl";
 
-/// Exact source-file requirements embedded in the immutable manifest header.
+/// Exact relative-path requirements embedded in the immutable manifest header.
 /// A zero minimum records an explicitly optional source identity.
 pub const EXACT_FILE_REQUIREMENTS: &[(&str, usize)] = &[
     ("README.rtf", 1),
@@ -153,7 +153,7 @@ pub fn extension_of(path: &Path) -> String {
         .map_or_else(|| NO_EXTENSION.to_owned(), str::to_lowercase)
 }
 
-/// Returns immutable exact-source-file shortfalls in declaration order.
+/// Returns immutable exact-relative-path shortfalls in declaration order.
 #[must_use]
 pub fn exact_file_shortfalls(root: &Path, files: &[PathBuf]) -> Vec<String> {
     let present = files

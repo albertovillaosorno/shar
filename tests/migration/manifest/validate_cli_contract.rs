@@ -41,10 +41,11 @@ use schoenwald_filesystem as _;
 
 static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
-fn run_validator(
+fn run_validator_with_executable(
     manifest: &str,
     extra_argument: Option<&str>,
     empty_argument: bool,
+    executable_bytes: &[u8],
 ) -> io::Result<Output> {
     let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
     let root = std::env::temp_dir().join(format!(
@@ -59,7 +60,7 @@ fn run_validator(
     fs::create_dir_all(&root)?;
     let result = (|| {
         fs::create_dir_all(root.join("manifest"))?;
-        fs::write(root.join("Simpsons.exe"), b"fixture")?;
+        fs::write(root.join("Simpsons.exe"), executable_bytes)?;
         fs::write(root.join("Simpsons.ico"), b"fixture")?;
         fs::write(root.join("README.rtf"), b"fixture")?;
         fs::write(root.join("dialog.rcf"), b"fixture")?;
@@ -85,8 +86,46 @@ fn run_validator(
     result
 }
 
+fn run_validator(
+    manifest: &str,
+    extra_argument: Option<&str>,
+    empty_argument: bool,
+) -> io::Result<Output> {
+    run_validator_with_executable(
+        manifest,
+        extra_argument,
+        empty_argument,
+        b"fixture",
+    )
+}
+
 fn validate_manifest(manifest: &str) -> io::Result<Output> {
     run_validator(manifest, None, false)
+}
+
+#[test]
+fn executable_requirement_is_path_not_byte_identity() -> io::Result<()> {
+    let row = concat!(
+        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,",
+        "\"kind\":\"generated_artifact\"}"
+    );
+    let manifest = format!("{}\n{row}\n", kind_taxonomy_jsonl());
+
+    let variants = [b"edition-a".as_slice(), b"different-edition".as_slice()];
+    for executable in variants {
+        let output = run_validator_with_executable(
+            &manifest,
+            None,
+            false,
+            executable,
+        )?;
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    Ok(())
 }
 
 #[test]
