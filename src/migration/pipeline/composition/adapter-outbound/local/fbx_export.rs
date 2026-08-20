@@ -1504,6 +1504,23 @@ fn resolve_material_binding(
     }
 }
 
+/// Preserve authored shader-member order while rejecting duplicate identities.
+fn ordered_shader_names(
+    shader_names: impl IntoIterator<Item = String>,
+) -> Result<Vec<String>, PipelineError> {
+    let mut seen = BTreeSet::new();
+    let mut ordered = Vec::new();
+    for shader in shader_names {
+        if !seen.insert(shader.clone()) {
+            return Err(PipelineError::new(format!(
+                "package material list repeats shader identity {shader}"
+            )));
+        }
+        ordered.push(shader);
+    }
+    Ok(ordered)
+}
+
 /// Resolve every used shader through private texture staging for embedding.
 fn resolve_materials(
     index: &PhaseThreePackageIndex,
@@ -1517,18 +1534,14 @@ fn resolve_materials(
         package_root,
         texture_staging_dir.to_path_buf(),
     );
-    let mut shader_names: Vec<String> = members
-        .materials
-        .iter()
-        .filter_map(|member| {
+    let shader_names = ordered_shader_names(
+        members.materials.iter().filter_map(|member| {
             Path::new(&member.path)
                 .file_stem()
                 .and_then(|stem| stem.to_str())
                 .map(str::to_owned)
-        })
-        .collect();
-    shader_names.sort();
-    shader_names.dedup();
+        }),
+    )?;
     let mut bindings = Vec::with_capacity(shader_names.len());
     let mut items = Vec::new();
     for shader in &shader_names {

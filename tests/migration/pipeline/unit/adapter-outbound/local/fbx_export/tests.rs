@@ -33,7 +33,7 @@
 use super::{
     GENERAL_CHARACTER_ANIMATION_SUBCATEGORY, animation_subcategory_candidates,
     deferred_material_identity, fbx_io_error, normalized_texture_png_file_name,
-    single_package_staging_path,
+    ordered_shader_names, single_package_staging_path,
 };
 
 #[test]
@@ -114,4 +114,32 @@ fn fbx_io_diagnostics_hide_physical_error_text() {
         fbx_io_error("read canonical FBX source", &error).to_string();
     assert_eq!(rendered, "read canonical FBX source failed (Other)");
     assert!(!rendered.contains(private_fragment));
+}
+
+#[test]
+fn shader_names_preserve_package_member_order() -> Result<(), String> {
+    let names = ordered_shader_names([
+        "zebra".to_owned(),
+        "alpha".to_owned(),
+        "middle".to_owned(),
+    ])
+    .map_err(|error| error.to_string())?;
+    assert_eq!(names, ["zebra", "alpha", "middle"]);
+    Ok(())
+}
+
+#[test]
+fn duplicate_shader_identity_fails_closed() -> Result<(), String> {
+    let result = ordered_shader_names([
+        "shared".to_owned(),
+        "shared".to_owned(),
+    ]);
+    let Err(error) = result else {
+        return Err("duplicate shader identity was accepted".to_owned());
+    };
+    assert_eq!(
+        error.to_string(),
+        "package material list repeats shader identity shared"
+    );
+    Ok(())
 }
