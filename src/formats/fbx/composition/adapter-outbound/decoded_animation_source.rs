@@ -57,7 +57,9 @@ use crate::domain::animation::{
     AnimationClip, AnimationClipError, BoneAnimationTrack, LocalTransformSample,
 };
 use crate::domain::skeleton::Bone;
-use crate::domain::transform::matrix::{MatrixError, compose, decompose, widen};
+use crate::domain::transform::matrix::{
+    MatrixError, compose, decompose, widen,
+};
 
 /// Decoded animation adapter failure.
 #[derive(Clone, Debug, Eq, PartialEq)]
