@@ -330,7 +330,7 @@ def _validate(values: Mapping[Coordinate, int]) -> None:
         if (
             not isinstance(key, tuple)
             or len(key) != 2
-            or not all(isinstance(value, str) for value in key)
+            or not all(_valid_utf8_text(value) for value in key)
             or not key[1]
         ):
             raise InvalidCoordinateError
