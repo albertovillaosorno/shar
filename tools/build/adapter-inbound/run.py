@@ -98,18 +98,27 @@ def _unique_json_object(
     return result
 
 
-def _read_object(path: Path, label: str) -> dict[str, object]:
-    """Read one required UTF-8 JSON object."""
+def _object_from_bytes(data: bytes, label: str) -> dict[str, object]:
+    """Decode one required UTF-8 JSON object from a stable byte snapshot."""
     try:
         value = json.loads(
-            path.read_text(encoding="utf-8"),
+            data.decode("utf-8"),
             object_pairs_hook=_unique_json_object,
         )
-    except (OSError, UnicodeError, json.JSONDecodeError) as error:
-        raise RunFailure(f"cannot read {label} {path}: {error}") from error
+    except (UnicodeError, json.JSONDecodeError) as error:
+        raise RunFailure(f"cannot decode {label}") from error
     if not isinstance(value, dict):
         raise RunFailure(f"{label} must contain a JSON object")
     return value
+
+
+def _read_object(path: Path, label: str) -> dict[str, object]:
+    """Read one required UTF-8 JSON object."""
+    try:
+        data = path.read_bytes()
+    except OSError as error:
+        raise RunFailure(f"cannot read {label} {path}: {error}") from error
+    return _object_from_bytes(data, label)
 
 
 def _require_keys(
@@ -152,9 +161,17 @@ def _target_from_json(value: object) -> Target:
     return target
 
 
-def _selected_targets(path: Path) -> list[Target]:
+def _selected_targets(
+    path: Path,
+    *,
+    snapshot: bytes | None = None,
+) -> list[Target]:
     """Validate the versioned architecture decision and return its targets."""
-    value = _read_object(path, "architecture evidence")
+    value = (
+        _read_object(path, "architecture evidence")
+        if snapshot is None
+        else _object_from_bytes(snapshot, "architecture evidence")
+    )
     _require_keys(value, {"host", "schema", "targets"}, "architecture evidence")
     if value.get("schema") != _ARCH_SCHEMA:
         raise RunFailure(f"architecture schema must be {_ARCH_SCHEMA}")
@@ -176,9 +193,17 @@ def _selected_targets(path: Path) -> list[Target]:
     return targets
 
 
-def _check_evidence(path: Path) -> dict[str, object]:
+def _check_evidence(
+    path: Path,
+    *,
+    snapshot: bytes | None = None,
+) -> dict[str, object]:
     """Load saved preflight evidence after check.py has revalidated it."""
-    value = _read_object(path, "check evidence")
+    value = (
+        _read_object(path, "check evidence")
+        if snapshot is None
+        else _object_from_bytes(snapshot, "check evidence")
+    )
     if value.get("schema") != _CHECK_SCHEMA:
         raise RunFailure(f"check schema must be {_CHECK_SCHEMA}")
     unreal = value.get("unreal")
@@ -192,8 +217,31 @@ def _check_evidence(path: Path) -> dict[str, object]:
     return value
 
 
-def _revalidate_arch(root: Path, arch_path: Path) -> None:
-    """Invoke canonical arch.py revalidation before using saved targets."""
+def _revalidate_snapshot(
+    root: Path,
+    path: Path,
+    command: list[str],
+    label: str,
+) -> bytes:
+    """Return bytes proven unchanged across one child revalidation."""
+    try:
+        before = path.read_bytes()
+    except OSError as error:
+        raise RunFailure(f"cannot snapshot saved {label}") from error
+    result = subprocess.run(command, cwd=root, check=False)
+    if result.returncode:
+        raise RunFailure(f"saved {label} did not revalidate")
+    try:
+        after = path.read_bytes()
+    except OSError as error:
+        raise RunFailure(f"cannot resnapshot saved {label}") from error
+    if after != before:
+        raise RunFailure(f"saved {label} changed during revalidation")
+    return after
+
+
+def _revalidate_arch(root: Path, arch_path: Path) -> bytes:
+    """Invoke canonical arch.py and return its stable validated snapshot."""
     command = [
         sys.executable,
         str(root / "tools" / "build" / "adapter-inbound" / "arch.py"),
@@ -201,13 +249,16 @@ def _revalidate_arch(root: Path, arch_path: Path) -> None:
         "--output",
         str(arch_path),
     ]
-    result = subprocess.run(command, cwd=root, check=False)
-    if result.returncode:
-        raise RunFailure("saved architecture decision did not revalidate")
+    return _revalidate_snapshot(
+        root,
+        arch_path,
+        command,
+        "architecture decision",
+    )
 
 
-def _revalidate_check(root: Path, check_path: Path) -> None:
-    """Invoke the supported check.py revalidation before using saved paths."""
+def _revalidate_check(root: Path, check_path: Path) -> bytes:
+    """Invoke check.py and return its stable validated snapshot."""
     command = [
         sys.executable,
         str(root / "tools" / "build" / "adapter-inbound" / "check.py"),
@@ -215,9 +266,7 @@ def _revalidate_check(root: Path, check_path: Path) -> None:
         "--output",
         str(check_path),
     ]
-    result = subprocess.run(command, cwd=root, check=False)
-    if result.returncode:
-        raise RunFailure("saved build preflight did not revalidate")
+    return _revalidate_snapshot(root, check_path, command, "build preflight")
 
 
 class _ProjectStateAction(NamedTuple):
@@ -835,10 +884,10 @@ def main() -> int:
     if not check_path.is_absolute():
         check_path = root / check_path
     try:
-        _revalidate_arch(root, arch_path)
-        targets = _selected_targets(arch_path)
-        _revalidate_check(root, check_path)
-        check = _check_evidence(check_path)
+        arch_snapshot = _revalidate_arch(root, arch_path)
+        targets = _selected_targets(arch_path, snapshot=arch_snapshot)
+        check_snapshot = _revalidate_check(root, check_path)
+        check = _check_evidence(check_path, snapshot=check_snapshot)
         unreal = _require_unreal_evidence(check)
         engine_root = Path(str(unreal["root"])).resolve()
         project = Path(str(unreal["project"])).resolve()

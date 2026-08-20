@@ -60,7 +60,11 @@ architecture selection also rejects repeated target identifiers instead of
 silently
 deduplicating them before persistence. Focused regressions prove the exact saved
 path is revalidated, a failed architecture revalidation stops the runner, and
-`main()` performs that gate before target consumption.
+`main()` performs that gate before target consumption. Architecture and
+preflight
+evidence are consumed from byte snapshots proven unchanged across their child
+revalidation process, so post-validation file replacement cannot substitute a
+different saved decision before the runner parses it.
 
 Mobile publication now consumes the declared artifact kind instead of treating
 any archive file as success. Android candidates must contain a non-empty APK and
