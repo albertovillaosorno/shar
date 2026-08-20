@@ -39,10 +39,12 @@ import argparse
 import json
 import os
 from pathlib import Path
+import plistlib
 import shutil
 import subprocess
 import sys
 from typing import NamedTuple
+import zipfile
 
 _ARCH_SCHEMA = "shar.build.arch.v1"
 _CHECK_SCHEMA = "shar.build.check.v1"
@@ -737,6 +739,113 @@ def _has_native_binary_signature(
         return False
 
 
+def _zip_inventory(
+    archive: zipfile.ZipFile,
+) -> dict[str, zipfile.ZipInfo] | None:
+    """Return a duplicate-free ZIP member inventory."""
+    infos = archive.infolist()
+    names = [info.filename for info in infos]
+    if len(names) != len(set(names)):
+        return None
+    return {info.filename: info for info in infos}
+
+
+def _zip_member_matches_elf(
+    archive: zipfile.ZipFile,
+    info: zipfile.ZipInfo,
+    architecture: str,
+) -> bool:
+    """Return whether one ZIP member is an ELF for the selected CPU."""
+    if info.is_dir():
+        return False
+    with archive.open(info) as stream:
+        prefix = stream.read(4)
+        return prefix == b"\x7fELF" and _matches_elf(
+            stream,
+            prefix,
+            architecture,
+        )
+
+
+def _is_android_apk(path: Path) -> bool:
+    """Return whether one APK contains an ARM64 native library."""
+    try:
+        with zipfile.ZipFile(path) as archive:
+            inventory = _zip_inventory(archive)
+            if inventory is None:
+                return False
+            for name, info in inventory.items():
+                parts = name.split("/")
+                if (
+                    len(parts) >= 3
+                    and parts[:2] == ["lib", "arm64-v8a"]
+                    and parts[-1].endswith(".so")
+                    and all(part not in {"", ".", ".."} for part in parts)
+                    and _zip_member_matches_elf(archive, info, "arm64")
+                ):
+                    return True
+            return False
+    except (OSError, RuntimeError, zipfile.BadZipFile):
+        return False
+
+
+def _ios_main_binary(
+    archive: zipfile.ZipFile,
+    inventory: dict[str, zipfile.ZipInfo],
+) -> zipfile.ZipInfo | None:
+    """Return the main iOS application binary declared by one IPA."""
+    plists = [
+        info
+        for name, info in inventory.items()
+        if len(name.split("/")) == 3
+        and name.startswith("Payload/")
+        and name.endswith(".app/Info.plist")
+        and not info.is_dir()
+    ]
+    if len(plists) != 1:
+        return None
+    plist_info = plists[0]
+    document = plistlib.loads(archive.read(plist_info))
+    if not isinstance(document, dict):
+        return None
+    executable = document.get("CFBundleExecutable")
+    if (
+        not isinstance(executable, str)
+        or executable in {"", ".", ".."}
+        or "/" in executable
+        or "\\" in executable
+    ):
+        return None
+    app_root = plist_info.filename.rsplit("/", 1)[0]
+    binary_info = inventory.get(f"{app_root}/{executable}")
+    if binary_info is None or binary_info.is_dir():
+        return None
+    return binary_info
+
+
+def _is_ios_ipa(path: Path) -> bool:
+    """Return whether one IPA main application executable contains ARM64."""
+    try:
+        with zipfile.ZipFile(path) as archive:
+            inventory = _zip_inventory(archive)
+            if inventory is None:
+                return False
+            binary_info = _ios_main_binary(archive, inventory)
+            if binary_info is None:
+                return False
+            with archive.open(binary_info) as stream:
+                prefix = stream.read(4)
+                return _matches_macho(stream, prefix, "arm64")
+    except (
+        OSError,
+        RuntimeError,
+        ValueError,
+        plistlib.InvalidFileException,
+        zipfile.BadZipFile,
+    ):
+        return False
+
+
 def _is_native_executable(
     path: Path,
     system: str,
@@ -813,21 +922,22 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
         )
         raise RunFailure(message)
 
-    expected = {
-        "apk": (".apk", "Android APK"),
-        "ipa": (".ipa", "iOS IPA"),
+    mobile_validator = {
+        "apk": (".apk", "ARM64 Android APK", _is_android_apk),
+        "ipa": (".ipa", "ARM64 iOS IPA", _is_ios_ipa),
     }.get(target.artifact)
-    if expected is None:
+    if mobile_validator is None:
         return
-    suffix, label = expected
+    suffix, label, validator = mobile_validator
     if any(
         item.is_file()
         and item.suffix.casefold() == suffix
         and item.stat().st_size > 0
+        and validator(item)
         for item in candidate.rglob("*")
     ):
         return
-    raise RunFailure(f"candidate package has no non-empty {label}: {candidate}")
+    raise RunFailure(f"candidate package has no valid {label}: {candidate}")
 
 
 def _cache_nonruntime_artifacts(
