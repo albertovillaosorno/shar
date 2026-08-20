@@ -142,10 +142,12 @@ bytes; replay tries only the authenticated plan's bounded layout alternatives
 against the caller-supplied file and succeeds only when one projected byte
 sequence authenticates the plan. Ordinary source records remain exact-hash
 bound. The projection stores no executable payload bytes or whole-file hashes,
-and source files remain read-only. This closes the mechanism gap for known
-multi-edition layouts without turning similarity into admission evidence; the
-P0 task remains open for representative-install calibration and final product
-policy.
+and source files remain read-only. Replay retains one source snapshot and
+materializes only one projected candidate at a time, so the alternative count
+cannot multiply candidate-byte memory before authentication. This closes the
+mechanism gap for known multi-edition layouts without turning similarity into
+admission evidence; the P0 task remains open for representative-install
+calibration and final product policy.
 
 The generic `shar.algorithm.v1` round-trip suite now includes explicit evidence
 that a serialized plan cannot replay with zero caller-supplied source roots and
