@@ -471,10 +471,11 @@ class SourceSelectionTests(unittest.TestCase):
         )
         escaped = diagnostic.replace("\\", "\\\\")
 
-        redacted = _CHECK._redact_selected_source(escaped, source)
+        for value in (escaped, escaped.upper()):
+            redacted = _CHECK._redact_selected_source(value, source)
 
-        self.assertNotIn("private", redacted)
-        self.assertIn("<selected-source>", redacted)
+            self.assertNotIn("private", redacted.casefold())
+            self.assertIn("<selected-source>", redacted)
 
     def test_manifest_failure_redacts_selected_source_path(self) -> None:
         source = Path("/private/user/installed-game")
