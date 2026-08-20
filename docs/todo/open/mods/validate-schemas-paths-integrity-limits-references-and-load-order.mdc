@@ -26,3 +26,8 @@ No explicit task dependency was recorded in the legacy TODO.
 
 Open work migrated from the canonical TODO. Add implementation and
 validation evidence here as the task advances.
+
+The shared `shar.mod-package.v1` validator now recomputes the deterministic
+content revision from the canonical member set and rejects stale or arbitrary
+package revision tokens. External contract tests cover both forged revision
+metadata and member changes that retain an old revision.

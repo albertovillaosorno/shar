@@ -16,6 +16,8 @@ share the same reserved-path, portable-path, size, digest, media-type, and role
 rules so invalid member records cannot acquire a canonical package revision.
 Variable-length path, media-type, and role fields are length-prefixed in the
 content-revision digest so distinct canonical field boundaries cannot alias.
+Manifest validation recomputes that content revision from canonical members and
+rejects stale or arbitrary package revision tokens before serialization/import.
 
 Transport (`directory`, `.zip`, Android/iOS document selection), staging,
 preview,
