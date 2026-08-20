@@ -81,7 +81,7 @@ const fn fixture_json() -> &'static str {
       "frame_rate":30.0,
       "cyclic":1,
       "sizes":[],
-      "group_lists":[{"version":0,"num_groups":3,"groups":[
+      "group_lists":[{"version":0,"num_groups":4,"groups":[
         {"version":0,"name":"Root\u0000","group_id":0,"num_channels":2,
          "channels":[
           {"kind":"vector1","version":0,"param":"TRAN","mapping":0,
@@ -101,11 +101,18 @@ const fn fixture_json() -> &'static str {
            "values":[[4.0,6.0],[8.0,10.0]],"channel_metadata":[
              {"kind":"interpolation_mode","version":0,"mode":1}]}
          ]},
-        {"version":0,"name":"IK_Helper\u0000","group_id":2,
+        {"version":0,"name":"Z_Helper\u0000","group_id":2,
          "num_channels":1,"channels":[
           {"kind":"vector1","version":0,"param":"TRAN","mapping":1,
            "constants":[0.0,7.0,0.0],"num_frames":2,"frames":[0,2],
            "values":[[7.0],[9.0]],"channel_metadata":[
+             {"kind":"interpolation_mode","version":0,"mode":0}]}
+         ]},
+        {"version":0,"name":"A_Helper","group_id":3,
+         "num_channels":1,"channels":[
+          {"kind":"vector1","version":0,"param":"TRAN","mapping":1,
+           "constants":[0.0,5.0,0.0],"num_frames":2,"frames":[0,2],
+           "values":[[5.0],[6.0]],"channel_metadata":[
              {"kind":"interpolation_mode","version":0,"mode":0}]}
          ]}
       ]}],
@@ -235,7 +242,7 @@ fn reconstructs_compact_channels_and_preserves_helper_evidence() {
     assert!((clip.frame_rate - 30f64).abs() <= TOLERANCE);
     assert!(clip.cyclic);
     assert_eq!(clip.frame_count, 3);
-    assert_eq!(clip.ignored_group_ids, vec!["IK_Helper"]);
+    assert_eq!(clip.ignored_group_ids, vec!["Z_Helper", "A_Helper"]);
     assert_eq!(clip.tracks.len(), 2);
     let Some(root_track) = clip.tracks.first() else {
         return;
