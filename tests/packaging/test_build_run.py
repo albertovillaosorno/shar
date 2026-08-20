@@ -52,6 +52,43 @@ _RUN = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_RUN)
 
 
+def _synthetic_elf(machine: int) -> bytes:
+    """Return the minimum ELF header needed by runner target validation."""
+    header = bytearray(20)
+    header[:4] = b"\x7fELF"
+    header[4] = 2
+    header[5] = 1
+    header[18:20] = machine.to_bytes(2, "little")
+    return bytes(header)
+
+
+def _synthetic_macho(cpu: int) -> bytes:
+    """Return one minimal little-endian 64-bit Mach-O header."""
+    return bytes.fromhex("cffaedfe") + cpu.to_bytes(4, "little")
+
+
+def _write_android_apk(path: Path, machine: int = 0x00B7) -> None:
+    """Write one synthetic APK with a native library entry."""
+    with _RUN.zipfile.ZipFile(path, "w") as archive:
+        archive.writestr(
+            "lib/arm64-v8a/libUnreal.so",
+            _synthetic_elf(machine),
+        )
+
+
+def _write_ios_ipa(path: Path, cpu: int = 0x0100000C) -> None:
+    """Write one synthetic IPA with a declared main executable."""
+    with _RUN.zipfile.ZipFile(path, "w") as archive:
+        archive.writestr(
+            "Payload/SHAR.app/Info.plist",
+            _RUN.plistlib.dumps({"CFBundleExecutable": "shar"}),
+        )
+        archive.writestr(
+            "Payload/SHAR.app/shar",
+            _synthetic_macho(cpu),
+        )
+
+
 class ProjectStateMigrationTests(unittest.TestCase):
     """Exercise build-state adoption without running Unreal."""
 
@@ -1175,10 +1212,8 @@ class CandidateArtifactTests(unittest.TestCase):
             prefix="shar-android-candidate-",
         ) as raw:
             candidate = Path(raw)
-            (candidate / "not-an-apk.txt").write_text(
-                "wrong artifact\n",
-                encoding="utf-8",
-            )
+            apk = candidate / "shar.apk"
+            apk.write_bytes(b"not a package")
 
             with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
                 _RUN._validate_candidate_artifact(
@@ -1186,19 +1221,43 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["android-arm64"],
                 )
 
+            _write_android_apk(apk, machine=0x003E)
+            with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["android-arm64"],
+                )
+
+            _write_android_apk(apk)
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["android-arm64"],
+            )
+
     def test_ios_candidate_requires_ipa(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-ios-candidate-") as raw:
             candidate = Path(raw)
-            (candidate / "not-an-ipa.txt").write_text(
-                "wrong artifact\n",
-                encoding="utf-8",
-            )
+            ipa = candidate / "shar.ipa"
+            ipa.write_bytes(b"not a package")
 
             with self.assertRaisesRegex(_RUN.RunFailure, "iOS IPA"):
                 _RUN._validate_candidate_artifact(
                     candidate,
                     _RUN._TARGETS_BY_ID["ios-arm64"],
                 )
+
+            _write_ios_ipa(ipa, cpu=0x01000007)
+            with self.assertRaisesRegex(_RUN.RunFailure, "iOS IPA"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["ios-arm64"],
+                )
+
+            _write_ios_ipa(ipa)
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["ios-arm64"],
+            )
 
     def test_linux_candidate_requires_shar_executable(self) -> None:
         for target_id, platform in (
@@ -1366,9 +1425,13 @@ class CandidateArtifactTests(unittest.TestCase):
 
     def test_candidate_rejects_empty_declared_artifact(self) -> None:
         cases = (
-            ("android-arm64", "shar.apk", "Android APK"),
-            ("ios-arm64", "shar.ipa", "iOS IPA"),
-            ("windows-x64", "shar.exe", "Windows SHAR executable"),
+            ("android-arm64", "shar.apk", "valid ARM64 Android APK"),
+            ("ios-arm64", "shar.ipa", "valid ARM64 iOS IPA"),
+            (
+                "windows-x64",
+                "shar.exe",
+                "non-empty Windows SHAR executable",
+            ),
         )
         for target_id, filename, label in cases:
             with (
@@ -1381,7 +1444,7 @@ class CandidateArtifactTests(unittest.TestCase):
                 (candidate / filename).write_bytes(b"")
                 with self.assertRaisesRegex(
                     _RUN.RunFailure,
-                    f"no non-empty {label}",
+                    f"no {label}",
                 ):
                     _RUN._validate_candidate_artifact(
                         candidate,
@@ -1395,7 +1458,7 @@ class CandidateArtifactTests(unittest.TestCase):
             candidate = Path(raw)
             nested = candidate / "package"
             nested.mkdir()
-            (nested / "shar.apk").write_bytes(b"apk")
+            _write_android_apk(nested / "shar.apk")
 
             _RUN._validate_candidate_artifact(
                 candidate,

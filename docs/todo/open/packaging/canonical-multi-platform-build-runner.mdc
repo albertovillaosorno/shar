@@ -67,9 +67,11 @@ revalidation process, so post-validation file replacement cannot substitute a
 different saved decision before the runner parses it.
 
 Mobile publication now consumes the declared artifact kind instead of treating
-any archive file as success. Android candidates must contain a non-empty APK and
-iOS candidates must contain a non-empty IPA before atomic publication;
-regression fixtures prove wrong or zero-byte mobile artifacts never create a
+any archive file as success. Android APKs must be valid ZIP containers with an
+ARM64 ELF native library, while iOS IPAs must declare a main application
+executable in `Info.plist` whose Mach-O image contains ARM64. Invalid
+containers,
+wrong-architecture mobile binaries, and zero-byte packages cannot create a
 completed `dist/<ARCH>/` target. Windows candidates likewise require a non-empty
 SHAR `.exe`; engine helper executables alone cannot satisfy publication. The
 optional Windows shortcut adapter applies the same SHAR executable identity, so
