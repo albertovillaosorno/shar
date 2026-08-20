@@ -137,13 +137,24 @@ def _parse_jsonl_record(line: str, line_number: int) -> dict[str, Any]:
     return record
 
 
+def _valid_utf8_text(value: object) -> bool:
+    """Return whether one JSON value is text made of Unicode scalar values."""
+    if not isinstance(value, str):
+        return False
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
 def _valid_required_file_metadata(value: object) -> bool:
     """Return whether one public required-file record has canonical shape."""
     if not isinstance(value, dict) or set(value) != {"path", "min"}:
         return False
     minimum = value["min"]
     return (
-        isinstance(value["path"], str)
+        _valid_utf8_text(value["path"])
         and not isinstance(minimum, bool)
         and isinstance(minimum, int)
         and 0 <= minimum <= _MAX_COUNT
@@ -157,7 +168,7 @@ def _validate_schema_metadata(record: dict[str, Any]) -> None:
     taxonomy = record.get("kind_taxonomy")
     if taxonomy is not None and (
         not isinstance(taxonomy, list)
-        or not all(isinstance(kind, str) for kind in taxonomy)
+        or not all(_valid_utf8_text(kind) for kind in taxonomy)
     ):
         raise LedgerInputError("count ledger kind taxonomy is invalid")
     required_files = record.get("required_files")
@@ -197,13 +208,13 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
     count = record.get("count" if has_observed else "min")
     kind = record.get("kind")
     if (
-        not isinstance(directory, str)
-        or not isinstance(extension, str)
+        not _valid_utf8_text(directory)
+        or not _valid_utf8_text(extension)
         or not extension
     ):
         raise InvalidCoordinateError
-    if kind is not None and not isinstance(kind, str):
-        raise LedgerInputError("count ledger kind metadata must be a string")
+    if kind is not None and not _valid_utf8_text(kind):
+        raise LedgerInputError("count ledger kind metadata must be valid text")
     if (
         isinstance(count, bool)
         or not isinstance(count, int)
