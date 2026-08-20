@@ -79,6 +79,8 @@ measurement, preventing a stateful mapping from presenting different counts to
 those two phases.
 JSONL calibration rows now also reject outer spaces or tabs, matching the
 canonical manifest producer instead of accepting whitespace-normalized aliases.
+Optional public metadata now distinguishes omission from explicit JSON `null`;
+present kind, taxonomy, and required-file fields must retain producer types.
 Generated manifest
 collision
 ordinals are aggregated into their structural family before

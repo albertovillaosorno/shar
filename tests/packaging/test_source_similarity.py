@@ -210,6 +210,7 @@ class SourceSimilarityTests(unittest.TestCase):
             '{"dir":"/aa","ext":"p3d","min":1}',
             '{"dir":"aa/","ext":"p3d","min":1}',
             '{"dir":"aa//bb","ext":"p3d","min":1}',
+            '{"dir":"aa","ext":"p3d","min":1,"kind":null}',
             '{"dir":"aa","ext":"p3d","min":1,"kind":{"private":1}}',
             '{"dir":"\\ud800","ext":"p3d","min":1}',
             '{"dir":"aa","ext":"\\ud800","min":1}',
@@ -219,6 +220,14 @@ class SourceSimilarityTests(unittest.TestCase):
             (
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
                 '"private_metadata":"not-public"}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"kind_taxonomy":null}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"required_files":null}'
             ),
             (
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
