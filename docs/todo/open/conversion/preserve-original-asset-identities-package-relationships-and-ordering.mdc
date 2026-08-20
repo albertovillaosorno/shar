@@ -133,7 +133,8 @@ internally valid `texture` row cannot replace a source `mesh` row.
 
 Non-world and world composite-prop selection now preserves the authored
 `props` array order instead of converting references through `BTreeSet` and
-sort/dedup normalization. Composite intake also rejects duplicate cleaned prop
+sorting/deduplication normalization. Composite intake also rejects duplicate
+cleaned prop
 identities rather than silently collapsing repeated evidence that the current
 outbound model cannot represent independently. Focused prop-catalog regressions
 prove a source order of `zebra`, `alpha`, `middle` remains unchanged and padded
