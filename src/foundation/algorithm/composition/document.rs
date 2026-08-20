@@ -34,7 +34,7 @@ use serde::de::Deserializer;
 use serde::ser::{SerializeSeq, Serializer};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{AlgorithmError, Settings};
+use crate::domain::{AlgorithmError, Settings, SourceProjection};
 
 pub(crate) const ALGORITHM_SCHEMA: &str = "shar.algorithm.v1";
 const CIPHERTEXT_CHUNK_HEX_LEN: usize = 64;
@@ -107,13 +107,169 @@ pub(crate) enum TargetKind {
     Directory,
 }
 
+const SOURCE_PROJECTION_KIND: &str = "offset-mask-set-v1";
+
+fn encode_hex(bytes: &[u8]) -> String {
+    use core::fmt::Write as _;
+    let mut output = String::with_capacity(bytes.len().saturating_mul(2));
+    for byte in bytes {
+        if write!(output, "{byte:02x}").is_err() {
+            return output;
+        }
+    }
+    output
+}
+
+fn projection_hex_value(byte: u8) -> Result<u8, AlgorithmError> {
+    match byte {
+        b'0'..=b'9' => Ok(byte.saturating_sub(b'0')),
+        b'a'..=b'f' => Ok(byte.saturating_sub(b'a').saturating_add(10)),
+        _ => Err(AlgorithmError::new(
+            "source projection mask must be canonical lowercase hexadecimal",
+        )),
+    }
+}
+
+fn decode_lower_hex(text: &str) -> Result<Vec<u8>, AlgorithmError> {
+    if !text.len().is_multiple_of(2)
+        || !text
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+    {
+        return Err(AlgorithmError::new(
+            "source projection mask must be canonical lowercase hexadecimal",
+        ));
+    }
+    let bytes = text.as_bytes();
+    let (pairs, remainder) = bytes.as_chunks::<2>();
+    if !remainder.is_empty() {
+        return Err(AlgorithmError::new(
+            "source projection mask has odd hexadecimal length",
+        ));
+    }
+    let mut output = Vec::with_capacity(pairs.len());
+    for pair in pairs {
+        let [high_byte, low_byte] = *pair;
+        let high = projection_hex_value(high_byte)?;
+        let low = projection_hex_value(low_byte)?;
+        output.push((high << 4) | low);
+    }
+    Ok(output)
+}
+
+fn encode_mask_chunks(mask: &[u8]) -> Vec<String> {
+    let encoded = encode_hex(mask);
+    encoded
+        .as_bytes()
+        .chunks(CIPHERTEXT_CHUNK_HEX_LEN)
+        .map(|chunk| String::from_utf8_lossy(chunk).into_owned())
+        .collect()
+}
+
+fn decode_mask_chunks(chunks: &[String]) -> Result<Vec<u8>, AlgorithmError> {
+    if chunks.is_empty() {
+        return Err(AlgorithmError::new(
+            "source projection mask chunks must not be empty",
+        ));
+    }
+    for (index, chunk) in chunks.iter().enumerate() {
+        let is_last = index.checked_add(1) == Some(chunks.len());
+        if chunk.is_empty()
+            || chunk.len() > CIPHERTEXT_CHUNK_HEX_LEN
+            || chunk.len() % 2 != 0
+            || (!is_last && chunk.len() != CIPHERTEXT_CHUNK_HEX_LEN)
+        {
+            return Err(AlgorithmError::new(
+                "source projection mask chunks are not canonical",
+            ));
+        }
+    }
+    decode_lower_hex(&chunks.concat())
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SourceProjectionAlternativeDocument {
+    span_bytes: u64,
+    mask: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct SourceProjectionDocument {
+    kind: String,
+    alternatives: Vec<SourceProjectionAlternativeDocument>,
+}
+
+impl SourceProjectionDocument {
+    pub(crate) fn from_projection(projection: &SourceProjection) -> Self {
+        let alternatives = projection
+            .alternatives()
+            .map(|(span_bytes, mask)| SourceProjectionAlternativeDocument {
+                span_bytes,
+                mask: encode_mask_chunks(mask),
+            })
+            .collect();
+        Self {
+            kind: SOURCE_PROJECTION_KIND.to_owned(),
+            alternatives,
+        }
+    }
+
+    pub(crate) fn to_projection(
+        &self,
+    ) -> Result<SourceProjection, AlgorithmError> {
+        if self.kind != SOURCE_PROJECTION_KIND || self.alternatives.is_empty() {
+            return Err(AlgorithmError::new(
+                "unsupported or empty source projection",
+            ));
+        }
+        let alternatives = self
+            .alternatives
+            .iter()
+            .map(|alternative| {
+                Ok((
+                    alternative.span_bytes,
+                    decode_mask_chunks(&alternative.mask)?,
+                ))
+            })
+            .collect::<Result<Vec<_>, AlgorithmError>>()?;
+        let projection = SourceProjection::offset_masks(alternatives)?;
+        if Self::from_projection(&projection) != *self {
+            return Err(AlgorithmError::new(
+                "source projection is not canonical",
+            ));
+        }
+        Ok(projection)
+    }
+}
+
+impl SourceProjection {
+    /// Parses one source-projection descriptor from JSON text.
+    ///
+    /// # Errors
+    /// Returns an error when JSON or projection metadata is invalid.
+    pub fn from_json(text: &str) -> Result<Self, AlgorithmError> {
+        let document: SourceProjectionDocument = serde_json::from_str(text)
+            .map_err(|error| {
+                AlgorithmError::new(format!(
+                    "invalid source projection JSON: {error}"
+                ))
+            })?;
+        document.to_projection()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct SourceRecord {
     pub(crate) input: u64,
     pub(crate) path: String,
     pub(crate) bytes: u64,
-    pub(crate) sha256: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) sha256: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) projection: Option<SourceProjectionDocument>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

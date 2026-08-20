@@ -39,8 +39,9 @@ empirically before code uses them.
 - [ ] Ensure distributable family plans under `algorithm/*.txt` use the
   implemented `shar.algorithm.v1` source-bound contract and never become a
   reversible encoding of the maintainer's private complete installation.
-- [ ] Keep plan-contained hashes limited to exact source binding and protected
-  target verification. They are not an antivirus verdict and must never replace
+- [ ] Keep plan-contained hashes limited to ordinary exact-source binding and
+  protected target verification. Projected variant source records must not carry
+  a source hash. No plan metadata is an antivirus verdict or replacement for
   caller-supplied source bytes.
 - [ ] Document the finalized metric and limitations in README when implemented;
   do not describe the tentative percentage as a legal safe harbor.
@@ -121,16 +122,26 @@ replace
 source-backed cryptographic replay evidence or the pending similarity
 calibration.
 
-A separate maintainer-only `source-variant-evidence` helper now checks whether a
+A separate maintainer-only `source-variant-evidence` helper checks whether a
 private cross-variant common-byte artifact is an ordered subsequence of supplied
 local variants while emitting only argument ordinals and aggregate byte counts.
-It neither derives nor publishes common bytes and has no admission result. The
-three executable variants retained in the current private workspace all report a
-complete ordered match. That result is intentionally limited to those available
-samples and does not certify other editions. The common-byte artifact also
-remains outside direct `shar.algorithm.v1` replay because the generic source
-contract binds exact bytes and hashes; a reviewed public-safe user-source
-projection would still be required for cross-edition replay.
+Its `--projection` mode can also emit an `offset-mask-set-v1` descriptor
+without a source hash, containing only bounded positional layouts. The three
+executable variants retained in the current private workspace all reproduce
+the full 284,682-byte common sequence and require three distinct layouts. That
+result is intentionally limited to those available samples and does not
+certify other editions.
+
+The generic algorithm engine now accepts one projected direct-file source record
+without a whole-file SHA-256. Authoring binds the protected target to the common
+bytes; replay tries only the authenticated plan's bounded layout alternatives
+against the caller-supplied file and succeeds only when one projected byte
+sequence authenticates the plan. Ordinary source records remain exact-hash
+bound. The projection stores no executable payload bytes or whole-file hashes,
+and source files remain read-only. This closes the mechanism gap for known
+multi-edition layouts without turning similarity into admission evidence; the
+P0 task remains open for representative-install calibration and final product
+policy.
 
 The generic `shar.algorithm.v1` round-trip suite now includes explicit evidence
 that a serialized plan cannot replay with zero caller-supplied source roots and

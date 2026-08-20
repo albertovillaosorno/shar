@@ -36,6 +36,7 @@ from contextlib import redirect_stderr
 from contextlib import redirect_stdout
 import importlib.util
 from io import StringIO
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -142,6 +143,77 @@ class SourceVariantEvidenceTests(unittest.TestCase):
 
             self.assertEqual(status, 1)
             self.assertEqual(stdout.getvalue(), "")
+            self.assertNotIn(str(root), stderr.getvalue())
+
+    def test_projection_mode_emits_distinct_layouts_without_hash(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-projection-") as raw:
+            root = Path(raw)
+            reference = root / "common.bin"
+            first = root / "first.bin"
+            second = root / "second.bin"
+            reference.write_bytes(b"ace")
+            first.write_bytes(b"a1c2e")
+            second.write_bytes(b"ZZaXcYe")
+
+            projection = _MOD.build_offset_projection(
+                b"ace",
+                [first, second],
+            )
+            self.assertEqual(len(projection.alternatives), 2)
+            self.assertEqual(projection.alternatives[0].span_bytes, 5)
+            self.assertEqual(projection.alternatives[0].mask, b"\xa8")
+            self.assertEqual(projection.alternatives[0].selected_bytes, 3)
+            self.assertEqual(projection.alternatives[1].span_bytes, 7)
+            self.assertEqual(projection.alternatives[1].mask, b"\x2a")
+            self.assertEqual(projection.alternatives[1].selected_bytes, 3)
+
+            stdout = StringIO()
+            stderr = StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                status = _MOD.main([
+                    "--projection",
+                    str(reference),
+                    str(first),
+                    str(second),
+                ])
+
+            self.assertEqual(status, 0)
+            self.assertEqual(stderr.getvalue(), "")
+            document = json.loads(stdout.getvalue())
+            self.assertEqual(document["kind"], "offset-mask-set-v1")
+            self.assertEqual(
+                document["alternatives"],
+                [
+                    {"span_bytes": 5, "mask": ["a8"]},
+                    {"span_bytes": 7, "mask": ["2a"]},
+                ],
+            )
+            self.assertNotIn("sha256", document)
+            self.assertNotIn(str(root), stdout.getvalue())
+
+    def test_projection_mismatch_fails_without_partial_output(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-projection-") as raw:
+            root = Path(raw)
+            reference = root / "common.bin"
+            first = root / "first.bin"
+            second = root / "second.bin"
+            reference.write_bytes(b"ace")
+            first.write_bytes(b"a1c2e")
+            second.write_bytes(b"aXcYq")
+            stdout = StringIO()
+            stderr = StringIO()
+
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                status = _MOD.main([
+                    "--projection",
+                    str(reference),
+                    str(first),
+                    str(second),
+                ])
+
+            self.assertEqual(status, 1)
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertIn("ordered subsequence", stderr.getvalue())
             self.assertNotIn(str(root), stderr.getvalue())
 
     def test_empty_reference_is_rejected(self) -> None:

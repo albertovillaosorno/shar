@@ -81,7 +81,10 @@ The canonical manifest already enforces exact relative-path presence for
 `Simpsons.exe` to one edition-specific byte hash; synthetic integration evidence
 proves different
 contents are admitted at the same canonical path. It keeps `uninst.ico` plus
-other official-language sources optional.
+other official-language sources optional. Cross-edition algorithm replay is a
+separate boundary: a projected `Simpsons.exe` source record stores positional
+mask alternatives and no source hash, so this early path gate does not need to
+identify one executable edition.
 
 The build dependency bootstrap now publishes both `validate-game` and
 `validate-source-deep` with binary and source-closure SHA-256 evidence. Build

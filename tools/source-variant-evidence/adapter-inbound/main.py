@@ -34,6 +34,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from itertools import starmap
+import json
 import os
 from pathlib import Path
 import stat
@@ -102,6 +104,16 @@ class CandidateChangedError(VariantEvidenceError):
         super().__init__("candidate variant changed while reading")
 
 
+class ProjectionMismatchError(VariantEvidenceError):
+    """The common artifact is not an ordered subsequence of one variant."""
+
+    def __init__(self) -> None:
+        """Initialize the canonical projection mismatch failure."""
+        super().__init__(
+            "common-byte reference is not an ordered subsequence of a variant"
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class FileIdentity:
     """Stable filesystem identity captured around one evidence read."""
@@ -124,6 +136,26 @@ class VariantEvidence:
     def complete(self) -> bool:
         """Whether every reference byte was observed in order."""
         return self.matched_bytes == self.reference_bytes
+
+
+@dataclass(frozen=True, slots=True)
+class OffsetProjectionAlternative:
+    """One public-safe positional layout for a private source variant."""
+
+    span_bytes: int
+    mask: bytes
+
+    @property
+    def selected_bytes(self) -> int:
+        """Number of source bytes selected by the mask."""
+        return sum(value.bit_count() for value in self.mask)
+
+
+@dataclass(frozen=True, slots=True)
+class OffsetProjection:
+    """Deduplicated public-safe layouts for private local variants."""
+
+    alternatives: tuple[OffsetProjectionAlternative, ...]
 
 
 def _identity(metadata: os.stat_result) -> FileIdentity:
@@ -239,6 +271,121 @@ def measure_variant(reference: bytes, path: Path) -> VariantEvidence:
     )
 
 
+def _read_candidate_snapshot(path: Path) -> bytes:
+    """Read one stable candidate snapshot with path-free failures.
+
+    Raises:
+        CandidateReadError: If candidate bytes cannot be read completely.
+        CandidateChangedError: If candidate identity changes during the read.
+
+    """
+    expected = _regular_file_identity(path)
+    try:
+        with path.open("rb") as handle:
+            opened = _identity(os.fstat(handle.fileno()))
+            data = handle.read()
+            finished = _identity(os.fstat(handle.fileno()))
+    except OSError as error:
+        raise CandidateReadError from error
+    if (
+        opened != expected
+        or finished != expected
+        or _current_identity(path) != expected
+        or len(data) != expected.size
+    ):
+        raise CandidateChangedError
+    return data
+
+
+def _offset_mask(flags: bytearray) -> bytes:
+    """Pack one selected-offset flag per source byte, high bit first."""
+    mask = bytearray((len(flags) + 7) // 8)
+    for offset, selected in enumerate(flags):
+        if not selected:
+            continue
+        byte_index, bit_index = divmod(offset, 8)
+        mask[byte_index] |= 1 << (7 - bit_index)
+    return bytes(mask)
+
+
+def _ordered_projection(
+    reference: bytes,
+    candidate: bytes,
+) -> OffsetProjectionAlternative:
+    """Derive the deterministic earliest-match layout for one candidate.
+
+    Raises:
+        ProjectionMismatchError: If the complete reference is not found
+            in order.
+
+    """
+    flags = bytearray(len(candidate))
+    matched = 0
+    span = 0
+    for offset, value in enumerate(candidate):
+        if matched == len(reference):
+            break
+        if value == reference[matched]:
+            flags[offset] = 1
+            matched += 1
+            span = offset + 1
+    if matched != len(reference):
+        raise ProjectionMismatchError
+    del flags[span:]
+    return OffsetProjectionAlternative(
+        span_bytes=span,
+        mask=_offset_mask(flags),
+    )
+
+
+def build_offset_projection(
+    reference: bytes,
+    paths: Sequence[Path],
+) -> OffsetProjection:
+    """Derive deduplicated ordered-subsequence layouts for local variants.
+
+    Raises:
+        EmptyReferenceError: If the supplied common artifact is empty.
+        ProjectionMismatchError: If one candidate cannot reproduce it in order.
+
+    """
+    if not reference:
+        raise EmptyReferenceError
+    if not paths:
+        raise ProjectionMismatchError
+    alternatives: list[OffsetProjectionAlternative] = []
+    for path in paths:
+        candidate = _read_candidate_snapshot(path)
+        alternative = _ordered_projection(reference, candidate)
+        if alternative not in alternatives:
+            alternatives.append(alternative)
+    return OffsetProjection(alternatives=tuple(alternatives))
+
+
+def _mask_chunks(mask: bytes) -> list[str]:
+    """Encode one offset mask as canonical bounded hexadecimal chunks."""
+    encoded = mask.hex()
+    return [
+        encoded[index : index + 64]
+        for index in range(0, len(encoded), 64)
+    ]
+
+
+def _projection_text(projection: OffsetProjection) -> str:
+    """Render one canonical algorithm source-projection descriptor."""
+    document = {
+        "kind": "offset-mask-set-v1",
+        "alternatives": [
+            {
+                "span_bytes": alternative.span_bytes,
+                "mask": _mask_chunks(alternative.mask),
+            }
+            for alternative in projection.alternatives
+        ],
+    }
+    return json.dumps(document, indent=2, ensure_ascii=True) + "\n"
+
+
 def _render(index: int, evidence: VariantEvidence) -> str:
     """Render one path-free evidence row."""
     complete = "true" if evidence.complete else "false"
@@ -252,24 +399,32 @@ def _render(index: int, evidence: VariantEvidence) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run ordered-byte evidence collection with no admission result."""
+    """Run path-free variant evidence or emit a verified offset projection."""
     arguments = list(sys.argv[1:] if argv is None else argv)
+    projection_mode = bool(arguments and arguments[0] == "--projection")
+    if projection_mode:
+        arguments.pop(0)
     if len(arguments) < 2:
         sys.stderr.write(
-            "usage: source-variant-evidence <common-file> <variant-file>...\n"
+            "usage: source-variant-evidence [--projection] "
+            "<common-file> <variant-file>...\n"
         )
         return 2
     try:
         reference = load_reference(Path(arguments[0]))
-        evidence = [
-            measure_variant(reference, Path(value))
-            for value in arguments[1:]
-        ]
+        variants = [Path(value) for value in arguments[1:]]
+        if projection_mode:
+            projection = build_offset_projection(reference, variants)
+            output = _projection_text(projection)
+        else:
+            evidence = [measure_variant(reference, path) for path in variants]
+            output = "".join(
+                starmap(_render, enumerate(evidence, start=1))
+            )
     except VariantEvidenceError as error:
         sys.stderr.write(f"source-variant-evidence: {error}\n")
         return 1
-    for index, result in enumerate(evidence, start=1):
-        sys.stdout.write(_render(index, result))
+    sys.stdout.write(output)
     return 0
 
 

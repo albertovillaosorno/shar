@@ -42,10 +42,10 @@ use shar_sha256::{Sha256, digest, digest_hex};
 
 use crate::document::{
     ALGORITHM_SCHEMA, AlgorithmDocument, AuthenticatedMetadata,
-    ProtectedTarget, SourceRecord, TargetDescriptor, TargetKind,
-    algorithm_json_text, settings_json_bytes,
+    ProtectedTarget, SourceProjectionDocument, SourceRecord, TargetDescriptor,
+    TargetKind, algorithm_json_text, settings_json_bytes,
 };
-use crate::domain::{AlgorithmError, Settings};
+use crate::domain::{AlgorithmError, Settings, SourceProjection};
 
 const SOURCE_KEY_DOMAIN: &[u8] = b"shar.algorithm.source-key.v1\0";
 const NONCE_DOMAIN: &[u8] = b"shar.algorithm.nonce.v1\0";
@@ -63,6 +63,7 @@ struct InputFile {
     bytes: u64,
     sha256: String,
     data: Vec<u8>,
+    projection: Option<SourceProjection>,
 }
 
 impl InputFile {
@@ -71,7 +72,11 @@ impl InputFile {
             input: self.input,
             path: self.logical_path.clone(),
             bytes: self.bytes,
-            sha256: self.sha256.clone(),
+            sha256: self.projection.is_none().then(|| self.sha256.clone()),
+            projection: self
+                .projection
+                .as_ref()
+                .map(SourceProjectionDocument::from_projection),
         }
     }
 
@@ -88,6 +93,18 @@ impl InputFile {
 struct CollectedSource {
     files: Vec<InputFile>,
     roots: Vec<PathBuf>,
+}
+
+#[derive(Debug)]
+struct ProjectedReplayCandidates {
+    file_index: usize,
+    data: Vec<Vec<u8>>,
+}
+
+#[derive(Debug)]
+struct CollectedReplaySource {
+    source: CollectedSource,
+    projected: Option<ProjectedReplayCandidates>,
 }
 
 fn io_failure(context: &str, error: &std::io::Error) -> AlgorithmError {
@@ -151,7 +168,97 @@ fn inspect_file(
         bytes,
         sha256: digest_hex(&data),
         data,
+        projection: None,
     })
+}
+
+fn project_source_bytes(
+    data: &[u8],
+    span_bytes: u64,
+    mask: &[u8],
+    selected_bytes: u64,
+) -> Result<Vec<u8>, AlgorithmError> {
+    let span = usize::try_from(span_bytes).map_err(|_error| {
+        AlgorithmError::new("source projection span exceeds host limits")
+    })?;
+    let selected_span = data.get(..span).ok_or_else(|| {
+        AlgorithmError::new("source file is shorter than projection span")
+    })?;
+    let capacity = usize::try_from(selected_bytes).map_err(|_error| {
+        AlgorithmError::new("source projection is too large")
+    })?;
+    let mut projected = Vec::with_capacity(capacity);
+    for (offset, value) in selected_span.iter().enumerate() {
+        let mask_index = offset.checked_div(8).ok_or_else(|| {
+            AlgorithmError::new("source projection mask index is invalid")
+        })?;
+        let Some(mask_byte) = mask.get(mask_index) else {
+            return Err(AlgorithmError::new(
+                "source projection mask is truncated",
+            ));
+        };
+        let bit_index = offset.checked_rem(8).ok_or_else(|| {
+            AlgorithmError::new("source projection bit index is invalid")
+        })?;
+        let shift = 7_usize.checked_sub(bit_index).ok_or_else(|| {
+            AlgorithmError::new("source projection bit index is invalid")
+        })?;
+        if mask_byte & (1_u8 << shift) != 0 {
+            projected.push(*value);
+        }
+    }
+    if usize_to_u64(projected.len(), "projected source length")?
+        != selected_bytes
+    {
+        return Err(AlgorithmError::new(
+            "source projection selected byte count changed",
+        ));
+    }
+    Ok(projected)
+}
+
+fn inspect_projected_file(
+    input: u64,
+    path: PathBuf,
+    projection: &SourceProjection,
+    settings: &Settings,
+) -> Result<(InputFile, Vec<Vec<u8>>), AlgorithmError> {
+    let bytes = local::file_len(&path)
+        .map_err(|error| io_failure("cannot inspect input file", &error))?;
+    if bytes > settings.maximum_file_bytes() {
+        return Err(AlgorithmError::new(
+            "input file exceeds maximum_file_bytes",
+        ));
+    }
+    let data = local::read_bytes(&path)
+        .map_err(|error| io_failure("cannot read input file", &error))?;
+    let observed = usize_to_u64(data.len(), "input file length")?;
+    if observed != bytes {
+        return Err(AlgorithmError::new(
+            "input file changed while it was being read",
+        ));
+    }
+    let selected_bytes = projection.selected_bytes();
+    let candidates = projection
+        .alternatives()
+        .filter(|(span_bytes, _mask)| *span_bytes <= observed)
+        .map(|(span_bytes, mask)| {
+            project_source_bytes(&data, span_bytes, mask, selected_bytes)
+        })
+        .collect::<Result<Vec<_>, AlgorithmError>>()?;
+    let first = candidates.first().ok_or_else(|| {
+        AlgorithmError::new("source file is shorter than every projection span")
+    })?;
+    let file = InputFile {
+        input,
+        logical_path: String::new(),
+        path,
+        bytes: selected_bytes,
+        sha256: digest_hex(first),
+        data: first.clone(),
+        projection: Some(projection.clone()),
+    };
+    Ok((file, candidates))
 }
 
 fn sort_files_by_logical_path(files: &mut [InputFile]) {
@@ -256,27 +363,11 @@ fn reject_duplicate_physical_targets(
     Ok(())
 }
 
-fn collect_source(
-    paths: &[PathBuf],
+fn finalize_collected_source(
+    roots: Vec<PathBuf>,
+    files: Vec<InputFile>,
     settings: &Settings,
 ) -> Result<CollectedSource, AlgorithmError> {
-    if paths.is_empty() {
-        return Err(AlgorithmError::new(
-            "at least one source path is required",
-        ));
-    }
-    let mut roots = Vec::with_capacity(paths.len());
-    let mut files = Vec::new();
-    let mut total_bytes = 0_u64;
-    for (index, path) in paths.iter().enumerate() {
-        let input = usize_to_u64(index, "source input index")?;
-        let (root, mut root_files) = collect_one_root(input, path, settings)?;
-        roots.push(root);
-        for file in &root_files {
-            total_bytes = total_bytes.saturating_add(file.bytes);
-        }
-        files.append(&mut root_files);
-    }
     reject_root_overlap(&roots)?;
     reject_duplicate_physical_sources(&files)?;
     let file_count = usize_to_u64(files.len(), "source file count")?;
@@ -288,6 +379,9 @@ fn collect_source(
     if file_count > settings.maximum_source_files() {
         return Err(AlgorithmError::new("source exceeds maximum_source_files"));
     }
+    let total_bytes = files
+        .iter()
+        .fold(0_u64, |total, file| total.saturating_add(file.bytes));
     if total_bytes < settings.minimum_source_bytes() {
         return Err(AlgorithmError::new(
             "source has fewer than minimum_source_bytes",
@@ -297,6 +391,137 @@ fn collect_source(
         return Err(AlgorithmError::new("source exceeds maximum_source_bytes"));
     }
     Ok(CollectedSource { files, roots })
+}
+
+fn collect_authoring_source(
+    paths: &[PathBuf],
+    projections: &[Option<SourceProjection>],
+    settings: &Settings,
+) -> Result<CollectedSource, AlgorithmError> {
+    if paths.len() != projections.len() || paths.is_empty() {
+        return Err(AlgorithmError::new(
+            "source paths and projections must have identical nonzero length",
+        ));
+    }
+    let mut roots = Vec::with_capacity(paths.len());
+    let mut files = Vec::new();
+    for (index, (path, projection)) in paths.iter().zip(projections).enumerate()
+    {
+        let input = usize_to_u64(index, "source input index")?;
+        let (root, mut root_files) = collect_one_root(input, path, settings)?;
+        if let Some(projection) = projection {
+            if root_files.len() != 1 {
+                return Err(AlgorithmError::new(
+                    "source projection requires one direct file input",
+                ));
+            }
+            let file = root_files.first_mut().ok_or_else(|| {
+                AlgorithmError::new(
+                    "source projection requires one direct file input",
+                )
+            })?;
+            if !file.logical_path.is_empty() {
+                return Err(AlgorithmError::new(
+                    "source projection requires one direct file input",
+                ));
+            }
+            if projection.alternatives().any(|(span_bytes, _mask)| {
+                span_bytes > settings.maximum_file_bytes()
+            }) {
+                return Err(AlgorithmError::new(
+                    "source projection span exceeds maximum_file_bytes",
+                ));
+            }
+            if projection.mask_bytes() > settings.maximum_file_bytes() {
+                return Err(AlgorithmError::new(
+                    "source projection masks exceed maximum_file_bytes",
+                ));
+            }
+            if projection.selected_bytes() != file.bytes {
+                return Err(AlgorithmError::new(concat!(
+                    "source projection selection does not match ",
+                    "canonical bytes",
+                )));
+            }
+            file.projection = Some(projection.clone());
+        }
+        roots.push(root);
+        files.append(&mut root_files);
+    }
+    finalize_collected_source(roots, files, settings)
+}
+
+fn collect_replay_source(
+    paths: &[PathBuf],
+    records: &[SourceRecord],
+    settings: &Settings,
+) -> Result<CollectedReplaySource, AlgorithmError> {
+    let expected_inputs = records
+        .last()
+        .and_then(|record| record.input.checked_add(1))
+        .ok_or_else(|| {
+            AlgorithmError::new("algorithm source inputs are empty")
+        })?;
+    if usize_to_u64(paths.len(), "replay source input count")?
+        != expected_inputs
+    {
+        return Err(AlgorithmError::new(
+            "caller source count does not match algorithm inputs",
+        ));
+    }
+    let mut roots = Vec::with_capacity(paths.len());
+    let mut files = Vec::new();
+    let mut projected = None;
+    for (index, path) in paths.iter().enumerate() {
+        let input = usize_to_u64(index, "source input index")?;
+        let expected = records
+            .iter()
+            .filter(|record| record.input == input)
+            .collect::<Vec<_>>();
+        let projection_document = match expected.as_slice() {
+            [record] if record.path.is_empty() => record.projection.as_ref(),
+            _ => None,
+        };
+        if let Some(document) = projection_document {
+            if projected.is_some() {
+                return Err(AlgorithmError::new(
+                    "algorithm supports at most one projected source input",
+                ));
+            }
+            let projection = document.to_projection()?;
+            let kind = local::path_kind(path).map_err(|error| {
+                io_failure("cannot inspect input path", &error)
+            })?;
+            if kind != PathKind::File {
+                return Err(AlgorithmError::new(
+                    "projected source input must be a regular file",
+                ));
+            }
+            let canonical = local::canonicalize(path).map_err(|error| {
+                io_failure("cannot canonicalize input path", &error)
+            })?;
+            let file_index = files.len();
+            let (file, candidates) = inspect_projected_file(
+                input,
+                canonical.clone(),
+                &projection,
+                settings,
+            )?;
+            roots.push(canonical);
+            files.push(file);
+            projected = Some(ProjectedReplayCandidates {
+                file_index,
+                data: candidates,
+            });
+        } else {
+            let (root, mut root_files) =
+                collect_one_root(input, path, settings)?;
+            roots.push(root);
+            files.append(&mut root_files);
+        }
+    }
+    let source = finalize_collected_source(roots, files, settings)?;
+    Ok(CollectedReplaySource { source, projected })
 }
 
 fn collect_target(
@@ -592,8 +817,32 @@ pub fn create_algorithm(
     target_path: &Path,
     algorithm_path: &Path,
 ) -> Result<(), AlgorithmError> {
+    let projections = vec![None; source_paths.len()];
+    create_algorithm_with_source_projections(
+        settings,
+        source_paths,
+        &projections,
+        target_path,
+        algorithm_path,
+    )
+}
+
+/// Authors one deterministic source-bound `.txt` algorithm with optional
+/// positional projections for direct-file source inputs.
+///
+/// # Errors
+/// Returns an error when source projection metadata, inputs, target evidence,
+/// encryption, or the explicit algorithm output path violate the contract.
+pub fn create_algorithm_with_source_projections(
+    settings: &Settings,
+    source_paths: &[PathBuf],
+    source_projections: &[Option<SourceProjection>],
+    target_path: &Path,
+    algorithm_path: &Path,
+) -> Result<(), AlgorithmError> {
     validate_txt_path(algorithm_path)?;
-    let source = collect_source(source_paths, settings)?;
+    let source =
+        collect_authoring_source(source_paths, source_projections, settings)?;
     let (target_kind, target_files, target_root) =
         collect_target(target_path, settings)?;
     reject_target_source_overlap(&target_root, &source.roots)?;
@@ -719,15 +968,53 @@ fn validate_source_records(
     let mut directory_inputs = HashSet::new();
     let mut previous_input: Option<u64> = None;
     let mut previous_path: Option<(u64, &str)> = None;
+    let mut projected_input = None;
     let mut portable_paths = BTreeMap::<u64, BTreeSet<String>>::new();
     let mut source_bytes = 0_u64;
     for record in source {
         validate_record_path(&record.path, true, "algorithm source")?;
-        validate_lower_hex(
-            &record.sha256,
-            Some(SHA256_HEX_LEN),
-            "algorithm source sha256",
-        )?;
+        match (&record.sha256, &record.projection) {
+            (Some(sha256), None) => validate_lower_hex(
+                sha256,
+                Some(SHA256_HEX_LEN),
+                "algorithm source sha256",
+            )?,
+            (None, Some(document)) => {
+                if !record.path.is_empty() {
+                    return Err(AlgorithmError::new(
+                        "source projection requires one direct file record",
+                    ));
+                }
+                if projected_input.replace(record.input).is_some() {
+                    return Err(AlgorithmError::new(
+                        "algorithm supports at most one projected source input",
+                    ));
+                }
+                let projection = document.to_projection()?;
+                if projection.alternatives().any(|(span_bytes, _mask)| {
+                    span_bytes > settings.maximum_file_bytes()
+                }) {
+                    return Err(AlgorithmError::new(
+                        "source projection span exceeds settings",
+                    ));
+                }
+                if projection.mask_bytes() > settings.maximum_file_bytes() {
+                    return Err(AlgorithmError::new(
+                        "source projection masks exceed settings",
+                    ));
+                }
+                if projection.selected_bytes() != record.bytes {
+                    return Err(AlgorithmError::new(
+                        "source projection byte count does not match record",
+                    ));
+                }
+            },
+            _ => {
+                return Err(AlgorithmError::new(
+                    "algorithm source must choose hash or projection",
+                ));
+            },
+        }
         if record.bytes > settings.maximum_file_bytes() {
             return Err(AlgorithmError::new(
                 "algorithm source file exceeds settings",
@@ -962,6 +1249,70 @@ fn output_path_for(
     }
 }
 
+enum RecoveryAttemptError {
+    Authentication,
+    Fatal(AlgorithmError),
+}
+
+fn recover_targets(
+    document: &AlgorithmDocument,
+    metadata: &[u8],
+    key: &[u8; 32],
+    output_path: &Path,
+) -> Result<Vec<(PathBuf, Vec<u8>)>, RecoveryAttemptError> {
+    let cipher =
+        ChaCha20Poly1305::new_from_slice(key).map_err(|_key_error| {
+            RecoveryAttemptError::Fatal(AlgorithmError::new(
+                "cannot initialize protected payload cipher",
+            ))
+        })?;
+    let mut recovered = Vec::with_capacity(document.target.len());
+    let mut output_identities = BTreeSet::new();
+    for target in &document.target {
+        let nonce =
+            decode_hex(&target.nonce).map_err(RecoveryAttemptError::Fatal)?;
+        let ciphertext = decode_hex(&target.ciphertext)
+            .map_err(RecoveryAttemptError::Fatal)?;
+        let associated = aad(metadata, &target.descriptor.path)
+            .map_err(RecoveryAttemptError::Fatal)?;
+        let nonce_value =
+            Nonce::try_from(nonce.as_slice()).map_err(|_nonce_error| {
+                RecoveryAttemptError::Fatal(AlgorithmError::new(
+                    "algorithm target nonce must be 12 bytes",
+                ))
+            })?;
+        let plaintext = cipher
+            .decrypt(&nonce_value, Payload {
+                msg: &ciphertext,
+                aad: &associated,
+            })
+            .map_err(|_cipher_error| RecoveryAttemptError::Authentication)?;
+        let observed_bytes =
+            usize_to_u64(plaintext.len(), "recovered target length")
+                .map_err(RecoveryAttemptError::Fatal)?;
+        if observed_bytes != target.descriptor.bytes
+            || digest_hex(&plaintext) != target.descriptor.sha256
+        {
+            return Err(RecoveryAttemptError::Fatal(AlgorithmError::new(
+                "recovered target identity does not match algorithm",
+            )));
+        }
+        let destination = output_path_for(
+            output_path,
+            document.target_kind,
+            &target.descriptor,
+        )
+        .map_err(RecoveryAttemptError::Fatal)?;
+        if !output_identities.insert(destination.clone()) {
+            return Err(RecoveryAttemptError::Fatal(AlgorithmError::new(
+                "replay target output collision",
+            )));
+        }
+        recovered.push((destination, plaintext));
+    }
+    Ok(recovered)
+}
+
 /// Replays one source-bound `.txt` algorithm into a new explicit output path.
 ///
 /// # Errors
@@ -976,7 +1327,8 @@ pub fn replay_algorithm(
 ) -> Result<(), AlgorithmError> {
     let document = parse_document(algorithm_path)?;
     let descriptors = validate_document(&document, settings)?;
-    let source = collect_source(source_paths, settings)?;
+    let CollectedReplaySource { mut source, projected } =
+        collect_replay_source(source_paths, &document.source, settings)?;
     let observed_source = source
         .files
         .iter()
@@ -1002,48 +1354,43 @@ pub fn replay_algorithm(
         document.target_kind,
         &descriptors,
     )?;
-    let key = source_key(&source.files)?;
-    let cipher =
-        ChaCha20Poly1305::new_from_slice(&key).map_err(|_key_error| {
-            AlgorithmError::new("cannot initialize protected payload cipher")
-        })?;
-    let mut recovered = Vec::with_capacity(document.target.len());
-    let mut output_identities = BTreeSet::new();
-    for target in &document.target {
-        let nonce = decode_hex(&target.nonce)?;
-        let ciphertext = decode_hex(&target.ciphertext)?;
-        let associated = aad(&metadata, &target.descriptor.path)?;
-        let nonce_value =
-            Nonce::try_from(nonce.as_slice()).map_err(|_nonce_error| {
-                AlgorithmError::new("algorithm target nonce must be 12 bytes")
-            })?;
-        let plaintext = cipher
-            .decrypt(&nonce_value, Payload {
-                msg: &ciphertext,
-                aad: &associated,
-            })
-            .map_err(|_cipher_error| {
-                AlgorithmError::new("protected target authentication failed")
-            })?;
-        let observed_bytes =
-            usize_to_u64(plaintext.len(), "recovered target length")?;
-        if observed_bytes != target.descriptor.bytes
-            || digest_hex(&plaintext) != target.descriptor.sha256
-        {
-            return Err(AlgorithmError::new(
-                "recovered target identity does not match algorithm",
-            ));
+    let recovered = if let Some(projected) = projected {
+        let mut authenticated = None;
+        for candidate in projected.data {
+            let file = source.files.get_mut(projected.file_index).ok_or_else(
+                || {
+                    let message = "projected source file index is invalid";
+                    AlgorithmError::new(message)
+                },
+            )?;
+            file.data = candidate;
+            let key = source_key(&source.files)?;
+            match recover_targets(&document, &metadata, &key, output_path) {
+                Ok(files) => {
+                    authenticated = Some(files);
+                    break;
+                },
+                Err(RecoveryAttemptError::Authentication) => {},
+                Err(RecoveryAttemptError::Fatal(error)) => return Err(error),
+            }
         }
-        let destination = output_path_for(
-            output_path,
-            document.target_kind,
-            &target.descriptor,
-        )?;
-        if !output_identities.insert(destination.clone()) {
-            return Err(AlgorithmError::new("replay target output collision"));
+        authenticated.ok_or_else(|| {
+            AlgorithmError::new(
+                "projected source evidence does not authenticate algorithm",
+            )
+        })?
+    } else {
+        let key = source_key(&source.files)?;
+        match recover_targets(&document, &metadata, &key, output_path) {
+            Ok(files) => files,
+            Err(RecoveryAttemptError::Authentication) => {
+                return Err(AlgorithmError::new(
+                    "protected target authentication failed",
+                ));
+            },
+            Err(RecoveryAttemptError::Fatal(error)) => return Err(error),
         }
-        recovered.push((destination, plaintext));
-    }
+    };
 
     for (destination, bytes) in recovered {
         local::write_new_bytes(&destination, &bytes, true).map_err(

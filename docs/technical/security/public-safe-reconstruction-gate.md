@@ -16,10 +16,12 @@ supply missing bytes, forgive a failed required path, or turn an invalid source
 into an accepted one.
 
 The original installation is read-only. Reconstruction and calibration write
-only to SHAR-owned cache/output locations. Exact hashes used by a
-`shar.algorithm.v1` document bind that plan to its required local evidence and
-protected target descriptors; they are not a separate source of reconstruction
-bytes and are not an antivirus verdict.
+only to SHAR-owned cache/output locations. Ordinary `shar.algorithm.v1` source
+records retain exact SHA-256 binding. A projected variant source record instead
+contains no source hash: it authenticates only public-safe positional masks, and
+replay derives the source key from the caller's bytes selected by those masks.
+Protected-target hashes remain target-integrity descriptors. None of these
+values supplies reconstruction bytes or acts as an antivirus verdict.
 
 ## Measurable terms
 
@@ -120,10 +122,11 @@ Repository policy additionally scans every publishable family
 `algorithm/*.txt`. Whitespace-only placeholders remain admitted as explicitly
 non-buildable state; every substantive plan must decode as a
 `shar.algorithm.v1` object with the exact top-level source/target contract,
-lowercase source/target hashes, 12-byte nonce evidence, and hexadecimal
-protected target material whose encoded length includes the required 16-byte
-authentication tag and whose declared resource use fits the active generic
-algorithm settings. Generic replay checks the fixed nonce and protected-payload
+lowercase hashes for ordinary source records and all target records, validated
+projection metadata without a source hash when present, 12-byte nonce evidence,
+and hexadecimal protected target material whose encoded length includes the
+required 16-byte authentication tag and whose declared resource use fits the
+active generic algorithm settings. Generic replay checks the fixed nonce and protected-payload
 encoded lengths and canonical lowercase hex without decoding protected payloads.
 It also validates source record paths, resource limits, identity uniqueness, and
 input grouping before collecting
@@ -142,15 +145,24 @@ structural publication guard does not turn a placeholder into a reviewed plan
 and does not implement a similarity threshold.
 
 The maintainer-only `in/`, `master/`, and shared `out/` workspace trees never
-ship as reconstruction plans. A maintainer-derived cross-variant byte artifact
-may support private compatibility analysis, but it is not automatically a
-replay source. `shar.algorithm.v1` source records bind exact bytes and
-hashes. Using such an artifact for a multi-edition public plan therefore
-requires a deterministic user-source projection that can reproduce the admitted
-bytes without embedding
-or publishing the private comparison corpus. Until that projection exists, the
-required `Simpsons.exe` path gate and algorithm byte binding remain separate
-contracts.
+ship as reconstruction plans. Ordinary `shar.algorithm.v1` source records
+bind exact bytes with SHA-256. A direct-file variant source may instead use a
+bounded `offset-mask-set-v1` projection without a source hash. Its alternatives
+contain only source spans and positional masks; every alternative selects the
+same common-byte count, duplicate layouts collapse, one projected source input
+is allowed, and both spans and aggregate mask bytes remain under the active
+file limit. Replay reads the caller's file once, evaluates only layouts whose
+spans fit, derives a candidate source key from each selected byte sequence, and
+accepts the first candidate that authenticates the protected plan. The user's edition-specific
+whole executable hash is neither stored nor used for that source record.
+
+The private common-byte artifact and private comparison executables remain
+maintainer evidence rather than plan payload. Projection authoring may derive
+position masks from them, but the published descriptor contains neither those
+bytes nor hashes of the complete executables. The three retained executable
+variants currently produce three distinct layouts; that evidence does not claim
+coverage for variants whose layouts have not been independently supplied and
+verified.
 
 Generic algorithm authoring also requires the
 canonical target root to be disjoint from every canonical source root in both

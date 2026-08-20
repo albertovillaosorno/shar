@@ -442,6 +442,9 @@ def _assert_plan_resource_limits(document: dict[str, object]) -> None:
         byte_count = record["bytes"]
         assert isinstance(byte_count, int)
         assert byte_count <= limits["maximum_file_bytes"]
+        projection = record.get("projection")
+        if projection is not None:
+            _assert_source_projection(record)
         source_bytes += byte_count
     assert limits["minimum_source_bytes"] <= source_bytes
     assert source_bytes <= limits["maximum_source_bytes"]
@@ -454,6 +457,71 @@ def _assert_plan_resource_limits(document: dict[str, object]) -> None:
         assert byte_count <= limits["maximum_file_bytes"]
         target_bytes += byte_count
     assert target_bytes <= limits["maximum_target_bytes"]
+
+
+def _assert_projection_mask(
+    alternative: dict[str, object],
+) -> tuple[int, bytes]:
+    """Require one canonical bounded offset-mask alternative."""
+    assert set(alternative) == {"span_bytes", "mask"}
+    span = alternative["span_bytes"]
+    assert _is_nonnegative_integer(span)
+    assert isinstance(span, int)
+    assert span > 0
+    mask = alternative["mask"]
+    assert isinstance(mask, list)
+    assert mask
+    for index, chunk in enumerate(mask):
+        assert isinstance(chunk, str)
+        assert 0 < len(chunk) <= 64
+        assert len(chunk) % 2 == 0
+        if index + 1 < len(mask):
+            assert len(chunk) == 64
+        assert set(chunk) <= _HEX
+    encoded = "".join(mask)
+    expected_bytes = (span + 7) // 8
+    assert len(encoded) == expected_bytes * 2
+    raw = bytes.fromhex(encoded)
+    remainder = span % 8
+    if remainder:
+        invalid_bits = 8 - remainder
+        invalid_mask = (1 << invalid_bits) - 1
+        assert raw[-1] & invalid_mask == 0
+    assert any(raw)
+    return span, raw
+
+
+def _assert_source_projection(record: dict[str, object]) -> None:
+    """Mirror the runtime offset-mask-set source projection contract."""
+    projection = record["projection"]
+    assert isinstance(projection, dict)
+    assert set(projection) == {"kind", "alternatives"}
+    assert projection["kind"] == "offset-mask-set-v1"
+    alternatives = projection["alternatives"]
+    assert isinstance(alternatives, list)
+    assert 0 < len(alternatives) <= 256
+    layouts: set[tuple[int, bytes]] = set()
+    selected_bytes: int | None = None
+    mask_bytes = 0
+    settings = _active_settings()
+    maximum_file_bytes = settings["maximum_file_bytes"]
+    assert isinstance(maximum_file_bytes, int)
+    for alternative in alternatives:
+        assert isinstance(alternative, dict)
+        span, raw = _assert_projection_mask(alternative)
+        assert span <= maximum_file_bytes
+        layout = (span, raw)
+        assert layout not in layouts
+        layouts.add(layout)
+        selected = sum(byte.bit_count() for byte in raw)
+        if selected_bytes is None:
+            selected_bytes = selected
+        else:
+            assert selected == selected_bytes
+        mask_bytes += len(raw)
+    assert selected_bytes == record["bytes"]
+    assert mask_bytes <= maximum_file_bytes
+    assert not record["path"]
 
 
 def _assert_source_bound_plan(text: str) -> None:
@@ -479,12 +547,17 @@ def _assert_source_bound_plan(text: str) -> None:
     assert source
     for record in source:
         assert isinstance(record, dict)
-        assert set(record) == {"input", "path", "bytes", "sha256"}
+        raw_keys = {"input", "path", "bytes", "sha256"}
+        projected_keys = {"input", "path", "bytes", "projection"}
+        assert set(record) in {frozenset(raw_keys), frozenset(projected_keys)}
         assert _is_nonnegative_integer(record["input"])
         assert isinstance(record["path"], str)
         _assert_relative_record_path(record["path"], allow_empty=True)
         assert _is_nonnegative_integer(record["bytes"])
-        assert _is_lower_hex(record["sha256"], 64)
+        if "sha256" in record:
+            assert _is_lower_hex(record["sha256"], 64)
+        else:
+            _assert_source_projection(record)
 
     target = document["target"]
     assert isinstance(target, list)
@@ -669,6 +742,26 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
     for text in invalid:
         with pytest.raises(AssertionError):
             _assert_source_bound_plan(text)
+
+
+def test_public_plan_guard_accepts_projection_without_source_hash() -> None:
+    """Permit variant sources that derive their key from selected bytes only."""
+    plan = _synthetic_plan()
+    source = plan["source"]
+    assert isinstance(source, list)
+    record = source[0]
+    assert isinstance(record, dict)
+    del record["sha256"]
+    record["projection"] = {
+        "kind": "offset-mask-set-v1",
+        "alternatives": [
+            {
+                "span_bytes": 2048,
+                "mask": ["aa" * 32 for _ in range(8)],
+            }
+        ],
+    }
+    _assert_source_bound_plan(json.dumps(plan))
 
 
 def test_substantive_algorithm_example_matches_source_bound_contract() -> None:
