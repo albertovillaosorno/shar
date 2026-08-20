@@ -212,11 +212,15 @@ fn mission_source_directory(source_path: &str) -> Result<String, String> {
 }
 
 fn validate_mission_id(mission_id: &str) -> Result<(), String> {
-    if mission_id.is_empty()
-        || mission_id != mission_id.trim()
-        || mission_id.contains('/')
-        || mission_id.contains(char::from(92))
-        || mission_id.chars().any(char::is_control)
+    let bytes = mission_id.as_bytes();
+    if bytes.is_empty()
+        || !bytes.first().is_some_and(u8::is_ascii_alphanumeric)
+        || !bytes.last().is_some_and(u8::is_ascii_alphanumeric)
+        || !bytes.iter().copied().all(|byte| {
+            byte.is_ascii_lowercase()
+                || byte.is_ascii_digit()
+                || matches!(byte, b'-' | b'_')
+        })
     {
         return Err("mission registration id is malformed".to_owned());
     }
