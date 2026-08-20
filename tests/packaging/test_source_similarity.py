@@ -138,14 +138,13 @@ class SourceSimilarityTests(unittest.TestCase):
         )
         self.assertEqual(_MOD.parse_count_ledger(ledger), {("aa", "p3d"): 2})
 
-    def test_parser_accepts_valid_json_surrogate_pair(self) -> None:
-        ledger = '{"dir":"\\ud83d\\ude80","ext":"p3d","min":1}'
+    def test_parser_rejects_ambiguous_jsonl_records(self) -> None:
+        valid_pair = '{"dir":"\\ud83d\\ude80","ext":"p3d","min":1}'
         self.assertEqual(
-            _MOD.parse_count_ledger(ledger),
+            _MOD.parse_count_ledger(valid_pair),
             {("🚀", "p3d"): 1},
         )
 
-    def test_parser_rejects_ambiguous_jsonl_records(self) -> None:
         records = (
             '{"dir":"aa","dir":"bb","ext":"p3d","min":1}',
             '{"dir":"aa","ext":"p3d","min":1,"extra":true}',
