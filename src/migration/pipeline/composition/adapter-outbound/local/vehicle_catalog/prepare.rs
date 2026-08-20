@@ -57,7 +57,8 @@ use super::model::{GroundingRecord, PartRecord, TextureRecord, VehicleRecord};
 use super::source::{
     VehicleTextureAuthority, common_headlight_quad_groups, decoded_name,
     png_files, relative_art_root, select_vehicle_composite,
-    select_vehicle_skeleton, vehicle_mesh_paths, vehicle_quad_group_paths,
+    select_vehicle_skeleton, unique_vehicle_component_paths, vehicle_mesh_paths,
+    vehicle_quad_group_paths,
 };
 use crate::domain::PipelineError;
 use crate::domain::package::PhaseThreePackageRow;
@@ -1037,26 +1038,29 @@ fn load_vehicle_animations(
     vehicle_dir: &Path,
     asset: &CharacterAsset,
 ) -> Result<(Vec<AnimationClip>, Vec<String>), PipelineError> {
-    let mut paths = package
-        .members()
-        .iter()
-        .filter(|member| {
-            member.kind == "p3d-animation"
-                && member.source_chunk_kind == "animation"
-        })
-        .map(|member| {
-            let file_name =
-                Path::new(&member.path).file_name().ok_or_else(|| {
-                    PipelineError::new("vehicle animation has no file name")
-                })?;
-            Ok(package_root
-                .join("components")
-                .join("animation")
-                .join(file_name))
-        })
-        .collect::<Result<Vec<_>, PipelineError>>()?;
-    paths.sort();
-    paths.dedup();
+    let paths = unique_vehicle_component_paths(
+        package
+            .members()
+            .iter()
+            .filter(|member| {
+                member.kind == "p3d-animation"
+                    && member.source_chunk_kind == "animation"
+            })
+            .map(|member| {
+                let file_name =
+                    Path::new(&member.path).file_name().ok_or_else(|| {
+                        PipelineError::new(
+                            "vehicle animation has no file name",
+                        )
+                    })?;
+                Ok(package_root
+                    .join("components")
+                    .join("animation")
+                    .join(file_name))
+            })
+            .collect::<Result<Vec<_>, PipelineError>>()?,
+        "animation",
+    )?;
     let mut skeletal_paths = Vec::new();
     let mut sidecars = Vec::new();
     let mut used_names = BTreeMap::<String, usize>::new();
