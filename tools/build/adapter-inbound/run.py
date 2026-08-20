@@ -620,24 +620,32 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
         )
         raise RunFailure(message)
 
+    if target.system == "windows":
+        if any(
+            item.is_file()
+            and item.suffix.casefold() == ".exe"
+            and item.stat().st_size > 0
+            and _is_shar_runtime_name(item.stem)
+            for item in candidate.rglob("*")
+        ):
+            return
+        message = (
+            "candidate package has no non-empty Windows SHAR executable: "
+            f"{candidate}"
+        )
+        raise RunFailure(message)
+
     expected = {
-        "apk": (".apk", "Android APK", None),
-        "ipa": (".ipa", "iOS IPA", None),
+        "apk": (".apk", "Android APK"),
+        "ipa": (".ipa", "iOS IPA"),
     }.get(target.artifact)
-    if expected is None and target.system == "windows":
-        expected = (".exe", "Windows SHAR executable", "shar")
     if expected is None:
         return
-    suffix, label, stem_prefix = expected
+    suffix, label = expected
     if any(
         item.is_file()
         and item.suffix.casefold() == suffix
         and item.stat().st_size > 0
-        and (
-            stem_prefix is None
-            or item.stem.casefold() == stem_prefix
-            or item.stem.casefold().startswith(f"{stem_prefix}-")
-        )
         for item in candidate.rglob("*")
     ):
         return

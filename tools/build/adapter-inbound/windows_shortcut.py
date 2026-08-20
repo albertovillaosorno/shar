@@ -48,7 +48,9 @@ def _is_shar_executable(path: Path) -> bool:
     if path.suffix.casefold() != ".exe":
         return False
     stem = path.stem.casefold()
-    return stem == "shar" or stem.startswith("shar-")
+    return stem == "shar" or (
+        stem.startswith("shar-") and stem.endswith("-shipping")
+    )
 
 
 def _root() -> Path:
