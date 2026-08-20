@@ -189,9 +189,10 @@ fn validate_rcf(
 ) -> Result<(), SourceAuditError> {
     let bytes = read_source(path, "rcf")?;
     let mut reader = SnapshotReader { bytes: &bytes };
-    let _archive = ArchiveParser::from_reader(&mut reader).map_err(|_error| {
-        SourceAuditError::new("deep source validation failed for rcf input")
-    })?;
+    let _archive =
+        ArchiveParser::from_reader(&mut reader).map_err(|_error| {
+            SourceAuditError::new("deep source validation failed for rcf input")
+        })?;
     increment(&mut report.rcf, "rcf")
 }
 
