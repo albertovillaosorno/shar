@@ -293,6 +293,21 @@ fn supports_demo_registration_family() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_noncanonical_registration_ids() -> Result<(), String> {
+    for mission_id in ["M1", "m.1", "-m1", "m1-"] {
+        if validate_mission_id(mission_id).is_ok() {
+            return Err(format!(
+                "noncanonical mission registration passed: {mission_id}"
+            ));
+        }
+    }
+    for mission_id in ["m1", "sr1", "e3m1", "m1_bonus"] {
+        validate_mission_id(mission_id)?;
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_missing_or_mismatched_registration_siblings() -> Result<(), String> {
     let missing_load = vec![
         snapshot(

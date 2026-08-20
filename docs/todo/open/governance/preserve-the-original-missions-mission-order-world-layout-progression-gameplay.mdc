@@ -51,6 +51,9 @@ Authored mission registration preflight now also rejects one mission identity
 registered by multiple registry scripts within the same level. The duplicate
 guard is scoped by exact init-sibling path, so the same short mission id remains
 valid in different levels; focused regressions prove both cases.
+Registration identities also use the same lowercase ASCII mission-id grammar as
+the published definition bundle, so case or punctuation drift fails at the
+cross-script source boundary instead of surviving until final publication.
 
 This parent remains open because complete progression/gameplay verification and
 final cross-platform release evidence are broader than these preserved mission
