@@ -963,6 +963,9 @@ class ArtifactCacheEntryTests(unittest.TestCase):
             invalid = candidate / "Manifest_B.txt"
             valid.write_text("valid\n", encoding="utf-8")
             invalid.mkdir()
+            cached = work / "publication-metadata/Manifest_Previous.txt"
+            cached.parent.mkdir(parents=True)
+            cached.write_text("previous\n", encoding="utf-8")
 
             with self.assertRaisesRegex(
                 _RUN.RunFailure,
@@ -976,7 +979,10 @@ class ArtifactCacheEntryTests(unittest.TestCase):
 
             self.assertTrue(valid.is_file())
             self.assertTrue(invalid.is_dir())
-            self.assertFalse((work / "publication-metadata").exists())
+            self.assertEqual(
+                cached.read_text(encoding="utf-8"),
+                "previous\n",
+            )
 
     def test_rejects_pdb_named_directory(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-artifact-entry-") as raw:
@@ -1006,6 +1012,9 @@ class ArtifactCacheEntryTests(unittest.TestCase):
             valid.parent.mkdir(parents=True)
             valid.write_bytes(b"symbols")
             invalid.mkdir()
+            cached = work / "symbols/shar/Binaries/Win64/previous.pdb"
+            cached.parent.mkdir(parents=True)
+            cached.write_bytes(b"previous")
 
             with self.assertRaisesRegex(
                 _RUN.RunFailure,
@@ -1019,7 +1028,7 @@ class ArtifactCacheEntryTests(unittest.TestCase):
 
             self.assertTrue(valid.is_file())
             self.assertTrue(invalid.is_dir())
-            self.assertFalse((work / "symbols").exists())
+            self.assertEqual(cached.read_bytes(), b"previous")
 
 
 class ArtifactCachePathTests(unittest.TestCase):

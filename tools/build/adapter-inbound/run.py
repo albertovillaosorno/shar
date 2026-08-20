@@ -667,25 +667,21 @@ def _cache_nonruntime_artifacts(
     """Keep packaging metadata and debug symbols out of final dist output."""
     metadata = work / "publication-metadata"
     symbols = work / "symbols"
-    _remove_real_directory_if_present(
-        metadata,
-        "publication metadata cache",
-    )
-    _remove_real_directory_if_present(symbols, "symbol cache")
-
     manifests = sorted(candidate.glob("Manifest_*.txt"))
     for source in manifests:
-        if not source.is_file():
-            raise RunFailure(
-                f"packaging manifest must be a real file: {source}"
-            )
+        _require_real_file(source, "packaging manifest")
 
     debug_files: list[Path] = []
     if target.system == "windows":
         debug_files = sorted(candidate.rglob("*.pdb"))
     for source in debug_files:
-        if not source.is_file():
-            raise RunFailure(f"debug symbol must be a real file: {source}")
+        _require_real_file(source, "debug symbol")
+
+    _remove_real_directory_if_present(
+        metadata,
+        "publication metadata cache",
+    )
+    _remove_real_directory_if_present(symbols, "symbol cache")
 
     if manifests:
         metadata.mkdir(parents=True)
