@@ -72,5 +72,10 @@ Skeletal PTRN loading now also models decoder-produced top-level loose channels
 and legacy animation extras explicitly. Non-empty payloads fail closed instead
 of being silently discarded by Serde while grouped skeletal tracks are exported.
 
+Skeleton loading now rejects joint-control semantics that the current FBX bone
+contract cannot represent: nonzero DOF/free-axis/axis selectors and decoded
+joint metadata. These authored rig controls can no longer be flattened silently
+into an unconstrained parent/child hierarchy.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

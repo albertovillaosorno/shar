@@ -200,6 +200,7 @@ pub fn load_skeleton(
                 joint: index,
             });
         }
+        validate_joint_rig_semantics(path, index, joint)?;
         let parent_id = joint_parent_id(path, index, joint, &names)?;
         names.push(joint_name.clone());
         bones.push(Bone {
@@ -209,6 +210,27 @@ pub fn load_skeleton(
         });
     }
     Ok((skeleton_name, bones))
+}
+
+/// Reject authored joint controls that plain FBX bones cannot preserve.
+fn validate_joint_rig_semantics(
+    path: &Path,
+    index: usize,
+    joint: &DecodedJoint,
+) -> Result<(), SkinSourceError> {
+    if joint.dof != 0
+        || joint.free_axes != 0
+        || joint.primary_axis != 0
+        || joint.secondary_axis != 0
+        || joint.twist_axis != 0
+        || !joint.joint_metadata.is_empty()
+    {
+        return Err(SkinSourceError::UnsupportedJointRigSemantics {
+            path: path_text(path),
+            joint: index,
+        });
+    }
+    Ok(())
 }
 
 /// Resolve one joint parent identity from previously loaded joint names.
@@ -879,6 +901,13 @@ pub enum SkinSourceError {
         /// Joint position inside the skeleton.
         joint: usize,
     },
+    /// One joint carries rig semantics this FBX contract cannot preserve.
+    UnsupportedJointRigSemantics {
+        /// Skeleton path.
+        path: String,
+        /// Joint position containing unsupported semantics.
+        joint: usize,
+    },
     /// One joint referenced an invalid parent position.
     InvalidJointParent {
         /// Skeleton path.
@@ -1041,26 +1070,21 @@ struct DecodedJoint {
     name: String,
     /// Parent joint position.
     parent: usize,
-    /// Degree-of-freedom mask retained for schema compatibility.
-    #[serde(rename = "dof")]
-    _dof: u32,
-    /// Free-axis mask retained for schema compatibility.
-    #[serde(rename = "free_axes")]
-    _free_axes: u32,
-    /// Primary axis retained for schema compatibility.
-    #[serde(rename = "primary_axis")]
-    _primary_axis: u32,
-    /// Secondary axis retained for schema compatibility.
-    #[serde(rename = "secondary_axis")]
-    _secondary_axis: u32,
-    /// Twist axis retained for schema compatibility.
-    #[serde(rename = "twist_axis")]
-    _twist_axis: u32,
+    /// Degree-of-freedom mask.
+    dof: u32,
+    /// Free-axis mask.
+    free_axes: u32,
+    /// Primary axis selector.
+    primary_axis: u32,
+    /// Secondary axis selector.
+    secondary_axis: u32,
+    /// Twist axis selector.
+    twist_axis: u32,
     /// Local rest pose matrix in row-major order.
     rest_pose: [f32; 16],
-    /// Joint metadata retained for schema compatibility.
-    #[serde(default, rename = "joint_metadata")]
-    _joint_metadata: serde_json::Value,
+    /// Decoder-produced joint metadata records.
+    #[serde(default)]
+    joint_metadata: Vec<serde_json::Value>,
 }
 
 #[derive(Deserialize)]
