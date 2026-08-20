@@ -189,6 +189,78 @@ fn preserves_authored_registration_order_and_siblings() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_duplicate_registration_across_level_sources() -> Result<(), String> {
+    let snapshots = vec![
+        snapshot(
+            "extracted/game/scripts/missions/level01/level.mfk.json",
+            Some("addmission"),
+            &["m1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/demo.mfk.json",
+            Some("addmission"),
+            &["m1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1i.mfk.json",
+            Some("selectmission"),
+            &["m1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1l.mfk.json",
+            None,
+            &[],
+        )?,
+    ];
+
+    let Err(error) = build_mission_order_source_reports(&snapshots) else {
+        return Err("duplicate level registration unexpectedly passed".to_owned());
+    };
+    assert!(error.contains("registration id is duplicated"));
+    Ok(())
+}
+
+#[test]
+fn allows_same_registration_id_in_different_levels() -> Result<(), String> {
+    let snapshots = vec![
+        snapshot(
+            "extracted/game/scripts/missions/level01/level.mfk.json",
+            Some("addmission"),
+            &["m1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1i.mfk.json",
+            Some("selectmission"),
+            &["m1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level01/m1l.mfk.json",
+            None,
+            &[],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level02/level.mfk.json",
+            Some("addmission"),
+            &["m1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level02/m1i.mfk.json",
+            Some("selectmission"),
+            &["m1"],
+        )?,
+        snapshot(
+            "extracted/game/scripts/missions/level02/m1l.mfk.json",
+            None,
+            &[],
+        )?,
+    ];
+
+    let reports = build_mission_order_source_reports(&snapshots)?;
+    assert_eq!(reports.len(), 2);
+    Ok(())
+}
+
+#[test]
 fn supports_demo_registration_family() -> Result<(), String> {
     let snapshots = vec![
         snapshot(
