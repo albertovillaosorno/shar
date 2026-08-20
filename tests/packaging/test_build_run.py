@@ -932,6 +932,46 @@ class PublicationArtifactTests(unittest.TestCase):
             self.assertFalse(stale.exists())
 
 
+class ArtifactCacheEntryTests(unittest.TestCase):
+    """Require cached packaging diagnostics to be regular files."""
+
+    def test_rejects_manifest_named_directory(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-artifact-entry-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            work = root / "work"
+            candidate.mkdir()
+            (candidate / "Manifest_UFSFiles_Linux.txt").mkdir()
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "packaging manifest must be a real file",
+            ):
+                _RUN._cache_nonruntime_artifacts(
+                    candidate,
+                    work,
+                    _RUN._TARGETS_BY_ID["linux-x64"],
+                )
+
+    def test_rejects_pdb_named_directory(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-artifact-entry-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            work = root / "work"
+            symbol = candidate / "shar/Binaries/Win64/shar.pdb"
+            symbol.mkdir(parents=True)
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "debug symbol must be a real file",
+            ):
+                _RUN._cache_nonruntime_artifacts(
+                    candidate,
+                    work,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
+
 class ArtifactCachePathTests(unittest.TestCase):
     """Reject redirected metadata and symbol cache roots before moving files."""
 
