@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -168,8 +168,8 @@ impl From<MissionCommandWire> for MissionCommandDocument {
 pub fn preflight_mission_script(
     json: &str,
 ) -> Result<MissionScriptEvidence, String> {
-    let wire = serde_json::from_str::<MissionScriptWire>(json)
-        .map_err(|_error| {
+    let wire =
+        serde_json::from_str::<MissionScriptWire>(json).map_err(|_error| {
             "normalized mission script JSON is invalid".to_owned()
         })?;
     preflight_mission_script_document(wire.into())

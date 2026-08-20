@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -252,6 +252,7 @@ fn progress_snapshot_renders_known_eta_without_wall_clock_sleep()
 
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn snapshot_replacement_publishes_complete_synced_state() -> Result<(), String> {
     let _lane = test_lane()?;
     let fixture = TestRegistry::new("snapshot-replacement")?;

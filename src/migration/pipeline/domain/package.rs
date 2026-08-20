@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -117,7 +117,10 @@ pub use index::{
     PhaseThreePackageMember, PhaseThreePackageRow, PhaseThreeTextKey,
 };
 pub use dyna_load_data::{
-    DynaLoadData, DynaLoadOperation, DynaLoadOperationKind, parse_dyna_load_data,
+        DynaLoadData,
+        DynaLoadOperation,
+        DynaLoadOperationKind,
+        parse_dyna_load_data,
 };
 pub use dyna_load_package::{
     DynaLoadPackageEffect, DynaLoadPackageTransition,

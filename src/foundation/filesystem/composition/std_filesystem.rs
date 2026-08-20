@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -30,8 +30,8 @@
 
 //! Std filesystem outbound adapter.
 
-use std::path::{Path, PathBuf};
 use std::io::Write as _;
+use std::path::{Path, PathBuf};
 use std::{fs, io};
 
 use crate::domain::PathKind;
@@ -52,7 +52,7 @@ fn reject_existing_link(path: &Path) -> io::Result<()> {
             } else {
                 Ok(())
             }
-        }
+        },
         Err(error)
             if matches!(
                 error.kind(),
@@ -61,7 +61,9 @@ fn reject_existing_link(path: &Path) -> io::Result<()> {
         {
             Ok(())
         },
-        Err(source) => Err(with_path("inspect path link metadata", path, source)),
+        Err(source) => {
+            Err(with_path("inspect path link metadata", path, source))
+        },
     }
 }
 
@@ -113,7 +115,9 @@ impl FileWriter for StdFilesystem {
         reject_links_in_path(path)?;
         match fs::create_dir_all(path) {
             Ok(()) => Ok(()),
-            Err(source) => Err(with_path("create directory tree", path, source)),
+            Err(source) => {
+                Err(with_path("create directory tree", path, source))
+            },
         }
     }
 
@@ -142,8 +146,12 @@ impl PathInspector for StdFilesystem {
         reject_links_in_parents(path)?;
         match fs::symlink_metadata(path) {
             Ok(metadata) => Ok(path_kind_from_metadata(&metadata)),
-            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(PathKind::Missing),
-            Err(source) => Err(with_path("inspect path metadata", path, source)),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                Ok(PathKind::Missing)
+            },
+            Err(source) => {
+                Err(with_path("inspect path metadata", path, source))
+            },
         }
     }
 
@@ -153,7 +161,7 @@ impl PathInspector for StdFilesystem {
             Ok(metadata) => metadata,
             Err(source) => {
                 return Err(with_path("inspect file metadata", path, source));
-            }
+            },
         };
         if !metadata.is_file() {
             return Err(invalid_input(
@@ -175,15 +183,19 @@ impl PathInspector for StdFilesystem {
 
 #[expect(
     clippy::filetype_is_file,
+    // jig-ignore-next-line: literal
     reason = "Strict traversal must distinguish regular files from redirects and special entries."
 )]
-fn collect_regular_files(root: &Path, strict: bool) -> io::Result<Vec<PathBuf>> {
+fn collect_regular_files(
+    root: &Path,
+    strict: bool,
+) -> io::Result<Vec<PathBuf>> {
     reject_links_in_path(root)?;
     let root_metadata = match fs::symlink_metadata(root) {
         Ok(metadata) => metadata,
         Err(source) => {
             return Err(with_path("inspect traversal root", root, source));
-        }
+        },
     };
     let root_type = root_metadata.file_type();
     if root_type.is_symlink() || !root_type.is_dir() {
@@ -200,27 +212,36 @@ fn collect_regular_files(root: &Path, strict: bool) -> io::Result<Vec<PathBuf>> 
             Ok(entries) => entries,
             Err(source) => {
                 return Err(with_path("read directory", &directory, source));
-            }
+            },
         };
         for entry_result in entries {
             let entry = match entry_result {
                 Ok(entry) => entry,
                 Err(source) => {
-                    return Err(with_path("read directory entry", &directory, source));
-                }
+                    return Err(with_path(
+                        "read directory entry",
+                        &directory,
+                        source,
+                    ));
+                },
             };
             let path = entry.path();
             let file_type = match entry.file_type() {
                 Ok(file_type) => file_type,
                 Err(source) => {
-                    return Err(with_path("inspect directory entry", &path, source));
-                }
+                    return Err(with_path(
+                        "inspect directory entry",
+                        &path,
+                        source,
+                    ));
+                },
             };
             if file_type.is_symlink() {
                 if strict {
                     return Err(invalid_input(
                         "validate strict traversal entry",
                         &path,
+                        // jig-ignore-next-line: literal
                         "strict traversal rejects redirects and special entries",
                     ));
                 }

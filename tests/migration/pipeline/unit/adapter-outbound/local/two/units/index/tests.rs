@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -707,8 +707,10 @@ fn manifest_evidence_routes_ui_resources_by_scope_and_role()
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn decoded_mesh_geometry_requires_physical_primitive_groups() -> Result<(), String> {
     if !decoded_mesh_has_no_primitive_groups(
+        // jig-ignore-next-line: literal
         br#"{"schema":"mesh","name":"empty","num_prim_groups":0,"prim_groups":[]}"#,
     )
     .map_err(|error| error.to_string())?
@@ -716,6 +718,7 @@ fn decoded_mesh_geometry_requires_physical_primitive_groups() -> Result<(), Stri
         return Err("empty decoded mesh was treated as FBX geometry".to_owned());
     }
     if decoded_mesh_has_no_primitive_groups(
+        // jig-ignore-next-line: literal
         br#"{"schema":"mesh","name":"solid","num_prim_groups":1,"prim_groups":[{}]}"#,
     )
     .map_err(|error| error.to_string())?
@@ -727,6 +730,7 @@ fn decoded_mesh_geometry_requires_physical_primitive_groups() -> Result<(), Stri
     )
     .map_err(|error| error.to_string())?
     {
+        // jig-ignore-next-line: literal
         return Err("spaced primitive group header lost empty geometry".to_owned());
     }
     for malformed in [
@@ -735,6 +739,7 @@ fn decoded_mesh_geometry_requires_physical_primitive_groups() -> Result<(), Stri
         b"not-json".as_slice(),
     ] {
         if decoded_mesh_has_no_primitive_groups(malformed).is_ok() {
+                        // jig-ignore-next-line: literal
             return Err("malformed decoded mesh evidence did not fail".to_owned());
         }
     }

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -63,12 +63,14 @@ fn cleanup(root: &PathBuf) {
 
 fn owner_row(ordinal: usize, name: &str) -> String {
     format!(
+        // jig-ignore-next-line: literal
         r#"{{"ordinal":{ordinal},"depth":1,"parent_ordinal":0,"container_ordinal":{ordinal},"name":"{name}","path":"srr_entity_dsg/{ordinal:03}.json","kind":"srr_entity_dsg"}}"#
     )
 }
 
 fn mesh_row(ordinal: usize, owner: usize, name: &str) -> String {
     format!(
+        // jig-ignore-next-line: literal
         r#"{{"ordinal":{ordinal},"depth":2,"parent_ordinal":{owner},"container_ordinal":{owner},"name":"{name}","path":"mesh/{ordinal:03}.json","kind":"mesh"}}"#
     )
 }
@@ -181,7 +183,9 @@ fn package_meshes_reject_duplicate_component_ordinals() -> Result<(), String> {
 fn package_meshes_reject_duplicate_component_paths() -> Result<(), String> {
     let rows = [
         owner_row(1, "owner"),
+        // jig-ignore-next-line: literal
         r#"{"ordinal":2,"depth":2,"parent_ordinal":1,"container_ordinal":1,"name":"first","path":"mesh/shared.json","kind":"mesh"}"#.to_owned(),
+        // jig-ignore-next-line: literal
         r#"{"ordinal":3,"depth":2,"parent_ordinal":1,"container_ordinal":1,"name":"second","path":"mesh/shared.json","kind":"mesh"}"#.to_owned(),
     ];
     let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
@@ -214,8 +218,10 @@ fn package_meshes_reject_orphan_component_owner() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn package_meshes_reject_root_owner_with_foreign_container() -> Result<(), String> {
     let rows = [
+        // jig-ignore-next-line: literal
         r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":2,"name":"foreign-owner","path":"srr_entity_dsg/001.json","kind":"srr_entity_dsg"}"#.to_owned(),
         owner_row(2, "owner"),
         mesh_row(3, 2, "mesh"),
@@ -240,6 +246,7 @@ fn package_meshes_reject_root_owner_with_foreign_container() -> Result<(), Strin
 fn package_meshes_reject_mesh_row_outside_mesh_family() -> Result<(), String> {
     let rows = [
         owner_row(1, "owner"),
+        // jig-ignore-next-line: literal
         r#"{"ordinal":2,"depth":2,"parent_ordinal":1,"container_ordinal":1,"name":"mesh","path":"shader/shared.json","kind":"mesh"}"#.to_owned(),
     ];
     let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
@@ -259,8 +266,10 @@ fn package_meshes_reject_mesh_row_outside_mesh_family() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn package_meshes_reject_root_owner_with_non_root_parent() -> Result<(), String> {
     let rows = [
+        // jig-ignore-next-line: literal
         r#"{"ordinal":1,"depth":1,"parent_ordinal":2,"container_ordinal":1,"name":"owner","path":"srr_entity_dsg/001.json","kind":"srr_entity_dsg"}"#.to_owned(),
         owner_row(2, "other"),
         mesh_row(3, 1, "mesh"),
@@ -282,9 +291,11 @@ fn package_meshes_reject_root_owner_with_non_root_parent() -> Result<(), String>
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn package_meshes_reject_nested_component_with_root_parent() -> Result<(), String> {
     let rows = [
         owner_row(1, "owner"),
+        // jig-ignore-next-line: literal
         r#"{"ordinal":2,"depth":2,"parent_ordinal":0,"container_ordinal":1,"name":"mesh","path":"mesh/002.json","kind":"mesh"}"#.to_owned(),
     ];
     let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
@@ -304,9 +315,11 @@ fn package_meshes_reject_nested_component_with_root_parent() -> Result<(), Strin
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn package_meshes_reject_published_parent_depth_mismatch() -> Result<(), String> {
     let rows = [
         owner_row(1, "owner"),
+        // jig-ignore-next-line: literal
         r#"{"ordinal":2,"depth":3,"parent_ordinal":1,"container_ordinal":1,"name":"mesh","path":"mesh/002.json","kind":"mesh"}"#.to_owned(),
     ];
     let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
@@ -318,6 +331,7 @@ fn package_meshes_reject_published_parent_depth_mismatch() -> Result<(), String>
     };
     if !error
         .to_string()
+        // jig-ignore-next-line: literal
         .contains("component ordinal 2 depth 3 disagrees with parent ordinal 1 depth 1")
     {
         return Err(format!("unexpected parent depth error: {error}"));
@@ -326,10 +340,12 @@ fn package_meshes_reject_published_parent_depth_mismatch() -> Result<(), String>
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn package_meshes_reject_published_parent_container_mismatch() -> Result<(), String> {
     let rows = [
         owner_row(1, "first"),
         owner_row(2, "second"),
+        // jig-ignore-next-line: literal
         r#"{"ordinal":3,"depth":2,"parent_ordinal":1,"container_ordinal":2,"name":"mesh","path":"mesh/003.json","kind":"mesh"}"#.to_owned(),
     ];
     let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
@@ -337,10 +353,12 @@ fn package_meshes_reject_published_parent_container_mismatch() -> Result<(), Str
     let result = package_meshes(&root);
     cleanup(&root);
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("published parent container mismatch was accepted".to_owned());
     };
     if !error
         .to_string()
+        // jig-ignore-next-line: literal
         .contains("component ordinal 3 container 2 disagrees with parent ordinal 1 container 1")
     {
         return Err(format!("unexpected parent container error: {error}"));
@@ -349,10 +367,13 @@ fn package_meshes_reject_published_parent_container_mismatch() -> Result<(), Str
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn package_meshes_reject_case_equivalent_component_paths() -> Result<(), String> {
     let rows = [
         owner_row(1, "owner"),
+        // jig-ignore-next-line: literal
         r#"{"ordinal":2,"depth":2,"parent_ordinal":1,"container_ordinal":1,"name":"first","path":"mesh/Shared.json","kind":"mesh"}"#.to_owned(),
+        // jig-ignore-next-line: literal
         r#"{"ordinal":3,"depth":2,"parent_ordinal":1,"container_ordinal":1,"name":"second","path":"mesh/shared.json","kind":"mesh"}"#.to_owned(),
     ];
     let borrowed = rows.iter().map(String::as_str).collect::<Vec<_>>();
@@ -364,6 +385,7 @@ fn package_meshes_reject_case_equivalent_component_paths() -> Result<(), String>
     };
     if !error
         .to_string()
+        // jig-ignore-next-line: literal
         .contains("component paths collide portably: mesh/Shared.json and mesh/shared.json")
     {
         return Err(format!("unexpected portable path error: {error}"));

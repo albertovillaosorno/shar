@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -50,6 +50,7 @@ fn coordinate_reference_requires_exact_original_topology() {
 
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn collision_mesh_rejects_repeated_index_source_triangles() -> Result<(), String> {
     let document = IntersectDocument {
         schema: "intersect_dsg".to_owned(),
@@ -60,6 +61,7 @@ fn collision_mesh_rejects_repeated_index_source_triangles() -> Result<(), String
     };
     let result = collision_mesh("package", "surface", document, None);
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("collision mesh altered repeated-index source topology".to_owned());
     };
     if !error.to_string().contains("RepeatedTriangleVertex") {

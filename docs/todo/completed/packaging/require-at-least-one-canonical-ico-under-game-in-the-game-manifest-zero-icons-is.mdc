@@ -1,11 +1,15 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: require-at-least-one-canonical-ico-under-game-in-the-game-manifest-zero-icons-is
 status: completed
 priority: P1
 lane: packaging
 active: false
 parent: implement-a-generic-configurable-rust-algorithm-creator-and-replayer
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [build-preflight-and-saved-check-evidence, implement-a-generic-configurable-rust-algorithm-creator-and-replayer]
 children: []
 ---
@@ -16,21 +20,23 @@ children: []
 
 Preserve the useful cross-platform icon pipeline while replacing only its giant
 generated-Rust reconstruction representation. The durable reconstruction plan is
-text data owned by `src/migration/icon/`, and local authored/recovered SVGs remain
+text data owned by `src/migration/icon/`, and local authored/recovered SVGs
+remain
 ignored evidence rather than distributable repository content.
 
 ## Acceptance criteria
 
 - [x] Keep exact root `Simpsons.ico` mandatory in the lawful source manifest and
   keep `uninst.ico` optional for the game installation.
-- [x] Recover the seven SVG assets from the pre-migration authenticated transform
+- [x] Recover the seven SVG assets from the pre-migration authenticated
+  transform
   into local `src/migration/icon/assets/` evidence before replacing the old
   representation; keep that directory ignored by Git.
 - [x] Make `game/Simpsons.ico` the sole icon reconstruction input. `uninst.ico`
   must not participate in icon authoring, replay, or generated platform output.
 - [x] Use the generic Rust function at `src/foundation/algorithm/` to record and
-  replay `src/migration/icon/icon_algorithm.txt`; do not generate source code as
-  reconstruction data.
+  replay `src/migration/icon/contract/icon_algorithm.txt`; do not generate
+  source code as reconstruction data.
 - [x] Preserve the useful SVG renderer, platform profiles, and Windows, macOS,
   Linux, Android, and iOS export behavior under `src/migration/icon/` rather
   than deleting it.
@@ -67,7 +73,8 @@ platform files including Windows `icon.ico`, macOS `icon.icns`, Linux scalable
 and raster resources, Android store/resources, and the iOS AppIcon catalog. The
 canonical source icon hash was unchanged before and after replay/export.
 
-`src/unreal/icon/` remains retired, and the temporary generic-algorithm reference
+`src/unreal/icon/` remains retired, and the temporary generic-algorithm
+reference
 directory was removed only after the reusable exporter had been preserved.
 `c7b5eac2` documents the exact local replay/export commands and explicitly
 forbids `game/*.ico`, `game/uninst.ico`, or the ignored SVG oracle as substitute

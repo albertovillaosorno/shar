@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: permit-nonvisual-mods-that-do-not-mutate-save-progression-state-but-show-an-explicit
 status: open
 priority: P4
@@ -10,6 +12,8 @@ dependencies: []
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Permit nonvisual mods that do not mutate save/progression state, but show an explicit…
 
 Permit nonvisual mods that do not mutate save/progression state, but show an

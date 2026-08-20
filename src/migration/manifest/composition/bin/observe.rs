@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,7 @@
 // - Defaults:
 //   - Invalid or missing inputs fail explicitly.
 //
+
 //! Observed manifest composition module.
 
 use std::process::ExitCode;

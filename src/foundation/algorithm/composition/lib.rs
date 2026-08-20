@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -34,9 +34,9 @@
 pub mod adapters;
 #[path = "application/mod.rs"]
 mod application;
+pub mod document;
 #[path = "../domain/mod.rs"]
 pub mod domain;
-pub mod document;
 
 pub use application::{create_algorithm, replay_algorithm};
 pub use domain::{AlgorithmError, Settings};

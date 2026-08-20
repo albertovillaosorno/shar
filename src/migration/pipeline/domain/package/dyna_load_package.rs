@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -158,7 +158,8 @@ fn validate_order_independent_p3d_effects(
             && previous != is_load
         {
             return Err(format!(
-                "Dyna Load Data package `{root}` has conflicting load/unload effects"
+                                // jig-ignore-next-line: literal
+                                "Dyna Load Data package `{root}` has conflicting load/unload effects"
             ));
         }
     }
@@ -221,5 +222,6 @@ fn normalize_active_package_root(root: &str) -> Result<String, String> {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/dyna_load_package/tests.rs"]
 mod tests;

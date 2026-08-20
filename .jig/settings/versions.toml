@@ -1,0 +1,95 @@
+domain = "versions"
+schema_version = 1
+
+[authority.clippy-nightly]
+current = "0.1.99"
+stable = "0.1.99"
+
+[authority.clippy-nightly.projection.cargo_clippy]
+kind = "tool"
+target = "rust_nightly_cargo_clippy"
+template = "{version}"
+
+[authority.cspell]
+current = "10.0.1"
+stable = "10.0.1"
+
+[authority.cspell.projection.tool]
+kind = "tool"
+target = "cspell"
+template = "{version}"
+
+[authority.git]
+current = "2.55.0"
+stable = "2.55.0"
+
+[authority.git.projection.tool]
+kind = "tool"
+target = "git"
+template = "{version}"
+
+[authority.markdownlint]
+current = "0.23.0"
+stable = "0.23.0"
+
+[authority.markdownlint.projection.tool]
+kind = "tool"
+target = "markdownlint"
+template = "{version}"
+
+[authority.pytest]
+current = "9.1.1"
+stable = "9.1.1"
+
+[authority.pytest.projection.tool]
+kind = "tool"
+target = "pytest"
+template = "{version}"
+
+[authority.ruff]
+current = "0.15.21"
+stable = "0.15.21"
+
+[authority.ruff.projection.tool]
+kind = "tool"
+target = "ruff"
+template = "{version}"
+
+[authority.rust-nightly]
+current = "1.99.0-nightly"
+stable = "1.99.0-nightly"
+
+[authority.rust-nightly.projection.cargo_tool]
+kind = "tool"
+target = "rust_nightly_cargo"
+template = "{version}"
+
+[authority.rust-stable]
+current = "1.97.1"
+stable = "1.97.1"
+
+[authority.rust-stable.projection.cargo_rust_version]
+kind = "toml"
+path = "Cargo.toml"
+selector = "workspace.package.rust-version"
+template = "{version}"
+
+[authority.rust-stable.projection.cargo_tool]
+kind = "tool"
+target = "rust_stable_cargo"
+template = "{version}"
+
+[authority.rust-stable.projection.rust_toolchain]
+kind = "toml"
+path = ".jig/version/rust-toolchain.toml"
+selector = "toolchain.channel"
+template = "stable-{version}-x86_64-pc-windows-gnu"
+
+[authority.rustfmt-nightly]
+current = "1.9.0-nightly"
+stable = "1.9.0-nightly"
+
+[authority.rustfmt-nightly.projection.cargo_fmt]
+kind = "tool"
+target = "rust_nightly_cargo_fmt"
+template = "{version}"

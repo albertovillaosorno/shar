@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -62,6 +62,7 @@ fn remove_transaction_case(root: &Path) -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn failed_straggler_normalization_preserves_accepted_root() -> Result<(), String>
 {
     let root = transaction_case_root("failure-preserves")?;
@@ -94,6 +95,7 @@ fn failed_straggler_normalization_preserves_accepted_root() -> Result<(), String
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn straggler_publication_replaces_root_and_removes_backup() -> Result<(), String>
 {
     let root = transaction_case_root("publish")?;

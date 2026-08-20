@@ -1,11 +1,32 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
 //   - false
 // License-File:
 //   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Mission stage semantic compiler regression tests.
+// - Must-Not:
+//   - Production behavior or private mission-script evidence.
+// - Allows:
+//   - Synthetic mission documents and typed stage assertions.
+// - Split-When:
+//   - One stage semantic family gains independent test ownership.
+// - Merge-When:
+//   - Stage semantics lose independent compiler behavior.
+// - Summary:
+//   - Mission stage semantic compiler regressions.
+// - Description:
+//   - Preserves focused unit evidence for the owning package-domain behavior.
+// - Usage:
+//   - Included only by the owning package-domain module under cfg(test).
+// - Defaults:
+//   - Invalid or ambiguous synthetic evidence fails closed.
+//
 
 //! Mission stage semantic compiler regressions.
 
@@ -48,14 +69,20 @@ fn stage_document(
         "schema":"shar-schoenwald.straggler.mission-script.v3",
         "source_extension":"mfk","route_class":"mission","source_bytes":256,
         "context_command_count":6,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":11,"unique_command_count":11,"load_p3d_reference_count":0,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":11,
+        "unique_command_count":11,
+        "load_p3d_reference_count":0,
         "mission_flow_command_count":10,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script","command_counts":counts,
         "source_statements":[
             "SelectMission(\"m1\");",format!("AddStage({stage_raw});"),
+                        // jig-ignore-next-line: literal
             format!("SetStageMessageIndex({message_index});"),"SetStageTime(30);",
-            "RESET_TO_HERE();",format!("AddStageVehicle(\"skinn_v\",\"m1_car\",\"chase\",\"{con_file}\",\"skinner\");"),
+                        // jig-ignore-next-line: literal
+                        "RESET_TO_HERE();",format!("AddStageVehicle(\"skinn_v\",\"m1_car\",\"chase\",\"{con_file}\",\"skinner\");"),
             "AddStageWaypoint(\"m1_path1\");","AddObjective(\"dummy\");",
             "CloseObjective();","CloseStage();","CloseMission();"
         ],
@@ -63,11 +90,15 @@ fn stage_document(
         "command_invocations":[
             invocation(1,"selectmission","\"m1\"","mission-script", &["m1"]),
             invocation(2,"addstage",&stage_raw,"mission-stage",stage_arguments),
+                        // jig-ignore-next-line: literal
             invocation(3,"setstagemessageindex",message_index,"mission-stage", &[message_index]),
             invocation(4,"setstagetime","30","mission-stage", &["30"]),
             invocation(5,"reset_to_here","","mission-script", &[]),
+                        // jig-ignore-next-line: literal
             invocation(6,"addstagevehicle",&format!("\"skinn_v\",\"m1_car\",\"chase\",\"{con_file}\",\"skinner\""),"mission-stage", &["skinn_v","m1_car","chase",con_file,"skinner"]),
+                        // jig-ignore-next-line: literal
             invocation(7,"addstagewaypoint","\"m1_path1\"","mission-stage", &["m1_path1"]),
+                        // jig-ignore-next-line: literal
             invocation(8,"addobjective","\"dummy\"","mission-objective", &["dummy"]),
             invocation(9,"closeobjective","","mission-objective", &[]),
             invocation(10,"closestage","","mission-stage", &[]),

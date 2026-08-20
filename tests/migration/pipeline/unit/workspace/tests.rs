@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -56,13 +56,16 @@ fn absent_legacy_extraction_workspace_is_a_noop() -> TestResult {
     let cache_exists = root.join(".cache").exists();
     cleanup_root(&root)?;
     if migrated || cache_exists {
-        return Err("absent legacy workspace created migration state".to_owned());
+        return Err(
+            "absent legacy workspace created migration state".to_owned()
+        );
     }
     Ok(())
 }
 
 #[test]
-fn clean_legacy_extraction_workspace_moves_with_persistent_lock() -> TestResult {
+fn clean_legacy_extraction_workspace_moves_with_persistent_lock() -> TestResult
+{
     let root = case_root("clean-with-lock");
     prepare_root(&root)?;
     fs::create_dir_all(root.join("extracted/art"))
@@ -79,9 +82,9 @@ fn clean_legacy_extraction_workspace_moves_with_persistent_lock() -> TestResult 
         .map_err(|error| error.to_string())?;
     let legacy_exists = root.join("extracted").exists();
     let legacy_lock_exists = root.join(EXTRACTED_LOCK_NAME).exists();
-    let canonical_parent = canonical
-        .parent()
-        .ok_or_else(|| "canonical extraction root lost its parent".to_owned())?;
+    let canonical_parent = canonical.parent().ok_or_else(|| {
+        "canonical extraction root lost its parent".to_owned()
+    })?;
     let canonical_lock = canonical_parent.join(EXTRACTED_LOCK_NAME);
     let canonical_lock_len = fs::metadata(&canonical_lock)
         .map_err(|error| error.to_string())?
@@ -107,16 +110,18 @@ fn legacy_extraction_without_lock_gains_canonical_lock() -> TestResult {
     let migrated = migrate_legacy_extracted_workspace_at(&root)
         .map_err(|error| error.to_string())?;
     let canonical = root.join(EXTRACTED_WORKSPACE_ROOT);
-    let canonical_parent = canonical
-        .parent()
-        .ok_or_else(|| "canonical extraction root lost its parent".to_owned())?;
+    let canonical_parent = canonical.parent().ok_or_else(|| {
+        "canonical extraction root lost its parent".to_owned()
+    })?;
     let canonical_lock = canonical_parent.join(EXTRACTED_LOCK_NAME);
     let lock_len = fs::metadata(&canonical_lock)
         .map_err(|error| error.to_string())?
         .len();
     cleanup_root(&root)?;
     if !migrated || lock_len != 0 {
-        return Err("migration did not establish canonical extraction lock".to_owned());
+        return Err(
+            "migration did not establish canonical extraction lock".to_owned()
+        );
     }
     Ok(())
 }
@@ -177,7 +182,9 @@ fn interrupted_legacy_extraction_transaction_fails_closed() -> TestResult {
         || !legacy_exists
         || !blocker_exists
     {
-        return Err("interrupted transaction state was not preserved".to_owned());
+        return Err(
+            "interrupted transaction state was not preserved".to_owned()
+        );
     }
     Ok(())
 }
@@ -205,8 +212,11 @@ fn active_legacy_extraction_lock_blocks_migration() -> TestResult {
     drop(lock);
     let legacy_exists = root.join("extracted").is_dir();
     cleanup_root(&root)?;
-    if !error.contains("active legacy extraction transaction") || !legacy_exists {
-        return Err("active extraction transaction did not block migration".to_owned());
+    if !error.contains("active legacy extraction transaction") || !legacy_exists
+    {
+        return Err(
+            "active extraction transaction did not block migration".to_owned()
+        );
     }
     Ok(())
 }
@@ -220,9 +230,12 @@ fn complete_legacy_fbx_workspace_moves_payload_and_manifest() -> TestResult {
         .map_err(|error| error.to_string())?;
     fs::write(legacy.join("packages/sample/sample.fbx"), b"fbx")
         .map_err(|error| error.to_string())?;
-    fs::write(legacy.join(LEGACY_FBX_MANIFEST_NAME), b"catalog
-")
-        .map_err(|error| error.to_string())?;
+    fs::write(
+        legacy.join(LEGACY_FBX_MANIFEST_NAME),
+        b"catalog
+",
+    )
+    .map_err(|error| error.to_string())?;
     let manifest = root.join("game/manifest/fbx.jsonl");
 
     let migrated = migrate_legacy_payload_workspace_at(
@@ -242,8 +255,12 @@ fn complete_legacy_fbx_workspace_moves_payload_and_manifest() -> TestResult {
         fs::read(&manifest).map_err(|error| error.to_string())?;
     let detached = !canonical.join(LEGACY_FBX_MANIFEST_NAME).exists();
     cleanup_root(&root)?;
-    if !migrated || payload != b"fbx" || manifest_bytes != b"catalog
-" || !detached {
+    if !migrated
+        || payload != b"fbx"
+        || manifest_bytes
+            != b"catalog
+" || !detached
+    {
         return Err("complete FBX workspace migration drifted".to_owned());
     }
     Ok(())
@@ -290,9 +307,12 @@ fn complete_legacy_unreal_workspace_moves_payload_and_manifest() -> TestResult {
         .map_err(|error| error.to_string())?;
     fs::write(legacy.join("plans/index.json"), b"{}")
         .map_err(|error| error.to_string())?;
-    fs::write(legacy.join(LEGACY_UNREAL_MANIFEST_NAME), b"unreal
-")
-        .map_err(|error| error.to_string())?;
+    fs::write(
+        legacy.join(LEGACY_UNREAL_MANIFEST_NAME),
+        b"unreal
+",
+    )
+    .map_err(|error| error.to_string())?;
     let manifest = root.join("game/manifest/unreal.jsonl");
 
     let migrated = migrate_legacy_payload_workspace_at(
@@ -312,8 +332,12 @@ fn complete_legacy_unreal_workspace_moves_payload_and_manifest() -> TestResult {
         fs::read(&manifest).map_err(|error| error.to_string())?;
     let detached = !canonical.join(LEGACY_UNREAL_MANIFEST_NAME).exists();
     cleanup_root(&root)?;
-    if !migrated || plan != b"{}" || manifest_bytes != b"unreal
-" || !detached {
+    if !migrated
+        || plan != b"{}"
+        || manifest_bytes
+            != b"unreal
+" || !detached
+    {
         return Err("complete Unreal workspace migration drifted".to_owned());
     }
     Ok(())

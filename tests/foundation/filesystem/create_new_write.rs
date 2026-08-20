@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -30,9 +30,8 @@
 
 //! Create-new filesystem write regression tests.
 
-use std::fs;
-use std::io;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::{fs, io};
 
 use schoenwald_filesystem::adapters::driving::local;
 
@@ -52,8 +51,8 @@ fn create_new_text_preserves_existing_destination() -> Result<(), String> {
     local::write_new_text(&path, "first\n", true)
         .map_err(|error| error.to_string())?;
     let second = local::write_new_text(&path, "second\n", true);
-    let preserved = fs::read_to_string(&path)
-        .map_err(|error| error.to_string())?;
+    let preserved =
+        fs::read_to_string(&path).map_err(|error| error.to_string())?;
     drop(cleanup());
 
     let Err(error) = second else {
@@ -100,8 +99,8 @@ fn create_new_bytes_preserve_existing_destination() -> Result<(), String> {
 }
 #[cfg(unix)]
 #[test]
-fn create_new_bytes_reject_symlinked_parent_without_outside_write(
-) -> Result<(), String> {
+fn create_new_bytes_reject_symlinked_parent_without_outside_write()
+-> Result<(), String> {
     use std::os::unix::fs::symlink;
 
     let sequence = SEQUENCE.fetch_add(1, Ordering::Relaxed);

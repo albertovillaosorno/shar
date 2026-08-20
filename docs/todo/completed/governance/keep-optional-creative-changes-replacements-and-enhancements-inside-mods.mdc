@@ -25,6 +25,8 @@ No explicit task dependency was recorded in the legacy TODO.
 
 ## Evidence
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
 The accepted [faithful-base governance ADR](../../../adr/governance/faithful-base-and-optional-mod-boundary.md)
 assigns new/redesigned missions, worlds, geometry, textures, audio, UI, balance,
 abilities, presentation, quality-of-life behavior, replacement media, and other

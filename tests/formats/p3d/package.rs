@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -132,15 +132,17 @@ fn package_header_binds_source_and_normalized_digests() {
         byte_len: 24,
         chunks: vec![component("root").chunk, component("child").chunk],
     };
-    let digest = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    let digest =
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     let normalized_digest =
         "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789";
     let header = package_header(&document, 1, digest, normalized_digest);
 
     assert!(header.contains(&format!(r#""source_sha256":"{digest}""#)));
-    assert!(header.contains(&format!(
-        r#""normalized_sha256":"{normalized_digest}""#
-    )));
+    assert!(
+        header
+            .contains(&format!(r#""normalized_sha256":"{normalized_digest}""#))
+    );
 }
 
 #[test]

@@ -1,0 +1,13 @@
+domain = "commit"
+schema_version = 1
+allowed_scopes = ["algorithm", "docs", "game-manifest", "jig", "layout", "pipeline", "repo", "user"]
+allowed_trailers = ["BREAKING CHANGE"]
+allowed_types = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "release", "revert", "style", "test"]
+allow_merge_commits = false
+allow_revert_type = true
+body_line_max_length = 80
+body_min_length = 1
+history_baseline = "5b4b4475f128b82fcb8db226733682f04323e983"
+required_trailers = []
+require_scope = true
+subject_max_length = 72

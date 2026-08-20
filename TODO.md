@@ -15,6 +15,8 @@ labels belong here.
 
 ## P0 — Authority and repository governance
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Define a public-safe reconstruction algorithm gate with bounded similarity
 
 Define and test the tentative 45–55% source-similarity window against a lawful
@@ -40,6 +42,8 @@ Validate a user-supplied lawful source installation.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/validate-a-user-supplied-lawful-source-installation.mdc](docs/todo/open/conversion/validate-a-user-supplied-lawful-source-installation.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Preserve original asset identities, package relationships, and ordering
 
 Preserve original asset identities, package relationships, and ordering.
@@ -47,6 +51,8 @@ Preserve original asset identities, package relationships, and ordering.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/preserve-original-asset-identities-package-relationships-and-ordering.mdc](docs/todo/open/conversion/preserve-original-asset-identities-package-relationships-and-ordering.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Preserve source topology, UVs, materials, textures, pivots, rigs, animations,…
 
 Preserve source topology, UVs, materials, textures, pivots, rigs, animations,
@@ -71,6 +77,8 @@ with an Unreal Landscape.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/import-the-original-world-through-source-authored-fbx-instead-of-replacing-it-with-an.mdc](docs/todo/open/conversion/import-the-original-world-through-source-authored-fbx-instead-of-replacing-it-with-an.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Verify representative character, prop, vehicle, interior, and world imports
 
 Verify representative character, prop, vehicle, interior, and world imports.
@@ -86,6 +94,8 @@ permit only deterministic source-backed conversion corrections.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/audit-reported-map-wide-lod-geometry-overlaps-before-removing-any-vertices-permit-only.mdc](docs/todo/open/conversion/audit-reported-map-wide-lod-geometry-overlaps-before-removing-any-vertices-permit-only.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Recheck those conversion audits in-game after deterministic fixes land
 
 Recheck those conversion audits in-game after deterministic fixes land.
@@ -132,6 +142,8 @@ Import meshes, skeletons, physics assets, and animations correctly.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/import-meshes-skeletons-physics-assets-and-animations-correctly.mdc](docs/todo/open/unreal/import-meshes-skeletons-physics-assets-and-animations-correctly.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Recreate materials only as required to match the original presentation
 
 Recreate materials only as required to match the original presentation.
@@ -170,6 +182,8 @@ reward, transition, and typed objective/condition parameter reference.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward.mdc](docs/todo/open/unreal/map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Resolve typed source identities and intentionally opaque values to canonical…
 
 Resolve typed source identities and intentionally opaque values to canonical
@@ -275,6 +289,8 @@ technical compatibility fix is required.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/runtime/preserve-original-mission-timing-gameplay-rules-and-progression-unless-a-technical.mdc](docs/todo/open/runtime/preserve-original-mission-timing-gameplay-rules-and-progression-unless-a-technical.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Bind generated assets through stable contracts instead of direct paths
 
 Bind generated assets through stable contracts instead of direct paths.
@@ -310,7 +326,8 @@ in place, selects targets, and writes only to its own workspace and `dist/`.
 ### TODO - Make `AGENTS.md` mod-first; validate C++ with Clang
 
 Make mod authoring the default user-facing agent posture, preserve a separate
-repository-engineering mode, and validate native mod C++ with strict Clang gates.
+repository-engineering mode, and validate native mod C++ with strict Clang
+gates.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/mods/make-agents-md-default-to-shar-mod-authoring-and-validate-cpp-with-clang.mdc](docs/todo/open/mods/make-agents-md-default-to-shar-mod-authoring-and-validate-cpp-with-clang.mdc)
@@ -351,6 +368,8 @@ supersession, and conflict rules.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/mods/define-deterministic-mod-identity-dependencies-priority-compatibility-supersession.mdc](docs/todo/open/mods/define-deterministic-mod-identity-dependencies-priority-compatibility-supersession.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Support validated replacement and extension packages for assets and data
 
 Support validated replacement and extension packages for assets and data.
@@ -379,6 +398,8 @@ Keep native-code mods behind an explicit trust boundary.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/mods/keep-native-code-mods-behind-an-explicit-trust-boundary.mdc](docs/todo/open/mods/keep-native-code-mods-behind-an-explicit-trust-boundary.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Validate schemas, paths, integrity, limits, references, and load order
 
 Validate schemas, paths, integrity, limits, references, and load order.
@@ -415,6 +436,8 @@ supported targets.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/keep-gameplay-saves-package-identities-and-mod-contracts-consistent-across-supported.mdc](docs/todo/open/packaging/keep-gameplay-saves-package-identities-and-mod-contracts-consistent-across-supported.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Provide graphics and performance settings without changing base content
 
 Provide graphics and performance settings without changing base content.
@@ -430,6 +453,8 @@ time.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/profile-cpu-gpu-memory-storage-streaming-shaders-loading-and-frame-time.mdc](docs/todo/open/packaging/profile-cpu-gpu-memory-storage-streaming-shaders-loading-and-frame-time.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Optimize only from measured evidence without removing original behavior
 
 Optimize only from measured evidence without removing original behavior.
@@ -473,6 +498,8 @@ Keep loading screens optional once streaming can replace them safely.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/keep-loading-screens-optional-once-streaming-can-replace-them-safely.mdc](docs/todo/open/product/keep-loading-screens-optional-once-streaming-can-replace-them-safely.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Ship a default, fully obtainable base achievement set suitable for 100%/platinum-style…
 
 Ship a default, fully obtainable base achievement set suitable for
@@ -599,6 +626,8 @@ features mandatory for the base port.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/keep-dlss-and-hardware-ray-tracing-rtx-integrations-behind-optional-capability-adapters.mdc](docs/todo/open/product/keep-dlss-and-hardware-ray-tracing-rtx-integrations-behind-optional-capability-adapters.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Preserve the delivery order: faithful port first, compatibility and quality-of-life…
 
 Preserve the delivery order: faithful port first, compatibility and
@@ -624,6 +653,8 @@ Add screenshots only after the player GUI and final package layout stabilize.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/verification/add-final-player-facing-readme-screenshots.mdc](docs/todo/open/verification/add-final-player-facing-readme-screenshots.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Complete a start-to-finish playthrough without progression-blocking defects
 
 Complete a start-to-finish playthrough without progression-blocking defects.
@@ -639,6 +670,8 @@ world layout, and the ending against the original game.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/verification/compare-missions-vehicles-collectibles-saves-localization-cinematics-world-layout.mdc](docs/todo/open/verification/compare-missions-vehicles-collectibles-saves-localization-cinematics-world-layout.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Verify generated assets preserve the original appearance and placement
 
 Verify generated assets preserve the original appearance and placement.
@@ -660,6 +693,8 @@ Verify representative mods without changing the default base game.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/verification/verify-representative-mods-without-changing-the-default-base-game.mdc](docs/todo/open/verification/verify-representative-mods-without-changing-the-default-base-game.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
 ### TODO - Verify an AI agent can create and validate a mod using published skills
 
 Verify an AI agent can create and validate a mod using published skills.

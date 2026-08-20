@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -231,10 +231,12 @@ pub(super) fn export_catalog_package(
     let canonical_fbx = package_dir.join(format!("{package_name}.fbx"));
     if generated_fbx != canonical_fbx {
         std::fs::rename(&generated_fbx, &canonical_fbx)
+                        // jig-ignore-next-line: literal
             .map_err(|error| fbx_io_error("normalize catalog FBX name", &error))?;
     }
     let report = package_dir.join("capability-report.json");
     std::fs::remove_file(&report)
+        // jig-ignore-next-line: literal
         .map_err(|error| fbx_io_error("remove catalog diagnostic report", &error))?;
     Ok(())
 }
@@ -1035,7 +1037,8 @@ fn resolve_indexed_package_materials(
     let declared_ids = declared.keys().cloned().collect::<BTreeSet<_>>();
     if used != declared_ids {
         return Err(PipelineError::new(format!(
-            "package shader membership does not exactly cover mesh usage for {}",
+                        // jig-ignore-next-line: literal
+                        "package shader membership does not exactly cover mesh usage for {}",
             package.package_id
         )));
     }

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -158,13 +158,16 @@ fn register_recovered_path(
     recovered: &RecoveredComponent,
 ) -> Result<bool, P3dError> {
     let relative = recovered.relative_path.to_str().ok_or_else(|| {
-        P3dError::invalid_source("recovered component path is not valid Unicode")
+        P3dError::invalid_source(
+            "recovered component path is not valid Unicode",
+        )
     })?;
     let identity = relative
         .chars()
         .flat_map(char::to_uppercase)
         .collect::<String>();
-    if let Some((existing_path, existing_bytes)) = published_paths.get(&identity)
+    if let Some((existing_path, existing_bytes)) =
+        published_paths.get(&identity)
     {
         if existing_path == &recovered.relative_path
             && existing_bytes == &recovered.bytes

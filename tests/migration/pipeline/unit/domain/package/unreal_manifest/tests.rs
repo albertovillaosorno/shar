@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -887,10 +887,13 @@ fn skeletal_fbx_reserves_primary_and_skeleton_outputs() -> Result<(), String> {
         &mut summary,
     )?;
     let expected = vec![
-        "/Game/Generated/SHAR/characters/character_package/character_package.character_package".to_owned(),
-        "/Game/Generated/SHAR/characters/character_package/character_package_Skeleton.character_package_Skeleton".to_owned(),
+                // jig-ignore-next-line: literal
+                "/Game/Generated/SHAR/characters/character_package/character_package.character_package".to_owned(),
+                // jig-ignore-next-line: literal
+                "/Game/Generated/SHAR/characters/character_package/character_package_Skeleton.character_package_Skeleton".to_owned(),
     ];
     if unreal_objects != expected {
+        // jig-ignore-next-line: literal
         return Err(format!("unexpected skeletal object inventory: {unreal_objects:?}"));
     }
     if staged_files
@@ -898,6 +901,7 @@ fn skeletal_fbx_reserves_primary_and_skeleton_outputs() -> Result<(), String> {
         || summary.requires_fbx != 1
         || summary.requires_semantic_conversion != 0
     {
+        // jig-ignore-next-line: literal
         return Err("skeletal FBX outputs were not reserved atomically".to_owned());
     }
     Ok(())

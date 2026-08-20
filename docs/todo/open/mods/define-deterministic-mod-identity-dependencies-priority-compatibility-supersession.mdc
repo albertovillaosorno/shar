@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: define-deterministic-mod-identity-dependencies-priority-compatibility-supersession
 status: open
 priority: P4
@@ -7,9 +9,13 @@ lane: mods
 active: false
 parent: null
 dependencies: []
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 children: [detect-duplicate-normalized-output-paths-before-conversion-or-writing, reject-ambiguous-outputs-and-report-both-exact-source-entries, require-clean-extraction-when-the-optional-package-set-changes]
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Define deterministic mod identity, dependencies, priority, compatibility, supersession,…
 
 Define deterministic mod identity, dependencies, priority, compatibility,

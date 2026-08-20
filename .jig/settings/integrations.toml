@@ -1,0 +1,8 @@
+domain = "integrations"
+schema_version = 1
+
+[graph]
+authority_roots = [".jig"]
+cache_root = ".cache/jig/graph"
+excluded_roots = []
+taxonomy_path = ".jig/taxonomy.json"

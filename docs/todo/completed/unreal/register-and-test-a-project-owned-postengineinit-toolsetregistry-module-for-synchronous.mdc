@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: register-and-test-a-project-owned-postengineinit-toolsetregistry-module-for-synchronous
 status: completed
 priority: P2
@@ -10,6 +12,8 @@ dependencies: [apply-conversion-plans-through-tested-native-unreal-mcp-commands]
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Register and test a project-owned PostEngineInit ToolsetRegistry module for synchronous…
 
 Register and test a project-owned PostEngineInit ToolsetRegistry module for

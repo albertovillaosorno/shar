@@ -5,7 +5,11 @@ status: completed
 priority: P4
 lane: mods
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: define-deterministic-mod-identity-dependencies-priority-compatibility-supersession
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [define-deterministic-mod-identity-dependencies-priority-compatibility-supersession]
 children: []
 ---
@@ -20,7 +24,10 @@ Detect duplicate normalized output paths before conversion or writing.
 
 ## Dependencies
 
-Parent task: `define-deterministic-mod-identity-dependencies-priority-compatibility-supersession`.
+Parent task:
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO dependency token is indivisible -->
+`define-deterministic-mod-identity-dependencies-priority-compatibility-supersession`.
 
 ## Evidence
 

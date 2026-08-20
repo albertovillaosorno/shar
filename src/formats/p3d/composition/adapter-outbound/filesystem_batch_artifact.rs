@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -105,13 +105,15 @@ pub(super) fn manifest_component_files_match_digests(
             has_header = true;
             continue;
         }
-        let Ok(value) = serde_json::from_str::<serde_json::Value>(trimmed) else {
+        let Ok(value) = serde_json::from_str::<serde_json::Value>(trimmed)
+        else {
             return false;
         };
         let Some(object) = value.as_object() else {
             return false;
         };
-        let Some(relative_path) = object.get("path").and_then(serde_json::Value::as_str)
+        let Some(relative_path) =
+            object.get("path").and_then(serde_json::Value::as_str)
         else {
             return false;
         };
@@ -121,13 +123,13 @@ pub(super) fn manifest_component_files_match_digests(
         else {
             return false;
         };
-        let Some(expected_sha256) = object
-            .get("sha256")
-            .and_then(serde_json::Value::as_str)
+        let Some(expected_sha256) =
+            object.get("sha256").and_then(serde_json::Value::as_str)
         else {
             return false;
         };
-        let Some(component_path) = cache_component_path(output_dir, relative_path)
+        let Some(component_path) =
+            cache_component_path(output_dir, relative_path)
         else {
             return false;
         };

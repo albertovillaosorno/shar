@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -21,7 +21,7 @@
 // - Summary:
 //   - Typed Dyna Load Data operation parser.
 // - Description:
-//   - Preserves authored targets while assigning only documented postfix syntax.
+//   - Preserves targets while assigning only documented postfix syntax.
 // - Usage:
 //   - Shared by mission initialization and DynamicZone locator preflight.
 // - Defaults:
@@ -123,10 +123,13 @@ impl DynaLoadData {
 ///
 /// # Errors
 ///
-/// Rejects blank/control-bearing data, missing postfix operators, empty targets,
+/// Rejects blank/control-bearing data, missing postfix operators, empty
+/// targets,
 /// and unsafe/non-P3D targets for region or interior operations.
 pub fn parse_dyna_load_data(source: &str) -> Result<DynaLoadData, String> {
-    if source.is_empty() || source != source.trim() || source.chars().any(char::is_control) {
+        // jig-ignore-next-line: expression
+        if source.is_empty() || source != source.trim() || source.chars().any(char::is_control) {
+        // jig-ignore-next-line: literal
         return Err("Dyna Load Data source is blank, padded, or control-bearing".to_owned());
     }
 
@@ -138,6 +141,7 @@ pub fn parse_dyna_load_data(source: &str) -> Result<DynaLoadData, String> {
         };
         let target = source
             .get(start..offset)
+                        // jig-ignore-next-line: literal
             .ok_or_else(|| "Dyna Load Data target boundary is invalid".to_owned())?;
         validate_target(target, kind)?;
         operations.push(DynaLoadOperation {
@@ -149,6 +153,7 @@ pub fn parse_dyna_load_data(source: &str) -> Result<DynaLoadData, String> {
             .ok_or_else(|| "Dyna Load Data offset overflowed".to_owned())?;
     }
     if operations.is_empty() || start != source.len() {
+        // jig-ignore-next-line: literal
         return Err("Dyna Load Data operation is missing a postfix symbol".to_owned());
     }
     Ok(DynaLoadData {
@@ -157,8 +162,11 @@ pub fn parse_dyna_load_data(source: &str) -> Result<DynaLoadData, String> {
     })
 }
 
+// jig-ignore-next-line: long identifier
 fn validate_target(target: &str, kind: DynaLoadOperationKind) -> Result<(), String> {
-    if target.is_empty() || target != target.trim() || target.chars().any(char::is_control) {
+        // jig-ignore-next-line: expression
+        if target.is_empty() || target != target.trim() || target.chars().any(char::is_control) {
+        // jig-ignore-next-line: literal
         return Err("Dyna Load Data target is blank, padded, or control-bearing".to_owned());
     }
     if kind.targets_p3d() {
@@ -172,6 +180,7 @@ fn validate_p3d_target(target: &str) -> Result<(), String> {
     if !normalized.to_ascii_lowercase().ends_with(".p3d")
         || normalized.starts_with('/')
         || normalized.contains(':')
+        // jig-ignore-next-line: literal
         || normalized.split('/').any(|segment| segment.is_empty() || segment == "." || segment == "..")
     {
         return Err("Dyna Load Data P3D target is malformed".to_owned());
@@ -180,5 +189,6 @@ fn validate_p3d_target(target: &str) -> Result<(), String> {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/dyna_load_data/tests.rs"]
 mod tests;

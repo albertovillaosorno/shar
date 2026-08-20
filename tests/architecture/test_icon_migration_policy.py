@@ -1,5 +1,5 @@
 # Copyright:
-#   - Copyright (c) 2026 Alberto Villa Osorno.
+#   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
 # Confidential:
@@ -36,7 +36,9 @@ import json
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[2]
-_PLAN = _ROOT / "src" / "migration" / "icon" / "icon_algorithm.txt"
+_PLAN = (
+    _ROOT / "src" / "migration" / "icon" / "contract" / "icon_algorithm.txt"
+)
 _CANONICAL_SOURCE = {
     "input": 0,
     "path": "",

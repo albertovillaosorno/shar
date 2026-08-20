@@ -16,7 +16,7 @@ AMD64 package is expected to have this general shape:
 ```text
 The Simpsons Hit & Run/
 ├── shar.exe
-├── Engine/                         # only packaged Unreal runtime files required
+├── Engine/                         # packaged Unreal runtime files only
 ├── shar/
 │   ├── Binaries/Win64/
 │   │   ├── shar-Win64-Shipping.exe
@@ -58,7 +58,8 @@ binaries will expose integrity hashes so users can detect unexpected
 modification and perform their own security checks. A hash is evidence only: it
 is never reconstruction input and it does not itself prove software is safe.
 
-1. Buy or use a lawful copy of *The Simpsons: Hit & Run* and install it normally.
+1. Buy or use a lawful copy of *The Simpsons: Hit & Run* and install it
+   normally.
    Leave the files where the installer put them. On Windows this is commonly a
    path similar to:
 
@@ -106,7 +107,8 @@ is never reconstruction input and it does not itself prove software is safe.
 1. A lightweight GUI will ask for the original game installation. You will be
    able to browse, paste/type the path, or drag `Simpsons.exe` onto the window
    where the platform GUI supports file dropping. On Windows, if you do not know
-   the location, the original shortcut's **Open file location** action is usually
+   the location, the original shortcut's **Open file location** action is
+   usually
    the easiest way
    to find it. SHAR rejects a source selection that reaches the installation
    through a symbolic directory link or Windows junction.
@@ -127,7 +129,8 @@ is never reconstruction input and it does not itself prove software is safe.
    - Other official original languages: preserved/exported as SHAR language
      mods, not compiled into the canonical base package.
 
-   English is the only canonical base language. Official non-English localization
+   English is the only canonical base language. Official non-English
+   localization
    is owned under `src/localization/languages/` and is emitted as deterministic
    content-only SHAR language mods. Each generated language overlay carries a
    `shar.mod-package.v1` `mod.json` whose identity and content revision are
@@ -139,7 +142,8 @@ is never reconstruction input and it does not itself prove software is safe.
    If an expected official language is not emitted, treat that as a source
    validation result rather than copying another language into its place. For
    example, the verified source used during development has only `???` Italian
-   TextBible values and no `dialogi.rcf`, so Italian generation is rejected until
+   TextBible values and no `dialogi.rcf`, so Italian generation is rejected
+   until
    a lawful source actually supplies usable Italian localization evidence.
 
 1. Select any targets you want:
@@ -204,7 +208,8 @@ when they are actually required by the chosen distribution path.
 dist/android-arm64/the-simpsons-hit-and-run.apk
 ```
 
-Install the APK using Android's normal local APK flow. Platform security settings
+Install the APK using Android's normal local APK flow. Platform security
+settings
 may require explicitly allowing installation from the app/file manager you use.
 
 ### iOS ARM64
@@ -229,18 +234,22 @@ algorithms/muckluck/algorithm/<target>.txt
 ```
 
 A populated plan uses the implemented `shar.algorithm.v1` schema. The generic
-algorithm engine binds replay to caller-supplied local source evidence, validates
+algorithm engine binds replay to caller-supplied local source evidence,
+validates
 its embedded source and target descriptors, and refuses wrong or tampered
 evidence before writing replay output. There is no parallel integrity file; the
 plan owns the hashes required by its own source-bound replay contract.
 
 The maintainer-only `in/`, `master/`, and shared `out/` directories described in
-`algorithms/README.md` are authoring workspace state, not public release payload.
-Only reviewed `algorithm/*.txt` plans and public metadata can cross that boundary.
+`algorithms/README.md` are authoring workspace state, not public release
+payload.
+Only reviewed `algorithm/*.txt` plans and public metadata can cross that
+boundary.
 
 For coverage analysis, the maintainer's complete lawful installation is treated
 as the private internal **100% reference**. The current planning estimate treats
-a traditional minimum installation as roughly **60%** of that complete reference,
+a traditional minimum installation as roughly **60%** of that complete
+reference,
 but that estimate must be measured across lawful installations before it becomes
 a product rule. The current design target is to investigate a **45–55% minimum
 similarity window** for accepting candidate source layouts.
@@ -249,7 +258,8 @@ Those numbers are deliberately not production policy. Calibration now defines
 reference coverage as shared structural count units divided by private-reference
 count units, and evaluates weighted-Jaccard similarity over the same public-safe
 obfuscated directory/extension count vectors. The repository-owned calibration
-helper at `tools/source-similarity/adapter-inbound/main.py` accepts reference and
+helper at `tools/source-similarity/adapter-inbound/main.py` accepts reference
+and
 candidate public JSONL count ledgers and reports those values, but has no
 acceptance threshold or pass/fail result.
 
@@ -314,7 +324,8 @@ I am working on a mod. Some imported assets are missing and some missions are
 broken.
 ```
 
-A useful agent should explain that unsupported legacy behavior may not translate,
+A useful agent should explain that unsupported legacy behavior may not
+translate,
 ask for lawful missing/new assets when necessary, ask how you want the mod to
 behave, and help rebuild the missing behavior for SHAR rather than pretending
 that the old package is authoritative.
@@ -335,18 +346,21 @@ wrong, and what you want changed. Repository skills provide the technical game
 and Unreal knowledge so the agent does not have to rediscover every convention.
 
 Native mod code is C++. Published source should pass the same strict
-Clang-family validation expected by SHAR. Write it by hand, generate parts of it,
+Clang-family validation expected by SHAR. Write it by hand, generate parts of
+it,
 or work through AI agents: the important engineering work is the architecture,
 contracts, invariants, problem modeling, testing, and the result—not how many
 tokens were entered manually. A package may physically exist without a clean
 lint result, but the tooling must report that clearly and agents should produce
 clean code by default.
 
-If somebody calls a mod “slop” or says it lacks soul merely because automation or
+If somebody calls a mod “slop” or says it lacks soul merely because automation
+or
 AI helped make it, that is not a useful engineering criterion. Make things you
 enjoy, learn from the bugs you create, fix them, and iterate. Manual coding is a
 perfectly valid craft; it is simply one execution mechanism among many. SHAR is
-interested in what a mod does, how safely and coherently it is built, and whether
+interested in what a mod does, how safely and coherently it is built, and
+whether
 its author had fun creating it—not in gatekeeping the author’s keyboard. Life is
 too short to turn syntax entry into a purity test.
 
@@ -373,13 +387,15 @@ logs. If you only want to play, use the lightweight release flow above.
 `Simpsons.ico` is preserved as canonical source identity. Cross-platform icon
 reconstruction and export are owned by `src/migration/icon/`: its local
 `assets/` and generated `out/` trees stay ignored, while the durable
-`icon_algorithm.txt` plan is replayed through the generic Rust algorithm
+`contract/icon_algorithm.txt` plan is replayed through the generic Rust
+algorithm
 foundation. `uninst.ico` is never icon-reconstruction input.
 
 ## Release and changelog policy
 
 The public ZIP is built from `src/user/` only. It must not contain repository
-caches, original game assets, proprietary engine source, or developer-only state.
+caches, original game assets, proprietary engine source, or developer-only
+state.
 Player/modder changelogs are handwritten and intentionally nontechnical; build
 manifests and validation evidence remain separate technical artifacts.
 
@@ -392,7 +408,8 @@ manifests and validation evidence remain separate technical artifacts.
 - [`AGENTS.md`](AGENTS.md) contains AI-agent guidance.
 - [`docs/adr/index.md`](docs/adr/index.md) contains architecture decisions.
 - [`docs/technical/index.md`](docs/technical/index.md) contains technical specs.
-- [`docs/legal/index.md`](docs/legal/index.md) contains legal research/scope notes.
+- [`docs/legal/index.md`](docs/legal/index.md) contains legal research/scope
+  notes.
 - [`skills/`](skills/) contains task and Unreal guidance.
 
 ## Legal and provenance

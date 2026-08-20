@@ -1,5 +1,5 @@
 # Copyright:
-#   - Copyright (c) 2026 Alberto Villa Osorno.
+#   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
 # Confidential:
@@ -40,10 +40,9 @@ _ROOT = Path(__file__).resolve().parents[2]
 
 def test_source_audit_is_declared_architecture_component() -> None:
     """Keep the deep validator inside Jig's dependency graph."""
-    with (_ROOT / ".jig" / "jig.toml").open("rb") as stream:
-        config = tomllib.load(stream)
-    architecture = config.get("architecture")
-    assert isinstance(architecture, dict)
+    path = _ROOT / ".jig" / "settings" / "architecture.toml"
+    with path.open("rb") as stream:
+        architecture = tomllib.load(stream)
     components = architecture.get("component")
     assert isinstance(components, dict)
     source_audit = components.get("shar_source_audit")

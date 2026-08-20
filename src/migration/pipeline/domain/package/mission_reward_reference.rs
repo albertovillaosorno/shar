@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -260,12 +260,15 @@ fn required_token(
     Ok(value.clone())
 }
 
+// jig-ignore-next-line: long identifier
 fn required_level(arguments: &[String], index: usize) -> Result<String, String> {
     let value = required_unsigned(arguments, index, "source level")?;
     let level = value
         .parse::<u32>()
+        // jig-ignore-next-line: literal
         .map_err(|_error| "BindReward source level is not an unsigned integer".to_owned())?;
     if !(1..=7).contains(&level) {
+        // jig-ignore-next-line: literal
         return Err("BindReward source level is outside observed base levels".to_owned());
     }
     Ok(value)

@@ -1,11 +1,32 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
 //   - false
 // License-File:
 //   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Typed mission-condition parameter regression tests.
+// - Must-Not:
+//   - Production behavior or private mission-script evidence.
+// - Allows:
+//   - Synthetic mission documents and typed parameter assertions.
+// - Split-When:
+//   - One condition family gains independent test ownership.
+// - Merge-When:
+//   - Condition parameters lose independent semantic policy.
+// - Summary:
+//   - Typed direct `AddCondition` parameter regressions.
+// - Description:
+//   - Preserves focused unit evidence for the owning package-domain behavior.
+// - Usage:
+//   - Included only by the owning package-domain module under cfg(test).
+// - Defaults:
+//   - Invalid or ambiguous synthetic evidence fails closed.
+//
 
 //! Typed direct `AddCondition` parameter regressions.
 
@@ -39,8 +60,12 @@ fn condition_document(arguments: &[&str]) -> Result<String, String> {
         "schema":"shar-schoenwald.straggler.mission-script.v3",
         "source_extension":"mfk","route_class":"mission","source_bytes":96,
         "context_command_count":8,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":8,"unique_command_count":8,"load_p3d_reference_count":0,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":8,
+        "unique_command_count":8,
+        "load_p3d_reference_count":0,
         "mission_flow_command_count":6,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script","command_counts":counts,
         "source_statements":[
@@ -50,14 +75,62 @@ fn condition_document(arguments: &[&str]) -> Result<String, String> {
         ],
         "p3d_references":[],
         "command_invocations":[
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":3,"name":"addobjective","args_raw":"\"dummy\"","semantic_role":"mission-objective","arguments":["dummy"]},
-            {"ordinal":4,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":5,"name":"addcondition","args_raw":args_raw,"semantic_role":"mission-script","arguments":arguments},
-            {"ordinal":6,"name":"closecondition","args_raw":"","semantic_role":"mission-script","arguments":[]},
-            {"ordinal":7,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":8,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addobjective",
+                            "args_raw":"\"dummy\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["dummy"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"addcondition",
+                            "args_raw":args_raw,
+                            "semantic_role":"mission-script",
+                            "arguments":arguments
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closecondition",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":8,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     }))
     .map_err(|error| error.to_string())

@@ -5,8 +5,14 @@ status: open
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward]
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 children: [resolve-reviewed-character-and-vehicle-source-identities-against-the-validated, compile-all-116-reviewed-pedestrian-groups-and-their-437-addped-members-as-bounded, bind-every-explicit-loadp3dfile-first-argument-to-one-canonical-phase-three-package, bind-all-61-typed-setpresentationbitmap-references-across-mission-initialization, bind-all-90-reviewed-bindreward-p3d-references-through-the-shared-canonical-package, bind-all-43-reviewed-setcarattributes-vehicle-identities-to-one-canonical-physical, type-all-32-reviewed-addpurchasecarreward-storefronts-from-the-source-loader-preserve, type-all-118-reviewed-ambient-and-81-bonus-mission-npc-declarations-bind-each-authored, bind-all-194-reviewed-mission-start-and-animated-camera-or-multi-controller-component, build-a-package-scoped-mission-locator-catalog-from-decoded-srr-locator-json-name, bind-each-typed-locator-reference-against-the-exact-selected-source-package-context, type-dyna-load-data-postfix-syntax-as-ordered-region-load-unload-interior-load-unload, compile-decoded-base-game-type-5-dynamiczone-dyna-load-data-into-ordered-package, model-dynamiczone-traversal-as-aggregate-child-trigger-occupancy, separate-streaming-lifetime-from-duplicate-locator-precedence-for-bm1-bestside-18, establish-base-game-dynamiczone-trigger-retrigger-semantics-without-importing, trace-runtime-lookup-for-every-currently-modeled-locator-role, classify-reviewed-stage-markers-without-conflating-presentation-with-topology-6-iris, compile-authored-order-for-all-611-stages-across-154-selected-mission-sources, resolve-all-36-reviewed-bindcollectibleto-index-pairs-against-the-owning-stage-s, bind-all-180-reviewed-objective-npc-walking-waypoints-across-58-selected-sources-to-one, group-all-43-reviewed-startcountdown-blocks-with-their-175-following, bind-all-four-reviewed-setpickuptarget-identities-to-one-unique-prior, preserve-all-64-reviewed-addmission-registrations-across-16-base-demo-and-e3-load, bind-all-24-reviewed-addvehicleselectinfo-registrations-through-the-canonical-p3d, bind-all-449-reviewed-stage-message-indices-to-canonical-localization-keys-through, preserve-exact-ownership-for-all-61-canonical-presentation-bitmap-package-bindings-two, bind-all-six-reviewed-objective-setfmvinfo-rmv-paths-to-one-canonical, bind-all-nine-reviewed-setmusicstate-pairs-to-the-indexed-base-score-library-script, bind-all-14-reviewed-stagestartmusicevent-calls-to-their-exact-owning-stage-while, bind-all-38-reviewed-setcompletiondialog-ids-to-one-canonical-same-level, bind-all-128-reviewed-objective-setdialogueinfo-records-to-canonical-participants-and, preserve-semantic-ownership-through-downstream-mission-bindings-instead-of, join-source-backed-definition-core-rows-before-final-asset-emission, keep-utility-mission-script-sources-valid-through-downstream-cross-reference-preflights, publish-the-joined-definition-core-as-deterministic-versioned-staging-data-before-native]
 ---
 
@@ -24,7 +30,10 @@ definitions before asset emission.
 
 ## Dependencies
 
-Parent task: `map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward`.
+Parent task:
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO dependency token is indivisible -->
+`map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward`.
 
 ## Evidence
 

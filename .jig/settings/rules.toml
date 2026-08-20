@@ -1,0 +1,5 @@
+domain = "rules"
+schema_version = 1
+all_registered = true
+allow_disable = false
+unknown_rule = "deny"

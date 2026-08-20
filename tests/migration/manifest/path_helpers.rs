@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -66,10 +66,9 @@ fn exact_root_requirements_are_case_sensitive() {
         PathBuf::from("game/art/frontend/scrooby2/resource/txtbible/srr2.txt"),
     ];
 
-    assert_eq!(
-        exact_file_shortfalls(root, &files),
-        vec!["  Simpsons.exe: have 0, need at least 1".to_owned()]
-    );
+    assert_eq!(exact_file_shortfalls(root, &files), vec![
+        "  Simpsons.exe: have 0, need at least 1".to_owned()
+    ]);
 }
 
 #[test]
@@ -85,12 +84,14 @@ fn optional_language_and_uninstall_sources_are_not_shortfalls() {
     ];
 
     assert!(exact_file_shortfalls(root, &files).is_empty());
-    assert!(kind_taxonomy_jsonl().contains(
-        "\"required_files\":[{\"path\":\"README.rtf\",\"min\":1},"
-    ));
-    assert!(kind_taxonomy_jsonl().contains(
-        "{\"path\":\"uninst.ico\",\"min\":0}]"
-    ));
+    assert!(
+        kind_taxonomy_jsonl().contains(
+            "\"required_files\":[{\"path\":\"README.rtf\",\"min\":1},"
+        )
+    );
+    assert!(
+        kind_taxonomy_jsonl().contains("{\"path\":\"uninst.ico\",\"min\":0}]")
+    );
 }
 
 #[test]
@@ -108,7 +109,8 @@ fn nested_english_source_is_required_exactly() {
     assert_eq!(
         exact_file_shortfalls(root, &files),
         vec![
-            "  art/frontend/scrooby2/resource/txtbible/srr2.txt: have 0, need at least 1"
+                        // jig-ignore-next-line: literal
+                        "  art/frontend/scrooby2/resource/txtbible/srr2.txt: have 0, need at least 1"
                 .to_owned()
         ]
     );

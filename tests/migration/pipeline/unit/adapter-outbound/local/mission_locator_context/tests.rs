@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -37,8 +37,10 @@ use serde_json::json;
 use super::*;
 use crate::preflight_mission_script;
 
+// jig-ignore-next-line: long identifier
 fn mission_evidence(mission_id: Option<&str>) -> Result<MissionScriptEvidence, String> {
-    let (invocations, commands, statements, p3d_references, mission_flow_count, context_count) =
+        // jig-ignore-next-line: expression
+        let (invocations, commands, statements, p3d_references, mission_flow_count, context_count) =
         mission_id.map_or_else(
             || {
                 (
@@ -49,6 +51,7 @@ fn mission_evidence(mission_id: Option<&str>) -> Result<MissionScriptEvidence, S
                         "arguments":["art/missions/level01/dummy.p3d"]
                     })],
                     json!({"loadp3dfile":1}),
+                    // jig-ignore-next-line: literal
                     vec!["LoadP3DFile(\"art/missions/level01/dummy.p3d\");".to_owned()],
                     vec!["art/missions/level01/dummy.p3d".to_owned()],
                     0,
@@ -58,12 +61,18 @@ fn mission_evidence(mission_id: Option<&str>) -> Result<MissionScriptEvidence, S
             |mission_id| {
                 (
                     vec![
-                        json!({"ordinal":1,"name":"selectmission","args_raw":format!("\"{mission_id}\""),"semantic_role":"mission-script","arguments":[mission_id]}),
-                        json!({"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]}),
-                        json!({"ordinal":3,"name":"addobjective","args_raw":"\"dummy\"","semantic_role":"mission-objective","arguments":["dummy"]}),
-                        json!({"ordinal":4,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]}),
-                        json!({"ordinal":5,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]}),
-                        json!({"ordinal":6,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}),
+                                                // jig-ignore-next-line: literal
+                                                json!({"ordinal":1,"name":"selectmission","args_raw":format!("\"{mission_id}\""),"semantic_role":"mission-script","arguments":[mission_id]}),
+                                                // jig-ignore-next-line: literal
+                                                json!({"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]}),
+                                                // jig-ignore-next-line: literal
+                                                json!({"ordinal":3,"name":"addobjective","args_raw":"\"dummy\"","semantic_role":"mission-objective","arguments":["dummy"]}),
+                                                // jig-ignore-next-line: literal
+                                                json!({"ordinal":4,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]}),
+                                                // jig-ignore-next-line: literal
+                                                json!({"ordinal":5,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]}),
+                                                // jig-ignore-next-line: literal
+                                                json!({"ordinal":6,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}),
                     ],
                     json!({
                         "selectmission":1,"addstage":1,"addobjective":1,
@@ -88,14 +97,20 @@ fn mission_evidence(mission_id: Option<&str>) -> Result<MissionScriptEvidence, S
         "schema":"shar-schoenwald.straggler.mission-script.v3",
         "source_extension":"mfk","route_class":"mission","source_bytes":64,
         "context_command_count":context_count,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":count,"unique_command_count":commands.as_object().map_or(0, serde_json::Map::len),
-        "load_p3d_reference_count":p3d_references.len(),"mission_flow_command_count":mission_flow_count,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":count,
+                // jig-ignore-next-line: literal
+                "unique_command_count":commands.as_object().map_or(0, serde_json::Map::len),
+        "load_p3d_reference_count":p3d_references.len(),
+        "mission_flow_command_count":mission_flow_count,
         "vehicle_physics_command_count":0,"semantic_family":"mission-script",
         "command_counts":commands,"source_statements":statements,
         "p3d_references":p3d_references,"command_invocations":invocations
     });
-    preflight_mission_script(&serde_json::to_string(&value).map_err(|error| error.to_string())?)
+        // jig-ignore-next-line: expression
+        preflight_mission_script(&serde_json::to_string(&value).map_err(|error| error.to_string())?)
 }
 
 fn snapshot(
@@ -185,6 +200,7 @@ fn chooses_longest_matching_level_load_family() -> Result<(), String> {
     if level != "extracted/game/scripts/missions/level02/e3level.mfk.json"
         || load != "extracted/game/scripts/missions/level02/e3m1l.mfk.json"
     {
+        // jig-ignore-next-line: literal
         return Err("special mission family did not select e3 level load".to_owned());
     }
     Ok(())
@@ -227,7 +243,8 @@ fn combines_level_and_mission_load_packages_per_source() -> Result<(), String> {
             &[],
         )?,
     ];
-    let contexts = build_mission_locator_source_contexts(&snapshots, &BTreeSet::new())?;
+        // jig-ignore-next-line: expression
+        let contexts = build_mission_locator_source_contexts(&snapshots, &BTreeSet::new())?;
     if contexts.len() != 1 {
         return Err("locator context count drifted".to_owned());
     }
@@ -253,6 +270,7 @@ fn combines_level_and_mission_load_packages_per_source() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_selected_id_that_disagrees_with_init_filename() -> Result<(), String> {
     let available = BTreeSet::from([
         "extracted/game/scripts/missions/level01/level.mfk.json",
@@ -263,6 +281,7 @@ fn rejects_selected_id_that_disagrees_with_init_filename() -> Result<(), String>
         "m1",
         &available,
     ) else {
+        // jig-ignore-next-line: literal
         return Err("selected mission/source mismatch did not fail closed".to_owned());
     };
     if !error.contains("does not match") {
@@ -272,6 +291,7 @@ fn rejects_selected_id_that_disagrees_with_init_filename() -> Result<(), String>
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn same_mission_id_in_different_levels_keeps_separate_contexts() -> Result<(), String> {
     let snapshots = vec![
         snapshot(
@@ -305,7 +325,8 @@ fn same_mission_id_in_different_levels_keeps_separate_contexts() -> Result<(), S
             &[],
         )?,
     ];
-    let contexts = build_mission_locator_source_contexts(&snapshots, &BTreeSet::new())?;
+        // jig-ignore-next-line: expression
+        let contexts = build_mission_locator_source_contexts(&snapshots, &BTreeSet::new())?;
     if contexts.len() != 2 {
         return Err("repeated mission id collapsed across levels".to_owned());
     }
@@ -345,7 +366,9 @@ fn selected_mission_without_load_sibling_fails_closed() -> Result<(), String> {
             &[],
         )?,
     ];
-    let Err(error) = build_mission_locator_source_contexts(&snapshots, &BTreeSet::new()) else {
+        // jig-ignore-next-line: expression
+        let Err(error) = build_mission_locator_source_contexts(&snapshots, &BTreeSet::new()) else {
+        // jig-ignore-next-line: literal
         return Err("missing mission load sibling did not fail closed".to_owned());
     };
     if !error.contains("paired load source is missing") {
@@ -418,6 +441,7 @@ fn initial_dynamic_p3d_uses_implicit_art_root() -> Result<(), String> {
 fn initial_dynamic_p3d_rejects_unsafe_paths() -> Result<(), String> {
     for value in ["../l1z7.p3d", "C:/l1z7.p3d", "/l1z7.p3d", "l1//z7.p3d"] {
         if initial_dynamic_package_root(value).is_ok() {
+            // jig-ignore-next-line: literal
             return Err(format!("unsafe initial Dyna P3D was accepted: {value}"));
         }
     }

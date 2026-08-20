@@ -6,6 +6,8 @@ priority: P4
 lane: packaging
 active: true
 parent: null
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [define-the-portable-dist-layout-and-machine-readable-dist-manifest]
 children: []
 ---

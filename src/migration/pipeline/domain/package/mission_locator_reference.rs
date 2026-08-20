@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -33,8 +33,12 @@
 use std::collections::BTreeMap;
 
 use super::{
-    MissionInitializationDirective, MissionInitializationReport, MissionLocatorCatalog,
-    MissionLocatorResolution, MissionLocatorTypeConstraint, MissionObjectiveDirective,
+        MissionInitializationDirective,
+        MissionInitializationReport,
+        MissionLocatorCatalog,
+        MissionLocatorResolution,
+        MissionLocatorTypeConstraint,
+        MissionObjectiveDirective,
     MissionObjectiveSemanticReport, MissionScopeReport, MissionStageDirective,
     MissionStageSemanticReport,
 };
@@ -186,7 +190,8 @@ impl MissionLocatorActivePackageReport {
     ///
     /// # Errors
     /// Returns an error when a selected mission id occurs more than once.
-    pub fn from_missions(missions: Vec<MissionLocatorActivePackages>) -> Result<Self, String> {
+        // jig-ignore-next-line: long identifier
+        pub fn from_missions(missions: Vec<MissionLocatorActivePackages>) -> Result<Self, String> {
         let mut by_mission_id = BTreeMap::new();
         for mission in missions {
             if by_mission_id
@@ -194,7 +199,8 @@ impl MissionLocatorActivePackageReport {
                 .is_some()
             {
                 return Err(
-                    "mission locator active-package context duplicated a mission".to_owned(),
+                                        // jig-ignore-next-line: literal
+                                        "mission locator active-package context duplicated a mission".to_owned(),
                 );
             }
         }
@@ -203,7 +209,8 @@ impl MissionLocatorActivePackageReport {
 
     /// Return package context for one exact selected mission id.
     #[must_use]
-    pub fn mission(&self, mission_id: &str) -> Option<&MissionLocatorActivePackages> {
+        // jig-ignore-next-line: long identifier
+        pub fn mission(&self, mission_id: &str) -> Option<&MissionLocatorActivePackages> {
         self.by_mission_id.get(mission_id)
     }
 }
@@ -307,7 +314,8 @@ impl MissionLocatorReferenceReport {
             mission
                 .references
                 .iter()
-                .all(|binding| matches!(binding.resolution, MissionLocatorResolution::Resolved(_)))
+                                // jig-ignore-next-line: expression
+                                .all(|binding| matches!(binding.resolution, MissionLocatorResolution::Resolved(_)))
         })
     }
 
@@ -321,7 +329,8 @@ impl MissionLocatorReferenceReport {
                     .references
                     .iter()
                     .filter(|binding| {
-                        !matches!(binding.resolution, MissionLocatorResolution::Resolved(_))
+                                                // jig-ignore-next-line: syntax
+                                                !matches!(binding.resolution, MissionLocatorResolution::Resolved(_))
                     })
                     .count()
             })
@@ -352,12 +361,15 @@ pub fn preflight_mission_locator_references(
     for mission in scopes.missions() {
         let mission_id = mission.source_mission_id();
         let active = active_packages.mission(mission_id).ok_or_else(|| {
+                        // jig-ignore-next-line: literal
             format!("mission locator active-package context is missing for {mission_id}")
         })?;
         let initialization = initializations
             .next()
+                        // jig-ignore-next-line: literal
             .ok_or_else(|| "mission locator initialization report is incomplete".to_owned())?;
         if initialization.mission_id() != mission_id {
+                        // jig-ignore-next-line: literal
             return Err("mission locator initialization report drifted".to_owned());
         }
         let mut references = Vec::new();
@@ -370,6 +382,7 @@ pub fn preflight_mission_locator_references(
         for stage in mission.stages() {
             let stage_semantics = stages
                 .next()
+                                // jig-ignore-next-line: literal
                 .ok_or_else(|| "mission locator stage report is incomplete".to_owned())?;
             if stage_semantics.source_ordinal() != stage.source_ordinal() {
                 return Err("mission locator stage report drifted".to_owned());
@@ -382,6 +395,7 @@ pub fn preflight_mission_locator_references(
             )?;
             let objective_semantics = objectives
                 .next()
+                                // jig-ignore-next-line: literal
                 .ok_or_else(|| "mission locator objective report is incomplete".to_owned())?;
             if objective_semantics.source_ordinal()
                 != stage.objective().binding().ordinal()
@@ -390,6 +404,7 @@ pub fn preflight_mission_locator_references(
                 || objective_semantics.owner_stage_sequence_ordinal()
                     != stage_semantics.sequence_ordinal()
             {
+                                // jig-ignore-next-line: literal
                 return Err("mission locator objective report drifted".to_owned());
             }
             resolve_objective(
@@ -399,13 +414,16 @@ pub fn preflight_mission_locator_references(
                 &mut references,
             )?;
         }
-        references.sort_by_key(|binding| (binding.source_ordinal, binding.role));
+                // jig-ignore-next-line: expression
+                references.sort_by_key(|binding| (binding.source_ordinal, binding.role));
         missions.push(MissionLocatorMissionBindings {
             mission_id: mission_id.to_owned(),
             references,
         });
     }
-    if initializations.next().is_some() || stages.next().is_some() || objectives.next().is_some() {
+        // jig-ignore-next-line: expression
+        if initializations.next().is_some() || stages.next().is_some() || objectives.next().is_some() {
+        // jig-ignore-next-line: literal
         return Err("mission locator semantic reports contain unowned bindings".to_owned());
     }
     Ok(MissionLocatorReferenceReport { missions })
@@ -850,7 +868,8 @@ fn package_roots_for_role(
 }
 
 fn validate_source_identity(value: &str, label: &str) -> Result<(), String> {
-    if value.is_empty() || value != value.trim() || value.chars().any(char::is_control) {
+        // jig-ignore-next-line: expression
+        if value.is_empty() || value != value.trim() || value.chars().any(char::is_control) {
         return Err(format!("{label} is malformed"));
     }
     Ok(())
@@ -864,6 +883,7 @@ fn validate_package_root(value: &str) -> Result<(), String> {
         || value.contains('\\')
         || value
             .split('/')
+                        // jig-ignore-next-line: literal
             .any(|segment| segment.is_empty() || segment == "." || segment == "..")
         || !value.to_ascii_lowercase().starts_with("extracted/")
     {
@@ -873,5 +893,6 @@ fn validate_package_root(value: &str) -> Result<(), String> {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/mission_locator_reference/tests.rs"]
 mod tests;

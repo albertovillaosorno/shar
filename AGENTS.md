@@ -75,7 +75,10 @@ conversion, target/Unreal representation requirements, import/runtime
 correctness, and corrections for defects introduced by SHAR. Do not manually
 redesign terrain, missions, models, textures, materials, audio, cinematics, UI,
 world layout, progression, tuning, or localization for the base. Optional
-creative changes, replacements, and enhancements belong in mods. Follow the accepted
+creative changes, replacements, and enhancements belong in mods. Follow the
+accepted
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
 [faithful-base governance ADR](docs/adr/governance/faithful-base-and-optional-mod-boundary.md)
 rather than treating editor output,
 aesthetic preference, AI suggestions, or third-party mods as source authority.

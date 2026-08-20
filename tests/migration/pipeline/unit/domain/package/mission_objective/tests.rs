@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -378,7 +378,8 @@ fn objective_scope_preflight_accepts_exact_scope_and_rejects_drift()
             )?)?;
         if preflight_mission_objective_commands(&evidence).is_ok() {
             return Err(format!(
-                "objective-scoped drift was accepted: {objective}/{command_name}"
+                                // jig-ignore-next-line: literal
+                                "objective-scoped drift was accepted: {objective}/{command_name}"
             ));
         }
     }

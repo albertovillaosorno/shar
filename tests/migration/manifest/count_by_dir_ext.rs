@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -144,44 +144,32 @@ fn generated_png_is_excluded_only_at_root() {
 #[test]
 fn root_machine_runtime_files_are_not_source_evidence() {
     let root = Path::new("game");
-    let counts = count_by_dir_ext_paths(
-        root,
-        &[
-            root.join("binkw32.dll"),
-            root.join("simpsons.ini"),
-            root.join("nested/config.ini"),
-        ],
-    );
+    let counts = count_by_dir_ext_paths(root, &[
+        root.join("binkw32.dll"),
+        root.join("simpsons.ini"),
+        root.join("nested/config.ini"),
+    ]);
 
     assert!(!counts.contains_key(&(String::new(), "dll".to_owned())));
     assert!(!counts.contains_key(&(String::new(), "ini".to_owned())));
-    assert_eq!(
-        counts.get(&("nd".to_owned(), "ini".to_owned())),
-        Some(&1)
-    );
+    assert_eq!(counts.get(&("nd".to_owned(), "ini".to_owned())), Some(&1));
 }
 
 #[test]
 fn root_runtime_saves_are_not_source_evidence() {
     let root = Path::new("game");
-    let counts = count_by_dir_ext_paths(
-        root,
-        &[
-            root.join("Save1"),
-            root.join("Save12"),
-            root.join("nested/Save1"),
-        ],
-    );
+    let counts = count_by_dir_ext_paths(root, &[
+        root.join("Save1"),
+        root.join("Save12"),
+        root.join("nested/Save1"),
+    ]);
 
     assert!(!counts.contains_key(&(String::new(), "(none)".to_owned())));
     assert_eq!(
         counts.get(&("nd".to_owned(), "(none)".to_owned())),
         Some(&1)
     );
-    assert_eq!(
-        counts.get(&(String::new(), "(none)".to_owned())),
-        None
-    );
+    assert_eq!(counts.get(&(String::new(), "(none)".to_owned())), None);
 }
 
 #[test]

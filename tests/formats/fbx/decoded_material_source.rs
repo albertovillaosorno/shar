@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -501,6 +501,7 @@ fn preserves_zero_alpha_from_diffuse_colour_parameter() {
     let setup_result = fs::create_dir_all(&shader_dir).and_then(|()| {
         fs::write(
             shader_dir.join("zero_alpha.json"),
+                        // jig-ignore-next-line: literal
             r#"{"name":"zero_alpha","params":[{"kind":"colour","param":"DIFF","value":1122867}]}"#,
         )
     });

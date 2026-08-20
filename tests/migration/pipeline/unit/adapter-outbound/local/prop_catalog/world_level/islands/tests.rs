@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -66,6 +66,7 @@ fn distant_components_remain_in_their_source_mesh() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn source_mesh_preservation_keeps_authored_positions_and_uvs() -> Result<(), String> {
     let source = synthetic_mesh(20.)?;
     let source_group = source

@@ -1,5 +1,5 @@
 # Copyright:
-#   - Copyright (c) 2026 Alberto Villa Osorno.
+#   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
 # Confidential:
@@ -47,9 +47,10 @@ def test_lmlm_tool_is_root_workspace_component() -> None:
     assert "workspace" not in tool_cargo
     assert not (_TOOL / "Cargo.lock").exists()
 
-    with (_ROOT / ".jig/jig.toml").open("rb") as stream:
+    architecture = _ROOT / ".jig/settings/architecture.toml"
+    with architecture.open("rb") as stream:
         config = tomllib.load(stream)
-    components = config["architecture"]["component"]
+    components = config["component"]
     assert components["shar_lmlm"]["depends_on"] == [
         "p3d",
         "schoenwald_cli",

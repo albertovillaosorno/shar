@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -139,6 +139,7 @@ pub fn preflight_mission_package_loads_with_catalog(
     {
         let arguments = invocation.arguments();
         if !(1..=3).contains(&arguments.len()) {
+                        // jig-ignore-next-line: literal
             return Err("LoadP3DFile must have one to three arguments".to_owned());
         }
         let source_reference = arguments
@@ -204,5 +205,6 @@ fn validate_inventory_section(section: &str) -> Result<(), String> {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/mission_load/tests.rs"]
 mod tests;

@@ -8,7 +8,8 @@ surface.
 ## Ownership
 
 Owns public end-user reconstruction/export entry points, release-local support
-code, launch helpers, reviewed source-bound plans, and portable release metadata.
+code, launch helpers, reviewed source-bound plans, and portable release
+metadata.
 
 ## Prohibitions
 

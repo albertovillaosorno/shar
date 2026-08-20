@@ -1,0 +1,10 @@
+domain = "headers"
+schema_version = 1
+adapters = ["cpp:cpp:slash-line", "h:cpp:slash-line", "py:python:python", "rs:rust:slash-line"]
+confidential = false
+copyright = "Copyright © 2026 Alberto Villa Osorno."
+exempt_paths = []
+extensions = ["cpp", "h", "py", "rs"]
+max_lines = 96
+required_boundary_fields = ["Owns", "Must-Not", "Allows", "Split-When", "Merge-When", "Summary", "Description", "Usage", "Defaults"]
+require_module_summary = true

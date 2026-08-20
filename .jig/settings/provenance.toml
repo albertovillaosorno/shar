@@ -1,0 +1,6 @@
+domain = "provenance"
+schema_version = 1
+
+[contribution]
+exact_form = true
+private_authoritative_review = true

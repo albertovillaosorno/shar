@@ -1,15 +1,23 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: assign-all-3-605-objective-scoped-commands-exactly-one-semantic-owner-3-498-objective
 status: completed
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward]
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Assign all 3,605 objective-scoped commands exactly one semantic owner: 3,498 objective…
 
 Assign all 3,605 objective-scoped commands exactly one semantic owner: 3,498
@@ -26,7 +34,10 @@ inventing unresolved units, defaults, or legacy meaning.
 
 ## Dependencies
 
-Parent task: `map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward`.
+Parent task:
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO dependency token is indivisible -->
+`map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward`.
 
 ## Evidence
 

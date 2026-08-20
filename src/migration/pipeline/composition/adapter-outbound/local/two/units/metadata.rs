@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -981,13 +981,16 @@ fn classify_straggler_json(
 /// classification prefix.
 fn straggler_schema(text: &str, family: &str) -> PipelineOutcome<String> {
     let schema = json_string_field_prefix(text, "schema").ok_or_else(|| {
+        // jig-ignore-next-line: literal
         PipelineError::new("normalized straggler JSON omitted schema in bounded header")
     })?;
     let prefix = format!("shar-schoenwald.{family}.v");
     let version = schema.strip_prefix(&prefix).ok_or_else(|| {
+        // jig-ignore-next-line: literal
         PipelineError::new("normalized straggler JSON schema disagrees with detected family")
     })?;
-    if version.is_empty() || !version.bytes().all(|byte| byte.is_ascii_digit()) {
+        // jig-ignore-next-line: expression
+        if version.is_empty() || !version.bytes().all(|byte| byte.is_ascii_digit()) {
         return Err(PipelineError::new(
             "normalized straggler JSON schema has an invalid version",
         ));
@@ -998,6 +1001,7 @@ fn straggler_schema(text: &str, family: &str) -> PipelineOutcome<String> {
 /// Read one simple top-level JSON string field from bounded canonical prefix
 /// evidence. Escaped field values are rejected because schema identifiers are
 /// required to be plain ASCII tokens.
+// jig-ignore-next-line: long identifier
 fn json_string_field_prefix<'text>(text: &'text str, field: &str) -> Option<&'text str> {
     let key = format!("\"{field}\"");
     let start = text.find(&key)?.checked_add(key.len())?;

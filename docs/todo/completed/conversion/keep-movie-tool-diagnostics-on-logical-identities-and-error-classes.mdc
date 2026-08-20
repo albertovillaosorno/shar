@@ -5,7 +5,11 @@ status: completed
 priority: P1
 lane: conversion
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in]
 children: []
 ---
@@ -20,7 +24,8 @@ Keep movie-tool diagnostics on logical identities and error classes.
 
 ## Dependencies
 
-Parent task: `preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in`.
+Parent task:
+`preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in`.
 
 ## Evidence
 

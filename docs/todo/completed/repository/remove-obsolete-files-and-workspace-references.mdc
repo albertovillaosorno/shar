@@ -29,7 +29,8 @@ removed after proving they had no remaining product consumers. Earlier cleanup
 also retired the external Python language tool, `src/mods/languages`, and other
 superseded compatibility paths without reintroducing them as workspace members.
 
-`tests/architecture/test_repository_paths.py` now parses the root Cargo workspace
+`tests/architecture/test_repository_paths.py` now parses the root Cargo
+workspace
 and fails when any declared member lacks its `Cargo.toml`. The current workspace
 has no missing members. The same guard keeps known retired repository paths
 absent, so obsolete compatibility/tooling directories cannot silently return.

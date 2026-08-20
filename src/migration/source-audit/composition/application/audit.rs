@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -80,11 +80,12 @@ impl DeepSourceAudit {
             let message = "source game directory not found";
             return Err(SourceAuditError::new(message));
         }
-        let files = local::strict_regular_files(source_root).map_err(|_error| {
-            SourceAuditError::new(
-                "deep source validation could not scan source directory",
-            )
-        })?;
+        let files =
+            local::strict_regular_files(source_root).map_err(|_error| {
+                SourceAuditError::new(
+                    "deep source validation could not scan source directory",
+                )
+            })?;
         let mut report = DeepSourceAuditReport::default();
         for path in files {
             let extension = path
@@ -97,7 +98,7 @@ impl DeepSourceAudit {
                 "rcf" => validate_rcf(&path, &mut report)?,
                 "rsd" => validate_rsd(&path, &mut report)?,
                 "rmv" => validate_rmv(&path, &mut report)?,
-                _ => {}
+                _ => {},
             }
         }
         report.files = report
@@ -121,11 +122,9 @@ fn read_source(path: &Path, kind: &str) -> Result<Vec<u8>, SourceAuditError> {
 }
 
 fn increment(value: &mut usize, kind: &str) -> Result<(), SourceAuditError> {
-    *value = value
-        .checked_add(1)
-        .ok_or_else(|| {
-            SourceAuditError::new(format!("{kind} count overflow"))
-        })?;
+    *value = value.checked_add(1).ok_or_else(|| {
+        SourceAuditError::new(format!("{kind} count overflow"))
+    })?;
     Ok(())
 }
 
@@ -134,10 +133,9 @@ fn validate_p3d(
     report: &mut DeepSourceAuditReport,
 ) -> Result<(), SourceAuditError> {
     let bytes = read_source(path, "p3d")?;
-    let _document = analyze_p3d(&bytes)
-        .map_err(|_error| {
-            SourceAuditError::new("deep source validation failed for p3d input")
-        })?;
+    let _document = analyze_p3d(&bytes).map_err(|_error| {
+        SourceAuditError::new("deep source validation failed for p3d input")
+    })?;
     increment(&mut report.p3d, "p3d")
 }
 
@@ -146,10 +144,9 @@ fn validate_rcf(
     report: &mut DeepSourceAuditReport,
 ) -> Result<(), SourceAuditError> {
     let source = FileArchiveSource::new(path);
-    let _archive = ArchiveParser::execute(&source)
-        .map_err(|_error| {
-            SourceAuditError::new("deep source validation failed for rcf input")
-        })?;
+    let _archive = ArchiveParser::execute(&source).map_err(|_error| {
+        SourceAuditError::new("deep source validation failed for rcf input")
+    })?;
     increment(&mut report.rcf, "rcf")
 }
 
@@ -158,10 +155,9 @@ fn validate_rsd(
     report: &mut DeepSourceAuditReport,
 ) -> Result<(), SourceAuditError> {
     let bytes = read_source(path, "rsd")?;
-    let _audio = RsdAudio::parse(&bytes)
-        .map_err(|_error| {
-            SourceAuditError::new("deep source validation failed for rsd input")
-        })?;
+    let _audio = RsdAudio::parse(&bytes).map_err(|_error| {
+        SourceAuditError::new("deep source validation failed for rsd input")
+    })?;
     increment(&mut report.rsd, "rsd")
 }
 

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -61,12 +61,10 @@ impl CliProgram for GenerateExpandedManifestCli {
         let game_dir = arguments
             .first()
             .map_or_else(|| PathBuf::from("game"), PathBuf::from);
-        let extracted_rcf_dir = arguments
-            .get(1)
-            .map_or_else(
-                || PathBuf::from(EXTRACTED_RCF_WORKSPACE_ROOT),
-                PathBuf::from,
-            );
+        let extracted_rcf_dir = arguments.get(1).map_or_else(
+            || PathBuf::from(EXTRACTED_RCF_WORKSPACE_ROOT),
+            PathBuf::from,
+        );
         let output_path = arguments.get(2).map_or_else(
             || game_dir.join(EXPANDED_MANIFEST_FILE_NAME),
             PathBuf::from,

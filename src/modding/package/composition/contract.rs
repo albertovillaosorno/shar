@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -367,13 +367,11 @@ fn normalized_member_identity(path: &str) -> Result<String, PackageError> {
         ));
     }
     let relative = Path::new(path);
-    let _resolved = schoenwald_filesystem::resolve_under(
-        Path::new("package"),
-        relative,
-    )
-    .map_err(|error| {
-        PackageError::new(format!("invalid member path: {error}"))
-    })?;
+    let _resolved =
+        schoenwald_filesystem::resolve_under(Path::new("package"), relative)
+            .map_err(|error| {
+                PackageError::new(format!("invalid member path: {error}"))
+            })?;
     let mut identity = String::new();
     for character in normalized.chars() {
         for lowercase in character.to_lowercase() {
@@ -407,8 +405,8 @@ impl PackageManifest {
     pub fn to_pretty_json(&self) -> Result<String, PackageError> {
         self.validate()?;
         let document = PackageManifestDocument::from(self);
-        let mut text = serde_json::to_string_pretty(&document)
-            .map_err(|error| {
+        let mut text =
+            serde_json::to_string_pretty(&document).map_err(|error| {
                 PackageError::new(format!("package JSON failed: {error}"))
             })?;
         text.push('\n');
@@ -428,8 +426,7 @@ impl PackageManifest {
         }
         validate_id(&self.canonical_id, "canonical package id")?;
         validate_revision(&self.package_revision)?;
-        if self.priority < -MAX_PRIORITY_ABS
-            || self.priority > MAX_PRIORITY_ABS
+        if self.priority < -MAX_PRIORITY_ABS || self.priority > MAX_PRIORITY_ABS
         {
             return Err(PackageError::new(
                 "package priority exceeds contract bounds",
@@ -482,19 +479,19 @@ impl PackageManifest {
         )?;
         validate_semantic_list(&self.supported_targets, "supported targets")?;
         match (self.package_kind, self.trust_level) {
-            (PackageKind::Content, TrustLevel::ContentOnly) => {}
+            (PackageKind::Content, TrustLevel::ContentOnly) => {},
             (PackageKind::Native, TrustLevel::NativeExplicit) => {
                 if self.supported_targets.is_empty() {
                     return Err(PackageError::new(
                         "native packages require explicit supported targets",
                     ));
                 }
-            }
+            },
             _ => {
                 return Err(PackageError::new(
                     "package kind and trust level do not match",
                 ));
-            }
+            },
         }
         self.validate_members()?;
         self.validate_provenance()
@@ -539,9 +536,8 @@ impl PackageManifest {
                     "package member exceeds byte limit",
                 ));
             }
-            total_bytes = total_bytes
-                .checked_add(member.bytes)
-                .ok_or_else(|| {
+            total_bytes =
+                total_bytes.checked_add(member.bytes).ok_or_else(|| {
                     PackageError::new("package byte count overflow")
                 })?;
             if total_bytes > MAX_PACKAGE_BYTES {
@@ -600,10 +596,9 @@ pub fn member_from_bytes(
     role: &str,
     bytes: &[u8],
 ) -> Result<Member, PackageError> {
-    let byte_count = u64::try_from(bytes.len())
-        .map_err(|_error| {
-            PackageError::new("member byte length does not fit u64")
-        })?;
+    let byte_count = u64::try_from(bytes.len()).map_err(|_error| {
+        PackageError::new("member byte length does not fit u64")
+    })?;
     let member = Member {
         path: path.to_owned(),
         bytes: byte_count,
@@ -655,8 +650,8 @@ pub fn content_revision(members: &[Member]) -> Result<String, PackageError> {
             ));
         }
         let path_bytes = member.path.as_bytes();
-        let path_length = u64::try_from(path_bytes.len())
-            .map_err(|_error| {
+        let path_length =
+            u64::try_from(path_bytes.len()).map_err(|_error| {
                 PackageError::new("member path length does not fit u64")
             })?;
         state.update(&path_length.to_be_bytes());

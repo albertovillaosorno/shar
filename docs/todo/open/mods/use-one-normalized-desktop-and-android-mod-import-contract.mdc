@@ -6,13 +6,16 @@ priority: P4
 lane: mods
 active: true
 parent: null
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [define-deterministic-mod-identity-dependencies-priority-compatibility-supersession, validate-schemas-paths-integrity-limits-references-and-load-order]
 children: []
 ---
 
 # Use one normalized portable mod import contract
 
-Use one inspectable SHAR mod-package contract across desktop and mobile. A mod is
+Use one inspectable SHAR mod-package contract across desktop and mobile. A mod
+is
 provided as either a directory or `.zip` containing its manifest, source and/or
 assets; opaque precompiled payloads are not the preferred canonical format.
 
@@ -30,9 +33,11 @@ assets; opaque precompiled payloads are not the preferred canonical format.
 - [ ] Keep mod source/assets inspectable and editable. “Open” here means not
   intentionally locked or obfuscated; it does not impose GPL or any other
   license on third-party mod authors.
-- [ ] Let each mod declare its own license/provenance and require distributors to
+- [ ] Let each mod declare its own license/provenance and require distributors
+  to
   have the rights needed for assets and code they redistribute.
-- [ ] Warn users to trust the author/distributor they choose; hashes can prove an
+- [ ] Warn users to trust the author/distributor they choose; hashes can prove
+  an
   exact package matches a known hash, but cannot prove that unknown code is
   harmless.
 - [ ] Keep generated official-language mods and converted legacy LMLM mods on

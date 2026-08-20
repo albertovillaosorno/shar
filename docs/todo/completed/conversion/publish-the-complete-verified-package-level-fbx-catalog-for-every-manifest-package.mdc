@@ -1,15 +1,21 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: publish-the-complete-verified-package-level-fbx-catalog-for-every-manifest-package
 status: completed
 priority: P1
 lane: conversion
 active: false
 parent: complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7]
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Publish the complete verified package-level FBX catalog for every manifest package…
 
 Publish the complete verified package-level FBX catalog for every manifest
@@ -24,7 +30,8 @@ plans to ready.
 
 ## Dependencies
 
-Parent task: `complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
+Parent task:
+`complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
 
 ## Evidence
 

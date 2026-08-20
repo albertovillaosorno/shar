@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -279,6 +279,7 @@ fn texture_font_recovery_preserves_lossless_glyph_words() -> Result<(), String>
     if !json.contains(r#""glyph_count":2"#)
         || !json.contains(r#""glyph_record_stride_bytes":40"#)
         || !json.contains(
+                        // jig-ignore-next-line: literal
             r#""glyph_records_u32":[[0,1,2,3,4,5,6,7,8,9],[100,101,102,103,104,105,106,107,108,109]]"#,
         )
     {
@@ -344,7 +345,8 @@ fn recovered_publication(path: &str, bytes: &[u8]) -> RecoveredComponent {
 }
 
 #[test]
-fn publication_registry_reuses_only_identical_nested_exact_path() -> Result<(), String> {
+fn publication_registry_reuses_only_identical_nested_exact_path()
+-> Result<(), String> {
     let mut paths = BTreeMap::new();
     let first = recovered_publication("mesh/shared.json", b"same");
     let nested = recovered_publication("mesh/shared.json", b"same");
@@ -361,13 +363,17 @@ fn publication_registry_reuses_only_identical_nested_exact_path() -> Result<(), 
     )
     .map_err(|error| error.to_string())?;
     if !first_publish || nested_publish {
-        return Err("identical nested exact-path reuse changed publication policy".to_owned());
+        return Err(
+            "identical nested exact-path reuse changed publication policy"
+                .to_owned(),
+        );
     }
     Ok(())
 }
 
 #[test]
-fn publication_registry_rejects_nested_payload_conflict() -> Result<(), String> {
+fn publication_registry_rejects_nested_payload_conflict() -> Result<(), String>
+{
     let mut paths = BTreeMap::new();
     let first = recovered_publication("mesh/shared.json", b"first");
     let nested = recovered_publication("mesh/shared.json", b"second");
@@ -380,8 +386,12 @@ fn publication_registry_rejects_nested_payload_conflict() -> Result<(), String> 
     if !first_publish {
         return Err("first component path claim was skipped".to_owned());
     }
-    if register_recovered_path(&mut paths, &publication_chunk(Some(1)), &nested).is_ok() {
-        return Err("different nested payload reused one component path".to_owned());
+    if register_recovered_path(&mut paths, &publication_chunk(Some(1)), &nested)
+        .is_ok()
+    {
+        return Err(
+            "different nested payload reused one component path".to_owned()
+        );
     }
     Ok(())
 }
@@ -400,8 +410,12 @@ fn publication_registry_rejects_direct_root_duplicate() -> Result<(), String> {
     if !first_publish {
         return Err("first component path claim was skipped".to_owned());
     }
-    if register_recovered_path(&mut paths, &publication_chunk(Some(0)), &second).is_ok() {
-        return Err("direct root duplicate component path was accepted".to_owned());
+    if register_recovered_path(&mut paths, &publication_chunk(Some(0)), &second)
+        .is_ok()
+    {
+        return Err(
+            "direct root duplicate component path was accepted".to_owned()
+        );
     }
     Ok(())
 }
@@ -420,7 +434,9 @@ fn publication_registry_rejects_case_equivalent_path() -> Result<(), String> {
     if !first_publish {
         return Err("first component path claim was skipped".to_owned());
     }
-    if register_recovered_path(&mut paths, &publication_chunk(Some(1)), &nested).is_ok() {
+    if register_recovered_path(&mut paths, &publication_chunk(Some(1)), &nested)
+        .is_ok()
+    {
         return Err("case-equivalent component path was accepted".to_owned());
     }
     Ok(())

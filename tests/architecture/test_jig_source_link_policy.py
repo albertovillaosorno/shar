@@ -1,5 +1,5 @@
 # Copyright:
-#   - Copyright (c) 2026 Alberto Villa Osorno.
+#   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
 # Confidential:
@@ -36,7 +36,7 @@ from pathlib import Path
 import tomllib
 
 _ROOT = Path(__file__).resolve().parents[2]
-_CONFIG = _ROOT / ".jig" / "jig.toml"
+_SETTINGS = _ROOT / ".jig" / "settings"
 _VALIDATION_PREFIX = ".dependencies/validation/bin/"
 _PORTABLE_TOOLS = {
     "cspell",
@@ -53,10 +53,10 @@ _PORTABLE_TOOLS = {
 
 def test_jig_tools_resolve_through_portable_validation_launchers() -> None:
     """Keep every Jig tool behind the repo-local portable launcher layer."""
-    with _CONFIG.open("rb") as stream:
+    with (_SETTINGS / "tools.toml").open("rb") as stream:
         config = tomllib.load(stream)
-    tools = config.get("tool")
-    assert isinstance(tools, dict), ".jig/jig.toml must declare [tool] entries"
+    tools = config.get("entry")
+    assert isinstance(tools, dict), "tools settings must declare [entry] values"
 
     offenders: list[str] = []
     for name in sorted(_PORTABLE_TOOLS):
@@ -82,10 +82,10 @@ _PROJECT_PYTHON_TOOLS = {
 
 def test_project_python_tools_use_portable_launchers() -> None:
     """Keep pytest and Ruff behind host-neutral repo-local launchers."""
-    with _CONFIG.open("rb") as stream:
+    with (_SETTINGS / "tools.toml").open("rb") as stream:
         config = tomllib.load(stream)
-    tools = config.get("tool")
-    assert isinstance(tools, dict), ".jig/jig.toml must declare [tool] entries"
+    tools = config.get("entry")
+    assert isinstance(tools, dict), "tools settings must declare [entry] values"
     mismatches: list[str] = []
     for name, expected in sorted(_PROJECT_PYTHON_TOOLS.items()):
         entry = tools.get(name)
@@ -105,12 +105,10 @@ def test_project_python_tools_use_portable_launchers() -> None:
 
 def test_pytest_gate_covers_all_python_test_roots() -> None:
     """Require every tracked top-level Python test root in canonical pytest."""
-    with _CONFIG.open("rb") as stream:
-        config = tomllib.load(stream)
-    validation = config.get("validation")
-    pytest_gate = (
-        validation.get("pytest") if isinstance(validation, dict) else None
-    )
+    with (_SETTINGS / "validation.toml").open("rb") as stream:
+        validation = tomllib.load(stream)
+    gates = validation.get("gate")
+    pytest_gate = gates.get("pytest") if isinstance(gates, dict) else None
     args = pytest_gate.get("args") if isinstance(pytest_gate, dict) else None
     assert isinstance(args, list), "validation.pytest.args must be configured"
     configured = {

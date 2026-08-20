@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -64,9 +64,15 @@ pub use package::{
     MissionLevelNpcBinding, MissionLevelNpcKind, MissionLevelNpcReport,
     MissionLevelNpcWaypointBinding,
     MissionLocatorActivePackageReport, MissionLocatorActivePackages,
-    MissionLocatorCatalog, MissionLocatorCatalogEntry, MissionLocatorMissionBindings,
-    MissionLocatorReferenceBinding, MissionLocatorReferenceReport, MissionLocatorResolution,
-    MissionLocatorRole, MissionLocatorTypeConstraint, MissionResolvedLocatorReference,
+        MissionLocatorCatalog,
+        MissionLocatorCatalogEntry,
+        MissionLocatorMissionBindings,
+        MissionLocatorReferenceBinding,
+        MissionLocatorReferenceReport,
+        MissionLocatorResolution,
+        MissionLocatorRole,
+        MissionLocatorTypeConstraint,
+        MissionResolvedLocatorReference,
     MissionPackageLoadBinding, MissionPackageLoadReport,
     MissionP3dPackageReference, MissionP3dReferenceCatalog,
     MissionPedGroupBinding, MissionPedGroupMemberBinding, MissionPedGroupReport,

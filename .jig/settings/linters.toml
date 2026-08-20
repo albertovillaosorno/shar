@@ -1,0 +1,284 @@
+domain = "linters"
+schema_version = 1
+
+[applicability.clang-format]
+enabled = false
+reason = "Unreal C++ needs path-scoped engine-aware formatting unavailable in Jig schema 18."
+
+[applicability.clang-tidy]
+enabled = false
+reason = "Unreal C++ analysis needs an Unreal Build Tool compile database not yet admitted locally."
+
+[applicability.clippy-config]
+enabled = true
+reason = ".jig/lang/rust/clippy.toml matches the reviewed Jig authority."
+
+[applicability.clippy-lints]
+enabled = true
+reason = "Every Rust package inherits the exact reviewed workspace Clippy matrix."
+
+[applicability.coverage-py]
+enabled = false
+reason = "Coverage is not yet an admitted release gate for the incomplete port."
+
+[applicability.csharp-global]
+enabled = false
+reason = "Unreal Build.cs files are build descriptors, not a standalone C# project."
+
+[applicability.csharp-visualstudio]
+enabled = false
+reason = "Unreal Build Tool, not Visual Studio C# policy, governs Build.cs files."
+
+[applicability.directory-build]
+enabled = false
+reason = "The repository has no standalone MSBuild project authority."
+
+[applicability.editorconfig]
+enabled = true
+reason = ".editorconfig governs repository-authored text surfaces."
+
+[applicability.msvc-cpp]
+enabled = false
+reason = "Unreal Build Tool owns compiler flags; a separate MSVC projection is not authoritative."
+
+[applicability.pyright]
+enabled = false
+reason = "A pinned repository-local BasedPyright environment has not yet been admitted."
+
+[applicability.pytest]
+enabled = false
+reason = "Pytest executes through the explicit validation.pytest native gate."
+
+[applicability.ruff]
+enabled = false
+reason = "Ruff executes through the explicit validation.ruff native gate."
+
+[applicability.rust-toolchain]
+enabled = true
+reason = "The repository pins Rust 1.97.1 for the workspace."
+
+[applicability.rustc-lints]
+enabled = true
+reason = "Every Rust package inherits the exact reviewed workspace compiler matrix."
+
+[applicability.rustfmt]
+enabled = true
+reason = "Pinned nightly rustfmt and the native gate govern every Rust target."
+
+[applicability.typescript]
+enabled = false
+reason = "The repository contains no TypeScript product source."
+
+[applicability.unreal]
+enabled = false
+reason = "Repository tests validate Unreal policy; no portable editor invocation is admitted yet."
+
+[override.clippy_absolute_paths]
+key = "absolute_paths"
+linter = "clippy-lints"
+reason = "Qualified standard-library and crate paths make boundary ownership explicit in SHAR conversion code."
+value = "allow"
+
+[override.clippy_arbitrary_source_item_ordering]
+key = "arbitrary_source_item_ordering"
+linter = "clippy-lints"
+reason = "SHAR preserves semantic field, enum, and module order because it documents binary and pipeline contracts."
+value = "allow"
+
+[override.clippy_assigning_clones]
+key = "assigning_clones"
+linter = "clippy-lints"
+reason = "Clone assignment suggestions do not change correctness and can obscure deliberate replacement semantics."
+value = "allow"
+
+[override.clippy_cognitive_complexity]
+key = "cognitive_complexity"
+linter = "clippy-lints"
+reason = "Integration tests and deterministic format validators remain readable as one transaction despite heuristic complexity scores."
+value = "allow"
+
+[override.clippy_default_numeric_fallback]
+key = "default_numeric_fallback"
+linter = "clippy-lints"
+reason = "Numeric context fixes the intended type throughout SHAR binary-format and fixture expressions."
+value = "allow"
+
+[override.clippy_doc_paragraphs_missing_punctuation]
+key = "doc_paragraphs_missing_punctuation"
+linter = "clippy-lints"
+reason = "Wrapped Rust documentation remains readable without forcing punctuation onto continuation-line fragments."
+value = "allow"
+
+[override.clippy_float_cmp]
+key = "float_cmp"
+linter = "clippy-lints"
+reason = "Binary-format and transform tests intentionally compare exact representable constants and serialized values."
+value = "allow"
+
+[override.clippy_impl_trait_in_params]
+key = "impl_trait_in_params"
+linter = "clippy-lints"
+reason = "SHAR uses impl Trait intentionally for compact process-neutral public boundaries without naming one-use generics."
+value = "allow"
+
+[override.clippy_inline_trait_bounds]
+key = "inline_trait_bounds"
+linter = "clippy-lints"
+reason = "Inline bounds are retained for concise one-bound generic helpers and do not weaken type constraints."
+value = "allow"
+
+[override.clippy_integer_division_remainder_used]
+key = "integer_division_remainder_used"
+linter = "clippy-lints"
+reason = "SHAR parsers and binary codecs use reviewed integer division and remainder as format-defined operations."
+value = "allow"
+
+[override.clippy_let_underscore_untyped]
+key = "let_underscore_untyped"
+linter = "clippy-lints"
+reason = "Discarded iterator and collection results are deliberate where only side effects or validation matter."
+value = "allow"
+
+[override.clippy_match_same_arms]
+key = "match_same_arms"
+linter = "clippy-lints"
+reason = "Explicit state combinations document policy even when two reviewed outcomes currently coincide."
+value = "allow"
+
+[override.clippy_min_ident_chars]
+key = "min_ident_chars"
+linter = "clippy-lints"
+reason = "Short identifiers are retained in standard transforms, codecs, matrices, and coordinate formulas where notation is canonical."
+value = "allow"
+
+[override.clippy_missing_asserts_for_indexing]
+key = "missing_asserts_for_indexing"
+linter = "clippy-lints"
+reason = "The stronger indexing_slicing policy remains enabled; this optimization lint duplicates length proofs from windows, exact slices, and guarded readers."
+value = "allow"
+
+[override.clippy_missing_trait_methods]
+key = "missing_trait_methods"
+linter = "clippy-lints"
+reason = "Implementing deprecated or optional default trait methods would add dead compatibility surface without behavior."
+value = "allow"
+
+[override.clippy_multiple_inherent_impl]
+key = "multiple_inherent_impl"
+linter = "clippy-lints"
+reason = "Large domain types split inherent implementations by responsibility to keep each section reviewable."
+value = "allow"
+
+[override.clippy_non_ascii_literal]
+key = "non_ascii_literal"
+linter = "clippy-lints"
+reason = "SHAR must preserve exact localized text, Unicode path aliases, and externally defined asset identities."
+value = "allow"
+
+[override.clippy_panic_in_result_fn]
+key = "panic_in_result_fn"
+linter = "clippy-lints"
+reason = "Test assertions may coexist with Result-based fixture setup; production panic remains separately denied."
+value = "allow"
+
+[override.clippy_partial_pub_fields]
+key = "partial_pub_fields"
+linter = "clippy-lints"
+reason = "Aggregate visibility follows field ownership rather than forcing every field to share one public surface."
+value = "allow"
+
+[override.clippy_renamed_function_params]
+key = "renamed_function_params"
+linter = "clippy-lints"
+reason = "Descriptive trait-implementation parameter names are retained when they clarify filesystem and serialization behavior."
+value = "allow"
+
+[override.clippy_self_named_module_files]
+key = "self_named_module_files"
+linter = "clippy-lints"
+reason = "SHAR keeps established flat module files alongside Jig kind directories; moving them would create unrelated API churn."
+value = "allow"
+
+[override.clippy_semicolon_if_nothing_returned]
+key = "semicolon_if_nothing_returned"
+linter = "clippy-lints"
+reason = "Rustfmt owns statement punctuation; expression-style unit arms remain readable and behaviorally identical."
+value = "allow"
+
+[override.clippy_separated_literal_suffix]
+key = "separated_literal_suffix"
+linter = "clippy-lints"
+reason = "The repository uses underscore-separated numeric suffixes consistently with existing binary-format notation."
+value = "allow"
+
+[override.clippy_shadow_reuse]
+key = "shadow_reuse"
+linter = "clippy-lints"
+reason = "Narrow pattern bindings intentionally refine optional values without extending their lifetime."
+value = "allow"
+
+[override.clippy_shadow_unrelated]
+key = "shadow_unrelated"
+linter = "clippy-lints"
+reason = "Independent test evidence may reuse descriptive discard names without semantic ambiguity."
+value = "allow"
+
+[override.clippy_single_char_lifetime_names]
+key = "single_char_lifetime_names"
+linter = "clippy-lints"
+reason = "Single borrowed-input lifetimes remain conventional in local parser and renderer types."
+value = "allow"
+
+[override.clippy_struct_excessive_bools]
+key = "struct_excessive_bools"
+linter = "clippy-lints"
+reason = "Manifest evidence mirrors independent external boolean facts rather than an artificial state machine."
+value = "allow"
+
+[override.clippy_struct_field_names]
+key = "struct_field_names"
+linter = "clippy-lints"
+reason = "Hash field suffixes preserve the public manifest vocabulary and artifact identity."
+value = "allow"
+
+[override.clippy_suboptimal_flops]
+key = "suboptimal_flops"
+linter = "clippy-lints"
+reason = "Reviewed matrix formulas preserve their documented evaluation order instead of target-dependent fused operations."
+value = "allow"
+
+[override.clippy_too_many_lines]
+key = "too_many_lines"
+linter = "clippy-lints"
+reason = "Deterministic serializers and integration tests keep one ordered transaction visible for auditability."
+value = "allow"
+
+[override.clippy_unnecessary_trailing_comma]
+key = "unnecessary_trailing_comma"
+linter = "clippy-lints"
+reason = "Rustfmt owns punctuation; historical macro call commas do not affect behavior or readability."
+value = "allow"
+
+[override.clippy_unused_trait_names]
+key = "unused_trait_names"
+linter = "clippy-lints"
+reason = "Explicit trait imports document extension-method authority even when method resolution uses them anonymously."
+value = "allow"
+
+[override.clippy_wildcard_enum_match_arm]
+key = "wildcard_enum_match_arm"
+linter = "clippy-lints"
+reason = "Fail-closed path handling and default None error sources intentionally cover future external and internal variants without granting behavior."
+value = "allow"
+
+[override.rustfmt_suffixed_floats]
+key = "float_literal_trailing_zero"
+linter = "rustfmt"
+reason = "Nightly rustfmt otherwise emits underscore-grouped suffixed floats rejected by the reviewed Clippy matrix."
+value = "Never"
+
+[override.rustfmt_unformatted_paths]
+key = "error_on_unformatted"
+linter = "rustfmt"
+reason = "Canonical test path attributes are indivisible strings; all executable Rust remains formatted and line-limited."
+value = "false"

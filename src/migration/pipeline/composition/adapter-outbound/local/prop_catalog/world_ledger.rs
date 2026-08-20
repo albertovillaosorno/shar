@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -67,7 +67,8 @@ pub(super) struct WorldLedger {
 ///
 /// # Errors
 ///
-/// Returns an error when JSONL fields are malformed or component identities conflict.
+/// Returns an error when JSONL fields are malformed or component identities
+/// conflict.
 pub(super) fn read_world_ledger(
     root: &Path,
 ) -> Result<WorldLedger, PipelineError> {
@@ -111,7 +112,8 @@ pub(super) fn read_world_ledger(
             .chars()
             .flat_map(char::to_uppercase)
             .collect::<String>();
-        if let Some(existing_path) = paths.insert(path_identity, row.path.clone()) {
+                // jig-ignore-next-line: expression
+                if let Some(existing_path) = paths.insert(path_identity, row.path.clone()) {
             if existing_path == row.path {
                 return Err(PipelineError::new(format!(
                     "prop ledger repeats component path {}",
@@ -119,7 +121,8 @@ pub(super) fn read_world_ledger(
                 )));
             }
             return Err(PipelineError::new(format!(
-                "prop ledger component paths collide portably: {existing_path} and {}",
+                                // jig-ignore-next-line: literal
+                                "prop ledger component paths collide portably: {existing_path} and {}",
                 row.path
             )));
         }
@@ -163,12 +166,14 @@ pub(super) fn read_world_ledger(
         })?;
         if *depth != expected_depth {
             return Err(PipelineError::new(format!(
-                "prop component ordinal {ordinal} depth {depth} disagrees with parent ordinal {parent_ordinal} depth {parent_depth}"
+                                // jig-ignore-next-line: literal
+                                "prop component ordinal {ordinal} depth {depth} disagrees with parent ordinal {parent_ordinal} depth {parent_depth}"
             )));
         }
         if container_ordinal != parent_container {
             return Err(PipelineError::new(format!(
-                "prop component ordinal {ordinal} container {container_ordinal} disagrees with parent ordinal {parent_ordinal} container {parent_container}"
+                                // jig-ignore-next-line: literal
+                                "prop component ordinal {ordinal} container {container_ordinal} disagrees with parent ordinal {parent_ordinal} container {parent_container}"
             )));
         }
     }

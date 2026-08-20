@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -42,9 +42,9 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 #[cfg(unix)]
-use game_manifest::adapters::FilesystemGameTree;
-#[cfg(unix)]
 use game_manifest::GameTree as _;
+#[cfg(unix)]
+use game_manifest::adapters::FilesystemGameTree;
 use schoenwald_cli as _;
 use schoenwald_filesystem as _;
 
@@ -74,9 +74,7 @@ fn filesystem_tree_rejects_redirected_entry() -> io::Result<()> {
     fs::remove_dir_all(&root)?;
 
     let Err(error) = result else {
-        return Err(io::Error::other(
-            "manifest traversal accepted a redirect",
-        ));
+        return Err(io::Error::other("manifest traversal accepted a redirect"));
     };
     assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
     Ok(())

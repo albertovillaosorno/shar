@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: add-an-optional-discord-boundary-for-display-username-rich-presence-parties-invites
 status: open
 priority: P4
@@ -10,6 +12,8 @@ dependencies: []
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Add an optional Discord boundary for display username, Rich Presence, parties/invites,…
 
 Add an optional Discord boundary for display username, Rich Presence,

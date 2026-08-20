@@ -138,7 +138,8 @@ script and RSD normalization writes to a hidden staging sibling while the
 accepted `.cache/pipeline/extracted/game` remains unchanged. A
 successful run moves the accepted root to a temporary backup, publishes the
 complete staging root, and removes the backup. A failed conversion removes only
-staging; a failed publish restores the accepted backup; startup recovery restores
+staging; a failed publish restores the accepted backup; startup recovery
+restores
 an interrupted backup before discarding stale staging. Symbolic links and
 non-directory transaction identities fail closed.
 

@@ -1,0 +1,7 @@
+domain = "repository"
+schema_version = 1
+fixture_roots = ["tests/fixtures"]
+host_absolute_path_guard = false
+
+[layout]
+adjacent_component_repetition = "deny"

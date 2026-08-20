@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -34,11 +34,10 @@
 #[path = "support/junction.rs"]
 pub mod support;
 
-use std::path::Path;
-use std::io;
-
 #[cfg(windows)]
 use std::fs;
+use std::io;
+use std::path::Path;
 
 use schoenwald_filesystem::adapters::driving::local;
 

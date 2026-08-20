@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -28,11 +28,14 @@
 //   - Interior control data and unsafe relative paths fail closed.
 //
 
+//! Mission locator catalog adapter tests.
+
 use super::*;
 
 #[test]
 fn decoded_locator_trims_only_trailing_nul_padding() -> Result<(), String> {
     let decoded = parse_decoded_locator(
+        // jig-ignore-next-line: literal
         r#"{"schema":"locator","name":"check1\u0000\u0000","locator_type":0,"locator_type_name":"event"}"#,
     )
     .map_err(|error| error.to_string())?;
@@ -45,6 +48,7 @@ fn decoded_locator_trims_only_trailing_nul_padding() -> Result<(), String> {
 #[test]
 fn decoded_locator_rejects_interior_nul() -> Result<(), String> {
     let Err(error) = parse_decoded_locator(
+        // jig-ignore-next-line: literal
         r#"{"schema":"locator","name":"bad\u0000name","locator_type":3,"locator_type_name":"car_start"}"#,
     ) else {
         return Err("interior control data did not fail closed".to_owned());
@@ -56,6 +60,7 @@ fn decoded_locator_rejects_interior_nul() -> Result<(), String> {
 #[test]
 fn decoded_locator_rejects_schema_drift() -> Result<(), String> {
     let Err(error) = parse_decoded_locator(
+        // jig-ignore-next-line: literal
         r#"{"schema":"other","name":"check1","locator_type":0,"locator_type_name":"event"}"#,
     ) else {
         return Err("schema drift did not fail closed".to_owned());
@@ -97,8 +102,12 @@ fn locator_path_rejects_traversal() -> Result<(), String> {
 
 #[test]
 fn accepts_only_observed_locator_member_classifications() {
+    // jig-ignore-next-line: literal
     assert!(validate_locator_member("locator", "p3d-locator", "srr_locator").is_ok());
+    // jig-ignore-next-line: literal
     assert!(validate_locator_member("locator", "p3d-locator", "locator").is_ok());
+    // jig-ignore-next-line: literal
     assert!(validate_locator_member("other", "p3d-locator", "srr_locator").is_err());
+    // jig-ignore-next-line: literal
     assert!(validate_locator_member("locator", "p3d-locator", "unknown").is_err());
 }

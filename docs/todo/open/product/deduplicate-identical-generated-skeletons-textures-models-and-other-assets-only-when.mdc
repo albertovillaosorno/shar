@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: deduplicate-identical-generated-skeletons-textures-models-and-other-assets-only-when
 status: open
 priority: P4

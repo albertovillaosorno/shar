@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -196,6 +196,7 @@ pub(super) fn normalized_json_path(
     normalized_json_path_at_root(&extracted_root.join("game"), relative)
 }
 
+// jig-ignore-next-line: long identifier
 fn normalized_json_path_at_root(output_root: &Path, relative: &Path) -> PathBuf {
     let mut output = output_root.join(relative);
     let file_name = relative
@@ -459,7 +460,8 @@ fn real_generated_directory_exists(path: &Path) -> PipelineOutcome<bool> {
             "inspect generated straggler transaction failed ({:?})",
             error.kind()
         ))),
-        Ok(metadata) if metadata.is_dir() && !metadata.file_type().is_symlink() => {
+                // jig-ignore-next-line: expression
+                Ok(metadata) if metadata.is_dir() && !metadata.file_type().is_symlink() => {
             Ok(true)
         },
         Ok(_metadata) => Err(PipelineError::new(

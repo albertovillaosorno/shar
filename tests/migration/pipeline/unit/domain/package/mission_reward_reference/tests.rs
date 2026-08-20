@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,8 @@
 // - Defaults:
 //   - Source reward policy tokens remain opaque.
 //
+
+//! `BindReward` package-reference tests.
 
 use super::*;
 
@@ -70,6 +72,7 @@ fn binds_observed_five_argument_shape() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn preserves_observed_seven_argument_shape_without_policy() -> Result<(), String> {
     let mut bindings = Vec::new();
     push_binding(

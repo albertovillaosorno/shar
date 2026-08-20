@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,8 @@
 // - Defaults:
 //   - Missing unload targets remain valid remove-if-present effects.
 //
+
+//! `DynamicZone` package-transition adapter tests.
 
 use super::*;
 

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -38,8 +38,8 @@ use super::ManifestError;
 use super::path_evidence::deduplicate_paths;
 use super::rcf_evidence::load_extracted_rcf_files;
 use crate::domain::{
-    BACKUP_EXTENSION, MANIFEST_FILE_NAME,
-    classify_manifest_bucket, extension_of, kind_taxonomy_jsonl,
+    BACKUP_EXTENSION, MANIFEST_FILE_NAME, classify_manifest_bucket,
+    extension_of, kind_taxonomy_jsonl,
 };
 use crate::ports::{GameTree, PathKind, TextArtifactStore};
 

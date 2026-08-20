@@ -1,0 +1,29 @@
+domain = "tools"
+schema_version = 1
+
+[entry.cspell]
+path = ".dependencies/validation/bin/cspell.cmd"
+
+[entry.git]
+path = ".dependencies/validation/bin/git.cmd"
+
+[entry.markdownlint]
+path = ".dependencies/validation/bin/markdownlint.cmd"
+
+[entry.pytest]
+path = ".dependencies/validation/bin/pytest.cmd"
+
+[entry.ruff]
+path = ".dependencies/validation/bin/ruff.cmd"
+
+[entry.rust_nightly_cargo]
+path = ".dependencies/validation/bin/rust-nightly-cargo.cmd"
+
+[entry.rust_nightly_cargo_clippy]
+path = ".dependencies/validation/bin/rust-nightly-clippy.cmd"
+
+[entry.rust_nightly_cargo_fmt]
+path = ".dependencies/validation/bin/rust-nightly-fmt.cmd"
+
+[entry.rust_stable_cargo]
+path = ".dependencies/validation/bin/rust-stable-cargo.cmd"

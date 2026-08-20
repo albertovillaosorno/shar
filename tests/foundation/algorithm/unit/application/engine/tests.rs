@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -33,16 +33,15 @@
 
 use std::path::PathBuf;
 
+use super::{
+    InputFile, decode_hex, hex_bytes, settings_sha256,
+    sort_files_by_logical_path, source_key, validate_document,
+};
 use crate::document::{
     ALGORITHM_SCHEMA, AlgorithmDocument, ProtectedTarget, SourceRecord,
     TargetDescriptor, TargetKind,
 };
 use crate::domain::Settings;
-
-use super::{
-    InputFile, decode_hex, hex_bytes, settings_sha256,
-    sort_files_by_logical_path, source_key, validate_document,
-};
 
 #[test]
 fn logical_file_order_is_portable_wire_order() {
@@ -155,8 +154,8 @@ fn directory_target_records_must_match_collector_order() -> Result<(), String> {
 }
 
 #[test]
-fn directory_target_portable_identity_collision_is_rejected(
-) -> Result<(), String> {
+fn directory_target_portable_identity_collision_is_rejected()
+-> Result<(), String> {
     let settings = settings()?;
     let document = AlgorithmDocument {
         schema: ALGORITHM_SCHEMA.to_owned(),
@@ -358,8 +357,8 @@ fn protected_target_length_must_match_declared_bytes() -> Result<(), String> {
 }
 
 #[test]
-fn source_key_uses_captured_bytes_without_reopening_path(
-) -> Result<(), String> {
+fn source_key_uses_captured_bytes_without_reopening_path() -> Result<(), String>
+{
     let file = InputFile {
         input: 0,
         logical_path: String::new(),

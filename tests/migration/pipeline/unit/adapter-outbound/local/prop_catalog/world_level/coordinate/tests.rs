@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -35,7 +35,10 @@ use std::collections::BTreeSet;
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 
 use super::{
-    LevelMeshSource, PackageCoordinates, exact_reference_match, topology_matches,
+        LevelMeshSource,
+        PackageCoordinates,
+        exact_reference_match,
+        topology_matches,
     transplant_coordinates,
 };
 
@@ -54,6 +57,7 @@ fn mesh(shader: &str, offset: f32) -> Result<MeshAsset, String> {
         .map_err(|error| format!("mesh failed: {error:?}"))
 }
 
+// jig-ignore-next-line: long identifier
 fn source(ordinal: usize, mesh_name: &str, owner_name: &str) -> LevelMeshSource {
     LevelMeshSource {
         ordinal,
@@ -222,6 +226,7 @@ fn exact_reference_identity_matches_once() -> TestResult {
     )
     .map_err(|error| error.to_string())?;
     if matched != Some(0) {
+        // jig-ignore-next-line: literal
         return Err(format!("exact reference identity did not match: {matched:?}"));
     }
     Ok(())
@@ -243,6 +248,7 @@ fn ambiguous_exact_reference_identity_fails_closed() -> TestResult {
         &BTreeSet::new(),
     );
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("ambiguous exact coordinate references were accepted".to_owned());
     };
     if !error.to_string().contains("identity is ambiguous") {

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -56,6 +56,7 @@ fn decoded_mesh_names_reject_duplicate_source_identity() -> Result<(), String> {
         .map_err(|error| error.to_string())?;
     fs::write(root.join("components/mesh/002.json"), r#"{"name":"shared"}"#)
         .map_err(|error| error.to_string())?;
+    // jig-ignore-next-line: literal
     let result = decoded_mesh_names(&root, &["001".to_owned(), "002".to_owned()]);
     drop(fs::remove_dir_all(&root));
     let Err(error) = result else {
@@ -65,6 +66,7 @@ fn decoded_mesh_names_reject_duplicate_source_identity() -> Result<(), String> {
         .to_string()
         .contains("world prop repeats mesh identity shared")
     {
+        // jig-ignore-next-line: literal
         return Err(format!("unexpected duplicate mesh identity error: {error}"));
     }
     Ok(())

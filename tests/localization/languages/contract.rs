@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -78,9 +78,8 @@ fn fixture(root: &Path) -> Result<(PathBuf, PathBuf), String> {
             code.as_bytes(),
         )?;
     }
-    let mut french_readme = ['L', 'i', 's', 'e', 'z']
-        .into_iter()
-        .collect::<String>();
+    let mut french_readme =
+        ['L', 'i', 's', 'e', 'z'].into_iter().collect::<String>();
     french_readme.push_str("-moi.rtf");
     let mut german_readme = ['L', 'i', 'e', 's', 'm', 'i', 'c', 'h']
         .into_iter()
@@ -130,8 +129,8 @@ fn cleanup(root: &Path) {
 }
 
 #[test]
-fn french_bundle_contains_dialogue_ui_and_cinematic_track_two(
-) -> Result<(), String> {
+fn french_bundle_contains_dialogue_ui_and_cinematic_track_two()
+-> Result<(), String> {
     let root = temp_root("french");
     cleanup(&root);
     let (game, movies) = fixture(&root)?;
@@ -188,18 +187,22 @@ fn missing_localized_ui_fails_closed() -> Result<(), String> {
     let root = temp_root("missing-ui");
     cleanup(&root);
     let (game, movies) = fixture(&root)?;
-    fs::remove_dir_all(game.join("art/frontend/dynaload/images/loading/german"))
-        .map_err(|error| error.to_string())?;
-    fs::remove_dir_all(game.join("art/frontend/dynaload/images/license/german"))
-        .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(
+        game.join("art/frontend/dynaload/images/loading/german"),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(
+        game.join("art/frontend/dynaload/images/license/german"),
+    )
+    .map_err(|error| error.to_string())?;
     let error = export_language(
         &game,
         &movies,
         &root.join("out/german"),
         Language::German,
     )
-        .err()
-        .ok_or_else(|| "German export unexpectedly succeeded".to_owned())?;
+    .err()
+    .ok_or_else(|| "German export unexpectedly succeeded".to_owned())?;
     let result = if error
         .to_string()
         .contains("no localized loading/license UI")
@@ -250,10 +253,10 @@ fn italian_placeholder_only_source_fails_closed() -> Result<(), String> {
         &root.join("out/italian"),
         Language::Italian,
     )
-        .err()
-        .ok_or_else(|| {
-            "Italian placeholder-only export unexpectedly succeeded".to_owned()
-        })?;
+    .err()
+    .ok_or_else(|| {
+        "Italian placeholder-only export unexpectedly succeeded".to_owned()
+    })?;
     let result = if error.to_string().contains("no translated text") {
         Ok(())
     } else {
@@ -270,20 +273,12 @@ fn repeated_exports_are_byte_deterministic() -> Result<(), String> {
     let (game, movies) = fixture(&root)?;
     let first = root.join("out/first");
     let second = root.join("out/second");
-    let first_report = export_language(
-        &game,
-        &movies,
-        &first,
-        Language::Spanish,
-    )
-        .map_err(|error| error.to_string())?;
-    let second_report = export_language(
-        &game,
-        &movies,
-        &second,
-        Language::Spanish,
-    )
-        .map_err(|error| error.to_string())?;
+    let first_report =
+        export_language(&game, &movies, &first, Language::Spanish)
+            .map_err(|error| error.to_string())?;
+    let second_report =
+        export_language(&game, &movies, &second, Language::Spanish)
+            .map_err(|error| error.to_string())?;
     if first_report != second_report {
         cleanup(&root);
         let message = "language manifests differ between repeated exports";
@@ -297,10 +292,10 @@ fn repeated_exports_are_byte_deterministic() -> Result<(), String> {
         .map_err(|error| error.to_string())?;
     let second_text = fs::read(second.join("text.jsonl"))
         .map_err(|error| error.to_string())?;
-    let first_package = fs::read(first.join("mod.json"))
-        .map_err(|error| error.to_string())?;
-    let second_package = fs::read(second.join("mod.json"))
-        .map_err(|error| error.to_string())?;
+    let first_package =
+        fs::read(first.join("mod.json")).map_err(|error| error.to_string())?;
+    let second_package =
+        fs::read(second.join("mod.json")).map_err(|error| error.to_string())?;
     let result = if first_manifest == second_manifest
         && first_text == second_text
         && first_package == second_package
@@ -355,10 +350,10 @@ fn missing_dialogue_archive_fails_closed() -> Result<(), String> {
         &root.join("out/spanish"),
         Language::Spanish,
     )
-        .err()
-        .ok_or_else(|| {
-            "Spanish export without dialogue unexpectedly succeeded".to_owned()
-        })?;
+    .err()
+    .ok_or_else(|| {
+        "Spanish export without dialogue unexpectedly succeeded".to_owned()
+    })?;
     let result = if error
         .to_string()
         .contains("required localization source is missing")
@@ -387,12 +382,12 @@ fn missing_cinematic_language_track_fails_closed() -> Result<(), String> {
         &root.join("out/french"),
         Language::French,
     )
-        .err()
-        .ok_or_else(|| {
-            let message = "French export without movie audio unexpectedly \
+    .err()
+    .ok_or_else(|| {
+        let message = "French export without movie audio unexpectedly \
                            succeeded";
-            message.to_owned()
-        })?;
+        message.to_owned()
+    })?;
     let result = if error
         .to_string()
         .contains("no normalized cinematic audio track")
@@ -415,8 +410,8 @@ fn language_package_uses_mod_contract() -> Result<(), String> {
         .map_err(|error| error.to_string())?;
     let text = fs::read_to_string(output.join("mod.json"))
         .map_err(|error| error.to_string())?;
-    let package = PackageManifest::from_json(&text)
-        .map_err(|error| error.to_string())?;
+    let package =
+        PackageManifest::from_json(&text).map_err(|error| error.to_string())?;
 
     let result = if package.canonical_id == "shar.localization.spanish"
         && language.package_id == package.canonical_id
@@ -466,7 +461,9 @@ fn published_manifest_json_matches_returned_report() -> Result<(), String> {
     let included = value
         .get("included_sources")
         .and_then(serde_json::Value::as_array)
-        .ok_or_else(|| "manifest included_sources is not an array".to_owned())?;
+        .ok_or_else(|| {
+            "manifest included_sources is not an array".to_owned()
+        })?;
     let cinematic = value
         .get("cinematic_audio")
         .and_then(serde_json::Value::as_array)

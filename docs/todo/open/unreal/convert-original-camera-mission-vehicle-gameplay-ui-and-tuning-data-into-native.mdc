@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native
 status: open
 priority: P2
@@ -7,6 +9,8 @@ lane: unreal
 active: false
 parent: null
 dependencies: []
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 children: [stop-treating-unresolved-normalized-source-as-a-generic-dataasset-or-one-bespoke, compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and, compile-remaining-normalized-ui-font-localization-tuning-and-other-structured]
 ---
 

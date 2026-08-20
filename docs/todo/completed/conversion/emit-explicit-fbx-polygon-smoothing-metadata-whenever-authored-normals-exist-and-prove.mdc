@@ -1,11 +1,15 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: emit-explicit-fbx-polygon-smoothing-metadata-whenever-authored-normals-exist-and-prove
 status: completed
 priority: P1
 lane: conversion
 active: false
 parent: complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7]
 children: []
 ---
@@ -24,7 +28,8 @@ smoothing groups.
 
 ## Dependencies
 
-Parent task: `complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
+Parent task:
+`complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
 
 ## Evidence
 

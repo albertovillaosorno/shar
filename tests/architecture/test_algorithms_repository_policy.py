@@ -1,5 +1,5 @@
 # Copyright:
-#   - Copyright (c) 2026 Alberto Villa Osorno.
+#   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
 # Confidential:
@@ -91,10 +91,9 @@ def test_algorithm_workspace_tracks_semantic_directory_anchors() -> None:
 
 def test_algorithm_workspace_has_one_taxonomy_role() -> None:
     """Keep the public workspace inside Jig's closed path taxonomy."""
-    with (_ROOT / ".jig" / "jig.toml").open("rb") as stream:
-        config = tomllib.load(stream)
-    taxonomy = config.get("taxonomy")
-    assert isinstance(taxonomy, dict)
+    path = _ROOT / ".jig" / "settings" / "taxonomy.toml"
+    with path.open("rb") as stream:
+        taxonomy = tomllib.load(stream)
     roles = taxonomy.get("role")
     assert isinstance(roles, dict)
     algorithms = roles.get("algorithms")
@@ -147,10 +146,9 @@ def test_public_algorithm_docs_name_source_bound_plan_schema() -> None:
 
 def test_algorithm_crate_is_declared_architecture_component() -> None:
     """Keep the generic algorithm crate inside Jig's dependency graph."""
-    with (_ROOT / ".jig" / "jig.toml").open("rb") as stream:
-        config = tomllib.load(stream)
-    architecture = config.get("architecture")
-    assert isinstance(architecture, dict)
+    path = _ROOT / ".jig" / "settings" / "architecture.toml"
+    with path.open("rb") as stream:
+        architecture = tomllib.load(stream)
     components = architecture.get("component")
     assert isinstance(components, dict)
     algorithm = components.get("shar_algorithm")
@@ -663,7 +661,7 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
 
 def test_substantive_algorithm_example_matches_source_bound_contract() -> None:
     """Exercise the publication guard against a real authored plan."""
-    example = _ROOT / "src/migration/icon/icon_algorithm.txt"
+    example = _ROOT / "src/migration/icon/contract/icon_algorithm.txt"
     _assert_source_bound_plan(_read_public_plan(example))
 
 

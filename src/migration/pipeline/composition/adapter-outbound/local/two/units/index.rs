@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -453,6 +453,7 @@ impl MinorUnitRow {
 
     /// Supports the `into_member` operation within this deterministic
     /// classification boundary.
+    // jig-ignore-next-line: long identifier
     fn into_member(self, extracted_root: &Path) -> PipelineOutcome<PackageMember> {
         let mut role =
             role_from_fields(&self.type_, &self.kind, &self.source_chunk_kind);
@@ -500,7 +501,9 @@ fn mesh_has_no_primitive_groups(
     decoded_mesh_has_no_primitive_groups(bounded)
 }
 
-/// Inspect canonical decoded mesh header evidence without reading full geometry.
+/// Inspect canonical decoded mesh header evidence without reading full
+/// geometry.
+// jig-ignore-next-line: long identifier
 fn decoded_mesh_has_no_primitive_groups(prefix: &[u8]) -> PipelineOutcome<bool> {
     let schema = json_field_value(prefix, b"schema").ok_or_else(|| {
         PipelineError::new("decoded P3D mesh omitted geometry schema")
@@ -524,6 +527,7 @@ fn decoded_mesh_has_no_primitive_groups(prefix: &[u8]) -> PipelineOutcome<bool> 
         .iter()
         .copied()
         .find(|byte| !byte.is_ascii_whitespace())
+        // jig-ignore-next-line: literal
         .ok_or_else(|| PipelineError::new("decoded P3D mesh array is truncated"))?;
     match first {
         b']' => Ok(true),

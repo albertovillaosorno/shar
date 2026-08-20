@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -86,11 +86,13 @@ fn existing_output_fails_before_index_access() -> Result<(), String> {
         &root.join("fbx.jsonl"),
         &root,
     );
+    // jig-ignore-next-line: literal
     let sentinel = fs::read(output.join("sentinel")).map_err(|error| error.to_string())?;
     clean(&root)?;
     let Err(error) = result else {
         return Err("existing accepted catalog was replaced".to_owned());
     };
+    // jig-ignore-next-line: literal
     if !error.to_string().contains("output already exists") || sentinel != b"accepted" {
         return Err("existing catalog did not fail before build".to_owned());
     }
@@ -129,6 +131,7 @@ fn cleanup_rejects_non_directory_transaction_identity() -> Result<(), String> {
     clean(&root)?;
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
     let transaction = root.join("staging");
+    // jig-ignore-next-line: literal
     fs::write(&transaction, b"not-a-directory").map_err(|error| error.to_string())?;
     let result = cleanup_directory(&transaction);
     let still_exists = transaction.is_file();

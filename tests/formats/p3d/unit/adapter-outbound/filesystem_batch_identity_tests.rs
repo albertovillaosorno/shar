@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -33,11 +33,11 @@
 use std::fs;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use super::super::filesystem_batch_artifact::manifest_component_files_exist;
 use super::{
     is_cache_current, manifest_is_complete,
     manifest_normalized_source_matches_bytes, manifest_source_matches_bytes,
 };
-use super::super::filesystem_batch_artifact::manifest_component_files_exist;
 
 static NEXT_CACHE_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
@@ -50,6 +50,7 @@ const PACKAGE_HEADER_TWO: &str = concat!(
     r#""byte_len":36,"chunk_count":3,"component_count":2}"#,
 );
 const COMPLETE_ROW: &str = concat!(
+    // jig-ignore-next-line: literal
     r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"mesh","#,
@@ -57,6 +58,7 @@ const COMPLETE_ROW: &str = concat!(
     r#""path":"components/mesh.json"}"#,
 );
 const DECODED_PATH_MISMATCH_ROW: &str = concat!(
+    // jig-ignore-next-line: literal
     r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"mesh","#,
@@ -64,6 +66,7 @@ const DECODED_PATH_MISMATCH_ROW: &str = concat!(
     r#""path":"components/mesh.png"}"#,
 );
 const RECOVERED_PATH_MISMATCH_ROW: &str = concat!(
+    // jig-ignore-next-line: literal
     r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"image/png","#,
     r#""kind":"texture","schema_ref":"texture","#,
@@ -71,6 +74,7 @@ const RECOVERED_PATH_MISMATCH_ROW: &str = concat!(
     r#""path":"texture/main.jpg"}"#,
 );
 const OUT_OF_RANGE_ORDINAL_ROW: &str = concat!(
+    // jig-ignore-next-line: literal
     r#"{"ordinal":2,"depth":1,"parent_ordinal":0,"container_ordinal":2,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"mesh","schema_ref":"mesh","#,
@@ -78,6 +82,7 @@ const OUT_OF_RANGE_ORDINAL_ROW: &str = concat!(
     r#""path":"components/out-of-range.json"}"#,
 );
 const DUPLICATE_PATH_ROW: &str = concat!(
+    // jig-ignore-next-line: literal
     r#"{"ordinal":2,"depth":1,"parent_ordinal":0,"container_ordinal":2,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"texture","schema_ref":"texture","#,
@@ -85,6 +90,7 @@ const DUPLICATE_PATH_ROW: &str = concat!(
     r#""path":"components/mesh.json"}"#,
 );
 const CASE_EQUIVALENT_PATH_ROW: &str = concat!(
+    // jig-ignore-next-line: literal
     r#"{"ordinal":2,"depth":1,"parent_ordinal":0,"container_ordinal":2,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"texture","schema_ref":"texture","#,
@@ -113,6 +119,7 @@ const PARENT_CONTAINER_MISMATCH_ROW: &str = concat!(
     r#""path":"components/container.json"}"#,
 );
 const DUPLICATE_ORDINAL_ROW: &str = concat!(
+    // jig-ignore-next-line: literal
     r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"value","#,
     r#""payload_format":"schema_json","#,
     r#""kind":"texture","schema_ref":"texture","#,
@@ -173,8 +180,10 @@ fn rejects_case_equivalent_component_paths() {
 
 #[test]
 fn rejects_missing_component_ancestry() {
-    let missing = format!("{PACKAGE_HEADER_ONE}
-{MISSING_ANCESTRY_ROW}");
+    let missing = format!(
+        "{PACKAGE_HEADER_ONE}
+{MISSING_ANCESTRY_ROW}"
+    );
     assert!(!manifest_is_complete(missing.as_str()));
 }
 
@@ -199,6 +208,7 @@ fn cache_source_digest_must_match_current_input_bytes() {
     let source = b"current-source";
     let digest = shar_sha256::digest_hex(source);
     let header = format!(
+        // jig-ignore-next-line: literal
         r#"{{"schema":"p3d.package.v1","source_sha256":"{digest}","byte_len":24,"chunk_count":2,"component_count":1}}"#
     );
     assert!(manifest_source_matches_bytes(&header, source));
@@ -207,13 +217,18 @@ fn cache_source_digest_must_match_current_input_bytes() {
 }
 
 #[test]
-fn cache_normalized_digest_must_match_published_source_bytes() -> Result<(), String> {
+fn cache_normalized_digest_must_match_published_source_bytes()
+-> Result<(), String> {
     let normalized = nested_p3d(1)?;
     let digest = shar_sha256::digest_hex(&normalized);
     let header = format!(
+        // jig-ignore-next-line: literal
         r#"{{"schema":"p3d.package.v1","normalized_sha256":"{digest}","byte_len":24,"chunk_count":2,"component_count":1}}"#
     );
-    assert!(manifest_normalized_source_matches_bytes(&header, &normalized));
+    assert!(manifest_normalized_source_matches_bytes(
+        &header,
+        &normalized
+    ));
     assert!(!manifest_normalized_source_matches_bytes(
         &header,
         b"corrupted-source"
@@ -226,7 +241,8 @@ fn cache_normalized_digest_must_match_published_source_bytes() -> Result<(), Str
 }
 
 #[test]
-fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), String> {
+fn current_cache_requires_exact_normalized_source_artifact()
+-> Result<(), String> {
     let sequence = NEXT_CACHE_FIXTURE.fetch_add(1, Ordering::Relaxed);
     let root = std::env::temp_dir().join(format!(
         "shar-p3d-cache-current-{}-{sequence}",
@@ -243,13 +259,16 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
     fs::write(output.join("source.p3d"), &normalized)
         .map_err(|error| error.to_string())?;
     let component_bytes = br#"{"name":"mesh"}"#;
-    fs::write(&component, component_bytes).map_err(|error| error.to_string())?;
+    fs::write(&component, component_bytes)
+        .map_err(|error| error.to_string())?;
     let header = format!(
+        // jig-ignore-next-line: literal
         r#"{{"schema":"p3d.package.v1","source_sha256":"{}","normalized_sha256":"{}","byte_len":24,"chunk_count":2,"component_count":1}}"#,
         shar_sha256::digest_hex(raw),
         shar_sha256::digest_hex(&normalized),
     );
     let row = format!(
+        // jig-ignore-next-line: literal
         r#"{{"ordinal":1,"depth":1,"parent_ordinal":0,"container_ordinal":1,"name":"mesh","payload_format":"schema_json","kind":"mesh","schema_ref":"mesh","recovery_status":"decoded_schema_payload","path":"mesh/mesh.json","sha256":"{}"}}"#,
         shar_sha256::digest_hex(component_bytes),
     );
@@ -263,10 +282,12 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
     let raw_matches = manifest_source_matches_bytes(&manifest_text, raw);
     let normalized_matches =
         manifest_normalized_source_matches_bytes(&manifest_text, &normalized);
-    let components_exist = manifest_component_files_exist(&output, &manifest_text);
+    let components_exist =
+        manifest_component_files_exist(&output, &manifest_text);
     if !is_cache_current(&output, &input) {
         drop(fs::remove_dir_all(&root));
         return Err(format!(
+            // jig-ignore-next-line: literal
             "complete source-bound cache was rejected: structural={structural} raw={raw_matches} normalized={normalized_matches} components={components_exist}"
         ));
     }
@@ -278,7 +299,8 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
         .map_err(|error| error.to_string())?;
     if is_cache_current(&output, &input) {
         drop(fs::remove_dir_all(&root));
-        return Err("component kind drift from normalized source was accepted".to_owned());
+        return Err("component kind drift from normalized source was accepted"
+            .to_owned());
     }
     fs::write(output.join("components.jsonl"), &manifest)
         .map_err(|error| error.to_string())?;
@@ -286,31 +308,41 @@ fn current_cache_requires_exact_normalized_source_artifact() -> Result<(), Strin
         .map_err(|error| error.to_string())?;
     if is_cache_current(&output, &input) {
         drop(fs::remove_dir_all(&root));
-        return Err("valid but changed component artifact was accepted".to_owned());
+        return Err(
+            "valid but changed component artifact was accepted".to_owned()
+        );
     }
-    fs::write(&component, component_bytes).map_err(|error| error.to_string())?;
+    fs::write(&component, component_bytes)
+        .map_err(|error| error.to_string())?;
     fs::write(output.join("source.p3d"), b"corrupted-source")
         .map_err(|error| error.to_string())?;
     if is_cache_current(&output, &input) {
         drop(fs::remove_dir_all(&root));
-        return Err("corrupted normalized source artifact was accepted".to_owned());
+        return Err(
+            "corrupted normalized source artifact was accepted".to_owned()
+        );
     }
     fs::write(output.join("source.p3d"), &normalized)
         .map_err(|error| error.to_string())?;
-    fs::remove_file(output.join("source.p3d")).map_err(|error| error.to_string())?;
+    fs::remove_file(output.join("source.p3d"))
+        .map_err(|error| error.to_string())?;
     let accepted_missing = is_cache_current(&output, &input);
     drop(fs::remove_dir_all(&root));
     if accepted_missing {
-        return Err("missing normalized source artifact was accepted".to_owned());
+        return Err(
+            "missing normalized source artifact was accepted".to_owned()
+        );
     }
     Ok(())
 }
 
 #[test]
-fn normalized_cache_digest_requires_exact_declared_byte_length() -> Result<(), String> {
+fn normalized_cache_digest_requires_exact_declared_byte_length()
+-> Result<(), String> {
     let normalized = nested_p3d(1)?;
     let digest = shar_sha256::digest_hex(&normalized);
     let wrong_length = format!(
+        // jig-ignore-next-line: literal
         r#"{{"schema":"p3d.package.v1","normalized_sha256":"{digest}","byte_len":25,"chunk_count":2,"component_count":1}}"#
     );
     assert!(!manifest_normalized_source_matches_bytes(
@@ -333,7 +365,11 @@ fn nested_p3d(depth: usize) -> Result<Vec<u8>, String> {
             .checked_mul(12)
             .and_then(|value| u32::try_from(value).ok())
             .ok_or_else(|| "fixture total size overflowed".to_owned())?;
-        let id = if level == 0 { 0xff44_3350_u32 } else { 0x0001_0000_u32 };
+        let id = if level == 0 {
+            0xff44_3350_u32
+        } else {
+            0x0001_0000_u32
+        };
         bytes.extend_from_slice(&id.to_le_bytes());
         bytes.extend_from_slice(&12_u32.to_le_bytes());
         bytes.extend_from_slice(&total_size.to_le_bytes());
@@ -342,14 +378,18 @@ fn nested_p3d(depth: usize) -> Result<Vec<u8>, String> {
 }
 
 #[test]
-fn normalized_cache_header_replays_document_chunk_count() -> Result<(), String> {
+fn normalized_cache_header_replays_document_chunk_count() -> Result<(), String>
+{
     let normalized = nested_p3d(2)?;
     let digest = shar_sha256::digest_hex(&normalized);
     let header = format!(
+        // jig-ignore-next-line: literal
         r#"{{"schema":"p3d.package.v1","normalized_sha256":"{digest}","byte_len":36,"chunk_count":2,"component_count":1}}"#
     );
     if manifest_normalized_source_matches_bytes(&header, &normalized) {
-        return Err("edited chunk count matched exact normalized source".to_owned());
+        return Err(
+            "edited chunk count matched exact normalized source".to_owned()
+        );
     }
     Ok(())
 }

@@ -1,12 +1,20 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward
 status: open
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and]
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 children: [compile-all-611-direct-objective-and-408-direct-condition-parameter-shapes-into-typed, compile-all-611-stage-headers-plus-2-549-typed-stage-directives-covering-all-2-454, compile-all-811-direct-mission-scope-commands-into-typed-restart-load-vehicle-camera, assign-all-3-605-objective-scoped-commands-exactly-one-semantic-owner-3-498-objective, resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
 ---
 
@@ -23,7 +31,10 @@ reward, transition, and typed objective/condition parameter reference.
 
 ## Dependencies
 
-Parent task: `compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and`.
+Parent task:
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO dependency token is indivisible -->
+`compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and`.
 
 ## Evidence
 

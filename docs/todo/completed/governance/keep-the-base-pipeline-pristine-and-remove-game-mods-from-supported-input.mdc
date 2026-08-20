@@ -36,7 +36,8 @@ No dependency: this is a P0 product-authority correction.
 ## Evidence
 
 The canonical base-source extraction no longer exposes `export-lmlm`,
-optional-mod preview, or approval-token paths, and its complete extraction is nine
+optional-mod preview, or approval-token paths, and its complete extraction is
+nine
 faithful-base stages. Phase-two metadata/index routing contains no LMLM override
 categories,
 and the game-manifest taxonomy contains no `language_mod` kind or synthetic

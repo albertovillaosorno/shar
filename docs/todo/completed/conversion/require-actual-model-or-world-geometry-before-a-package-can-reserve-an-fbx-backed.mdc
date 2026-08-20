@@ -1,15 +1,21 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: require-actual-model-or-world-geometry-before-a-package-can-reserve-an-fbx-backed
 status: completed
 priority: P1
 lane: conversion
 active: false
 parent: complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7]
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Require actual model or world geometry before a package can reserve an FBX-backed…
 
 Require actual model or world geometry before a package can reserve an
@@ -24,7 +30,8 @@ evidence as companions only when geometry exists.
 
 ## Dependencies
 
-Parent task: `complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
+Parent task:
+`complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
 
 ## Evidence
 

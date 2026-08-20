@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -167,13 +167,55 @@ fn mission_with_condition_modifier(
         ],
         "p3d_references": [],
         "command_invocations": [
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":3,"name":"addcondition","args_raw":condition_raw,"semantic_role":"mission-script","arguments":condition_arguments},
-            {"ordinal":4,"name":command,"args_raw":command_raw,"semantic_role":command_role,"arguments":command_arguments},
-            {"ordinal":5,"name":"closecondition","args_raw":"","semantic_role":"mission-script","arguments":[]},
-            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addcondition",
+                            "args_raw":condition_raw,
+                            "semantic_role":"mission-script",
+                            "arguments":condition_arguments
+                        },
+                        {
+                            "ordinal":4,
+                            "name":command,
+                            "args_raw":command_raw,
+                            "semantic_role":command_role,
+                            "arguments":command_arguments
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"closecondition",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     }))
     .map_err(|error| error.to_string())
@@ -229,13 +271,55 @@ fn reviewed_keepbarrel_adaptation_document() -> Result<String, String> {
         "source_statements": statements,
         "p3d_references": [],
         "command_invocations": [
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m7\"","semantic_role":"mission-script","arguments":["m7"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":112,"name":"stagestartmusicevent","args_raw":"\"L7_drama\"","semantic_role":"mission-stage","arguments":["L7_drama"]},
-            {"ordinal":113,"name":"addcondition","args_raw":"\"keepbarrel\", 2","semantic_role":"mission-script","arguments":["keepbarrel","2"]},
-            {"ordinal":114,"name":"showstagecomplete","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":115,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":116,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m7\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m7"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":112,
+                            "name":"stagestartmusicevent",
+                            "args_raw":"\"L7_drama\"",
+                            "semantic_role":"mission-stage",
+                            "arguments":["L7_drama"]
+                        },
+                        {
+                            "ordinal":113,
+                            "name":"addcondition",
+                            "args_raw":"\"keepbarrel\", 2",
+                            "semantic_role":"mission-script",
+                            "arguments":["keepbarrel","2"]
+                        },
+                        {
+                            "ordinal":114,
+                            "name":"showstagecomplete",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":115,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":116,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     }))
     .map_err(|error| error.to_string())
@@ -294,7 +378,8 @@ fn condition_scope_preflight_accepts_exact_scope_and_rejects_drift()
             )?)?;
         if preflight_mission_condition_commands(&evidence).is_ok() {
             return Err(format!(
-                "condition-scoped drift was accepted: {condition}/{command_name}"
+                                // jig-ignore-next-line: literal
+                                "condition-scoped drift was accepted: {condition}/{command_name}"
             ));
         }
     }

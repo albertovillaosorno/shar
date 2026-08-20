@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,9 @@
 // - Defaults:
 //   - Invalid, ambiguous, or replacement requests fail explicitly.
 //
+
+//! Shar import editor module registration.
+
 #include "Import/SharImportToolset.h"
 
 #include "Modules/ModuleManager.h"
@@ -37,12 +40,14 @@ class FSharImportEditorModule final : public IModuleInterface
 public:
     virtual void StartupModule() override
     {
-        UToolsetRegistry::RegisterToolsetClass(USharImportToolset::StaticClass());
+        UToolsetRegistry::RegisterToolsetClass(
+            USharImportToolset::StaticClass());
     }
 
     virtual void ShutdownModule() override
     {
-        UToolsetRegistry::UnregisterToolsetClass(USharImportToolset::StaticClass());
+        UToolsetRegistry::UnregisterToolsetClass(
+            USharImportToolset::StaticClass());
     }
 };
 

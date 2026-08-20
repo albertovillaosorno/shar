@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -35,11 +35,11 @@
 pub mod support;
 
 use std::cell::Cell;
-use std::path::Path;
-use std::io;
-
 #[cfg(windows)]
 use std::fs;
+use std::io;
+use std::path::Path;
+
 #[cfg(windows)]
 use schoenwald_filesystem::adapters::driving::local;
 use schoenwald_filesystem::application::WriteFile;

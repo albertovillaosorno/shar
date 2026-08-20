@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: reproduce-original-missions-objectives-triggers-dialogue-rewards-collectibles
 status: open
 priority: P3
@@ -10,6 +12,8 @@ dependencies: []
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Reproduce original missions, objectives, triggers, dialogue, rewards, collectibles,…
 
 Reproduce original missions, objectives, triggers, dialogue, rewards,

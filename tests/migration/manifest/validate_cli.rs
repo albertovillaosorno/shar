@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -101,8 +101,8 @@ not-json
 
 #[test]
 fn validator_requires_current_taxonomy_header() {
-    let row =
-        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
+    // jig-ignore-next-line: literal
+    let row = "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
     for manifest in [row.to_owned(), format!("{{\"kind_taxonomy\":[]}}\n{row}")]
     {
         let result = validate_manifest(&manifest);
@@ -116,8 +116,8 @@ fn validator_requires_current_taxonomy_header() {
 
 #[test]
 fn validator_rejects_duplicate_coordinates() {
-    let row =
-        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
+    // jig-ignore-next-line: literal
+    let row = "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
     let manifest = format!("{}\n{row}\n{row}\n", kind_taxonomy_jsonl());
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
@@ -131,12 +131,15 @@ fn validator_rejects_duplicate_coordinates() {
 fn validator_rejects_unsorted_coordinates() {
     let first =
         "{\"dir\":\"aa\",\"ext\":\"p3d\",\"min\":0,\"kind\":\"p3d_container\"}";
-    let second =
-        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
-    let manifest = format!("{}
+    // jig-ignore-next-line: literal
+    let second = "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
+    let manifest = format!(
+        "{}
 {first}
 {second}
-", kind_taxonomy_jsonl());
+",
+        kind_taxonomy_jsonl()
+    );
     let result = validate_manifest(&manifest);
     assert!(result.is_ok());
     let Some(output) = result.ok() else {
@@ -147,8 +150,8 @@ fn validator_rejects_unsorted_coordinates() {
 
 #[test]
 fn validator_accepts_zero_minimum_as_optional() {
-    let generated_image =
-        "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
+    // jig-ignore-next-line: literal
+    let generated_image = "{\"dir\":\"\",\"ext\":\"png\",\"min\":0,\"kind\":\"generated_artifact\"}";
     let optional =
         "{\"dir\":\"aa\",\"ext\":\"p3d\",\"min\":0,\"kind\":\"p3d_container\"}";
     let manifest = format!(
@@ -169,7 +172,6 @@ fn validator_accepts_zero_minimum_as_optional() {
         String::from_utf8_lossy(&output.stderr)
     );
 }
-
 
 #[test]
 fn validator_requires_generated_image_root_coordinate() {

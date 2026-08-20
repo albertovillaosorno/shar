@@ -1,0 +1,11 @@
+domain = "diagnostics"
+schema_version = 1
+
+[analysis]
+cache = "bounded"
+full_workspace = true
+incremental = true
+
+[rigor]
+conflict = "fail"
+mode = "additive"

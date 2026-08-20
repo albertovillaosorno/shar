@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: let-mods-declare-deterministic-hierarchy-load-order-and-override-priority-unresolved
 status: open
 priority: P4
@@ -10,6 +12,8 @@ dependencies: []
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Let mods declare deterministic hierarchy, load order, and override priority; unresolved…
 
 Let mods declare deterministic hierarchy, load order, and override priority;

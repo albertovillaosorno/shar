@@ -1,11 +1,17 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: replay-normalized-mission-context-and-producer-derived-summaries-then-project-a
 status: completed
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and]
 children: []
 ---
@@ -28,7 +34,10 @@ positional values uninterpreted.
 
 ## Dependencies
 
-Parent task: `compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and`.
+Parent task:
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO dependency token is indivisible -->
+`compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and`.
 
 ## Evidence
 

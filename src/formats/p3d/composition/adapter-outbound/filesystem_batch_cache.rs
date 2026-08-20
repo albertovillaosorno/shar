@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -89,7 +89,8 @@ pub(super) fn is_cache_current(output_dir: &Path, input_path: &Path) -> bool {
     let Ok(source_bytes) = local::read_bytes(input_path) else {
         return false;
     };
-    let Ok(normalized_bytes) = local::read_bytes(&output_dir.join("source.p3d"))
+    let Ok(normalized_bytes) =
+        local::read_bytes(&output_dir.join("source.p3d"))
     else {
         return false;
     };
@@ -102,7 +103,9 @@ pub(super) fn is_cache_current(output_dir: &Path, input_path: &Path) -> bool {
 
 /// Returns whether the package header binds to these exact raw source bytes.
 pub(super) fn manifest_source_matches_bytes(text: &str, source: &[u8]) -> bool {
-    let Some(header) = text.lines().map(str::trim).find(|line| !line.is_empty()) else {
+    let Some(header) =
+        text.lines().map(str::trim).find(|line| !line.is_empty())
+    else {
         return false;
     };
     let Ok(value) = serde_json::from_str::<serde_json::Value>(header) else {
@@ -123,7 +126,9 @@ pub(super) fn manifest_normalized_source_matches_bytes(
     text: &str,
     normalized: &[u8],
 ) -> bool {
-    let Some(header) = text.lines().map(str::trim).find(|line| !line.is_empty()) else {
+    let Some(header) =
+        text.lines().map(str::trim).find(|line| !line.is_empty())
+    else {
         return false;
     };
     let Ok(value) = serde_json::from_str::<serde_json::Value>(header) else {
@@ -160,8 +165,12 @@ pub(super) fn manifest_normalized_source_matches_bytes(
         && normalized_sha256 == digest_hex(normalized)
 }
 
-/// Returns whether published row provenance agrees with the normalized document.
-fn manifest_components_match_normalized_source(text: &str, normalized: &[u8]) -> bool {
+/// Returns whether published row provenance agrees with the normalized
+/// document.
+fn manifest_components_match_normalized_source(
+    text: &str,
+    normalized: &[u8],
+) -> bool {
     let Ok(document) = crate::analyze_p3d(normalized) else {
         return false;
     };
@@ -337,7 +346,9 @@ fn complete_component_identity(line: &str) -> Option<ComponentIdentity> {
 }
 
 /// Returns whether one component's own ancestry fields are self-consistent.
-const fn component_relationship_is_locally_valid(component: &ComponentIdentity) -> bool {
+const fn component_relationship_is_locally_valid(
+    component: &ComponentIdentity,
+) -> bool {
     match component.depth {
         0 => false,
         1 => {
