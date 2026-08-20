@@ -234,7 +234,8 @@ def _revalidate_snapshot(
     try:
         after = path.read_bytes()
     except OSError as error:
-        raise RunFailure(f"cannot resnapshot saved {label}") from error
+        message = f"cannot read saved {label} after revalidation"
+        raise RunFailure(message) from error
     if after != before:
         raise RunFailure(f"saved {label} changed during revalidation")
     return after
