@@ -34,7 +34,8 @@ use std::path::Path;
 
 use p3d::analyze_p3d;
 use rcf::ArchiveParser;
-use rcf::adapters::FileArchiveSource;
+use rcf::domain::ArchiveError;
+use rcf::ports::ArchiveByteReader;
 use rmv::MovieKind;
 use rmv::domain::ProvenanceEvidence;
 use rsd::RsdAudio;
@@ -61,6 +62,49 @@ pub struct DeepSourceAuditReport {
 /// Stateless deep source validator.
 #[derive(Debug, Clone, Copy)]
 pub struct DeepSourceAudit;
+
+/// Immutable byte snapshot exposed through the RCF parser's range port.
+struct SnapshotReader<'a> {
+    bytes: &'a [u8],
+}
+
+impl ArchiveByteReader for SnapshotReader<'_> {
+    fn len(&self) -> Result<u64, ArchiveError> {
+        u64::try_from(self.bytes.len()).map_err(|error| {
+            ArchiveError::invalid_archive(format!(
+                "RCF snapshot length does not fit u64: {error}"
+            ))
+        })
+    }
+
+    fn read_range(
+        &mut self,
+        offset: u64,
+        length: u64,
+    ) -> Result<Vec<u8>, ArchiveError> {
+        let end = offset.checked_add(length).ok_or_else(|| {
+            ArchiveError::invalid_archive("RCF snapshot range overflow")
+        })?;
+        let start = usize::try_from(offset).map_err(|error| {
+            ArchiveError::invalid_archive(format!(
+                "RCF snapshot offset does not fit usize: {error}"
+            ))
+        })?;
+        let end = usize::try_from(end).map_err(|error| {
+            ArchiveError::invalid_archive(format!(
+                "RCF snapshot range end does not fit usize: {error}"
+            ))
+        })?;
+        self.bytes
+            .get(start..end)
+            .map(<[u8]>::to_vec)
+            .ok_or_else(|| {
+                ArchiveError::invalid_archive(
+                    "RCF snapshot range exceeds captured bytes",
+                )
+            })
+    }
+}
 
 impl DeepSourceAudit {
     /// Validates every supported structured source file without writing output.
@@ -143,8 +187,9 @@ fn validate_rcf(
     path: &Path,
     report: &mut DeepSourceAuditReport,
 ) -> Result<(), SourceAuditError> {
-    let source = FileArchiveSource::new(path);
-    let _archive = ArchiveParser::execute(&source).map_err(|_error| {
+    let bytes = read_source(path, "rcf")?;
+    let mut reader = SnapshotReader { bytes: &bytes };
+    let _archive = ArchiveParser::from_reader(&mut reader).map_err(|_error| {
         SourceAuditError::new("deep source validation failed for rcf input")
     })?;
     increment(&mut report.rcf, "rcf")
@@ -174,3 +219,8 @@ fn validate_rmv(
     let _provenance = ProvenanceEvidence::from_bytes(&bytes);
     increment(&mut report.rmv, "rmv")
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
+#[path = "../../../../../tests/migration/source-audit/unit/application/audit/tests.rs"]
+mod tests;

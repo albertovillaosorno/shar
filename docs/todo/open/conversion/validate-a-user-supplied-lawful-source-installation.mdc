@@ -85,9 +85,12 @@ P3D/RCF/RSD/RMV audit, recording both results in saved evidence. A stale deep
 validator is rejected when its source closure changes, and focused packaging
 tests prove the ordered fast-then-deep call sequence. The filesystem-backed
 fast manifest adapter and deep validator both use strict traversal, so redirects
-and special entries fail closed instead of being silently skipped. Their Rust
-contract tests prove redirected and malformed source failures do not modify
-source payloads or disclose the selected private path.
+and special entries fail closed instead of being silently skipped. Deep RCF
+validation now captures bytes through the same link-aware read boundary used by
+the other supported formats and parses that immutable snapshot instead of
+reopening the source path after traversal. Their Rust contract tests prove
+redirected and malformed source failures do not modify source payloads or
+disclose the selected private path.
 
 Build preflight also redacts the selected source root from manifest and deep
 validator stdout, stderr, and execution errors before those messages are
