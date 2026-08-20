@@ -381,6 +381,26 @@ fn normalized_member_identity(path: &str) -> Result<String, PackageError> {
     Ok(identity)
 }
 
+fn validate_member(member: &Member) -> Result<String, PackageError> {
+    let identity = normalized_member_identity(&member.path)?;
+    if member.path == "mod.json" {
+        return Err(PackageError::new(
+            "mod.json is reserved for the package declaration",
+        ));
+    }
+    if member.bytes > MAX_MEMBER_BYTES {
+        return Err(PackageError::new("package member exceeds byte limit"));
+    }
+    if !validate_sha256(&member.sha256) {
+        return Err(PackageError::new(
+            "member SHA-256 must be lowercase hexadecimal",
+        ));
+    }
+    validate_semantic_token(&member.media_type, "member media type")?;
+    validate_semantic_token(&member.role, "member role")?;
+    Ok(identity)
+}
+
 impl PackageManifest {
     /// Parses one exact contract-v1 JSON object and validates canonical form.
     ///
@@ -549,20 +569,10 @@ impl PackageManifest {
                 ));
             }
             previous_path = Some(&member.path);
-            let identity = normalized_member_identity(&member.path)?;
+            let identity = validate_member(member)?;
             if !portable_identities.insert(identity) {
                 return Err(PackageError::new(
                     "member paths collide after portable normalization",
-                ));
-            }
-            if member.path == "mod.json" {
-                return Err(PackageError::new(
-                    "mod.json is reserved for the package declaration",
-                ));
-            }
-            if member.bytes > MAX_MEMBER_BYTES {
-                return Err(PackageError::new(
-                    "package member exceeds byte limit",
                 ));
             }
             total_bytes =
@@ -574,13 +584,6 @@ impl PackageManifest {
                     "package exceeds total byte limit",
                 ));
             }
-            if !validate_sha256(&member.sha256) {
-                return Err(PackageError::new(
-                    "member SHA-256 must be lowercase hexadecimal",
-                ));
-            }
-            validate_semantic_token(&member.media_type, "member media type")?;
-            validate_semantic_token(&member.role, "member role")?;
         }
         Ok(())
     }
@@ -635,12 +638,7 @@ pub fn member_from_bytes(
         media_type: media_type.to_owned(),
         role: role.to_owned(),
     };
-    if member.bytes > MAX_MEMBER_BYTES {
-        return Err(PackageError::new("package member exceeds byte limit"));
-    }
-    let _identity = normalized_member_identity(&member.path)?;
-    validate_semantic_token(&member.media_type, "member media type")?;
-    validate_semantic_token(&member.role, "member role")?;
+    let _identity = validate_member(&member)?;
     Ok(member)
 }
 
@@ -655,9 +653,15 @@ pub fn content_revision(members: &[Member]) -> Result<String, PackageError> {
             "cannot derive revision from empty members",
         ));
     }
+    if members.len() > MAX_MEMBERS {
+        return Err(PackageError::new(
+            "revision member count exceeds contract limit",
+        ));
+    }
     let mut state = Sha256::new();
     let mut previous_path: Option<&str> = None;
     let mut identities = BTreeSet::new();
+    let mut total_bytes = 0_u64;
     for member in members {
         if previous_path
             .is_some_and(|previous| previous >= member.path.as_str())
@@ -667,15 +671,19 @@ pub fn content_revision(members: &[Member]) -> Result<String, PackageError> {
             ));
         }
         previous_path = Some(&member.path);
-        let identity = normalized_member_identity(&member.path)?;
+        let identity = validate_member(member)?;
         if !identities.insert(identity) {
             return Err(PackageError::new(
                 "revision member paths collide after portable normalization",
             ));
         }
-        if !validate_sha256(&member.sha256) {
+        total_bytes =
+            total_bytes.checked_add(member.bytes).ok_or_else(|| {
+                PackageError::new("revision package byte count overflow")
+            })?;
+        if total_bytes > MAX_PACKAGE_BYTES {
             return Err(PackageError::new(
-                "member SHA-256 must be lowercase hexadecimal",
+                "revision package exceeds total byte limit",
             ));
         }
         let path_bytes = member.path.as_bytes();
