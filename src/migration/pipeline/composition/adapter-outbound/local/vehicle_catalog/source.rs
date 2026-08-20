@@ -190,7 +190,7 @@ pub(super) fn select_vehicle_composite(
 }
 
 /// Preserve package-member order while rejecting projected path collisions.
-fn unique_vehicle_component_paths(
+pub(super) fn unique_vehicle_component_paths(
     paths: impl IntoIterator<Item = PathBuf>,
     kind: &str,
 ) -> Result<Vec<PathBuf>, PipelineError> {
