@@ -152,7 +152,7 @@ fn rejects_unsupported_bound_channel_parameter() {
         channel_count: 1,
         channels: vec![DecodedChannel {
             kind: "vector3".to_owned(),
-            param: "SCAL".to_owned(),
+            param: "FAIL".to_owned(),
             mapping: None,
             constants: None,
             key_count: 0,
@@ -171,7 +171,7 @@ fn rejects_unsupported_bound_channel_parameter() {
         sample_track(&bone, &group, rest, 1),
         Err(DecodedAnimationError::UnsupportedChannelParameter {
             group: "Root".to_owned(),
-            parameter: "SCAL".to_owned(),
+            parameter: "FAIL".to_owned(),
         })
     );
 }
