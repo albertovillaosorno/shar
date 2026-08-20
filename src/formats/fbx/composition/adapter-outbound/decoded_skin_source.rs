@@ -89,6 +89,12 @@ pub fn load_character(
             &part_names,
             bones.len(),
         )?;
+        if bindings.effect_count != 0 {
+            return Err(SkinSourceError::UnsupportedCompositeEffects {
+                path: path_text(composite_path),
+                count: bindings.effect_count,
+            });
+        }
         translucent_skins.extend(bindings.translucent_skins);
         for binding in bindings.props {
             let prop_name = binding.name.clone();
@@ -611,6 +617,8 @@ pub(super) struct CompositeBindings {
     pub(super) props: Vec<CompositePropBinding>,
     /// Skin identities explicitly marked translucent.
     pub(super) translucent_skins: BTreeSet<String>,
+    /// Decoded effect bindings retained as unsupported whole-character evidence.
+    pub(super) effect_count: usize,
 }
 
 /// Read one strict legacy zero-or-one flag.
@@ -738,6 +746,7 @@ pub(super) fn composite_bindings(
     Ok(CompositeBindings {
         props: bindings,
         translucent_skins,
+        effect_count: actual_effect_count,
     })
 }
 
@@ -925,6 +934,13 @@ pub enum SkinSourceError {
         expected: String,
         /// Referenced skeleton identity.
         found: String,
+    },
+    /// Composite contains effect bindings unsupported by this FBX contract.
+    UnsupportedCompositeEffects {
+        /// Composite path.
+        path: String,
+        /// Number of decoded effect bindings.
+        count: usize,
     },
     /// Composite referenced a skin that was not loaded.
     CompositeSkinMissing {
@@ -1230,6 +1246,11 @@ struct DecodedCompositeSkin {
     #[serde(default, rename = "sort_order")]
     _sort_order: serde_json::Value,
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../tests/formats/fbx/unit/adapter-outbound/decoded_skin_source/composite_effect_tests.rs"]
+mod composite_effect_tests;
 
 #[cfg(test)]
 // jig-ignore-next-line: exact syntax is indivisible
