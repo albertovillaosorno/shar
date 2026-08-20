@@ -286,8 +286,8 @@ fn rejects_unbound_top_level_animation_data() {
         ));
         let path = root.join("animation.json");
         let fixture = fixture_json().replace(empty, populated);
-        let setup = fs::create_dir_all(&root)
-            .and_then(|()| fs::write(&path, fixture));
+        let setup =
+            fs::create_dir_all(&root).and_then(|()| fs::write(&path, fixture));
         assert!(
             setup.is_ok(),
             "synthetic top-level fixture should be writable"
