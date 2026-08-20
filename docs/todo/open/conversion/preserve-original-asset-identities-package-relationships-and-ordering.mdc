@@ -158,5 +158,11 @@ object ids, object emission, and texture connections no longer inherit lexical
 `BTreeMap` key order; a focused binary artifact regression proves `zebra_m`
 remains before `alpha_m` when that is their first source-group use order.
 
+Binary FBX skin-cluster planning now uses influence identities only for
+membership and projects that membership back through the canonical skeleton
+sequence. Cluster objects and connections therefore retain source skeleton
+ordinals instead of lexical bone-name order; a focused regression proves a
+`z_root` parent remains before its lexically earlier `a_child` child.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

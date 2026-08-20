@@ -245,11 +245,15 @@ fn binary_groups<'character>(
                         shader: group.shader.clone(),
                     }
                 })?;
-            let used_bones = influences
+            let influenced_bones = influences
                 .iter()
-                .map(|influence| influence.bone_id.clone())
-                .collect::<BTreeSet<_>>()
-                .into_iter()
+                .map(|influence| influence.bone_id.as_str())
+                .collect::<BTreeSet<_>>();
+            let used_bones = character
+                .bones
+                .iter()
+                .filter(|bone| influenced_bones.contains(bone.id.as_str()))
+                .map(|bone| bone.id.clone())
                 .collect();
             groups.push(BinaryGroup {
                 ids,
