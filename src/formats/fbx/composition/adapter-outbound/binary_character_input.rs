@@ -57,11 +57,22 @@ pub(super) struct MaterialSlot<'materials> {
 
 /// One complete source-binding and semantic-variant material plan.
 pub(super) struct MaterialPlan<'materials> {
-    /// Material variants keyed by source identity and semantic signature.
-    pub(super) slots: BTreeMap<String, MaterialSlot<'materials>>,
+    /// Material variants in first authored group-use order.
+    pub(super) slots: Vec<MaterialSlot<'materials>>,
+    /// Material variant ordinals keyed by source identity and semantic signature.
+    slot_ordinals: BTreeMap<String, usize>,
     /// Original source bindings keyed by authored shader identity.
     pub(super) source_bindings:
         BTreeMap<&'materials str, &'materials MaterialBinding>,
+}
+
+impl MaterialPlan<'_> {
+    /// Resolve one semantic material variant without changing authored order.
+    pub(super) fn slot(&self, key: &str) -> Option<&MaterialSlot<'_>> {
+        self.slot_ordinals
+            .get(key)
+            .and_then(|ordinal| self.slots.get(*ordinal))
+    }
 }
 
 /// Precomputed local and global bind transforms for one bone.
@@ -151,11 +162,11 @@ pub(super) fn material_slots<'materials>(
 ) -> Result<MaterialPlan<'materials>, CharacterInputError> {
     let source_bindings = validated_source_bindings(character, materials)?;
     let variants = material_variants(character, &source_bindings)?;
-    let mut slots = BTreeMap::new();
-    for (ordinal, (key, (binding, semantics))) in
-        variants.into_iter().enumerate()
-    {
-        let _previous = slots.insert(key, MaterialSlot {
+    let mut slots = Vec::with_capacity(variants.len());
+    let mut slot_ordinals = BTreeMap::new();
+    for (ordinal, (key, binding, semantics)) in variants.into_iter().enumerate() {
+        let _previous = slot_ordinals.insert(key, ordinal);
+        slots.push(MaterialSlot {
             ids: material_ids(ordinal)?,
             binding,
             semantics,
@@ -165,7 +176,11 @@ pub(super) fn material_slots<'materials>(
             ),
         });
     }
-    Ok(MaterialPlan { slots, source_bindings })
+    Ok(MaterialPlan {
+        slots,
+        slot_ordinals,
+        source_bindings,
+    })
 }
 
 /// Validate source material identities and index every used shader binding.
@@ -213,10 +228,11 @@ fn material_variants<'materials>(
     character: &CharacterAsset,
     source_bindings: &BTreeMap<&'materials str, &'materials MaterialBinding>,
 ) -> Result<
-    BTreeMap<String, (&'materials MaterialBinding, MaterialSemantics)>,
+    Vec<(String, &'materials MaterialBinding, MaterialSemantics)>,
     CharacterInputError,
 > {
-    let mut variants = BTreeMap::new();
+    let mut seen = BTreeSet::new();
+    let mut variants = Vec::new();
     for part in &character.parts {
         for group in &part.mesh.groups {
             let binding = source_bindings
@@ -230,7 +246,9 @@ fn material_variants<'materials>(
             let semantics =
                 effective_material_semantics(&part.mesh.name, binding);
             let key = material_variant_key(&group.shader, semantics);
-            let _entry = variants.entry(key).or_insert((binding, semantics));
+            if seen.insert(key.clone()) {
+                variants.push((key, binding, semantics));
+            }
         }
     }
     Ok(variants)

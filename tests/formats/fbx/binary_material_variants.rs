@@ -55,9 +55,9 @@ fn mesh(name: &str) -> Result<MeshAsset, String> {
         .map_err(|error| format!("mesh failed: {error:?}"))
 }
 
-fn output_path() -> PathBuf {
+fn output_path(label: &str) -> PathBuf {
     std::env::temp_dir().join(format!(
-        "fbx-binary-material-variants-{}.fbx",
+        "fbx-binary-material-variants-{label}-{}.fbx",
         std::process::id()
     ))
 }
@@ -79,7 +79,7 @@ fn contains_token(bytes: &[u8], token: &str) -> bool {
 #[test]
 fn shared_shader_creates_isolated_light_material_variant() -> Result<(), String>
 {
-    let path = output_path();
+    let path = output_path("semantic-split");
     remove_if_present(&path)?;
     let material = MaterialBinding::new("shared_m", None)
         .map_err(|error| format!("material failed: {error:?}"))?;
@@ -102,5 +102,54 @@ fn shared_shader_creates_isolated_light_material_variant() -> Result<(), String>
         return Err("light material variant identity is missing".to_owned());
     }
     remove_if_present(&path)?;
+    Ok(())
+}
+
+#[test]
+fn material_objects_preserve_first_group_use_order() -> Result<(), String> {
+    let path = output_path("source-order");
+    remove_if_present(&path)?;
+    let groups = ["zebra_m", "alpha_m"]
+        .into_iter()
+        .enumerate()
+        .map(|(index, shader)| {
+            PrimitiveGroup::new(
+                index,
+                shader,
+                vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+                vec![[0., 0.], [1., 0.], [0., 1.]],
+                &[0, 1, 2],
+            )
+            .map_err(|error| format!("primitive group failed: {error:?}"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let model = MeshAsset::new("body", groups)
+        .map_err(|error| format!("mesh failed: {error:?}"))?;
+    let materials = ["zebra_m", "alpha_m"]
+        .into_iter()
+        .map(|name| {
+            MaterialBinding::new(name, None)
+                .map_err(|error| format!("material failed: {error:?}"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let _summary =
+        write_binary_model_fbx("material-order", &[model], &materials, &path)
+            .map_err(|error| format!("FBX write failed: {error:?}"))?;
+    let bytes =
+        fs::read(&path).map_err(|error| format!("FBX read failed: {error}"))?;
+    let zebra = bytes
+        .windows("zebra_m".len())
+        .position(|window| window == b"zebra_m")
+        .ok_or("zebra material identity is missing")?;
+    let alpha = bytes
+        .windows("alpha_m".len())
+        .position(|window| window == b"alpha_m")
+        .ok_or("alpha material identity is missing")?;
+    remove_if_present(&path)?;
+    if zebra >= alpha {
+        return Err(format!(
+            "material objects lost first-use order: zebra={zebra}, alpha={alpha}"
+        ));
+    }
     Ok(())
 }
