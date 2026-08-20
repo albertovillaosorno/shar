@@ -59,7 +59,8 @@ pub(super) struct MaterialSlot<'materials> {
 pub(super) struct MaterialPlan<'materials> {
     /// Material variants in first authored group-use order.
     pub(super) slots: Vec<MaterialSlot<'materials>>,
-    /// Material variant ordinals keyed by source identity and semantic signature.
+    /// Material variant ordinals keyed by source identity and semantic
+    /// signature.
     slot_ordinals: BTreeMap<String, usize>,
     /// Original source bindings keyed by authored shader identity.
     pub(super) source_bindings:
@@ -164,7 +165,8 @@ pub(super) fn material_slots<'materials>(
     let variants = material_variants(character, &source_bindings)?;
     let mut slots = Vec::with_capacity(variants.len());
     let mut slot_ordinals = BTreeMap::new();
-    for (ordinal, (key, binding, semantics)) in variants.into_iter().enumerate() {
+    for (ordinal, (key, binding, semantics)) in variants.into_iter().enumerate()
+    {
         let _previous = slot_ordinals.insert(key, ordinal);
         slots.push(MaterialSlot {
             ids: material_ids(ordinal)?,

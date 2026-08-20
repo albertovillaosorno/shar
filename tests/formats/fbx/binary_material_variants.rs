@@ -148,7 +148,8 @@ fn material_objects_preserve_first_group_use_order() -> Result<(), String> {
     remove_if_present(&path)?;
     if zebra >= alpha {
         return Err(format!(
-            "material objects lost first-use order: zebra={zebra}, alpha={alpha}"
+            "material objects lost first-use order: \
+             zebra={zebra}, alpha={alpha}"
         ));
     }
     Ok(())
