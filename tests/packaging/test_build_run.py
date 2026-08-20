@@ -1101,6 +1101,67 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["ios-arm64"],
                 )
 
+    def test_linux_candidate_requires_shar_executable(self) -> None:
+        for target_id, platform in (
+            ("linux-arm64", "LinuxArm64"),
+            ("linux-x64", "Linux"),
+        ):
+            with (
+                self.subTest(target=target_id),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-linux-candidate-",
+                ) as raw,
+            ):
+                candidate = Path(raw)
+                (candidate / "README.txt").write_text(
+                    "not a runtime\n",
+                    encoding="utf-8",
+                )
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
+
+                binary = (
+                    candidate
+                    / "shar"
+                    / "Binaries"
+                    / platform
+                    / f"shar-{platform}-Shipping"
+                )
+                binary.parent.mkdir(parents=True)
+                binary.write_bytes(b"game")
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID[target_id],
+                )
+
+    def test_macos_candidate_requires_shar_app_runtime(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-macos-candidate-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(b"")
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+            executable.write_bytes(b"game")
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["macos-arm64"],
+            )
+
     def test_windows_candidate_requires_shar_executable(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-windows-candidate-",
