@@ -125,6 +125,31 @@ class WindowsShortcutTargetTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.module = _load(_SHORTCUT, "shar_windows_shortcut_target_test")
 
+    def test_discovery_rejects_linked_dist_root(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-shortcut-root-") as raw:
+            root = Path(raw)
+            dist = root / "dist"
+            dist.mkdir()
+            shipping = dist / "shar-Win64-Shipping.exe"
+            shipping.write_bytes(b"game")
+            original = self.module._is_directory_link
+
+            def report_dist_as_link(path: Path) -> bool:
+                return path == dist or original(path)
+
+            with (
+                mock.patch.object(
+                    self.module,
+                    "_is_directory_link",
+                    side_effect=report_dist_as_link,
+                ),
+                self.assertRaisesRegex(
+                    SystemExit,
+                    "dist/ must be a real directory",
+                ),
+            ):
+                self.module._discover_target(root)
+
     def test_discovery_ignores_original_helpers_and_lookalikes(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-shortcut-target-") as raw:
             root = Path(raw)
