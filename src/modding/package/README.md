@@ -8,7 +8,9 @@ order.
 Version 1 is intentionally narrow and fail-closed. It validates deterministic
 identity, exact revisions, explicit priority, dependency/conflict/supersession
 relations, content/native trust boundaries, portable member paths, byte lengths,
-SHA-256 identities, provenance, capabilities, and target declarations.
+SHA-256 identities, provenance, capabilities, and target declarations. One
+package identity can name at most one exact dependency revision and cannot be
+simultaneously required and declared conflicting or superseded.
 
 Transport (`directory`, `.zip`, Android/iOS document selection), staging,
 preview,
