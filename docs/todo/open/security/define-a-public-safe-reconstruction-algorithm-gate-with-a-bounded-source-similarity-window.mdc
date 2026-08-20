@@ -69,7 +69,11 @@ collision-disambiguated, and non-generated suffix vectors. The companion
 local source, validates the same exact required root evidence as manifest
 generation, and keeps private source paths out of failures. Ephemeral
 observations use `count` rather than the minimum-policy ledger's `min`, and the
-similarity parser rejects rows or whole ledgers that mix those meanings.
+similarity parser rejects rows or whole ledgers that mix those meanings. It also
+requires directory coordinates to retain the manifest producer's lowercase,
+forward-slash normalization (while preserving the empty game-root alias), so
+case or separator drift cannot turn equivalent structure into false
+dissimilarity.
 Generated manifest
 collision
 ordinals are aggregated into their structural family before

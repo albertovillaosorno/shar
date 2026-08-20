@@ -75,7 +75,8 @@ class InvalidCoordinateError(SimilarityInputError):
     def __init__(self) -> None:
         """Initialize the canonical coordinate-shape failure."""
         super().__init__(
-            "coordinate must be a pair of strings with normalized extension"
+            "coordinate must be a pair of strings with normalized directory "
+            "and extension"
         )
 
 
@@ -150,6 +151,30 @@ def _valid_utf8_text(value: object) -> bool:
     return True
 
 
+def _valid_directory_alias(value: object) -> bool:
+    """Return whether a directory coordinate matches producer normalization."""
+    if not _valid_utf8_text(value):
+        return False
+    if not value:
+        return True
+    return (
+        value == value.lower()
+        and chr(92) not in value
+        and not value.startswith("/")
+        and not value.endswith("/")
+        and "//" not in value
+    )
+
+
+def _valid_extension(value: object) -> bool:
+    """Return whether an extension matches producer normalization."""
+    return (
+        _valid_utf8_text(value)
+        and bool(value)
+        and value == value.lower()
+    )
+
+
 def _valid_required_file_metadata(value: object) -> bool:
     """Return whether one public required-file record has canonical shape."""
     if not isinstance(value, dict) or set(value) != {"path", "min"}:
@@ -210,9 +235,8 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
     count = record.get("count" if has_observed else "min")
     kind = record.get("kind")
     if (
-        not _valid_utf8_text(directory)
-        or not _valid_utf8_text(extension)
-        or not extension
+        not _valid_directory_alias(directory)
+        or not _valid_extension(extension)
     ):
         raise InvalidCoordinateError
     if kind is not None and not _valid_utf8_text(kind):
@@ -346,9 +370,8 @@ def _validate(values: Mapping[Coordinate, int]) -> None:
         if (
             not isinstance(key, tuple)
             or len(key) != 2
-            or not all(_valid_utf8_text(value) for value in key)
-            or not key[1]
-            or key[1] != key[1].lower()
+            or not _valid_directory_alias(key[0])
+            or not _valid_extension(key[1])
         ):
             raise InvalidCoordinateError
         if (

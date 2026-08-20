@@ -21,9 +21,11 @@ coverage, and weighted-Jaccard similarity. Tracked policy rows use `min`;
 read-only observation rows use `count`. A row must select exactly one, and every
 coordinate row in one ledger must use the same count field. Optional `kind` and
 manifest-header metadata must retain their public JSON shapes but are ignored by
-the metric. Coordinate extensions must be nonempty and retain the producer's
-lowercase normalization; files without extensions use the manifest's `(none)`
-token. Coordinate counts, required-file minima, and each
+the metric. Directory coordinates must retain the producer's lowercase,
+forward-slash normalization (with the empty string reserved for the game root).
+Coordinate extensions must likewise be nonempty and lowercase; files without
+extensions use the manifest's `(none)` token. Coordinate counts, required-file
+minima, and each
 ledger's total count must fit the unsigned 64-bit range used by the supported
 64-bit Rust manifest producers. File inputs preserve the canonical producer
 framing: UTF-8, LF-only record boundaries, and a final LF. The command never
