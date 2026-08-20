@@ -122,6 +122,13 @@ pub enum DecodedAnimationError {
         /// Repeated channel parameter.
         parameter: String,
     },
+    /// One bound skeletal channel targeted an unsupported transform property.
+    UnsupportedChannelParameter {
+        /// Group containing the unsupported channel.
+        group: String,
+        /// Unsupported source transform parameter.
+        parameter: String,
+    },
     /// One channel kind was unsupported for its transform parameter.
     UnsupportedChannelKind {
         /// Channel parameter.
@@ -351,6 +358,7 @@ fn sample_track(
     rest: LocalTransformSample,
     frame_count: usize,
 ) -> Result<BoneAnimationTrack, DecodedAnimationError> {
+    validate_bound_channel_parameters(group)?;
     let translation = unique_channel(group, "TRAN")?;
     let rotation = unique_channel(group, "ROT_")?;
     let mut samples = Vec::with_capacity(frame_count);
@@ -372,6 +380,21 @@ fn sample_track(
         bone_id: bone.id.clone(),
         samples,
     })
+}
+
+/// Reject source channels that this skeletal FBX contract cannot preserve.
+fn validate_bound_channel_parameters(
+    group: &DecodedGroup,
+) -> Result<(), DecodedAnimationError> {
+    for channel in &group.channels {
+        if !matches!(channel.param.as_str(), "TRAN" | "ROT_") {
+            return Err(DecodedAnimationError::UnsupportedChannelParameter {
+                group: trim_identity(&group.name)?,
+                parameter: channel.param.clone(),
+            });
+        }
+    }
+    Ok(())
 }
 
 /// Return a unique channel for one group parameter.
