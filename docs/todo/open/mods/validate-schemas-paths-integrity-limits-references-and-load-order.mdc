@@ -37,5 +37,7 @@ missing or mismatched exact dependency revisions, and dependency cycles. Its
 canonical-identity ready queue yields the same dependency order regardless of
 candidate discovery order. A separate active-set validator now rejects direct
 conflicts when both canonical package identities are present, while declarations
-against inactive packages remain inert. Priority and supersession remain pending
-full activation-policy work.
+against inactive packages remain inert. Active supersession cycles are now
+rejected independently of discovery order while references to inactive package
+identities remain inert. Priority and supersession winner selection remain
+pending full activation-policy work.

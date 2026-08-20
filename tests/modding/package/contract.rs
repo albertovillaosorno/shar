@@ -36,7 +36,7 @@ use serde_json as _;
 use shar_mod_package::{
     CONTRACT_VERSION, Dependency, PackageKind, PackageManifest, Provenance,
     TrustLevel, content_revision, dependency_load_order, member_from_bytes,
-    validate_active_conflicts,
+    validate_active_conflicts, validate_active_supersession_cycles,
 };
 use shar_sha256 as _;
 use unicode_normalization as _;
@@ -325,6 +325,29 @@ fn active_conflicts_are_rejected_independent_of_discovery_order()
     let mut absent_conflict = second;
     absent_conflict.conflicts = vec!["shar.not-active".to_owned()];
     validate_active_conflicts(&[first, absent_conflict])?;
+    Ok(())
+}
+
+#[test]
+fn active_supersession_cycles_are_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
+    let mut first = package_with_identity("shar.first", Vec::new())?;
+    let mut second = package_with_identity("shar.second", Vec::new())?;
+    first.supersedes = vec![second.canonical_id.clone()];
+    second.supersedes = vec![first.canonical_id.clone()];
+    assert!(
+        validate_active_supersession_cycles(&[first.clone(), second.clone()])
+            .is_err()
+    );
+    assert!(
+        validate_active_supersession_cycles(&[second.clone(), first.clone()])
+            .is_err()
+    );
+
+    second.supersedes.clear();
+    validate_active_supersession_cycles(&[first, second.clone()])?;
+    second.supersedes = vec!["shar.not-active".to_owned()];
+    validate_active_supersession_cycles(&[second])?;
     Ok(())
 }
 

@@ -23,8 +23,10 @@ requires exact dependency revisions, rejects duplicate identities and cycles,
 and uses canonical identity to make dependency-ready ordering independent of
 package discovery order. The separate `validate_active_conflicts` helper rejects
 any declared conflict whose canonical identity is present in the active
-candidate set while ignoring conflicts with inactive packages. Full priority and
-supersession activation policy remains outside these declaration-level helpers.
+candidate set while ignoring conflicts with inactive packages. Active
+supersession cycles are rejected independently as well. Full priority and
+supersession winner-selection policy remains outside these declaration-level
+helpers.
 
 Transport (`directory`, `.zip`, Android/iOS document selection), staging,
 preview,
