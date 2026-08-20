@@ -10,6 +10,8 @@ dependencies: []
 children: []
 ---
 
+<!-- CSpell:ignore pdb -->
+
 # Canonical multi-platform build runner
 
 Implement `tools/build/adapter-inbound/run.py` to consume saved preflight and
@@ -68,6 +70,10 @@ original-game, helper, empty, prefixed-helper, or non-Shipping `.exe` files are
 never auto-selected. Shortcut auto-discovery also requires `dist/` itself to
 remain a real directory, so a later symlink or junction cannot redirect the
 helper outside the published tree.
+Cached UAT manifests and Windows debug symbols are now required to be regular
+files before they can leave the candidate tree; directory entries that merely
+match `Manifest_*.txt` or `*.pdb` fail closed instead of becoming cached build
+evidence.
 Linux candidates now require a non-empty SHAR native executable for both x64
 and ARM64, and macOS candidates require a `.app` bundle with a non-empty SHAR
 executable below `Contents/MacOS`. Plain data-only archives can no longer be

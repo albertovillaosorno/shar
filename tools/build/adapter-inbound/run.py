@@ -670,6 +670,10 @@ def _cache_nonruntime_artifacts(
     if manifests:
         metadata.mkdir(parents=True)
         for source in manifests:
+            if not source.is_file():
+                raise RunFailure(
+                    f"packaging manifest must be a real file: {source}"
+                )
             Path(source).replace(metadata / source.name)
 
     debug_files: list[Path] = []
@@ -678,6 +682,10 @@ def _cache_nonruntime_artifacts(
     if debug_files:
         symbols.mkdir(parents=True)
         for source in debug_files:
+            if not source.is_file():
+                raise RunFailure(
+                    f"debug symbol must be a real file: {source}"
+                )
             relative = source.relative_to(candidate)
             destination = symbols / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
