@@ -683,6 +683,85 @@ pub fn validate_active_conflicts(
     Ok(())
 }
 
+/// Rejects cycles formed by supersession edges between active candidates.
+///
+/// Supersession declarations that name inactive packages are ignored by this
+/// graph check. Winner selection and priority policy remain separate activation
+/// concerns.
+///
+/// # Errors
+/// Returns a deterministic failure for invalid declarations, duplicate package
+/// identities, graph accounting failures, or an active supersession cycle.
+pub fn validate_active_supersession_cycles(
+    packages: &[PackageManifest],
+) -> Result<(), PackageError> {
+    let ordered = ordered_candidate_packages(packages)?;
+    let active_ids = ordered
+        .iter()
+        .map(|package| package.canonical_id.as_str())
+        .collect::<BTreeSet<_>>();
+    let mut incoming = active_ids
+        .iter()
+        .map(|canonical_id| (*canonical_id, 0_usize))
+        .collect::<BTreeMap<_, _>>();
+    let mut outgoing = BTreeMap::<&str, Vec<&str>>::new();
+    for package in &ordered {
+        for superseded in &package.supersedes {
+            if !active_ids.contains(superseded.as_str()) {
+                continue;
+            }
+            let Some(count) = incoming.get_mut(superseded.as_str()) else {
+                return Err(PackageError::new(
+                    "supersession graph lost an active package",
+                ));
+            };
+            *count = count.checked_add(1).ok_or_else(|| {
+                PackageError::new("supersession graph count overflow")
+            })?;
+            outgoing
+                .entry(package.canonical_id.as_str())
+                .or_default()
+                .push(superseded.as_str());
+        }
+    }
+    let mut ready = incoming
+        .iter()
+        .filter_map(|(canonical_id, count)| {
+            (*count == 0).then_some(*canonical_id)
+        })
+        .collect::<BTreeSet<_>>();
+    let mut visited = 0_usize;
+    while let Some(next) = ready.pop_first() {
+        visited = visited.checked_add(1).ok_or_else(|| {
+            PackageError::new("supersession graph visit count overflow")
+        })?;
+        for target in outgoing.get(next).into_iter().flatten() {
+            let Some(count) = incoming.get_mut(*target) else {
+                return Err(PackageError::new(
+                    "supersession graph lost an active target",
+                ));
+            };
+            let Some(updated) = count.checked_sub(1) else {
+                return Err(PackageError::new(
+                    "supersession graph count underflow",
+                ));
+            };
+            *count = updated;
+            if updated == 0 && !ready.insert(target) {
+                return Err(PackageError::new(
+                    "supersession package became ready more than once",
+                ));
+            }
+        }
+    }
+    if visited != ordered.len() {
+        return Err(PackageError::new(
+            "active package supersession graph contains a cycle",
+        ));
+    }
+    Ok(())
+}
+
 /// Resolves exact package dependencies into one discovery-order-independent
 /// load order.
 ///
