@@ -1,7 +1,7 @@
 // File: SharCamera.Build.cs
 // jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharCamera/SharCamera.Build.cs
-// Copyright (c) 2026 Alberto Villa Osorno.
+// Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier: MIT
 // Boundary: camera definition and request-arbitration dependencies only.
 // jig-ignore-next-line: exact syntax is indivisible
