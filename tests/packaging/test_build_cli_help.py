@@ -99,6 +99,33 @@ class BuildCliHelpTests(unittest.TestCase):
             self.assertEqual(module.main(), 0)
         self.assertIn("linux-x64", output.getvalue())
 
+    def test_arch_rejects_duplicate_explicit_targets(self) -> None:
+        """Repeated CLI target identities must fail instead of deduplicating."""
+        module = _load_arch_without_tkinter()
+        with tempfile.TemporaryDirectory(prefix="shar-arch-duplicate-") as raw:
+            output = Path(raw) / "arch.json"
+            with (
+                mock.patch.object(
+                    sys,
+                    "argv",
+                    [
+                        "arch",
+                        "--select",
+                        "linux-x64",
+                        "--select",
+                        "linux-x64",
+                        "--output",
+                        str(output),
+                    ],
+                ),
+                self.assertRaisesRegex(
+                    SystemExit,
+                    "duplicate target identifiers",
+                ),
+            ):
+                module.main()
+            self.assertFalse(output.exists())
+
     @unittest.skipIf(os.name == "nt", "non-Windows platform gate regression")
     def test_windows_shortcut_help_precedes_platform_gate(self) -> None:
         """Help remains discoverable where shortcut creation is unsupported."""

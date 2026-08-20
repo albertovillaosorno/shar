@@ -220,6 +220,8 @@ def _selected_targets(identifiers: list[str]) -> list[Target]:
         names = ", ".join(unknown)
         raise SystemExit(f"arch: unsupported target identifier: {names}")
     requested = set(identifiers)
+    if len(requested) != len(identifiers):
+        raise SystemExit("arch: duplicate target identifiers are not allowed")
     return [target for target in _TARGETS if target.identifier in requested]
 
 
