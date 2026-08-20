@@ -118,6 +118,12 @@ class SourceSimilarityTests(unittest.TestCase):
             _MOD.measure({"aa": 1}, {})
         with self.assertRaises(_MOD.InvalidCoordinateError):
             _MOD.measure({("aa", ""): 1}, {})
+        for coordinate in (("\ud800", "p3d"), ("aa", "\ud800")):
+            with (
+                self.subTest(coordinate=repr(coordinate)),
+                self.assertRaises(_MOD.InvalidCoordinateError),
+            ):
+                _MOD.measure({coordinate: 1}, {})
 
     def test_parser_accepts_generated_manifest_metadata_and_kind(self) -> None:
         ledger = (
