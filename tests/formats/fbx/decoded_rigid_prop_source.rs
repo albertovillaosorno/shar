@@ -242,8 +242,8 @@ fn bakes_normals_with_inverse_transpose_under_nonuniform_scale(
         &composite_path,
     );
     remove_fixture(&root)?;
-    let asset = result
-        .map_err(|error| format!("scaled prop failed: {error:?}"))?;
+    let asset =
+        result.map_err(|error| format!("scaled prop failed: {error:?}"))?;
     let normal = asset
         .parts
         .first()
