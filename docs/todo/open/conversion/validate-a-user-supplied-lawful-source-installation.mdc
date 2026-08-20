@@ -27,8 +27,9 @@ anything inside the original installation directory.
 
 - [x] Accept a selected installation folder, a pasted/typed path, or a dropped
   `Simpsons.exe` and resolve it to one candidate game root.
-- [x] Require the exact canonical source identities owned by the dedicated
-  minimum-source TODO, including `Simpsons.exe` and `Simpsons.ico`; keep
+- [x] Require the exact canonical relative-path identities owned by the
+  dedicated minimum-source TODO, including `Simpsons.exe` and `Simpsons.ico`;
+  keep
   `uninst.ico` optional.
 - [x] Require the English source identities needed by the canonical base game.
 - [x] Treat other supported original languages as optional source that can later
@@ -74,9 +75,13 @@ packaging tests cover directory/executable resolution, wrong-file rejection,
 private-path-safe missing-source diagnostics, separate validator inputs, and
 saved-source evidence.
 
-The canonical manifest itself already enforces exact `Simpsons.exe`,
-`Simpsons.ico`, English `README.rtf`, `dialog.rcf`, `srr2.E`, and `srr2.txt`.
-It keeps `uninst.ico` plus other official-language sources optional.
+The canonical manifest already enforces exact relative-path presence for
+`Simpsons.exe`, `Simpsons.ico`, English `README.rtf`, `dialog.rcf`,
+`srr2.E`, and `srr2.txt`. This early gate intentionally does not bind
+`Simpsons.exe` to one edition-specific byte hash; synthetic integration evidence
+proves different
+contents are admitted at the same canonical path. It keeps `uninst.ico` plus
+other official-language sources optional.
 
 The build dependency bootstrap now publishes both `validate-game` and
 `validate-source-deep` with binary and source-closure SHA-256 evidence. Build
