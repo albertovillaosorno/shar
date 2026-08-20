@@ -1393,50 +1393,117 @@ class CandidateArtifactTests(unittest.TestCase):
 
 
 class ArchitectureRevalidationTests(unittest.TestCase):
-    """Require direct runner use to revalidate saved target decisions."""
+    """Require direct runner use to consume stable revalidated evidence."""
 
     def test_invokes_arch_revalidation_for_exact_saved_path(self) -> None:
-        root = Path("/repo")
-        arch_path = root / ".cache/build/data/arch.json"
-        result = mock.Mock(returncode=0)
+        with tempfile.TemporaryDirectory(prefix="shar-arch-revalidate-") as raw:
+            root = Path(raw)
+            arch_path = root / ".cache/build/data/arch.json"
+            arch_path.parent.mkdir(parents=True)
+            arch_path.write_bytes(b"stable architecture evidence")
+            result = mock.Mock(returncode=0)
 
-        with mock.patch.object(
-            _RUN.subprocess,
-            "run",
-            return_value=result,
-        ) as run:
-            _RUN._revalidate_arch(root, arch_path)
+            with mock.patch.object(
+                _RUN.subprocess,
+                "run",
+                return_value=result,
+            ) as run:
+                snapshot = _RUN._revalidate_arch(root, arch_path)
 
-        run.assert_called_once_with(
-            [
-                _RUN.sys.executable,
-                str(root / "tools/build/adapter-inbound/arch.py"),
-                "--revalidate",
-                "--output",
-                str(arch_path),
-            ],
-            cwd=root,
-            check=False,
-        )
+            self.assertEqual(snapshot, b"stable architecture evidence")
+            run.assert_called_once_with(
+                [
+                    _RUN.sys.executable,
+                    str(root / "tools/build/adapter-inbound/arch.py"),
+                    "--revalidate",
+                    "--output",
+                    str(arch_path),
+                ],
+                cwd=root,
+                check=False,
+            )
 
     def test_rejects_failed_architecture_revalidation(self) -> None:
-        root = Path("/repo")
-        arch_path = root / ".cache/build/data/arch.json"
-        result = mock.Mock(returncode=7)
+        with tempfile.TemporaryDirectory(prefix="shar-arch-revalidate-") as raw:
+            root = Path(raw)
+            arch_path = root / ".cache/build/data/arch.json"
+            arch_path.parent.mkdir(parents=True)
+            arch_path.write_bytes(b"saved architecture evidence")
+            result = mock.Mock(returncode=7)
 
-        with (
-            mock.patch.object(_RUN.subprocess, "run", return_value=result),
-            self.assertRaisesRegex(
-                _RUN.RunFailure,
-                "architecture decision did not revalidate",
-            ),
-        ):
-            _RUN._revalidate_arch(root, arch_path)
+            with (
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "run",
+                    return_value=result,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "architecture decision did not revalidate",
+                ),
+            ):
+                _RUN._revalidate_arch(root, arch_path)
 
-    def test_main_revalidates_architecture_before_consuming_targets(
-        self,
-    ) -> None:
+    def test_rejects_architecture_drift_during_revalidation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-arch-revalidate-") as raw:
+            root = Path(raw)
+            arch_path = root / ".cache/build/data/arch.json"
+            arch_path.parent.mkdir(parents=True)
+            arch_path.write_bytes(b"before")
+
+            def replace_evidence(
+                *_args: object,
+                **_kwargs: object,
+            ) -> mock.Mock:
+                arch_path.write_bytes(b"after")
+                return mock.Mock(returncode=0)
+
+            with (
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "run",
+                    side_effect=replace_evidence,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "architecture decision changed during revalidation",
+                ),
+            ):
+                _RUN._revalidate_arch(root, arch_path)
+
+    def test_rejects_preflight_drift_during_revalidation(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-check-revalidate-",
+        ) as raw:
+            root = Path(raw)
+            check_path = root / ".cache/build/data/check.json"
+            check_path.parent.mkdir(parents=True)
+            check_path.write_bytes(b"before")
+
+            def replace_evidence(
+                *_args: object,
+                **_kwargs: object,
+            ) -> mock.Mock:
+                check_path.write_bytes(b"after")
+                return mock.Mock(returncode=0)
+
+            with (
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "run",
+                    side_effect=replace_evidence,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "build preflight changed during revalidation",
+                ),
+            ):
+                _RUN._revalidate_check(root, check_path)
+
+    def test_main_consumes_revalidated_snapshots(self) -> None:
         root = Path("/repo")
+        arch_snapshot = b"validated arch"
+        check_snapshot = b"validated check"
         unreal = {
             "project": "/repo/project/shar.uproject",
             "root": "/engine",
@@ -1444,14 +1511,26 @@ class ArchitectureRevalidationTests(unittest.TestCase):
         }
         with (
             mock.patch.object(_RUN, "_root", return_value=root),
-            mock.patch.object(_RUN, "_revalidate_arch") as revalidate_arch,
-            mock.patch.object(_RUN, "_selected_targets", return_value=[]),
-            mock.patch.object(_RUN, "_revalidate_check"),
+            mock.patch.object(
+                _RUN,
+                "_revalidate_arch",
+                return_value=arch_snapshot,
+            ) as revalidate_arch,
+            mock.patch.object(
+                _RUN,
+                "_selected_targets",
+                return_value=[],
+            ) as selected_targets,
+            mock.patch.object(
+                _RUN,
+                "_revalidate_check",
+                return_value=check_snapshot,
+            ) as revalidate_check,
             mock.patch.object(
                 _RUN,
                 "_check_evidence",
                 return_value={"unreal": unreal},
-            ),
+            ) as check_evidence,
             mock.patch.object(
                 _RUN,
                 "_require_unreal_evidence",
@@ -1463,7 +1542,18 @@ class ArchitectureRevalidationTests(unittest.TestCase):
         ):
             self.assertEqual(_RUN.main(), 0)
 
-        revalidate_arch.assert_called_once_with(root, root / _RUN._ARCH_PATH)
+        arch_path = root / _RUN._ARCH_PATH
+        check_path = root / _RUN._CHECK_PATH
+        revalidate_arch.assert_called_once_with(root, arch_path)
+        selected_targets.assert_called_once_with(
+            arch_path,
+            snapshot=arch_snapshot,
+        )
+        revalidate_check.assert_called_once_with(root, check_path)
+        check_evidence.assert_called_once_with(
+            check_path,
+            snapshot=check_snapshot,
+        )
 
 
 if __name__ == "__main__":
