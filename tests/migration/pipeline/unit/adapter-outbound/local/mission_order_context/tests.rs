@@ -214,7 +214,9 @@ fn rejects_duplicate_registration_across_level_sources() -> Result<(), String> {
     ];
 
     let Err(error) = build_mission_order_source_reports(&snapshots) else {
-        return Err("duplicate level registration unexpectedly passed".to_owned());
+        return Err(
+            "duplicate level registration unexpectedly passed".to_owned(),
+        );
     };
     assert!(error.contains("registration id is duplicated"));
     Ok(())
