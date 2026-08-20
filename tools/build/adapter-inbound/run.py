@@ -794,7 +794,7 @@ def _ios_main_binary(
     inventory: dict[str, zipfile.ZipInfo],
 ) -> zipfile.ZipInfo | None:
     """Return the main iOS application binary declared by one IPA."""
-    plists = [
+    property_lists = [
         info
         for name, info in inventory.items()
         if len(name.split("/")) == 3
@@ -802,9 +802,9 @@ def _ios_main_binary(
         and name.endswith(".app/Info.plist")
         and not info.is_dir()
     ]
-    if len(plists) != 1:
+    if len(property_lists) != 1:
         return None
-    plist_info = plists[0]
+    plist_info = property_lists[0]
     document = plistlib.loads(archive.read(plist_info))
     if not isinstance(document, dict):
         return None
