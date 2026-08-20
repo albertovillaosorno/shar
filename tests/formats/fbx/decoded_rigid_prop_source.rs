@@ -224,8 +224,8 @@ fn rejects_selected_mesh_without_composite_binding() -> Result<(), String> {
 }
 
 #[test]
-fn bakes_normals_with_inverse_transpose_under_nonuniform_scale(
-) -> Result<(), String> {
+fn bakes_normals_with_inverse_transpose_under_nonuniform_scale()
+-> Result<(), String> {
     let root = temp_root("normal-scale");
     let (skeleton_path, composite_path, mesh_path) =
         write_fixture(&root, "BodyShape")?;
