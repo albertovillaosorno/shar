@@ -55,12 +55,41 @@ sys.modules[_SPEC.name] = _MOD
 _SPEC.loader.exec_module(_MOD)
 
 
+class ChangingCountMapping:
+    """Count source that changes after its first read."""
+
+    def __init__(self) -> None:
+        self.reads = 0
+
+    def _next_value(self) -> int:
+        self.reads += 1
+        return 1 if self.reads == 1 else -1
+
+    def items(self) -> tuple[tuple[tuple[str, str], int], ...]:
+        """Return one coordinate paired with the next observed count."""
+        return ((("aa", "p3d"), self._next_value()),)
+
+    def values(self) -> tuple[int, ...]:
+        """Return the next observed count as a values collection."""
+        return (self._next_value(),)
+
+
 class SourceSimilarityTests(unittest.TestCase):
     def test_identical_vectors_are_complete(self) -> None:
         vector = {("aa", "p3d"): 4, ("bb", "rcf"): 2}
         evidence = _MOD.measure(vector, vector)
         self.assertEqual(evidence.reference_coverage, Fraction(1, 1))
         self.assertEqual(evidence.weighted_jaccard, Fraction(1, 1))
+
+        changing_reference = ChangingCountMapping()
+        changing_evidence = _MOD.measure(
+            changing_reference,
+            {("aa", "p3d"): 1},
+        )
+        self.assertEqual(changing_reference.reads, 1)
+        self.assertEqual(changing_evidence.reference_units, 1)
+        self.assertEqual(changing_evidence.reference_coverage, Fraction(1, 1))
+        self.assertEqual(changing_evidence.weighted_jaccard, Fraction(1, 1))
 
     def test_missing_counts_reduce_coverage_without_admission_result(
         self,
