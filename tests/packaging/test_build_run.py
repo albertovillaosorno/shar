@@ -1225,6 +1225,16 @@ class CandidateArtifactTests(unittest.TestCase):
                 )
                 binary.parent.mkdir(parents=True)
                 binary.write_bytes(b"game")
+                if _RUN.os.name != "nt":
+                    with self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "Linux SHAR executable",
+                    ):
+                        _RUN._validate_candidate_artifact(
+                            candidate,
+                            _RUN._TARGETS_BY_ID[target_id],
+                        )
+                    binary.chmod(0o755)
                 _RUN._validate_candidate_artifact(
                     candidate,
                     _RUN._TARGETS_BY_ID[target_id],
@@ -1247,6 +1257,16 @@ class CandidateArtifactTests(unittest.TestCase):
                 )
 
             executable.write_bytes(b"game")
+            if _RUN.os.name != "nt":
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "macOS SHAR app bundle",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["macos-arm64"],
+                    )
+                executable.chmod(0o755)
             _RUN._validate_candidate_artifact(
                 candidate,
                 _RUN._TARGETS_BY_ID["macos-arm64"],
