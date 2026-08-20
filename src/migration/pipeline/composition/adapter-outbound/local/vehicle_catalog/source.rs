@@ -189,27 +189,53 @@ pub(super) fn select_vehicle_composite(
     }
 }
 
+/// Preserve package-member order while rejecting projected path collisions.
+fn unique_vehicle_component_paths(
+    paths: impl IntoIterator<Item = PathBuf>,
+    kind: &str,
+) -> Result<Vec<PathBuf>, PipelineError> {
+    let mut seen = BTreeSet::new();
+    let mut ordered = Vec::new();
+    for path in paths {
+        if !seen.insert(path.clone()) {
+            return Err(PipelineError::new(format!(
+                "vehicle package projects duplicate {kind} path: {}",
+                path.display()
+            )));
+        }
+        ordered.push(path);
+    }
+    Ok(ordered)
+}
+
 /// Resolve every exact render-mesh path from generated package membership.
 pub(super) fn vehicle_mesh_paths(
     package: &PhaseThreePackageRow,
     package_root: &Path,
 ) -> Result<Vec<PathBuf>, PipelineError> {
-    let mut paths = package
-        .members()
-        .iter()
-        .filter(|member| {
-            member.kind == "p3d-mesh" && member.source_chunk_kind == "mesh"
-        })
-        .map(|member| {
-            let file_name =
-                Path::new(&member.path).file_name().ok_or_else(|| {
-                    PipelineError::new("vehicle mesh member has no file name")
-                })?;
-            Ok(package_root.join("components").join("mesh").join(file_name))
-        })
-        .collect::<Result<Vec<_>, PipelineError>>()?;
-    paths.sort();
-    paths.dedup();
+    let paths = unique_vehicle_component_paths(
+        package
+            .members()
+            .iter()
+            .filter(|member| {
+                member.kind == "p3d-mesh"
+                    && member.source_chunk_kind == "mesh"
+            })
+            .map(|member| {
+                let file_name =
+                    Path::new(&member.path).file_name().ok_or_else(|| {
+                        PipelineError::new(
+                            "vehicle mesh member has no file name",
+                        )
+                    })?;
+                Ok(package_root
+                    .join("components")
+                    .join("mesh")
+                    .join(file_name))
+            })
+            .collect::<Result<Vec<_>, PipelineError>>()?,
+        "mesh",
+    )?;
     if paths.is_empty() {
         return Err(PipelineError::new(format!(
             "vehicle package {} has no render meshes",
@@ -230,25 +256,26 @@ pub(super) fn vehicle_quad_group_paths(
     package: &PhaseThreePackageRow,
     package_root: &Path,
 ) -> Result<Vec<PathBuf>, PipelineError> {
-    let mut paths = package
-        .members()
-        .iter()
-        .filter(|member| member.source_chunk_kind == "quad_group")
-        .map(|member| {
-            let file_name =
-                Path::new(&member.path).file_name().ok_or_else(|| {
-                    PipelineError::new(
-                        "vehicle quad-group member has no file name",
-                    )
-                })?;
-            Ok(package_root
-                .join("components")
-                .join("quad_group")
-                .join(file_name))
-        })
-        .collect::<Result<Vec<_>, PipelineError>>()?;
-    paths.sort();
-    paths.dedup();
+    let paths = unique_vehicle_component_paths(
+        package
+            .members()
+            .iter()
+            .filter(|member| member.source_chunk_kind == "quad_group")
+            .map(|member| {
+                let file_name =
+                    Path::new(&member.path).file_name().ok_or_else(|| {
+                        PipelineError::new(
+                            "vehicle quad-group member has no file name",
+                        )
+                    })?;
+                Ok(package_root
+                    .join("components")
+                    .join("quad_group")
+                    .join(file_name))
+            })
+            .collect::<Result<Vec<_>, PipelineError>>()?,
+        "quad-group",
+    )?;
     if let Some(path) = paths.iter().find(|path| !path.is_file()) {
         return Err(PipelineError::new(format!(
             "vehicle quad-group source is missing: {}",

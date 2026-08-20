@@ -145,5 +145,10 @@ identities before material resolution. Duplicate shader identities fail
 closed, and focused FBX-export tests prove `zebra`, `alpha`, `middle` remains
 in authored order.
 
+Vehicle mesh and billboard source projection now preserves canonical
+package-member order instead of sorting projected component paths, and duplicate
+basenames fail closed instead of being silently deduplicated. Focused vehicle
+source tests prove both the retained order and collision rejection.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
