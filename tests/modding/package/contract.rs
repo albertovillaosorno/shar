@@ -36,6 +36,7 @@ use serde_json as _;
 use shar_mod_package::{
     CONTRACT_VERSION, Dependency, PackageKind, PackageManifest, Provenance,
     TrustLevel, content_revision, dependency_load_order, member_from_bytes,
+    validate_active_conflicts,
 };
 use shar_sha256 as _;
 use unicode_normalization as _;
@@ -304,6 +305,26 @@ fn dependency_order_is_exact_and_discovery_independent()
         }])?;
     assert!(dependency_load_order(&[core.clone(), wrong_revision]).is_err());
     assert!(dependency_load_order(&[core.clone(), core]).is_err());
+    Ok(())
+}
+
+#[test]
+fn active_conflicts_are_rejected_independent_of_discovery_order()
+-> Result<(), Box<dyn std::error::Error>> {
+    let first = package_with_identity("shar.first", Vec::new())?;
+    let mut second = package_with_identity("shar.second", Vec::new())?;
+    second.conflicts = vec![first.canonical_id.clone()];
+
+    assert!(
+        validate_active_conflicts(&[first.clone(), second.clone()]).is_err()
+    );
+    assert!(
+        validate_active_conflicts(&[second.clone(), first.clone()]).is_err()
+    );
+
+    let mut absent_conflict = second;
+    absent_conflict.conflicts = vec!["shar.not-active".to_owned()];
+    validate_active_conflicts(&[first, absent_conflict])?;
     Ok(())
 }
 

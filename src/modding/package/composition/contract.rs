@@ -623,19 +623,9 @@ impl PackageManifest {
     }
 }
 
-/// Resolves exact package dependencies into one discovery-order-independent
-/// load order.
-///
-/// This helper orders only dependency precedence. Explicit priority,
-/// supersession, conflicts, capabilities, and activation policy remain separate
-/// admission concerns.
-///
-/// # Errors
-/// Returns a deterministic failure for invalid declarations, duplicate package
-/// identities, missing or mismatched exact dependencies, or dependency cycles.
-pub fn dependency_load_order(
+fn ordered_candidate_packages(
     packages: &[PackageManifest],
-) -> Result<Vec<String>, PackageError> {
+) -> Result<Vec<&PackageManifest>, PackageError> {
     if packages.len() > MAX_LIST_ITEMS {
         return Err(PackageError::new(
             "candidate package count exceeds contract limit",
@@ -660,6 +650,53 @@ pub fn dependency_load_order(
     for package in &ordered {
         package.validate()?;
     }
+    Ok(ordered)
+}
+
+/// Rejects direct conflicts inside one simultaneously active candidate set.
+///
+/// A conflict declaration names another canonical package identity. A conflict
+/// with a package that is not active is inert; a conflict with any active
+/// candidate fails deterministically regardless of discovery order.
+///
+/// # Errors
+/// Returns a deterministic failure for invalid declarations, duplicate package
+/// identities, or a declared conflict with another active package.
+pub fn validate_active_conflicts(
+    packages: &[PackageManifest],
+) -> Result<(), PackageError> {
+    let ordered = ordered_candidate_packages(packages)?;
+    let active_ids = ordered
+        .iter()
+        .map(|package| package.canonical_id.as_str())
+        .collect::<BTreeSet<_>>();
+    for package in ordered {
+        for conflict in &package.conflicts {
+            if active_ids.contains(conflict.as_str()) {
+                return Err(PackageError::new(format!(
+                    "active package conflict between {} and {}",
+                    package.canonical_id, conflict
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Resolves exact package dependencies into one discovery-order-independent
+/// load order.
+///
+/// This helper orders only dependency precedence. Explicit priority,
+/// supersession, conflicts, capabilities, and activation policy remain separate
+/// admission concerns.
+///
+/// # Errors
+/// Returns a deterministic failure for invalid declarations, duplicate package
+/// identities, missing or mismatched exact dependencies, or dependency cycles.
+pub fn dependency_load_order(
+    packages: &[PackageManifest],
+) -> Result<Vec<String>, PackageError> {
+    let ordered = ordered_candidate_packages(packages)?;
 
     let by_id = ordered
         .iter()
