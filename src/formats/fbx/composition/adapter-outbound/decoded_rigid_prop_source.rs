@@ -48,6 +48,7 @@ use super::decoded_skin_source::{
 use crate::domain::character::{CharacterAsset, SkinnedPart};
 use crate::domain::mesh::MeshAsset;
 use crate::domain::skeleton::Bone;
+use crate::domain::transform::affine_inverse::invert_affine;
 use crate::domain::transform::matrix::{multiply, widen};
 
 /// Load selected rigid meshes and prune unrelated skeleton branches.
@@ -414,12 +415,31 @@ fn bake_rigid_mesh(
     mesh: &mut MeshAsset,
     matrix: &[f64; 16],
 ) -> Result<(), SkinSourceError> {
+    let inverse = mesh
+        .groups
+        .iter()
+        .any(|group| !group.normals.is_empty())
+        .then(|| invert_affine(matrix))
+        .transpose()
+        .map_err(|error| {
+            SkinSourceError::Prop(format!(
+                "rigid prop {} has a non-invertible normal transform: \
+                 {error:?}",
+                mesh.name
+            ))
+        })?;
     for group in &mut mesh.groups {
         for position in &mut group.positions {
             *position = transform_position(*position, matrix, &mesh.name)?;
         }
         for normal in &mut group.normals {
-            *normal = transform_normal(*normal, matrix, &mesh.name)?;
+            let normal_basis = inverse.as_ref().ok_or_else(|| {
+                SkinSourceError::Prop(format!(
+                    "rigid prop {} is missing its normal transform",
+                    mesh.name
+                ))
+            })?;
+            *normal = transform_normal(*normal, normal_basis, &mesh.name)?;
         }
     }
     Ok(())
@@ -452,7 +472,7 @@ fn transform_position(
     )
 }
 
-/// Transform and normalize one direction without applying translation.
+/// Transform and normalize one normal by an inverse affine basis.
 fn transform_normal(
     value: [f32; 3],
     matrix: &[f64; 16],
@@ -464,9 +484,9 @@ fn transform_normal(
         return Ok(value);
     }
     let mut transformed = [
-        z.mul_add(matrix[8], y.mul_add(matrix[4], x * matrix[0])),
-        z.mul_add(matrix[9], y.mul_add(matrix[5], x * matrix[1])),
-        z.mul_add(matrix[10], y.mul_add(matrix[6], x * matrix[2])),
+        z.mul_add(matrix[2], y.mul_add(matrix[1], x * matrix[0])),
+        z.mul_add(matrix[6], y.mul_add(matrix[5], x * matrix[4])),
+        z.mul_add(matrix[10], y.mul_add(matrix[9], x * matrix[8])),
     ];
     let length = transformed
         .iter()

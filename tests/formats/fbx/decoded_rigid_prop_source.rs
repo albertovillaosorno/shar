@@ -91,6 +91,38 @@ fn mesh_json(name: &str) -> String {
     )
 }
 
+fn mesh_with_normals_json(name: &str) -> String {
+    format!(
+        concat!(
+            r#"{{"schema":"mesh","name":"{}","prim_groups":[{{"#,
+            r#""shader":"body_m","positions":[[0,0,0],[1,0,0],[0,1,0]],"#,
+            r#""normals":[[0.70710677,0.70710677,0],"#,
+            r#"[0.70710677,0.70710677,0],[0.70710677,0.70710677,0]],"#,
+            r#""indices":[0,1,2]}}]}}"#,
+        ),
+        name
+    )
+}
+
+const fn scaled_skeleton_json() -> &'static str {
+    concat!(
+        r#"{"schema":"skeleton","name":"rig","version":0,"#,
+        r#""num_joints":4,"joints":["#,
+        r#"{"name":"root","parent":0,"dof":0,"free_axes":0,"#,
+        r#""primary_axis":0,"secondary_axis":0,"twist_axis":0,"#,
+        r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]},"#,
+        r#"{"name":"body","parent":0,"dof":0,"free_axes":0,"#,
+        r#""primary_axis":0,"secondary_axis":0,"twist_axis":0,"#,
+        r#""rest_pose":[2,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]},"#,
+        r#"{"name":"wing","parent":1,"dof":0,"free_axes":0,"#,
+        r#""primary_axis":0,"secondary_axis":0,"twist_axis":0,"#,
+        r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]},"#,
+        r#"{"name":"glow","parent":1,"dof":0,"free_axes":0,"#,
+        r#""primary_axis":0,"secondary_axis":0,"twist_axis":0,"#,
+        r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}]}"#,
+    )
+}
+
 fn write_fixture(
     root: &Path,
     mesh_name: &str,
@@ -189,4 +221,44 @@ fn rejects_selected_mesh_without_composite_binding() -> Result<(), String> {
         },
         other => Err(format!("missing binding was accepted: {other:?}")),
     }
+}
+
+#[test]
+fn bakes_normals_with_inverse_transpose_under_nonuniform_scale(
+) -> Result<(), String> {
+    let root = temp_root("normal-scale");
+    let (skeleton_path, composite_path, mesh_path) =
+        write_fixture(&root, "BodyShape")?;
+    fs::write(&skeleton_path, scaled_skeleton_json())
+        .and_then(|()| {
+            fs::write(&mesh_path, mesh_with_normals_json("BodyShape"))
+        })
+        .map_err(|error| error.to_string())?;
+
+    let result = decoded_rigid_prop_source::load_selected_rigid_prop_asset(
+        "scaled",
+        &skeleton_path,
+        &[mesh_path.as_path()],
+        &composite_path,
+    );
+    remove_fixture(&root)?;
+    let asset = result
+        .map_err(|error| format!("scaled prop failed: {error:?}"))?;
+    let normal = asset
+        .parts
+        .first()
+        .and_then(|part| part.mesh.groups.first())
+        .and_then(|group| group.normals.first())
+        .ok_or("scaled rigid prop has no authored normal")?;
+    let expected = [0.447_213_6_f32, 0.894_427_2_f32, 0.];
+    if normal
+        .iter()
+        .zip(expected)
+        .any(|(actual, expected)| (*actual - expected).abs() > 1e-5)
+    {
+        return Err(format!(
+            "nonuniform-scale normal used position basis: {normal:?}"
+        ));
+    }
+    Ok(())
 }
