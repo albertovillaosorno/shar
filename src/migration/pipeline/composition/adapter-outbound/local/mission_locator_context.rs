@@ -432,11 +432,19 @@ fn locator_context_paths(
     mission_id: &str,
     available: &BTreeSet<&str>,
 ) -> Result<(String, String), String> {
-    if mission_id.is_empty()
-        || mission_id != mission_id.trim()
-        || mission_id.contains('/')
-        || mission_id.contains(char::from(92))
-        || mission_id.chars().any(char::is_control)
+    let mission_id_bytes = mission_id.as_bytes();
+    if mission_id_bytes.is_empty()
+        || !mission_id_bytes
+            .first()
+            .is_some_and(u8::is_ascii_alphanumeric)
+        || !mission_id_bytes
+            .last()
+            .is_some_and(u8::is_ascii_alphanumeric)
+        || !mission_id_bytes.iter().copied().all(|byte| {
+            byte.is_ascii_lowercase()
+                || byte.is_ascii_digit()
+                || matches!(byte, b'-' | b'_')
+        })
     {
         // jig-ignore-next-line: literal
         return Err("mission locator selected mission id is malformed".to_owned());

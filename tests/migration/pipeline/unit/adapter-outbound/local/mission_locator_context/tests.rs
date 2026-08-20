@@ -270,6 +270,24 @@ fn combines_level_and_mission_load_packages_per_source() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_noncanonical_selected_mission_id() -> Result<(), String> {
+    let available = BTreeSet::from([
+        "extracted/game/scripts/missions/level01/level.mfk.json",
+        "extracted/game/scripts/missions/level01/M1l.mfk.json",
+    ]);
+    if locator_context_paths(
+        "extracted/game/scripts/missions/level01/M1i.mfk.json",
+        "M1",
+        &available,
+    )
+    .is_ok()
+    {
+        return Err("noncanonical selected mission id passed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 // jig-ignore-next-line: long identifier
 fn rejects_selected_id_that_disagrees_with_init_filename() -> Result<(), String> {
     let available = BTreeSet::from([
