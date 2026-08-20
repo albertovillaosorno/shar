@@ -786,8 +786,8 @@ def _build_target(
     arguments = _build_arguments(project, target, candidate, staging)
     _run_uat(root, uat, arguments, log)
     _validate_candidate_tree(candidate)
-    _cache_nonruntime_artifacts(candidate, work, target)
     _validate_candidate_artifact(candidate, target)
+    _cache_nonruntime_artifacts(candidate, work, target)
     destination = root / _DIST_ROOT / target.identifier
     _publish(candidate, destination)
     print(f"run: {target.identifier}: published {destination}")

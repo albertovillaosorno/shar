@@ -78,9 +78,11 @@ files before they can leave the candidate tree; directory entries that merely
 match `Manifest_*.txt` or `*.pdb` fail closed instead of becoming cached build
 evidence. Every matching entry is type-checked before stale diagnostic caches
 are pruned or any new diagnostic is moved, so malformed candidate evidence
-preserves the previous successful cache. Artifact entries also require one
-filesystem link at this boundary instead of relying only on the earlier tree
-scan.
+preserves the previous successful cache. The required native/mobile artifact is
+validated before those caches are replaced as well, so an otherwise well-formed
+but unrunnable package cannot displace diagnostics from the last accepted build.
+Artifact entries also require one filesystem link at this boundary instead of
+relying only on the earlier tree scan.
 Linux candidates now require a non-empty SHAR native executable for both x64
 and ARM64, and macOS candidates require a `.app` bundle with a non-empty SHAR
 executable below `Contents/MacOS`. On POSIX hosts those native runtimes must
