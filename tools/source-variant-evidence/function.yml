@@ -1,0 +1,19 @@
+schema: shar-function/v1
+identity:
+  id: source-variant-evidence
+  path: tools/source-variant-evidence
+  domain: tools
+architecture:
+  route: tools/<function>/<kind>/<part>
+  kinds:
+    - adapter-inbound
+capabilities:
+  - math
+  - python
+projects:
+tests:
+  root: tests/packaging
+ownership:
+  accountable: Alberto Villa Osorno
+validation:
+  mode: active

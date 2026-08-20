@@ -121,6 +121,17 @@ replace
 source-backed cryptographic replay evidence or the pending similarity
 calibration.
 
+A separate maintainer-only `source-variant-evidence` helper now checks whether a
+private cross-variant common-byte artifact is an ordered subsequence of supplied
+local variants while emitting only argument ordinals and aggregate byte counts.
+It neither derives nor publishes common bytes and has no admission result. The
+three executable variants retained in the current private workspace all report a
+complete ordered match. That result is intentionally limited to those available
+samples and does not certify other editions. The common-byte artifact also
+remains outside direct `shar.algorithm.v1` replay because the generic source
+contract binds exact bytes and hashes; a reviewed public-safe user-source
+projection would still be required for cross-edition replay.
+
 The generic `shar.algorithm.v1` round-trip suite now includes explicit evidence
 that a serialized plan cannot replay with zero caller-supplied source roots and
 that successful create/replay leaves the caller source bytes and source layout

@@ -19,5 +19,7 @@ Does not own source crates, generated artifacts, or local dependencies.
   mods.
 - [`source-similarity/`](source-similarity/) measures content-free structural
   calibration evidence without choosing an admission threshold.
+- [`source-variant-evidence/`](source-variant-evidence/) checks private ordered
+  common-byte evidence across local source variants without exposing payloads.
 - [`validation/python_dependencies.py`](validation/python_dependencies.py)
   materializes the exact repository-local pytest/Ruff environment used by Jig.
