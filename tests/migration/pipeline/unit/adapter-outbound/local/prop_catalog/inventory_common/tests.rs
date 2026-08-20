@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -30,10 +30,67 @@
 
 //! Tests unit tests.
 
-use super::clean_identity;
+use std::fs;
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use super::{clean_identity, read_composite};
+
+static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
+
+fn composite_fixture(label: &str, props: &str) -> Result<PathBuf, String> {
+    let sequence = NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed);
+    let root = std::env::temp_dir().join(format!(
+        "shar-prop-composite-{label}-{}-{sequence}",
+        std::process::id()
+    ));
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let path = root.join("composite.json");
+    fs::write(
+        &path,
+        format!(
+            r#"{{"name":"owner","skeleton_name":"rig","props":{props}}}"#
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    Ok(path)
+}
 
 #[test]
 fn decoded_identity_padding_is_removed() {
     assert_eq!(clean_identity("PTRN_flag\x00\x00"), "PTRN_flag");
     assert_eq!(clean_identity("flag\0\0"), "flag");
+}
+
+#[test]
+fn composite_prop_order_is_preserved() -> Result<(), String> {
+    let path = composite_fixture(
+        "source-order",
+        r#"[{"name":"zebra"},{"name":"alpha"},{"name":"middle"}]"#,
+    )?;
+    let result = read_composite(&path).map_err(|error| error.to_string());
+    drop(fs::remove_dir_all(path.parent().ok_or("fixture has no parent")?));
+    let composite = result?;
+    assert_eq!(composite.prop_names, ["zebra", "alpha", "middle"]);
+    Ok(())
+}
+
+#[test]
+fn composite_duplicate_prop_identity_fails_closed() -> Result<(), String> {
+    let path = composite_fixture(
+        "duplicate-prop",
+        r#"[{"name":"shared"},{"name":"shared\u0000"}]"#,
+    )?;
+    let result = read_composite(&path);
+    drop(fs::remove_dir_all(path.parent().ok_or("fixture has no parent")?));
+    let Err(error) = result else {
+        return Err("duplicate composite prop identity was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("prop composite repeats prop identity shared")
+    {
+        return Err(format!("unexpected duplicate prop error: {error}"));
+    }
+    Ok(())
 }

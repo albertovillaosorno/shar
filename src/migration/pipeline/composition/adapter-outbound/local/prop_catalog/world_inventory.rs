@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -30,7 +30,7 @@
 
 //! World inventory outbound adapter.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use super::extraction::relative_art_root;
@@ -185,7 +185,7 @@ fn associate_composite(
             .iter()
             .filter_map(|name| mesh_names.get(name))
             .cloned()
-            .collect::<BTreeSet<_>>();
+            .collect::<Vec<_>>();
         if !selected.is_empty() {
             matches.push((composite, selected));
         }
@@ -205,7 +205,7 @@ fn associate_composite(
     let animated = skeleton.is_some() && animation.is_some();
     Ok(Some((
         composite.name,
-        selected.into_iter().collect(),
+        selected,
         animated.then_some(composite.member_id),
         animated.then_some(skeleton).flatten(),
         animated.then_some(animation).flatten(),
