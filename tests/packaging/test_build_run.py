@@ -953,6 +953,31 @@ class ArtifactCacheEntryTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["linux-x64"],
                 )
 
+    def test_rejects_malformed_manifest_before_moving_valid_one(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-artifact-entry-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            work = root / "work"
+            candidate.mkdir()
+            valid = candidate / "Manifest_A.txt"
+            invalid = candidate / "Manifest_B.txt"
+            valid.write_text("valid\n", encoding="utf-8")
+            invalid.mkdir()
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "packaging manifest must be a real file",
+            ):
+                _RUN._cache_nonruntime_artifacts(
+                    candidate,
+                    work,
+                    _RUN._TARGETS_BY_ID["linux-x64"],
+                )
+
+            self.assertTrue(valid.is_file())
+            self.assertTrue(invalid.is_dir())
+            self.assertFalse((work / "publication-metadata").exists())
+
     def test_rejects_pdb_named_directory(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-artifact-entry-") as raw:
             root = Path(raw)
@@ -970,6 +995,31 @@ class ArtifactCacheEntryTests(unittest.TestCase):
                     work,
                     _RUN._TARGETS_BY_ID["windows-x64"],
                 )
+
+    def test_rejects_malformed_pdb_before_moving_valid_one(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-artifact-entry-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            work = root / "work"
+            valid = candidate / "shar/Binaries/Win64/a.pdb"
+            invalid = candidate / "shar/Binaries/Win64/b.pdb"
+            valid.parent.mkdir(parents=True)
+            valid.write_bytes(b"symbols")
+            invalid.mkdir()
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "debug symbol must be a real file",
+            ):
+                _RUN._cache_nonruntime_artifacts(
+                    candidate,
+                    work,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
+            self.assertTrue(valid.is_file())
+            self.assertTrue(invalid.is_dir())
+            self.assertFalse((work / "symbols").exists())
 
 
 class ArtifactCachePathTests(unittest.TestCase):
