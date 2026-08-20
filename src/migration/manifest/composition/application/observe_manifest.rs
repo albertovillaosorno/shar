@@ -69,6 +69,11 @@ impl ObserveManifest {
             ));
         }
         let counts = load_counts(tree, game_dir)?;
+        if counts.is_empty() {
+            return Err(ManifestError::Invalid(
+                "source observation contains no countable files".to_owned(),
+            ));
+        }
         let mut rows = Vec::with_capacity(counts.len());
         let mut total_files = 0_usize;
         for ((dir, extension), count) in counts {

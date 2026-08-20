@@ -120,6 +120,24 @@ fn observation_emits_counts_without_writing_source() -> io::Result<()> {
 }
 
 #[test]
+fn observation_rejects_source_without_countable_rows() -> io::Result<()> {
+    let fixture = Fixture::create()?;
+    fs::remove_file(fixture.root.join("art/cars/first.p3d"))?;
+    fs::remove_file(fixture.root.join("art/cars/second.p3d"))?;
+
+    let output = run_observer(&fixture.root, None)?;
+
+    assert!(!output.status.success());
+    assert_eq!(output.stdout, b"");
+    assert_eq!(
+        String::from_utf8_lossy(&output.stderr),
+        "source count observation failed\n"
+    );
+    assert!(!fixture.root.join("manifest").exists());
+    Ok(())
+}
+
+#[test]
 fn observation_failure_does_not_disclose_source_path() -> io::Result<()> {
     let fixture = Fixture::create()?;
     fs::remove_file(fixture.root.join("Simpsons.exe"))?;
