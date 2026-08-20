@@ -1,0 +1,63 @@
+domain = "validation"
+schema_version = 1
+
+[gate.cspell]
+args = ["lint", "--config", ".jig/cspell/cspell.json", "--no-progress", "--no-summary"]
+capability = "cspell"
+config_files = [".jig/cspell/cspell.json"]
+scope_applicability = "global"
+tool = "cspell"
+
+[gate.markdown]
+args = ["--config", ".jig/file/markdown/.markdownlint-cli2.jsonc"]
+capability = "markdown"
+config_files = [".jig/file/markdown/.markdownlint-cli2.jsonc"]
+scope_applicability = "global"
+tool = "markdownlint"
+
+[gate.pytest]
+args = ["-q", "-c", ".jig/lang/python/pytest.ini", "tests/architecture", "tests/packaging", "tests/unreal/editor-control", "tests/unreal/project", "tests/user"]
+capability = "pytest"
+config_files = [".jig/lang/python/pytest.ini"]
+scope_applicability = "global"
+timeout_seconds = 3600
+tool = "pytest"
+
+[gate.ruff]
+args = ["check", "--config", ".jig/lang/python/ruff.toml", "."]
+capability = "ruff"
+config_files = [".jig/lang/python/ruff.toml"]
+scope_applicability = "global"
+tool = "ruff"
+
+[gate.rust_nightly_clippy]
+args = ["--locked", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings"]
+capability = "rust-clippy"
+config_files = [".jig/lang/rust/clippy.toml", "Cargo.lock", "Cargo.toml"]
+scope_applicability = "global"
+timeout_seconds = 3600
+tool = "rust_nightly_cargo_clippy"
+
+[gate.rust_nightly_format]
+args = ["--all", "--", "--check", "--config-path", ".jig/lang/rust/.rustfmt.toml"]
+capability = "rustfmt"
+config_files = [".jig/lang/rust/.rustfmt.toml"]
+scope_applicability = "global"
+timeout_seconds = 3600
+tool = "rust_nightly_cargo_fmt"
+
+[gate.rust_nightly_test]
+args = ["test", "--workspace", "--all-targets", "--all-features"]
+capability = "rust-test"
+config_files = [".cargo/config.toml", "Cargo.toml"]
+scope_applicability = "global"
+timeout_seconds = 3600
+tool = "rust_nightly_cargo"
+
+[gate.rust_stable_check]
+args = ["check", "--locked", "--workspace", "--all-features"]
+capability = "rust-check"
+config_files = [".cargo/config.toml", "Cargo.lock", "Cargo.toml"]
+scope_applicability = "global"
+timeout_seconds = 3600
+tool = "rust_stable_cargo"

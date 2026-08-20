@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -28,9 +28,12 @@
 //   - Optional heap names are validated source provenance only.
 //
 
+//! Mission package-load tests.
+
 use super::*;
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn maps_authored_windows_p3d_path_to_canonical_package_root() -> Result<(), String> {
     assert_eq!(
         normalized_p3d_package_root(r"ART\MISSIONS\LEVEL01\BM1.P3D")?,
@@ -70,6 +73,7 @@ fn validates_optional_inventory_section_identity() {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn package_root_normalization_matches_transport_case_and_separator() -> Result<(), String> {
     assert_eq!(
         normalized_package_root(r"EXTRACTED\ART\L01_FX")?,
@@ -79,6 +83,7 @@ fn package_root_normalization_matches_transport_case_and_separator() -> Result<(
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn package_candidate_filter_ignores_non_extracted_namespaces() -> Result<(), String> {
     assert_eq!(normalized_candidate_package_root("game")?, None);
     assert_eq!(normalized_candidate_package_root("extracted")?, None);
@@ -87,6 +92,7 @@ fn package_candidate_filter_ignores_non_extracted_namespaces() -> Result<(), Str
         Some("extracted/art/l01_fx".to_owned())
     );
     if normalized_candidate_package_root("extracted/art/../outside").is_ok() {
+        // jig-ignore-next-line: literal
         return Err("unsafe extracted package root did not fail closed".to_owned());
     }
     Ok(())

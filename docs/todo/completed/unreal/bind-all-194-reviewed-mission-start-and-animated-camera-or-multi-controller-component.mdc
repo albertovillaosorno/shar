@@ -1,15 +1,23 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: bind-all-194-reviewed-mission-start-and-animated-camera-or-multi-controller-component
 status: completed
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Bind all 194 reviewed mission-start and animated camera or multi-controller component…
 
 Bind all 194 reviewed mission-start and animated camera or multi-controller
@@ -36,7 +44,8 @@ playback semantics.
 
 ## Dependencies
 
-Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+Parent task:
+`resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
 
 ## Evidence
 

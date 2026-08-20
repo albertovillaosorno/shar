@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -156,7 +156,8 @@ fn rejects_mesh_identity_mismatches() {
 }
 
 #[test]
-fn analysis_loader_rejects_repeated_index_triangle_lists() -> Result<(), String> {
+fn analysis_loader_rejects_repeated_index_triangle_lists() -> Result<(), String>
+{
     let root = temp_root("analysis-degenerate-triangle");
     let mesh_dir = root.join("components").join("mesh");
     let mesh_json = concat!(
@@ -174,7 +175,9 @@ fn analysis_loader_rejects_repeated_index_triangle_lists() -> Result<(), String>
     let analysis_result = read_mesh_for_analysis(&root, "mesh");
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     if analysis_result.is_ok() {
-        return Err("analysis mesh altered repeated-index source topology".to_owned());
+        return Err(
+            "analysis mesh altered repeated-index source topology".to_owned()
+        );
     }
     Ok(())
 }

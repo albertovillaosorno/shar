@@ -1,0 +1,22 @@
+domain = "cspell"
+schema_version = 1
+config_path = ".jig/cspell/cspell.json"
+dictionary_root = ".jig/cspell"
+files = ["**/*.{cpp,cs,h,ini,json,jsonc,md,mdc,py,rs,toml,txt,yml,yaml}"]
+ignore_paths = [".cache/**", ".dependencies/**", ".git/**", ".logs/**", ".temp/**", "Cargo.lock", "game/**", "src/unreal/project/composition/uproject/Content/**", "target/**", "tests/fixtures/**"]
+language = "en-US,en-GB"
+min_word_length = 3
+schema = "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json"
+version = "0.2"
+
+[dictionary.english]
+name = "custom-english"
+path = ".jig/cspell/english.txt"
+
+[dictionary.named-entities]
+name = "custom-named-entities"
+path = ".jig/cspell/named-entities.txt"
+
+[dictionary.technical]
+name = "custom-technical"
+path = ".jig/cspell/technical.txt"

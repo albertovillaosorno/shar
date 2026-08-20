@@ -1,15 +1,21 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: version-the-fbx-catalog-verifier-for-exact-external-png-provenance-without-treating
 status: completed
 priority: P1
 lane: conversion
 active: false
 parent: complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7]
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Version the FBX catalog verifier for exact external PNG provenance without treating…
 
 Version the FBX catalog verifier for exact external PNG provenance without
@@ -22,7 +28,8 @@ treating sidecars as independently promotable model inputs.
 
 ## Dependencies
 
-Parent task: `complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
+Parent task:
+`complete-deterministic-conversion-of-original-models-to-binary-fbx-7-7`.
 
 ## Evidence
 

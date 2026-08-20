@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -195,8 +195,8 @@ bool FSharMissionDefinitionValidationTest::RunTest(const FString& Parameters)
         FName(TEXT("execute_arbitrary_script"));
     Errors.Reset();
     Mission->GatherValidationErrors(Errors);
-    // jig-ignore-next-line: exact syntax is indivisible
-    TestFalse(TEXT("Malformed mission definition is rejected"), Errors.IsEmpty());
+    TestFalse(
+        TEXT("Malformed mission definition is rejected"), Errors.IsEmpty());
 
     auto* MissingPolicy = NewObject<USharMissionDefinition>();
     FillMissionBase(*MissingPolicy);
@@ -210,7 +210,8 @@ bool FSharMissionDefinitionValidationTest::RunTest(const FString& Parameters)
     MismatchedPolicy->ObjectivePolicies[0].ObjectiveKind = FName(TEXT("race"));
     Errors.Reset();
     MismatchedPolicy->GatherValidationErrors(Errors);
-    TestFalse(TEXT("Mismatched objective policy is rejected"), Errors.IsEmpty());
+    TestFalse(
+        TEXT("Mismatched objective policy is rejected"), Errors.IsEmpty());
     return true;
 }
 
@@ -233,10 +234,11 @@ bool FSharMissionRuntimeTransitionTest::RunTest(const FString& Parameters)
     );
 
     auto* FailureRuntime = NewObject<USharMissionRuntime>();
-    // jig-ignore-next-line: exact syntax is indivisible
-    TestTrue(TEXT("Second mission starts"), FailureRuntime->StartMission(Mission));
-    // jig-ignore-next-line: exact syntax is indivisible
-    TestTrue(TEXT("Objective failure resolves"), FailureRuntime->ResolveObjective(false));
+    TestTrue(
+        TEXT("Second mission starts"), FailureRuntime->StartMission(Mission));
+    TestTrue(
+        TEXT("Objective failure resolves"),
+        FailureRuntime->ResolveObjective(false));
     TestTrue(
         TEXT("Failure terminal is applied"),
         FailureRuntime->GetState() == ESharMissionRuntimeState::Failed

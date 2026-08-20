@@ -1,11 +1,32 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
 //   - false
 // License-File:
 //   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Dyna Load Data syntax regression tests.
+// - Must-Not:
+//   - Production behavior or private source evidence.
+// - Allows:
+//   - Synthetic Dyna Load Data strings and exact parsed-operation assertions.
+// - Split-When:
+//   - Another Dyna Load grammar gains independent test fixtures.
+// - Merge-When:
+//   - The parser no longer has independently testable syntax behavior.
+// - Summary:
+//   - Dyna Load Data syntax regressions.
+// - Description:
+//   - Preserves focused unit evidence for the owning package-domain behavior.
+// - Usage:
+//   - Included only by the owning package-domain module under cfg(test).
+// - Defaults:
+//   - Invalid or ambiguous synthetic evidence fails closed.
+//
 
 //! Dyna Load Data syntax regressions.
 
@@ -39,6 +60,7 @@ fn parses_all_documented_postfix_operations_in_order() -> Result<(), String> {
         .map(|operation| (operation.target(), operation.kind()))
         .collect::<Vec<_>>();
     if actual != expected {
+        // jig-ignore-next-line: literal
         return Err(format!("Dyna Load Data operation order drifted: {actual:?}"));
     }
     Ok(())

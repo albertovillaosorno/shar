@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -35,15 +35,8 @@ use super::{Mode, parse};
 #[test]
 fn create_shape_accepts_repeated_sources() {
     let arguments = [
-        "create",
-        "--source",
-        "one",
-        "--source",
-        "two",
-        "--target",
-        "target",
-        "--output",
-        "plan.txt",
+        "create", "--source", "one", "--source", "two", "--target", "target",
+        "--output", "plan.txt",
     ]
     .map(str::to_owned);
     let parsed = parse(&arguments)

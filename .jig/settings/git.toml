@@ -1,0 +1,5 @@
+domain = "git"
+schema_version = 1
+required_hooks = ["commit-msg"]
+required_ignored_paths = []
+binary_extensions = ["7z", "a", "bmp", "dll", "dylib", "exe", "fbx", "gif", "gz", "ico", "jpeg", "jpg", "lib", "pdf", "png", "so", "uasset", "umap", "webp", "zip"]

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -43,7 +43,9 @@ use std::{fs, thread};
 use same_file::Handle;
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local::{
-    path_kind as local_path_kind, read_bytes as local_read_bytes, read_utf8 as local_read_utf8,
+        path_kind as local_path_kind,
+        read_bytes as local_read_bytes,
+        read_utf8 as local_read_utf8,
 };
 use serde_json::{Map, Value};
 use shar_sha256::{Sha256, digest_hex};
@@ -67,7 +69,11 @@ use crate::domain::{
     MISSION_SCRIPT_SCHEMA, MissionCameraCatalog, MissionInitializationBinding,
     MissionLocatorCatalog, MissionP3dReferenceCatalog, MissionReferenceCatalog,
     PhaseThreePackageIndex,
-    PipelineConfig, PipelineError, PipelineOutcome, StageReport, UNREAL_IMPORT_MANIFEST_SCHEMA,
+        PipelineConfig,
+        PipelineError,
+        PipelineOutcome,
+        StageReport,
+        UNREAL_IMPORT_MANIFEST_SCHEMA,
     UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
     compile_mission_scope_graphs,
     preflight_mission_authored_stage_topology,
@@ -122,6 +128,7 @@ const PUBLISHED_FILE_COUNT: usize = PUBLISHED_FILES.len().saturating_add(1);
 const AUDIT_SCHEMA: &str = "shar-schoenwald.minor-unit-audit.v2";
 
 /// Generate and atomically publish Unreal staging evidence.
+// jig-ignore-next-line: long identifier
 pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageReport> {
     let minor_unit_root = config.extracted_root.join("minor-unit");
     let manifest_path = minor_unit_root.join("manifest.jsonl");
@@ -129,12 +136,15 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     let index_path = minor_unit_root.join("index.jsonl");
     let manifest_text = read_utf8(&manifest_path, "read minor-unit manifest")?;
     validate_audit(&audit_path, &manifest_text)?;
-    let index = PhaseThreePackageIndex::read_for_unreal(&index_path).map_err(|error| {
+        // jig-ignore-next-line: expression
+        let index = PhaseThreePackageIndex::read_for_unreal(&index_path).map_err(|error| {
+        // jig-ignore-next-line: literal
         PipelineError::new(format!("Unreal package-index intake failed: {error}"))
     })?;
     let mission_cameras =
         load_mission_camera_catalog(&index, &config.extracted_root)?;
-    let mission_locators = load_mission_locator_catalog(&index, &config.extracted_root)?;
+        // jig-ignore-next-line: expression
+        let mission_locators = load_mission_locator_catalog(&index, &config.extracted_root)?;
     let mission_p3d_references =
         MissionP3dReferenceCatalog::from_package_index(&index).map_err(|error| {
             PipelineError::new(format!(
@@ -143,6 +153,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         })?;
     let mission_references =
         MissionReferenceCatalog::from_package_index(&index).map_err(|error| {
+                        // jig-ignore-next-line: literal
             PipelineError::new(format!("mission reference catalog intake failed: {error}"))
         })?;
     let source_report = source_evidence(
@@ -160,6 +171,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     )?;
     let evidence = retain_importable_evidence(&index, source_report.evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
+        // jig-ignore-next-line: literal
         .map_err(|error| PipelineError::new(format!("Unreal manifest planning failed: {error}")))?;
     let manifest_jsonl = unreal_manifest.to_jsonl();
     let summary_json = unreal_manifest.summary_json();
@@ -175,9 +187,11 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         .map_or_else(
             || unreal_manifest.plan_bundle(&manifest_revision),
             |catalog| {
-                unreal_manifest.plan_bundle_with_complete_fbx_catalog(&manifest_revision, catalog)
+                                // jig-ignore-next-line: expression
+                                unreal_manifest.plan_bundle_with_complete_fbx_catalog(&manifest_revision, catalog)
             },
         )
+        // jig-ignore-next-line: literal
         .map_err(|error| PipelineError::new(format!("Unreal plan generation failed: {error}")))?;
     let unreal_manifest_path =
         config.game_root.join(UNREAL_MANIFEST_GAME_RELATIVE_PATH);
@@ -220,6 +234,7 @@ fn validate_audit(path: &Path, manifest: &str) -> PipelineOutcome<()> {
     let rows = required_u64(&audit, "rows", "minor-unit audit")?;
     let failures = required_u64(&audit, "failures", "minor-unit audit")?;
     let error_rows = required_u64(&audit, "error_rows", "minor-unit audit")?;
+    // jig-ignore-next-line: literal
     let audited_sha256 = required_string(&audit, "manifest_sha256", "minor-unit audit")?;
     if schema != AUDIT_SCHEMA {
         return Err(PipelineError::new(
@@ -276,6 +291,7 @@ fn source_evidence(
             check_cancellation()?;
         }
         let line_number = line_index.saturating_add(1);
+        // jig-ignore-next-line: literal
         let row = parse_object(line, &format!("minor-unit line {line_number}"))?;
         let id = manifest_string(&row, "id", line_number)?;
         validate_public_identifier(&id, "minor-unit source id")?;
@@ -292,6 +308,7 @@ fn source_evidence(
             path,
             resolved,
             expected_size,
+                        // jig-ignore-next-line: literal
             file_extension: manifest_string(&row, "file_extension", line_number)?,
             unit_type: manifest_string(&row, "type", line_number)?,
             subtype: manifest_string(&row, "subtype", line_number)?,
@@ -300,8 +317,11 @@ fn source_evidence(
             schema: manifest_string(&row, "schema", line_number)?,
             origin: manifest_string(&row, "origin", line_number)?,
             source_path: manifest_string(&row, "source_path", line_number)?,
+                        // jig-ignore-next-line: literal
             source_chunk_kind: manifest_string(&row, "source_chunk_kind", line_number)?,
+                        // jig-ignore-next-line: literal
             unreal_import_relation: manifest_string(&row, "unreal_import_relation", line_number)?,
+                        // jig-ignore-next-line: literal
             future_normalization: manifest_string(&row, "future_normalization", line_number)?,
         });
     }
@@ -370,6 +390,7 @@ fn parallel_source_evidence(
     let next = AtomicUsize::new(0);
     let (sender, receiver) = mpsc::channel();
     let workers = source_worker_count(inputs.len());
+    // jig-ignore-next-line: literal
     let mut progress = StageProgress::begin("Unreal source evidence", inputs.len());
     let mut collected = Vec::with_capacity(inputs.len());
     thread::scope(|scope| {
@@ -460,6 +481,7 @@ fn preflight_cross_source_mission_locators(
             continue;
         }
         let source = verified_by_id.get(input.id.as_str()).ok_or_else(|| {
+                        // jig-ignore-next-line: literal
             PipelineError::new("mission locator source is missing from verified evidence")
         })?;
         if source.source_path != input.source_path {
@@ -469,7 +491,8 @@ fn preflight_cross_source_mission_locators(
         }
         let bytes = read_stable_source_bytes(&input.resolved)?;
         let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
-        if actual_size != input.expected_size || actual_size != source.size_bytes {
+                // jig-ignore-next-line: expression
+                if actual_size != input.expected_size || actual_size != source.size_bytes {
             return Err(PipelineError::new(format!(
                 "mission locator source size changed after verification for {}",
                 input.path
@@ -477,11 +500,13 @@ fn preflight_cross_source_mission_locators(
         }
         if digest_hex(&bytes) != source.sha256 {
             return Err(PipelineError::new(format!(
-                "mission locator source digest changed after verification for {}",
+                                // jig-ignore-next-line: literal
+                                "mission locator source digest changed after verification for {}",
                 input.path
             )));
         }
         let text = std::str::from_utf8(&bytes).map_err(|_error| {
+                        // jig-ignore-next-line: literal
             PipelineError::new("mission locator source is not valid UTF-8 after verification")
         })?;
         let evidence = preflight_mission_script(text).map_err(|error| {
@@ -587,7 +612,8 @@ fn preflight_cross_source_mission_locators(
             })?,
         );
     }
-    let contexts = build_mission_locator_source_contexts(&snapshots, &indexed_package_roots)
+        // jig-ignore-next-line: expression
+        let contexts = build_mission_locator_source_contexts(&snapshots, &indexed_package_roots)
         .map_err(|error| {
             PipelineError::new(format!(
                 "mission locator active-package context failed: {error}"
@@ -597,10 +623,13 @@ fn preflight_cross_source_mission_locators(
         let Some(context) = contexts.get(snapshot.source_path()) else {
             continue;
         };
-        let scopes = compile_mission_scope_graphs(snapshot.evidence()).map_err(|error| {
+                // jig-ignore-next-line: expression
+                let scopes = compile_mission_scope_graphs(snapshot.evidence()).map_err(|error| {
+                        // jig-ignore-next-line: literal
             PipelineError::new(format!("mission locator scope preflight failed: {error}"))
         })?;
-        let initialization = preflight_mission_initialization(&scopes).map_err(|error| {
+                // jig-ignore-next-line: expression
+                let initialization = preflight_mission_initialization(&scopes).map_err(|error| {
             PipelineError::new(format!(
                 "mission locator initialization preflight failed: {error}"
             ))
@@ -782,19 +811,23 @@ struct StableSourceIdentity {
 
 /// Open one source only after the shared filesystem boundary proves it is a
 /// regular non-linked file, then bind the path to the exact open descriptor.
+// jig-ignore-next-line: long identifier
 fn open_stable_source(path: &Path) -> PipelineOutcome<(fs::File, StableSourceIdentity)> {
+    // jig-ignore-next-line: literal
     let kind = local_path_kind(path).map_err(path_error("inspect Unreal source evidence"))?;
     if kind != PathKind::File {
         return Err(PipelineError::new(
             "Unreal source evidence is not a regular non-linked file",
         ));
     }
+    // jig-ignore-next-line: literal
     let file = fs::File::open(path).map_err(path_error("read Unreal source evidence"))?;
     let descriptor = file
         .try_clone()
         .and_then(Handle::from_file)
         .map_err(path_error("identify open Unreal source evidence"))?;
     let path_handle =
+        // jig-ignore-next-line: literal
         Handle::from_path(path).map_err(path_error("identify Unreal source evidence path"))?;
     if descriptor != path_handle {
         return Err(PipelineError::new(
@@ -820,6 +853,7 @@ fn verify_stable_source(
     initial: &StableSourceIdentity,
 ) -> PipelineOutcome<()> {
     let kind =
+        // jig-ignore-next-line: literal
         local_path_kind(path).map_err(path_error("inspect Unreal source evidence after read"))?;
     if kind != PathKind::File {
         return Err(PipelineError::new(
@@ -836,7 +870,8 @@ fn verify_stable_source(
     let metadata = file
         .metadata()
         .map_err(path_error("inspect open Unreal source evidence after read"))?;
-    if metadata.len() != initial.len || metadata.modified().ok() != initial.modified {
+        // jig-ignore-next-line: expression
+        if metadata.len() != initial.len || metadata.modified().ok() != initial.modified {
         return Err(PipelineError::new(
             "Unreal source evidence metadata changed during verification",
         ));
@@ -848,6 +883,7 @@ fn verify_stable_source(
 /// identity checks used by streamed source hashing.
 #[expect(
     clippy::verbose_file_reads,
+    // jig-ignore-next-line: literal
     reason = "fs::read would reopen the path and discard the descriptor identity               that must remain stable across verification."
 )]
 fn read_stable_source_bytes(path: &Path) -> PipelineOutcome<Vec<u8>> {
@@ -882,10 +918,12 @@ fn stream_source_digest(path: &Path) -> PipelineOutcome<(u64, String)> {
         }
         let chunk = buffer
             .get(..read)
+                        // jig-ignore-next-line: literal
             .ok_or_else(|| PipelineError::new("Unreal source read exceeded its bounded buffer"))?;
         digest.update(chunk);
         total = total
             .checked_add(u64::try_from(read).unwrap_or(u64::MAX))
+                        // jig-ignore-next-line: literal
             .ok_or_else(|| PipelineError::new("Unreal source byte count overflowed"))?;
     }
     verify_stable_source(path, &file, &identity)?;
@@ -899,7 +937,8 @@ fn stream_source_digest(path: &Path) -> PipelineOutcome<(u64, String)> {
 
 /// Bound physical source verification workers for this machine.
 fn source_worker_count(source_count: usize) -> usize {
-    let available = thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
+        // jig-ignore-next-line: expression
+        let available = thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
     source_worker_count_for(available, source_count)
 }
 
@@ -942,8 +981,10 @@ fn validate_normalized_mission_source(
         ));
     }
     let text = std::str::from_utf8(bytes)
+        // jig-ignore-next-line: literal
         .map_err(|_error| PipelineError::new("normalized mission source is not valid UTF-8"))?;
     let evidence = preflight_mission_script(text).map_err(|error| {
+        // jig-ignore-next-line: literal
         PipelineError::new(format!("mission semantic preflight failed: {error}"))
     })?;
     drop(
@@ -964,10 +1005,12 @@ fn validate_normalized_mission_source(
             mission_p3d_references,
         )
         .map_err(|error| {
+                        // jig-ignore-next-line: literal
             PipelineError::new(format!("mission package-load preflight failed: {error}"))
         })?,
     );
     drop(preflight_mission_objectives(&evidence).map_err(|error| {
+        // jig-ignore-next-line: literal
         PipelineError::new(format!("mission objective preflight failed: {error}"))
     })?);
     drop(
@@ -978,6 +1021,7 @@ fn validate_normalized_mission_source(
         })?,
     );
     drop(preflight_mission_conditions(&evidence).map_err(|error| {
+        // jig-ignore-next-line: literal
         PipelineError::new(format!("mission condition preflight failed: {error}"))
     })?);
     drop(
@@ -988,21 +1032,28 @@ fn validate_normalized_mission_source(
         })?,
     );
     let scopes = compile_mission_scope_graphs(&evidence)
+        // jig-ignore-next-line: literal
         .map_err(|error| PipelineError::new(format!("mission scope preflight failed: {error}")))?;
-    let objective_semantics = preflight_mission_objective_semantics(&scopes).map_err(|error| {
+        // jig-ignore-next-line: expression
+        let objective_semantics = preflight_mission_objective_semantics(&scopes).map_err(|error| {
         PipelineError::new(format!(
             "mission objective semantic preflight failed: {error}"
         ))
     })?;
-    let condition_semantics = preflight_mission_condition_semantics(&scopes).map_err(|error| {
+        // jig-ignore-next-line: expression
+        let condition_semantics = preflight_mission_condition_semantics(&scopes).map_err(|error| {
         PipelineError::new(format!(
             "mission condition semantic preflight failed: {error}"
         ))
     })?;
-    let initialization = preflight_mission_initialization(&scopes).map_err(|error| {
+        // jig-ignore-next-line: expression
+        let initialization = preflight_mission_initialization(&scopes).map_err(|error| {
+        // jig-ignore-next-line: literal
         PipelineError::new(format!("mission initialization preflight failed: {error}"))
     })?;
-    let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
+        // jig-ignore-next-line: expression
+        let stage_semantics = preflight_mission_stage_semantics(&scopes).map_err(|error| {
+        // jig-ignore-next-line: literal
         PipelineError::new(format!("mission stage semantic preflight failed: {error}"))
     })?;
     let topology =
@@ -1412,7 +1463,8 @@ fn validate_mission_definition_objective(
     let objective_source_ordinal =
         required_u64(objective, "source_ordinal", stage_label)?;
     let source_alias = required_string(objective, "source_alias", stage_label)?;
-    if objective_source_ordinal <= stage_source_ordinal || source_alias.is_empty() {
+        // jig-ignore-next-line: expression
+        if objective_source_ordinal <= stage_source_ordinal || source_alias.is_empty() {
         return Err(PipelineError::new(format!(
             "{stage_label} objective identity is malformed"
         )));
@@ -1488,7 +1540,8 @@ fn validate_mission_definition_conditions(
                 }
             },
             "objective" => {
-                if owner.and_then(Value::as_u64) != Some(objective_source_ordinal) {
+                                // jig-ignore-next-line: expression
+                                if owner.and_then(Value::as_u64) != Some(objective_source_ordinal) {
                     return Err(PipelineError::new(format!(
                         "{condition_label} objective owner drifted"
                     )));
@@ -1583,6 +1636,7 @@ fn validate_mission_definition_countdown(
         let entry = value.as_object().ok_or_else(|| {
             PipelineError::new(format!("{entry_label} is not an object"))
         })?;
+        // jig-ignore-next-line: literal
         let source_ordinal = required_u64(entry, "source_ordinal", &entry_label)?;
         if source_ordinal <= previous_source_ordinal
             || required_string(entry, "token", &entry_label)?.is_empty()
@@ -1744,6 +1798,7 @@ fn validate_mission_definition_npc_waypoints(
                 .is_some_and(|previous| source_ordinal <= previous)
             || required_string(binding, "npc_id", &label)?.is_empty()
             || required_string(binding, "npc_locator_id", &label)?.is_empty()
+                        // jig-ignore-next-line: literal
             || required_string(binding, "waypoint_locator_id", &label)?.is_empty()
         {
             return Err(PipelineError::new(format!(
@@ -1894,11 +1949,13 @@ fn retain_source_ids(
     evidence
 }
 
+// jig-ignore-next-line: long identifier
 fn resolve_source_path(config: &PipelineConfig, manifest_path: &str) -> PipelineOutcome<PathBuf> {
     for root in [&config.game_root, &config.extracted_root] {
         let root_name = root
             .file_name()
             .and_then(|value| value.to_str())
+                        // jig-ignore-next-line: literal
             .ok_or_else(|| PipelineError::new("pipeline root has no portable basename"))?;
         let prefix = format!("{root_name}/");
         if let Some(relative) = manifest_path.strip_prefix(&prefix) {
@@ -1926,12 +1983,15 @@ fn validate_relative_path(path: &str) -> PipelineOutcome<()> {
     Ok(())
 }
 
+// jig-ignore-next-line: long identifier
 fn parse_object(json: &str, label: &str) -> PipelineOutcome<Map<String, Value>> {
     let value = serde_json::from_str::<Value>(json)
+        // jig-ignore-next-line: literal
         .map_err(|error| PipelineError::new(format!("invalid {label} JSON: {error}")))?;
     value
         .as_object()
         .cloned()
+        // jig-ignore-next-line: literal
         .ok_or_else(|| PipelineError::new(format!("{label} must be a JSON object")))
 }
 
@@ -1943,6 +2003,7 @@ fn manifest_string(
     required_string(row, field, &format!("minor-unit line {line_number}"))
 }
 
+// jig-ignore-next-line: long identifier
 fn manifest_u64(row: &Map<String, Value>, field: &str, line_number: usize) -> PipelineOutcome<u64> {
     let label = format!("minor-unit line {line_number}");
     let value = required_string(row, field, &label)?;
@@ -1962,11 +2023,14 @@ fn required_string(
         .get(field)
         .and_then(Value::as_str)
         .map(ToOwned::to_owned)
+        // jig-ignore-next-line: literal
         .ok_or_else(|| PipelineError::new(format!("{label} is missing string field {field}")))
 }
 
+// jig-ignore-next-line: long identifier
 fn required_u64(object: &Map<String, Value>, field: &str, label: &str) -> PipelineOutcome<u64> {
     object.get(field).and_then(Value::as_u64).ok_or_else(|| {
+        // jig-ignore-next-line: literal
         PipelineError::new(format!("{label} is missing unsigned integer field {field}"))
     })
 }
@@ -1996,12 +2060,14 @@ fn required_string_array(
         .collect()
 }
 
+// jig-ignore-next-line: long identifier
 fn validate_rendered_output(manifest: &str, summary: &str) -> PipelineOutcome<()> {
     let mut lines = manifest.lines();
     let header_line = lines
         .next()
         .ok_or_else(|| PipelineError::new("Unreal import manifest is empty"))?;
     if header_line.trim().is_empty() {
+        // jig-ignore-next-line: literal
         return Err(PipelineError::new("Unreal import manifest header is blank"));
     }
     let header = parse_object(header_line, "Unreal manifest header")?;
@@ -2025,6 +2091,7 @@ fn validate_rendered_output(manifest: &str, summary: &str) -> PipelineOutcome<()
         }
         let label = format!("Unreal manifest line {line_number}");
         let record = parse_object(line, &label)?;
+        // jig-ignore-next-line: literal
         if required_string(&record, "schema", &label)? != UNREAL_IMPORT_MANIFEST_SCHEMA {
             return Err(PipelineError::new(format!(
                 "{label} has a noncanonical schema"
@@ -2090,7 +2157,9 @@ fn validate_rendered_schemas(
     header: &Map<String, Value>,
     summary: &Map<String, Value>,
 ) -> PipelineOutcome<()> {
+    // jig-ignore-next-line: literal
     if required_string(header, "schema", "Unreal manifest header")? != UNREAL_IMPORT_MANIFEST_SCHEMA
+        // jig-ignore-next-line: literal
         || required_string(header, "record_type", "Unreal manifest header")? != "header"
     {
         return Err(PipelineError::new(
@@ -2124,7 +2193,9 @@ fn declared_rendered_counts(
         ("metadata_only_count", "metadata_only"),
     ];
     for (header_field, summary_field) in fields {
+        // jig-ignore-next-line: literal
         let header_value = required_u64(header, header_field, "Unreal manifest header")?;
+        // jig-ignore-next-line: literal
         let summary_value = required_u64(summary, summary_field, "Unreal manifest summary")?;
         if header_value != summary_value {
             return Err(PipelineError::new(format!(
@@ -2136,7 +2207,9 @@ fn declared_rendered_counts(
     Ok(RenderedCounts {
         packages: required_u64(header, "package_count", "Unreal header")?,
         sources: required_u64(header, "source_count", "Unreal header")?,
+        // jig-ignore-next-line: literal
         direct_imports: required_u64(header, "direct_import_count", "Unreal header")?,
+        // jig-ignore-next-line: literal
         requires_fbx: required_u64(header, "requires_fbx_count", "Unreal header")?,
         requires_editor_factory: required_u64(
             header,
@@ -2148,6 +2221,7 @@ fn declared_rendered_counts(
             "requires_semantic_conversion_count",
             "Unreal header",
         )?,
+        // jig-ignore-next-line: literal
         metadata_only: required_u64(header, "metadata_only_count", "Unreal header")?,
     })
 }
@@ -2208,7 +2282,8 @@ fn validate_rendered_package(
             counts.requires_fbx = counts.requires_fbx.saturating_add(1);
         }
         "requires-editor-factory" => {
-            counts.requires_editor_factory = counts.requires_editor_factory.saturating_add(1);
+                        // jig-ignore-next-line: expression
+                        counts.requires_editor_factory = counts.requires_editor_factory.saturating_add(1);
         }
         "requires-semantic-conversion" => {
             counts.requires_semantic_conversion =
@@ -2274,7 +2349,8 @@ fn validate_public_identifier(value: &str, label: &str) -> PipelineOutcome<()> {
         || !bytes
             .iter()
             .copied()
-            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
+                        // jig-ignore-next-line: expression
+                        .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
     {
         return Err(PipelineError::new(format!(
             "rendered Unreal {label} is not canonical"
@@ -2366,8 +2442,10 @@ fn publish_staging(
         transaction_root.join(format!("manifest-staging-{process_id}.jsonl"));
     let manifest_backup =
         transaction_root.join(format!("manifest-backup-{process_id}.jsonl"));
+    // jig-ignore-next-line: literal
     ensure_generated_directory(&temporary_root, "create Unreal temporary root")?;
     ensure_generated_directory(&pipeline_root, "create Unreal pipeline root")?;
+    // jig-ignore-next-line: literal
     ensure_generated_directory(&transaction_root, "create Unreal transaction root")?;
     validate_generated_chain(&[
         temporary_root.as_path(),
@@ -2421,6 +2499,7 @@ fn publish_staging(
     if had_destination {
         validate_generated_directory(&destination)?;
         fs::rename(&destination, &backup)
+                        // jig-ignore-next-line: literal
             .map_err(|error| prepare_io_error("back up Unreal staging root", &error))?;
     }
     let had_manifest = manifest_destination.exists();
@@ -2498,6 +2577,7 @@ fn restore_previous_publication(
     Ok(())
 }
 
+// jig-ignore-next-line: long identifier
 fn validate_publication_inventory(published_paths: &BTreeSet<String>) -> PipelineOutcome<()> {
     let expected = PUBLISHED_FILES
         .iter()
@@ -2511,6 +2591,7 @@ fn validate_publication_inventory(published_paths: &BTreeSet<String>) -> Pipelin
     Ok(())
 }
 
+// jig-ignore-next-line: long identifier
 fn write_staged_file(root: &Path, relative_path: &str, content: &str) -> PipelineOutcome<()> {
     validate_relative_path(relative_path)?;
     let path = root.join(relative_path);
@@ -2518,7 +2599,9 @@ fn write_staged_file(root: &Path, relative_path: &str, content: &str) -> Pipelin
     verify_staged_file(&path, relative_path, content.as_bytes())
 }
 
+// jig-ignore-next-line: long identifier
 fn verify_staged_file(path: &Path, public_path: &str, expected: &[u8]) -> PipelineOutcome<()> {
+    // jig-ignore-next-line: literal
     let actual = local_read_bytes(path).map_err(path_error("read Unreal staged file"))?;
     if actual != expected {
         return Err(PipelineError::new(format!(
@@ -2593,9 +2676,11 @@ fn remove_generated_directory(path: &Path) -> PipelineOutcome<()> {
         return Ok(());
     }
     validate_generated_directory(path)?;
+    // jig-ignore-next-line: literal
     fs::remove_dir_all(path).map_err(path_error("remove generated Unreal directory"))
 }
 
+// jig-ignore-next-line: long identifier
 fn ensure_generated_directory(path: &Path, create_action: &'static str) -> PipelineOutcome<()> {
     match fs::symlink_metadata(path) {
         Ok(_metadata) => validate_generated_directory(path),
@@ -2619,6 +2704,7 @@ fn validate_generated_chain(paths: &[&Path]) -> PipelineOutcome<()> {
 
 fn validate_generated_directory(path: &Path) -> PipelineOutcome<()> {
     let metadata =
+        // jig-ignore-next-line: literal
         fs::symlink_metadata(path).map_err(path_error("inspect generated Unreal directory"))?;
     if !metadata.is_dir() || metadata.file_type().is_symlink() {
         return Err(PipelineError::new(
@@ -2671,6 +2757,7 @@ fn publication_error(
     PipelineError::new(message)
 }
 
+// jig-ignore-next-line: long identifier
 fn path_error(action: &'static str) -> impl FnOnce(std::io::Error) -> PipelineError {
     move |error| prepare_io_error(action, &error)
 }

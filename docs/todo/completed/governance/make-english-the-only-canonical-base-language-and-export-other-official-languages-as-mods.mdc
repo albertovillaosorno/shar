@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: make-english-the-only-canonical-base-language-and-export-other-official-languages-as-mods
 status: completed
 priority: P0
@@ -53,7 +55,8 @@ closing the previous exact-header bypass. `cargo test -p game_manifest` and the
 794-test pipeline library suite pass, and the local `game/` passes
 `validate-game` with 103 curated generic minimums plus exact required sources.
 Canonical language-mod generation now lives in the internal Rust crate
-`src/localization/languages/`, not as a user-facing tool. The contract covers the
+`src/localization/languages/`, not as a user-facing tool. The contract covers
+the
 original TextBible bytes/sidecar, dialogue RCF, localized readme, localized
 loading/license UI assets, and normalized cinematic audio. Original runtime FMV
 indexes 1/2/3 map to extracted tracks 02/03/04 for French/German/Spanish. Rust
@@ -82,8 +85,10 @@ then adapted official-language generation to that same contract: every published
 language bundle carries `mod.json`, `shar.localization.<language>` identity,
 content-only trust, exact package members, deterministic revision, and explicit
 conflicts with the other official language overlays. Repeated synthetic exports
-are byte-identical and the Rust suite now has 10 passing language tests including
-package-contract parsing and complete Spanish dialogue/text/cinematic membership.
+are byte-identical and the Rust suite now has 10 passing language tests
+including
+package-contract parsing and complete Spanish dialogue/text/cinematic
+membership.
 
 The README now states English as the sole canonical base language, explains the
 normalized official-language package shape in validation/mod installation text,

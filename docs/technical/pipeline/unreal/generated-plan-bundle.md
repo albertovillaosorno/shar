@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText:
-  - Copyright (c) 2026 Alberto Villa Osorno.
+  - Copyright © 2026 Alberto Villa Osorno.
 SPDX-License-Identifier:
   - MIT
 Confidential:
@@ -47,7 +47,8 @@ SHA-256 generation may execute concurrently through a bounded worker pool. Each
 worker first requires a regular non-linked source through the shared filesystem
 boundary, binds the pathname to the opened physical file identity, and rejects
 identity, byte-length, or modification-time drift after the read. Mission JSON
-is retained only for its semantic preflight; other source payloads stream through
+is retained only for its semantic preflight; other source payloads stream
+through
 the shared incremental SHA-256 boundary instead of being retained wholesale.
 Manifest rows are parsed and validated before worker dispatch, completed results
 are restored to manifest order before planning, and therefore worker scheduling
@@ -119,7 +120,8 @@ FBX version `7700`. Optional `texture` records carry the owning package, exact
 `textures/*.png` path, byte count, and lowercase SHA-256 digest. Texture records
 are verified provenance for the external FBX package; they do not replace the
 separate Unreal `Texture2D` operations and do not independently promote model
-readiness. The JSONL uses UTF-8, LF line endings, no blank records, and one final
+readiness. The JSONL uses UTF-8, LF line endings, no blank records, and one
+final
 LF.
 
 An absent root is not treated as an error: model operations remain
@@ -202,7 +204,8 @@ from a stable file descriptor, detects size or identity changes during the read,
 deduplicates shared source evidence, and compiles only exact reviewed native
 routes. Operations still in `requires-conversion` are counted but not opened.
 
-`plan-capabilities` reruns both local gates before connecting to Unreal. It lists
+`plan-capabilities` reruns both local gates before connecting to Unreal. It
+lists
 the live Toolset Registry and describes only toolsets required by compiled
 routes. It validates exact input and output schemas for native import, explicit
 save, existence, class, dirty-state read-back, and compensating deletion without
@@ -280,10 +283,12 @@ object, declares no generic `DataAsset`, and emits no asset-construction
 operation. Mission-script bundles are one example: they must compile into typed
 mission definitions and bindings for the shared mission StateTree contract,
 not one ad hoc StateTree or abstract data asset per source bundle. Pure3D sprite
-layouts, Scrooby project headers, TextureFont evidence, and TextBible headers are
+layouts, Scrooby project headers, TextureFont evidence, and TextBible headers
+are
 also semantic evidence rather than standalone `Texture2D`, `WidgetBlueprint`,
 `Font`, or `StringTable` factory inputs. TextureFont extraction preserves its
-embedded atlas PNGs plus each fixed 40-byte glyph record as ten raw little-endian
+embedded atlas PNGs plus each fixed 40-byte glyph record as ten raw
+little-endian
 words; field semantics remain unassigned until an authoritative compiler mapping
 exists. A direct `Texture2D` target requires a physical PNG member owned by the
 package instead of a sprite/layout JSON row.

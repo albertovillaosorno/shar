@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -41,8 +41,7 @@ use crate::application::ValidateManifest;
 use crate::domain::MANIFEST_FILE_NAME;
 
 /// Exact usage contract for manifest validation.
-const USAGE: &str =
-    "usage: validate-game [game-directory] [manifest-path]";
+const USAGE: &str = "usage: validate-game [game-directory] [manifest-path]";
 
 /// Process-neutral minimum-manifest validation CLI program.
 #[derive(Debug, Default, Clone, Copy)]
@@ -56,10 +55,9 @@ impl CliProgram for ValidateManifestCli {
         let game_dir = arguments
             .first()
             .map_or_else(|| PathBuf::from("game"), PathBuf::from);
-        let manifest_path = arguments.get(1).map_or_else(
-            || game_dir.join(MANIFEST_FILE_NAME),
-            PathBuf::from,
-        );
+        let manifest_path = arguments
+            .get(1)
+            .map_or_else(|| game_dir.join(MANIFEST_FILE_NAME), PathBuf::from);
         match ValidateManifest::execute_with_manifest(
             &FilesystemGameTree,
             &FilesystemTextStore,

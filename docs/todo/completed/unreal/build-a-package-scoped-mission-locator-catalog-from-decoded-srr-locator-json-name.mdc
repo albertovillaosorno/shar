@@ -1,11 +1,17 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: build-a-package-scoped-mission-locator-catalog-from-decoded-srr-locator-json-name
 status: completed
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
 children: []
 ---
@@ -26,7 +32,8 @@ global-name precedence.
 
 ## Dependencies
 
-Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+Parent task:
+`resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
 
 ## Evidence
 

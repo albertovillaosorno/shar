@@ -1,11 +1,17 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: preserve-exact-ownership-for-all-61-canonical-presentation-bitmap-package-bindings-two
 status: completed
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
 children: []
 ---
@@ -30,7 +36,8 @@ remain separate boundaries.
 
 ## Dependencies
 
-Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+Parent task:
+`resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
 
 ## Evidence
 

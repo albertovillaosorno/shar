@@ -31,7 +31,8 @@ finds 15/15 function identities synchronized and zero missing relative Markdown
 targets.
 
 Current authority was also searched for retired paths from the language, LMLM,
-VWJ, icon, and repository-root mod transitions. No stale active reference remains;
+VWJ, icon, and repository-root mod transitions. No stale active reference
+remains;
 historical completed TODO evidence may still name retired paths to explain what
 was removed. Future stale path changes fail the architecture tests instead of
 relying on a manual cleanup sweep.

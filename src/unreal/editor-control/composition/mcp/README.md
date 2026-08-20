@@ -115,10 +115,12 @@ The current reviewed compiler maps decoded images to
 `TextureTools.import_file`, PCM WAV files to the project-owned
 `SharImportToolset.ImportSoundWave`, verified HAP MOV files to
 `SharImportToolset.ImportFileMediaSource`, and ready static-mesh FBX operations
-to `SharImportToolset.ImportStaticMesh`. The editor-only SHAR toolset loads after
+to `SharImportToolset.ImportStaticMesh`. The editor-only SHAR toolset loads
+after
 engine initialization and registers through ToolsetRegistry. WAV and static FBX
 use synchronous automated asset-import tasks without replacement or implicit
-save. Static FBX pins the import to one combined `StaticMesh`, preserves authored
+save. Static FBX pins the import to one combined `StaticMesh`, preserves
+authored
 normals, and disables material, texture, animation, LOD, collision, Nanite, and
 lightmap-UV generation. HAP copies verified bytes transactionally beneath
 `Content/Movies/Generated/SHAR/`, creates a `UFileMediaSource`, and stores the
@@ -137,7 +139,8 @@ workspace locations: `extracted/...` and `fbx-assets/...` resolve below
 `game/manifest/unreal.jsonl`. Reads do not follow links, SHA-256 streams from
 stable file descriptors, and physical paths stay out of public reports. If an
 import response is lost after the asset appears,
-`plan-apply` treats that destination as created and compensates it. A lost delete
+`plan-apply` treats that destination as created and compensates it. A lost
+delete
 response is accepted only when independent existence read-back proves the asset
 is already absent.
 

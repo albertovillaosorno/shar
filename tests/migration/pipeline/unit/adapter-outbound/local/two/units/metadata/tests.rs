@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -37,6 +37,7 @@ use super::{classify_minor_unit, json_string_field_prefix, straggler_schema};
 
 #[test]
 fn bounded_schema_reader_preserves_exact_revision() -> Result<(), String> {
+    // jig-ignore-next-line: literal
     let text = r#"{"schema" : "shar-schoenwald.straggler.mission-script.v3","semantic_family":"mission-script"}"#;
     if json_string_field_prefix(text, "schema")
         != Some("shar-schoenwald.straggler.mission-script.v3")
@@ -55,7 +56,9 @@ fn bounded_schema_reader_preserves_exact_revision() -> Result<(), String> {
 fn straggler_schema_rejects_missing_mismatched_or_invalid_revision() {
     for (text, family) in [
         (r#"{"semantic_family":"mission-script"}"#, "straggler.mission-script"),
+        // jig-ignore-next-line: literal
         (r#"{"schema":"shar-schoenwald.straggler.config-script.v2"}"#, "straggler.mission-script"),
+        // jig-ignore-next-line: literal
         (r#"{"schema":"shar-schoenwald.straggler.mission-script.vx"}"#, "straggler.mission-script"),
     ] {
         assert!(straggler_schema(text, family).is_err());
@@ -63,6 +66,7 @@ fn straggler_schema_rejects_missing_mismatched_or_invalid_revision() {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn classifier_preserves_physical_mission_schema_revision() -> Result<(), String> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(".temp")
@@ -75,9 +79,11 @@ fn classifier_preserves_physical_mission_schema_revision() -> Result<(), String>
         .map_err(|error| error.to_string())?;
     fs::write(
         &path,
+        // jig-ignore-next-line: literal
         br#"{"schema":"shar-schoenwald.straggler.mission-script.v3","semantic_family":"mission-script"}"#,
     )
     .map_err(|error| error.to_string())?;
+    // jig-ignore-next-line: literal
     let result = classify_minor_unit(&root, "extracted/game/mission.json", "json")
         .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;

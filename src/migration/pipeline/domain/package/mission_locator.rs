@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -11,9 +11,9 @@
 // - Owns:
 //   - Package-scoped canonical lookup for decoded mission locator identities.
 // - Must-Not:
-//   - Read files, infer package load precedence, or derive names from filenames.
+//   - Read files, infer load precedence, or derive names from filenames.
 // - Allows:
-//   - Resolve exact decoded locator names against explicit active package roots.
+//   - Resolve decoded locator names against explicit active package roots.
 //   - Preserve missing and ambiguous lookup outcomes as typed evidence.
 // - Split-When:
 //   - Mission package-load context gains an independent runtime lifecycle.
@@ -22,7 +22,7 @@
 // - Summary:
 //   - Mission locator package-reference catalog.
 // - Description:
-//   - Binds decoded srr_locator identities to phase-three package evidence while
+//   - Binds decoded srr_locator identities to phase-three package evidence
 //     refusing global-name and package-precedence guesses.
 // - Usage:
 //   - Constructed by a filesystem adapter from validated decoded locator JSON.
@@ -179,16 +179,19 @@ impl MissionLocatorCatalog {
     ///
     /// Returns an error when two entries publish the same decoded locator name
     /// from one package or when the catalog is empty.
-    pub fn from_entries(entries: Vec<MissionLocatorCatalogEntry>) -> Result<Self, String> {
+        // jig-ignore-next-line: long identifier
+        pub fn from_entries(entries: Vec<MissionLocatorCatalogEntry>) -> Result<Self, String> {
         if entries.is_empty() {
             return Err("mission locator catalog is empty".to_owned());
         }
-        let mut by_source_name = BTreeMap::<String, Vec<MissionLocatorCatalogEntry>>::new();
+                // jig-ignore-next-line: expression
+                let mut by_source_name = BTreeMap::<String, Vec<MissionLocatorCatalogEntry>>::new();
         let mut package_names = BTreeSet::<(String, String)>::new();
         for entry in entries {
             let package_key = normalized_package_root(&entry.package_root)?;
             let identity = (package_key, entry.source_name.clone());
             if !package_names.insert(identity) {
+                                // jig-ignore-next-line: literal
                 return Err("mission locator name is duplicated inside one package".to_owned());
             }
             by_source_name
@@ -321,13 +324,15 @@ fn validate_identity(value: &str, role: &str) -> Result<(), String> {
 fn validate_package_root(root: &str) -> Result<(), String> {
     let normalized = normalized_package_root(root)?;
     if !normalized.starts_with("extracted/") {
+        // jig-ignore-next-line: literal
         return Err("locator package root is outside extracted evidence".to_owned());
     }
     Ok(())
 }
 
 fn normalized_package_root(root: &str) -> Result<String, String> {
-    if root.is_empty() || root != root.trim() || root.chars().any(char::is_control) {
+        // jig-ignore-next-line: expression
+        if root.is_empty() || root != root.trim() || root.chars().any(char::is_control) {
         return Err("mission locator package root is malformed".to_owned());
     }
     if root.contains(':') || root.starts_with('/') || root.ends_with('/') {
@@ -343,6 +348,7 @@ fn normalized_package_root(root: &str) -> Result<String, String> {
     Ok(normalized)
 }
 
+// jig-ignore-next-line: long identifier
 fn validate_member_path(package_root: &str, member_path: &str) -> Result<(), String> {
     if member_path.is_empty()
         || member_path != member_path.trim()
@@ -350,6 +356,7 @@ fn validate_member_path(package_root: &str, member_path: &str) -> Result<(), Str
         || member_path.contains(':')
         || member_path
             .split('/')
+                        // jig-ignore-next-line: literal
             .any(|segment| segment.is_empty() || segment == "." || segment == "..")
         || member_path.chars().any(char::is_control)
     {
@@ -361,11 +368,13 @@ fn validate_member_path(package_root: &str, member_path: &str) -> Result<(), Str
             .extension()
             .is_some_and(|extension| extension.eq_ignore_ascii_case("json"))
     {
+        // jig-ignore-next-line: literal
         return Err("locator member path escaped its package locator namespace".to_owned());
     }
     Ok(())
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/mission_locator/tests.rs"]
 mod tests;

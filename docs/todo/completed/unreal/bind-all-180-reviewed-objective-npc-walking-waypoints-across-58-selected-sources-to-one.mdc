@@ -1,11 +1,17 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: bind-all-180-reviewed-objective-npc-walking-waypoints-across-58-selected-sources-to-one
 status: completed
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
 children: []
 ---
@@ -26,7 +32,8 @@ inferring pathfinding or traversal.
 
 ## Dependencies
 
-Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+Parent task:
+`resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
 
 ## Evidence
 

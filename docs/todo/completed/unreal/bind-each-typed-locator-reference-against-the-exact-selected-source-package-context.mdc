@@ -1,15 +1,23 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: bind-each-typed-locator-reference-against-the-exact-selected-source-package-context
 status: completed
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Bind each typed locator reference against the exact selected source package context…
 
 Bind each typed locator reference against the exact selected source package
@@ -47,7 +55,8 @@ exact `AddObjective` source ordinal. Ownership does not alter `Resolved`,
 
 ## Dependencies
 
-Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+Parent task:
+`resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
 
 ## Evidence
 

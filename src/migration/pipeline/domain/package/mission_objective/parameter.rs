@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -360,5 +360,6 @@ fn validate_source_identity(value: &str, label: &str) -> Result<(), String> {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../../tests/migration/pipeline/unit/domain/package/mission_objective/parameter_tests.rs"]
 mod tests;

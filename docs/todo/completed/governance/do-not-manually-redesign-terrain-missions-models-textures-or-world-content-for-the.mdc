@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: do-not-manually-redesign-terrain-missions-models-textures-or-world-content-for-the
 status: completed
 priority: P0
@@ -26,15 +28,19 @@ No explicit task dependency was recorded in the legacy TODO.
 
 ## Evidence
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
 The accepted [faithful-base governance ADR](../../../adr/governance/faithful-base-and-optional-mod-boundary.md)
-now makes source evidence, not operator/editor/aesthetic preference, the authority
+now makes source evidence, not operator/editor/aesthetic preference, the
+authority
 for canonical terrain, missions, world layout, models, textures, materials,
 audio, cinematics, UI, progression, tuning, and localization. It explicitly
 rejects hand-edited terrain, placement, mission, material, and texture changes
 without source-backed conversion evidence.
 
 Existing world-assembly and native-asset ADRs already reject manual placement,
-copy-paste, drag-and-drop production assembly, hidden editor repair, map offsets,
+copy-paste, drag-and-drop production assembly, hidden editor repair, map
+offsets,
 and replacement terrain. The remaining offset/distant-object/LOD/vehicle
 questions stay open as P1 conversion audits; governance does not pre-approve any
 of those corrections.

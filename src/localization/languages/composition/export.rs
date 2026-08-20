@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -30,9 +30,8 @@
 
 //! Source-backed official-language export composition.
 
-use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
+use std::{fs, io};
 
 use schoenwald_filesystem::PathKind;
 use schoenwald_filesystem::adapters::driving::local;
@@ -264,9 +263,7 @@ fn parse_text_table(
         .split('\t')
         .collect::<Vec<_>>();
     let expected_codes = ["E", "F", "G", "I", "S"];
-    let expected_names = [
-        "ENGLISH", "FRENCH", "GERMAN", "ITALIAN", "SPANISH",
-    ];
+    let expected_names = ["ENGLISH", "FRENCH", "GERMAN", "ITALIAN", "SPANISH"];
     if columns.get(3..8) != Some(&expected_codes)
         || names.get(3..8) != Some(&expected_names)
     {
@@ -291,33 +288,22 @@ fn parse_text_table(
             let message = "TextBible language value is missing";
             ExportError::Contract(message.to_owned())
         })?;
-        let screen = fields
-            .first()
-            .copied()
-            .ok_or_else(|| {
-                ExportError::Contract(
-                    "TextBible screen value is missing".to_owned(),
-                )
-            })?;
-        let key = fields
-            .get(1)
-            .copied()
-            .ok_or_else(|| {
-                let message = "TextBible key value is missing";
-                ExportError::Contract(message.to_owned())
-            })?;
+        let screen = fields.first().copied().ok_or_else(|| {
+            ExportError::Contract(
+                "TextBible screen value is missing".to_owned(),
+            )
+        })?;
+        let key = fields.get(1).copied().ok_or_else(|| {
+            let message = "TextBible key value is missing";
+            ExportError::Contract(message.to_owned())
+        })?;
         let english = fields.get(3).copied().ok_or_else(|| {
             let message = "TextBible English value is missing";
             ExportError::Contract(message.to_owned())
         })?;
-        let notes = fields
-            .get(8)
-            .copied()
-            .ok_or_else(|| {
-                ExportError::Contract(
-                    "TextBible notes value is missing".to_owned(),
-                )
-            })?;
+        let notes = fields.get(8).copied().ok_or_else(|| {
+            ExportError::Contract("TextBible notes value is missing".to_owned())
+        })?;
         if value == "???" {
             placeholders = placeholders.saturating_add(1);
         } else {
@@ -367,11 +353,9 @@ fn copy_source(
         )));
     }
     let bytes = local::read_bytes(&source)?;
-    let destination = schoenwald_filesystem::resolve_under(
-        &staging.join("source"),
-        relative,
-    )
-    .map_err(|error| ExportError::Contract(error.to_string()))?;
+    let destination =
+        schoenwald_filesystem::resolve_under(&staging.join("source"), relative)
+            .map_err(|error| ExportError::Contract(error.to_string()))?;
     local::write_bytes(&destination, &bytes, true)?;
     evidence(&relative.to_string_lossy().replace('\\', "/"), &bytes)
 }
@@ -387,16 +371,16 @@ fn copy_optional_source(
     match local::path_kind(&source)? {
         PathKind::File => {
             included.push(copy_source(game_root, staging, relative)?);
-        }
+        },
         PathKind::Missing => {
             missing.push(relative.to_string_lossy().replace('\\', "/"));
-        }
+        },
         PathKind::Directory | PathKind::Other => {
             return Err(ExportError::Contract(format!(
                 "localization source is not a regular file: {}",
                 relative.to_string_lossy()
             )));
-        }
+        },
     }
     Ok(())
 }
@@ -409,9 +393,8 @@ fn copy_localized_ui(
 ) -> Result<(), ExportError> {
     let mut copied = 0usize;
     for family in ["loading", "license"] {
-        let relative_root = PathBuf::from(UI_ROOT)
-            .join(family)
-            .join(spec.ui_directory);
+        let relative_root =
+            PathBuf::from(UI_ROOT).join(family).join(spec.ui_directory);
         let source_root = game_root.join(&relative_root);
         if local::path_kind(&source_root)? == PathKind::Missing {
             continue;
@@ -474,10 +457,8 @@ fn copy_cinematic_audio(
                 ExportError::Contract(message.to_owned())
             })?;
         let bytes = local::read_bytes(&source)?;
-        let destination = staging
-            .join("cinematics")
-            .join(movie)
-            .join(&track_name);
+        let destination =
+            staging.join("cinematics").join(movie).join(&track_name);
         local::write_bytes(&destination, &bytes, true)?;
         let size = u64::try_from(bytes.len()).map_err(|_error| {
             let message = "cinematic audio size does not fit u64";
@@ -497,8 +478,7 @@ fn copy_cinematic_audio(
                 "{} localization has no normalized cinematic audio ",
                 "track {}",
             ),
-            spec.name,
-            track_name
+            spec.name, track_name
         )));
     }
     Ok(cinematic_audio)
@@ -520,7 +500,7 @@ fn nearest_existing_directory(path: &Path) -> Result<PathBuf, ExportError> {
         }
         match local::path_kind(candidate)? {
             PathKind::Directory => return Ok(candidate.to_path_buf()),
-            PathKind::Missing => {}
+            PathKind::Missing => {},
             PathKind::File | PathKind::Other => {
                 return Err(ExportError::Contract(
                     concat!(
@@ -529,7 +509,7 @@ fn nearest_existing_directory(path: &Path) -> Result<PathBuf, ExportError> {
                     )
                     .to_owned(),
                 ));
-            }
+            },
         }
     }
     Err(ExportError::Contract(

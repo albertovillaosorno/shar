@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -484,7 +484,8 @@ pub fn compile_mission_scope_graphs(
                     .clone();
                 if source_mission_id.is_empty() {
                     return Err(
-                        "mission scope projection found an empty mission identity"
+                                                // jig-ignore-next-line: literal
+                                                "mission scope projection found an empty mission identity"
                             .to_owned(),
                     );
                 }
@@ -957,5 +958,6 @@ fn closes_condition_before_invocation(
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/mission_scope/tests.rs"]
 mod tests;

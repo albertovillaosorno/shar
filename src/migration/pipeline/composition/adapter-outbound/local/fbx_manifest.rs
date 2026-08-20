@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -170,7 +170,8 @@ pub(super) fn write_phase_three_fbx_manifest(
     };
     if fbx_plan.target_kind == FbxTargetKind::SemanticSplit {
         return Err(PipelineError::new(format!(
-            "selected package requires semantic splitting before FBX export: {}",
+                        // jig-ignore-next-line: literal
+                        "selected package requires semantic splitting before FBX export: {}",
             package.package_id
         )));
     }

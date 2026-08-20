@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -36,6 +36,7 @@ use serde_json::json;
 use super::*;
 use crate::domain::MissionLocatorCatalogEntry;
 
+// jig-ignore-next-line: long identifier
 fn entry(name: &str, package: &str) -> Result<MissionLocatorCatalogEntry, String> {
     let root = format!("extracted/art/missions/level01/{package}");
     MissionLocatorCatalogEntry::new(
@@ -82,6 +83,7 @@ fn mission_json() -> Result<String, String> {
             "SelectMission(\"m1\");",
             "InitLevelPlayerVehicle(\"cletu_v\",\"start\",\"OTHER\");",
             "AddStage(\"locked\",\"car\",\"cletu_v\");",
+                        // jig-ignore-next-line: literal
             r#"AddStageVehicle("cletu_v","carstart","chase","scripts\cars\cletu_v.con","none");"#,
             "AddObjective(\"getin\",\"cletu_v\");",
             "AddNPC(\"brn_unf\",\"npc_loc\");",
@@ -90,21 +92,77 @@ fn mission_json() -> Result<String, String> {
         ],
         "p3d_references": [],
         "command_invocations": [
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"initlevelplayervehicle","args_raw":"\"cletu_v\",\"start\",\"OTHER\"","semantic_role":"mission-script","arguments":["cletu_v","start","OTHER"]},
-            {"ordinal":3,"name":"addstage","args_raw":"\"locked\",\"car\",\"cletu_v\"","semantic_role":"mission-stage","arguments":["locked","car","cletu_v"]},
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"initlevelplayervehicle",
+                            "args_raw":"\"cletu_v\",\"start\",\"OTHER\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["cletu_v","start","OTHER"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addstage",
+                            "args_raw":"\"locked\",\"car\",\"cletu_v\"",
+                            "semantic_role":"mission-stage",
+                            "arguments":["locked","car","cletu_v"]
+                        },
             {
                 "ordinal":4,"name":"addstagevehicle",
-                "args_raw":r#""cletu_v","carstart","chase","scripts\cars\cletu_v.con","none""#,
+                                // jig-ignore-next-line: literal
+                                "args_raw":r#""cletu_v","carstart","chase","scripts\cars\cletu_v.con","none""#,
                 "semantic_role":"mission-stage",
-                "arguments":["cletu_v","carstart","chase",r"scripts\cars\cletu_v.con","none"]
+                                // jig-ignore-next-line: literal
+                                "arguments":["cletu_v","carstart","chase",r"scripts\cars\cletu_v.con","none"]
             },
-            {"ordinal":5,"name":"addobjective","args_raw":"\"getin\",\"cletu_v\"","semantic_role":"mission-objective","arguments":["getin","cletu_v"]},
-            {"ordinal":6,"name":"addnpc","args_raw":"\"brn_unf\",\"npc_loc\"","semantic_role":"mission-script","arguments":["brn_unf","npc_loc"]},
-            {"ordinal":7,"name":"setobjtargetvehicle","args_raw":"\"cletu_v\"","semantic_role":"mission-script","arguments":["cletu_v"]},
-            {"ordinal":8,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":9,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":10,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":5,
+                            "name":"addobjective",
+                            "args_raw":"\"getin\",\"cletu_v\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["getin","cletu_v"]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"addnpc",
+                            "args_raw":"\"brn_unf\",\"npc_loc\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["brn_unf","npc_loc"]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"setobjtargetvehicle",
+                            "args_raw":"\"cletu_v\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["cletu_v"]
+                        },
+                        {
+                            "ordinal":8,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":9,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":10,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     });
     serde_json::to_string(&value).map_err(|error| error.to_string())
@@ -121,14 +179,17 @@ fn reports() -> Result<
 > {
     let evidence = crate::preflight_mission_script(&mission_json()?)?;
     let scopes = crate::domain::compile_mission_scope_graphs(&evidence)?;
-    let initialization = crate::domain::preflight_mission_initialization(&scopes)?;
+        // jig-ignore-next-line: expression
+        let initialization = crate::domain::preflight_mission_initialization(&scopes)?;
     let stages = crate::domain::preflight_mission_stage_semantics(&scopes)?;
-    let objectives = crate::domain::preflight_mission_objective_semantics(&scopes)?;
+        // jig-ignore-next-line: expression
+        let objectives = crate::domain::preflight_mission_objective_semantics(&scopes)?;
     Ok((scopes, initialization, stages, objectives))
 }
 
 fn active(roots: &[&str]) -> Result<MissionLocatorActivePackageReport, String> {
-    MissionLocatorActivePackageReport::from_missions(vec![MissionLocatorActivePackages::new(
+        // jig-ignore-next-line: expression
+        MissionLocatorActivePackageReport::from_missions(vec![MissionLocatorActivePackages::new(
         "m1".to_owned(),
         roots.iter().map(|root| (*root).to_owned()).collect(),
     )?])
@@ -188,7 +249,8 @@ fn resolves_car_start_roles_inside_active_package() -> Result<(), String> {
     assert_eq!(objective.owner_objective_source_ordinal(), Some(5));
 
     if mission.references().iter().any(|binding| {
-        binding.type_constraint() != MissionLocatorTypeConstraint::Exact(CAR_START_LOCATOR_TYPE)
+                // jig-ignore-next-line: expression
+                binding.type_constraint() != MissionLocatorTypeConstraint::Exact(CAR_START_LOCATOR_TYPE)
     }) {
         return Err("documented CarStart constraints drifted".to_owned());
     }
@@ -196,6 +258,7 @@ fn resolves_car_start_roles_inside_active_package() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn post_dyna_exact_lookup_keeps_history_dependent_ambiguity() -> Result<(), String> {
     let catalog = MissionLocatorCatalog::from_entries(vec![
         entry("walk_start", "m1")?,
@@ -223,6 +286,7 @@ fn post_dyna_exact_lookup_keeps_history_dependent_ambiguity() -> Result<(), Stri
         binding.resolution(),
         MissionLocatorResolution::Ambiguous(entries) if entries.len() == 2
     ) {
+        // jig-ignore-next-line: literal
         return Err("post-Dyna exact lookup invented stable precedence".to_owned());
     }
     Ok(())
@@ -292,12 +356,15 @@ fn exact_script_lookup_uses_static_load_precedence() -> Result<(), String> {
     let [binding] = references.as_slice() else {
         return Err("exact script locator binding count drifted".to_owned());
     };
-    let MissionLocatorResolution::Resolved(reference) = binding.resolution() else {
+        // jig-ignore-next-line: expression
+        let MissionLocatorResolution::Resolved(reference) = binding.resolution() else {
+        // jig-ignore-next-line: literal
         return Err("exact script locator did not use load precedence".to_owned());
     };
     if reference.entry().package_root()
         != "extracted/art/missions/level01/level"
     {
+        // jig-ignore-next-line: literal
         return Err("exact script locator did not choose first static load".to_owned());
     }
 
@@ -318,6 +385,7 @@ fn exact_script_lookup_uses_static_load_precedence() -> Result<(), String> {
         binding.resolution(),
         MissionLocatorResolution::Ambiguous(entries) if entries.len() == 2
     ) {
+        // jig-ignore-next-line: literal
         return Err("generic locator lookup invented subtype precedence".to_owned());
     }
     Ok(())
@@ -339,6 +407,7 @@ fn separates_script_and_post_dyna_locator_visibility() -> Result<(), String> {
         return Err("locator visibility phases drifted".to_owned());
     }
 
+    // jig-ignore-next-line: literal
     let catalog = MissionLocatorCatalog::from_entries(vec![entry("late", "dyna")?])?;
     let mut references = Vec::new();
     push_locator(
@@ -366,10 +435,13 @@ fn separates_script_and_post_dyna_locator_visibility() -> Result<(), String> {
         script_binding.resolution(),
         MissionLocatorResolution::Missing
     ) {
+        // jig-ignore-next-line: literal
         return Err("script-time locator saw post-script Dyna package".to_owned());
     }
-    let MissionLocatorResolution::Resolved(reference) = post_dyna_binding.resolution()
+        // jig-ignore-next-line: expression
+        let MissionLocatorResolution::Resolved(reference) = post_dyna_binding.resolution()
     else {
+        // jig-ignore-next-line: literal
         return Err("post-Dyna locator did not see initial Dyna package".to_owned());
     };
     if reference.entry().package_root() != dyna_root {
@@ -395,7 +467,9 @@ fn rejects_missing_active_mission_context() -> Result<(), String> {
         &stages,
         &objectives,
     );
+    // jig-ignore-next-line: literal
     if !matches!(result, Err(message) if message.contains("context is missing")) {
+        // jig-ignore-next-line: literal
         return Err("missing mission locator context did not fail closed".to_owned());
     }
     Ok(())

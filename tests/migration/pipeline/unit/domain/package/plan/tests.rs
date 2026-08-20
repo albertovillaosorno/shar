@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -533,6 +533,7 @@ fn routes_derived_language_keys_to_string_tables() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn defers_physical_language_layouts_for_semantic_compilation() -> Result<(), String> {
     let package = row("language", "language/ui-text/scene-layouts", "ui_ids")?;
     let plan = PhaseThreePackagePlanner::plan(&package);
@@ -540,6 +541,7 @@ fn defers_physical_language_layouts_for_semantic_compilation() -> Result<(), Str
         return Err("language layout should produce an Unreal plan".to_owned());
     };
     if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        // jig-ignore-next-line: literal
         return Err("physical language layout bypassed semantic compilation".to_owned());
     }
     Ok(())
@@ -564,6 +566,7 @@ fn defers_mission_scripts_for_semantic_compilation() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn defers_texture_font_headers_for_semantic_compilation() -> Result<(), String> {
     let package = row_with_kind(
         "ui-resources",
@@ -576,12 +579,14 @@ fn defers_texture_font_headers_for_semantic_compilation() -> Result<(), String> 
         return Err("font resource should produce an Unreal plan".to_owned());
     };
     if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        // jig-ignore-next-line: literal
         return Err("texture-font header bypassed semantic compilation".to_owned());
     }
     Ok(())
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn defers_ui_text_bible_headers_for_semantic_compilation() -> Result<(), String> {
     let package = row_with_kind(
         "ui-resources",
@@ -594,6 +599,7 @@ fn defers_ui_text_bible_headers_for_semantic_compilation() -> Result<(), String>
         return Err("text bible should produce an Unreal plan".to_owned());
     };
     if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        // jig-ignore-next-line: literal
         return Err("text-bible header bypassed semantic compilation".to_owned());
     }
     Ok(())
@@ -649,6 +655,7 @@ fn routes_cinematic_audio_to_sound_waves() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn sprite_layout_json_does_not_fabricate_texture_payload() -> Result<(), String> {
     let package = row_with_texture_path(
         "ui-images",

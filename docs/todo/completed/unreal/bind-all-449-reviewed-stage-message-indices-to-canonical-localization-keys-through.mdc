@@ -1,15 +1,23 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: bind-all-449-reviewed-stage-message-indices-to-canonical-localization-keys-through
 status: completed
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical]
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Bind all 449 reviewed stage message indices to canonical localization keys through…
 
 Bind all 449 reviewed stage message indices to canonical localization keys
@@ -39,7 +47,8 @@ source-less packages still fail closed.
 
 ## Dependencies
 
-Parent task: `resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
+Parent task:
+`resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical`.
 
 ## Evidence
 

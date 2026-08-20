@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -51,6 +51,7 @@ fn strips_trailing_line_comments_from_call_arguments() -> Result<(), String> {
 
 #[test]
 fn preserves_backslashes_and_strips_reward_comments() -> Result<(), String> {
+    // jig-ignore-next-line: literal
     let statement = r#"BindReward("plowk_v", "art\cars\plowk_v.p3d", "car", "forsale", 1, 150, "simpson" ); // Barney"#;
     let Some((command, raw)) = parse_call(statement) else {
         return Err("reward command was not parsed".to_owned());
@@ -280,6 +281,7 @@ fn adapts_only_exact_reviewed_legacy_context_windows() -> Result<(), String> {
     );
     if !adapted.findings.is_empty()
         || super::context::adaptations_json(&adapted.adaptations)
+                        // jig-ignore-next-line: literal
             != "[{\"ordinal\":70,\"command\":\"closecondition\",\"code\":\"legacy-l2-m6sdi-ignore-orphan-condition-close-v1\"}]"
     {
         return Err("reviewed level02 mission adaptation changed".to_owned());
@@ -314,6 +316,7 @@ fn adapts_only_exact_reviewed_legacy_context_windows() -> Result<(), String> {
     );
     if !adapted.findings.is_empty()
         || super::context::adaptations_json(&adapted.adaptations)
+                        // jig-ignore-next-line: literal
             != "[{\"ordinal\":114,\"command\":\"showstagecomplete\",\"code\":\"legacy-l7-m7i-close-keepbarrel-before-stage-complete-v1\"}]"
     {
         return Err("reviewed level07 mission adaptation changed".to_owned());
@@ -379,6 +382,7 @@ fn p3d_summary_keeps_only_primary_load_reference() -> Result<(), String> {
         || arguments.get(1).and_then(serde_json::Value::as_str)
             != Some("GMA_LEVEL_OTHER")
     {
+        // jig-ignore-next-line: literal
         return Err("optional LoadP3DFile argument was not preserved".to_owned());
     }
     Ok(())

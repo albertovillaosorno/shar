@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: audit-reported-map-wide-lod-geometry-overlaps-before-removing-any-vertices-permit-only
 status: open
 priority: P1

@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: verify-applicable-source-files-roots-links-sizes-and-sha-256-before-native-execution
 status: completed
 priority: P2

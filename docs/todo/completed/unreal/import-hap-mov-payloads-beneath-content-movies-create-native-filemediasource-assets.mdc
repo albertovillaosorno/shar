@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: import-hap-mov-payloads-beneath-content-movies-create-native-filemediasource-assets
 status: completed
 priority: P2

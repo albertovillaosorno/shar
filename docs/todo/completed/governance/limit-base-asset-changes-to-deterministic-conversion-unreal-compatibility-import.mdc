@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: limit-base-asset-changes-to-deterministic-conversion-unreal-compatibility-import
 status: completed
 priority: P0
@@ -10,6 +12,8 @@ dependencies: []
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Limit base-asset changes to deterministic conversion, Unreal compatibility, import…
 
 Limit base-asset changes to deterministic conversion, Unreal compatibility,
@@ -27,6 +31,8 @@ No explicit task dependency was recorded in the legacy TODO.
 
 ## Evidence
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: Markdown link target is indivisible -->
 The accepted [faithful-base governance ADR](../../../adr/governance/faithful-base-and-optional-mod-boundary.md)
 defines the complete admission set for canonical base changes: deterministic
 conversion of validated source, a required Unreal/target representation change,

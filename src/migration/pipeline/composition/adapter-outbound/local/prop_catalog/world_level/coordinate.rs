@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -148,7 +148,8 @@ impl PackageCoordinates {
     }
 }
 
-/// Match direct-world canonical meshes to exact coordinate-reference identities.
+/// Match direct-world canonical meshes to exact coordinate-reference
+/// identities.
 fn match_direct_reference_meshes(
     canonical_sources: &[LevelMeshSource],
     canonical_meshes: &[MeshAsset],

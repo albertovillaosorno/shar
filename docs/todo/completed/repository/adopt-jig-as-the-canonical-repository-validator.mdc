@@ -25,7 +25,8 @@ No explicit task dependency was recorded in the legacy TODO.
 ## Evidence
 
 `.jig/jig.toml` is the tracked repository validation authority and configures
-the external CSpell, Markdown, pytest, Ruff, nightly Clippy/rustfmt/tests, stable
+the external CSpell, Markdown, pytest, Ruff, nightly Clippy/rustfmt/tests,
+stable
 Rust check, and Jig-native repository-policy gates. `AGENTS.md` names
 `jig validate --fail-fast --root .` as final validation evidence and explicitly
 forbids substituting ad hoc formatter/compiler/linter/test runs.

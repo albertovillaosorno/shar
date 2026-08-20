@@ -93,8 +93,10 @@ constraints: the active settings hash, integer wire types, duplicate-key
 rejection, bounded integer/resource limits, protected-payload tag length,
 source/target portable relative-path policy, deterministic source-record
 grouping, and case-equivalent target ancestor collisions.
-This structural guard narrows what can be committed publicly; it does not replace
-source-backed cryptographic replay evidence or the pending similarity calibration.
+This structural guard narrows what can be committed publicly; it does not
+replace
+source-backed cryptographic replay evidence or the pending similarity
+calibration.
 
 The generic `shar.algorithm.v1` round-trip suite now includes explicit evidence
 that a serialized plan cannot replay with zero caller-supplied source roots and

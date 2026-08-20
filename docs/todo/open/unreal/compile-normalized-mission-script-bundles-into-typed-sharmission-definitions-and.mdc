@@ -1,12 +1,20 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: compile-normalized-mission-script-bundles-into-typed-sharmission-definitions-and
 status: open
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native]
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 children: [version-normalized-mfk-command-evidence-to-v3-strip-trailing-source-comments-from, fail-semantic-intake-before-unreal-planning-on-stale-mission-evidence-inconsistent, require-every-reflected-mission-stage-to-bind-one-validated-objective-policy-row-with, resolve-the-two-observed-legacy-context-defects-through-exact-path-and-command-window, close-the-observed-objective-and-condition-alias-registries-plus-exact, replay-normalized-mission-context-and-producer-derived-summaries-then-project-a, map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward, emit-lossless-usharmissiondefinition-assets-only-after-the-complete-mission-graph]
 ---
 
@@ -22,7 +30,10 @@ and bindings for the shared mission StateTree contract.
 
 ## Dependencies
 
-Parent task: `convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native`.
+Parent task:
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO dependency token is indivisible -->
+`convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native`.
 
 ## Evidence
 

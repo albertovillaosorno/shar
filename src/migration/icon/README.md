@@ -8,7 +8,7 @@ iOS icon formats.
 
 ## Ownership
 
-`icon_algorithm.txt` is the tracked source-bound reconstruction record.
+`contract/icon_algorithm.txt` is the tracked source-bound reconstruction record.
 `assets/` is local recovered/authored evidence and `out/` is generated output;
 both remain ignored by Git. Platform export code lives under `composition/`.
 
@@ -22,14 +22,19 @@ installation material and must never become icon reconstruction evidence.
 From the repository root, reconstruct only from the canonical game icon into the
 ignored output tree:
 
-```text
-cargo run -p shar_algorithm --bin algorithm -- replay --source game/Simpsons.ico --algorithm src/migration/icon/icon_algorithm.txt --output src/migration/icon/out/recovered
+```sh
+cargo run -p shar_algorithm --bin algorithm -- replay \
+  --source game/Simpsons.ico \
+  --algorithm src/migration/icon/contract/icon_algorithm.txt \
+  --output src/migration/icon/out/recovered
 ```
 
 Then export the recovered SVGs to every supported platform icon layout:
 
-```text
-python src/migration/icon/composition/export_cli.py --assets src/migration/icon/out/recovered --out src/migration/icon/out/platform
+```sh
+python src/migration/icon/composition/export_cli.py \
+  --assets src/migration/icon/out/recovered \
+  --out src/migration/icon/out/platform
 ```
 
 Do not substitute `game/uninst.ico`, wildcard `game/*.ico`, or the ignored local

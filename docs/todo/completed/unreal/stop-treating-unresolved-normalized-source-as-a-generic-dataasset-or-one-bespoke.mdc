@@ -1,15 +1,23 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: stop-treating-unresolved-normalized-source-as-a-generic-dataasset-or-one-bespoke
 status: completed
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native]
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Stop treating unresolved normalized source as a generic `DataAsset` or one bespoke…
 
 Stop treating unresolved normalized source as a generic `DataAsset` or one
@@ -28,7 +36,10 @@ completeness gate.
 
 ## Dependencies
 
-Parent task: `convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native`.
+Parent task:
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO dependency token is indivisible -->
+`convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native`.
 
 ## Evidence
 

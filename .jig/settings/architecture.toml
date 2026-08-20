@@ -1,0 +1,59 @@
+domain = "architecture"
+schema_version = 1
+
+[component.fbx]
+depends_on = ["schoenwald_filesystem", "shar_sha256"]
+
+[component.game_manifest]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
+
+[component.lmlm]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
+
+[component.p3d]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem", "shar_json_text", "shar_sha256"]
+
+[component.pipeline]
+depends_on = ["fbx", "game_manifest", "lmlm", "p3d", "rcf", "rmv", "rsd", "rtf", "schoenwald_cli", "schoenwald_filesystem", "shar_json_text", "shar_sha256", "shar_unreal_conversion"]
+
+[component.rcf]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
+
+[component.rmv]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem", "shar_sha256"]
+
+[component.rsd]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
+
+[component.rtf]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem"]
+
+[component.schoenwald_cli]
+depends_on = []
+
+[component.schoenwald_filesystem]
+depends_on = []
+
+[component.shar_algorithm]
+depends_on = ["schoenwald_cli", "schoenwald_filesystem", "shar_sha256"]
+
+[component.shar_json_text]
+depends_on = []
+
+[component.shar_languages]
+depends_on = ["schoenwald_filesystem", "shar_mod_package", "shar_sha256"]
+
+[component.shar_lmlm]
+depends_on = ["p3d", "schoenwald_cli", "schoenwald_filesystem", "shar_mod_package", "shar_sha256"]
+
+[component.shar_mod_package]
+depends_on = ["schoenwald_filesystem", "shar_sha256"]
+
+[component.shar_sha256]
+depends_on = []
+
+[component.shar_source_audit]
+depends_on = ["p3d", "rcf", "rmv", "rsd", "schoenwald_cli", "schoenwald_filesystem"]
+
+[component.shar_unreal_conversion]
+depends_on = ["shar_json_text", "shar_sha256"]

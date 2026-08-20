@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -37,12 +37,11 @@ use super::{USAGE, ValidateManifestCli};
 #[test]
 fn excess_arguments_return_validator_usage_without_storage_access()
 -> Result<(), String> {
-    let outcome =
-        ValidateManifestCli.execute(&[
-            "first".to_owned(),
-            "second".to_owned(),
-            "third".to_owned(),
-        ]);
+    let outcome = ValidateManifestCli.execute(&[
+        "first".to_owned(),
+        "second".to_owned(),
+        "third".to_owned(),
+    ]);
     if outcome.status() != schoenwald_cli::ExitStatus::Failure {
         return Err("excess validator arguments must fail".to_owned());
     }

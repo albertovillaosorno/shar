@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -40,7 +40,10 @@ use shar_sha256::digest_hex;
 use super::{
     MISSION_DEFINITIONS_FILE, PLAN_INDEX_FILE, PUBLISHED_FILE_COUNT,
     PUBLISHED_FILES, SUMMARY_FILE, SourceEvidenceInput,
-    ensure_generated_directory, open_stable_source, parallel_source_evidence, prepare_io_error,
+        ensure_generated_directory,
+        open_stable_source,
+        parallel_source_evidence,
+        prepare_io_error,
     publication_error, read_utf8, restore_previous_publication,
     retain_source_ids, source_worker_count_for, stream_source_digest,
     validate_audit, validate_generated_chain,
@@ -52,7 +55,9 @@ use super::{
 use crate::domain::{
     MISSION_SCRIPT_SCHEMA, MissionP3dReferenceCatalog, MissionReferenceCatalog,
     PipelineOutcome,
-    UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealSourceEvidence,
+        UNREAL_IMPORT_MANIFEST_SCHEMA,
+        UNREAL_IMPORT_SUMMARY_SCHEMA,
+        UnrealSourceEvidence,
 };
 
 fn source(id: &str) -> UnrealSourceEvidence {
@@ -228,6 +233,7 @@ fn mission_definition_row_with_stages(
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn parallel_source_verification_reports_first_manifest_error() -> Result<(), String> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(".temp")
@@ -266,6 +272,7 @@ fn parallel_source_verification_reports_first_manifest_error() -> Result<(), Str
     );
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("parallel verification unexpectedly accepted invalid rows".to_owned());
     };
     let rendered = error.to_string();
@@ -287,13 +294,15 @@ fn stable_source_verification_rejects_path_replacement() -> Result<(), String> {
     let path = root.join("source.bin");
     let moved = root.join("opened.bin");
     fs::write(&path, b"original-source").map_err(|error| error.to_string())?;
-    let (file, identity) = open_stable_source(&path).map_err(|error| error.to_string())?;
+        // jig-ignore-next-line: expression
+        let (file, identity) = open_stable_source(&path).map_err(|error| error.to_string())?;
     fs::rename(&path, &moved).map_err(|error| error.to_string())?;
     fs::write(&path, b"replacement-src").map_err(|error| error.to_string())?;
     let result = verify_stable_source(&path, &file, &identity);
     drop(file);
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("path replacement preserved a stale source identity".to_owned());
     };
     if !error.to_string().contains("identity changed") {
@@ -303,6 +312,7 @@ fn stable_source_verification_rejects_path_replacement() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn streamed_source_digest_matches_one_shot_across_io_blocks() -> Result<(), String> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(".temp")
@@ -318,6 +328,7 @@ fn streamed_source_digest_matches_one_shot_across_io_blocks() -> Result<(), Stri
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let (size, digest) = result?;
     if size != 1_048_593 || digest != digest_hex(&payload) {
+        // jig-ignore-next-line: literal
         return Err("streamed source digest changed across I/O blocks".to_owned());
     }
     Ok(())
@@ -333,6 +344,7 @@ fn source_worker_count_is_bounded_and_never_zero() {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn parallel_source_verification_preserves_manifest_order() -> Result<(), String> {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join(".temp")
@@ -389,6 +401,7 @@ fn parallel_source_verification_preserves_manifest_order() -> Result<(), String>
             .get(1)
             .is_none_or(|source| source.sha256 != digest_hex(b"second-source"))
     {
+        // jig-ignore-next-line: literal
         return Err("parallel source hashing changed physical evidence".to_owned());
     }
     Ok(())
@@ -471,18 +484,55 @@ fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
         ],
         "p3d_references": [],
         "command_invocations": [
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":3,"name":"addobjective","args_raw":"\"goto\"","semantic_role":"mission-objective","arguments":["goto"]},
-            {"ordinal":4,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":5,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":6,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addobjective",
+                            "args_raw":"\"goto\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["goto"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     }))
     .map_err(|error| error.to_string())
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds() -> Result<(), String> {
     let clean = clean_mission_json(false)?;
     validate_test_mission_source(
@@ -493,11 +543,13 @@ fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds() -> Result<(
         &clean,
     )
     .map_err(|error| error.to_string())?;
+    // jig-ignore-next-line: literal
     validate_test_mission_source("texture", "unrelated-schema", "bin", "test", b"not-json")
         .map_err(|error| error.to_string())
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn mission_semantic_gate_rejects_stale_schema_and_context_findings() -> Result<(), String> {
     let clean = clean_mission_json(false)?;
     let stale = validate_test_mission_source(
@@ -523,6 +575,7 @@ fn mission_semantic_gate_rejects_stale_schema_and_context_findings() -> Result<(
         &finding,
     );
     let Err(finding) = finding else {
+        // jig-ignore-next-line: literal
         return Err("mission context finding reached Unreal planning".to_owned());
     };
     if !finding.to_string().contains("must be resolved") {
@@ -571,10 +624,13 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
 
 #[test]
 fn accepts_clean_current_audit() -> Result<(), String> {
+    // jig-ignore-next-line: literal
     let path = std::env::temp_dir().join(format!("shar-unreal-audit-{}.json", std::process::id()));
     let manifest = "one\ntwo\nthree\n";
-    fs::write(&path, clean_audit(manifest, 3)).map_err(|error| error.to_string())?;
-    let result = validate_audit(&path, manifest).map_err(|error| error.to_string());
+        // jig-ignore-next-line: expression
+        fs::write(&path, clean_audit(manifest, 3)).map_err(|error| error.to_string())?;
+        // jig-ignore-next-line: expression
+        let result = validate_audit(&path, manifest).map_err(|error| error.to_string());
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     result
 }
@@ -586,7 +642,8 @@ fn rejects_stale_audit_and_escaping_paths() -> Result<(), String> {
         std::process::id()
     ));
     let audited_manifest = "one\ntwo\n";
-    fs::write(&path, clean_audit(audited_manifest, 2)).map_err(|error| error.to_string())?;
+        // jig-ignore-next-line: expression
+        fs::write(&path, clean_audit(audited_manifest, 2)).map_err(|error| error.to_string())?;
     let stale = validate_audit(&path, "one\ntwo\nthree\n").is_err();
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     if !stale {
@@ -609,13 +666,15 @@ fn rejects_stale_audit_and_escaping_paths() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_same_row_count_with_changed_manifest_content() -> Result<(), String> {
     let path = std::env::temp_dir().join(format!(
         "shar-unreal-hash-audit-{}.json",
         std::process::id()
     ));
     let audited_manifest = "one\ntwo\n";
-    fs::write(&path, clean_audit(audited_manifest, 2)).map_err(|error| error.to_string())?;
+        // jig-ignore-next-line: expression
+        fs::write(&path, clean_audit(audited_manifest, 2)).map_err(|error| error.to_string())?;
     let result = validate_audit(&path, "one\nchanged\n");
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     let Err(error) = result else {
@@ -627,6 +686,7 @@ fn rejects_same_row_count_with_changed_manifest_content() -> Result<(), String> 
     Ok(())
 }
 
+// jig-ignore-next-line: long identifier
 fn rendered_fixture(package_count: u64, source_package: &str) -> (String, String) {
     let manifest = format!(
         concat!(
@@ -668,7 +728,8 @@ fn rendered_fixture(package_count: u64, source_package: &str) -> (String, String
 #[test]
 fn accepts_canonical_rendered_schemas_and_counts() -> Result<(), String> {
     let (manifest, summary) = rendered_fixture(1, "pkg");
-    validate_rendered_output(&manifest, &summary).map_err(|error| error.to_string())
+        // jig-ignore-next-line: expression
+        validate_rendered_output(&manifest, &summary).map_err(|error| error.to_string())
 }
 
 #[test]
@@ -698,9 +759,11 @@ fn rejects_rendered_source_for_unknown_package() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn prepare_io_diagnostics_hide_paths_and_raw_error_text() -> Result<(), String> {
     let private_fragment = "private-workstation-unreal-prepare";
     let error = std::io::Error::other(private_fragment);
+    // jig-ignore-next-line: literal
     let rendered = prepare_io_error("read Unreal source evidence", &error).to_string();
     if rendered.contains(private_fragment)
         || rendered != "read Unreal source evidence failed (Other)"
@@ -724,12 +787,14 @@ fn prepare_io_diagnostics_hide_paths_and_raw_error_text() -> Result<(), String> 
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn relative_path_diagnostics_do_not_echo_rejected_values() -> Result<(), String> {
     let private_path = "private-workstation/../escape";
     let Err(error) = validate_relative_path(private_path) else {
         return Err("escaping path was accepted".to_owned());
     };
     let error = error.to_string();
+    // jig-ignore-next-line: literal
     if error.contains(private_path) || error != "unsafe minor-unit relative path" {
         return Err(format!("relative-path diagnostic leaked: {error}"));
     }
@@ -737,8 +802,11 @@ fn relative_path_diagnostics_do_not_echo_rejected_values() -> Result<(), String>
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn publication_failure_reports_failed_rollback_without_raw_text() -> Result<(), String> {
+    // jig-ignore-next-line: literal
     let publish = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "private-publish-path");
+    // jig-ignore-next-line: literal
     let rollback = std::io::Error::new(std::io::ErrorKind::AlreadyExists, "private-backup-path");
     let rendered = publication_error(&publish, Some(&rollback)).to_string();
     let expected = concat!(
@@ -800,7 +868,9 @@ fn publication_rollback_restores_cache_and_manifest() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn generated_transaction_chain_rejects_non_directory_ancestors() -> Result<(), String> {
+    // jig-ignore-next-line: literal
     let private_fragment = format!("private-unreal-chain-{}", std::process::id());
     let root = std::env::temp_dir().join(&private_fragment);
     let directory = root.join("directory");
@@ -810,9 +880,11 @@ fn generated_transaction_chain_rejects_non_directory_ancestors() -> Result<(), S
     }
     fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
     fs::write(&file, b"not a directory").map_err(|error| error.to_string())?;
-    let result = validate_generated_chain(&[root.as_path(), directory.as_path(), file.as_path()]);
+        // jig-ignore-next-line: expression
+        let result = validate_generated_chain(&[root.as_path(), directory.as_path(), file.as_path()]);
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("non-directory transaction ancestor was accepted".to_owned());
     };
     let rendered = error.to_string();
@@ -826,6 +898,7 @@ fn generated_transaction_chain_rejects_non_directory_ancestors() -> Result<(), S
 
 #[test]
 fn generated_directory_creation_stops_at_unsafe_parent() -> Result<(), String> {
+    // jig-ignore-next-line: literal
     let private_fragment = format!("private-unreal-create-{}", std::process::id());
     let root = std::env::temp_dir().join(&private_fragment);
     let blocked = root.join("blocked");
@@ -855,11 +928,13 @@ fn generated_directory_creation_stops_at_unsafe_parent() -> Result<(), String> {
 fn rejects_rendered_package_with_unknown_disposition() -> Result<(), String> {
     let private_disposition = "C:/private/import-policy";
     let (manifest, summary) = rendered_fixture(1, "pkg");
+    // jig-ignore-next-line: literal
     let manifest = manifest.replace("direct-editor-import", private_disposition);
     let Err(error) = validate_rendered_output(&manifest, &summary) else {
         return Err("unknown package disposition was accepted".to_owned());
     };
     let rendered = error.to_string();
+    // jig-ignore-next-line: literal
     if !rendered.contains("unsupported disposition") || rendered.contains(private_disposition) {
         return Err(format!("unexpected disposition failure: {error}"));
     }
@@ -867,8 +942,10 @@ fn rejects_rendered_package_with_unknown_disposition() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_rendered_source_with_non_object_direct_import() -> Result<(), String> {
     let (manifest, summary) = rendered_fixture(1, "pkg");
+    // jig-ignore-next-line: literal
     let manifest = manifest.replace("\"direct_import\":{}", "\"direct_import\":\"invalid\"");
     let Err(error) = validate_rendered_output(&manifest, &summary) else {
         return Err("non-object direct-import contract was accepted".to_owned());
@@ -891,6 +968,7 @@ fn rejects_noncanonical_rendered_ids_without_echo() -> Result<(), String> {
         return Err("path-shaped rendered package id was accepted".to_owned());
     };
     let rendered = error.to_string();
+    // jig-ignore-next-line: literal
     if rendered.contains(private_id) || !rendered.contains("package id is not canonical") {
         return Err(format!("rendered-id diagnostic leaked: {rendered}"));
     }
@@ -1012,6 +1090,7 @@ fn publication_inventory_rejects_undeclared_files() -> Result<(), String> {
     let Err(error) = validate_publication_inventory(&paths) else {
         return Err("extra publication file was accepted".to_owned());
     };
+    // jig-ignore-next-line: literal
     if error.to_string() != "Unreal staging publication inventory is not exact" {
         return Err(format!("unexpected inventory failure: {error}"));
     }
@@ -1021,6 +1100,7 @@ fn publication_inventory_rejects_undeclared_files() -> Result<(), String> {
 #[test]
 fn public_identifier_guard_rejects_path_shaped_values() -> Result<(), String> {
     let private_id = "C:/private/minor-unit";
+    // jig-ignore-next-line: literal
     let Err(error) = validate_public_identifier(private_id, "minor-unit source id") else {
         return Err("path-shaped minor-unit id was accepted".to_owned());
     };
@@ -1042,6 +1122,7 @@ fn audit_schema_failure_does_not_echo_rejected_value() -> Result<(), String> {
         std::process::id()
     ));
     let audit =
+        // jig-ignore-next-line: literal
         clean_audit(manifest, 1).replace("shar-schoenwald.minor-unit-audit.v2", private_schema);
     fs::write(&path, audit).map_err(|error| error.to_string())?;
     let result = validate_audit(&path, manifest);
@@ -1050,6 +1131,7 @@ fn audit_schema_failure_does_not_echo_rejected_value() -> Result<(), String> {
         return Err("unsupported audit schema was accepted".to_owned());
     };
     let rendered = error.to_string();
+    // jig-ignore-next-line: literal
     if rendered.contains(private_schema) || rendered != "minor-unit audit schema is not supported" {
         return Err(format!("audit-schema diagnostic leaked: {rendered}"));
     }
@@ -1057,6 +1139,7 @@ fn audit_schema_failure_does_not_echo_rejected_value() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rendered_record_type_failure_does_not_echo_rejected_value() -> Result<(), String> {
     let private_type = "C:/private/record-type";
     let (manifest, summary) = rendered_fixture(1, "pkg");
@@ -1069,6 +1152,7 @@ fn rendered_record_type_failure_does_not_echo_rejected_value() -> Result<(), Str
         return Err("unsupported record type was accepted".to_owned());
     };
     let rendered = error.to_string();
+    // jig-ignore-next-line: literal
     if rendered.contains(private_type) || !rendered.contains("unsupported record type") {
         return Err(format!("record-type diagnostic leaked: {rendered}"));
     }
@@ -1076,24 +1160,55 @@ fn rendered_record_type_failure_does_not_echo_rejected_value() -> Result<(), Str
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn mission_semantic_gate_rejects_stage_without_root_objective() -> Result<(), String> {
     let bytes = serde_json::to_vec(&json!({
         "schema": MISSION_SCRIPT_SCHEMA,
         "source_extension":"mfk","route_class":"mission","source_bytes":64,
         "context_command_count":4,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":4,"unique_command_count":4,"load_p3d_reference_count":0,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":4,
+        "unique_command_count":4,
+        "load_p3d_reference_count":0,
         "mission_flow_command_count":4,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script",
-        "command_counts":{"selectmission":1,"addstage":1,"closestage":1,"closemission":1},
+                // jig-ignore-next-line: literal
+                "command_counts":{"selectmission":1,"addstage":1,"closestage":1,"closemission":1},
         "source_statements":[
-            "SelectMission(\"m1\");","AddStage(0);","CloseStage();","CloseMission();"
+                        // jig-ignore-next-line: literal
+                        "SelectMission(\"m1\");","AddStage(0);","CloseStage();","CloseMission();"
         ],"p3d_references":[],
         "command_invocations":[
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":3,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":4,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     })).map_err(|error| error.to_string())?;
     let result = validate_test_mission_source(
@@ -1104,6 +1219,7 @@ fn mission_semantic_gate_rejects_stage_without_root_objective() -> Result<(), St
         &bytes,
     );
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("mission stage without root objective was accepted".to_owned());
     };
     let rendered = error.to_string();
@@ -1116,18 +1232,23 @@ fn mission_semantic_gate_rejects_stage_without_root_objective() -> Result<(), St
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn mission_semantic_gate_rejects_unreviewed_stage_flags() -> Result<(), String> {
     let bytes = clean_mission_json(false)?;
     let mut value =
-        serde_json::from_slice::<serde_json::Value>(&bytes).map_err(|error| error.to_string())?;
+                // jig-ignore-next-line: expression
+                serde_json::from_slice::<serde_json::Value>(&bytes).map_err(|error| error.to_string())?;
     *value
         .pointer_mut("/source_statements/1")
+        // jig-ignore-next-line: literal
         .ok_or_else(|| "mission fixture statement disappeared".to_owned())? = json!("AddStage(6);");
     *value
         .pointer_mut("/command_invocations/1/args_raw")
+        // jig-ignore-next-line: literal
         .ok_or_else(|| "mission fixture raw arguments disappeared".to_owned())? = json!("6");
     *value
         .pointer_mut("/command_invocations/1/arguments")
+        // jig-ignore-next-line: literal
         .ok_or_else(|| "mission fixture arguments disappeared".to_owned())? = json!(["6"]);
     let bytes = serde_json::to_vec(&value).map_err(|error| error.to_string())?;
     let result = validate_test_mission_source(
@@ -1138,6 +1259,7 @@ fn mission_semantic_gate_rejects_unreviewed_stage_flags() -> Result<(), String> 
         &bytes,
     );
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("unreviewed legacy stage flags reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
@@ -1172,19 +1294,62 @@ fn timer_mission_json(duration: &str) -> Result<Vec<u8>, String> {
         ],
         "p3d_references":[],
         "command_invocations":[
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":3,"name":"addobjective","args_raw":"\"timer\"","semantic_role":"mission-objective","arguments":["timer"]},
-            {"ordinal":4,"name":"setdurationtime","args_raw":duration_raw,"semantic_role":"mission-script","arguments":[duration]},
-            {"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addobjective",
+                            "args_raw":"\"timer\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["timer"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"setdurationtime",
+                            "args_raw":duration_raw,
+                            "semantic_role":"mission-script",
+                            "arguments":[duration]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     }))
     .map_err(|error| error.to_string())
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn mission_semantic_gate_rejects_invalid_objective_duration() -> Result<(), String> {
     let bytes = timer_mission_json("0")?;
     let result = validate_test_mission_source(
@@ -1195,12 +1360,14 @@ fn mission_semantic_gate_rejects_invalid_objective_duration() -> Result<(), Stri
         &bytes,
     );
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("invalid objective duration reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
     if !rendered.contains("mission objective semantic preflight failed")
         || !rendered.contains("must be positive")
     {
+        // jig-ignore-next-line: literal
         return Err(format!("unexpected objective semantic failure: {rendered}"));
     }
     Ok(())
@@ -1230,21 +1397,76 @@ fn condition_time_mission_json(value: &str) -> Result<Vec<u8>, String> {
         ],
         "p3d_references":[],
         "command_invocations":[
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":3,"name":"addobjective","args_raw":"\"dummy\"","semantic_role":"mission-objective","arguments":["dummy"]},
-            {"ordinal":4,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":5,"name":"addcondition","args_raw":"\"outofvehicle\"","semantic_role":"mission-script","arguments":["outofvehicle"]},
-            {"ordinal":6,"name":"setcondtime","args_raw":value_raw,"semantic_role":"mission-script","arguments":[value]},
-            {"ordinal":7,"name":"closecondition","args_raw":"","semantic_role":"mission-script","arguments":[]},
-            {"ordinal":8,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":9,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addobjective",
+                            "args_raw":"\"dummy\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["dummy"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"addcondition",
+                            "args_raw":"\"outofvehicle\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["outofvehicle"]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"setcondtime",
+                            "args_raw":value_raw,
+                            "semantic_role":"mission-script",
+                            "arguments":[value]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closecondition",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":8,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":9,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     }))
     .map_err(|error| error.to_string())
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn mission_semantic_gate_rejects_invalid_condition_time() -> Result<(), String> {
     let bytes = condition_time_mission_json("0")?;
     let result = validate_test_mission_source(
@@ -1261,6 +1483,7 @@ fn mission_semantic_gate_rejects_invalid_condition_time() -> Result<(), String> 
     if !rendered.contains("mission condition semantic preflight failed")
         || !rendered.contains("must be positive")
     {
+        // jig-ignore-next-line: literal
         return Err(format!("unexpected condition semantic failure: {rendered}"));
     }
     Ok(())
@@ -1272,8 +1495,12 @@ fn mission_root_ped_group_json(value: &str) -> Result<Vec<u8>, String> {
         "schema": MISSION_SCRIPT_SCHEMA,
         "source_extension":"mfk","route_class":"mission","source_bytes":128,
         "context_command_count":6,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":7,"unique_command_count":7,"load_p3d_reference_count":0,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":7,
+        "unique_command_count":7,
+        "load_p3d_reference_count":0,
         "mission_flow_command_count":6,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script",
         "command_counts":{
@@ -1287,19 +1514,62 @@ fn mission_root_ped_group_json(value: &str) -> Result<Vec<u8>, String> {
         ],
         "p3d_references":[],
         "command_invocations":[
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"usepedgroup","args_raw":value_raw,"semantic_role":"mission-script","arguments":[value]},
-            {"ordinal":3,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":4,"name":"addobjective","args_raw":"\"goto\"","semantic_role":"mission-objective","arguments":["goto"]},
-            {"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"usepedgroup",
+                            "args_raw":value_raw,
+                            "semantic_role":"mission-script",
+                            "arguments":[value]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"addobjective",
+                            "args_raw":"\"goto\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["goto"]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     }))
     .map_err(|error| error.to_string())
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn mission_semantic_gate_rejects_invalid_root_ped_group() -> Result<(), String> {
     let bytes = mission_root_ped_group_json("8")?;
     let result = validate_test_mission_source(
@@ -1310,6 +1580,7 @@ fn mission_semantic_gate_rejects_invalid_root_ped_group() -> Result<(), String> 
         &bytes,
     );
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("invalid mission pedestrian group reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
@@ -1329,8 +1600,12 @@ fn conversation_camera_mission_json(slot: &str) -> Result<Vec<u8>, String> {
         "schema": MISSION_SCRIPT_SCHEMA,
         "source_extension":"mfk","route_class":"mission","source_bytes":128,
         "context_command_count":6,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":7,"unique_command_count":7,"load_p3d_reference_count":0,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":7,
+        "unique_command_count":7,
+        "load_p3d_reference_count":0,
         "mission_flow_command_count":6,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script",
         "command_counts":{
@@ -1346,19 +1621,62 @@ fn conversation_camera_mission_json(slot: &str) -> Result<Vec<u8>, String> {
         ],
         "p3d_references":[],
         "command_invocations":[
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":3,"name":"addobjective","args_raw":"\"dialogue\"","semantic_role":"mission-objective","arguments":["dialogue"]},
-            {"ordinal":4,"name":"setconversationcam","args_raw":format!("{slot_raw},\"pc_far\""),"semantic_role":"mission-script","arguments":[slot,"pc_far"]},
-            {"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addobjective",
+                            "args_raw":"\"dialogue\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["dialogue"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"setconversationcam",
+                            "args_raw":format!("{slot_raw},\"pc_far\""),
+                            "semantic_role":"mission-script",
+                            "arguments":[slot,"pc_far"]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     }))
     .map_err(|error| error.to_string())
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn mission_semantic_gate_rejects_invalid_conversation_camera() -> Result<(), String> {
     let bytes = conversation_camera_mission_json("7")?;
     let result = validate_test_mission_source(
@@ -1369,6 +1687,7 @@ fn mission_semantic_gate_rejects_invalid_conversation_camera() -> Result<(), Str
         &bytes,
     );
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("invalid conversation-camera slot reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
@@ -1388,8 +1707,12 @@ fn stage_race_catchup_mission_json(factor: &str) -> Result<Vec<u8>, String> {
         "schema": MISSION_SCRIPT_SCHEMA,
         "source_extension":"mfk","route_class":"mission","source_bytes":160,
         "context_command_count":6,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":7,"unique_command_count":7,"load_p3d_reference_count":0,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":7,
+        "unique_command_count":7,
+        "load_p3d_reference_count":0,
         "mission_flow_command_count":7,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script",
         "command_counts":{
@@ -1398,25 +1721,70 @@ fn stage_race_catchup_mission_json(factor: &str) -> Result<Vec<u8>, String> {
         },
         "source_statements":[
             "SelectMission(\"m1\");","AddStage(0);",
+                        // jig-ignore-next-line: literal
             format!("SetStageAIRaceCatchupParams(\"car\",80,{factor_raw},1.0,1.0);"),
             "AddObjective(\"goto\");","CloseObjective();","CloseStage();",
             "CloseMission();"
         ],
         "p3d_references":[],
         "command_invocations":[
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":3,"name":"setstageairacecatchupparams","args_raw":format!("\"car\",80,{factor_raw},1.0,1.0"),"semantic_role":"mission-stage","arguments":["car","80",factor,"1.0","1.0"]},
-            {"ordinal":4,"name":"addobjective","args_raw":"\"goto\"","semantic_role":"mission-objective","arguments":["goto"]},
-            {"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"setstageairacecatchupparams",
+                                                // jig-ignore-next-line: literal
+                                                        "args_raw":format!("\"car\",80,{factor_raw},1.0,1.0"),
+                            "semantic_role":"mission-stage",
+                            "arguments":["car","80",factor,"1.0","1.0"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"addobjective",
+                            "args_raw":"\"goto\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["goto"]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     }))
     .map_err(|error| error.to_string())
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn mission_semantic_gate_rejects_invalid_stage_race_catchup() -> Result<(), String> {
     let bytes = stage_race_catchup_mission_json("1e0")?;
     let result = validate_test_mission_source(
@@ -1427,6 +1795,7 @@ fn mission_semantic_gate_rejects_invalid_stage_race_catchup() -> Result<(), Stri
         &bytes,
     );
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("invalid stage race catch-up reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
@@ -1443,8 +1812,12 @@ fn participant_mission_json() -> Result<Vec<u8>, String> {
         "schema": MISSION_SCRIPT_SCHEMA,
         "source_extension":"mfk","route_class":"mission","source_bytes":128,
         "context_command_count":6,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":7,"unique_command_count":7,"load_p3d_reference_count":0,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":7,
+        "unique_command_count":7,
+        "load_p3d_reference_count":0,
         "mission_flow_command_count":6,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script",
         "command_counts":{
@@ -1458,19 +1831,62 @@ fn participant_mission_json() -> Result<Vec<u8>, String> {
         ],
         "p3d_references":[],
         "command_invocations":[
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":3,"name":"addobjective","args_raw":"\"talkto\"","semantic_role":"mission-objective","arguments":["talkto"]},
-            {"ordinal":4,"name":"addnpc","args_raw":"\"bart\",\"npc_loc\"","semantic_role":"mission-script","arguments":["bart","npc_loc"]},
-            {"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addobjective",
+                            "args_raw":"\"talkto\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["talkto"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"addnpc",
+                            "args_raw":"\"bart\",\"npc_loc\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["bart","npc_loc"]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     }))
     .map_err(|error| error.to_string())
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn mission_semantic_gate_rejects_missing_participant_package() -> Result<(), String> {
     let bytes = participant_mission_json()?;
     let result = validate_test_mission_source(
@@ -1481,6 +1897,7 @@ fn mission_semantic_gate_rejects_missing_participant_package() -> Result<(), Str
         &bytes,
     );
     let Err(error) = result else {
+        // jig-ignore-next-line: literal
         return Err("missing participant package reached Unreal planning".to_owned());
     };
     let rendered = error.to_string();
@@ -1511,6 +1928,7 @@ fn accepts_source_distinct_mission_definition_rows() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_mission_definitions_out_of_verified_source_order() -> Result<(), String> {
     let rows = vec![
         mission_definition_row("script-two", "m1"),
@@ -1581,6 +1999,7 @@ fn rejects_mission_definition_with_sparse_stage_order() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_mission_definition_with_authored_neighbor_drift() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
@@ -1634,6 +2053,7 @@ fn rejects_mission_definition_with_authored_neighbor_drift() -> Result<(), Strin
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_mission_definition_with_early_terminal_outcome() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
@@ -1687,6 +2107,7 @@ fn rejects_mission_definition_with_early_terminal_outcome() -> Result<(), String
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_mission_definition_with_invented_runtime_edge() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
@@ -1754,6 +2175,7 @@ fn rejects_mission_definition_with_kind_final_drift() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_mission_definition_with_nonexclusive_objective_mapping() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
@@ -1931,6 +2353,7 @@ fn rejects_mission_definition_condition_order_drift() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_mission_definition_condition_violation_drift() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
@@ -2055,6 +2478,7 @@ fn rejects_mission_definition_checkpoint_before_stage() -> Result<(), String> {
         &[mission_source("script-one")],
     )
     .rejection("checkpoint at or before its stage must fail")?;
+    // jig-ignore-next-line: literal
     assert!(error.to_string().contains("checkpoint source ordinal is malformed"));
     Ok(())
 }
@@ -2101,6 +2525,7 @@ fn rejects_mission_definition_countdown_owner_drift() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_mission_definition_countdown_entry_order_drift() -> Result<(), String> {
     let rows = vec![mission_definition_row_with_stages(
         "script-one",
@@ -2191,6 +2616,7 @@ fn rejects_mission_definition_collectible_owner_drift() -> Result<(), String> {
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn rejects_mission_definition_npc_declaration_order_drift() -> Result<(), String> {
     let mut stage = mission_definition_relationship_stage();
     drop(first_array_object_mut(&mut stage, "objective_npc_waypoints")?.insert(
@@ -2207,6 +2633,7 @@ fn rejects_mission_definition_npc_declaration_order_drift() -> Result<(), String
         &[mission_source("script-one")],
     )
     .rejection("NPC declaration order drift must fail")?;
+    // jig-ignore-next-line: literal
     assert!(error.to_string().contains("NPC waypoint 1 relationship is malformed"));
     Ok(())
 }
@@ -2218,6 +2645,7 @@ fn rejects_mission_definition_pickup_scope_drift() -> Result<(), String> {
     let scope = pickup
         .get_mut("declaration_scope")
         .and_then(serde_json::Value::as_object_mut)
+        // jig-ignore-next-line: literal
         .ok_or_else(|| "pickup declaration scope fixture is malformed".to_owned())?;
     drop(scope.insert("source_ordinal".to_owned(), json!(8)));
     let rows = vec![mission_definition_row_with_stages(

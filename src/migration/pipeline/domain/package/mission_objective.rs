@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -263,5 +263,6 @@ fn objective_alias_schema(alias: &str) -> Option<ObjectiveAliasSchema> {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/mission_objective/tests.rs"]
 mod tests;

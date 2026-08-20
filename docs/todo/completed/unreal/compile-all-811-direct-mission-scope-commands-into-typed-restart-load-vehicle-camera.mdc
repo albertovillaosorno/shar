@@ -1,11 +1,17 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: compile-all-811-direct-mission-scope-commands-into-typed-restart-load-vehicle-camera
 status: completed
 priority: P2
 lane: unreal
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward]
 children: []
 ---
@@ -24,7 +30,10 @@ evidence with no raw mission command fallback.
 
 ## Dependencies
 
-Parent task: `map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward`.
+Parent task:
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO dependency token is indivisible -->
+`map-every-reviewed-participant-route-timing-load-checkpoint-presentation-reward`.
 
 ## Evidence
 

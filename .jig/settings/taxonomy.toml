@@ -1,0 +1,40 @@
+domain = "taxonomy"
+schema_version = 1
+required = true
+one_role_per_path = true
+overlapping_roles = "deny"
+spaces_in_paths = "deny"
+unknown_paths = "deny"
+
+[role.algorithms]
+paths = ["algorithms/"]
+
+[role.cargo_configuration]
+paths = [".cargo/"]
+
+[role.documentation]
+paths = ["docs/"]
+
+[role.game_manifest]
+paths = ["game/manifest/game.jsonl"]
+
+[role.github]
+paths = [".github/"]
+
+[role.jig_configuration]
+paths = [".jig/"]
+
+[role.root_governance]
+paths = [".editorconfig", ".env.example", ".gitattributes", ".gitignore", "AGENTS.md", "Cargo.lock", "Cargo.toml", "LICENSE-MIT", "README.md", "ROADMAP.md", "TODO.md"]
+
+[role.skills]
+paths = ["skills/"]
+
+[role.source]
+paths = ["src/"]
+
+[role.tests]
+paths = ["tests/"]
+
+[role.tools]
+paths = ["tools/"]

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -38,8 +38,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::domain::mesh::{
-    MeshAsset, MeshError, PrimitiveGroup,
-    triangulate_strip,
+    MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
 };
 use crate::domain::scene::identity::is_portable_path_segment;
 use crate::domain::texture::{
@@ -478,7 +477,6 @@ fn attach_surface_layers(
             .map_err(DecodedComponentError::Mesh)
     }
 }
-
 
 /// Internal helper for the adapter implementation.
 fn resolve_material(

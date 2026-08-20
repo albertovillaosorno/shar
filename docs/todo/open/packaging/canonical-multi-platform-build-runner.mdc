@@ -112,7 +112,8 @@ files must be real files with exactly one filesystem link, while
 directories. Linked identities fail before UAT starts, so cached tool output
 cannot be redirected through a pre-existing work-tree identity. Turnkey SDK
 evidence is likewise required to be a real report file with one filesystem link
-both before stale-report cleanup and after UAT returns. Redirected or hard-linked
+both before stale-report cleanup and after UAT returns. Redirected or
+hard-linked
 `turnkey.txt` evidence cannot make external content satisfy the SDK-validity
 gate. The report must decode as UTF-8 and contain a platform-anchored valid SDK
 row; a prefixed lookalike platform name cannot satisfy another target's gate.
@@ -178,7 +179,8 @@ The runner now moves UAT `Manifest_*.txt` publication metadata and Windows PDBs
 out of the candidate before atomic publication, retaining them under the target
 build cache. Those metadata and symbol cache roots are preflighted as real
 directories before stale cache cleanup, so redirected identities fail before
-any manifest or debug-symbol file is moved. Applying that rule to the accepted Windows
+any manifest or debug-symbol file is moved. Applying that rule to the accepted
+Windows
 package reduced final
 `dist/windows-x64` to 26 runtime/licensing files and 488,530,675 bytes. A second
 exact copy produced inventory SHA-256

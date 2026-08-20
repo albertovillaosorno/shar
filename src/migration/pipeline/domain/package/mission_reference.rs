@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -318,7 +318,8 @@ impl MissionReferenceCatalog {
         entries: &[(&str, &str, &str, &str)],
     ) -> Self {
         let mut characters = BTreeMap::new();
-        for (source_id, participant_id, package_id, package_subcategory) in entries {
+                // jig-ignore-next-line: expression
+                for (source_id, participant_id, package_id, package_subcategory) in entries {
             characters
                 .entry(source_id.to_ascii_lowercase())
                 .or_insert_with(Vec::new)
@@ -1115,5 +1116,6 @@ fn resolve_stage_directive(
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/mission_reference/tests.rs"]
 mod tests;

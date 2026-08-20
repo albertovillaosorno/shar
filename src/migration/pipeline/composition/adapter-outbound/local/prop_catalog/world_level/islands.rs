@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -34,7 +34,8 @@ use fbx::domain::mesh::MeshAsset;
 
 /// Preserve one source mesh as one exported mesh.
 ///
-/// Spatial distance between disconnected source components is not object-identity
+/// Spatial distance between disconnected source components is not
+/// object-identity
 /// evidence. Source owner and placement records govern downstream object roles;
 /// this boundary therefore performs no proximity-based regrouping.
 ///

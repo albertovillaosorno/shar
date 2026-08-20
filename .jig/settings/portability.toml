@@ -1,0 +1,9 @@
+domain = "portability"
+schema_version = 1
+forbidden_roots = [".jig-cache", ".turbo", "cache", "dependencies", "logs", "target", "temp", "tmp"]
+required_roots = [".cache", ".dependencies", ".logs", ".temp"]
+runtime_roots = [".cache", ".dependencies", ".logs", ".temp"]
+
+[rust]
+cargo_config = ".cargo/config.toml"
+target_dir = ".cache/rust/target"

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -109,6 +109,7 @@ struct DecodedLocatorIdentity {
     locator_type_name: String,
 }
 
+// jig-ignore-next-line: long identifier
 fn parse_decoded_locator(json: &str) -> PipelineOutcome<DecodedLocatorIdentity> {
     let value = serde_json::from_str::<Value>(json).map_err(|error| {
         PipelineError::new(format!("invalid decoded locator JSON: {error}"))
@@ -222,5 +223,6 @@ pub(super) fn required_u32(
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/mission_locator_catalog/tests.rs"]
 mod tests;

@@ -1,15 +1,23 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: keep-movie-package-manifests-and-decode-reports-independent-of-local-source-extraction
 status: completed
 priority: P1
 lane: conversion
 active: false
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 parent: preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 dependencies: [preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in]
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Keep movie package manifests and decode reports independent of local source, extraction,…
 
 Keep movie package manifests and decode reports independent of local source,
@@ -22,7 +30,8 @@ extraction, and transaction paths.
 
 ## Dependencies
 
-Parent task: `preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in`.
+Parent task:
+`preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in`.
 
 ## Evidence
 

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -158,6 +158,7 @@ fn run_unprepared_game_root_case() -> Result<(), String> {
     let accepted = fs::read(extracted_root.join("game/accepted.txt"))
         .map_err(|error| error.to_string())?;
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    // jig-ignore-next-line: literal
     if !error.contains("prepared game manifest validation") || accepted != b"accepted" {
         return Err("unprepared root did not fail before mutation".to_owned());
     }
@@ -198,6 +199,7 @@ fn run_prepared_root_shortfall_case() -> Result<(), String> {
         .map_err(|error| error.to_string())?;
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
     if !error.contains("requirement shortfall") || accepted != b"accepted" {
+        // jig-ignore-next-line: literal
         return Err("manifest shortfall did not fail before mutation".to_owned());
     }
     Ok(())

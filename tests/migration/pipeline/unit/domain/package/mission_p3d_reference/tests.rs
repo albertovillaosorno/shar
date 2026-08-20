@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,8 @@
 // - Defaults:
 //   - Missing, unsafe, and non-P3D references fail closed.
 //
+
+//! Mission P3D package-reference tests.
 
 use super::*;
 

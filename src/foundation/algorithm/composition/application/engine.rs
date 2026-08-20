@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -33,18 +33,17 @@
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::path::{Component, Path, PathBuf};
 
-use chacha20poly1305::{
-    ChaCha20Poly1305, KeyInit, Nonce,
-    aead::{Aead, Payload},
-};
-use schoenwald_filesystem::adapters::driving::local;
+use chacha20poly1305::aead::{Aead, Payload};
+use chacha20poly1305::{ChaCha20Poly1305, KeyInit, Nonce};
 use same_file::Handle;
+use schoenwald_filesystem::adapters::driving::local;
 use schoenwald_filesystem::{PathKind, resolve_under, validate_portable_path};
 use shar_sha256::{Sha256, digest, digest_hex};
 
 use crate::document::{
-    ALGORITHM_SCHEMA, AlgorithmDocument, AuthenticatedMetadata, ProtectedTarget, SourceRecord,
-    TargetDescriptor, TargetKind, settings_json_bytes,
+    ALGORITHM_SCHEMA, AlgorithmDocument, AuthenticatedMetadata,
+    ProtectedTarget, SourceRecord, TargetDescriptor, TargetKind,
+    settings_json_bytes,
 };
 use crate::domain::{AlgorithmError, Settings};
 
@@ -102,16 +101,17 @@ fn usize_to_u64(value: usize, context: &str) -> Result<u64, AlgorithmError> {
 }
 
 fn portable_relative(path: &Path) -> Result<String, AlgorithmError> {
-    validate_portable_path(path)
-        .map_err(|error| AlgorithmError::new(format!("non-portable relative path: {error}")))?;
+    validate_portable_path(path).map_err(|error| {
+        AlgorithmError::new(format!("non-portable relative path: {error}"))
+    })?;
     let mut text = String::new();
     for component in path.components() {
         let Component::Normal(part) = component else {
             return Err(AlgorithmError::new("relative path is not canonical"));
         };
-        let part = part
-            .to_str()
-            .ok_or_else(|| AlgorithmError::new("relative path must be valid Unicode"))?;
+        let part = part.to_str().ok_or_else(|| {
+            AlgorithmError::new("relative path must be valid Unicode")
+        })?;
         if !text.is_empty() {
             text.push('/');
         }
@@ -132,7 +132,9 @@ fn inspect_file(
     let bytes = local::file_len(&path)
         .map_err(|error| io_failure("cannot inspect input file", &error))?;
     if bytes > settings.maximum_file_bytes() {
-        return Err(AlgorithmError::new("input file exceeds maximum_file_bytes"));
+        return Err(AlgorithmError::new(
+            "input file exceeds maximum_file_bytes",
+        ));
     }
     let data = local::read_bytes(&path)
         .map_err(|error| io_failure("cannot read input file", &error))?;
@@ -163,16 +165,24 @@ fn collect_one_root(
 ) -> Result<(PathBuf, Vec<InputFile>), AlgorithmError> {
     let kind = local::path_kind(root)
         .map_err(|error| io_failure("cannot inspect input path", &error))?;
-    let canonical = local::canonicalize(root)
-        .map_err(|error| io_failure("cannot canonicalize input path", &error))?;
+    let canonical = local::canonicalize(root).map_err(|error| {
+        io_failure("cannot canonicalize input path", &error)
+    })?;
     match kind {
         PathKind::File => {
-            let file = inspect_file(input, String::new(), canonical.clone(), settings)?;
+            let file = inspect_file(
+                input,
+                String::new(),
+                canonical.clone(),
+                settings,
+            )?;
             Ok((canonical, vec![file]))
-        }
+        },
         PathKind::Directory => {
-            let paths = local::strict_regular_files(&canonical)
-                .map_err(|error| io_failure("cannot traverse input directory", &error))?;
+            let paths =
+                local::strict_regular_files(&canonical).map_err(|error| {
+                    io_failure("cannot traverse input directory", &error)
+                })?;
             if paths.is_empty() {
                 return Err(AlgorithmError::new(
                     "source directory must contain at least one regular file",
@@ -180,16 +190,19 @@ fn collect_one_root(
             }
             let mut files = Vec::with_capacity(paths.len());
             for path in paths {
-                let relative = path
-                    .strip_prefix(&canonical)
-                    .map_err(|_prefix_error| AlgorithmError::new("input file escaped its root"))?;
+                let relative =
+                    path.strip_prefix(&canonical).map_err(|_prefix_error| {
+                        AlgorithmError::new("input file escaped its root")
+                    })?;
                 let logical = portable_relative(relative)?;
                 files.push(inspect_file(input, logical, path, settings)?);
             }
             sort_files_by_logical_path(&mut files);
             Ok((canonical, files))
-        }
-        PathKind::Missing => Err(AlgorithmError::new("input path does not exist")),
+        },
+        PathKind::Missing => {
+            Err(AlgorithmError::new("input path does not exist"))
+        },
         PathKind::Other => Err(AlgorithmError::new(
             "input path must be a regular file or directory",
         )),
@@ -200,18 +213,23 @@ fn reject_root_overlap(roots: &[PathBuf]) -> Result<(), AlgorithmError> {
     for (index, root) in roots.iter().enumerate() {
         for other in roots.iter().skip(index.saturating_add(1)) {
             if root.starts_with(other) || other.starts_with(root) {
-                return Err(AlgorithmError::new("input roots must not overlap"));
+                return Err(AlgorithmError::new(
+                    "input roots must not overlap",
+                ));
             }
         }
     }
     Ok(())
 }
 
-fn reject_duplicate_physical_sources(files: &[InputFile]) -> Result<(), AlgorithmError> {
+fn reject_duplicate_physical_sources(
+    files: &[InputFile],
+) -> Result<(), AlgorithmError> {
     let mut identities = HashSet::new();
     for file in files {
-        let identity = Handle::from_path(&file.path)
-            .map_err(|_error| AlgorithmError::new("cannot identify source input file"))?;
+        let identity = Handle::from_path(&file.path).map_err(|_error| {
+            AlgorithmError::new("cannot identify source input file")
+        })?;
         if !identities.insert(identity) {
             return Err(AlgorithmError::new(
                 "source inputs repeat one physical file",
@@ -221,11 +239,14 @@ fn reject_duplicate_physical_sources(files: &[InputFile]) -> Result<(), Algorith
     Ok(())
 }
 
-fn reject_duplicate_physical_targets(files: &[InputFile]) -> Result<(), AlgorithmError> {
+fn reject_duplicate_physical_targets(
+    files: &[InputFile],
+) -> Result<(), AlgorithmError> {
     let mut identities = HashSet::new();
     for file in files {
-        let identity = Handle::from_path(&file.path)
-            .map_err(|_error| AlgorithmError::new("cannot identify target input file"))?;
+        let identity = Handle::from_path(&file.path).map_err(|_error| {
+            AlgorithmError::new("cannot identify target input file")
+        })?;
         if !identities.insert(identity) {
             return Err(AlgorithmError::new(
                 "target inputs repeat one physical file",
@@ -240,7 +261,9 @@ fn collect_source(
     settings: &Settings,
 ) -> Result<CollectedSource, AlgorithmError> {
     if paths.is_empty() {
-        return Err(AlgorithmError::new("at least one source path is required"));
+        return Err(AlgorithmError::new(
+            "at least one source path is required",
+        ));
     }
     let mut roots = Vec::with_capacity(paths.len());
     let mut files = Vec::new();
@@ -286,30 +309,38 @@ fn collect_target(
         io_failure("cannot canonicalize target path", &error)
     })?;
     let (target_kind, files) = match kind {
-        PathKind::File => (
-            TargetKind::File,
-            vec![inspect_file(0, String::new(), canonical.clone(), settings)?],
-        ),
+        PathKind::File => (TargetKind::File, vec![inspect_file(
+            0,
+            String::new(),
+            canonical.clone(),
+            settings,
+        )?]),
         PathKind::Directory => {
-            let paths = local::strict_regular_files(&canonical)
-                .map_err(|error| io_failure("cannot traverse target directory", &error))?;
+            let paths =
+                local::strict_regular_files(&canonical).map_err(|error| {
+                    io_failure("cannot traverse target directory", &error)
+                })?;
             let mut files = Vec::with_capacity(paths.len());
             for target_file in paths {
-                let relative = target_file
-                    .strip_prefix(&canonical)
-                    .map_err(|_prefix_error| AlgorithmError::new("target file escaped its root"))?;
+                let relative = target_file.strip_prefix(&canonical).map_err(
+                    |_prefix_error| {
+                        AlgorithmError::new("target file escaped its root")
+                    },
+                )?;
                 let logical = portable_relative(relative)?;
                 files.push(inspect_file(0, logical, target_file, settings)?);
             }
             sort_files_by_logical_path(&mut files);
             (TargetKind::Directory, files)
-        }
-        PathKind::Missing => return Err(AlgorithmError::new("target path does not exist")),
+        },
+        PathKind::Missing => {
+            return Err(AlgorithmError::new("target path does not exist"));
+        },
         PathKind::Other => {
             return Err(AlgorithmError::new(
                 "target path must be a regular file or directory",
             ));
-        }
+        },
     };
     if files.is_empty() {
         return Err(AlgorithmError::new(
@@ -334,7 +365,10 @@ fn settings_sha256(settings: &Settings) -> Result<String, AlgorithmError> {
     Ok(digest_hex(&settings_json_bytes(settings)?))
 }
 
-fn update_frame(state: &mut Sha256, bytes: &[u8]) -> Result<(), AlgorithmError> {
+fn update_frame(
+    state: &mut Sha256,
+    bytes: &[u8],
+) -> Result<(), AlgorithmError> {
     let length = usize_to_u64(bytes.len(), "hash frame length")?;
     state.update(&length.to_be_bytes());
     state.update(bytes);
@@ -366,7 +400,9 @@ fn metadata_bytes(
         target,
     };
     serde_json::to_vec(&metadata).map_err(|error| {
-        AlgorithmError::new(format!("cannot serialize algorithm metadata: {error}"))
+        AlgorithmError::new(format!(
+            "cannot serialize algorithm metadata: {error}"
+        ))
     })
 }
 
@@ -382,7 +418,11 @@ fn aad(metadata: &[u8], path: &str) -> Result<Vec<u8>, AlgorithmError> {
     Ok(bytes)
 }
 
-fn nonce_for(key: &[u8; 32], metadata: &[u8], path: &str) -> Result<[u8; 12], AlgorithmError> {
+fn nonce_for(
+    key: &[u8; 32],
+    metadata: &[u8],
+    path: &str,
+) -> Result<[u8; 12], AlgorithmError> {
     let mut state = Sha256::new();
     state.update(NONCE_DOMAIN);
     state.update(key);
@@ -456,7 +496,9 @@ fn absolute_lexical(path: &Path) -> Result<PathBuf, AlgorithmError> {
         Ok(path.to_path_buf())
     } else {
         let current = std::env::current_dir().map_err(|error| {
-            AlgorithmError::new(format!("cannot resolve current directory: {error}"))
+            AlgorithmError::new(format!(
+                "cannot resolve current directory: {error}"
+            ))
         })?;
         Ok(current.join(path))
     }
@@ -465,15 +507,17 @@ fn absolute_lexical(path: &Path) -> Result<PathBuf, AlgorithmError> {
 fn projected_identity(path: &Path) -> Result<PathBuf, AlgorithmError> {
     let absolute = absolute_lexical(path)?;
     for ancestor in absolute.ancestors() {
-        let kind = local::path_kind(ancestor)
-            .map_err(|error| io_failure("cannot inspect output path", &error))?;
+        let kind = local::path_kind(ancestor).map_err(|error| {
+            io_failure("cannot inspect output path", &error)
+        })?;
         if kind != PathKind::Missing {
             let canonical = local::canonicalize(ancestor).map_err(|error| {
                 io_failure("cannot canonicalize output ancestor", &error)
             })?;
-            let suffix = absolute.strip_prefix(ancestor).map_err(|_prefix_error| {
-                AlgorithmError::new("cannot resolve output path identity")
-            })?;
+            let suffix =
+                absolute.strip_prefix(ancestor).map_err(|_prefix_error| {
+                    AlgorithmError::new("cannot resolve output path identity")
+                })?;
             return Ok(canonical.join(suffix));
         }
     }
@@ -482,7 +526,10 @@ fn projected_identity(path: &Path) -> Result<PathBuf, AlgorithmError> {
     ))
 }
 
-fn reject_output_overlap(path: &Path, protected_roots: &[PathBuf]) -> Result<(), AlgorithmError> {
+fn reject_output_overlap(
+    path: &Path,
+    protected_roots: &[PathBuf],
+) -> Result<(), AlgorithmError> {
     let output = projected_identity(path)?;
     if protected_roots
         .iter()
@@ -499,10 +546,9 @@ fn reject_target_source_overlap(
     target_root: &Path,
     source_roots: &[PathBuf],
 ) -> Result<(), AlgorithmError> {
-    if source_roots
-        .iter()
-        .any(|root| target_root.starts_with(root) || root.starts_with(target_root))
-    {
+    if source_roots.iter().any(|root| {
+        target_root.starts_with(root) || root.starts_with(target_root)
+    }) {
         return Err(AlgorithmError::new(
             "target path overlaps a source input root",
         ));
@@ -523,8 +569,9 @@ fn reject_physical_source_target_overlap(
         })
         .collect::<Result<HashSet<_>, _>>()?;
     for target in target_files {
-        let identity = Handle::from_path(&target.path)
-            .map_err(|_error| AlgorithmError::new("cannot identify target input file"))?;
+        let identity = Handle::from_path(&target.path).map_err(|_error| {
+            AlgorithmError::new("cannot identify target input file")
+        })?;
         if source_identities.contains(&identity) {
             return Err(AlgorithmError::new(
                 "target file aliases a source input file",
@@ -547,7 +594,8 @@ pub fn create_algorithm(
 ) -> Result<(), AlgorithmError> {
     validate_txt_path(algorithm_path)?;
     let source = collect_source(source_paths, settings)?;
-    let (target_kind, target_files, target_root) = collect_target(target_path, settings)?;
+    let (target_kind, target_files, target_root) =
+        collect_target(target_path, settings)?;
     reject_target_source_overlap(&target_root, &source.roots)?;
     reject_physical_source_target_overlap(&source.files, &target_files)?;
     reject_output_overlap(algorithm_path, &source.roots)?;
@@ -570,24 +618,27 @@ pub fn create_algorithm(
         &target_descriptors,
     )?;
     let key = source_key(&source.files)?;
-    let cipher = ChaCha20Poly1305::new_from_slice(&key)
-        .map_err(|_key_error| AlgorithmError::new("cannot initialize protected payload cipher"))?;
+    let cipher =
+        ChaCha20Poly1305::new_from_slice(&key).map_err(|_key_error| {
+            AlgorithmError::new("cannot initialize protected payload cipher")
+        })?;
     let mut protected = Vec::with_capacity(target_files.len());
     for (file, descriptor) in target_files.iter().zip(target_descriptors) {
         let plaintext = &file.data;
         let nonce = nonce_for(&key, &metadata, &descriptor.path)?;
         let associated = aad(&metadata, &descriptor.path)?;
-        let nonce_value = Nonce::try_from(nonce.as_slice())
-            .map_err(|_nonce_error| AlgorithmError::new("invalid derived nonce"))?;
+        let nonce_value =
+            Nonce::try_from(nonce.as_slice()).map_err(|_nonce_error| {
+                AlgorithmError::new("invalid derived nonce")
+            })?;
         let ciphertext = cipher
-            .encrypt(
-                &nonce_value,
-                Payload {
-                    msg: plaintext,
-                    aad: &associated,
-                },
-            )
-            .map_err(|_cipher_error| AlgorithmError::new("protected target encryption failed"))?;
+            .encrypt(&nonce_value, Payload {
+                msg: plaintext,
+                aad: &associated,
+            })
+            .map_err(|_cipher_error| {
+                AlgorithmError::new("protected target encryption failed")
+            })?;
         protected.push(ProtectedTarget {
             descriptor,
             nonce: hex_bytes(&nonce),
@@ -601,8 +652,10 @@ pub fn create_algorithm(
         target_kind,
         target: protected,
     };
-    let mut text = serde_json::to_string_pretty(&document)
-        .map_err(|error| AlgorithmError::new(format!("cannot serialize algorithm: {error}")))?;
+    let mut text =
+        serde_json::to_string_pretty(&document).map_err(|error| {
+            AlgorithmError::new(format!("cannot serialize algorithm: {error}"))
+        })?;
     text.push('\n');
     local::write_new_text(algorithm_path, &text, true)
         .map_err(|error| io_failure("cannot write algorithm output", &error))
@@ -684,9 +737,8 @@ fn validate_source_records(
                 "algorithm source file exceeds settings",
             ));
         }
-        source_bytes = source_bytes
-            .checked_add(record.bytes)
-            .ok_or_else(|| {
+        source_bytes =
+            source_bytes.checked_add(record.bytes).ok_or_else(|| {
                 AlgorithmError::new("algorithm source length overflow")
             })?;
         match previous_input {
@@ -728,7 +780,8 @@ fn validate_source_records(
             let paths = portable_paths.entry(record.input).or_default();
             if paths.iter().any(|existing| {
                 let existing = Path::new(existing);
-                candidate.starts_with(existing) || existing.starts_with(candidate)
+                candidate.starts_with(existing)
+                    || existing.starts_with(candidate)
             }) {
                 return Err(AlgorithmError::new(
                     "algorithm contains overlapping source paths",
@@ -779,7 +832,8 @@ fn validate_document(
             "algorithm source and target records must not be empty",
         ));
     }
-    let source_count = usize_to_u64(document.source.len(), "algorithm source count")?;
+    let source_count =
+        usize_to_u64(document.source.len(), "algorithm source count")?;
     if source_count < settings.minimum_source_files()
         || source_count > settings.maximum_source_files()
     {
@@ -788,7 +842,8 @@ fn validate_document(
         ));
     }
     validate_source_records(&document.source, settings)?;
-    let target_count = usize_to_u64(document.target.len(), "algorithm target count")?;
+    let target_count =
+        usize_to_u64(document.target.len(), "algorithm target count")?;
     if target_count > settings.maximum_target_files() {
         return Err(AlgorithmError::new(
             "algorithm target count violates settings",
@@ -889,8 +944,9 @@ fn parse_document(path: &Path) -> Result<AlgorithmDocument, AlgorithmError> {
     validate_txt_path(path)?;
     let text = local::read_utf8(path)
         .map_err(|error| io_failure("cannot read algorithm", &error))?;
-    serde_json::from_str(&text)
-        .map_err(|error| AlgorithmError::new(format!("invalid algorithm JSON: {error}")))
+    serde_json::from_str(&text).map_err(|error| {
+        AlgorithmError::new(format!("invalid algorithm JSON: {error}"))
+    })
 }
 
 fn output_path_for(
@@ -900,16 +956,22 @@ fn output_path_for(
 ) -> Result<PathBuf, AlgorithmError> {
     match target_kind {
         TargetKind::File => Ok(output.to_path_buf()),
-        TargetKind::Directory => resolve_under(output, Path::new(&descriptor.path))
-            .map_err(|error| AlgorithmError::new(format!("invalid target output path: {error}"))),
+        TargetKind::Directory => resolve_under(
+            output,
+            Path::new(&descriptor.path),
+        )
+        .map_err(|error| {
+            AlgorithmError::new(format!("invalid target output path: {error}"))
+        }),
     }
 }
 
 /// Replays one source-bound `.txt` algorithm into a new explicit output path.
 ///
 /// # Errors
-/// Returns an error before writing when settings, source evidence, authenticated
-/// metadata, protected target bytes, or output containment fail validation.
+/// Returns an error before writing when settings, source evidence,
+/// authenticated metadata, protected target bytes, or output containment fail
+/// validation.
 pub fn replay_algorithm(
     settings: &Settings,
     source_paths: &[PathBuf],
@@ -945,29 +1007,30 @@ pub fn replay_algorithm(
         &descriptors,
     )?;
     let key = source_key(&source.files)?;
-    let cipher = ChaCha20Poly1305::new_from_slice(&key)
-        .map_err(|_key_error| AlgorithmError::new("cannot initialize protected payload cipher"))?;
+    let cipher =
+        ChaCha20Poly1305::new_from_slice(&key).map_err(|_key_error| {
+            AlgorithmError::new("cannot initialize protected payload cipher")
+        })?;
     let mut recovered = Vec::with_capacity(document.target.len());
     let mut output_identities = BTreeSet::new();
     for target in &document.target {
         let nonce = decode_hex(&target.nonce)?;
         let ciphertext = decode_hex(&target.ciphertext)?;
         let associated = aad(&metadata, &target.descriptor.path)?;
-        let nonce_value = Nonce::try_from(nonce.as_slice()).map_err(|_nonce_error| {
-            AlgorithmError::new("algorithm target nonce must be 12 bytes")
-        })?;
+        let nonce_value =
+            Nonce::try_from(nonce.as_slice()).map_err(|_nonce_error| {
+                AlgorithmError::new("algorithm target nonce must be 12 bytes")
+            })?;
         let plaintext = cipher
-            .decrypt(
-                &nonce_value,
-                Payload {
-                    msg: &ciphertext,
-                    aad: &associated,
-                },
-            )
+            .decrypt(&nonce_value, Payload {
+                msg: &ciphertext,
+                aad: &associated,
+            })
             .map_err(|_cipher_error| {
                 AlgorithmError::new("protected target authentication failed")
             })?;
-        let observed_bytes = usize_to_u64(plaintext.len(), "recovered target length")?;
+        let observed_bytes =
+            usize_to_u64(plaintext.len(), "recovered target length")?;
         if observed_bytes != target.descriptor.bytes
             || digest_hex(&plaintext) != target.descriptor.sha256
         {
@@ -975,7 +1038,11 @@ pub fn replay_algorithm(
                 "recovered target identity does not match algorithm",
             ));
         }
-        let destination = output_path_for(output_path, document.target_kind, &target.descriptor)?;
+        let destination = output_path_for(
+            output_path,
+            document.target_kind,
+            &target.descriptor,
+        )?;
         if !output_identities.insert(destination.clone()) {
             return Err(AlgorithmError::new("replay target output collision"));
         }
@@ -983,8 +1050,9 @@ pub fn replay_algorithm(
     }
 
     for (destination, bytes) in recovered {
-        local::write_new_bytes(&destination, &bytes, true)
-            .map_err(|error| io_failure("cannot write replay output", &error))?;
+        local::write_new_bytes(&destination, &bytes, true).map_err(
+            |error| io_failure("cannot write replay output", &error),
+        )?;
     }
     Ok(())
 }

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -1321,5 +1321,6 @@ fn command_is_allowed_for_alias(source_alias: &str, command: &str) -> bool {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../../tests/migration/pipeline/unit/domain/package/mission_objective/directive_tests.rs"]
 mod tests;

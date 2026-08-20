@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -103,20 +103,104 @@ fn base_document(invocations: &Value, statement_count: usize) -> Value {
 fn scope_document() -> Value {
     base_document(
         &json!([
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0,final","semantic_role":"mission-stage","arguments":["0","final"]},
-            {"ordinal":3,"name":"addobjective","args_raw":"\"race\"","semantic_role":"mission-objective","arguments":["race"]},
-            {"ordinal":4,"name":"addcondition","args_raw":"\"timeout\"","semantic_role":"mission-script","arguments":["timeout"]},
-            {"ordinal":5,"name":"closecondition","args_raw":"","semantic_role":"mission-script","arguments":[]},
-            {"ordinal":6,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":7,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":8,"name":"addstage","args_raw":"1","semantic_role":"mission-stage","arguments":["1"]},
-            {"ordinal":9,"name":"addobjective","args_raw":"\"goto\",\"both\"","semantic_role":"mission-objective","arguments":["goto","both"]},
-            {"ordinal":10,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":11,"name":"addcondition","args_raw":"\"damage\",\"neither\"","semantic_role":"mission-script","arguments":["damage","neither"]},
-            {"ordinal":12,"name":"closecondition","args_raw":"","semantic_role":"mission-script","arguments":[]},
-            {"ordinal":13,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":14,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0,final",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0","final"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addobjective",
+                            "args_raw":"\"race\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["race"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"addcondition",
+                            "args_raw":"\"timeout\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["timeout"]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"closecondition",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":8,
+                            "name":"addstage",
+                            "args_raw":"1",
+                            "semantic_role":"mission-stage",
+                            "arguments":["1"]
+                        },
+                        {
+                            "ordinal":9,
+                            "name":"addobjective",
+                            "args_raw":"\"goto\",\"both\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["goto","both"]
+                        },
+                        {
+                            "ordinal":10,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":11,
+                            "name":"addcondition",
+                            "args_raw":"\"damage\",\"neither\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["damage","neither"]
+                        },
+                        {
+                            "ordinal":12,
+                            "name":"closecondition",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":13,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":14,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]),
         14,
     )
@@ -212,7 +296,13 @@ fn utility_script_without_mission_context_projects_no_graphs()
         "source_statements": ["BindReward();"],
         "p3d_references": [],
         "command_invocations": [
-            {"ordinal":1,"name":"bindreward","args_raw":"","semantic_role":"mission-reward","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"bindreward",
+                            "args_raw":"",
+                            "semantic_role":"mission-reward",
+                            "arguments":[]
+                        }
         ]
     });
     let report = compile_mission_scope_graphs(&preflight(&value)?)?;
@@ -335,14 +425,62 @@ fn preserves_direct_mission_and_stage_commands_without_interpretation()
         ],
         "p3d_references": [],
         "command_invocations": [
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"setdynaloaddata","args_raw":"\"l1\"","semantic_role":"mission-script","arguments":["l1"]},
-            {"ordinal":3,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":4,"name":"setstagetime","args_raw":"30","semantic_role":"mission-stage","arguments":["30"]},
-            {"ordinal":5,"name":"addobjective","args_raw":"\"goto\"","semantic_role":"mission-objective","arguments":["goto"]},
-            {"ordinal":6,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":7,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":8,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"setdynaloaddata",
+                            "args_raw":"\"l1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["l1"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"setstagetime",
+                            "args_raw":"30",
+                            "semantic_role":"mission-stage",
+                            "arguments":["30"]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"addobjective",
+                            "args_raw":"\"goto\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["goto"]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":8,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     });
     let report = compile_mission_scope_graphs(&preflight(&value)?)?;
@@ -423,10 +561,14 @@ fn direct_command_document(
         invocations.push(stage);
     }
     invocations.extend([
-        json!({"ordinal":4,"name":"addobjective","args_raw":"\"goto\"","semantic_role":"mission-objective","arguments":["goto"]}),
-        json!({"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]}),
-        json!({"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]}),
-        json!({"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}),
+                                // jig-ignore-next-line: literal
+                json!({"ordinal":4,"name":"addobjective","args_raw":"\"goto\"","semantic_role":"mission-objective","arguments":["goto"]}),
+                                // jig-ignore-next-line: literal
+                json!({"ordinal":5,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]}),
+                                // jig-ignore-next-line: literal
+                json!({"ordinal":6,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]}),
+                                // jig-ignore-next-line: literal
+                json!({"ordinal":7,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}),
     ]);
     let mut counts = serde_json::Map::new();
     for name in [
@@ -453,13 +595,18 @@ fn direct_command_document(
         "schema":"shar-schoenwald.straggler.mission-script.v3",
         "source_extension":"mfk","route_class":"mission","source_bytes":128,
         "context_command_count":6,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":7,"unique_command_count":7,"load_p3d_reference_count":0,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":7,
+        "unique_command_count":7,
+        "load_p3d_reference_count":0,
         "mission_flow_command_count":mission_flow_command_count,
         "vehicle_physics_command_count":0,
         "semantic_family":"mission-script","command_counts":counts,
         "source_statements": invocations.iter().map(|row| {
             let name = row.get("name").and_then(Value::as_str).unwrap_or("");
+                        // jig-ignore-next-line: literal
             let args = row.get("args_raw").and_then(Value::as_str).unwrap_or("");
             format!("{name}({args});")
         }).collect::<Vec<_>>(),
@@ -500,8 +647,12 @@ fn nested_condition_modifier_belongs_to_most_specific_scope()
         "schema":"shar-schoenwald.straggler.mission-script.v3",
         "source_extension":"mfk","route_class":"mission","source_bytes":192,
         "context_command_count":8,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":9,"unique_command_count":9,"load_p3d_reference_count":0,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":9,
+        "unique_command_count":9,
+        "load_p3d_reference_count":0,
         "mission_flow_command_count":6,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script",
         "command_counts":{
@@ -511,20 +662,75 @@ fn nested_condition_modifier_belongs_to_most_specific_scope()
         },
         "source_statements":[
             "SelectMission(\"m1\");","AddStage(0);","AddObjective(\"race\");",
-            "AddCondition(\"damage\");","SetCondMinHealth(0.0);","CloseCondition();",
+                        // jig-ignore-next-line: literal
+                        "AddCondition(\"damage\");","SetCondMinHealth(0.0);","CloseCondition();",
             "CloseObjective();","CloseStage();","CloseMission();"
         ],
         "p3d_references":[],
         "command_invocations":[
-            {"ordinal":1,"name":"selectmission","args_raw":"\"m1\"","semantic_role":"mission-script","arguments":["m1"]},
-            {"ordinal":2,"name":"addstage","args_raw":"0","semantic_role":"mission-stage","arguments":["0"]},
-            {"ordinal":3,"name":"addobjective","args_raw":"\"race\"","semantic_role":"mission-objective","arguments":["race"]},
-            {"ordinal":4,"name":"addcondition","args_raw":"\"damage\"","semantic_role":"mission-script","arguments":["damage"]},
-            {"ordinal":5,"name":"setcondminhealth","args_raw":"0.0","semantic_role":"mission-script","arguments":["0.0"]},
-            {"ordinal":6,"name":"closecondition","args_raw":"","semantic_role":"mission-script","arguments":[]},
-            {"ordinal":7,"name":"closeobjective","args_raw":"","semantic_role":"mission-objective","arguments":[]},
-            {"ordinal":8,"name":"closestage","args_raw":"","semantic_role":"mission-stage","arguments":[]},
-            {"ordinal":9,"name":"closemission","args_raw":"","semantic_role":"mission-script","arguments":[]}
+                        {
+                            "ordinal":1,
+                            "name":"selectmission",
+                            "args_raw":"\"m1\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["m1"]
+                        },
+                        {
+                            "ordinal":2,
+                            "name":"addstage",
+                            "args_raw":"0",
+                            "semantic_role":"mission-stage",
+                            "arguments":["0"]
+                        },
+                        {
+                            "ordinal":3,
+                            "name":"addobjective",
+                            "args_raw":"\"race\"",
+                            "semantic_role":"mission-objective",
+                            "arguments":["race"]
+                        },
+                        {
+                            "ordinal":4,
+                            "name":"addcondition",
+                            "args_raw":"\"damage\"",
+                            "semantic_role":"mission-script",
+                            "arguments":["damage"]
+                        },
+                        {
+                            "ordinal":5,
+                            "name":"setcondminhealth",
+                            "args_raw":"0.0",
+                            "semantic_role":"mission-script",
+                            "arguments":["0.0"]
+                        },
+                        {
+                            "ordinal":6,
+                            "name":"closecondition",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":7,
+                            "name":"closeobjective",
+                            "args_raw":"",
+                            "semantic_role":"mission-objective",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":8,
+                            "name":"closestage",
+                            "args_raw":"",
+                            "semantic_role":"mission-stage",
+                            "arguments":[]
+                        },
+                        {
+                            "ordinal":9,
+                            "name":"closemission",
+                            "args_raw":"",
+                            "semantic_role":"mission-script",
+                            "arguments":[]
+                        }
         ]
     });
     let report = compile_mission_scope_graphs(&preflight(&value)?)?;
@@ -563,8 +769,12 @@ fn unscoped_direct_document(command: &str, arguments: &[&str]) -> Value {
         "schema":"shar-schoenwald.straggler.mission-script.v3",
         "source_extension":"mfk","route_class":"mission","source_bytes":64,
         "context_command_count":0,"context_adaptation_count":0,
-        "context_adaptations":[],"context_finding_count":0,"context_findings":[],
-        "statement_count":1,"unique_command_count":1,"load_p3d_reference_count":0,
+        "context_adaptations":[],
+        "context_finding_count":0,
+        "context_findings":[],
+        "statement_count":1,
+        "unique_command_count":1,
+        "load_p3d_reference_count":0,
         "mission_flow_command_count":0,"vehicle_physics_command_count":0,
         "semantic_family":"mission-script","command_counts":{command:1},
         "source_statements":[format!("{command}({args_raw});")],

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,9 @@
 // - Defaults:
 //   - Invalid, ambiguous, or replacement requests fail explicitly.
 //
+
+//! Shar import request validation.
+
 #pragma once
 
 #include "CoreMinimal.h"

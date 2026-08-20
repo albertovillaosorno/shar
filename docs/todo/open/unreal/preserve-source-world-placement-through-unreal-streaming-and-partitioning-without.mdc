@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: preserve-source-world-placement-through-unreal-streaming-and-partitioning-without
 status: open
 priority: P2
@@ -10,6 +12,8 @@ dependencies: []
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Preserve source world placement through Unreal streaming and partitioning without…
 
 Preserve source world placement through Unreal streaming and partitioning

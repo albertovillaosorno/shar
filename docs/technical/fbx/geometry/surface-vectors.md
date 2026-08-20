@@ -39,5 +39,6 @@ The smoothing layer is omitted with the normal layer when normals are absent.
 - Channel-cardinality tests cover vertex and polygon-corner ownership.
 - Coordinate tests verify consistent orientation across all vector families.
 - Read-back tests compare channel names and ordering.
-- Binary-contract tests require polygon smoothing metadata when normals exist and
+- Binary-contract tests require polygon smoothing metadata when normals exist
+  and
   reject it from incomplete-normal output.

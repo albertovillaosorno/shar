@@ -1,0 +1,12 @@
+domain = "documentation"
+schema_version = 1
+path_style = "lower-kebab"
+required_paths = ["docs/README.md"]
+roots = ["docs/"]
+
+[profile.general]
+decision_id = "none"
+kind = "markdown"
+paths = ["docs/"]
+section_mode = "required"
+sections = []

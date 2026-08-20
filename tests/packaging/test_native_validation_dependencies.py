@@ -1,5 +1,5 @@
 # Copyright:
-#   - Copyright (c) 2026 Alberto Villa Osorno.
+#   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
 # Confidential:
@@ -83,9 +83,10 @@ class NativeValidationBootstrapTests(unittest.TestCase):
         self.assertIn("%*", text)
 
     def test_jig_tool_paths_use_portable_validation_launchers(self) -> None:
-        with (_ROOT / ".jig" / "jig.toml").open("rb") as stream:
+        path = _ROOT / ".jig" / "settings" / "tools.toml"
+        with path.open("rb") as stream:
             config = tomllib.load(stream)
-        tools = config["tool"]
+        tools = config["entry"]
         expected = {
             "cspell": "cspell.cmd",
             "git": "git.cmd",
@@ -111,12 +112,13 @@ class NativeValidationBootstrapTests(unittest.TestCase):
         )
 
     def test_jig_git_version_matches_portable_bootstrap(self) -> None:
-        with (_ROOT / ".jig" / "jig.toml").open("rb") as stream:
+        path = _ROOT / ".jig" / "settings" / "versions.toml"
+        with path.open("rb") as stream:
             config = tomllib.load(stream)
         expected = _MODULE._GIT_VERSION
-        self.assertEqual(config["tool"]["git"]["version"], expected)
-        self.assertEqual(config["version"]["git"]["current"], expected)
-        self.assertEqual(config["version"]["git"]["stable"], expected)
+        authority = config["authority"]["git"]
+        self.assertEqual(authority["current"], expected)
+        self.assertEqual(authority["stable"], expected)
 
     def test_jig_native_cargo_home_is_a_real_repo_local_directory(self) -> None:
         prepare_home = getattr(_MODULE, "_prepare_jig_cargo_home", None)

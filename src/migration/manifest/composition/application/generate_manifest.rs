@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -36,8 +36,8 @@ use super::ManifestError;
 use super::path_evidence::require_rooted_paths;
 use crate::domain::{
     DirCount, DirExtCounts, GENERATED_IMAGE_EXTENSION, MANIFEST_FILE_NAME,
-    classify_manifest_bucket, count_by_dir_ext_paths,
-    exact_file_shortfalls, kind_taxonomy_jsonl,
+    classify_manifest_bucket, count_by_dir_ext_paths, exact_file_shortfalls,
+    kind_taxonomy_jsonl,
 };
 use crate::ports::{GameTree, PathKind, TextArtifactStore};
 
@@ -128,8 +128,10 @@ pub(super) fn load_counts(
         return Err(ManifestError::Invalid(format!(
             "game directory is missing exact required files:
 {}",
-            shortfalls.join("
-")
+            shortfalls.join(
+                "
+"
+            )
         )));
     }
     Ok(count_by_dir_ext_paths(game_dir, &files))

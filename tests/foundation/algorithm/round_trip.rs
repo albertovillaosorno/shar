@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -84,7 +84,9 @@ fn settings() -> Result<Settings, Box<dyn std::error::Error>> {
     Ok(Settings::from_json(text)?)
 }
 
-fn write_fixture_tree(root: &Path) -> Result<(PathBuf, PathBuf), std::io::Error> {
+fn write_fixture_tree(
+    root: &Path,
+) -> Result<(PathBuf, PathBuf), std::io::Error> {
     let source = root.join("source");
     let target = root.join("target");
     fs::create_dir_all(source.join("nested"))?;
@@ -92,14 +94,16 @@ fn write_fixture_tree(root: &Path) -> Result<(PathBuf, PathBuf), std::io::Error>
     fs::write(source.join("one.bin"), vec![0x31_u8; 1536])?;
     fs::write(source.join("nested").join("two.bin"), vec![0x57_u8; 768])?;
     fs::write(target.join("alpha.txt"), b"synthetic target alpha\n")?;
-    fs::write(
-        target.join("nested").join("beta.bin"),
-        [0_u8, 1, 2, 3, 250, 251, 252, 253],
-    )?;
+    fs::write(target.join("nested").join("beta.bin"), [
+        0_u8, 1, 2, 3, 250, 251, 252, 253,
+    ])?;
     Ok((source, target))
 }
 
-fn assert_tree_equal(left: &Path, right: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn assert_tree_equal(
+    left: &Path,
+    right: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     for relative in ["alpha.txt", "nested/beta.bin"] {
         let left_bytes = fs::read(left.join(relative))?;
         let right_bytes = fs::read(right.join(relative))?;
@@ -110,7 +114,8 @@ fn assert_tree_equal(left: &Path, right: &Path) -> Result<(), Box<dyn std::error
     Ok(())
 }
 
-fn run_directory_round_trip_is_deterministic() -> Result<(), Box<dyn std::error::Error>> {
+fn run_directory_round_trip_is_deterministic()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("round-trip")?;
     let (source, target) = write_fixture_tree(&temp.path)?;
     let first = temp.path.join("first.txt");
@@ -118,17 +123,36 @@ fn run_directory_round_trip_is_deterministic() -> Result<(), Box<dyn std::error:
     let replayed = temp.path.join("replayed");
     let settings = settings()?;
 
-    create_algorithm(&settings, std::slice::from_ref(&source), &target, &first)?;
-    create_algorithm(&settings, std::slice::from_ref(&source), &target, &second)?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &first,
+    )?;
+    create_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &target,
+        &second,
+    )?;
     if fs::read(&first)? != fs::read(&second)? {
-        return Err("identical inputs must create byte-identical algorithms".into());
+        return Err(
+            "identical inputs must create byte-identical algorithms".into()
+        );
     }
     let plan_text = fs::read_to_string(&first)?;
     if plan_text.contains("synthetic target alpha") {
-        return Err("protected target plaintext leaked into algorithm text".into());
+        return Err(
+            "protected target plaintext leaked into algorithm text".into()
+        );
     }
 
-    replay_algorithm(&settings, std::slice::from_ref(&source), &first, &replayed)?;
+    replay_algorithm(
+        &settings,
+        std::slice::from_ref(&source),
+        &first,
+        &replayed,
+    )?;
     assert_tree_equal(&target, &replayed)
 }
 
@@ -173,8 +197,8 @@ fn wrong_source_is_rejected_before_output() {
     assert!(result.is_ok(), "wrong-source rejection failed: {result:?}");
 }
 
-fn run_plan_without_source_is_rejected(
-) -> Result<(), Box<dyn std::error::Error>> {
+fn run_plan_without_source_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("missing-source")?;
     let (source, target) = write_fixture_tree(&temp.path)?;
     let algorithm = temp.path.join("plan.txt");
@@ -200,11 +224,14 @@ fn run_plan_without_source_is_rejected(
 #[test]
 fn plan_without_caller_source_is_rejected_before_output() {
     let result = run_plan_without_source_is_rejected();
-    assert!(result.is_ok(), "missing-source rejection failed: {result:?}");
+    assert!(
+        result.is_ok(),
+        "missing-source rejection failed: {result:?}"
+    );
 }
 
-fn run_empty_source_root_is_rejected(
-) -> Result<(), Box<dyn std::error::Error>> {
+fn run_empty_source_root_is_rejected() -> Result<(), Box<dyn std::error::Error>>
+{
     let temp = TempTree::create("empty-source-root")?;
     let empty = temp.path.join("empty");
     let source = temp.path.join("source.bin");
@@ -214,12 +241,8 @@ fn run_empty_source_root_is_rejected(
     fs::write(&source, vec![0x45_u8; 2048])?;
     fs::write(&target, b"synthetic target")?;
 
-    let result = create_algorithm(
-        &settings()?,
-        &[empty, source],
-        &target,
-        &algorithm,
-    );
+    let result =
+        create_algorithm(&settings()?, &[empty, source], &target, &algorithm);
     if result.is_ok() {
         return Err("empty source root was accepted".into());
     }
@@ -235,8 +258,8 @@ fn empty_source_root_is_rejected_before_publication() {
     assert!(result.is_ok(), "empty source rejection failed: {result:?}");
 }
 
-fn run_empty_target_directory_is_rejected(
-) -> Result<(), Box<dyn std::error::Error>> {
+fn run_empty_target_directory_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("empty-target-directory")?;
     let source = temp.path.join("source.bin");
     let target = temp.path.join("target");
@@ -265,8 +288,8 @@ fn empty_target_directory_is_rejected_before_publication() {
     assert!(result.is_ok(), "empty target rejection failed: {result:?}");
 }
 
-fn run_source_tree_remains_unchanged(
-) -> Result<(), Box<dyn std::error::Error>> {
+fn run_source_tree_remains_unchanged() -> Result<(), Box<dyn std::error::Error>>
+{
     let temp = TempTree::create("source-unchanged")?;
     let (source, target) = write_fixture_tree(&temp.path)?;
     let algorithm = temp.path.join("plan.txt");
@@ -300,7 +323,9 @@ fn run_source_tree_remains_unchanged(
     ];
     for entry in source_entries {
         if !entry.exists() {
-            return Err("algorithm execution changed caller source layout".into());
+            return Err(
+                "algorithm execution changed caller source layout".into()
+            );
         }
     }
     Ok(())
@@ -312,7 +337,9 @@ fn caller_source_tree_remains_unchanged_after_create_and_replay() {
     assert!(result.is_ok(), "source immutability failed: {result:?}");
 }
 
-fn tamper_first_ciphertext(text: &str) -> Result<String, Box<dyn std::error::Error>> {
+fn tamper_first_ciphertext(
+    text: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
     let marker = "\"ciphertext\": \"";
     let Some(marker_start) = text.find(marker) else {
         return Err("ciphertext marker missing".into());
@@ -321,7 +348,11 @@ fn tamper_first_ciphertext(text: &str) -> Result<String, Box<dyn std::error::Err
     let Some(original) = text.as_bytes().get(value_start).copied() else {
         return Err("ciphertext value missing".into());
     };
-    let replacement = if original == b'0' { '1' } else { '0' };
+    let replacement = if original == b'0' {
+        '1'
+    } else {
+        '0'
+    };
     let mut tampered = text.to_owned();
     tampered.replace_range(
         value_start..value_start.saturating_add(1),
@@ -330,7 +361,8 @@ fn tamper_first_ciphertext(text: &str) -> Result<String, Box<dyn std::error::Err
     Ok(tampered)
 }
 
-fn run_tampered_payload_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_tampered_payload_is_rejected() -> Result<(), Box<dyn std::error::Error>>
+{
     let temp = TempTree::create("tamper")?;
     let (source, target) = write_fixture_tree(&temp.path)?;
     let algorithm = temp.path.join("plan.txt");
@@ -372,7 +404,7 @@ fn run_file_target_round_trip() -> Result<(), Box<dyn std::error::Error>> {
     let target = temp.path.join("target.bin");
     let algorithm = temp.path.join("plan.txt");
     let output = temp.path.join("output.bin");
-    fs::write(&source, vec![0xA5_u8; 2048])?;
+    fs::write(&source, vec![0xa5_u8; 2048])?;
     fs::write(&target, b"synthetic single-file target")?;
     let settings = settings()?;
     create_algorithm(
@@ -446,7 +478,8 @@ fn settings_reject_unknown_and_inconsistent_policy() {
     );
 }
 
-fn run_non_txt_algorithm_output_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_non_txt_algorithm_output_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("extension")?;
     let source = temp.path.join("source.bin");
     let target = temp.path.join("target.bin");
@@ -474,8 +507,8 @@ fn non_txt_algorithm_output_is_rejected() {
     assert!(result.is_ok(), "extension rejection failed: {result:?}");
 }
 
-fn run_existing_algorithm_output_is_preserved(
-) -> Result<(), Box<dyn std::error::Error>> {
+fn run_existing_algorithm_output_is_preserved()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("existing-algorithm-output")?;
     let source = temp.path.join("source.bin");
     let target = temp.path.join("target.bin");
@@ -509,10 +542,13 @@ fn existing_algorithm_output_collision_is_preserved() {
     );
 }
 
-fn run_missing_source_error_is_path_free(
-) -> Result<(), Box<dyn std::error::Error>> {
+fn run_missing_source_error_is_path_free()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("private-source-diagnostic")?;
-    let source = temp.path.join("private-user-installation").join("missing.bin");
+    let source = temp
+        .path
+        .join("private-user-installation")
+        .join("missing.bin");
     let target = temp.path.join("target.bin");
     let algorithm = temp.path.join("plan.txt");
     fs::write(&target, b"synthetic target")?;
@@ -544,7 +580,8 @@ fn missing_source_error_does_not_disclose_private_path() {
     assert!(result.is_ok(), "private-path diagnostic failed: {result:?}");
 }
 
-fn run_algorithm_output_inside_source_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_algorithm_output_inside_source_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("source-overlap")?;
     let source = temp.path.join("source");
     let target = temp.path.join("target.bin");
@@ -577,7 +614,8 @@ fn algorithm_output_inside_source_is_rejected() {
     );
 }
 
-fn run_source_target_overlap_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_source_target_overlap_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("source-target-overlap")?;
     let (source, _target) = write_fixture_tree(&temp.path)?;
     let algorithm = temp.path.join("plan.txt");
@@ -589,7 +627,9 @@ fn run_source_target_overlap_is_rejected() -> Result<(), Box<dyn std::error::Err
         &algorithm,
     );
     if result.is_ok() {
-        return Err("source tree must not be accepted as algorithm target".into());
+        return Err(
+            "source tree must not be accepted as algorithm target".into()
+        );
     }
     if algorithm.exists() {
         return Err("source-target overlap must not create an algorithm".into());
@@ -600,10 +640,14 @@ fn run_source_target_overlap_is_rejected() -> Result<(), Box<dyn std::error::Err
 #[test]
 fn source_target_overlap_is_rejected_before_publication() {
     let result = run_source_target_overlap_is_rejected();
-    assert!(result.is_ok(), "source-target overlap rejection failed: {result:?}");
+    assert!(
+        result.is_ok(),
+        "source-target overlap rejection failed: {result:?}"
+    );
 }
 
-fn run_nested_target_overlap_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_nested_target_overlap_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("nested-target-overlap")?;
     let (source, _target) = write_fixture_tree(&temp.path)?;
     let nested_target = source.join("nested");
@@ -616,7 +660,9 @@ fn run_nested_target_overlap_is_rejected() -> Result<(), Box<dyn std::error::Err
         &algorithm,
     );
     if result.is_ok() || algorithm.exists() {
-        return Err("nested source target overlap must fail before output".into());
+        return Err(
+            "nested source target overlap must fail before output".into()
+        );
     }
     Ok(())
 }
@@ -624,10 +670,14 @@ fn run_nested_target_overlap_is_rejected() -> Result<(), Box<dyn std::error::Err
 #[test]
 fn nested_target_inside_source_is_rejected_before_publication() {
     let result = run_nested_target_overlap_is_rejected();
-    assert!(result.is_ok(), "nested target overlap rejection failed: {result:?}");
+    assert!(
+        result.is_ok(),
+        "nested target overlap rejection failed: {result:?}"
+    );
 }
 
-fn run_target_parent_overlap_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_target_parent_overlap_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("target-parent-overlap")?;
     let target = temp.path.join("target");
     let source = target.join("source.bin");
@@ -644,7 +694,9 @@ fn run_target_parent_overlap_is_rejected() -> Result<(), Box<dyn std::error::Err
         &algorithm,
     );
     if result.is_ok() || algorithm.exists() {
-        return Err("target containing source input must fail before output".into());
+        return Err(
+            "target containing source input must fail before output".into()
+        );
     }
     Ok(())
 }
@@ -652,10 +704,14 @@ fn run_target_parent_overlap_is_rejected() -> Result<(), Box<dyn std::error::Err
 #[test]
 fn target_parent_containing_source_is_rejected_before_publication() {
     let result = run_target_parent_overlap_is_rejected();
-    assert!(result.is_ok(), "target parent overlap rejection failed: {result:?}");
+    assert!(
+        result.is_ok(),
+        "target parent overlap rejection failed: {result:?}"
+    );
 }
 
-fn run_hard_link_target_alias_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_hard_link_target_alias_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("hard-link-target-alias")?;
     let source = temp.path.join("source.bin");
     let target = temp.path.join("target.bin");
@@ -681,10 +737,14 @@ fn run_hard_link_target_alias_is_rejected() -> Result<(), Box<dyn std::error::Er
 #[test]
 fn hard_link_target_alias_is_rejected_before_publication() {
     let result = run_hard_link_target_alias_is_rejected();
-    assert!(result.is_ok(), "hard-link target rejection failed: {result:?}");
+    assert!(
+        result.is_ok(),
+        "hard-link target rejection failed: {result:?}"
+    );
 }
 
-fn run_duplicate_hard_link_source_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_duplicate_hard_link_source_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("duplicate-hard-link-source")?;
     let source = temp.path.join("source");
     let target = temp.path.join("target.bin");
@@ -714,11 +774,14 @@ fn run_duplicate_hard_link_source_is_rejected() -> Result<(), Box<dyn std::error
 #[test]
 fn duplicate_hard_link_source_is_rejected_before_publication() {
     let result = run_duplicate_hard_link_source_is_rejected();
-    assert!(result.is_ok(), "duplicate source rejection failed: {result:?}");
+    assert!(
+        result.is_ok(),
+        "duplicate source rejection failed: {result:?}"
+    );
 }
 
-fn run_duplicate_hard_link_target_is_rejected(
-) -> Result<(), Box<dyn std::error::Error>> {
+fn run_duplicate_hard_link_target_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("duplicate-hard-link-target")?;
     let source = temp.path.join("source.bin");
     let target = temp.path.join("target");
@@ -748,10 +811,14 @@ fn run_duplicate_hard_link_target_is_rejected(
 #[test]
 fn duplicate_hard_link_target_is_rejected_before_publication() {
     let result = run_duplicate_hard_link_target_is_rejected();
-    assert!(result.is_ok(), "duplicate target rejection failed: {result:?}");
+    assert!(
+        result.is_ok(),
+        "duplicate target rejection failed: {result:?}"
+    );
 }
 
-fn run_replay_parent_traversal_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_replay_parent_traversal_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("replay-parent")?;
     let source = temp.path.join("source.bin");
     let target = temp.path.join("target.bin");
@@ -788,7 +855,9 @@ fn replay_parent_traversal_is_rejected() {
     assert!(result.is_ok(), "replay path rejection failed: {result:?}");
 }
 
-fn tamper_first_target_path(text: &str) -> Result<String, Box<dyn std::error::Error>> {
+fn tamper_first_target_path(
+    text: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
     let marker = "\"path\": \"alpha.txt\"";
     if !text.contains(marker) {
         return Err("target path marker missing".into());
@@ -796,7 +865,8 @@ fn tamper_first_target_path(text: &str) -> Result<String, Box<dyn std::error::Er
     Ok(text.replacen(marker, "\"path\": \"../escape.txt\"", 1))
 }
 
-fn run_tampered_target_path_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_tampered_target_path_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("target-path-tamper")?;
     let (source, target) = write_fixture_tree(&temp.path)?;
     let algorithm = temp.path.join("plan.txt");
@@ -840,7 +910,8 @@ fn tampered_target_path_is_rejected_before_output() {
 pub mod junction_support;
 
 #[cfg(windows)]
-fn run_source_tree_redirect_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_source_tree_redirect_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("source-redirect")?;
     let source = temp.path.join("source");
     let outside = temp.path.join("outside");
@@ -878,7 +949,8 @@ fn source_tree_redirect_is_rejected() {
     );
 }
 
-fn run_existing_replay_output_is_preserved() -> Result<(), Box<dyn std::error::Error>> {
+fn run_existing_replay_output_is_preserved()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("existing-output")?;
     let source = temp.path.join("source.bin");
     let target = temp.path.join("target.bin");
@@ -919,7 +991,8 @@ fn existing_replay_output_collision_is_preserved() {
     );
 }
 
-fn run_tampered_target_hash_is_rejected() -> Result<(), Box<dyn std::error::Error>> {
+fn run_tampered_target_hash_is_rejected()
+-> Result<(), Box<dyn std::error::Error>> {
     let temp = TempTree::create("target-hash-tamper")?;
     let source = temp.path.join("source.bin");
     let target = temp.path.join("target.bin");

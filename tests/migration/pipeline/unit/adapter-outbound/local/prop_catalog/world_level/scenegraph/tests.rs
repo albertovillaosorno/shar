@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -78,7 +78,8 @@ fn write_scenegraph_fixture(
     let root = fixture_root(label);
     let directory = root.join("components/scenegraph");
     fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
-    let document = serde_json::to_vec(&scenegraph_with_translations(translations))
+        // jig-ignore-next-line: expression
+        let document = serde_json::to_vec(&scenegraph_with_translations(translations))
         .map_err(|error| error.to_string())?;
     fs::write(directory.join("000.json"), document)
         .map_err(|error| error.to_string())?;
@@ -125,6 +126,7 @@ fn nested_transform_places_one_drawable() -> Result<(), String> {
 
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn placement_map_preserves_duplicate_authored_placements() -> Result<(), String> {
     let root = write_scenegraph_fixture("duplicates", &[4, 4])?;
     let result = placement_map(&root).map_err(|error| error.to_string());

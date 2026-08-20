@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in
 status: open
 priority: P1
@@ -7,6 +9,8 @@ lane: conversion
 active: false
 parent: null
 dependencies: []
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 children: [keep-movie-package-manifests-and-decode-reports-independent-of-local-source-extraction, keep-movie-tool-diagnostics-on-logical-identities-and-error-classes]
 ---
 
@@ -35,7 +39,8 @@ normalized movie tree contains 16 English track-01 packages and eight packages
 each carrying localized tracks 02, 03, and 04.
 
 Canonical non-English localization is now internal Rust product code under
-`src/localization/languages/`. The original PC/PAL runtime evidence maps French/German/Spanish
+`src/localization/languages/`. The original PC/PAL runtime evidence maps
+French/German/Spanish
 FMV audio indexes 1/2/3 to normalized tracks 02/03/04 after the English index-0
 track. Language composition also preserves the exact TextBible table/sidecar,
 matching dialogue RCF, localized loading/license UI assets, optional localized
@@ -48,7 +53,8 @@ containment, byte-deterministic repeated output, normalized mod-package
 publication, and manifest/report serialization agreement.
 
 Italian remains intentionally unavailable from the current source: all 1,632
-Italian text records are `???`, `dialogi.rcf` is absent, and no Italian localized
+Italian text records are `???`, `dialogi.rcf` is absent, and no Italian
+localized
 loading/license assets are present. No content is synthesized to fill those
 gaps.
 

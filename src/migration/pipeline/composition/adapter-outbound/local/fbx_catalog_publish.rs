@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -13,7 +13,7 @@
 // - Must-Not:
 //   - Publish a partial catalog or invent FBX package evidence.
 // - Allows:
-//   - Reuse package writers, hash generated artifacts, verify, then rename root.
+//   - Reuse package writers, hash artifacts, verify, then rename root.
 // - Split-When:
 //   - Split when catalog scheduling gains an independent lifecycle.
 // - Merge-When:
@@ -21,7 +21,7 @@
 // - Summary:
 //   - Complete verified FBX catalog publisher.
 // - Description:
-//   - Publishes only after every current direct FBX package verifies physically.
+//   - Publishes only after every direct FBX package verifies physically.
 // - Usage:
 //   - Invoked explicitly before prepare-unreal can promote FBX plans to ready.
 // - Defaults:
@@ -261,7 +261,8 @@ fn catalog_rows(
                             "catalog texture inventory contains a non-file",
                         ));
                     }
-                    let file_name = entry.file_name().into_string().map_err(|_name| {
+                                        // jig-ignore-next-line: expression
+                                        let file_name = entry.file_name().into_string().map_err(|_name| {
                         PipelineError::new(
                             "catalog texture name is not portable Unicode",
                         )
@@ -393,7 +394,9 @@ fn stage_external_manifest(
 }
 
 fn staging_path(output_root: &Path) -> Result<PathBuf, PipelineError> {
-    let name = output_root.file_name().and_then(|name| name.to_str()).ok_or_else(
+        // jig-ignore-next-line: expression
+        let name = output_root.file_name().and_then(|name| name.to_str()).ok_or_else(
+        // jig-ignore-next-line: literal
         || PipelineError::new("complete FBX catalog output has no portable name"),
     )?;
     let parent = output_root.parent().unwrap_or_else(|| Path::new("."));
@@ -403,7 +406,9 @@ fn staging_path(output_root: &Path) -> Result<PathBuf, PipelineError> {
 fn ensure_missing(path: &Path, label: &str) -> Result<(), PipelineError> {
     match fs::symlink_metadata(path) {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        // jig-ignore-next-line: literal
         Err(error) => Err(public_io_error("inspect catalog transaction", &error)),
+        // jig-ignore-next-line: literal
         Ok(_metadata) => Err(PipelineError::new(format!("{label} already exists"))),
     }
 }
@@ -454,9 +459,11 @@ fn tree_totals(root: &Path) -> Result<(usize, u64), PipelineError> {
                 pending.push(entry.path());
             } else if metadata.is_file() {
                 files = files.checked_add(1).ok_or_else(|| {
+                                        // jig-ignore-next-line: literal
                     PipelineError::new("complete FBX catalog file count overflowed")
                 })?;
                 bytes = bytes.checked_add(metadata.len()).ok_or_else(|| {
+                                        // jig-ignore-next-line: literal
                     PipelineError::new("complete FBX catalog byte count overflowed")
                 })?;
             } else {

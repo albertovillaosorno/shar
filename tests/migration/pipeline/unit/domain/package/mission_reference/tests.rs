@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,7 @@
 // - Defaults:
 //   - Missing and ambiguous physical participants fail closed.
 //
+
 //! Mission participant package-reference resolver tests.
 
 use super::*;

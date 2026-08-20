@@ -1,11 +1,32 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
 //   - false
 // License-File:
 //   - LICENSE-MIT
+//
+// Boundary-Contract:
+// - Owns:
+//   - Mission initialization helper regression tests.
+// - Must-Not:
+//   - Production behavior or private mission evidence.
+// - Allows:
+//   - Synthetic locator and P3D identities plus helper assertions.
+// - Split-When:
+//   - One initialization helper gains independent test ownership.
+// - Merge-When:
+//   - Initialization helpers lose independently testable behavior.
+// - Summary:
+//   - Mission initialization helper regressions.
+// - Description:
+//   - Preserves focused unit evidence for the owning package-domain behavior.
+// - Usage:
+//   - Included only by the owning package-domain module under cfg(test).
+// - Defaults:
+//   - Invalid or ambiguous synthetic evidence fails closed.
+//
 
 //! Mission initialization helper regressions.
 
@@ -143,6 +164,7 @@ fn rejects_unreviewed_mission_scope_values() -> Result<(), String> {
 
 
 #[test]
+// jig-ignore-next-line: long identifier
 fn preserves_legacy_set_dyna_without_final_region_postfix() -> Result<(), String> {
     let p3d_files = super::reviewed_dynamic_p3d_files(
         "l7z6.p3d;l7r6.p3d;l7r4.p3d",

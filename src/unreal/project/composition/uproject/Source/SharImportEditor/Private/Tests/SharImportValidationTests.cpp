@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,9 @@
 // - Defaults:
 //   - Invalid, ambiguous, or replacement requests fail explicitly.
 //
+
+//! Shar native import automation tests.
+
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Import/SharImportToolset.h"
@@ -61,7 +64,9 @@ FString WriteMinimalWaveFixture()
     const FString Filename = Directory / TEXT("minimal-import.wav");
     TArray<uint8> Bytes;
     Bytes.Append(WaveBytes, UE_ARRAY_COUNT(WaveBytes));
-    return FFileHelper::SaveArrayToFile(Bytes, *Filename) ? Filename : FString();
+    return FFileHelper::SaveArrayToFile(Bytes, *Filename)
+               ? Filename
+               : FString();
 }
 FString WriteMinimalMovieFixture()
 {
@@ -71,11 +76,14 @@ FString WriteMinimalMovieFixture()
     IFileManager::Get().MakeDirectory(*Directory, true);
     const FString Filename = Directory / TEXT("minimal-import.mov");
     static const uint8 MovieBytes[] = {
-        'S', 'H', 'A', 'R', '-', 'H', 'A', 'P', '-', 'F', 'I', 'X', 'T', 'U', 'R', 'E',
+        'S', 'H', 'A', 'R', '-', 'H', 'A', 'P', '-', 'F', 'I', 'X', 'T',
+        'U', 'R', 'E',
     };
     TArray<uint8> Bytes;
     Bytes.Append(MovieBytes, UE_ARRAY_COUNT(MovieBytes));
-    return FFileHelper::SaveArrayToFile(Bytes, *Filename) ? Filename : FString();
+    return FFileHelper::SaveArrayToFile(Bytes, *Filename)
+               ? Filename
+               : FString();
 }
 
 } // namespace
@@ -247,7 +255,9 @@ bool FSharImportValidationTest::RunTest(const FString& Parameters)
     if (SoundWave != nullptr)
     {
         UPackage* Package = SoundWave->GetPackage();
-        TestTrue(TEXT("Imported package is dirty before explicit save"), Package->IsDirty());
+        TestTrue(
+            TEXT("Imported package is dirty before explicit save"),
+            Package->IsDirty());
         const FString PackageFilename = FPackageName::LongPackageNameToFilename(
             Package->GetName(),
             FPackageName::GetAssetPackageExtension()

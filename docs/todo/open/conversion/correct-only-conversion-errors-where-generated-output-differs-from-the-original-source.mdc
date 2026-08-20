@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: correct-only-conversion-errors-where-generated-output-differs-from-the-original-source
 status: open
 priority: P1

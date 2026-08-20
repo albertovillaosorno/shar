@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -39,9 +39,9 @@ use std::os::windows::ffi::OsStringExt as _;
 
 use schoenwald_cli::CliProgram;
 
-use super::{RtfConversionProgram, USAGE};
 #[cfg(windows)]
 use super::run;
+use super::{RtfConversionProgram, USAGE};
 
 #[test]
 fn excess_arguments_return_one_usage_diagnostic() -> Result<(), String> {

@@ -1,5 +1,5 @@
 # Copyright:
-#   - Copyright (c) 2026 Alberto Villa Osorno.
+#   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
 # Confidential:
@@ -41,10 +41,9 @@ _BOUNDARY = _ROOT / "src/localization/languages"
 
 def test_languages_is_declared_architecture_component() -> None:
     """Keep official languages inside Jig's dependency graph."""
-    with (_ROOT / ".jig" / "jig.toml").open("rb") as stream:
-        config = tomllib.load(stream)
-    architecture = config.get("architecture")
-    assert isinstance(architecture, dict)
+    path = _ROOT / ".jig" / "settings" / "architecture.toml"
+    with path.open("rb") as stream:
+        architecture = tomllib.load(stream)
     components = architecture.get("component")
     assert isinstance(components, dict)
     languages = components.get("shar_languages")

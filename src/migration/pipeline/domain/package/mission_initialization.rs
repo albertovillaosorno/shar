@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -522,6 +522,7 @@ fn compile_dynamic_load(
 }
 
 
+// jig-ignore-next-line: long identifier
 fn reviewed_dynamic_p3d_files(source_data: &str) -> Result<Vec<String>, String> {
     let legacy_completed_source;
     let typed_source = if source_data.to_ascii_lowercase().ends_with(".p3d") {
@@ -556,6 +557,7 @@ fn compile_street_race_props(
     let expected = match terminator {
         ';' => DynaLoadOperationKind::RegionLoad,
         ':' => DynaLoadOperationKind::RegionUnload,
+        // jig-ignore-next-line: literal
         _ => return Err("street-race props terminator is not reviewed".to_owned()),
     };
     let parsed = parse_dyna_load_data(source_data)?;
@@ -640,5 +642,6 @@ fn validate_p3d_path(value: &str) -> Result<(), String> {
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../tests/migration/pipeline/unit/domain/package/mission_initialization/tests.rs"]
 mod tests;

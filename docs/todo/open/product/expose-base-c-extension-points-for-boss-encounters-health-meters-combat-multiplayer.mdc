@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: expose-base-c-extension-points-for-boss-encounters-health-meters-combat-multiplayer
 status: open
 priority: P4
@@ -10,6 +12,8 @@ dependencies: []
 children: []
 ---
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
 # Expose base C++ extension points for boss encounters, health meters, combat, multiplayer…
 
 Expose base C++ extension points for boss encounters, health meters, combat,

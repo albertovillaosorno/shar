@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -28,6 +28,8 @@
 // - Defaults:
 //   - Empty histories preserve the initial package set.
 //
+
+//! `DynamicZone` traversal-history unit tests.
 
 use super::*;
 use crate::domain::{compile_dyna_load_package_transition, parse_dyna_load_data};

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,9 @@
 // - Defaults:
 //   - Invalid, ambiguous, or replacement requests fail explicitly.
 //
+
+//! Shar import toolset implementation.
+
 #include "Import/SharImportToolset.h"
 
 #include "Import/SharImportValidation.h"
@@ -378,7 +381,8 @@ bool BuildFileMediaSourcePathsFromObjectPath(
 )
 {
     OutError.Reset();
-    const FString PackagePath = FPackageName::ObjectPathToPackageName(AssetPath);
+    const FString PackagePath =
+        FPackageName::ObjectPathToPackageName(AssetPath);
     const FString AssetName = FPackageName::ObjectPathToObjectName(AssetPath);
     if (
         PackagePath.IsEmpty()
@@ -625,7 +629,8 @@ TArray<FString> USharImportToolset::ImportSkeletalMesh(
     if (!PrimaryResultMatches || SkeletalMesh == nullptr)
     {
         DiscardSkeletalImport(Task.Get(), SkeletalMesh);
-        RaiseError(TEXT("FBX skeletal import produced unexpected primary assets"));
+        RaiseError(
+            TEXT("FBX skeletal import produced unexpected primary assets"));
         return {};
     }
 

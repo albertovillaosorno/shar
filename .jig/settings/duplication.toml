@@ -1,0 +1,43 @@
+domain = "duplication"
+schema_version = 1
+default = "authored-production"
+exact_languages = []
+
+[override.generated_game_manifest]
+authority = "generate-manifest"
+kind = "generated"
+selectors = ["exact:game/manifest/game.jsonl"]
+
+[override.generated_jig_catalogs]
+authority = "jig"
+kind = "generated"
+selectors = ["exact:.jig/cspell/cspell.json", "exact:.jig/taxonomy.json"]
+
+[override.generated_jig_sidecars]
+authority = "jig"
+kind = "generated"
+selectors = ["basename:Cargo.toml.yml", "basename:README.md.yml", "basename:lib.rs.yml"]
+
+[override.generated_lock]
+authority = "cargo"
+kind = "generated"
+selectors = ["exact:Cargo.lock"]
+
+[override.generated_p3d_fixtures]
+authority = "p3d-fixture-builder"
+kind = "generated"
+selectors = ["prefix:tests/formats/p3d/fixtures/"]
+
+[override.generated_unreal_mcp_skills]
+authority = "unreal-mcp-skill-export"
+kind = "generated"
+selectors = ["exact:skills/unreal/index.md", "prefix:skills/unreal/capabilities/"]
+
+[override.generated_unreal_test_fixtures]
+authority = "repository-fixture-builders"
+kind = "generated"
+selectors = ["prefix:tests/fixtures/"]
+
+[override.tests]
+kind = "test"
+selectors = ["exact:tests/formats/p3d/chunk.rs", "exact:tests/formats/p3d/extract.rs", "exact:tests/formats/p3d/package.rs", "exact:tests/formats/p3d/reader.rs", "prefix:tests/formats/fbx/", "prefix:tests/formats/lmlm/", "prefix:tests/formats/p3d/unit/", "prefix:tests/formats/rcf/", "prefix:tests/formats/rmv/", "prefix:tests/formats/rsd/", "prefix:tests/formats/rtf/", "prefix:tests/foundation/", "prefix:tests/migration/", "prefix:tests/tools/lmlm/", "prefix:tests/unreal/"]

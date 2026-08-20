@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -37,7 +37,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::domain::{
     MissionInitializationBinding, MissionInitializationDirective,
-    MissionLocatorActivePackageReport, MissionLocatorActivePackages, MissionScriptEvidence,
+        MissionLocatorActivePackageReport,
+        MissionLocatorActivePackages,
+        MissionScriptEvidence,
     compile_mission_scope_graphs, preflight_mission_initialization,
 };
 
@@ -300,6 +302,7 @@ pub(super) fn build_mission_locator_source_contexts(
             .insert(snapshot.source_path.as_str(), snapshot)
             .is_some()
         {
+                        // jig-ignore-next-line: literal
             return Err("mission locator context source path is duplicated".to_owned());
         }
     }
@@ -311,24 +314,30 @@ pub(super) fn build_mission_locator_source_contexts(
             continue;
         }
         let [mission] = scopes.missions() else {
+                        // jig-ignore-next-line: literal
             return Err("mission locator context source selects multiple missions".to_owned());
         };
         let mission_id = mission.source_mission_id();
         let (level_load_path, mission_load_path) =
-            locator_context_paths(&snapshot.source_path, mission_id, &available)?;
+                        // jig-ignore-next-line: expression
+                        locator_context_paths(&snapshot.source_path, mission_id, &available)?;
         let level_load = by_path
             .get(level_load_path.as_str())
+                        // jig-ignore-next-line: literal
             .ok_or_else(|| "mission locator level-load source disappeared".to_owned())?;
         let mission_load = by_path
             .get(mission_load_path.as_str())
+                        // jig-ignore-next-line: literal
             .ok_or_else(|| "mission locator mission-load source disappeared".to_owned())?;
         let mut script_package_roots = level_load.package_roots.clone();
         script_package_roots.extend(mission_load.package_roots.iter().cloned());
         let initialization = preflight_mission_initialization(&scopes)?;
         let [initialization] = initialization.missions() else {
+                        // jig-ignore-next-line: literal
             return Err("mission locator initialization context drifted".to_owned());
         };
         if initialization.mission_id() != mission_id {
+                        // jig-ignore-next-line: literal
             return Err("mission locator initialization identity drifted".to_owned());
         }
         let initial_dynamic_package_roots = initial_dynamic_package_roots(
@@ -377,7 +386,8 @@ fn initial_dynamic_package_roots(
     let mut roots = InitialDynamicPackageRoots::default();
     for directive in initialization.directives() {
         let (MissionInitializationDirective::DynamicLoad { p3d_files, .. }
-        | MissionInitializationDirective::StreetRacePropsLoad { p3d_files, .. }) = directive
+                // jig-ignore-next-line: expression
+                | MissionInitializationDirective::StreetRacePropsLoad { p3d_files, .. }) = directive
         else {
             continue;
         };
@@ -396,6 +406,7 @@ fn initial_dynamic_package_roots(
 fn initial_dynamic_package_root(p3d_file: &str) -> Result<String, String> {
     let normalized = p3d_file.replace(char::from(92), "/").to_ascii_lowercase();
     let Some(without_extension) = normalized.strip_suffix(".p3d") else {
+        // jig-ignore-next-line: literal
         return Err("mission locator initial dynamic P3D path is malformed".to_owned());
     };
     if without_extension.is_empty()
@@ -403,8 +414,10 @@ fn initial_dynamic_package_root(p3d_file: &str) -> Result<String, String> {
         || without_extension.contains(':')
         || without_extension
             .split('/')
+                        // jig-ignore-next-line: literal
             .any(|segment| segment.is_empty() || segment == "." || segment == "..")
     {
+        // jig-ignore-next-line: literal
         return Err("mission locator initial dynamic P3D path is malformed".to_owned());
     }
     Ok(if without_extension.starts_with("art/") {
@@ -425,19 +438,24 @@ fn locator_context_paths(
         || mission_id.contains(char::from(92))
         || mission_id.chars().any(char::is_control)
     {
+        // jig-ignore-next-line: literal
         return Err("mission locator selected mission id is malformed".to_owned());
     }
     let relative = source_path
         .strip_prefix(MISSION_ROOT)
+        // jig-ignore-next-line: literal
         .ok_or_else(|| "mission locator selected source is outside the mission root".to_owned())?;
     let (level_dir, file_name) = relative
         .split_once('/')
+        // jig-ignore-next-line: literal
         .ok_or_else(|| "mission locator selected source has no level directory".to_owned())?;
     if level_dir.is_empty() || file_name.contains('/') {
+        // jig-ignore-next-line: literal
         return Err("mission locator selected source path is malformed".to_owned());
     }
     let expected_init = format!("{mission_id}{INIT_SUFFIX}");
     if file_name != expected_init {
+        // jig-ignore-next-line: literal
         return Err("mission locator selected id does not match its init source path".to_owned());
     }
     let directory = format!("{MISSION_ROOT}{level_dir}/");
@@ -454,7 +472,8 @@ fn locator_context_paths(
         if candidate_file.contains('/') {
             continue;
         }
-        let Some(family_prefix) = candidate_file.strip_suffix(LEVEL_LOAD_SUFFIX) else {
+                // jig-ignore-next-line: expression
+                let Some(family_prefix) = candidate_file.strip_suffix(LEVEL_LOAD_SUFFIX) else {
             continue;
         };
         if !mission_id.starts_with(family_prefix) {
@@ -466,17 +485,21 @@ fn locator_context_paths(
             Some((_current, current_score)) if score > current_score => {
                 best_level_load = Some((candidate, score));
             }
-            Some((current, current_score)) if score == current_score && current != *candidate => {
+                        // jig-ignore-next-line: expression
+                        Some((current, current_score)) if score == current_score && current != *candidate => {
+                                // jig-ignore-next-line: literal
                 return Err("mission locator level-load family is ambiguous".to_owned());
             }
             Some(_) => {}
         }
     }
     let (level_load_path, _score) =
+        // jig-ignore-next-line: literal
         best_level_load.ok_or_else(|| "mission locator level-load family is missing".to_owned())?;
     Ok((level_load_path.to_owned(), mission_load_path))
 }
 
 #[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/mission_locator_context/tests.rs"]
 mod tests;

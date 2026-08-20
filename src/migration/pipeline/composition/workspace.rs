@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -44,8 +44,9 @@
 use std::fs::{self, File, OpenOptions, TryLockError};
 use std::path::{Path, PathBuf};
 
-use crate::domain::{PipelineError, PipelineOutcome};
 use schoenwald_filesystem::adapters::driving::local as local_filesystem;
+
+use crate::domain::{PipelineError, PipelineOutcome};
 
 /// Default physical extraction workspace.
 pub(crate) const EXTRACTED_WORKSPACE_ROOT: &str = ".cache/pipeline/extracted";
@@ -155,10 +156,9 @@ fn migrate_extraction_with_lock(
                 let _cleanup = fs::remove_file(legacy_lock);
             }
             match restore {
-                Ok(()) => Err(io_failure(
-                    "move legacy extraction workspace",
-                    &error,
-                )),
+                Ok(()) => {
+                    Err(io_failure("move legacy extraction workspace", &error))
+                },
                 Err(rollback) => Err(PipelineError::new(format!(
                     concat!(
                         "move legacy extraction workspace failed ({:?}); ",
@@ -173,8 +173,9 @@ fn migrate_extraction_with_lock(
 }
 
 fn ensure_cache_parent(parent: &Path) -> PipelineOutcome<()> {
-    local_filesystem::create_dir_all(parent)
-        .map_err(|error| io_failure("create cached workspace parent", &error))?;
+    local_filesystem::create_dir_all(parent).map_err(|error| {
+        io_failure("create cached workspace parent", &error)
+    })?;
     ensure_real_directory(parent, "cached workspace parent")
 }
 
@@ -187,10 +188,7 @@ fn acquire_migration_lock(path: &Path) -> PipelineOutcome<(File, bool)> {
     {
         Ok(file) => (file, true),
         Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
-            ensure_real_empty_file(
-                path,
-                "legacy extraction transaction lock",
-            )?;
+            ensure_real_empty_file(path, "legacy extraction transaction lock")?;
             let file = OpenOptions::new()
                 .read(true)
                 .write(true)
@@ -252,9 +250,7 @@ fn ensure_real_empty_file(path: &Path, label: &str) -> PipelineOutcome<()> {
     let metadata = fs::symlink_metadata(path)
         .map_err(|error| io_failure("inspect workspace file", &error))?;
     if !metadata.is_file() || metadata.file_type().is_symlink() {
-        return Err(PipelineError::new(format!(
-            "{label} must be a real file"
-        )));
+        return Err(PipelineError::new(format!("{label} must be a real file")));
     }
     if metadata.len() != 0 {
         return Err(PipelineError::new(format!("{label} must be empty")));
@@ -393,23 +389,22 @@ fn migrate_payload_and_manifest(
     migration: &PayloadMigration<'_>,
 ) -> PipelineOutcome<()> {
     if let Some(source) = migration.legacy_manifest.as_ref() {
-        fs::rename(source, migration.manifest_destination).map_err(|error| {
-            io_failure("move legacy generated manifest", &error)
-        })?;
+        fs::rename(source, migration.manifest_destination).map_err(
+            |error| io_failure("move legacy generated manifest", &error),
+        )?;
     }
 
     match fs::rename(&migration.legacy_root, &migration.canonical_root) {
         Ok(()) => Ok(()),
         Err(error) => {
-            let manifest_restore = migration.legacy_manifest.as_ref().map_or(
-                Ok(()),
-                |source| fs::rename(migration.manifest_destination, source),
-            );
+            let manifest_restore =
+                migration.legacy_manifest.as_ref().map_or(Ok(()), |source| {
+                    fs::rename(migration.manifest_destination, source)
+                });
             match manifest_restore {
-                Ok(()) => Err(io_failure(
-                    "move legacy generated workspace",
-                    &error,
-                )),
+                Ok(()) => {
+                    Err(io_failure("move legacy generated workspace", &error))
+                },
                 Err(rollback) => Err(PipelineError::new(format!(
                     concat!(
                         "move legacy {} workspace failed ({:?}); ",

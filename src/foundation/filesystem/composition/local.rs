@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -34,7 +34,8 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use crate::application::{
-    CollectRegularFiles, CollectStrictRegularFiles, InspectPath, ReadFile, WriteFile,
+    CollectRegularFiles, CollectStrictRegularFiles, InspectPath, ReadFile,
+    WriteFile,
 };
 use crate::domain::PathKind;
 use crate::std_filesystem::StdFilesystem;
@@ -71,7 +72,11 @@ pub fn read_optional_utf8(path: &Path) -> io::Result<Option<String>> {
 /// # Errors
 ///
 /// Returns the local provider I/O error.
-pub fn write_bytes(path: &Path, bytes: &[u8], create_parents: bool) -> io::Result<()> {
+pub fn write_bytes(
+    path: &Path,
+    bytes: &[u8],
+    create_parents: bool,
+) -> io::Result<()> {
     WriteFile::bytes(&StdFilesystem, path, bytes, create_parents)
 }
 
@@ -94,7 +99,11 @@ pub fn write_new_bytes(
 /// # Errors
 ///
 /// Returns the local provider I/O error.
-pub fn write_text(path: &Path, text: &str, create_parents: bool) -> io::Result<()> {
+pub fn write_text(
+    path: &Path,
+    text: &str,
+    create_parents: bool,
+) -> io::Result<()> {
     WriteFile::text(&StdFilesystem, path, text, create_parents)
 }
 

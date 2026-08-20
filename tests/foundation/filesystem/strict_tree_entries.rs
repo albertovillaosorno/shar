@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -30,10 +30,9 @@
 
 //! Strict filesystem traversal entry-validation tests.
 
-use std::fs;
-use std::io;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::{fs, io};
 
 use schoenwald_filesystem::adapters::driving::local;
 
@@ -82,8 +81,8 @@ fn strict_traversal_rejects_nested_directory_redirect() -> Result<(), String> {
 
 #[cfg(windows)]
 #[test]
-fn ordinary_traversal_still_ignores_nested_directory_redirect(
-) -> Result<(), String> {
+fn ordinary_traversal_still_ignores_nested_directory_redirect()
+-> Result<(), String> {
     let root = case_root("ordinary-redirect");
     let source = root.join("source");
     let outside = root.join("outside");
@@ -96,8 +95,8 @@ fn ordinary_traversal_still_ignores_nested_directory_redirect(
         .map_err(|error| error.to_string())?;
     support::create_junction(&link, &outside)?;
 
-    let files = local::regular_files(&source)
-        .map_err(|error| error.to_string())?;
+    let files =
+        local::regular_files(&source).map_err(|error| error.to_string())?;
     let cleanup = fs::remove_dir_all(&root).map_err(|error| error.to_string());
     cleanup?;
 
@@ -115,8 +114,8 @@ fn strict_traversal_rejects_special_socket_entry() -> Result<(), String> {
     let root = case_root("special-socket");
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
     let socket = root.join("entry.socket");
-    let listener = UnixListener::bind(&socket)
-        .map_err(|error| error.to_string())?;
+    let listener =
+        UnixListener::bind(&socket).map_err(|error| error.to_string())?;
 
     let result = local::strict_regular_files(&root);
     drop(listener);

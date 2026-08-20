@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -394,7 +394,8 @@ fn halloween_mixed_mesh_preserves_source_authored_triangles()
         .ok_or_else(|| String::from("Halloween addition was removed"))?;
     if removed_overlay != 0 {
         return Err(format!(
-            "source-authored Halloween triangles were removed: {removed_overlay}"
+                        // jig-ignore-next-line: literal
+                        "source-authored Halloween triangles were removed: {removed_overlay}"
         ));
     }
     let retained_group = retained_overlay

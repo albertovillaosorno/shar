@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: import-the-original-world-through-source-authored-fbx-instead-of-replacing-it-with-an
 status: open
 priority: P1

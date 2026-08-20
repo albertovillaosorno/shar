@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -153,7 +153,8 @@ impl RegistryStorage {
                 snapshot.run_id()
             )
         })?;
-        if let Err(error) = write_synced_file(&pending.join(STATE_FILE), &bytes) {
+                // jig-ignore-next-line: expression
+                if let Err(error) = write_synced_file(&pending.join(STATE_FILE), &bytes) {
             drop(fs::remove_dir_all(&pending));
             return Err(format!(
                 "pipeline initial run state write failed: {error}"

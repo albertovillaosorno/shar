@@ -1,5 +1,5 @@
 # Copyright:
-#   - Copyright (c) 2026 Alberto Villa Osorno.
+#   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
 #   - MIT
 # Confidential:
@@ -253,7 +253,10 @@ def test_compiles_skeletal_fbx_with_explicit_skeleton_companion() -> None:
         "/Game/Generated/SHAR/test/asset_0000000000000007_Skeleton"
     )
     assert step.expected_object_paths == (
-        "/Game/Generated/SHAR/test/asset_0000000000000007.asset_0000000000000007",
+        (
+            "/Game/Generated/SHAR/test/asset_0000000000000007."
+            "asset_0000000000000007"
+        ),
         f"{skeleton_package}.asset_0000000000000007_Skeleton",
     )
     rollback_orders = tuple(

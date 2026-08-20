@@ -1,5 +1,7 @@
 ---
 schema: shar.todo.v1
+<!-- markdownlint-disable-next-line MD044 -->
+# jig-ignore-next-line: typed TODO identity is canonical
 id: compare-missions-vehicles-collectibles-saves-localization-cinematics-world-layout
 status: open
 priority: P5

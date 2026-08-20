@@ -48,7 +48,8 @@ commands, mission reset locators, `SetInitialWalk`, `SetDynaLoadData`,
 controls. The Dyna Load Data reference was also cross-checked for its documented
 postfix operations: region load/unload, interior load/unload, and World Sphere
 enable/disable. The locator reference was additionally cross-checked for
-base-game type-5 `DynamicZone` use of Dyna Load Data; repository corpus evidence,
+base-game type-5 `DynamicZone` use of Dyna Load Data; repository corpus
+evidence,
 not the secondary reference, remains authoritative for package identities and
 counts. Mod Launcher `AddStageDynaLoadData`, `SetStageDynaLoadData`, and
 checkpoint extensions are not treated as evidence that those commands exist in
@@ -56,11 +57,13 @@ the original game corpus. `AddNPC`, `AddObjectiveNPCWaypoint`,
 `AddStageVehicle`, and `ActivateVehicle` were also used as secondary
 cross-checks that character,
 vehicle, and locator arguments are source names rather than generated package
-identifiers; optional or sentinel driver/locator forms remain explicit instead of
+identifiers; optional or sentinel driver/locator forms remain explicit instead
+of
 becoming fabricated catalog objects. Community mission tutorials and public
 compatibility implementations were additionally reviewed for source shapes such
 as `SetDestination`,
-`SetDialogueInfo`, `SetCamBestSide`, `SetConversationCam`, AI tuples, and mission
+`SetDialogueInfo`, `SetCamBestSide`, `SetConversationCam`, AI tuples, and
+mission
 FMV usage. These secondary descriptions are used only where repository evidence
 independently closes the same command form; they are not used to invent a
 precedence rule when the same decoded locator name is present in multiple active
@@ -115,6 +118,8 @@ require separate fact-specific analysis in docs/legal.
   distributed.
 - Donut Team (n.d.) *The Simpsons: Hit & Run — All Console Script Commands* and
   linked command pages in DT Docs. Available at:
+  <!-- markdownlint-disable-next-line MD044 -->
+  <!-- jig-ignore-next-line: canonical source URL is indivisible -->
   <https://docs.donutteam.com/docs/TheSimpsonsHitAndRun/Scripting/ConsoleCommands/AllCommands>
   (Accessed: 8 August 2026). Secondary community interoperability reference.
 - SHAR repository (2026) pipeline straggler command decoder and MFK/CON tests.

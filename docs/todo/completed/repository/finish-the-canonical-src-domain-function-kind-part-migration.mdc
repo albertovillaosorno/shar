@@ -35,7 +35,8 @@ root to `src/localization/languages/` without changing its Rust package API.
 Metadata for `json-text`, `sha256`, and `asset-conversion` was corrected to
 include the physical `composition` kind that already existed.
 
-Architecture tests now fail if a domain lacks boundary metadata, a function lacks
+Architecture tests now fail if a domain lacks boundary metadata, a function
+lacks
 `function.yml`, identity domain/path diverges from the filesystem, the canonical
 route changes, or declared kinds differ from physical nonlocal kind directories.
 The current audit covers all five domains and 16 functions; the moved language

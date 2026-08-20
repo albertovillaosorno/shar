@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,8 @@
 // - Defaults:
 //   - Missing and ambiguous identities never become guessed references.
 //
+
+//! Mission locator catalog tests.
 
 use super::*;
 
@@ -107,8 +109,10 @@ fn preserves_ambiguity_across_active_packages() -> Result<(), String> {
         "extracted/art/missions/level01/bm1".to_owned(),
     ];
     let resolution =
-        catalog.resolve(source_name, &active, MissionLocatorTypeConstraint::Exact(3))?;
+                // jig-ignore-next-line: expression
+                catalog.resolve(source_name, &active, MissionLocatorTypeConstraint::Exact(3))?;
     let MissionLocatorResolution::Ambiguous(candidates) = resolution else {
+        // jig-ignore-next-line: literal
         return Err("duplicate active source name did not remain ambiguous".to_owned());
     };
     let [first, second] = candidates.as_slice() else {
@@ -178,7 +182,8 @@ fn type_constraint_filters_without_precedence() -> Result<(), String> {
         "extracted/art/missions/level01/bm1".to_owned(),
     ];
     let resolution =
-        catalog.resolve(source_name, &active, MissionLocatorTypeConstraint::Exact(0))?;
+                // jig-ignore-next-line: expression
+                catalog.resolve(source_name, &active, MissionLocatorTypeConstraint::Exact(0))?;
     let MissionLocatorResolution::Resolved(reference) = resolution else {
         return Err("exact locator type did not leave one candidate".to_owned());
     };
@@ -197,7 +202,8 @@ fn missing_or_inactive_name_stays_missing() -> Result<(), String> {
     let inactive = vec!["extracted/art/missions/level01/level".to_owned()];
     for name in ["l1_tommaco", "not_authored"] {
         assert_eq!(
-            catalog.resolve(name, &inactive, MissionLocatorTypeConstraint::Any)?,
+                        // jig-ignore-next-line: expression
+                        catalog.resolve(name, &inactive, MissionLocatorTypeConstraint::Any)?,
             MissionLocatorResolution::Missing
         );
     }
@@ -211,8 +217,10 @@ fn rejects_duplicate_decoded_name_inside_one_package() -> Result<(), String> {
     let first = entry(package_id, package_root, "duplicate", 0)?;
     let mut second = entry(package_id, package_root, "duplicate", 3)?;
     second.member_id = "locator-other".to_owned();
+    // jig-ignore-next-line: literal
     second.member_path = format!("{package_root}/components/srr_locator/duplicate2.json");
-    let Err(error) = MissionLocatorCatalog::from_entries(vec![first, second]) else {
+        // jig-ignore-next-line: expression
+        let Err(error) = MissionLocatorCatalog::from_entries(vec![first, second]) else {
         return Err("package-local duplicate did not fail closed".to_owned());
     };
     assert_eq!(

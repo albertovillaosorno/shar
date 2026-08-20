@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -40,15 +40,8 @@ use crate::domain::{BACKUP_EXTENSION, extension_of};
 use crate::ports::{GameTree, PathKind};
 
 /// Extensions intentionally excluded from the ephemeral structural audit.
-const IGNORED_EXTENSIONS: &[&str] = &[
-    "rcf",
-    "p3d",
-    "rmv",
-    "ico",
-    "rtf",
-    "jsonl",
-    BACKUP_EXTENSION,
-];
+const IGNORED_EXTENSIONS: &[&str] =
+    &["rcf", "p3d", "rmv", "ico", "rtf", "jsonl", BACKUP_EXTENSION];
 
 /// Deterministically ordered extension audit result.
 #[derive(Debug, Clone, PartialEq, Eq)]

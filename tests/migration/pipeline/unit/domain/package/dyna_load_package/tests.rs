@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -27,6 +27,8 @@
 // - Defaults:
 //   - World Sphere operations never mutate P3D package roots.
 //
+
+//! Dyna Load Data package-transition unit tests.
 
 use super::super::{DynaLoadOperationKind, parse_dyna_load_data};
 use super::{DynaLoadPackageEffect, compile_dyna_load_package_transition};

@@ -1,5 +1,5 @@
 // Copyright:
-//   - Copyright (c) 2026 Alberto Villa Osorno.
+//   - Copyright © 2026 Alberto Villa Osorno.
 // SPDX-License-Identifier:
 //   - MIT
 // Confidential:
@@ -112,6 +112,7 @@ fn indexed_material_accepts_exact_external_texture() -> Result<(), String> {
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
     fs::write(
         &shader_path,
+        // jig-ignore-next-line: literal
         r#"{"schema":"shader","name":"sharedShader","params":[{"kind":"texture","param":"TEX","value":"shared.bmp"}]}"#,
     )
     .map_err(|error| error.to_string())?;
