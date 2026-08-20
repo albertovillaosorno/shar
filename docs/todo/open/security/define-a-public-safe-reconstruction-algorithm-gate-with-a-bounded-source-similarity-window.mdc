@@ -83,8 +83,9 @@ Optional public metadata now distinguishes omission from explicit JSON `null`;
 present kind, taxonomy, and required-file fields must retain producer types.
 Ledger paths must also identify regular files before bytes are read, preventing
 calibration from treating devices or other special filesystem nodes as JSONL.
-The read-only observation adapter now fails when an exact-file-only source has no
-countable structural rows, so success cannot produce an empty unusable ledger.
+The read-only observation adapter now fails when an exact-file-only source has
+no countable structural rows, so success cannot produce an empty unusable
+ledger.
 Generated manifest
 collision
 ordinals are aggregated into their structural family before
