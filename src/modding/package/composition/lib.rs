@@ -36,6 +36,7 @@ pub mod domain;
 
 pub use contract::{
     content_revision, dependency_load_order, member_from_bytes,
+    validate_active_conflicts,
 };
 pub use domain::{
     CONTRACT_VERSION, Dependency, Member, PackageError, PackageKind,
