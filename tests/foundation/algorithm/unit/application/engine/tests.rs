@@ -161,27 +161,29 @@ fn directory_target_records_must_match_collector_order() -> Result<(), String> {
 fn directory_target_portable_identity_collision_is_rejected()
 -> Result<(), String> {
     let settings = settings()?;
-    let document = AlgorithmDocument {
-        schema: ALGORITHM_SCHEMA.to_owned(),
-        settings_sha256: settings_sha256(&settings)
-            .map_err(|error| error.to_string())?,
-        source: vec![SourceRecord {
-            input: 0,
-            path: String::new(),
-            bytes: 1024,
-            sha256: Some("0".repeat(64)),
-            projection: None,
-        }],
-        target_kind: TargetKind::Directory,
-        target: vec![
-            protected_target("Folder/File.bin"),
-            protected_target("folder/file.bin"),
-        ],
-    };
+    for paths in [
+        ("Folder/File.bin", "folder/file.bin"),
+        ("\u{a7ce}.bin", "\u{a7cf}.bin"),
+    ] {
+        let document = AlgorithmDocument {
+            schema: ALGORITHM_SCHEMA.to_owned(),
+            settings_sha256: settings_sha256(&settings)
+                .map_err(|error| error.to_string())?,
+            source: vec![SourceRecord {
+                input: 0,
+                path: String::new(),
+                bytes: 1024,
+                sha256: Some("0".repeat(64)),
+                projection: None,
+            }],
+            target_kind: TargetKind::Directory,
+            target: vec![protected_target(paths.0), protected_target(paths.1)],
+        };
 
-    if validate_document(&document, &settings).is_ok() {
-        let message = "portable target identity collision was accepted";
-        return Err(message.to_owned());
+        if validate_document(&document, &settings).is_ok() {
+            let message = "portable target identity collision was accepted";
+            return Err(message.to_owned());
+        }
     }
     Ok(())
 }
@@ -326,6 +328,22 @@ fn source_metadata_must_match_collector_contract() -> Result<(), String> {
             SourceRecord {
                 input: 0,
                 path: "a/b".to_owned(),
+                bytes: 512,
+                sha256: Some("0".repeat(64)),
+                projection: None,
+            },
+        ],
+        vec![
+            SourceRecord {
+                input: 0,
+                path: "\u{a7ce}.bin".to_owned(),
+                bytes: 512,
+                sha256: Some("0".repeat(64)),
+                projection: None,
+            },
+            SourceRecord {
+                input: 0,
+                path: "\u{a7cf}.bin".to_owned(),
                 bytes: 512,
                 sha256: Some("0".repeat(64)),
                 projection: None,
