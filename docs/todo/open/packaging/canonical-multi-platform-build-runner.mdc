@@ -108,7 +108,7 @@ also retain execute permission. Desktop entrypoints must identify their native
 binary format as ELF, Mach-O, or PE as appropriate, and the native header must
 match the selected x64 or ARM64 target. Runtime size, execute permission, and
 header parsing now share one stable single-link descriptor identity that must
-still match the candidate path afterward; a transient external binary therefore
+still match the candidate path afterward. A transient external binary therefore
 cannot authorize different local bytes that later reach publication. A renamed
 executable or a binary for the wrong architecture cannot satisfy publication.
 Plain data-only archives can no longer be published as successful desktop
@@ -227,8 +227,8 @@ evidence is likewise required to be a real report file with one filesystem link
 both before stale-report cleanup and after UAT returns. Redirected or
 hard-linked
 `turnkey.txt` evidence cannot make external content satisfy the SDK-validity
-gate. Report decoding also binds one descriptor identity to the cache path before
-and after the UTF-8 read, so a post-UAT check-to-read replacement cannot
+gate. Report decoding also binds one descriptor identity to the cache path
+before and after the UTF-8 read, so a post-UAT check-to-read replacement cannot
 substitute external SDK evidence. The report must contain a platform-anchored
 valid SDK row; a prefixed lookalike platform name cannot satisfy another
 target's gate.
