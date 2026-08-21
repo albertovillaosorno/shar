@@ -177,6 +177,54 @@ class WindowsShortcutTargetTests(unittest.TestCase):
             ):
                 self.module._discover_target(root)
 
+    def test_discovery_fails_closed_on_nested_scan_error(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-shortcut-scan-") as raw:
+            root = Path(raw)
+            dist = root / "dist"
+            blocked = dist / "blocked"
+            blocked.mkdir(parents=True)
+            (dist / "shar.exe").write_bytes(b"launcher")
+            (blocked / "shar-Win64-Shipping.exe").write_bytes(b"game")
+            real_scan = self.module._scan_directory
+
+            def strict_scan(
+                path: Path,
+            ) -> object:
+                if path == blocked:
+                    raise PermissionError("blocked dist subtree")
+                return real_scan(path)
+
+            with (
+                mock.patch.object(
+                    self.module,
+                    "_scan_directory",
+                    side_effect=strict_scan,
+                ),
+                self.assertRaisesRegex(
+                    SystemExit,
+                    "dist/ cannot be inspected safely",
+                ),
+            ):
+                self.module._discover_target(root)
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_discovery_rejects_nested_redirect(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-shortcut-link-") as raw:
+            root = Path(raw)
+            dist = root / "dist"
+            outside = root / "outside"
+            dist.mkdir()
+            outside.mkdir()
+            (dist / "shar.exe").write_bytes(b"launcher")
+            redirect = dist / "redirected"
+            redirect.symlink_to(outside, target_is_directory=True)
+
+            with self.assertRaisesRegex(
+                SystemExit,
+                "dist/ contains a redirected entry",
+            ):
+                self.module._discover_target(root)
+
     def test_discovery_ignores_original_helpers_and_lookalikes(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-shortcut-target-") as raw:
             root = Path(raw)
