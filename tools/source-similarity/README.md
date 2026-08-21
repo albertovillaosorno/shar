@@ -25,7 +25,9 @@ coverage, and weighted-Jaccard similarity. Tracked policy rows use `min`;
 read-only observation rows use `count`. A row must select exactly one, and every
 coordinate row in one ledger must use the same count field. Optional `kind` and
 manifest-header metadata must retain their public JSON shapes when present;
-required-file rows are limited to the schema-v2 public path/minimum pairs, so
+present taxonomy and required-file lists must exactly retain the producer's
+canonical values and order. Required-file rows are limited to the schema-v2
+public path/minimum pairs, so
 explicit JSON `null` is not treated as absence. Coordinate rows must also map to
 one producer-classified bucket; an optional `kind` value must match that exact
 classification. Coordinate rows must remain in the producer's deterministic
