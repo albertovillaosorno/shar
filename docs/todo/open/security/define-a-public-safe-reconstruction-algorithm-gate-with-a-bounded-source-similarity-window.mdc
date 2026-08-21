@@ -152,7 +152,8 @@ files rather than symbolic links, so external content cannot satisfy validation
 while Git publishes only a redirect. The same guard now mirrors key replay
 constraints: a real active settings file with Rust-equivalent schema and
 resource validation, its hash in Rust's fixed settings wire order, integer wire
-types, duplicate-key rejection, bounded integer/resource limits, canonical
+types including signed-zero rejection, duplicate-key rejection, bounded
+integer/resource limits, canonical
 chunked protected payloads with the required tag length, source/target portable
 relative-path policy including ASCII-only Windows device alias folding,
 deterministic source-record grouping, and case-equivalent target ancestor
