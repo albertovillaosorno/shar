@@ -32,6 +32,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from collections.abc import Iterator
 from contextlib import AbstractContextManager
 import hashlib
@@ -544,6 +545,93 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
                 _CHECK._dependency_validator(root, evidence)
         finally:
             temporary.cleanup()
+
+
+class DependencyValidatorHashBoundaryTests(unittest.TestCase):
+    """Bind preflight validator hashes to repository-owned file identities."""
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_preflight_rejects_validator_replacement_during_hash(self) -> None:
+        cases = (
+            (
+                "validator",
+                "validate-game",
+                _CHECK._dependency_validator,
+            ),
+            (
+                "deep_source_validator",
+                "validate-source-deep",
+                _CHECK._dependency_deep_source_validator,
+            ),
+        )
+        for field, name, resolve in cases:
+            with (
+                self.subTest(field=field),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-preflight-validator-hash-race-"
+                ) as raw,
+            ):
+                root = Path(raw)
+                validator = root / ".dependencies/build/bin" / name
+                validator.parent.mkdir(parents=True)
+                validator.write_bytes(b"validator")
+                external = root / "external-validator"
+                external.write_bytes(b"validator")
+                displaced = root / "displaced-validator"
+                evidence = {
+                    field: {
+                        "path": str(validator),
+                        "sha256": hashlib.sha256(b"validator").hexdigest(),
+                        "source_sha256": "source",
+                    }
+                }
+                real_identity = _CHECK._real_evidence_identity
+                replaced = False
+
+                def replace_after_identity(
+                    path: Path,
+                    label: str,
+                    *,
+                    identity_reader: Callable[
+                        [Path, str], tuple[int, ...]
+                    ] = real_identity,
+                    validator_path: Path = validator,
+                    displaced_path: Path = displaced,
+                    external_path: Path = external,
+                ) -> tuple[int, ...]:
+                    nonlocal replaced
+                    identity = identity_reader(path, label)
+                    if path == validator_path and not replaced:
+                        validator_path.replace(displaced_path)
+                        validator_path.symlink_to(external_path)
+                        replaced = True
+                    return identity
+
+                with (
+                    mock.patch.object(
+                        _CHECK,
+                        "_real_evidence_identity",
+                        side_effect=replace_after_identity,
+                    ),
+                    mock.patch.object(
+                        _CHECK,
+                        "_validator_source_sha256",
+                        return_value="source",
+                    ),
+                    mock.patch.object(
+                        _CHECK,
+                        "_deep_validator_source_sha256",
+                        return_value="source",
+                    ),
+                    self.assertRaisesRegex(
+                        _CHECK.CheckFailure,
+                        "changed while hashing",
+                    ),
+                ):
+                    resolve(root, evidence)
+
+                self.assertTrue(validator.is_symlink())
+                self.assertEqual(external.read_bytes(), b"validator")
 
 
 class VisualStudioBootstrapBoundaryTests(unittest.TestCase):

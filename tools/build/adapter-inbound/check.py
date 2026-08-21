@@ -412,6 +412,29 @@ def _read_real_evidence_bytes(path: Path, label: str) -> bytes:
     return payload
 
 
+def _sha256_real_evidence(path: Path, label: str) -> str:
+    """Hash one stable non-redirected regular evidence file."""
+    expected = _real_evidence_identity(path, label)
+    digest = hashlib.sha256()
+    total = 0
+    try:
+        with path.open("rb") as handle:
+            opened = _evidence_identity(os.fstat(handle.fileno()))
+            if opened != expected:
+                raise CheckFailure(f"{label} changed while hashing")
+            while chunk := handle.read(1024 * 1024):
+                total += len(chunk)
+                digest.update(chunk)
+            finished = _evidence_identity(os.fstat(handle.fileno()))
+    except OSError as error:
+        raise CheckFailure(f"cannot read {label} {path}: {error}") from error
+    if finished != expected or total != expected[4]:
+        raise CheckFailure(f"{label} changed while hashing")
+    if _real_evidence_identity(path, label) != expected:
+        raise CheckFailure(f"{label} changed while hashing")
+    return digest.hexdigest()
+
+
 def _require_unchanged_evidence(
     path: Path,
     label: str,
@@ -565,7 +588,9 @@ def _dependency_validator(
         raw_path,
         "dependency validator",
     )
-    actual_hash = _sha256(validator)
+    actual_hash = _sha256_real_evidence(
+        validator, "dependency validator"
+    )
     if actual_hash != expected_hash:
         message = "dependency validator SHA-256 no longer matches evidence"
         raise CheckFailure(message)
@@ -600,7 +625,10 @@ def _dependency_deep_source_validator(
         raw_path,
         "deep source validator",
     )
-    if _sha256(validator) != expected_hash:
+    if (
+        _sha256_real_evidence(validator, "deep source validator")
+        != expected_hash
+    ):
         raise CheckFailure(
             "deep source validator SHA-256 no longer matches evidence"
         )
