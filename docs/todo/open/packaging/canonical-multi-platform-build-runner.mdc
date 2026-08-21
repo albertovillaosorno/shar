@@ -224,8 +224,11 @@ evidence is likewise required to be a real report file with one filesystem link
 both before stale-report cleanup and after UAT returns. Redirected or
 hard-linked
 `turnkey.txt` evidence cannot make external content satisfy the SDK-validity
-gate. The report must decode as UTF-8 and contain a platform-anchored valid SDK
-row; a prefixed lookalike platform name cannot satisfy another target's gate.
+gate. Report decoding also binds one descriptor identity to the cache path before
+and after the UTF-8 read, so a post-UAT check-to-read replacement cannot
+substitute external SDK evidence. The report must contain a platform-anchored
+valid SDK row; a prefixed lookalike platform name cannot satisfy another
+target's gate.
 After UAT returns, the complete candidate tree is traversed without following
 links and rejects symbolic links, junctions, hard-linked regular files, or
 special filesystem entries before manifests/debug symbols are moved. The final
