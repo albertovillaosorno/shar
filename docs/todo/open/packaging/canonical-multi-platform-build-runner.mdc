@@ -156,9 +156,11 @@ and hashes one stable byte snapshot and requires the canonical dependency file
 to retain one filesystem link and the same bytes through source and engine
 validation, preventing either an external hard-link alias or a mid-check
 replacement from binding saved evidence to JSON that did not select the
-validators. The canonical game manifest is likewise captured as one stable
-single-link snapshot before validation, required to retain the same bytes
-through preflight, and hashed from that exact snapshot for saved evidence.
+validators. The canonical game manifest is likewise required to remain below
+real `game/` and `game/manifest/` directories, captured as one stable
+single-link
+snapshot before validation, required to retain the same bytes through preflight,
+and hashed from that exact snapshot for saved evidence.
 Direct saved-check revalidation applies the same single-link rule.
 Linked or malformed saved evidence now fails before it can be consumed,
 replaced,
