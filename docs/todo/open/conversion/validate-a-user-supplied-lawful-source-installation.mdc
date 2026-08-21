@@ -130,7 +130,8 @@ errors. Nested traversal now uses explicit directory scans because Python 3.14
 recursive globbing suppresses scan failures; an unreadable nested directory
 therefore fails closed instead of hiding another canonical executable. Synthetic
 regressions cover directory, quoted text, executable, missing, wrong-file,
-redirected wrong-file, redirected directory/parent, mocked junction, nested-only,
+redirected wrong-file, redirected directory/parent, mocked junction,
+nested-only,
 and nested-scan-failure selections without proprietary source data. The future
 P4 GUI
 still owns concrete browse/text/drop
