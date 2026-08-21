@@ -83,8 +83,10 @@ those two phases.
 JSONL calibration rows now also reject outer spaces or tabs, matching the
 canonical manifest producer instead of accepting whitespace-normalized aliases.
 Optional public metadata now distinguishes omission from explicit JSON `null`;
-present row kinds must belong to the producer's public taxonomy, taxonomy lists
-cannot introduce unknown or duplicate values, and required-file metadata must
+present row kinds must belong to the producer's public taxonomy and match the
+producer's exact `(dir, ext)` bucket classification, while unclassifiable
+coordinates fail even when `kind` is omitted. Taxonomy lists cannot introduce
+unknown or duplicate values, and required-file metadata must
 remain a portable source-relative path under the shared host-safe component
 rules. Reserved aliases, stream syntax, trailing-dot/space identities, control
 characters, invisible path modifiers, and oversized components all fail closed.
