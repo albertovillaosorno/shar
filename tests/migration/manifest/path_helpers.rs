@@ -52,11 +52,16 @@ fn extension_of_lowercases_unicode() {
 #[test]
 fn obfuscate_component_lowercases_unicode() {
     assert_eq!(obfuscate_component("ÄZ"), "äz");
-    assert_eq!(
-        obfuscate_component("\u{a7ce}Z"),
-        "\u{a7cf}z",
-        "obfuscation must retain Rust Unicode 17 lowercase semantics"
-    );
+    for (source, expected) in [
+        ("\u{a7ce}Z", "\u{a7cf}z"),
+        ("\u{16ea0}Z", "\u{16ebb}z"),
+    ] {
+        assert_eq!(
+            obfuscate_component(source),
+            expected,
+            "obfuscation must retain Rust Unicode 17 lowercase semantics"
+        );
+    }
 }
 
 #[test]

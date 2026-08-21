@@ -904,21 +904,25 @@ def test_public_plan_guard_rejects_legacy_ciphertext_wire() -> None:
 
 def test_public_plan_guard_uses_rust_unicode_17_portable_identity() -> None:
     """Reject source and target collisions visible to Rust Unicode 17."""
-    target_plan = _synthetic_plan(path="\ua7ce.bin")
-    target = target_plan["target"]
-    assert isinstance(target, list)
-    second_target = dict(target[0])
-    second_target["path"] = "\ua7cf.bin"
-    target.append(second_target)
+    for uppercase, lowercase in (
+        ("\ua7ce", "\ua7cf"),
+        ("\U00016ea0", "\U00016ebb"),
+    ):
+        target_plan = _synthetic_plan(path=f"{uppercase}.bin")
+        target = target_plan["target"]
+        assert isinstance(target, list)
+        second_target = dict(target[0])
+        second_target["path"] = f"{lowercase}.bin"
+        target.append(second_target)
 
-    source_plan = _synthetic_source_rows(
-        {"path": "\ua7ce.bin", "bytes": 512},
-        {"path": "\ua7cf.bin", "bytes": 512},
-    )
+        source_plan = _synthetic_source_rows(
+            {"path": f"{uppercase}.bin", "bytes": 512},
+            {"path": f"{lowercase}.bin", "bytes": 512},
+        )
 
-    for plan in (target_plan, source_plan):
-        with pytest.raises(AssertionError):
-            _assert_source_bound_plan(json.dumps(plan))
+        for plan in (target_plan, source_plan):
+            with pytest.raises(AssertionError):
+                _assert_source_bound_plan(json.dumps(plan))
 
 
 def test_public_plan_guard_rejects_multiple_projected_sources() -> None:
