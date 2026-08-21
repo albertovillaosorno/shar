@@ -158,7 +158,8 @@ class SourceSimilarityTests(unittest.TestCase):
     def test_parser_accepts_generated_manifest_metadata_and_kind(self) -> None:
         ledger = (
             '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
-            '"kind_taxonomy":[],"required_files":[]}\n'
+            '"kind_taxonomy":[],"required_files":['
+            '{"path":"README.rtf","min":1}]}\n'
             '{"dir":"aa","ext":"p3d","min":2,'
             '"kind":"p3d_container"}\n'
         )
@@ -256,6 +257,10 @@ class SourceSimilarityTests(unittest.TestCase):
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
                 '"required_files":[{"path":"README.rtf","min":1,'
                 '"private":"metadata"}]}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"required_files":[{"path":"private/source","min":1}]}'
             ),
             (
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
