@@ -549,6 +549,39 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class ValidatorSourceAliasTests(unittest.TestCase):
+    """Reject physical aliases from validator source fingerprints."""
+
+    def test_source_closure_rejects_hard_linked_files(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-validator-source-hard-link-"
+        ) as raw:
+            root = Path(raw)
+            for relative in _DEPENDENCIES._VALIDATOR_SOURCE_INPUTS:
+                path = root / relative
+                if path.suffix:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text("fixture\n", encoding="utf-8")
+                else:
+                    path.mkdir(parents=True, exist_ok=True)
+                    (path / "fixture.rs").write_text(
+                        "fixture\n", encoding="utf-8"
+                    )
+            source = root / "Cargo.toml"
+            alias = root / "external-source-alias"
+            alias.hardlink_to(source)
+
+            for module in (_DEPENDENCIES, _CHECK):
+                with (
+                    self.subTest(module=module.__name__),
+                    self.assertRaisesRegex(
+                        OSError,
+                        "source closure contains a hard-linked file",
+                    ),
+                ):
+                    module._validator_source_sha256(root)
+
+
 class EngineSelectionTests(unittest.TestCase):
     """Exercise portable default Unreal Engine candidate selection."""
 
