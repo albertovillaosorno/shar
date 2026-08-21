@@ -265,6 +265,27 @@ class CanonicalBuildStateBoundaryTests(unittest.TestCase):
             ):
                 _CHECK._dependency_evidence(root)
 
+    def test_check_rejects_hard_linked_dependency_evidence_input(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-dependency-input-hardlink-"
+        ) as raw:
+            root = Path(raw)
+            data = root / ".cache/build/data"
+            data.mkdir(parents=True)
+            external = root / "external-dependencies.json"
+            external.write_text(
+                '{"schema":"shar.build.dependencies.v1"}\n',
+                encoding="utf-8",
+            )
+            dependency = data / "dependencies.json"
+            dependency.hardlink_to(external)
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "dependency evidence must be a real file",
+            ):
+                _CHECK._dependency_evidence(root)
+
     @unittest.skipIf(sys.platform == "win32", "symlink setup is Unix-focused")
     def test_check_rejects_linked_dependency_evidence_parent(self) -> None:
         with tempfile.TemporaryDirectory(

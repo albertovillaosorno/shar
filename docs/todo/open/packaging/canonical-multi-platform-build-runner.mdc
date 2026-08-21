@@ -148,12 +148,13 @@ the real `.cache/build/data` ancestor checks before consuming
 so a post-bootstrap parent symlink or junction cannot redirect dependency
 authority to external JSON. Preflight parses
 and hashes one stable byte snapshot and requires the canonical dependency file
-to
-retain those bytes through source and engine validation, preventing a
-mid-check
+to retain one filesystem link and the same bytes through source and engine
+validation, preventing either an external hard-link alias or a mid-check
 replacement from binding saved evidence to JSON that did not select the
-validators. Linked or malformed saved evidence now fails before it can be
-consumed, replaced, or cleaned up.
+validators. Direct saved-check revalidation applies the same single-link rule.
+Linked or malformed saved evidence now fails before it can be consumed,
+replaced,
+or cleaned up.
 Their PID-named atomic staging files are now created exclusively. A pre-existing
 staging identity is preserved and causes the writer to fail closed instead of
 being truncated or removed before the final atomic replace.
