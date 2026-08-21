@@ -148,7 +148,9 @@ A separate maintainer-only `source-variant-evidence` helper checks whether a
 private cross-variant common-byte artifact is an ordered subsequence of supplied
 local variants while emitting only argument ordinals and aggregate byte counts.
 Its `--projection` mode can also emit an `offset-mask-set-v1` descriptor
-without a source hash, containing only bounded positional layouts. The three
+without a source hash, containing only bounded positional layouts. Private
+reference and variant paths now reject symlinked or junction-backed lexical
+directory parents before any payload read. The three
 executable variants retained in the current private workspace all reproduce
 the full 284,682-byte common sequence and require three distinct layouts. That
 result is intentionally limited to those available samples and does not

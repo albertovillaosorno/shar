@@ -64,6 +64,16 @@ class InputTypeError(VariantEvidenceError):
         super().__init__("source-variant evidence input must be a regular file")
 
 
+class InputRedirectError(VariantEvidenceError):
+    """One local evidence input traverses a redirected parent directory."""
+
+    def __init__(self) -> None:
+        """Initialize the canonical parent-redirect failure."""
+        super().__init__(
+            "source-variant evidence parent must be a real directory"
+        )
+
+
 class EmptyReferenceError(VariantEvidenceError):
     """The private common-byte reference contains no bytes."""
 
@@ -173,10 +183,17 @@ def _regular_file_identity(path: Path) -> FileIdentity:
 
     Raises:
         InputInspectionError: If filesystem metadata cannot be inspected.
+        InputRedirectError: If a lexical parent redirects elsewhere.
         InputTypeError: If the path does not identify a regular file.
 
     """
     try:
+        redirected_parent = any(
+            parent.is_symlink() or os.path.isjunction(parent)
+            for parent in (path.parent, *path.parent.parents)
+        )
+        if redirected_parent:
+            raise InputRedirectError
         metadata = path.lstat()
     except OSError as error:
         raise InputInspectionError from error
