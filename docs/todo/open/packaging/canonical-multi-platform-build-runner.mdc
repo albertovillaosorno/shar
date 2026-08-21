@@ -149,7 +149,11 @@ mutation. Rejection preserves existing evidence; architecture and preflight test
 output overrides remain independent. Dependency bootstrap additionally requires
 real `.dependencies` and `.dependencies/build` tool storage even when its JSON
 evidence path is overridden, because Cargo, rustup, and validator outputs remain
-repository-owned side effects. Cargo-produced validator build outputs may
+repository-owned side effects. Cached pinned rustup installers must be real
+single-link files, and downloads use an exclusively created PID staging file
+before opening the network response. The checksum is computed from the exact
+response bytes written to that owned handle, while pre-existing staging files or
+links are preserved and fail closed. Cargo-produced validator build outputs may
 retain Cargo's canonical `release/deps` hard link, but every filesystem link
 must
 be accounted for inside that repository-owned target tree. Published validator

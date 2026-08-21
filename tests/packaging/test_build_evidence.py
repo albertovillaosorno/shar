@@ -36,6 +36,7 @@ from collections.abc import Iterator
 from contextlib import AbstractContextManager
 import hashlib
 import importlib.util
+import io
 import os
 from pathlib import Path
 import tempfile
@@ -543,6 +544,117 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
                 _CHECK._dependency_validator(root, evidence)
         finally:
             temporary.cleanup()
+
+
+class RustupBootstrapBoundaryTests(unittest.TestCase):
+    """Keep pinned rustup installer authority inside repository cache files."""
+
+    _TARGET = "x86_64-unknown-linux-gnu"
+    _PAYLOAD = b"pinned-rustup-fixture"
+
+    class _Response(io.BytesIO):
+        def __enter__(self) -> RustupBootstrapBoundaryTests._Response:
+            return self
+
+        def __exit__(self, *_args: object) -> None:
+            self.close()
+
+    def _expected(self) -> str:
+        return hashlib.sha256(self._PAYLOAD).hexdigest()
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_cached_rustup_rejects_redirected_installer(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-rustup-cache-link-"
+        ) as raw:
+            root = Path(raw)
+            installer = _DEPENDENCIES._rustup_installer_path(
+                root, self._TARGET
+            )
+            installer.parent.mkdir(parents=True)
+            external = root / "external-installer"
+            external.write_bytes(self._PAYLOAD)
+            installer.symlink_to(external)
+            with (
+                mock.patch.dict(
+                    _DEPENDENCIES._RUSTUP_SHA256,
+                    {self._TARGET: self._expected()},
+                    clear=True,
+                ),
+                mock.patch.object(
+                    _DEPENDENCIES.urllib.request, "urlopen"
+                ) as urlopen,
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "rustup installer must be a real file",
+                ),
+            ):
+                _DEPENDENCIES._download_rustup(root, self._TARGET)
+
+            urlopen.assert_not_called()
+            self.assertEqual(external.read_bytes(), self._PAYLOAD)
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_rustup_download_preserves_redirected_staging_file(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-rustup-staging-link-"
+        ) as raw:
+            root = Path(raw)
+            installer = _DEPENDENCIES._rustup_installer_path(
+                root, self._TARGET
+            )
+            installer.parent.mkdir(parents=True)
+            external = root / "external-stage"
+            external.write_bytes(b"outside")
+            candidate = installer.with_name(
+                f".{installer.name}.{os.getpid()}.tmp"
+            )
+            candidate.symlink_to(external)
+            with (
+                mock.patch.dict(
+                    _DEPENDENCIES._RUSTUP_SHA256,
+                    {self._TARGET: self._expected()},
+                    clear=True,
+                ),
+                mock.patch.object(
+                    _DEPENDENCIES.urllib.request, "urlopen"
+                ) as urlopen,
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "rustup staging file already exists",
+                ),
+            ):
+                _DEPENDENCIES._download_rustup(root, self._TARGET)
+
+            urlopen.assert_not_called()
+            self.assertTrue(candidate.is_symlink())
+            self.assertEqual(external.read_bytes(), b"outside")
+            self.assertFalse(installer.exists())
+
+    def test_rustup_download_hashes_owned_response_stream(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-rustup-download-"
+        ) as raw:
+            root = Path(raw)
+            with (
+                mock.patch.dict(
+                    _DEPENDENCIES._RUSTUP_SHA256,
+                    {self._TARGET: self._expected()},
+                    clear=True,
+                ),
+                mock.patch.object(
+                    _DEPENDENCIES.urllib.request,
+                    "urlopen",
+                    return_value=self._Response(self._PAYLOAD),
+                ),
+            ):
+                installer = _DEPENDENCIES._download_rustup(
+                    root, self._TARGET
+                )
+
+            self.assertEqual(installer.read_bytes(), self._PAYLOAD)
+            self.assertFalse(installer.is_symlink())
+            self.assertEqual(installer.stat().st_nlink, 1)
 
 
 class ValidatorPublicationStagingTests(unittest.TestCase):

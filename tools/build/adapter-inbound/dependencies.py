@@ -320,11 +320,58 @@ def _rustup_installer_path(root: Path, target: str) -> Path:
     return root / _BOOTSTRAP_CACHE / filename
 
 
+def _rustup_installer_metadata(path: Path, label: str) -> os.stat_result:
+    """Require one real single-link rustup installer cache file."""
+    if path.is_symlink() or os.path.isjunction(path):
+        raise BootstrapFailure(f"{label} must be a real file: {path}")
+    try:
+        metadata = path.stat(follow_symlinks=False)
+    except OSError as error:
+        raise BootstrapFailure(f"{label} is missing: {path}") from error
+    if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+        raise BootstrapFailure(
+            f"{label} must be a real single-link file: {path}"
+        )
+    return metadata
+
+
+def _cached_rustup_matches(installer: Path, expected: str) -> bool:
+    """Return whether one existing real cached installer has the pinned hash."""
+    if not os.path.lexists(installer):
+        return False
+    _rustup_installer_metadata(installer, "rustup installer")
+    return _sha256(installer) == expected
+
+
+def _make_rustup_candidate_executable(
+    handle: BinaryIO,
+    candidate: Path,
+) -> None:
+    """Preserve host execution semantics on one owned installer candidate."""
+    if os.name == "nt":
+        return
+    mode = os.fstat(handle.fileno()).st_mode | 0o111
+    if hasattr(os, "fchmod"):
+        os.fchmod(handle.fileno(), mode)
+    else:
+        candidate.chmod(mode)
+
+
+def _write_rustup_response(response: BinaryIO, handle: BinaryIO) -> str:
+    """Write and hash exactly one pinned rustup response stream."""
+    digest = hashlib.sha256()
+    while chunk := response.read(1024 * 1024):
+        handle.write(chunk)
+        digest.update(chunk)
+    handle.flush()
+    return digest.hexdigest()
+
+
 def _download_rustup(root: Path, target: str) -> Path:
     """Download and verify the exact pinned rustup installer."""
     installer = _rustup_installer_path(root, target)
     expected = _RUSTUP_SHA256[target]
-    if installer.is_file() and _sha256(installer) == expected:
+    if _cached_rustup_matches(installer, expected):
         return installer
     installer.parent.mkdir(parents=True, exist_ok=True)
     suffix = ".exe" if "windows" in target else ""
@@ -342,28 +389,37 @@ def _download_rustup(root: Path, target: str) -> Path:
     request = urllib.request.Request(  # noqa: S310 - origin checked above.
         url, method="GET"
     )
+    created = False
     try:
-        with (
-            urllib.request.urlopen(  # noqa: S310 - URL origin checked above.
-                request, timeout=120
-            ) as response,
-            candidate.open("wb") as handle,
-        ):
-            shutil.copyfileobj(response, handle)
-        actual = _sha256(candidate)
-        if actual != expected:
+        try:
+            handle = candidate.open("xb")
+        except FileExistsError as error:
             raise BootstrapFailure(
-                "rustup installer checksum mismatch: "
-                f"expected {expected}, found {actual}"
-            )
-        if os.name != "nt":
-            candidate.chmod(candidate.stat().st_mode | 0o111)
+                f"rustup staging file already exists: {candidate}"
+            ) from error
+        created = True
+        with handle:
+            try:
+                response = urllib.request.urlopen(  # noqa: S310
+                    request, timeout=120
+                )
+            except urllib.error.URLError as error:
+                message = f"cannot download pinned rustup: {error}"
+                raise BootstrapFailure(message) from error
+            with response:
+                actual = _write_rustup_response(response, handle)
+            if actual != expected:
+                raise BootstrapFailure(
+                    "rustup installer checksum mismatch: "
+                    f"expected {expected}, found {actual}"
+                )
+            _make_rustup_candidate_executable(handle, candidate)
+        _rustup_installer_metadata(candidate, "rustup staging file")
         Path(candidate).replace(installer)
-    except urllib.error.URLError as error:
-        message = f"cannot download pinned rustup: {error}"
-        raise BootstrapFailure(message) from error
+        _rustup_installer_metadata(installer, "rustup installer")
     finally:
-        candidate.unlink(missing_ok=True)
+        if created:
+            candidate.unlink(missing_ok=True)
     return installer
 
 
