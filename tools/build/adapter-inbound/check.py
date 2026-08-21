@@ -302,6 +302,8 @@ def _check_game(root: Path, selected: Path | None) -> Path:
 def _dependency_evidence(root: Path) -> tuple[Path, dict[str, object]]:
     """Read and validate the dependency bootstrap evidence."""
     path = root / _DEPENDENCIES_PATH
+    if path.is_symlink() or os.path.isjunction(path):
+        raise CheckFailure("dependency evidence must be a real file")
     data = _read_json_object(path, "dependency evidence")
     if data.get("schema") != _DEPENDENCIES_SCHEMA:
         raise CheckFailure(
