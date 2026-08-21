@@ -653,7 +653,7 @@ class CheckRevalidationSnapshotTests(unittest.TestCase):
 
     def test_revalidation_rejects_hard_linked_saved_evidence(self) -> None:
         with tempfile.TemporaryDirectory(
-            prefix="shar-check-revalidation-hardlink-"
+            prefix="shar-check-revalidation-hard-link-"
         ) as raw:
             root = Path(raw)
             external = root / "external-check.json"

@@ -267,7 +267,7 @@ class CanonicalBuildStateBoundaryTests(unittest.TestCase):
 
     def test_check_rejects_hard_linked_dependency_evidence_input(self) -> None:
         with tempfile.TemporaryDirectory(
-            prefix="shar-dependency-input-hardlink-"
+            prefix="shar-dependency-input-hard-link-"
         ) as raw:
             root = Path(raw)
             data = root / ".cache/build/data"
