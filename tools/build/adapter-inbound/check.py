@@ -414,6 +414,25 @@ def _require_real_manifest_roots(root: Path) -> None:
     )
 
 
+def _require_real_project_roots(root: Path) -> None:
+    """Keep the canonical Unreal descriptor under real repository roots."""
+    _require_real_directories(
+        (
+            (root / "src", "source root"),
+            (root / "src/unreal", "Unreal source root"),
+            (root / "src/unreal/project", "Unreal project source root"),
+            (
+                root / "src/unreal/project/composition",
+                "Unreal project composition root",
+            ),
+            (
+                root / "src/unreal/project/composition/uproject",
+                "Unreal project root",
+            ),
+        )
+    )
+
+
 def _dependency_evidence(
     root: Path,
 ) -> tuple[Path, bytes, dict[str, object]]:
@@ -689,8 +708,14 @@ def _read_json_object(path: Path, label: str) -> dict[str, object]:
 
 def _check_project(root: Path) -> Path:
     """Require the tracked Unreal project association used by the build."""
+    _require_real_project_roots(root)
     project = root / _PROJECT_PATH
-    descriptor = _read_json_object(project, "Unreal project descriptor")
+    snapshot = _read_real_evidence_bytes(project, "Unreal project descriptor")
+    descriptor = _json_object_from_bytes(
+        snapshot,
+        "Unreal project descriptor",
+        project,
+    )
     association = descriptor.get("EngineAssociation")
     if association != _UNREAL_ASSOCIATION:
         raise CheckFailure(

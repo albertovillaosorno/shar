@@ -130,7 +130,11 @@ before it can become a `dist/<ARCH>/` symlink to external content.
 
 Project-state migration now validates both `.cache` and `.cache/build` as real
 repository directories before creating or adopting Unreal-generated state.
-Regressions cover linked cache ancestors so build state cannot escape the repo.
+Build preflight also requires every lexical repository ancestor of the canonical
+`shar.uproject` descriptor to remain a real directory and parses the descriptor
+from one stable single-link snapshot. Redirected project authority therefore
+fails before it can be normalized into the saved UAT project path. Regressions
+cover linked cache and project ancestors so build state cannot escape the repo.
 
 Canonical dependency, preflight, and architecture evidence writers now reject
 linked `.cache`, `.cache/build`, or `.cache/build/data` ancestors before any
