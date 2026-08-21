@@ -23,9 +23,14 @@ coordinate row in one ledger must use the same count field. Optional `kind` and
 manifest-header metadata must retain their public JSON shapes when present;
 explicit JSON `null` is not treated as absence. Those metadata fields remain
 ignored by the metric. Directory coordinates must retain the producer's
-lowercase,
-forward-slash normalization (with the empty string reserved for the game root).
-Coordinate extensions must likewise be nonempty and lowercase; files without
+lowercase, forward-slash
+normalization (with the empty string reserved for the game root). After any
+canonical collision ordinal is removed, every directory component must contain
+2–4 Unicode scalar values: exactly the bounded shape produced by lowercasing the
+first and last source-directory characters. Longer readable directory
+names are
+therefore rejected instead of entering calibration evidence. Coordinate
+extensions must likewise be nonempty and lowercase; files without
 extensions use the manifest's `(none)` token. Coordinate counts, required-file
 minima, and each
 ledger's total count must fit the unsigned 64-bit range used by the supported

@@ -188,13 +188,16 @@ def _valid_directory_alias(value: object) -> bool:
         return False
     if not value:
         return True
-    return (
-        value == value.lower()
-        and chr(92) not in value
-        and not value.startswith("/")
-        and not value.endswith("/")
-        and "//" not in value
-    )
+    if (
+        value != value.lower()
+        or chr(92) in value
+        or value.startswith("/")
+        or value.endswith("/")
+        or "//" in value
+    ):
+        return False
+    base = _collision_family(value)
+    return all(2 <= len(component) <= 4 for component in base.split("/"))
 
 
 def _valid_extension(value: object) -> bool:

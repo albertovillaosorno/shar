@@ -37,6 +37,7 @@ from contextlib import redirect_stdout
 from fractions import Fraction
 import importlib.util
 from io import StringIO
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -125,20 +126,6 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(evidence.reference_coverage, Fraction(1, 1))
         self.assertEqual(evidence.weighted_jaccard, Fraction(1, 1))
 
-    def test_non_generated_suffix_remains_distinct(self) -> None:
-        for directory in (
-            "aa~1",
-            "aa~00",
-            "aa~001",
-            "aa~18446744073709551616",
-        ):
-            with self.subTest(directory=directory):
-                reference = {(directory, "p3d"): 2}
-                candidate = {("aa", "p3d"): 2}
-                evidence = _MOD.measure(reference, candidate)
-                self.assertEqual(evidence.reference_coverage, Fraction(0, 1))
-                self.assertEqual(evidence.weighted_jaccard, Fraction(0, 1))
-
     def test_invalid_or_empty_reference_vectors_fail_closed(self) -> None:
         with self.assertRaisesRegex(ValueError, "must not be empty"):
             _MOD.measure({}, {("aa", "p3d"): 1})
@@ -188,10 +175,20 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(_MOD.parse_count_ledger(ledger), {("aa", "p3d"): 2})
 
     def test_parser_rejects_ambiguous_jsonl_records(self) -> None:
-        valid_pair = '{"dir":"\\ud83d\\ude80","ext":"p3d","min":1}'
+        valid_pair = (
+            '{"dir":"\\ud83d\\ude80\\ud83d\\ude80",'
+            '"ext":"p3d","min":1}'
+        )
         self.assertEqual(
             _MOD.parse_count_ledger(valid_pair),
-            {("🚀", "p3d"): 1},
+            {("🚀🚀", "p3d"): 1},
+        )
+        expanded_lowercase = (
+            '{"dir":"i\\u0307z","ext":"p3d","min":1}'
+        )
+        self.assertEqual(
+            _MOD.parse_count_ledger(expanded_lowercase),
+            {("i\u0307z", "p3d"): 1},
         )
 
         records = (
@@ -445,6 +442,48 @@ class SourceSimilarityTests(unittest.TestCase):
                 self.assertEqual(stdout.getvalue(), "")
                 self.assertNotIn(str(reference), stderr.getvalue())
                 self.assertIn(expected, stderr.getvalue())
+
+
+class SourceSimilarityAliasShapeTests(unittest.TestCase):
+    """Guard the manifest producer's bounded public directory aliases."""
+
+    def test_non_generated_suffix_remains_distinct(self) -> None:
+        reference = {("aa~1", "p3d"): 2}
+        candidate = {("aa", "p3d"): 2}
+        evidence = _MOD.measure(reference, candidate)
+        self.assertEqual(evidence.reference_coverage, Fraction(0, 1))
+        self.assertEqual(evidence.weighted_jaccard, Fraction(0, 1))
+
+        for directory in (
+            "aa~00",
+            "aa~001",
+            "aa~18446744073709551616",
+        ):
+            with (
+                self.subTest(directory=directory),
+                self.assertRaises(_MOD.InvalidCoordinateError),
+            ):
+                _MOD.measure({(directory, "p3d"): 2}, candidate)
+
+    def test_parser_rejects_private_directory_names_outside_alias_shape(
+        self,
+    ) -> None:
+        for directory in (
+            "private-source-name",
+            "aa/private",
+            "aa/visible",
+        ):
+            with (
+                self.subTest(directory=directory),
+                self.assertRaises(_MOD.InvalidCoordinateError),
+            ):
+                _MOD.parse_count_ledger(
+                    json.dumps({
+                        "dir": directory,
+                        "ext": "p3d",
+                        "count": 1,
+                    })
+                )
 
 
 if __name__ == "__main__":
