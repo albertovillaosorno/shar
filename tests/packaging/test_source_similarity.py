@@ -156,17 +156,56 @@ class SourceSimilarityTests(unittest.TestCase):
         _MOD.measure({("", "p3d"): 1}, {})
 
     def test_parser_accepts_generated_manifest_metadata_and_kind(self) -> None:
+        header = (
+            _ROOT / "game/manifest/game.jsonl"
+        ).read_text(encoding="utf-8").splitlines()[0]
         ledger = (
-            '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
-            '"kind_taxonomy":[],"required_files":['
-            '{"path":"README.rtf","min":1}]}\n'
-            '{"dir":"aa","ext":"p3d","min":2,'
+            header
+            + "\n"
+            + '{"dir":"aa","ext":"p3d","min":2,'
             '"kind":"p3d_container"}\n'
         )
         self.assertEqual(
             _MOD.parse_count_ledger(ledger),
             {("aa", "p3d"): 2},
         )
+
+    def test_parser_rejects_noncanonical_manifest_header_lists(self) -> None:
+        header = json.loads(
+            (_ROOT / "game/manifest/game.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()[0]
+        )
+        variants = []
+
+        partial_taxonomy = dict(header)
+        partial_taxonomy["kind_taxonomy"] = header["kind_taxonomy"][:-1]
+        variants.append(partial_taxonomy)
+
+        reordered_taxonomy = dict(header)
+        reordered_taxonomy["kind_taxonomy"] = list(
+            reversed(header["kind_taxonomy"])
+        )
+        variants.append(reordered_taxonomy)
+
+        partial_required = dict(header)
+        partial_required["required_files"] = header["required_files"][:-1]
+        variants.append(partial_required)
+
+        reordered_required = dict(header)
+        reordered_required["required_files"] = list(
+            reversed(header["required_files"])
+        )
+        variants.append(reordered_required)
+
+        row = '{"dir":"aa","ext":"p3d","count":1}\n'
+        for variant in variants:
+            ledger = json.dumps(variant, separators=(",", ":")) + "\n" + row
+            with (
+                self.subTest(variant=variant),
+                self.assertRaises(_MOD.LedgerInputError),
+            ):
+                _MOD.parse_count_ledger(ledger)
 
     def test_parser_accepts_observed_count_rows(self) -> None:
         ledger = (

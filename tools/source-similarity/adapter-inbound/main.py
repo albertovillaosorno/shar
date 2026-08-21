@@ -51,49 +51,47 @@ Coordinate = tuple[str, str]
 _MANIFEST_SCHEMA = "shar-schoenwald.game-manifest-ledger.v2"
 _MAX_COUNT = (1 << 64) - 1
 _MAX_COUNT_TEXT = str(_MAX_COUNT)
-_MANIFEST_KINDS = frozenset(
-    {
-        "audio",
-        "build-log",
-        "character_outfit",
-        "document",
-        "error",
-        "generated_artifact",
-        "image",
-        "json-ledger",
-        "language_textbible",
-        "metadata",
-        "movie",
-        "music_arrangement",
-        "p3d_container",
-        "rcf_container",
-        "script",
-        "sound-type",
-        "ui-resource",
-    }
+_MANIFEST_KIND_TAXONOMY = (
+    "error",
+    "language_textbible",
+    "movie",
+    "p3d_container",
+    "rcf_container",
+    "audio",
+    "music_arrangement",
+    "script",
+    "image",
+    "generated_artifact",
+    "character_outfit",
+    "build-log",
+    "document",
+    "ui-resource",
+    "sound-type",
+    "metadata",
+    "json-ledger",
 )
-_MANIFEST_REQUIRED_FILES = frozenset(
-    {
-        ("README.rtf", 1),
-        ("Simpsons.exe", 1),
-        ("Simpsons.ico", 1),
-        ("art/frontend/scrooby2/resource/txtbible/srr2.E", 1),
-        ("art/frontend/scrooby2/resource/txtbible/srr2.F", 0),
-        ("art/frontend/scrooby2/resource/txtbible/srr2.G", 0),
-        ("art/frontend/scrooby2/resource/txtbible/srr2.I", 0),
-        ("art/frontend/scrooby2/resource/txtbible/srr2.S", 0),
-        ("art/frontend/scrooby2/resource/txtbible/srr2.txt", 1),
-        ("dialog.rcf", 1),
-        ("dialogf.rcf", 0),
-        ("dialogg.rcf", 0),
-        ("dialogi.rcf", 0),
-        ("dialogs.rcf", 0),
-        ("Liesmich.rtf", 0),
-        ("Lisez-moi.rtf", 0),
-        ("Léeme.rtf", 0),
-        ("uninst.ico", 0),
-    }
+_MANIFEST_KINDS = frozenset(_MANIFEST_KIND_TAXONOMY)
+_MANIFEST_REQUIRED_FILE_METADATA = (
+    ("README.rtf", 1),
+    ("Simpsons.exe", 1),
+    ("Simpsons.ico", 1),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.E", 1),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.F", 0),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.G", 0),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.I", 0),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.S", 0),
+    ("art/frontend/scrooby2/resource/txtbible/srr2.txt", 1),
+    ("dialog.rcf", 1),
+    ("dialogf.rcf", 0),
+    ("dialogg.rcf", 0),
+    ("dialogi.rcf", 0),
+    ("dialogs.rcf", 0),
+    ("Liesmich.rtf", 0),
+    ("Lisez-moi.rtf", 0),
+    ("Léeme.rtf", 0),
+    ("uninst.ico", 0),
 )
+_MANIFEST_REQUIRED_FILES = frozenset(_MANIFEST_REQUIRED_FILE_METADATA)
 _MANIFEST_KIND_BY_EXTENSION = {
     "bik": "movie",
     "bk2": "movie",
@@ -434,24 +432,23 @@ def _validate_schema_metadata(record: dict[str, Any]) -> None:
         taxonomy = record["kind_taxonomy"]
         if (
             not isinstance(taxonomy, list)
-            or not all(_valid_manifest_kind(kind) for kind in taxonomy)
-            or len(set(taxonomy)) != len(taxonomy)
+            or taxonomy != list(_MANIFEST_KIND_TAXONOMY)
         ):
             raise LedgerInputError("count ledger kind taxonomy is invalid")
     if "required_files" in record:
         required_files = record["required_files"]
-        if not isinstance(required_files, list) or not all(
-            _valid_required_file_metadata(requirement)
-            for requirement in required_files
-        ):
-            raise LedgerInputError(
-                "count ledger required-files metadata is invalid"
+        canonical_required_files = [
+            {"path": path, "min": minimum}
+            for path, minimum in _MANIFEST_REQUIRED_FILE_METADATA
+        ]
+        if (
+            not isinstance(required_files, list)
+            or not all(
+                _valid_required_file_metadata(requirement)
+                for requirement in required_files
             )
-        identities = {
-            (requirement["path"], requirement["min"])
-            for requirement in required_files
-        }
-        if len(identities) != len(required_files):
+            or required_files != canonical_required_files
+        ):
             raise LedgerInputError(
                 "count ledger required-files metadata is invalid"
             )
