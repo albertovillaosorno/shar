@@ -87,8 +87,9 @@ optional Windows shortcut adapter applies the same SHAR executable identity, so
 original-game, helper, empty, prefixed-helper, or non-Shipping `.exe` files are
 never auto-selected. Shortcut auto-discovery also requires `dist/` itself to
 remain a real directory and traverses it with strict directory scans. Nested
-redirects, special entries, or scan failures therefore fail instead of making a
-partial tree appear to contain one unambiguous SHAR executable.
+redirects, hard-linked files, special entries, or scan failures therefore fail
+instead of making a partial or externally aliased tree appear to contain one
+unambiguous SHAR executable. Explicit shortcut targets also require one link.
 Cached UAT manifests and Windows debug symbols are now required to be regular
 files before they can leave the candidate tree; directory entries that merely
 match `Manifest_*.txt` or `*.pdb` fail closed instead of becoming cached build

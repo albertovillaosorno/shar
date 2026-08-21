@@ -45,7 +45,10 @@ import sys
 
 def _is_shar_executable(path: Path) -> bool:
     """Return whether one non-empty real file has a packaged SHAR exe name."""
-    if not path.is_file() or path.is_symlink() or path.stat().st_size == 0:
+    if not path.is_file() or path.is_symlink() or os.path.isjunction(path):
+        return False
+    metadata = path.stat(follow_symlinks=False)
+    if metadata.st_size == 0 or metadata.st_nlink != 1:
         return False
     if path.suffix.casefold() != ".exe":
         return False
@@ -71,6 +74,25 @@ def _scan_directory(
     return os.scandir(path)
 
 
+def _record_dist_entry(
+    entry: os.DirEntry[str],
+    pending: list[Path],
+    files: list[Path],
+) -> None:
+    """Classify one real dist entry or fail closed."""
+    path = Path(entry.path)
+    if entry.is_symlink() or os.path.isjunction(path):
+        raise SystemExit("shortcut: dist/ contains a redirected entry")
+    if entry.is_dir(follow_symlinks=False):
+        pending.append(path)
+        return
+    if not entry.is_file(follow_symlinks=False):
+        raise SystemExit("shortcut: dist/ contains a special entry")
+    if entry.stat(follow_symlinks=False).st_nlink != 1:
+        raise SystemExit("shortcut: dist/ contains a hard-linked file")
+    files.append(path)
+
+
 def _dist_files(dist: Path) -> list[Path]:
     """Collect dist files without following redirects or skipping failures."""
     files: list[Path] = []
@@ -79,19 +101,7 @@ def _dist_files(dist: Path) -> list[Path]:
         directory = pending.pop()
         with _scan_directory(directory) as entries:
             for entry in entries:
-                path = Path(entry.path)
-                if entry.is_symlink() or os.path.isjunction(path):
-                    raise SystemExit(
-                        "shortcut: dist/ contains a redirected entry"
-                    )
-                if entry.is_dir(follow_symlinks=False):
-                    pending.append(path)
-                elif entry.is_file(follow_symlinks=False):
-                    files.append(path)
-                else:
-                    raise SystemExit(
-                        "shortcut: dist/ contains a special entry"
-                    )
+                _record_dist_entry(entry, pending, files)
     return files
 
 
