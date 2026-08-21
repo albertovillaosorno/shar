@@ -64,7 +64,9 @@ path is revalidated, a failed architecture revalidation stops the runner, and
 preflight
 evidence are consumed from byte snapshots proven unchanged across their child
 revalidation process, so post-validation file replacement cannot substitute a
-different saved decision before the runner parses it.
+different saved decision before the runner parses it. Direct `check.py`
+revalidation also pins the saved preflight bytes across recomputation, so its
+standalone success cannot race a replacement of the evidence it just validated.
 
 Mobile publication now consumes the declared artifact kind instead of treating
 any archive file as success. Android APKs must be valid ZIP containers with an
