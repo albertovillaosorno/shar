@@ -31,8 +31,9 @@ python tools/source-variant-evidence/adapter-inbound/main.py \
 Each distinct variant layout contributes one deterministic earliest-match mask;
 duplicate layouts collapse to one alternative. Evidence inputs and their lexical
 directory parents must be real filesystem entries rather than symlinks or
-Windows
-junctions. The descriptor contains only
+Windows junctions. Each input snapshot keeps device, inode, modification time,
+status-change time, and byte count stable through its read and final path check.
+The descriptor contains only
 bounded spans and selected-offset masks. It contains no source payload bytes,
 source hashes, or private paths. `algorithm create` can pair that descriptor
 with the compact common source using `--source-projection projection.json`;

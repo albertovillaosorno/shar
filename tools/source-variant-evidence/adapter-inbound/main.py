@@ -131,6 +131,7 @@ class FileIdentity:
     device: int
     inode: int
     modified_ns: int
+    changed_ns: int
     size: int
 
 
@@ -174,6 +175,7 @@ def _identity(metadata: os.stat_result) -> FileIdentity:
         device=metadata.st_dev,
         inode=metadata.st_ino,
         modified_ns=metadata.st_mtime_ns,
+        changed_ns=metadata.st_ctime_ns,
         size=metadata.st_size,
     )
 
@@ -382,10 +384,7 @@ def build_offset_projection(
 def _mask_chunks(mask: bytes) -> list[str]:
     """Encode one offset mask as canonical bounded hexadecimal chunks."""
     encoded = mask.hex()
-    return [
-        encoded[index : index + 64]
-        for index in range(0, len(encoded), 64)
-    ]
+    return [encoded[index : index + 64] for index in range(0, len(encoded), 64)]
 
 
 def _projection_text(projection: OffsetProjection) -> str:
@@ -435,9 +434,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             output = _projection_text(projection)
         else:
             evidence = [measure_variant(reference, path) for path in variants]
-            output = "".join(
-                starmap(_render, enumerate(evidence, start=1))
-            )
+            output = "".join(starmap(_render, enumerate(evidence, start=1)))
     except VariantEvidenceError as error:
         sys.stderr.write(f"source-variant-evidence: {error}\n")
         return 1
