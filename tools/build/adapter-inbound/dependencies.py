@@ -646,6 +646,21 @@ def _resolve_binutils(
     )
 
 
+def _create_visual_studio_batch(batch: Path, text: str) -> None:
+    """Create one owned Visual Studio environment batch exclusively."""
+    try:
+        with batch.open(
+            "x",
+            encoding="utf-8",
+            newline="",
+        ) as handle:
+            handle.write(text)
+    except FileExistsError as error:
+        raise BootstrapFailure(
+            f"Visual Studio environment staging file already exists: {batch}"
+        ) from error
+
+
 def _visual_studio_environment(  # noqa: PLR0912, PLR0914
     root: Path,
     host: str,
@@ -718,12 +733,8 @@ def _visual_studio_environment(  # noqa: PLR0912, PLR0914
         str(system_root),
         str(system_root / "System32" / "Wbem"),
     ))
+    _create_visual_studio_batch(batch, batch_text)
     try:
-        batch.write_text(
-            batch_text,
-            encoding="utf-8",
-            newline="",
-        )
         result = subprocess.run(
             [comspec, "/d", "/c", str(batch)],
             env=bootstrap_environment,

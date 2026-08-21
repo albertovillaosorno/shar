@@ -546,6 +546,64 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
             temporary.cleanup()
 
 
+class VisualStudioBootstrapBoundaryTests(unittest.TestCase):
+    """Preserve pre-existing Visual Studio bootstrap staging identities."""
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_environment_batch_preserves_redirected_staging_file(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-vs-environment-staging-link-"
+        ) as raw:
+            root = Path(raw)
+            program_files = root / "Program Files (x86)"
+            vswhere = (
+                program_files
+                / "Microsoft Visual Studio/Installer/vswhere.exe"
+            )
+            vswhere.parent.mkdir(parents=True)
+            vswhere.write_bytes(b"vswhere")
+            installation = root / "VS"
+            script = installation / "VC/Auxiliary/Build/vcvars64.bat"
+            script.parent.mkdir(parents=True)
+            script.write_text("@echo off\n", encoding="utf-8")
+            command_root = root / _DEPENDENCIES._BOOTSTRAP_CACHE
+            command_root.mkdir(parents=True)
+            external = root / "external-command"
+            external.write_text("outside\n", encoding="utf-8")
+            batch = command_root / f"vsenv-{os.getpid()}.cmd"
+            batch.symlink_to(external)
+
+            with (
+                mock.patch.dict(
+                    _DEPENDENCIES.os.environ,
+                    {
+                        "ProgramFiles(x86)": str(program_files),
+                        "SystemRoot": str(root / "Windows"),
+                        "COMSPEC": "cmd.exe",
+                    },
+                    clear=True,
+                ),
+                mock.patch.object(
+                    _DEPENDENCIES.subprocess,
+                    "run",
+                    return_value=mock.Mock(
+                        stdout=f"{installation}\n"
+                    ),
+                ) as run,
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "Visual Studio environment staging file already exists",
+                ),
+            ):
+                _DEPENDENCIES._visual_studio_environment(
+                    root, "x86_64-pc-windows-msvc"
+                )
+
+            run.assert_called_once()
+            self.assertTrue(batch.is_symlink())
+            self.assertEqual(external.read_text(encoding="utf-8"), "outside\n")
+
+
 class RustupBootstrapBoundaryTests(unittest.TestCase):
     """Keep pinned rustup installer authority inside repository cache files."""
 
