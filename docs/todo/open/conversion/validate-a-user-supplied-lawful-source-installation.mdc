@@ -73,7 +73,9 @@ with the repository-owned `game/manifest/game.jsonl` as a separate argument. The
 saved local preflight reuses that selected source during revalidation. Focused
 packaging tests cover directory/executable resolution, wrong-file rejection,
 private-path-safe missing-source diagnostics, separate validator inputs, and
-saved-source evidence.
+saved-source evidence. The preflight nested-executable search now also uses
+strict directory scans, so unreadable source subtrees fail closed instead of
+disappearing under recursive-glob error suppression.
 
 The canonical manifest already enforces exact relative-path presence for
 `Simpsons.exe`, `Simpsons.ico`, English `README.rtf`, `dialog.rcf`,

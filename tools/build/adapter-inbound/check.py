@@ -35,6 +35,8 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 import hashlib
 import json
 import os
@@ -199,6 +201,35 @@ def _game_candidate(root: Path, selected: Path | None) -> Path:
     raise CheckFailure("selected source path does not exist")
 
 
+def _scan_directory(
+    path: Path,
+) -> AbstractContextManager[Iterator[os.DirEntry[str]]]:
+    """Open one directory scan so tests can inject metadata failures."""
+    return os.scandir(path)
+
+
+def _nested_game_executables(
+    game: Path, direct: Path | None,
+) -> tuple[Path, ...]:
+    """Find nested canonical executables without suppressing scan failures."""
+    nested: list[Path] = []
+    pending = [game]
+    while pending:
+        directory = pending.pop()
+        with _scan_directory(directory) as entries:
+            for entry in entries:
+                path = Path(entry.path)
+                if path != direct and entry.name == "Simpsons.exe":
+                    nested.append(path)
+                if (
+                    entry.is_dir(follow_symlinks=False)
+                    and not entry.is_symlink()
+                    and not os.path.isjunction(path)
+                ):
+                    pending.append(path)
+    return tuple(nested)
+
+
 def _inspect_game_root(game: Path) -> None:
     """Require one resolved source root to contain one direct executable."""
     executable = next(
@@ -206,15 +237,7 @@ def _inspect_game_root(game: Path) -> None:
         None,
     ) if game.is_dir() else None
     if executable is None or not executable.is_file():
-        nested = (
-            sorted(
-                path
-                for path in game.rglob("*")
-                if path.name == "Simpsons.exe"
-            )
-            if game.is_dir()
-            else []
-        )
+        nested = _nested_game_executables(game, None) if game.is_dir() else ()
         if nested:
             raise CheckFailure(
                 "Simpsons.exe must be directly inside the selected source"
@@ -225,11 +248,7 @@ def _inspect_game_root(game: Path) -> None:
     if executable.is_symlink():
         raise CheckFailure("selected source must contain a real Simpsons.exe")
 
-    nested = [
-        path
-        for path in game.rglob("*")
-        if path != executable and path.name == "Simpsons.exe"
-    ]
+    nested = _nested_game_executables(game, executable)
     if nested:
         raise CheckFailure(
             "selected source contains another nested Simpsons.exe"
