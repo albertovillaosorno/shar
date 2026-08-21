@@ -710,6 +710,8 @@ def measure(
     candidate_units = sum(candidate_snapshot.values())
     if reference_units == 0:
         raise EmptyReferenceError
+    if candidate_units == 0:
+        raise LedgerInputError("candidate count vector contains no units")
     comparable_reference = _collapse_collision_families(reference_snapshot)
     comparable_candidate = _collapse_collision_families(candidate_snapshot)
     coordinates = set(comparable_reference) | set(comparable_candidate)
