@@ -693,26 +693,51 @@ def _fat_macho_contains_arm64(
     stream: object,
     byte_order: str,
     entry_size: int,
+    file_size: int,
 ) -> bool:
-    """Return whether one bounded universal Mach-O header contains ARM64."""
+    """Return whether one bounded universal Mach-O contains an ARM64 slice."""
     count_bytes = stream.read(4)
     if len(count_bytes) != 4:
         return False
     count = int.from_bytes(count_bytes, byte_order)
     if count == 0 or count > 64:
         return False
+    table_end = 8 + (count * entry_size)
     contains_arm64 = False
     for _ in range(count):
         cpu = stream.read(4)
         rest = stream.read(entry_size - 4)
         if len(cpu) != 4 or len(rest) != entry_size - 4:
             return False
+        offset_width = 8 if entry_size == 32 else 4
+        offset_start = 4
+        size_start = offset_start + offset_width
+        offset = int.from_bytes(
+            rest[offset_start:size_start],
+            byte_order,
+        )
+        size = int.from_bytes(
+            rest[size_start : size_start + offset_width],
+            byte_order,
+        )
+        if (
+            size == 0
+            or offset < table_end
+            or offset > file_size
+            or size > file_size - offset
+        ):
+            return False
         if int.from_bytes(cpu, byte_order) == _MACHO_ARM64_CPU:
             contains_arm64 = True
     return contains_arm64
 
 
-def _matches_macho(stream: object, prefix: bytes, architecture: str) -> bool:
+def _matches_macho(
+    stream: object,
+    prefix: bytes,
+    architecture: str,
+    file_size: int,
+) -> bool:
     """Return whether one Mach-O header contains the selected architecture."""
     if architecture != "arm64":
         return False
@@ -723,7 +748,12 @@ def _matches_macho(stream: object, prefix: bytes, architecture: str) -> bool:
     if fat is None:
         return False
     byte_order, entry_size = fat
-    return _fat_macho_contains_arm64(stream, byte_order, entry_size)
+    return _fat_macho_contains_arm64(
+        stream,
+        byte_order,
+        entry_size,
+        file_size,
+    )
 
 
 def _has_native_binary_signature(
@@ -738,7 +768,12 @@ def _has_native_binary_signature(
             if system == "linux" and prefix == b"\x7fELF":
                 return _matches_elf(stream, prefix, architecture)
             if system == "macos":
-                return _matches_macho(stream, prefix, architecture)
+                return _matches_macho(
+                    stream,
+                    prefix,
+                    architecture,
+                    os.fstat(stream.fileno()).st_size,
+                )
             if system == "windows":
                 return _matches_pe(stream, prefix, architecture)
             return False
@@ -842,7 +877,12 @@ def _is_ios_ipa(path: Path) -> bool:
                 return False
             with archive.open(binary_info) as stream:
                 prefix = stream.read(4)
-                return _matches_macho(stream, prefix, "arm64")
+                return _matches_macho(
+                    stream,
+                    prefix,
+                    "arm64",
+                    binary_info.file_size,
+                )
     except (
         OSError,
         RuntimeError,
