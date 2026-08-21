@@ -222,6 +222,25 @@ _RESERVED_HOST_SUFFIXES = frozenset(
     {"1", "2", "3", "4", "5", "6", "7", "8", "9", "¹", "²", "³"}
 )
 _FORBIDDEN_HOST_CHARACTERS = frozenset('<>"|?*\\')
+_RUST17_UPPERCASE_MINUS_ONE = frozenset({0xA7CF, 0xA7D3, 0xA7D5})
+_RUST17_UPPERCASE_RANGE_START = 0x16EBB
+_RUST17_UPPERCASE_RANGE_END = 0x16ED3
+_RUST17_UPPERCASE_RANGE_OFFSET = 0x1B
+
+
+def _rust_upper_character(character: str) -> str:
+    """Mirror Rust 1.97 Unicode 17 uppercase beyond Python Unicode 16."""
+    code = ord(character)
+    if code in _RUST17_UPPERCASE_MINUS_ONE:
+        return chr(code - 1)
+    if _RUST17_UPPERCASE_RANGE_START <= code <= _RUST17_UPPERCASE_RANGE_END:
+        return chr(code - _RUST17_UPPERCASE_RANGE_OFFSET)
+    return character.upper()
+
+
+def _portable_upper(value: str) -> str:
+    """Upper text with replay's character-by-character Rust mapping."""
+    return "".join(_rust_upper_character(character) for character in value)
 
 
 def _parse_json_integer(lexeme: str) -> int:
@@ -460,7 +479,7 @@ def _assert_target_layout(document: dict[str, object]) -> None:
             assert path >= previous_path
         previous_path = path
         parts = _assert_relative_record_path(path, allow_empty=False)
-        identity = tuple(part.upper() for part in parts)
+        identity = tuple(_portable_upper(part) for part in parts)
         assert not any(
             identity[: len(existing)] == existing
             or existing[: len(identity)] == identity
@@ -504,7 +523,7 @@ def _assert_source_layout(source: list[object]) -> None:
         identities.add(identity)
         parts = _assert_relative_record_path(path, allow_empty=True)
         if parts:
-            portable_identity = tuple(part.upper() for part in parts)
+            portable_identity = tuple(_portable_upper(part) for part in parts)
             prior_paths = portable_paths.setdefault(input_index, [])
             assert not any(
                 portable_identity[: len(existing)] == existing
@@ -869,6 +888,25 @@ def test_public_plan_guard_rejects_legacy_ciphertext_wire() -> None:
 
     with pytest.raises(AssertionError):
         _assert_source_bound_plan(json.dumps(plan))
+
+
+def test_public_plan_guard_uses_rust_unicode_17_portable_identity() -> None:
+    """Reject source and target collisions visible to Rust Unicode 17."""
+    target_plan = _synthetic_plan(path="\ua7ce.bin")
+    target = target_plan["target"]
+    assert isinstance(target, list)
+    second_target = dict(target[0])
+    second_target["path"] = "\ua7cf.bin"
+    target.append(second_target)
+
+    source_plan = _synthetic_source_rows(
+        {"path": "\ua7ce.bin", "bytes": 512},
+        {"path": "\ua7cf.bin", "bytes": 512},
+    )
+
+    for plan in (target_plan, source_plan):
+        with pytest.raises(AssertionError):
+            _assert_source_bound_plan(json.dumps(plan))
 
 
 def test_public_plan_guard_rejects_multiple_projected_sources() -> None:
