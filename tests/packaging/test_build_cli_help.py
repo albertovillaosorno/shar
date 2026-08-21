@@ -126,6 +126,41 @@ class BuildCliHelpTests(unittest.TestCase):
                 module.main()
             self.assertFalse(output.exists())
 
+    def test_arch_revalidation_rejects_hard_linked_selection(self) -> None:
+        module = _load_arch_without_tkinter()
+        with tempfile.TemporaryDirectory(prefix="shar-arch-hard-link-") as raw:
+            root = Path(raw)
+            external = root / "external-arch.json"
+            selected = [module._TARGETS_BY_ID["linux-x64"]]
+            module._write_selection(external, selected)
+            output = root / "arch.json"
+            output.hardlink_to(external)
+
+            with self.assertRaisesRegex(
+                SystemExit,
+                "saved selection must be a real file",
+            ):
+                module._revalidate_selection(output)
+
+    def test_arch_revalidation_rejects_junction_selection(self) -> None:
+        module = _load_arch_without_tkinter()
+        with tempfile.TemporaryDirectory(prefix="shar-arch-junction-") as raw:
+            output = Path(raw) / "arch.json"
+            selected = [module._TARGETS_BY_ID["linux-x64"]]
+            module._write_selection(output, selected)
+            with (
+                mock.patch.object(
+                    module.os.path,
+                    "isjunction",
+                    side_effect=lambda path: Path(path) == output,
+                ),
+                self.assertRaisesRegex(
+                    SystemExit,
+                    "saved selection must be a real file",
+                ),
+            ):
+                module._revalidate_selection(output)
+
     def test_arch_revalidation_rejects_saved_selection_drift(self) -> None:
         module = _load_arch_without_tkinter()
         with tempfile.TemporaryDirectory(prefix="shar-arch-drift-") as raw:
