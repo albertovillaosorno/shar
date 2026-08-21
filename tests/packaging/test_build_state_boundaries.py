@@ -504,5 +504,60 @@ class DependencyOutputFailureTests(unittest.TestCase):
             self.assertFalse(output.exists())
 
 
+class CheckOutputFailureTests(unittest.TestCase):
+    """Preserve noncanonical preflight evidence on failed recomputation."""
+
+    def test_check_failed_override_preserves_existing_output(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-check-override-failure-",
+        ) as raw:
+            root = Path(raw)
+            output = root / "testing/output.json"
+            output.parent.mkdir(parents=True)
+            output.write_text("sentinel\n", encoding="utf-8")
+            with (
+                mock.patch.object(_CHECK, "_root", return_value=root),
+                mock.patch.object(
+                    _CHECK,
+                    "_run",
+                    side_effect=_CHECK.CheckFailure("synthetic failure"),
+                ),
+                mock.patch.object(
+                    sys,
+                    "argv",
+                    ["check.py", "--output", "testing/output.json"],
+                ),
+            ):
+                self.assertEqual(_CHECK.main(), 1)
+
+            self.assertEqual(
+                output.read_text(encoding="utf-8"),
+                "sentinel\n",
+            )
+
+    def test_check_failed_canonical_recompute_removes_stale_output(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-check-canonical-failure-",
+        ) as raw:
+            root = Path(raw)
+            output = root / _CHECK._DATA_PATH
+            output.parent.mkdir(parents=True)
+            output.write_text("stale-success\n", encoding="utf-8")
+            with (
+                mock.patch.object(_CHECK, "_root", return_value=root),
+                mock.patch.object(
+                    _CHECK,
+                    "_run",
+                    side_effect=_CHECK.CheckFailure("synthetic failure"),
+                ),
+                mock.patch.object(sys, "argv", ["check.py"]),
+            ):
+                self.assertEqual(_CHECK.main(), 1)
+
+            self.assertFalse(output.exists())
+
+
 if __name__ == "__main__":
     unittest.main()

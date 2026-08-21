@@ -928,11 +928,11 @@ def _host_evidence(
     }
 
 
-def _validate_canonical_output_root(root: Path, output: Path) -> None:
-    """Reject linked or malformed canonical build-data ancestors."""
+def _validate_canonical_output_root(root: Path, output: Path) -> bool:
+    """Reject malformed canonical ancestors and identify canonical output."""
     canonical = root / _DATA_PATH
     if output != canonical:
-        return
+        return False
     roots = (
         (root / ".cache", "repository cache root"),
         (root / ".cache/build", "build cache root"),
@@ -953,6 +953,7 @@ def _validate_canonical_output_root(root: Path, output: Path) -> None:
         raise CheckFailure(
             f"preflight evidence must be a real file: {output}"
         )
+    return True
 
 
 def _write_json(path: Path, value: dict[str, object]) -> None:
@@ -1151,10 +1152,11 @@ def main() -> int:
     output = args.output or (root / _DATA_PATH)
     if not output.is_absolute():
         output = root / output
-    output_safe_to_mutate = False
+    cleanup_output_on_failure = False
     try:
-        _validate_canonical_output_root(root, output)
-        output_safe_to_mutate = True
+        cleanup_output_on_failure = _validate_canonical_output_root(
+            root, output
+        )
         if args.revalidate:
             _reject_revalidate_overrides(args)
             _revalidate(output)
@@ -1163,7 +1165,7 @@ def main() -> int:
         evidence = _run(args)
         _write_json(output, evidence)
     except (CheckFailure, OSError) as error:
-        if not args.revalidate and output_safe_to_mutate:
+        if not args.revalidate and cleanup_output_on_failure:
             output.unlink(missing_ok=True)
         print(f"check: {error}", file=sys.stderr)
         return 1
