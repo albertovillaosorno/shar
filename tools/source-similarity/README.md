@@ -53,8 +53,10 @@ extensions use the manifest's `(none)` token. Coordinate counts, required-file
 minima, and each
 ledger's total count must fit the unsigned 64-bit range used by the supported
 64-bit Rust manifest producers. Observation `count` rows must be positive, while
-policy `min` rows may remain zero for optional coordinates. Every ledger must
-still contain at least one coordinate row. Signed-zero integer
+policy `min` rows may remain zero for optional coordinates. The generated
+game-root `png` coordinate is producer-owned optional policy and therefore may
+carry only zero; it cannot contribute observed or programmatic units. Every
+ledger must still contain at least one coordinate row. Signed-zero integer
 aliases are rejected instead of normalizing to zero. File inputs and their
 lexical directory
 parents must be non-redirected; the file itself must be regular and preserve

@@ -802,6 +802,8 @@ def _validate(values: Mapping[Coordinate, int]) -> None:
             or count > _MAX_COUNT - total
         ):
             raise InvalidCountError
+        if key == ("", "png") and count != 0:
+            raise InvalidCountError
         total += count
 
 
