@@ -90,6 +90,13 @@ class EngineEvidence(NamedTuple):
     version: str
 
 
+class ProjectEvidence(NamedTuple):
+    """Validated canonical Unreal project descriptor evidence."""
+
+    path: Path
+    snapshot: bytes
+
+
 def _root() -> Path:
     """Return the repository root from this script's tracked location."""
     return Path(__file__).resolve().parents[3]
@@ -706,7 +713,7 @@ def _read_json_object(path: Path, label: str) -> dict[str, object]:
     return value
 
 
-def _check_project(root: Path) -> Path:
+def _check_project(root: Path) -> ProjectEvidence:
     """Require the tracked Unreal project association used by the build."""
     _require_real_project_roots(root)
     project = root / _PROJECT_PATH
@@ -722,7 +729,7 @@ def _check_project(root: Path) -> Path:
             "Unreal project EngineAssociation must be "
             f"{_UNREAL_ASSOCIATION}, not {association!r}"
         )
-    return project
+    return ProjectEvidence(project, snapshot)
 
 
 def _engine_candidates(explicit: Path | None) -> list[Path]:
@@ -956,6 +963,11 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         "canonical game manifest",
         manifest_snapshot,
     )
+    _require_unchanged_evidence(
+        project.path,
+        "Unreal project descriptor",
+        project.snapshot,
+    )
     return {
         "dependencies": {
             "path": _normalized(dependencies_path),
@@ -973,7 +985,8 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         "python": python,
         "schema": _SCHEMA,
         "unreal": {
-            "project": _normalized(project),
+            "project": _normalized(project.path),
+            "project_sha256": hashlib.sha256(project.snapshot).hexdigest(),
             "root": _normalized(engine.root),
             "version": engine.version,
         },

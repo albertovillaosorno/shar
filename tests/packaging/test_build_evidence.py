@@ -686,7 +686,7 @@ class CanonicalProjectBoundaryTests(unittest.TestCase):
                 _CHECK._check_project(root)
 
 
-class DependencyEvidenceSnapshotTests(unittest.TestCase):
+class PreflightEvidenceSnapshotTests(unittest.TestCase):
     """Bind preflight to one stable dependency-evidence snapshot."""
 
     def test_preflight_rejects_dependency_evidence_drift(self) -> None:
@@ -729,7 +729,9 @@ class DependencyEvidenceSnapshotTests(unittest.TestCase):
                 mock.patch.object(_CHECK, "_check_python", return_value={}),
                 mock.patch.object(_CHECK, "_check_game", return_value=game),
                 mock.patch.object(
-                    _CHECK, "_check_project", return_value=project
+                    _CHECK,
+                    "_check_project",
+                    return_value=_CHECK.ProjectEvidence(project, b"{}"),
                 ),
                 mock.patch.object(
                     _CHECK,
@@ -797,7 +799,9 @@ class DependencyEvidenceSnapshotTests(unittest.TestCase):
                 mock.patch.object(_CHECK, "_check_python", return_value={}),
                 mock.patch.object(_CHECK, "_check_game", return_value=game),
                 mock.patch.object(
-                    _CHECK, "_check_project", return_value=project
+                    _CHECK,
+                    "_check_project",
+                    return_value=_CHECK.ProjectEvidence(project, b"{}"),
                 ),
                 mock.patch.object(
                     _CHECK,
@@ -827,6 +831,70 @@ class DependencyEvidenceSnapshotTests(unittest.TestCase):
                 ),
             ):
                 _CHECK._run(args)
+
+    def test_preflight_rejects_project_descriptor_drift(self) -> None:
+        root = Path("/synthetic/repository")
+        game = Path("/synthetic/game")
+        manifest = root / "game/manifest/game.jsonl"
+        project = root / _CHECK._PROJECT_PATH
+        dependency_path = root / _CHECK._DEPENDENCIES_PATH
+        validator = root / ".dependencies/build/bin/validate-game"
+        deep_validator = root / ".dependencies/build/bin/validate-source-deep"
+        engine = _CHECK.EngineEvidence(Path("/synthetic/engine"), "5.8.1")
+        args = _CHECK.argparse.Namespace(
+            engine_root=None,
+            game=game,
+            manifest_validator=None,
+            deep_source_validator=None,
+        )
+
+        def read_snapshot(path: Path, _label: str) -> bytes:
+            if path == project:
+                return b"changed-project"
+            if path == dependency_path:
+                return b"dependency"
+            if path == manifest:
+                return b"manifest"
+            raise AssertionError(path)
+
+        with (
+            mock.patch.object(_CHECK, "_root", return_value=root),
+            mock.patch.object(_CHECK, "_check_python", return_value={}),
+            mock.patch.object(_CHECK, "_check_game", return_value=game),
+            mock.patch.object(_CHECK, "_require_real_manifest_roots"),
+            mock.patch.object(
+                _CHECK,
+                "_check_project",
+                return_value=_CHECK.ProjectEvidence(project, b"project"),
+            ),
+            mock.patch.object(
+                _CHECK,
+                "_dependency_evidence",
+                return_value=(dependency_path, b"dependency", {}),
+            ),
+            mock.patch.object(
+                _CHECK, "_resolve_validator", return_value=validator
+            ),
+            mock.patch.object(
+                _CHECK,
+                "_resolve_deep_source_validator",
+                return_value=deep_validator,
+            ),
+            mock.patch.object(_CHECK, "_check_manifest", return_value="ok"),
+            mock.patch.object(_CHECK, "_check_deep_source", return_value="ok"),
+            mock.patch.object(_CHECK, "_check_engine", return_value=engine),
+            mock.patch.object(_CHECK, "_host_evidence", return_value={}),
+            mock.patch.object(
+                _CHECK,
+                "_read_real_evidence_bytes",
+                side_effect=read_snapshot,
+            ),
+            self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "Unreal project descriptor changed during preflight",
+            ),
+        ):
+            _CHECK._run(args)
 
 
 class CanonicalManifestBoundaryTests(unittest.TestCase):
@@ -1296,7 +1364,11 @@ class SourceSelectionTests(unittest.TestCase):
             mock.patch.object(_CHECK, "_check_game", return_value=game),
             mock.patch.object(_CHECK, "_require_real_manifest_roots"),
             mock.patch.object(Path, "is_file", return_value=True),
-            mock.patch.object(_CHECK, "_check_project", return_value=project),
+            mock.patch.object(
+                _CHECK,
+                "_check_project",
+                return_value=_CHECK.ProjectEvidence(project, b"{}"),
+            ),
             mock.patch.object(
                 _CHECK,
                 "_dependency_evidence",
@@ -1340,6 +1412,10 @@ class SourceSelectionTests(unittest.TestCase):
         self.assertEqual(
             evidence["deep_source_validator"],
             str(deep_validator.resolve()),
+        )
+        self.assertEqual(
+            evidence["unreal"]["project_sha256"],
+            hashlib.sha256(b"{}").hexdigest(),
         )
 
     def test_revalidation_rejects_deep_validator_override(self) -> None:

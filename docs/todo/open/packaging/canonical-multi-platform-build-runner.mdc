@@ -132,8 +132,12 @@ Project-state migration now validates both `.cache` and `.cache/build` as real
 repository directories before creating or adopting Unreal-generated state.
 Build preflight also requires every lexical repository ancestor of the canonical
 `shar.uproject` descriptor to remain a real directory and parses the descriptor
-from one stable single-link snapshot. Redirected project authority therefore
-fails before it can be normalized into the saved UAT project path. Regressions
+from one stable single-link snapshot. That snapshot must remain unchanged
+through preflight, and its SHA-256 is saved with the UAT project path, so
+valid-association configuration drift is visible to direct check revalidation.
+Redirected project
+authority therefore fails before it can be normalized into the saved UAT path.
+Regressions
 cover linked cache and project ancestors so build state cannot escape the repo.
 
 Canonical dependency, preflight, and architecture evidence writers now reject
