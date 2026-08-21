@@ -1105,6 +1105,56 @@ class ValidatorSourceAliasTests(unittest.TestCase):
 class EngineSelectionTests(unittest.TestCase):
     """Exercise portable default Unreal Engine candidate selection."""
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_engine_rejects_build_version_replacement_during_read(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-engine-version-race-"
+        ) as raw:
+            root = Path(raw)
+            engine = root / "UE_5.8"
+            version = engine / "Engine/Build/Build.version"
+            version.parent.mkdir(parents=True)
+            local_payload = (
+                b'{"MajorVersion":5,"MinorVersion":7,"PatchVersion":0}\n'
+            )
+            external_payload = (
+                b'{"MajorVersion":5,"MinorVersion":8,"PatchVersion":1}\n'
+            )
+            version.write_bytes(local_payload)
+            external = root / "external-Build.version"
+            external.write_bytes(external_payload)
+            displaced = root / "displaced-Build.version"
+            real_identity = _CHECK._real_evidence_identity
+            replaced = False
+
+            def replace_after_identity(
+                path: Path, label: str
+            ) -> tuple[int, ...]:
+                nonlocal replaced
+                identity = real_identity(path, label)
+                if path == version and not replaced:
+                    version.replace(displaced)
+                    version.symlink_to(external)
+                    replaced = True
+                return identity
+
+            with (
+                mock.patch.object(
+                    _CHECK,
+                    "_real_evidence_identity",
+                    side_effect=replace_after_identity,
+                ),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "Unreal Build.version changed while reading",
+                ),
+            ):
+                _CHECK._engine_version(engine)
+
+            self.assertTrue(version.is_symlink())
+            self.assertEqual(displaced.read_bytes(), local_payload)
+            self.assertEqual(external.read_bytes(), external_payload)
+
     def test_engine_rejects_directory_at_editor_executable_path(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-engine-editor-") as raw:
             engine = Path(raw) / "UE_5.8"
