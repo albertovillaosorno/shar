@@ -34,10 +34,14 @@ extensions must likewise be nonempty and lowercase; files without
 extensions use the manifest's `(none)` token. Coordinate counts, required-file
 minima, and each
 ledger's total count must fit the unsigned 64-bit range used by the supported
-64-bit Rust manifest producers. File inputs must be regular files and preserve
-the canonical producer framing: UTF-8, LF-only record boundaries, no outer
-record whitespace, and a final LF. Programmatic count
-vectors are captured once and validated as stable snapshots before measurement,
+64-bit Rust manifest producers. File inputs must be non-redirected regular
+files and preserve the canonical
+producer framing: UTF-8, LF-only record boundaries, no outer record whitespace,
+and a final LF. Each ledger is opened once and its device, inode, modification
+time, and byte count must remain identical from pre-open inspection through the
+completed read and final path check. Programmatic count
+vectors are captured once and validated as stable snapshots before
+measurement,
 so a stateful mapping cannot change counts between validation and scoring. The
 command never
 prints an admission result or embeds an acceptance threshold. Input failures

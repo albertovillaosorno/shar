@@ -90,10 +90,13 @@ rules. Reserved aliases, stream syntax, trailing-dot/space identities, control
 characters, invisible path modifiers, and oversized components all fail closed.
 These ignored metadata fields therefore cannot smuggle arbitrary private path or
 kind strings into an accepted
-calibration ledger. Ledger paths must also identify regular files before bytes
-are read, preventing
-calibration from treating devices or other special filesystem nodes as JSONL.
-The read-only observation adapter now fails when an exact-file-only source has
+calibration ledger. Ledger paths must also identify non-redirected regular files
+before bytes are read, preventing calibration from treating devices, symlinks,
+or other special filesystem nodes as JSONL. Calibration reads one open file
+snapshot and requires its device, inode, modification time, and size to remain
+stable through the read and final path check, so path replacement cannot
+substitute different evidence after type inspection. The read-only observation
+adapter now fails when an exact-file-only source has
 no countable structural rows, so success cannot produce an empty unusable
 ledger.
 Generated manifest

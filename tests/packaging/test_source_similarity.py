@@ -396,16 +396,16 @@ class SourceSimilarityTests(unittest.TestCase):
             with (
                 mock.patch.object(
                     Path,
-                    "read_bytes",
-                    side_effect=AssertionError("special ledger was read"),
-                ) as read_bytes,
+                    "open",
+                    side_effect=AssertionError("special ledger was opened"),
+                ) as open_file,
                 self.assertRaisesRegex(
                     _MOD.LedgerInputError,
                     "regular file",
                 ),
             ):
                 _MOD.load_count_ledger(special)
-            read_bytes.assert_not_called()
+            open_file.assert_not_called()
 
     def test_cli_rejects_malformed_ledger_without_disclosing_path(self) -> None:
         malformed_ledgers = (
@@ -442,6 +442,49 @@ class SourceSimilarityTests(unittest.TestCase):
                 self.assertEqual(stdout.getvalue(), "")
                 self.assertNotIn(str(reference), stderr.getvalue())
                 self.assertIn(expected, stderr.getvalue())
+
+
+class SourceSimilarityLedgerFileTests(unittest.TestCase):
+    """Require stable non-redirected calibration-ledger snapshots."""
+
+    def test_ledger_symlink_is_rejected_before_payload_read(self) -> None:
+        if sys.platform == "win32":
+            self.skipTest("symlink fixture is Unix-focused")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "target.jsonl"
+            linked = root / "linked.jsonl"
+            target.write_text(
+                '{"dir":"aa","ext":"p3d","count":1}\n',
+                encoding="utf-8",
+            )
+            linked.symlink_to(target.name)
+
+            with self.assertRaisesRegex(
+                _MOD.LedgerInputError,
+                "regular file",
+            ):
+                _MOD.load_count_ledger(linked)
+
+    def test_ledger_identity_drift_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            ledger = Path(directory) / "ledger.jsonl"
+            ledger.write_text(
+                '{"dir":"aa","ext":"p3d","count":1}\n',
+                encoding="utf-8",
+            )
+            with (
+                mock.patch.object(
+                    _MOD,
+                    "_current_ledger_identity",
+                    return_value=None,
+                ),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "changed while reading",
+                ),
+            ):
+                _MOD.load_count_ledger(ledger)
 
 
 class SourceSimilarityAliasShapeTests(unittest.TestCase):
