@@ -177,9 +177,9 @@ junction-backed lexical
 directory parents before any payload read. Their read snapshots compare both the
 opened descriptor and current lexical path identity before reading bytes and
 retain device, inode, modification time, platform `ctime`, and size through the
-final path check. Projection derivation grows the packed bit mask only through the latest
-selected offset instead of reserving for the full candidate or retaining one
-flag byte for every candidate byte. The three
+final path check. Projection derivation grows the packed bit mask only
+through the latest selected offset instead of reserving for the full candidate
+or retaining one flag byte for every candidate byte. The three
 executable variants retained in the current private workspace all reproduce
 the full 284,682-byte common sequence and require three distinct layouts. That
 result is intentionally limited to those available samples and does not
