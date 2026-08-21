@@ -382,13 +382,8 @@ def _json_object_from_bytes(
     return value
 
 
-def _require_real_build_data_roots(root: Path) -> None:
-    """Require canonical build-data ancestors to remain real directories."""
-    roots = (
-        (root / ".cache", "repository cache root"),
-        (root / ".cache/build", "build cache root"),
-        (root / ".cache/build/data", "build data root"),
-    )
+def _require_real_directories(roots: tuple[tuple[Path, str], ...]) -> None:
+    """Require repository authority paths to remain real directories."""
     for path, label in roots:
         if (
             not path.is_dir()
@@ -396,6 +391,27 @@ def _require_real_build_data_roots(root: Path) -> None:
             or os.path.isjunction(path)
         ):
             raise CheckFailure(f"{label} must be a real directory: {path}")
+
+
+def _require_real_build_data_roots(root: Path) -> None:
+    """Require canonical build-data ancestors to remain real directories."""
+    _require_real_directories(
+        (
+            (root / ".cache", "repository cache root"),
+            (root / ".cache/build", "build cache root"),
+            (root / ".cache/build/data", "build data root"),
+        )
+    )
+
+
+def _require_real_manifest_roots(root: Path) -> None:
+    """Keep the canonical manifest under real repository directories."""
+    _require_real_directories(
+        (
+            (root / "game", "canonical game root"),
+            (root / "game/manifest", "canonical manifest root"),
+        )
+    )
 
 
 def _dependency_evidence(
@@ -881,6 +897,7 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
     root = _root()
     python = _check_python()
     game = _check_game(root, args.game)
+    _require_real_manifest_roots(root)
     manifest = root / "game" / "manifest" / "game.jsonl"
     manifest_snapshot = _read_real_evidence_bytes(
         manifest,

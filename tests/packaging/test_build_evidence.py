@@ -755,6 +755,53 @@ class DependencyEvidenceSnapshotTests(unittest.TestCase):
                 _CHECK._run(args)
 
 
+class CanonicalManifestBoundaryTests(unittest.TestCase):
+    """Keep canonical manifest authority inside real repository directories."""
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_preflight_rejects_linked_manifest_parent(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-manifest-parent-link-"
+        ) as raw:
+            root = Path(raw)
+            outside = root / "outside-manifest"
+            outside.mkdir()
+            (outside / "game.jsonl").write_text(
+                "external\n", encoding="utf-8"
+            )
+            game = root / "game"
+            game.mkdir()
+            (game / "manifest").symlink_to(
+                outside, target_is_directory=True
+            )
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "canonical manifest root must be a real directory",
+            ):
+                _CHECK._require_real_manifest_roots(root)
+
+    def test_preflight_rejects_junction_manifest_parent(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-manifest-parent-junction-"
+        ) as raw:
+            root = Path(raw)
+            manifest_root = root / "game/manifest"
+            manifest_root.mkdir(parents=True)
+            with (
+                mock.patch.object(
+                    _CHECK.os.path,
+                    "isjunction",
+                    side_effect=lambda path: Path(path) == manifest_root,
+                ),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "canonical manifest root must be a real directory",
+                ),
+            ):
+                _CHECK._require_real_manifest_roots(root)
+
+
 class CheckRevalidationSnapshotTests(unittest.TestCase):
     """Keep direct check revalidation bound to one saved snapshot."""
 
@@ -1173,6 +1220,7 @@ class SourceSelectionTests(unittest.TestCase):
             mock.patch.object(_CHECK, "_root", return_value=root),
             mock.patch.object(_CHECK, "_check_python", return_value={}),
             mock.patch.object(_CHECK, "_check_game", return_value=game),
+            mock.patch.object(_CHECK, "_require_real_manifest_roots"),
             mock.patch.object(Path, "is_file", return_value=True),
             mock.patch.object(_CHECK, "_check_project", return_value=project),
             mock.patch.object(
