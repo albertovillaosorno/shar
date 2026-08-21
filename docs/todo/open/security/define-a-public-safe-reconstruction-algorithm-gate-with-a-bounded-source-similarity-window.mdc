@@ -75,8 +75,10 @@ requires directory coordinates to retain the manifest producer's lowercase,
 forward-slash normalization (while preserving the empty game-root alias), so
 case or separator drift cannot turn equivalent structure into false
 dissimilarity. Calibration aliases now also retain the manifest producer's
-bounded first/last-character shape after collision normalization, so longer
-private directory names cannot be accepted as supposedly obfuscated evidence.
+exact two-endpoint lowercase shape after collision normalization. The current
+Rust lowercase table has only one two-scalar expansion, so impossible 3/4-scalar
+aliases and short
+readable private names cannot be accepted as supposedly obfuscated evidence.
 Direct programmatic count vectors are also captured once before validation and
 measurement, preventing a stateful mapping from presenting different counts to
 those two phases.

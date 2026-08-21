@@ -303,6 +303,21 @@ def _expected_manifest_kind(directory: str, extension: str) -> str:
     return _MANIFEST_KIND_BY_EXTENSION.get(extension, "error")
 
 
+_LOWERCASE_EXPANSION = "i\u0307"
+
+
+def _valid_obfuscated_component(component: str) -> bool:
+    """Return whether one component can be two lowercased endpoint chars."""
+    size = len(component)
+    if size == 2:
+        return True
+    if size == 3:
+        return component.startswith(_LOWERCASE_EXPANSION) or component.endswith(
+            _LOWERCASE_EXPANSION
+        )
+    return size == 4 and component == _LOWERCASE_EXPANSION * 2
+
+
 def _valid_directory_alias(value: object) -> bool:
     """Return whether a directory coordinate matches producer normalization."""
     if not _valid_utf8_text(value):
@@ -318,7 +333,9 @@ def _valid_directory_alias(value: object) -> bool:
     ):
         return False
     base = _collision_family(value)
-    return all(2 <= len(component) <= 4 for component in base.split("/"))
+    return all(
+        _valid_obfuscated_component(component) for component in base.split("/")
+    )
 
 
 def _valid_extension(value: object) -> bool:
