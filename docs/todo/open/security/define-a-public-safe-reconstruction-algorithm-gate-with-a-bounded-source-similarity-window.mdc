@@ -92,9 +92,10 @@ escaped keys while preserving valid decoded JSON string-value escapes. Optional
 public
 metadata distinguishes omission from explicit
 JSON `null`;
-excessively nested JSON, producer-impossible signed-zero tokens, and zero-valued
-observation `count` rows also fail through the calibrator's path-free input
-error; zero policy `min` rows remain valid optional coordinates. Present row
+excessively nested JSON, producer-impossible signed-zero tokens, zero-valued
+observation `count` rows, and ledgers without coordinate rows also fail through
+the calibrator's path-free input error; zero policy `min` rows remain valid
+optional coordinates. Present row
 kinds must
 belong to the producer's public taxonomy and match the
 producer's exact `(dir, ext)` bucket classification, while unclassifiable
