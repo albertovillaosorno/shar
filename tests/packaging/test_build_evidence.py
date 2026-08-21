@@ -196,6 +196,151 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
         finally:
             temporary.cleanup()
 
+    def _combined_fixture(
+        self,
+    ) -> tuple[tempfile.TemporaryDirectory[str], Path]:
+        temporary = tempfile.TemporaryDirectory(
+            prefix="shar-combined-validator-evidence-"
+        )
+        root = Path(temporary.name)
+        inputs = dict.fromkeys(
+            (
+                *_DEPENDENCIES._VALIDATOR_SOURCE_INPUTS,
+                *_DEPENDENCIES._DEEP_VALIDATOR_SOURCE_INPUTS,
+            )
+        )
+        for relative in inputs:
+            path = root / relative
+            if path.suffix:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(
+                    f"fixture:{relative.as_posix()}\n",
+                    encoding="utf-8",
+                )
+            else:
+                path.mkdir(parents=True, exist_ok=True)
+                (path / "fixture.rs").write_text(
+                    f"// {relative.as_posix()}\n",
+                    encoding="utf-8",
+                )
+        return temporary, root
+
+    def test_validator_evidence_rejects_source_drift_during_build(self) -> None:
+        temporary, root = self._combined_fixture()
+        try:
+            manifest_source = root / "src/migration/manifest/fixture.rs"
+            outputs = {
+                "validate-game": root / "validate-game",
+                "validate-source-deep": root / "validate-source-deep",
+            }
+            for output in outputs.values():
+                output.write_bytes(b"validator")
+
+            def build(
+                _root: Path,
+                _context: object,
+                *,
+                package: str,
+                binary: str,
+            ) -> Path:
+                del package
+                if binary == "validate-game":
+                    manifest_source.write_text(
+                        "// changed during build\n",
+                        encoding="utf-8",
+                    )
+                return outputs[binary]
+
+            context = _DEPENDENCIES.CargoBuildContext(
+                Path("cargo"),
+                Path("rustc"),
+                None,
+                {},
+            )
+            with (
+                mock.patch.object(
+                    _DEPENDENCIES,
+                    "_build_cargo_binary",
+                    side_effect=build,
+                ),
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "source inputs changed during build",
+                ),
+            ):
+                _DEPENDENCIES._validator_evidence(
+                    root,
+                    context,
+                    publish_validator=False,
+                )
+        finally:
+            temporary.cleanup()
+
+    def test_validator_evidence_rejects_source_drift_during_publication(
+        self,
+    ) -> None:
+        temporary, root = self._combined_fixture()
+        try:
+            manifest_source = root / "src/migration/manifest/fixture.rs"
+            outputs = {
+                "validate-game": root / "validate-game",
+                "validate-source-deep": root / "validate-source-deep",
+            }
+            for output in outputs.values():
+                output.write_bytes(b"validator")
+
+            def build(
+                _root: Path,
+                _context: object,
+                *,
+                package: str,
+                binary: str,
+            ) -> Path:
+                del package
+                return outputs[binary]
+
+            publication_count = 0
+
+            def publish(_root: Path, built: Path) -> Path:
+                nonlocal publication_count
+                publication_count += 1
+                if publication_count == 1:
+                    manifest_source.write_text(
+                        "// changed during publication\n",
+                        encoding="utf-8",
+                    )
+                return built.resolve()
+
+            context = _DEPENDENCIES.CargoBuildContext(
+                Path("cargo"),
+                Path("rustc"),
+                None,
+                {},
+            )
+            with (
+                mock.patch.object(
+                    _DEPENDENCIES,
+                    "_build_cargo_binary",
+                    side_effect=build,
+                ),
+                mock.patch.object(
+                    _DEPENDENCIES,
+                    "_publish_validator",
+                    side_effect=publish,
+                ),
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "source inputs changed during publication",
+                ),
+            ):
+                _DEPENDENCIES._validator_evidence(
+                    root,
+                    context,
+                    publish_validator=True,
+                )
+        finally:
+            temporary.cleanup()
+
     def test_deep_source_drift_rejects_byte_intact_validator(self) -> None:
         temporary, root = self._deep_fixture()
         try:

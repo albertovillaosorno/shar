@@ -209,9 +209,13 @@ so an unreadable nested source directory cannot silently disappear from the
 fingerprint under recursive-glob error suppression. Redirected or special source
 entries also fail instead of being omitted from the digest, preventing a source
 file reached through a symlink or junction from changing without changing the
-recorded closure. This prevents an old byte-intact validator from surviving a
+recorded closure. Bootstrap fingerprints both validator source closures before
+Cargo starts and requires the same fingerprints after both builds and after
+publication, so source drift cannot bind a previously built validator to newer
+source evidence. This prevents an old byte-intact validator from surviving a
 checkout that changes the canonical game-manifest contract; tests prove source
-drift, scan failure, redirect rejection, and legacy evidence all fail closed.
+drift, build/publication drift, scan failure, redirect rejection, and legacy
+evidence all fail closed.
 
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
