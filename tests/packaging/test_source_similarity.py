@@ -515,6 +515,9 @@ class SourceSimilarityJsonRobustnessTests(unittest.TestCase):
             '{"dir":"aa", "ext":"p3d","count":1}',
             '{"dir":"aa","ext":"p3d","count": 1}',
             '{"dir":"aa","ext":"p3d",\t"count":1}',
+            '{"dir"\r:"aa","ext":"p3d","count":1}',
+            '{"dir":"aa",\r"ext":"p3d","count":1}',
+            '{"dir":"aa","ext"\r:\r"p3d","count":1}',
         )
 
         for ledger in aliases:

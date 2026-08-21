@@ -301,7 +301,7 @@ def _has_json_token_whitespace(line: str) -> bool:
             continue
         if character == '"':
             in_string = True
-        elif character in {" ", "\t"}:
+        elif character in {" ", "\t", "\r", "\n"}:
             return True
     return False
 
