@@ -449,6 +449,14 @@ class SourceSimilarityTests(unittest.TestCase):
                 self.assertIn(expected, stderr.getvalue())
 
 
+class SourceSimilaritySchemaParityTests(unittest.TestCase):
+    """Keep calibration metadata aligned with the tracked public manifest."""
+
+    def test_tracked_public_manifest_header_is_accepted(self) -> None:
+        counts = _MOD.load_count_ledger(_ROOT / "game/manifest/game.jsonl")
+        self.assertTrue(counts)
+
+
 class SourceSimilarityLedgerFileTests(unittest.TestCase):
     """Require stable non-redirected calibration-ledger snapshots."""
 
