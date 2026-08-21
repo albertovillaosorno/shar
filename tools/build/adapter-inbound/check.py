@@ -354,6 +354,16 @@ def _read_real_evidence_bytes(path: Path, label: str) -> bytes:
     return payload
 
 
+def _require_unchanged_evidence(
+    path: Path,
+    label: str,
+    snapshot: bytes,
+) -> None:
+    """Require one stable evidence path to retain its captured bytes."""
+    if _read_real_evidence_bytes(path, label) != snapshot:
+        raise CheckFailure(f"{label} changed during preflight")
+
+
 def _json_object_from_bytes(
     payload: bytes,
     label: str,
@@ -872,8 +882,10 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
     python = _check_python()
     game = _check_game(root, args.game)
     manifest = root / "game" / "manifest" / "game.jsonl"
-    if not manifest.is_file():
-        raise CheckFailure("canonical game/manifest/game.jsonl is missing")
+    manifest_snapshot = _read_real_evidence_bytes(
+        manifest,
+        "canonical game manifest",
+    )
     project = _check_project(root)
     dependencies_path, dependencies_snapshot, dependencies = (
         _dependency_evidence(root)
@@ -892,12 +904,16 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
     deep_result = _check_deep_source(deep_validator, game)
     engine = _check_engine(args.engine_root)
     host = _host_evidence(dependencies)
-    current_dependencies = _read_real_evidence_bytes(
+    _require_unchanged_evidence(
         dependencies_path,
         "dependency evidence",
+        dependencies_snapshot,
     )
-    if current_dependencies != dependencies_snapshot:
-        raise CheckFailure("dependency evidence changed during preflight")
+    _require_unchanged_evidence(
+        manifest,
+        "canonical game manifest",
+        manifest_snapshot,
+    )
     return {
         "dependencies": {
             "path": _normalized(dependencies_path),
@@ -906,7 +922,7 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         },
         "game": {
             "manifest": _normalized(manifest),
-            "manifest_sha256": _sha256(manifest),
+            "manifest_sha256": hashlib.sha256(manifest_snapshot).hexdigest(),
             "path": _normalized(game),
             "validation": manifest_result,
             "deep_validation": deep_result,
