@@ -1421,6 +1421,37 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["macos-arm64"],
                 )
 
+            fat_entry = (
+                _RUN._MACHO_ARM64_CPU.to_bytes(4, "big") + (b"\0" * 16)
+            )
+            truncated_fat = (
+                bytes.fromhex("cafebabe")
+                + (2).to_bytes(4, "big")
+                + fat_entry
+            )
+            executable.write_bytes(truncated_fat)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+            x64_entry = (0x01000007).to_bytes(4, "big") + (b"\0" * 16)
+            complete_fat = (
+                bytes.fromhex("cafebabe")
+                + (2).to_bytes(4, "big")
+                + x64_entry
+                + fat_entry
+            )
+            executable.write_bytes(complete_fat)
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["macos-arm64"],
+            )
+
     def test_windows_candidate_requires_shar_executable(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-windows-candidate-",

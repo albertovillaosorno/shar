@@ -72,7 +72,10 @@ ARM64 ELF native library, while iOS IPAs must declare a main application
 executable in `Info.plist` whose Mach-O image contains ARM64. Invalid
 containers,
 wrong-architecture mobile binaries, and zero-byte packages cannot create a
-completed `dist/<ARCH>/` target. Windows candidates likewise require a non-empty
+completed `dist/<ARCH>/` target. Universal Mach-O validation consumes every
+declared architecture record before accepting ARM64, so a truncated fat header
+cannot masquerade as a complete macOS or iOS runtime. Windows candidates
+likewise require a non-empty
 SHAR `.exe`; engine helper executables alone cannot satisfy publication. The
 optional Windows shortcut adapter applies the same SHAR executable identity, so
 original-game, helper, empty, prefixed-helper, or non-Shipping `.exe` files are
