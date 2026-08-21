@@ -155,8 +155,9 @@ ship as reconstruction plans. Ordinary `shar.algorithm.v1` source records
 bind exact bytes with SHA-256. A direct-file variant source may instead use a
 bounded `offset-mask-set-v1` projection without a source hash. Its alternatives
 contain only source spans and positional masks; every alternative selects the
-same common-byte count, duplicate layouts collapse, one projected source input
-is allowed, and both spans and aggregate mask bytes remain under the active
+same common-byte count, duplicate layouts collapse, at most 256 distinct layouts
+are allowed, one projected source input is allowed, and both spans and aggregate
+mask bytes remain under the active
 file limit. Replay reads the caller's file once, evaluates only layouts whose
 spans fit, derives a candidate source key from each selected byte sequence, and
 accepts the first candidate that authenticates the protected plan. The user's

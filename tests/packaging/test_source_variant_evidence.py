@@ -319,6 +319,23 @@ class SourceVariantEvidenceTests(unittest.TestCase):
             self.assertNotIn("sha256", document)
             self.assertNotIn(str(root), stdout.getvalue())
 
+    def test_projection_rejects_more_than_algorithm_layout_limit(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-projection-limit-"
+        ) as raw:
+            root = Path(raw)
+            variants = []
+            for offset in range(_MOD._MAX_PROJECTION_ALTERNATIVES + 1):
+                candidate = root / f"candidate-{offset:03}.bin"
+                candidate.write_bytes((b"a" * offset) + b"x")
+                variants.append(candidate)
+
+            with self.assertRaisesRegex(
+                _MOD.ProjectionLimitError,
+                "too many distinct layout alternatives",
+            ):
+                _MOD.build_offset_projection(b"x", variants)
+
     def test_projection_mismatch_fails_without_partial_output(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-projection-") as raw:
             root = Path(raw)
