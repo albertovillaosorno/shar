@@ -95,7 +95,9 @@ JSON `null`;
 excessively nested JSON, producer-impossible signed-zero tokens, zero-valued
 observation `count` rows, and ledgers without coordinate rows also fail through
 the calibrator's path-free input error; zero policy `min` rows remain valid
-optional coordinates. Present row
+optional coordinates. The generated game-root `png` policy coordinate is pinned
+to zero because source observation explicitly excludes that generated artifact
+bucket. Present row
 kinds must
 belong to the producer's public taxonomy and match the
 producer's exact `(dir, ext)` bucket classification, while unclassifiable

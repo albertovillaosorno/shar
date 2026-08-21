@@ -504,6 +504,22 @@ class SourceSimilarityJsonRobustnessTests(unittest.TestCase):
             {("", "png"): 0},
         )
 
+    def test_generated_root_image_coordinate_must_remain_optional(self) -> None:
+        for count_field in ("min", "count"):
+            ledger = (
+                '{"dir":"","ext":"png","'
+                + count_field
+                + '":1,"kind":"generated_artifact"}'
+            )
+            with (
+                self.subTest(count_field=count_field),
+                self.assertRaises(_MOD.InvalidCountError),
+            ):
+                _MOD.parse_count_ledger(ledger)
+
+        with self.assertRaises(_MOD.InvalidCountError):
+            _MOD.measure({("", "png"): 1}, {("aa", "p3d"): 1})
+
     def test_parser_rejects_signed_zero_counts(self) -> None:
         for count_field in ("count", "min"):
             ledger = '{"dir":"aa","ext":"p3d","' + count_field + '":-0}'
