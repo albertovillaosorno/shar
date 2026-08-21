@@ -125,9 +125,10 @@ It must not contain:
 
 Repository policy additionally scans every publishable family
 `algorithm/*.txt`. Whitespace-only placeholders remain admitted as explicitly
-non-buildable state. The active settings hash is reconstructed in the Rust
-`SettingsDocument` field order rather than depending on source JSON member
-order. Every substantive plan must decode as a
+non-buildable state. The active settings authority must be a real file and
+match Rust's exact settings schema, unsigned ranges, and resource relations. Its
+hash is reconstructed in the Rust `SettingsDocument` field order rather than
+depending on source JSON member order. Every substantive plan must decode as a
 `shar.algorithm.v1` object with the exact top-level source/target contract,
 lowercase hashes for ordinary source records and all target records, validated
 projection metadata without a source hash when present, 12-byte nonce evidence,
