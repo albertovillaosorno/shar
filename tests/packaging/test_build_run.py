@@ -1955,6 +1955,54 @@ class ArchitectureRevalidationTests(unittest.TestCase):
             ):
                 _RUN._project_from_evidence(root, unreal)
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_project_evidence_rejects_replacement_during_read(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-run-project-race-"
+        ) as raw:
+            root = Path(raw)
+            project = root / _RUN._PROJECT_PATH
+            project.parent.mkdir(parents=True)
+            payload = b'{"EngineAssociation":"5.8"}\n'
+            project.write_bytes(payload)
+            external = root / "external.uproject"
+            external.write_bytes(payload)
+            displaced = root / "displaced.uproject"
+            unreal = {
+                "project": str(project),
+                "project_sha256": hashlib.sha256(payload).hexdigest(),
+            }
+            real_identity = _RUN._real_file_identity
+            replaced = False
+
+            def replace_after_identity(
+                path: Path, label: str
+            ) -> tuple[int, ...]:
+                nonlocal replaced
+                identity = real_identity(path, label)
+                if path == project and not replaced:
+                    project.replace(displaced)
+                    project.symlink_to(external)
+                    replaced = True
+                return identity
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_real_file_identity",
+                    side_effect=replace_after_identity,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Unreal project descriptor changed while reading",
+                ),
+            ):
+                _RUN._project_from_evidence(root, unreal)
+
+            self.assertTrue(project.is_symlink())
+            self.assertEqual(displaced.read_bytes(), payload)
+            self.assertEqual(external.read_bytes(), payload)
+
     def test_project_evidence_accepts_current_canonical_descriptor(
         self,
     ) -> None:
