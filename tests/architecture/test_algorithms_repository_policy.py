@@ -204,6 +204,16 @@ def test_algorithm_domain_is_serialization_free() -> None:
 
 _HEX = frozenset("0123456789abcdef")
 _U64_MAX = (1 << 64) - 1
+_SETTINGS_WIRE_FIELDS = (
+    "schema",
+    "minimum_source_files",
+    "minimum_source_bytes",
+    "maximum_source_files",
+    "maximum_target_files",
+    "maximum_file_bytes",
+    "maximum_source_bytes",
+    "maximum_target_bytes",
+)
 _MAX_PORTABLE_COMPONENT_UTF16_UNITS = 255
 _RESERVED_HOST_STEMS = frozenset(
     {"AUX", "CLOCK$", "CON", "CONIN$", "CONOUT$", "NUL", "PRN"}
@@ -248,10 +258,29 @@ def _active_settings() -> dict[str, object]:
     return document
 
 
-def _active_settings_sha256() -> str:
-    """Hash the active algorithm settings using the Rust compact JSON shape."""
-    encoded = json.dumps(_active_settings(), separators=(",", ":")).encode()
+def _settings_sha256(settings: dict[str, object]) -> str:
+    """Hash settings in Rust `SettingsDocument` serialization order."""
+    assert set(settings) == set(_SETTINGS_WIRE_FIELDS)
+    canonical = {field: settings[field] for field in _SETTINGS_WIRE_FIELDS}
+    encoded = json.dumps(
+        canonical,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _active_settings_sha256() -> str:
+    """Hash active settings using the Rust compact JSON wire shape."""
+    return _settings_sha256(_active_settings())
+
+
+def test_algorithm_settings_hash_ignores_input_member_order() -> None:
+    """Mirror serde parsing plus fixed `SettingsDocument` serialization."""
+    settings = _active_settings()
+    reordered = dict(reversed(tuple(settings.items())))
+    assert tuple(reordered) != tuple(settings)
+    assert _settings_sha256(reordered) == _settings_sha256(settings)
 
 
 def _is_lower_hex(value: object, length: int) -> bool:
