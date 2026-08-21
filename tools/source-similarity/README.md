@@ -43,10 +43,13 @@ normalization (with the empty string reserved for the game root) and must not
 contain host-reserved punctuation, controls, invisible path modifiers, or
 trailing dot/space aliases rejected by source-tree intake. After any canonical
 collision ordinal is removed, every directory component must be the
-concatenation of the producer's two lowercased endpoint characters. Normal
-endpoints contribute one Unicode scalar each; the current Rust mapping has one
-two-scalar lowercase expansion (`i` plus combining dot), which accounts for the
-only valid 3- or 4-scalar component shapes. Other short readable aliases are
+concatenation of the producer's two lowercased endpoint characters. The helper
+mirrors the Unicode 17 case additions used by Rust 1.97 even though the bundled
+Python 3.14 runtime exposes Unicode 16, so newly cased uppercase characters
+cannot masquerade as producer-normalized aliases. Normal endpoints contribute
+one Unicode scalar each; the current Rust mapping has one two-scalar lowercase
+expansion (`i` plus combining dot), which accounts for the only valid 3- or
+4-scalar component shapes. Other short readable aliases are
 rejected instead of entering calibration evidence. Coordinate
 extensions must likewise be nonempty and lowercase; files without
 extensions use the manifest's `(none)` token. Coordinate counts, required-file

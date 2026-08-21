@@ -371,6 +371,25 @@ def _expected_manifest_kind(directory: str, extension: str) -> str:
 
 
 _LOWERCASE_EXPANSION = "i\u0307"
+_RUST17_LOWERCASE_PLUS_ONE = frozenset({0xA7CE, 0xA7D2, 0xA7D4})
+_RUST17_BERIA_ERFE_UPPER_START = 0x16EA0
+_RUST17_BERIA_ERFE_UPPER_END = 0x16EB8
+_RUST17_BERIA_ERFE_CASE_OFFSET = 0x1B
+
+
+def _rust_lower_character(character: str) -> str:
+    """Mirror Rust 1.97 Unicode 17 lowercase beyond Python Unicode 16."""
+    code = ord(character)
+    if code in _RUST17_LOWERCASE_PLUS_ONE:
+        return chr(code + 1)
+    if _RUST17_BERIA_ERFE_UPPER_START <= code <= _RUST17_BERIA_ERFE_UPPER_END:
+        return chr(code + _RUST17_BERIA_ERFE_CASE_OFFSET)
+    return character.lower()
+
+
+def _rust_lower(value: str) -> str:
+    """Lower text with the producer's character-by-character Rust mapping."""
+    return "".join(_rust_lower_character(character) for character in value)
 
 
 def _valid_obfuscated_component(component: str) -> bool:
@@ -392,7 +411,7 @@ def _valid_directory_alias(value: object) -> bool:
     if not value:
         return True
     if (
-        value != value.lower()
+        value != _rust_lower(value)
         or chr(92) in value
         or value.startswith("/")
         or value.endswith("/")
