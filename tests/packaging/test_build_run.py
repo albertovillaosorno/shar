@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -490,6 +491,51 @@ class UatWorkPathTests(unittest.TestCase):
                 _RUN._run_uat(root, Path("/uat"), ["probe"], log)
 
             self.assertEqual(log.read_text(encoding="utf-8"), "sentinel\n")
+            process.assert_not_called()
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_rejects_log_replacement_before_truncate(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-log-race-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            log = work / "build.log"
+            log.write_text("sentinel\n", encoding="utf-8")
+            external = root / "external.log"
+            external.write_text("outside\n", encoding="utf-8")
+            displaced = root / "displaced.log"
+            real_identity = _RUN._real_file_identity
+            replaced = False
+
+            def replace_after_identity(
+                path: Path, label: str
+            ) -> tuple[int, ...]:
+                nonlocal replaced
+                identity = real_identity(path, label)
+                if path == log and not replaced:
+                    log.replace(displaced)
+                    log.symlink_to(external)
+                    replaced = True
+                return identity
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_real_file_identity",
+                    side_effect=replace_after_identity,
+                ),
+                mock.patch.object(_RUN.subprocess, "run") as process,
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "UAT log changed before opening",
+                ),
+            ):
+                _RUN._run_uat(root, Path("/uat"), ["probe"], log)
+
+            self.assertEqual(external.read_text(encoding="utf-8"), "outside\n")
+            self.assertEqual(
+                displaced.read_text(encoding="utf-8"), "sentinel\n"
+            )
             process.assert_not_called()
 
     def test_rejects_hard_linked_log_before_subprocess(self) -> None:

@@ -45,6 +45,7 @@ import shutil
 import subprocess
 import sys
 from typing import NamedTuple
+from typing import TextIO
 import zipfile
 
 _ARCH_SCHEMA = "shar.build.arch.v1"
@@ -350,6 +351,57 @@ def _require_real_file(path: Path, label: str) -> None:
         raise RunFailure(f"{label} must have one filesystem link: {path}")
 
 
+def _file_identity(metadata: os.stat_result) -> tuple[int, ...]:
+    """Project one regular file to stable local identity fields."""
+    return (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_mode,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
+        metadata.st_size,
+        metadata.st_nlink,
+    )
+
+
+def _real_file_identity(path: Path, label: str) -> tuple[int, ...]:
+    """Return the stable identity of one required real single-link file."""
+    _require_real_file(path, label)
+    return _file_identity(path.stat(follow_symlinks=False))
+
+
+def _require_open_uat_log_identity(
+    log: Path,
+    handle: TextIO,
+    expected: tuple[int, ...] | None,
+) -> None:
+    """Require an opened UAT log to match its repository path identity."""
+    opened = _file_identity(os.fstat(handle.fileno()))
+    if expected is not None and opened != expected:
+        raise RunFailure(f"UAT log changed before opening: {log}")
+    if _real_file_identity(log, "UAT log") != opened:
+        raise RunFailure(f"UAT log changed before opening: {log}")
+
+
+def _open_uat_log(log: Path) -> TextIO:
+    """Open one UAT log without truncating a substituted filesystem identity."""
+    existed = _path_present(log)
+    expected = _real_file_identity(log, "UAT log") if existed else None
+    mode = "r+" if existed else "x+"
+    try:
+        handle = log.open(mode, encoding="utf-8", newline="\n")
+    except FileExistsError as error:
+        raise RunFailure(f"UAT log appeared before creation: {log}") from error
+    try:
+        _require_open_uat_log_identity(log, handle, expected)
+    except BaseException:
+        handle.close()
+        raise
+    handle.seek(0)
+    handle.truncate(0)
+    return handle
+
+
 def _ensure_real_directory(path: Path, label: str) -> None:
     """Create one directory or require an existing real directory."""
     if _path_present(path):
@@ -543,8 +595,6 @@ def _run_uat(
     """Run one bounded UAT command and persist its complete output."""
     work = log.parent
     _ensure_real_directory(work, "UAT work root")
-    if _path_present(log):
-        _require_real_file(log, "UAT log")
     command = _uat_command(uat, arguments)
     automation_saved = work / "automation-saved"
     _ensure_real_directory(automation_saved, "UAT saved root")
@@ -557,7 +607,7 @@ def _run_uat(
     environment["uebp_FinalLogFolder"] = str(automation_logs)
     environment["uebp_LogFolder"] = str(automation_logs)
     environment["UE-LocalDataCachePath"] = str(ddc)
-    with log.open("w", encoding="utf-8", newline="\n") as handle:
+    with _open_uat_log(log) as handle:
         result = subprocess.run(
             command,
             cwd=root,
