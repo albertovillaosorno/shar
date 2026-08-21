@@ -467,6 +467,23 @@ class SourceSimilarityTests(unittest.TestCase):
                 self.assertIn(expected, stderr.getvalue())
 
 
+class SourceSimilarityJsonRobustnessTests(unittest.TestCase):
+    """Keep malformed JSON failures inside the path-free input boundary."""
+
+    def test_parser_rejects_excessively_nested_json(self) -> None:
+        depth = 100_000
+        ledger = (
+            '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+            '"required_files":' + ("[" * depth) + "0" + ("]" * depth) + "}\n"
+        )
+
+        with self.assertRaisesRegex(
+            _MOD.LedgerInputError,
+            "invalid JSONL",
+        ):
+            _MOD.parse_count_ledger(ledger)
+
+
 class SourceSimilaritySchemaParityTests(unittest.TestCase):
     """Keep calibration metadata aligned with the tracked public manifest."""
 
