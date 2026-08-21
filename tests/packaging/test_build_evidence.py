@@ -549,6 +549,108 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class ValidatorPublicationStagingTests(unittest.TestCase):
+    """Keep validator staging exclusive and repository-local."""
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_validator_publication_preserves_redirected_staging_file(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-validator-staging-link-"
+        ) as raw:
+            root = Path(raw)
+            release = root / _DEPENDENCIES._CARGO_TARGET / "release"
+            deps = release / "deps"
+            deps.mkdir(parents=True)
+            built = release / "validate-game"
+            built.write_bytes(b"validator")
+            (deps / "validate_game-fixture").hardlink_to(built)
+            destination = root / _DEPENDENCIES._BIN_ROOT / built.name
+            destination.parent.mkdir(parents=True)
+            external = root / "external-validator"
+            external.write_bytes(b"outside")
+            candidate = destination.with_name(
+                f".{destination.name}.{os.getpid()}.tmp"
+            )
+            candidate.symlink_to(external)
+
+            with self.assertRaisesRegex(
+                _DEPENDENCIES.BootstrapFailure,
+                "validator staging file already exists",
+            ):
+                _DEPENDENCIES._publish_validator(root, built)
+
+            self.assertTrue(candidate.is_symlink())
+            self.assertEqual(external.read_bytes(), b"outside")
+            self.assertFalse(destination.exists())
+
+    def test_validator_publication_preserves_existing_staging_file(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-validator-staging-file-"
+        ) as raw:
+            root = Path(raw)
+            release = root / _DEPENDENCIES._CARGO_TARGET / "release"
+            release.mkdir(parents=True)
+            built = release / "validate-game"
+            built.write_bytes(b"validator")
+            destination = root / _DEPENDENCIES._BIN_ROOT / built.name
+            destination.parent.mkdir(parents=True)
+            candidate = destination.with_name(
+                f".{destination.name}.{os.getpid()}.tmp"
+            )
+            candidate.write_bytes(b"preserve")
+
+            with self.assertRaisesRegex(
+                _DEPENDENCIES.BootstrapFailure,
+                "validator staging file already exists",
+            ):
+                _DEPENDENCIES._publish_validator(root, built)
+
+            self.assertEqual(candidate.read_bytes(), b"preserve")
+            self.assertFalse(destination.exists())
+
+    def test_validator_publication_rejects_build_drift_during_copy(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-validator-copy-drift-"
+        ) as raw:
+            root = Path(raw)
+            release = root / _DEPENDENCIES._CARGO_TARGET / "release"
+            release.mkdir(parents=True)
+            built = release / "validate-game"
+            built.write_bytes(b"validator-before")
+            destination = root / _DEPENDENCIES._BIN_ROOT / built.name
+            destination.parent.mkdir(parents=True)
+            candidate = destination.with_name(
+                f".{destination.name}.{os.getpid()}.tmp"
+            )
+            copyfileobj = _DEPENDENCIES.shutil.copyfileobj
+
+            def drift_then_copy(*args: object, **kwargs: object) -> None:
+                built.write_bytes(b"validator-after")
+                copyfileobj(*args, **kwargs)
+
+            with (
+                mock.patch.object(
+                    _DEPENDENCIES.shutil,
+                    "copyfileobj",
+                    side_effect=drift_then_copy,
+                ),
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "changed while publishing",
+                ),
+            ):
+                _DEPENDENCIES._publish_validator(root, built)
+
+            self.assertFalse(candidate.exists())
+            self.assertFalse(destination.exists())
+
+
 class ValidatorSourceAliasTests(unittest.TestCase):
     """Reject physical aliases from validator source fingerprints."""
 

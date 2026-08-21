@@ -153,7 +153,12 @@ repository-owned side effects. Cargo-produced validator build outputs may
 retain Cargo's canonical `release/deps` hard link, but every filesystem link
 must
 be accounted for inside that repository-owned target tree. Published validator
-identities remain real single-link files. Preflight repeats the real-directory
+identities remain real single-link files. Validator publication also creates its
+PID staging identity exclusively, preserves a pre-existing staging file or link,
+and copies from one descriptor-bound Cargo output whose filesystem identity must
+remain stable through the copy. A stale or redirected staging path therefore
+cannot overwrite external content or become the published validator. Preflight
+repeats the real-directory
 and single-link checks before trusting either validator, so build-time or
 post-bootstrap redirects and external hard-link aliases cannot move binary
 authority outside repository-owned storage.

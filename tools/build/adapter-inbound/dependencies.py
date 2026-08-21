@@ -48,6 +48,7 @@ import stat
 import subprocess
 import sys
 import tomllib
+from typing import BinaryIO
 from typing import NamedTuple
 import urllib.error
 import urllib.parse
@@ -749,6 +750,80 @@ def _require_cargo_validator_file(
         raise BootstrapFailure(message)
 
 
+def _validator_identity(metadata: os.stat_result) -> tuple[int, ...]:
+    """Project validator metadata to stable publication identity fields."""
+    return (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_mode,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
+        metadata.st_size,
+        metadata.st_nlink,
+    )
+
+
+def _require_validator_identity(
+    metadata: os.stat_result,
+    expected: tuple[int, ...],
+    message: str,
+) -> None:
+    """Fail when validator metadata no longer matches one captured identity."""
+    if _validator_identity(metadata) != expected:
+        raise BootstrapFailure(message)
+
+
+def _copy_validator_candidate(
+    root: Path,
+    built: Path,
+    target: BinaryIO,
+) -> None:
+    """Copy one stable Cargo validator into an open exclusive candidate."""
+    _require_cargo_validator_file(root, built, "validator build output")
+    expected_metadata = _validator_file_metadata(
+        built,
+        "validator build output",
+    )
+    expected = _validator_identity(expected_metadata)
+    with built.open("rb") as source:
+        _require_validator_identity(
+            os.fstat(source.fileno()),
+            expected,
+            "validator build output changed while publishing",
+        )
+        shutil.copyfileobj(source, target, length=1024 * 1024)
+        if hasattr(os, "fchmod"):
+            os.fchmod(
+                target.fileno(),
+                stat.S_IMODE(expected_metadata.st_mode),
+            )
+        target.flush()
+        target_metadata = os.fstat(target.fileno())
+        if (
+            not stat.S_ISREG(target_metadata.st_mode)
+            or target_metadata.st_nlink != 1
+            or target_metadata.st_size != expected_metadata.st_size
+        ):
+            raise BootstrapFailure(
+                "validator staging file changed while publishing"
+            )
+        finished = os.fstat(source.fileno())
+    _require_validator_identity(
+        finished,
+        expected,
+        "validator build output changed while publishing",
+    )
+    current = _validator_file_metadata(built, "validator build output")
+    _require_validator_identity(
+        current,
+        expected,
+        "validator build output changed while publishing",
+    )
+    _require_cargo_validator_file(root, built, "validator build output")
+    if not hasattr(os, "fchmod"):
+        Path(target.name).chmod(stat.S_IMODE(expected_metadata.st_mode))
+
+
 def _publish_validator(root: Path, built: Path) -> Path:
     """Atomically publish one validator when its content changed."""
     _require_cargo_validator_file(root, built, "validator build output")
@@ -768,11 +843,21 @@ def _publish_validator(root: Path, built: Path) -> Path:
     if destination.is_file() and _sha256(destination) == _sha256(built):
         return destination.resolve()
     candidate = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
+    created = False
     try:
-        shutil.copy2(built, candidate)
+        try:
+            target = candidate.open("xb")
+        except FileExistsError as error:
+            raise BootstrapFailure(
+                f"validator staging file already exists: {candidate}"
+            ) from error
+        created = True
+        with target:
+            _copy_validator_candidate(root, built, target)
         Path(candidate).replace(destination)
     finally:
-        candidate.unlink(missing_ok=True)
+        if created:
+            candidate.unlink(missing_ok=True)
     return destination.resolve()
 
 
