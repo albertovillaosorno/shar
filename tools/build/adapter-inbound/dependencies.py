@@ -35,6 +35,8 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 import hashlib
 import json
 import os
@@ -129,6 +131,34 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _scan_source_directory(
+    path: Path,
+) -> AbstractContextManager[Iterator[os.DirEntry[str]]]:
+    """Open one source-closure directory without suppressing scan failures."""
+    return os.scandir(path)
+
+
+def _source_tree_files(source: Path) -> list[Path]:
+    """Collect repository source files with strict non-redirected traversal."""
+    files: list[Path] = []
+    pending = [source]
+    while pending:
+        directory = pending.pop()
+        with _scan_source_directory(directory) as entries:
+            for entry in entries:
+                path = Path(entry.path)
+                if entry.is_symlink():
+                    continue
+                if (
+                    entry.is_dir(follow_symlinks=False)
+                    and not os.path.isjunction(path)
+                ):
+                    pending.append(path)
+                elif entry.is_file(follow_symlinks=False):
+                    files.append(path)
+    return files
+
+
 def _source_inputs_sha256(root: Path, inputs: tuple[Path, ...]) -> str:
     """Hash one deterministic repository source closure."""
     digest = hashlib.sha256()
@@ -140,11 +170,7 @@ def _source_inputs_sha256(root: Path, inputs: tuple[Path, ...]) -> str:
             continue
         if not source.is_dir():
             raise FileNotFoundError(source)
-        files.extend(
-            candidate
-            for candidate in source.rglob("*")
-            if candidate.is_file() and not candidate.is_symlink()
-        )
+        files.extend(_source_tree_files(source))
     ordered = sorted(
         files,
         key=lambda path: path.relative_to(root).as_posix(),
