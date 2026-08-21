@@ -787,20 +787,6 @@ def _unique_json_object(
     return result
 
 
-def _read_json_object(path: Path, label: str) -> dict[str, object]:
-    """Read one required JSON object with a user-facing source label."""
-    try:
-        value = json.loads(
-            path.read_text(encoding="utf-8"),
-            object_pairs_hook=_unique_json_object,
-        )
-    except (OSError, UnicodeError, json.JSONDecodeError) as error:
-        raise CheckFailure(f"cannot read {label} {path}: {error}") from error
-    if not isinstance(value, dict):
-        raise CheckFailure(f"{label} must contain a JSON object: {path}")
-    return value
-
-
 def _check_project(root: Path) -> ProjectEvidence:
     """Require the tracked Unreal project association used by the build."""
     _require_real_project_roots(root)
@@ -842,7 +828,15 @@ def _engine_candidates(explicit: Path | None) -> list[Path]:
 def _engine_version(root: Path) -> str:
     """Read and require the exact Unreal Build.version tuple."""
     build_version = root / "Engine" / "Build" / "Build.version"
-    data = _read_json_object(build_version, "Unreal Build.version")
+    snapshot = _read_real_evidence_bytes(
+        build_version,
+        "Unreal Build.version",
+    )
+    data = _json_object_from_bytes(
+        snapshot,
+        "Unreal Build.version",
+        build_version,
+    )
     keys = ("MajorVersion", "MinorVersion", "PatchVersion")
     raw = tuple(data.get(key) for key in keys)
     if any(type(value) is not int for value in raw):

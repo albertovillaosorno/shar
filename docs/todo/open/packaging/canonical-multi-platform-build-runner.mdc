@@ -258,8 +258,10 @@ rolls the swap back as well: the prior `dist/<ARCH>/` tree is restored, the new
 package returns to its cache candidate path, and no failed run leaves the new
 publication exposed.
 Turnkey validation also confirmed the installed Windows x64 SDK as valid. Build
-preflight now requires the host-native Unreal editor identity to be a regular
-file rather than merely an existing filesystem entry and, on POSIX hosts, to
+preflight now reads Unreal `Build.version` through one stable single-link file
+identity, so a transient external descriptor cannot supply the required 5.8.1
+version tuple. The host-native Unreal editor identity must likewise be a regular
+file rather than merely an existing filesystem entry and, on POSIX hosts, must
 have execute permission. The runner similarly requires its host `RunUAT`
 launcher to be a non-linked file and executable on POSIX before Turnkey starts.
 Directory, redirected, or non-executable launchers cannot become build
