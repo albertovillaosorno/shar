@@ -312,6 +312,43 @@ def _dependency_evidence(root: Path) -> tuple[Path, dict[str, object]]:
     return path, data
 
 
+def _dependency_validator_root(root: Path) -> Path:
+    """Return the canonical root after rejecting redirected validator storage."""
+    paths = (
+        root / ".dependencies",
+        root / ".dependencies" / "build",
+        root / ".dependencies" / "build" / "bin",
+    )
+    for path in paths:
+        if (
+            not path.is_dir()
+            or path.is_symlink()
+            or os.path.isjunction(path)
+        ):
+            raise CheckFailure(
+                "dependency validator storage must use real directories"
+            )
+    return paths[-1].resolve()
+
+
+def _real_dependency_validator(
+    root: Path, raw_path: str, label: str,
+) -> Path:
+    """Require one repository-owned single-link validator binary."""
+    candidate = Path(raw_path)
+    owned = _dependency_validator_root(root)
+    if candidate.is_symlink() or os.path.isjunction(candidate):
+        raise CheckFailure(f"{label} must be a real file")
+    validator = candidate.resolve()
+    if validator.parent != owned:
+        raise CheckFailure(f"{label} must be under .dependencies/build/bin")
+    if not validator.is_file():
+        raise CheckFailure(f"{label} is missing: {validator}")
+    if validator.stat(follow_symlinks=False).st_nlink != 1:
+        raise CheckFailure(f"{label} must be a real file")
+    return validator
+
+
 def _dependency_validator(
     root: Path,
     data: dict[str, object],
@@ -329,14 +366,11 @@ def _dependency_validator(
         or not isinstance(expected_source_hash, str)
     ):
         raise CheckFailure("dependency validator evidence is incomplete")
-    validator = Path(raw_path).resolve()
-    owned = (root / ".dependencies" / "build" / "bin").resolve()
-    if validator.parent != owned:
-        raise CheckFailure(
-            "dependency validator must be under .dependencies/build/bin"
-        )
-    if not validator.is_file():
-        raise CheckFailure(f"dependency validator is missing: {validator}")
+    validator = _real_dependency_validator(
+        root,
+        raw_path,
+        "dependency validator",
+    )
     actual_hash = _sha256(validator)
     if actual_hash != expected_hash:
         message = "dependency validator SHA-256 no longer matches evidence"
@@ -367,14 +401,11 @@ def _dependency_deep_source_validator(
         or not isinstance(expected_source_hash, str)
     ):
         raise CheckFailure("deep source validator evidence is incomplete")
-    validator = Path(raw_path).resolve()
-    owned = (root / ".dependencies" / "build" / "bin").resolve()
-    if validator.parent != owned:
-        raise CheckFailure(
-            "deep source validator must be under .dependencies/build/bin"
-        )
-    if not validator.is_file():
-        raise CheckFailure(f"deep source validator is missing: {validator}")
+    validator = _real_dependency_validator(
+        root,
+        raw_path,
+        "deep source validator",
+    )
     if _sha256(validator) != expected_hash:
         raise CheckFailure(
             "deep source validator SHA-256 no longer matches evidence"
