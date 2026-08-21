@@ -142,7 +142,8 @@ Canonical `arch.json`, `check.json`, and `dependencies.json` identities are also
 required to be real regular files when already present. Build preflight repeats
 that rule when consuming `dependencies.json`, so a post-bootstrap symlink or
 junction cannot redirect dependency authority to external JSON. Preflight parses
-and hashes one stable byte snapshot and requires the canonical dependency file to
+and hashes one stable byte snapshot and requires the canonical dependency file
+to
 retain those bytes through source and engine validation, preventing a
 mid-check
 replacement from binding saved evidence to JSON that did not select the
