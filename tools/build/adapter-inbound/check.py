@@ -1033,12 +1033,12 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         args.manifest_validator,
         dependencies,
     )
+    manifest_result = _check_manifest(validator, game, manifest)
     deep_validator = _resolve_deep_source_validator(
         root,
         args.deep_source_validator,
         dependencies,
     )
-    manifest_result = _check_manifest(validator, game, manifest)
     deep_result = _check_deep_source(deep_validator, game)
     engine = _check_engine(args.engine_root)
     host = _host_evidence(dependencies)
