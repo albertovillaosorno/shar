@@ -573,6 +573,81 @@ class EngineSelectionTests(unittest.TestCase):
         self.assertEqual(candidates, [expected])
 
 
+class DependencyEvidenceSnapshotTests(unittest.TestCase):
+    """Bind preflight to one stable dependency-evidence snapshot."""
+
+    def test_preflight_rejects_dependency_evidence_drift(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-preflight-dependency-drift-"
+        ) as raw:
+            root = Path(raw)
+            dependency_path = root / _CHECK._DEPENDENCIES_PATH
+            dependency_path.parent.mkdir(parents=True)
+            dependency_path.write_text(
+                '{"schema":"shar.build.dependencies.v1"}\n',
+                encoding="utf-8",
+            )
+            manifest = root / "game/manifest/game.jsonl"
+            manifest.parent.mkdir(parents=True)
+            manifest.write_text("fixture\n", encoding="utf-8")
+            game = root / "game-source"
+            project = root / "src/unreal/project/shar.uproject"
+            validator = root / ".dependencies/build/bin/validate-game"
+            deep_validator = (
+                root / ".dependencies/build/bin/validate-source-deep"
+            )
+            engine = _CHECK.EngineEvidence(root / "engine", "5.8.1")
+            args = _CHECK.argparse.Namespace(
+                engine_root=None,
+                game=game,
+                manifest_validator=None,
+                deep_source_validator=None,
+            )
+
+            def manifest_gate(*_args: object) -> str:
+                dependency_path.write_text(
+                    '{"schema":"shar.build.dependencies.v1","drift":true}\n',
+                    encoding="utf-8",
+                )
+                return "manifest-ok"
+
+            with (
+                mock.patch.object(_CHECK, "_root", return_value=root),
+                mock.patch.object(_CHECK, "_check_python", return_value={}),
+                mock.patch.object(_CHECK, "_check_game", return_value=game),
+                mock.patch.object(
+                    _CHECK, "_check_project", return_value=project
+                ),
+                mock.patch.object(
+                    _CHECK,
+                    "_resolve_validator",
+                    return_value=validator,
+                ),
+                mock.patch.object(
+                    _CHECK,
+                    "_resolve_deep_source_validator",
+                    return_value=deep_validator,
+                ),
+                mock.patch.object(
+                    _CHECK,
+                    "_check_manifest",
+                    side_effect=manifest_gate,
+                ),
+                mock.patch.object(
+                    _CHECK,
+                    "_check_deep_source",
+                    return_value="deep-ok",
+                ),
+                mock.patch.object(_CHECK, "_check_engine", return_value=engine),
+                mock.patch.object(_CHECK, "_host_evidence", return_value={}),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "dependency evidence changed during preflight",
+                ),
+            ):
+                _CHECK._run(args)
+
+
 class SourceSelectionTests(unittest.TestCase):
     """Exercise read-only source-root selection without build toolchains."""
 
@@ -945,7 +1020,12 @@ class SourceSelectionTests(unittest.TestCase):
             mock.patch.object(
                 _CHECK,
                 "_dependency_evidence",
-                return_value=(dependency_path, {}),
+                return_value=(dependency_path, b"{}", {}),
+            ),
+            mock.patch.object(
+                _CHECK,
+                "_read_real_evidence_bytes",
+                return_value=b"{}",
             ),
             mock.patch.object(
                 _CHECK,

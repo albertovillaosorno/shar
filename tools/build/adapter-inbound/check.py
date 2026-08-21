@@ -44,6 +44,7 @@ from pathlib import Path
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 from typing import NamedTuple
@@ -299,17 +300,90 @@ def _check_game(root: Path, selected: Path | None) -> Path:
         return game
 
 
-def _dependency_evidence(root: Path) -> tuple[Path, dict[str, object]]:
-    """Read and validate the dependency bootstrap evidence."""
-    path = root / _DEPENDENCIES_PATH
+def _evidence_identity(metadata: os.stat_result) -> tuple[int, ...]:
+    """Return filesystem identity used to bind one evidence read."""
+    return (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
+        metadata.st_size,
+        metadata.st_nlink,
+    )
+
+
+def _real_evidence_identity(path: Path, label: str) -> tuple[int, ...]:
+    """Return one non-redirected regular evidence-file identity."""
     if path.is_symlink() or os.path.isjunction(path):
-        raise CheckFailure("dependency evidence must be a real file")
-    data = _read_json_object(path, "dependency evidence")
+        raise CheckFailure(f"{label} must be a real file")
+    try:
+        metadata = path.stat(follow_symlinks=False)
+    except OSError as error:
+        raise CheckFailure(f"cannot read {label} {path}: {error}") from error
+    if not stat.S_ISREG(metadata.st_mode):
+        raise CheckFailure(f"{label} must be a real file")
+    return _evidence_identity(metadata)
+
+
+def _read_evidence_descriptor(
+    path: Path,
+    label: str,
+    expected: tuple[int, ...],
+) -> bytes:
+    """Read bytes from the descriptor matching one expected identity."""
+    try:
+        with path.open("rb") as handle:
+            opened = _evidence_identity(os.fstat(handle.fileno()))
+            if opened != expected:
+                raise CheckFailure(f"{label} changed while reading")
+            payload = handle.read()
+            finished = _evidence_identity(os.fstat(handle.fileno()))
+    except OSError as error:
+        raise CheckFailure(f"cannot read {label} {path}: {error}") from error
+    if finished != expected or len(payload) != expected[4]:
+        raise CheckFailure(f"{label} changed while reading")
+    return payload
+
+
+def _read_real_evidence_bytes(path: Path, label: str) -> bytes:
+    """Read one stable non-redirected regular evidence file."""
+    expected = _real_evidence_identity(path, label)
+    payload = _read_evidence_descriptor(path, label, expected)
+    if _real_evidence_identity(path, label) != expected:
+        raise CheckFailure(f"{label} changed while reading")
+    return payload
+
+
+def _json_object_from_bytes(
+    payload: bytes,
+    label: str,
+    path: Path,
+) -> dict[str, object]:
+    """Decode one UTF-8 JSON object from an already-stable snapshot."""
+    try:
+        value = json.loads(
+            payload.decode("utf-8"),
+            object_pairs_hook=_unique_json_object,
+        )
+    except (UnicodeError, json.JSONDecodeError) as error:
+        raise CheckFailure(f"cannot read {label} {path}: {error}") from error
+    if not isinstance(value, dict):
+        raise CheckFailure(f"{label} must contain a JSON object: {path}")
+    return value
+
+
+def _dependency_evidence(
+    root: Path,
+) -> tuple[Path, bytes, dict[str, object]]:
+    """Read and validate one stable dependency bootstrap snapshot."""
+    path = root / _DEPENDENCIES_PATH
+    snapshot = _read_real_evidence_bytes(path, "dependency evidence")
+    data = _json_object_from_bytes(snapshot, "dependency evidence", path)
     if data.get("schema") != _DEPENDENCIES_SCHEMA:
         raise CheckFailure(
             f"dependency evidence schema must be {_DEPENDENCIES_SCHEMA}"
         )
-    return path, data
+    return path, snapshot, data
 
 
 def _dependency_validator_root(root: Path) -> Path:
@@ -786,7 +860,9 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
     if not manifest.is_file():
         raise CheckFailure("canonical game/manifest/game.jsonl is missing")
     project = _check_project(root)
-    dependencies_path, dependencies = _dependency_evidence(root)
+    dependencies_path, dependencies_snapshot, dependencies = (
+        _dependency_evidence(root)
+    )
     validator = _resolve_validator(
         root,
         args.manifest_validator,
@@ -801,11 +877,17 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
     deep_result = _check_deep_source(deep_validator, game)
     engine = _check_engine(args.engine_root)
     host = _host_evidence(dependencies)
+    current_dependencies = _read_real_evidence_bytes(
+        dependencies_path,
+        "dependency evidence",
+    )
+    if current_dependencies != dependencies_snapshot:
+        raise CheckFailure("dependency evidence changed during preflight")
     return {
         "dependencies": {
             "path": _normalized(dependencies_path),
             "schema": _DEPENDENCIES_SCHEMA,
-            "sha256": _sha256(dependencies_path),
+            "sha256": hashlib.sha256(dependencies_snapshot).hexdigest(),
         },
         "game": {
             "manifest": _normalized(manifest),
