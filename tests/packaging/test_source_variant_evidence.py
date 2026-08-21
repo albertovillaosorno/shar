@@ -112,6 +112,46 @@ class SourceVariantEvidenceTests(unittest.TestCase):
         self.assertNotIn(str(private), stderr.getvalue())
         self.assertIn("cannot be inspected", stderr.getvalue())
 
+    def test_redirected_parent_is_rejected(self) -> None:
+        if sys.platform == "win32":
+            self.skipTest("symlink fixture is Unix-focused")
+        with tempfile.TemporaryDirectory(prefix="shar-variant-parent-") as raw:
+            root = Path(raw)
+            real = root / "real"
+            real.mkdir()
+            candidate = real / "candidate.bin"
+            candidate.write_bytes(b"abcd")
+            redirect = root / "redirect"
+            redirect.symlink_to(real, target_is_directory=True)
+
+            with self.assertRaisesRegex(
+                _MOD.VariantEvidenceError,
+                "real directory",
+            ):
+                _MOD.measure_variant(b"abcd", redirect / candidate.name)
+
+    def test_junction_parent_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-variant-junction-"
+        ) as raw:
+            root = Path(raw)
+            parent = root / "junction-parent"
+            parent.mkdir()
+            candidate = parent / "candidate.bin"
+            candidate.write_bytes(b"abcd")
+            with (
+                mock.patch.object(
+                    _MOD.os.path,
+                    "isjunction",
+                    side_effect=lambda path: Path(path) == parent,
+                ),
+                self.assertRaisesRegex(
+                    _MOD.VariantEvidenceError,
+                    "real directory",
+                ),
+            ):
+                _MOD.measure_variant(b"abcd", candidate)
+
     def test_candidate_identity_drift_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-variant-") as raw:
             candidate = Path(raw) / "candidate.bin"
