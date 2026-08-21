@@ -31,7 +31,8 @@ python tools/source-variant-evidence/adapter-inbound/main.py \
 Each distinct variant layout contributes one deterministic earliest-match mask;
 duplicate layouts collapse to one alternative, and output is limited to the
 generic algorithm contract's 256 distinct alternatives. Projection mode also
-loads the active algorithm settings and rejects reference/candidate sizes, spans,
+loads the active algorithm settings and rejects reference/candidate sizes,
+spans,
 or aggregate mask bytes that exceed its file limit. Evidence inputs and
 their lexical
 directory parents must be real filesystem entries rather than symlinks or
