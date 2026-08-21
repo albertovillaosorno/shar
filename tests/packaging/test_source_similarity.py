@@ -129,40 +129,46 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(evidence.reference_coverage, Fraction(1, 1))
         self.assertEqual(evidence.weighted_jaccard, Fraction(1, 1))
 
-    def test_invalid_or_empty_reference_vectors_fail_closed(self) -> None:
+    def test_invalid_or_empty_vectors_fail_closed(self) -> None:
+        valid_candidate = {("bb", "p3d"): 1}
+        with self.assertRaisesRegex(
+            _MOD.LedgerInputError,
+            "candidate count vector contains no coordinates",
+        ):
+            _MOD.measure({("aa", "p3d"): 1}, {})
         with self.assertRaisesRegex(ValueError, "must not be empty"):
-            _MOD.measure({}, {("aa", "p3d"): 1})
+            _MOD.measure({}, valid_candidate)
         with self.assertRaisesRegex(ValueError, "nonnegative integer"):
-            _MOD.measure({("aa", "p3d"): -1}, {})
+            _MOD.measure({("aa", "p3d"): -1}, valid_candidate)
         with self.assertRaisesRegex(ValueError, "pair of strings"):
-            _MOD.measure({"aa": 1}, {})
+            _MOD.measure({"aa": 1}, valid_candidate)
         with self.assertRaises(_MOD.InvalidCoordinateError):
-            _MOD.measure({("aa", ""): 1}, {})
+            _MOD.measure({("aa", ""): 1}, valid_candidate)
         for coordinate in (("\ud800", "p3d"), ("aa", "\ud800")):
             with (
                 self.subTest(coordinate=repr(coordinate)),
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
-                _MOD.measure({coordinate: 1}, {})
+                _MOD.measure({coordinate: 1}, valid_candidate)
         for extension in ("private", "dll"):
             with (
                 self.subTest(unclassifiable_extension=extension),
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
-                _MOD.measure({("aa", extension): 1}, {})
+                _MOD.measure({("aa", extension): 1}, valid_candidate)
         for extension in ("P3D", "ÄBC"):
             with (
                 self.subTest(extension=extension),
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
-                _MOD.measure({("aa", extension): 1}, {})
+                _MOD.measure({("aa", extension): 1}, valid_candidate)
         for directory in ("AA", "Aa", r"aa\bb", "/aa", "aa/", "aa//bb"):
             with (
                 self.subTest(directory=directory),
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
-                _MOD.measure({(directory, "p3d"): 1}, {})
-        _MOD.measure({("", "p3d"): 1}, {})
+                _MOD.measure({(directory, "p3d"): 1}, valid_candidate)
+        _MOD.measure({("", "p3d"): 1}, valid_candidate)
 
     def test_parser_accepts_generated_manifest_metadata_and_kind(self) -> None:
         header = (
