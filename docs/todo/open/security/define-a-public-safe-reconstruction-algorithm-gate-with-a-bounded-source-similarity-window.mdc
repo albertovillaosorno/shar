@@ -79,7 +79,10 @@ exact two-endpoint lowercase shape after collision normalization. The current
 Rust lowercase table has only one two-scalar expansion, so impossible 3/4-scalar
 aliases and short
 readable private names cannot be accepted as supposedly obfuscated evidence.
-Direct programmatic count vectors are also captured once before validation and
+Alias components also retain the source tree's portable-host character policy,
+so controls, invisible modifiers, reserved punctuation, and trailing dot/space
+identities cannot enter calibration after obfuscation. Direct programmatic count
+vectors are also captured once before validation and
 measurement, preventing a stateful mapping from presenting different counts to
 those two phases.
 JSONL calibration rows now also reject outer spaces or tabs, matching the

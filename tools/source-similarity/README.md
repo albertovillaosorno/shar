@@ -39,8 +39,10 @@ ignored by the metric.
 Directory
 coordinates must retain the producer's
 lowercase, forward-slash
-normalization (with the empty string reserved for the game root). After any
-canonical collision ordinal is removed, every directory component must be the
+normalization (with the empty string reserved for the game root) and must not
+contain host-reserved punctuation, controls, invisible path modifiers, or
+trailing dot/space aliases rejected by source-tree intake. After any canonical
+collision ordinal is removed, every directory component must be the
 concatenation of the producer's two lowercased endpoint characters. Normal
 endpoints contribute one Unicode scalar each; the current Rust mapping has one
 two-scalar lowercase expansion (`i` plus combining dot), which accounts for the

@@ -334,7 +334,9 @@ def _valid_directory_alias(value: object) -> bool:
         return False
     base = _collision_family(value)
     return all(
-        _valid_obfuscated_component(component) for component in base.split("/")
+        _valid_public_path_component(component)
+        and _valid_obfuscated_component(component)
+        for component in base.split("/")
     )
 
 
