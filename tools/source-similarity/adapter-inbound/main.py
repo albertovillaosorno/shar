@@ -174,6 +174,13 @@ class LedgerInputError(SimilarityInputError):
     """A public JSONL count ledger is malformed or unreadable."""
 
 
+def _parse_json_integer(lexeme: str) -> int:
+    """Decode one JSON integer while rejecting the producer-impossible -0."""
+    if lexeme == "-0":
+        raise ValueError("signed zero is not canonical")
+    return int(lexeme)
+
+
 def _object_without_duplicates(
     pairs: list[tuple[str, Any]],
 ) -> dict[str, Any]:
@@ -287,6 +294,7 @@ def _parse_jsonl_record(line: str, line_number: int) -> dict[str, Any]:
         record: Any = json.loads(
             line,
             object_pairs_hook=_object_without_duplicates,
+            parse_int=_parse_json_integer,
         )
     except (ValueError, RecursionError) as error:
         raise LedgerInputError(

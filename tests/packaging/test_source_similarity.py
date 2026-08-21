@@ -470,6 +470,18 @@ class SourceSimilarityTests(unittest.TestCase):
 class SourceSimilarityJsonRobustnessTests(unittest.TestCase):
     """Keep malformed JSON failures inside the path-free input boundary."""
 
+    def test_parser_rejects_signed_zero_counts(self) -> None:
+        for count_field in ("count", "min"):
+            ledger = '{"dir":"aa","ext":"p3d","' + count_field + '":-0}'
+            with (
+                self.subTest(count_field=count_field),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "invalid JSONL",
+                ),
+            ):
+                _MOD.parse_count_ledger(ledger)
+
     def test_parser_rejects_json_token_whitespace(self) -> None:
         aliases = (
             '{"dir": "aa","ext":"p3d","count":1}',

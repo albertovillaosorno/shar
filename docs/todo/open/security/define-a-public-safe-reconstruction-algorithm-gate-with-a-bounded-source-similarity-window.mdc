@@ -89,8 +89,8 @@ JSONL calibration rows now also require the producer's compact JSON token
 framing, rejecting whitespace between tokens while preserving valid decoded JSON
 string escapes. Optional public metadata distinguishes omission from explicit
 JSON `null`;
-excessively nested JSON also fails through the calibrator's path-free input
-error instead of escaping as a parser recursion failure. Present row kinds must
+excessively nested JSON and producer-impossible signed-zero count tokens also
+fail through the calibrator's path-free input error. Present row kinds must
 belong to the producer's public taxonomy and match the
 producer's exact `(dir, ext)` bucket classification, while unclassifiable
 coordinates fail even when `kind` is omitted. JSON object members and coordinate
