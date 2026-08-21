@@ -273,6 +273,16 @@ class SourceVariantEvidenceTests(unittest.TestCase):
             self.assertEqual(stdout.getvalue(), "")
             self.assertNotIn(str(root), stderr.getvalue())
 
+    def test_projection_packs_sparse_long_span_mask(self) -> None:
+        candidate = (b"a" * 8192) + b"x"
+
+        alternative = _MOD._ordered_projection(b"x", candidate)
+
+        self.assertEqual(alternative.span_bytes, 8193)
+        self.assertEqual(len(alternative.mask), 1025)
+        self.assertEqual(alternative.mask[:-1], b"\x00" * 1024)
+        self.assertEqual(alternative.mask[-1], 0x80)
+
     def test_projection_mode_emits_distinct_layouts_without_hash(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-projection-") as raw:
             root = Path(raw)

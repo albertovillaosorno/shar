@@ -330,17 +330,6 @@ def _read_candidate_snapshot(path: Path) -> bytes:
     return data
 
 
-def _offset_mask(flags: bytearray) -> bytes:
-    """Pack one selected-offset flag per source byte, high bit first."""
-    mask = bytearray((len(flags) + 7) // 8)
-    for offset, selected in enumerate(flags):
-        if not selected:
-            continue
-        byte_index, bit_index = divmod(offset, 8)
-        mask[byte_index] |= 1 << (7 - bit_index)
-    return bytes(mask)
-
-
 def _ordered_projection(
     reference: bytes,
     candidate: bytes,
@@ -352,22 +341,23 @@ def _ordered_projection(
             in order.
 
     """
-    flags = bytearray(len(candidate))
+    mask = bytearray((len(candidate) + 7) // 8)
     matched = 0
     span = 0
     for offset, value in enumerate(candidate):
         if matched == len(reference):
             break
         if value == reference[matched]:
-            flags[offset] = 1
+            byte_index, bit_index = divmod(offset, 8)
+            mask[byte_index] |= 1 << (7 - bit_index)
             matched += 1
             span = offset + 1
     if matched != len(reference):
         raise ProjectionMismatchError
-    del flags[span:]
+    del mask[(span + 7) // 8 :]
     return OffsetProjectionAlternative(
         span_bytes=span,
-        mask=_offset_mask(flags),
+        mask=bytes(mask),
     )
 
 
