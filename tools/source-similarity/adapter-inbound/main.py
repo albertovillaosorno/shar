@@ -751,6 +751,7 @@ def _validate(values: Mapping[Coordinate, int]) -> None:
             or len(key) != 2
             or not _valid_directory_alias(key[0])
             or not _valid_extension(key[1])
+            or _expected_manifest_kind(key[0], key[1]) == "error"
         ):
             raise InvalidCoordinateError
         if (

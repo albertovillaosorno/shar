@@ -65,8 +65,9 @@ inspection through an immediate opened-path check, the completed read, and the
 final path check. Descriptor/current-path parity carries redirect protection;
 `ctime` is additional drift evidence where the host updates it. Programmatic
 count vectors are captured once and validated as stable snapshots before
-measurement,
-so a stateful mapping cannot change counts between validation and scoring. The
+measurement; their coordinates must resolve to the same producer bucket
+taxonomy as parsed ledgers. A stateful mapping therefore cannot change counts
+between validation and scoring. The
 command never
 prints an admission result or embeds an acceptance threshold. Input failures
 omit local ledger paths.
