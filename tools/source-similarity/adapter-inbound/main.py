@@ -740,6 +740,7 @@ def _validated_snapshot(
     """Capture and validate one stable programmatic count-vector snapshot."""
     snapshot = dict(values.items())
     _validate(snapshot)
+    _validate_ledger_collision_families(snapshot)
     return snapshot
 
 
