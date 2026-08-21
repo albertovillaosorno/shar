@@ -57,7 +57,7 @@ _SPEC.loader.exec_module(_MOD)
 
 
 class SourceVariantEvidenceTests(unittest.TestCase):
-    def test_file_identity_includes_status_change_time(self) -> None:
+    def test_file_identity_includes_platform_ctime(self) -> None:
         before = mock.Mock(
             st_dev=1,
             st_ino=2,
@@ -80,14 +80,14 @@ class SourceVariantEvidenceTests(unittest.TestCase):
             device=1,
             inode=2,
             modified_ns=3,
-            changed_ns=4,
+            ctime_ns=4,
             size=5,
         )
         changed = _MOD.FileIdentity(
             device=1,
             inode=2,
             modified_ns=3,
-            changed_ns=6,
+            ctime_ns=6,
             size=5,
         )
         operations = (

@@ -131,7 +131,7 @@ class FileIdentity:
     device: int
     inode: int
     modified_ns: int
-    changed_ns: int
+    ctime_ns: int
     size: int
 
 
@@ -175,7 +175,7 @@ def _identity(metadata: os.stat_result) -> FileIdentity:
         device=metadata.st_dev,
         inode=metadata.st_ino,
         modified_ns=metadata.st_mtime_ns,
-        changed_ns=metadata.st_ctime_ns,
+        ctime_ns=metadata.st_ctime_ns,
         size=metadata.st_size,
     )
 
