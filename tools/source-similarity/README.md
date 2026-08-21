@@ -56,8 +56,10 @@ ledger's total count must fit the unsigned 64-bit range used by the supported
 policy `min` rows may remain zero for optional coordinates. The generated
 game-root `png` coordinate is producer-owned optional policy and therefore may
 carry only zero; it cannot contribute observed or programmatic units. Every
-ledger must still contain at least one coordinate row. Signed-zero integer
-aliases are rejected instead of normalizing to zero. File inputs and their
+ledger must still contain at least one coordinate row, and direct programmatic
+candidate vectors must likewise contain at least one coordinate. Signed-zero
+integer aliases are rejected instead of normalizing to zero. File inputs and
+their
 lexical directory
 parents must be non-redirected; the file itself must be regular and preserve
 the canonical

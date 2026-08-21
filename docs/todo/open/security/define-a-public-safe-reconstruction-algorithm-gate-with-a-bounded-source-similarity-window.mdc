@@ -82,10 +82,10 @@ readable private names cannot be accepted as supposedly obfuscated evidence.
 Alias components also retain the source tree's portable-host character policy,
 so controls, invisible modifiers, reserved punctuation, and trailing dot/space
 identities cannot enter calibration after obfuscation. Direct programmatic count
-vectors are also captured once before validation and measurement, reject
-coordinates outside the producer's classified bucket taxonomy or complete
-collision-family shape, and prevent a stateful mapping from presenting different
-counts to those two phases.
+vectors are also captured once before validation and measurement, reject empty
+candidate vectors, coordinates outside the producer's classified bucket taxonomy
+or complete collision-family shape, and prevent a stateful mapping from
+presenting different counts to those two phases.
 JSONL calibration rows now also require the producer's compact JSON token
 framing and literal member names, rejecting all JSON token whitespace or
 escaped keys while preserving valid decoded JSON string-value escapes. Optional

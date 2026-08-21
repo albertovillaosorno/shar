@@ -684,6 +684,8 @@ def measure(
     """
     reference_snapshot = _validated_snapshot(reference)
     candidate_snapshot = _validated_snapshot(candidate)
+    if not candidate_snapshot:
+        raise LedgerInputError("candidate count vector contains no coordinates")
     reference_units = sum(reference_snapshot.values())
     candidate_units = sum(candidate_snapshot.values())
     if reference_units == 0:
