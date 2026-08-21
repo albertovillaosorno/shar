@@ -56,8 +56,8 @@ and a final LF. Each ledger is opened once and its device, inode, modification
 time, platform `ctime`, and byte count must remain identical from pre-open
 inspection through an immediate opened-path check, the completed read, and the
 final path check. Descriptor/current-path parity carries redirect protection;
-`ctime` is additional drift evidence where the host updates it. Programmatic count
-vectors are captured once and validated as stable snapshots before
+`ctime` is additional drift evidence where the host updates it. Programmatic
+count vectors are captured once and validated as stable snapshots before
 measurement,
 so a stateful mapping cannot change counts between validation and scoring. The
 command never

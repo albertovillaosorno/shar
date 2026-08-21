@@ -107,9 +107,9 @@ calibration ledger. Ledger paths must also identify non-redirected regular files
 beneath non-redirected lexical directory parents before bytes are read,
 preventing calibration from traversing symlinks or Windows junctions or treating
 other special filesystem nodes as JSONL. Calibration reads one open file
-snapshot and requires its device, inode, modification time, platform `ctime`, and
-size to remain stable through an immediate opened-path check, the read, and the
-final path check. Descriptor/current-path parity rejects redirects and
+snapshot and requires its device, inode, modification time, platform `ctime`,
+and size to remain stable through an immediate opened-path check, the read,
+and the final path check. Descriptor/current-path parity rejects redirects and
 replacements; `ctime` adds drift evidence on hosts where it tracks metadata
 changes. The read-only observation
 adapter now fails when an exact-file-only source has
