@@ -67,6 +67,30 @@ def _synthetic_macho(cpu: int) -> bytes:
     return bytes.fromhex("cffaedfe") + cpu.to_bytes(4, "little")
 
 
+def _synthetic_fat_macho(cpu_types: tuple[int, ...]) -> bytes:
+    """Return one bounded big-endian universal Mach-O with tiny slices."""
+    entry_size = 20
+    table_end = 8 + (entry_size * len(cpu_types))
+    slices = [_synthetic_macho(cpu) for cpu in cpu_types]
+    offset = table_end
+    entries: list[bytes] = []
+    for cpu, payload in zip(cpu_types, slices, strict=True):
+        entries.append(
+            cpu.to_bytes(4, "big")
+            + (b"\0" * 4)
+            + offset.to_bytes(4, "big")
+            + len(payload).to_bytes(4, "big")
+            + (b"\0" * 4)
+        )
+        offset += len(payload)
+    return (
+        bytes.fromhex("cafebabe")
+        + len(cpu_types).to_bytes(4, "big")
+        + b"".join(entries)
+        + b"".join(slices)
+    )
+
+
 def _write_android_apk(path: Path, machine: int = 0x00B7) -> None:
     """Write one synthetic APK with a native library entry."""
     with _RUN.zipfile.ZipFile(path, "w") as archive:
@@ -1429,24 +1453,29 @@ class CandidateArtifactTests(unittest.TestCase):
                 + (2).to_bytes(4, "big")
                 + fat_entry
             )
-            executable.write_bytes(truncated_fat)
-            with self.assertRaisesRegex(
-                _RUN.RunFailure,
-                "macOS SHAR app bundle",
-            ):
-                _RUN._validate_candidate_artifact(
-                    candidate,
-                    _RUN._TARGETS_BY_ID["macos-arm64"],
-                )
-
-            x64_entry = (0x01000007).to_bytes(4, "big") + (b"\0" * 16)
-            complete_fat = (
+            zero_slice_fat = (
                 bytes.fromhex("cafebabe")
-                + (2).to_bytes(4, "big")
-                + x64_entry
+                + (1).to_bytes(4, "big")
                 + fat_entry
             )
-            executable.write_bytes(complete_fat)
+            for malformed in (truncated_fat, zero_slice_fat):
+                with (
+                    self.subTest(malformed_size=len(malformed)),
+                    self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "macOS SHAR app bundle",
+                    ),
+                ):
+                    executable.write_bytes(malformed)
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["macos-arm64"],
+                    )
+
+            executable.write_bytes(_synthetic_fat_macho((
+                0x01000007,
+                _RUN._MACHO_ARM64_CPU,
+            )))
             _RUN._validate_candidate_artifact(
                 candidate,
                 _RUN._TARGETS_BY_ID["macos-arm64"],
