@@ -32,6 +32,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import hashlib
 import importlib.util
 import os
@@ -1467,6 +1468,73 @@ class CandidateArtifactTests(unittest.TestCase):
                 candidate,
                 _RUN._TARGETS_BY_ID["ios-arm64"],
             )
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_mobile_candidate_rejects_transient_external_archive(self) -> None:
+        cases = (
+            (
+                "android-arm64",
+                "shar.apk",
+                _write_android_apk,
+                "_is_android_apk",
+                "Android APK",
+            ),
+            (
+                "ios-arm64",
+                "shar.ipa",
+                _write_ios_ipa,
+                "_is_ios_ipa",
+                "iOS IPA",
+            ),
+        )
+        for target_id, name, write_valid, validator_name, label in cases:
+            with (
+                self.subTest(target=target_id),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-mobile-runtime-race-"
+                ) as raw,
+            ):
+                root = Path(raw)
+                candidate = root / "candidate"
+                candidate.mkdir()
+                package = candidate / name
+                package.write_bytes(b"invalid local package")
+                external = root / f"external-{name}"
+                write_valid(external)
+                displaced = root / f"displaced-{name}"
+                real_validator = getattr(_RUN, validator_name)
+
+                def transient_external(
+                    path: Path,
+                    *,
+                    local_path: Path = package,
+                    external_path: Path = external,
+                    displaced_path: Path = displaced,
+                    validate: Callable[[Path], bool] = real_validator,
+                ) -> bool:
+                    local_path.replace(displaced_path)
+                    local_path.symlink_to(external_path)
+                    try:
+                        return validate(path)
+                    finally:
+                        local_path.unlink()
+                        displaced_path.replace(local_path)
+
+                with (
+                    mock.patch.object(
+                        _RUN,
+                        validator_name,
+                        side_effect=transient_external,
+                    ),
+                    self.assertRaisesRegex(_RUN.RunFailure, label),
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
+
+                self.assertEqual(package.read_bytes(), b"invalid local package")
+                self.assertTrue(external.is_file())
 
     def test_linux_candidate_requires_shar_executable(self) -> None:
         for target_id, platform in (
