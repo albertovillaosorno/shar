@@ -313,7 +313,7 @@ def _dependency_evidence(root: Path) -> tuple[Path, dict[str, object]]:
 
 
 def _dependency_validator_root(root: Path) -> Path:
-    """Return the canonical root after rejecting redirected validator storage."""
+    """Return the canonical root after rejecting validator redirects."""
     paths = (
         root / ".dependencies",
         root / ".dependencies" / "build",

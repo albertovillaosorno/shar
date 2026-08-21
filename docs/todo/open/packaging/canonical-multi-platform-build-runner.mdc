@@ -135,7 +135,8 @@ real `.dependencies` and `.dependencies/build` tool storage even when its JSON
 evidence path is overridden, because Cargo, rustup, and validator outputs remain
 repository-owned side effects. Published validator identities must also remain
 real single-link files. Preflight repeats the real-directory and single-link
-checks before trusting either validator, so post-bootstrap redirects or hard-link
+checks before trusting either validator, so post-bootstrap redirects or
+hard-link
 aliases cannot move binary authority outside repository-owned storage.
 Canonical `arch.json`, `check.json`, and `dependencies.json` identities are also
 required to be real regular files when already present. Build preflight repeats
