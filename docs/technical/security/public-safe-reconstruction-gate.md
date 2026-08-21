@@ -148,8 +148,9 @@ caller source evidence, so malformed documents fail before private-source
 traversal. The authored icon reconstruction plan
 exercises the same policy against a real non-placeholder document. Source and
 directory-target record paths must also be canonical forward-slash relatives
-whose components satisfy the runtime portable-host policy, with an empty source
-path reserved for direct-file evidence. Source records also
+whose components contain valid Unicode scalar values and satisfy the runtime
+portable-host policy, with an empty source path reserved for direct-file
+evidence. Source records also
 retain the collector's contiguous input numbering from zero, stable relative
 path order within each directory input, unique non-overlapping portable file
 identities, and one root kind per input. Directory targets retain the algorithm
