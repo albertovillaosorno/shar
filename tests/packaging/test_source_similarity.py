@@ -925,11 +925,18 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
 
     def test_programmatic_aliases_use_rust_unicode_17_lowercase(self) -> None:
         candidate = {("bb", "p3d"): 1}
-        with self.assertRaises(_MOD.InvalidCoordinateError):
-            _MOD.measure({("\ua7ce\ua7ce", "p3d"): 1}, candidate)
+        for uppercase, lowercase in (
+            ("\ua7ce", "\ua7cf"),
+            ("\U00016ea0", "\U00016ebb"),
+        ):
+            with (
+                self.subTest(uppercase=uppercase.encode("unicode_escape")),
+                self.assertRaises(_MOD.InvalidCoordinateError),
+            ):
+                _MOD.measure({(uppercase * 2, "p3d"): 1}, candidate)
 
-        evidence = _MOD.measure({("\ua7cf\ua7cf", "p3d"): 1}, candidate)
-        self.assertEqual(evidence.reference_units, 1)
+            evidence = _MOD.measure({(lowercase * 2, "p3d"): 1}, candidate)
+            self.assertEqual(evidence.reference_units, 1)
 
     def test_parser_rejects_impossible_obfuscated_components(self) -> None:
         for directory in ("abc", "abcd", "aa~1"):

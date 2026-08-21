@@ -164,6 +164,7 @@ fn directory_target_portable_identity_collision_is_rejected()
     for paths in [
         ("Folder/File.bin", "folder/file.bin"),
         ("\u{a7ce}.bin", "\u{a7cf}.bin"),
+        ("\u{16ea0}.bin", "\u{16ebb}.bin"),
     ] {
         let document = AlgorithmDocument {
             schema: ALGORITHM_SCHEMA.to_owned(),
@@ -344,6 +345,22 @@ fn source_metadata_must_match_collector_contract() -> Result<(), String> {
             SourceRecord {
                 input: 0,
                 path: "\u{a7cf}.bin".to_owned(),
+                bytes: 512,
+                sha256: Some("0".repeat(64)),
+                projection: None,
+            },
+        ],
+        vec![
+            SourceRecord {
+                input: 0,
+                path: "\u{16ea0}.bin".to_owned(),
+                bytes: 512,
+                sha256: Some("0".repeat(64)),
+                projection: None,
+            },
+            SourceRecord {
+                input: 0,
+                path: "\u{16ebb}.bin".to_owned(),
                 bytes: 512,
                 sha256: Some("0".repeat(64)),
                 projection: None,
