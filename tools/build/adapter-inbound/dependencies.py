@@ -435,6 +435,61 @@ def _repo_rust_paths(
     return bin_root / f"cargo{suffix}", bin_root / f"rustc{suffix}"
 
 
+def _require_repo_rust_directory(path: Path, label: str) -> None:
+    """Require one repository-owned rustup toolchain directory."""
+    if (
+        not path.is_dir()
+        or path.is_symlink()
+        or os.path.isjunction(path)
+    ):
+        raise BootstrapFailure(f"{label} must be a real directory: {path}")
+
+
+def _require_repo_rust_tool(path: Path, label: str) -> None:
+    """Require one repository-owned regular single-link Rust tool."""
+    if path.is_symlink() or os.path.isjunction(path):
+        raise BootstrapFailure(f"{label} must be a real file: {path}")
+    try:
+        metadata = path.stat(follow_symlinks=False)
+    except OSError as error:
+        raise BootstrapFailure(f"{label} is missing: {path}") from error
+    if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+        raise BootstrapFailure(
+            f"{label} must be a real single-link file: {path}"
+        )
+
+
+def _repo_rust_tools_ready(
+    root: Path,
+    required: str,
+    target: str,
+    cargo: Path,
+    rustc: Path,
+) -> bool:
+    """Validate repo Rust authority and report complete tool presence."""
+    cargo_present = os.path.lexists(cargo)
+    rustc_present = os.path.lexists(rustc)
+    if not cargo_present and not rustc_present:
+        return False
+    toolchain = f"{required}-{target}"
+    directories = (
+        (root / _RUSTUP_HOME, "rustup home"),
+        (root / _RUSTUP_HOME / "toolchains", "rustup toolchain root"),
+        (
+            root / _RUSTUP_HOME / "toolchains" / toolchain,
+            "selected Rust toolchain root",
+        ),
+        (cargo.parent, "selected Rust toolchain bin root"),
+    )
+    for directory, label in directories:
+        _require_repo_rust_directory(directory, label)
+    if cargo_present:
+        _require_repo_rust_tool(cargo, "repo-local cargo")
+    if rustc_present:
+        _require_repo_rust_tool(rustc, "repo-local rustc")
+    return cargo_present and rustc_present
+
+
 def _install_repo_rust(
     root: Path,
     required: str,
@@ -442,15 +497,13 @@ def _install_repo_rust(
     """Install the exact Rust toolchain under repository-owned directories."""
     target = _host_rust_target()
     cargo, rustc = _repo_rust_paths(root, required, target)
-    if cargo.is_file() and rustc.is_file():
+    if _repo_rust_tools_ready(root, required, target, cargo, rustc):
         installer = _rustup_installer_path(root, target)
         installer_hash = None
         installer_path = None
-        if installer.is_file():
-            actual = _sha256(installer)
-            if actual == _RUSTUP_SHA256[target]:
-                installer_hash = actual
-                installer_path = str(installer.resolve())
+        if _cached_rustup_matches(installer, _RUSTUP_SHA256[target]):
+            installer_hash = _RUSTUP_SHA256[target]
+            installer_path = str(installer.resolve())
         evidence = {
             "installer": installer_path,
             "installer_sha256": installer_hash,
@@ -460,7 +513,7 @@ def _install_repo_rust(
         return cargo.resolve(), rustc.resolve(), evidence
     installer = _download_rustup(root, target)
     installer_sha256 = _sha256(installer)
-    if not cargo.is_file() or not rustc.is_file():
+    if not _repo_rust_tools_ready(root, required, target, cargo, rustc):
         rustup_home = root / _RUSTUP_HOME
         cargo_home = root / _RUSTUP_CARGO_HOME
         rustup_home.mkdir(parents=True, exist_ok=True)
@@ -484,7 +537,7 @@ def _install_repo_rust(
             raise BootstrapFailure(
                 f"rustup could not install Rust {toolchain}"
             ) from error
-    if not cargo.is_file() or not rustc.is_file():
+    if not _repo_rust_tools_ready(root, required, target, cargo, rustc):
         raise BootstrapFailure("rustup did not publish the requested toolchain")
     evidence = {
         "installer": str(installer.resolve()),
