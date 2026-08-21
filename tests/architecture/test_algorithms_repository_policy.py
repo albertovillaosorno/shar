@@ -772,7 +772,7 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
     short_targets = short_ciphertext["target"]
     assert isinstance(short_targets, list)
     assert isinstance(short_targets[0], dict)
-    short_targets[0]["ciphertext"] = "00"
+    short_targets[0]["ciphertext"] = ["00"]
     invalid.append(json.dumps(short_ciphertext))
 
     invalid.extend(
