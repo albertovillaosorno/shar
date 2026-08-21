@@ -701,14 +701,15 @@ def _fat_macho_contains_arm64(
     count = int.from_bytes(count_bytes, byte_order)
     if count == 0 or count > 64:
         return False
+    contains_arm64 = False
     for _ in range(count):
         cpu = stream.read(4)
         rest = stream.read(entry_size - 4)
         if len(cpu) != 4 or len(rest) != entry_size - 4:
             return False
         if int.from_bytes(cpu, byte_order) == _MACHO_ARM64_CPU:
-            return True
-    return False
+            contains_arm64 = True
+    return contains_arm64
 
 
 def _matches_macho(stream: object, prefix: bytes, architecture: str) -> bool:
