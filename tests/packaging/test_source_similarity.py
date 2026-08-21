@@ -260,6 +260,12 @@ class SourceSimilarityTests(unittest.TestCase):
             ),
             (
                 '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
+                '"required_files":['
+                '{"path":"README.rtf","min":1},'
+                '{"path":"README.rtf","min":1}]}'
+            ),
+            (
+                '{"schema":"shar-schoenwald.game-manifest-ledger.v2",'
                 '"required_files":[{"path":"private/source","min":1}]}'
             ),
             (

@@ -383,6 +383,14 @@ def _validate_schema_metadata(record: dict[str, Any]) -> None:
             raise LedgerInputError(
                 "count ledger required-files metadata is invalid"
             )
+        identities = {
+            (requirement["path"], requirement["min"])
+            for requirement in required_files
+        }
+        if len(identities) != len(required_files):
+            raise LedgerInputError(
+                "count ledger required-files metadata is invalid"
+            )
 
 
 def _is_schema_record(record: dict[str, Any], line_number: int) -> bool:
