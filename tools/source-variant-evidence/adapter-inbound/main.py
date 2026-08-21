@@ -43,6 +43,10 @@ import sys
 
 _CHUNK_BYTES = 1024 * 1024
 _MAX_PROJECTION_ALTERNATIVES = 256
+_ALGORITHM_SETTINGS_SCHEMA = "shar.algorithm.settings.v1"
+_ALGORITHM_SETTINGS_RELATIVE = Path(
+    "src/foundation/algorithm/composition/adapter-inbound/settings.json"
+)
 
 
 class VariantEvidenceError(ValueError):
@@ -125,6 +129,22 @@ class ProjectionMismatchError(VariantEvidenceError):
         )
 
 
+class ProjectionSettingsError(VariantEvidenceError):
+    """The active generic algorithm settings cannot be read safely."""
+
+    def __init__(self) -> None:
+        """Initialize the canonical path-free settings failure."""
+        super().__init__("active algorithm projection settings are invalid")
+
+
+class ProjectionResourceError(VariantEvidenceError):
+    """Projection evidence exceeds the active generic algorithm resources."""
+
+    def __init__(self) -> None:
+        """Initialize the canonical projection resource-limit failure."""
+        super().__init__("source projection exceeds active algorithm limits")
+
+
 class ProjectionLimitError(VariantEvidenceError):
     """Distinct projection layouts exceed the generic algorithm limit."""
 
@@ -180,6 +200,55 @@ class OffsetProjection:
     alternatives: tuple[OffsetProjectionAlternative, ...]
 
 
+def _repository_root() -> Path:
+    """Return the repository root from this tool's tracked location."""
+    return Path(__file__).resolve().parents[3]
+
+
+def _algorithm_maximum_file_bytes() -> int:
+    """Load the active generic algorithm file limit without leaking its path.
+
+    Raises:
+        ProjectionSettingsError: If active settings cannot be validated.
+
+    """
+    path = _repository_root() / _ALGORITHM_SETTINGS_RELATIVE
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise ProjectionSettingsError from error
+    if not isinstance(document, dict):
+        raise ProjectionSettingsError
+    maximum = document.get("maximum_file_bytes")
+    if (
+        document.get("schema") != _ALGORITHM_SETTINGS_SCHEMA
+        or isinstance(maximum, bool)
+        or not isinstance(maximum, int)
+        or maximum <= 0
+    ):
+        raise ProjectionSettingsError
+    return maximum
+
+
+def _validate_projection_resources(
+    projection: OffsetProjection,
+    maximum_file_bytes: int,
+) -> None:
+    """Require spans and aggregate mask bytes to fit active authoring limits.
+
+    Raises:
+        ProjectionResourceError: If one projection exceeds the active limit.
+
+    """
+    mask_bytes = 0
+    for alternative in projection.alternatives:
+        if alternative.span_bytes > maximum_file_bytes:
+            raise ProjectionResourceError
+        mask_bytes += len(alternative.mask)
+        if mask_bytes > maximum_file_bytes:
+            raise ProjectionResourceError
+
+
 def _identity(metadata: os.stat_result) -> FileIdentity:
     """Project path-free metadata needed to detect evidence-file drift."""
     return FileIdentity(
@@ -223,16 +292,23 @@ def _current_identity(path: Path) -> FileIdentity | None:
         return None
 
 
-def load_reference(path: Path) -> bytes:
+def load_reference(
+    path: Path,
+    *,
+    maximum_file_bytes: int | None = None,
+) -> bytes:
     """Read one nonempty common-byte reference without disclosing its path.
 
     Raises:
         ReferenceReadError: If the complete bytes cannot be read.
         ReferenceChangedError: If size evidence changes during the read.
         EmptyReferenceError: If the reference contains no bytes.
+        ProjectionResourceError: If projection mode exceeds the active limit.
 
     """
     expected = _regular_file_identity(path)
+    if maximum_file_bytes is not None and expected.size > maximum_file_bytes:
+        raise ProjectionResourceError
     try:
         with path.open("rb") as handle:
             opened = _identity(os.fstat(handle.fileno()))
@@ -303,15 +379,22 @@ def measure_variant(reference: bytes, path: Path) -> VariantEvidence:
     )
 
 
-def _read_candidate_snapshot(path: Path) -> bytes:
+def _read_candidate_snapshot(
+    path: Path,
+    *,
+    maximum_file_bytes: int | None = None,
+) -> bytes:
     """Read one stable candidate snapshot with path-free failures.
 
     Raises:
         CandidateReadError: If candidate bytes cannot be read completely.
         CandidateChangedError: If candidate identity changes during the read.
+        ProjectionResourceError: If the candidate exceeds the active limit.
 
     """
     expected = _regular_file_identity(path)
+    if maximum_file_bytes is not None and expected.size > maximum_file_bytes:
+        raise ProjectionResourceError
     try:
         with path.open("rb") as handle:
             opened = _identity(os.fstat(handle.fileno()))
@@ -364,6 +447,8 @@ def _ordered_projection(
 def build_offset_projection(
     reference: bytes,
     paths: Sequence[Path],
+    *,
+    maximum_file_bytes: int | None = None,
 ) -> OffsetProjection:
     """Derive deduplicated ordered-subsequence layouts for local variants.
 
@@ -371,20 +456,35 @@ def build_offset_projection(
         EmptyReferenceError: If the supplied common artifact is empty.
         ProjectionMismatchError: If one candidate cannot reproduce it in order.
         ProjectionLimitError: If distinct layouts exceed the algorithm limit.
+        ProjectionResourceError: If projection resources exceed active limits.
 
     """
     if not reference:
         raise EmptyReferenceError
     if not paths:
         raise ProjectionMismatchError
+    maximum = (
+        _algorithm_maximum_file_bytes()
+        if maximum_file_bytes is None
+        else maximum_file_bytes
+    )
+    if len(reference) > maximum:
+        raise ProjectionResourceError
     alternatives: list[OffsetProjectionAlternative] = []
     for path in paths:
-        candidate = _read_candidate_snapshot(path)
+        candidate = _read_candidate_snapshot(
+            path,
+            maximum_file_bytes=maximum,
+        )
         alternative = _ordered_projection(reference, candidate)
         if alternative not in alternatives:
             alternatives.append(alternative)
             if len(alternatives) > _MAX_PROJECTION_ALTERNATIVES:
                 raise ProjectionLimitError
+            _validate_projection_resources(
+                OffsetProjection(alternatives=tuple(alternatives)),
+                maximum,
+            )
     return OffsetProjection(alternatives=tuple(alternatives))
 
 
@@ -434,12 +534,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 2
     try:
-        reference = load_reference(Path(arguments[0]))
         variants = [Path(value) for value in arguments[1:]]
         if projection_mode:
-            projection = build_offset_projection(reference, variants)
+            maximum_file_bytes = _algorithm_maximum_file_bytes()
+            reference = load_reference(
+                Path(arguments[0]),
+                maximum_file_bytes=maximum_file_bytes,
+            )
+            projection = build_offset_projection(
+                reference,
+                variants,
+                maximum_file_bytes=maximum_file_bytes,
+            )
             output = _projection_text(projection)
         else:
+            reference = load_reference(Path(arguments[0]))
             evidence = [measure_variant(reference, path) for path in variants]
             output = "".join(starmap(_render, enumerate(evidence, start=1)))
     except VariantEvidenceError as error:
