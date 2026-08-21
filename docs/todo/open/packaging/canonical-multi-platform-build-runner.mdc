@@ -62,7 +62,7 @@ deduplicating them before persistence. Focused regressions prove the exact saved
 path is revalidated, a failed architecture revalidation stops the runner, and
 `main()` performs that gate before target consumption. Architecture and
 preflight evidence are consumed from stable single-link byte snapshots whose
-SHA-256 is passed into the child revalidator. `arch.py` and `check.py` refuse to
+SHA-256 is passed into child revalidation. `arch.py` and `check.py` refuse to
 revalidate a different snapshot, and the runner requires the same bytes again
 afterward, so an ABA path substitution cannot make the child validate one saved
 decision while the runner consumes another. Direct revalidation also pins the
