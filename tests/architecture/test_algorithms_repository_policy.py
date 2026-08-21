@@ -415,7 +415,18 @@ def _is_reserved_host_alias(name: str) -> bool:
 
 
 def _assert_portable_component(name: str) -> None:
-    """Mirror the runtime portable component policy used during replay."""
+    """Mirror the runtime portable component policy used during replay.
+
+    Raises:
+        AssertionError: If the component cannot satisfy replay path policy.
+
+    """
+    try:
+        encoded_utf16 = name.encode("utf-16-le")
+    except UnicodeEncodeError as error:
+        raise AssertionError(
+            "portable component must contain Unicode scalar values"
+        ) from error
     assert not any(
         character in _FORBIDDEN_HOST_CHARACTERS for character in name
     )
@@ -423,7 +434,7 @@ def _assert_portable_component(name: str) -> None:
         unicodedata.category(character) == "Cc" for character in name
     )
     assert not any(_is_unicode_path_modifier(character) for character in name)
-    utf16_units = len(name.encode("utf-16-le")) // 2
+    utf16_units = len(encoded_utf16) // 2
     assert utf16_units <= _MAX_PORTABLE_COMPONENT_UTF16_UNITS
     assert not name.endswith((".", " "))
     assert not _is_reserved_host_alias(name)
@@ -803,6 +814,7 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
             json.dumps(_synthetic_plan(path="CON")),
             json.dumps(_synthetic_source_plan(path="folder/PRN.txt")),
             json.dumps(_synthetic_plan(path="folder/name.")),
+            json.dumps(_synthetic_plan(path="\ud800.bin")),
             json.dumps(
                 _synthetic_plan(path="folder/" + chr(8203) + "hidden.bin")
             ),
