@@ -271,19 +271,17 @@ def _revalidate_snapshot(
     command: list[str],
     label: str,
 ) -> bytes:
-    """Return bytes proven unchanged across one child revalidation."""
-    try:
-        before = path.read_bytes()
-    except OSError as error:
-        raise RunFailure(f"cannot snapshot saved {label}") from error
-    result = subprocess.run(command, cwd=root, check=False)
+    """Return the exact saved bytes validated by one child process."""
+    before = _read_real_bytes(path, f"saved {label}")
+    expected_sha256 = hashlib.sha256(before).hexdigest()
+    result = subprocess.run(
+        [*command, "--expected-sha256", expected_sha256],
+        cwd=root,
+        check=False,
+    )
     if result.returncode:
         raise RunFailure(f"saved {label} did not revalidate")
-    try:
-        after = path.read_bytes()
-    except OSError as error:
-        message = f"cannot read saved {label} after revalidation"
-        raise RunFailure(message) from error
+    after = _read_real_bytes(path, f"saved {label}")
     if after != before:
         raise RunFailure(f"saved {label} changed during revalidation")
     return after

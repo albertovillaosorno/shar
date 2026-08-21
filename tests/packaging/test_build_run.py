@@ -1919,6 +1919,10 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                     "--revalidate",
                     "--output",
                     str(arch_path),
+                    "--expected-sha256",
+                    hashlib.sha256(
+                        b"stable architecture evidence"
+                    ).hexdigest(),
                 ],
                 cwd=root,
                 check=False,

@@ -35,6 +35,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import json
 import os
@@ -294,9 +295,27 @@ def _require_selection_snapshot(path: Path, snapshot: bytes) -> None:
         raise SystemExit("arch: saved selection changed during revalidation")
 
 
-def _revalidate_selection(path: Path) -> int:
+def _require_expected_snapshot(
+    snapshot: bytes,
+    expected_sha256: str | None,
+) -> None:
+    """Require one saved selection snapshot to match runner authority."""
+    if (
+        expected_sha256 is not None
+        and hashlib.sha256(snapshot).hexdigest() != expected_sha256
+    ):
+        raise SystemExit(
+            "arch: saved selection does not match requested snapshot"
+        )
+
+
+def _revalidate_selection(
+    path: Path,
+    expected_sha256: str | None = None,
+) -> int:
     """Require saved architecture evidence to match canonical current policy."""
     snapshot = _selection_snapshot(path)
+    _require_expected_snapshot(snapshot, expected_sha256)
     try:
         value = json.loads(
             snapshot.decode("utf-8"),
@@ -476,6 +495,10 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="revalidate the saved selection without opening the checklist",
     )
+    parser.add_argument(
+        "--expected-sha256",
+        help="require revalidation to consume this exact saved snapshot",
+    )
     return parser
 
 
@@ -493,13 +516,17 @@ def main() -> int:
         raise SystemExit(
             "arch: --list, --select, and --revalidate cannot be combined"
         )
+    if args.expected_sha256 is not None and not args.revalidate:
+        raise SystemExit(
+            "arch: --expected-sha256 requires --revalidate"
+        )
     if args.list:
         return _print_targets()
     _validate_canonical_output_root(_root(), output)
     if args.select:
         return _save_cli(args.select, output)
     if args.revalidate:
-        return _revalidate_selection(output)
+        return _revalidate_selection(output, args.expected_sha256)
     return _show_gui(output)
 
 

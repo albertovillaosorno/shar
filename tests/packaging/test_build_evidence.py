@@ -1566,6 +1566,27 @@ class CheckRevalidationSnapshotTests(unittest.TestCase):
             ):
                 _CHECK._revalidate(path)
 
+    def test_revalidation_rejects_unexpected_snapshot_digest(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-check-revalidation-digest-"
+        ) as raw:
+            path = Path(raw) / "check.json"
+            path.write_text(
+                '{"schema":"shar.build.check.v1"}\n',
+                encoding="utf-8",
+            )
+
+            with (
+                mock.patch.object(_CHECK, "_run") as recompute,
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "saved check evidence does not match requested snapshot",
+                ),
+            ):
+                _CHECK._revalidate(path, "0" * 64)
+
+            recompute.assert_not_called()
+
     def test_revalidation_rejects_saved_evidence_drift(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-check-revalidation-drift-"

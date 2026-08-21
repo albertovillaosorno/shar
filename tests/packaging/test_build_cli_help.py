@@ -161,6 +161,19 @@ class BuildCliHelpTests(unittest.TestCase):
             ):
                 module._revalidate_selection(output)
 
+    def test_arch_revalidation_rejects_unexpected_snapshot_digest(self) -> None:
+        module = _load_arch_without_tkinter()
+        with tempfile.TemporaryDirectory(prefix="shar-arch-digest-") as raw:
+            output = Path(raw) / "arch.json"
+            selected = [module._TARGETS_BY_ID["linux-x64"]]
+            module._write_selection(output, selected)
+
+            with self.assertRaisesRegex(
+                SystemExit,
+                "saved selection does not match requested snapshot",
+            ):
+                module._revalidate_selection(output, "0" * 64)
+
     def test_arch_revalidation_rejects_saved_selection_drift(self) -> None:
         module = _load_arch_without_tkinter()
         with tempfile.TemporaryDirectory(prefix="shar-arch-drift-") as raw:
