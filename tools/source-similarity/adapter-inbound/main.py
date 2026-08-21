@@ -39,6 +39,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from fractions import Fraction
 import json
+import os
 from pathlib import Path
 import stat
 import sys
@@ -126,6 +127,47 @@ def _object_without_duplicates(
             raise LedgerInputError("count ledger repeats a JSON object key")
         record[key] = value
     return record
+
+
+@dataclass(frozen=True, slots=True)
+class _LedgerIdentity:
+    """Stable local identity captured around one calibration-ledger read."""
+
+    device: int
+    inode: int
+    modified_ns: int
+    size: int
+
+
+def _ledger_identity(metadata: os.stat_result) -> _LedgerIdentity:
+    """Project path-free filesystem evidence needed to detect ledger drift."""
+    return _LedgerIdentity(
+        device=metadata.st_dev,
+        inode=metadata.st_ino,
+        modified_ns=metadata.st_mtime_ns,
+        size=metadata.st_size,
+    )
+
+
+def _regular_ledger_identity(path: Path) -> _LedgerIdentity:
+    """Return one non-redirected regular-file identity for a count ledger."""
+    try:
+        metadata = path.lstat()
+    except OSError as error:
+        raise LedgerInputError(
+            "count ledger could not be read as UTF-8"
+        ) from error
+    if not stat.S_ISREG(metadata.st_mode):
+        raise LedgerInputError("count ledger must be a regular file")
+    return _ledger_identity(metadata)
+
+
+def _current_ledger_identity(path: Path) -> _LedgerIdentity | None:
+    """Return the final regular-file identity, or `None` after path drift."""
+    try:
+        return _regular_ledger_identity(path)
+    except LedgerInputError:
+        return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -384,18 +426,28 @@ def parse_count_ledger(text: str) -> dict[Coordinate, int]:
 
 
 def load_count_ledger(path: Path) -> dict[Coordinate, int]:
-    """Load one canonical public JSONL ledger without disclosing its path."""
+    """Load one stable canonical JSONL ledger without disclosing its path."""
+    expected = _regular_ledger_identity(path)
     try:
-        mode = path.stat().st_mode
+        with path.open("rb") as handle:
+            opened = _ledger_identity(os.fstat(handle.fileno()))
+            if opened != expected:
+                raise LedgerInputError("count ledger changed while reading")
+            data = handle.read()
+            finished = _ledger_identity(os.fstat(handle.fileno()))
     except OSError as error:
         raise LedgerInputError(
             "count ledger could not be read as UTF-8"
         ) from error
-    if not stat.S_ISREG(mode):
-        raise LedgerInputError("count ledger must be a regular file")
+    if (
+        finished != expected
+        or _current_ledger_identity(path) != expected
+        or len(data) != expected.size
+    ):
+        raise LedgerInputError("count ledger changed while reading")
     try:
-        text = path.read_bytes().decode("utf-8")
-    except (OSError, UnicodeError) as error:
+        text = data.decode("utf-8")
+    except UnicodeError as error:
         raise LedgerInputError(
             "count ledger could not be read as UTF-8"
         ) from error
