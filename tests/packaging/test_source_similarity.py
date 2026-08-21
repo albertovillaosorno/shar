@@ -597,14 +597,10 @@ class SourceSimilarityLedgerFileTests(unittest.TestCase):
 class SourceSimilarityAliasShapeTests(unittest.TestCase):
     """Guard the manifest producer's bounded public directory aliases."""
 
-    def test_non_generated_suffix_remains_distinct(self) -> None:
-        reference = {("aa~1", "p3d"): 2}
+    def test_non_generated_suffixes_fail_closed(self) -> None:
         candidate = {("aa", "p3d"): 2}
-        evidence = _MOD.measure(reference, candidate)
-        self.assertEqual(evidence.reference_coverage, Fraction(0, 1))
-        self.assertEqual(evidence.weighted_jaccard, Fraction(0, 1))
-
         for directory in (
+            "aa~1",
             "aa~00",
             "aa~001",
             "aa~18446744073709551616",
@@ -637,6 +633,20 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
                 ),
             ):
                 _MOD.parse_count_ledger(ledger)
+
+    def test_parser_rejects_impossible_obfuscated_components(self) -> None:
+        for directory in ("abc", "abcd", "aa~1"):
+            with (
+                self.subTest(directory=directory),
+                self.assertRaises(_MOD.InvalidCoordinateError),
+            ):
+                _MOD.parse_count_ledger(
+                    json.dumps({
+                        "dir": directory,
+                        "ext": "p3d",
+                        "count": 1,
+                    })
+                )
 
     def test_parser_rejects_private_directory_names_outside_alias_shape(
         self,

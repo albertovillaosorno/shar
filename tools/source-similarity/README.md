@@ -34,11 +34,12 @@ Directory
 coordinates must retain the producer's
 lowercase, forward-slash
 normalization (with the empty string reserved for the game root). After any
-canonical collision ordinal is removed, every directory component must contain
-2–4 Unicode scalar values: exactly the bounded shape produced by lowercasing the
-first and last source-directory characters. Longer readable directory
-names are
-therefore rejected instead of entering calibration evidence. Coordinate
+canonical collision ordinal is removed, every directory component must be the
+concatenation of the producer's two lowercased endpoint characters. Normal
+endpoints contribute one Unicode scalar each; the current Rust mapping has one
+two-scalar lowercase expansion (`i` plus combining dot), which accounts for the
+only valid 3- or 4-scalar component shapes. Other short readable aliases are
+rejected instead of entering calibration evidence. Coordinate
 extensions must likewise be nonempty and lowercase; files without
 extensions use the manifest's `(none)` token. Coordinate counts, required-file
 minima, and each
