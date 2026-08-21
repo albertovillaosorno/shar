@@ -414,6 +414,25 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
         finally:
             temporary.cleanup()
 
+    def test_validator_publication_rejects_hard_linked_build_output(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-validator-build-hard-link-"
+        ) as raw:
+            root = Path(raw)
+            external = root / "external-validator"
+            external.write_bytes(b"validator")
+            built = root / "built" / "validate-game"
+            built.parent.mkdir()
+            built.hardlink_to(external)
+
+            with self.assertRaisesRegex(
+                _DEPENDENCIES.BootstrapFailure,
+                "validator build output must be a real file",
+            ):
+                _DEPENDENCIES._publish_validator(root, built)
+
     @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
     def test_validator_publication_rejects_redirected_destination(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-validator-link-") as raw:

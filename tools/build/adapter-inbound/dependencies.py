@@ -44,6 +44,7 @@ from pathlib import Path
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tomllib
@@ -647,8 +648,21 @@ def _build_cargo_binary(
     return built
 
 
+def _require_real_validator_file(path: Path, label: str) -> None:
+    """Require one non-redirected single-link validator file."""
+    if path.is_symlink() or os.path.isjunction(path):
+        raise BootstrapFailure(f"{label} must be a real file: {path}")
+    try:
+        metadata = path.stat(follow_symlinks=False)
+    except OSError as error:
+        raise BootstrapFailure(f"{label} is missing: {path}") from error
+    if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+        raise BootstrapFailure(f"{label} must be a real file: {path}")
+
+
 def _publish_validator(root: Path, built: Path) -> Path:
     """Atomically publish one validator when its content changed."""
+    _require_real_validator_file(built, "validator build output")
     destination = root / _BIN_ROOT / built.name
     destination.parent.mkdir(parents=True, exist_ok=True)
     if os.path.lexists(destination):
@@ -714,6 +728,8 @@ def _validator_evidence(
         binary="validate-source-deep",
     )
     _require_validator_source_hashes(root, source_hashes, "build")
+    _require_real_validator_file(built, "validator build output")
+    _require_real_validator_file(deep_built, "deep validator build output")
     validator = (
         _publish_validator(root, built)
         if publish_validator
