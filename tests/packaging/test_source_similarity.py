@@ -540,6 +540,27 @@ class SourceSimilarityCanonicalOrderTests(unittest.TestCase):
 class SourceSimilarityLedgerFileTests(unittest.TestCase):
     """Require stable non-redirected calibration-ledger snapshots."""
 
+    def test_ledger_identity_includes_status_change_time(self) -> None:
+        before = mock.Mock(
+            st_dev=1,
+            st_ino=2,
+            st_mtime_ns=3,
+            st_ctime_ns=4,
+            st_size=5,
+        )
+        after = mock.Mock(
+            st_dev=1,
+            st_ino=2,
+            st_mtime_ns=3,
+            st_ctime_ns=6,
+            st_size=5,
+        )
+
+        self.assertNotEqual(
+            _MOD._ledger_identity(before),
+            _MOD._ledger_identity(after),
+        )
+
     def test_ledger_symlink_is_rejected_before_payload_read(self) -> None:
         if sys.platform == "win32":
             self.skipTest("symlink fixture is Unix-focused")

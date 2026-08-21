@@ -51,8 +51,8 @@ parents must be non-redirected; the file itself must be regular and preserve
 the canonical
 producer framing: UTF-8, LF-only record boundaries, no outer record whitespace,
 and a final LF. Each ledger is opened once and its device, inode, modification
-time, and byte count must remain identical from pre-open inspection through the
-completed read and final path check. Programmatic count
+time, status-change time, and byte count must remain identical from pre-open
+inspection through the completed read and final path check. Programmatic count
 vectors are captured once and validated as stable snapshots before
 measurement,
 so a stateful mapping cannot change counts between validation and scoring. The

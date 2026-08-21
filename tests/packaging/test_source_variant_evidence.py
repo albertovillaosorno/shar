@@ -57,6 +57,24 @@ _SPEC.loader.exec_module(_MOD)
 
 
 class SourceVariantEvidenceTests(unittest.TestCase):
+    def test_file_identity_includes_status_change_time(self) -> None:
+        before = mock.Mock(
+            st_dev=1,
+            st_ino=2,
+            st_mtime_ns=3,
+            st_ctime_ns=4,
+            st_size=5,
+        )
+        after = mock.Mock(
+            st_dev=1,
+            st_ino=2,
+            st_mtime_ns=3,
+            st_ctime_ns=6,
+            st_size=5,
+        )
+
+        self.assertNotEqual(_MOD._identity(before), _MOD._identity(after))
+
     def test_complete_subsequence_reports_aggregate_evidence(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-variant-") as raw:
             root = Path(raw)

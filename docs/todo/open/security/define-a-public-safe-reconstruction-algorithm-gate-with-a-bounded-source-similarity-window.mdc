@@ -105,9 +105,10 @@ calibration ledger. Ledger paths must also identify non-redirected regular files
 beneath non-redirected lexical directory parents before bytes are read,
 preventing calibration from traversing symlinks or Windows junctions or treating
 other special filesystem nodes as JSONL. Calibration reads one open file
-snapshot and requires its device, inode, modification time, and size to remain
-stable through the read and final path check, so path replacement cannot
-substitute different evidence after type inspection. The read-only observation
+snapshot and requires its device, inode, modification time, status-change time,
+and size to remain stable through the read and final path check, so same-size
+rewrites cannot evade drift detection merely by restoring modification time.
+The read-only observation
 adapter now fails when an exact-file-only source has
 no countable structural rows, so success cannot produce an empty unusable
 ledger.
@@ -152,7 +153,9 @@ local variants while emitting only argument ordinals and aggregate byte counts.
 Its `--projection` mode can also emit an `offset-mask-set-v1` descriptor
 without a source hash, containing only bounded positional layouts. Private
 reference and variant paths now reject symlinked or junction-backed lexical
-directory parents before any payload read. The three
+directory parents before any payload read. Their read snapshots also retain
+device, inode, modification time, status-change time, and size across the open
+file and final path checks. The three
 executable variants retained in the current private workspace all reproduce
 the full 284,682-byte common sequence and require three distinct layouts. That
 result is intentionally limited to those available samples and does not
