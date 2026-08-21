@@ -689,6 +689,46 @@ def _matches_thin_macho(stream: object, byte_order: str) -> bool:
     )
 
 
+def _fat_macho_slice_bounds(
+    payload: bytes,
+    byte_order: str,
+    entry_size: int,
+    table_end: int,
+    file_size: int,
+) -> tuple[int, int] | None:
+    """Return one structurally bounded fat Mach-O slice range."""
+    offset_width = 8 if entry_size == 32 else 4
+    offset_start = 4
+    size_start = offset_start + offset_width
+    offset = int.from_bytes(
+        payload[offset_start:size_start],
+        byte_order,
+    )
+    size = int.from_bytes(
+        payload[size_start : size_start + offset_width],
+        byte_order,
+    )
+    if (
+        size == 0
+        or offset < table_end
+        or offset > file_size
+        or size > file_size - offset
+    ):
+        return None
+    return offset, size
+
+
+def _fat_macho_arm64_slice_is_native(stream: object, offset: int) -> bool:
+    """Return whether one fat ARM64 slice begins with a matching thin header."""
+    try:
+        stream.seek(offset)
+    except (OSError, ValueError):
+        return False
+    prefix = stream.read(4)
+    thin_order = _MACHO_THIN_ENDIAN.get(prefix)
+    return thin_order is not None and _matches_thin_macho(stream, thin_order)
+
+
 def _fat_macho_contains_arm64(
     stream: object,
     byte_order: str,
@@ -703,33 +743,30 @@ def _fat_macho_contains_arm64(
     if count == 0 or count > 64:
         return False
     table_end = 8 + (count * entry_size)
-    contains_arm64 = False
+    arm64_offsets: list[int] = []
     for _ in range(count):
         cpu = stream.read(4)
         rest = stream.read(entry_size - 4)
         if len(cpu) != 4 or len(rest) != entry_size - 4:
             return False
-        offset_width = 8 if entry_size == 32 else 4
-        offset_start = 4
-        size_start = offset_start + offset_width
-        offset = int.from_bytes(
-            rest[offset_start:size_start],
+        bounds = _fat_macho_slice_bounds(
+            rest,
             byte_order,
+            entry_size,
+            table_end,
+            file_size,
         )
-        size = int.from_bytes(
-            rest[size_start : size_start + offset_width],
-            byte_order,
-        )
-        if (
-            size == 0
-            or offset < table_end
-            or offset > file_size
-            or size > file_size - offset
-        ):
+        if bounds is None:
             return False
+        offset, size = bounds
         if int.from_bytes(cpu, byte_order) == _MACHO_ARM64_CPU:
-            contains_arm64 = True
-    return contains_arm64
+            if size < 8:
+                return False
+            arm64_offsets.append(offset)
+    return bool(arm64_offsets) and all(
+        _fat_macho_arm64_slice_is_native(stream, offset)
+        for offset in arm64_offsets
+    )
 
 
 def _matches_macho(

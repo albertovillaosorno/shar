@@ -100,7 +100,12 @@ def _write_android_apk(path: Path, machine: int = 0x00B7) -> None:
         )
 
 
-def _write_ios_ipa(path: Path, cpu: int = 0x0100000C) -> None:
+def _write_ios_ipa(
+    path: Path,
+    cpu: int = 0x0100000C,
+    *,
+    binary: bytes | None = None,
+) -> None:
     """Write one synthetic IPA with a declared main executable."""
     with _RUN.zipfile.ZipFile(path, "w") as archive:
         archive.writestr(
@@ -109,7 +114,7 @@ def _write_ios_ipa(path: Path, cpu: int = 0x0100000C) -> None:
         )
         archive.writestr(
             "Payload/SHAR.app/shar",
-            _synthetic_macho(cpu),
+            _synthetic_macho(cpu) if binary is None else binary,
         )
 
 
@@ -1331,6 +1336,18 @@ class CandidateArtifactTests(unittest.TestCase):
                 _RUN._TARGETS_BY_ID["ios-arm64"],
             )
 
+            _write_ios_ipa(
+                ipa,
+                binary=_synthetic_fat_macho((
+                    0x01000007,
+                    _RUN._MACHO_ARM64_CPU,
+                )),
+            )
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["ios-arm64"],
+            )
+
     def test_linux_candidate_requires_shar_executable(self) -> None:
         for target_id, platform in (
             ("linux-arm64", "LinuxArm64"),
@@ -1458,7 +1475,21 @@ class CandidateArtifactTests(unittest.TestCase):
                 + (1).to_bytes(4, "big")
                 + fat_entry
             )
-            for malformed in (truncated_fat, zero_slice_fat):
+            in_bounds_non_macho = (
+                bytes.fromhex("cafebabe")
+                + (1).to_bytes(4, "big")
+                + _RUN._MACHO_ARM64_CPU.to_bytes(4, "big")
+                + (b"\0" * 4)
+                + (28).to_bytes(4, "big")
+                + (8).to_bytes(4, "big")
+                + (b"\0" * 4)
+                + b"invalid!"
+            )
+            for malformed in (
+                truncated_fat,
+                zero_slice_fat,
+                in_bounds_non_macho,
+            ):
                 with (
                     self.subTest(malformed_size=len(malformed)),
                     self.assertRaisesRegex(
