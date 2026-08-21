@@ -482,6 +482,31 @@ class SourceSimilaritySchemaParityTests(unittest.TestCase):
         self.assertTrue(counts)
 
 
+class SourceSimilarityCanonicalOrderTests(unittest.TestCase):
+    """Require JSONL rows to retain deterministic producer coordinate order."""
+
+    def test_parser_rejects_reordered_coordinates(self) -> None:
+        ledgers = (
+            (
+                '{"dir":"bb","ext":"p3d","count":1}\n'
+                '{"dir":"aa","ext":"p3d","count":1}\n'
+            ),
+            (
+                '{"dir":"aa","ext":"rcf","count":1}\n'
+                '{"dir":"aa","ext":"p3d","count":1}\n'
+            ),
+        )
+        for ledger in ledgers:
+            with (
+                self.subTest(ledger=ledger),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "coordinate order",
+                ),
+            ):
+                _MOD.parse_count_ledger(ledger)
+
+
 class SourceSimilarityLedgerFileTests(unittest.TestCase):
     """Require stable non-redirected calibration-ledger snapshots."""
 

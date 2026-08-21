@@ -500,6 +500,7 @@ def parse_count_ledger(text: str) -> dict[Coordinate, int]:
     """Parse public manifest coordinates without retaining metadata payloads."""
     counts: dict[Coordinate, int] = {}
     count_field: str | None = None
+    previous_coordinate: Coordinate | None = None
     for line_number, line in enumerate(_ledger_lines(text), start=1):
         record = _parse_jsonl_record(line, line_number)
         if _is_schema_record(record, line_number):
@@ -514,7 +515,12 @@ def parse_count_ledger(text: str) -> dict[Coordinate, int]:
             raise LedgerInputError(
                 f"count ledger repeats a coordinate at line {line_number}"
             )
+        if previous_coordinate is not None and coordinate < previous_coordinate:
+            raise LedgerInputError(
+                "count ledger coordinate order is not canonical"
+            )
         counts[coordinate] = count
+        previous_coordinate = coordinate
     _validate_ledger_collision_families(counts)
     _validate(counts)
     return counts
