@@ -285,6 +285,29 @@ class WindowsShortcutTargetTests(unittest.TestCase):
             ):
                 self.module._discover_target(root)
 
+    def test_discovery_and_explicit_target_reject_hard_link(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-shortcut-hard-link-"
+        ) as raw:
+            root = Path(raw)
+            dist = root / "dist/windows-x64"
+            dist.mkdir(parents=True)
+            external = root / "external-shar.exe"
+            external.write_bytes(b"game")
+            target = dist / "shar.exe"
+            target.hardlink_to(external)
+
+            with self.assertRaisesRegex(
+                SystemExit,
+                "dist/ contains a hard-linked file",
+            ):
+                self.module._discover_target(root)
+            with self.assertRaisesRegex(
+                SystemExit,
+                "non-empty packaged SHAR",
+            ):
+                self.module._target(str(target), root)
+
     def test_discovery_ignores_original_helpers_and_lookalikes(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-shortcut-target-") as raw:
             root = Path(raw)
