@@ -120,6 +120,37 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
         finally:
             temporary.cleanup()
 
+    def test_source_closure_scan_failures_are_not_suppressed(self) -> None:
+        temporary, root = self._fixture()
+        try:
+            blocked = root / "src/migration/manifest"
+
+            def assert_scan_failure(module: ModuleType) -> None:
+                real_scan = module._scan_source_directory
+
+                def strict_scan(
+                    path: Path,
+                ) -> AbstractContextManager[Iterator[os.DirEntry[str]]]:
+                    if path == blocked:
+                        raise PermissionError("source closure scan blocked")
+                    return real_scan(path)
+
+                with (
+                    mock.patch.object(
+                        module,
+                        "_scan_source_directory",
+                        strict_scan,
+                    ),
+                    self.assertRaises(PermissionError),
+                ):
+                    module._validator_source_sha256(root)
+
+            for module in (_DEPENDENCIES, _CHECK):
+                with self.subTest(module=module.__name__):
+                    assert_scan_failure(module)
+        finally:
+            temporary.cleanup()
+
     def test_deep_source_drift_rejects_byte_intact_validator(self) -> None:
         temporary, root = self._deep_fixture()
         try:
