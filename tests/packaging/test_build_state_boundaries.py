@@ -244,6 +244,51 @@ class CanonicalBuildStateBoundaryTests(unittest.TestCase):
             ):
                 _CHECK._validate_canonical_output_root(root, output)
 
+    @unittest.skipIf(sys.platform == "win32", "symlink setup is Unix-focused")
+    def test_check_rejects_linked_dependency_evidence_input(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-dependency-input-link-"
+        ) as raw:
+            root = Path(raw)
+            external = root / "external-dependencies.json"
+            external.write_text(
+                '{"schema":"shar.build.dependencies.v1"}\n',
+                encoding="utf-8",
+            )
+            dependency = root / _CHECK._DEPENDENCIES_PATH
+            dependency.parent.mkdir(parents=True)
+            dependency.symlink_to(external)
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "dependency evidence must be a real file",
+            ):
+                _CHECK._dependency_evidence(root)
+
+    def test_check_rejects_junction_dependency_evidence_input(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-dependency-input-junction-"
+        ) as raw:
+            root = Path(raw)
+            dependency = root / _CHECK._DEPENDENCIES_PATH
+            dependency.parent.mkdir(parents=True)
+            dependency.write_text(
+                '{"schema":"shar.build.dependencies.v1"}\n',
+                encoding="utf-8",
+            )
+            with (
+                mock.patch.object(
+                    _CHECK.os.path,
+                    "isjunction",
+                    side_effect=lambda path: Path(path) == dependency,
+                ),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "dependency evidence must be a real file",
+                ),
+            ):
+                _CHECK._dependency_evidence(root)
+
     def test_dependencies_reject_linked_canonical_evidence_file(
         self,
     ) -> None:
