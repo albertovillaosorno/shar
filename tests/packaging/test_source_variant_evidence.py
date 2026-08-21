@@ -367,6 +367,20 @@ class SourceVariantProjectionTests(unittest.TestCase):
             _MOD._read_candidate_snapshot(path, maximum_file_bytes=8)
         opened.assert_not_called()
 
+    def test_projection_mask_does_not_reserve_for_candidate_tail(self) -> None:
+        candidate = b"x" + (b"a" * 8191)
+        with mock.patch.object(
+            _MOD,
+            "bytearray",
+            wraps=bytearray,
+            create=True,
+        ) as packed_mask:
+            alternative = _MOD._ordered_projection(b"x", candidate)
+
+        packed_mask.assert_called_once_with()
+        self.assertEqual(alternative.span_bytes, 1)
+        self.assertEqual(alternative.mask, b"\x80")
+
     def test_projection_packs_sparse_long_span_mask(self) -> None:
         candidate = (b"a" * 8192) + b"x"
 
