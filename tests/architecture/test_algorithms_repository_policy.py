@@ -224,6 +224,12 @@ _RESERVED_HOST_SUFFIXES = frozenset(
 _FORBIDDEN_HOST_CHARACTERS = frozenset('<>"|?*\\')
 
 
+def _parse_json_integer(lexeme: str) -> int:
+    """Match serde unsigned-integer parsing before Python normalizes `-0`."""
+    assert lexeme != "-0", "algorithm JSON uses signed zero"
+    return int(lexeme)
+
+
 def _json_object_without_duplicates(
     pairs: list[tuple[str, object]],
 ) -> dict[str, object]:
@@ -282,6 +288,7 @@ def _active_settings() -> dict[str, object]:
     document = json.loads(
         path.read_text(encoding="utf-8"),
         object_pairs_hook=_json_object_without_duplicates,
+        parse_int=_parse_json_integer,
     )
     return _validate_settings_document(document)
 
@@ -632,6 +639,7 @@ def _assert_source_bound_plan(text: str) -> None:
     document = json.loads(
         text,
         object_pairs_hook=_json_object_without_duplicates,
+        parse_int=_parse_json_integer,
     )
     assert isinstance(document, dict)
     assert set(document) == {
@@ -830,6 +838,10 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
     child["path"] = "folder/child.bin"
     target.append(child)
     invalid.append(json.dumps(overlap))
+
+    signed_zero = json.dumps(_synthetic_plan())
+    signed_zero = signed_zero.replace('"input": 0', '"input": -0', 1)
+    invalid.append(signed_zero)
 
     duplicate_key = json.dumps(_synthetic_plan())
     duplicate_key = duplicate_key.replace(
