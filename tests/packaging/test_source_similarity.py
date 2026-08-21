@@ -479,6 +479,21 @@ class SourceSimilarityTests(unittest.TestCase):
 class SourceSimilarityJsonRobustnessTests(unittest.TestCase):
     """Keep malformed JSON failures inside the path-free input boundary."""
 
+    def test_parser_rejects_ledgers_without_coordinates(self) -> None:
+        ledgers = (
+            "",
+            '{"schema":"shar-schoenwald.game-manifest-ledger.v2"}',
+        )
+        for ledger in ledgers:
+            with (
+                self.subTest(ledger=ledger),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "contains no coordinates",
+                ),
+            ):
+                _MOD.parse_count_ledger(ledger)
+
     def test_parser_rejects_zero_observation_but_allows_optional_minimum(
         self,
     ) -> None:

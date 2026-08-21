@@ -631,6 +631,8 @@ def parse_count_ledger(text: str) -> dict[Coordinate, int]:
             )
         counts[coordinate] = count
         previous_coordinate = coordinate
+    if not counts:
+        raise LedgerInputError("count ledger contains no coordinates")
     _validate_ledger_collision_families(counts)
     _validate(counts)
     return counts
