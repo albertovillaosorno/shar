@@ -1100,9 +1100,19 @@ def _saved_engine_root(saved: dict[str, object]) -> Path:
     return Path(raw_root)
 
 
-def _revalidate(path: Path) -> None:
+def _revalidate(
+    path: Path,
+    expected_sha256: str | None = None,
+) -> None:
     """Recompute preflight evidence and require exact saved equality."""
     snapshot = _read_real_evidence_bytes(path, "saved check evidence")
+    if (
+        expected_sha256 is not None
+        and hashlib.sha256(snapshot).hexdigest() != expected_sha256
+    ):
+        raise CheckFailure(
+            "saved check evidence does not match requested snapshot"
+        )
     saved = _json_object_from_bytes(snapshot, "saved check evidence", path)
     if saved.get("schema") != _SCHEMA:
         raise CheckFailure(f"saved check evidence schema must be {_SCHEMA}")
@@ -1159,7 +1169,21 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="revalidate the saved check JSON instead of replacing it",
     )
+    parser.add_argument(
+        "--expected-sha256",
+        help="require revalidation to consume this exact saved snapshot",
+    )
     return parser
+
+
+def _reject_expected_sha_without_revalidation(
+    args: argparse.Namespace,
+) -> None:
+    """Reject a snapshot binding outside saved-evidence revalidation."""
+    if args.expected_sha256 is not None and not args.revalidate:
+        raise CheckFailure(
+            "--expected-sha256 requires --revalidate"
+        )
 
 
 def _reject_revalidate_overrides(args: argparse.Namespace) -> None:
@@ -1188,9 +1212,10 @@ def main() -> int:
         cleanup_output_on_failure = _validate_canonical_output_root(
             root, output
         )
+        _reject_expected_sha_without_revalidation(args)
         if args.revalidate:
             _reject_revalidate_overrides(args)
-            _revalidate(output)
+            _revalidate(output, args.expected_sha256)
             print(f"check: revalidated saved evidence at {output.resolve()}")
             return 0
         evidence = _run(args)

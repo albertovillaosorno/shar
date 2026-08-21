@@ -61,13 +61,13 @@ silently
 deduplicating them before persistence. Focused regressions prove the exact saved
 path is revalidated, a failed architecture revalidation stops the runner, and
 `main()` performs that gate before target consumption. Architecture and
-preflight
-evidence are consumed from byte snapshots proven unchanged across their child
-revalidation process, so post-validation file replacement cannot substitute a
-different saved decision before the runner parses it. Direct `arch.py` and
-`check.py` revalidation also require non-redirected single-link evidence and pin
-the saved bytes across recomputation, so standalone success cannot race or trust
-an external alias of the evidence it just validated.
+preflight evidence are consumed from stable single-link byte snapshots whose
+SHA-256 is passed into the child revalidator. `arch.py` and `check.py` refuse to
+revalidate a different snapshot, and the runner requires the same bytes again
+afterward, so an ABA path substitution cannot make the child validate one saved
+decision while the runner consumes another. Direct revalidation also pins the
+saved bytes across recomputation, so standalone success cannot race or trust an
+external alias of the evidence it just validated.
 
 Mobile publication now consumes the declared artifact kind instead of treating
 any archive file as success. Android APKs must be valid ZIP containers with an
