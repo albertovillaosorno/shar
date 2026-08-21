@@ -171,9 +171,10 @@ local variants while emitting only argument ordinals and aggregate byte counts.
 Its `--projection` mode can also emit an `offset-mask-set-v1` descriptor
 without a source hash, containing only bounded positional layouts. It now
 rejects more than the generic algorithm contract's 256 distinct alternatives
-and binds reference/candidate sizes, spans, and aggregate mask bytes to the
-active algorithm file limit before emitting a descriptor that authoring would
-reject. Private reference and variant paths now reject symlinked or
+and binds reference/candidate sizes, spans, and aggregate mask bytes to one
+stable non-redirected snapshot of the active algorithm file limit before
+emitting a descriptor that authoring would reject. Private reference and
+variant paths now reject symlinked or
 junction-backed lexical
 directory parents before any payload read. Their read snapshots compare both the
 opened descriptor and current lexical path identity before reading bytes and
