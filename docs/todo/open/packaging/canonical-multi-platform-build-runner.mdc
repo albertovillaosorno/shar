@@ -135,8 +135,11 @@ Build preflight also requires every lexical repository ancestor of the canonical
 from one stable single-link snapshot. That snapshot must remain unchanged
 through preflight, and its SHA-256 is saved with the UAT project path, so
 valid-association configuration drift is visible to direct check revalidation.
-Redirected project
-authority therefore fails before it can be normalized into the saved UAT path.
+The build runner consumes that hash too: after check revalidation it requires
+saved project path to equal the canonical repository descriptor, rechecks the
+real parent/file boundary, and compares current bytes to `project_sha256` before
+project-state migration or UAT. Redirected or post-revalidation project drift
+therefore fails before it can become build authority.
 Regressions
 cover linked cache and project ancestors so build state cannot escape the repo.
 
