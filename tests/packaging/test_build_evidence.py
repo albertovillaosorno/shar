@@ -151,6 +151,51 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
         finally:
             temporary.cleanup()
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_source_closure_rejects_redirected_entries(self) -> None:
+        temporary, root = self._fixture()
+        try:
+            manifest_root = root / "src/migration/manifest"
+            redirected = manifest_root / "redirected.rs"
+            target = root / "redirect-target.rs"
+            target.write_text("// redirected\n", encoding="utf-8")
+            redirected.symlink_to(target)
+
+            for module in (_DEPENDENCIES, _CHECK):
+                with (
+                    self.subTest(module=module.__name__),
+                    self.assertRaisesRegex(
+                        OSError,
+                        "source closure contains a redirected entry",
+                    ),
+                ):
+                    module._validator_source_sha256(root)
+        finally:
+            temporary.cleanup()
+
+    def test_source_closure_rejects_junction_entries(self) -> None:
+        temporary, root = self._fixture()
+        try:
+            redirected = root / "src/migration/manifest/redirected"
+            redirected.mkdir()
+
+            for module in (_DEPENDENCIES, _CHECK):
+                with (
+                    self.subTest(module=module.__name__),
+                    mock.patch.object(
+                        module.os.path,
+                        "isjunction",
+                        side_effect=lambda path: Path(path) == redirected,
+                    ),
+                    self.assertRaisesRegex(
+                        OSError,
+                        "source closure contains a redirected entry",
+                    ),
+                ):
+                    module._validator_source_sha256(root)
+        finally:
+            temporary.cleanup()
+
     def test_deep_source_drift_rejects_byte_intact_validator(self) -> None:
         temporary, root = self._deep_fixture()
         try:

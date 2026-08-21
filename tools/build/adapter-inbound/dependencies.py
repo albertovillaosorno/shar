@@ -147,15 +147,18 @@ def _source_tree_files(source: Path) -> list[Path]:
         with _scan_source_directory(directory) as entries:
             for entry in entries:
                 path = Path(entry.path)
-                if entry.is_symlink():
-                    continue
-                if (
-                    entry.is_dir(follow_symlinks=False)
-                    and not os.path.isjunction(path)
-                ):
+                if entry.is_symlink() or os.path.isjunction(path):
+                    raise OSError(
+                        "validator source closure contains a redirected entry"
+                    )
+                if entry.is_dir(follow_symlinks=False):
                     pending.append(path)
                 elif entry.is_file(follow_symlinks=False):
                     files.append(path)
+                else:
+                    raise OSError(
+                        "validator source closure contains a special entry"
+                    )
     return files
 
 
@@ -165,6 +168,10 @@ def _source_inputs_sha256(root: Path, inputs: tuple[Path, ...]) -> str:
     files: list[Path] = []
     for relative in inputs:
         source = root / relative
+        if source.is_symlink() or os.path.isjunction(source):
+            raise OSError(
+                "validator source closure contains a redirected input"
+            )
         if source.is_file():
             files.append(source)
             continue
