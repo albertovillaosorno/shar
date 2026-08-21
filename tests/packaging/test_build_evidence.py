@@ -545,10 +545,6 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
             temporary.cleanup()
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class ValidatorPublicationStagingTests(unittest.TestCase):
     """Keep validator staging exclusive and repository-local."""
 
@@ -1578,3 +1574,7 @@ class SourceSelectionTests(unittest.TestCase):
             "no source game root",
         ):
             _CHECK._saved_game_root({"game": {}})
+
+
+if __name__ == "__main__":
+    unittest.main()
