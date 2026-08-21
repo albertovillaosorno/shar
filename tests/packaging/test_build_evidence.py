@@ -653,6 +653,49 @@ class RustupBootstrapBoundaryTests(unittest.TestCase):
             self.assertEqual(external.read_bytes(), self._PAYLOAD)
 
     @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_cached_rustup_rejects_replacement_during_hash(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-rustup-cache-race-"
+        ) as raw:
+            root = Path(raw)
+            installer = root / "installer"
+            installer.write_bytes(self._PAYLOAD)
+            external = root / "external-installer"
+            external.write_bytes(self._PAYLOAD)
+            displaced = root / "displaced-installer"
+            real_metadata = _DEPENDENCIES._rustup_installer_metadata
+            replaced = False
+
+            def replace_after_metadata(
+                path: Path, label: str
+            ) -> os.stat_result:
+                nonlocal replaced
+                metadata = real_metadata(path, label)
+                if path == installer and not replaced:
+                    installer.replace(displaced)
+                    installer.symlink_to(external)
+                    replaced = True
+                return metadata
+
+            with (
+                mock.patch.object(
+                    _DEPENDENCIES,
+                    "_rustup_installer_metadata",
+                    side_effect=replace_after_metadata,
+                ),
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "rustup installer changed while hashing",
+                ),
+            ):
+                _DEPENDENCIES._cached_rustup_matches(
+                    installer, self._expected()
+                )
+
+            self.assertTrue(installer.is_symlink())
+            self.assertEqual(external.read_bytes(), self._PAYLOAD)
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
     def test_rustup_download_preserves_redirected_staging_file(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-rustup-staging-link-"

@@ -335,12 +335,46 @@ def _rustup_installer_metadata(path: Path, label: str) -> os.stat_result:
     return metadata
 
 
+def _rustup_installer_identity(metadata: os.stat_result) -> tuple[int, ...]:
+    """Project rustup installer metadata to stable identity fields."""
+    return (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_mode,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
+        metadata.st_size,
+        metadata.st_nlink,
+    )
+
+
+def _rustup_installer_sha256(path: Path, label: str) -> str:
+    """Hash one rustup installer while preserving its filesystem identity."""
+    expected_metadata = _rustup_installer_metadata(path, label)
+    expected = _rustup_installer_identity(expected_metadata)
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        opened = _rustup_installer_identity(os.fstat(handle.fileno()))
+        if opened != expected:
+            raise BootstrapFailure(f"{label} changed while hashing")
+        while chunk := handle.read(1024 * 1024):
+            digest.update(chunk)
+        finished = _rustup_installer_identity(os.fstat(handle.fileno()))
+    if finished != expected:
+        raise BootstrapFailure(f"{label} changed while hashing")
+    current = _rustup_installer_metadata(path, label)
+    if _rustup_installer_identity(current) != expected:
+        raise BootstrapFailure(f"{label} changed while hashing")
+    return digest.hexdigest()
+
+
 def _cached_rustup_matches(installer: Path, expected: str) -> bool:
     """Return whether one existing real cached installer has the pinned hash."""
     if not os.path.lexists(installer):
         return False
-    _rustup_installer_metadata(installer, "rustup installer")
-    return _sha256(installer) == expected
+    return (
+        _rustup_installer_sha256(installer, "rustup installer") == expected
+    )
 
 
 def _make_rustup_candidate_executable(
@@ -416,7 +450,11 @@ def _download_rustup(root: Path, target: str) -> Path:
             _make_rustup_candidate_executable(handle, candidate)
         _rustup_installer_metadata(candidate, "rustup staging file")
         Path(candidate).replace(installer)
-        _rustup_installer_metadata(installer, "rustup installer")
+        actual = _rustup_installer_sha256(installer, "rustup installer")
+        if actual != expected:
+            raise BootstrapFailure(
+                "rustup installer checksum changed during publication"
+            )
     finally:
         if created:
             candidate.unlink(missing_ok=True)
@@ -512,7 +550,9 @@ def _install_repo_rust(
         }
         return cargo.resolve(), rustc.resolve(), evidence
     installer = _download_rustup(root, target)
-    installer_sha256 = _sha256(installer)
+    installer_sha256 = _rustup_installer_sha256(
+        installer, "rustup installer"
+    )
     if not _repo_rust_tools_ready(root, required, target, cargo, rustc):
         rustup_home = root / _RUSTUP_HOME
         cargo_home = root / _RUSTUP_CARGO_HOME

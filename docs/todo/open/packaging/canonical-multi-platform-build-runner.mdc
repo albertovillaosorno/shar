@@ -155,7 +155,9 @@ additionally requires
 real `.dependencies` and `.dependencies/build` tool storage even when its JSON
 evidence path is overridden, because Cargo, rustup, and validator outputs remain
 repository-owned side effects. Cached pinned rustup installers must be real
-single-link files, and downloads use an exclusively created PID staging file
+single-link files, and their checksum is read from one descriptor whose stable
+filesystem identity must continue to match the lexical cache path through the
+read. Downloads use an exclusively created PID staging file
 before opening the network response. The checksum is computed from the exact
 response bytes written to that owned handle, while pre-existing staging files or
 links are preserved and fail closed. Reused or freshly installed repo-local Rust
