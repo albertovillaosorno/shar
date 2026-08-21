@@ -89,7 +89,8 @@ present row kinds must belong to the producer's public taxonomy and match the
 producer's exact `(dir, ext)` bucket classification, while unclassifiable
 coordinates fail even when `kind` is omitted. Coordinate rows must also retain
 the producer's deterministic `(dir, ext)` order. Taxonomy and required-file
-lists, when present, must retain the producer's exact canonical values and order;
+lists, when present, must retain the producer's exact canonical values and
+order;
 required-file metadata must also remain a portable source-relative path under
 the shared host-safe component rules. Reserved aliases, stream syntax,
 trailing-dot/space identities, control

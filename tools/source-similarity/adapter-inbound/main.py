@@ -214,14 +214,10 @@ def _regular_ledger_identity(path: Path) -> _LedgerIdentity:
             for parent in (path.parent, *path.parent.parents)
         )
         if redirected_parent:
-            raise LedgerInputError(
-                "count ledger parent must be a real directory"
-            )
+            raise LedgerInputError("count ledger parent must be a real directory")
         metadata = path.lstat()
     except OSError as error:
-        raise LedgerInputError(
-            "count ledger could not be read as UTF-8"
-        ) from error
+        raise LedgerInputError("count ledger could not be read as UTF-8") from error
     if not stat.S_ISREG(metadata.st_mode):
         raise LedgerInputError("count ledger must be a regular file")
     return _ledger_identity(metadata)
@@ -331,18 +327,12 @@ def _valid_directory_alias(value: object) -> bool:
     ):
         return False
     base = _collision_family(value)
-    return all(
-        _valid_obfuscated_component(component) for component in base.split("/")
-    )
+    return all(_valid_obfuscated_component(component) for component in base.split("/"))
 
 
 def _valid_extension(value: object) -> bool:
     """Return whether an extension matches producer normalization."""
-    return (
-        _valid_utf8_text(value)
-        and bool(value)
-        and value == value.lower()
-    )
+    return _valid_utf8_text(value) and bool(value) and value == value.lower()
 
 
 _RESERVED_HOST_STEMS = frozenset(
@@ -386,8 +376,7 @@ def _valid_public_path_component(component: str) -> bool:
     if any(character in '<>:"|?*' for character in component):
         return False
     if any(
-        ord(character) < 32 or 127 <= ord(character) <= 159
-        for character in component
+        ord(character) < 32 or 127 <= ord(character) <= 159 for character in component
     ):
         return False
     if any(_is_unicode_path_modifier(character) for character in component):
@@ -404,8 +393,7 @@ def _valid_public_relative_path(value: object) -> bool:
     if value.startswith("/") or value.endswith("/") or "//" in value:
         return False
     return all(
-        _valid_public_path_component(component)
-        for component in value.split("/")
+        _valid_public_path_component(component) for component in value.split("/")
     )
 
 
@@ -430,10 +418,7 @@ def _validate_schema_metadata(record: dict[str, Any]) -> None:
         raise LedgerInputError("count ledger schema record has unknown fields")
     if "kind_taxonomy" in record:
         taxonomy = record["kind_taxonomy"]
-        if (
-            not isinstance(taxonomy, list)
-            or taxonomy != list(_MANIFEST_KIND_TAXONOMY)
-        ):
+        if not isinstance(taxonomy, list) or taxonomy != list(_MANIFEST_KIND_TAXONOMY):
             raise LedgerInputError("count ledger kind taxonomy is invalid")
     if "required_files" in record:
         required_files = record["required_files"]
@@ -449,9 +434,7 @@ def _validate_schema_metadata(record: dict[str, Any]) -> None:
             )
             or required_files != canonical_required_files
         ):
-            raise LedgerInputError(
-                "count ledger required-files metadata is invalid"
-            )
+            raise LedgerInputError("count ledger required-files metadata is invalid")
 
 
 def _is_schema_record(record: dict[str, Any], line_number: int) -> bool:
@@ -471,17 +454,12 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
     has_minimum = "min" in record
     has_observed = "count" in record
     if has_minimum == has_observed:
-        raise LedgerInputError(
-            "count ledger record must select one count field"
-        )
+        raise LedgerInputError("count ledger record must select one count field")
     directory = record.get("dir")
     extension = record.get("ext")
     count = record.get("count" if has_observed else "min")
     kind = record.get("kind")
-    if (
-        not _valid_directory_alias(directory)
-        or not _valid_extension(extension)
-    ):
+    if not _valid_directory_alias(directory) or not _valid_extension(extension):
         raise InvalidCoordinateError
     expected_kind = _expected_manifest_kind(directory, extension)
     if (
@@ -530,9 +508,7 @@ def parse_count_ledger(text: str) -> dict[Coordinate, int]:
                 f"count ledger repeats a coordinate at line {line_number}"
             )
         if previous_coordinate is not None and coordinate < previous_coordinate:
-            raise LedgerInputError(
-                "count ledger coordinate order is not canonical"
-            )
+            raise LedgerInputError("count ledger coordinate order is not canonical")
         counts[coordinate] = count
         previous_coordinate = coordinate
     _validate_ledger_collision_families(counts)
@@ -551,9 +527,7 @@ def load_count_ledger(path: Path) -> dict[Coordinate, int]:
             data = handle.read()
             finished = _ledger_identity(os.fstat(handle.fileno()))
     except OSError as error:
-        raise LedgerInputError(
-            "count ledger could not be read as UTF-8"
-        ) from error
+        raise LedgerInputError("count ledger could not be read as UTF-8") from error
     if (
         finished != expected
         or _current_ledger_identity(path) != expected
@@ -563,9 +537,7 @@ def load_count_ledger(path: Path) -> dict[Coordinate, int]:
     try:
         text = data.decode("utf-8")
     except UnicodeError as error:
-        raise LedgerInputError(
-            "count ledger could not be read as UTF-8"
-        ) from error
+        raise LedgerInputError("count ledger could not be read as UTF-8") from error
     if "\r" in text:
         raise LedgerInputError("count ledger must use LF line endings")
     if not text.endswith("\n"):
@@ -656,13 +628,10 @@ def _validate_ledger_collision_families(
             base in plain_directories
             or len(ordered) < 2
             or any(
-                ordinal != expected
-                for expected, ordinal in enumerate(ordered, start=1)
+                ordinal != expected for expected, ordinal in enumerate(ordered, start=1)
             )
         ):
-            raise LedgerInputError(
-                "count ledger collision ordinals are not canonical"
-            )
+            raise LedgerInputError("count ledger collision ordinals are not canonical")
 
 
 def _collapse_collision_families(
