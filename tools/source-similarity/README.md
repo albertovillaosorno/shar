@@ -52,7 +52,8 @@ extensions must likewise be nonempty and lowercase; files without
 extensions use the manifest's `(none)` token. Coordinate counts, required-file
 minima, and each
 ledger's total count must fit the unsigned 64-bit range used by the supported
-64-bit Rust manifest producers. File inputs and their lexical directory
+64-bit Rust manifest producers. Signed-zero integer aliases are rejected instead
+of normalizing to zero. File inputs and their lexical directory
 parents must be non-redirected; the file itself must be regular and preserve
 the canonical
 producer framing: UTF-8, compact JSON token framing, LF-only record boundaries,
