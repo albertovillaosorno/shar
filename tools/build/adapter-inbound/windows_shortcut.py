@@ -35,6 +35,8 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 import os
 from pathlib import Path
 import subprocess
@@ -62,6 +64,37 @@ def _is_directory_link(path: Path) -> bool:
     return path.is_symlink() or os.path.isjunction(path)
 
 
+def _scan_directory(
+    path: Path,
+) -> AbstractContextManager[Iterator[os.DirEntry[str]]]:
+    """Open one dist directory without suppressing scan failures."""
+    return os.scandir(path)
+
+
+def _dist_files(dist: Path) -> list[Path]:
+    """Collect dist files without following redirects or skipping failures."""
+    files: list[Path] = []
+    pending = [dist]
+    while pending:
+        directory = pending.pop()
+        with _scan_directory(directory) as entries:
+            for entry in entries:
+                path = Path(entry.path)
+                if entry.is_symlink() or os.path.isjunction(path):
+                    raise SystemExit(
+                        "shortcut: dist/ contains a redirected entry"
+                    )
+                if entry.is_dir(follow_symlinks=False):
+                    pending.append(path)
+                elif entry.is_file(follow_symlinks=False):
+                    files.append(path)
+                else:
+                    raise SystemExit(
+                        "shortcut: dist/ contains a special entry"
+                    )
+    return files
+
+
 def _discover_target(root: Path) -> Path:
     dist = root / "dist"
     if not dist.is_dir():
@@ -72,11 +105,15 @@ def _discover_target(root: Path) -> Path:
     if _is_directory_link(dist):
         raise SystemExit("shortcut: dist/ must be a real directory")
 
-    executables = sorted(
-        path.resolve()
-        for path in dist.rglob("*")
-        if _is_shar_executable(path)
-    )
+    try:
+        files = _dist_files(dist)
+        executables = sorted(
+            path.resolve() for path in files if _is_shar_executable(path)
+        )
+    except OSError as error:
+        raise SystemExit(
+            "shortcut: dist/ cannot be inspected safely"
+        ) from error
     exact = [path for path in executables if path.name.casefold() == "shar.exe"]
     if len(exact) == 1:
         return exact[0]
