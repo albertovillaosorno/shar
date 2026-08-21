@@ -32,6 +32,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 import hashlib
 import importlib.util
 import os
@@ -452,6 +454,38 @@ class SourceSelectionTests(unittest.TestCase):
                     _CHECK._check_game(repository, selection)
 
     def test_missing_source_diagnostic_does_not_echo_private_path(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-source-unreadable-"
+        ) as value:
+            root = Path(value)
+            repository = root / "repository"
+            source = root / "installed-game"
+            blocked = source / "private-copy"
+            repository.mkdir()
+            blocked.mkdir(parents=True)
+            (source / "Simpsons.exe").write_bytes(b"fixture")
+            real_scan = _CHECK._scan_directory
+
+            def strict_scan(
+                path: Path,
+            ) -> AbstractContextManager[Iterator[os.DirEntry[str]]]:
+                if path == blocked:
+                    raise PermissionError(f"cannot scan {blocked}")
+                return real_scan(path)
+
+            with (
+                mock.patch.object(_CHECK, "_scan_directory", strict_scan),
+                self.assertRaises(_CHECK.CheckFailure) as raised,
+            ):
+                _CHECK._check_game(repository, source)
+
+            message = str(raised.exception)
+            self.assertNotIn(str(blocked), message)
+            self.assertEqual(
+                message,
+                "selected source cannot be inspected safely",
+            )
+
         with tempfile.TemporaryDirectory(
             prefix="shar-source-missing-"
         ) as value:
