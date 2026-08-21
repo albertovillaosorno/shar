@@ -662,6 +662,26 @@ def _publish_validator(root: Path, built: Path) -> Path:
     return destination.resolve()
 
 
+def _validator_source_hashes(root: Path) -> tuple[str, str]:
+    """Return manifest and deep-validator source-closure fingerprints."""
+    return (
+        _validator_source_sha256(root),
+        _deep_validator_source_sha256(root),
+    )
+
+
+def _require_validator_source_hashes(
+    root: Path,
+    expected: tuple[str, str],
+    phase: str,
+) -> None:
+    """Require validator source closures to remain stable across one phase."""
+    if _validator_source_hashes(root) != expected:
+        raise BootstrapFailure(
+            f"validator source inputs changed during {phase}; rerun bootstrap"
+        )
+
+
 def _validator_evidence(
     root: Path,
     context: CargoBuildContext,
@@ -669,6 +689,7 @@ def _validator_evidence(
     publish_validator: bool,
 ) -> tuple[dict[str, str], dict[str, str]]:
     """Build both source validators and return their publication evidence."""
+    source_hashes = _validator_source_hashes(root)
     built = _build_cargo_binary(
         root,
         context,
@@ -681,6 +702,7 @@ def _validator_evidence(
         package="shar_source_audit",
         binary="validate-source-deep",
     )
+    _require_validator_source_hashes(root, source_hashes, "build")
     validator = (
         _publish_validator(root, built)
         if publish_validator
@@ -691,16 +713,17 @@ def _validator_evidence(
         if publish_validator
         else deep_built.resolve()
     )
+    _require_validator_source_hashes(root, source_hashes, "publication")
     return (
         {
             "path": str(validator),
             "sha256": _sha256(validator),
-            "source_sha256": _validator_source_sha256(root),
+            "source_sha256": source_hashes[0],
         },
         {
             "path": str(deep_validator),
             "sha256": _sha256(deep_validator),
-            "source_sha256": _deep_validator_source_sha256(root),
+            "source_sha256": source_hashes[1],
         },
     )
 
