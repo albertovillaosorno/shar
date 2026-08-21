@@ -237,14 +237,34 @@ def _unique_json_object(
     return result
 
 
+def _selection_snapshot(path: Path) -> bytes:
+    """Read one saved architecture-selection byte snapshot."""
+    try:
+        return path.read_bytes()
+    except OSError as error:
+        message = f"arch: cannot read saved selection: {error}"
+        raise SystemExit(message) from error
+
+
+def _require_selection_snapshot(path: Path, snapshot: bytes) -> None:
+    """Require saved architecture bytes to remain unchanged."""
+    try:
+        current = path.read_bytes()
+    except OSError as error:
+        raise SystemExit("arch: cannot reread saved selection") from error
+    if current != snapshot:
+        raise SystemExit("arch: saved selection changed during revalidation")
+
+
 def _revalidate_selection(path: Path) -> int:
     """Require saved architecture evidence to match canonical current policy."""
+    snapshot = _selection_snapshot(path)
     try:
         value = json.loads(
-            path.read_text(encoding="utf-8"),
+            snapshot.decode("utf-8"),
             object_pairs_hook=_unique_json_object,
         )
-    except (OSError, UnicodeError, ValueError) as error:
+    except (UnicodeError, ValueError) as error:
         message = f"arch: cannot read saved selection: {error}"
         raise SystemExit(message) from error
     if not isinstance(value, dict):
@@ -272,6 +292,7 @@ def _revalidate_selection(path: Path) -> int:
         raise SystemExit(
             "arch: saved selection no longer matches this host or target policy"
         )
+    _require_selection_snapshot(path, snapshot)
     print(f"arch: revalidated {len(selected)} saved target(s) at {path}")
     return 0
 
