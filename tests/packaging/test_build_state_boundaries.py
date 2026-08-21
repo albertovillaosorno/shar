@@ -265,6 +265,28 @@ class CanonicalBuildStateBoundaryTests(unittest.TestCase):
             ):
                 _CHECK._dependency_evidence(root)
 
+    @unittest.skipIf(sys.platform == "win32", "symlink setup is Unix-focused")
+    def test_check_rejects_linked_dependency_evidence_parent(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-dependency-parent-link-"
+        ) as raw:
+            root = Path(raw)
+            external = root / "external-data"
+            external.mkdir()
+            (external / "dependencies.json").write_text(
+                '{"schema":"shar.build.dependencies.v1"}\n',
+                encoding="utf-8",
+            )
+            build = root / ".cache/build"
+            build.mkdir(parents=True)
+            (build / "data").symlink_to(external, target_is_directory=True)
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "build data root must be a real directory",
+            ):
+                _CHECK._dependency_evidence(root)
+
     def test_check_rejects_junction_dependency_evidence_input(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-dependency-input-junction-"
@@ -285,6 +307,31 @@ class CanonicalBuildStateBoundaryTests(unittest.TestCase):
                 self.assertRaisesRegex(
                     _CHECK.CheckFailure,
                     "dependency evidence must be a real file",
+                ),
+            ):
+                _CHECK._dependency_evidence(root)
+
+    def test_check_rejects_junction_dependency_evidence_parent(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-dependency-parent-junction-"
+        ) as raw:
+            root = Path(raw)
+            dependency = root / _CHECK._DEPENDENCIES_PATH
+            dependency.parent.mkdir(parents=True)
+            dependency.write_text(
+                '{"schema":"shar.build.dependencies.v1"}\n',
+                encoding="utf-8",
+            )
+            parent = dependency.parent
+            with (
+                mock.patch.object(
+                    _CHECK.os.path,
+                    "isjunction",
+                    side_effect=lambda path: Path(path) == parent,
+                ),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "build data root must be a real directory",
                 ),
             ):
                 _CHECK._dependency_evidence(root)

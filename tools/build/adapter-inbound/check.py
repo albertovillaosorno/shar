@@ -372,10 +372,27 @@ def _json_object_from_bytes(
     return value
 
 
+def _require_real_build_data_roots(root: Path) -> None:
+    """Require canonical build-data ancestors to remain real directories."""
+    roots = (
+        (root / ".cache", "repository cache root"),
+        (root / ".cache/build", "build cache root"),
+        (root / ".cache/build/data", "build data root"),
+    )
+    for path, label in roots:
+        if (
+            not path.is_dir()
+            or path.is_symlink()
+            or os.path.isjunction(path)
+        ):
+            raise CheckFailure(f"{label} must be a real directory: {path}")
+
+
 def _dependency_evidence(
     root: Path,
 ) -> tuple[Path, bytes, dict[str, object]]:
     """Read and validate one stable dependency bootstrap snapshot."""
+    _require_real_build_data_roots(root)
     path = root / _DEPENDENCIES_PATH
     snapshot = _read_real_evidence_bytes(path, "dependency evidence")
     data = _json_object_from_bytes(snapshot, "dependency evidence", path)
@@ -815,14 +832,12 @@ def _validate_canonical_output_root(root: Path, output: Path) -> None:
     for path, label in roots:
         if not os.path.lexists(path):
             continue
-        is_real = (
-            path.is_dir()
-            and not path.is_symlink()
-            and not os.path.isjunction(path)
-        )
-        if is_real:
-            continue
-        raise CheckFailure(f"{label} must be a real directory: {path}")
+        if (
+            not path.is_dir()
+            or path.is_symlink()
+            or os.path.isjunction(path)
+        ):
+            raise CheckFailure(f"{label} must be a real directory: {path}")
     if os.path.lexists(output) and (
         not output.is_file() or output.is_symlink()
     ):
