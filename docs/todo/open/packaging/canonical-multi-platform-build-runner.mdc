@@ -212,7 +212,11 @@ Candidate and staging scratch roots are now preflighted before cleanup and
 recreation too. Linked or malformed stale scratch identities fail before UAT,
 rather than surviving ignored cleanup and reaching packaging.
 Each UAT invocation now also validates its own child write roots: existing log
-files must be real files with exactly one filesystem link, while
+files must be real files with exactly one filesystem link. Existing logs are
+opened without truncation, descriptor/path identity is compared, and only then
+are bytes truncated through that owned descriptor; new logs use exclusive
+creation. This prevents a check-to-open replacement from redirecting UAT output.
+Meanwhile,
 `automation-saved/`, its `logs/` child, and the local DDC must be real
 directories. Linked identities fail before UAT starts, so cached tool output
 cannot be redirected through a pre-existing work-tree identity. Turnkey SDK
