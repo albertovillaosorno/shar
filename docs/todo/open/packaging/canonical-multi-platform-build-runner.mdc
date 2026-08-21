@@ -148,7 +148,9 @@ linked `.cache`, `.cache/build`, or `.cache/build/data` ancestors before any
 mutation. Rejection preserves existing evidence; architecture and preflight test
 output overrides remain independent. Failed dependency-bootstrap recomputation
 invalidates stale canonical evidence but preserves a pre-existing test-output
-override that the failing invocation never published. Dependency bootstrap
+override that the failing invocation never published. Failed preflight
+recomputation applies the same ownership rule: stale canonical check evidence is
+removed, while an independent output override is preserved. Dependency bootstrap
 additionally requires
 real `.dependencies` and `.dependencies/build` tool storage even when its JSON
 evidence path is overridden, because Cargo, rustup, and validator outputs remain
