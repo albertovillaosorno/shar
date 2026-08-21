@@ -32,6 +32,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 import importlib.util
 import os
 from pathlib import Path
@@ -135,6 +137,32 @@ def test_directory_requires_one_direct_canonical_executable() -> None:
 
         assert str(source) not in message
         assert "direct Simpsons.exe" in message
+
+
+def test_nested_scan_failure_is_rejected_without_private_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = _load()
+    with tempfile.TemporaryDirectory(prefix="shar-user-unreadable-") as value:
+        source, _ = _source(Path(value))
+        blocked = source / "private-copy"
+        blocked.mkdir()
+        real_scan = module._scan_directory
+
+        def strict_scan(
+            path: Path,
+        ) -> AbstractContextManager[Iterator[os.DirEntry[str]]]:
+            if path == blocked:
+                raise PermissionError(f"cannot scan {blocked}")
+            return real_scan(path)
+
+        monkeypatch.setattr(module, "_scan_directory", strict_scan)
+        with pytest.raises(module.SourceSelectionError) as raised:
+            module.resolve_source_selection(source)
+
+        message = str(raised.value)
+        assert str(blocked) not in message
+        assert message == "selected source cannot be inspected safely"
 
 
 def test_redirected_wrong_file_name_is_rejected() -> None:
