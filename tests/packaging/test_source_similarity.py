@@ -495,7 +495,7 @@ class SourceSimilarityJsonRobustnessTests(unittest.TestCase):
         aliases = (
             '{"d\\u0069r":"aa","ext":"p3d","count":1}',
             '{"dir":"aa","e\\u0078t":"p3d","count":1}',
-            '{"dir":"aa","ext":"p3d","c\\u006funt":1}',
+            '{"dir":"aa","ext":"p3d","co\\u0075nt":1}',
             '{"sch\\u0065ma":"shar-schoenwald.game-manifest-ledger.v2"}',
         )
 
