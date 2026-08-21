@@ -104,11 +104,14 @@ substitute different evidence after type inspection. The read-only observation
 adapter now fails when an exact-file-only source has
 no countable structural rows, so success cannot produce an empty unusable
 ledger.
-Generated manifest
-collision
-ordinals are aggregated into their structural family before
-comparison because a partial candidate can legitimately change those ordinals.
-Hard manifest and deep validation remain exact and unchanged. No 45–55%
+Generated manifest collision ordinals are aggregated into their structural
+family before comparison because a partial candidate can legitimately change
+those ordinals. Parsed ledgers now require each suffixed family to contain the
+producer's complete contiguous `~01..~NN` sequence with at least two members and
+reject a simultaneous base alias without a suffix, so malformed orphan/gapped
+ordinals
+cannot be normalized into apparently valid evidence. Hard manifest and deep
+validation remain exact and unchanged. No 45–55%
 threshold exists in that code. The technical contract also pins the read-only
 source boundary, source-bound plan publication restrictions, and the rule that
 similarity cannot substitute for any hard source gate.

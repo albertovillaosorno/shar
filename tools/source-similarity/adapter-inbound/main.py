@@ -463,6 +463,7 @@ def parse_count_ledger(text: str) -> dict[Coordinate, int]:
                 f"count ledger repeats a coordinate at line {line_number}"
             )
         counts[coordinate] = count
+    _validate_ledger_collision_families(counts)
     _validate(counts)
     return counts
 
@@ -540,19 +541,56 @@ def measure(
     )
 
 
-def _collision_family(directory: str) -> str:
+def _generated_collision_ordinal(
+    directory: str,
+) -> tuple[str, int] | None:
+    """Return one producer-shaped collision family and ordinal when present."""
     base, marker, ordinal = directory.rpartition("~")
     if not marker or not base:
-        return directory
+        return None
     if len(ordinal) < 2 or not ordinal.isascii() or not ordinal.isdigit():
-        return directory
+        return None
     if ordinal == "00" or (len(ordinal) > 2 and ordinal.startswith("0")):
-        return directory
+        return None
     if len(ordinal) > len(_MAX_COUNT_TEXT) or (
         len(ordinal) == len(_MAX_COUNT_TEXT) and ordinal > _MAX_COUNT_TEXT
     ):
-        return directory
-    return base
+        return None
+    return base, int(ordinal)
+
+
+def _collision_family(directory: str) -> str:
+    collision = _generated_collision_ordinal(directory)
+    return directory if collision is None else collision[0]
+
+
+def _validate_ledger_collision_families(
+    values: Mapping[Coordinate, int],
+) -> None:
+    """Require collision aliases to match one complete producer family."""
+    plain_directories: set[str] = set()
+    families: dict[str, set[int]] = {}
+    for coordinate in values:
+        directory = coordinate[0]
+        collision = _generated_collision_ordinal(directory)
+        if collision is None:
+            plain_directories.add(directory)
+            continue
+        base, ordinal = collision
+        families.setdefault(base, set()).add(ordinal)
+    for base, ordinals in families.items():
+        ordered = sorted(ordinals)
+        if (
+            base in plain_directories
+            or len(ordered) < 2
+            or any(
+                ordinal != expected
+                for expected, ordinal in enumerate(ordered, start=1)
+            )
+        ):
+            raise LedgerInputError(
+                "count ledger collision ordinals are not canonical"
+            )
 
 
 def _collapse_collision_families(
