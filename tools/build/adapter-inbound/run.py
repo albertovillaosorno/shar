@@ -36,6 +36,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 import hashlib
 import json
 import os
@@ -1000,26 +1001,62 @@ def _zip_member_matches_elf(
         )
 
 
-def _is_android_apk(path: Path) -> bool:
-    """Return whether one APK contains an ARM64 native library."""
-    try:
-        with zipfile.ZipFile(path) as archive:
-            inventory = _zip_inventory(archive)
-            if inventory is None:
-                return False
-            for name, info in inventory.items():
-                parts = name.split("/")
-                if (
-                    len(parts) >= 3
-                    and parts[:2] == ["lib", "arm64-v8a"]
-                    and parts[-1].endswith(".so")
-                    and all(part not in {"", ".", ".."} for part in parts)
-                    and _zip_member_matches_elf(archive, info, "arm64")
-                ):
-                    return True
-            return False
-    except (OSError, RuntimeError, zipfile.BadZipFile):
+def _android_archive_contains_arm64(archive: zipfile.ZipFile) -> bool:
+    """Return whether one opened APK contains an ARM64 native library."""
+    inventory = _zip_inventory(archive)
+    if inventory is None:
         return False
+    for name, info in inventory.items():
+        parts = name.split("/")
+        if (
+            len(parts) >= 3
+            and parts[:2] == ["lib", "arm64-v8a"]
+            and parts[-1].endswith(".so")
+            and all(part not in {"", ".", ".."} for part in parts)
+            and _zip_member_matches_elf(archive, info, "arm64")
+        ):
+            return True
+    return False
+
+
+def _stable_zip_matches(
+    path: Path,
+    label: str,
+    validator: Callable[[zipfile.ZipFile], bool],
+) -> bool:
+    """Validate one ZIP through a stable local single-link file identity."""
+    try:
+        expected = _real_file_identity(path, label)
+        if expected[5] == 0:
+            return False
+        with path.open("rb") as handle:
+            opened = _file_identity(os.fstat(handle.fileno()))
+            if opened != expected:
+                return False
+            with zipfile.ZipFile(handle) as archive:
+                matches = validator(archive)
+            finished = _file_identity(os.fstat(handle.fileno()))
+        if finished != expected:
+            return False
+        return matches and _real_file_identity(path, label) == expected
+    except (
+        OSError,
+        RunFailure,
+        RuntimeError,
+        ValueError,
+        plistlib.InvalidFileException,
+        zipfile.BadZipFile,
+    ):
+        return False
+
+
+def _is_android_apk(path: Path) -> bool:
+    """Return whether one stable APK contains an ARM64 native library."""
+    return _stable_zip_matches(
+        path,
+        "Android APK",
+        _android_archive_contains_arm64,
+    )
 
 
 def _ios_main_binary(
@@ -1056,32 +1093,31 @@ def _ios_main_binary(
     return binary_info
 
 
-def _is_ios_ipa(path: Path) -> bool:
-    """Return whether one IPA main application executable contains ARM64."""
-    try:
-        with zipfile.ZipFile(path) as archive:
-            inventory = _zip_inventory(archive)
-            if inventory is None:
-                return False
-            binary_info = _ios_main_binary(archive, inventory)
-            if binary_info is None:
-                return False
-            with archive.open(binary_info) as stream:
-                prefix = stream.read(4)
-                return _matches_macho(
-                    stream,
-                    prefix,
-                    "arm64",
-                    binary_info.file_size,
-                )
-    except (
-        OSError,
-        RuntimeError,
-        ValueError,
-        plistlib.InvalidFileException,
-        zipfile.BadZipFile,
-    ):
+def _ios_archive_contains_arm64(archive: zipfile.ZipFile) -> bool:
+    """Return whether one opened IPA main executable contains ARM64."""
+    inventory = _zip_inventory(archive)
+    if inventory is None:
         return False
+    binary_info = _ios_main_binary(archive, inventory)
+    if binary_info is None:
+        return False
+    with archive.open(binary_info) as stream:
+        prefix = stream.read(4)
+        return _matches_macho(
+            stream,
+            prefix,
+            "arm64",
+            binary_info.file_size,
+        )
+
+
+def _is_ios_ipa(path: Path) -> bool:
+    """Return whether one stable IPA main executable contains ARM64."""
+    return _stable_zip_matches(
+        path,
+        "iOS IPA",
+        _ios_archive_contains_arm64,
+    )
 
 
 def _is_native_executable(
@@ -1160,10 +1196,7 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
         return
     suffix, label, validator = mobile_validator
     if any(
-        item.is_file()
-        and item.suffix.casefold() == suffix
-        and item.stat().st_size > 0
-        and validator(item)
+        item.suffix.casefold() == suffix and validator(item)
         for item in candidate.rglob("*")
     ):
         return
