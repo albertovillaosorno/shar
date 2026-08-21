@@ -372,9 +372,9 @@ def _expected_manifest_kind(directory: str, extension: str) -> str:
 
 _LOWERCASE_EXPANSION = "i\u0307"
 _RUST17_LOWERCASE_PLUS_ONE = frozenset({0xA7CE, 0xA7D2, 0xA7D4})
-_RUST17_BERIA_ERFE_UPPER_START = 0x16EA0
-_RUST17_BERIA_ERFE_UPPER_END = 0x16EB8
-_RUST17_BERIA_ERFE_CASE_OFFSET = 0x1B
+_RUST17_LOWERCASE_RANGE_START = 0x16EA0
+_RUST17_LOWERCASE_RANGE_END = 0x16EB8
+_RUST17_LOWERCASE_RANGE_OFFSET = 0x1B
 
 
 def _rust_lower_character(character: str) -> str:
@@ -382,8 +382,8 @@ def _rust_lower_character(character: str) -> str:
     code = ord(character)
     if code in _RUST17_LOWERCASE_PLUS_ONE:
         return chr(code + 1)
-    if _RUST17_BERIA_ERFE_UPPER_START <= code <= _RUST17_BERIA_ERFE_UPPER_END:
-        return chr(code + _RUST17_BERIA_ERFE_CASE_OFFSET)
+    if _RUST17_LOWERCASE_RANGE_START <= code <= _RUST17_LOWERCASE_RANGE_END:
+        return chr(code + _RUST17_LOWERCASE_RANGE_OFFSET)
     return character.lower()
 
 
