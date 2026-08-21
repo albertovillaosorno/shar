@@ -132,11 +132,13 @@ depending on source JSON member order. Every substantive plan must decode as a
 `shar.algorithm.v1` object with the exact top-level source/target contract,
 lowercase hashes for ordinary source records and all target records, validated
 projection metadata without a source hash when present, 12-byte nonce evidence,
-and hexadecimal protected target material whose encoded length includes the
-required 16-byte authentication tag and whose declared resource use fits the
-active generic algorithm settings. Generic replay checks the fixed nonce and
-protected-payload encoded lengths and canonical lowercase hex without decoding
-protected payloads.
+and canonical 64-hex-character protected-target chunks whose encoded length
+includes the required 16-byte authentication tag and whose declared resource
+use fits the active generic algorithm settings. Replay retains compatibility
+with the earlier monolithic ciphertext string, but that replay-only legacy wire
+form is not admitted for tracked public plans. Generic replay checks the fixed
+nonce and protected-payload encoded lengths and canonical lowercase hex without
+decoding protected payloads.
 It also validates source record paths, resource limits, identity uniqueness, and
 input grouping before collecting
 caller source evidence, so malformed documents fail before private-source

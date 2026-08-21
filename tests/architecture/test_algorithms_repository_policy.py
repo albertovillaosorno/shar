@@ -664,19 +664,16 @@ def _assert_source_bound_plan(text: str) -> None:
         assert _is_lower_hex(record["sha256"], 64)
         assert _is_lower_hex(record["nonce"], 24)
         ciphertext_wire = record["ciphertext"]
-        if isinstance(ciphertext_wire, str):
-            ciphertext = ciphertext_wire
-        else:
-            assert isinstance(ciphertext_wire, list)
-            assert ciphertext_wire
-            for index, chunk in enumerate(ciphertext_wire):
-                assert isinstance(chunk, str)
-                assert 0 < len(chunk) <= 64
-                assert len(chunk) % 2 == 0
-                if index + 1 < len(ciphertext_wire):
-                    assert len(chunk) == 64
-                assert set(chunk) <= _HEX
-            ciphertext = "".join(ciphertext_wire)
+        assert isinstance(ciphertext_wire, list)
+        assert ciphertext_wire
+        for index, chunk in enumerate(ciphertext_wire):
+            assert isinstance(chunk, str)
+            assert 0 < len(chunk) <= 64
+            assert len(chunk) % 2 == 0
+            if index + 1 < len(ciphertext_wire):
+                assert len(chunk) == 64
+            assert set(chunk) <= _HEX
+        ciphertext = "".join(ciphertext_wire)
         assert len(ciphertext) == 2 * (record["bytes"] + 16)
         assert set(ciphertext) <= _HEX
     _assert_source_layout(source)
@@ -699,7 +696,7 @@ def _synthetic_plan(*, path: str = "asset.bin") -> dict[str, object]:
                 "bytes": 1,
                 "sha256": "0" * 64,
                 "nonce": "0" * 24,
-                "ciphertext": "00" * 17,
+                "ciphertext": ["00" * 17],
             }
         ],
     }
@@ -830,6 +827,21 @@ def test_public_plan_guard_matches_runtime_rejections() -> None:
     for text in invalid:
         with pytest.raises(AssertionError):
             _assert_source_bound_plan(text)
+
+
+def test_public_plan_guard_rejects_legacy_ciphertext_wire() -> None:
+    """Keep replay compatibility from becoming the tracked publication form."""
+    plan = _synthetic_plan()
+    target = plan["target"]
+    assert isinstance(target, list)
+    record = target[0]
+    assert isinstance(record, dict)
+    chunks = record["ciphertext"]
+    assert isinstance(chunks, list)
+    record["ciphertext"] = "".join(chunks)
+
+    with pytest.raises(AssertionError):
+        _assert_source_bound_plan(json.dumps(plan))
 
 
 def test_public_plan_guard_rejects_multiple_projected_sources() -> None:
