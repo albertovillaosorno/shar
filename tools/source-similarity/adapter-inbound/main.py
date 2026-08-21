@@ -152,6 +152,14 @@ def _ledger_identity(metadata: os.stat_result) -> _LedgerIdentity:
 def _regular_ledger_identity(path: Path) -> _LedgerIdentity:
     """Return one non-redirected regular-file identity for a count ledger."""
     try:
+        redirected_parent = any(
+            parent.is_symlink() or os.path.isjunction(parent)
+            for parent in (path.parent, *path.parent.parents)
+        )
+        if redirected_parent:
+            raise LedgerInputError(
+                "count ledger parent must be a real directory"
+            )
         metadata = path.lstat()
     except OSError as error:
         raise LedgerInputError(

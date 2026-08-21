@@ -466,6 +466,50 @@ class SourceSimilarityLedgerFileTests(unittest.TestCase):
             ):
                 _MOD.load_count_ledger(linked)
 
+    def test_ledger_parent_redirect_is_rejected(self) -> None:
+        if sys.platform == "win32":
+            self.skipTest("symlink fixture is Unix-focused")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            real = root / "real"
+            real.mkdir()
+            ledger = real / "ledger.jsonl"
+            ledger.write_text(
+                '{"dir":"aa","ext":"p3d","count":1}\n',
+                encoding="utf-8",
+            )
+            redirect = root / "redirect"
+            redirect.symlink_to(real, target_is_directory=True)
+
+            with self.assertRaisesRegex(
+                _MOD.LedgerInputError,
+                "real directory",
+            ):
+                _MOD.load_count_ledger(redirect / ledger.name)
+
+    def test_ledger_parent_junction_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            parent = root / "junction-parent"
+            parent.mkdir()
+            ledger = parent / "ledger.jsonl"
+            ledger.write_text(
+                '{"dir":"aa","ext":"p3d","count":1}\n',
+                encoding="utf-8",
+            )
+            with (
+                mock.patch.object(
+                    _MOD.os.path,
+                    "isjunction",
+                    side_effect=lambda path: Path(path) == parent,
+                ),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "real directory",
+                ),
+            ):
+                _MOD.load_count_ledger(ledger)
+
     def test_ledger_identity_drift_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             ledger = Path(directory) / "ledger.jsonl"
