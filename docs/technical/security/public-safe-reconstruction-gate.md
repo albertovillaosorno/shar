@@ -154,8 +154,11 @@ retain the collector's contiguous input numbering from zero, stable relative
 path order within each directory input, unique non-overlapping portable file
 identities, and one root kind per input. Directory targets retain the algorithm
 creator's stable portable UTF-8 relative-path order as well. Source directory
-records use that same portable order before hashing and serialization. This
-structural publication guard does not turn a placeholder into a reviewed plan
+records use that same portable order before hashing and serialization. Portable
+identity comparisons mirror Rust 1.97's Unicode 17 uppercase additions even
+when the repository Python runtime exposes Unicode 16, so newly cased paths
+cannot bypass source/target collision checks. This structural publication guard
+does not turn a placeholder into a reviewed plan
 and does not implement a similarity threshold.
 
 The maintainer-only `in/`, `master/`, and shared `out/` workspace trees never
