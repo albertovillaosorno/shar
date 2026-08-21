@@ -907,28 +907,61 @@ def _matches_macho(
     )
 
 
+def _matches_native_binary_stream(
+    stream: object,
+    system: str,
+    architecture: str,
+    file_size: int,
+) -> bool:
+    """Return whether one opened stream matches its declared native target."""
+    prefix = stream.read(4)
+    if system == "linux" and prefix == b"\x7fELF":
+        return _matches_elf(stream, prefix, architecture)
+    if system == "macos":
+        return _matches_macho(
+            stream,
+            prefix,
+            architecture,
+            file_size,
+        )
+    if system == "windows":
+        return _matches_pe(stream, prefix, architecture)
+    return False
+
+
 def _has_native_binary_signature(
     path: Path,
     system: str,
     architecture: str,
 ) -> bool:
-    """Return whether one file matches its declared native target format."""
+    """Validate one native binary through a stable local file identity."""
+    label = "candidate runtime"
     try:
-        with path.open("rb") as stream:
-            prefix = stream.read(4)
-            if system == "linux" and prefix == b"\x7fELF":
-                return _matches_elf(stream, prefix, architecture)
-            if system == "macos":
-                return _matches_macho(
-                    stream,
-                    prefix,
-                    architecture,
-                    os.fstat(stream.fileno()).st_size,
-                )
-            if system == "windows":
-                return _matches_pe(stream, prefix, architecture)
+        expected = _real_file_identity(path, label)
+        if expected[5] == 0:
             return False
-    except OSError:
+        permission_ok = (
+            system == "windows"
+            or os.name == "nt"
+            or bool(expected[2] & 0o111)
+        )
+        if not permission_ok:
+            return False
+        with path.open("rb") as stream:
+            opened = _file_identity(os.fstat(stream.fileno()))
+            if opened != expected:
+                return False
+            matches = _matches_native_binary_stream(
+                stream,
+                system,
+                architecture,
+                expected[5],
+            )
+            finished = _file_identity(os.fstat(stream.fileno()))
+        if finished != expected:
+            return False
+        return matches and _real_file_identity(path, label) == expected
+    except (OSError, RunFailure):
         return False
 
 
@@ -1049,16 +1082,8 @@ def _is_native_executable(
     system: str,
     architecture: str,
 ) -> bool:
-    """Return whether one runtime is host-runnable and target-native."""
-    permission_ok = (
-        system == "windows" or os.name == "nt" or os.access(path, os.X_OK)
-    )
-    return (
-        path.is_file()
-        and path.stat().st_size > 0
-        and permission_ok
-        and _has_native_binary_signature(path, system, architecture)
-    )
+    """Return whether one stable runtime is runnable and target-native."""
+    return _has_native_binary_signature(path, system, architecture)
 
 
 def _has_linux_runtime(candidate: Path, target: Target) -> bool:
