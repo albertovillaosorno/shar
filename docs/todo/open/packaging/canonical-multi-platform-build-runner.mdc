@@ -245,10 +245,13 @@ The dependency bootstrap now also binds `validate-game` evidence to a SHA-256
 fingerprint of its local Rust source closure, workspace manifest, and lockfile.
 Source-closure traversal is explicit and strict in both bootstrap and preflight,
 so an unreadable nested source directory cannot silently disappear from the
-fingerprint under recursive-glob error suppression. Redirected or special source
-entries also fail instead of being omitted from the digest, preventing a source
-file reached through a symlink or junction from changing without changing the
-recorded closure. Bootstrap fingerprints both validator source closures before
+fingerprint under recursive-glob error suppression. Redirected, hard-linked, or
+special source entries also fail instead of being omitted from the digest. Each
+hashed source file is read through one descriptor whose device, inode,
+timestamps, size, and link count must match the lexical path before and after
+the read. This prevents scan-to-read substitution or external alias mutation
+from entering validator evidence. Bootstrap fingerprints both validator source
+closures before
 Cargo starts and requires the same fingerprints after both builds and after
 publication, so source drift cannot bind a previously built validator to newer
 source evidence. This prevents an old byte-intact validator from surviving a

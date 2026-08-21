@@ -163,6 +163,57 @@ def _source_tree_files(source: Path) -> list[Path]:
     return files
 
 
+def _source_file_identity(path: Path) -> tuple[int, ...]:
+    """Return one stable real source-file identity for hashing."""
+    if path.is_symlink() or os.path.isjunction(path):
+        raise OSError("validator source closure contains a redirected file")
+    metadata = path.stat(follow_symlinks=False)
+    if not stat.S_ISREG(metadata.st_mode):
+        raise OSError("validator source closure contains a special file")
+    if metadata.st_nlink != 1:
+        raise OSError("validator source closure contains a hard-linked file")
+    return (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
+        metadata.st_size,
+        metadata.st_nlink,
+    )
+
+
+def _read_source_bytes(path: Path) -> bytes:
+    """Read one source file while preserving its lexical filesystem identity."""
+    expected = _source_file_identity(path)
+    with path.open("rb") as handle:
+        opened = _source_file_identity_from_stat(os.fstat(handle.fileno()))
+        if opened != expected:
+            raise OSError("validator source file changed while hashing")
+        payload = handle.read()
+        finished = _source_file_identity_from_stat(os.fstat(handle.fileno()))
+    if (
+        finished != expected
+        or len(payload) != expected[4]
+        or _source_file_identity(path) != expected
+    ):
+        raise OSError("validator source file changed while hashing")
+    return payload
+
+
+def _source_file_identity_from_stat(
+    metadata: os.stat_result,
+) -> tuple[int, ...]:
+    """Project source metadata to the stable hashing identity fields."""
+    return (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
+        metadata.st_size,
+        metadata.st_nlink,
+    )
+
+
 def _source_inputs_sha256(root: Path, inputs: tuple[Path, ...]) -> str:
     """Hash one deterministic repository source closure."""
     digest = hashlib.sha256()
@@ -185,7 +236,7 @@ def _source_inputs_sha256(root: Path, inputs: tuple[Path, ...]) -> str:
     )
     for source in ordered:
         relative = source.relative_to(root).as_posix().encode("utf-8")
-        payload = source.read_bytes()
+        payload = _read_source_bytes(source)
         digest.update(len(relative).to_bytes(8, "big"))
         digest.update(relative)
         digest.update(len(payload).to_bytes(8, "big"))
