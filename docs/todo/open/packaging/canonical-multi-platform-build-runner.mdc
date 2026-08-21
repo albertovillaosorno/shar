@@ -206,10 +206,12 @@ The dependency bootstrap now also binds `validate-game` evidence to a SHA-256
 fingerprint of its local Rust source closure, workspace manifest, and lockfile.
 Source-closure traversal is explicit and strict in both bootstrap and preflight,
 so an unreadable nested source directory cannot silently disappear from the
-fingerprint under recursive-glob error suppression. This prevents an old
-byte-intact validator from surviving a checkout that changes the canonical
-game-manifest contract; tests prove source drift, scan failure, and legacy
-evidence all fail closed.
+fingerprint under recursive-glob error suppression. Redirected or special source
+entries also fail instead of being omitted from the digest, preventing a source
+file reached through a symlink or junction from changing without changing the
+recorded closure. This prevents an old byte-intact validator from surviving a
+checkout that changes the canonical game-manifest contract; tests prove source
+drift, scan failure, redirect rejection, and legacy evidence all fail closed.
 
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
