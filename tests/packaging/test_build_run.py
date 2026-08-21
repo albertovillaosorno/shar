@@ -732,6 +732,79 @@ class TurnkeyReportTests(unittest.TestCase):
                     work,
                 )
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_rejects_sdk_report_replacement_during_read(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-turnkey-report-race-"
+        ) as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            report = work / "turnkey.txt"
+            external = root / "external.txt"
+            displaced = root / "displaced.txt"
+            target = _RUN._TARGETS_BY_ID["windows-x64"]
+            external.write_text(
+                "Win64: (Status=Valid, MinAllowed=0)\n",
+                encoding="utf-8",
+            )
+            real_identity = _RUN._real_file_identity
+            replaced = False
+
+            def write_invalid_report(
+                *_args: object,
+                **_kwargs: object,
+            ) -> None:
+                report.write_text(
+                    "Win64: (Status=Invalid,)\n",
+                    encoding="utf-8",
+                )
+
+            def replace_after_identity(
+                path: Path, label: str
+            ) -> tuple[int, ...]:
+                nonlocal replaced
+                identity = real_identity(path, label)
+                if path == report and not replaced:
+                    report.replace(displaced)
+                    report.symlink_to(external)
+                    replaced = True
+                return identity
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_run_uat",
+                    side_effect=write_invalid_report,
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_real_file_identity",
+                    side_effect=replace_after_identity,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Turnkey SDK report changed while reading",
+                ),
+            ):
+                _RUN._verify_sdk(
+                    root,
+                    Path("/uat"),
+                    Path("/project"),
+                    target,
+                    work,
+                )
+
+            self.assertTrue(report.is_symlink())
+            self.assertEqual(
+                displaced.read_text(encoding="utf-8"),
+                "Win64: (Status=Invalid,)\n",
+            )
+            self.assertEqual(
+                external.read_text(encoding="utf-8"),
+                "Win64: (Status=Valid, MinAllowed=0)\n",
+            )
+
     def test_accepts_exact_platform_sdk_row(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-turnkey-report-") as raw:
             root = Path(raw)

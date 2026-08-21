@@ -402,6 +402,29 @@ def _open_uat_log(log: Path) -> TextIO:
     return handle
 
 
+def _read_real_text(path: Path, label: str) -> str:
+    """Read UTF-8 text from one stable real single-link file identity."""
+    expected = _real_file_identity(path, label)
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            opened = _file_identity(os.fstat(handle.fileno()))
+            if opened != expected:
+                raise RunFailure(f"{label} changed while reading: {path}")
+            text = handle.read()
+            finished = _file_identity(os.fstat(handle.fileno()))
+    except (OSError, UnicodeError) as error:
+        raise RunFailure(f"cannot read {label}: {path}") from error
+    if finished != expected:
+        raise RunFailure(f"{label} changed while reading: {path}")
+    try:
+        current = _real_file_identity(path, label)
+    except RunFailure as error:
+        raise RunFailure(f"{label} changed while reading: {path}") from error
+    if current != expected:
+        raise RunFailure(f"{label} changed while reading: {path}")
+    return text
+
+
 def _ensure_real_directory(path: Path, label: str) -> None:
     """Create one directory or require an existing real directory."""
     if _path_present(path):
@@ -647,11 +670,7 @@ def _verify_sdk(
     _run_uat(root, uat, arguments, log)
     if not _path_present(report):
         raise RunFailure(f"Turnkey did not produce an SDK report: {report}")
-    _require_real_file(report, "Turnkey SDK report")
-    try:
-        text = report.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as error:
-        raise RunFailure(f"cannot read Turnkey SDK report: {report}") from error
+    text = _read_real_text(report, "Turnkey SDK report")
     expected = f"{target.unreal_platform}: (Status=Valid,"
     if not any(line.strip().startswith(expected) for line in text.splitlines()):
         raise RunFailure(
