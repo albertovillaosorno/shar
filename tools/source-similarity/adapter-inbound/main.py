@@ -591,6 +591,8 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
         or count > _MAX_COUNT
     ):
         raise InvalidCountError
+    if count_field == "count" and count == 0:
+        raise InvalidCountError
     return (directory, extension), count
 
 

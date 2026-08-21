@@ -479,6 +479,16 @@ class SourceSimilarityTests(unittest.TestCase):
 class SourceSimilarityJsonRobustnessTests(unittest.TestCase):
     """Keep malformed JSON failures inside the path-free input boundary."""
 
+    def test_parser_rejects_zero_observation_but_allows_optional_minimum(
+        self,
+    ) -> None:
+        with self.assertRaises(_MOD.InvalidCountError):
+            _MOD.parse_count_ledger('{"dir":"aa","ext":"p3d","count":0}')
+        self.assertEqual(
+            _MOD.parse_count_ledger('{"dir":"","ext":"png","min":0}'),
+            {("", "png"): 0},
+        )
+
     def test_parser_rejects_signed_zero_counts(self) -> None:
         for count_field in ("count", "min"):
             ledger = '{"dir":"aa","ext":"p3d","' + count_field + '":-0}'
