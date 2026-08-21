@@ -107,7 +107,7 @@ class SourceSimilarityTests(unittest.TestCase):
         self,
     ) -> None:
         reference = {("aa", "p3d"): 4}
-        candidate = {("aa", "p3d"): 4, ("zz", "bin"): 4}
+        candidate = {("aa", "p3d"): 4, ("zz", "png"): 4}
         evidence = _MOD.measure(reference, candidate)
         self.assertEqual(evidence.reference_coverage, Fraction(1, 1))
         self.assertEqual(evidence.weighted_jaccard, Fraction(1, 2))
@@ -141,6 +141,12 @@ class SourceSimilarityTests(unittest.TestCase):
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
                 _MOD.measure({coordinate: 1}, {})
+        for extension in ("private", "dll"):
+            with (
+                self.subTest(unclassifiable_extension=extension),
+                self.assertRaises(_MOD.InvalidCoordinateError),
+            ):
+                _MOD.measure({("aa", extension): 1}, {})
         for extension in ("P3D", "ÄBC"):
             with (
                 self.subTest(extension=extension),
