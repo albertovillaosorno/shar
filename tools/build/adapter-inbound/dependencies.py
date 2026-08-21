@@ -1218,18 +1218,18 @@ def main() -> int:
     output = args.output or (root / _DATA_PATH)
     if not output.is_absolute():
         output = root / output
-    output_safe_to_mutate = False
+    cleanup_output_on_failure = False
     try:
         _validate_dependency_storage_roots(root)
         publish_validator = _validate_canonical_output_root(root, output)
-        output_safe_to_mutate = True
+        cleanup_output_on_failure = publish_validator
         evidence = _run(
             args,
             publish_validator=publish_validator,
         )
         _write_json(output, evidence)
     except (BootstrapFailure, OSError, tomllib.TOMLDecodeError) as error:
-        if output_safe_to_mutate:
+        if cleanup_output_on_failure:
             output.unlink(missing_ok=True)
         print(f"dependencies: {error}", file=sys.stderr)
         return 1

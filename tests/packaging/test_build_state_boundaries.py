@@ -439,5 +439,70 @@ class CanonicalBuildStateBoundaryTests(unittest.TestCase):
             self.assertFalse((root / "testing/output.json").exists())
 
 
+class DependencyOutputFailureTests(unittest.TestCase):
+    """Preserve noncanonical dependency evidence on failed recomputation."""
+
+    def test_dependencies_failed_override_preserves_existing_output(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-dependency-override-failure-",
+        ) as raw:
+            root = Path(raw)
+            output = root / "testing/output.json"
+            output.parent.mkdir(parents=True)
+            output.write_text("sentinel\n", encoding="utf-8")
+            with (
+                mock.patch.object(_DEPENDENCIES, "_root", return_value=root),
+                mock.patch.object(
+                    _DEPENDENCIES,
+                    "_run",
+                    side_effect=_DEPENDENCIES.BootstrapFailure(
+                        "synthetic failure"
+                    ),
+                ),
+                mock.patch.object(
+                    sys,
+                    "argv",
+                    [
+                        "dependencies.py",
+                        "--output",
+                        "testing/output.json",
+                    ],
+                ),
+            ):
+                self.assertEqual(_DEPENDENCIES.main(), 1)
+
+            self.assertEqual(
+                output.read_text(encoding="utf-8"),
+                "sentinel\n",
+            )
+
+    def test_dependencies_failed_canonical_recompute_removes_stale_output(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-dependency-canonical-failure-",
+        ) as raw:
+            root = Path(raw)
+            output = root / _DEPENDENCIES._DATA_PATH
+            output.parent.mkdir(parents=True)
+            output.write_text("stale-success\n", encoding="utf-8")
+            with (
+                mock.patch.object(_DEPENDENCIES, "_root", return_value=root),
+                mock.patch.object(
+                    _DEPENDENCIES,
+                    "_run",
+                    side_effect=_DEPENDENCIES.BootstrapFailure(
+                        "synthetic failure"
+                    ),
+                ),
+                mock.patch.object(sys, "argv", ["dependencies.py"]),
+            ):
+                self.assertEqual(_DEPENDENCIES.main(), 1)
+
+            self.assertFalse(output.exists())
+
+
 if __name__ == "__main__":
     unittest.main()
