@@ -136,8 +136,9 @@ and canonical 64-hex-character protected-target chunks whose encoded length
 includes the required 16-byte authentication tag and whose declared resource
 use fits the active generic algorithm settings. Replay retains compatibility
 with the earlier monolithic ciphertext string, but that replay-only legacy wire
-form is not admitted for tracked public plans. Unsigned plan integers also reject
-lexical signed zero before JSON normalization, matching Rust `u64` decoding.
+form is not admitted for tracked public plans. Unsigned plan integers also
+reject lexical signed zero before JSON normalization, matching Rust `u64`
+decoding.
 Generic replay checks the fixed
 nonce and protected-payload encoded lengths and canonical lowercase hex without
 decoding protected payloads.
