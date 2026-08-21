@@ -65,8 +65,9 @@ preflight
 evidence are consumed from byte snapshots proven unchanged across their child
 revalidation process, so post-validation file replacement cannot substitute a
 different saved decision before the runner parses it. Direct `arch.py` and
-`check.py` revalidation also pin their saved bytes across recomputation, so a
-standalone success cannot race replacement of the evidence it just validated.
+`check.py` revalidation also require non-redirected single-link evidence and pin
+the saved bytes across recomputation, so standalone success cannot race or trust
+an external alias of the evidence it just validated.
 
 Mobile publication now consumes the declared artifact kind instead of treating
 any archive file as success. Android APKs must be valid ZIP containers with an

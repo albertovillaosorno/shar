@@ -40,6 +40,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import stat
 import sys
 from types import ModuleType
 from typing import NamedTuple
@@ -237,22 +238,59 @@ def _unique_json_object(
     return result
 
 
-def _selection_snapshot(path: Path) -> bytes:
-    """Read one saved architecture-selection byte snapshot."""
+def _selection_identity(metadata: os.stat_result) -> tuple[int, ...]:
+    """Return filesystem identity used to bind one saved selection read."""
+    return (
+        metadata.st_dev,
+        metadata.st_ino,
+        metadata.st_mtime_ns,
+        metadata.st_ctime_ns,
+        metadata.st_size,
+        metadata.st_nlink,
+    )
+
+
+def _real_selection_identity(path: Path) -> tuple[int, ...]:
+    """Require one non-redirected single-link saved selection file."""
+    if path.is_symlink() or os.path.isjunction(path):
+        raise SystemExit("arch: saved selection must be a real file")
     try:
-        return path.read_bytes()
+        metadata = path.stat(follow_symlinks=False)
     except OSError as error:
         message = f"arch: cannot read saved selection: {error}"
         raise SystemExit(message) from error
+    if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+        raise SystemExit("arch: saved selection must be a real file")
+    return _selection_identity(metadata)
+
+
+def _selection_snapshot(path: Path) -> bytes:
+    """Read one stable architecture-selection byte snapshot."""
+    expected = _real_selection_identity(path)
+    try:
+        with path.open("rb") as handle:
+            opened = _selection_identity(os.fstat(handle.fileno()))
+            if opened != expected:
+                raise SystemExit(
+                    "arch: saved selection changed during revalidation"
+                )
+            snapshot = handle.read()
+            finished = _selection_identity(os.fstat(handle.fileno()))
+    except OSError as error:
+        message = f"arch: cannot read saved selection: {error}"
+        raise SystemExit(message) from error
+    if (
+        finished != expected
+        or len(snapshot) != expected[4]
+        or _real_selection_identity(path) != expected
+    ):
+        raise SystemExit("arch: saved selection changed during revalidation")
+    return snapshot
 
 
 def _require_selection_snapshot(path: Path, snapshot: bytes) -> None:
     """Require saved architecture bytes to remain unchanged."""
-    try:
-        current = path.read_bytes()
-    except OSError as error:
-        raise SystemExit("arch: cannot reread saved selection") from error
-    if current != snapshot:
+    if _selection_snapshot(path) != snapshot:
         raise SystemExit("arch: saved selection changed during revalidation")
 
 
