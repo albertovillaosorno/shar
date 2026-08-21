@@ -154,8 +154,9 @@ constraints: a real active settings file with Rust-equivalent schema and
 resource validation, its hash in Rust's fixed settings wire order, integer wire
 types, duplicate-key rejection, bounded integer/resource limits, canonical
 chunked protected payloads with the required tag length, source/target portable
-relative-path policy, deterministic source-record
-grouping, and case-equivalent target ancestor collisions.
+relative-path policy including ASCII-only Windows device alias folding,
+deterministic source-record grouping, and case-equivalent target ancestor
+collisions.
 This structural guard narrows what can be committed publicly; it does not
 replace
 source-backed cryptographic replay evidence or the pending similarity

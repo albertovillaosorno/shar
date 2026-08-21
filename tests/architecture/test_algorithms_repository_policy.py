@@ -368,9 +368,17 @@ def _is_unicode_path_modifier(character: str) -> bool:
     )
 
 
+def _ascii_upper(value: str) -> str:
+    """Mirror Rust `str::to_ascii_uppercase` without Unicode case folding."""
+    return "".join(
+        chr(ord(character) - 32) if "a" <= character <= "z" else character
+        for character in value
+    )
+
+
 def _is_reserved_host_alias(name: str) -> bool:
     """Mirror Windows-reserved portable host aliases."""
-    stem = name.split(".", maxsplit=1)[0].rstrip(" .").upper()
+    stem = _ascii_upper(name.split(".", maxsplit=1)[0].rstrip(" ."))
     if stem in _RESERVED_HOST_STEMS:
         return True
     for prefix in ("COM", "LPT"):
@@ -393,6 +401,13 @@ def _assert_portable_component(name: str) -> None:
     assert utf16_units <= _MAX_PORTABLE_COMPONENT_UTF16_UNITS
     assert not name.endswith((".", " "))
     assert not _is_reserved_host_alias(name)
+
+
+def test_portable_reserved_alias_check_uses_ascii_case_only() -> None:
+    """Keep Unicode case mappings from inventing Windows device aliases."""
+    _assert_portable_component("con\u0131n$")
+    with pytest.raises(AssertionError):
+        _assert_portable_component("conin$")
 
 
 def _assert_relative_record_path(
