@@ -21,6 +21,7 @@ coverage, and weighted-Jaccard similarity. Tracked policy rows use `min`;
 read-only observation rows use `count`. A row must select exactly one, and every
 coordinate row in one ledger must use the same count field. Optional `kind` and
 manifest-header metadata must retain their public JSON shapes when present;
+required-file rows are limited to the schema-v2 public path/minimum pairs, so
 explicit JSON `null` is not treated as absence. Those metadata fields remain
 ignored by the metric. Directory coordinates must retain the producer's
 lowercase, forward-slash

@@ -32,6 +32,8 @@
 
 """Content-free source-installation similarity calibration."""
 
+# CSpell:ignore Liesmich Lisez Léeme textbible uninst
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -68,6 +70,28 @@ _MANIFEST_KINDS = frozenset(
         "script",
         "sound-type",
         "ui-resource",
+    }
+)
+_MANIFEST_REQUIRED_FILES = frozenset(
+    {
+        ("README.rtf", 1),
+        ("Simpsons.exe", 1),
+        ("Simpsons.ico", 1),
+        ("art/frontend/scrooby2/resource/txtbible/srr2.E", 1),
+        ("art/frontend/scrooby2/resource/txtbible/srr2.F", 0),
+        ("art/frontend/scrooby2/resource/txtbible/srr2.G", 0),
+        ("art/frontend/scrooby2/resource/txtbible/srr2.I", 0),
+        ("art/frontend/scrooby2/resource/txtbible/srr2.S", 0),
+        ("art/frontend/scrooby2/resource/txtbible/srr2.txt", 1),
+        ("dialog.rcf", 1),
+        ("dialogf.rcf", 0),
+        ("dialogg.rcf", 0),
+        ("dialogi.rcf", 0),
+        ("dialogs.rcf", 0),
+        ("Liesmich.rtf", 0),
+        ("Lisez-moi.rtf", 0),
+        ("Léeme.rtf", 0),
+        ("uninst.ico", 0),
     }
 )
 
@@ -328,12 +352,14 @@ def _valid_required_file_metadata(value: object) -> bool:
     if not isinstance(value, dict) or set(value) != {"path", "min"}:
         return False
     minimum = value["min"]
-    return (
-        _valid_public_relative_path(value["path"])
-        and not isinstance(minimum, bool)
-        and isinstance(minimum, int)
-        and 0 <= minimum <= _MAX_COUNT
-    )
+    if (
+        not _valid_public_relative_path(value["path"])
+        or isinstance(minimum, bool)
+        or not isinstance(minimum, int)
+        or not 0 <= minimum <= _MAX_COUNT
+    ):
+        return False
+    return (value["path"], minimum) in _MANIFEST_REQUIRED_FILES
 
 
 def _validate_schema_metadata(record: dict[str, Any]) -> None:
