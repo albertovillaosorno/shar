@@ -273,6 +273,49 @@ class SourceVariantEvidenceTests(unittest.TestCase):
             self.assertEqual(stdout.getvalue(), "")
             self.assertNotIn(str(root), stderr.getvalue())
 
+
+class SourceVariantProjectionTests(unittest.TestCase):
+    """Guard projection derivation and generic-algorithm compatibility."""
+
+    def test_projection_enforces_active_file_resources(self) -> None:
+        oversized_span = _MOD.OffsetProjection((
+            _MOD.OffsetProjectionAlternative(span_bytes=9, mask=b"\x80\x00"),
+        ))
+        aggregate_masks = _MOD.OffsetProjection((
+            _MOD.OffsetProjectionAlternative(span_bytes=8, mask=b"\x80"),
+            _MOD.OffsetProjectionAlternative(span_bytes=8, mask=b"\x40"),
+        ))
+
+        with self.assertRaises(_MOD.ProjectionResourceError):
+            _MOD._validate_projection_resources(oversized_span, 8)
+        with self.assertRaises(_MOD.ProjectionResourceError):
+            _MOD._validate_projection_resources(aggregate_masks, 1)
+
+    def test_projection_rejects_oversized_candidate_before_read(self) -> None:
+        path = Path("private-candidate.bin")
+        identity = _MOD.FileIdentity(
+            device=1,
+            inode=2,
+            modified_ns=3,
+            ctime_ns=4,
+            size=9,
+        )
+        with (
+            mock.patch.object(
+                _MOD,
+                "_regular_file_identity",
+                return_value=identity,
+            ),
+            mock.patch.object(
+                Path,
+                "open",
+                side_effect=AssertionError("payload was read"),
+            ) as opened,
+            self.assertRaises(_MOD.ProjectionResourceError),
+        ):
+            _MOD._read_candidate_snapshot(path, maximum_file_bytes=8)
+        opened.assert_not_called()
+
     def test_projection_packs_sparse_long_span_mask(self) -> None:
         candidate = (b"a" * 8192) + b"x"
 
