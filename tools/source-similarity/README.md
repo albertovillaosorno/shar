@@ -28,7 +28,9 @@ manifest-header metadata must retain their public JSON shapes when present;
 present taxonomy and required-file lists must exactly retain the producer's
 canonical values and order. Required-file rows are limited to the schema-v2
 public path/minimum pairs, so
-explicit JSON `null` is not treated as absence. Coordinate rows must also map to
+explicit JSON `null` is not treated as absence. Excessively nested JSON also
+fails through the same path-free malformed-ledger error rather than escaping as
+a parser recursion failure. Coordinate rows must also map to
 one producer-classified bucket; an optional `kind` value must match that exact
 classification. Coordinate rows must remain in the producer's deterministic
 `(dir, ext)` order. Those metadata fields remain ignored by the metric.

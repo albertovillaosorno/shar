@@ -264,7 +264,7 @@ def _parse_jsonl_record(line: str, line_number: int) -> dict[str, Any]:
             line,
             object_pairs_hook=_object_without_duplicates,
         )
-    except ValueError as error:
+    except (ValueError, RecursionError) as error:
         raise LedgerInputError(
             f"count ledger contains invalid JSONL at line {line_number}"
         ) from error

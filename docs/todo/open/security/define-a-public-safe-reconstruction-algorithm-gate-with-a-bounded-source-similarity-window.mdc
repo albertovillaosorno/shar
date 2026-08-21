@@ -85,7 +85,9 @@ those two phases.
 JSONL calibration rows now also reject outer spaces or tabs, matching the
 canonical manifest producer instead of accepting whitespace-normalized aliases.
 Optional public metadata now distinguishes omission from explicit JSON `null`;
-present row kinds must belong to the producer's public taxonomy and match the
+excessively nested JSON also fails through the calibrator's path-free input
+error instead of escaping as a parser recursion failure. Present row kinds must
+belong to the producer's public taxonomy and match the
 producer's exact `(dir, ext)` bucket classification, while unclassifiable
 coordinates fail even when `kind` is omitted. Coordinate rows must also retain
 the producer's deterministic `(dir, ext)` order. Taxonomy and required-file
