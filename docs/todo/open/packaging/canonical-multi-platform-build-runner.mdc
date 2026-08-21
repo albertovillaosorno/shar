@@ -156,7 +156,9 @@ response bytes written to that owned handle, while pre-existing staging files or
 links are preserved and fail closed. Reused or freshly installed repo-local Rust
 toolchains also require real rustup/toolchain/bin directory ancestors and
 single-link regular `cargo` and `rustc` leaves before bootstrap uses or records
-them. Cargo-produced validator build outputs may
+them. Windows MSVC environment discovery likewise creates its PID-named command
+file exclusively and preserves any pre-existing staging identity instead of
+overwriting or deleting it. Cargo-produced validator build outputs may
 retain Cargo's canonical `release/deps` hard link, but every filesystem link
 must
 be accounted for inside that repository-owned target tree. Published validator
