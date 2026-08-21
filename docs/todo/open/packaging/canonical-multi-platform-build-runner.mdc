@@ -177,8 +177,10 @@ cannot overwrite external content or become the published validator. Preflight
 repeats the real-directory
 and single-link checks before trusting either validator. Each validator hash is
 also streamed from one descriptor whose stable filesystem identity must continue
-to match the canonical dependency path through the read, so scan-to-hash
-replacement cannot move binary authority outside repository-owned storage.
+to match the canonical dependency path through the read. The binary hash is
+rechecked after its validator source closure is fingerprinted, so replacement
+during that longer scan cannot move binary authority outside repository-owned
+storage.
 Canonical `arch.json`, `check.json`, and `dependencies.json` identities are also
 required to be real regular files when already present. Build preflight repeats
 the real `.cache/build/data` ancestor checks before consuming

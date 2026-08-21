@@ -566,6 +566,16 @@ def _real_dependency_validator(
     return validator
 
 
+def _require_dependency_validator_hash(
+    validator: Path,
+    label: str,
+    expected_hash: str,
+) -> None:
+    """Require one dependency validator to retain its saved binary hash."""
+    if _sha256_real_evidence(validator, label) != expected_hash:
+        raise CheckFailure(f"{label} SHA-256 no longer matches evidence")
+
+
 def _dependency_validator(
     root: Path,
     data: dict[str, object],
@@ -588,18 +598,18 @@ def _dependency_validator(
         raw_path,
         "dependency validator",
     )
-    actual_hash = _sha256_real_evidence(
-        validator, "dependency validator"
+    _require_dependency_validator_hash(
+        validator, "dependency validator", expected_hash
     )
-    if actual_hash != expected_hash:
-        message = "dependency validator SHA-256 no longer matches evidence"
-        raise CheckFailure(message)
     actual_source_hash = _validator_source_sha256(root)
     if actual_source_hash != expected_source_hash:
         raise CheckFailure(
             "dependency validator source inputs no longer match evidence; "
             "rerun tools/build/adapter-inbound/dependencies.py"
         )
+    _require_dependency_validator_hash(
+        validator, "dependency validator", expected_hash
+    )
     return validator
 
 
@@ -625,18 +635,17 @@ def _dependency_deep_source_validator(
         raw_path,
         "deep source validator",
     )
-    if (
-        _sha256_real_evidence(validator, "deep source validator")
-        != expected_hash
-    ):
-        raise CheckFailure(
-            "deep source validator SHA-256 no longer matches evidence"
-        )
+    _require_dependency_validator_hash(
+        validator, "deep source validator", expected_hash
+    )
     if _deep_validator_source_sha256(root) != expected_source_hash:
         raise CheckFailure(
             "deep source validator source inputs no longer match evidence; "
             "rerun tools/build/adapter-inbound/dependencies.py"
         )
+    _require_dependency_validator_hash(
+        validator, "deep source validator", expected_hash
+    )
     return validator
 
 

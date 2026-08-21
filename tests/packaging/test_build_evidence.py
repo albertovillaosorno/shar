@@ -633,6 +633,73 @@ class DependencyValidatorHashBoundaryTests(unittest.TestCase):
                 self.assertTrue(validator.is_symlink())
                 self.assertEqual(external.read_bytes(), b"validator")
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_preflight_rejects_validator_replacement_during_source_hash(
+        self,
+    ) -> None:
+        cases = (
+            (
+                "validator",
+                "validate-game",
+                _CHECK._dependency_validator,
+                "_validator_source_sha256",
+            ),
+            (
+                "deep_source_validator",
+                "validate-source-deep",
+                _CHECK._dependency_deep_source_validator,
+                "_deep_validator_source_sha256",
+            ),
+        )
+        for field, name, resolve, source_hash_name in cases:
+            with (
+                self.subTest(field=field),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-preflight-validator-source-race-"
+                ) as raw,
+            ):
+                root = Path(raw)
+                validator = root / ".dependencies/build/bin" / name
+                validator.parent.mkdir(parents=True)
+                validator.write_bytes(b"validator")
+                external = root / "external-validator"
+                external.write_bytes(b"validator")
+                displaced = root / "displaced-validator"
+                evidence = {
+                    field: {
+                        "path": str(validator),
+                        "sha256": hashlib.sha256(b"validator").hexdigest(),
+                        "source_sha256": "source",
+                    }
+                }
+
+                def replace_during_source_hash(
+                    _root: Path,
+                    *,
+                    validator_path: Path = validator,
+                    displaced_path: Path = displaced,
+                    external_path: Path = external,
+                ) -> str:
+                    validator_path.replace(displaced_path)
+                    validator_path.symlink_to(external_path)
+                    return "source"
+
+                with (
+                    mock.patch.object(
+                        _CHECK,
+                        source_hash_name,
+                        side_effect=replace_during_source_hash,
+                    ),
+                    self.assertRaisesRegex(
+                        _CHECK.CheckFailure,
+                        "must be a real file",
+                    ),
+                ):
+                    resolve(root, evidence)
+
+                self.assertTrue(validator.is_symlink())
+                self.assertEqual(external.read_bytes(), b"validator")
+
 
 class VisualStudioBootstrapBoundaryTests(unittest.TestCase):
     """Preserve pre-existing Visual Studio bootstrap staging identities."""
