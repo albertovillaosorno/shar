@@ -136,6 +136,11 @@ class SourceSimilarityTests(unittest.TestCase):
             "candidate count vector contains no coordinates",
         ):
             _MOD.measure({("aa", "p3d"): 1}, {})
+        with self.assertRaisesRegex(
+            _MOD.LedgerInputError,
+            "candidate count vector contains no units",
+        ):
+            _MOD.measure({("aa", "p3d"): 1}, {("", "png"): 0})
         with self.assertRaisesRegex(ValueError, "must not be empty"):
             _MOD.measure({}, valid_candidate)
         with self.assertRaisesRegex(ValueError, "nonnegative integer"):
