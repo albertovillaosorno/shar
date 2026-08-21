@@ -2147,15 +2147,9 @@ class ArchitectureRevalidationTests(unittest.TestCase):
         arch_path = root / _RUN._ARCH_PATH
         check_path = root / _RUN._CHECK_PATH
         revalidate_arch.assert_called_once_with(root, arch_path)
-        selected_targets.assert_called_once_with(
-            arch_path,
-            snapshot=arch_snapshot,
-        )
+        selected_targets.assert_called_once_with(arch_snapshot)
         revalidate_check.assert_called_once_with(root, check_path)
-        check_evidence.assert_called_once_with(
-            check_path,
-            snapshot=check_snapshot,
-        )
+        check_evidence.assert_called_once_with(check_snapshot)
 
 
 if __name__ == "__main__":
