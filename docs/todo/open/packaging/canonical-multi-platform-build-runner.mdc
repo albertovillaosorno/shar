@@ -140,9 +140,11 @@ through preflight, and its SHA-256 is saved with the UAT project path, so
 valid-association configuration drift is visible to direct check revalidation.
 The build runner consumes that hash too: after check revalidation it requires
 saved project path to equal the canonical repository descriptor, rechecks the
-real parent/file boundary, and compares current bytes to `project_sha256` before
-project-state migration or UAT. Redirected or post-revalidation project drift
-therefore fails before it can become build authority.
+real parent/file boundary, and compares one descriptor-bound stable snapshot to
+`project_sha256` before project-state migration or UAT. The descriptor identity
+must continue to match the canonical path through the read, so redirected,
+replaced, or post-revalidation project drift fails before it can become build
+authority.
 Regressions
 cover linked cache and project ancestors so build state cannot escape the repo.
 

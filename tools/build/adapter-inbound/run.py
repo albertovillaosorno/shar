@@ -252,11 +252,10 @@ def _project_from_evidence(
         (expected_path.parent, "Unreal project root"),
     ):
         _require_real_directory(path, label)
-    _require_real_file(expected_path, "Unreal project descriptor")
-    try:
-        snapshot = expected_path.read_bytes()
-    except OSError as error:
-        raise RunFailure("cannot read Unreal project descriptor") from error
+    snapshot = _read_real_bytes(
+        expected_path,
+        "Unreal project descriptor",
+    )
     actual = hashlib.sha256(snapshot).hexdigest()
     if actual != unreal["project_sha256"]:
         raise RunFailure(
@@ -402,19 +401,19 @@ def _open_uat_log(log: Path) -> TextIO:
     return handle
 
 
-def _read_real_text(path: Path, label: str) -> str:
-    """Read UTF-8 text from one stable real single-link file identity."""
+def _read_real_bytes(path: Path, label: str) -> bytes:
+    """Read bytes from one stable real single-link file identity."""
     expected = _real_file_identity(path, label)
     try:
-        with path.open("r", encoding="utf-8") as handle:
+        with path.open("rb") as handle:
             opened = _file_identity(os.fstat(handle.fileno()))
             if opened != expected:
                 raise RunFailure(f"{label} changed while reading: {path}")
-            text = handle.read()
+            payload = handle.read()
             finished = _file_identity(os.fstat(handle.fileno()))
-    except (OSError, UnicodeError) as error:
+    except OSError as error:
         raise RunFailure(f"cannot read {label}: {path}") from error
-    if finished != expected:
+    if finished != expected or len(payload) != expected[5]:
         raise RunFailure(f"{label} changed while reading: {path}")
     try:
         current = _real_file_identity(path, label)
@@ -422,7 +421,15 @@ def _read_real_text(path: Path, label: str) -> str:
         raise RunFailure(f"{label} changed while reading: {path}") from error
     if current != expected:
         raise RunFailure(f"{label} changed while reading: {path}")
-    return text
+    return payload
+
+
+def _read_real_text(path: Path, label: str) -> str:
+    """Decode UTF-8 from one stable real single-link file identity."""
+    try:
+        return _read_real_bytes(path, label).decode("utf-8")
+    except UnicodeError as error:
+        raise RunFailure(f"cannot read {label}: {path}") from error
 
 
 def _ensure_real_directory(path: Path, label: str) -> None:
