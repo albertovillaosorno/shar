@@ -770,6 +770,31 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
             ):
                 _MOD.parse_count_ledger(ledger)
 
+    def test_parser_rejects_nonportable_obfuscated_components(self) -> None:
+        for directory in (
+            "a\u200b",
+            "\u200b\u200b",
+            "a\u0001",
+            "\u0001a",
+            "a:",
+            "a?",
+            "a*",
+            "..",
+            "a.",
+            "a ",
+        ):
+            with (
+                self.subTest(directory=repr(directory)),
+                self.assertRaises(_MOD.InvalidCoordinateError),
+            ):
+                _MOD.parse_count_ledger(
+                    json.dumps({
+                        "dir": directory,
+                        "ext": "p3d",
+                        "count": 1,
+                    })
+                )
+
     def test_parser_rejects_impossible_obfuscated_components(self) -> None:
         for directory in ("abc", "abcd", "aa~1"):
             with (
