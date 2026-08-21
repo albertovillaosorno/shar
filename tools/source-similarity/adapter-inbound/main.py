@@ -557,7 +557,7 @@ def load_count_ledger(path: Path) -> dict[Coordinate, int]:
     try:
         with path.open("rb") as handle:
             opened = _ledger_identity(os.fstat(handle.fileno()))
-            if opened != expected:
+            if opened != expected or _current_ledger_identity(path) != expected:
                 raise LedgerInputError("count ledger changed while reading")
             data = handle.read()
             finished = _ledger_identity(os.fstat(handle.fileno()))

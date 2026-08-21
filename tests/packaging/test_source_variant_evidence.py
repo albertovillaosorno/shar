@@ -75,7 +75,7 @@ class SourceVariantEvidenceTests(unittest.TestCase):
 
         self.assertNotEqual(_MOD._identity(before), _MOD._identity(after))
 
-    def test_open_identity_drift_fails_before_payload_read(self) -> None:
+    def test_open_or_path_drift_fails_before_payload_read(self) -> None:
         expected = _MOD.FileIdentity(
             device=1,
             inode=2,
@@ -83,14 +83,14 @@ class SourceVariantEvidenceTests(unittest.TestCase):
             changed_ns=4,
             size=5,
         )
-        opened = _MOD.FileIdentity(
+        changed = _MOD.FileIdentity(
             device=1,
             inode=2,
             modified_ns=3,
             changed_ns=6,
             size=5,
         )
-        cases = (
+        operations = (
             (
                 "reference",
                 _MOD.load_reference,
@@ -107,25 +107,43 @@ class SourceVariantEvidenceTests(unittest.TestCase):
                 _MOD.CandidateChangedError,
             ),
         )
+        drift_modes = (
+            ("opened", changed, expected),
+            ("current-path", expected, None),
+        )
 
-        for label, operation, error_type in cases:
-            handle = mock.MagicMock()
-            handle.__enter__.return_value = handle
-            handle.read.side_effect = AssertionError("payload was read")
-            with (
-                self.subTest(label=label),
-                mock.patch.object(
-                    _MOD,
-                    "_regular_file_identity",
-                    return_value=expected,
-                ),
-                mock.patch.object(_MOD, "_identity", return_value=opened),
-                mock.patch.object(Path, "open", return_value=handle),
-                mock.patch.object(_MOD.os, "fstat", return_value=mock.Mock()),
-                self.assertRaises(error_type),
-            ):
-                operation(Path("private-input.bin"))
-            handle.read.assert_not_called()
+        for label, operation, error_type in operations:
+            for drift, opened, current in drift_modes:
+                handle = mock.MagicMock()
+                handle.__enter__.return_value = handle
+                handle.read.side_effect = AssertionError("payload was read")
+                with (
+                    self.subTest(label=label, drift=drift),
+                    mock.patch.object(
+                        _MOD,
+                        "_regular_file_identity",
+                        return_value=expected,
+                    ),
+                    mock.patch.object(
+                        _MOD,
+                        "_identity",
+                        return_value=opened,
+                    ),
+                    mock.patch.object(
+                        _MOD,
+                        "_current_identity",
+                        return_value=current,
+                    ),
+                    mock.patch.object(Path, "open", return_value=handle),
+                    mock.patch.object(
+                        _MOD.os,
+                        "fstat",
+                        return_value=mock.Mock(),
+                    ),
+                    self.assertRaises(error_type),
+                ):
+                    operation(Path("private-input.bin"))
+                handle.read.assert_not_called()
 
     def test_complete_subsequence_reports_aggregate_evidence(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-variant-") as raw:

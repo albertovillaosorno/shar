@@ -561,6 +561,39 @@ class SourceSimilarityLedgerFileTests(unittest.TestCase):
             _MOD._ledger_identity(after),
         )
 
+    def test_ledger_path_drift_fails_before_payload_read(self) -> None:
+        expected = _MOD._LedgerIdentity(
+            device=1,
+            inode=2,
+            modified_ns=3,
+            changed_ns=4,
+            size=5,
+        )
+        handle = mock.MagicMock()
+        handle.__enter__.return_value = handle
+        handle.read.side_effect = AssertionError("payload was read")
+        with (
+            mock.patch.object(
+                _MOD,
+                "_regular_ledger_identity",
+                return_value=expected,
+            ),
+            mock.patch.object(_MOD, "_ledger_identity", return_value=expected),
+            mock.patch.object(
+                _MOD,
+                "_current_ledger_identity",
+                return_value=None,
+            ),
+            mock.patch.object(Path, "open", return_value=handle),
+            mock.patch.object(_MOD.os, "fstat", return_value=mock.Mock()),
+            self.assertRaisesRegex(
+                _MOD.LedgerInputError,
+                "changed while reading",
+            ),
+        ):
+            _MOD.load_count_ledger(Path("private-ledger.jsonl"))
+        handle.read.assert_not_called()
+
     def test_ledger_symlink_is_rejected_before_payload_read(self) -> None:
         if sys.platform == "win32":
             self.skipTest("symlink fixture is Unix-focused")
