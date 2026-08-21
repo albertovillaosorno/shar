@@ -126,9 +126,13 @@ Windows junctions in the selected directory's lexical prefix chain, requires one
 direct exact-case canonical executable, rejects another nested canonical
 executable, performs only read-only filesystem inspection, and reports path-free
 selection
-errors. Synthetic regressions cover directory, quoted text, executable, missing,
-wrong-file, redirected wrong-file, redirected directory/parent, mocked junction,
-and nested-only selections without proprietary source data. The future P4 GUI
+errors. Nested traversal now uses explicit directory scans because Python 3.14
+recursive globbing suppresses scan failures; an unreadable nested directory
+therefore fails closed instead of hiding another canonical executable. Synthetic
+regressions cover directory, quoted text, executable, missing, wrong-file,
+redirected wrong-file, redirected directory/parent, mocked junction, nested-only,
+and nested-scan-failure selections without proprietary source data. The future
+P4 GUI
 still owns concrete browse/text/drop
 event binding; this criterion now owns only the source-selection semantics
 shared by those events.

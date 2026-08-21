@@ -11,7 +11,9 @@ Owns normalization of a selected installation folder, pasted or typed path, and
 a selected or dropped `Simpsons.exe` path. It requires that exact case-sensitive
 canonical executable spelling directly beneath one resolved source root. The
 selected source path must not pass through symbolic directory links or Windows
-junctions.
+junctions. Nested inspection is strict: an unreadable directory fails selection
+instead of being skipped while deciding whether another canonical executable is
+hidden below the selected root.
 
 ## Prohibitions
 

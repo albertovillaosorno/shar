@@ -32,6 +32,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import AbstractContextManager
 import os
 from pathlib import Path
 
@@ -116,6 +118,33 @@ def _candidate_root(selection: str | Path) -> Path:
     raise SourceSelectionError(message)
 
 
+def _scan_directory(
+    path: Path,
+) -> AbstractContextManager[Iterator[os.DirEntry[str]]]:
+    """Open one directory scan so tests can inject metadata failures."""
+    return os.scandir(path)
+
+
+def _nested_executables(root: Path, direct: Path) -> tuple[Path, ...]:
+    """Find nested canonical executables without suppressing scan failures."""
+    nested: list[Path] = []
+    pending = [root]
+    while pending:
+        directory = pending.pop()
+        with _scan_directory(directory) as entries:
+            for entry in entries:
+                path = Path(entry.path)
+                if path != direct and entry.name == _EXECUTABLE_NAME:
+                    nested.append(path)
+                if (
+                    entry.is_dir(follow_symlinks=False)
+                    and not entry.is_symlink()
+                    and not os.path.isjunction(path)
+                ):
+                    pending.append(path)
+    return tuple(nested)
+
+
 def resolve_source_selection(selection: str | Path) -> Path:
     """Return one flat source root selected by directory, text, or executable.
 
@@ -139,11 +168,7 @@ def resolve_source_selection(selection: str | Path) -> Path:
         if direct.is_symlink():
             message = "selected source must contain a real Simpsons.exe"
             raise SourceSelectionError(message)
-        nested = tuple(
-            path
-            for path in root.rglob("*")
-            if path != direct and path.name == _EXECUTABLE_NAME
-        )
+        nested = _nested_executables(root, direct)
     except OSError as error:
         message = "selected source cannot be inspected safely"
         raise SourceSelectionError(message) from error
