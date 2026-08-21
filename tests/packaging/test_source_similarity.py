@@ -491,6 +491,24 @@ class SourceSimilarityJsonRobustnessTests(unittest.TestCase):
             ):
                 _MOD.parse_count_ledger(ledger)
 
+    def test_parser_rejects_escaped_json_member_names(self) -> None:
+        aliases = (
+            '{"d\\u0069r":"aa","ext":"p3d","count":1}',
+            '{"dir":"aa","e\\u0078t":"p3d","count":1}',
+            '{"dir":"aa","ext":"p3d","c\\u006funt":1}',
+            '{"sch\\u0065ma":"shar-schoenwald.game-manifest-ledger.v2"}',
+        )
+
+        for ledger in aliases:
+            with (
+                self.subTest(ledger=ledger),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "member name uses an escape",
+                ),
+            ):
+                _MOD.parse_count_ledger(ledger)
+
     def test_parser_rejects_json_token_whitespace(self) -> None:
         aliases = (
             '{"dir": "aa","ext":"p3d","count":1}',

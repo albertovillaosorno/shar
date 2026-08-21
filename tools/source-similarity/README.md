@@ -58,8 +58,9 @@ parents must be non-redirected; the file itself must be regular and preserve
 the canonical
 producer framing: UTF-8, compact JSON token framing, LF-only record boundaries,
 no outer record whitespace, and a final LF. Spaces or tabs between JSON tokens
-are rejected rather than normalized; valid JSON string escapes remain decoded.
-Each ledger is opened once and its device, inode, modification
+and escaped object-member names are rejected rather than normalized; valid JSON
+string-value escapes remain decoded. Each ledger is opened once and its device,
+inode, modification
 time, platform `ctime`, and byte count must remain identical from pre-open
 inspection through an immediate opened-path check, the completed read, and the
 final path check. Descriptor/current-path parity carries redirect protection;
