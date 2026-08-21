@@ -47,6 +47,17 @@ _ALGORITHM_SETTINGS_SCHEMA = "shar.algorithm.settings.v1"
 _ALGORITHM_SETTINGS_RELATIVE = Path(
     "src/foundation/algorithm/composition/adapter-inbound/settings.json"
 )
+_ALGORITHM_SETTINGS_FIELDS = (
+    "schema",
+    "minimum_source_files",
+    "minimum_source_bytes",
+    "maximum_source_files",
+    "maximum_target_files",
+    "maximum_file_bytes",
+    "maximum_source_bytes",
+    "maximum_target_bytes",
+)
+_U64_MAX = (1 << 64) - 1
 
 
 class VariantEvidenceError(ValueError):
@@ -205,6 +216,74 @@ def _repository_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
+def _settings_object_without_duplicates(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    """Build one settings object while rejecting duplicate JSON fields.
+
+    Raises:
+        ProjectionSettingsError: If one field appears more than once.
+
+    """
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ProjectionSettingsError
+        result[key] = value
+    return result
+
+
+def _algorithm_maximum_file_bytes_from_text(text: str) -> int:
+    """Validate Rust-compatible active settings and return the file limit.
+
+    Raises:
+        ProjectionSettingsError: If active settings cannot be validated.
+
+    """
+    try:
+        document = json.loads(
+            text,
+            object_pairs_hook=_settings_object_without_duplicates,
+        )
+    except (TypeError, ValueError) as error:
+        raise ProjectionSettingsError from error
+    if not isinstance(document, dict) or set(document) != set(
+        _ALGORITHM_SETTINGS_FIELDS
+    ):
+        raise ProjectionSettingsError
+    if document["schema"] != _ALGORITHM_SETTINGS_SCHEMA:
+        raise ProjectionSettingsError
+    values: dict[str, int] = {}
+    for field in _ALGORITHM_SETTINGS_FIELDS[1:]:
+        value = document[field]
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, int)
+            or not 0 <= value <= _U64_MAX
+        ):
+            raise ProjectionSettingsError
+        values[field] = value
+    if (
+        values["minimum_source_files"] == 0
+        or values["minimum_source_bytes"] == 0
+        or values["maximum_source_files"] < values["minimum_source_files"]
+        or values["maximum_source_bytes"] < values["minimum_source_bytes"]
+    ):
+        raise ProjectionSettingsError
+    if (
+        values["maximum_target_files"] == 0
+        or values["maximum_file_bytes"] == 0
+        or values["maximum_target_bytes"] == 0
+    ):
+        raise ProjectionSettingsError
+    if (
+        values["maximum_source_files"] * values["maximum_file_bytes"]
+        < values["minimum_source_bytes"]
+    ):
+        raise ProjectionSettingsError
+    return values["maximum_file_bytes"]
+
+
 def _algorithm_maximum_file_bytes() -> int:
     """Load the active generic algorithm file limit without leaking its path.
 
@@ -214,20 +293,10 @@ def _algorithm_maximum_file_bytes() -> int:
     """
     path = _repository_root() / _ALGORITHM_SETTINGS_RELATIVE
     try:
-        document = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as error:
+        text = path.read_text(encoding="utf-8")
+    except OSError as error:
         raise ProjectionSettingsError from error
-    if not isinstance(document, dict):
-        raise ProjectionSettingsError
-    maximum = document.get("maximum_file_bytes")
-    if (
-        document.get("schema") != _ALGORITHM_SETTINGS_SCHEMA
-        or isinstance(maximum, bool)
-        or not isinstance(maximum, int)
-        or maximum <= 0
-    ):
-        raise ProjectionSettingsError
-    return maximum
+    return _algorithm_maximum_file_bytes_from_text(text)
 
 
 def _validate_projection_resources(
