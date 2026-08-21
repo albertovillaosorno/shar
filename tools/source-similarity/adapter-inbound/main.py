@@ -119,6 +119,7 @@ _MANIFEST_KIND_BY_EXTENSION = {
     "rmv": "movie",
     "rsd": "audio",
     "rsm": "music_arrangement",
+    "rtf": "document",
     "s": "language_textbible",
     "scr": "ui-resource",
     "tga": "image",

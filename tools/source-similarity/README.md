@@ -32,7 +32,8 @@ explicit JSON `null` is not treated as absence. Excessively nested JSON also
 fails through the same path-free malformed-ledger error rather than escaping as
 a parser recursion failure. Coordinate rows must also map to
 one producer-classified bucket; an optional `kind` value must match that exact
-classification. JSON object members must retain the producer's canonical field
+classification, including nested RTF `document` rows. JSON object members must
+retain the producer's canonical field
 order, including nested required-file metadata. Coordinate rows must remain in
 the producer's deterministic `(dir, ext)` order. Those metadata fields remain
 ignored by the metric.

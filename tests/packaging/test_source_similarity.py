@@ -187,8 +187,20 @@ class SourceSimilarityTests(unittest.TestCase):
         )
 
     def test_parser_accepts_observed_count_rows(self) -> None:
-        ledger = '{"dir":"aa","ext":"p3d","count":2,"kind":"p3d_container"}'
-        self.assertEqual(_MOD.parse_count_ledger(ledger), {("aa", "p3d"): 2})
+        cases = (
+            ("p3d", "p3d_container", 2),
+            ("rtf", "document", 1),
+        )
+        for extension, kind, count in cases:
+            with self.subTest(extension=extension):
+                ledger = (
+                    f'{{"dir":"aa","ext":"{extension}","count":{count},'
+                    f'"kind":"{kind}"}}'
+                )
+                self.assertEqual(
+                    _MOD.parse_count_ledger(ledger),
+                    {("aa", extension): count},
+                )
 
     def test_parser_rejects_ambiguous_jsonl_records(self) -> None:
         valid_pair = (
