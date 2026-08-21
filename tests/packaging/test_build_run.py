@@ -1536,6 +1536,58 @@ class CandidateArtifactTests(unittest.TestCase):
                         _RUN._TARGETS_BY_ID[target_id],
                     )
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_rejects_runtime_replacement_before_signature_read(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-native-runtime-race-"
+        ) as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            runtime = (
+                candidate
+                / "shar/Binaries/Linux/shar-Linux-Shipping"
+            )
+            runtime.parent.mkdir(parents=True)
+            runtime.write_bytes(b"not an ELF runtime")
+            runtime.chmod(0o755)
+            external = root / "external-runtime"
+            external.write_bytes(_synthetic_elf(0x003E))
+            external.chmod(0o755)
+            displaced = root / "displaced-runtime"
+            real_identity = _RUN._real_file_identity
+            replaced = False
+
+            def replace_after_identity(
+                path: Path, label: str
+            ) -> tuple[int, ...]:
+                nonlocal replaced
+                identity = real_identity(path, label)
+                if path == runtime and not replaced:
+                    runtime.replace(displaced)
+                    runtime.symlink_to(external)
+                    replaced = True
+                return identity
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_real_file_identity",
+                    side_effect=replace_after_identity,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ),
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["linux-x64"],
+                )
+
+            self.assertTrue(runtime.is_symlink())
+            self.assertEqual(displaced.read_bytes(), b"not an ELF runtime")
+            self.assertEqual(external.read_bytes(), _synthetic_elf(0x003E))
+
     def test_macos_candidate_requires_shar_app_runtime(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-macos-candidate-") as raw:
             candidate = Path(raw)

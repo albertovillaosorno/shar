@@ -106,10 +106,13 @@ and ARM64, and macOS candidates require a `.app` bundle with a non-empty SHAR
 executable below `Contents/MacOS`. On POSIX hosts those native runtimes must
 also retain execute permission. Desktop entrypoints must identify their native
 binary format as ELF, Mach-O, or PE as appropriate, and the native header must
-match the selected x64 or ARM64 target. A renamed executable or a binary for the
-wrong architecture cannot satisfy publication. Plain data-only archives can no
-longer be
-published as successful desktop packages on those platforms.
+match the selected x64 or ARM64 target. Runtime size, execute permission, and
+header parsing now share one stable single-link descriptor identity that must
+still match the candidate path afterward; a transient external binary therefore
+cannot authorize different local bytes that later reach publication. A renamed
+executable or a binary for the wrong architecture cannot satisfy publication.
+Plain data-only archives can no longer be published as successful desktop
+packages on those platforms.
 
 Publication also preflights an existing `dist/<ARCH>/` identity as a real
 directory before any rename. A regression proves a colliding regular file is
