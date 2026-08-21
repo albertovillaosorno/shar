@@ -532,6 +532,41 @@ class SourceSimilaritySchemaParityTests(unittest.TestCase):
 class SourceSimilarityCanonicalOrderTests(unittest.TestCase):
     """Require JSONL rows to retain deterministic producer coordinate order."""
 
+    def test_parser_rejects_reordered_json_members(self) -> None:
+        header = json.loads(
+            (_ROOT / "game/manifest/game.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()[0]
+        )
+        reordered_header = {
+            "required_files": header["required_files"],
+            "schema": header["schema"],
+            "kind_taxonomy": header["kind_taxonomy"],
+        }
+        reordered_requirement = dict(header)
+        first = header["required_files"][0]
+        reordered_requirement["required_files"] = [
+            {"min": first["min"], "path": first["path"]},
+            *header["required_files"][1:],
+        ]
+        variants = (
+            '{"ext":"p3d","dir":"aa","count":1}',
+            '{"dir":"aa","count":1,"ext":"p3d"}',
+            '{"dir":"aa","ext":"p3d","kind":"p3d_container","count":1}',
+            json.dumps(reordered_header, separators=(",", ":")),
+            json.dumps(reordered_requirement, separators=(",", ":")),
+        )
+
+        for ledger in variants:
+            with (
+                self.subTest(ledger=ledger[:120]),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "order|metadata",
+                ),
+            ):
+                _MOD.parse_count_ledger(ledger)
+
     def test_parser_rejects_reordered_coordinates(self) -> None:
         ledgers = (
             (

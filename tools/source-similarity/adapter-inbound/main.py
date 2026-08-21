@@ -426,7 +426,7 @@ def _valid_public_relative_path(value: object) -> bool:
 
 def _valid_required_file_metadata(value: object) -> bool:
     """Return whether one public required-file record has canonical shape."""
-    if not isinstance(value, dict) or set(value) != {"path", "min"}:
+    if not isinstance(value, dict) or tuple(value) != ("path", "min"):
         return False
     minimum = value["min"]
     if (
@@ -441,8 +441,16 @@ def _valid_required_file_metadata(value: object) -> bool:
 
 def _validate_schema_metadata(record: dict[str, Any]) -> None:
     """Require only public manifest header metadata shapes."""
-    if set(record) - {"schema", "kind_taxonomy", "required_files"}:
+    canonical_order = ("schema", "kind_taxonomy", "required_files")
+    if set(record) - set(canonical_order):
         raise LedgerInputError("count ledger schema record has unknown fields")
+    expected_order = tuple(
+        field for field in canonical_order if field in record
+    )
+    if tuple(record) != expected_order:
+        raise LedgerInputError(
+            "count ledger schema member order is not canonical"
+        )
     if "kind_taxonomy" in record:
         taxonomy = record["kind_taxonomy"]
         if not isinstance(taxonomy, list) or taxonomy != list(
@@ -488,9 +496,15 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
         raise LedgerInputError(
             "count ledger record must select one count field"
         )
+    count_field = "count" if has_observed else "min"
+    expected_order = ("dir", "ext", count_field) + (
+        ("kind",) if "kind" in record else ()
+    )
+    if tuple(record) != expected_order:
+        raise LedgerInputError("count ledger member order is not canonical")
     directory = record.get("dir")
     extension = record.get("ext")
-    count = record.get("count" if has_observed else "min")
+    count = record.get(count_field)
     kind = record.get("kind")
     if not _valid_directory_alias(directory) or not _valid_extension(extension):
         raise InvalidCoordinateError
