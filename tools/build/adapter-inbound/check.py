@@ -933,7 +933,8 @@ def _saved_engine_root(saved: dict[str, object]) -> Path:
 
 def _revalidate(path: Path) -> None:
     """Recompute preflight evidence and require exact saved equality."""
-    saved = _read_json_object(path, "saved check evidence")
+    snapshot = _read_real_evidence_bytes(path, "saved check evidence")
+    saved = _json_object_from_bytes(snapshot, "saved check evidence", path)
     if saved.get("schema") != _SCHEMA:
         raise CheckFailure(f"saved check evidence schema must be {_SCHEMA}")
     engine_root = _saved_engine_root(saved)
@@ -945,6 +946,8 @@ def _revalidate(path: Path) -> None:
         deep_source_validator=None,
     )
     current = _run(arguments)
+    if _read_real_evidence_bytes(path, "saved check evidence") != snapshot:
+        raise CheckFailure("saved check evidence changed during revalidation")
     if saved != current:
         raise CheckFailure(
             "saved check evidence no longer matches validated state; "

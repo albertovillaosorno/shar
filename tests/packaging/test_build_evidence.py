@@ -648,6 +648,41 @@ class DependencyEvidenceSnapshotTests(unittest.TestCase):
                 _CHECK._run(args)
 
 
+class CheckRevalidationSnapshotTests(unittest.TestCase):
+    """Keep direct check revalidation bound to one saved snapshot."""
+
+    def test_revalidation_rejects_saved_evidence_drift(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-check-revalidation-drift-"
+        ) as raw:
+            path = Path(raw) / "check.json"
+            saved = {
+                "game": {"path": "/lawful/game"},
+                "schema": _CHECK._SCHEMA,
+                "unreal": {"root": "/engine"},
+            }
+            path.write_text(
+                _CHECK.json.dumps(saved) + "\n",
+                encoding="utf-8",
+            )
+
+            def recompute(_args: object) -> dict[str, object]:
+                path.write_text(
+                    _CHECK.json.dumps({**saved, "drift": True}) + "\n",
+                    encoding="utf-8",
+                )
+                return saved
+
+            with (
+                mock.patch.object(_CHECK, "_run", side_effect=recompute),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "saved check evidence changed during revalidation",
+                ),
+            ):
+                _CHECK._revalidate(path)
+
+
 class SourceSelectionTests(unittest.TestCase):
     """Exercise read-only source-root selection without build toolchains."""
 
