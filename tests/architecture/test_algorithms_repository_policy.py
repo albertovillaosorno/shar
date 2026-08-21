@@ -244,18 +244,46 @@ def _is_nonnegative_integer(value: object) -> bool:
     )
 
 
+def _validate_settings_document(
+    document: object,
+) -> dict[str, object]:
+    """Mirror Rust `Settings::from_json` and `Settings::validate`."""
+    assert isinstance(document, dict)
+    assert set(document) == set(_SETTINGS_WIRE_FIELDS)
+    assert document["schema"] == "shar.algorithm.settings.v1"
+    values: dict[str, int] = {}
+    for field in _SETTINGS_WIRE_FIELDS[1:]:
+        value = document[field]
+        assert _is_nonnegative_integer(value)
+        assert isinstance(value, int)
+        values[field] = value
+    assert values["minimum_source_files"] > 0
+    assert values["minimum_source_bytes"] > 0
+    assert values["maximum_source_files"] >= values["minimum_source_files"]
+    assert values["maximum_target_files"] > 0
+    assert values["maximum_file_bytes"] > 0
+    assert values["maximum_source_bytes"] >= values["minimum_source_bytes"]
+    assert (
+        values["maximum_source_files"] * values["maximum_file_bytes"]
+        >= values["minimum_source_bytes"]
+    )
+    assert values["maximum_target_bytes"] > 0
+    return document
+
+
 def _active_settings() -> dict[str, object]:
-    """Load active generic algorithm settings with duplicate-key rejection."""
+    """Load the exact Rust-compatible active algorithm settings authority."""
     path = (
         _ROOT
         / "src/foundation/algorithm/composition/adapter-inbound/settings.json"
     )
+    assert path.is_file()
+    assert not path.is_symlink()
     document = json.loads(
         path.read_text(encoding="utf-8"),
         object_pairs_hook=_json_object_without_duplicates,
     )
-    assert isinstance(document, dict)
-    return document
+    return _validate_settings_document(document)
 
 
 def _settings_sha256(settings: dict[str, object]) -> str:
@@ -281,6 +309,33 @@ def test_algorithm_settings_hash_ignores_input_member_order() -> None:
     reordered = dict(reversed(tuple(settings.items())))
     assert tuple(reordered) != tuple(settings)
     assert _settings_sha256(reordered) == _settings_sha256(settings)
+
+
+def test_active_algorithm_settings_match_runtime_validation() -> None:
+    """Reject settings shapes or relations that Rust rejects."""
+    settings = _active_settings()
+    invalid = (
+        {**settings, "schema": "wrong"},
+        {key: value for key, value in settings.items() if key != "schema"},
+        {**settings, "unknown": 1},
+        {**settings, "minimum_source_files": True},
+        {**settings, "minimum_source_bytes": 0},
+        {**settings, "maximum_source_files": 0},
+        {**settings, "maximum_target_files": 0},
+        {**settings, "maximum_file_bytes": 0},
+        {**settings, "maximum_source_bytes": 1},
+        {**settings, "maximum_target_bytes": 0},
+        {
+            **settings,
+            "minimum_source_bytes": 5,
+            "maximum_source_files": 2,
+            "maximum_file_bytes": 2,
+        },
+        {**settings, "maximum_target_bytes": 1 << 64},
+    )
+    for document in invalid:
+        with pytest.raises(AssertionError):
+            _validate_settings_document(document)
 
 
 def _is_lower_hex(value: object, length: int) -> bool:
