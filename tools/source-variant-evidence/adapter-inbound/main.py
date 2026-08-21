@@ -285,7 +285,7 @@ def _algorithm_maximum_file_bytes_from_text(text: str) -> int:
 
 
 def _algorithm_maximum_file_bytes() -> int:
-    """Load the active generic algorithm file limit without leaking its path.
+    """Load one stable non-redirected active algorithm settings snapshot.
 
     Raises:
         ProjectionSettingsError: If active settings cannot be validated.
@@ -293,8 +293,27 @@ def _algorithm_maximum_file_bytes() -> int:
     """
     path = _repository_root() / _ALGORITHM_SETTINGS_RELATIVE
     try:
-        text = path.read_text(encoding="utf-8")
+        expected = _regular_file_identity(path)
+    except VariantEvidenceError as error:
+        raise ProjectionSettingsError from error
+    try:
+        with path.open("rb") as handle:
+            opened = _identity(os.fstat(handle.fileno()))
+            if opened != expected or _current_identity(path) != expected:
+                raise ProjectionSettingsError
+            data = handle.read()
+            finished = _identity(os.fstat(handle.fileno()))
     except OSError as error:
+        raise ProjectionSettingsError from error
+    if (
+        finished != expected
+        or _current_identity(path) != expected
+        or len(data) != expected.size
+    ):
+        raise ProjectionSettingsError
+    try:
+        text = data.decode("utf-8")
+    except UnicodeError as error:
         raise ProjectionSettingsError from error
     return _algorithm_maximum_file_bytes_from_text(text)
 

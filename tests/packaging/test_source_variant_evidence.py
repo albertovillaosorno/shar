@@ -311,6 +311,23 @@ class SourceVariantProjectionTests(unittest.TestCase):
             ):
                 _MOD._algorithm_maximum_file_bytes_from_text(document)
 
+    def test_projection_settings_redirect_fails_before_read(self) -> None:
+        with (
+            mock.patch.object(
+                _MOD,
+                "_regular_file_identity",
+                side_effect=_MOD.InputRedirectError,
+            ),
+            mock.patch.object(
+                Path,
+                "open",
+                side_effect=AssertionError("settings payload was read"),
+            ) as opened,
+            self.assertRaises(_MOD.ProjectionSettingsError),
+        ):
+            _MOD._algorithm_maximum_file_bytes()
+        opened.assert_not_called()
+
     def test_projection_enforces_active_file_resources(self) -> None:
         oversized_span = _MOD.OffsetProjection((
             _MOD.OffsetProjectionAlternative(span_bytes=9, mask=b"\x80\x00"),
