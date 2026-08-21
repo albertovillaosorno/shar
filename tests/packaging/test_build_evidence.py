@@ -1155,6 +1155,31 @@ class EngineSelectionTests(unittest.TestCase):
             self.assertEqual(displaced.read_bytes(), local_payload)
             self.assertEqual(external.read_bytes(), external_payload)
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_engine_rejects_linked_editor_executable(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-engine-editor-") as raw:
+            engine = Path(raw) / "UE_5.8"
+            version = engine / "Engine/Build/Build.version"
+            version.parent.mkdir(parents=True)
+            version.write_text(
+                '{"MajorVersion":5,"MinorVersion":8,"PatchVersion":1}\n',
+                encoding="utf-8",
+            )
+            external = Path(raw) / "external-editor"
+            external.write_bytes(b"editor")
+            external.chmod(0o755)
+            editor = engine / "fake-editor"
+            editor.symlink_to(external)
+
+            with (
+                mock.patch.object(_CHECK, "_editor_path", return_value=editor),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "Unreal editor executable must be a real file",
+                ),
+            ):
+                _CHECK._check_engine(engine)
+
     def test_engine_rejects_directory_at_editor_executable_path(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-engine-editor-") as raw:
             engine = Path(raw) / "UE_5.8"

@@ -886,6 +886,10 @@ def _check_engine(explicit: Path | None) -> EngineEvidence:
             if not editor.is_file():
                 message = f"Unreal editor executable is missing: {editor}"
                 raise CheckFailure(message)
+            if editor.is_symlink() or os.path.isjunction(editor):
+                raise CheckFailure(
+                    f"Unreal editor executable must be a real file: {editor}"
+                )
             if os.name != "nt" and not os.access(editor, os.X_OK):
                 raise CheckFailure(f"Unreal editor is not executable: {editor}")
         return EngineEvidence(resolved, version)
