@@ -571,6 +571,29 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
             ):
                 _MOD.measure({(directory, "p3d"): 2}, candidate)
 
+    def test_parser_rejects_noncanonical_collision_families(self) -> None:
+        ledgers = (
+            '{"dir":"aa~01","ext":"p3d","count":1}\n',
+            (
+                '{"dir":"aa~01","ext":"p3d","count":1}\n'
+                '{"dir":"aa~03","ext":"rcf","count":1}\n'
+            ),
+            (
+                '{"dir":"aa","ext":"p3d","count":1}\n'
+                '{"dir":"aa~01","ext":"rcf","count":1}\n'
+                '{"dir":"aa~02","ext":"wav","count":1}\n'
+            ),
+        )
+        for ledger in ledgers:
+            with (
+                self.subTest(ledger=ledger),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "collision ordinals",
+                ),
+            ):
+                _MOD.parse_count_ledger(ledger)
+
     def test_parser_rejects_private_directory_names_outside_alias_shape(
         self,
     ) -> None:

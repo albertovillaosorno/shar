@@ -6,7 +6,11 @@ Defines the `tools/source-similarity` boundary for content-free structural
 similarity calibration over lawful source manifests. Comparison aggregates only
 canonical generated collision ordinals within the unsigned 64-bit generator
 range so optional directories cannot renumber otherwise shared structural
-evidence. The CLI accepts two public JSONL count ledgers and emits aggregate
+evidence. Parsed ledgers require each suffixed collision family to contain the
+complete contiguous producer sequence from `~01` through at least `~02`, and
+reject a simultaneous base alias without a suffix. The CLI accepts two public
+JSONL
+count ledgers and emits aggregate
 exact-rational evidence only.
 
 ## Calibration invocation
