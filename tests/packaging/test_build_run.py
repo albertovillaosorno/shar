@@ -32,6 +32,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 from pathlib import Path
 import tempfile
@@ -1761,12 +1762,56 @@ class ArchitectureRevalidationTests(unittest.TestCase):
             ):
                 _RUN._revalidate_check(root, check_path)
 
+    def test_project_evidence_rejects_descriptor_drift(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-run-project-drift-"
+        ) as raw:
+            root = Path(raw)
+            project = root / _RUN._PROJECT_PATH
+            project.parent.mkdir(parents=True)
+            project.write_text(
+                '{"EngineAssociation":"5.8"}\n',
+                encoding="utf-8",
+            )
+            unreal = {
+                "project": str(project),
+                "project_sha256": "0" * 64,
+            }
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "project descriptor no longer matches preflight",
+            ):
+                _RUN._project_from_evidence(root, unreal)
+
+    def test_project_evidence_accepts_current_canonical_descriptor(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-run-project-current-"
+        ) as raw:
+            root = Path(raw)
+            project = root / _RUN._PROJECT_PATH
+            project.parent.mkdir(parents=True)
+            payload = b'{"EngineAssociation":"5.8"}\n'
+            project.write_bytes(payload)
+            unreal = {
+                "project": str(project),
+                "project_sha256": hashlib.sha256(payload).hexdigest(),
+            }
+
+            self.assertEqual(
+                _RUN._project_from_evidence(root, unreal),
+                project,
+            )
+
     def test_main_consumes_revalidated_snapshots(self) -> None:
         root = Path("/repo")
         arch_snapshot = b"validated arch"
         check_snapshot = b"validated check"
         unreal = {
             "project": "/repo/project/shar.uproject",
+            "project_sha256": "a" * 64,
             "root": "/engine",
             "version": "5.8.1",
         }
@@ -1796,6 +1841,11 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                 _RUN,
                 "_require_unreal_evidence",
                 return_value=unreal,
+            ),
+            mock.patch.object(
+                _RUN,
+                "_project_from_evidence",
+                return_value=Path("/repo/project/shar.uproject"),
             ),
             mock.patch.object(_RUN, "_prepare_project_state"),
             mock.patch.object(_RUN, "_uat_path", return_value=Path("/uat")),

@@ -36,6 +36,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -50,6 +51,7 @@ _ARCH_SCHEMA = "shar.build.arch.v1"
 _CHECK_SCHEMA = "shar.build.check.v1"
 _ARCH_PATH = Path(".cache/build/data/arch.json")
 _CHECK_PATH = Path(".cache/build/data/check.json")
+_PROJECT_PATH = Path("src/unreal/project/composition/uproject/shar.uproject")
 _WORK_ROOT = Path(".cache/build/run")
 _PROJECT_STATE_ROOT = Path(".cache/build/project-state")
 _PROJECT_STATE_NAMES = ("Binaries", "DerivedDataCache", "Intermediate", "Saved")
@@ -211,12 +213,55 @@ def _check_evidence(
     unreal = value.get("unreal")
     if not isinstance(unreal, dict):
         raise RunFailure("check evidence has no unreal object")
-    for key in ("project", "root", "version"):
+    for key in ("project", "project_sha256", "root", "version"):
         if not isinstance(unreal.get(key), str) or not unreal.get(key):
             raise RunFailure(f"check evidence has invalid unreal.{key}")
+    project_sha256 = str(unreal["project_sha256"])
+    if (
+        len(project_sha256) != 64
+        or project_sha256 != project_sha256.casefold()
+        or any(
+            character not in "0123456789abcdef"
+            for character in project_sha256
+        )
+    ):
+        raise RunFailure("check evidence has invalid unreal.project_sha256")
     if unreal.get("version") != "5.8.1":
         raise RunFailure("check evidence must target Unreal Engine 5.8.1")
     return value
+
+
+def _project_from_evidence(
+    root: Path,
+    unreal: dict[str, object],
+) -> Path:
+    """Require the current canonical project to match saved preflight bytes."""
+    expected_path = root / _PROJECT_PATH
+    saved_path = Path(str(unreal["project"]))
+    if saved_path != expected_path:
+        raise RunFailure("check evidence project path is not canonical")
+    for path, label in (
+        (root / "src", "source root"),
+        (root / "src/unreal", "Unreal source root"),
+        (root / "src/unreal/project", "Unreal project source root"),
+        (
+            root / "src/unreal/project/composition",
+            "Unreal project composition root",
+        ),
+        (expected_path.parent, "Unreal project root"),
+    ):
+        _require_real_directory(path, label)
+    _require_real_file(expected_path, "Unreal project descriptor")
+    try:
+        snapshot = expected_path.read_bytes()
+    except OSError as error:
+        raise RunFailure("cannot read Unreal project descriptor") from error
+    actual = hashlib.sha256(snapshot).hexdigest()
+    if actual != unreal["project_sha256"]:
+        raise RunFailure(
+            "Unreal project descriptor no longer matches preflight"
+        )
+    return expected_path
 
 
 def _revalidate_snapshot(
@@ -1206,7 +1251,7 @@ def main() -> int:
         check = _check_evidence(check_path, snapshot=check_snapshot)
         unreal = _require_unreal_evidence(check)
         engine_root = Path(str(unreal["root"])).resolve()
-        project = Path(str(unreal["project"])).resolve()
+        project = _project_from_evidence(root, unreal)
         _prepare_project_state(root, project)
         uat = _uat_path(engine_root)
         for target in targets:
