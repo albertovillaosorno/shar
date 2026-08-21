@@ -651,6 +651,17 @@ def _publish_validator(root: Path, built: Path) -> Path:
     """Atomically publish one validator when its content changed."""
     destination = root / _BIN_ROOT / built.name
     destination.parent.mkdir(parents=True, exist_ok=True)
+    if os.path.lexists(destination):
+        is_real = (
+            destination.is_file()
+            and not destination.is_symlink()
+            and not os.path.isjunction(destination)
+            and destination.stat(follow_symlinks=False).st_nlink == 1
+        )
+        if not is_real:
+            raise BootstrapFailure(
+                f"validator destination must be a real file: {destination}"
+            )
     if destination.is_file() and _sha256(destination) == _sha256(built):
         return destination.resolve()
     candidate = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")

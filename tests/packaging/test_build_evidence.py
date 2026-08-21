@@ -414,6 +414,77 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
         finally:
             temporary.cleanup()
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_validator_publication_rejects_redirected_destination(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-validator-link-") as raw:
+            root = Path(raw)
+            built = root / "built" / "validate-game"
+            built.parent.mkdir()
+            built.write_bytes(b"validator")
+            destination = root / _DEPENDENCIES._BIN_ROOT / built.name
+            destination.parent.mkdir(parents=True)
+            external = root / "external-validator"
+            external.write_bytes(b"validator")
+            destination.symlink_to(external)
+
+            with self.assertRaisesRegex(
+                _DEPENDENCIES.BootstrapFailure,
+                "validator destination must be a real file",
+            ):
+                _DEPENDENCIES._publish_validator(root, built)
+
+    def test_preflight_rejects_hard_linked_dependency_validator(self) -> None:
+        temporary, root = self._fixture()
+        try:
+            validator = root / ".dependencies/build/bin/validate-game"
+            validator.parent.mkdir(parents=True)
+            validator.write_bytes(b"validator")
+            alias = root / "validator-alias"
+            alias.hardlink_to(validator)
+            evidence = {
+                "validator": {
+                    "path": str(validator),
+                    "sha256": hashlib.sha256(b"validator").hexdigest(),
+                    "source_sha256": _CHECK._validator_source_sha256(root),
+                }
+            }
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "dependency validator must be a real file",
+            ):
+                _CHECK._dependency_validator(root, evidence)
+        finally:
+            temporary.cleanup()
+
+    def test_preflight_rejects_redirected_validator_storage(self) -> None:
+        temporary, root = self._fixture()
+        try:
+            validator = root / ".dependencies/build/bin/validate-game"
+            validator.parent.mkdir(parents=True)
+            validator.write_bytes(b"validator")
+            evidence = {
+                "validator": {
+                    "path": str(validator),
+                    "sha256": hashlib.sha256(b"validator").hexdigest(),
+                    "source_sha256": _CHECK._validator_source_sha256(root),
+                }
+            }
+            build_root = root / ".dependencies/build"
+            with (
+                mock.patch.object(
+                    _CHECK.os.path,
+                    "isjunction",
+                    side_effect=lambda path: Path(path) == build_root,
+                ),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "validator storage must use real directories",
+                ),
+            ):
+                _CHECK._dependency_validator(root, evidence)
+        finally:
+            temporary.cleanup()
+
     def test_legacy_validator_evidence_fails_closed(self) -> None:
         temporary, root = self._fixture()
         try:
