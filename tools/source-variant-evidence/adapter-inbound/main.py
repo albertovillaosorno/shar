@@ -493,7 +493,7 @@ def _ordered_projection(
             in order.
 
     """
-    mask = bytearray((len(candidate) + 7) // 8)
+    mask = bytearray()
     matched = 0
     span = 0
     for offset, value in enumerate(candidate):
@@ -501,12 +501,14 @@ def _ordered_projection(
             break
         if value == reference[matched]:
             byte_index, bit_index = divmod(offset, 8)
+            missing = byte_index + 1 - len(mask)
+            if missing > 0:
+                mask.extend(b"\x00" * missing)
             mask[byte_index] |= 1 << (7 - bit_index)
             matched += 1
             span = offset + 1
     if matched != len(reference):
         raise ProjectionMismatchError
-    del mask[(span + 7) // 8 :]
     return OffsetProjectionAlternative(
         span_bytes=span,
         mask=bytes(mask),
