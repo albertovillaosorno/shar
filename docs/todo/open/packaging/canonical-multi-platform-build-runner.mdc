@@ -153,7 +153,10 @@ repository-owned side effects. Cached pinned rustup installers must be real
 single-link files, and downloads use an exclusively created PID staging file
 before opening the network response. The checksum is computed from the exact
 response bytes written to that owned handle, while pre-existing staging files or
-links are preserved and fail closed. Cargo-produced validator build outputs may
+links are preserved and fail closed. Reused or freshly installed repo-local Rust
+toolchains also require real rustup/toolchain/bin directory ancestors and
+single-link regular `cargo` and `rustc` leaves before bootstrap uses or records
+them. Cargo-produced validator build outputs may
 retain Cargo's canonical `release/deps` hard link, but every filesystem link
 must
 be accounted for inside that repository-owned target tree. Published validator

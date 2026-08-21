@@ -631,6 +631,60 @@ class RustupBootstrapBoundaryTests(unittest.TestCase):
             self.assertEqual(external.read_bytes(), b"outside")
             self.assertFalse(installer.exists())
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_cached_toolchain_rejects_redirected_cargo(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-rust-tool-link-"
+        ) as raw:
+            root = Path(raw)
+            required = "1.97.1"
+            cargo, rustc = _DEPENDENCIES._repo_rust_paths(
+                root, required, self._TARGET
+            )
+            cargo.parent.mkdir(parents=True)
+            external = root / "external-cargo"
+            external.write_bytes(b"external")
+            cargo.symlink_to(external)
+            rustc.write_bytes(b"rustc")
+            with (
+                mock.patch.object(
+                    _DEPENDENCIES,
+                    "_host_rust_target",
+                    return_value=self._TARGET,
+                ),
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "repo-local cargo must be a real file",
+                ),
+            ):
+                _DEPENDENCIES._install_repo_rust(root, required)
+
+    def test_cached_toolchain_rejects_hard_linked_rustc(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-rust-tool-hard-link-"
+        ) as raw:
+            root = Path(raw)
+            required = "1.97.1"
+            cargo, rustc = _DEPENDENCIES._repo_rust_paths(
+                root, required, self._TARGET
+            )
+            cargo.parent.mkdir(parents=True)
+            cargo.write_bytes(b"cargo")
+            rustc.write_bytes(b"rustc")
+            (root / "external-rustc-alias").hardlink_to(rustc)
+            with (
+                mock.patch.object(
+                    _DEPENDENCIES,
+                    "_host_rust_target",
+                    return_value=self._TARGET,
+                ),
+                self.assertRaisesRegex(
+                    _DEPENDENCIES.BootstrapFailure,
+                    "repo-local rustc must be a real single-link file",
+                ),
+            ):
+                _DEPENDENCIES._install_repo_rust(root, required)
+
     def test_rustup_download_hashes_owned_response_stream(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-rustup-download-"
