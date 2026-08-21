@@ -76,8 +76,9 @@ from a lawful local installation without writing into it. Observation rows use
 `count` while tracked minimum-policy rows use `min`; the similarity CLI accepts
 either form but rejects rows that mix the two meanings. Parsed rows must also
 resolve to the manifest producer's canonical bucket classification, and a
-present `kind` field must match that classification exactly. It reports only
-aggregate units and ratios and keeps local input paths out of validation
+present `kind` field must match that classification exactly. Parsed coordinate
+rows also retain the producer's deterministic `(dir, ext)` ordering. It reports
+only aggregate units and ratios and keeps local input paths out of validation
 diagnostics. Observation fails when exact mandatory files exist but no countable
 structural coordinate remains, so a successful observation always supplies a
 nonempty vector for calibration.

@@ -28,7 +28,9 @@ manifest-header metadata must retain their public JSON shapes when present;
 required-file rows are limited to the schema-v2 public path/minimum pairs, so
 explicit JSON `null` is not treated as absence. Coordinate rows must also map to
 one producer-classified bucket; an optional `kind` value must match that exact
-classification. Those metadata fields remain ignored by the metric. Directory
+classification. Coordinate rows must remain in the producer's deterministic
+`(dir, ext)` order. Those metadata fields remain ignored by the metric.
+Directory
 coordinates must retain the producer's
 lowercase, forward-slash
 normalization (with the empty string reserved for the game root). After any

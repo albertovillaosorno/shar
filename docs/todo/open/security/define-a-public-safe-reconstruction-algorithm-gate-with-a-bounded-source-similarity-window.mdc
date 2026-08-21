@@ -85,7 +85,8 @@ canonical manifest producer instead of accepting whitespace-normalized aliases.
 Optional public metadata now distinguishes omission from explicit JSON `null`;
 present row kinds must belong to the producer's public taxonomy and match the
 producer's exact `(dir, ext)` bucket classification, while unclassifiable
-coordinates fail even when `kind` is omitted. Taxonomy lists cannot introduce
+coordinates fail even when `kind` is omitted. Coordinate rows must also retain
+the producer's deterministic `(dir, ext)` order. Taxonomy lists cannot introduce
 unknown or duplicate values, and required-file metadata must
 remain a portable source-relative path under the shared host-safe component
 rules. Reserved aliases, stream syntax, trailing-dot/space identities, control
