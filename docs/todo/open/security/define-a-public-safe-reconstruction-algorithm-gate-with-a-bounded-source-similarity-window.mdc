@@ -90,7 +90,8 @@ rules. Reserved aliases, stream syntax, trailing-dot/space identities, control
 characters, invisible path modifiers, and oversized components all fail closed.
 Required-file rows are additionally limited to the schema-v2 public path/minimum
 pairs, with a regression that parses the tracked public manifest so producer and
-calibrator metadata cannot drift independently. These ignored metadata fields
+calibrator metadata cannot drift independently; duplicate required-file rows
+also fail closed. These ignored metadata fields
 therefore cannot smuggle arbitrary private
 path or kind strings into an accepted
 calibration ledger. Ledger paths must also identify non-redirected regular files
