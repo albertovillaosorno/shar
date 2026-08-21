@@ -162,52 +162,23 @@ class SourceSimilarityTests(unittest.TestCase):
             .splitlines()[0]
         )
         ledger = (
-            header + "\n" + '{"dir":"aa","ext":"p3d","min":2,"kind":"p3d_container"}\n'
+            header
+            + "\n"
+            + '{"dir":"aa","ext":"p3d","min":2,"kind":"p3d_container"}\n'
         )
         self.assertEqual(
             _MOD.parse_count_ledger(ledger),
             {("aa", "p3d"): 2},
         )
 
-    def test_parser_rejects_noncanonical_manifest_header_lists(self) -> None:
-        header = json.loads(
-            (_ROOT / "game/manifest/game.jsonl")
-            .read_text(encoding="utf-8")
-            .splitlines()[0]
-        )
-        variants = []
-
-        partial_taxonomy = dict(header)
-        partial_taxonomy["kind_taxonomy"] = header["kind_taxonomy"][:-1]
-        variants.append(partial_taxonomy)
-
-        reordered_taxonomy = dict(header)
-        reordered_taxonomy["kind_taxonomy"] = list(reversed(header["kind_taxonomy"]))
-        variants.append(reordered_taxonomy)
-
-        partial_required = dict(header)
-        partial_required["required_files"] = header["required_files"][:-1]
-        variants.append(partial_required)
-
-        reordered_required = dict(header)
-        reordered_required["required_files"] = list(reversed(header["required_files"]))
-        variants.append(reordered_required)
-
-        row = '{"dir":"aa","ext":"p3d","count":1}\n'
-        for variant in variants:
-            ledger = json.dumps(variant, separators=(",", ":")) + "\n" + row
-            with (
-                self.subTest(variant=variant),
-                self.assertRaises(_MOD.LedgerInputError),
-            ):
-                _MOD.parse_count_ledger(ledger)
-
     def test_parser_accepts_observed_count_rows(self) -> None:
         ledger = '{"dir":"aa","ext":"p3d","count":2,"kind":"p3d_container"}'
         self.assertEqual(_MOD.parse_count_ledger(ledger), {("aa", "p3d"): 2})
 
     def test_parser_rejects_ambiguous_jsonl_records(self) -> None:
-        valid_pair = '{"dir":"\\ud83d\\ude80\\ud83d\\ude80","ext":"p3d","min":1}'
+        valid_pair = (
+            '{"dir":"\\ud83d\\ude80\\ud83d\\ude80","ext":"p3d","min":1}'
+        )
         self.assertEqual(
             _MOD.parse_count_ledger(valid_pair),
             {("🚀🚀", "p3d"): 1},
@@ -376,7 +347,8 @@ class SourceSimilarityTests(unittest.TestCase):
 
     def test_parser_rejects_mixed_count_meanings(self) -> None:
         ledger = (
-            '{"dir":"aa","ext":"p3d","min":1}\n{"dir":"bb","ext":"rcf","count":1}\n'
+            '{"dir":"aa","ext":"p3d","min":1}\n'
+            '{"dir":"bb","ext":"rcf","count":1}\n'
         )
         with self.assertRaisesRegex(ValueError, "mixes count meanings"):
             _MOD.parse_count_ledger(ledger)
@@ -413,7 +385,10 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(stderr.getvalue(), "")
 
     def test_duplicate_public_coordinates_fail_closed(self) -> None:
-        ledger = '{"dir":"aa","ext":"p3d","min":1}\n{"dir":"aa","ext":"p3d","min":2}\n'
+        ledger = (
+            '{"dir":"aa","ext":"p3d","min":1}\n'
+            '{"dir":"aa","ext":"p3d","min":2}\n'
+        )
         with self.assertRaisesRegex(ValueError, "repeats a coordinate"):
             _MOD.parse_count_ledger(ledger)
 
@@ -481,7 +456,10 @@ class SourceSimilarityTests(unittest.TestCase):
                     stdout = StringIO()
                     stderr = StringIO()
                     with redirect_stdout(stdout), redirect_stderr(stderr):
-                        return_code = _MOD.main([str(reference), str(candidate)])
+                        return_code = _MOD.main([
+                            str(reference),
+                            str(candidate),
+                        ])
 
                 self.assertNotEqual(return_code, 0)
                 self.assertEqual(stdout.getvalue(), "")
@@ -491,6 +469,43 @@ class SourceSimilarityTests(unittest.TestCase):
 
 class SourceSimilaritySchemaParityTests(unittest.TestCase):
     """Keep calibration metadata aligned with the tracked public manifest."""
+
+    def test_parser_rejects_noncanonical_manifest_header_lists(self) -> None:
+        header = json.loads(
+            (_ROOT / "game/manifest/game.jsonl")
+            .read_text(encoding="utf-8")
+            .splitlines()[0]
+        )
+        variants = []
+
+        partial_taxonomy = dict(header)
+        partial_taxonomy["kind_taxonomy"] = header["kind_taxonomy"][:-1]
+        variants.append(partial_taxonomy)
+
+        reordered_taxonomy = dict(header)
+        reordered_taxonomy["kind_taxonomy"] = list(
+            reversed(header["kind_taxonomy"])
+        )
+        variants.append(reordered_taxonomy)
+
+        partial_required = dict(header)
+        partial_required["required_files"] = header["required_files"][:-1]
+        variants.append(partial_required)
+
+        reordered_required = dict(header)
+        reordered_required["required_files"] = list(
+            reversed(header["required_files"])
+        )
+        variants.append(reordered_required)
+
+        row = '{"dir":"aa","ext":"p3d","count":1}\n'
+        for variant in variants:
+            ledger = json.dumps(variant, separators=(",", ":")) + "\n" + row
+            with (
+                self.subTest(variant=variant),
+                self.assertRaises(_MOD.LedgerInputError),
+            ):
+                _MOD.parse_count_ledger(ledger)
 
     def test_tracked_public_manifest_header_is_accepted(self) -> None:
         counts = _MOD.load_count_ledger(_ROOT / "game/manifest/game.jsonl")
@@ -656,13 +671,11 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
                 _MOD.parse_count_ledger(
-                    json.dumps(
-                        {
-                            "dir": directory,
-                            "ext": "p3d",
-                            "count": 1,
-                        }
-                    )
+                    json.dumps({
+                        "dir": directory,
+                        "ext": "p3d",
+                        "count": 1,
+                    })
                 )
 
     def test_parser_rejects_private_directory_names_outside_alias_shape(
@@ -678,13 +691,11 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
                 _MOD.parse_count_ledger(
-                    json.dumps(
-                        {
-                            "dir": directory,
-                            "ext": "p3d",
-                            "count": 1,
-                        }
-                    )
+                    json.dumps({
+                        "dir": directory,
+                        "ext": "p3d",
+                        "count": 1,
+                    })
                 )
 
 
