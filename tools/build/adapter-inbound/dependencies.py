@@ -32,6 +32,8 @@
 
 """Prepare SHAR public build dependencies in repository-owned locations."""
 
+# CSpell:ignore fchmod
+
 from __future__ import annotations
 
 import argparse
