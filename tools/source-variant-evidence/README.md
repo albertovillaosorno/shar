@@ -33,8 +33,9 @@ duplicate layouts collapse to one alternative. Evidence inputs and their lexical
 directory parents must be real filesystem entries rather than symlinks or
 Windows junctions. Each input snapshot verifies both the opened descriptor and
 current lexical path identity before any payload read, then keeps device, inode,
-modification time, status-change time, and byte count stable through the read
-and final path check. The descriptor
+modification time, platform `ctime`, and byte count stable through the read and
+final path check. Descriptor/current-path parity carries redirect protection;
+`ctime` is additional drift evidence where the host updates it. The descriptor
 contains only
 bounded spans and selected-offset masks. It contains no source payload bytes,
 source hashes, or private paths. `algorithm create` can pair that descriptor

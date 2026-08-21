@@ -557,7 +557,7 @@ class SourceSimilarityCanonicalOrderTests(unittest.TestCase):
 class SourceSimilarityLedgerFileTests(unittest.TestCase):
     """Require stable non-redirected calibration-ledger snapshots."""
 
-    def test_ledger_identity_includes_status_change_time(self) -> None:
+    def test_ledger_identity_includes_platform_ctime(self) -> None:
         before = mock.Mock(
             st_dev=1,
             st_ino=2,
@@ -583,7 +583,7 @@ class SourceSimilarityLedgerFileTests(unittest.TestCase):
             device=1,
             inode=2,
             modified_ns=3,
-            changed_ns=4,
+            ctime_ns=4,
             size=5,
         )
         handle = mock.MagicMock()

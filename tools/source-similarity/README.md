@@ -53,9 +53,10 @@ parents must be non-redirected; the file itself must be regular and preserve
 the canonical
 producer framing: UTF-8, LF-only record boundaries, no outer record whitespace,
 and a final LF. Each ledger is opened once and its device, inode, modification
-time, status-change time, and byte count must remain identical from pre-open
+time, platform `ctime`, and byte count must remain identical from pre-open
 inspection through an immediate opened-path check, the completed read, and the
-final path check. Programmatic count
+final path check. Descriptor/current-path parity carries redirect protection;
+`ctime` is additional drift evidence where the host updates it. Programmatic count
 vectors are captured once and validated as stable snapshots before
 measurement,
 so a stateful mapping cannot change counts between validation and scoring. The
