@@ -651,6 +651,22 @@ class DependencyEvidenceSnapshotTests(unittest.TestCase):
 class CheckRevalidationSnapshotTests(unittest.TestCase):
     """Keep direct check revalidation bound to one saved snapshot."""
 
+    def test_revalidation_rejects_hard_linked_saved_evidence(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-check-revalidation-hardlink-"
+        ) as raw:
+            root = Path(raw)
+            external = root / "external-check.json"
+            external.write_text("{}\n", encoding="utf-8")
+            path = root / "check.json"
+            path.hardlink_to(external)
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "saved check evidence must be a real file",
+            ):
+                _CHECK._revalidate(path)
+
     def test_revalidation_rejects_saved_evidence_drift(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-check-revalidation-drift-"

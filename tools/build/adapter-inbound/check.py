@@ -320,7 +320,7 @@ def _real_evidence_identity(path: Path, label: str) -> tuple[int, ...]:
         metadata = path.stat(follow_symlinks=False)
     except OSError as error:
         raise CheckFailure(f"cannot read {label} {path}: {error}") from error
-    if not stat.S_ISREG(metadata.st_mode):
+    if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
         raise CheckFailure(f"{label} must be a real file")
     return _evidence_identity(metadata)
 
