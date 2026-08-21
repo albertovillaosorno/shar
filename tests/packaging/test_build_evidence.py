@@ -612,6 +612,80 @@ class EngineSelectionTests(unittest.TestCase):
         self.assertEqual(candidates, [expected])
 
 
+class CanonicalProjectBoundaryTests(unittest.TestCase):
+    """Keep canonical Unreal project authority inside the repository."""
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_preflight_rejects_linked_project_descriptor(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-project-descriptor-link-"
+        ) as raw:
+            root = Path(raw)
+            project = root / _CHECK._PROJECT_PATH
+            project.parent.mkdir(parents=True)
+            external = root / "external.uproject"
+            external.write_text(
+                '{"EngineAssociation":"5.8"}\n',
+                encoding="utf-8",
+            )
+            project.symlink_to(external)
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "Unreal project descriptor must be a real file",
+            ):
+                _CHECK._check_project(root)
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_preflight_rejects_linked_project_parent(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-project-parent-link-"
+        ) as raw:
+            root = Path(raw)
+            outside = root / "outside-project"
+            outside.mkdir()
+            (outside / "shar.uproject").write_text(
+                '{"EngineAssociation":"5.8"}\n',
+                encoding="utf-8",
+            )
+            composition = root / "src/unreal/project/composition"
+            composition.mkdir(parents=True)
+            (composition / "uproject").symlink_to(
+                outside, target_is_directory=True
+            )
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "Unreal project root must be a real directory",
+            ):
+                _CHECK._check_project(root)
+
+    def test_preflight_rejects_junction_project_parent(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-project-parent-junction-"
+        ) as raw:
+            root = Path(raw)
+            project_root = root / "src/unreal/project/composition/uproject"
+            project_root.mkdir(parents=True)
+            project = project_root / "shar.uproject"
+            project.write_text(
+                '{"EngineAssociation":"5.8"}\n',
+                encoding="utf-8",
+            )
+            with (
+                mock.patch.object(
+                    _CHECK.os.path,
+                    "isjunction",
+                    side_effect=lambda path: Path(path) == project_root,
+                ),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "Unreal project root must be a real directory",
+                ),
+            ):
+                _CHECK._check_project(root)
+
+
 class DependencyEvidenceSnapshotTests(unittest.TestCase):
     """Bind preflight to one stable dependency-evidence snapshot."""
 
