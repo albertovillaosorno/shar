@@ -87,8 +87,9 @@ coordinates outside the producer's classified bucket taxonomy or complete
 collision-family shape, and prevent a stateful mapping from presenting different
 counts to those two phases.
 JSONL calibration rows now also require the producer's compact JSON token
-framing, rejecting whitespace between tokens while preserving valid decoded JSON
-string escapes. Optional public metadata distinguishes omission from explicit
+framing and literal member names, rejecting token whitespace or escaped keys
+while preserving valid decoded JSON string-value escapes. Optional public
+metadata distinguishes omission from explicit
 JSON `null`;
 excessively nested JSON and producer-impossible signed-zero count tokens also
 fail through the calibrator's path-free input error. Present row kinds must

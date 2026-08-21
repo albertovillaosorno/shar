@@ -256,6 +256,36 @@ class SimilarityEvidence:
     weighted_jaccard: Fraction
 
 
+def _has_escaped_json_member_name(line: str) -> bool:
+    """Return whether one JSON object key uses a backslash escape."""
+    index = 0
+    while index < len(line):
+        if line[index] != '"':
+            index += 1
+            continue
+        index += 1
+        escaped = False
+        used_escape = False
+        while index < len(line):
+            character = line[index]
+            if escaped:
+                escaped = False
+                index += 1
+                continue
+            if character == "\\":
+                escaped = True
+                used_escape = True
+                index += 1
+                continue
+            if character == '"':
+                break
+            index += 1
+        if index + 1 < len(line) and line[index + 1] == ":" and used_escape:
+            return True
+        index += 1
+    return False
+
+
 def _has_json_token_whitespace(line: str) -> bool:
     """Return whether JSON tokens are separated by spaces or tabs."""
     in_string = False
@@ -289,6 +319,11 @@ def _parse_jsonl_record(line: str, line_number: int) -> dict[str, Any]:
     if _has_json_token_whitespace(line):
         raise LedgerInputError(
             f"count ledger JSON tokens have whitespace at line {line_number}"
+        )
+    if _has_escaped_json_member_name(line):
+        raise LedgerInputError(
+            "count ledger JSON member name uses an escape "
+            f"at line {line_number}"
         )
     try:
         record: Any = json.loads(
