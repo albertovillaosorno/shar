@@ -470,6 +470,24 @@ class SourceSimilarityTests(unittest.TestCase):
 class SourceSimilarityJsonRobustnessTests(unittest.TestCase):
     """Keep malformed JSON failures inside the path-free input boundary."""
 
+    def test_parser_rejects_json_token_whitespace(self) -> None:
+        aliases = (
+            '{"dir": "aa","ext":"p3d","count":1}',
+            '{"dir":"aa", "ext":"p3d","count":1}',
+            '{"dir":"aa","ext":"p3d","count": 1}',
+            '{"dir":"aa","ext":"p3d",\t"count":1}',
+        )
+
+        for ledger in aliases:
+            with (
+                self.subTest(ledger=ledger),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "JSON tokens have whitespace",
+                ),
+            ):
+                _MOD.parse_count_ledger(ledger)
+
     def test_parser_rejects_excessively_nested_json(self) -> None:
         depth = 100_000
         ledger = (
@@ -788,11 +806,14 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
                 _MOD.parse_count_ledger(
-                    json.dumps({
-                        "dir": directory,
-                        "ext": "p3d",
-                        "count": 1,
-                    })
+                    json.dumps(
+                        {
+                            "dir": directory,
+                            "ext": "p3d",
+                            "count": 1,
+                        },
+                        separators=(",", ":"),
+                    )
                 )
 
     def test_parser_rejects_impossible_obfuscated_components(self) -> None:
@@ -802,11 +823,14 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
                 _MOD.parse_count_ledger(
-                    json.dumps({
-                        "dir": directory,
-                        "ext": "p3d",
-                        "count": 1,
-                    })
+                    json.dumps(
+                        {
+                            "dir": directory,
+                            "ext": "p3d",
+                            "count": 1,
+                        },
+                        separators=(",", ":"),
+                    )
                 )
 
     def test_parser_rejects_private_directory_names_outside_alias_shape(
@@ -822,11 +846,14 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
                 _MOD.parse_count_ledger(
-                    json.dumps({
-                        "dir": directory,
-                        "ext": "p3d",
-                        "count": 1,
-                    })
+                    json.dumps(
+                        {
+                            "dir": directory,
+                            "ext": "p3d",
+                            "count": 1,
+                        },
+                        separators=(",", ":"),
+                    )
                 )
 
 
