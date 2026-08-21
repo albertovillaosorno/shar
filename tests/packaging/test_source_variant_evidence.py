@@ -277,6 +277,40 @@ class SourceVariantEvidenceTests(unittest.TestCase):
 class SourceVariantProjectionTests(unittest.TestCase):
     """Guard projection derivation and generic-algorithm compatibility."""
 
+    def test_projection_settings_match_rust_validation_shape(self) -> None:
+        settings = {
+            "schema": "shar.algorithm.settings.v1",
+            "minimum_source_files": 1,
+            "minimum_source_bytes": 2,
+            "maximum_source_files": 3,
+            "maximum_target_files": 4,
+            "maximum_file_bytes": 5,
+            "maximum_source_bytes": 6,
+            "maximum_target_bytes": 7,
+        }
+        encoded = json.dumps(settings, separators=(",", ":"))
+        self.assertEqual(
+            _MOD._algorithm_maximum_file_bytes_from_text(encoded),
+            5,
+        )
+
+        malformed = (
+            encoded[:-1] + ',"maximum_file_bytes":8}',
+            json.dumps({**settings, "unknown": 1}),
+            json.dumps({
+                key: value for key, value in settings.items() if key != "schema"
+            }),
+            json.dumps({**settings, "maximum_file_bytes": True}),
+            json.dumps({**settings, "maximum_source_bytes": 1}),
+            json.dumps({**settings, "maximum_source_files": 0}),
+        )
+        for document in malformed:
+            with (
+                self.subTest(document=document),
+                self.assertRaises(_MOD.ProjectionSettingsError),
+            ):
+                _MOD._algorithm_maximum_file_bytes_from_text(document)
+
     def test_projection_enforces_active_file_resources(self) -> None:
         oversized_span = _MOD.OffsetProjection((
             _MOD.OffsetProjectionAlternative(span_bytes=9, mask=b"\x80\x00"),
