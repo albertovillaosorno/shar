@@ -153,9 +153,9 @@ local variants while emitting only argument ordinals and aggregate byte counts.
 Its `--projection` mode can also emit an `offset-mask-set-v1` descriptor
 without a source hash, containing only bounded positional layouts. Private
 reference and variant paths now reject symlinked or junction-backed lexical
-directory parents before any payload read. Their read snapshots also retain
-device, inode, modification time, status-change time, and size across the open
-file and final path checks. The three
+directory parents before any payload read. Their read snapshots compare the
+opened file identity before reading bytes and retain device, inode, modification
+time, status-change time, and size through the final path check. The three
 executable variants retained in the current private workspace all reproduce
 the full 284,682-byte common sequence and require three distinct layouts. That
 result is intentionally limited to those available samples and does not

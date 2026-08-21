@@ -225,13 +225,14 @@ def load_reference(path: Path) -> bytes:
     try:
         with path.open("rb") as handle:
             opened = _identity(os.fstat(handle.fileno()))
+            if opened != expected:
+                raise ReferenceChangedError
             data = handle.read()
             finished = _identity(os.fstat(handle.fileno()))
     except OSError as error:
         raise ReferenceReadError from error
     if (
-        opened != expected
-        or finished != expected
+        finished != expected
         or _current_identity(path) != expected
         or len(data) != expected.size
     ):
@@ -270,6 +271,8 @@ def measure_variant(reference: bytes, path: Path) -> VariantEvidence:
     try:
         with path.open("rb") as handle:
             opened = _identity(os.fstat(handle.fileno()))
+            if opened != expected:
+                raise CandidateChangedError
             while chunk := handle.read(_CHUNK_BYTES):
                 observed += len(chunk)
                 matched = _match_chunk(reference, matched, chunk)
@@ -277,8 +280,7 @@ def measure_variant(reference: bytes, path: Path) -> VariantEvidence:
     except OSError as error:
         raise CandidateReadError from error
     if (
-        opened != expected
-        or finished != expected
+        finished != expected
         or _current_identity(path) != expected
         or observed != expected.size
     ):
@@ -302,13 +304,14 @@ def _read_candidate_snapshot(path: Path) -> bytes:
     try:
         with path.open("rb") as handle:
             opened = _identity(os.fstat(handle.fileno()))
+            if opened != expected:
+                raise CandidateChangedError
             data = handle.read()
             finished = _identity(os.fstat(handle.fileno()))
     except OSError as error:
         raise CandidateReadError from error
     if (
-        opened != expected
-        or finished != expected
+        finished != expected
         or _current_identity(path) != expected
         or len(data) != expected.size
     ):
