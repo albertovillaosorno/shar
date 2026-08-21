@@ -42,6 +42,7 @@ import stat
 import sys
 
 _CHUNK_BYTES = 1024 * 1024
+_MAX_PROJECTION_ALTERNATIVES = 256
 
 
 class VariantEvidenceError(ValueError):
@@ -121,6 +122,16 @@ class ProjectionMismatchError(VariantEvidenceError):
         """Initialize the canonical projection mismatch failure."""
         super().__init__(
             "common-byte reference is not an ordered subsequence of a variant"
+        )
+
+
+class ProjectionLimitError(VariantEvidenceError):
+    """Distinct projection layouts exceed the generic algorithm limit."""
+
+    def __init__(self) -> None:
+        """Initialize the canonical projection alternative limit failure."""
+        super().__init__(
+            "source projection has too many distinct layout alternatives"
         )
 
 
@@ -369,6 +380,7 @@ def build_offset_projection(
     Raises:
         EmptyReferenceError: If the supplied common artifact is empty.
         ProjectionMismatchError: If one candidate cannot reproduce it in order.
+        ProjectionLimitError: If distinct layouts exceed the algorithm limit.
 
     """
     if not reference:
@@ -381,6 +393,8 @@ def build_offset_projection(
         alternative = _ordered_projection(reference, candidate)
         if alternative not in alternatives:
             alternatives.append(alternative)
+            if len(alternatives) > _MAX_PROJECTION_ALTERNATIVES:
+                raise ProjectionLimitError
     return OffsetProjection(alternatives=tuple(alternatives))
 
 

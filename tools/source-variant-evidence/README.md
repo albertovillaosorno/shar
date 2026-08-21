@@ -29,7 +29,9 @@ python tools/source-variant-evidence/adapter-inbound/main.py \
 ```
 
 Each distinct variant layout contributes one deterministic earliest-match mask;
-duplicate layouts collapse to one alternative. Evidence inputs and their lexical
+duplicate layouts collapse to one alternative, and output is limited to the
+generic algorithm contract's 256 distinct alternatives. Evidence inputs and
+their lexical
 directory parents must be real filesystem entries rather than symlinks or
 Windows junctions. Each input snapshot verifies both the opened descriptor and
 current lexical path identity before any payload read, then keeps device, inode,
