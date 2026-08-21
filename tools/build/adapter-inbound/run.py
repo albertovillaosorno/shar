@@ -118,15 +118,6 @@ def _object_from_bytes(data: bytes, label: str) -> dict[str, object]:
     return value
 
 
-def _read_object(path: Path, label: str) -> dict[str, object]:
-    """Read one required UTF-8 JSON object."""
-    try:
-        data = path.read_bytes()
-    except OSError as error:
-        raise RunFailure(f"cannot read {label} {path}: {error}") from error
-    return _object_from_bytes(data, label)
-
-
 def _require_keys(
     value: dict[str, object],
     required: set[str],
@@ -167,17 +158,9 @@ def _target_from_json(value: object) -> Target:
     return target
 
 
-def _selected_targets(
-    path: Path,
-    *,
-    snapshot: bytes | None = None,
-) -> list[Target]:
-    """Validate the versioned architecture decision and return its targets."""
-    value = (
-        _read_object(path, "architecture evidence")
-        if snapshot is None
-        else _object_from_bytes(snapshot, "architecture evidence")
-    )
+def _selected_targets(snapshot: bytes) -> list[Target]:
+    """Validate a captured architecture decision and return its targets."""
+    value = _object_from_bytes(snapshot, "architecture evidence")
     _require_keys(value, {"host", "schema", "targets"}, "architecture evidence")
     if value.get("schema") != _ARCH_SCHEMA:
         raise RunFailure(f"architecture schema must be {_ARCH_SCHEMA}")
@@ -199,17 +182,9 @@ def _selected_targets(
     return targets
 
 
-def _check_evidence(
-    path: Path,
-    *,
-    snapshot: bytes | None = None,
-) -> dict[str, object]:
-    """Load saved preflight evidence after check.py has revalidated it."""
-    value = (
-        _read_object(path, "check evidence")
-        if snapshot is None
-        else _object_from_bytes(snapshot, "check evidence")
-    )
+def _check_evidence(snapshot: bytes) -> dict[str, object]:
+    """Load a captured preflight snapshot after child revalidation."""
+    value = _object_from_bytes(snapshot, "check evidence")
     if value.get("schema") != _CHECK_SCHEMA:
         raise RunFailure(f"check schema must be {_CHECK_SCHEMA}")
     unreal = value.get("unreal")
@@ -1378,9 +1353,9 @@ def main() -> int:
         check_path = root / check_path
     try:
         arch_snapshot = _revalidate_arch(root, arch_path)
-        targets = _selected_targets(arch_path, snapshot=arch_snapshot)
+        targets = _selected_targets(arch_snapshot)
         check_snapshot = _revalidate_check(root, check_path)
-        check = _check_evidence(check_path, snapshot=check_snapshot)
+        check = _check_evidence(check_snapshot)
         unreal = _require_unreal_evidence(check)
         engine_root = Path(str(unreal["root"])).resolve()
         project = _project_from_evidence(root, unreal)
