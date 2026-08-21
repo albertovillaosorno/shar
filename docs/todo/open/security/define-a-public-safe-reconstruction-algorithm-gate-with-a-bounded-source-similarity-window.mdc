@@ -148,8 +148,9 @@ placeholders and are therefore not claimed as validated release plans. The
 publication guard also requires substantive plan paths to be real repository
 files rather than symbolic links, so external content cannot satisfy validation
 while Git publishes only a redirect. The same guard now mirrors key replay
-constraints: the active settings hash, integer wire types, duplicate-key
-rejection, bounded integer/resource limits, protected-payload tag length,
+constraints: the active settings hash in Rust's fixed settings wire order,
+integer wire types, duplicate-key rejection, bounded integer/resource limits,
+protected-payload tag length,
 source/target portable relative-path policy, deterministic source-record
 grouping, and case-equivalent target ancestor collisions.
 This structural guard narrows what can be committed publicly; it does not
