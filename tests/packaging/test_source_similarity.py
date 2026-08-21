@@ -334,6 +334,25 @@ class SourceSimilarityTests(unittest.TestCase):
         with self.assertRaises(_MOD.InvalidCountError):
             _MOD.parse_count_ledger(aggregate_overflow)
 
+    def test_parser_rejects_noncanonical_kind_metadata(self) -> None:
+        rows = (
+            '{"dir":"aa","ext":"p3d","count":1,"kind":"audio"}\n',
+            '{"dir":"aa","ext":"mystery","count":1}\n',
+            (
+                '{"dir":"","ext":"png","count":1,'
+                '"kind":"image"}\n'
+            ),
+        )
+        for row in rows:
+            with (
+                self.subTest(row=row),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "kind metadata",
+                ),
+            ):
+                _MOD.parse_count_ledger(row)
+
     def test_parser_rejects_mixed_count_meanings(self) -> None:
         ledger = (
             '{"dir":"aa","ext":"p3d","min":1}\n'

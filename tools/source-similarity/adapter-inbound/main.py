@@ -94,6 +94,41 @@ _MANIFEST_REQUIRED_FILES = frozenset(
         ("uninst.ico", 0),
     }
 )
+_MANIFEST_KIND_BY_EXTENSION = {
+    "bik": "movie",
+    "bk2": "movie",
+    "bmp": "image",
+    "cho": "character_outfit",
+    "con": "script",
+    "e": "language_textbible",
+    "err": "build-log",
+    "f": "language_textbible",
+    "g": "language_textbible",
+    "i": "language_textbible",
+    "ico": "image",
+    "jpeg": "image",
+    "jpg": "image",
+    "json": "metadata",
+    "jsonl": "json-ledger",
+    "lua": "script",
+    "mfk": "script",
+    "p3d": "p3d_container",
+    "pag": "ui-resource",
+    "png": "image",
+    "prj": "ui-resource",
+    "rcf": "rcf_container",
+    "rms": "music_arrangement",
+    "rmv": "movie",
+    "rsd": "audio",
+    "rsm": "music_arrangement",
+    "s": "language_textbible",
+    "scr": "ui-resource",
+    "tga": "image",
+    "txt": "language_textbible",
+    "typ": "sound-type",
+    "wav": "audio",
+    "x": "language_textbible",
+}
 
 
 class SimilarityInputError(ValueError):
@@ -254,6 +289,18 @@ def _valid_utf8_text(value: object) -> bool:
 def _valid_manifest_kind(value: object) -> bool:
     """Return whether one value is a public manifest kind token."""
     return _valid_utf8_text(value) and value in _MANIFEST_KINDS
+
+
+def _expected_manifest_kind(directory: str, extension: str) -> str:
+    """Mirror the public manifest producer's stable bucket classification."""
+    if extension == "png" and not directory:
+        return "generated_artifact"
+    if extension == "p3d" and directory in {
+        "at/fd/sy/re/te",
+        "at/fd/s2/re/te",
+    }:
+        return "language_textbible"
+    return _MANIFEST_KIND_BY_EXTENSION.get(extension, "error")
 
 
 def _valid_directory_alias(value: object) -> bool:
@@ -422,7 +469,12 @@ def _coordinate_record(record: dict[str, Any]) -> tuple[Coordinate, int]:
         or not _valid_extension(extension)
     ):
         raise InvalidCoordinateError
-    if "kind" in record and not _valid_manifest_kind(kind):
+    expected_kind = _expected_manifest_kind(directory, extension)
+    if (
+        expected_kind == "error"
+        or ("kind" in record and not _valid_manifest_kind(kind))
+        or ("kind" in record and kind != expected_kind)
+    ):
         raise LedgerInputError("count ledger kind metadata is invalid")
     if (
         isinstance(count, bool)
