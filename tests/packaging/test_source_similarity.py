@@ -120,8 +120,11 @@ class SourceSimilarityTests(unittest.TestCase):
         self.assertEqual(evidence.weighted_jaccard, Fraction(3, 5))
 
     def test_wide_generated_collision_ordinal_joins_family(self) -> None:
-        reference = {("aa~100", "p3d"): 2}
-        candidate = {("aa", "p3d"): 2}
+        reference = {
+            (f"aa~{ordinal:02d}", "p3d"): 1 for ordinal in range(1, 100)
+        }
+        reference["aa~100", "p3d"] = 1
+        candidate = {("aa", "p3d"): 100}
         evidence = _MOD.measure(reference, candidate)
         self.assertEqual(evidence.reference_coverage, Fraction(1, 1))
         self.assertEqual(evidence.weighted_jaccard, Fraction(1, 1))
@@ -782,6 +785,24 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
                 self.assertRaises(_MOD.InvalidCoordinateError),
             ):
                 _MOD.measure({(directory, "p3d"): 2}, candidate)
+
+    def test_programmatic_vectors_reject_noncanonical_collision_families(
+        self,
+    ) -> None:
+        candidate = {("aa", "p3d"): 1}
+        for reference in (
+            {("aa~01", "p3d"): 1},
+            {("aa~02", "p3d"): 1},
+            {("aa~100", "p3d"): 1},
+        ):
+            with (
+                self.subTest(reference=reference),
+                self.assertRaisesRegex(
+                    _MOD.LedgerInputError,
+                    "collision ordinals",
+                ),
+            ):
+                _MOD.measure(reference, candidate)
 
     def test_parser_rejects_noncanonical_collision_families(self) -> None:
         ledgers = (
