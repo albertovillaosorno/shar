@@ -57,7 +57,7 @@ of normalizing to zero. File inputs and their lexical directory
 parents must be non-redirected; the file itself must be regular and preserve
 the canonical
 producer framing: UTF-8, compact JSON token framing, LF-only record boundaries,
-no outer record whitespace, and a final LF. Spaces or tabs between JSON tokens
+no outer record whitespace, and a final LF. JSON whitespace between tokens
 and escaped object-member names are rejected rather than normalized; valid JSON
 string-value escapes remain decoded. Each ledger is opened once and its device,
 inode, modification
