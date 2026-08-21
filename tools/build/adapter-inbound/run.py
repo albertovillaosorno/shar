@@ -574,10 +574,7 @@ def _uat_path(engine_root: Path) -> Path:
     """Resolve one real host-native RunUAT launcher."""
     batch = engine_root / "Engine" / "Build" / "BatchFiles"
     path = batch / "RunUAT.bat" if os.name == "nt" else batch / "RunUAT.sh"
-    if not path.is_file() or path.is_symlink():
-        raise RunFailure(
-            f"Unreal AutomationTool launcher must be a real file: {path}"
-        )
+    _require_real_file(path, "Unreal AutomationTool launcher")
     if os.name != "nt" and not os.access(path, os.X_OK):
         raise RunFailure(
             f"Unreal AutomationTool launcher is not executable: {path}"

@@ -319,6 +319,22 @@ class UatLauncherTests(unittest.TestCase):
             ):
                 _RUN._uat_path(engine)
 
+    def test_rejects_hard_linked_uat_launcher(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-launcher-") as raw:
+            engine = Path(raw)
+            launcher = engine / "Engine/Build/BatchFiles/RunUAT.sh"
+            launcher.parent.mkdir(parents=True)
+            external = engine / "external-uat.sh"
+            external.write_text("#!/bin/sh\n", encoding="utf-8")
+            external.chmod(0o755)
+            launcher.hardlink_to(external)
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "launcher must have one filesystem link",
+            ):
+                _RUN._uat_path(engine)
+
     @unittest.skipIf(_RUN.os.name == "nt", "POSIX launcher permission")
     def test_requires_executable_uat_launcher(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-uat-launcher-") as raw:
