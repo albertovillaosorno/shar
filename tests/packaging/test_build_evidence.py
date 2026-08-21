@@ -1911,6 +1911,22 @@ class SourceSelectionTests(unittest.TestCase):
             calls.append("deep")
             return "deep-source\tfiles=0\tp3d=0\trcf=0\trsd=0\trmv=0"
 
+        def resolve_manifest(
+            _root: Path,
+            _explicit: Path | None,
+            _dependencies: dict[str, object],
+        ) -> Path:
+            calls.append("resolve-manifest")
+            return manifest_validator
+
+        def resolve_deep(
+            _root: Path,
+            _explicit: Path | None,
+            _dependencies: dict[str, object],
+        ) -> Path:
+            calls.append("resolve-deep")
+            return deep_validator
+
         with (
             mock.patch.object(_CHECK, "_root", return_value=root),
             mock.patch.object(_CHECK, "_check_python", return_value={}),
@@ -1935,12 +1951,12 @@ class SourceSelectionTests(unittest.TestCase):
             mock.patch.object(
                 _CHECK,
                 "_resolve_validator",
-                return_value=manifest_validator,
+                side_effect=resolve_manifest,
             ),
             mock.patch.object(
                 _CHECK,
                 "_resolve_deep_source_validator",
-                return_value=deep_validator,
+                side_effect=resolve_deep,
             ),
             mock.patch.object(
                 _CHECK, "_check_manifest", side_effect=manifest_gate
@@ -1956,7 +1972,10 @@ class SourceSelectionTests(unittest.TestCase):
         ):
             evidence = _CHECK._run(args)
 
-        self.assertEqual(calls, ["manifest", "deep"])
+        self.assertEqual(
+            calls,
+            ["resolve-manifest", "manifest", "resolve-deep", "deep"],
+        )
         self.assertEqual(evidence["game"]["validation"], "manifest-ok")
         self.assertEqual(
             evidence["game"]["deep_validation"],
