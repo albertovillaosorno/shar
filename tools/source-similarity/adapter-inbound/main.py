@@ -249,6 +249,26 @@ class SimilarityEvidence:
     weighted_jaccard: Fraction
 
 
+def _has_json_token_whitespace(line: str) -> bool:
+    """Return whether JSON tokens are separated by spaces or tabs."""
+    in_string = False
+    escaped = False
+    for character in line:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            continue
+        if character == '"':
+            in_string = True
+        elif character in {" ", "\t"}:
+            return True
+    return False
+
+
 def _parse_jsonl_record(line: str, line_number: int) -> dict[str, Any]:
     """Parse one JSONL object while preserving a path-free line diagnostic."""
     if not line.strip():
@@ -258,6 +278,10 @@ def _parse_jsonl_record(line: str, line_number: int) -> dict[str, Any]:
     if line.strip() != line:
         raise LedgerInputError(
             f"count ledger record has outer whitespace at line {line_number}"
+        )
+    if _has_json_token_whitespace(line):
+        raise LedgerInputError(
+            f"count ledger JSON tokens have whitespace at line {line_number}"
         )
     try:
         record: Any = json.loads(
