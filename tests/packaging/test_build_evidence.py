@@ -282,9 +282,11 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
         temporary, root = self._combined_fixture()
         try:
             manifest_source = root / "src/migration/manifest/fixture.rs"
+            release = root / _DEPENDENCIES._CARGO_TARGET / "release"
+            release.mkdir(parents=True)
             outputs = {
-                "validate-game": root / "validate-game",
-                "validate-source-deep": root / "validate-source-deep",
+                "validate-game": release / "validate-game",
+                "validate-source-deep": release / "validate-source-deep",
             }
             for output in outputs.values():
                 output.write_bytes(b"validator")
@@ -414,22 +416,38 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
         finally:
             temporary.cleanup()
 
-    def test_validator_publication_rejects_hard_linked_build_output(
-        self,
-    ) -> None:
+    def test_validator_publication_allows_cargo_owned_hard_link(self) -> None:
         with tempfile.TemporaryDirectory(
-            prefix="shar-validator-build-hard-link-"
+            prefix="shar-validator-build-cargo-link-"
         ) as raw:
             root = Path(raw)
-            external = root / "external-validator"
-            external.write_bytes(b"validator")
-            built = root / "built" / "validate-game"
-            built.parent.mkdir()
-            built.hardlink_to(external)
+            release = root / _DEPENDENCIES._CARGO_TARGET / "release"
+            deps = release / "deps"
+            deps.mkdir(parents=True)
+            built = release / "validate-game"
+            built.write_bytes(b"validator")
+            (deps / "validate_game-fixture").hardlink_to(built)
+
+            published = _DEPENDENCIES._publish_validator(root, built)
+
+            self.assertEqual(published.read_bytes(), b"validator")
+
+    def test_validator_publication_rejects_external_hard_link(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-validator-build-external-link-"
+        ) as raw:
+            root = Path(raw)
+            release = root / _DEPENDENCIES._CARGO_TARGET / "release"
+            deps = release / "deps"
+            deps.mkdir(parents=True)
+            built = release / "validate-game"
+            built.write_bytes(b"validator")
+            (deps / "validate_game-fixture").hardlink_to(built)
+            (root / "external-validator").hardlink_to(built)
 
             with self.assertRaisesRegex(
                 _DEPENDENCIES.BootstrapFailure,
-                "validator build output must be a real file",
+                "external hard-link alias",
             ):
                 _DEPENDENCIES._publish_validator(root, built)
 
@@ -437,8 +455,10 @@ class ValidatorSourceEvidenceTests(unittest.TestCase):
     def test_validator_publication_rejects_redirected_destination(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-validator-link-") as raw:
             root = Path(raw)
-            built = root / "built" / "validate-game"
-            built.parent.mkdir()
+            built = (
+                root / _DEPENDENCIES._CARGO_TARGET / "release/validate-game"
+            )
+            built.parent.mkdir(parents=True)
             built.write_bytes(b"validator")
             destination = root / _DEPENDENCIES._BIN_ROOT / built.name
             destination.parent.mkdir(parents=True)

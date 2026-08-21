@@ -648,21 +648,59 @@ def _build_cargo_binary(
     return built
 
 
-def _require_real_validator_file(path: Path, label: str) -> None:
-    """Require one non-redirected single-link validator file."""
+def _validator_file_metadata(path: Path, label: str) -> os.stat_result:
+    """Return metadata for one non-redirected regular validator file."""
     if path.is_symlink() or os.path.isjunction(path):
         raise BootstrapFailure(f"{label} must be a real file: {path}")
     try:
         metadata = path.stat(follow_symlinks=False)
     except OSError as error:
         raise BootstrapFailure(f"{label} is missing: {path}") from error
-    if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+    if not stat.S_ISREG(metadata.st_mode):
         raise BootstrapFailure(f"{label} must be a real file: {path}")
+    return metadata
+
+
+def _cargo_validator_alias_count(
+    deps: Path,
+    metadata: os.stat_result,
+) -> int:
+    """Count Cargo-owned hard-link aliases for one validator output."""
+    if not deps.is_dir() or deps.is_symlink() or os.path.isjunction(deps):
+        return 0
+    aliases = 0
+    with os.scandir(deps) as entries:
+        for entry in entries:
+            candidate = entry.stat(follow_symlinks=False)
+            if (
+                candidate.st_dev == metadata.st_dev
+                and candidate.st_ino == metadata.st_ino
+            ):
+                aliases += 1
+    return aliases
+
+
+def _require_cargo_validator_file(
+    root: Path,
+    path: Path,
+    label: str,
+) -> None:
+    """Require one Cargo-owned validator output with no external aliases."""
+    release = root / _CARGO_TARGET / "release"
+    if path.parent != release:
+        raise BootstrapFailure(f"{label} must be a Cargo release file: {path}")
+    metadata = _validator_file_metadata(path, label)
+    if metadata.st_nlink == 1:
+        return
+    aliases = _cargo_validator_alias_count(release / "deps", metadata)
+    if aliases != metadata.st_nlink - 1:
+        message = f"{label} has an external hard-link alias: {path}"
+        raise BootstrapFailure(message)
 
 
 def _publish_validator(root: Path, built: Path) -> Path:
     """Atomically publish one validator when its content changed."""
-    _require_real_validator_file(built, "validator build output")
+    _require_cargo_validator_file(root, built, "validator build output")
     destination = root / _BIN_ROOT / built.name
     destination.parent.mkdir(parents=True, exist_ok=True)
     if os.path.lexists(destination):
@@ -728,8 +766,10 @@ def _validator_evidence(
         binary="validate-source-deep",
     )
     _require_validator_source_hashes(root, source_hashes, "build")
-    _require_real_validator_file(built, "validator build output")
-    _require_real_validator_file(deep_built, "deep validator build output")
+    _require_cargo_validator_file(root, built, "validator build output")
+    _require_cargo_validator_file(
+        root, deep_built, "deep validator build output"
+    )
     validator = (
         _publish_validator(root, built)
         if publish_validator
