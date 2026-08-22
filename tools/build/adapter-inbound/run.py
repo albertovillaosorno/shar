@@ -991,7 +991,7 @@ def _pe_optional_layout(
     section_count = int.from_bytes(coff[2:4], "little")
     optional_size = int.from_bytes(coff[16:18], "little")
     characteristics = int.from_bytes(coff[18:20], "little")
-    if machine != expected or section_count == 0:
+    if machine != expected or section_count == 0 or section_count > 96:
         return None
     if (
         optional_size < 112
