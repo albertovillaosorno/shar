@@ -102,13 +102,25 @@ def _synthetic_pe(
     return bytes(payload)
 
 
-def _synthetic_macho(cpu: int, file_type: int = 2) -> bytes:
-    """Return one minimal little-endian executable Mach-O header."""
+def _synthetic_macho(
+    cpu: int,
+    file_type: int = 2,
+    *,
+    command: int = 0x80000028,
+) -> bytes:
+    """Return one minimal little-endian Mach-O64 image fixture."""
+    command_size = 24
     return (
         bytes.fromhex("cffaedfe")
         + cpu.to_bytes(4, "little")
         + (0).to_bytes(4, "little")
         + file_type.to_bytes(4, "little")
+        + (1).to_bytes(4, "little")
+        + command_size.to_bytes(4, "little")
+        + (0).to_bytes(8, "little")
+        + command.to_bytes(4, "little")
+        + command_size.to_bytes(4, "little")
+        + (0).to_bytes(16, "little")
     )
 
 
@@ -1711,6 +1723,16 @@ class CandidateArtifactTests(unittest.TestCase):
 
             _write_ios_ipa(
                 ipa,
+                binary=_synthetic_macho(_RUN._MACHO_ARM64_CPU, command=0x1B),
+            )
+            with self.assertRaisesRegex(_RUN.RunFailure, "iOS IPA"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["ios-arm64"],
+                )
+
+            _write_ios_ipa(
+                ipa,
                 binary=_synthetic_fat_macho((
                     0x01000007,
                     _RUN._MACHO_ARM64_CPU,
@@ -1972,7 +1994,20 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["macos-arm64"],
                 )
 
-            macho[12:16] = (2).to_bytes(4, "little")
+            macho = bytearray(
+                _synthetic_macho(_RUN._MACHO_ARM64_CPU, command=0x1B)
+            )
+            executable.write_bytes(macho)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+            macho = bytearray(_synthetic_macho(_RUN._MACHO_ARM64_CPU))
             macho[4:8] = (0x01000007).to_bytes(4, "little")
             executable.write_bytes(macho)
             with self.assertRaisesRegex(
