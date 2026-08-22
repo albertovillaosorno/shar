@@ -916,12 +916,20 @@ def _elf_load_programs_match(
     executable = False
     entrypoint_in_executable = False
     load_segments_valid = True
+    previous_load_address: int | None = None
     for _ in range(program_count):
         program = stream.read(program_size)
         if len(program) != program_size:
             return False
         if int.from_bytes(program[:4], byte_order) != 1:
             continue
+        virtual_address = int.from_bytes(program[16:24], byte_order)
+        if (
+            previous_load_address is not None
+            and virtual_address < previous_load_address
+        ):
+            load_segments_valid = False
+        previous_load_address = virtual_address
         bounded, segment_executable, contains_entrypoint = (
             _elf_load_segment_state(
                 program,
