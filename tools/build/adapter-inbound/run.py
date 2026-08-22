@@ -1014,12 +1014,19 @@ def _pe_sections_contain_entrypoint(
 ) -> bool:
     """Require an executable section containing the program entrypoint."""
     admitted = False
+    previous_virtual_address: int | None = None
     for _ in range(section_count):
         section = stream.read(40)
         if len(section) != 40:
             return False
         virtual_size = int.from_bytes(section[8:12], "little")
         virtual_address = int.from_bytes(section[12:16], "little")
+        if (
+            previous_virtual_address is not None
+            and virtual_address < previous_virtual_address
+        ):
+            return False
+        previous_virtual_address = virtual_address
         raw_size = int.from_bytes(section[16:20], "little")
         raw_offset = int.from_bytes(section[20:24], "little")
         characteristics = int.from_bytes(section[36:40], "little")
