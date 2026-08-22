@@ -122,9 +122,10 @@ bounded ELF64 program-header table, and at least one loadable segment rather
 than a truncated, relocatable, or machine-only lookalike. Thin and universal
 ARM64 Mach-O main
 images must identify an executable file type rather than only carrying an ARM64
-CPU field. Windows images must also carry a complete COFF header and PE32+
-optional-header magic rather than only an `MZ`/machine
-lookalike. Runtime size, execute permission, and
+CPU field. Windows images must also carry a complete COFF header, at least one
+section, the executable-image characteristic, and a bounded PE32+ optional
+header and section table rather than only an `MZ`/machine lookalike. Runtime
+size, execute permission, and
 header parsing now share one stable single-link descriptor identity that must
 still match the candidate path afterward. A transient external binary therefore
 cannot authorize different local bytes that later reach publication. A renamed

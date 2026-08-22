@@ -856,23 +856,51 @@ def _matches_elf(
     return loadable
 
 
-def _matches_pe(stream: object, prefix: bytes, architecture: str) -> bool:
-    """Return whether one PE32+ image declares the selected architecture."""
+def _pe_optional_layout(
+    coff: bytes,
+    expected: int,
+    offset: int,
+    file_size: int,
+) -> int | None:
+    """Return a bounded PE32+ optional-header size for an executable image."""
+    machine = int.from_bytes(coff[:2], "little")
+    section_count = int.from_bytes(coff[2:4], "little")
+    optional_size = int.from_bytes(coff[16:18], "little")
+    characteristics = int.from_bytes(coff[18:20], "little")
+    if machine != expected or section_count == 0:
+        return None
+    if optional_size < 112 or characteristics & 0x0002 == 0:
+        return None
+    remaining = file_size - offset
+    required = 24 + optional_size + (40 * section_count)
+    return optional_size if required <= remaining else None
+
+
+def _matches_pe(
+    stream: object,
+    prefix: bytes,
+    architecture: str,
+    file_size: int,
+) -> bool:
+    """Return whether one bounded executable PE32+ image matches target."""
     if prefix[:2] != b"MZ":
         return False
     stream.seek(0x3C)
     offset_bytes = stream.read(4)
     if len(offset_bytes) != 4:
         return False
-    stream.seek(int.from_bytes(offset_bytes, "little"))
+    offset = int.from_bytes(offset_bytes, "little")
+    if offset < 64 or offset > file_size:
+        return False
+    stream.seek(offset)
     signature = stream.read(4)
     coff = stream.read(20)
     if signature != b"PE\0\0" or len(coff) != 20:
         return False
     expected = _PE_MACHINES.get(architecture)
-    machine = int.from_bytes(coff[:2], "little")
-    optional_size = int.from_bytes(coff[16:18], "little")
-    if expected is None or machine != expected or optional_size < 2:
+    if expected is None or _pe_optional_layout(
+        coff, expected, offset, file_size
+    ) is None:
         return False
     optional_magic = stream.read(2)
     return optional_magic == bytes.fromhex("0b02")
@@ -1010,7 +1038,7 @@ def _matches_native_binary_stream(
             file_size,
         )
     if system == "windows":
-        return _matches_pe(stream, prefix, architecture)
+        return _matches_pe(stream, prefix, architecture, file_size)
     return False
 
 
