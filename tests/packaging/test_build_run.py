@@ -1589,6 +1589,28 @@ class CandidateArtifactTests(unittest.TestCase):
                 _RUN._TARGETS_BY_ID["android-arm64"],
             )
 
+    def test_android_candidate_requires_loader_library_path(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-android-candidate-",
+        ) as raw:
+            candidate = Path(raw)
+            apk = candidate / "shar.apk"
+            target = _RUN._TARGETS_BY_ID["android-arm64"]
+            invalid_members = (
+                "lib/arm64-v8a/nested/libUnreal.so",
+                "lib/arm64-v8a/Unreal.so",
+                "lib/arm64-v8a/lib.so",
+            )
+            for member in invalid_members:
+                with self.subTest(member=member):
+                    with _RUN.zipfile.ZipFile(apk, "w") as archive:
+                        archive.writestr(member, _synthetic_elf(0x00B7))
+                    with self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "Android APK",
+                    ):
+                        _RUN._validate_candidate_artifact(candidate, target)
+
     def test_ios_candidate_requires_ipa(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-ios-candidate-") as raw:
             candidate = Path(raw)
