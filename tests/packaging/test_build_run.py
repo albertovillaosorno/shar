@@ -1886,6 +1886,33 @@ class CandidateTreeTests(unittest.TestCase):
             cache_artifacts.assert_not_called()
 
 
+class ElfEntrypointTests(unittest.TestCase):
+    """Require Linux process entrypoints to resolve to file-backed code."""
+
+    def test_rejects_entrypoint_in_zero_fill_tail(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar/Binaries/Linux/shar-Linux-Shipping"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(
+                _synthetic_elf(
+                    0x003E,
+                    entrypoint=0x400001,
+                    segment_memory_size=2,
+                )
+            )
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Linux SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["linux-x64"],
+                )
+
+
 class MachOFatSliceTests(unittest.TestCase):
     """Require dyld-compatible universal ARM64 slice placement."""
 
