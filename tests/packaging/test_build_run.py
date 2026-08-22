@@ -56,16 +56,28 @@ _RUN = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_RUN)
 
 
-def _synthetic_elf(machine: int) -> bytes:
-    """Return the minimum ELF header needed by runner target validation."""
-    header = bytearray(20)
+def _synthetic_elf(
+    machine: int,
+    *,
+    image_type: int = 3,
+    program_type: int = 1,
+) -> bytes:
+    """Return one minimal loadable little-endian ELF64 image."""
+    header = bytearray(64)
     header[:4] = b"\x7fELF"
     header[4] = 2
     header[5] = 1
     header[6] = 1
-    header[16:18] = (3).to_bytes(2, "little")
+    header[16:18] = image_type.to_bytes(2, "little")
     header[18:20] = machine.to_bytes(2, "little")
-    return bytes(header)
+    header[20:24] = (1).to_bytes(4, "little")
+    header[32:40] = (64).to_bytes(8, "little")
+    header[52:54] = (64).to_bytes(2, "little")
+    header[54:56] = (56).to_bytes(2, "little")
+    header[56:58] = (1).to_bytes(2, "little")
+    program = bytearray(56)
+    program[:4] = program_type.to_bytes(4, "little")
+    return bytes(header + program)
 
 
 def _synthetic_macho(cpu: int, file_type: int = 2) -> bytes:
@@ -1798,14 +1810,8 @@ class CandidateArtifactTests(unittest.TestCase):
                         candidate,
                         _RUN._TARGETS_BY_ID[target_id],
                     )
-                header = bytearray(20)
-                header[:4] = b"\x7fELF"
-                header[4] = 2
-                header[5] = 1
-                header[6] = 1
-                header[16:18] = (3).to_bytes(2, "little")
                 machine = 0x00B7 if target_id == "linux-arm64" else 0x003E
-                header[18:20] = machine.to_bytes(2, "little")
+                header = bytearray(_synthetic_elf(machine))
                 binary.write_bytes(header)
                 _RUN._validate_candidate_artifact(
                     candidate,
@@ -1823,7 +1829,18 @@ class CandidateArtifactTests(unittest.TestCase):
                         _RUN._TARGETS_BY_ID[target_id],
                     )
 
-                header[16:18] = (3).to_bytes(2, "little")
+                header = bytearray(_synthetic_elf(machine, program_type=0))
+                binary.write_bytes(header)
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
+
+                header = bytearray(_synthetic_elf(machine))
                 wrong_machine = 0x003E if machine == 0x00B7 else 0x00B7
                 header[18:20] = wrong_machine.to_bytes(2, "little")
                 binary.write_bytes(header)

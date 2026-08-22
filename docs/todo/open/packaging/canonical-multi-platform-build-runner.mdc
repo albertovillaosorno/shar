@@ -116,9 +116,11 @@ and ARM64, and macOS candidates require a `.app` bundle with a non-empty SHAR
 executable below `Contents/MacOS`. On POSIX hosts those native runtimes must
 also retain execute permission. Desktop entrypoints must identify their native
 binary format as ELF, Mach-O, or PE as appropriate, and the native header must
-match the selected x64 or ARM64 target. ELF images must be ELF64 with the
-current header version and an executable/shared-object image type rather than a
-relocatable or machine-only lookalike. Thin and universal ARM64 Mach-O main
+match the selected x64 or ARM64 target. ELF images must carry a complete ELF64
+header with the current version, an executable/shared-object image type, a
+bounded ELF64 program-header table, and at least one loadable segment rather
+than a truncated, relocatable, or machine-only lookalike. Thin and universal
+ARM64 Mach-O main
 images must identify an executable file type rather than only carrying an ARM64
 CPU field. Windows images must also carry a complete COFF header and PE32+
 optional-header magic rather than only an `MZ`/machine

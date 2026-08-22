@@ -800,18 +800,60 @@ _MACHO_FAT = {
 }
 
 
-def _matches_elf(stream: object, prefix: bytes, architecture: str) -> bool:
-    """Return whether one runnable ELF64 image declares the selected CPU."""
-    header = prefix + stream.read(16)
-    if len(header) != 20 or header[4] != 2 or header[6] != 1:
+def _elf_program_layout(
+    header: bytes,
+    byte_order: str,
+    expected: int,
+    file_size: int,
+) -> tuple[int, int, int] | None:
+    """Return one bounded ELF64 program-table layout for a runnable image."""
+    image_type = int.from_bytes(header[16:18], byte_order)
+    machine = int.from_bytes(header[18:20], byte_order)
+    version = int.from_bytes(header[20:24], byte_order)
+    if image_type not in {2, 3} or machine != expected or version != 1:
+        return None
+    program_offset = int.from_bytes(header[32:40], byte_order)
+    header_size = int.from_bytes(header[52:54], byte_order)
+    program_size = int.from_bytes(header[54:56], byte_order)
+    program_count = int.from_bytes(header[56:58], byte_order)
+    if header_size != 64 or program_size != 56 or program_count == 0:
+        return None
+    if program_offset < header_size or program_offset > file_size:
+        return None
+    if program_size * program_count > file_size - program_offset:
+        return None
+    return program_offset, program_size, program_count
+
+
+def _matches_elf(
+    stream: object,
+    prefix: bytes,
+    architecture: str,
+    file_size: int,
+) -> bool:
+    """Return whether one loadable ELF64 image declares the selected CPU."""
+    header = prefix + stream.read(60)
+    if len(header) != 64 or header[4] != 2 or header[6] != 1:
         return False
     byte_order = {1: "little", 2: "big"}.get(header[5])
     expected = _ELF_MACHINES.get(architecture)
     if byte_order is None or expected is None:
         return False
-    image_type = int.from_bytes(header[16:18], byte_order)
-    machine = int.from_bytes(header[18:20], byte_order)
-    return image_type in {2, 3} and machine == expected
+    layout = _elf_program_layout(header, byte_order, expected, file_size)
+    if layout is None:
+        return False
+    program_offset, program_size, program_count = layout
+    try:
+        stream.seek(program_offset)
+    except (OSError, ValueError):
+        return False
+    loadable = False
+    for _ in range(program_count):
+        program = stream.read(program_size)
+        if len(program) != program_size:
+            return False
+        loadable = loadable or int.from_bytes(program[:4], byte_order) == 1
+    return loadable
 
 
 def _matches_pe(stream: object, prefix: bytes, architecture: str) -> bool:
@@ -959,7 +1001,7 @@ def _matches_native_binary_stream(
     """Return whether one opened stream matches its declared native target."""
     prefix = stream.read(4)
     if system == "linux" and prefix == b"\x7fELF":
-        return _matches_elf(stream, prefix, architecture)
+        return _matches_elf(stream, prefix, architecture, file_size)
     if system == "macos":
         return _matches_macho(
             stream,
@@ -1033,6 +1075,7 @@ def _zip_member_matches_elf(
             stream,
             prefix,
             architecture,
+            info.file_size,
         )
 
 
