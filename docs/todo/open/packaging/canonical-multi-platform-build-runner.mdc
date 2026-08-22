@@ -135,7 +135,7 @@ segment lookalikes fail.
 Thin and universal
 ARM64 Mach-O main images must carry a complete 64-bit header, a bounded
 load-command table whose command sizes retain 64-bit alignment, an executable
-file type, and an `LC_MAIN` or legacy
+file type, and exactly one `LC_MAIN` or legacy
 `LC_UNIXTHREAD` entrypoint rather than only carrying an ARM64 CPU field. Legacy
 thread entrypoints must carry the complete ARM64 thread-state flavor/count and
 a nonzero program counter; arbitrary nonempty thread-command bodies do not

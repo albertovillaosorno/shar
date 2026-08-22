@@ -1079,7 +1079,7 @@ def _macho_commands_have_entrypoint(
 ) -> bool:
     """Validate one Mach-O load-command table and find an entrypoint."""
     remaining = command_bytes
-    has_entrypoint = False
+    entrypoint_count = 0
     entrypoints_valid = True
     for _ in range(command_count):
         command_header = stream.read(8)
@@ -1099,14 +1099,14 @@ def _macho_commands_have_entrypoint(
         if command == 0x80000028:
             entry_offset = int.from_bytes(body[:8], byte_order)
             valid = command_size == 24 and entry_offset < file_size
+            entrypoint_count += 1
             entrypoints_valid = entrypoints_valid and valid
-            has_entrypoint = has_entrypoint or valid
         elif command == 0x5:
             valid = _macho_thread_state_has_entrypoint(body, byte_order)
+            entrypoint_count += 1
             entrypoints_valid = entrypoints_valid and valid
-            has_entrypoint = has_entrypoint or valid
         remaining -= command_size
-    return remaining == 0 and has_entrypoint and entrypoints_valid
+    return remaining == 0 and entrypoint_count == 1 and entrypoints_valid
 
 
 def _matches_thin_macho(
