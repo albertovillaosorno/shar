@@ -1026,7 +1026,12 @@ def _pe_optional_fields_are_valid(optional: bytes) -> bool:
     )
 
 
-def _pe_loader_fields_are_valid(optional: bytes) -> bool:
+def _pe_loader_fields_are_valid(
+    optional: bytes,
+    *,
+    header_end: int,
+    file_size: int,
+) -> bool:
     """Return whether bounded PE32+ loader metadata is structurally valid."""
     section_alignment = int.from_bytes(optional[32:36], "little")
     file_alignment = int.from_bytes(optional[36:40], "little")
@@ -1036,11 +1041,15 @@ def _pe_loader_fields_are_valid(optional: bytes) -> bool:
     loader_flags = int.from_bytes(optional[104:108], "little")
     directory_count = int.from_bytes(optional[108:112], "little")
     directory_capacity = (len(optional) - 112) // 8
+    expected_header_size = (
+        (header_end + file_alignment - 1) // file_alignment * file_alignment
+    )
     return (
         win32_version == 0
         and loader_flags == 0
         and image_size % section_alignment == 0
-        and header_size % file_alignment == 0
+        and header_size == expected_header_size
+        and header_size <= file_size
         and directory_count <= directory_capacity
     )
 
@@ -1051,6 +1060,7 @@ def _pe_raw_section_is_valid(
     file_size: int,
     *,
     file_alignment: int,
+    header_size: int,
     previous_raw_end: int | None,
 ) -> bool:
     """Return whether one PE section's optional raw range is well formed."""
@@ -1060,8 +1070,9 @@ def _pe_raw_section_is_valid(
         raw_size % file_alignment == 0 and raw_offset % file_alignment == 0
     )
     bounded = raw_offset <= file_size and raw_size <= file_size - raw_offset
+    after_headers = raw_offset >= header_size
     ordered = previous_raw_end is None or raw_offset >= previous_raw_end
-    return aligned and bounded and ordered
+    return aligned and bounded and after_headers and ordered
 
 
 def _pe_sections_contain_entrypoint(
@@ -1072,6 +1083,7 @@ def _pe_sections_contain_entrypoint(
     *,
     section_alignment: int,
     file_alignment: int,
+    header_size: int,
 ) -> bool:
     """Require an executable section containing the program entrypoint."""
     admitted = False
@@ -1098,6 +1110,7 @@ def _pe_sections_contain_entrypoint(
             raw_offset,
             file_size,
             file_alignment=file_alignment,
+            header_size=header_size,
             previous_raw_end=previous_raw_end,
         ):
             return False
@@ -1149,16 +1162,22 @@ def _matches_pe(
         return False
     optional_size, section_count = layout
     optional = stream.read(optional_size)
+    header_end = offset + 24 + optional_size + (40 * section_count)
     if (
         len(optional) != optional_size
         or optional[:2] != bytes.fromhex("0b02")
         or not _pe_optional_fields_are_valid(optional)
-        or not _pe_loader_fields_are_valid(optional)
+        or not _pe_loader_fields_are_valid(
+            optional,
+            header_end=header_end,
+            file_size=file_size,
+        )
     ):
         return False
     entrypoint = int.from_bytes(optional[16:20], "little")
     section_alignment = int.from_bytes(optional[32:36], "little")
     file_alignment = int.from_bytes(optional[36:40], "little")
+    header_size = int.from_bytes(optional[60:64], "little")
     return _pe_sections_contain_entrypoint(
         stream,
         section_count,
@@ -1166,6 +1185,7 @@ def _matches_pe(
         entrypoint,
         section_alignment=section_alignment,
         file_alignment=file_alignment,
+        header_size=header_size,
     )
 
 
