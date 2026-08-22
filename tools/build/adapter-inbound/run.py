@@ -1259,6 +1259,9 @@ def _android_archive_contains_arm64(archive: zipfile.ZipFile) -> bool:
     inventory = _zip_inventory(archive)
     if inventory is None:
         return False
+    manifest = inventory.get("AndroidManifest.xml")
+    if manifest is None or manifest.is_dir() or manifest.file_size == 0:
+        return False
     return any(
         _is_android_arm64_library_path(name)
         and _zip_member_matches_elf(archive, info, "arm64")
