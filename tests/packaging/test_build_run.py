@@ -2123,6 +2123,27 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["android-arm64"],
                 )
 
+            for alignment in (3, 0x1000):
+                native = bytearray(_synthetic_elf(0x00B7))
+                native[112:120] = alignment.to_bytes(8, "little")
+                with _RUN.zipfile.ZipFile(apk, "w") as archive:
+                    archive.writestr(
+                        "AndroidManifest.xml",
+                        b"synthetic manifest",
+                    )
+                    archive.writestr(
+                        "lib/arm64-v8a/libUnreal.so",
+                        native,
+                    )
+                with (
+                    self.subTest(alignment=alignment),
+                    self.assertRaisesRegex(_RUN.RunFailure, "Android APK"),
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["android-arm64"],
+                    )
+
             _write_android_apk(apk)
             _RUN._validate_candidate_artifact(
                 candidate,
@@ -2467,6 +2488,31 @@ class CandidateArtifactTests(unittest.TestCase):
                         candidate,
                         _RUN._TARGETS_BY_ID[target_id],
                     )
+
+                for alignment, segment_offset in (
+                    (3, 120),
+                    (0x1000, 120),
+                ):
+                    payload = bytearray(
+                        _synthetic_elf(machine, segment_offset=segment_offset)
+                    )
+                    payload[112:120] = alignment.to_bytes(8, "little")
+                    binary.write_bytes(payload)
+                    with (
+                        self.subTest(
+                            target=target_id,
+                            alignment=alignment,
+                            segment_offset=segment_offset,
+                        ),
+                        self.assertRaisesRegex(
+                            _RUN.RunFailure,
+                            "Linux SHAR executable",
+                        ),
+                    ):
+                        _RUN._validate_candidate_artifact(
+                            candidate,
+                            _RUN._TARGETS_BY_ID[target_id],
+                        )
 
                 header = bytearray(_synthetic_elf(machine))
                 header[68:72] = (0x4).to_bytes(4, "little")
