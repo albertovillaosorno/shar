@@ -1847,6 +1847,33 @@ class CandidateTreeTests(unittest.TestCase):
             cache_artifacts.assert_not_called()
 
 
+class MachOEntrypointTests(unittest.TestCase):
+    """Require one unambiguous Mach-O process entry command."""
+
+    def test_rejects_duplicate_entry_commands(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-macos-entry-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            duplicate_entry = bytearray(
+                _synthetic_macho(_RUN._MACHO_ARM64_CPU)
+            )
+            duplicate_entry[16:20] = (2).to_bytes(4, "little")
+            duplicate_entry[20:24] = (48).to_bytes(4, "little")
+            duplicate_entry.extend(duplicate_entry[32:56])
+            executable.write_bytes(duplicate_entry)
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+
 class CandidateArtifactTests(unittest.TestCase):
     """Require each candidate to contain its declared runnable artifact."""
 
