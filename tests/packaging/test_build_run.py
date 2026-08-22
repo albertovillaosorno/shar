@@ -80,6 +80,7 @@ def _synthetic_elf(
     header[56:58] = (1).to_bytes(2, "little")
     program = bytearray(56)
     program[:4] = program_type.to_bytes(4, "little")
+    program[4:8] = (0x5).to_bytes(4, "little")
     program[8:16] = segment_offset.to_bytes(8, "little")
     program[32:40] = segment_file_size.to_bytes(8, "little")
     program[40:48] = segment_memory_size.to_bytes(8, "little")
@@ -2159,6 +2160,18 @@ class CandidateArtifactTests(unittest.TestCase):
                         segment_memory_size=1,
                     )
                 )
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
+
+                header = bytearray(_synthetic_elf(machine))
+                header[68:72] = (0x4).to_bytes(4, "little")
+                binary.write_bytes(header)
                 with self.assertRaisesRegex(
                     _RUN.RunFailure,
                     "Linux SHAR executable",
