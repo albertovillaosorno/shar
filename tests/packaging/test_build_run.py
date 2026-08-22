@@ -1282,6 +1282,39 @@ class ArtifactCacheEntryTests(unittest.TestCase):
             self.assertTrue(invalid.is_dir())
             self.assertEqual(cached.read_bytes(), b"previous")
 
+    def test_scan_failure_preserves_existing_symbol_cache(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-artifact-entry-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            nested = candidate / "shar/Binaries/Win64"
+            nested.mkdir(parents=True)
+            (nested / "shar.pdb").write_bytes(b"new symbols")
+            work = root / "work"
+            cached = work / "symbols/shar/Binaries/Win64/shar.pdb"
+            cached.parent.mkdir(parents=True)
+            cached.write_bytes(b"previous symbols")
+            original = Path.iterdir
+
+            def fail_nested_scan(path: Path) -> Iterator[Path]:
+                if path == nested:
+                    raise PermissionError("injected candidate scan failure")
+                return original(path)
+
+            with (
+                mock.patch.object(Path, "iterdir", fail_nested_scan),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "candidate package could not be scanned",
+                ),
+            ):
+                _RUN._cache_nonruntime_artifacts(
+                    candidate,
+                    work,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
+            self.assertEqual(cached.read_bytes(), b"previous symbols")
+
 
 class ArtifactCachePathTests(unittest.TestCase):
     """Reject redirected metadata and symbol cache roots before moving files."""
