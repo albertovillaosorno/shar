@@ -61,6 +61,9 @@ def _synthetic_elf(
     *,
     image_type: int = 3,
     program_type: int = 1,
+    segment_offset: int = 120,
+    segment_file_size: int = 1,
+    segment_memory_size: int = 1,
 ) -> bytes:
     """Return one minimal loadable little-endian ELF64 image."""
     header = bytearray(64)
@@ -77,7 +80,10 @@ def _synthetic_elf(
     header[56:58] = (1).to_bytes(2, "little")
     program = bytearray(56)
     program[:4] = program_type.to_bytes(4, "little")
-    return bytes(header + program)
+    program[8:16] = segment_offset.to_bytes(8, "little")
+    program[32:40] = segment_file_size.to_bytes(8, "little")
+    program[40:48] = segment_memory_size.to_bytes(8, "little")
+    return bytes(header + program + b"\0")
 
 
 def _synthetic_pe(
@@ -2000,6 +2006,34 @@ class CandidateArtifactTests(unittest.TestCase):
 
                 header = bytearray(_synthetic_elf(machine, program_type=0))
                 binary.write_bytes(header)
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
+
+                binary.write_bytes(
+                    _synthetic_elf(machine, segment_offset=4096)
+                )
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
+
+                binary.write_bytes(
+                    _synthetic_elf(
+                        machine,
+                        segment_file_size=2,
+                        segment_memory_size=1,
+                    )
+                )
                 with self.assertRaisesRegex(
                     _RUN.RunFailure,
                     "Linux SHAR executable",
