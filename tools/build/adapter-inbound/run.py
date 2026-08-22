@@ -837,12 +837,13 @@ def _matches_pe(stream: object, prefix: bytes, architecture: str) -> bool:
 
 
 def _matches_thin_macho(stream: object, byte_order: str) -> bool:
-    """Return whether one thin Mach-O header declares ARM64."""
-    cpu = stream.read(4)
-    return (
-        len(cpu) == 4
-        and int.from_bytes(cpu, byte_order) == _MACHO_ARM64_CPU
-    )
+    """Return whether one thin ARM64 Mach-O header is executable."""
+    header = stream.read(12)
+    if len(header) != 12:
+        return False
+    cpu = int.from_bytes(header[:4], byte_order)
+    file_type = int.from_bytes(header[8:12], byte_order)
+    return cpu == _MACHO_ARM64_CPU and file_type == 2
 
 
 def _fat_macho_slice_bounds(
@@ -916,7 +917,7 @@ def _fat_macho_contains_arm64(
             return False
         offset, size = bounds
         if int.from_bytes(cpu, byte_order) == _MACHO_ARM64_CPU:
-            if size < 8:
+            if size < 16:
                 return False
             arm64_offsets.append(offset)
     return bool(arm64_offsets) and all(

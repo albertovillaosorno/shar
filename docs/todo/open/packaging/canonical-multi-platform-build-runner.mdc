@@ -118,8 +118,10 @@ also retain execute permission. Desktop entrypoints must identify their native
 binary format as ELF, Mach-O, or PE as appropriate, and the native header must
 match the selected x64 or ARM64 target. ELF images must be ELF64 with the
 current header version and an executable/shared-object image type rather than a
-relocatable or machine-only lookalike. Windows images must also carry a complete
-COFF header and PE32+ optional-header magic rather than only an `MZ`/machine
+relocatable or machine-only lookalike. Thin and universal ARM64 Mach-O main
+images must identify an executable file type rather than only carrying an ARM64
+CPU field. Windows images must also carry a complete COFF header and PE32+
+optional-header magic rather than only an `MZ`/machine
 lookalike. Runtime size, execute permission, and
 header parsing now share one stable single-link descriptor identity that must
 still match the candidate path afterward. A transient external binary therefore
