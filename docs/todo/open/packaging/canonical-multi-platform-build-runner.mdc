@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-<!-- CSpell:ignore pdb UNIXTHREAD -->
+<!-- CSpell:ignore OSABI pdb UNIXTHREAD -->
 
 # Canonical multi-platform build runner
 
