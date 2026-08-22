@@ -875,8 +875,14 @@ def _elf_load_segment_state(
     virtual_address = int.from_bytes(program[16:24], byte_order)
     file_bytes = int.from_bytes(program[32:40], byte_order)
     memory_bytes = int.from_bytes(program[40:48], byte_order)
+    alignment = int.from_bytes(program[48:56], byte_order)
+    aligned = alignment in {0, 1} or (
+        alignment & (alignment - 1) == 0
+        and virtual_address % alignment == offset % alignment
+    )
     bounded = (
-        file_bytes <= memory_bytes
+        aligned
+        and file_bytes <= memory_bytes
         and offset <= file_size
         and file_bytes <= file_size - offset
     )
