@@ -1867,6 +1867,10 @@ class CandidateArtifactTests(unittest.TestCase):
             for member in invalid_members:
                 with self.subTest(member=member):
                     with _RUN.zipfile.ZipFile(apk, "w") as archive:
+                        archive.writestr(
+                            "AndroidManifest.xml",
+                            b"synthetic manifest",
+                        )
                         archive.writestr(member, _synthetic_elf(0x00B7))
                     with self.assertRaisesRegex(
                         _RUN.RunFailure,
