@@ -1084,6 +1084,16 @@ def _pe_raw_section_is_valid(
     return aligned and bounded and after_headers and ordered
 
 
+def _pe_section_image_metadata_is_valid(section: bytes) -> bool:
+    """Return whether one image section omits object-only COFF metadata."""
+    return (
+        int.from_bytes(section[24:28], "little") == 0
+        and int.from_bytes(section[28:32], "little") == 0
+        and int.from_bytes(section[32:34], "little") == 0
+        and int.from_bytes(section[34:36], "little") == 0
+    )
+
+
 def _pe_sections_contain_entrypoint(
     stream: object,
     section_count: int,
@@ -1097,7 +1107,7 @@ def _pe_sections_contain_entrypoint(
     previous_raw_end: int | None = None
     for _ in range(section_count):
         section = stream.read(40)
-        if len(section) != 40:
+        if len(section) != 40 or not _pe_section_image_metadata_is_valid(section):
             return False
         virtual_size = int.from_bytes(section[8:12], "little")
         virtual_address = int.from_bytes(section[12:16], "little")
