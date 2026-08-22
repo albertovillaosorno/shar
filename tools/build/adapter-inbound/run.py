@@ -915,17 +915,20 @@ def _pe_optional_layout(
     return optional_size, section_count
 
 
-def _pe_sections_have_executable_data(
+def _pe_sections_contain_entrypoint(
     stream: object,
     section_count: int,
     file_size: int,
+    entrypoint: int,
 ) -> bool:
-    """Require bounded section payloads and executable file-backed data."""
-    executable = False
+    """Require an executable section containing the program entrypoint."""
+    admitted = False
     for _ in range(section_count):
         section = stream.read(40)
         if len(section) != 40:
             return False
+        virtual_size = int.from_bytes(section[8:12], "little")
+        virtual_address = int.from_bytes(section[12:16], "little")
         raw_size = int.from_bytes(section[16:20], "little")
         raw_offset = int.from_bytes(section[20:24], "little")
         characteristics = int.from_bytes(section[36:40], "little")
@@ -933,9 +936,14 @@ def _pe_sections_have_executable_data(
             raw_offset > file_size or raw_size > file_size - raw_offset
         ):
             return False
-        if characteristics & 0x20000000 and raw_size:
-            executable = True
-    return executable
+        mapped_size = max(virtual_size, raw_size)
+        if (
+            characteristics & 0x20000000
+            and raw_size
+            and virtual_address <= entrypoint < virtual_address + mapped_size
+        ):
+            admitted = True
+    return entrypoint != 0 and admitted
 
 
 def _matches_pe(
@@ -965,7 +973,13 @@ def _matches_pe(
     optional = stream.read(optional_size)
     if len(optional) != optional_size or optional[:2] != bytes.fromhex("0b02"):
         return False
-    return _pe_sections_have_executable_data(stream, section_count, file_size)
+    entrypoint = int.from_bytes(optional[16:20], "little")
+    return _pe_sections_contain_entrypoint(
+        stream,
+        section_count,
+        file_size,
+        entrypoint,
+    )
 
 
 def _macho_commands_have_entrypoint(
