@@ -815,7 +815,7 @@ def _matches_elf(stream: object, prefix: bytes, architecture: str) -> bool:
 
 
 def _matches_pe(stream: object, prefix: bytes, architecture: str) -> bool:
-    """Return whether one PE header declares the selected architecture."""
+    """Return whether one PE32+ image declares the selected architecture."""
     if prefix[:2] != b"MZ":
         return False
     stream.seek(0x3C)
@@ -824,14 +824,16 @@ def _matches_pe(stream: object, prefix: bytes, architecture: str) -> bool:
         return False
     stream.seek(int.from_bytes(offset_bytes, "little"))
     signature = stream.read(4)
-    machine = stream.read(2)
+    coff = stream.read(20)
+    if signature != b"PE\0\0" or len(coff) != 20:
+        return False
     expected = _PE_MACHINES.get(architecture)
-    return (
-        signature == b"PE\0\0"
-        and len(machine) == 2
-        and expected is not None
-        and int.from_bytes(machine, "little") == expected
-    )
+    machine = int.from_bytes(coff[:2], "little")
+    optional_size = int.from_bytes(coff[16:18], "little")
+    if expected is None or machine != expected or optional_size < 2:
+        return False
+    optional_magic = stream.read(2)
+    return optional_magic == bytes.fromhex("0b02")
 
 
 def _matches_thin_macho(stream: object, byte_order: str) -> bool:
