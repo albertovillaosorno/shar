@@ -1891,6 +1891,25 @@ class CandidateTreeTests(unittest.TestCase):
 class PeOptionalHeaderTests(unittest.TestCase):
     """Require Windows PE32+ loader alignment fields to be coherent."""
 
+    def test_rejects_misaligned_section_virtual_address(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-windows-alignment-",
+        ) as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar-Win64-Shipping.exe"
+            payload = bytearray(_synthetic_pe(0x8664))
+            payload[0xA8:0xAC] = (0x1001).to_bytes(4, "little")
+            payload[0x114:0x118] = (0x1001).to_bytes(4, "little")
+            executable.write_bytes(payload)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
     def test_rejects_invalid_loader_alignments(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-windows-alignment-",
