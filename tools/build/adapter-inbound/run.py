@@ -886,10 +886,9 @@ def _elf_load_segment_state(
         and offset <= file_size
         and file_bytes <= file_size - offset
     )
-    executable = bool(flags & 0x1)
+    executable = bool(flags & 0x1) and file_bytes > 0
     contains_entrypoint = (
         executable
-        and file_bytes > 0
         and virtual_address
         <= entrypoint
         < virtual_address + file_bytes
