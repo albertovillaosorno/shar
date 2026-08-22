@@ -143,17 +143,28 @@ def _synthetic_macho(
     *,
     command: int = 0x80000028,
     entry_offset: int = 0,
+    prefix_command_size: int = 0,
 ) -> bytes:
     """Return one minimal little-endian Mach-O64 image fixture."""
     command_size = 24
+    prefix_command = b""
+    if prefix_command_size:
+        prefix_command = (
+            (0x1B).to_bytes(4, "little")
+            + prefix_command_size.to_bytes(4, "little")
+            + (b"\0" * (prefix_command_size - 8))
+        )
+    command_count = 1 + bool(prefix_command)
+    command_bytes = command_size + len(prefix_command)
     return (
         bytes.fromhex("cffaedfe")
         + cpu.to_bytes(4, "little")
         + (0).to_bytes(4, "little")
         + file_type.to_bytes(4, "little")
-        + (1).to_bytes(4, "little")
-        + command_size.to_bytes(4, "little")
+        + int(command_count).to_bytes(4, "little")
+        + command_bytes.to_bytes(4, "little")
         + (0).to_bytes(8, "little")
+        + prefix_command
         + command.to_bytes(4, "little")
         + command_size.to_bytes(4, "little")
         + entry_offset.to_bytes(8, "little")
@@ -2342,6 +2353,21 @@ class CandidateArtifactTests(unittest.TestCase):
                 _synthetic_macho(
                     _RUN._MACHO_ARM64_CPU,
                     entry_offset=4096,
+                )
+            )
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+            executable.write_bytes(
+                _synthetic_macho(
+                    _RUN._MACHO_ARM64_CPU,
+                    prefix_command_size=9,
                 )
             )
             with self.assertRaisesRegex(
