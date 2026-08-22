@@ -30,6 +30,8 @@
 
 """Tests for canonical build-runner project-state migration."""
 
+# CSpell:ignore osabi
+
 from __future__ import annotations
 
 from collections.abc import Callable
