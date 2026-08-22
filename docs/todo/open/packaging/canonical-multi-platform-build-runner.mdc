@@ -158,6 +158,10 @@ moves.
 The `dist/` publication root is also required to be a real directory rather
 than a symbolic link or Windows junction. A regression proves publication
 rejects a linked output root before moving the candidate package.
+The final swap binds that real publication-root identity and the selected
+target's present-or-absent state across last-mile candidate revalidation. A
+parent replacement, target replacement, or newly appeared target is rejected
+before either the previous package or candidate can move.
 
 The candidate side of the transaction is likewise required to remain a real
 cache-owned directory. A regression proves a linked candidate is rejected

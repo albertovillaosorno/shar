@@ -1638,6 +1638,20 @@ def _validate_publication_candidate(
     return tree
 
 
+def _require_publication_destination_state(
+    destination: Path,
+    expected: tuple[int, int, int] | None,
+) -> None:
+    """Require the published target path to retain its pre-validation state."""
+    if expected is None:
+        if _path_present(destination):
+            raise RunFailure(
+                f"published target changed before publication: {destination}"
+            )
+        return
+    _require_directory_identity(destination, "published target", expected)
+
+
 def _rollback_publication_swap(
     candidate: Path,
     destination: Path,
@@ -1673,8 +1687,11 @@ def _publish(
     tree = _validate_candidate_tree(candidate)
     if not tree.files:
         raise RunFailure(f"candidate package is empty: {candidate}")
-    if _path_present(destination):
-        _require_real_directory(destination, "published target")
+    destination_identity = (
+        _real_directory_identity(destination, "published target")
+        if _path_present(destination)
+        else None
+    )
     publication_root = destination.parent
     if _path_present(publication_root):
         _require_real_directory(publication_root, "publication root")
@@ -1694,7 +1711,8 @@ def _publish(
         "publication root",
         publication_identity,
     )
-    had_previous = destination.exists()
+    _require_publication_destination_state(destination, destination_identity)
+    had_previous = destination_identity is not None
     if had_previous:
         Path(destination).replace(backup)
     try:

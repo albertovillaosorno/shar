@@ -1180,6 +1180,66 @@ class PublicationTransactionTests(unittest.TestCase):
             self.assertTrue(dist.is_symlink())
             self.assertTrue(displaced.is_dir())
 
+    def test_rejects_destination_drift_before_candidate_moves(self) -> None:
+        for initially_present in (False, True):
+            with (
+                self.subTest(initially_present=initially_present),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-publish-target-race-"
+                ) as raw,
+            ):
+                root = Path(raw)
+                candidate = root / "candidate"
+                candidate.mkdir()
+                (candidate / "new.txt").write_text(
+                    "new", encoding="utf-8"
+                )
+                destination = root / "dist/linux-x64"
+                destination.parent.mkdir()
+                displaced = root / "displaced-target"
+                if initially_present:
+                    destination.mkdir()
+                    (destination / "old.txt").write_text(
+                        "old", encoding="utf-8"
+                    )
+                real_validate = _RUN._validate_publication_candidate
+
+                def replace_after_validation(
+                    package: Path,
+                    target: object,
+                    *,
+                    present: bool = initially_present,
+                    target_path: Path = destination,
+                    displaced_path: Path = displaced,
+                    validate: Callable[[Path, object], object] = real_validate,
+                ) -> object:
+                    tree = validate(package, target)
+                    if present:
+                        target_path.replace(displaced_path)
+                    target_path.mkdir()
+                    (target_path / "intruder.txt").write_text(
+                        "intruder", encoding="utf-8"
+                    )
+                    return tree
+
+                with (
+                    mock.patch.object(
+                        _RUN,
+                        "_validate_publication_candidate",
+                        side_effect=replace_after_validation,
+                    ),
+                    self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "published target changed before publication",
+                    ),
+                ):
+                    _RUN._publish(candidate, destination)
+
+                self.assertTrue((candidate / "new.txt").is_file())
+                self.assertTrue((destination / "intruder.txt").is_file())
+                if initially_present:
+                    self.assertTrue((displaced / "old.txt").is_file())
+
     def test_rejects_broken_link_backup_before_candidate_moves(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-backup-link-") as raw:
             root = Path(raw)
