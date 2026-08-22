@@ -1022,6 +1022,7 @@ def _pe_sections_contain_entrypoint(
     section_count: int,
     file_size: int,
     entrypoint: int,
+    section_alignment: int,
 ) -> bool:
     """Require an executable section containing the program entrypoint."""
     admitted = False
@@ -1032,6 +1033,8 @@ def _pe_sections_contain_entrypoint(
             return False
         virtual_size = int.from_bytes(section[8:12], "little")
         virtual_address = int.from_bytes(section[12:16], "little")
+        if virtual_address % section_alignment != 0:
+            return False
         if (
             previous_virtual_address is not None
             and virtual_address < previous_virtual_address
@@ -1089,11 +1092,13 @@ def _matches_pe(
     ):
         return False
     entrypoint = int.from_bytes(optional[16:20], "little")
+    section_alignment = int.from_bytes(optional[32:36], "little")
     return _pe_sections_contain_entrypoint(
         stream,
         section_count,
         file_size,
         entrypoint,
+        section_alignment,
     )
 
 
