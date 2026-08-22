@@ -1006,15 +1006,24 @@ def _pe_optional_layout(
     return optional_size, section_count
 
 
-def _pe_alignments_are_valid(optional: bytes) -> bool:
-    """Return whether PE32+ image/file alignment fields are loader-safe."""
+def _pe_optional_fields_are_valid(optional: bytes) -> bool:
+    """Return whether required PE32+ loader fields are coherent."""
+    image_base = int.from_bytes(optional[24:32], "little")
     section_alignment = int.from_bytes(optional[32:36], "little")
     file_alignment = int.from_bytes(optional[36:40], "little")
     file_alignment_valid = (
         0x200 <= file_alignment <= 0x10000
         and file_alignment & (file_alignment - 1) == 0
     )
-    return file_alignment_valid and section_alignment >= file_alignment
+    low_alignment_valid = (
+        section_alignment >= 0x1000 or section_alignment == file_alignment
+    )
+    return (
+        image_base % 0x10000 == 0
+        and file_alignment_valid
+        and section_alignment >= file_alignment
+        and low_alignment_valid
+    )
 
 
 def _pe_sections_contain_entrypoint(
@@ -1088,7 +1097,7 @@ def _matches_pe(
     if (
         len(optional) != optional_size
         or optional[:2] != bytes.fromhex("0b02")
-        or not _pe_alignments_are_valid(optional)
+        or not _pe_optional_fields_are_valid(optional)
     ):
         return False
     entrypoint = int.from_bytes(optional[16:20], "little")
