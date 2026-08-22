@@ -2009,6 +2009,28 @@ class PeOptionalHeaderTests(unittest.TestCase):
 class PeSectionLayoutTests(unittest.TestCase):
     """Require PE section file layout to follow loader alignment."""
 
+    def test_rejects_raw_sections_out_of_virtual_address_order(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-windows-section-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar-Win64-Shipping.exe"
+            payload = bytearray(_synthetic_pe(0x8664, section_count=2))
+            payload.extend(b"\0" * 0x200)
+            payload[0x11C:0x120] = (0x400).to_bytes(4, "little")
+            payload[0x138:0x13C] = (1).to_bytes(4, "little")
+            payload[0x13C:0x140] = (0x2000).to_bytes(4, "little")
+            payload[0x140:0x144] = (0x200).to_bytes(4, "little")
+            payload[0x144:0x148] = (0x200).to_bytes(4, "little")
+            payload[0x154:0x158] = (0x40000040).to_bytes(4, "little")
+            executable.write_bytes(payload)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
     def test_rejects_misaligned_raw_section_data(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-windows-section-") as raw:
             candidate = Path(raw)
