@@ -874,6 +874,7 @@ def _matches_elf(
     except (OSError, ValueError):
         return False
     loadable = False
+    executable = False
     load_segments_valid = True
     for _ in range(program_count):
         program = stream.read(program_size)
@@ -881,6 +882,7 @@ def _matches_elf(
             return False
         if int.from_bytes(program[:4], byte_order) != 1:
             continue
+        flags = int.from_bytes(program[4:8], byte_order)
         offset = int.from_bytes(program[8:16], byte_order)
         file_bytes = int.from_bytes(program[32:40], byte_order)
         memory_bytes = int.from_bytes(program[40:48], byte_order)
@@ -890,7 +892,8 @@ def _matches_elf(
             and file_bytes <= file_size - offset
         )
         loadable = True
-    return loadable and load_segments_valid
+        executable = executable or bool(flags & 0x1)
+    return loadable and executable and load_segments_valid
 
 
 def _pe_optional_layout(
