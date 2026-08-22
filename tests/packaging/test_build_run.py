@@ -115,6 +115,8 @@ def _synthetic_pe(
     optional = coff + 20
     payload[optional : optional + 2] = bytes.fromhex("0b02")
     payload[optional + 16 : optional + 20] = (0x1000).to_bytes(4, "little")
+    payload[optional + 32 : optional + 36] = (0x1000).to_bytes(4, "little")
+    payload[optional + 36 : optional + 40] = (0x200).to_bytes(4, "little")
     if section_count:
         raw_offset = (
             data_offset if section_raw_offset is None else section_raw_offset
@@ -1884,6 +1886,39 @@ class CandidateTreeTests(unittest.TestCase):
                     validate_only=False,
                 )
             cache_artifacts.assert_not_called()
+
+
+class PeOptionalHeaderTests(unittest.TestCase):
+    """Require Windows PE32+ loader alignment fields to be coherent."""
+
+    def test_rejects_invalid_loader_alignments(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-windows-alignment-",
+        ) as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar-Win64-Shipping.exe"
+            for section_alignment, file_alignment in (
+                (0x100, 0x200),
+                (0x1000, 0x201),
+            ):
+                payload = bytearray(_synthetic_pe(0x8664))
+                payload[0xB8:0xBC] = section_alignment.to_bytes(4, "little")
+                payload[0xBC:0xC0] = file_alignment.to_bytes(4, "little")
+                executable.write_bytes(payload)
+                with (
+                    self.subTest(
+                        section_alignment=section_alignment,
+                        file_alignment=file_alignment,
+                    ),
+                    self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "Windows SHAR executable",
+                    ),
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["windows-x64"],
+                    )
 
 
 class PeEntrypointTests(unittest.TestCase):
