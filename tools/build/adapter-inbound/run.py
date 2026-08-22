@@ -1047,6 +1047,29 @@ def _matches_pe(
     )
 
 
+def _macho_thread_state_has_entrypoint(body: bytes, byte_order: str) -> bool:
+    """Return whether legacy thread state carries a valid ARM64 entrypoint."""
+    cursor = 0
+    has_entrypoint = False
+    while cursor < len(body):
+        if len(body) - cursor < 8:
+            return False
+        flavor = int.from_bytes(body[cursor : cursor + 4], byte_order)
+        count = int.from_bytes(body[cursor + 4 : cursor + 8], byte_order)
+        cursor += 8
+        state_size = count * 4
+        if state_size > len(body) - cursor:
+            return False
+        state = body[cursor : cursor + state_size]
+        if flavor == 6:
+            if count != 68:
+                return False
+            pc = int.from_bytes(state[256:264], byte_order)
+            has_entrypoint = has_entrypoint or pc != 0
+        cursor += state_size
+    return has_entrypoint
+
+
 def _macho_commands_have_entrypoint(
     stream: object,
     byte_order: str,
@@ -1079,7 +1102,7 @@ def _macho_commands_have_entrypoint(
             entrypoints_valid = entrypoints_valid and valid
             has_entrypoint = has_entrypoint or valid
         elif command == 0x5:
-            valid = command_size > 8
+            valid = _macho_thread_state_has_entrypoint(body, byte_order)
             entrypoints_valid = entrypoints_valid and valid
             has_entrypoint = has_entrypoint or valid
         remaining -= command_size

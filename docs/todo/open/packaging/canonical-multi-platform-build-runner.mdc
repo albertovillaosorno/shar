@@ -135,9 +135,11 @@ Thin and universal
 ARM64 Mach-O main images must carry a complete 64-bit header, a bounded
 load-command table whose command sizes retain 64-bit alignment, an executable
 file type, and an `LC_MAIN` or legacy
-`LC_UNIXTHREAD` entrypoint rather than only carrying an ARM64 CPU field.
-`LC_MAIN` entry offsets must remain inside the admitted thin image or universal
-slice. Windows
+`LC_UNIXTHREAD` entrypoint rather than only carrying an ARM64 CPU field. Legacy
+thread entrypoints must carry the complete ARM64 thread-state flavor/count and
+a nonzero program counter; arbitrary nonempty thread-command bodies do not
+qualify. `LC_MAIN` entry offsets must remain inside the admitted thin image or
+universal slice. Windows
 images must also carry a complete COFF header, the executable-image
 characteristic without the DLL flag, a bounded PE32+ optional header and
 section table, bounded
