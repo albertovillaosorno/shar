@@ -578,10 +578,33 @@ def _prepare_project_state(root: Path, project: Path) -> Path:
     return state_root
 
 
+def _require_real_descendant_parents(
+    root: Path,
+    path: Path,
+    label: str,
+) -> None:
+    """Require a real root and every internal parent of one trusted file."""
+    _require_real_directory(root, "Unreal Engine root")
+    try:
+        relative = path.relative_to(root)
+    except ValueError as error:
+        message = f"{label} must remain inside the Unreal Engine root"
+        raise RunFailure(message) from error
+    current = root
+    for component in relative.parts[:-1]:
+        current /= component
+        _require_real_directory(current, f"{label} parent")
+
+
 def _uat_path(engine_root: Path) -> Path:
     """Resolve one real host-native RunUAT launcher."""
     batch = engine_root / "Engine" / "Build" / "BatchFiles"
     path = batch / "RunUAT.bat" if os.name == "nt" else batch / "RunUAT.sh"
+    _require_real_descendant_parents(
+        engine_root,
+        path,
+        "Unreal AutomationTool launcher",
+    )
     _require_real_file(path, "Unreal AutomationTool launcher")
     if os.name != "nt" and not os.access(path, os.X_OK):
         raise RunFailure(

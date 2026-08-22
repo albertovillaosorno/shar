@@ -825,9 +825,38 @@ def _engine_candidates(explicit: Path | None) -> list[Path]:
     return candidates
 
 
+def _require_real_engine_parents(
+    engine: Path,
+    path: Path,
+    label: str,
+) -> None:
+    """Require every engine-internal parent of one trusted file to be real."""
+    if (
+        not engine.is_dir()
+        or engine.is_symlink()
+        or os.path.isjunction(engine)
+    ):
+        raise CheckFailure("Unreal engine root must be a real directory")
+    try:
+        relative = path.relative_to(engine)
+    except ValueError as error:
+        message = f"{label} must remain inside the Unreal engine root"
+        raise CheckFailure(message) from error
+    current = engine
+    for component in relative.parts[:-1]:
+        current /= component
+        if (
+            not current.is_dir()
+            or current.is_symlink()
+            or os.path.isjunction(current)
+        ):
+            raise CheckFailure(f"{label} parent must be a real directory")
+
+
 def _engine_version(root: Path) -> str:
     """Read and require the exact Unreal Build.version tuple."""
     build_version = root / "Engine" / "Build" / "Build.version"
+    _require_real_engine_parents(root, build_version, "Unreal Build.version")
     snapshot = _read_real_evidence_bytes(
         build_version,
         "Unreal Build.version",
@@ -883,6 +912,11 @@ def _check_engine(explicit: Path | None) -> EngineEvidence:
         version = _engine_version(resolved)
         editor = _editor_path(resolved)
         if editor is not None:
+            _require_real_engine_parents(
+                resolved,
+                editor,
+                "Unreal editor executable",
+            )
             if not editor.is_file():
                 message = f"Unreal editor executable is missing: {editor}"
                 raise CheckFailure(message)

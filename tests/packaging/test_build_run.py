@@ -320,6 +320,29 @@ class UatLauncherTests(unittest.TestCase):
             ):
                 _RUN._uat_path(engine)
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_rejects_redirected_uat_parent(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-launcher-") as raw:
+            root = Path(raw)
+            engine = root / "UE_5.8"
+            build = engine / "Engine/Build"
+            build.mkdir(parents=True)
+            external = root / "external-batch"
+            external.mkdir()
+            launcher = external / "RunUAT.sh"
+            launcher.write_text("#!/bin/sh\n", encoding="utf-8")
+            launcher.chmod(0o755)
+            (build / "BatchFiles").symlink_to(
+                external,
+                target_is_directory=True,
+            )
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "launcher parent must be a real directory",
+            ):
+                _RUN._uat_path(engine)
+
     def test_rejects_hard_linked_uat_launcher(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-uat-launcher-") as raw:
             engine = Path(raw)
