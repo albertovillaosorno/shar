@@ -883,10 +883,10 @@ def _elf_load_segment_state(
     executable = bool(flags & 0x1)
     contains_entrypoint = (
         executable
-        and memory_bytes > 0
+        and file_bytes > 0
         and virtual_address
         <= entrypoint
-        < virtual_address + memory_bytes
+        < virtual_address + file_bytes
     )
     return bounded, executable, contains_entrypoint
 
