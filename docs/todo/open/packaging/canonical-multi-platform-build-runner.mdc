@@ -272,8 +272,10 @@ also leaves the previous diagnostic caches unchanged. The final publication
 transaction repeats that tree gate and, for real target builds, repeats native
 or mobile artifact admission after diagnostic caching. A runtime replaced by a
 regular but wrong-format or wrong-architecture file after the first validation
-therefore cannot reach the atomic swap, while direct or drifted callers still
-cannot publish a redirected candidate between cache pruning and publication.
+therefore cannot reach the atomic swap. The real publication-root directory
+identity is also captured after stale-backup cleanup and must remain identical
+after final candidate validation, so replacing `dist/` with a symlink cannot
+redirect the package swap outside the repository.
 
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its

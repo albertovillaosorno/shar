@@ -340,6 +340,31 @@ def _require_real_file(path: Path, label: str) -> None:
         raise RunFailure(f"{label} must have one filesystem link: {path}")
 
 
+def _real_directory_identity(path: Path, label: str) -> tuple[int, int, int]:
+    """Return stable device/inode/mode identity for one real directory."""
+    _require_real_directory(path, label)
+    try:
+        metadata = path.stat(follow_symlinks=False)
+    except OSError as error:
+        raise RunFailure(f"cannot inspect {label}: {path}") from error
+    return metadata.st_dev, metadata.st_ino, metadata.st_mode
+
+
+def _require_directory_identity(
+    path: Path,
+    label: str,
+    expected: tuple[int, int, int],
+) -> None:
+    """Require one directory path to retain a captured local identity."""
+    try:
+        current = _real_directory_identity(path, label)
+    except RunFailure as error:
+        message = f"{label} changed before publication: {path}"
+        raise RunFailure(message) from error
+    if current != expected:
+        raise RunFailure(f"{label} changed before publication: {path}")
+
+
 def _file_identity(metadata: os.stat_result) -> tuple[int, ...]:
     """Project one regular file to stable local identity fields."""
     return (
@@ -1594,7 +1619,16 @@ def _publish(
     if _path_present(backup):
         _require_real_directory(backup, "publication backup")
         shutil.rmtree(backup)
+    publication_identity = _real_directory_identity(
+        publication_root,
+        "publication root",
+    )
     _validate_publication_candidate(candidate, target)
+    _require_directory_identity(
+        publication_root,
+        "publication root",
+        publication_identity,
+    )
     had_previous = destination.exists()
     if had_previous:
         Path(destination).replace(backup)

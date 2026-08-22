@@ -1109,6 +1109,50 @@ class PublicationTransactionTests(unittest.TestCase):
             self.assertTrue((candidate / "new.txt").is_file())
             self.assertFalse(destination.exists())
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_rejects_dist_root_replacement_before_swap(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-publish-root-race-"
+        ) as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            candidate.mkdir()
+            (candidate / "new.txt").write_text("new", encoding="utf-8")
+            dist = root / "dist"
+            dist.mkdir()
+            destination = dist / "linux-x64"
+            displaced = root / "displaced-dist"
+            outside = root / "outside"
+            outside.mkdir()
+            real_validate = _RUN._validate_publication_candidate
+
+            def redirect_after_validation(
+                package: Path,
+                target: object,
+            ) -> object:
+                tree = real_validate(package, target)
+                dist.replace(displaced)
+                dist.symlink_to(outside, target_is_directory=True)
+                return tree
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_validate_publication_candidate",
+                    side_effect=redirect_after_validation,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "publication root changed before publication",
+                ),
+            ):
+                _RUN._publish(candidate, destination)
+
+            self.assertTrue((candidate / "new.txt").is_file())
+            self.assertFalse((outside / "linux-x64").exists())
+            self.assertTrue(dist.is_symlink())
+            self.assertTrue(displaced.is_dir())
+
     def test_rejects_broken_link_backup_before_candidate_moves(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-backup-link-") as raw:
             root = Path(raw)
