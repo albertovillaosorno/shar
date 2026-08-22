@@ -79,9 +79,11 @@ containers,
 wrong-architecture mobile binaries, and zero-byte packages cannot create a
 completed `dist/<ARCH>/` target. Mobile archive inventories also reject rooted,
 parent/current traversal, backslash, and empty-segment member paths, so a valid
-native entry cannot hide unsafe package members beside it. APK and IPA parsing
-also holds one stable
-single-link package descriptor and requires the candidate path to retain that
+native entry cannot hide unsafe package members beside it. Every archive member
+is also decompressed through ZIP CRC validation before package-specific
+admission, so corruption outside the selected native entry still fails the
+whole package. APK and IPA parsing also holds one stable single-link package
+descriptor and requires the candidate path to retain that
 identity through ZIP validation, so a transient external archive cannot
 authorize different local bytes for publication. Universal Mach-O validation
 consumes every

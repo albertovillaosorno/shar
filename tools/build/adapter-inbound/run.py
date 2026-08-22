@@ -1212,7 +1212,8 @@ def _stable_zip_matches(
             if opened != expected:
                 return False
             with zipfile.ZipFile(handle) as archive:
-                matches = validator(archive)
+                archive_is_intact = archive.testzip() is None
+                matches = archive_is_intact and validator(archive)
             finished = _file_identity(os.fstat(handle.fileno()))
         if finished != expected:
             return False
