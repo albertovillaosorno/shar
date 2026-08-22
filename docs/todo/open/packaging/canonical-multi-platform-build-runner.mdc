@@ -133,7 +133,8 @@ process entrypoint. Truncated, relocatable, machine-only, or out-of-bounds
 segment lookalikes fail.
 Thin and universal
 ARM64 Mach-O main images must carry a complete 64-bit header, a bounded
-load-command table, an executable file type, and an `LC_MAIN` or legacy
+load-command table whose command sizes retain 64-bit alignment, an executable
+file type, and an `LC_MAIN` or legacy
 `LC_UNIXTHREAD` entrypoint rather than only carrying an ARM64 CPU field.
 `LC_MAIN` entry offsets must remain inside the admitted thin image or universal
 slice. Windows

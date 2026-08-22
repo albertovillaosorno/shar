@@ -1064,7 +1064,11 @@ def _macho_commands_have_entrypoint(
             return False
         command = int.from_bytes(command_header[:4], byte_order)
         command_size = int.from_bytes(command_header[4:8], byte_order)
-        if command_size < 8 or command_size > remaining:
+        if (
+            command_size < 8
+            or command_size % 8 != 0
+            or command_size > remaining
+        ):
             return False
         body = stream.read(command_size - 8)
         if len(body) != command_size - 8:
