@@ -83,6 +83,14 @@ class _CandidateTree(NamedTuple):
     directories: tuple[Path, ...]
 
 
+class _CapturedArtifact(NamedTuple):
+    """One stable diagnostic source snapshot bound to its file identity."""
+
+    source: Path
+    payload: bytes
+    identity: tuple[int, ...]
+
+
 _TARGETS = (
     Target("android-arm64", "android", "arm64", "apk", "Android", "arm64"),
     Target("ios-arm64", "ios", "arm64", "ipa", "IOS", "arm64"),
@@ -383,8 +391,11 @@ def _open_uat_log(log: Path) -> TextIO:
     return handle
 
 
-def _read_real_bytes(path: Path, label: str) -> bytes:
-    """Read bytes from one stable real single-link file identity."""
+def _capture_real_bytes(
+    path: Path,
+    label: str,
+) -> tuple[bytes, tuple[int, ...]]:
+    """Capture bytes and identity from one stable real single-link file."""
     expected = _real_file_identity(path, label)
     try:
         with path.open("rb") as handle:
@@ -403,7 +414,12 @@ def _read_real_bytes(path: Path, label: str) -> bytes:
         raise RunFailure(f"{label} changed while reading: {path}") from error
     if current != expected:
         raise RunFailure(f"{label} changed while reading: {path}")
-    return payload
+    return payload, expected
+
+
+def _read_real_bytes(path: Path, label: str) -> bytes:
+    """Read bytes from one stable real single-link file identity."""
+    return _capture_real_bytes(path, label)[0]
 
 
 def _read_real_text(path: Path, label: str) -> str:
@@ -1226,6 +1242,68 @@ def _validate_candidate_artifact(
     raise RunFailure(f"candidate package has no valid {label}: {candidate}")
 
 
+def _require_cache_root_if_present(path: Path, label: str) -> None:
+    """Preflight one existing diagnostic cache without mutating it."""
+    if _path_present(path):
+        _require_real_directory(path, label)
+
+
+def _remove_captured_artifact(
+    source: Path,
+    label: str,
+    expected: tuple[int, ...],
+) -> None:
+    """Remove only the cache-owned candidate identity that was captured."""
+    try:
+        current = _real_file_identity(source, label)
+    except RunFailure as error:
+        raise RunFailure(f"{label} changed before caching: {source}") from error
+    if current != expected:
+        raise RunFailure(f"{label} changed before caching: {source}")
+    try:
+        source.unlink()
+    except OSError as error:
+        raise RunFailure(f"cannot remove cached {label}: {source}") from error
+    if _path_present(source):
+        raise RunFailure(f"{label} reappeared while caching: {source}")
+
+
+def _captured_artifact(source: Path, label: str) -> _CapturedArtifact:
+    """Capture one diagnostic source before cache mutation begins."""
+    payload, identity = _capture_real_bytes(source, label)
+    return _CapturedArtifact(source, payload, identity)
+
+
+def _write_cached_artifact(
+    destination: Path,
+    payload: bytes,
+    label: str,
+) -> None:
+    """Persist one captured diagnostic artifact through an exclusive file."""
+    try:
+        with destination.open("xb") as handle:
+            handle.write(payload)
+            handle.flush()
+            opened = _file_identity(os.fstat(handle.fileno()))
+    except FileExistsError as error:
+        message = f"{label} cache path already exists: {destination}"
+        raise RunFailure(message) from error
+    except OSError as error:
+        raise RunFailure(f"cannot cache {label}: {destination}") from error
+    current = _real_file_identity(destination, label)
+    if opened[5] != len(payload) or current != opened:
+        raise RunFailure(f"{label} cache changed while writing: {destination}")
+
+
+def _ensure_cached_parent(root: Path, relative: Path, label: str) -> Path:
+    """Create or require each repository-owned cache parent in order."""
+    current = root
+    for component in relative.parts:
+        current /= component
+        _ensure_real_directory(current, label)
+    return current
+
+
 def _cache_nonruntime_artifacts(
     candidate: Path,
     work: Path,
@@ -1233,6 +1311,7 @@ def _cache_nonruntime_artifacts(
     tree: _CandidateTree | None = None,
 ) -> None:
     """Keep packaging metadata and debug symbols out of final dist output."""
+    _ensure_real_directory(work, "target work root")
     metadata = work / "publication-metadata"
     symbols = work / "symbols"
     inventory = _validate_candidate_tree(candidate) if tree is None else tree
@@ -1242,16 +1321,34 @@ def _cache_nonruntime_artifacts(
         for item in entries
         if item.parent == candidate and item.match("Manifest_*.txt")
     )
-    for source in manifests:
-        _require_real_file(source, "packaging manifest")
-
     debug_files: list[Path] = []
     if target.system == "windows":
         debug_files = sorted(
             item for item in entries if item.match("*.pdb")
         )
-    for source in debug_files:
-        _require_real_file(source, "debug symbol")
+
+    _require_cache_root_if_present(metadata, "publication metadata cache")
+    _require_cache_root_if_present(symbols, "symbol cache")
+    manifest_snapshots = [
+        _captured_artifact(source, "packaging manifest")
+        for source in manifests
+    ]
+    debug_snapshots = [
+        _captured_artifact(source, "debug symbol")
+        for source in debug_files
+    ]
+    for artifact in manifest_snapshots:
+        _remove_captured_artifact(
+            artifact.source,
+            "packaging manifest",
+            artifact.identity,
+        )
+    for artifact in debug_snapshots:
+        _remove_captured_artifact(
+            artifact.source,
+            "debug symbol",
+            artifact.identity,
+        )
 
     _remove_real_directory_if_present(
         metadata,
@@ -1259,17 +1356,29 @@ def _cache_nonruntime_artifacts(
     )
     _remove_real_directory_if_present(symbols, "symbol cache")
 
-    if manifests:
-        metadata.mkdir(parents=True)
-        for source in manifests:
-            Path(source).replace(metadata / source.name)
-    if debug_files:
-        symbols.mkdir(parents=True)
-        for source in debug_files:
-            relative = source.relative_to(candidate)
+    if manifest_snapshots:
+        metadata.mkdir()
+        for artifact in manifest_snapshots:
+            _write_cached_artifact(
+                metadata / artifact.source.name,
+                artifact.payload,
+                "packaging manifest",
+            )
+    if debug_snapshots:
+        symbols.mkdir()
+        for artifact in debug_snapshots:
+            relative = artifact.source.relative_to(candidate)
             destination = symbols / relative
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            Path(source).replace(destination)
+            _ensure_cached_parent(
+                symbols,
+                relative.parent,
+                "symbol cache parent",
+            )
+            _write_cached_artifact(
+                destination,
+                artifact.payload,
+                "debug symbol",
+            )
 
 
 def _rollback_publication_swap(
