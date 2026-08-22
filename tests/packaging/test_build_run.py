@@ -1933,6 +1933,7 @@ class PeOptionalHeaderTests(unittest.TestCase):
             cases = (
                 ("win32-version", 0xCC, 4, 1),
                 ("image-size", 0xD0, 4, 1),
+                ("image-size-zero", 0xD0, 4, 0),
                 ("header-size", 0xD4, 4, 1),
                 ("header-size-zero", 0xD4, 4, 0),
                 ("loader-flags", 0x100, 4, 1),
