@@ -104,7 +104,11 @@ validated before those caches are replaced as well, so an otherwise well-formed
 but non-runnable package cannot displace diagnostics from the last accepted
 build.
 Artifact entries also require one filesystem link at this boundary instead of
-relying only on the earlier tree scan.
+relying only on the earlier tree scan. Their bytes and filesystem identities are
+captured through stable descriptors before the previous diagnostic caches are
+mutated. Cache files are recreated exclusively from those captured bytes, and
+the candidate source must still match its captured identity before removal, so a
+check-to-move replacement cannot substitute external manifest or symbol content.
 Linux candidates now require a non-empty SHAR native executable for both x64
 and ARM64, and macOS candidates require a `.app` bundle with a non-empty SHAR
 executable below `Contents/MacOS`. On POSIX hosts those native runtimes must

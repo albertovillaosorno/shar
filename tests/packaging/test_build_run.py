@@ -1305,6 +1305,63 @@ class ArtifactCacheEntryTests(unittest.TestCase):
             self.assertTrue(invalid.is_dir())
             self.assertEqual(cached.read_bytes(), b"previous")
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_manifest_replacement_before_snapshot_preserves_cache(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-artifact-race-") as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            candidate.mkdir()
+            manifest = candidate / "Manifest_UFSFiles_Linux.txt"
+            manifest.write_text("local manifest\n", encoding="utf-8")
+            displaced = root / "displaced-manifest.txt"
+            external = root / "external-manifest.txt"
+            external.write_text("external manifest\n", encoding="utf-8")
+            work = root / "work"
+            cached = work / "publication-metadata/Manifest_Previous.txt"
+            cached.parent.mkdir(parents=True)
+            cached.write_text("previous manifest\n", encoding="utf-8")
+            real_require = _RUN._require_real_file
+            replaced = False
+
+            def replace_after_file_check(path: Path, label: str) -> None:
+                nonlocal replaced
+                real_require(path, label)
+                if path == manifest and not replaced:
+                    manifest.replace(displaced)
+                    manifest.symlink_to(external)
+                    replaced = True
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_require_real_file",
+                    side_effect=replace_after_file_check,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "packaging manifest changed while reading",
+                ),
+            ):
+                _RUN._cache_nonruntime_artifacts(
+                    candidate,
+                    work,
+                    _RUN._TARGETS_BY_ID["linux-x64"],
+                )
+
+            self.assertEqual(
+                cached.read_text(encoding="utf-8"),
+                "previous manifest\n",
+            )
+            self.assertTrue(manifest.is_symlink())
+            self.assertEqual(
+                displaced.read_text(encoding="utf-8"),
+                "local manifest\n",
+            )
+            self.assertEqual(
+                external.read_text(encoding="utf-8"),
+                "external manifest\n",
+            )
+
     def test_scan_failure_preserves_existing_symbol_cache(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-artifact-entry-") as raw:
             root = Path(raw)
