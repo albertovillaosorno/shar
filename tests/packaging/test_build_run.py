@@ -172,6 +172,36 @@ def _synthetic_macho(
     )
 
 
+def _synthetic_thread_entry_macho(
+    cpu: int,
+    *,
+    flavor: int = 6,
+    count: int = 68,
+    pc: int = 0x1000,
+) -> bytes:
+    """Return one little-endian Mach-O64 legacy thread-entry fixture."""
+    state = bytearray(272)
+    state[256:264] = pc.to_bytes(8, "little")
+    body = (
+        flavor.to_bytes(4, "little")
+        + count.to_bytes(4, "little")
+        + bytes(state)
+    )
+    command_size = 8 + len(body)
+    return (
+        bytes.fromhex("cffaedfe")
+        + cpu.to_bytes(4, "little")
+        + (0).to_bytes(4, "little")
+        + (2).to_bytes(4, "little")
+        + (1).to_bytes(4, "little")
+        + command_size.to_bytes(4, "little")
+        + (0).to_bytes(8, "little")
+        + (0x5).to_bytes(4, "little")
+        + command_size.to_bytes(4, "little")
+        + body
+    )
+
+
 def _synthetic_fat_macho(cpu_types: tuple[int, ...]) -> bytes:
     """Return one bounded big-endian universal Mach-O with tiny slices."""
     entry_size = 20
@@ -2446,6 +2476,58 @@ class CandidateArtifactTests(unittest.TestCase):
                 candidate,
                 _RUN._TARGETS_BY_ID["macos-arm64"],
             )
+
+    def test_macos_legacy_thread_entrypoint_requires_arm64_state(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-macos-thread-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(
+                _synthetic_thread_entry_macho(_RUN._MACHO_ARM64_CPU)
+            )
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["macos-arm64"],
+            )
+
+            invalid_threads = (
+                (
+                    "wrong-flavor",
+                    _synthetic_thread_entry_macho(
+                        _RUN._MACHO_ARM64_CPU,
+                        flavor=1,
+                    ),
+                ),
+                (
+                    "wrong-count",
+                    _synthetic_thread_entry_macho(
+                        _RUN._MACHO_ARM64_CPU,
+                        count=67,
+                    ),
+                ),
+                (
+                    "zero-pc",
+                    _synthetic_thread_entry_macho(
+                        _RUN._MACHO_ARM64_CPU,
+                        pc=0,
+                    ),
+                ),
+            )
+            for reason, invalid_thread in invalid_threads:
+                executable.write_bytes(invalid_thread)
+                with (
+                    self.subTest(reason=reason),
+                    self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "macOS SHAR app bundle",
+                    ),
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["macos-arm64"],
+                    )
 
     def test_windows_candidate_requires_shar_executable(self) -> None:
         with tempfile.TemporaryDirectory(
