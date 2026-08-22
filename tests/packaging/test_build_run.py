@@ -2447,6 +2447,18 @@ class CandidateArtifactTests(unittest.TestCase):
                 )
 
             executable.write_bytes(
+                _synthetic_pe(0x8664, characteristics=0x2002)
+            )
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
+            executable.write_bytes(
                 _synthetic_pe(0x8664, section_characteristics=0x40000040)
             )
             with self.assertRaisesRegex(

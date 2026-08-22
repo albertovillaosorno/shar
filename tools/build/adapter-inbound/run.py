@@ -909,7 +909,11 @@ def _pe_optional_layout(
     characteristics = int.from_bytes(coff[18:20], "little")
     if machine != expected or section_count == 0:
         return None
-    if optional_size < 112 or characteristics & 0x0002 == 0:
+    if (
+        optional_size < 112
+        or characteristics & 0x0002 == 0
+        or characteristics & 0x2000
+    ):
         return None
     remaining = file_size - offset
     required = 24 + optional_size + (40 * section_count)
