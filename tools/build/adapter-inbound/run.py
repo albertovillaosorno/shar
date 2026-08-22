@@ -1154,11 +1154,21 @@ def _fat_macho_slice_bounds(
         payload[size_start : size_start + offset_width],
         byte_order,
     )
+    align_start = size_start + offset_width
+    alignment_power = int.from_bytes(
+        payload[align_start : align_start + 4],
+        byte_order,
+    )
     if (
         size == 0
         or offset < table_end
         or offset > file_size
         or size > file_size - offset
+    ):
+        return None
+    if (
+        alignment_power >= offset_width * 8
+        or offset % (1 << alignment_power) != 0
     ):
         return None
     return offset, size
