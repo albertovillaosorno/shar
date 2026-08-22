@@ -978,7 +978,11 @@ def _matches_elf(
         return False
     byte_order = {1: "little", 2: "big"}.get(header[5])
     expected = _ELF_MACHINES.get(architecture)
-    if byte_order is None or expected is None:
+    if (
+        byte_order is None
+        or expected is None
+        or (architecture == "amd64" and byte_order != "little")
+    ):
         return False
     layout = _elf_program_layout(header, byte_order, expected, file_size)
     if layout is None:
