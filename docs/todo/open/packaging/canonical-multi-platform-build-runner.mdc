@@ -91,7 +91,7 @@ consumes every
 declared architecture record before accepting ARM64, and each declared slice
 must have nonzero in-bounds file data after the architecture table, honor its
 declared power-of-two file alignment, and not overlap another slice. Selected
-ARM64 slices must themselves begin with
+ARM64 slices must also begin at a 16-KiB page boundary and themselves begin with
 an ARM64 thin Mach-O header. Truncated, empty, overlapping, or mislabeled fat
 slices cannot masquerade as complete macOS or iOS
 runtimes. Windows candidates

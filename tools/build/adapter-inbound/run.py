@@ -1383,8 +1383,9 @@ def _fat_macho_contains_arm64(
             return False
         offset, size = bounds
         slices.append((offset, size))
-        if int.from_bytes(cpu, byte_order) == _MACHO_ARM64_CPU:
-            if size < 32:
+        cpu_type = int.from_bytes(cpu, byte_order)
+        if cpu_type == _MACHO_ARM64_CPU:
+            if size < 32 or offset % 0x4000 != 0:
                 return False
             arm64_slices.append((offset, size))
     return (

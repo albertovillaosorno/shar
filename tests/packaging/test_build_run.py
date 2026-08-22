@@ -236,26 +236,32 @@ def _synthetic_thread_entry_macho(
 
 
 def _synthetic_fat_macho(cpu_types: tuple[int, ...]) -> bytes:
-    """Return one bounded big-endian universal Mach-O with tiny slices."""
+    """Return one page-aligned big-endian universal Mach-O fixture."""
     entry_size = 20
     table_end = 8 + (entry_size * len(cpu_types))
     slices = [_synthetic_macho(cpu) for cpu in cpu_types]
-    offset = table_end
+    cursor = table_end
     entries: list[bytes] = []
+    body = bytearray()
     for cpu, payload in zip(cpu_types, slices, strict=True):
+        alignment_power = 14 if cpu == _RUN._MACHO_ARM64_CPU else 12
+        alignment = 1 << alignment_power
+        offset = (cursor + alignment - 1) & -alignment
+        body.extend(b"\0" * (offset - cursor))
+        body.extend(payload)
         entries.append(
             cpu.to_bytes(4, "big")
             + (b"\0" * 4)
             + offset.to_bytes(4, "big")
             + len(payload).to_bytes(4, "big")
-            + (b"\0" * 4)
+            + alignment_power.to_bytes(4, "big")
         )
-        offset += len(payload)
+        cursor = offset + len(payload)
     return (
         bytes.fromhex("cafebabe")
         + len(cpu_types).to_bytes(4, "big")
         + b"".join(entries)
-        + b"".join(slices)
+        + bytes(body)
     )
 
 
@@ -1880,6 +1886,37 @@ class CandidateTreeTests(unittest.TestCase):
             cache_artifacts.assert_not_called()
 
 
+class MachOFatSliceTests(unittest.TestCase):
+    """Require dyld-compatible universal ARM64 slice placement."""
+
+    def test_rejects_arm64_slice_outside_sixteen_kilobyte_page(self) -> None:
+        valid_arm64 = _synthetic_fat_macho((_RUN._MACHO_ARM64_CPU,))
+        source_offset = int.from_bytes(valid_arm64[16:20], "big")
+        source_size = int.from_bytes(valid_arm64[20:24], "big")
+        page_misaligned = bytearray(valid_arm64[:28])
+        page_misaligned[16:20] = (4096).to_bytes(4, "big")
+        page_misaligned[24:28] = (12).to_bytes(4, "big")
+        page_misaligned.extend(b"\0" * (4096 - 28))
+        page_misaligned.extend(
+            valid_arm64[source_offset : source_offset + source_size]
+        )
+        with tempfile.TemporaryDirectory(prefix="shar-macos-fat-page-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(page_misaligned)
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+
 class MachOEntrypointTests(unittest.TestCase):
     """Require one unambiguous Mach-O process entry command."""
 
@@ -2547,7 +2584,7 @@ class CandidateArtifactTests(unittest.TestCase):
                 _RUN._MACHO_ARM64_CPU,
                 0x01000007,
             )))
-            misaligned_fat[24:28] = (12).to_bytes(4, "big")
+            misaligned_fat[24:28] = (15).to_bytes(4, "big")
             for malformed in (
                 truncated_fat,
                 zero_slice_fat,
