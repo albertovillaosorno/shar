@@ -131,8 +131,8 @@ segment with non-empty file-backed bytes whose file range stays inside the image
 and does not exceed its memory range or wrap the 64-bit virtual address space.
 Loadable ELF segments also retain the ABI alignment contract: `p_align` must be
 zero, one, or a power of two, and aligned segments require congruent file
-offsets and virtual addresses. Linux desktop
-runtimes must also declare a
+offsets and virtual addresses. `PT_LOAD` entries must also remain in ascending
+virtual-address order. Linux desktop runtimes must also declare a
 nonzero entrypoint inside
 executable file-backed bytes of a load segment rather than its zero-fill tail;
 Android shared libraries may legitimately declare no process entrypoint.

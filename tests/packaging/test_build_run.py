@@ -1930,6 +1930,32 @@ class PeEntrypointTests(unittest.TestCase):
 class ElfEntrypointTests(unittest.TestCase):
     """Require Linux process entrypoints to resolve to file-backed code."""
 
+    def test_rejects_unsorted_load_segments(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar/Binaries/Linux/shar-Linux-Shipping"
+            executable.parent.mkdir(parents=True)
+            payload = bytearray(_synthetic_elf(0x003E))
+            first = bytearray(payload[64:120])
+            second = bytearray(first)
+            payload[24:32] = (0x500000).to_bytes(8, "little")
+            payload[56:58] = (2).to_bytes(2, "little")
+            first[8:16] = (176).to_bytes(8, "little")
+            first[16:24] = (0x500000).to_bytes(8, "little")
+            second[8:16] = (177).to_bytes(8, "little")
+            second[16:24] = (0x400000).to_bytes(8, "little")
+            executable.write_bytes(payload[:64] + first + second + b"\0\0")
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Linux SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["linux-x64"],
+                )
+
     def test_rejects_wrapping_load_segment_virtual_range(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
             candidate = Path(raw)
