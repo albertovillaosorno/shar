@@ -80,6 +80,28 @@ def _synthetic_elf(
     return bytes(header + program)
 
 
+def _synthetic_pe(
+    machine: int,
+    *,
+    section_count: int = 1,
+    characteristics: int = 0x0002,
+    optional_size: int = 112,
+) -> bytes:
+    """Return one minimal bounded PE32+ image fixture."""
+    offset = 0x80
+    payload = bytearray(offset + 24 + optional_size + (40 * section_count))
+    payload[:2] = b"MZ"
+    payload[0x3C:0x40] = offset.to_bytes(4, "little")
+    payload[offset : offset + 4] = b"PE\0\0"
+    coff = offset + 4
+    payload[coff : coff + 2] = machine.to_bytes(2, "little")
+    payload[coff + 2 : coff + 4] = section_count.to_bytes(2, "little")
+    payload[coff + 16 : coff + 18] = optional_size.to_bytes(2, "little")
+    payload[coff + 18 : coff + 20] = characteristics.to_bytes(2, "little")
+    payload[coff + 20 : coff + 22] = bytes.fromhex("0b02")
+    return bytes(payload)
+
+
 def _synthetic_macho(cpu: int, file_type: int = 2) -> bytes:
     """Return one minimal little-endian executable Mach-O header."""
     return (
@@ -2040,19 +2062,34 @@ class CandidateArtifactTests(unittest.TestCase):
                     candidate,
                     _RUN._TARGETS_BY_ID["windows-x64"],
                 )
-            payload = bytearray(0x9A)
-            payload[:2] = b"MZ"
-            payload[0x3C:0x40] = (0x80).to_bytes(4, "little")
-            payload[0x80:0x84] = b"PE\0\0"
-            payload[0x84:0x86] = (0x8664).to_bytes(2, "little")
-            payload[0x94:0x96] = (2).to_bytes(2, "little")
-            payload[0x98:0x9A] = bytes.fromhex("0b02")
+            payload = bytearray(_synthetic_pe(0x8664))
             executable.write_bytes(payload)
             _RUN._validate_candidate_artifact(
                 candidate,
                 _RUN._TARGETS_BY_ID["windows-x64"],
             )
 
+            executable.write_bytes(_synthetic_pe(0x8664, section_count=0))
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
+            executable.write_bytes(_synthetic_pe(0x8664, characteristics=0))
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
+            payload = bytearray(_synthetic_pe(0x8664))
             payload[0x98:0x9A] = bytes.fromhex("0b01")
             executable.write_bytes(payload)
             with self.assertRaisesRegex(
@@ -2064,9 +2101,7 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["windows-x64"],
                 )
 
-            payload[0x98:0x9A] = bytes.fromhex("0b02")
-            payload[0x84:0x86] = (0xAA64).to_bytes(2, "little")
-            executable.write_bytes(payload)
+            executable.write_bytes(_synthetic_pe(0xAA64))
             with self.assertRaisesRegex(
                 _RUN.RunFailure,
                 "Windows SHAR executable",
