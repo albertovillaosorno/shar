@@ -1146,8 +1146,12 @@ def _macho_segment64(
     virtual_size = int.from_bytes(body[24:32], byte_order)
     file_offset = int.from_bytes(body[32:40], byte_order)
     mapped_file_size = int.from_bytes(body[40:48], byte_order)
+    maximum_protection = int.from_bytes(body[48:52], byte_order)
     initial_protection = int.from_bytes(body[52:56], byte_order)
-    if mapped_file_size > virtual_size:
+    if (
+        initial_protection & ~maximum_protection
+        or mapped_file_size > virtual_size
+    ):
         return None
     if (
         file_offset > file_size
