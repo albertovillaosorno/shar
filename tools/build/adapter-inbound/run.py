@@ -906,14 +906,57 @@ def _matches_pe(
     return optional_magic == bytes.fromhex("0b02")
 
 
-def _matches_thin_macho(stream: object, byte_order: str) -> bool:
-    """Return whether one thin ARM64 Mach-O header is executable."""
-    header = stream.read(12)
-    if len(header) != 12:
+def _macho_commands_have_entrypoint(
+    stream: object,
+    byte_order: str,
+    command_count: int,
+    command_bytes: int,
+) -> bool:
+    """Validate one Mach-O load-command table and find an entrypoint."""
+    remaining = command_bytes
+    has_entrypoint = False
+    for _ in range(command_count):
+        command_header = stream.read(8)
+        if len(command_header) != 8:
+            return False
+        command = int.from_bytes(command_header[:4], byte_order)
+        command_size = int.from_bytes(command_header[4:8], byte_order)
+        if command_size < 8 or command_size > remaining:
+            return False
+        body = stream.read(command_size - 8)
+        if len(body) != command_size - 8:
+            return False
+        if (
+            command == 0x80000028 and command_size == 24
+        ) or (command == 0x5 and command_size > 8):
+            has_entrypoint = True
+        remaining -= command_size
+    return remaining == 0 and has_entrypoint
+
+
+def _matches_thin_macho(
+    stream: object,
+    byte_order: str,
+    file_size: int,
+) -> bool:
+    """Return whether one ARM64 Mach-O64 executable has an entrypoint."""
+    header = stream.read(28)
+    if len(header) != 28 or file_size < 32:
         return False
     cpu = int.from_bytes(header[:4], byte_order)
     file_type = int.from_bytes(header[8:12], byte_order)
-    return cpu == _MACHO_ARM64_CPU and file_type == 2
+    command_count = int.from_bytes(header[12:16], byte_order)
+    command_bytes = int.from_bytes(header[16:20], byte_order)
+    if cpu != _MACHO_ARM64_CPU or file_type != 2 or command_count == 0:
+        return False
+    if command_bytes == 0 or command_bytes > file_size - 32:
+        return False
+    return _macho_commands_have_entrypoint(
+        stream,
+        byte_order,
+        command_count,
+        command_bytes,
+    )
 
 
 def _fat_macho_slice_bounds(
@@ -945,15 +988,23 @@ def _fat_macho_slice_bounds(
     return offset, size
 
 
-def _fat_macho_arm64_slice_is_native(stream: object, offset: int) -> bool:
-    """Return whether one fat ARM64 slice begins with a matching thin header."""
+def _fat_macho_arm64_slice_is_native(
+    stream: object,
+    offset: int,
+    size: int,
+) -> bool:
+    """Return whether one fat ARM64 slice is a bounded executable image."""
     try:
         stream.seek(offset)
     except (OSError, ValueError):
         return False
     prefix = stream.read(4)
     thin_order = _MACHO_THIN_ENDIAN.get(prefix)
-    return thin_order is not None and _matches_thin_macho(stream, thin_order)
+    return thin_order is not None and _matches_thin_macho(
+        stream,
+        thin_order,
+        size,
+    )
 
 
 def _fat_macho_contains_arm64(
@@ -970,7 +1021,7 @@ def _fat_macho_contains_arm64(
     if count == 0 or count > 64:
         return False
     table_end = 8 + (count * entry_size)
-    arm64_offsets: list[int] = []
+    arm64_slices: list[tuple[int, int]] = []
     for _ in range(count):
         cpu = stream.read(4)
         rest = stream.read(entry_size - 4)
@@ -987,12 +1038,12 @@ def _fat_macho_contains_arm64(
             return False
         offset, size = bounds
         if int.from_bytes(cpu, byte_order) == _MACHO_ARM64_CPU:
-            if size < 16:
+            if size < 32:
                 return False
-            arm64_offsets.append(offset)
-    return bool(arm64_offsets) and all(
-        _fat_macho_arm64_slice_is_native(stream, offset)
-        for offset in arm64_offsets
+            arm64_slices.append((offset, size))
+    return bool(arm64_slices) and all(
+        _fat_macho_arm64_slice_is_native(stream, offset, size)
+        for offset, size in arm64_slices
     )
 
 
@@ -1007,7 +1058,7 @@ def _matches_macho(
         return False
     thin_order = _MACHO_THIN_ENDIAN.get(prefix)
     if thin_order is not None:
-        return _matches_thin_macho(stream, thin_order)
+        return _matches_thin_macho(stream, thin_order, file_size)
     fat = _MACHO_FAT.get(prefix)
     if fat is None:
         return False

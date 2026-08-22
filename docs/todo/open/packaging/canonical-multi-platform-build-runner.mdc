@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-<!-- CSpell:ignore pdb -->
+<!-- CSpell:ignore pdb UNIXTHREAD -->
 
 # Canonical multi-platform build runner
 
@@ -120,9 +120,10 @@ match the selected x64 or ARM64 target. ELF images must carry a complete ELF64
 header with the current version, an executable/shared-object image type, a
 bounded ELF64 program-header table, and at least one loadable segment rather
 than a truncated, relocatable, or machine-only lookalike. Thin and universal
-ARM64 Mach-O main
-images must identify an executable file type rather than only carrying an ARM64
-CPU field. Windows images must also carry a complete COFF header, at least one
+ARM64 Mach-O main images must carry a complete 64-bit header, a bounded
+load-command table, an executable file type, and an `LC_MAIN` or legacy
+`LC_UNIXTHREAD` entrypoint rather than only carrying an ARM64 CPU field. Windows
+images must also carry a complete COFF header, at least one
 section, the executable-image characteristic, and a bounded PE32+ optional
 header and section table rather than only an `MZ`/machine lookalike. Runtime
 size, execute permission, and
