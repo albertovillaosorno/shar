@@ -897,8 +897,8 @@ def _pe_optional_layout(
     expected: int,
     offset: int,
     file_size: int,
-) -> int | None:
-    """Return a bounded PE32+ optional-header size for an executable image."""
+) -> tuple[int, int] | None:
+    """Return bounded PE32+ optional and section-table dimensions."""
     machine = int.from_bytes(coff[:2], "little")
     section_count = int.from_bytes(coff[2:4], "little")
     optional_size = int.from_bytes(coff[16:18], "little")
@@ -909,7 +909,32 @@ def _pe_optional_layout(
         return None
     remaining = file_size - offset
     required = 24 + optional_size + (40 * section_count)
-    return optional_size if required <= remaining else None
+    if required > remaining:
+        return None
+    return optional_size, section_count
+
+
+def _pe_sections_have_executable_data(
+    stream: object,
+    section_count: int,
+    file_size: int,
+) -> bool:
+    """Require bounded section payloads and executable file-backed data."""
+    executable = False
+    for _ in range(section_count):
+        section = stream.read(40)
+        if len(section) != 40:
+            return False
+        raw_size = int.from_bytes(section[16:20], "little")
+        raw_offset = int.from_bytes(section[20:24], "little")
+        characteristics = int.from_bytes(section[36:40], "little")
+        if raw_size and (
+            raw_offset > file_size or raw_size > file_size - raw_offset
+        ):
+            return False
+        if characteristics & 0x20000000 and raw_size:
+            executable = True
+    return executable
 
 
 def _matches_pe(
@@ -923,23 +948,23 @@ def _matches_pe(
         return False
     stream.seek(0x3C)
     offset_bytes = stream.read(4)
-    if len(offset_bytes) != 4:
-        return False
     offset = int.from_bytes(offset_bytes, "little")
-    if offset < 64 or offset > file_size:
+    if len(offset_bytes) != 4 or offset < 64 or offset > file_size:
         return False
     stream.seek(offset)
     signature = stream.read(4)
     coff = stream.read(20)
-    if signature != b"PE\0\0" or len(coff) != 20:
-        return False
     expected = _PE_MACHINES.get(architecture)
-    if expected is None or _pe_optional_layout(
-        coff, expected, offset, file_size
-    ) is None:
+    if signature != b"PE\0\0" or len(coff) != 20 or expected is None:
         return False
-    optional_magic = stream.read(2)
-    return optional_magic == bytes.fromhex("0b02")
+    layout = _pe_optional_layout(coff, expected, offset, file_size)
+    if layout is None:
+        return False
+    optional_size, section_count = layout
+    optional = stream.read(optional_size)
+    if len(optional) != optional_size or optional[:2] != bytes.fromhex("0b02"):
+        return False
+    return _pe_sections_have_executable_data(stream, section_count, file_size)
 
 
 def _macho_commands_have_entrypoint(

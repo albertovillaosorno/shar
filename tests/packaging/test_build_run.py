@@ -91,11 +91,16 @@ def _synthetic_pe(
     *,
     section_count: int = 1,
     characteristics: int = 0x0002,
-    optional_size: int = 112,
+    section_characteristics: int = 0x60000020,
+    section_raw_offset: int | None = None,
+    section_raw_size: int = 1,
 ) -> bytes:
     """Return one minimal bounded PE32+ image fixture."""
     offset = 0x80
-    payload = bytearray(offset + 24 + optional_size + (40 * section_count))
+    optional_size = 112
+    section_table = offset + 24 + optional_size
+    data_offset = section_table + (40 * section_count)
+    payload = bytearray(data_offset + 1)
     payload[:2] = b"MZ"
     payload[0x3C:0x40] = offset.to_bytes(4, "little")
     payload[offset : offset + 4] = b"PE\0\0"
@@ -105,6 +110,19 @@ def _synthetic_pe(
     payload[coff + 16 : coff + 18] = optional_size.to_bytes(2, "little")
     payload[coff + 18 : coff + 20] = characteristics.to_bytes(2, "little")
     payload[coff + 20 : coff + 22] = bytes.fromhex("0b02")
+    if section_count:
+        raw_offset = (
+            data_offset if section_raw_offset is None else section_raw_offset
+        )
+        payload[section_table + 16 : section_table + 20] = (
+            section_raw_size.to_bytes(4, "little")
+        )
+        payload[section_table + 20 : section_table + 24] = raw_offset.to_bytes(
+            4, "little"
+        )
+        payload[section_table + 36 : section_table + 40] = (
+            section_characteristics.to_bytes(4, "little")
+        )
     return bytes(payload)
 
 
@@ -2274,6 +2292,30 @@ class CandidateArtifactTests(unittest.TestCase):
                 )
 
             executable.write_bytes(_synthetic_pe(0x8664, characteristics=0))
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
+            executable.write_bytes(
+                _synthetic_pe(0x8664, section_characteristics=0x40000040)
+            )
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
+            executable.write_bytes(
+                _synthetic_pe(0x8664, section_raw_offset=4096)
+            )
             with self.assertRaisesRegex(
                 _RUN.RunFailure,
                 "Windows SHAR executable",
