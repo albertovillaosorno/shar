@@ -1107,7 +1107,10 @@ def _pe_sections_contain_entrypoint(
     previous_raw_end: int | None = None
     for _ in range(section_count):
         section = stream.read(40)
-        if len(section) != 40 or not _pe_section_image_metadata_is_valid(section):
+        if (
+            len(section) != 40
+            or not _pe_section_image_metadata_is_valid(section)
+        ):
             return False
         virtual_size = int.from_bytes(section[8:12], "little")
         virtual_address = int.from_bytes(section[12:16], "little")
