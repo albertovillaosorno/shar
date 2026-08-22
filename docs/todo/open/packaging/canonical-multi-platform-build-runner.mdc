@@ -136,7 +136,8 @@ load-command table, an executable file type, and an `LC_MAIN` or legacy
 `LC_MAIN` entry offsets must remain inside the admitted thin image or universal
 slice. Windows
 images must also carry a complete COFF header, the executable-image
-characteristic, a bounded PE32+ optional header and section table, bounded
+characteristic without the DLL flag, a bounded PE32+ optional header and
+section table, bounded
 file-backed section ranges, and a nonzero program entrypoint inside an
 executable section containing file data rather than only an `MZ`/machine
 lookalike. Runtime
