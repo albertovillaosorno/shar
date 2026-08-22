@@ -1127,12 +1127,12 @@ def _macho_entrypoint_is_executable(
     entrypoint: int,
     segments: list[_MachOSegment],
 ) -> bool:
-    """Return whether an entrypoint is inside an executable segment."""
+    """Return whether an entrypoint is inside executable file-backed bytes."""
     return any(
         segment.initial_protection & 0x4
         and segment.virtual_address
         <= entrypoint
-        < segment.virtual_address + segment.virtual_size
+        < segment.virtual_address + segment.file_size
         for segment in segments
     )
 

@@ -1958,6 +1958,28 @@ class MachOFatSliceTests(unittest.TestCase):
 class MachOEntrypointTests(unittest.TestCase):
     """Require one unambiguous Mach-O process entry command."""
 
+    def test_rejects_entrypoint_in_zero_fill_tail(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-macos-entry-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(
+                _synthetic_macho(
+                    _RUN._MACHO_ARM64_CPU,
+                    entry_offset=256,
+                )
+            )
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
     def test_rejects_duplicate_entry_commands(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-macos-entry-") as raw:
             candidate = Path(raw)
