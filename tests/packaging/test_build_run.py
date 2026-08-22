@@ -33,6 +33,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from collections.abc import Iterator
 import hashlib
 import importlib.util
 import os
@@ -1387,6 +1388,33 @@ class CandidateTreeTests(unittest.TestCase):
                 ),
             ):
                 _RUN._validate_candidate_tree(candidate)
+
+    def test_rejects_nested_scan_failure(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-candidate-tree-") as raw:
+            candidate = Path(raw) / "candidate"
+            nested = candidate / "nested"
+            nested.mkdir(parents=True)
+            runtime = nested / "shar-Linux-Shipping"
+            runtime.write_bytes(_synthetic_elf(0x003E))
+            runtime.chmod(0o755)
+            original = Path.iterdir
+
+            def fail_nested_scan(path: Path) -> Iterator[Path]:
+                if path == nested:
+                    raise PermissionError("injected candidate scan failure")
+                return original(path)
+
+            with (
+                mock.patch.object(Path, "iterdir", fail_nested_scan),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "candidate package could not be scanned",
+                ),
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["linux-x64"],
+                )
 
     def test_build_validates_candidate_tree_before_artifact_caching(
         self,
