@@ -104,10 +104,11 @@ class _MachOSegment(NamedTuple):
 
 
 class _PeSectionPolicy(NamedTuple):
-    """PE section alignment and header-boundary admission fields."""
+    """PE section alignment and image-boundary admission fields."""
 
     section_alignment: int
     file_alignment: int
+    image_size: int
     header_size: int
 
 
@@ -1139,7 +1140,11 @@ def _pe_sections_contain_entrypoint(
             < virtual_address + mapped_file_size
         ):
             admitted = True
-    return entrypoint != 0 and admitted
+    return (
+        entrypoint != 0
+        and admitted
+        and expected_virtual_address == policy.image_size
+    )
 
 
 def _matches_pe(
@@ -1183,6 +1188,7 @@ def _matches_pe(
     policy = _PeSectionPolicy(
         section_alignment=int.from_bytes(optional[32:36], "little"),
         file_alignment=int.from_bytes(optional[36:40], "little"),
+        image_size=int.from_bytes(optional[56:60], "little"),
         header_size=int.from_bytes(optional[60:64], "little"),
     )
     return _pe_sections_contain_entrypoint(
