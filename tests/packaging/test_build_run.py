@@ -96,14 +96,20 @@ def _synthetic_pe(
     characteristics: int = 0x0002,
     section_characteristics: int = 0x60000020,
     section_raw_offset: int | None = None,
-    section_raw_size: int = 1,
+    section_raw_size: int = 0x200,
 ) -> bytes:
     """Return one minimal bounded PE32+ image fixture."""
     offset = 0x80
     optional_size = 112
+    file_alignment = 0x200
+    section_alignment = 0x1000
     section_table = offset + 24 + optional_size
-    data_offset = section_table + (40 * section_count)
-    payload = bytearray(data_offset + 1)
+    header_end = section_table + (40 * section_count)
+    data_offset = (
+        (header_end + file_alignment - 1) // file_alignment * file_alignment
+    )
+    payload_size = data_offset + (section_raw_size if section_count else 0)
+    payload = bytearray(payload_size)
     payload[:2] = b"MZ"
     payload[0x3C:0x40] = offset.to_bytes(4, "little")
     payload[offset : offset + 4] = b"PE\0\0"
@@ -115,8 +121,16 @@ def _synthetic_pe(
     optional = coff + 20
     payload[optional : optional + 2] = bytes.fromhex("0b02")
     payload[optional + 16 : optional + 20] = (0x1000).to_bytes(4, "little")
-    payload[optional + 32 : optional + 36] = (0x1000).to_bytes(4, "little")
-    payload[optional + 36 : optional + 40] = (0x200).to_bytes(4, "little")
+    payload[optional + 32 : optional + 36] = section_alignment.to_bytes(
+        4,
+        "little",
+    )
+    payload[optional + 36 : optional + 40] = file_alignment.to_bytes(
+        4,
+        "little",
+    )
+    payload[optional + 56 : optional + 60] = (0x2000).to_bytes(4, "little")
+    payload[optional + 60 : optional + 64] = data_offset.to_bytes(4, "little")
     if section_count:
         raw_offset = (
             data_offset if section_raw_offset is None else section_raw_offset
@@ -131,7 +145,8 @@ def _synthetic_pe(
             section_raw_size.to_bytes(4, "little")
         )
         payload[section_table + 20 : section_table + 24] = raw_offset.to_bytes(
-            4, "little"
+            4,
+            "little",
         )
         payload[section_table + 36 : section_table + 40] = (
             section_characteristics.to_bytes(4, "little")
@@ -1991,6 +2006,30 @@ class PeOptionalHeaderTests(unittest.TestCase):
                     )
 
 
+class PeSectionLayoutTests(unittest.TestCase):
+    """Require PE section file layout to follow loader alignment."""
+
+    def test_rejects_misaligned_raw_section_data(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-windows-section-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar-Win64-Shipping.exe"
+            for reason, offset in (("raw-size", 0x118), ("raw-offset", 0x11C)):
+                payload = bytearray(_synthetic_pe(0x8664))
+                payload[offset : offset + 4] = (1).to_bytes(4, "little")
+                executable.write_bytes(payload)
+                with (
+                    self.subTest(reason=reason),
+                    self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "Windows SHAR executable",
+                    ),
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["windows-x64"],
+                    )
+
+
 class PeEntrypointTests(unittest.TestCase):
     """Require Windows process entrypoints to resolve to file-backed code."""
 
@@ -2041,6 +2080,7 @@ class PeEntrypointTests(unittest.TestCase):
             payload = bytearray(_synthetic_pe(0x8664))
             payload[0xA8:0xAC] = (0x1001).to_bytes(4, "little")
             payload[0x110:0x114] = (2).to_bytes(4, "little")
+            payload[0x118:0x11C] = (1).to_bytes(4, "little")
             executable.write_bytes(payload)
             with self.assertRaisesRegex(
                 _RUN.RunFailure,
