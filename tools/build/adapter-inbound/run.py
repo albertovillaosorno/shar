@@ -998,9 +998,17 @@ def _pe_optional_layout(
     """Return bounded PE32+ optional and section-table dimensions."""
     machine = int.from_bytes(coff[:2], "little")
     section_count = int.from_bytes(coff[2:4], "little")
+    symbol_table = int.from_bytes(coff[8:12], "little")
+    symbol_count = int.from_bytes(coff[12:16], "little")
     optional_size = int.from_bytes(coff[16:18], "little")
     characteristics = int.from_bytes(coff[18:20], "little")
-    if machine != expected or section_count == 0 or section_count > 96:
+    if (
+        machine != expected
+        or section_count == 0
+        or section_count > 96
+        or symbol_table != 0
+        or symbol_count != 0
+    ):
         return None
     if (
         optional_size < 112
