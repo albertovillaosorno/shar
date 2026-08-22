@@ -1156,6 +1156,63 @@ class EngineSelectionTests(unittest.TestCase):
             self.assertEqual(external.read_bytes(), external_payload)
 
     @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_engine_rejects_redirected_build_version_parent(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-engine-version-") as raw:
+            root = Path(raw)
+            engine = root / "UE_5.8"
+            (engine / "Engine").mkdir(parents=True)
+            external = root / "external-build"
+            external.mkdir()
+            (external / "Build.version").write_text(
+                '{"MajorVersion":5,"MinorVersion":8,"PatchVersion":1}\n',
+                encoding="utf-8",
+            )
+            (engine / "Engine/Build").symlink_to(
+                external,
+                target_is_directory=True,
+            )
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "Unreal Build.version parent must be a real directory",
+            ):
+                _CHECK._engine_version(engine)
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_engine_rejects_redirected_editor_parent(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-engine-editor-") as raw:
+            root = Path(raw)
+            engine = root / "UE_5.8"
+            version = engine / "Engine/Build/Build.version"
+            version.parent.mkdir(parents=True)
+            version.write_text(
+                '{"MajorVersion":5,"MinorVersion":8,"PatchVersion":1}\n',
+                encoding="utf-8",
+            )
+            external = root / "external-editor-bin"
+            external.mkdir()
+            editor = external / "UnrealEditor"
+            editor.write_bytes(b"editor")
+            editor.chmod(0o755)
+            linked_parent = engine / "Engine/Binaries/Linked"
+            linked_parent.parent.mkdir(parents=True)
+            linked_parent.symlink_to(external, target_is_directory=True)
+            linked_editor = linked_parent / "UnrealEditor"
+
+            with (
+                mock.patch.object(
+                    _CHECK,
+                    "_editor_path",
+                    return_value=linked_editor,
+                ),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "Unreal editor executable parent must be a real directory",
+                ),
+            ):
+                _CHECK._check_engine(engine)
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
     def test_engine_rejects_linked_editor_executable(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-engine-editor-") as raw:
             engine = Path(raw) / "UE_5.8"

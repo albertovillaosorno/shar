@@ -266,11 +266,15 @@ publication exposed.
 Turnkey validation also confirmed the installed Windows x64 SDK as valid. Build
 preflight now reads Unreal `Build.version` through one stable single-link file
 identity, so a transient external descriptor cannot supply the required 5.8.1
-version tuple. The host-native Unreal editor identity must likewise be a regular
-file rather than merely an existing filesystem entry and, on POSIX hosts, must
-have execute permission. The runner similarly requires its host `RunUAT`
-launcher to be a non-linked file and executable on POSIX before Turnkey starts.
-Directory, redirected, or non-executable launchers cannot become build
+version tuple. The resolved engine root and every engine-internal directory
+between it and `Build.version` must also be real rather than a symlink or
+junction. The
+host-native Unreal editor identity has the same internal-parent rule, must be a
+regular file rather than merely an existing filesystem entry and, on POSIX
+hosts, must have execute permission. The runner similarly requires a real engine
+root and real internal parents for its host `RunUAT` launcher, then requires the
+launcher itself to be a non-linked file and executable on POSIX before Turnkey
+starts. Directory, redirected, or non-executable launchers cannot become build
 authority. UAT logs are redirected beneath
 `.cache/build/run/<target>/automation-saved/`. A
 second real Shipping build completed successfully in 16m58s with the local DDC
