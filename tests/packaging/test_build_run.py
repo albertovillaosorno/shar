@@ -2273,10 +2273,16 @@ class CandidateArtifactTests(unittest.TestCase):
                 + (b"\0" * 4)
                 + b"invalid!"
             )
+            overlapping_fat = bytearray(_synthetic_fat_macho((
+                _RUN._MACHO_ARM64_CPU,
+                0x01000007,
+            )))
+            overlapping_fat[36:40] = overlapping_fat[16:20]
             for malformed in (
                 truncated_fat,
                 zero_slice_fat,
                 in_bounds_non_macho,
+                bytes(overlapping_fat),
             ):
                 with (
                     self.subTest(malformed_size=len(malformed)),

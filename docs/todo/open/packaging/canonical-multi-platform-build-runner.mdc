@@ -89,9 +89,10 @@ identity through ZIP validation, so a transient external archive cannot
 authorize different local bytes for publication. Universal Mach-O validation
 consumes every
 declared architecture record before accepting ARM64, and each declared slice
-must have nonzero in-bounds file data after the architecture table. Selected
-ARM64 slices must themselves begin with an ARM64 thin Mach-O header. Truncated,
-empty, or mislabeled fat slices cannot masquerade as complete macOS or iOS
+must have nonzero in-bounds file data after the architecture table, and declared
+slice ranges must not overlap. Selected ARM64 slices must themselves begin with
+an ARM64 thin Mach-O header. Truncated, empty, overlapping, or mislabeled fat
+slices cannot masquerade as complete macOS or iOS
 runtimes. Windows candidates
 likewise require a non-empty
 SHAR `.exe`; engine helper executables alone cannot satisfy publication. The
