@@ -851,11 +851,86 @@ def _elf_program_layout(
     return program_offset, program_size, program_count
 
 
+def _elf_load_segment_state(
+    program: bytes,
+    byte_order: str,
+    file_size: int,
+    entrypoint: int,
+) -> tuple[bool, bool, bool]:
+    """Return bounds, execute permission, and entrypoint containment."""
+    flags = int.from_bytes(program[4:8], byte_order)
+    offset = int.from_bytes(program[8:16], byte_order)
+    virtual_address = int.from_bytes(program[16:24], byte_order)
+    file_bytes = int.from_bytes(program[32:40], byte_order)
+    memory_bytes = int.from_bytes(program[40:48], byte_order)
+    bounded = (
+        file_bytes <= memory_bytes
+        and offset <= file_size
+        and file_bytes <= file_size - offset
+    )
+    executable = bool(flags & 0x1)
+    contains_entrypoint = (
+        executable
+        and memory_bytes > 0
+        and virtual_address
+        <= entrypoint
+        < virtual_address + memory_bytes
+    )
+    return bounded, executable, contains_entrypoint
+
+
+def _elf_load_programs_match(
+    stream: object,
+    byte_order: str,
+    layout: tuple[int, int, int],
+    file_size: int,
+    entrypoint: int,
+    *,
+    require_entrypoint: bool,
+) -> bool:
+    """Validate ELF load segments and optional process entrypoint."""
+    program_offset, program_size, program_count = layout
+    try:
+        stream.seek(program_offset)
+    except (OSError, ValueError):
+        return False
+    loadable = False
+    executable = False
+    entrypoint_in_executable = False
+    load_segments_valid = True
+    for _ in range(program_count):
+        program = stream.read(program_size)
+        if len(program) != program_size:
+            return False
+        if int.from_bytes(program[:4], byte_order) != 1:
+            continue
+        bounded, segment_executable, contains_entrypoint = (
+            _elf_load_segment_state(
+                program,
+                byte_order,
+                file_size,
+                entrypoint,
+            )
+        )
+        load_segments_valid = load_segments_valid and bounded
+        loadable = True
+        executable = executable or segment_executable
+        entrypoint_in_executable = (
+            entrypoint_in_executable or contains_entrypoint
+        )
+    entrypoint_ok = not require_entrypoint or (
+        entrypoint != 0 and entrypoint_in_executable
+    )
+    return loadable and executable and load_segments_valid and entrypoint_ok
+
+
 def _matches_elf(
     stream: object,
     prefix: bytes,
     architecture: str,
     file_size: int,
+    *,
+    require_entrypoint: bool = False,
 ) -> bool:
     """Return whether one loadable ELF64 image declares the selected CPU."""
     header = prefix + stream.read(60)
@@ -868,32 +943,15 @@ def _matches_elf(
     layout = _elf_program_layout(header, byte_order, expected, file_size)
     if layout is None:
         return False
-    program_offset, program_size, program_count = layout
-    try:
-        stream.seek(program_offset)
-    except (OSError, ValueError):
-        return False
-    loadable = False
-    executable = False
-    load_segments_valid = True
-    for _ in range(program_count):
-        program = stream.read(program_size)
-        if len(program) != program_size:
-            return False
-        if int.from_bytes(program[:4], byte_order) != 1:
-            continue
-        flags = int.from_bytes(program[4:8], byte_order)
-        offset = int.from_bytes(program[8:16], byte_order)
-        file_bytes = int.from_bytes(program[32:40], byte_order)
-        memory_bytes = int.from_bytes(program[40:48], byte_order)
-        load_segments_valid = load_segments_valid and (
-            file_bytes <= memory_bytes
-            and offset <= file_size
-            and file_bytes <= file_size - offset
-        )
-        loadable = True
-        executable = executable or bool(flags & 0x1)
-    return loadable and executable and load_segments_valid
+    entrypoint = int.from_bytes(header[24:32], byte_order)
+    return _elf_load_programs_match(
+        stream,
+        byte_order,
+        layout,
+        file_size,
+        entrypoint,
+        require_entrypoint=require_entrypoint,
+    )
 
 
 def _pe_optional_layout(
@@ -1188,7 +1246,13 @@ def _matches_native_binary_stream(
     """Return whether one opened stream matches its declared native target."""
     prefix = stream.read(4)
     if system == "linux" and prefix == b"\x7fELF":
-        return _matches_elf(stream, prefix, architecture, file_size)
+        return _matches_elf(
+            stream,
+            prefix,
+            architecture,
+            file_size,
+            require_entrypoint=True,
+        )
     if system == "macos":
         return _matches_macho(
             stream,

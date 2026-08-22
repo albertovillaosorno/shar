@@ -60,7 +60,7 @@ def _synthetic_elf(
     machine: int,
     *,
     image_type: int = 3,
-    program_type: int = 1,
+    entrypoint: int = 0x400000,
     segment_offset: int = 120,
     segment_file_size: int = 1,
     segment_memory_size: int = 1,
@@ -74,14 +74,16 @@ def _synthetic_elf(
     header[16:18] = image_type.to_bytes(2, "little")
     header[18:20] = machine.to_bytes(2, "little")
     header[20:24] = (1).to_bytes(4, "little")
+    header[24:32] = entrypoint.to_bytes(8, "little")
     header[32:40] = (64).to_bytes(8, "little")
     header[52:54] = (64).to_bytes(2, "little")
     header[54:56] = (56).to_bytes(2, "little")
     header[56:58] = (1).to_bytes(2, "little")
     program = bytearray(56)
-    program[:4] = program_type.to_bytes(4, "little")
+    program[:4] = (1).to_bytes(4, "little")
     program[4:8] = (0x5).to_bytes(4, "little")
     program[8:16] = segment_offset.to_bytes(8, "little")
+    program[16:24] = (0x400000).to_bytes(8, "little")
     program[32:40] = segment_file_size.to_bytes(8, "little")
     program[40:48] = segment_memory_size.to_bytes(8, "little")
     return bytes(header + program + b"\0")
@@ -183,13 +185,18 @@ def _synthetic_fat_macho(cpu_types: tuple[int, ...]) -> bytes:
     )
 
 
-def _write_android_apk(path: Path, machine: int = 0x00B7) -> None:
+def _write_android_apk(
+    path: Path,
+    machine: int = 0x00B7,
+    *,
+    entrypoint: int = 0x400000,
+) -> None:
     """Write one synthetic APK with manifest and native library entries."""
     with _RUN.zipfile.ZipFile(path, "w") as archive:
         archive.writestr("AndroidManifest.xml", b"synthetic manifest")
         archive.writestr(
             "lib/arm64-v8a/libUnreal.so",
-            _synthetic_elf(machine),
+            _synthetic_elf(machine, entrypoint=entrypoint),
         )
 
 
@@ -1852,6 +1859,12 @@ class CandidateArtifactTests(unittest.TestCase):
                 _RUN._TARGETS_BY_ID["android-arm64"],
             )
 
+            _write_android_apk(apk, entrypoint=0)
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["android-arm64"],
+            )
+
     def test_android_candidate_requires_loader_library_path(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-android-candidate-",
@@ -2134,7 +2147,8 @@ class CandidateArtifactTests(unittest.TestCase):
                         _RUN._TARGETS_BY_ID[target_id],
                     )
 
-                header = bytearray(_synthetic_elf(machine, program_type=0))
+                header = bytearray(_synthetic_elf(machine))
+                header[64:68] = (0).to_bytes(4, "little")
                 binary.write_bytes(header)
                 with self.assertRaisesRegex(
                     _RUN.RunFailure,
@@ -2184,6 +2198,22 @@ class CandidateArtifactTests(unittest.TestCase):
                         candidate,
                         _RUN._TARGETS_BY_ID[target_id],
                     )
+
+                for entrypoint in (0, 0x500000):
+                    binary.write_bytes(
+                        _synthetic_elf(machine, entrypoint=entrypoint)
+                    )
+                    with (
+                        self.subTest(target=target_id, entrypoint=entrypoint),
+                        self.assertRaisesRegex(
+                            _RUN.RunFailure,
+                            "Linux SHAR executable",
+                        ),
+                    ):
+                        _RUN._validate_candidate_artifact(
+                            candidate,
+                            _RUN._TARGETS_BY_ID[target_id],
+                        )
 
                 header = bytearray(_synthetic_elf(machine))
                 wrong_machine = 0x003E if machine == 0x00B7 else 0x00B7
