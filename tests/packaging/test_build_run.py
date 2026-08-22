@@ -2449,11 +2449,17 @@ class CandidateArtifactTests(unittest.TestCase):
                 0x01000007,
             )))
             overlapping_fat[36:40] = overlapping_fat[16:20]
+            misaligned_fat = bytearray(_synthetic_fat_macho((
+                _RUN._MACHO_ARM64_CPU,
+                0x01000007,
+            )))
+            misaligned_fat[24:28] = (12).to_bytes(4, "big")
             for malformed in (
                 truncated_fat,
                 zero_slice_fat,
                 in_bounds_non_macho,
                 bytes(overlapping_fat),
+                bytes(misaligned_fat),
             ):
                 with (
                     self.subTest(malformed_size=len(malformed)),
