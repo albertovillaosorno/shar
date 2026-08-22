@@ -125,9 +125,10 @@ executable below `Contents/MacOS`. On POSIX hosts those native runtimes must
 also retain execute permission. Desktop entrypoints must identify their native
 binary format as ELF, Mach-O, or PE as appropriate, and the native header must
 match the selected x64 or ARM64 target. ELF images must carry a complete ELF64
-header with the current version, an executable/shared-object image type, a
-bounded ELF64 program-header table, and at least one executable loadable
-segment with non-empty file-backed bytes whose file range stays inside the image
+header with the current version and a System V/Linux OSABI, an
+executable/shared-object image type, a bounded ELF64 program-header table, and
+at least one executable loadable segment with non-empty file-backed bytes whose
+file range stays inside the image
 and does not exceed its memory range or wrap the 64-bit virtual address space.
 Loadable ELF segments also retain the ABI alignment contract: `p_align` must be
 zero, one, or a power of two, and aligned segments require congruent file
