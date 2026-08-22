@@ -175,8 +175,9 @@ def _synthetic_fat_macho(cpu_types: tuple[int, ...]) -> bytes:
 
 
 def _write_android_apk(path: Path, machine: int = 0x00B7) -> None:
-    """Write one synthetic APK with a native library entry."""
+    """Write one synthetic APK with manifest and native library entries."""
     with _RUN.zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("AndroidManifest.xml", b"synthetic manifest")
         archive.writestr(
             "lib/arm64-v8a/libUnreal.so",
             _synthetic_elf(machine),
@@ -1740,6 +1741,29 @@ class CandidateArtifactTests(unittest.TestCase):
             apk = candidate / "shar.apk"
             apk.write_bytes(b"not a package")
 
+            with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["android-arm64"],
+                )
+
+            with _RUN.zipfile.ZipFile(apk, "w") as archive:
+                archive.writestr(
+                    "lib/arm64-v8a/libUnreal.so",
+                    _synthetic_elf(0x00B7),
+                )
+            with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["android-arm64"],
+                )
+
+            with _RUN.zipfile.ZipFile(apk, "w") as archive:
+                archive.writestr("AndroidManifest.xml", b"")
+                archive.writestr(
+                    "lib/arm64-v8a/libUnreal.so",
+                    _synthetic_elf(0x00B7),
+                )
             with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
                 _RUN._validate_candidate_artifact(
                     candidate,
