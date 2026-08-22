@@ -1024,22 +1024,29 @@ def _zip_member_matches_elf(
         )
 
 
+def _is_android_arm64_library_path(name: str) -> bool:
+    """Return whether one APK member uses Android's ARM64 library shape."""
+    parts = name.split("/")
+    if len(parts) != 3 or parts[:2] != ["lib", "arm64-v8a"]:
+        return False
+    library = parts[2]
+    return (
+        library.startswith("lib")
+        and library.endswith(".so")
+        and len(library) > len("lib.so")
+    )
+
+
 def _android_archive_contains_arm64(archive: zipfile.ZipFile) -> bool:
     """Return whether one opened APK contains an ARM64 native library."""
     inventory = _zip_inventory(archive)
     if inventory is None:
         return False
-    for name, info in inventory.items():
-        parts = name.split("/")
-        if (
-            len(parts) >= 3
-            and parts[:2] == ["lib", "arm64-v8a"]
-            and parts[-1].endswith(".so")
-            and all(part not in {"", ".", ".."} for part in parts)
-            and _zip_member_matches_elf(archive, info, "arm64")
-        ):
-            return True
-    return False
+    return any(
+        _is_android_arm64_library_path(name)
+        and _zip_member_matches_elf(archive, info, "arm64")
+        for name, info in inventory.items()
+    )
 
 
 def _stable_zip_matches(
