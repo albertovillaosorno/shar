@@ -39,6 +39,7 @@ import argparse
 from collections.abc import Callable
 from collections.abc import Sequence
 import hashlib
+from itertools import pairwise
 import json
 import os
 from pathlib import Path
@@ -1076,6 +1077,17 @@ def _fat_macho_arm64_slice_is_native(
     )
 
 
+def _fat_macho_slices_are_disjoint(
+    slices: Sequence[tuple[int, int]],
+) -> bool:
+    """Return whether declared universal Mach-O slice ranges are disjoint."""
+    ordered = sorted((offset, offset + size) for offset, size in slices)
+    return all(
+        previous_end <= current_start
+        for (_, previous_end), (current_start, _) in pairwise(ordered)
+    )
+
+
 def _fat_macho_contains_arm64(
     stream: object,
     byte_order: str,
@@ -1090,6 +1102,7 @@ def _fat_macho_contains_arm64(
     if count == 0 or count > 64:
         return False
     table_end = 8 + (count * entry_size)
+    slices: list[tuple[int, int]] = []
     arm64_slices: list[tuple[int, int]] = []
     for _ in range(count):
         cpu = stream.read(4)
@@ -1106,13 +1119,18 @@ def _fat_macho_contains_arm64(
         if bounds is None:
             return False
         offset, size = bounds
+        slices.append((offset, size))
         if int.from_bytes(cpu, byte_order) == _MACHO_ARM64_CPU:
             if size < 32:
                 return False
             arm64_slices.append((offset, size))
-    return bool(arm64_slices) and all(
-        _fat_macho_arm64_slice_is_native(stream, offset, size)
-        for offset, size in arm64_slices
+    return (
+        _fat_macho_slices_are_disjoint(slices)
+        and bool(arm64_slices)
+        and all(
+            _fat_macho_arm64_slice_is_native(stream, offset, size)
+            for offset, size in arm64_slices
+        )
     )
 
 
