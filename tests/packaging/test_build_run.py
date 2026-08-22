@@ -157,6 +157,31 @@ def _write_android_apk(path: Path, machine: int = 0x00B7) -> None:
         )
 
 
+def _corrupt_stored_zip_member(path: Path, member: str) -> None:
+    """Flip one stored byte without changing central metadata.
+
+    Raises:
+        AssertionError: If the synthetic ZIP fixture is malformed.
+
+    """
+    with _RUN.zipfile.ZipFile(path) as archive:
+        info = archive.getinfo(member)
+        offset = info.header_offset
+    with path.open("r+b") as handle:
+        handle.seek(offset)
+        local = handle.read(30)
+        if len(local) != 30 or local[:4] != bytes.fromhex("504b0304"):
+            raise AssertionError("invalid synthetic ZIP local header")
+        name_size = int.from_bytes(local[26:28], "little")
+        extra_size = int.from_bytes(local[28:30], "little")
+        handle.seek(offset + 30 + name_size + extra_size)
+        value = handle.read(1)
+        if not value:
+            raise AssertionError("synthetic ZIP member is empty")
+        handle.seek(-1, 1)
+        handle.write(bytes([value[0] ^ 0xFF]))
+
+
 def _write_ios_ipa(
     path: Path,
     cpu: int = 0x0100000C,
@@ -1773,6 +1798,31 @@ class CandidateArtifactTests(unittest.TestCase):
                             candidate,
                             _RUN._TARGETS_BY_ID[target_id],
                         )
+
+    def test_mobile_candidate_rejects_corrupt_unrelated_member(self) -> None:
+        cases = (
+            ("android-arm64", "shar.apk", _write_android_apk, "Android APK"),
+            ("ios-arm64", "shar.ipa", _write_ios_ipa, "iOS IPA"),
+        )
+        member = "assets/integrity.bin"
+        for target_id, name, write_valid, label in cases:
+            with (
+                self.subTest(target=target_id),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-mobile-integrity-"
+                ) as raw,
+            ):
+                candidate = Path(raw)
+                package = candidate / name
+                write_valid(package)
+                with _RUN.zipfile.ZipFile(package, "a") as archive:
+                    archive.writestr(member, b"integrity evidence")
+                _corrupt_stored_zip_member(package, member)
+                with self.assertRaisesRegex(_RUN.RunFailure, label):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
 
     @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
     def test_mobile_candidate_rejects_transient_external_archive(self) -> None:
