@@ -2142,6 +2142,25 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["android-arm64"],
                 )
 
+            with _RUN.zipfile.ZipFile(apk, "w") as archive:
+                archive.writestr(
+                    "AndroidManifest.xml",
+                    b"synthetic manifest",
+                )
+                archive.writestr(
+                    "lib/arm64-v8a/libUnreal.so",
+                    _synthetic_elf(
+                        0x00B7,
+                        segment_file_size=0,
+                        segment_memory_size=1,
+                    ),
+                )
+            with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["android-arm64"],
+                )
+
             for alignment in (3, 0x1000):
                 native = bytearray(_synthetic_elf(0x00B7))
                 native[112:120] = alignment.to_bytes(8, "little")
