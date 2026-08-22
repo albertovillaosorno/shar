@@ -1233,9 +1233,9 @@ def _macho_entrypoint_matches_segments(
         return False
     kind, entrypoint = entrypoints[0]
     if kind == "main":
-        if entrypoint > ((1 << 64) - 1) - text_segment.virtual_address:
-            return False
-        entrypoint += text_segment.virtual_address
+        return bool(text_segment.initial_protection & 0x4) and (
+            entrypoint < text_segment.file_size
+        )
     return _macho_entrypoint_is_executable(entrypoint, segments)
 
 

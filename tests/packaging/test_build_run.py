@@ -2026,6 +2026,31 @@ class MachOFatSliceTests(unittest.TestCase):
 class MachOEntrypointTests(unittest.TestCase):
     """Require one unambiguous Mach-O process entry command."""
 
+    def test_rejects_lc_main_offset_beyond_text_file_bytes(self) -> None:
+        text_segment = _RUN._MachOSegment(
+            name=b"__TEXT",
+            virtual_address=0x100000000,
+            virtual_size=0x1000,
+            file_offset=0,
+            file_size=0x100,
+            initial_protection=0x5,
+        )
+        later_segment = _RUN._MachOSegment(
+            name=b"__ALT",
+            virtual_address=0x100000100,
+            virtual_size=0x100,
+            file_offset=0x100,
+            file_size=0x100,
+            initial_protection=0x5,
+        )
+        self.assertFalse(
+            _RUN._macho_entrypoint_matches_segments(
+                [text_segment, later_segment],
+                [("main", 0x100)],
+                64,
+            )
+        )
+
     def test_rejects_entrypoint_in_zero_fill_tail(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-macos-entry-") as raw:
             candidate = Path(raw)
