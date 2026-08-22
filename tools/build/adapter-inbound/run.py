@@ -103,6 +103,14 @@ class _MachOSegment(NamedTuple):
     initial_protection: int
 
 
+class _PeSectionPolicy(NamedTuple):
+    """PE section alignment and header-boundary admission fields."""
+
+    section_alignment: int
+    file_alignment: int
+    header_size: int
+
+
 _TARGETS = (
     Target("android-arm64", "android", "arm64", "apk", "Android", "arm64"),
     Target("ios-arm64", "ios", "arm64", "ipa", "IOS", "arm64"),
@@ -1080,10 +1088,7 @@ def _pe_sections_contain_entrypoint(
     section_count: int,
     file_size: int,
     entrypoint: int,
-    *,
-    section_alignment: int,
-    file_alignment: int,
-    header_size: int,
+    policy: _PeSectionPolicy,
 ) -> bool:
     """Require an executable section containing the program entrypoint."""
     admitted = False
@@ -1095,7 +1100,7 @@ def _pe_sections_contain_entrypoint(
             return False
         virtual_size = int.from_bytes(section[8:12], "little")
         virtual_address = int.from_bytes(section[12:16], "little")
-        if virtual_address % section_alignment != 0:
+        if virtual_address % policy.section_alignment != 0:
             return False
         if (
             expected_virtual_address is not None
@@ -1109,8 +1114,8 @@ def _pe_sections_contain_entrypoint(
             raw_size,
             raw_offset,
             file_size,
-            file_alignment=file_alignment,
-            header_size=header_size,
+            file_alignment=policy.file_alignment,
+            header_size=policy.header_size,
             previous_raw_end=previous_raw_end,
         ):
             return False
@@ -1121,9 +1126,9 @@ def _pe_sections_contain_entrypoint(
             return False
         virtual_end = virtual_address + mapped_size
         expected_virtual_address = (
-            (virtual_end + section_alignment - 1)
-            // section_alignment
-            * section_alignment
+            (virtual_end + policy.section_alignment - 1)
+            // policy.section_alignment
+            * policy.section_alignment
         )
         mapped_file_size = min(virtual_size, raw_size)
         if (
@@ -1175,17 +1180,17 @@ def _matches_pe(
     ):
         return False
     entrypoint = int.from_bytes(optional[16:20], "little")
-    section_alignment = int.from_bytes(optional[32:36], "little")
-    file_alignment = int.from_bytes(optional[36:40], "little")
-    header_size = int.from_bytes(optional[60:64], "little")
+    policy = _PeSectionPolicy(
+        section_alignment=int.from_bytes(optional[32:36], "little"),
+        file_alignment=int.from_bytes(optional[36:40], "little"),
+        header_size=int.from_bytes(optional[60:64], "little"),
+    )
     return _pe_sections_contain_entrypoint(
         stream,
         section_count,
         file_size,
         entrypoint,
-        section_alignment=section_alignment,
-        file_alignment=file_alignment,
-        header_size=header_size,
+        policy,
     )
 
 
