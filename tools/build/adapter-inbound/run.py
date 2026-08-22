@@ -76,6 +76,13 @@ class Target(NamedTuple):
     unreal_architecture: str
 
 
+class _CandidateTree(NamedTuple):
+    """One strict candidate traversal split by regular files/directories."""
+
+    files: tuple[Path, ...]
+    directories: tuple[Path, ...]
+
+
 _TARGETS = (
     Target("android-arm64", "android", "arm64", "apk", "Android", "arm64"),
     Target("ios-arm64", "ios", "arm64", "ipa", "IOS", "arm64"),
@@ -685,10 +692,11 @@ def _build_arguments(
     ]
 
 
-def _validate_candidate_tree(candidate: Path) -> tuple[Path, ...]:
-    """Return regular files after one strict, link-free candidate scan."""
+def _validate_candidate_tree(candidate: Path) -> _CandidateTree:
+    """Return one strict, link-free inventory of the candidate tree."""
     _require_real_directory(candidate, "candidate package")
     files: list[Path] = []
+    directories: list[Path] = []
     pending = [candidate]
     while pending:
         directory = pending.pop()
@@ -704,6 +712,7 @@ def _validate_candidate_tree(candidate: Path) -> tuple[Path, ...]:
                     f"candidate package contains a linked entry: {item}"
                 )
             if item.is_dir():
+                directories.append(item)
                 pending.append(item)
                 continue
             if item.is_file():
@@ -716,7 +725,7 @@ def _validate_candidate_tree(candidate: Path) -> tuple[Path, ...]:
             raise RunFailure(
                 f"candidate package contains a special entry: {item}"
             )
-    return tuple(files)
+    return _CandidateTree(tuple(files), tuple(directories))
 
 
 def _is_shar_runtime_name(name: str) -> bool:
@@ -1144,7 +1153,9 @@ def _validate_candidate_artifact(
 ) -> None:
     """Require UAT archives to contain their declared runnable artifact."""
     candidate_files = (
-        _validate_candidate_tree(candidate) if files is None else tuple(files)
+        _validate_candidate_tree(candidate).files
+        if files is None
+        else tuple(files)
     )
     if target.system == "linux":
         if _has_linux_runtime(candidate_files, target):
@@ -1196,17 +1207,26 @@ def _cache_nonruntime_artifacts(
     candidate: Path,
     work: Path,
     target: Target,
+    tree: _CandidateTree | None = None,
 ) -> None:
     """Keep packaging metadata and debug symbols out of final dist output."""
     metadata = work / "publication-metadata"
     symbols = work / "symbols"
-    manifests = sorted(candidate.glob("Manifest_*.txt"))
+    inventory = _validate_candidate_tree(candidate) if tree is None else tree
+    entries = (*inventory.files, *inventory.directories)
+    manifests = sorted(
+        item
+        for item in entries
+        if item.parent == candidate and item.match("Manifest_*.txt")
+    )
     for source in manifests:
         _require_real_file(source, "packaging manifest")
 
     debug_files: list[Path] = []
     if target.system == "windows":
-        debug_files = sorted(candidate.rglob("*.pdb"))
+        debug_files = sorted(
+            item for item in entries if item.match("*.pdb")
+        )
     for source in debug_files:
         _require_real_file(source, "debug symbol")
 
@@ -1257,8 +1277,8 @@ def _rollback_publication_swap(
 
 def _publish(candidate: Path, destination: Path) -> None:
     """Replace one published target without exposing a partial candidate."""
-    files = _validate_candidate_tree(candidate)
-    if not files:
+    tree = _validate_candidate_tree(candidate)
+    if not tree.files:
         raise RunFailure(f"candidate package is empty: {candidate}")
     if _path_present(destination):
         _require_real_directory(destination, "published target")
@@ -1318,9 +1338,9 @@ def _build_target(
     log = work / "build.log"
     arguments = _build_arguments(project, target, candidate, staging)
     _run_uat(root, uat, arguments, log)
-    candidate_files = _validate_candidate_tree(candidate)
-    _validate_candidate_artifact(candidate, target, candidate_files)
-    _cache_nonruntime_artifacts(candidate, work, target)
+    candidate_tree = _validate_candidate_tree(candidate)
+    _validate_candidate_artifact(candidate, target, candidate_tree.files)
+    _cache_nonruntime_artifacts(candidate, work, target, candidate_tree)
     destination = root / _DIST_ROOT / target.identifier
     _publish(candidate, destination)
     print(f"run: {target.identifier}: published {destination}")
