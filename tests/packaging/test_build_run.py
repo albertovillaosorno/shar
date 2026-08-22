@@ -1930,6 +1930,28 @@ class PeEntrypointTests(unittest.TestCase):
 class ElfEntrypointTests(unittest.TestCase):
     """Require Linux process entrypoints to resolve to file-backed code."""
 
+    def test_rejects_wrapping_load_segment_virtual_range(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar/Binaries/Linux/shar-Linux-Shipping"
+            executable.parent.mkdir(parents=True)
+            payload = bytearray(_synthetic_elf(0x003E))
+            maximum = (1 << 64) - 1
+            payload[24:32] = maximum.to_bytes(8, "little")
+            payload[80:88] = maximum.to_bytes(8, "little")
+            payload[104:112] = (2).to_bytes(8, "little")
+            executable.write_bytes(payload)
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Linux SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["linux-x64"],
+                )
+
     def test_rejects_entrypoint_in_zero_fill_tail(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
             candidate = Path(raw)
