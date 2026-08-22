@@ -1909,6 +1909,38 @@ class PeOptionalHeaderTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["windows-x64"],
                 )
 
+    def test_rejects_malformed_loader_fields(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-windows-header-",
+        ) as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar-Win64-Shipping.exe"
+            cases = (
+                ("win32-version", 0xCC, 4, 1),
+                ("image-size", 0xD0, 4, 1),
+                ("header-size", 0xD4, 4, 1),
+                ("loader-flags", 0x100, 4, 1),
+                ("directory-count", 0x104, 4, 1),
+            )
+            for reason, offset, width, value in cases:
+                payload = bytearray(_synthetic_pe(0x8664))
+                payload[offset : offset + width] = value.to_bytes(
+                    width,
+                    "little",
+                )
+                executable.write_bytes(payload)
+                with (
+                    self.subTest(reason=reason),
+                    self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "Windows SHAR executable",
+                    ),
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["windows-x64"],
+                    )
+
     def test_rejects_misaligned_section_virtual_address(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-windows-alignment-",
