@@ -63,7 +63,6 @@ def _synthetic_elf(
     *,
     image_type: int = 3,
     entrypoint: int = 0x400000,
-    byte_order: str = "little",
     segment_offset: int = 120,
     segment_file_size: int = 1,
     segment_memory_size: int = 1,
@@ -72,24 +71,48 @@ def _synthetic_elf(
     header = bytearray(64)
     header[:4] = b"\x7fELF"
     header[4] = 2
-    header[5] = 1 if byte_order == "little" else 2
+    header[5] = 1
     header[6] = 1
-    header[16:18] = image_type.to_bytes(2, byte_order)
-    header[18:20] = machine.to_bytes(2, byte_order)
-    header[20:24] = (1).to_bytes(4, byte_order)
-    header[24:32] = entrypoint.to_bytes(8, byte_order)
-    header[32:40] = (64).to_bytes(8, byte_order)
-    header[52:54] = (64).to_bytes(2, byte_order)
-    header[54:56] = (56).to_bytes(2, byte_order)
-    header[56:58] = (1).to_bytes(2, byte_order)
+    header[16:18] = image_type.to_bytes(2, "little")
+    header[18:20] = machine.to_bytes(2, "little")
+    header[20:24] = (1).to_bytes(4, "little")
+    header[24:32] = entrypoint.to_bytes(8, "little")
+    header[32:40] = (64).to_bytes(8, "little")
+    header[52:54] = (64).to_bytes(2, "little")
+    header[54:56] = (56).to_bytes(2, "little")
+    header[56:58] = (1).to_bytes(2, "little")
     program = bytearray(56)
-    program[:4] = (1).to_bytes(4, byte_order)
-    program[4:8] = (0x5).to_bytes(4, byte_order)
-    program[8:16] = segment_offset.to_bytes(8, byte_order)
-    program[16:24] = (0x400000).to_bytes(8, byte_order)
-    program[32:40] = segment_file_size.to_bytes(8, byte_order)
-    program[40:48] = segment_memory_size.to_bytes(8, byte_order)
+    program[:4] = (1).to_bytes(4, "little")
+    program[4:8] = (0x5).to_bytes(4, "little")
+    program[8:16] = segment_offset.to_bytes(8, "little")
+    program[16:24] = (0x400000).to_bytes(8, "little")
+    program[32:40] = segment_file_size.to_bytes(8, "little")
+    program[40:48] = segment_memory_size.to_bytes(8, "little")
     return bytes(header + program + b"\0")
+
+
+def _synthetic_big_endian_elf(machine: int) -> bytes:
+    """Return the minimal ELF fixture encoded as big endian."""
+    payload = bytearray(_synthetic_elf(machine))
+    payload[5] = 2
+    for start, width, value in (
+        (16, 2, 3),
+        (18, 2, machine),
+        (20, 4, 1),
+        (24, 8, 0x400000),
+        (32, 8, 64),
+        (52, 2, 64),
+        (54, 2, 56),
+        (56, 2, 1),
+        (64, 4, 1),
+        (68, 4, 0x5),
+        (72, 8, 120),
+        (80, 8, 0x400000),
+        (96, 8, 1),
+        (104, 8, 1),
+    ):
+        payload[start : start + width] = value.to_bytes(width, "big")
+    return bytes(payload)
 
 
 def _synthetic_pe(
@@ -2212,7 +2235,7 @@ class ElfEntrypointTests(unittest.TestCase):
             executable = candidate / "shar/Binaries/Linux/shar-Linux-Shipping"
             executable.parent.mkdir(parents=True)
             executable.write_bytes(
-                _synthetic_elf(0x003E, byte_order="big")
+                _synthetic_big_endian_elf(0x003E)
             )
             if _RUN.os.name != "nt":
                 executable.chmod(0o755)
