@@ -942,10 +942,17 @@ class SourceSimilarityAliasShapeTests(unittest.TestCase):
 
     def test_programmatic_aliases_use_rust_unicode_17_lowercase(self) -> None:
         candidate = {("bb", "p3d"): 1}
-        for uppercase, lowercase in (
-            ("\ua7ce", "\ua7cf"),
-            ("\U00016ea0", "\U00016ebb"),
-        ):
+        unicode_17_additions = [
+            (chr(code), chr(code + 1))
+            for code in (0xA7CE, 0xA7D2, 0xA7D4)
+        ]
+        unicode_17_additions.extend(
+            (chr(code), chr(code + 0x1B))
+            for code in range(0x16EA0, 0x16EB9)
+        )
+        self.assertEqual(len(unicode_17_additions), 28)
+
+        for uppercase, lowercase in unicode_17_additions:
             with (
                 self.subTest(uppercase=uppercase.encode("unicode_escape")),
                 self.assertRaises(_MOD.InvalidCoordinateError),
