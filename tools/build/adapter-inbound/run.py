@@ -883,6 +883,7 @@ def _elf_load_segment_state(
     bounded = (
         aligned
         and file_bytes <= memory_bytes
+        and memory_bytes <= ((1 << 64) - 1) - virtual_address
         and offset <= file_size
         and file_bytes <= file_size - offset
     )
