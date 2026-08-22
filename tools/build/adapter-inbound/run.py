@@ -1045,6 +1045,25 @@ def _pe_loader_fields_are_valid(optional: bytes) -> bool:
     )
 
 
+def _pe_raw_section_is_valid(
+    raw_size: int,
+    raw_offset: int,
+    file_size: int,
+    *,
+    file_alignment: int,
+    previous_raw_end: int | None,
+) -> bool:
+    """Return whether one PE section's optional raw range is well formed."""
+    if raw_size == 0:
+        return True
+    aligned = (
+        raw_size % file_alignment == 0 and raw_offset % file_alignment == 0
+    )
+    bounded = raw_offset <= file_size and raw_size <= file_size - raw_offset
+    ordered = previous_raw_end is None or raw_offset >= previous_raw_end
+    return aligned and bounded and ordered
+
+
 def _pe_sections_contain_entrypoint(
     stream: object,
     section_count: int,
@@ -1057,6 +1076,7 @@ def _pe_sections_contain_entrypoint(
     """Require an executable section containing the program entrypoint."""
     admitted = False
     previous_virtual_address: int | None = None
+    previous_raw_end: int | None = None
     for _ in range(section_count):
         section = stream.read(40)
         if len(section) != 40:
@@ -1074,13 +1094,16 @@ def _pe_sections_contain_entrypoint(
         raw_size = int.from_bytes(section[16:20], "little")
         raw_offset = int.from_bytes(section[20:24], "little")
         characteristics = int.from_bytes(section[36:40], "little")
-        if raw_size and (
-            raw_size % file_alignment != 0
-            or raw_offset % file_alignment != 0
-            or raw_offset > file_size
-            or raw_size > file_size - raw_offset
+        if not _pe_raw_section_is_valid(
+            raw_size,
+            raw_offset,
+            file_size,
+            file_alignment=file_alignment,
+            previous_raw_end=previous_raw_end,
         ):
             return False
+        if raw_size:
+            previous_raw_end = raw_offset + raw_size
         mapped_file_size = min(virtual_size, raw_size)
         if (
             characteristics & 0x20000000

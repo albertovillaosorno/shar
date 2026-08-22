@@ -161,7 +161,9 @@ alignment below 4 KiB must equal file alignment. Reserved loader fields remain
 zero, declared image/header sizes retain their required alignments, and the data
 directory count must fit the optional header. Nonempty section raw-data sizes and
 file offsets must be multiples of file alignment while remaining file-bounded.
-A nonzero program
+Nonempty raw ranges must also follow section virtual-address order without
+overlap. A
+nonzero program
 entrypoint inside the intersection of executable loaded section memory and
 file-backed section bytes rather than virtual zero-fill or raw-file padding or
 only an `MZ`/machine lookalike. Runtime
