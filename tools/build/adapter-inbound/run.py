@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
+from collections.abc import Sequence
 import hashlib
 import json
 import os
@@ -684,18 +685,20 @@ def _build_arguments(
     ]
 
 
-def _has_payload(path: Path) -> bool:
-    """Return whether a candidate archive contains at least one regular file."""
-    return path.is_dir() and any(item.is_file() for item in path.rglob("*"))
-
-
-def _validate_candidate_tree(candidate: Path) -> None:
-    """Reject links and special entries without traversing outside candidate."""
+def _validate_candidate_tree(candidate: Path) -> tuple[Path, ...]:
+    """Return regular files after one strict, link-free candidate scan."""
     _require_real_directory(candidate, "candidate package")
+    files: list[Path] = []
     pending = [candidate]
     while pending:
         directory = pending.pop()
-        for item in sorted(directory.iterdir(), key=lambda path: path.name):
+        try:
+            entries = sorted(directory.iterdir(), key=lambda path: path.name)
+        except OSError as error:
+            raise RunFailure(
+                f"candidate package could not be scanned: {directory}"
+            ) from error
+        for item in entries:
             if _is_directory_link(item):
                 raise RunFailure(
                     f"candidate package contains a linked entry: {item}"
@@ -708,10 +711,12 @@ def _validate_candidate_tree(candidate: Path) -> None:
                     raise RunFailure(
                         f"candidate package contains a hard-linked file: {item}"
                     )
+                files.append(item)
                 continue
             raise RunFailure(
                 f"candidate package contains a special entry: {item}"
             )
+    return tuple(files)
 
 
 def _is_shar_runtime_name(name: str) -> bool:
@@ -1099,36 +1104,50 @@ def _is_native_executable(
     return _has_native_binary_signature(path, system, architecture)
 
 
-def _has_linux_runtime(candidate: Path, target: Target) -> bool:
+def _has_linux_runtime(files: Sequence[Path], target: Target) -> bool:
     """Return whether a Linux archive contains a non-empty SHAR binary."""
     return any(
         _is_native_executable(item, "linux", target.architecture)
         and _is_shar_runtime_name(item.name)
-        for item in candidate.rglob("*")
+        for item in files
     )
 
 
-def _has_macos_runtime(candidate: Path, target: Target) -> bool:
+def _has_macos_runtime(
+    candidate: Path,
+    files: Sequence[Path],
+    target: Target,
+) -> bool:
     """Return whether a macOS archive contains a runnable SHAR app bundle."""
-    for bundle in candidate.rglob("*"):
-        if not bundle.is_dir() or bundle.suffix.casefold() != ".app":
+    for item in files:
+        parts = item.relative_to(candidate).parts
+        if len(parts) < 4:
             continue
-        executable_root = bundle / "Contents" / "MacOS"
-        if not executable_root.is_dir():
+        bundle = parts[-4]
+        if (
+            not bundle.casefold().endswith(".app")
+            or parts[-3:-1] != ("Contents", "MacOS")
+        ):
             continue
-        if any(
+        if (
             _is_native_executable(item, "macos", target.architecture)
             and _is_shar_runtime_name(item.name)
-            for item in executable_root.iterdir()
         ):
             return True
     return False
 
 
-def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
+def _validate_candidate_artifact(
+    candidate: Path,
+    target: Target,
+    files: Sequence[Path] | None = None,
+) -> None:
     """Require UAT archives to contain their declared runnable artifact."""
+    candidate_files = (
+        _validate_candidate_tree(candidate) if files is None else tuple(files)
+    )
     if target.system == "linux":
-        if _has_linux_runtime(candidate, target):
+        if _has_linux_runtime(candidate_files, target):
             return
         message = (
             "candidate package has no non-empty Linux SHAR executable: "
@@ -1136,7 +1155,7 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
         )
         raise RunFailure(message)
     if target.system == "macos":
-        if _has_macos_runtime(candidate, target):
+        if _has_macos_runtime(candidate, candidate_files, target):
             return
         message = (
             "candidate package has no runnable macOS SHAR app bundle: "
@@ -1149,7 +1168,7 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
             item.suffix.casefold() == ".exe"
             and _is_native_executable(item, "windows", target.architecture)
             and _is_shar_runtime_name(item.stem)
-            for item in candidate.rglob("*")
+            for item in candidate_files
         ):
             return
         message = (
@@ -1167,7 +1186,7 @@ def _validate_candidate_artifact(candidate: Path, target: Target) -> None:
     suffix, label, validator = mobile_validator
     if any(
         item.suffix.casefold() == suffix and validator(item)
-        for item in candidate.rglob("*")
+        for item in candidate_files
     ):
         return
     raise RunFailure(f"candidate package has no valid {label}: {candidate}")
@@ -1238,8 +1257,8 @@ def _rollback_publication_swap(
 
 def _publish(candidate: Path, destination: Path) -> None:
     """Replace one published target without exposing a partial candidate."""
-    _validate_candidate_tree(candidate)
-    if not _has_payload(candidate):
+    files = _validate_candidate_tree(candidate)
+    if not files:
         raise RunFailure(f"candidate package is empty: {candidate}")
     if _path_present(destination):
         _require_real_directory(destination, "published target")
@@ -1299,8 +1318,8 @@ def _build_target(
     log = work / "build.log"
     arguments = _build_arguments(project, target, candidate, staging)
     _run_uat(root, uat, arguments, log)
-    _validate_candidate_tree(candidate)
-    _validate_candidate_artifact(candidate, target)
+    candidate_files = _validate_candidate_tree(candidate)
+    _validate_candidate_artifact(candidate, target, candidate_files)
     _cache_nonruntime_artifacts(candidate, work, target)
     destination = root / _DIST_ROOT / target.identifier
     _publish(candidate, destination)

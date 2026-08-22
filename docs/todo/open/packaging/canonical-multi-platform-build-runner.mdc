@@ -240,9 +240,13 @@ valid SDK row; a prefixed lookalike platform name cannot satisfy another
 target's gate.
 After UAT returns, the complete candidate tree is traversed without following
 links and rejects symbolic links, junctions, hard-linked regular files, or
-special filesystem entries before manifests/debug symbols are moved. The final
-publication transaction repeats that tree gate, so a direct or drifted caller
-cannot publish a redirected candidate between cache pruning and the atomic swap.
+special filesystem entries before manifests/debug symbols are moved. Candidate
+artifact discovery reuses the regular-file result of that strict traversal
+instead of recursively globbing the package again, so an unreadable nested
+directory cannot disappear from runtime admission through glob scan-error
+suppression. The final publication transaction repeats that tree gate, so a
+direct or drifted caller cannot publish a redirected candidate between cache
+pruning and the atomic swap.
 
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its
