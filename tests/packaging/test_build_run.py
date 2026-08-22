@@ -1906,6 +1906,31 @@ class CandidateTreeTests(unittest.TestCase):
 class PeOptionalHeaderTests(unittest.TestCase):
     """Require Windows PE32+ loader alignment fields to be coherent."""
 
+    def test_rejects_deprecated_coff_symbol_table_metadata(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-windows-header-",
+        ) as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar-Win64-Shipping.exe"
+            for reason, offset in (
+                ("symbol-table-pointer", 0x8C),
+                ("symbol-count", 0x90),
+            ):
+                payload = bytearray(_synthetic_pe(0x8664))
+                payload[offset : offset + 4] = (1).to_bytes(4, "little")
+                executable.write_bytes(payload)
+                with (
+                    self.subTest(reason=reason),
+                    self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "Windows SHAR executable",
+                    ),
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["windows-x64"],
+                    )
+
     def test_rejects_misaligned_image_base(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-windows-alignment-",
