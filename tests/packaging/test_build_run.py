@@ -2027,6 +2027,31 @@ class PeSectionLayoutTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["windows-x64"],
                 )
 
+    def test_rejects_object_only_section_metadata(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-windows-section-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar-Win64-Shipping.exe"
+            for reason, offset, width in (
+                ("relocation-pointer", 0x120, 4),
+                ("line-number-pointer", 0x124, 4),
+                ("relocation-count", 0x128, 2),
+                ("line-number-count", 0x12A, 2),
+            ):
+                payload = bytearray(_synthetic_pe(0x8664))
+                payload[offset : offset + width] = (1).to_bytes(width, "little")
+                executable.write_bytes(payload)
+                with (
+                    self.subTest(reason=reason),
+                    self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "Windows SHAR executable",
+                    ),
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["windows-x64"],
+                    )
+
     def test_rejects_nonadjacent_section_virtual_addresses(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-windows-section-") as raw:
             candidate = Path(raw)
