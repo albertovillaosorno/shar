@@ -149,8 +149,9 @@ nonempty thread-command bodies do not qualify. Windows
 images must also carry a complete COFF header, the executable-image
 characteristic without the DLL flag, a bounded PE32+ optional header and
 section table, bounded file-backed section ranges, and a nonzero program
-entrypoint inside executable file-backed section bytes rather than a virtual
-zero-fill tail or only an `MZ`/machine lookalike. Runtime
+entrypoint inside the intersection of executable loaded section memory and
+file-backed section bytes rather than virtual zero-fill or raw-file padding or
+only an `MZ`/machine lookalike. Runtime
 size, execute permission, and
 header parsing now share one stable single-link descriptor identity that must
 still match the candidate path afterward. A transient external binary therefore
