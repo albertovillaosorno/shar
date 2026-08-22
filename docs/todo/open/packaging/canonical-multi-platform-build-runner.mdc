@@ -269,9 +269,11 @@ traversal instead of recursively globbing the package again, so an
 unreadable nested directory cannot disappear from runtime admission or debug
 symbol classification through glob scan-error suppression. A failed strict scan
 also leaves the previous diagnostic caches unchanged. The final publication
-transaction repeats that tree gate, so a
-direct or drifted caller cannot publish a redirected candidate between cache
-pruning and the atomic swap.
+transaction repeats that tree gate and, for real target builds, repeats native
+or mobile artifact admission after diagnostic caching. A runtime replaced by a
+regular but wrong-format or wrong-architecture file after the first validation
+therefore cannot reach the atomic swap, while direct or drifted callers still
+cannot publish a redirected candidate between cache pruning and publication.
 
 A real Windows AMD64 Shipping integration build completed successfully through
 C++ compilation, cook, Pak/IoStore, stage, package, and archive in 29m10s. Its

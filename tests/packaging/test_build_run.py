@@ -2269,6 +2269,75 @@ class CandidateArtifactTests(unittest.TestCase):
                 _RUN._TARGETS_BY_ID["android-arm64"],
             )
 
+    def test_build_revalidates_runtime_after_diagnostic_caching(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-runtime-drift-") as raw:
+            root = Path(raw)
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+            runtime_path: Path | None = None
+
+            def write_candidate(
+                _root: Path,
+                _uat: Path,
+                arguments: list[str],
+                _log: Path,
+            ) -> None:
+                nonlocal runtime_path
+                archive = next(
+                    value
+                    for value in arguments
+                    if value.startswith("-ArchiveDirectory=")
+                )
+                candidate = Path(archive.split("=", 1)[1])
+                runtime_path = (
+                    candidate / "shar/Binaries/Linux/shar-Linux-Shipping"
+                )
+                runtime_path.parent.mkdir(parents=True)
+                runtime_path.write_bytes(_synthetic_elf(0x003E))
+                runtime_path.chmod(0o755)
+
+            real_cache = _RUN._cache_nonruntime_artifacts
+
+            def drift_after_cache(
+                candidate: Path,
+                work: Path,
+                selected: object,
+                tree: object,
+            ) -> None:
+                real_cache(candidate, work, selected, tree)
+                if runtime_path is None:
+                    raise AssertionError("runtime fixture was not created")
+                runtime_path.write_bytes(b"drifted runtime")
+
+            with (
+                mock.patch.object(_RUN, "_verify_sdk"),
+                mock.patch.object(
+                    _RUN,
+                    "_run_uat",
+                    side_effect=write_candidate,
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_cache_nonruntime_artifacts",
+                    side_effect=drift_after_cache,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ),
+            ):
+                _RUN._build_target(
+                    root,
+                    Path("/uat"),
+                    Path("/project/shar.uproject"),
+                    target,
+                    validate_only=False,
+                )
+
+            self.assertFalse((root / "dist/linux-x64").exists())
+            self.assertIsNotNone(runtime_path)
+            if runtime_path is not None:
+                self.assertEqual(runtime_path.read_bytes(), b"drifted runtime")
+
     def test_build_rejects_wrong_mobile_artifact_before_publication(
         self,
     ) -> None:
