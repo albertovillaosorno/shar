@@ -1502,6 +1502,28 @@ class CandidateTreeTests(unittest.TestCase):
             ):
                 _RUN._validate_candidate_tree(candidate)
 
+    def test_rejects_entry_metadata_failure(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-candidate-tree-") as raw:
+            candidate = Path(raw) / "candidate"
+            candidate.mkdir()
+            runtime = candidate / "runtime.bin"
+            runtime.write_bytes(b"fixture")
+            original = Path.is_file
+
+            def fail_runtime_metadata(path: Path) -> bool:
+                if path == runtime:
+                    raise PermissionError("injected candidate metadata failure")
+                return original(path)
+
+            with (
+                mock.patch.object(Path, "is_file", fail_runtime_metadata),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "candidate package entry could not be inspected",
+                ),
+            ):
+                _RUN._validate_candidate_tree(candidate)
+
     def test_rejects_nested_scan_failure(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-candidate-tree-") as raw:
             candidate = Path(raw) / "candidate"

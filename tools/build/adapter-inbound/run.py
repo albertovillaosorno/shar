@@ -746,16 +746,25 @@ def _validate_candidate_tree(candidate: Path) -> _CandidateTree:
                 f"candidate package could not be scanned: {directory}"
             ) from error
         for item in entries:
-            if _is_directory_link(item):
+            try:
+                linked = _is_directory_link(item)
+                is_directory = item.is_dir()
+                is_file = item.is_file()
+                metadata = item.stat(follow_symlinks=False) if is_file else None
+            except OSError as error:
+                raise RunFailure(
+                    f"candidate package entry could not be inspected: {item}"
+                ) from error
+            if linked:
                 raise RunFailure(
                     f"candidate package contains a linked entry: {item}"
                 )
-            if item.is_dir():
+            if is_directory:
                 directories.append(item)
                 pending.append(item)
                 continue
-            if item.is_file():
-                if item.stat(follow_symlinks=False).st_nlink > 1:
+            if is_file:
+                if metadata is not None and metadata.st_nlink > 1:
                     raise RunFailure(
                         f"candidate package contains a hard-linked file: {item}"
                     )
