@@ -1026,6 +1026,25 @@ def _pe_optional_fields_are_valid(optional: bytes) -> bool:
     )
 
 
+def _pe_loader_fields_are_valid(optional: bytes) -> bool:
+    """Return whether bounded PE32+ loader metadata is structurally valid."""
+    section_alignment = int.from_bytes(optional[32:36], "little")
+    file_alignment = int.from_bytes(optional[36:40], "little")
+    win32_version = int.from_bytes(optional[52:56], "little")
+    image_size = int.from_bytes(optional[56:60], "little")
+    header_size = int.from_bytes(optional[60:64], "little")
+    loader_flags = int.from_bytes(optional[104:108], "little")
+    directory_count = int.from_bytes(optional[108:112], "little")
+    directory_capacity = (len(optional) - 112) // 8
+    return (
+        win32_version == 0
+        and loader_flags == 0
+        and image_size % section_alignment == 0
+        and header_size % file_alignment == 0
+        and directory_count <= directory_capacity
+    )
+
+
 def _pe_sections_contain_entrypoint(
     stream: object,
     section_count: int,
@@ -1098,6 +1117,7 @@ def _matches_pe(
         len(optional) != optional_size
         or optional[:2] != bytes.fromhex("0b02")
         or not _pe_optional_fields_are_valid(optional)
+        or not _pe_loader_fields_are_valid(optional)
     ):
         return False
     entrypoint = int.from_bytes(optional[16:20], "little")
