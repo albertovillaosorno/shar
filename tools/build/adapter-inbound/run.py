@@ -1129,13 +1129,27 @@ def _has_native_binary_signature(
         return False
 
 
+def _zip_member_path_is_safe(info: zipfile.ZipInfo) -> bool:
+    """Return whether one archive member is a strict relative slash path."""
+    name = info.filename
+    if not name or name.startswith("/") or "\\" in name:
+        return False
+    logical = name[:-1] if info.is_dir() else name
+    parts = logical.split("/")
+    return bool(logical) and all(
+        part not in {"", ".", ".."} for part in parts
+    )
+
+
 def _zip_inventory(
     archive: zipfile.ZipFile,
 ) -> dict[str, zipfile.ZipInfo] | None:
-    """Return a duplicate-free ZIP member inventory."""
+    """Return one duplicate-free inventory with strict member paths."""
     infos = archive.infolist()
     names = [info.filename for info in infos]
     if len(names) != len(set(names)):
+        return None
+    if not all(_zip_member_path_is_safe(info) for info in infos):
         return None
     return {info.filename: info for info in infos}
 

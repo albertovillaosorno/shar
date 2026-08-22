@@ -1743,6 +1743,37 @@ class CandidateArtifactTests(unittest.TestCase):
                 _RUN._TARGETS_BY_ID["ios-arm64"],
             )
 
+    def test_mobile_candidate_rejects_unsafe_archive_member_path(self) -> None:
+        cases = (
+            ("android-arm64", "shar.apk", _write_android_apk, "Android APK"),
+            ("ios-arm64", "shar.ipa", _write_ios_ipa, "iOS IPA"),
+        )
+        unsafe_members = (
+            "../escape.bin",
+            "/rooted.bin",
+            "nested\\escape.bin",
+            "nested//escape.bin",
+            "./alias.bin",
+        )
+        for target_id, name, write_valid, label in cases:
+            for member in unsafe_members:
+                with (
+                    self.subTest(target=target_id, member=member),
+                    tempfile.TemporaryDirectory(
+                        prefix="shar-mobile-member-path-"
+                    ) as raw,
+                ):
+                    candidate = Path(raw)
+                    package = candidate / name
+                    write_valid(package)
+                    with _RUN.zipfile.ZipFile(package, "a") as archive:
+                        archive.writestr(member, b"unsafe")
+                    with self.assertRaisesRegex(_RUN.RunFailure, label):
+                        _RUN._validate_candidate_artifact(
+                            candidate,
+                            _RUN._TARGETS_BY_ID[target_id],
+                        )
+
     @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
     def test_mobile_candidate_rejects_transient_external_archive(self) -> None:
         cases = (
