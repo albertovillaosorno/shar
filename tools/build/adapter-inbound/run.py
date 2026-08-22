@@ -1537,6 +1537,17 @@ def _cache_nonruntime_artifacts(
             )
 
 
+def _validate_publication_candidate(
+    candidate: Path,
+    target: Target | None,
+) -> _CandidateTree:
+    """Revalidate final candidate bytes immediately before publication."""
+    tree = _validate_candidate_tree(candidate)
+    if target is not None:
+        _validate_candidate_artifact(candidate, target, tree.files)
+    return tree
+
+
 def _rollback_publication_swap(
     candidate: Path,
     destination: Path,
@@ -1563,7 +1574,11 @@ def _rollback_publication_swap(
     ) from error
 
 
-def _publish(candidate: Path, destination: Path) -> None:
+def _publish(
+    candidate: Path,
+    destination: Path,
+    target: Target | None = None,
+) -> None:
     """Replace one published target without exposing a partial candidate."""
     tree = _validate_candidate_tree(candidate)
     if not tree.files:
@@ -1579,6 +1594,7 @@ def _publish(candidate: Path, destination: Path) -> None:
     if _path_present(backup):
         _require_real_directory(backup, "publication backup")
         shutil.rmtree(backup)
+    _validate_publication_candidate(candidate, target)
     had_previous = destination.exists()
     if had_previous:
         Path(destination).replace(backup)
@@ -1630,7 +1646,7 @@ def _build_target(
     _validate_candidate_artifact(candidate, target, candidate_tree.files)
     _cache_nonruntime_artifacts(candidate, work, target, candidate_tree)
     destination = root / _DIST_ROOT / target.identifier
-    _publish(candidate, destination)
+    _publish(candidate, destination, target)
     print(f"run: {target.identifier}: published {destination}")
 
 
