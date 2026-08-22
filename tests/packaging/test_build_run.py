@@ -1916,6 +1916,44 @@ class MachOFatSliceTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["macos-arm64"],
                 )
 
+    def test_rejects_arm64_slice_with_mismatched_cpu_subtype(self) -> None:
+        fat = bytearray(_synthetic_fat_macho((_RUN._MACHO_ARM64_CPU,)))
+        fat[12:16] = (1).to_bytes(4, "big")
+        with tempfile.TemporaryDirectory(
+            prefix="shar-macos-fat-subtype-"
+        ) as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(fat)
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+    def test_allows_arm64_subtype_feature_bit_difference(self) -> None:
+        fat = bytearray(_synthetic_fat_macho((_RUN._MACHO_ARM64_CPU,)))
+        fat[12:16] = (0x80000000).to_bytes(4, "big")
+        with tempfile.TemporaryDirectory(
+            prefix="shar-macos-fat-subtype-"
+        ) as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(fat)
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["macos-arm64"],
+            )
+
 
 class MachOEntrypointTests(unittest.TestCase):
     """Require one unambiguous Mach-O process entry command."""

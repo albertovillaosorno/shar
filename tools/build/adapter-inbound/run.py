@@ -825,6 +825,7 @@ def _is_shar_runtime_name(name: str) -> bool:
 _ELF_MACHINES = {"amd64": 0x003E, "arm64": 0x00B7}
 _PE_MACHINES = {"amd64": 0x8664, "arm64": 0xAA64}
 _MACHO_ARM64_CPU = 0x0100000C
+_MACHO_CPU_SUBTYPE_MASK = 0xFF000000
 _MACHO_THIN_ENDIAN = {
     bytes.fromhex("cffaedfe"): "little",
     bytes.fromhex("feedfacf"): "big",
@@ -1260,16 +1261,23 @@ def _matches_thin_macho(
     stream: object,
     byte_order: str,
     file_size: int,
+    expected_cpu_subtype: int | None = None,
 ) -> bool:
     """Return whether one ARM64 Mach-O64 executable has an entrypoint."""
     header = stream.read(28)
     if len(header) != 28 or file_size < 32:
         return False
     cpu = int.from_bytes(header[:4], byte_order)
+    cpu_subtype = int.from_bytes(header[4:8], byte_order)
     file_type = int.from_bytes(header[8:12], byte_order)
     command_count = int.from_bytes(header[12:16], byte_order)
     command_bytes = int.from_bytes(header[16:20], byte_order)
     if cpu != _MACHO_ARM64_CPU or file_type != 2 or command_count == 0:
+        return False
+    if expected_cpu_subtype is not None and (
+        cpu_subtype & ~_MACHO_CPU_SUBTYPE_MASK
+        != expected_cpu_subtype & ~_MACHO_CPU_SUBTYPE_MASK
+    ):
         return False
     if command_bytes == 0 or command_bytes > file_size - 32:
         return False
@@ -1325,6 +1333,7 @@ def _fat_macho_arm64_slice_is_native(
     stream: object,
     offset: int,
     size: int,
+    cpu_subtype: int,
 ) -> bool:
     """Return whether one fat ARM64 slice is a bounded executable image."""
     try:
@@ -1337,6 +1346,7 @@ def _fat_macho_arm64_slice_is_native(
         stream,
         thin_order,
         size,
+        cpu_subtype,
     )
 
 
@@ -1366,7 +1376,7 @@ def _fat_macho_contains_arm64(
         return False
     table_end = 8 + (count * entry_size)
     slices: list[tuple[int, int]] = []
-    arm64_slices: list[tuple[int, int]] = []
+    arm64_slices: list[tuple[int, int, int]] = []
     for _ in range(count):
         cpu = stream.read(4)
         rest = stream.read(entry_size - 4)
@@ -1384,16 +1394,22 @@ def _fat_macho_contains_arm64(
         offset, size = bounds
         slices.append((offset, size))
         cpu_type = int.from_bytes(cpu, byte_order)
+        cpu_subtype = int.from_bytes(rest[:4], byte_order)
         if cpu_type == _MACHO_ARM64_CPU:
             if size < 32 or offset % 0x4000 != 0:
                 return False
-            arm64_slices.append((offset, size))
+            arm64_slices.append((offset, size, cpu_subtype))
     return (
         _fat_macho_slices_are_disjoint(slices)
         and bool(arm64_slices)
         and all(
-            _fat_macho_arm64_slice_is_native(stream, offset, size)
-            for offset, size in arm64_slices
+            _fat_macho_arm64_slice_is_native(
+                stream,
+                offset,
+                size,
+                cpu_subtype,
+            )
+            for offset, size, cpu_subtype in arm64_slices
         )
     )
 
