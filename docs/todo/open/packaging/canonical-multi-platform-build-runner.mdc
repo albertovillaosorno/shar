@@ -127,8 +127,10 @@ match the selected x64 or ARM64 target. ELF images must carry a complete ELF64
 header with the current version, an executable/shared-object image type, a
 bounded ELF64 program-header table, and at least one executable loadable
 segment whose file range stays inside the image and does not exceed its memory
-range.
-Truncated, relocatable, machine-only, or out-of-bounds segment lookalikes fail.
+range. Linux desktop runtimes must also declare a nonzero entrypoint inside an
+executable load segment; Android shared libraries may legitimately declare no
+process entrypoint. Truncated, relocatable, machine-only, or out-of-bounds
+segment lookalikes fail.
 Thin and universal
 ARM64 Mach-O main images must carry a complete 64-bit header, a bounded
 load-command table, an executable file type, and an `LC_MAIN` or legacy
