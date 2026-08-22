@@ -109,10 +109,18 @@ def _synthetic_pe(
     payload[coff + 2 : coff + 4] = section_count.to_bytes(2, "little")
     payload[coff + 16 : coff + 18] = optional_size.to_bytes(2, "little")
     payload[coff + 18 : coff + 20] = characteristics.to_bytes(2, "little")
-    payload[coff + 20 : coff + 22] = bytes.fromhex("0b02")
+    optional = coff + 20
+    payload[optional : optional + 2] = bytes.fromhex("0b02")
+    payload[optional + 16 : optional + 20] = (0x1000).to_bytes(4, "little")
     if section_count:
         raw_offset = (
             data_offset if section_raw_offset is None else section_raw_offset
+        )
+        payload[section_table + 8 : section_table + 12] = (1).to_bytes(
+            4, "little"
+        )
+        payload[section_table + 12 : section_table + 16] = (0x1000).to_bytes(
+            4, "little"
         )
         payload[section_table + 16 : section_table + 20] = (
             section_raw_size.to_bytes(4, "little")
@@ -2444,6 +2452,22 @@ class CandidateArtifactTests(unittest.TestCase):
                     candidate,
                     _RUN._TARGETS_BY_ID["windows-x64"],
                 )
+
+            for entrypoint in (0, 0x2000):
+                payload = bytearray(_synthetic_pe(0x8664))
+                payload[0xA8:0xAC] = entrypoint.to_bytes(4, "little")
+                executable.write_bytes(payload)
+                with (
+                    self.subTest(entrypoint=entrypoint),
+                    self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "Windows SHAR executable",
+                    ),
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["windows-x64"],
+                    )
 
             payload = bytearray(_synthetic_pe(0x8664))
             payload[0x98:0x9A] = bytes.fromhex("0b01")

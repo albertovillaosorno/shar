@@ -136,8 +136,9 @@ load-command table, an executable file type, and an `LC_MAIN` or legacy
 slice. Windows
 images must also carry a complete COFF header, the executable-image
 characteristic, a bounded PE32+ optional header and section table, bounded
-file-backed section ranges, and at least one section containing executable
-file data rather than only an `MZ`/machine lookalike. Runtime
+file-backed section ranges, and a nonzero program entrypoint inside an
+executable section containing file data rather than only an `MZ`/machine
+lookalike. Runtime
 size, execute permission, and
 header parsing now share one stable single-link descriptor identity that must
 still match the candidate path afterward. A transient external binary therefore
