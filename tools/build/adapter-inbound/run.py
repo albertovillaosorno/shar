@@ -1004,7 +1004,6 @@ def _pe_sections_contain_entrypoint(
         section = stream.read(40)
         if len(section) != 40:
             return False
-        virtual_size = int.from_bytes(section[8:12], "little")
         virtual_address = int.from_bytes(section[12:16], "little")
         raw_size = int.from_bytes(section[16:20], "little")
         raw_offset = int.from_bytes(section[20:24], "little")
@@ -1013,11 +1012,10 @@ def _pe_sections_contain_entrypoint(
             raw_offset > file_size or raw_size > file_size - raw_offset
         ):
             return False
-        mapped_size = max(virtual_size, raw_size)
         if (
             characteristics & 0x20000000
             and raw_size
-            and virtual_address <= entrypoint < virtual_address + mapped_size
+            and virtual_address <= entrypoint < virtual_address + raw_size
         ):
             admitted = True
     return entrypoint != 0 and admitted

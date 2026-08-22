@@ -1886,6 +1886,28 @@ class CandidateTreeTests(unittest.TestCase):
             cache_artifacts.assert_not_called()
 
 
+class PeEntrypointTests(unittest.TestCase):
+    """Require Windows process entrypoints to resolve to file-backed code."""
+
+    def test_rejects_entrypoint_in_zero_fill_tail(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-windows-entry-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar/Binaries/Win64/shar.exe"
+            executable.parent.mkdir(parents=True)
+            payload = bytearray(_synthetic_pe(0x8664))
+            payload[0xA8:0xAC] = (0x1001).to_bytes(4, "little")
+            payload[0x110:0x114] = (2).to_bytes(4, "little")
+            executable.write_bytes(payload)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
+
 class ElfEntrypointTests(unittest.TestCase):
     """Require Linux process entrypoints to resolve to file-backed code."""
 
