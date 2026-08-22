@@ -62,6 +62,8 @@ def _synthetic_elf(machine: int) -> bytes:
     header[:4] = b"\x7fELF"
     header[4] = 2
     header[5] = 1
+    header[6] = 1
+    header[16:18] = (3).to_bytes(2, "little")
     header[18:20] = machine.to_bytes(2, "little")
     return bytes(header)
 
@@ -1785,6 +1787,8 @@ class CandidateArtifactTests(unittest.TestCase):
                 header[:4] = b"\x7fELF"
                 header[4] = 2
                 header[5] = 1
+                header[6] = 1
+                header[16:18] = (3).to_bytes(2, "little")
                 machine = 0x00B7 if target_id == "linux-arm64" else 0x003E
                 header[18:20] = machine.to_bytes(2, "little")
                 binary.write_bytes(header)
@@ -1793,6 +1797,18 @@ class CandidateArtifactTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID[target_id],
                 )
 
+                header[16:18] = (1).to_bytes(2, "little")
+                binary.write_bytes(header)
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
+
+                header[16:18] = (3).to_bytes(2, "little")
                 wrong_machine = 0x003E if machine == 0x00B7 else 0x00B7
                 header[18:20] = wrong_machine.to_bytes(2, "little")
                 binary.write_bytes(header)

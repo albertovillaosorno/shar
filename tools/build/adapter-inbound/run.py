@@ -801,17 +801,17 @@ _MACHO_FAT = {
 
 
 def _matches_elf(stream: object, prefix: bytes, architecture: str) -> bool:
-    """Return whether one ELF header declares the selected architecture."""
+    """Return whether one runnable ELF64 image declares the selected CPU."""
     header = prefix + stream.read(16)
-    if len(header) != 20 or header[4] != 2:
+    if len(header) != 20 or header[4] != 2 or header[6] != 1:
         return False
     byte_order = {1: "little", 2: "big"}.get(header[5])
     expected = _ELF_MACHINES.get(architecture)
-    return (
-        byte_order is not None
-        and expected is not None
-        and int.from_bytes(header[18:20], byte_order) == expected
-    )
+    if byte_order is None or expected is None:
+        return False
+    image_type = int.from_bytes(header[16:18], byte_order)
+    machine = int.from_bytes(header[18:20], byte_order)
+    return image_type in {2, 3} and machine == expected
 
 
 def _matches_pe(stream: object, prefix: bytes, architecture: str) -> bool:
