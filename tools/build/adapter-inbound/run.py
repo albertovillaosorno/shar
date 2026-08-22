@@ -1050,7 +1050,9 @@ def _pe_sections_contain_entrypoint(
     section_count: int,
     file_size: int,
     entrypoint: int,
+    *,
     section_alignment: int,
+    file_alignment: int,
 ) -> bool:
     """Require an executable section containing the program entrypoint."""
     admitted = False
@@ -1073,7 +1075,10 @@ def _pe_sections_contain_entrypoint(
         raw_offset = int.from_bytes(section[20:24], "little")
         characteristics = int.from_bytes(section[36:40], "little")
         if raw_size and (
-            raw_offset > file_size or raw_size > file_size - raw_offset
+            raw_size % file_alignment != 0
+            or raw_offset % file_alignment != 0
+            or raw_offset > file_size
+            or raw_size > file_size - raw_offset
         ):
             return False
         mapped_file_size = min(virtual_size, raw_size)
@@ -1122,12 +1127,14 @@ def _matches_pe(
         return False
     entrypoint = int.from_bytes(optional[16:20], "little")
     section_alignment = int.from_bytes(optional[32:36], "little")
+    file_alignment = int.from_bytes(optional[36:40], "little")
     return _pe_sections_contain_entrypoint(
         stream,
         section_count,
         file_size,
         entrypoint,
-        section_alignment,
+        section_alignment=section_alignment,
+        file_alignment=file_alignment,
     )
 
 

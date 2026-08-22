@@ -159,8 +159,9 @@ and remain multiples of section alignment, a 64 KiB-aligned image base, and a
 512–65536 power-of-two file alignment no larger than section alignment. Section
 alignment below 4 KiB must equal file alignment. Reserved loader fields remain
 zero, declared image/header sizes retain their required alignments, and the data
-directory count must fit the optional header. Bounded file-backed section ranges
-and a nonzero program
+directory count must fit the optional header. Nonempty section raw-data sizes and
+file offsets must be multiples of file alignment while remaining file-bounded.
+A nonzero program
 entrypoint inside the intersection of executable loaded section memory and
 file-backed section bytes rather than virtual zero-fill or raw-file padding or
 only an `MZ`/machine lookalike. Runtime
