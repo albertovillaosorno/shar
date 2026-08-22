@@ -969,7 +969,12 @@ def _matches_elf(
 ) -> bool:
     """Return whether one loadable ELF64 image declares the selected CPU."""
     header = prefix + stream.read(60)
-    if len(header) != 64 or header[4] != 2 or header[6] != 1:
+    if (
+        len(header) != 64
+        or header[4] != 2
+        or header[6] != 1
+        or header[7] not in {0, 3}
+    ):
         return False
     byte_order = {1: "little", 2: "big"}.get(header[5])
     expected = _ELF_MACHINES.get(architecture)
