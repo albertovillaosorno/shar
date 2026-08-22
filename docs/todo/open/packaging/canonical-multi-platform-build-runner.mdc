@@ -145,8 +145,9 @@ file type, one bounded `__TEXT` segment beginning at file offset zero, and
 exactly one `LC_MAIN` or legacy `LC_UNIXTHREAD` entrypoint rather than only
 carrying an ARM64 CPU field. `LC_MAIN` file offsets must remain inside
 executable file-backed bytes of the unique `__TEXT` segment instead of escaping
-into a
-later executable mapping. Legacy virtual entrypoints must resolve inside
+into a later executable mapping. Segment initial VM permissions must remain a
+subset of their declared maximum permissions. Legacy virtual entrypoints must
+resolve inside
 executable file-backed bytes of a mapped segment rather than its zero-fill tail.
 Legacy thread entrypoints must carry the complete ARM64 thread-state
 flavor/count and a nonzero program counter; arbitrary
