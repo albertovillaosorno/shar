@@ -1006,6 +1006,17 @@ def _pe_optional_layout(
     return optional_size, section_count
 
 
+def _pe_alignments_are_valid(optional: bytes) -> bool:
+    """Return whether PE32+ image/file alignment fields are loader-safe."""
+    section_alignment = int.from_bytes(optional[32:36], "little")
+    file_alignment = int.from_bytes(optional[36:40], "little")
+    file_alignment_valid = (
+        0x200 <= file_alignment <= 0x10000
+        and file_alignment & (file_alignment - 1) == 0
+    )
+    return file_alignment_valid and section_alignment >= file_alignment
+
+
 def _pe_sections_contain_entrypoint(
     stream: object,
     section_count: int,
@@ -1071,7 +1082,11 @@ def _matches_pe(
         return False
     optional_size, section_count = layout
     optional = stream.read(optional_size)
-    if len(optional) != optional_size or optional[:2] != bytes.fromhex("0b02"):
+    if (
+        len(optional) != optional_size
+        or optional[:2] != bytes.fromhex("0b02")
+        or not _pe_alignments_are_valid(optional)
+    ):
         return False
     entrypoint = int.from_bytes(optional[16:20], "little")
     return _pe_sections_contain_entrypoint(
