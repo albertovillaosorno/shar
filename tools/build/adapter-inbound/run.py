@@ -92,6 +92,17 @@ class _CapturedArtifact(NamedTuple):
     identity: tuple[int, ...]
 
 
+class _MachOSegment(NamedTuple):
+    """One bounded 64-bit Mach-O segment mapping."""
+
+    name: bytes
+    virtual_address: int
+    virtual_size: int
+    file_offset: int
+    file_size: int
+    initial_protection: int
+
+
 _TARGETS = (
     Target("android-arm64", "android", "arm64", "apk", "Android", "arm64"),
     Target("ios-arm64", "ios", "arm64", "ipa", "IOS", "arm64"),
@@ -1047,27 +1058,177 @@ def _matches_pe(
     )
 
 
-def _macho_thread_state_has_entrypoint(body: bytes, byte_order: str) -> bool:
-    """Return whether legacy thread state carries a valid ARM64 entrypoint."""
+def _macho_thread_state_entrypoint(
+    body: bytes,
+    byte_order: str,
+) -> int | None:
+    """Return the valid ARM64 legacy thread program counter when present."""
     cursor = 0
-    has_entrypoint = False
+    entrypoint: int | None = None
     while cursor < len(body):
         if len(body) - cursor < 8:
-            return False
+            return None
         flavor = int.from_bytes(body[cursor : cursor + 4], byte_order)
         count = int.from_bytes(body[cursor + 4 : cursor + 8], byte_order)
         cursor += 8
         state_size = count * 4
         if state_size > len(body) - cursor:
-            return False
+            return None
         state = body[cursor : cursor + state_size]
         if flavor == 6:
-            if count != 68:
-                return False
+            if count != 68 or entrypoint is not None:
+                return None
             pc = int.from_bytes(state[256:264], byte_order)
-            has_entrypoint = has_entrypoint or pc != 0
+            if pc == 0:
+                return None
+            entrypoint = pc
         cursor += state_size
-    return has_entrypoint
+    return entrypoint
+
+
+def _macho_segment64(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    file_size: int,
+) -> _MachOSegment | None:
+    """Return one bounded 64-bit segment mapping."""
+    if command_size < 72 or len(body) < 64:
+        return None
+    section_count = int.from_bytes(body[56:60], byte_order)
+    if command_size != 72 + (80 * section_count):
+        return None
+    virtual_address = int.from_bytes(body[16:24], byte_order)
+    virtual_size = int.from_bytes(body[24:32], byte_order)
+    file_offset = int.from_bytes(body[32:40], byte_order)
+    mapped_file_size = int.from_bytes(body[40:48], byte_order)
+    initial_protection = int.from_bytes(body[52:56], byte_order)
+    if mapped_file_size > virtual_size:
+        return None
+    if (
+        file_offset > file_size
+        or mapped_file_size > file_size - file_offset
+    ):
+        return None
+    if virtual_size > ((1 << 64) - 1) - virtual_address:
+        return None
+    return _MachOSegment(
+        name=body[:16],
+        virtual_address=virtual_address,
+        virtual_size=virtual_size,
+        file_offset=file_offset,
+        file_size=mapped_file_size,
+        initial_protection=initial_protection,
+    )
+
+
+def _macho_entrypoint_is_executable(
+    entrypoint: int,
+    segments: list[_MachOSegment],
+) -> bool:
+    """Return whether an entrypoint is inside an executable segment."""
+    return any(
+        segment.initial_protection & 0x4
+        and segment.virtual_address
+        <= entrypoint
+        < segment.virtual_address + segment.virtual_size
+        for segment in segments
+    )
+
+
+def _macho_read_command(
+    stream: object,
+    byte_order: str,
+    remaining: int,
+) -> tuple[int, int, bytes] | None:
+    """Read one bounded and aligned Mach-O load command."""
+    if remaining < 8:
+        return None
+    header = stream.read(8)
+    if len(header) != 8:
+        return None
+    command = int.from_bytes(header[:4], byte_order)
+    command_size = int.from_bytes(header[4:8], byte_order)
+    if (
+        command_size < 8
+        or command_size % 8 != 0
+        or command_size > remaining
+    ):
+        return None
+    body = stream.read(command_size - 8)
+    if len(body) != command_size - 8:
+        return None
+    return command, command_size, body
+
+
+def _macho_command_evidence(
+    stream: object,
+    byte_order: str,
+    command_count: int,
+    command_bytes: int,
+    file_size: int,
+) -> tuple[list[_MachOSegment], list[tuple[str, int]]] | None:
+    """Collect bounded segment and process-entry command evidence."""
+    remaining = command_bytes
+    entrypoints: list[tuple[str, int]] = []
+    segments: list[_MachOSegment] = []
+    for _ in range(command_count):
+        record = _macho_read_command(stream, byte_order, remaining)
+        if record is None:
+            return None
+        command, command_size, body = record
+        if command == 0x19:
+            segment = _macho_segment64(
+                body,
+                command_size,
+                byte_order,
+                file_size,
+            )
+            if segment is None:
+                return None
+            segments.append(segment)
+        elif command == 0x80000028:
+            if command_size != 24:
+                return None
+            entrypoints.append(("main", int.from_bytes(body[:8], byte_order)))
+        elif command == 0x5:
+            entrypoint = _macho_thread_state_entrypoint(body, byte_order)
+            if entrypoint is None:
+                return None
+            entrypoints.append(("thread", entrypoint))
+        remaining -= command_size
+    if remaining != 0:
+        return None
+    return segments, entrypoints
+
+
+def _macho_entrypoint_matches_segments(
+    segments: list[_MachOSegment],
+    entrypoints: list[tuple[str, int]],
+    command_bytes: int,
+) -> bool:
+    """Bind one Mach-O process entry command to executable segment memory."""
+    if len(entrypoints) != 1:
+        return False
+    text_segments = [
+        segment
+        for segment in segments
+        if segment.name.split(b"\0", 1)[0] == b"__TEXT"
+    ]
+    if len(text_segments) != 1:
+        return False
+    text_segment = text_segments[0]
+    if (
+        text_segment.file_offset != 0
+        or 32 + command_bytes > text_segment.file_size
+    ):
+        return False
+    kind, entrypoint = entrypoints[0]
+    if kind == "main":
+        if entrypoint > ((1 << 64) - 1) - text_segment.virtual_address:
+            return False
+        entrypoint += text_segment.virtual_address
+    return _macho_entrypoint_is_executable(entrypoint, segments)
 
 
 def _macho_commands_have_entrypoint(
@@ -1077,36 +1238,22 @@ def _macho_commands_have_entrypoint(
     command_bytes: int,
     file_size: int,
 ) -> bool:
-    """Validate one Mach-O load-command table and find an entrypoint."""
-    remaining = command_bytes
-    entrypoint_count = 0
-    entrypoints_valid = True
-    for _ in range(command_count):
-        command_header = stream.read(8)
-        if len(command_header) != 8:
-            return False
-        command = int.from_bytes(command_header[:4], byte_order)
-        command_size = int.from_bytes(command_header[4:8], byte_order)
-        if (
-            command_size < 8
-            or command_size % 8 != 0
-            or command_size > remaining
-        ):
-            return False
-        body = stream.read(command_size - 8)
-        if len(body) != command_size - 8:
-            return False
-        if command == 0x80000028:
-            entry_offset = int.from_bytes(body[:8], byte_order)
-            valid = command_size == 24 and entry_offset < file_size
-            entrypoint_count += 1
-            entrypoints_valid = entrypoints_valid and valid
-        elif command == 0x5:
-            valid = _macho_thread_state_has_entrypoint(body, byte_order)
-            entrypoint_count += 1
-            entrypoints_valid = entrypoints_valid and valid
-        remaining -= command_size
-    return remaining == 0 and entrypoint_count == 1 and entrypoints_valid
+    """Validate one Mach-O load-command table and executable entrypoint."""
+    evidence = _macho_command_evidence(
+        stream,
+        byte_order,
+        command_count,
+        command_bytes,
+        file_size,
+    )
+    if evidence is None:
+        return False
+    segments, entrypoints = evidence
+    return _macho_entrypoint_matches_segments(
+        segments,
+        entrypoints,
+        command_bytes,
+    )
 
 
 def _matches_thin_macho(

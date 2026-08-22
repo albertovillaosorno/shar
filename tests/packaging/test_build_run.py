@@ -146,7 +146,7 @@ def _synthetic_macho(
     prefix_command_size: int = 0,
 ) -> bytes:
     """Return one minimal little-endian Mach-O64 image fixture."""
-    command_size = 24
+    entry_command_size = 24
     prefix_command = b""
     if prefix_command_size:
         prefix_command = (
@@ -154,8 +154,23 @@ def _synthetic_macho(
             + prefix_command_size.to_bytes(4, "little")
             + (b"\0" * (prefix_command_size - 8))
         )
-    command_count = 1 + bool(prefix_command)
-    command_bytes = command_size + len(prefix_command)
+    segment_size = 72
+    command_count = 2 + bool(prefix_command)
+    command_bytes = segment_size + len(prefix_command) + entry_command_size
+    file_size = 32 + command_bytes
+    segment = (
+        (0x19).to_bytes(4, "little")
+        + segment_size.to_bytes(4, "little")
+        + b"__TEXT"
+        + (b"\0" * 10)
+        + (0x100000000).to_bytes(8, "little")
+        + (0x1000).to_bytes(8, "little")
+        + (0).to_bytes(8, "little")
+        + file_size.to_bytes(8, "little")
+        + (0x5).to_bytes(4, "little")
+        + (0x5).to_bytes(4, "little")
+        + (0).to_bytes(8, "little")
+    )
     return (
         bytes.fromhex("cffaedfe")
         + cpu.to_bytes(4, "little")
@@ -164,9 +179,10 @@ def _synthetic_macho(
         + int(command_count).to_bytes(4, "little")
         + command_bytes.to_bytes(4, "little")
         + (0).to_bytes(8, "little")
+        + segment
         + prefix_command
         + command.to_bytes(4, "little")
-        + command_size.to_bytes(4, "little")
+        + entry_command_size.to_bytes(4, "little")
         + entry_offset.to_bytes(8, "little")
         + (0).to_bytes(8, "little")
     )
@@ -177,7 +193,7 @@ def _synthetic_thread_entry_macho(
     *,
     flavor: int = 6,
     count: int = 68,
-    pc: int = 0x1000,
+    pc: int = 0x100000080,
 ) -> bytes:
     """Return one little-endian Mach-O64 legacy thread-entry fixture."""
     state = bytearray(272)
@@ -187,17 +203,34 @@ def _synthetic_thread_entry_macho(
         + count.to_bytes(4, "little")
         + bytes(state)
     )
-    command_size = 8 + len(body)
+    thread_size = 8 + len(body)
+    segment_size = 72
+    command_bytes = segment_size + thread_size
+    file_size = 32 + command_bytes
+    segment = (
+        (0x19).to_bytes(4, "little")
+        + segment_size.to_bytes(4, "little")
+        + b"__TEXT"
+        + (b"\0" * 10)
+        + (0x100000000).to_bytes(8, "little")
+        + (0x1000).to_bytes(8, "little")
+        + (0).to_bytes(8, "little")
+        + file_size.to_bytes(8, "little")
+        + (0x5).to_bytes(4, "little")
+        + (0x5).to_bytes(4, "little")
+        + (0).to_bytes(8, "little")
+    )
     return (
         bytes.fromhex("cffaedfe")
         + cpu.to_bytes(4, "little")
         + (0).to_bytes(4, "little")
         + (2).to_bytes(4, "little")
-        + (1).to_bytes(4, "little")
-        + command_size.to_bytes(4, "little")
+        + (2).to_bytes(4, "little")
+        + command_bytes.to_bytes(4, "little")
         + (0).to_bytes(8, "little")
+        + segment
         + (0x5).to_bytes(4, "little")
-        + command_size.to_bytes(4, "little")
+        + thread_size.to_bytes(4, "little")
         + body
     )
 
@@ -1858,10 +1891,33 @@ class MachOEntrypointTests(unittest.TestCase):
             duplicate_entry = bytearray(
                 _synthetic_macho(_RUN._MACHO_ARM64_CPU)
             )
-            duplicate_entry[16:20] = (2).to_bytes(4, "little")
-            duplicate_entry[20:24] = (48).to_bytes(4, "little")
-            duplicate_entry.extend(duplicate_entry[32:56])
+            command_bytes = int.from_bytes(duplicate_entry[20:24], "little")
+            duplicate_entry[16:20] = (3).to_bytes(4, "little")
+            duplicate_entry[20:24] = (command_bytes + 24).to_bytes(4, "little")
+            duplicate_entry.extend(duplicate_entry[-24:])
+            duplicate_entry[80:88] = len(duplicate_entry).to_bytes(8, "little")
             executable.write_bytes(duplicate_entry)
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+    def test_rejects_non_executable_entry_segment(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-macos-segment-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            non_executable = bytearray(
+                _synthetic_macho(_RUN._MACHO_ARM64_CPU)
+            )
+            non_executable[92:96] = (0x1).to_bytes(4, "little")
+            executable.write_bytes(non_executable)
             if _RUN.os.name != "nt":
                 executable.chmod(0o755)
             with self.assertRaisesRegex(
@@ -1983,6 +2039,17 @@ class CandidateArtifactTests(unittest.TestCase):
                 candidate,
                 _RUN._TARGETS_BY_ID["ios-arm64"],
             )
+
+            non_executable = bytearray(
+                _synthetic_macho(_RUN._MACHO_ARM64_CPU)
+            )
+            non_executable[92:96] = (0x1).to_bytes(4, "little")
+            _write_ios_ipa(ipa, binary=bytes(non_executable))
+            with self.assertRaisesRegex(_RUN.RunFailure, "iOS IPA"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["ios-arm64"],
+                )
 
             _write_ios_ipa(
                 ipa,
