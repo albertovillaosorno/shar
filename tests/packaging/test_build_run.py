@@ -63,6 +63,7 @@ def _synthetic_elf(
     *,
     image_type: int = 3,
     entrypoint: int = 0x400000,
+    byte_order: str = "little",
     segment_offset: int = 120,
     segment_file_size: int = 1,
     segment_memory_size: int = 1,
@@ -71,23 +72,23 @@ def _synthetic_elf(
     header = bytearray(64)
     header[:4] = b"\x7fELF"
     header[4] = 2
-    header[5] = 1
+    header[5] = 1 if byte_order == "little" else 2
     header[6] = 1
-    header[16:18] = image_type.to_bytes(2, "little")
-    header[18:20] = machine.to_bytes(2, "little")
-    header[20:24] = (1).to_bytes(4, "little")
-    header[24:32] = entrypoint.to_bytes(8, "little")
-    header[32:40] = (64).to_bytes(8, "little")
-    header[52:54] = (64).to_bytes(2, "little")
-    header[54:56] = (56).to_bytes(2, "little")
-    header[56:58] = (1).to_bytes(2, "little")
+    header[16:18] = image_type.to_bytes(2, byte_order)
+    header[18:20] = machine.to_bytes(2, byte_order)
+    header[20:24] = (1).to_bytes(4, byte_order)
+    header[24:32] = entrypoint.to_bytes(8, byte_order)
+    header[32:40] = (64).to_bytes(8, byte_order)
+    header[52:54] = (64).to_bytes(2, byte_order)
+    header[54:56] = (56).to_bytes(2, byte_order)
+    header[56:58] = (1).to_bytes(2, byte_order)
     program = bytearray(56)
-    program[:4] = (1).to_bytes(4, "little")
-    program[4:8] = (0x5).to_bytes(4, "little")
-    program[8:16] = segment_offset.to_bytes(8, "little")
-    program[16:24] = (0x400000).to_bytes(8, "little")
-    program[32:40] = segment_file_size.to_bytes(8, "little")
-    program[40:48] = segment_memory_size.to_bytes(8, "little")
+    program[:4] = (1).to_bytes(4, byte_order)
+    program[4:8] = (0x5).to_bytes(4, byte_order)
+    program[8:16] = segment_offset.to_bytes(8, byte_order)
+    program[16:24] = (0x400000).to_bytes(8, byte_order)
+    program[32:40] = segment_file_size.to_bytes(8, byte_order)
+    program[40:48] = segment_memory_size.to_bytes(8, byte_order)
     return bytes(header + program + b"\0")
 
 
@@ -2204,6 +2205,25 @@ class PeEntrypointTests(unittest.TestCase):
 
 class ElfEntrypointTests(unittest.TestCase):
     """Require Linux process entrypoints to resolve to file-backed code."""
+
+    def test_rejects_big_endian_x64_image(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar/Binaries/Linux/shar-Linux-Shipping"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(
+                _synthetic_elf(0x003E, byte_order="big")
+            )
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Linux SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["linux-x64"],
+                )
 
     def test_rejects_foreign_osabi(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
