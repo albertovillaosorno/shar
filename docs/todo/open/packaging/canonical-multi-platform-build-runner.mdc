@@ -511,7 +511,12 @@ link. UE 5.8.1 exposes the supported UBT `-NoUBA` switch through BuildCookRun's
 `-UbtArgs` forwarding path. Linux build arguments now pass
 `-UbtArgs=-NoUBA` so this repository-owned linked cache layout uses native
 compiler filesystem behavior; other target families retain their existing UBA
-policy.
+policy. The runner also takes a repository-local advisory lock before
+revalidation or project-state migration, so a concurrent invocation cannot
+reset target scratch or detach links beneath an active build. The lock is held
+by the open descriptor rather than file existence: POSIX `flock` and Windows
+Windows runtime file locking release it automatically when the process exits,
+stale lock-file authority after crashes.
 
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
