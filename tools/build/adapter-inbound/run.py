@@ -978,6 +978,31 @@ def _elf_load_segment_state(
     return bounded, executable, contains_entrypoint
 
 
+def _elf_interpreter_path_is_valid(
+    stream: object,
+    program: bytes,
+    byte_order: str,
+) -> bool:
+    """Return whether one PT_INTERP names one bounded nonempty path."""
+    offset = int.from_bytes(program[8:16], byte_order)
+    file_bytes = int.from_bytes(program[32:40], byte_order)
+    if file_bytes < 2:
+        return False
+    try:
+        cursor = stream.tell()
+        stream.seek(offset)
+        path = stream.read(file_bytes)
+        stream.seek(cursor)
+    except (OSError, ValueError):
+        return False
+    return (
+        len(path) == file_bytes
+        and path[-1:] == b"\0"
+        and bool(path[:-1])
+        and b"\0" not in path[:-1]
+    )
+
+
 def _elf_entrypoint_is_metadata(
     program: bytes,
     byte_order: str,
@@ -1005,7 +1030,7 @@ def _elf_load_programs_match(
     require_entrypoint: bool,
 ) -> bool:
     """Validate ELF load segments and optional process entrypoint."""
-    program_offset, program_size, program_count = layout
+    program_offset = layout[0]
     try:
         stream.seek(program_offset)
     except (OSError, ValueError):
@@ -1013,11 +1038,12 @@ def _elf_load_programs_match(
     loadable = False
     executable = False
     entrypoint_in_executable = False
+    interpreter_seen = False
     load_segments_valid = True
     previous_load_address: int | None = None
-    for _ in range(program_count):
-        program = stream.read(program_size)
-        if len(program) != program_size:
+    for _ in range(layout[2]):
+        program = stream.read(layout[1])
+        if len(program) != layout[1]:
             return False
         program_type = int.from_bytes(program[:4], byte_order)
         if program_type == 0:
@@ -1028,6 +1054,19 @@ def _elf_load_programs_match(
             file_size,
         ):
             return False
+        if program_type == 3:
+            if (
+                loadable
+                or interpreter_seen
+                or not _elf_interpreter_path_is_valid(
+                    stream,
+                    program,
+                    byte_order,
+                )
+            ):
+                return False
+            interpreter_seen = True
+            continue
         if program_type != 1:
             continue
         virtual_address = int.from_bytes(program[16:24], byte_order)
