@@ -84,6 +84,14 @@ class _CandidateTree(NamedTuple):
     directories: tuple[Path, ...]
 
 
+class _CandidateTreeSnapshot(NamedTuple):
+    """One candidate tree bound to stable local filesystem identities."""
+
+    root: tuple[int, int, int]
+    files: tuple[tuple[Path, tuple[int, ...]], ...]
+    directories: tuple[tuple[Path, tuple[int, int, int]], ...]
+
+
 class _CapturedArtifact(NamedTuple):
     """One stable diagnostic source snapshot bound to its file identity."""
 
@@ -820,6 +828,53 @@ def _validate_candidate_tree(candidate: Path) -> _CandidateTree:
                 f"candidate package contains a special entry: {item}"
             )
     return _CandidateTree(tuple(files), tuple(directories))
+
+
+def _candidate_tree_snapshot(
+    candidate: Path,
+    tree: _CandidateTree,
+) -> _CandidateTreeSnapshot:
+    """Capture one validated candidate tree's stable local identities."""
+    return _CandidateTreeSnapshot(
+        root=_real_directory_identity(candidate, "candidate package"),
+        files=tuple(
+            (item, _real_file_identity(item, "candidate package file"))
+            for item in tree.files
+        ),
+        directories=tuple(
+            (
+                item,
+                _real_directory_identity(item, "candidate package directory"),
+            )
+            for item in tree.directories
+        ),
+    )
+
+
+def _require_candidate_tree_snapshot(
+    candidate: Path,
+    snapshot: _CandidateTreeSnapshot,
+) -> None:
+    """Require the candidate path to retain one validated tree snapshot."""
+    message = f"candidate package changed before publication: {candidate}"
+    try:
+        current = _validate_candidate_tree(candidate)
+        root = _real_directory_identity(candidate, "candidate package")
+        files = tuple(
+            (item, _real_file_identity(item, "candidate package file"))
+            for item in current.files
+        )
+        directories = tuple(
+            (
+                item,
+                _real_directory_identity(item, "candidate package directory"),
+            )
+            for item in current.directories
+        )
+    except RunFailure as error:
+        raise RunFailure(message) from error
+    if _CandidateTreeSnapshot(root, files, directories) != snapshot:
+        raise RunFailure(message)
 
 
 def _is_shar_runtime_name(name: str) -> bool:
@@ -2281,12 +2336,14 @@ def _cache_nonruntime_artifacts(
 def _validate_publication_candidate(
     candidate: Path,
     target: Target | None,
-) -> _CandidateTree:
-    """Revalidate final candidate bytes immediately before publication."""
+) -> _CandidateTreeSnapshot:
+    """Revalidate and bind final candidate bytes before publication."""
     tree = _validate_candidate_tree(candidate)
+    snapshot = _candidate_tree_snapshot(candidate, tree)
     if target is not None:
         _validate_candidate_artifact(candidate, target, tree.files)
-    return tree
+    _require_candidate_tree_snapshot(candidate, snapshot)
+    return snapshot
 
 
 def _require_publication_destination_state(
@@ -2356,13 +2413,14 @@ def _publish(
         publication_root,
         "publication root",
     )
-    _validate_publication_candidate(candidate, target)
+    candidate_snapshot = _validate_publication_candidate(candidate, target)
     _require_directory_identity(
         publication_root,
         "publication root",
         publication_identity,
     )
     _require_publication_destination_state(destination, destination_identity)
+    _require_candidate_tree_snapshot(candidate, candidate_snapshot)
     had_previous = destination_identity is not None
     if had_previous:
         Path(destination).replace(backup)
