@@ -77,8 +77,9 @@ platform loader shape
 satisfy package admission. iOS IPAs must declare a main application
 executable in `Info.plist` whose Mach-O image contains ARM64. Invalid
 containers,
-wrong-architecture mobile binaries, and zero-byte packages cannot create a
-completed `dist/<ARCH>/` target. Mobile archive inventories also reject rooted,
+wrong-architecture mobile binaries, zero-byte packages, and ambiguous multiple
+APKs/IPAs cannot create a completed `dist/<ARCH>/` target. Mobile archive
+inventories also reject rooted,
 parent/current traversal, backslash, and empty-segment member paths plus
 file/directory aliases and regular-file ancestors of nested members, so a valid
 native entry cannot hide an unrealizable package tree beside it. Every archive
