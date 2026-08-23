@@ -2757,6 +2757,22 @@ class MachOEntrypointTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["macos-arm64"],
                 )
 
+    def test_rejects_section_beyond_segment_file_extent(self) -> None:
+        payload = _synthetic_macho(_RUN._MACHO_ARM64_CPU)
+        body = bytearray(payload[40:104])
+        body[56:60] = (1).to_bytes(4, "little")
+        section = bytearray(80)
+        section[40:48] = (2).to_bytes(8, "little")
+        section[48:52] = (128).to_bytes(4, "little")
+        self.assertIsNone(
+            _RUN._macho_segment64(
+                bytes(body + section),
+                152,
+                "little",
+                len(payload),
+            )
+        )
+
     def test_rejects_invalid_segment_protection_flags(self) -> None:
         for reason, protection in (
             ("executable-only", 0x4),

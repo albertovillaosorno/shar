@@ -1296,6 +1296,29 @@ def _macho_thread_state_entrypoint(
     return entrypoint
 
 
+def _macho_sections_fit_segment(
+    body: bytes,
+    section_count: int,
+    byte_order: str,
+    file_offset: int,
+    mapped_file_size: int,
+) -> bool:
+    """Return whether file-backed sections stay inside their segment."""
+    segment_file_end = file_offset + mapped_file_size
+    for index in range(section_count):
+        start = 64 + (80 * index)
+        section = body[start : start + 80]
+        section_size = int.from_bytes(section[40:48], byte_order)
+        section_offset = int.from_bytes(section[48:52], byte_order)
+        if section_offset != 0 and (
+            section_offset < file_offset
+            or section_offset > segment_file_end
+            or section_size > segment_file_end - section_offset
+        ):
+            return False
+    return True
+
+
 def _macho_segment64(
     body: bytes,
     command_size: int,
@@ -1332,7 +1355,16 @@ def _macho_segment64(
         or mapped_file_size > file_size - file_offset
     ):
         return None
-    if virtual_size > ((1 << 64) - 1) - virtual_address:
+    if (
+        virtual_size > ((1 << 64) - 1) - virtual_address
+        or not _macho_sections_fit_segment(
+            body,
+            section_count,
+            byte_order,
+            file_offset,
+            mapped_file_size,
+        )
+    ):
         return None
     return _MachOSegment(
         name=body[:16],
