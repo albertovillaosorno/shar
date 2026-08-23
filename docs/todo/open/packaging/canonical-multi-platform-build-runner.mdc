@@ -469,10 +469,12 @@ successful package size. The packaged Shipping executable remained alive for an
 PID was terminated cleanly.
 
 Project-generated `Binaries/`, `DerivedDataCache/`, `Intermediate/`, and
-`Saved/` now resolve through persistent directory links to
+`Saved/` resolve through runner-scoped directory links to
 `.cache/build/project-state/`. Exact project-root ignore entries cover those
-link identities because Git's directory-only ignore rules do not match symlinks.
-Migration preflights all four identities, adopts
+link identities while attached because Git's directory-only rules do not match
+symlinks. Normal and error exits detach the links without deleting cached state,
+so canonical Jig traversal sees no project-root boundary afterward. Migration
+preflights all four identities, adopts
 legacy real directories by same-filesystem rename, rejects competing canonical
 state, and rolls back earlier moves if a later link fails. Standard-library
 regressions cover adoption, reuse, dual-authority rejection, and injected

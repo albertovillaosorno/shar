@@ -726,6 +726,23 @@ class ProjectStateMigrationTests(unittest.TestCase):
             self._unlink_project_state(project)
             temporary.cleanup()
 
+    def test_detaches_links_without_deleting_cached_state(self) -> None:
+        temporary, root, project = self._fixture()
+        try:
+            state_root = _RUN._prepare_project_state(root, project)
+            sentinel = state_root / "Intermediate/sentinel.txt"
+            sentinel.write_text("cached", encoding="utf-8")
+
+            _RUN._detach_project_state(root, project)
+
+            for name in _RUN._PROJECT_STATE_NAMES:
+                self.assertFalse(_RUN._path_present(project.parent / name))
+                self.assertTrue((state_root / name).is_dir())
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "cached")
+        finally:
+            self._unlink_project_state(project)
+            temporary.cleanup()
+
     def test_reuses_existing_canonical_links(self) -> None:
         temporary, root, project = self._fixture()
         try:
@@ -851,6 +868,41 @@ class ProjectStateMigrationTests(unittest.TestCase):
         finally:
             self._unlink_project_state(project)
             temporary.cleanup()
+
+
+class BuildLifecycleStateTests(unittest.TestCase):
+    """Detach project-state links after selected build execution."""
+
+    def test_detaches_project_state_after_build_failure(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-build-life-") as raw:
+            root = Path(raw)
+            project = root / "project/shar.uproject"
+            project.parent.mkdir()
+            project.write_text("{}\n", encoding="utf-8")
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+            with (
+                mock.patch.object(_RUN, "_uat_path", return_value=Path("/uat")),
+                mock.patch.object(
+                    _RUN,
+                    "_build_target",
+                    side_effect=_RUN.RunFailure("injected build failure"),
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "injected build failure",
+                ),
+            ):
+                _RUN._build_selected_targets(
+                    root,
+                    Path("/engine"),
+                    project,
+                    [target],
+                    validate_only=False,
+                )
+            for name in _RUN._PROJECT_STATE_NAMES:
+                self.assertFalse(_RUN._path_present(project.parent / name))
+                canonical = root / _RUN._PROJECT_STATE_ROOT / name
+                self.assertTrue(canonical.is_dir())
 
 
 class UatLauncherTests(unittest.TestCase):
@@ -6714,8 +6766,7 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                 "_project_from_evidence",
                 return_value=Path("/repo/project/shar.uproject"),
             ),
-            mock.patch.object(_RUN, "_prepare_project_state"),
-            mock.patch.object(_RUN, "_uat_path", return_value=Path("/uat")),
+            mock.patch.object(_RUN, "_build_selected_targets") as build_targets,
             mock.patch.object(_RUN.sys, "argv", ["run.py", "--validate-only"]),
         ):
             self.assertEqual(_RUN.main(), 0)
@@ -6726,6 +6777,13 @@ class ArchitectureRevalidationTests(unittest.TestCase):
         selected_targets.assert_called_once_with(arch_snapshot)
         revalidate_check.assert_called_once_with(root, check_path)
         check_evidence.assert_called_once_with(check_snapshot)
+        build_targets.assert_called_once_with(
+            root,
+            Path("/engine"),
+            Path("/repo/project/shar.uproject"),
+            [],
+            validate_only=True,
+        )
 
 
 if __name__ == "__main__":

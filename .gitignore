@@ -62,7 +62,7 @@ Saved/
 **/DerivedDataCache/
 **/Intermediate/
 **/Saved/
-# Persistent project-state links are symlinks/junctions, not directories to Git.
+# Runner project-state links are symlinks/junctions, not directories to Git.
 src/unreal/project/composition/uproject/Binaries
 src/unreal/project/composition/uproject/DerivedDataCache
 src/unreal/project/composition/uproject/Intermediate
