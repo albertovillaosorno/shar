@@ -1771,7 +1771,13 @@ def _has_native_binary_signature(
 def _zip_member_path_is_safe(info: zipfile.ZipInfo) -> bool:
     """Return whether one archive member is a strict relative slash path."""
     name = info.filename
-    if not name or name.startswith("/") or "\\" in name:
+    drive_qualified = (
+        len(name) >= 2
+        and name[0].isascii()
+        and name[0].isalpha()
+        and name[1] == ":"
+    )
+    if not name or name.startswith("/") or "\\" in name or drive_qualified:
         return False
     logical = name[:-1] if info.is_dir() else name
     parts = logical.split("/")
