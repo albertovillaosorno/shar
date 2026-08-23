@@ -3509,6 +3509,56 @@ class MachOFatSliceTests(unittest.TestCase):
             )
 
 
+class MachOLinkEditDataTests(unittest.TestCase):
+    """Require Mach-O link-edit data commands to stay file-bounded."""
+
+    def test_validates_linkedit_data_command_ranges(self) -> None:
+        for reason, command_size, offset, size, file_size, admitted in (
+            ("valid", 16, 0x100, 0x20, 0x200, True),
+            ("empty", 16, 0, 0, 0x200, True),
+            ("command-size", 24, 0x100, 0x20, 0x200, False),
+            ("offset", 16, 0x201, 0, 0x200, False),
+            ("range", 16, 0x1F0, 0x20, 0x200, False),
+        ):
+            body = offset.to_bytes(4, "little") + size.to_bytes(4, "little")
+            if command_size > 16:
+                body += b"\0" * (command_size - 16)
+            with self.subTest(reason=reason):
+                self.assertEqual(
+                    _RUN._macho_linkedit_data_is_valid(
+                        body,
+                        command_size,
+                        "little",
+                        file_size,
+                    ),
+                    admitted,
+                )
+
+    def test_applies_bounds_to_all_linkedit_command_ids(self) -> None:
+        commands = (
+            0x1D,
+            0x1E,
+            0x26,
+            0x29,
+            0x2B,
+            0x2E,
+            0x80000033,
+            0x80000034,
+        )
+        for command in commands:
+            with self.subTest(command=hex(command)):
+                self.assertIsNone(
+                    _RUN._macho_auxiliary_command(
+                        command,
+                        16,
+                        (0x200).to_bytes(4, "little")
+                        + (1).to_bytes(4, "little"),
+                        "little",
+                        0x200,
+                    )
+                )
+
+
 class MachOPlatformTests(unittest.TestCase):
     """Bind ARM64 Mach-O admission to its target Apple platform."""
 
@@ -3564,7 +3614,7 @@ class MachODynamicLinkerTests(unittest.TestCase):
 
     def test_rejects_bare_dynamic_linker_marker(self) -> None:
         self.assertIsNone(
-            _RUN._macho_auxiliary_command(0xE, 8, b"", "little")
+            _RUN._macho_auxiliary_command(0xE, 8, b"", "little", 0x200)
         )
 
     def test_rejects_malformed_dynamic_linker_paths(self) -> None:
@@ -3582,6 +3632,7 @@ class MachODynamicLinkerTests(unittest.TestCase):
                         len(command),
                         bytes(body),
                         "little",
+                        0x200,
                     )
                 )
 
