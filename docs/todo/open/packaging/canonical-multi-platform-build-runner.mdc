@@ -206,7 +206,10 @@ exact 24-byte structure, a single command, and bounded 16-byte ARM64 symbol
 entries plus a bounded string table through the shared `__LINKEDIT` range gate.
 Optional `LC_DYSYMTAB` metadata requires that `LC_SYMTAB` companion, uses one
 exact 80-byte command, and bounds its TOC, 64-bit module, reference, indirect,
-external-relocation, and local-relocation tables through the same range gate. A
+external-relocation, and local-relocation tables through the same range gate.
+Its local, defined-external, and undefined symbol start/count groups must each
+remain inside the companion `LC_SYMTAB` symbol count, including their end index.
+A
 structurally bounded `LC_LOAD_DYLINKER` must carry a nonempty, NUL-terminated
 embedded path so the Apple loader does not classify it as a static executable.
 Present dylib-load and `LC_RPATH` commands must likewise keep their string

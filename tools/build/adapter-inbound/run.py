@@ -123,6 +123,7 @@ class _MachOAuxiliary(NamedTuple):
     value: int = 0
     size: int = 0
     ranges: tuple[tuple[int, int], ...] = ()
+    symbol_groups: tuple[tuple[int, int], ...] = ()
 
 
 class _PeSectionPolicy(NamedTuple):
@@ -1848,6 +1849,22 @@ def _macho_dyld_info_ranges(
     return ranges
 
 
+def _macho_dysymtab_symbol_groups(
+    body: bytes,
+    byte_order: str,
+) -> tuple[tuple[int, int], ...]:
+    """Return local, external, and undefined LC_DYSYMTAB symbol groups."""
+    fields = tuple(
+        int.from_bytes(body[index : index + 4], byte_order)
+        for index in range(0, 24, 4)
+    )
+    return (
+        (fields[0], fields[1]),
+        (fields[2], fields[3]),
+        (fields[4], fields[5]),
+    )
+
+
 def _macho_dysymtab_ranges(
     body: bytes,
     command_size: int,
@@ -2002,7 +2019,11 @@ def _macho_linkedit_auxiliary(
         return (
             None
             if ranges is None
-            else _MachOAuxiliary("dysymtab", ranges=ranges)
+            else _MachOAuxiliary(
+                "dysymtab",
+                ranges=ranges,
+                symbol_groups=_macho_dysymtab_symbol_groups(body, byte_order),
+            )
         )
     if command == 0x2:
         ranges = _macho_symtab_ranges(
@@ -2014,7 +2035,11 @@ def _macho_linkedit_auxiliary(
         return (
             None
             if ranges is None
-            else _MachOAuxiliary("symtab", ranges=ranges)
+            else _MachOAuxiliary(
+                "symtab",
+                size=int.from_bytes(body[4:8], byte_order),
+                ranges=ranges,
+            )
         )
     data_range = _macho_linkedit_data_range(
         body,
@@ -2138,9 +2163,19 @@ def _macho_auxiliary_metadata_is_valid(
         or item.kind.startswith("linkedit-")
     ]
     kinds = set(singleton_kinds)
-    return (
-        len(singleton_kinds) == len(kinds)
-        and ("dysymtab" not in kinds or "symtab" in kinds)
+    if len(singleton_kinds) != len(kinds):
+        return False
+    if "dysymtab" not in kinds:
+        return True
+    if "symtab" not in kinds:
+        return False
+    symtab = next(item for item in auxiliaries if item.kind == "symtab")
+    dysymtab = next(item for item in auxiliaries if item.kind == "dysymtab")
+    return all(
+        start <= symtab.size
+        and count <= symtab.size
+        and start + count <= symtab.size
+        for start, count in dysymtab.symbol_groups
     )
 
 
