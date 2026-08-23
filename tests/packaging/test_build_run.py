@@ -3156,6 +3156,8 @@ class CandidateArtifactTests(unittest.TestCase):
             "nested\\escape.bin",
             "nested//escape.bin",
             "./alias.bin",
+            "C:/escape.bin",
+            "C:escape.bin",
         )
         for target_id, name, write_valid, label in cases:
             for member in unsafe_members:
