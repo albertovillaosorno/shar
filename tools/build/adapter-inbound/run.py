@@ -1970,6 +1970,20 @@ def _macho_encryption_is_valid(
     return crypt_offset <= file_size and crypt_size <= file_size - crypt_offset
 
 
+def _macho_note_is_valid(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    file_size: int,
+) -> bool:
+    """Return whether one LC_NOTE payload range stays inside the file."""
+    if command_size != 40 or len(body) != 32:
+        return False
+    note_offset = int.from_bytes(body[16:24], byte_order)
+    note_size = int.from_bytes(body[24:32], byte_order)
+    return note_offset <= file_size and note_size <= file_size - note_offset
+
+
 def _macho_fixed_auxiliary(
     command: int,
     body: bytes,
@@ -1988,6 +2002,13 @@ def _macho_fixed_auxiliary(
         file_size,
     ):
         result = _MachOAuxiliary("encryption")
+    elif command == 0x31 and _macho_note_is_valid(
+        body,
+        command_size,
+        byte_order,
+        file_size,
+    ):
+        result = _MachOAuxiliary("note")
     return result
 
 
@@ -2083,7 +2104,7 @@ def _macho_auxiliary_command(
 ) -> _MachOAuxiliary | None:
     """Parse one non-segment Mach-O command used by admission."""
     result: _MachOAuxiliary | None = _MachOAuxiliary("ignored")
-    if command in {0xD, 0x1B, 0x21, 0x2C}:
+    if command in {0xD, 0x1B, 0x21, 0x2C, 0x31}:
         result = _macho_fixed_auxiliary(
             command,
             body,
