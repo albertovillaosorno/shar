@@ -2886,6 +2886,31 @@ class MachOEntrypointTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["macos-arm64"],
                 )
 
+    def test_rejects_invalid_section_alignment(self) -> None:
+        payload = _synthetic_macho(_RUN._MACHO_ARM64_CPU)
+        body = bytearray(payload[40:104])
+        body[56:60] = (1).to_bytes(4, "little")
+        virtual_address = int.from_bytes(body[16:24], "little")
+        for reason, address, alignment_power in (
+            ("misaligned-address", virtual_address + 1, 4),
+            ("oversized-exponent", virtual_address, 64),
+        ):
+            section = bytearray(80)
+            section[16:32] = body[:16]
+            section[32:40] = address.to_bytes(8, "little")
+            section[40:48] = (1).to_bytes(8, "little")
+            section[48:52] = (128).to_bytes(4, "little")
+            section[52:56] = alignment_power.to_bytes(4, "little")
+            with self.subTest(reason=reason):
+                self.assertIsNone(
+                    _RUN._macho_segment64(
+                        bytes(body + section),
+                        152,
+                        "little",
+                        len(payload),
+                    )
+                )
+
     def test_rejects_section_with_mismatched_segment_name(self) -> None:
         payload = _synthetic_macho(_RUN._MACHO_ARM64_CPU)
         body = bytearray(payload[40:104])
