@@ -11,7 +11,7 @@ children: []
 ---
 
 <!-- CSpell:ignore APPL COMDAT DYLINKER LINKEDIT -->
-<!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD -->
+<!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD rpath -->
 
 # Canonical multi-platform build runner
 
@@ -199,7 +199,10 @@ file payload inside the unique `__LINKEDIT` file mapping, and keep those payload
 ranges pairwise disjoint rather than merely file-bounded. A
 structurally bounded `LC_LOAD_DYLINKER` must carry a nonempty, NUL-terminated
 embedded path so the Apple loader does not classify it as a static executable.
-Each image must also carry one exact `LC_BUILD_VERSION`
+Present dylib-load and `LC_RPATH` commands must likewise keep their string
+offsets beyond the fixed command structure and terminate the embedded string
+inside the command; `LC_ID_DYLIB` is rejected in these executable images. Each
+image must also carry one exact `LC_BUILD_VERSION`
 platform declaration matching macOS or iOS admission, while legacy
 `LC_VERSION_MIN_*` platform commands are rejected for these ARM64 targets.
 `__TEXT` must be initially
