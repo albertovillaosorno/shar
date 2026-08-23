@@ -1157,6 +1157,10 @@ def _pe_data_directories_are_valid(
         start = 112 + (8 * index)
         address = int.from_bytes(optional[start : start + 4], "little")
         size = int.from_bytes(optional[start + 4 : start + 8], "little")
+        if index in {7, 15} and (address != 0 or size != 0):
+            return False
+        if index == 8 and size != 0:
+            return False
         if size == 0:
             continue
         if address == 0:

@@ -30,7 +30,7 @@
 
 """Tests for canonical build-runner project-state migration."""
 
-# CSpell:ignore dylinker linkedit osabi APPL FMWK BNDL
+# CSpell:ignore dylinker linkedit osabi APPL FMWK BNDL RVA rva
 
 from __future__ import annotations
 
@@ -2397,6 +2397,41 @@ class PeOptionalHeaderTests(unittest.TestCase):
                     ),
                     admitted,
                 )
+
+    def test_rejects_reserved_data_directory_metadata(self) -> None:
+        cases = (
+            ("architecture-rva", 7, 0x1000, 0),
+            ("architecture-size", 7, 0, 8),
+            ("global-pointer-size", 8, 0x1000, 8),
+            ("reserved-rva", 15, 0x1000, 0),
+            ("reserved-size", 15, 0, 8),
+        )
+        for reason, index, address, size in cases:
+            optional = bytearray(112 + (16 * 8))
+            optional[56:60] = (0x3000).to_bytes(4, "little")
+            optional[108:112] = (16).to_bytes(4, "little")
+            start = 112 + (index * 8)
+            optional[start : start + 4] = address.to_bytes(4, "little")
+            optional[start + 4 : start + 8] = size.to_bytes(4, "little")
+            with self.subTest(reason=reason):
+                self.assertFalse(
+                    _RUN._pe_data_directories_are_valid(
+                        bytes(optional),
+                        0x4000,
+                    )
+                )
+
+        optional = bytearray(112 + (16 * 8))
+        optional[56:60] = (0x3000).to_bytes(4, "little")
+        optional[108:112] = (16).to_bytes(4, "little")
+        global_pointer = 112 + (8 * 8)
+        optional[global_pointer : global_pointer + 4] = (0x1000).to_bytes(
+            4,
+            "little",
+        )
+        self.assertTrue(
+            _RUN._pe_data_directories_are_valid(bytes(optional), 0x4000)
+        )
 
     def test_rejects_data_directory_outside_image(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-windows-header-") as raw:
