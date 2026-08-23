@@ -30,7 +30,7 @@
 
 """Tests for canonical build-runner project-state migration."""
 
-# CSpell:ignore dylinker linkedit osabi
+# CSpell:ignore dylinker linkedit osabi APPL FMWK BNDL
 
 from __future__ import annotations
 
@@ -563,11 +563,14 @@ def _write_ios_ipa(
     *,
     binary: bytes | None = None,
     bundle_id: object = "org.shar.game",
+    package_type: object | None = "APPL",
 ) -> None:
     """Write one synthetic IPA with a declared main executable."""
     document: dict[str, object] = {"CFBundleExecutable": "shar"}
     if bundle_id is not None:
         document["CFBundleIdentifier"] = bundle_id
+    if package_type is not None:
+        document["CFBundlePackageType"] = package_type
     with _RUN.zipfile.ZipFile(path, "w") as archive:
         archive.writestr(
             "Payload/SHAR.app/Info.plist",
@@ -3796,6 +3799,7 @@ class MobileArchiveMemberTypeTests(unittest.TestCase):
                         {
                             "CFBundleExecutable": "shar",
                             "CFBundleIdentifier": "org.shar.game",
+                            "CFBundlePackageType": "APPL",
                         }
                     )
                     binary = _synthetic_macho(
@@ -3896,6 +3900,31 @@ class IosBundleMetadataTests(unittest.TestCase):
             ):
                 candidate = Path(raw)
                 _write_ios_ipa(candidate / "shar.ipa", bundle_id=value)
+                _RUN._validate_candidate_artifact(candidate, target)
+
+    def test_ios_candidate_rejects_contradictory_bundle_type(self) -> None:
+        target = _RUN._TARGETS_BY_ID["ios-arm64"]
+        for value in ("FMWK", "BNDL", "", 7):
+            with (
+                self.subTest(value=value),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-ios-bundle-type-"
+                ) as raw,
+            ):
+                candidate = Path(raw)
+                _write_ios_ipa(candidate / "shar.ipa", package_type=value)
+                with self.assertRaisesRegex(_RUN.RunFailure, "iOS IPA"):
+                    _RUN._validate_candidate_artifact(candidate, target)
+
+        for value in (None, "APPL"):
+            with (
+                self.subTest(valid=value),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-ios-bundle-type-"
+                ) as raw,
+            ):
+                candidate = Path(raw)
+                _write_ios_ipa(candidate / "shar.ipa", package_type=value)
                 _RUN._validate_candidate_artifact(candidate, target)
 
 
