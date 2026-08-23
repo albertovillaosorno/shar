@@ -415,18 +415,25 @@ def _synthetic_android_manifest(
     *,
     root_name: str = "manifest",
     package_name: str | None = "org.shar.game",
+    split_name: str | None = None,
     utf8: bool = True,
     child_name: str | None = None,
 ) -> bytes:
     """Return one minimal Android resource binary XML manifest fixture."""
     names = [root_name]
-    package_key_index: int | None = None
-    package_value_index: int | None = None
+    attributes: list[tuple[int, int]] = []
     if package_name is not None:
-        package_key_index = len(names)
+        key_index = len(names)
         names.append("package")
-        package_value_index = len(names)
+        value_index = len(names)
         names.append(package_name)
+        attributes.append((key_index, value_index))
+    if split_name is not None:
+        key_index = len(names)
+        names.append("split")
+        value_index = len(names)
+        names.append(split_name)
+        attributes.append((key_index, value_index))
     child_index: int | None = None
     if child_name is not None:
         child_index = len(names)
@@ -458,21 +465,22 @@ def _synthetic_android_manifest(
         + bytes(string_data)
     )
 
-    def start_element(name_index: int, *, package: bool = False) -> bytes:
-        attribute = b""
-        if package:
-            assert package_key_index is not None
-            assert package_value_index is not None
-            attribute = (
+    def start_element(
+        name_index: int,
+        entries: tuple[tuple[int, int], ...] = (),
+    ) -> bytes:
+        encoded_attributes = bytearray()
+        for key_index, value_index in entries:
+            encoded_attributes += (
                 (0xFFFFFFFF).to_bytes(4, "little")
-                + package_key_index.to_bytes(4, "little")
-                + package_value_index.to_bytes(4, "little")
+                + key_index.to_bytes(4, "little")
+                + value_index.to_bytes(4, "little")
                 + (8).to_bytes(2, "little")
                 + b"\0"
                 + b"\x03"
-                + package_value_index.to_bytes(4, "little")
+                + value_index.to_bytes(4, "little")
             )
-        chunk_size = 36 + len(attribute)
+        chunk_size = 36 + len(encoded_attributes)
         return (
             (0x0102).to_bytes(2, "little")
             + (16).to_bytes(2, "little")
@@ -483,12 +491,12 @@ def _synthetic_android_manifest(
             + name_index.to_bytes(4, "little")
             + (20).to_bytes(2, "little")
             + (20).to_bytes(2, "little")
-            + (1 if package else 0).to_bytes(2, "little")
+            + len(entries).to_bytes(2, "little")
             + (b"\0" * 6)
-            + attribute
+            + bytes(encoded_attributes)
         )
 
-    nodes = start_element(0, package=package_name is not None)
+    nodes = start_element(0, tuple(attributes))
     if child_index is not None:
         nodes += start_element(child_index)
     size = 8 + len(string_pool) + len(nodes)
@@ -3657,6 +3665,13 @@ class AndroidManifestStructureTests(unittest.TestCase):
                     False,
                 )
             )
+        cases.append(
+            (
+                "split-apk",
+                _synthetic_android_manifest(split_name="feature.camera"),
+                False,
+            )
+        )
         plain = b"synthetic manifest"
         cases.append(("plain-text", plain, False))
         string_pool_size = int.from_bytes(baseline[12:16], "little")
@@ -3705,6 +3720,7 @@ class AndroidManifestStructureTests(unittest.TestCase):
                 "android-package",
                 _synthetic_android_manifest(package_name="android"),
             ),
+            ("empty-split", _synthetic_android_manifest(split_name="")),
             (
                 "child-tag",
                 _synthetic_android_manifest(child_name="application"),
