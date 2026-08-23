@@ -780,7 +780,7 @@ def _build_arguments(
     staging: Path,
 ) -> list[str]:
     """Return the reviewed BuildCookRun argument vector for one target."""
-    return [
+    arguments = [
         "BuildCookRun",
         f"-Project={project}",
         "-NoP4",
@@ -798,6 +798,9 @@ def _build_arguments(
         "-Pak",
         "-IoStore",
     ]
+    if target.system == "linux":
+        arguments.append("-UbtArgs=-NoUBA")
+    return arguments
 
 
 def _validate_candidate_tree(candidate: Path) -> _CandidateTree:

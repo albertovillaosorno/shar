@@ -498,6 +498,17 @@ checkout that changes the canonical game-manifest contract; tests prove source
 drift, build/publication drift, scan failure, redirect rejection, and legacy
 evidence all fail closed.
 
+A current Linux x64 Shipping integration attempt reached native UBT compilation
+after canonical CPython 3.14.6 preflight and a valid Turnkey SDK check, then
+reproduced Unreal Build Accelerator POSIX detour failures while writing the
+cache-backed `Intermediate` tree: UBA reported cross-process rename-while-open
+assertions and replacement-race copies through the project-state directory
+link. UE 5.8.1 exposes the supported UBT `-NoUBA` switch through BuildCookRun's
+`-UbtArgs` forwarding path. Linux build arguments now pass
+`-UbtArgs=-NoUBA` so this repository-owned linked cache layout uses native
+compiler filesystem behavior; other target families retain their existing UBA
+policy.
+
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
 721,654,073 bytes. An exact copy under `.cache/build/copy-probe/` matched every
