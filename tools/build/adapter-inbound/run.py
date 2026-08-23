@@ -931,6 +931,19 @@ def _elf_program_layout(
     return program_offset, program_size, program_count
 
 
+def _elf_program_file_range_is_bounded(
+    program: bytes,
+    byte_order: str,
+    file_size: int,
+) -> bool:
+    """Return whether one non-null ELF segment file image is bounded."""
+    offset = int.from_bytes(program[8:16], byte_order)
+    file_bytes = int.from_bytes(program[32:40], byte_order)
+    return file_bytes == 0 or (
+        offset <= file_size and file_bytes <= file_size - offset
+    )
+
+
 def _elf_load_segment_state(
     program: bytes,
     byte_order: str,
@@ -1006,7 +1019,16 @@ def _elf_load_programs_match(
         program = stream.read(program_size)
         if len(program) != program_size:
             return False
-        if int.from_bytes(program[:4], byte_order) != 1:
+        program_type = int.from_bytes(program[:4], byte_order)
+        if program_type == 0:
+            continue
+        if not _elf_program_file_range_is_bounded(
+            program,
+            byte_order,
+            file_size,
+        ):
+            return False
+        if program_type != 1:
             continue
         virtual_address = int.from_bytes(program[16:24], byte_order)
         if (
