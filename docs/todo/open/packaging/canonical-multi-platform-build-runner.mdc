@@ -12,6 +12,7 @@ children: []
 
 <!-- CSpell:ignore APPL COMDAT DYLD DYLINKER LINKEDIT SYMTAB DYSYMTAB -->
 <!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD rpath -->
+<!-- CSpell:ignore taskkill -->
 
 # Canonical multi-platform build runner
 
@@ -514,14 +515,23 @@ compiler filesystem behavior. Linux also passes `-SkipBuildEditor`: preflight
 already requires a real executable host editor, so source-tree packaging can use
 that editor for cooking instead of redundantly rebuilding it. A bounded UE 5.8.1
 probe reduced the native agenda to `shar` plus `UnrealPak`; other target
-families
-retain their existing build controls. The runner also takes a repository-local
-advisory lock before
-revalidation or project-state migration, so a concurrent invocation cannot
-reset target scratch or detach links beneath an active build. The lock is held
-by the open descriptor rather than file existence: POSIX `flock` and Windows
-runtime file locking release it automatically when the process exits, avoiding
-stale lock-file authority after crashes.
+families retain their existing build controls. The runner also takes a
+repository-local advisory lock before revalidation or project-state migration,
+so a concurrent invocation cannot reset target scratch or detach links beneath
+an active build. The lock is held by the open descriptor rather than file
+existence: POSIX `flock` and Windows runtime file locking release it
+automatically when the process exits, avoiding stale lock-file authority after
+crashes.
+
+UAT now runs in its own host-native process group: a new POSIX session or a
+Windows process group. If the runner is interrupted while waiting for UAT, it
+terminates that whole group before control can unwind into project-state detach;
+POSIX escalates from group `SIGTERM` to `SIGKILL` after a bounded wait, while
+Windows uses `taskkill /T /F` for descendant-tree termination. A real synthetic
+POSIX probe launched a child process beneath a fake UAT executable, interrupted
+the waiting runner with `SIGINT`, and proved both launcher and descendant PIDs
+were gone before `KeyboardInterrupt` was re-raised. Unit regressions cover both
+host launch modes, POSIX forced escalation, and Windows tree termination.
 
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
