@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-<!-- CSpell:ignore APPL DYLINKER LINKEDIT OSABI pdb RVA rva UNIXTHREAD -->
+<!-- CSpell:ignore APPL COMDAT DYLINKER LINKEDIT OSABI pdb RVA rva UNIXTHREAD -->
 
 # Canonical multi-platform build runner
 
@@ -221,8 +221,9 @@ Ordinary ranges must stay inside the loaded image; the certificate-table
 file-offset exception is bounded by the file instead, with its file offset and
 padded table size both aligned to 8-byte boundaries.
 Executable-image section
-headers keep COFF
-relocation and line-number pointers/counts at zero. Nonempty section raw-data
+headers keep COFF relocation and line-number pointers/counts at zero and reject
+object-only linker, COMDAT, section-alignment, and extended-relocation flags
+while retaining defined image memory flags. Nonempty section raw-data
 sizes and file offsets must be multiples of file alignment while remaining
 file-bounded.
 Nonempty raw ranges must also begin at or after the declared header size and

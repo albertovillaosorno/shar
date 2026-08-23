@@ -1229,11 +1229,14 @@ def _pe_raw_section_is_valid(
 
 def _pe_section_image_metadata_is_valid(section: bytes) -> bool:
     """Return whether one image section omits object-only COFF metadata."""
+    characteristics = int.from_bytes(section[36:40], "little")
+    object_only_flags = 0x01F01A08
     return (
         int.from_bytes(section[24:28], "little") == 0
         and int.from_bytes(section[28:32], "little") == 0
         and int.from_bytes(section[32:34], "little") == 0
         and int.from_bytes(section[34:36], "little") == 0
+        and characteristics & object_only_flags == 0
     )
 
 
