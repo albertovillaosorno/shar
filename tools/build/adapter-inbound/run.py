@@ -1457,7 +1457,13 @@ def _matches_thin_macho(
     file_type = int.from_bytes(header[8:12], byte_order)
     command_count = int.from_bytes(header[12:16], byte_order)
     command_bytes = int.from_bytes(header[16:20], byte_order)
-    if cpu != _MACHO_ARM64_CPU or file_type != 2 or command_count == 0:
+    reserved = int.from_bytes(header[24:28], byte_order)
+    if (
+        cpu != _MACHO_ARM64_CPU
+        or file_type != 2
+        or command_count == 0
+        or reserved != 0
+    ):
         return False
     if expected_cpu_subtype is not None and (
         cpu_subtype & ~_MACHO_CPU_SUBTYPE_MASK
