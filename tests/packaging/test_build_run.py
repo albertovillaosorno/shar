@@ -2336,6 +2336,32 @@ class CandidateTreeTests(unittest.TestCase):
 class PeOptionalHeaderTests(unittest.TestCase):
     """Require Windows PE32+ loader alignment fields to be coherent."""
 
+    def test_rejects_32_bit_machine_flag_for_64_bit_targets(self) -> None:
+        offset = 0x80
+        file_size = 0x400
+        for machine in (0x8664, 0xAA64):
+            for characteristics, admitted in (
+                (0x0002, True),
+                (0x0022, True),
+                (0x0102, False),
+            ):
+                coff = bytearray(20)
+                coff[:2] = machine.to_bytes(2, "little")
+                coff[2:4] = (1).to_bytes(2, "little")
+                coff[16:18] = (112).to_bytes(2, "little")
+                coff[18:20] = characteristics.to_bytes(2, "little")
+                with self.subTest(
+                    machine=hex(machine),
+                    characteristics=hex(characteristics),
+                ):
+                    actual = _RUN._pe_optional_layout(
+                        bytes(coff),
+                        machine,
+                        offset,
+                        file_size,
+                    )
+                    self.assertEqual(actual is not None, admitted)
+
     def test_rejects_obsolete_working_set_characteristic(self) -> None:
         offset = 0x80
         file_size = 0x400
