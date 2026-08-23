@@ -411,6 +411,36 @@ def _synthetic_fat64_macho(*, reserved: int = 0) -> bytes:
     )
 
 
+def _synthetic_android_manifest() -> bytes:
+    """Return one minimal Android resource binary XML manifest fixture."""
+    string_pool = (
+        (0x0001).to_bytes(2, "little")
+        + (28).to_bytes(2, "little")
+        + (28).to_bytes(4, "little")
+        + (b"\0" * 20)
+    )
+    start_element = (
+        (0x0102).to_bytes(2, "little")
+        + (16).to_bytes(2, "little")
+        + (36).to_bytes(4, "little")
+        + (1).to_bytes(4, "little")
+        + (0xFFFFFFFF).to_bytes(4, "little")
+        + (0xFFFFFFFF).to_bytes(4, "little")
+        + (0).to_bytes(4, "little")
+        + (20).to_bytes(2, "little")
+        + (20).to_bytes(2, "little")
+        + (b"\0" * 8)
+    )
+    size = 8 + len(string_pool) + len(start_element)
+    return (
+        (0x0003).to_bytes(2, "little")
+        + (8).to_bytes(2, "little")
+        + size.to_bytes(4, "little")
+        + string_pool
+        + start_element
+    )
+
+
 def _write_android_apk(
     path: Path,
     machine: int = 0x00B7,
@@ -419,7 +449,7 @@ def _write_android_apk(
 ) -> None:
     """Write one synthetic APK with manifest and native library entries."""
     with _RUN.zipfile.ZipFile(path, "w") as archive:
-        archive.writestr("AndroidManifest.xml", b"synthetic manifest")
+        archive.writestr("AndroidManifest.xml", _synthetic_android_manifest())
         archive.writestr(
             "lib/arm64-v8a/libUnreal.so",
             _synthetic_elf(machine, entrypoint=entrypoint),
@@ -3541,6 +3571,44 @@ class MobileArchiveTreeTests(unittest.TestCase):
                 )
 
 
+class AndroidManifestStructureTests(unittest.TestCase):
+    """Require APK manifests to retain compiled binary-XML structure."""
+
+    def test_rejects_malformed_binary_xml_manifests(self) -> None:
+        baseline = _synthetic_android_manifest()
+        cases: list[tuple[str, bytes, bool]] = [("valid", baseline, True)]
+        plain = b"synthetic manifest"
+        cases.append(("plain-text", plain, False))
+        mutations = (
+            ("root-type", 0, 2, 0x0002),
+            ("root-size", 4, 4, len(baseline) + 4),
+            ("string-pool-header", 10, 2, 24),
+            ("node-before-strings", 8, 2, 0x0180),
+            ("missing-start", 36, 2, 0x0103),
+            ("misaligned-child", 40, 4, 35),
+            ("attribute-overflow", 64, 2, 1),
+        )
+        for reason, offset, width, value in mutations:
+            payload = bytearray(baseline)
+            payload[offset : offset + width] = value.to_bytes(width, "little")
+            cases.append((reason, bytes(payload), False))
+        for reason, manifest, admitted in cases:
+            with (
+                self.subTest(reason=reason),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-android-manifest-"
+                ) as raw,
+            ):
+                package = Path(raw) / "shar.apk"
+                with _RUN.zipfile.ZipFile(package, "w") as archive:
+                    archive.writestr("AndroidManifest.xml", manifest)
+                    archive.writestr(
+                        "lib/arm64-v8a/libUnreal.so",
+                        _synthetic_elf(0x00B7),
+                    )
+                self.assertEqual(_RUN._is_android_apk(package), admitted)
+
+
 class MobileArchiveMemberTypeTests(unittest.TestCase):
     """Require loader-critical mobile ZIP members to be regular files."""
 
@@ -3558,7 +3626,7 @@ class MobileArchiveMemberTypeTests(unittest.TestCase):
             ):
                 package = Path(raw) / "shar.apk"
                 with _RUN.zipfile.ZipFile(package, "w") as archive:
-                    manifest = b"synthetic manifest"
+                    manifest = _synthetic_android_manifest()
                     native = _synthetic_elf(0x00B7)
                     for name, payload in (
                         ("AndroidManifest.xml", manifest),
@@ -3701,7 +3769,7 @@ class CandidateArtifactTests(unittest.TestCase):
             with _RUN.zipfile.ZipFile(apk, "w") as archive:
                 archive.writestr(
                     "AndroidManifest.xml",
-                    b"synthetic manifest",
+                    _synthetic_android_manifest(),
                 )
                 archive.writestr(
                     "lib/arm64-v8a/libUnreal.so",
@@ -3716,7 +3784,7 @@ class CandidateArtifactTests(unittest.TestCase):
             with _RUN.zipfile.ZipFile(apk, "w") as archive:
                 archive.writestr(
                     "AndroidManifest.xml",
-                    b"synthetic manifest",
+                    _synthetic_android_manifest(),
                 )
                 archive.writestr(
                     "lib/arm64-v8a/libUnreal.so",
@@ -3731,7 +3799,7 @@ class CandidateArtifactTests(unittest.TestCase):
             with _RUN.zipfile.ZipFile(apk, "w") as archive:
                 archive.writestr(
                     "AndroidManifest.xml",
-                    b"synthetic manifest",
+                    _synthetic_android_manifest(),
                 )
                 archive.writestr(
                     "lib/arm64-v8a/libUnreal.so",
@@ -3753,7 +3821,7 @@ class CandidateArtifactTests(unittest.TestCase):
                 with _RUN.zipfile.ZipFile(apk, "w") as archive:
                     archive.writestr(
                         "AndroidManifest.xml",
-                        b"synthetic manifest",
+                        _synthetic_android_manifest(),
                     )
                     archive.writestr(
                         "lib/arm64-v8a/libUnreal.so",
@@ -3797,7 +3865,7 @@ class CandidateArtifactTests(unittest.TestCase):
                     with _RUN.zipfile.ZipFile(apk, "w") as archive:
                         archive.writestr(
                             "AndroidManifest.xml",
-                            b"synthetic manifest",
+                            _synthetic_android_manifest(),
                         )
                         archive.writestr(member, _synthetic_elf(0x00B7))
                     with self.assertRaisesRegex(
