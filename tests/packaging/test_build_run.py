@@ -33,7 +33,7 @@
 # CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit symtab
 # CSpell:ignore DYSYMTAB dysymtab uba
 # CSpell:ignore osabi phdr rva shlib rpath runpath
-# CSpell:ignore popen creationflags killpg taskkill
+# CSpell:ignore popen creationflags killpg taskkill DFL pthread sigmask
 
 from __future__ import annotations
 
@@ -1375,7 +1375,24 @@ class UatProcessLifecycleTests(unittest.TestCase):
             )
             self.assertNotIn("start_new_session", popen.call_args.kwargs)
 
-    def test_posix_interrupt_terminates_group_before_reraise(self) -> None:
+    def test_posix_tree_tracks_children_that_change_session(self) -> None:
+        table = [
+            (101, 1, "S"),
+            (102, 101, "S"),
+            (103, 102, "S"),
+            (104, 102, "Z"),
+            (105, 9, "S"),
+        ]
+        with mock.patch.object(
+            _RUN,
+            "_posix_process_table",
+            return_value=table,
+        ):
+            self.assertEqual(_RUN._uat_posix_tree_pids(101), [101, 102, 103])
+
+    def test_posix_interrupt_terminates_descendants_before_reraise(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-uat-process-") as raw:
             root = Path(raw)
             work = root / "work"
@@ -1389,7 +1406,17 @@ class UatProcessLifecycleTests(unittest.TestCase):
                     "Popen",
                     return_value=process,
                 ),
-                mock.patch.object(_RUN.os, "killpg") as kill_group,
+                mock.patch.object(
+                    _RUN,
+                    "_uat_posix_tree_pids",
+                    return_value=[101, 102, 103],
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_wait_for_posix_pids",
+                    return_value=set(),
+                ),
+                mock.patch.object(_RUN.os, "kill") as kill_process,
                 self.assertRaises(KeyboardInterrupt),
             ):
                 _RUN._run_uat(
@@ -1399,29 +1426,47 @@ class UatProcessLifecycleTests(unittest.TestCase):
                     work / "uat.log",
                 )
 
-        kill_group.assert_called_once_with(101, _RUN.signal.SIGTERM)
+        self.assertEqual(
+            kill_process.call_args_list,
+            [
+                mock.call(101, _RUN.signal.SIGTERM),
+                mock.call(102, _RUN.signal.SIGTERM),
+                mock.call(103, _RUN.signal.SIGTERM),
+            ],
+        )
         self.assertEqual(
             process.wait.call_args_list,
-            [mock.call(), mock.call(timeout=_RUN._UAT_STOP_TIMEOUT_SECONDS)],
+            [mock.call(), mock.call()],
         )
 
-    def test_posix_forces_process_group_after_timeout(self) -> None:
+    def test_posix_forces_only_surviving_descendants(self) -> None:
         process = mock.Mock(pid=102)
-        process.wait.side_effect = [_RUN.subprocess.TimeoutExpired("uat", 5), 0]
+        process.wait.return_value = 0
         with (
             mock.patch.object(_RUN.os, "name", "posix"),
-            mock.patch.object(_RUN.os, "killpg") as kill_group,
+            mock.patch.object(
+                _RUN,
+                "_uat_posix_tree_pids",
+                return_value=[102, 103],
+            ),
+            mock.patch.object(
+                _RUN,
+                "_wait_for_posix_pids",
+                side_effect=[{103}, set()],
+            ),
+            mock.patch.object(_RUN.os, "kill") as kill_process,
         ):
             _RUN._terminate_uat_tree(process)
 
         self.assertEqual(
-            kill_group.call_args_list,
+            kill_process.call_args_list,
             [
                 mock.call(102, _RUN.signal.SIGTERM),
-                mock.call(102, _RUN.signal.SIGKILL),
+                mock.call(103, _RUN.signal.SIGTERM),
+                mock.call(103, _RUN.signal.SIGKILL),
             ],
         )
-        self.assertEqual(process.wait.call_count, 2)
+        process.wait.assert_called_once_with()
 
     def test_windows_interrupt_terminates_entire_process_tree(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-uat-process-") as raw:
@@ -1463,6 +1508,41 @@ class UatProcessLifecycleTests(unittest.TestCase):
             process.wait.call_args_list,
             [mock.call(), mock.call()],
         )
+
+    def test_installs_int_and_term_handlers_if_previously_ignored(
+        self,
+    ) -> None:
+        old_mask = {_RUN.signal.SIGINT}
+        with (
+            mock.patch.object(_RUN.os, "name", "posix"),
+            mock.patch.object(
+                _RUN.signal,
+                "pthread_sigmask",
+                return_value=old_mask,
+            ) as mask,
+            mock.patch.object(
+                _RUN.signal,
+                "signal",
+                side_effect=[_RUN.signal.SIG_IGN, _RUN.signal.SIG_DFL],
+            ) as install,
+        ):
+            previous, previous_mask = _RUN._install_run_signal_handlers()
+
+        mask.assert_called_once_with(
+            _RUN.signal.SIG_UNBLOCK,
+            {_RUN.signal.SIGINT, _RUN.signal.SIGTERM},
+        )
+        self.assertEqual(len(install.call_args_list), 2)
+        self.assertEqual(
+            set(previous),
+            {_RUN.signal.SIGINT, _RUN.signal.SIGTERM},
+        )
+        self.assertEqual(previous_mask, old_mask)
+
+    def test_signal_handler_preserves_signal_number(self) -> None:
+        with self.assertRaises(_RUN._RunSignal) as raised:
+            _RUN._raise_run_signal(_RUN.signal.SIGTERM, None)
+        self.assertEqual(raised.exception.signum, _RUN.signal.SIGTERM)
 
 
 class TurnkeyReportTests(unittest.TestCase):
