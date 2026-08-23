@@ -33,7 +33,7 @@
 
 """Build selected SHAR targets and publish only complete native packages."""
 
-# CSpell:ignore APPL BNDL FMWK dylinker linkedit
+# CSpell:ignore APPL BNDL FMWK RVA dylinker linkedit
 
 from __future__ import annotations
 
@@ -1206,6 +1206,20 @@ def _pe_loader_fields_are_valid(
     )
 
 
+def _pe_raw_offset_matches_virtual_address(
+    raw_size: int,
+    raw_offset: int,
+    virtual_address: int,
+    section_alignment: int,
+) -> bool:
+    """Return whether low-alignment image bytes use their RVA offset."""
+    return (
+        raw_size == 0
+        or section_alignment >= 0x1000
+        or raw_offset == virtual_address
+    )
+
+
 def _pe_raw_section_is_valid(
     raw_size: int,
     raw_offset: int,
@@ -1273,7 +1287,12 @@ def _pe_sections_contain_entrypoint(
         raw_size = int.from_bytes(section[16:20], "little")
         raw_offset = int.from_bytes(section[20:24], "little")
         characteristics = int.from_bytes(section[36:40], "little")
-        if not _pe_raw_section_is_valid(
+        if not _pe_raw_offset_matches_virtual_address(
+            raw_size,
+            raw_offset,
+            virtual_address,
+            policy.section_alignment,
+        ) or not _pe_raw_section_is_valid(
             raw_size,
             raw_offset,
             file_size,
