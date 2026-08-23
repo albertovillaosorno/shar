@@ -115,6 +115,14 @@ class _MachOSegment(NamedTuple):
     initial_protection: int
 
 
+class _MachOAuxiliary(NamedTuple):
+    """One parsed non-segment Mach-O command."""
+
+    kind: str
+    value: int = 0
+    size: int = 0
+
+
 class _PeSectionPolicy(NamedTuple):
     """PE section alignment and image-boundary admission fields."""
 
@@ -895,6 +903,16 @@ _PE_MACHINES = {"amd64": 0x8664, "arm64": 0xAA64}
 _MACHO_ARM64_CPU = 0x0100000C
 _MACHO_PLATFORMS = {"macos": 1, "ios": 2}
 _MACHO_CPU_SUBTYPE_MASK = 0xFF000000
+_MACHO_LINKEDIT_DATA_COMMANDS = {
+    0x1D,
+    0x1E,
+    0x26,
+    0x29,
+    0x2B,
+    0x2E,
+    0x80000033,
+    0x80000034,
+}
 _MACHO_THIN_ENDIAN = {
     bytes.fromhex("cffaedfe"): "little",
     bytes.fromhex("feedfacf"): "big",
@@ -1787,6 +1805,22 @@ def _macho_dylinker_is_valid(
     return terminator > 0
 
 
+def _macho_linkedit_data_range(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    file_size: int,
+) -> tuple[int, int] | None:
+    """Return one file-bounded link-edit data range."""
+    if command_size != 16 or len(body) != 8:
+        return None
+    data_offset = int.from_bytes(body[:4], byte_order)
+    data_size = int.from_bytes(body[4:8], byte_order)
+    if data_offset > file_size or data_size > file_size - data_offset:
+        return None
+    return data_offset, data_size
+
+
 def _macho_linkedit_data_is_valid(
     body: bytes,
     command_size: int,
@@ -1794,11 +1828,15 @@ def _macho_linkedit_data_is_valid(
     file_size: int,
 ) -> bool:
     """Return whether one link-edit data command stays inside the file."""
-    if command_size != 16 or len(body) != 8:
-        return False
-    data_offset = int.from_bytes(body[:4], byte_order)
-    data_size = int.from_bytes(body[4:8], byte_order)
-    return data_offset <= file_size and data_size <= file_size - data_offset
+    return (
+        _macho_linkedit_data_range(
+            body,
+            command_size,
+            byte_order,
+            file_size,
+        )
+        is not None
+    )
 
 
 def _macho_platform_command(
@@ -1806,12 +1844,12 @@ def _macho_platform_command(
     command_size: int,
     body: bytes,
     byte_order: str,
-) -> tuple[str, int] | None:
+) -> _MachOAuxiliary | None:
     """Parse one modern ARM64 platform command or reject a legacy form."""
     if command != 0x32:
         return None
     platform = _macho_build_platform(body, command_size, byte_order)
-    return None if platform is None else ("platform", platform)
+    return None if platform is None else _MachOAuxiliary("platform", platform)
 
 
 def _macho_auxiliary_command(
@@ -1820,30 +1858,24 @@ def _macho_auxiliary_command(
     body: bytes,
     byte_order: str,
     file_size: int,
-) -> tuple[str, int] | None:
+) -> _MachOAuxiliary | None:
     """Parse one non-segment Mach-O command used by admission."""
-    linkedit_commands = {
-        0x1D,
-        0x1E,
-        0x26,
-        0x29,
-        0x2B,
-        0x2E,
-        0x80000033,
-        0x80000034,
-    }
-    result: tuple[str, int] | None = ("ignored", 0)
-    if command in linkedit_commands:
-        if not _macho_linkedit_data_is_valid(
+    result: _MachOAuxiliary | None = _MachOAuxiliary("ignored")
+    if command in _MACHO_LINKEDIT_DATA_COMMANDS:
+        data_range = _macho_linkedit_data_range(
             body,
             command_size,
             byte_order,
             file_size,
-        ):
-            result = None
+        )
+        result = (
+            None
+            if data_range is None
+            else _MachOAuxiliary("linkedit", *data_range)
+        )
     elif command == 0xE:
         result = (
-            ("dylinker", 0)
+            _MachOAuxiliary("dylinker")
             if _macho_dylinker_is_valid(body, command_size, byte_order)
             else None
         )
@@ -1856,13 +1888,17 @@ def _macho_auxiliary_command(
         )
     elif command == 0x80000028:
         result = (
-            ("main", int.from_bytes(body[:8], byte_order))
+            _MachOAuxiliary("main", int.from_bytes(body[:8], byte_order))
             if command_size == 24
             else None
         )
     elif command == 0x5:
         entrypoint = _macho_thread_state_entrypoint(body, byte_order)
-        result = None if entrypoint is None else ("thread", entrypoint)
+        result = (
+            None
+            if entrypoint is None
+            else _MachOAuxiliary("thread", entrypoint)
+        )
     return result
 
 
@@ -1872,24 +1908,28 @@ def _macho_command_evidence(
     command_count: int,
     command_bytes: int,
     file_size: int,
-) -> tuple[list[_MachOSegment], list[tuple[str, int]], bool, list[int]] | None:
+) -> tuple[
+    list[_MachOSegment],
+    list[tuple[str, int]],
+    bool,
+    list[int],
+    list[tuple[int, int]],
+] | None:
     """Collect bounded segment, entrypoint, linker, and platform evidence."""
     remaining = command_bytes
-    entrypoints: list[tuple[str, int]] = []
     segments: list[_MachOSegment] = []
-    platforms: list[int] = []
-    has_dynamic_linker = False
+    auxiliaries: list[_MachOAuxiliary] = []
     for _ in range(command_count):
         record = _macho_read_command(stream, byte_order, remaining)
         if record is None:
             return None
-        command, command_size, body = record
+        command, command_size, command_body = record
         if command in {0x1, 0x19}:
             segment = (
                 None
                 if command == 0x1
                 else _macho_segment64(
-                    body,
+                    command_body,
                     command_size,
                     byte_order,
                     file_size,
@@ -1902,23 +1942,35 @@ def _macho_command_evidence(
             auxiliary = _macho_auxiliary_command(
                 command,
                 command_size,
-                body,
+                command_body,
                 byte_order,
                 file_size,
             )
             if auxiliary is None:
                 return None
-            kind, value = auxiliary
-            if kind == "dylinker":
-                has_dynamic_linker = True
-            elif kind == "platform":
-                platforms.append(value)
-            elif kind in {"main", "thread"}:
-                entrypoints.append((kind, value))
+            auxiliaries.append(auxiliary)
         remaining -= command_size
     if remaining != 0:
         return None
-    return segments, entrypoints, has_dynamic_linker, platforms
+    entrypoints = [
+        (item.kind, item.value)
+        for item in auxiliaries
+        if item.kind in {"main", "thread"}
+    ]
+    platforms = [item.value for item in auxiliaries if item.kind == "platform"]
+    linkedit_ranges = [
+        (item.value, item.size)
+        for item in auxiliaries
+        if item.kind == "linkedit" and item.size
+    ]
+    has_dynamic_linker = any(item.kind == "dylinker" for item in auxiliaries)
+    return (
+        segments,
+        entrypoints,
+        has_dynamic_linker,
+        platforms,
+        linkedit_ranges,
+    )
 
 
 def _macho_ranges_are_disjoint(
@@ -1966,6 +2018,27 @@ def _macho_segments_follow_layout_order(
             ):
                 return False
     return True
+
+
+def _macho_linkedit_ranges_fit_segment(
+    segments: Sequence[_MachOSegment],
+    ranges: Sequence[tuple[int, int]],
+) -> bool:
+    """Return whether positive link-edit payloads stay in __LINKEDIT."""
+    linkedit = [
+        segment
+        for segment in segments
+        if segment.name.split(b"\0", 1)[0] == b"__LINKEDIT"
+    ]
+    if len(linkedit) != 1:
+        return False
+    start = linkedit[0].file_offset
+    size = linkedit[0].file_size
+    return all(
+        start <= offset <= start + size
+        and payload_size <= start + size - offset
+        for offset, payload_size in ranges
+    )
 
 
 def _macho_entrypoint_matches_segments(
@@ -2032,10 +2105,17 @@ def _macho_commands_have_entrypoint(
     )
     if evidence is None:
         return False
-    segments, entrypoints, has_dynamic_linker, platforms = evidence
+    (
+        segments,
+        entrypoints,
+        has_dynamic_linker,
+        platforms,
+        linkedit_ranges,
+    ) = evidence
     return (
         has_dynamic_linker
         and platforms == [expected_platform]
+        and _macho_linkedit_ranges_fit_segment(segments, linkedit_ranges)
         and _macho_entrypoint_matches_segments(
             segments,
             entrypoints,
