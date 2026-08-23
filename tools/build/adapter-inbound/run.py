@@ -1,3 +1,4 @@
+# cspell:ignore linkedit LINKEDIT
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -1597,11 +1598,19 @@ def _macho_entrypoint_matches_segments(
         for segment in segments
         if segment.name.split(b"\0", 1)[0] == b"__TEXT"
     ]
-    if len(text_segments) != 1:
+    linkedit_segments = [
+        segment
+        for segment in segments
+        if segment.name.split(b"\0", 1)[0] == b"__LINKEDIT"
+    ]
+    if len(text_segments) != 1 or len(linkedit_segments) != 1:
         return False
     text_segment = text_segments[0]
+    linkedit_segment = linkedit_segments[0]
     if (
         text_segment.file_offset != 0
+        or text_segment.initial_protection != 0x5
+        or linkedit_segment.initial_protection != 0x1
         or 32 + command_bytes > text_segment.file_size
     ):
         return False
