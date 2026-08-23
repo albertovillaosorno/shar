@@ -30,7 +30,7 @@
 
 """Tests for canonical build-runner project-state migration."""
 
-# CSpell:ignore dylinker linkedit osabi APPL FMWK BNDL RVA rva
+# CSpell:ignore dylinker linkedit osabi APPL FMWK BNDL RVA rva SHLIB shlib
 
 from __future__ import annotations
 
@@ -3040,6 +3040,33 @@ class ElfEntrypointTests(unittest.TestCase):
                     candidate,
                     _RUN._TARGETS_BY_ID["linux-x64"],
                 )
+
+    def test_rejects_reserved_shlib_segment(self) -> None:
+        base = bytearray(
+            _synthetic_elf(
+                0x003E,
+                image_type=2,
+                segment_offset=176,
+            )
+        )
+        header = bytearray(base[:64])
+        load = bytearray(base[64:120])
+        header[56:58] = (2).to_bytes(2, "little")
+        load[8:16] = (176).to_bytes(8, "little")
+        shlib = bytearray(56)
+        shlib[:4] = (5).to_bytes(4, "little")
+        payload = bytes(header + shlib + load + b"\0")
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        self.assertFalse(
+            _RUN._matches_elf(
+                stream,
+                prefix,
+                "amd64",
+                len(payload),
+                require_entrypoint=True,
+            )
+        )
 
     def test_rejects_out_of_file_supplementary_segment(self) -> None:
         base = bytearray(

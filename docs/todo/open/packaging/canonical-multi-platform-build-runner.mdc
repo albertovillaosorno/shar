@@ -11,7 +11,7 @@ children: []
 ---
 
 <!-- CSpell:ignore APPL COMDAT DYLINKER LINKEDIT -->
-<!-- CSpell:ignore OSABI pdb RVA rva UNIXTHREAD -->
+<!-- CSpell:ignore OSABI pdb RVA rva SHLIB UNIXTHREAD -->
 
 # Canonical multi-platform build runner
 
@@ -151,8 +151,9 @@ little-endian target encoding and omit reserved processor flags, and every image
 must use an
 executable/shared-object image type and a bounded ELF64 program-header table.
 Every non-null program segment with file-backed bytes must stay inside the
-image,
-and at least one executable loadable segment must carry non-empty file-backed
+image, and the nonconforming reserved `PT_SHLIB` segment type is rejected while
+OS/processor-specific segment ranges remain admissible. At least one executable
+loadable segment must carry non-empty file-backed
 bytes whose file range does not exceed its memory range or wrap the 64-bit
 virtual address space.
 Loadable ELF segments also retain the ABI alignment contract: `p_align` must be

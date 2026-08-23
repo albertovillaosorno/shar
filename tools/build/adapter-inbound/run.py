@@ -1022,7 +1022,7 @@ def _elf_load_programs_match(
         program_type = int.from_bytes(program[:4], byte_order)
         if program_type == 0:
             continue
-        if not _elf_program_file_range_is_bounded(
+        if program_type == 5 or not _elf_program_file_range_is_bounded(
             program,
             byte_order,
             file_size,
