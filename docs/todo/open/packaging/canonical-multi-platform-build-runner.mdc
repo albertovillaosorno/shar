@@ -10,7 +10,8 @@ dependencies: []
 children: []
 ---
 
-<!-- CSpell:ignore APPL COMDAT DYLINKER LINKEDIT OSABI pdb RVA rva UNIXTHREAD -->
+<!-- CSpell:ignore APPL COMDAT DYLINKER LINKEDIT -->
+<!-- CSpell:ignore OSABI pdb RVA rva UNIXTHREAD -->
 
 # Canonical multi-platform build runner
 

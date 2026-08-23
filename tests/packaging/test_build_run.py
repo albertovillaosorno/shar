@@ -2708,7 +2708,9 @@ class PeSectionLayoutTests(unittest.TestCase):
                 )
 
         section[36:40] = (original | 0x02000000).to_bytes(4, "little")
-        self.assertTrue(_RUN._pe_section_image_metadata_is_valid(bytes(section)))
+        self.assertTrue(
+            _RUN._pe_section_image_metadata_is_valid(bytes(section))
+        )
 
     def test_rejects_nonadjacent_section_virtual_addresses(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-windows-section-") as raw:
