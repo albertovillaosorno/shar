@@ -1347,6 +1347,84 @@ class PublicationTransactionTests(unittest.TestCase):
             self.assertTrue(dist.is_symlink())
             self.assertTrue(displaced.is_dir())
 
+    def test_rejects_candidate_drift_before_candidate_moves(self) -> None:
+        for replacement in ("directory", "runtime"):
+            with (
+                self.subTest(replacement=replacement),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-publish-candidate-race-"
+                ) as raw,
+            ):
+                root = Path(raw)
+                candidate = root / "candidate"
+                candidate.mkdir()
+                runtime = candidate / "shar"
+                runtime.write_bytes(_synthetic_elf(0x003E))
+                if _RUN.os.name != "nt":
+                    runtime.chmod(0o755)
+                destination = root / "dist/linux-x64"
+                destination.parent.mkdir()
+                displaced = root / "displaced-candidate"
+                real_state = _RUN._require_publication_destination_state
+
+                injected = (
+                    replacement,
+                    candidate,
+                    displaced,
+                    runtime,
+                    real_state,
+                )
+
+                def replace_after_validation(
+                    target_path: Path,
+                    expected: tuple[int, int, int] | None,
+                    state: tuple[
+                        str,
+                        Path,
+                        Path,
+                        Path,
+                        Callable[[Path, tuple[int, int, int] | None], None],
+                    ] = injected,
+                ) -> None:
+                    replace_kind, package, stale, binary, check_state = state
+                    check_state(target_path, expected)
+                    if replace_kind == "directory":
+                        package.replace(stale)
+                        package.mkdir()
+                        (package / "unvalidated.txt").write_text(
+                            "replacement", encoding="utf-8"
+                        )
+                    else:
+                        binary.unlink()
+                        binary.write_text("replacement", encoding="utf-8")
+
+                with (
+                    mock.patch.object(
+                        _RUN,
+                        "_require_publication_destination_state",
+                        side_effect=replace_after_validation,
+                    ),
+                    self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "candidate package changed before publication",
+                    ),
+                ):
+                    _RUN._publish(
+                        candidate,
+                        destination,
+                        _RUN._TARGETS_BY_ID["linux-x64"],
+                    )
+
+                self.assertFalse(destination.exists())
+                if replacement == "directory":
+                    self.assertTrue((displaced / "shar").is_file())
+                    self.assertTrue((candidate / "unvalidated.txt").is_file())
+                else:
+                    self.assertEqual(
+                        runtime.read_text(encoding="utf-8"),
+                        "replacement",
+                    )
+
     def test_rejects_destination_drift_before_candidate_moves(self) -> None:
         for initially_present in (False, True):
             with (
