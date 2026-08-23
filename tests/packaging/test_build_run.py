@@ -3041,6 +3041,39 @@ class ElfEntrypointTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["linux-x64"],
                 )
 
+    def test_rejects_out_of_file_supplementary_segment(self) -> None:
+        base = bytearray(
+            _synthetic_elf(
+                0x003E,
+                image_type=2,
+                segment_offset=176,
+            )
+        )
+        header = bytearray(base[:64])
+        load = bytearray(base[64:120])
+        header[56:58] = (2).to_bytes(2, "little")
+        load[8:16] = (176).to_bytes(8, "little")
+        for dynamic_offset, admitted in ((176, True), (0x1000, False)):
+            dynamic = bytearray(56)
+            dynamic[:4] = (2).to_bytes(4, "little")
+            dynamic[8:16] = dynamic_offset.to_bytes(8, "little")
+            dynamic[32:40] = (1).to_bytes(8, "little")
+            dynamic[40:48] = (1).to_bytes(8, "little")
+            payload = bytes(header + dynamic + load + b"\0")
+            stream = io.BytesIO(payload)
+            prefix = stream.read(4)
+            with self.subTest(dynamic_offset=hex(dynamic_offset)):
+                self.assertEqual(
+                    _RUN._matches_elf(
+                        stream,
+                        prefix,
+                        "amd64",
+                        len(payload),
+                        require_entrypoint=True,
+                    ),
+                    admitted,
+                )
+
     def test_rejects_wrapping_load_segment_virtual_range(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
             candidate = Path(raw)

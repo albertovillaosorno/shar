@@ -149,10 +149,12 @@ header with the current version, a System V/Linux OSABI, and zero ABI-version
 and reserved identification bytes. Supported x64 and ARM64 images must use their
 little-endian target encoding and omit reserved processor flags, and every image
 must use an
-executable/shared-object image type, a bounded ELF64 program-header table, and
-at least one executable loadable segment with non-empty file-backed bytes whose
-file range stays inside the image
-and does not exceed its memory range or wrap the 64-bit virtual address space.
+executable/shared-object image type and a bounded ELF64 program-header table.
+Every non-null program segment with file-backed bytes must stay inside the
+image,
+and at least one executable loadable segment must carry non-empty file-backed
+bytes whose file range does not exceed its memory range or wrap the 64-bit
+virtual address space.
 Loadable ELF segments also retain the ABI alignment contract: `p_align` must be
 zero, one, or a power of two, and aligned segments require congruent file
 offsets and virtual addresses. `PT_LOAD` entries must also remain in ascending
