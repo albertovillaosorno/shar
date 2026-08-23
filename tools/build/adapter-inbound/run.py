@@ -959,6 +959,18 @@ def _elf_load_programs_match(
     return loadable and executable and load_segments_valid and entrypoint_ok
 
 
+def _elf_ident_is_valid(header: bytes) -> bool:
+    """Return whether one complete ELF64 identification block is canonical."""
+    return (
+        len(header) == 64
+        and header[4] == 2
+        and header[6] == 1
+        and header[7] in {0, 3}
+        and header[8] == 0
+        and not any(header[9:16])
+    )
+
+
 def _matches_elf(
     stream: object,
     prefix: bytes,
@@ -970,12 +982,7 @@ def _matches_elf(
 ) -> bool:
     """Return whether one admitted ELF64 image declares the selected CPU."""
     header = prefix + stream.read(60)
-    if (
-        len(header) != 64
-        or header[4] != 2
-        or header[6] != 1
-        or header[7] not in {0, 3}
-    ):
+    if not _elf_ident_is_valid(header):
         return False
     byte_order = {1: "little", 2: "big"}.get(header[5])
     expected = _ELF_MACHINES.get(architecture)
