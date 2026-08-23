@@ -3602,6 +3602,54 @@ class MachOLinkEditDataTests(unittest.TestCase):
                     admitted,
                 )
 
+    def test_allows_one_code_signature_command(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=16,
+            )
+        )
+        payload[104:108] = (0x1D).to_bytes(4, "little")
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        self.assertTrue(
+            _RUN._matches_macho(
+                stream,
+                prefix,
+                "macos",
+                "arm64",
+                len(payload),
+            )
+        )
+
+    def test_rejects_duplicate_code_signature_commands(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=32,
+            )
+        )
+        payload[16:20] = (
+            int.from_bytes(payload[16:20], "little") + 1
+        ).to_bytes(4, "little")
+        record = (
+            (0x1D).to_bytes(4, "little")
+            + (16).to_bytes(4, "little")
+            + (b"\0" * 8)
+        )
+        payload[104:136] = record + record
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        self.assertFalse(
+            _RUN._matches_macho(
+                stream,
+                prefix,
+                "macos",
+                "arm64",
+                len(payload),
+            )
+        )
+
     def test_applies_bounds_to_all_linkedit_command_ids(self) -> None:
         commands = (
             0x1D,
