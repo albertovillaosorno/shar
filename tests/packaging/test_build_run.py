@@ -2543,6 +2543,55 @@ class MachOEntrypointTests(unittest.TestCase):
                 )
 
 
+class MobileArchiveTreeTests(unittest.TestCase):
+    """Require mobile ZIP inventories to describe realizable trees."""
+
+    def test_mobile_candidate_rejects_file_ancestor_conflict(self) -> None:
+        cases = (
+            (
+                "android-arm64",
+                "shar.apk",
+                _write_android_apk,
+                "lib",
+                "Android APK",
+            ),
+            ("ios-arm64", "shar.ipa", _write_ios_ipa, "Payload", "iOS IPA"),
+        )
+        for target_id, name, write_valid, conflict, label in cases:
+            with (
+                self.subTest(target=target_id),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-mobile-member-tree-"
+                ) as raw,
+            ):
+                candidate = Path(raw)
+                package = candidate / name
+                write_valid(package)
+                with _RUN.zipfile.ZipFile(package, "a") as archive:
+                    archive.writestr(conflict, b"file ancestor")
+                with self.assertRaisesRegex(_RUN.RunFailure, label):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
+
+    def test_mobile_candidate_rejects_file_directory_alias(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-mobile-member-tree-"
+        ) as raw:
+            candidate = Path(raw)
+            package = candidate / "shar.apk"
+            _write_android_apk(package)
+            with _RUN.zipfile.ZipFile(package, "a") as archive:
+                archive.writestr("assets/conflict", b"file")
+                archive.writestr("assets/conflict/", b"")
+            with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["android-arm64"],
+                )
+
+
 class CandidateArtifactTests(unittest.TestCase):
     """Require each candidate to contain its declared runnable artifact."""
 
