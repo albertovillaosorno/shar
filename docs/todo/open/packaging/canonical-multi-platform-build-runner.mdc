@@ -150,7 +150,8 @@ segment lookalikes fail.
 Thin and universal
 ARM64 Mach-O main images must carry a complete 64-bit header with a zero
 reserved word, a bounded load-command table whose command sizes retain 64-bit
-alignment, an executable file type, one bounded `__TEXT` segment beginning at
+alignment and which rejects the 32-bit `LC_SEGMENT` form, an executable file
+type, one bounded `__TEXT` segment beginning at
 file offset zero, and
 exactly one `LC_MAIN` or legacy `LC_UNIXTHREAD` entrypoint rather than only
 carrying an ARM64 CPU field. Entrypoints inside the Mach-O header or
