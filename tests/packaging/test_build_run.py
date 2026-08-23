@@ -2063,6 +2063,22 @@ class PeOptionalHeaderTests(unittest.TestCase):
                         _RUN._TARGETS_BY_ID["windows-x64"],
                     )
 
+    def test_rejects_nonempty_data_directory_at_zero_address(self) -> None:
+        cases = ((0, 1, 120), (4, 5, 152))
+        for index, count, optional_size in cases:
+            with self.subTest(index=index):
+                optional = bytearray(optional_size)
+                optional[56:60] = (0x2000).to_bytes(4, "little")
+                optional[108:112] = count.to_bytes(4, "little")
+                start = 112 + (8 * index)
+                optional[start + 4 : start + 8] = (1).to_bytes(4, "little")
+                self.assertFalse(
+                    _RUN._pe_data_directories_are_valid(
+                        bytes(optional),
+                        0x4000,
+                    )
+                )
+
     def test_rejects_data_directory_outside_image(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-windows-header-") as raw:
             candidate = Path(raw)

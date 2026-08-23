@@ -1155,6 +1155,8 @@ def _pe_data_directories_are_valid(
         size = int.from_bytes(optional[start + 4 : start + 8], "little")
         if size == 0:
             continue
+        if address == 0:
+            return False
         limit = file_size if index == 4 else image_size
         if address > limit or size > limit - address:
             return False
