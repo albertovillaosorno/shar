@@ -3996,6 +3996,50 @@ class MachOSymbolTableTests(unittest.TestCase):
         )
 
 
+class MachONoteTests(unittest.TestCase):
+    """Validate optional Mach-O note command file ranges."""
+
+    def _matches(self, payload: bytes) -> bool:
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        return _RUN._matches_macho(
+            stream,
+            prefix,
+            "macos",
+            "arm64",
+            len(payload),
+        )
+
+    def _with_note(
+        self,
+        *,
+        command_size: int = 40,
+        note_offset: int = 0,
+        note_size: int = 0,
+    ) -> bytes:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=command_size,
+            )
+        )
+        payload[104:108] = (0x31).to_bytes(4, "little")
+        if command_size >= 40:
+            payload[128:136] = note_offset.to_bytes(8, "little")
+            payload[136:144] = note_size.to_bytes(8, "little")
+        return bytes(payload)
+
+    def test_allows_one_zero_range_note(self) -> None:
+        self.assertTrue(self._matches(self._with_note()))
+
+    def test_rejects_out_of_file_note_range(self) -> None:
+        payload = self._with_note(note_offset=0x10000, note_size=1)
+        self.assertFalse(self._matches(payload))
+
+    def test_rejects_wrong_note_command_size(self) -> None:
+        self.assertFalse(self._matches(self._with_note(command_size=32)))
+
+
 class MachOEncryptionInfoTests(unittest.TestCase):
     """Validate optional Mach-O64 encrypted-file range metadata."""
 
