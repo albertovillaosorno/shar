@@ -1018,7 +1018,7 @@ class UatLauncherTests(unittest.TestCase):
 class BuildArgumentTests(unittest.TestCase):
     """Keep platform-specific UBT controls inside reviewed build arguments."""
 
-    def test_disables_uba_only_for_linux_targets(self) -> None:
+    def test_linux_uses_reviewed_source_engine_controls(self) -> None:
         for target in _RUN._TARGETS:
             arguments = _RUN._build_arguments(
                 Path("/project/shar.uproject"),
@@ -1026,11 +1026,10 @@ class BuildArgumentTests(unittest.TestCase):
                 Path("/candidate"),
                 Path("/stage"),
             )
+            linux = target.system == "linux"
             with self.subTest(target=target.identifier):
-                self.assertEqual(
-                    "-UbtArgs=-NoUBA" in arguments,
-                    target.system == "linux",
-                )
+                self.assertEqual("-UbtArgs=-NoUBA" in arguments, linux)
+                self.assertEqual("-SkipBuildEditor" in arguments, linux)
 
 
 class BuildWorkRootTests(unittest.TestCase):
