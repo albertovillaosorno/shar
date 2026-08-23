@@ -1521,11 +1521,12 @@ def _macho_command_evidence(
     command_count: int,
     command_bytes: int,
     file_size: int,
-) -> tuple[list[_MachOSegment], list[tuple[str, int]]] | None:
-    """Collect bounded segment and process-entry command evidence."""
+) -> tuple[list[_MachOSegment], list[tuple[str, int]], bool] | None:
+    """Collect bounded segment, entrypoint, and dynamic-linker evidence."""
     remaining = command_bytes
     entrypoints: list[tuple[str, int]] = []
     segments: list[_MachOSegment] = []
+    has_dynamic_linker = False
     for _ in range(command_count):
         record = _macho_read_command(stream, byte_order, remaining)
         if record is None:
@@ -1545,6 +1546,8 @@ def _macho_command_evidence(
             if segment is None:
                 return None
             segments.append(segment)
+        elif command == 0xE:
+            has_dynamic_linker = True
         elif command == 0x80000028:
             if command_size != 24:
                 return None
@@ -1557,7 +1560,7 @@ def _macho_command_evidence(
         remaining -= command_size
     if remaining != 0:
         return None
-    return segments, entrypoints
+    return segments, entrypoints, has_dynamic_linker
 
 
 def _macho_ranges_are_disjoint(
@@ -1669,8 +1672,8 @@ def _macho_commands_have_entrypoint(
     )
     if evidence is None:
         return False
-    segments, entrypoints = evidence
-    return _macho_entrypoint_matches_segments(
+    segments, entrypoints, has_dynamic_linker = evidence
+    return has_dynamic_linker and _macho_entrypoint_matches_segments(
         segments,
         entrypoints,
         command_bytes,

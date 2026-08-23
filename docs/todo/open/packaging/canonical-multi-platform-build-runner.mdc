@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-<!-- CSpell:ignore LINKEDIT OSABI pdb UNIXTHREAD -->
+<!-- CSpell:ignore DYLINKER LINKEDIT OSABI pdb UNIXTHREAD -->
 
 # Canonical multi-platform build runner
 
@@ -162,9 +162,9 @@ into a later executable mapping. Positive-size segment file and virtual-memory
 ranges must remain pairwise disjoint. Segment load-command order must also
 follow ascending VM addresses and nonzero file offsets, retaining Apple's
 `__DWARF` exception. Admitted executables require exactly one `__LINKEDIT`
-segment;
-`__TEXT` must be initially readable/executable and
-`__LINKEDIT` read-only. Sections must remain inside their owning segment virtual
+segment, plus `LC_LOAD_DYLINKER` so the Apple loader does not classify it as
+executable. `__TEXT` must be initially readable/executable and `__LINKEDIT`
+read-only. Sections must remain inside their owning segment virtual
 extent, and file-backed sections must also stay within the segment file extent.
 Section records must retain the enclosing segment name
 and honor their declared power-of-two virtual-address alignment. Zero-fill

@@ -30,7 +30,7 @@
 
 """Tests for canonical build-runner project-state migration."""
 
-# CSpell:ignore linkedit osabi
+# CSpell:ignore dylinker linkedit osabi
 
 from __future__ import annotations
 
@@ -217,9 +217,14 @@ def _synthetic_macho(
         )
     segment_size = 72
     linkedit_size = segment_size if include_linkedit else 0
-    command_count = 2 + bool(prefix_command) + bool(include_linkedit)
+    dylinker_size = 8
+    command_count = 3 + bool(prefix_command) + bool(include_linkedit)
     command_bytes = (
-        segment_size + len(prefix_command) + entry_command_size + linkedit_size
+        segment_size
+        + len(prefix_command)
+        + entry_command_size
+        + linkedit_size
+        + dylinker_size
     )
     command_end = 32 + command_bytes
     resolved_entry = command_end if entry_offset is None else entry_offset
@@ -240,6 +245,7 @@ def _synthetic_macho(
     linkedit = (
         _synthetic_linkedit_segment(file_size) if include_linkedit else b""
     )
+    dylinker = (0xE).to_bytes(4, "little") + (8).to_bytes(4, "little")
     return (
         bytes.fromhex("cffaedfe")
         + cpu.to_bytes(4, "little")
@@ -255,6 +261,7 @@ def _synthetic_macho(
         + resolved_entry.to_bytes(8, "little")
         + (0).to_bytes(8, "little")
         + linkedit
+        + dylinker
         + b"\0"
     )
 
@@ -269,7 +276,8 @@ def _synthetic_thread_entry_macho(
     """Return one little-endian Mach-O64 legacy thread-entry fixture."""
     segment_size = 72
     thread_size = 288
-    command_bytes = segment_size + thread_size + segment_size
+    dylinker_size = 8
+    command_bytes = segment_size + thread_size + segment_size + dylinker_size
     command_end = 32 + command_bytes
     resolved_pc = 0x100000000 + command_end if pc is None else pc
     file_size = command_end + 1
@@ -299,7 +307,7 @@ def _synthetic_thread_entry_macho(
         + cpu.to_bytes(4, "little")
         + (0).to_bytes(4, "little")
         + (2).to_bytes(4, "little")
-        + (3).to_bytes(4, "little")
+        + (4).to_bytes(4, "little")
         + command_bytes.to_bytes(4, "little")
         + (0).to_bytes(8, "little")
         + segment
@@ -307,6 +315,8 @@ def _synthetic_thread_entry_macho(
         + thread_size.to_bytes(4, "little")
         + body
         + linkedit
+        + (0xE).to_bytes(4, "little")
+        + (8).to_bytes(4, "little")
         + b"\0"
     )
 
@@ -2838,6 +2848,25 @@ class MachOLoaderSegmentTests(unittest.TestCase):
                     include_linkedit=False,
                 )
             )
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+    def test_rejects_static_execute_without_dylinker(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-macos-static-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            payload = bytearray(_synthetic_macho(_RUN._MACHO_ARM64_CPU))
+            payload[-9:-5] = (0x1B).to_bytes(4, "little")
+            executable.write_bytes(payload)
             if _RUN.os.name != "nt":
                 executable.chmod(0o755)
             with self.assertRaisesRegex(
