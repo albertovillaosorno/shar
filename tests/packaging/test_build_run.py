@@ -2728,6 +2728,39 @@ class MobileArchiveTreeTests(unittest.TestCase):
                 )
 
 
+class MobileArtifactMultiplicityTests(unittest.TestCase):
+    """Require one unambiguous package for each mobile target."""
+
+    def test_rejects_additional_mobile_package(self) -> None:
+        cases = (
+            ("android-arm64", "shar.apk", "stale.apk", _write_android_apk),
+            ("ios-arm64", "shar.ipa", "stale.ipa", _write_ios_ipa),
+        )
+        for target_id, valid_name, extra_name, write_valid in cases:
+            for extra_valid in (False, True):
+                with (
+                    self.subTest(target=target_id, extra_valid=extra_valid),
+                    tempfile.TemporaryDirectory(
+                        prefix="shar-mobile-multiplicity-"
+                    ) as raw,
+                ):
+                    candidate = Path(raw)
+                    write_valid(candidate / valid_name)
+                    extra = candidate / extra_name
+                    if extra_valid:
+                        write_valid(extra)
+                    else:
+                        extra.write_bytes(b"invalid package")
+                    with self.assertRaisesRegex(
+                        _RUN.RunFailure,
+                        "expected exactly one",
+                    ):
+                        _RUN._validate_candidate_artifact(
+                            candidate,
+                            _RUN._TARGETS_BY_ID[target_id],
+                        )
+
+
 class CandidateArtifactTests(unittest.TestCase):
     """Require each candidate to contain its declared runnable artifact."""
 

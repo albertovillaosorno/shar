@@ -2008,12 +2008,16 @@ def _validate_candidate_artifact(
     if mobile_validator is None:
         return
     suffix, label, validator = mobile_validator
-    if any(
-        item.suffix.casefold() == suffix and validator(item)
-        for item in candidate_files
-    ):
+    mobile_packages = [
+        item for item in candidate_files if item.suffix.casefold() == suffix
+    ]
+    if len(mobile_packages) == 1 and validator(mobile_packages[0]):
         return
-    raise RunFailure(f"candidate package has no valid {label}: {candidate}")
+    message = (
+        f"candidate package has no valid {label}; expected exactly one: "
+        f"{candidate}"
+    )
+    raise RunFailure(message)
 
 
 def _require_cache_root_if_present(path: Path, label: str) -> None:
