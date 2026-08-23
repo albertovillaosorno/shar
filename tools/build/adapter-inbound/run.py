@@ -1877,8 +1877,12 @@ def _macho_auxiliary_command(
 ) -> _MachOAuxiliary | None:
     """Parse one non-segment Mach-O command used by admission."""
     result: _MachOAuxiliary | None = _MachOAuxiliary("ignored")
-    if command == 0xD:
-        result = None
+    if command in {0xD, 0x1B}:
+        result = (
+            _MachOAuxiliary("uuid")
+            if command == 0x1B and command_size == 24
+            else None
+        )
     elif command in _MACHO_DYLIB_LOAD_COMMANDS:
         if not _macho_lc_string_is_valid(
             body,
@@ -1984,7 +1988,8 @@ def _macho_command_evidence(
                 return None
             auxiliaries.append(auxiliary)
         remaining -= command_size
-    if remaining != 0:
+    uuid_count = sum(item.kind == "uuid" for item in auxiliaries)
+    if remaining != 0 or uuid_count > 1:
         return None
     entrypoints = [
         (item.kind, item.value)
