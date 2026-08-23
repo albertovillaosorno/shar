@@ -31,6 +31,7 @@
 """Tests for canonical build-runner project-state migration."""
 
 # CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit symtab
+# CSpell:ignore DYSYMTAB dysymtab
 # CSpell:ignore osabi phdr rva shlib rpath runpath
 
 from __future__ import annotations
@@ -3761,6 +3762,91 @@ class MachOPlatformTests(unittest.TestCase):
                             len(payload),
                         )
                     )
+
+
+class MachODynamicSymbolTableTests(unittest.TestCase):
+    """Validate optional Mach-O dynamic symbol-table metadata."""
+
+    def _matches_commands(self, commands: tuple[bytes, ...]) -> bool:
+        command_bytes = sum(map(len, commands))
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=command_bytes,
+            )
+        )
+        payload[16:20] = (
+            int.from_bytes(payload[16:20], "little") + len(commands) - 1
+        ).to_bytes(4, "little")
+        payload[104 : 104 + command_bytes] = b"".join(commands)
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        return _RUN._matches_macho(
+            stream,
+            prefix,
+            "macos",
+            "arm64",
+            len(payload),
+        )
+
+    def _symtab(self) -> bytes:
+        return (
+            (0x2).to_bytes(4, "little")
+            + (24).to_bytes(4, "little")
+            + (b"\0" * 16)
+        )
+
+    def _dysymtab(self, body: bytes | None = None) -> bytes:
+        return (
+            (0xB).to_bytes(4, "little")
+            + (80).to_bytes(4, "little")
+            + ((b"\0" * 72) if body is None else body)
+        )
+
+    def test_allows_zero_range_dynamic_symbol_table_with_symtab(self) -> None:
+        self.assertTrue(
+            self._matches_commands((self._symtab(), self._dysymtab()))
+        )
+
+    def test_rejects_dynamic_symbol_table_without_symtab(self) -> None:
+        self.assertFalse(self._matches_commands((self._dysymtab(),)))
+
+    def test_rejects_duplicate_dynamic_symbol_tables(self) -> None:
+        self.assertFalse(
+            self._matches_commands(
+                (self._symtab(), self._dysymtab(), self._dysymtab())
+            )
+        )
+
+    def test_validates_dynamic_symbol_table_file_ranges(self) -> None:
+        valid = bytearray(72)
+        valid[48:52] = (0x120).to_bytes(4, "little")
+        valid[52:56] = (2).to_bytes(4, "little")
+        ranges = _RUN._macho_dysymtab_ranges(
+            bytes(valid),
+            80,
+            "little",
+            0x200,
+        )
+        self.assertIsNotNone(ranges)
+        invalid = bytearray(valid)
+        invalid[48:52] = (0x1FC).to_bytes(4, "little")
+        self.assertIsNone(
+            _RUN._macho_dysymtab_ranges(
+                bytes(invalid),
+                80,
+                "little",
+                0x200,
+            )
+        )
+        self.assertIsNone(
+            _RUN._macho_dysymtab_ranges(
+                bytes(valid),
+                72,
+                "little",
+                0x200,
+            )
+        )
 
 
 class MachOSymbolTableTests(unittest.TestCase):

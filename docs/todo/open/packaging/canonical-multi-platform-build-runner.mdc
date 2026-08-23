@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-<!-- CSpell:ignore APPL COMDAT DYLD DYLINKER LINKEDIT SYMTAB -->
+<!-- CSpell:ignore APPL COMDAT DYLD DYLINKER LINKEDIT SYMTAB DYSYMTAB -->
 <!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD rpath -->
 
 # Canonical multi-platform build runner
@@ -204,7 +204,9 @@ all five of their file ranges, require the exact 48-byte structure, and may
 appear only once in total. Present `LC_SYMTAB` metadata likewise requires its
 exact 24-byte structure, a single command, and bounded 16-byte ARM64 symbol
 entries plus a bounded string table through the shared `__LINKEDIT` range gate.
-A
+Optional `LC_DYSYMTAB` metadata requires that `LC_SYMTAB` companion, uses one
+exact 80-byte command, and bounds its TOC, 64-bit module, reference, indirect,
+external-relocation, and local-relocation tables through the same range gate. A
 structurally bounded `LC_LOAD_DYLINKER` must carry a nonempty, NUL-terminated
 embedded path so the Apple loader does not classify it as a static executable.
 Present dylib-load and `LC_RPATH` commands must likewise keep their string
