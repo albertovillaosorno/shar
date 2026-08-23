@@ -4370,6 +4370,43 @@ class MachODynamicLinkerTests(unittest.TestCase):
             _RUN._macho_auxiliary_command(0xE, 8, b"", "little", 0x200)
         )
 
+    def test_rejects_dynamic_linker_identity_in_executable(self) -> None:
+        command = bytearray(_synthetic_dylinker_command())
+        command[:4] = (0xF).to_bytes(4, "little")
+        self.assertIsNone(
+            _RUN._macho_auxiliary_command(
+                0xF,
+                len(command),
+                bytes(command[8:]),
+                "little",
+                0x200,
+            )
+        )
+
+    def test_rejects_duplicate_load_dynamic_linker_commands(self) -> None:
+        command = _synthetic_dylinker_command()
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=len(command) * 2,
+            )
+        )
+        payload[16:20] = (
+            int.from_bytes(payload[16:20], "little") + 1
+        ).to_bytes(4, "little")
+        payload[104 : 104 + len(command) * 2] = command + command
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        self.assertFalse(
+            _RUN._matches_macho(
+                stream,
+                prefix,
+                "macos",
+                "arm64",
+                len(payload),
+            )
+        )
+
     def test_rejects_malformed_dynamic_linker_paths(self) -> None:
         command = _synthetic_dylinker_command()
         for reason in ("invalid-offset", "unterminated"):
