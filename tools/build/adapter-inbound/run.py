@@ -1980,10 +1980,11 @@ def _macho_linkedit_auxiliary(
         byte_order,
         file_size,
     )
+    kind = "code-signature" if command == 0x1D else "linkedit"
     return (
         None
         if data_range is None
-        else _MachOAuxiliary("linkedit", ranges=(data_range,))
+        else _MachOAuxiliary(kind, ranges=(data_range,))
     )
 
 
@@ -2078,7 +2079,13 @@ def _macho_auxiliary_singletons_are_valid(
     """Return whether singleton Mach-O auxiliary commands are unique."""
     return all(
         sum(item.kind == kind for item in auxiliaries) <= 1
-        for kind in ("uuid", "dyld-info", "encryption", "symtab")
+        for kind in (
+            "uuid",
+            "dyld-info",
+            "encryption",
+            "symtab",
+            "code-signature",
+        )
     )
 
 
