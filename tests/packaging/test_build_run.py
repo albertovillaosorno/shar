@@ -3126,6 +3126,32 @@ class ElfEntrypointTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["linux-x64"],
                 )
 
+    def test_validates_dynamic_segment_array(self) -> None:
+        program = bytearray(56)
+        program[:4] = (2).to_bytes(4, "little")
+        program[8:16] = (64).to_bytes(8, "little")
+        cases = (
+            ("valid", (1).to_bytes(8, "little") + (b"\0" * 24), True),
+            ("no-null", (1).to_bytes(8, "little") + (b"\0" * 8), False),
+            ("short", b"\0" * 15, False),
+            ("partial", b"\0" * 17, False),
+        )
+        for reason, payload, admitted in cases:
+            candidate = bytearray(program)
+            candidate[32:40] = len(payload).to_bytes(8, "little")
+            stream = io.BytesIO((b"\0" * 64) + payload)
+            stream.seek(32)
+            with self.subTest(reason=reason):
+                self.assertEqual(
+                    _RUN._elf_dynamic_array_is_valid(
+                        stream,
+                        bytes(candidate),
+                        "little",
+                    ),
+                    admitted,
+                )
+                self.assertEqual(stream.tell(), 32)
+
     def test_validates_thread_local_storage_segment(self) -> None:
         base = bytearray(56)
         base[:4] = (7).to_bytes(4, "little")
@@ -3290,9 +3316,9 @@ class ElfEntrypointTests(unittest.TestCase):
             dynamic = bytearray(56)
             dynamic[:4] = (2).to_bytes(4, "little")
             dynamic[8:16] = dynamic_offset.to_bytes(8, "little")
-            dynamic[32:40] = (1).to_bytes(8, "little")
-            dynamic[40:48] = (1).to_bytes(8, "little")
-            payload = bytes(header + dynamic + load + b"\0")
+            dynamic[32:40] = (16).to_bytes(8, "little")
+            dynamic[40:48] = (16).to_bytes(8, "little")
+            payload = bytes(header + dynamic + load + (b"\0" * 16))
             stream = io.BytesIO(payload)
             prefix = stream.read(4)
             with self.subTest(dynamic_offset=hex(dynamic_offset)):
