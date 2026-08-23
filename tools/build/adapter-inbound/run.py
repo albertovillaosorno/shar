@@ -894,7 +894,7 @@ def _build_arguments(
         "-IoStore",
     ]
     if target.system == "linux":
-        arguments.append("-UbtArgs=-NoUBA")
+        arguments.extend(("-SkipBuildEditor", "-UbtArgs=-NoUBA"))
     return arguments
 
 
