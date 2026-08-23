@@ -1586,13 +1586,38 @@ def _macho_segments_are_disjoint(segments: Sequence[_MachOSegment]) -> bool:
     return virtual_disjoint and file_disjoint
 
 
+def _macho_segments_follow_layout_order(
+    segments: Sequence[_MachOSegment],
+) -> bool:
+    """Return whether load-command order follows dyld VM/file layout."""
+    for index, earlier in enumerate(segments):
+        earlier_name = earlier.name.split(b"\0", 1)[0]
+        for later in segments[index + 1 :]:
+            later_name = later.name.split(b"\0", 1)[0]
+            if b"__DWARF" in {earlier_name, later_name}:
+                continue
+            if earlier.virtual_address > later.virtual_address:
+                return False
+            if (
+                earlier.file_offset
+                and later.file_offset
+                and earlier.file_offset > later.file_offset
+            ):
+                return False
+    return True
+
+
 def _macho_entrypoint_matches_segments(
     segments: list[_MachOSegment],
     entrypoints: list[tuple[str, int]],
     command_bytes: int,
 ) -> bool:
     """Bind one Mach-O process entry command to executable segment memory."""
-    if len(entrypoints) != 1 or not _macho_segments_are_disjoint(segments):
+    if (
+        len(entrypoints) != 1
+        or not _macho_segments_are_disjoint(segments)
+        or not _macho_segments_follow_layout_order(segments)
+    ):
         return False
     text_segments = [
         segment

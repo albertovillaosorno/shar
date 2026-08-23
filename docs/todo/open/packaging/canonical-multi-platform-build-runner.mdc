@@ -159,8 +159,10 @@ load-command table are rejected. `LC_MAIN` file offsets must otherwise remain
 inside
 executable file-backed bytes of the unique `__TEXT` segment instead of escaping
 into a later executable mapping. Positive-size segment file and virtual-memory
-ranges must remain pairwise disjoint. Admitted executables require exactly one
-`__LINKEDIT` segment; `__TEXT` must be initially readable/executable and
+ranges must remain pairwise disjoint. Segment load-command order must also
+follow ascending VM addresses and nonzero file offsets, retaining Apple's
+`__DWARF` exception. Admitted executables require exactly one `__LINKEDIT` segment;
+`__TEXT` must be initially readable/executable and
 `__LINKEDIT` read-only. Sections must remain inside their owning segment virtual
 extent, and file-backed sections must also stay within the segment file extent.
 Section records must retain the enclosing segment name
