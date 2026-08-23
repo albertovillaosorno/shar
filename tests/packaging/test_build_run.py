@@ -185,7 +185,7 @@ def _synthetic_macho(
     file_type: int = 2,
     *,
     command: int = 0x80000028,
-    entry_offset: int = 0,
+    entry_offset: int | None = None,
     prefix_command_size: int = 0,
 ) -> bytes:
     """Return one minimal little-endian Mach-O64 image fixture."""
@@ -200,7 +200,9 @@ def _synthetic_macho(
     segment_size = 72
     command_count = 2 + bool(prefix_command)
     command_bytes = segment_size + len(prefix_command) + entry_command_size
-    file_size = 32 + command_bytes
+    command_end = 32 + command_bytes
+    resolved_entry = command_end if entry_offset is None else entry_offset
+    file_size = command_end + 1
     segment = (
         (0x19).to_bytes(4, "little")
         + segment_size.to_bytes(4, "little")
@@ -226,8 +228,9 @@ def _synthetic_macho(
         + prefix_command
         + command.to_bytes(4, "little")
         + entry_command_size.to_bytes(4, "little")
-        + entry_offset.to_bytes(8, "little")
+        + resolved_entry.to_bytes(8, "little")
         + (0).to_bytes(8, "little")
+        + b"\0"
     )
 
 
@@ -236,20 +239,22 @@ def _synthetic_thread_entry_macho(
     *,
     flavor: int = 6,
     count: int = 68,
-    pc: int = 0x100000080,
+    pc: int | None = None,
 ) -> bytes:
     """Return one little-endian Mach-O64 legacy thread-entry fixture."""
+    segment_size = 72
+    thread_size = 288
+    command_bytes = segment_size + thread_size
+    command_end = 32 + command_bytes
+    resolved_pc = 0x100000000 + command_end if pc is None else pc
+    file_size = command_end + 1
     state = bytearray(272)
-    state[256:264] = pc.to_bytes(8, "little")
+    state[256:264] = resolved_pc.to_bytes(8, "little")
     body = (
         flavor.to_bytes(4, "little")
         + count.to_bytes(4, "little")
         + bytes(state)
     )
-    thread_size = 8 + len(body)
-    segment_size = 72
-    command_bytes = segment_size + thread_size
-    file_size = 32 + command_bytes
     segment = (
         (0x19).to_bytes(4, "little")
         + segment_size.to_bytes(4, "little")
@@ -275,6 +280,7 @@ def _synthetic_thread_entry_macho(
         + (0x5).to_bytes(4, "little")
         + thread_size.to_bytes(4, "little")
         + body
+        + b"\0"
     )
 
 
@@ -2514,6 +2520,28 @@ class MachOEntrypointTests(unittest.TestCase):
             )
         )
 
+    def test_rejects_lc_main_inside_load_commands(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-macos-entry-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(
+                _synthetic_macho(
+                    _RUN._MACHO_ARM64_CPU,
+                    entry_offset=32,
+                )
+            )
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
     def test_rejects_entrypoint_in_zero_fill_tail(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-macos-entry-") as raw:
             candidate = Path(raw)
@@ -3421,6 +3449,13 @@ class CandidateArtifactTests(unittest.TestCase):
                     _synthetic_thread_entry_macho(
                         _RUN._MACHO_ARM64_CPU,
                         count=67,
+                    ),
+                ),
+                (
+                    "pc-inside-load-commands",
+                    _synthetic_thread_entry_macho(
+                        _RUN._MACHO_ARM64_CPU,
+                        pc=0x100000080,
                     ),
                 ),
                 (
