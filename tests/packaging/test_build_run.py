@@ -413,11 +413,18 @@ def _synthetic_fat64_macho(*, reserved: int = 0) -> bytes:
 
 def _synthetic_android_manifest() -> bytes:
     """Return one minimal Android resource binary XML manifest fixture."""
+    string_data = b"\x08\x08manifest\0\0"
     string_pool = (
         (0x0001).to_bytes(2, "little")
         + (28).to_bytes(2, "little")
-        + (28).to_bytes(4, "little")
-        + (b"\0" * 20)
+        + (44).to_bytes(4, "little")
+        + (1).to_bytes(4, "little")
+        + (0).to_bytes(4, "little")
+        + (0x100).to_bytes(4, "little")
+        + (32).to_bytes(4, "little")
+        + (0).to_bytes(4, "little")
+        + (0).to_bytes(4, "little")
+        + string_data
     )
     start_element = (
         (0x0102).to_bytes(2, "little")
@@ -3579,14 +3586,20 @@ class AndroidManifestStructureTests(unittest.TestCase):
         cases: list[tuple[str, bytes, bool]] = [("valid", baseline, True)]
         plain = b"synthetic manifest"
         cases.append(("plain-text", plain, False))
+        string_pool_size = int.from_bytes(baseline[12:16], "little")
+        start = 8 + string_pool_size
         mutations = (
             ("root-type", 0, 2, 0x0002),
             ("root-size", 4, 4, len(baseline) + 4),
             ("string-pool-header", 10, 2, 24),
+            ("string-count", 16, 4, 0xFFFFFFFF),
+            ("style-count", 20, 4, 1),
+            ("string-start", 28, 4, 0xFFFFFFFF),
+            ("string-terminator", start - 1, 1, 1),
             ("node-before-strings", 8, 2, 0x0180),
-            ("missing-start", 36, 2, 0x0103),
-            ("misaligned-child", 40, 4, 35),
-            ("attribute-overflow", 64, 2, 1),
+            ("missing-start", start, 2, 0x0103),
+            ("misaligned-child", start + 4, 4, 35),
+            ("attribute-overflow", start + 28, 2, 1),
         )
         for reason, offset, width, value in mutations:
             payload = bytearray(baseline)
