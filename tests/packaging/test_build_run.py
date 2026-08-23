@@ -30,7 +30,7 @@
 
 """Tests for canonical build-runner project-state migration."""
 
-# CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit
+# CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit symtab
 # CSpell:ignore osabi phdr rva shlib rpath runpath
 
 from __future__ import annotations
@@ -3675,6 +3675,87 @@ class MachOPlatformTests(unittest.TestCase):
                             len(payload),
                         )
                     )
+
+
+class MachOSymbolTableTests(unittest.TestCase):
+    """Validate optional Mach-O symbol and string table ranges."""
+
+    def _matches(self, payload: bytes) -> bool:
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        return _RUN._matches_macho(
+            stream,
+            prefix,
+            "macos",
+            "arm64",
+            len(payload),
+        )
+
+    def test_allows_one_zero_range_symbol_table(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=24,
+            )
+        )
+        payload[104:108] = (0x2).to_bytes(4, "little")
+        self.assertTrue(self._matches(bytes(payload)))
+
+    def test_rejects_out_of_file_symbol_table(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=24,
+            )
+        )
+        payload[104:108] = (0x2).to_bytes(4, "little")
+        payload[112:116] = (len(payload) + 1).to_bytes(4, "little")
+        payload[116:120] = (1).to_bytes(4, "little")
+        self.assertFalse(self._matches(bytes(payload)))
+
+    def test_rejects_duplicate_symbol_tables(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=48,
+            )
+        )
+        payload[16:20] = (
+            int.from_bytes(payload[16:20], "little") + 1
+        ).to_bytes(4, "little")
+        record = (
+            (0x2).to_bytes(4, "little")
+            + (24).to_bytes(4, "little")
+            + (b"\0" * 16)
+        )
+        payload[104:152] = record + record
+        self.assertFalse(self._matches(bytes(payload)))
+
+    def test_symbol_and_string_ranges_share_overlap_gate(self) -> None:
+        body = (
+            (0x120).to_bytes(4, "little")
+            + (2).to_bytes(4, "little")
+            + (0x130).to_bytes(4, "little")
+            + (0x20).to_bytes(4, "little")
+        )
+        ranges = _RUN._macho_symtab_ranges(body, 24, "little", 0x200)
+        self.assertIsNotNone(ranges)
+        segments = [
+            _RUN._MachOSegment(
+                b"__LINKEDIT",
+                0x1000,
+                0x100,
+                0x100,
+                0x100,
+                0x1,
+            )
+        ]
+        self.assertFalse(
+            _RUN._macho_linkedit_ranges_fit_segment(
+                segments,
+                ranges or (),
+            )
+        )
 
 
 class MachOEncryptionInfoTests(unittest.TestCase):

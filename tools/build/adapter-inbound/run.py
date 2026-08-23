@@ -33,7 +33,7 @@
 
 """Build selected SHAR targets and publish only complete native packages."""
 
-# CSpell:ignore APPL BNDL FMWK PHDR RVA dylinker linkedit
+# CSpell:ignore APPL BNDL FMWK PHDR RVA dylinker linkedit symtab
 # CSpell:ignore phdr
 
 from __future__ import annotations
@@ -1847,6 +1847,32 @@ def _macho_dyld_info_ranges(
     return ranges
 
 
+def _macho_symtab_ranges(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    file_size: int,
+) -> tuple[tuple[int, int], ...] | None:
+    """Return bounded symbol/string ranges from one LC_SYMTAB."""
+    if command_size != 24 or len(body) != 16:
+        return None
+    symbol_offset = int.from_bytes(body[:4], byte_order)
+    symbol_count = int.from_bytes(body[4:8], byte_order)
+    string_offset = int.from_bytes(body[8:12], byte_order)
+    string_size = int.from_bytes(body[12:16], byte_order)
+    symbol_size = symbol_count * 16
+    ranges = (
+        (symbol_offset, symbol_size),
+        (string_offset, string_size),
+    )
+    if any(
+        offset > file_size or size > file_size - offset
+        for offset, size in ranges
+    ):
+        return None
+    return ranges
+
+
 def _macho_linkedit_data_range(
     body: bytes,
     command_size: int,
@@ -1936,6 +1962,18 @@ def _macho_linkedit_auxiliary(
             if ranges is None
             else _MachOAuxiliary("dyld-info", ranges=ranges)
         )
+    if command == 0x2:
+        ranges = _macho_symtab_ranges(
+            body,
+            command_size,
+            byte_order,
+            file_size,
+        )
+        return (
+            None
+            if ranges is None
+            else _MachOAuxiliary("symtab", ranges=ranges)
+        )
     data_range = _macho_linkedit_data_range(
         body,
         command_size,
@@ -1995,7 +2033,9 @@ def _macho_auxiliary_command(
             12,
         ):
             result = None
-    elif command in _MACHO_LINKEDIT_DATA_COMMANDS | _MACHO_DYLD_INFO_COMMANDS:
+    elif command == 0x2 or command in (
+        _MACHO_LINKEDIT_DATA_COMMANDS | _MACHO_DYLD_INFO_COMMANDS
+    ):
         result = _macho_linkedit_auxiliary(
             command,
             body,
@@ -2038,7 +2078,7 @@ def _macho_auxiliary_singletons_are_valid(
     """Return whether singleton Mach-O auxiliary commands are unique."""
     return all(
         sum(item.kind == kind for item in auxiliaries) <= 1
-        for kind in ("uuid", "dyld-info", "encryption")
+        for kind in ("uuid", "dyld-info", "encryption", "symtab")
     )
 
 
