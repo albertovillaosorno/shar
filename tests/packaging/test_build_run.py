@@ -2896,6 +2896,31 @@ class MachOPlatformTests(unittest.TestCase):
                         admitted,
                     )
 
+    def test_rejects_legacy_platform_commands(self) -> None:
+        legacy_commands = (0x24, 0x25, 0x2F, 0x30)
+        for system, platform in (("macos", 1), ("ios", 2)):
+            for command in legacy_commands:
+                payload = bytearray(
+                    _synthetic_macho(
+                        _RUN._MACHO_ARM64_CPU,
+                        platform=platform,
+                        prefix_command_size=16,
+                    )
+                )
+                payload[104:108] = command.to_bytes(4, "little")
+                stream = io.BytesIO(payload)
+                prefix = stream.read(4)
+                with self.subTest(system=system, command=command):
+                    self.assertFalse(
+                        _RUN._matches_macho(
+                            stream,
+                            prefix,
+                            system,
+                            "arm64",
+                            len(payload),
+                        )
+                    )
+
 
 class MachODynamicLinkerTests(unittest.TestCase):
     """Require structurally complete dynamic-linker load commands."""
