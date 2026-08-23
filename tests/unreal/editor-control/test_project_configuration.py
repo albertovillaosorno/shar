@@ -108,6 +108,16 @@ def test_project_plugins_remain_local_and_translator_is_not_a_server() -> None:
     assert "future fallback" in translator_readme
 
 
+def test_persistent_project_state_links_are_ignored_explicitly() -> None:
+    """Git must ignore the persistent links, not only real directories."""
+    ignore_lines = (_REPOSITORY_ROOT / ".gitignore").read_text(
+        encoding="utf-8"
+    ).splitlines()
+    project_root = "src/unreal/project/composition/uproject"
+    for name in ("Binaries", "DerivedDataCache", "Intermediate", "Saved"):
+        assert f"{project_root}/{name}" in ignore_lines
+
+
 def test_repository_pytest_configuration_owns_import_discovery() -> None:
     """Python tests must share one repository-owned Jig config authority."""
     config_lines = (
