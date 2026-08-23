@@ -1331,6 +1331,8 @@ def _macho_sections_fit_segment(
     for index in range(section_count):
         start = 64 + (80 * index)
         section = body[start : start + 80]
+        if section[16:32] != body[:16]:
+            return False
         section_address = int.from_bytes(section[32:40], byte_order)
         section_size = int.from_bytes(section[40:48], byte_order)
         section_offset = int.from_bytes(section[48:52], byte_order)
