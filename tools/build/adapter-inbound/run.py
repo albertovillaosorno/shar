@@ -1639,16 +1639,30 @@ def _macho_thread_state_entrypoint(
     return entrypoint
 
 
+def _macho_section_relocations_are_bounded(
+    section: bytes,
+    byte_order: str,
+    file_size: int,
+) -> bool:
+    """Return whether one section relocation table stays inside the file."""
+    relocation_offset = int.from_bytes(section[56:60], byte_order)
+    relocation_count = int.from_bytes(section[60:64], byte_order)
+    return (
+        relocation_offset <= file_size
+        and relocation_count * 8 <= file_size - relocation_offset
+    )
+
+
 def _macho_sections_fit_segment(
     body: bytes,
     section_count: int,
     byte_order: str,
     virtual_range: tuple[int, int],
-    file_range: tuple[int, int],
+    file_range: tuple[int, int, int],
 ) -> bool:
     """Return whether sections remain inside their owning segment ranges."""
     virtual_address, virtual_size = virtual_range
-    file_offset, mapped_file_size = file_range
+    file_offset, mapped_file_size, file_size = file_range
     segment_virtual_end = virtual_address + virtual_size
     segment_file_end = file_offset + mapped_file_size
     for index in range(section_count):
@@ -1668,6 +1682,12 @@ def _macho_sections_fit_segment(
             or section_address < virtual_address
             or section_address > segment_virtual_end
             or section_size > segment_virtual_end - section_address
+        ):
+            return False
+        if not _macho_section_relocations_are_bounded(
+            section,
+            byte_order,
+            file_size,
         ):
             return False
         if zero_fill:
@@ -1726,7 +1746,7 @@ def _macho_segment64(
             section_count,
             byte_order,
             (virtual_address, virtual_size),
-            (file_offset, mapped_file_size),
+            (file_offset, mapped_file_size, file_size),
         )
     ):
         return None

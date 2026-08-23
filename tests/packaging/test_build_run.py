@@ -4969,6 +4969,34 @@ class MachOEntrypointTests(unittest.TestCase):
                 )
 
 
+class MachOSectionRelocationTests(unittest.TestCase):
+    """Keep optional Mach-O section relocation tables inside the file."""
+
+    def test_bounds_section_relocation_entries_by_file(self) -> None:
+        payload = _synthetic_macho(_RUN._MACHO_ARM64_CPU)
+        body = bytearray(payload[40:104])
+        body[56:60] = (1).to_bytes(4, "little")
+        section = bytearray(80)
+        section[16:32] = body[:16]
+        virtual_address = int.from_bytes(body[16:24], "little")
+        section[32:40] = virtual_address.to_bytes(8, "little")
+        for reason, relocation_offset, relocation_count, admitted in (
+            ("bounded", len(payload) - 8, 1, True),
+            ("offset", len(payload) + 1, 0, False),
+            ("range", len(payload) - 4, 1, False),
+        ):
+            section[56:60] = relocation_offset.to_bytes(4, "little")
+            section[60:64] = relocation_count.to_bytes(4, "little")
+            with self.subTest(reason=reason):
+                result = _RUN._macho_segment64(
+                    bytes(body + section),
+                    152,
+                    "little",
+                    len(payload),
+                )
+                self.assertEqual(result is not None, admitted)
+
+
 class MobileArchiveTreeTests(unittest.TestCase):
     """Require mobile ZIP inventories to describe realizable trees."""
 
