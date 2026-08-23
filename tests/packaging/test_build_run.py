@@ -210,6 +210,19 @@ def _synthetic_build_version(platform: int) -> bytes:
     )
 
 
+def _synthetic_dylinker_command() -> bytes:
+    """Return one aligned LC_LOAD_DYLINKER command with a local dyld path."""
+    path = b"/usr/lib/dyld\0"
+    command_size = 32
+    return (
+        (0xE).to_bytes(4, "little")
+        + command_size.to_bytes(4, "little")
+        + (12).to_bytes(4, "little")
+        + path
+        + (b"\0" * (command_size - 12 - len(path)))
+    )
+
+
 def _synthetic_macho(
     cpu: int,
     file_type: int = 2,
@@ -230,7 +243,8 @@ def _synthetic_macho(
         )
     segment_size = 72
     linkedit_size = segment_size
-    dylinker_size = 8
+    dylinker = _synthetic_dylinker_command()
+    dylinker_size = len(dylinker)
     build_version = _synthetic_build_version(platform)
     command_count = 5 + bool(prefix_command)
     command_bytes = (
@@ -258,7 +272,6 @@ def _synthetic_macho(
         + (0).to_bytes(8, "little")
     )
     linkedit = _synthetic_linkedit_segment(file_size)
-    dylinker = (0xE).to_bytes(4, "little") + (8).to_bytes(4, "little")
     return (
         bytes.fromhex("cffaedfe")
         + cpu.to_bytes(4, "little")
@@ -290,7 +303,8 @@ def _synthetic_thread_entry_macho(
     """Return one little-endian Mach-O64 legacy thread-entry fixture."""
     segment_size = 72
     thread_size = 288
-    dylinker_size = 8
+    dylinker = _synthetic_dylinker_command()
+    dylinker_size = len(dylinker)
     build_version = _synthetic_build_version(1)
     command_bytes = (
         segment_size
@@ -336,8 +350,7 @@ def _synthetic_thread_entry_macho(
         + thread_size.to_bytes(4, "little")
         + body
         + linkedit
-        + (0xE).to_bytes(4, "little")
-        + (8).to_bytes(4, "little")
+        + dylinker
         + build_version
         + b"\0"
     )
@@ -2884,6 +2897,33 @@ class MachOPlatformTests(unittest.TestCase):
                     )
 
 
+class MachODynamicLinkerTests(unittest.TestCase):
+    """Require structurally complete dynamic-linker load commands."""
+
+    def test_rejects_bare_dynamic_linker_marker(self) -> None:
+        self.assertIsNone(
+            _RUN._macho_auxiliary_command(0xE, 8, b"", "little")
+        )
+
+    def test_rejects_malformed_dynamic_linker_paths(self) -> None:
+        command = _synthetic_dylinker_command()
+        for reason in ("invalid-offset", "unterminated"):
+            body = bytearray(command[8:])
+            if reason == "invalid-offset":
+                body[:4] = (8).to_bytes(4, "little")
+            else:
+                body[4:] = b"A" * (len(body) - 4)
+            with self.subTest(reason=reason):
+                self.assertIsNone(
+                    _RUN._macho_auxiliary_command(
+                        0xE,
+                        len(command),
+                        bytes(body),
+                        "little",
+                    )
+                )
+
+
 class MachOLoaderSegmentTests(unittest.TestCase):
     """Require dyld loader-facing segment identities and permissions."""
 
@@ -2912,7 +2952,7 @@ class MachOLoaderSegmentTests(unittest.TestCase):
             executable = candidate / "SHAR.app/Contents/MacOS/shar"
             executable.parent.mkdir(parents=True)
             payload = bytearray(_synthetic_macho(_RUN._MACHO_ARM64_CPU))
-            command = (0xE).to_bytes(4, "little") + (8).to_bytes(4, "little")
+            command = _synthetic_dylinker_command()
             offset = payload.find(command)
             self.assertNotEqual(offset, -1)
             payload[offset : offset + 4] = (0x1B).to_bytes(4, "little")
@@ -3185,7 +3225,7 @@ class MachOEntrypointTests(unittest.TestCase):
             executable.write_bytes(
                 _synthetic_macho(
                     _RUN._MACHO_ARM64_CPU,
-                    entry_offset=256,
+                    entry_offset=512,
                 )
             )
             if _RUN.os.name != "nt":
