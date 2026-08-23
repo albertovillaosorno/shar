@@ -1014,7 +1014,7 @@ def _matches_elf(
     if byte_order is None or expected is None or byte_order != "little":
         return False
     processor_flags = int.from_bytes(header[48:52], byte_order)
-    if architecture == "amd64" and processor_flags != 0:
+    if processor_flags != 0:
         return False
     image_type = int.from_bytes(header[16:18], byte_order)
     if require_shared_object and image_type != 3:
