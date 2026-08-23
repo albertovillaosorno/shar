@@ -414,12 +414,22 @@ def _synthetic_fat64_macho(*, reserved: int = 0) -> bytes:
 def _synthetic_android_manifest(
     *,
     root_name: str = "manifest",
+    package_name: str | None = "org.shar.game",
     utf8: bool = True,
     child_name: str | None = None,
 ) -> bytes:
     """Return one minimal Android resource binary XML manifest fixture."""
     names = [root_name]
+    package_key_index: int | None = None
+    package_value_index: int | None = None
+    if package_name is not None:
+        package_key_index = len(names)
+        names.append("package")
+        package_value_index = len(names)
+        names.append(package_name)
+    child_index: int | None = None
     if child_name is not None:
+        child_index = len(names)
         names.append(child_name)
     offsets: list[int] = []
     string_data = bytearray()
@@ -448,23 +458,39 @@ def _synthetic_android_manifest(
         + bytes(string_data)
     )
 
-    def start_element(name_index: int) -> bytes:
+    def start_element(name_index: int, *, package: bool = False) -> bytes:
+        attribute = b""
+        if package:
+            assert package_key_index is not None
+            assert package_value_index is not None
+            attribute = (
+                (0xFFFFFFFF).to_bytes(4, "little")
+                + package_key_index.to_bytes(4, "little")
+                + package_value_index.to_bytes(4, "little")
+                + (8).to_bytes(2, "little")
+                + b"\0"
+                + b"\x03"
+                + package_value_index.to_bytes(4, "little")
+            )
+        chunk_size = 36 + len(attribute)
         return (
             (0x0102).to_bytes(2, "little")
             + (16).to_bytes(2, "little")
-            + (36).to_bytes(4, "little")
+            + chunk_size.to_bytes(4, "little")
             + (1).to_bytes(4, "little")
             + (0xFFFFFFFF).to_bytes(4, "little")
             + (0xFFFFFFFF).to_bytes(4, "little")
             + name_index.to_bytes(4, "little")
             + (20).to_bytes(2, "little")
             + (20).to_bytes(2, "little")
-            + (b"\0" * 8)
+            + (1 if package else 0).to_bytes(2, "little")
+            + (b"\0" * 6)
+            + attribute
         )
 
-    nodes = start_element(0)
-    if child_name is not None:
-        nodes += start_element(1)
+    nodes = start_element(0, package=package_name is not None)
+    if child_index is not None:
+        nodes += start_element(child_index)
     size = 8 + len(string_pool) + len(nodes)
     return (
         (0x0003).to_bytes(2, "little")
@@ -3618,6 +3644,19 @@ class AndroidManifestStructureTests(unittest.TestCase):
                 False,
             )
         )
+        for reason, package_name in (
+            ("missing-package", None),
+            ("package-no-separator", "shar"),
+            ("package-leading-digit", "9shar.game"),
+            ("package-invalid-segment", "shar.-game"),
+        ):
+            cases.append(
+                (
+                    reason,
+                    _synthetic_android_manifest(package_name=package_name),
+                    False,
+                )
+            )
         plain = b"synthetic manifest"
         cases.append(("plain-text", plain, False))
         string_pool_size = int.from_bytes(baseline[12:16], "little")
@@ -3634,7 +3673,7 @@ class AndroidManifestStructureTests(unittest.TestCase):
             ("node-before-strings", 8, 2, 0x0180),
             ("missing-start", start, 2, 0x0103),
             ("misaligned-child", start + 4, 4, 35),
-            ("attribute-overflow", start + 28, 2, 1),
+            ("attribute-overflow", start + 28, 2, 2),
         )
         for reason, offset, width, value in mutations:
             payload = bytearray(baseline)
@@ -3662,6 +3701,10 @@ class AndroidManifestStructureTests(unittest.TestCase):
         cases = (
             ("utf8", _synthetic_android_manifest()),
             ("utf16", _synthetic_android_manifest(utf8=False)),
+            (
+                "android-package",
+                _synthetic_android_manifest(package_name="android"),
+            ),
             (
                 "child-tag",
                 _synthetic_android_manifest(child_name="application"),
