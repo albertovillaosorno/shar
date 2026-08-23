@@ -966,8 +966,9 @@ def _matches_elf(
     file_size: int,
     *,
     require_entrypoint: bool = False,
+    require_shared_object: bool = False,
 ) -> bool:
-    """Return whether one loadable ELF64 image declares the selected CPU."""
+    """Return whether one admitted ELF64 image declares the selected CPU."""
     header = prefix + stream.read(60)
     if (
         len(header) != 64
@@ -983,6 +984,9 @@ def _matches_elf(
         byte_order != "little" or processor_flags != 0
     )
     if byte_order is None or expected is None or invalid_x64_abi:
+        return False
+    image_type = int.from_bytes(header[16:18], byte_order)
+    if require_shared_object and image_type != 3:
         return False
     layout = _elf_program_layout(header, byte_order, expected, file_size)
     if layout is None:
@@ -1735,6 +1739,7 @@ def _zip_member_matches_elf(
             prefix,
             architecture,
             info.file_size,
+            require_shared_object=True,
         )
 
 

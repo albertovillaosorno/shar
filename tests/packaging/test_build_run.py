@@ -2646,6 +2646,21 @@ class CandidateArtifactTests(unittest.TestCase):
                 )
                 archive.writestr(
                     "lib/arm64-v8a/libUnreal.so",
+                    _synthetic_elf(0x00B7, image_type=2),
+                )
+            with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["android-arm64"],
+                )
+
+            with _RUN.zipfile.ZipFile(apk, "w") as archive:
+                archive.writestr(
+                    "AndroidManifest.xml",
+                    b"synthetic manifest",
+                )
+                archive.writestr(
+                    "lib/arm64-v8a/libUnreal.so",
                     _synthetic_elf(
                         0x00B7,
                         segment_file_size=0,
