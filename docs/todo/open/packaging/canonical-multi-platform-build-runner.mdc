@@ -82,8 +82,11 @@ APKs/IPAs cannot create a completed `dist/<ARCH>/` target. Mobile archive
 inventories also reject rooted or Windows drive-qualified, parent/current
 traversal, backslash, and empty-segment member paths plus
 file/directory aliases and regular-file ancestors of nested members, so a valid
-native entry cannot hide an unrealizable package tree beside it. Every archive
-member is also decompressed through ZIP CRC validation before package-specific
+native entry cannot hide an unrealizable package tree beside it. Loader-critical
+manifest, property-list, and native entries must also be regular files when ZIP
+Unix metadata declares a file type; unrelated IPA symlinks remain admissible.
+Every archive member is also decompressed through ZIP CRC validation before
+package-specific
 admission, so corruption outside the selected native entry still fails the
 whole package. APK and IPA parsing also holds one stable single-link package
 descriptor and requires the candidate path to retain that
