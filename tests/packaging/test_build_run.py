@@ -2068,6 +2068,24 @@ class PeOptionalHeaderTests(unittest.TestCase):
 class PeSectionLayoutTests(unittest.TestCase):
     """Require PE section file layout to follow loader alignment."""
 
+    def test_rejects_virtual_section_overlapping_headers(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-windows-section-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar-Win64-Shipping.exe"
+            payload = bytearray(_synthetic_pe(0x8664))
+            payload[0x110:0x114] = (0x1001).to_bytes(4, "little")
+            payload[0x114:0x118] = (0).to_bytes(4, "little")
+            payload[0xA8:0xAC] = (1).to_bytes(4, "little")
+            executable.write_bytes(payload)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
     def test_rejects_raw_section_overlapping_headers(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-windows-section-") as raw:
             candidate = Path(raw)

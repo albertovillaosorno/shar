@@ -1141,7 +1141,10 @@ def _pe_sections_contain_entrypoint(
             return False
         virtual_size = int.from_bytes(section[8:12], "little")
         virtual_address = int.from_bytes(section[12:16], "little")
-        if virtual_address % policy.section_alignment != 0:
+        if (
+            virtual_address < policy.header_size
+            or virtual_address % policy.section_alignment != 0
+        ):
             return False
         if (
             expected_virtual_address is not None

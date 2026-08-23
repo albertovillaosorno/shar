@@ -164,8 +164,8 @@ nonempty thread-command bodies do not qualify. Windows
 images must also carry a complete COFF header, no deprecated image symbol-table
 metadata, the executable-image characteristic without the DLL flag, a bounded
 PE32+ optional header and section table with one to 96 sections whose virtual
-addresses remain aligned
-and adjacent by loaded section span, a 64 KiB-aligned image base, and a
+addresses remain beyond the loaded header span, aligned, and adjacent by loaded
+section span, a 64 KiB-aligned image base, and a
 512–65536 power-of-two file alignment no larger than section alignment. Section
 alignment below 4 KiB must equal file alignment. Reserved loader fields remain
 zero, the declared image size matches the final aligned loaded section span,
