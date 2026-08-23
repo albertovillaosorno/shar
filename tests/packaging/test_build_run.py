@@ -1388,7 +1388,7 @@ class UatProcessLifecycleTests(unittest.TestCase):
             "_posix_process_table",
             return_value=table,
         ):
-            self.assertEqual(_RUN._uat_posix_tree_pids(101), [101, 102, 103])
+            self.assertEqual(_RUN._posix_tree_pids(101), [101, 102, 103])
 
     def test_posix_interrupt_terminates_descendants_before_reraise(
         self,
@@ -1408,7 +1408,7 @@ class UatProcessLifecycleTests(unittest.TestCase):
                 ),
                 mock.patch.object(
                     _RUN,
-                    "_uat_posix_tree_pids",
+                    "_posix_tree_pids",
                     return_value=[101, 102, 103],
                 ),
                 mock.patch.object(
@@ -1446,7 +1446,7 @@ class UatProcessLifecycleTests(unittest.TestCase):
             mock.patch.object(_RUN.os, "name", "posix"),
             mock.patch.object(
                 _RUN,
-                "_uat_posix_tree_pids",
+                "_posix_tree_pids",
                 return_value=[102, 103],
             ),
             mock.patch.object(
@@ -1456,7 +1456,7 @@ class UatProcessLifecycleTests(unittest.TestCase):
             ),
             mock.patch.object(_RUN.os, "kill") as kill_process,
         ):
-            _RUN._terminate_uat_tree(process)
+            _RUN._terminate_child_tree(process)
 
         self.assertEqual(
             kill_process.call_args_list,
@@ -6775,17 +6775,25 @@ class ArchitectureRevalidationTests(unittest.TestCase):
             arch_path = root / ".cache/build/data/arch.json"
             arch_path.parent.mkdir(parents=True)
             arch_path.write_bytes(b"stable architecture evidence")
-            result = mock.Mock(returncode=0)
+            process = mock.Mock()
+            process.wait.return_value = 0
 
-            with mock.patch.object(
-                _RUN.subprocess,
-                "run",
-                return_value=result,
-            ) as run:
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_child_process_options",
+                    return_value={},
+                ),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=process,
+                ) as popen,
+            ):
                 snapshot = _RUN._revalidate_arch(root, arch_path)
 
             self.assertEqual(snapshot, b"stable architecture evidence")
-            run.assert_called_once_with(
+            popen.assert_called_once_with(
                 [
                     _RUN.sys.executable,
                     str(root / "tools/build/adapter-inbound/arch.py"),
@@ -6798,8 +6806,35 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                     ).hexdigest(),
                 ],
                 cwd=root,
-                check=False,
             )
+            process.wait.assert_called_once_with()
+
+    def test_revalidation_interrupt_reaps_child_tree(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-arch-revalidate-") as raw:
+            root = Path(raw)
+            arch_path = root / ".cache/build/data/arch.json"
+            arch_path.parent.mkdir(parents=True)
+            arch_path.write_bytes(b"saved architecture evidence")
+            process = mock.Mock(pid=101)
+            process.wait.side_effect = _RUN._RunSignal(_RUN.signal.SIGTERM)
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_child_process_options",
+                    return_value={},
+                ),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=process,
+                ),
+                mock.patch.object(_RUN, "_terminate_child_tree") as terminate,
+                self.assertRaises(_RUN._RunSignal),
+            ):
+                _RUN._revalidate_arch(root, arch_path)
+
+            terminate.assert_called_once_with(process)
 
     def test_rejects_failed_architecture_revalidation(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-arch-revalidate-") as raw:
@@ -6807,13 +6842,19 @@ class ArchitectureRevalidationTests(unittest.TestCase):
             arch_path = root / ".cache/build/data/arch.json"
             arch_path.parent.mkdir(parents=True)
             arch_path.write_bytes(b"saved architecture evidence")
-            result = mock.Mock(returncode=7)
+            process = mock.Mock()
+            process.wait.return_value = 7
 
             with (
                 mock.patch.object(
+                    _RUN,
+                    "_child_process_options",
+                    return_value={},
+                ),
+                mock.patch.object(
                     _RUN.subprocess,
-                    "run",
-                    return_value=result,
+                    "Popen",
+                    return_value=process,
                 ),
                 self.assertRaisesRegex(
                     _RUN.RunFailure,
@@ -6834,12 +6875,19 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                 **_kwargs: object,
             ) -> mock.Mock:
                 arch_path.write_bytes(b"after")
-                return mock.Mock(returncode=0)
+                process = mock.Mock()
+                process.wait.return_value = 0
+                return process
 
             with (
                 mock.patch.object(
+                    _RUN,
+                    "_child_process_options",
+                    return_value={},
+                ),
+                mock.patch.object(
                     _RUN.subprocess,
-                    "run",
+                    "Popen",
                     side_effect=replace_evidence,
                 ),
                 self.assertRaisesRegex(
@@ -6863,12 +6911,19 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                 **_kwargs: object,
             ) -> mock.Mock:
                 check_path.write_bytes(b"after")
-                return mock.Mock(returncode=0)
+                process = mock.Mock()
+                process.wait.return_value = 0
+                return process
 
             with (
                 mock.patch.object(
+                    _RUN,
+                    "_child_process_options",
+                    return_value={},
+                ),
+                mock.patch.object(
                     _RUN.subprocess,
-                    "run",
+                    "Popen",
                     side_effect=replace_evidence,
                 ),
                 self.assertRaisesRegex(
