@@ -2455,6 +2455,25 @@ class PeOptionalHeaderTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["windows-x64"],
                 )
 
+    def test_rejects_reserved_dll_characteristic_bits(self) -> None:
+        for value, admitted in (
+            (0x0001, False),
+            (0x0002, False),
+            (0x0004, False),
+            (0x0008, False),
+            (0x0100, True),
+        ):
+            optional = bytearray(112)
+            optional[24:32] = (0x140000000).to_bytes(8, "little")
+            optional[32:36] = (0x1000).to_bytes(4, "little")
+            optional[36:40] = (0x200).to_bytes(4, "little")
+            optional[70:72] = value.to_bytes(2, "little")
+            with self.subTest(value=hex(value)):
+                self.assertEqual(
+                    _RUN._pe_optional_fields_are_valid(bytes(optional)),
+                    admitted,
+                )
+
     def test_rejects_misaligned_image_base(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-windows-alignment-",
