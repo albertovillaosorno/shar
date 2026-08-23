@@ -2733,6 +2733,35 @@ class MachOEntrypointTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["macos-arm64"],
                 )
 
+    def test_rejects_invalid_segment_protection_flags(self) -> None:
+        for reason, protection in (
+            ("executable-only", 0x4),
+            ("reserved-bit", 0xD),
+        ):
+            with (
+                self.subTest(reason=reason),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-macos-segment-"
+                ) as raw,
+            ):
+                candidate = Path(raw)
+                executable = candidate / "SHAR.app/Contents/MacOS/shar"
+                executable.parent.mkdir(parents=True)
+                invalid = bytearray(_synthetic_macho(_RUN._MACHO_ARM64_CPU))
+                invalid[88:92] = protection.to_bytes(4, "little")
+                invalid[92:96] = protection.to_bytes(4, "little")
+                executable.write_bytes(invalid)
+                if _RUN.os.name != "nt":
+                    executable.chmod(0o755)
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "macOS SHAR app bundle",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["macos-arm64"],
+                    )
+
     def test_rejects_initial_protection_beyond_maximum(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-macos-segment-") as raw:
             candidate = Path(raw)
