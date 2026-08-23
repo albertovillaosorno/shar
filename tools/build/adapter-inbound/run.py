@@ -33,7 +33,8 @@
 
 """Build selected SHAR targets and publish only complete native packages."""
 
-# CSpell:ignore APPL BNDL FMWK RVA dylinker linkedit
+# CSpell:ignore APPL BNDL FMWK PHDR RVA dylinker linkedit
+# CSpell:ignore phdr
 
 from __future__ import annotations
 
@@ -978,6 +979,32 @@ def _elf_load_segment_state(
     return bounded, executable, contains_entrypoint
 
 
+def _elf_program_header_segment_is_valid(
+    program: bytes,
+    byte_order: str,
+    layout: tuple[int, int, int],
+) -> bool:
+    """Return whether PT_PHDR exactly describes the ELF program table."""
+    table_size = layout[1] * layout[2]
+    return (
+        int.from_bytes(program[8:16], byte_order) == layout[0]
+        and int.from_bytes(program[32:40], byte_order) == table_size
+        and int.from_bytes(program[40:48], byte_order) == table_size
+    )
+
+
+def _elf_load_contains_program_table(
+    program: bytes,
+    byte_order: str,
+    layout: tuple[int, int, int],
+) -> bool:
+    """Return whether one load segment maps the whole program-header table."""
+    offset = int.from_bytes(program[8:16], byte_order)
+    file_bytes = int.from_bytes(program[32:40], byte_order)
+    table_end = layout[0] + (layout[1] * layout[2])
+    return offset <= layout[0] and table_end <= offset + file_bytes
+
+
 def _elf_interpreter_path_is_valid(
     stream: object,
     program: bytes,
@@ -1001,6 +1028,58 @@ def _elf_interpreter_path_is_valid(
         and bool(path[:-1])
         and b"\0" not in path[:-1]
     )
+
+
+class _ElfProgramContext(NamedTuple):
+    """Immutable ELF program-table validation context."""
+
+    byte_order: str
+    layout: tuple[int, int, int]
+    file_size: int
+
+
+def _elf_supplementary_program_state(
+    stream: object,
+    program: bytes,
+    context: _ElfProgramContext,
+    state: int,
+    *,
+    loadable: bool,
+) -> int:
+    """Validate one non-load program header and return updated state."""
+    program_type = int.from_bytes(program[:4], context.byte_order)
+    if program_type == 0:
+        return state
+    if program_type == 5 or not _elf_program_file_range_is_bounded(
+        program,
+        context.byte_order,
+        context.file_size,
+    ):
+        return -1
+    result = state
+    if program_type == 3:
+        valid = (
+            not loadable
+            and state & 0x1 == 0
+            and _elf_interpreter_path_is_valid(
+                stream,
+                program,
+                context.byte_order,
+            )
+        )
+        result = state | 0x1 if valid else -1
+    elif program_type == 6:
+        valid = (
+            not loadable
+            and state & 0x2 == 0
+            and _elf_program_header_segment_is_valid(
+                program,
+                context.byte_order,
+                context.layout,
+            )
+        )
+        result = state | 0x2 if valid else -1
+    return result
 
 
 def _elf_entrypoint_is_metadata(
@@ -1038,7 +1117,7 @@ def _elf_load_programs_match(
     loadable = False
     executable = False
     entrypoint_in_executable = False
-    interpreter_seen = False
+    special_segments = 0
     load_segments_valid = True
     previous_load_address: int | None = None
     for _ in range(layout[2]):
@@ -1046,29 +1125,23 @@ def _elf_load_programs_match(
         if len(program) != layout[1]:
             return False
         program_type = int.from_bytes(program[:4], byte_order)
-        if program_type == 0:
+        if program_type != 1:
+            special_segments = _elf_supplementary_program_state(
+                stream,
+                program,
+                _ElfProgramContext(byte_order, layout, file_size),
+                special_segments,
+                loadable=loadable,
+            )
+            if special_segments < 0:
+                return False
             continue
-        if program_type == 5 or not _elf_program_file_range_is_bounded(
+        if not _elf_program_file_range_is_bounded(
             program,
             byte_order,
             file_size,
         ):
             return False
-        if program_type == 3:
-            if (
-                loadable
-                or interpreter_seen
-                or not _elf_interpreter_path_is_valid(
-                    stream,
-                    program,
-                    byte_order,
-                )
-            ):
-                return False
-            interpreter_seen = True
-            continue
-        if program_type != 1:
-            continue
         virtual_address = int.from_bytes(program[16:24], byte_order)
         if (
             previous_load_address is not None
@@ -1093,6 +1166,12 @@ def _elf_load_programs_match(
         ):
             contains_entrypoint = False
         load_segments_valid = load_segments_valid and bounded
+        if bounded and _elf_load_contains_program_table(
+            program,
+            byte_order,
+            layout,
+        ):
+            special_segments |= 0x4
         loadable = True
         executable = executable or segment_executable
         entrypoint_in_executable = (
@@ -1101,7 +1180,13 @@ def _elf_load_programs_match(
     entrypoint_ok = not require_entrypoint or (
         entrypoint != 0 and entrypoint_in_executable
     )
-    return loadable and executable and load_segments_valid and entrypoint_ok
+    return (
+        loadable
+        and executable
+        and load_segments_valid
+        and entrypoint_ok
+        and (special_segments & 0x2 == 0 or bool(special_segments & 0x4))
+    )
 
 
 def _elf_ident_is_valid(header: bytes) -> bool:
