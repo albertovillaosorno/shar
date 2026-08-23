@@ -31,7 +31,7 @@
 """Tests for canonical build-runner project-state migration."""
 
 # CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit symtab
-# CSpell:ignore DYSYMTAB dysymtab
+# CSpell:ignore DYSYMTAB dysymtab uba
 # CSpell:ignore osabi phdr rva shlib rpath runpath
 
 from __future__ import annotations
@@ -938,6 +938,24 @@ class UatLauncherTests(unittest.TestCase):
 
             launcher.chmod(0o755)
             self.assertEqual(_RUN._uat_path(engine), launcher)
+
+
+class BuildArgumentTests(unittest.TestCase):
+    """Keep platform-specific UBT controls inside reviewed build arguments."""
+
+    def test_disables_uba_only_for_linux_targets(self) -> None:
+        for target in _RUN._TARGETS:
+            arguments = _RUN._build_arguments(
+                Path("/project/shar.uproject"),
+                target,
+                Path("/candidate"),
+                Path("/stage"),
+            )
+            with self.subTest(target=target.identifier):
+                self.assertEqual(
+                    "-UbtArgs=-NoUBA" in arguments,
+                    target.system == "linux",
+                )
 
 
 class BuildWorkRootTests(unittest.TestCase):
