@@ -159,8 +159,9 @@ load-command table are rejected. `LC_MAIN` file offsets must otherwise remain
 inside
 executable file-backed bytes of the unique `__TEXT` segment instead of escaping
 into a later executable mapping. Positive-size segment file and virtual-memory
-ranges must remain pairwise disjoint. File-backed sections must remain inside
-their owning segment file extent. Segment VM protections may use only
+ranges must remain pairwise disjoint. Sections must remain inside their owning
+segment virtual extent, and file-backed sections must also stay within the
+segment file extent. Segment VM protections may use only
 read/write/execute bits; nonzero initial mappings must be readable and remain a
 subset of their declared maximum permissions. Legacy virtual entrypoints must
 resolve inside

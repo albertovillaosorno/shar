@@ -1320,16 +1320,26 @@ def _macho_sections_fit_segment(
     body: bytes,
     section_count: int,
     byte_order: str,
-    file_offset: int,
-    mapped_file_size: int,
+    virtual_range: tuple[int, int],
+    file_range: tuple[int, int],
 ) -> bool:
-    """Return whether file-backed sections stay inside their segment."""
+    """Return whether sections remain inside their owning segment ranges."""
+    virtual_address, virtual_size = virtual_range
+    file_offset, mapped_file_size = file_range
+    segment_virtual_end = virtual_address + virtual_size
     segment_file_end = file_offset + mapped_file_size
     for index in range(section_count):
         start = 64 + (80 * index)
         section = body[start : start + 80]
+        section_address = int.from_bytes(section[32:40], byte_order)
         section_size = int.from_bytes(section[40:48], byte_order)
         section_offset = int.from_bytes(section[48:52], byte_order)
+        if (
+            section_address < virtual_address
+            or section_address > segment_virtual_end
+            or section_size > segment_virtual_end - section_address
+        ):
+            return False
         if section_offset != 0 and (
             section_offset < file_offset
             or section_offset > segment_file_end
@@ -1381,8 +1391,8 @@ def _macho_segment64(
             body,
             section_count,
             byte_order,
-            file_offset,
-            mapped_file_size,
+            (virtual_address, virtual_size),
+            (file_offset, mapped_file_size),
         )
     ):
         return None
