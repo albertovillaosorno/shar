@@ -1334,14 +1334,20 @@ def _macho_sections_fit_segment(
         section_address = int.from_bytes(section[32:40], byte_order)
         section_size = int.from_bytes(section[40:48], byte_order)
         section_offset = int.from_bytes(section[48:52], byte_order)
+        section_type = int.from_bytes(section[64:68], byte_order) & 0xFF
+        zero_fill = section_type in {0x1, 0xC, 0x12}
         if (
             section_address < virtual_address
             or section_address > segment_virtual_end
             or section_size > segment_virtual_end - section_address
         ):
             return False
-        if section_offset != 0 and (
-            section_offset < file_offset
+        if zero_fill:
+            if section_offset != 0:
+                return False
+        elif section_size and (
+            section_offset == 0
+            or section_offset < file_offset
             or section_offset > segment_file_end
             or section_size > segment_file_end - section_offset
         ):
