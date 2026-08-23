@@ -1416,13 +1416,39 @@ def _macho_command_evidence(
     return segments, entrypoints
 
 
+def _macho_ranges_are_disjoint(
+    ranges: Sequence[tuple[int, int]],
+) -> bool:
+    """Return whether positive-size Mach-O ranges are pairwise disjoint."""
+    positive = sorted(
+        (start, start + size) for start, size in ranges if size > 0
+    )
+    return all(
+        previous_end <= current_start
+        for (_, previous_end), (current_start, _) in pairwise(positive)
+    )
+
+
+def _macho_segments_are_disjoint(segments: Sequence[_MachOSegment]) -> bool:
+    """Return whether Mach-O segment VM and file mappings do not overlap."""
+    virtual_ranges = [
+        (segment.virtual_address, segment.virtual_size) for segment in segments
+    ]
+    file_ranges = [
+        (segment.file_offset, segment.file_size) for segment in segments
+    ]
+    virtual_disjoint = _macho_ranges_are_disjoint(virtual_ranges)
+    file_disjoint = _macho_ranges_are_disjoint(file_ranges)
+    return virtual_disjoint and file_disjoint
+
+
 def _macho_entrypoint_matches_segments(
     segments: list[_MachOSegment],
     entrypoints: list[tuple[str, int]],
     command_bytes: int,
 ) -> bool:
     """Bind one Mach-O process entry command to executable segment memory."""
-    if len(entrypoints) != 1:
+    if len(entrypoints) != 1 or not _macho_segments_are_disjoint(segments):
         return False
     text_segments = [
         segment

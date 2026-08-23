@@ -2596,6 +2596,49 @@ class MachOEntrypointTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["macos-arm64"],
                 )
 
+    def test_rejects_overlapping_segment_mappings(self) -> None:
+        text_segment = _RUN._MachOSegment(
+            name=b"__TEXT",
+            virtual_address=0x100000000,
+            virtual_size=0x200,
+            file_offset=0,
+            file_size=0x200,
+            initial_protection=0x5,
+        )
+        cases = (
+            (
+                "virtual",
+                _RUN._MachOSegment(
+                    name=b"__DATA",
+                    virtual_address=0x100000100,
+                    virtual_size=0x100,
+                    file_offset=0x200,
+                    file_size=0x100,
+                    initial_protection=0x3,
+                ),
+            ),
+            (
+                "file",
+                _RUN._MachOSegment(
+                    name=b"__DATA",
+                    virtual_address=0x100000200,
+                    virtual_size=0x100,
+                    file_offset=0x100,
+                    file_size=0x100,
+                    initial_protection=0x3,
+                ),
+            ),
+        )
+        for reason, overlapping in cases:
+            with self.subTest(reason=reason):
+                self.assertFalse(
+                    _RUN._macho_entrypoint_matches_segments(
+                        [text_segment, overlapping],
+                        [("main", 0x80)],
+                        64,
+                    )
+                )
+
     def test_rejects_lc_main_offset_beyond_text_file_bytes(self) -> None:
         text_segment = _RUN._MachOSegment(
             name=b"__TEXT",
