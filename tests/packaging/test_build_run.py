@@ -3818,6 +3818,34 @@ class MachOSegmentOrderTests(unittest.TestCase):
                     _RUN._macho_segments_follow_layout_order(segments)
                 )
 
+    def test_requires_linkedit_to_have_last_file_offset(self) -> None:
+        text = _RUN._MachOSegment(
+            b"__TEXT", 0x1000, 0x1000, 0, 0x200, 0x5
+        )
+        data = _RUN._MachOSegment(
+            b"__DATA", 0x2000, 0x1000, 0x200, 0x100, 0x3
+        )
+        linkedit = _RUN._MachOSegment(
+            b"__LINKEDIT", 0x3000, 0x1000, 0x300, 0x100, 0x1
+        )
+        late = _RUN._MachOSegment(
+            b"__LATE", 0x4000, 0x1000, 0x400, 0x100, 0x1
+        )
+        self.assertTrue(
+            _RUN._macho_entrypoint_matches_segments(
+                [text, data, linkedit],
+                [("main", 0x100)],
+                0x80,
+            )
+        )
+        self.assertFalse(
+            _RUN._macho_entrypoint_matches_segments(
+                [text, data, linkedit, late],
+                [("main", 0x100)],
+                0x80,
+            )
+        )
+
     def test_allows_dwarf_segment_order_exception(self) -> None:
         segments = [
             _RUN._MachOSegment(

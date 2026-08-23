@@ -2020,6 +2020,22 @@ def _macho_segments_follow_layout_order(
     return True
 
 
+def _macho_linkedit_is_last_file_segment(
+    segments: Sequence[_MachOSegment],
+) -> bool:
+    """Return whether __LINKEDIT has the greatest segment file offset."""
+    linkedit = [
+        segment
+        for segment in segments
+        if segment.name.split(b"\0", 1)[0] == b"__LINKEDIT"
+    ]
+    return (
+        len(linkedit) == 1
+        and linkedit[0].file_offset
+        == max(segment.file_offset for segment in segments)
+    )
+
+
 def _macho_linkedit_ranges_fit_segment(
     segments: Sequence[_MachOSegment],
     ranges: Sequence[tuple[int, int]],
@@ -2051,6 +2067,7 @@ def _macho_entrypoint_matches_segments(
         len(entrypoints) != 1
         or not _macho_segments_are_disjoint(segments)
         or not _macho_segments_follow_layout_order(segments)
+        or not _macho_linkedit_is_last_file_segment(segments)
     ):
         return False
     text_segments = [
