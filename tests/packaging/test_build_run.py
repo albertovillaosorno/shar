@@ -1,3 +1,4 @@
+# cspell:ignore linkedit LINKEDIT
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -180,6 +181,23 @@ def _synthetic_pe(
     return bytes(payload)
 
 
+def _synthetic_linkedit_segment(file_size: int) -> bytes:
+    """Return one minimal read-only LC_SEGMENT_64 __LINKEDIT command."""
+    return (
+        (0x19).to_bytes(4, "little")
+        + (72).to_bytes(4, "little")
+        + b"__LINKEDIT"
+        + (b"\0" * 6)
+        + (0x100001000).to_bytes(8, "little")
+        + (0).to_bytes(8, "little")
+        + file_size.to_bytes(8, "little")
+        + (0).to_bytes(8, "little")
+        + (0x1).to_bytes(4, "little")
+        + (0x1).to_bytes(4, "little")
+        + (0).to_bytes(8, "little")
+    )
+
+
 def _synthetic_macho(
     cpu: int,
     file_type: int = 2,
@@ -187,6 +205,7 @@ def _synthetic_macho(
     command: int = 0x80000028,
     entry_offset: int | None = None,
     prefix_command_size: int = 0,
+    include_linkedit: bool = True,
 ) -> bytes:
     """Return one minimal little-endian Mach-O64 image fixture."""
     entry_command_size = 24
@@ -198,8 +217,11 @@ def _synthetic_macho(
             + (b"\0" * (prefix_command_size - 8))
         )
     segment_size = 72
-    command_count = 2 + bool(prefix_command)
-    command_bytes = segment_size + len(prefix_command) + entry_command_size
+    linkedit_size = segment_size if include_linkedit else 0
+    command_count = 2 + bool(prefix_command) + bool(include_linkedit)
+    command_bytes = (
+        segment_size + len(prefix_command) + entry_command_size + linkedit_size
+    )
     command_end = 32 + command_bytes
     resolved_entry = command_end if entry_offset is None else entry_offset
     file_size = command_end + 1
@@ -216,6 +238,9 @@ def _synthetic_macho(
         + (0x5).to_bytes(4, "little")
         + (0).to_bytes(8, "little")
     )
+    linkedit = (
+        _synthetic_linkedit_segment(file_size) if include_linkedit else b""
+    )
     return (
         bytes.fromhex("cffaedfe")
         + cpu.to_bytes(4, "little")
@@ -230,6 +255,7 @@ def _synthetic_macho(
         + entry_command_size.to_bytes(4, "little")
         + resolved_entry.to_bytes(8, "little")
         + (0).to_bytes(8, "little")
+        + linkedit
         + b"\0"
     )
 
@@ -244,7 +270,7 @@ def _synthetic_thread_entry_macho(
     """Return one little-endian Mach-O64 legacy thread-entry fixture."""
     segment_size = 72
     thread_size = 288
-    command_bytes = segment_size + thread_size
+    command_bytes = segment_size + thread_size + segment_size
     command_end = 32 + command_bytes
     resolved_pc = 0x100000000 + command_end if pc is None else pc
     file_size = command_end + 1
@@ -268,18 +294,20 @@ def _synthetic_thread_entry_macho(
         + (0x5).to_bytes(4, "little")
         + (0).to_bytes(8, "little")
     )
+    linkedit = _synthetic_linkedit_segment(file_size)
     return (
         bytes.fromhex("cffaedfe")
         + cpu.to_bytes(4, "little")
         + (0).to_bytes(4, "little")
         + (2).to_bytes(4, "little")
-        + (2).to_bytes(4, "little")
+        + (3).to_bytes(4, "little")
         + command_bytes.to_bytes(4, "little")
         + (0).to_bytes(8, "little")
         + segment
         + (0x5).to_bytes(4, "little")
         + thread_size.to_bytes(4, "little")
         + body
+        + linkedit
         + b"\0"
     )
 
@@ -2797,6 +2825,65 @@ class MachOFatSliceTests(unittest.TestCase):
             )
 
 
+class MachOLoaderSegmentTests(unittest.TestCase):
+    """Require dyld loader-facing segment identities and permissions."""
+
+    def test_rejects_missing_linkedit_segment(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-macos-linkedit-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(
+                _synthetic_macho(
+                    _RUN._MACHO_ARM64_CPU,
+                    include_linkedit=False,
+                )
+            )
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+    def test_rejects_loader_segment_permissions(self) -> None:
+        cases = (
+            ("writable-text", 88, 92, 0x7),
+            ("writable-linkedit", 184, 188, 0x3),
+        )
+        for reason, maximum_offset, initial_offset, protection in cases:
+            with (
+                self.subTest(reason=reason),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-macos-permissions-"
+                ) as raw,
+            ):
+                candidate = Path(raw)
+                executable = candidate / "SHAR.app/Contents/MacOS/shar"
+                executable.parent.mkdir(parents=True)
+                payload = bytearray(_synthetic_macho(_RUN._MACHO_ARM64_CPU))
+                payload[maximum_offset : maximum_offset + 4] = (
+                    protection.to_bytes(4, "little")
+                )
+                encoded = protection.to_bytes(4, "little")
+                payload[initial_offset : initial_offset + 4] = encoded
+                executable.write_bytes(payload)
+                if _RUN.os.name != "nt":
+                    executable.chmod(0o755)
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "macOS SHAR app bundle",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID["macos-arm64"],
+                    )
+
+
 class MachOEntrypointTests(unittest.TestCase):
     """Require one unambiguous Mach-O process entry command."""
 
@@ -2956,29 +3043,29 @@ class MachOEntrypointTests(unittest.TestCase):
                 )
 
     def test_rejects_duplicate_entry_commands(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="shar-macos-entry-") as raw:
-            candidate = Path(raw)
-            executable = candidate / "SHAR.app/Contents/MacOS/shar"
-            executable.parent.mkdir(parents=True)
-            duplicate_entry = bytearray(
-                _synthetic_macho(_RUN._MACHO_ARM64_CPU)
+        text_segment = _RUN._MachOSegment(
+            name=b"__TEXT",
+            virtual_address=0x100000000,
+            virtual_size=0x1000,
+            file_offset=0,
+            file_size=0x200,
+            initial_protection=0x5,
+        )
+        linkedit_segment = _RUN._MachOSegment(
+            name=b"__LINKEDIT",
+            virtual_address=0x100001000,
+            virtual_size=0,
+            file_offset=0x200,
+            file_size=0,
+            initial_protection=0x1,
+        )
+        self.assertFalse(
+            _RUN._macho_entrypoint_matches_segments(
+                [text_segment, linkedit_segment],
+                [("main", 0x100), ("main", 0x100)],
+                64,
             )
-            command_bytes = int.from_bytes(duplicate_entry[20:24], "little")
-            duplicate_entry[16:20] = (3).to_bytes(4, "little")
-            duplicate_entry[20:24] = (command_bytes + 24).to_bytes(4, "little")
-            duplicate_entry.extend(duplicate_entry[-24:])
-            duplicate_entry[80:88] = len(duplicate_entry).to_bytes(8, "little")
-            executable.write_bytes(duplicate_entry)
-            if _RUN.os.name != "nt":
-                executable.chmod(0o755)
-            with self.assertRaisesRegex(
-                _RUN.RunFailure,
-                "macOS SHAR app bundle",
-            ):
-                _RUN._validate_candidate_artifact(
-                    candidate,
-                    _RUN._TARGETS_BY_ID["macos-arm64"],
-                )
+        )
 
     def test_rejects_invalid_section_alignment(self) -> None:
         payload = _synthetic_macho(_RUN._MACHO_ARM64_CPU)
