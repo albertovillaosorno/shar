@@ -3677,6 +3677,60 @@ class MachOPlatformTests(unittest.TestCase):
                     )
 
 
+class MachOUuidTests(unittest.TestCase):
+    """Validate optional UUID load-command structure and uniqueness."""
+
+    def _matches(self, payload: bytes) -> bool:
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        return _RUN._matches_macho(
+            stream,
+            prefix,
+            "macos",
+            "arm64",
+            len(payload),
+        )
+
+    def test_allows_one_structural_uuid_command(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=24,
+            )
+        )
+        payload[104:108] = (0x1B).to_bytes(4, "little")
+        payload[112:128] = b"U" * 16
+        self.assertTrue(self._matches(bytes(payload)))
+
+    def test_rejects_undersized_uuid_command(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=8,
+            )
+        )
+        payload[104:108] = (0x1B).to_bytes(4, "little")
+        self.assertFalse(self._matches(bytes(payload)))
+
+    def test_rejects_duplicate_uuid_commands(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=48,
+            )
+        )
+        payload[16:20] = (
+            int.from_bytes(payload[16:20], "little") + 1
+        ).to_bytes(4, "little")
+        record = (
+            (0x1B).to_bytes(4, "little")
+            + (24).to_bytes(4, "little")
+            + (b"U" * 16)
+        )
+        payload[104:152] = record + record
+        self.assertFalse(self._matches(bytes(payload)))
+
+
 class MachOLoaderPathTests(unittest.TestCase):
     """Require bounded dylib and runpath strings in executable images."""
 
