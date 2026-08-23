@@ -3677,6 +3677,68 @@ class MachOPlatformTests(unittest.TestCase):
                     )
 
 
+class MachOEncryptionInfoTests(unittest.TestCase):
+    """Validate optional Mach-O64 encrypted-file range metadata."""
+
+    def _matches(self, payload: bytes) -> bool:
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        return _RUN._matches_macho(
+            stream,
+            prefix,
+            "macos",
+            "arm64",
+            len(payload),
+        )
+
+    def _with_command(
+        self,
+        command: int,
+        crypt_offset: int = 0,
+        crypt_size: int = 0,
+    ) -> bytearray:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=24,
+            )
+        )
+        payload[104:108] = command.to_bytes(4, "little")
+        payload[112:116] = crypt_offset.to_bytes(4, "little")
+        payload[116:120] = crypt_size.to_bytes(4, "little")
+        return payload
+
+    def test_allows_one_zero_range_encryption_info_64(self) -> None:
+        self.assertTrue(self._matches(bytes(self._with_command(0x2C))))
+
+    def test_rejects_out_of_file_encryption_range(self) -> None:
+        payload = self._with_command(0x2C)
+        payload[112:116] = (len(payload) + 1).to_bytes(4, "little")
+        payload[116:120] = (1).to_bytes(4, "little")
+        self.assertFalse(self._matches(bytes(payload)))
+
+    def test_rejects_32_bit_encryption_command(self) -> None:
+        self.assertFalse(self._matches(bytes(self._with_command(0x21))))
+
+    def test_rejects_duplicate_encryption_commands(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=48,
+            )
+        )
+        payload[16:20] = (
+            int.from_bytes(payload[16:20], "little") + 1
+        ).to_bytes(4, "little")
+        record = (
+            (0x2C).to_bytes(4, "little")
+            + (24).to_bytes(4, "little")
+            + (b"\0" * 16)
+        )
+        payload[104:152] = record + record
+        self.assertFalse(self._matches(bytes(payload)))
+
+
 class MachODyldInfoTests(unittest.TestCase):
     """Validate classic dyld link-edit range commands."""
 
