@@ -1538,6 +1538,11 @@ def _fat_macho_slice_bounds(
         byte_order,
     )
     if (
+        entry_size == 32
+        and int.from_bytes(payload[24:28], byte_order) != 0
+    ):
+        return None
+    if (
         size == 0
         or offset < table_end
         or offset > file_size
