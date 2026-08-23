@@ -2131,16 +2131,130 @@ def _is_android_arm64_library_path(name: str) -> bool:
     )
 
 
+def _android_xml_root_layout(payload: bytes) -> tuple[int, int] | None:
+    """Return the bounded Android resource binary-XML root header and size."""
+    if len(payload) < 8:
+        return None
+    root_type = int.from_bytes(payload[:2], "little")
+    header_size = int.from_bytes(payload[2:4], "little")
+    root_size = int.from_bytes(payload[4:8], "little")
+    if (
+        root_type != 0x0003
+        or header_size != 8
+        or root_size > len(payload)
+        or root_size % 4 != 0
+    ):
+        return None
+    return header_size, root_size
+
+
+def _android_xml_chunk_layout(
+    payload: bytes,
+    cursor: int,
+    root_size: int,
+) -> tuple[int, int, int] | None:
+    """Return one bounded and aligned Android resource chunk."""
+    if root_size - cursor < 8:
+        return None
+    chunk_type = int.from_bytes(payload[cursor : cursor + 2], "little")
+    header_size = int.from_bytes(payload[cursor + 2 : cursor + 4], "little")
+    chunk_size = int.from_bytes(payload[cursor + 4 : cursor + 8], "little")
+    if (
+        header_size < 8
+        or header_size % 4 != 0
+        or chunk_size < header_size
+        or chunk_size % 4 != 0
+        or chunk_size > root_size - cursor
+    ):
+        return None
+    return chunk_type, header_size, chunk_size
+
+
+def _android_start_element_is_valid(
+    payload: bytes,
+    cursor: int,
+    header_size: int,
+    chunk_size: int,
+) -> bool:
+    """Return whether one Android start-element attribute area is bounded."""
+    if chunk_size < header_size + 20:
+        return False
+    extension = cursor + header_size
+    attribute_start = int.from_bytes(
+        payload[extension + 8 : extension + 10],
+        "little",
+    )
+    attribute_size = int.from_bytes(
+        payload[extension + 10 : extension + 12],
+        "little",
+    )
+    attribute_count = int.from_bytes(
+        payload[extension + 12 : extension + 14],
+        "little",
+    )
+    return (
+        attribute_start + (attribute_size * attribute_count)
+        <= chunk_size - header_size
+    )
+
+
+def _android_xml_children_are_valid(
+    payload: bytes,
+    cursor: int,
+    root_size: int,
+) -> bool:
+    """Return whether binary-XML children provide strings and a root tag."""
+    has_string_pool = False
+    has_start_element = False
+    while cursor < root_size:
+        layout = _android_xml_chunk_layout(payload, cursor, root_size)
+        if layout is None:
+            return False
+        chunk_type, header_size, chunk_size = layout
+        if chunk_type == 0x0001:
+            if header_size < 28:
+                return False
+            has_string_pool = True
+        elif 0x0100 <= chunk_type <= 0x017F:
+            if not has_string_pool or header_size < 16:
+                return False
+            if chunk_type == 0x0102:
+                if not _android_start_element_is_valid(
+                    payload,
+                    cursor,
+                    header_size,
+                    chunk_size,
+                ):
+                    return False
+                has_start_element = True
+        cursor += chunk_size
+    return cursor == root_size and has_string_pool and has_start_element
+
+
+def _android_manifest_is_binary_xml(
+    archive: zipfile.ZipFile,
+    info: zipfile.ZipInfo,
+) -> bool:
+    """Return whether the APK manifest has bounded resource binary XML."""
+    if not _zip_member_is_regular_file(info):
+        return False
+    payload = archive.read(info)
+    layout = _android_xml_root_layout(payload)
+    if layout is None:
+        return False
+    header_size, root_size = layout
+    return _android_xml_children_are_valid(payload, header_size, root_size)
+
+
 def _android_archive_contains_arm64(archive: zipfile.ZipFile) -> bool:
     """Return whether one opened APK contains an ARM64 native library."""
     inventory = _zip_inventory(archive)
     if inventory is None:
         return False
     manifest = inventory.get("AndroidManifest.xml")
-    if (
-        manifest is None
-        or not _zip_member_is_regular_file(manifest)
-        or manifest.file_size == 0
+    if manifest is None or not _android_manifest_is_binary_xml(
+        archive,
+        manifest,
     ):
         return False
     return any(

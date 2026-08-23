@@ -71,8 +71,9 @@ external alias of the evidence it just validated.
 
 Mobile publication now consumes the declared artifact kind instead of treating
 any archive file as success. Android APKs must be valid ZIP containers with a
-non-empty root `AndroidManifest.xml` and an ARM64 ELF native library at the
-platform loader shape
+compiled resource binary-XML root `AndroidManifest.xml` whose root/string-pool/
+start-element chunks are bounded and aligned, plus an ARM64 ELF native library
+at the platform loader shape
 `lib/arm64-v8a/lib<name>.so`; nested or non-library-shaped lookalikes do not
 satisfy package admission. iOS IPAs must declare a main application
 executable in `Info.plist` whose Mach-O image contains ARM64. Invalid
