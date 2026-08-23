@@ -35,19 +35,21 @@
 
 # CSpell:ignore APPL BNDL FMWK PHDR RVA dylinker linkedit symtab
 # CSpell:ignore DYSYMTAB dysymtab NBLCK msvcrt
-# CSpell:ignore phdr
+# CSpell:ignore phdr creationflags killpg taskkill
 
 from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
 from collections.abc import Sequence
+from contextlib import suppress
 import hashlib
 from itertools import pairwise
 import json
 import os
 from pathlib import Path
 import plistlib
+import signal
 
 if os.name == "nt":
     import msvcrt
@@ -71,6 +73,7 @@ _RUN_LOCK_PATH = Path(".cache/build/run.lock")
 _PROJECT_STATE_ROOT = Path(".cache/build/project-state")
 _PROJECT_STATE_NAMES = ("Binaries", "DerivedDataCache", "Intermediate", "Saved")
 _DIST_ROOT = Path("dist")
+_UAT_STOP_TIMEOUT_SECONDS = 5
 
 
 class RunFailure(RuntimeError):
@@ -798,6 +801,40 @@ def _uat_command(uat: Path, arguments: list[str]) -> list[str]:
     return [str(uat), *arguments]
 
 
+def _uat_process_options() -> dict[str, object]:
+    """Return host-native process-group isolation for one UAT tree."""
+    if os.name == "nt":
+        return {
+            "creationflags": getattr(
+                subprocess,
+                "CREATE_NEW_PROCESS_GROUP",
+                0x00000200,
+            )
+        }
+    return {"start_new_session": True}
+
+
+def _terminate_uat_tree(process: subprocess.Popen[str]) -> None:
+    """Stop one interrupted UAT process tree before project-state cleanup."""
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/pid", str(process.pid), "/t", "/f"],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        process.wait()
+        return
+    with suppress(ProcessLookupError):
+        os.killpg(process.pid, signal.SIGTERM)
+    try:
+        process.wait(timeout=_UAT_STOP_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired:
+        with suppress(ProcessLookupError):
+            os.killpg(process.pid, signal.SIGKILL)
+        process.wait()
+
+
 def _run_uat(
     root: Path,
     uat: Path,
@@ -820,18 +857,23 @@ def _run_uat(
     environment["uebp_LogFolder"] = str(automation_logs)
     environment["UE-LocalDataCachePath"] = str(ddc)
     with _open_uat_log(log) as handle:
-        result = subprocess.run(
+        process = subprocess.Popen(
             command,
             cwd=root,
             env=environment,
-            check=False,
             stdout=handle,
             stderr=subprocess.STDOUT,
             text=True,
+            **_uat_process_options(),
         )
-    if result.returncode:
+        try:
+            returncode = process.wait()
+        except (KeyboardInterrupt, OSError):
+            _terminate_uat_tree(process)
+            raise
+    if returncode:
         raise RunFailure(
-            f"Unreal AutomationTool failed with {result.returncode}; see {log}"
+            f"Unreal AutomationTool failed with {returncode}; see {log}"
         )
 
 

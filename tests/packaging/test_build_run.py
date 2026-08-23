@@ -33,6 +33,7 @@
 # CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit symtab
 # CSpell:ignore DYSYMTAB dysymtab uba
 # CSpell:ignore osabi phdr rva shlib rpath runpath
+# CSpell:ignore popen creationflags killpg taskkill
 
 from __future__ import annotations
 
@@ -1177,7 +1178,7 @@ class UatWorkPathTests(unittest.TestCase):
 
             with (
                 mock.patch.object(Path, "is_symlink", report_log_as_link),
-                mock.patch.object(_RUN.subprocess, "run") as process,
+                mock.patch.object(_RUN.subprocess, "Popen") as process,
                 self.assertRaisesRegex(
                     _RUN.RunFailure,
                     "UAT log must be a real file",
@@ -1219,7 +1220,7 @@ class UatWorkPathTests(unittest.TestCase):
                     "_real_file_identity",
                     side_effect=replace_after_identity,
                 ),
-                mock.patch.object(_RUN.subprocess, "run") as process,
+                mock.patch.object(_RUN.subprocess, "Popen") as process,
                 self.assertRaisesRegex(
                     _RUN.RunFailure,
                     "UAT log changed before opening",
@@ -1244,7 +1245,7 @@ class UatWorkPathTests(unittest.TestCase):
             log.hardlink_to(outside)
 
             with (
-                mock.patch.object(_RUN.subprocess, "run") as process,
+                mock.patch.object(_RUN.subprocess, "Popen") as process,
                 self.assertRaisesRegex(
                     _RUN.RunFailure,
                     "UAT log must have one filesystem link",
@@ -1273,7 +1274,7 @@ class UatWorkPathTests(unittest.TestCase):
                     "_is_directory_link",
                     side_effect=report_automation_as_link,
                 ),
-                mock.patch.object(_RUN.subprocess, "run") as process,
+                mock.patch.object(_RUN.subprocess, "Popen") as process,
                 self.assertRaisesRegex(
                     _RUN.RunFailure,
                     "UAT saved root must be a real directory",
@@ -1306,7 +1307,7 @@ class UatWorkPathTests(unittest.TestCase):
                     "_is_directory_link",
                     side_effect=report_ddc_as_link,
                 ),
-                mock.patch.object(_RUN.subprocess, "run") as process,
+                mock.patch.object(_RUN.subprocess, "Popen") as process,
                 self.assertRaisesRegex(
                     _RUN.RunFailure,
                     "UAT DDC root must be a real directory",
@@ -1320,6 +1321,148 @@ class UatWorkPathTests(unittest.TestCase):
                 )
 
             process.assert_not_called()
+
+
+class UatProcessLifecycleTests(unittest.TestCase):
+    """Keep interrupted UAT descendants inside the runner lifecycle."""
+
+    def test_posix_launches_uat_in_new_session(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-process-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            process = mock.Mock()
+            process.wait.return_value = 0
+            with (
+                mock.patch.object(_RUN.os, "name", "posix"),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=process,
+                ) as popen,
+            ):
+                _RUN._run_uat(root, Path("/uat"), ["probe"], work / "uat.log")
+
+            self.assertTrue(popen.call_args.kwargs["start_new_session"])
+            self.assertNotIn("creationflags", popen.call_args.kwargs)
+
+    def test_windows_launches_uat_in_new_process_group(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-process-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            process = mock.Mock()
+            process.wait.return_value = 0
+            with (
+                mock.patch.object(_RUN.os, "name", "nt"),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "CREATE_NEW_PROCESS_GROUP",
+                    0x00000200,
+                    create=True,
+                ),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=process,
+                ) as popen,
+            ):
+                _RUN._run_uat(root, Path("/uat"), ["probe"], work / "uat.log")
+
+            self.assertEqual(
+                popen.call_args.kwargs["creationflags"],
+                0x00000200,
+            )
+            self.assertNotIn("start_new_session", popen.call_args.kwargs)
+
+    def test_posix_interrupt_terminates_group_before_reraise(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-process-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            process = mock.Mock(pid=101)
+            process.wait.side_effect = [KeyboardInterrupt, 0]
+            with (
+                mock.patch.object(_RUN.os, "name", "posix"),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=process,
+                ),
+                mock.patch.object(_RUN.os, "killpg") as kill_group,
+                self.assertRaises(KeyboardInterrupt),
+            ):
+                _RUN._run_uat(
+                    root,
+                    Path("/uat"),
+                    ["probe"],
+                    work / "uat.log",
+                )
+
+        kill_group.assert_called_once_with(101, _RUN.signal.SIGTERM)
+        self.assertEqual(
+            process.wait.call_args_list,
+            [mock.call(), mock.call(timeout=_RUN._UAT_STOP_TIMEOUT_SECONDS)],
+        )
+
+    def test_posix_forces_process_group_after_timeout(self) -> None:
+        process = mock.Mock(pid=102)
+        process.wait.side_effect = [_RUN.subprocess.TimeoutExpired("uat", 5), 0]
+        with (
+            mock.patch.object(_RUN.os, "name", "posix"),
+            mock.patch.object(_RUN.os, "killpg") as kill_group,
+        ):
+            _RUN._terminate_uat_tree(process)
+
+        self.assertEqual(
+            kill_group.call_args_list,
+            [
+                mock.call(102, _RUN.signal.SIGTERM),
+                mock.call(102, _RUN.signal.SIGKILL),
+            ],
+        )
+        self.assertEqual(process.wait.call_count, 2)
+
+    def test_windows_interrupt_terminates_entire_process_tree(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-process-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            process = mock.Mock(pid=103)
+            process.wait.side_effect = [KeyboardInterrupt, 1]
+            with (
+                mock.patch.object(_RUN.os, "name", "nt"),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "CREATE_NEW_PROCESS_GROUP",
+                    0x00000200,
+                    create=True,
+                ),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=process,
+                ),
+                mock.patch.object(_RUN.subprocess, "run") as run,
+                self.assertRaises(KeyboardInterrupt),
+            ):
+                _RUN._run_uat(
+                    root,
+                    Path("/uat"),
+                    ["probe"],
+                    work / "uat.log",
+                )
+
+        run.assert_called_once_with(
+            ["taskkill", "/pid", "103", "/t", "/f"],
+            check=False,
+            stdout=_RUN.subprocess.DEVNULL,
+            stderr=_RUN.subprocess.DEVNULL,
+        )
+        self.assertEqual(
+            process.wait.call_args_list,
+            [mock.call(), mock.call()],
+        )
 
 
 class TurnkeyReportTests(unittest.TestCase):
