@@ -76,9 +76,12 @@ start-element chunks are bounded and aligned. The first start element must
 resolve through the bounded UTF-8/UTF-16 string pool to the exact `manifest`
 root tag. That root must carry a no-namespace `package` raw-string attribute
 whose value satisfies Android's lite-parser package-name grammar and length
-bound, including its `android` special case. String/style indices, string data
-ranges, and required terminators must remain inside the string-pool chunk. The
-APK must also contain an ARM64 ELF native library at the platform loader shape
+bound, including its `android` special case. A non-empty no-namespace `split`
+attribute is rejected so the published artifact remains one standalone base APK;
+an absent or empty split identity remains base-package compatible. String/style
+indices, string data ranges, and required terminators must remain inside the
+string-pool chunk. The APK must also contain an ARM64 ELF native library at the
+platform loader shape
 `lib/arm64-v8a/lib<name>.so`; nested or non-library-shaped lookalikes do not
 satisfy package admission. iOS IPAs must declare a main application
 executable in `Info.plist` whose Mach-O image contains ARM64. Invalid

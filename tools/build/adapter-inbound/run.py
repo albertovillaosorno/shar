@@ -2387,13 +2387,14 @@ def _android_package_name_is_valid(value: str) -> bool:
     return True
 
 
-def _android_manifest_package_name(
+def _android_manifest_raw_attribute(
     payload: bytes,
     cursor: int,
     header_size: int,
     string_pool: tuple[int, int],
-) -> str | None:
-    """Return one bounded no-namespace Android manifest package name."""
+    expected_name: str,
+) -> tuple[bool, str | None]:
+    """Return one bounded no-namespace raw manifest attribute."""
     extension = cursor + header_size
     attribute_start = int.from_bytes(
         payload[extension + 8 : extension + 10],
@@ -2408,37 +2409,41 @@ def _android_manifest_package_name(
         "little",
     )
     if attribute_size < 20:
-        return None
+        return False, None
     pool_cursor, pool_size = string_pool
     for index in range(attribute_count):
         attribute = extension + attribute_start + (attribute_size * index)
-        namespace = int.from_bytes(payload[attribute : attribute + 4], "little")
-        name_index = int.from_bytes(
-            payload[attribute + 4 : attribute + 8],
-            "little",
-        )
-        raw_index = int.from_bytes(
-            payload[attribute + 8 : attribute + 12],
+        namespace = int.from_bytes(
+            payload[attribute : attribute + 4],
             "little",
         )
         if namespace != 0xFFFFFFFF:
             continue
+        name_index = int.from_bytes(
+            payload[attribute + 4 : attribute + 8],
+            "little",
+        )
         name = _android_string_pool_text(
             payload,
             pool_cursor,
             pool_size,
             name_index,
         )
-        if name != "package" or raw_index == 0xFFFFFFFF:
+        if name != expected_name:
             continue
-        value = _android_string_pool_text(
+        raw_index = int.from_bytes(
+            payload[attribute + 8 : attribute + 12],
+            "little",
+        )
+        if raw_index == 0xFFFFFFFF:
+            return True, None
+        return True, _android_string_pool_text(
             payload,
             pool_cursor,
             pool_size,
             raw_index,
         )
-        return value if value is not None else None
-    return None
+    return False, None
 
 
 def _android_root_element_is_valid(
@@ -2464,15 +2469,27 @@ def _android_root_element_is_valid(
         != "manifest"
     ):
         return False
-    package_name = _android_manifest_package_name(
+    package_found, package_name = _android_manifest_raw_attribute(
         payload,
         cursor,
         header_size,
         string_pool,
+        "package",
     )
-    return package_name is not None and _android_package_name_is_valid(
-        package_name
+    if (
+        not package_found
+        or package_name is None
+        or not _android_package_name_is_valid(package_name)
+    ):
+        return False
+    split_found, split_name = _android_manifest_raw_attribute(
+        payload,
+        cursor,
+        header_size,
+        string_pool,
+        "split",
     )
+    return not split_found or (split_name is not None and not split_name)
 
 
 def _android_xml_children_are_valid(
