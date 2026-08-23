@@ -2050,7 +2050,7 @@ def _macho_linkedit_ranges_fit_segment(
         return False
     start = linkedit[0].file_offset
     size = linkedit[0].file_size
-    return all(
+    return _macho_ranges_are_disjoint(ranges) and all(
         start <= offset <= start + size
         and payload_size <= start + size - offset
         for offset, payload_size in ranges
