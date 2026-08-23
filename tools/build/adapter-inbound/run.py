@@ -1131,6 +1131,7 @@ def _pe_optional_fields_are_valid(optional: bytes) -> bool:
     image_base = int.from_bytes(optional[24:32], "little")
     section_alignment = int.from_bytes(optional[32:36], "little")
     file_alignment = int.from_bytes(optional[36:40], "little")
+    dll_characteristics = int.from_bytes(optional[70:72], "little")
     file_alignment_valid = (
         0x200 <= file_alignment <= 0x10000
         and file_alignment & (file_alignment - 1) == 0
@@ -1140,6 +1141,7 @@ def _pe_optional_fields_are_valid(optional: bytes) -> bool:
     )
     return (
         image_base % 0x10000 == 0
+        and dll_characteristics & 0x000F == 0
         and file_alignment_valid
         and section_alignment >= file_alignment
         and low_alignment_valid

@@ -207,7 +207,9 @@ addresses remain beyond the loaded header span, aligned, and adjacent by loaded
 section span, a 64 KiB-aligned image base, and a
 512–65536 power-of-two file alignment no larger than section alignment. Section
 alignment below 4 KiB must equal file alignment. Reserved loader fields remain
-zero, the declared image size matches the final aligned loaded section span,
+zero, including Microsoft-reserved low `DllCharacteristics` bits, while defined
+flags such as NX compatibility remain admissible. The declared image size
+matches the final aligned loaded section span,
 the header size matches the rounded header table, and the data directory count
 must fit the optional header. Nonempty data directories must use a nonzero
 address. Microsoft's Architecture and final Reserved directory slots must remain
