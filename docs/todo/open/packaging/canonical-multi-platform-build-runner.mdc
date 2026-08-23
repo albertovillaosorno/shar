@@ -191,9 +191,12 @@ into a later executable mapping. Positive-size segment file and virtual-memory
 ranges must remain pairwise disjoint. Segment load-command order must also
 follow ascending VM addresses and nonzero file offsets, retaining Apple's
 `__DWARF` exception. Admitted executables require exactly one `__LINKEDIT`
-segment. Apple link-edit data commands must use the exact 16-byte command
-structure and keep every positive-size declared file payload inside the unique
-`__LINKEDIT` file mapping, not merely somewhere inside the Mach-O image. A
+segment, and that `__LINKEDIT` mapping must have the greatest segment file
+offset so the Apple loader sees it as the last segment. Apple link-edit data
+commands must
+use the exact 16-byte command structure and keep every positive-size declared
+file payload inside the unique `__LINKEDIT` file mapping, not merely somewhere
+inside the Mach-O image. A
 structurally bounded `LC_LOAD_DYLINKER` must carry a nonempty, NUL-terminated
 embedded path so the Apple loader does not classify it as a static executable.
 Each image must also carry one exact `LC_BUILD_VERSION`
