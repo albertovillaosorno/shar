@@ -1314,8 +1314,16 @@ def _macho_segment64(
     mapped_file_size = int.from_bytes(body[40:48], byte_order)
     maximum_protection = int.from_bytes(body[48:52], byte_order)
     initial_protection = int.from_bytes(body[52:56], byte_order)
+    invalid_protection_bits = (
+        maximum_protection | initial_protection
+    ) & ~0x7
+    unreadable_mapping = initial_protection != 0 and not (
+        initial_protection & 0x1
+    )
     if (
-        initial_protection & ~maximum_protection
+        invalid_protection_bits
+        or unreadable_mapping
+        or initial_protection & ~maximum_protection
         or mapped_file_size > virtual_size
     ):
         return None

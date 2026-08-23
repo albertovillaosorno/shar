@@ -158,8 +158,9 @@ load-command table are rejected. `LC_MAIN` file offsets must otherwise remain
 inside
 executable file-backed bytes of the unique `__TEXT` segment instead of escaping
 into a later executable mapping. Positive-size segment file and virtual-memory
-ranges must remain pairwise disjoint. Segment initial VM permissions must remain
-a subset of their declared maximum permissions. Legacy virtual entrypoints must
+ranges must remain pairwise disjoint. Segment VM protections may use only
+read/write/execute bits; nonzero initial mappings must be readable and remain a
+subset of their declared maximum permissions. Legacy virtual entrypoints must
 resolve inside
 executable file-backed bytes of a mapped segment rather than its zero-fill tail.
 Legacy thread entrypoints must carry the complete ARM64 thread-state
