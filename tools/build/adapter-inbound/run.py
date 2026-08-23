@@ -1530,6 +1530,22 @@ def _macho_build_platform(
     return int.from_bytes(body[:4], byte_order)
 
 
+def _macho_dylinker_is_valid(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+) -> bool:
+    """Return whether LC_LOAD_DYLINKER carries one bounded nonempty path."""
+    if command_size < 16 or len(body) != command_size - 8:
+        return False
+    name_offset = int.from_bytes(body[:4], byte_order)
+    if name_offset < 12 or name_offset >= command_size:
+        return False
+    path = body[name_offset - 8 :]
+    terminator = path.find(b"\0")
+    return terminator > 0
+
+
 def _macho_auxiliary_command(
     command: int,
     command_size: int,
@@ -1538,7 +1554,11 @@ def _macho_auxiliary_command(
 ) -> tuple[str, int] | None:
     """Parse one non-segment Mach-O command used by admission."""
     if command == 0xE:
-        return "dylinker", 0
+        return (
+            ("dylinker", 0)
+            if _macho_dylinker_is_valid(body, command_size, byte_order)
+            else None
+        )
     if command == 0x32:
         platform = _macho_build_platform(body, command_size, byte_order)
         return None if platform is None else ("platform", platform)
