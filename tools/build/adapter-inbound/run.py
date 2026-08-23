@@ -1399,12 +1399,16 @@ def _macho_command_evidence(
         if record is None:
             return None
         command, command_size, body = record
-        if command == 0x19:
-            segment = _macho_segment64(
-                body,
-                command_size,
-                byte_order,
-                file_size,
+        if command in {0x1, 0x19}:
+            segment = (
+                None
+                if command == 0x1
+                else _macho_segment64(
+                    body,
+                    command_size,
+                    byte_order,
+                    file_size,
+                )
             )
             if segment is None:
                 return None
