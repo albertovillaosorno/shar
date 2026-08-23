@@ -2242,13 +2242,164 @@ def _android_string_pool_is_valid(
     return strings_valid and styles_valid
 
 
+def _android_string_pool_length8(
+    data: bytes,
+    cursor: int,
+    limit: int,
+) -> tuple[int, int] | None:
+    """Decode one bounded Android UTF-8 string length field."""
+    if cursor >= limit:
+        return None
+    first = data[cursor]
+    cursor += 1
+    if first & 0x80 == 0:
+        return first, cursor
+    if cursor >= limit:
+        return None
+    return ((first & 0x7F) << 8) | data[cursor], cursor + 1
+
+
+def _android_string_pool_length16(
+    data: bytes,
+    cursor: int,
+    limit: int,
+) -> tuple[int, int] | None:
+    """Decode one bounded Android UTF-16 string length field."""
+    if limit - cursor < 2:
+        return None
+    first = int.from_bytes(data[cursor : cursor + 2], "little")
+    cursor += 2
+    if first & 0x8000 == 0:
+        return first, cursor
+    if limit - cursor < 2:
+        return None
+    second = int.from_bytes(data[cursor : cursor + 2], "little")
+    return ((first & 0x7FFF) << 16) | second, cursor + 2
+
+
+def _android_string_pool_entry_bounds(
+    payload: bytes,
+    cursor: int,
+    chunk_size: int,
+    index: int,
+) -> tuple[int, int, bool] | None:
+    """Return one bounded Android string entry and its encoding."""
+    string_count = int.from_bytes(payload[cursor + 8 : cursor + 12], "little")
+    if index >= string_count:
+        return None
+    flags = int.from_bytes(payload[cursor + 16 : cursor + 20], "little")
+    strings_start = int.from_bytes(payload[cursor + 20 : cursor + 24], "little")
+    styles_start = int.from_bytes(payload[cursor + 24 : cursor + 28], "little")
+    entry = cursor + 28 + (index * 4)
+    offset = int.from_bytes(payload[entry : entry + 4], "little")
+    start = cursor + strings_start + offset
+    limit = cursor + (styles_start or chunk_size)
+    if start >= limit:
+        return None
+    return start, limit, bool(flags & 0x100)
+
+
+def _android_utf8_pool_text(
+    payload: bytes,
+    start: int,
+    limit: int,
+) -> str | None:
+    """Decode one bounded Android UTF-8 string-pool entry."""
+    utf16_length = _android_string_pool_length8(payload, start, limit)
+    if utf16_length is None:
+        return None
+    _, data_cursor = utf16_length
+    byte_length = _android_string_pool_length8(payload, data_cursor, limit)
+    if byte_length is None:
+        return None
+    length, data_cursor = byte_length
+    if length >= limit - data_cursor:
+        return None
+    raw = payload[data_cursor : data_cursor + length]
+    if payload[data_cursor + length] != 0:
+        return None
+    try:
+        return raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return None
+
+
+def _android_utf16_pool_text(
+    payload: bytes,
+    start: int,
+    limit: int,
+) -> str | None:
+    """Decode one bounded Android UTF-16 string-pool entry."""
+    length_field = _android_string_pool_length16(payload, start, limit)
+    if length_field is None:
+        return None
+    length, data_cursor = length_field
+    byte_length = length * 2
+    if byte_length + 2 > limit - data_cursor:
+        return None
+    raw = payload[data_cursor : data_cursor + byte_length]
+    terminator = payload[
+        data_cursor + byte_length : data_cursor + byte_length + 2
+    ]
+    if terminator != b"\0\0":
+        return None
+    try:
+        return raw.decode("utf-16-le")
+    except UnicodeDecodeError:
+        return None
+
+
+def _android_string_pool_text(
+    payload: bytes,
+    cursor: int,
+    chunk_size: int,
+    index: int,
+) -> str | None:
+    """Decode one referenced Android string-pool entry when bounded."""
+    bounds = _android_string_pool_entry_bounds(
+        payload,
+        cursor,
+        chunk_size,
+        index,
+    )
+    if bounds is None:
+        return None
+    start, limit, utf8 = bounds
+    decoder = _android_utf8_pool_text if utf8 else _android_utf16_pool_text
+    return decoder(payload, start, limit)
+
+
+def _android_root_element_is_manifest(
+    payload: bytes,
+    cursor: int,
+    header_size: int,
+    string_pool: tuple[int, int],
+) -> bool:
+    """Return whether one first XML start element resolves to manifest."""
+    extension = cursor + header_size
+    name_index = int.from_bytes(
+        payload[extension + 4 : extension + 8],
+        "little",
+    )
+    pool_cursor, pool_size = string_pool
+    return (
+        _android_string_pool_text(
+            payload,
+            pool_cursor,
+            pool_size,
+            name_index,
+        )
+        == "manifest"
+    )
+
+
 def _android_xml_children_are_valid(
     payload: bytes,
     cursor: int,
     root_size: int,
 ) -> bool:
     """Return whether binary-XML children provide strings and a root tag."""
-    has_string_pool = False
+    string_pool: tuple[int, int] | None = None
     has_start_element = False
     while cursor < root_size:
         layout = _android_xml_chunk_layout(payload, cursor, root_size)
@@ -2263,9 +2414,9 @@ def _android_xml_children_are_valid(
                 chunk_size,
             ):
                 return False
-            has_string_pool = True
+            string_pool = (cursor, chunk_size)
         elif 0x0100 <= chunk_type <= 0x017F:
-            if not has_string_pool or header_size < 16:
+            if string_pool is None or header_size < 16:
                 return False
             if chunk_type == 0x0102:
                 if not _android_start_element_is_valid(
@@ -2275,9 +2426,23 @@ def _android_xml_children_are_valid(
                     chunk_size,
                 ):
                     return False
+                root_matches = has_start_element or (
+                    _android_root_element_is_manifest(
+                        payload,
+                        cursor,
+                        header_size,
+                        string_pool,
+                    )
+                )
+                if not root_matches:
+                    return False
                 has_start_element = True
         cursor += chunk_size
-    return cursor == root_size and has_string_pool and has_start_element
+    return (
+        cursor == root_size
+        and string_pool is not None
+        and has_start_element
+    )
 
 
 def _android_manifest_is_binary_xml(

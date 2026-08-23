@@ -411,40 +411,67 @@ def _synthetic_fat64_macho(*, reserved: int = 0) -> bytes:
     )
 
 
-def _synthetic_android_manifest() -> bytes:
+def _synthetic_android_manifest(
+    *,
+    root_name: str = "manifest",
+    utf8: bool = True,
+    child_name: str | None = None,
+) -> bytes:
     """Return one minimal Android resource binary XML manifest fixture."""
-    string_data = b"\x08\x08manifest\0\0"
+    names = [root_name]
+    if child_name is not None:
+        names.append(child_name)
+    offsets: list[int] = []
+    string_data = bytearray()
+    for name in names:
+        offsets.append(len(string_data))
+        if utf8:
+            encoded = name.encode("utf-8")
+            string_data += bytes([len(name), len(encoded)]) + encoded + b"\0"
+        else:
+            encoded = name.encode("utf-16-le")
+            string_data += len(name).to_bytes(2, "little") + encoded + b"\0\0"
+    while len(string_data) % 4:
+        string_data += b"\0"
+    strings_start = 28 + (4 * len(names))
+    string_pool_size = strings_start + len(string_data)
     string_pool = (
         (0x0001).to_bytes(2, "little")
         + (28).to_bytes(2, "little")
-        + (44).to_bytes(4, "little")
-        + (1).to_bytes(4, "little")
+        + string_pool_size.to_bytes(4, "little")
+        + len(names).to_bytes(4, "little")
         + (0).to_bytes(4, "little")
-        + (0x100).to_bytes(4, "little")
-        + (32).to_bytes(4, "little")
+        + (0x100 if utf8 else 0).to_bytes(4, "little")
+        + strings_start.to_bytes(4, "little")
         + (0).to_bytes(4, "little")
-        + (0).to_bytes(4, "little")
-        + string_data
+        + b"".join(offset.to_bytes(4, "little") for offset in offsets)
+        + bytes(string_data)
     )
-    start_element = (
-        (0x0102).to_bytes(2, "little")
-        + (16).to_bytes(2, "little")
-        + (36).to_bytes(4, "little")
-        + (1).to_bytes(4, "little")
-        + (0xFFFFFFFF).to_bytes(4, "little")
-        + (0xFFFFFFFF).to_bytes(4, "little")
-        + (0).to_bytes(4, "little")
-        + (20).to_bytes(2, "little")
-        + (20).to_bytes(2, "little")
-        + (b"\0" * 8)
-    )
-    size = 8 + len(string_pool) + len(start_element)
+
+    def start_element(name_index: int) -> bytes:
+        return (
+            (0x0102).to_bytes(2, "little")
+            + (16).to_bytes(2, "little")
+            + (36).to_bytes(4, "little")
+            + (1).to_bytes(4, "little")
+            + (0xFFFFFFFF).to_bytes(4, "little")
+            + (0xFFFFFFFF).to_bytes(4, "little")
+            + name_index.to_bytes(4, "little")
+            + (20).to_bytes(2, "little")
+            + (20).to_bytes(2, "little")
+            + (b"\0" * 8)
+        )
+
+    nodes = start_element(0)
+    if child_name is not None:
+        nodes += start_element(1)
+    size = 8 + len(string_pool) + len(nodes)
     return (
         (0x0003).to_bytes(2, "little")
         + (8).to_bytes(2, "little")
         + size.to_bytes(4, "little")
         + string_pool
-        + start_element
+        + nodes
     )
 
 
@@ -3584,6 +3611,13 @@ class AndroidManifestStructureTests(unittest.TestCase):
     def test_rejects_malformed_binary_xml_manifests(self) -> None:
         baseline = _synthetic_android_manifest()
         cases: list[tuple[str, bytes, bool]] = [("valid", baseline, True)]
+        cases.append(
+            (
+                "wrong-root-name",
+                _synthetic_android_manifest(root_name="application"),
+                False,
+            )
+        )
         plain = b"synthetic manifest"
         cases.append(("plain-text", plain, False))
         string_pool_size = int.from_bytes(baseline[12:16], "little")
@@ -3596,6 +3630,7 @@ class AndroidManifestStructureTests(unittest.TestCase):
             ("style-count", 20, 4, 1),
             ("string-start", 28, 4, 0xFFFFFFFF),
             ("string-terminator", start - 1, 1, 1),
+            ("root-name-index", start + 20, 4, 1),
             ("node-before-strings", 8, 2, 0x0180),
             ("missing-start", start, 2, 0x0103),
             ("misaligned-child", start + 4, 4, 35),
@@ -3620,6 +3655,33 @@ class AndroidManifestStructureTests(unittest.TestCase):
                         _synthetic_elf(0x00B7),
                     )
                 self.assertEqual(_RUN._is_android_apk(package), admitted)
+
+    def test_accepts_supported_root_string_encodings_and_child_tags(
+        self,
+    ) -> None:
+        cases = (
+            ("utf8", _synthetic_android_manifest()),
+            ("utf16", _synthetic_android_manifest(utf8=False)),
+            (
+                "child-tag",
+                _synthetic_android_manifest(child_name="application"),
+            ),
+        )
+        for reason, manifest in cases:
+            with (
+                self.subTest(reason=reason),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-android-manifest-"
+                ) as raw,
+            ):
+                package = Path(raw) / "shar.apk"
+                with _RUN.zipfile.ZipFile(package, "w") as archive:
+                    archive.writestr("AndroidManifest.xml", manifest)
+                    archive.writestr(
+                        "lib/arm64-v8a/libUnreal.so",
+                        _synthetic_elf(0x00B7),
+                    )
+                self.assertTrue(_RUN._is_android_apk(package))
 
 
 class MobileArchiveMemberTypeTests(unittest.TestCase):
