@@ -1692,13 +1692,31 @@ def _zip_member_path_is_safe(info: zipfile.ZipInfo) -> bool:
 def _zip_inventory(
     archive: zipfile.ZipFile,
 ) -> dict[str, zipfile.ZipInfo] | None:
-    """Return one duplicate-free inventory with strict member paths."""
+    """Return one duplicate-free inventory with a realizable member tree."""
     infos = archive.infolist()
     names = [info.filename for info in infos]
     if len(names) != len(set(names)):
         return None
     if not all(_zip_member_path_is_safe(info) for info in infos):
         return None
+    logical = [
+        info.filename[:-1] if info.is_dir() else info.filename
+        for info in infos
+    ]
+    if len(logical) != len(set(logical)):
+        return None
+    files = {
+        name
+        for name, info in zip(logical, infos, strict=True)
+        if not info.is_dir()
+    }
+    for name in logical:
+        parts = name.split("/")
+        ancestors = (
+            "/".join(parts[:index]) for index in range(1, len(parts))
+        )
+        if any(ancestor in files for ancestor in ancestors):
+            return None
     return {info.filename: info for info in infos}
 
 
