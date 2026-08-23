@@ -3126,6 +3126,37 @@ class ElfEntrypointTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["linux-x64"],
                 )
 
+    def test_validates_thread_local_storage_segment(self) -> None:
+        base = bytearray(56)
+        base[:4] = (7).to_bytes(4, "little")
+        base[4:8] = (0x4).to_bytes(4, "little")
+        base[8:16] = (0x200).to_bytes(8, "little")
+        base[16:24] = (0x400200).to_bytes(8, "little")
+        base[32:40] = (8).to_bytes(8, "little")
+        base[40:48] = (16).to_bytes(8, "little")
+        base[48:56] = (8).to_bytes(8, "little")
+        cases = (
+            ("valid", None, True),
+            ("flags", (4, 4, 0x5), False),
+            ("file-size", (32, 8, 17), False),
+            ("alignment", (48, 8, 3), False),
+            ("congruence", (8, 8, 0x201), False),
+            ("virtual-wrap", (16, 8, (1 << 64) - 8), False),
+        )
+        for reason, mutation, admitted in cases:
+            program = bytearray(base)
+            if mutation is not None:
+                offset, width, value = mutation
+                program[offset : offset + width] = value.to_bytes(
+                    width,
+                    "little",
+                )
+            with self.subTest(reason=reason):
+                self.assertEqual(
+                    _RUN._elf_tls_segment_is_valid(bytes(program), "little"),
+                    admitted,
+                )
+
     def test_validates_program_header_segment(self) -> None:
         cases = (
             ("valid", _synthetic_elf_with_program_header(), True),

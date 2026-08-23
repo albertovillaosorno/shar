@@ -11,7 +11,7 @@ children: []
 ---
 
 <!-- CSpell:ignore APPL COMDAT DYLINKER LINKEDIT -->
-<!-- CSpell:ignore OSABI pdb PHDR RVA rva SHLIB UNIXTHREAD -->
+<!-- CSpell:ignore OSABI pdb PHDR TLS RVA rva SHLIB UNIXTHREAD -->
 
 # Canonical multi-platform build runner
 
@@ -156,9 +156,11 @@ OS/processor-specific segment ranges remain admissible. `PT_INTERP`, when
 present, must occur once before every load segment and name one nonempty
 NUL-terminated interpreter path. `PT_PHDR`, when present, must likewise occur
 once before load segments, exactly describe the program-header table, and that
-table must be mapped by a loadable segment. At least one executable loadable
-segment must carry non-empty file-backed bytes whose file range does not exceed
-its memory range or wrap the 64-bit
+table must be mapped by a loadable segment. Optional `PT_TLS` templates must
+remain read-only, keep initialized bytes no larger than the total template,
+retain valid file/virtual alignment, and avoid wrapping the virtual address
+space. At least one executable loadable segment must carry non-empty file-backed
+bytes whose file range does not exceed its memory range or wrap the 64-bit
 virtual address space.
 Loadable ELF segments also retain the ABI alignment contract: `p_align` must be
 zero, one, or a power of two, and aligned segments require congruent file
