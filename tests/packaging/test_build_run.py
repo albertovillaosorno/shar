@@ -314,6 +314,28 @@ def _synthetic_fat_macho(cpu_types: tuple[int, ...]) -> bytes:
     )
 
 
+def _synthetic_fat64_macho(*, reserved: int = 0) -> bytes:
+    """Return one page-aligned big-endian FAT64 ARM64 fixture."""
+    payload = _synthetic_macho(_RUN._MACHO_ARM64_CPU)
+    entry_size = 32
+    offset = 0x4000
+    entry = (
+        _RUN._MACHO_ARM64_CPU.to_bytes(4, "big")
+        + (0).to_bytes(4, "big")
+        + offset.to_bytes(8, "big")
+        + len(payload).to_bytes(8, "big")
+        + (14).to_bytes(4, "big")
+        + reserved.to_bytes(4, "big")
+    )
+    return (
+        bytes.fromhex("cafebabf")
+        + (1).to_bytes(4, "big")
+        + entry
+        + (b"\0" * (offset - 8 - entry_size))
+        + payload
+    )
+
+
 def _write_android_apk(
     path: Path,
     machine: int = 0x00B7,
@@ -2455,6 +2477,36 @@ class ElfEntrypointTests(unittest.TestCase):
 
 class MachOFatSliceTests(unittest.TestCase):
     """Require dyld-compatible universal ARM64 slice placement."""
+
+    def test_rejects_nonzero_fat64_reserved_word(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-macos-fat64-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(_synthetic_fat64_macho(reserved=1))
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "macOS SHAR app bundle",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["macos-arm64"],
+                )
+
+    def test_allows_zero_fat64_reserved_word(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-macos-fat64-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "SHAR.app/Contents/MacOS/shar"
+            executable.parent.mkdir(parents=True)
+            executable.write_bytes(_synthetic_fat64_macho())
+            if _RUN.os.name != "nt":
+                executable.chmod(0o755)
+            _RUN._validate_candidate_artifact(
+                candidate,
+                _RUN._TARGETS_BY_ID["macos-arm64"],
+            )
 
     def test_rejects_arm64_slice_outside_sixteen_kilobyte_page(self) -> None:
         valid_arm64 = _synthetic_fat_macho((_RUN._MACHO_ARM64_CPU,))

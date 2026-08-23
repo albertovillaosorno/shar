@@ -90,9 +90,10 @@ descriptor and requires the candidate path to retain that
 identity through ZIP validation, so a transient external archive cannot
 authorize different local bytes for publication. Universal Mach-O validation
 consumes every
-declared architecture record before accepting ARM64, and each declared slice
-must have nonzero in-bounds file data after the architecture table, honor its
-declared power-of-two file alignment, and not overlap another slice. Selected
+declared architecture record before accepting ARM64. FAT64 architecture records
+must keep their reserved word zero, and each declared slice must have nonzero
+in-bounds file data after the architecture table, honor its declared
+power-of-two file alignment, and not overlap another slice. Selected
 ARM64 slices must also begin at a 16-KiB page boundary and themselves begin with
 an ARM64 thin Mach-O header whose CPU subtype matches the fat record after
 masking subtype feature bits. Truncated, empty, overlapping, or mislabeled fat
