@@ -1116,6 +1116,7 @@ def _pe_optional_layout(
     if (
         optional_size < 112
         or characteristics & 0x0002 == 0
+        or characteristics & 0x0010
         or characteristics & 0x2000
     ):
         return None
