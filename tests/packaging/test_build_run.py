@@ -3657,7 +3657,6 @@ class MachOLinkEditDataTests(unittest.TestCase):
             0x26,
             0x29,
             0x2B,
-            0x2E,
             0x80000033,
             0x80000034,
         ):
@@ -3696,7 +3695,6 @@ class MachOLinkEditDataTests(unittest.TestCase):
             0x26,
             0x29,
             0x2B,
-            0x2E,
             0x80000033,
             0x80000034,
         )
@@ -3994,6 +3992,32 @@ class MachOSymbolTableTests(unittest.TestCase):
         self.assertIsNone(
             _RUN._macho_symtab_ranges(body, 24, "little", 0x200)
         )
+
+
+class MachOObjectOnlyCommandTests(unittest.TestCase):
+    """Reject linker metadata reserved for relocatable object files."""
+
+    def test_rejects_object_only_linker_commands(self) -> None:
+        for command in (0x2D, 0x2E):
+            payload = bytearray(
+                _synthetic_macho(
+                    _RUN._MACHO_ARM64_CPU,
+                    prefix_command_size=16,
+                )
+            )
+            payload[104:108] = command.to_bytes(4, "little")
+            stream = io.BytesIO(payload)
+            prefix = stream.read(4)
+            with self.subTest(command=hex(command)):
+                self.assertFalse(
+                    _RUN._matches_macho(
+                        stream,
+                        prefix,
+                        "macos",
+                        "arm64",
+                        len(payload),
+                    )
+                )
 
 
 class MachONoteTests(unittest.TestCase):

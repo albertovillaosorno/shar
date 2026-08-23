@@ -914,7 +914,6 @@ _MACHO_LINKEDIT_DATA_COMMANDS = {
     0x26,
     0x29,
     0x2B,
-    0x2E,
     0x80000033,
     0x80000034,
 }
@@ -2104,7 +2103,7 @@ def _macho_auxiliary_command(
 ) -> _MachOAuxiliary | None:
     """Parse one non-segment Mach-O command used by admission."""
     result: _MachOAuxiliary | None = _MachOAuxiliary("ignored")
-    if command in {0xD, 0x1B, 0x21, 0x2C, 0x31}:
+    if command in {0xD, 0x1B, 0x21, 0x2C, 0x2D, 0x2E, 0x31}:
         result = _macho_fixed_auxiliary(
             command,
             body,

@@ -198,7 +198,9 @@ use the exact 16-byte command structure, keep every positive-size declared
 file payload inside the unique `__LINKEDIT` file mapping, keep those payload
 ranges pairwise disjoint rather than merely file-bounded, and allow at most one
 of each link-edit data command type. `LC_CODE_SIGNATURE` remains optional for
-local/unsigned output under that same singleton rule. Classic `LC_DYLD_INFO`
+local/unsigned output under that same singleton rule. Object-file-only
+`LC_LINKER_OPTION` and `LC_LINKER_OPTIMIZATION_HINT` commands are rejected from
+these executable images. Classic `LC_DYLD_INFO`
 and `LC_DYLD_INFO_ONLY` commands share that same containment/overlap gate across
 all five of their file ranges, require the exact 48-byte structure, and may
 appear only once in total. Present `LC_SYMTAB` metadata likewise requires its
