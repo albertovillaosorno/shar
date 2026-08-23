@@ -1160,6 +1160,8 @@ def _pe_data_directories_are_valid(
             continue
         if address == 0:
             return False
+        if index == 4 and (address % 8 != 0 or size % 8 != 0):
+            return False
         limit = file_size if index == 4 else image_size
         if address > limit or size > limit - address:
             return False

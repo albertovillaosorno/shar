@@ -2248,6 +2248,27 @@ class PeOptionalHeaderTests(unittest.TestCase):
                     )
                 )
 
+    def test_rejects_misaligned_certificate_table(self) -> None:
+        for reason, address, size, admitted in (
+            ("valid", 0x200, 8, True),
+            ("offset", 0x201, 8, False),
+            ("size", 0x200, 7, False),
+        ):
+            optional = bytearray(152)
+            optional[56:60] = (0x2000).to_bytes(4, "little")
+            optional[108:112] = (5).to_bytes(4, "little")
+            start = 112 + (4 * 8)
+            optional[start : start + 4] = address.to_bytes(4, "little")
+            optional[start + 4 : start + 8] = size.to_bytes(4, "little")
+            with self.subTest(reason=reason):
+                self.assertEqual(
+                    _RUN._pe_data_directories_are_valid(
+                        bytes(optional),
+                        0x4000,
+                    ),
+                    admitted,
+                )
+
     def test_rejects_data_directory_outside_image(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-windows-header-") as raw:
             candidate = Path(raw)
