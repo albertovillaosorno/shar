@@ -2618,6 +2618,19 @@ def _is_android_apk(path: Path) -> bool:
     )
 
 
+def _ios_bundle_identifier_is_valid(value: object) -> bool:
+    """Return whether one iOS bundle identifier uses Apple's character set."""
+    return (
+        isinstance(value, str)
+        and bool(value)
+        and all(
+            character.isascii()
+            and (character.isalnum() or character in {"-", "."})
+            for character in value
+        )
+    )
+
+
 def _ios_main_binary(
     archive: zipfile.ZipFile,
     inventory: dict[str, zipfile.ZipInfo],
@@ -2636,6 +2649,8 @@ def _ios_main_binary(
     plist_info = property_lists[0]
     document = plistlib.loads(archive.read(plist_info))
     if not isinstance(document, dict):
+        return None
+    if not _ios_bundle_identifier_is_valid(document.get("CFBundleIdentifier")):
         return None
     executable = document.get("CFBundleExecutable")
     if (

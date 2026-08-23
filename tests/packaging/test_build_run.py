@@ -562,12 +562,16 @@ def _write_ios_ipa(
     cpu: int = 0x0100000C,
     *,
     binary: bytes | None = None,
+    bundle_id: object = "org.shar.game",
 ) -> None:
     """Write one synthetic IPA with a declared main executable."""
+    document: dict[str, object] = {"CFBundleExecutable": "shar"}
+    if bundle_id is not None:
+        document["CFBundleIdentifier"] = bundle_id
     with _RUN.zipfile.ZipFile(path, "w") as archive:
         archive.writestr(
             "Payload/SHAR.app/Info.plist",
-            _RUN.plistlib.dumps({"CFBundleExecutable": "shar"}),
+            _RUN.plistlib.dumps(document),
         )
         archive.writestr(
             "Payload/SHAR.app/shar",
@@ -3788,7 +3792,12 @@ class MobileArchiveMemberTypeTests(unittest.TestCase):
             ):
                 package = Path(raw) / "shar.ipa"
                 with _RUN.zipfile.ZipFile(package, "w") as archive:
-                    plist = _RUN.plistlib.dumps({"CFBundleExecutable": "shar"})
+                    plist = _RUN.plistlib.dumps(
+                        {
+                            "CFBundleExecutable": "shar",
+                            "CFBundleIdentifier": "org.shar.game",
+                        }
+                    )
                     binary = _synthetic_macho(
                         _RUN._MACHO_ARM64_CPU,
                         platform=2,
@@ -3851,6 +3860,43 @@ class MobileArtifactMultiplicityTests(unittest.TestCase):
                             candidate,
                             _RUN._TARGETS_BY_ID[target_id],
                         )
+
+
+class IosBundleMetadataTests(unittest.TestCase):
+    """Require iOS app-bundle identity metadata needed by signing."""
+
+    def test_ios_candidate_requires_valid_bundle_identifier(self) -> None:
+        invalid_values: tuple[object, ...] = (
+            None,
+            "",
+            "org/shar/game",
+            "org shar.game",
+            "org.shar.🔥",
+            7,
+        )
+        target = _RUN._TARGETS_BY_ID["ios-arm64"]
+        for value in invalid_values:
+            with (
+                self.subTest(value=value),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-ios-bundle-id-"
+                ) as raw,
+            ):
+                candidate = Path(raw)
+                _write_ios_ipa(candidate / "shar.ipa", bundle_id=value)
+                with self.assertRaisesRegex(_RUN.RunFailure, "iOS IPA"):
+                    _RUN._validate_candidate_artifact(candidate, target)
+
+        for value in ("org.shar.game", "A-1.b-2", "single"):
+            with (
+                self.subTest(valid=value),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-ios-bundle-id-"
+                ) as raw,
+            ):
+                candidate = Path(raw)
+                _write_ios_ipa(candidate / "shar.ipa", bundle_id=value)
+                _RUN._validate_candidate_artifact(candidate, target)
 
 
 class CandidateArtifactTests(unittest.TestCase):
