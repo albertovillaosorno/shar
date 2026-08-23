@@ -33,7 +33,7 @@
 
 """Build selected SHAR targets and publish only complete native packages."""
 
-# CSpell:ignore linkedit
+# CSpell:ignore dylinker linkedit
 
 from __future__ import annotations
 
@@ -891,6 +891,7 @@ def _is_shar_runtime_name(name: str) -> bool:
 _ELF_MACHINES = {"amd64": 0x003E, "arm64": 0x00B7}
 _PE_MACHINES = {"amd64": 0x8664, "arm64": 0xAA64}
 _MACHO_ARM64_CPU = 0x0100000C
+_MACHO_PLATFORMS = {"macos": 1, "ios": 2}
 _MACHO_CPU_SUBTYPE_MASK = 0xFF000000
 _MACHO_THIN_ENDIAN = {
     bytes.fromhex("cffaedfe"): "little",
@@ -1515,17 +1516,54 @@ def _macho_read_command(
     return command, command_size, body
 
 
+def _macho_build_platform(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+) -> int | None:
+    """Return one structurally valid LC_BUILD_VERSION platform id."""
+    if command_size < 24 or len(body) < 16:
+        return None
+    tool_count = int.from_bytes(body[12:16], byte_order)
+    if command_size != 24 + (8 * tool_count):
+        return None
+    return int.from_bytes(body[:4], byte_order)
+
+
+def _macho_auxiliary_command(
+    command: int,
+    command_size: int,
+    body: bytes,
+    byte_order: str,
+) -> tuple[str, int] | None:
+    """Parse one non-segment Mach-O command used by admission."""
+    if command == 0xE:
+        return "dylinker", 0
+    if command == 0x32:
+        platform = _macho_build_platform(body, command_size, byte_order)
+        return None if platform is None else ("platform", platform)
+    if command == 0x80000028:
+        if command_size != 24:
+            return None
+        return "main", int.from_bytes(body[:8], byte_order)
+    if command == 0x5:
+        entrypoint = _macho_thread_state_entrypoint(body, byte_order)
+        return None if entrypoint is None else ("thread", entrypoint)
+    return "ignored", 0
+
+
 def _macho_command_evidence(
     stream: object,
     byte_order: str,
     command_count: int,
     command_bytes: int,
     file_size: int,
-) -> tuple[list[_MachOSegment], list[tuple[str, int]], bool] | None:
-    """Collect bounded segment, entrypoint, and dynamic-linker evidence."""
+) -> tuple[list[_MachOSegment], list[tuple[str, int]], bool, list[int]] | None:
+    """Collect bounded segment, entrypoint, linker, and platform evidence."""
     remaining = command_bytes
     entrypoints: list[tuple[str, int]] = []
     segments: list[_MachOSegment] = []
+    platforms: list[int] = []
     has_dynamic_linker = False
     for _ in range(command_count):
         record = _macho_read_command(stream, byte_order, remaining)
@@ -1546,21 +1584,26 @@ def _macho_command_evidence(
             if segment is None:
                 return None
             segments.append(segment)
-        elif command == 0xE:
-            has_dynamic_linker = True
-        elif command == 0x80000028:
-            if command_size != 24:
+        else:
+            auxiliary = _macho_auxiliary_command(
+                command,
+                command_size,
+                body,
+                byte_order,
+            )
+            if auxiliary is None:
                 return None
-            entrypoints.append(("main", int.from_bytes(body[:8], byte_order)))
-        elif command == 0x5:
-            entrypoint = _macho_thread_state_entrypoint(body, byte_order)
-            if entrypoint is None:
-                return None
-            entrypoints.append(("thread", entrypoint))
+            kind, value = auxiliary
+            if kind == "dylinker":
+                has_dynamic_linker = True
+            elif kind == "platform":
+                platforms.append(value)
+            elif kind in {"main", "thread"}:
+                entrypoints.append((kind, value))
         remaining -= command_size
     if remaining != 0:
         return None
-    return segments, entrypoints, has_dynamic_linker
+    return segments, entrypoints, has_dynamic_linker, platforms
 
 
 def _macho_ranges_are_disjoint(
@@ -1661,6 +1704,8 @@ def _macho_commands_have_entrypoint(
     command_count: int,
     command_bytes: int,
     file_size: int,
+    *,
+    expected_platform: int,
 ) -> bool:
     """Validate one Mach-O load-command table and executable entrypoint."""
     evidence = _macho_command_evidence(
@@ -1672,11 +1717,15 @@ def _macho_commands_have_entrypoint(
     )
     if evidence is None:
         return False
-    segments, entrypoints, has_dynamic_linker = evidence
-    return has_dynamic_linker and _macho_entrypoint_matches_segments(
-        segments,
-        entrypoints,
-        command_bytes,
+    segments, entrypoints, has_dynamic_linker, platforms = evidence
+    return (
+        has_dynamic_linker
+        and platforms == [expected_platform]
+        and _macho_entrypoint_matches_segments(
+            segments,
+            entrypoints,
+            command_bytes,
+        )
     )
 
 
@@ -1684,6 +1733,7 @@ def _matches_thin_macho(
     stream: object,
     byte_order: str,
     file_size: int,
+    expected_platform: int,
     expected_cpu_subtype: int | None = None,
 ) -> bool:
     """Return whether one ARM64 Mach-O64 executable has an entrypoint."""
@@ -1716,6 +1766,7 @@ def _matches_thin_macho(
         command_count,
         command_bytes,
         file_size,
+        expected_platform=expected_platform,
     )
 
 
@@ -1768,6 +1819,7 @@ def _fat_macho_arm64_slice_is_native(
     offset: int,
     size: int,
     cpu_subtype: int,
+    expected_platform: int,
 ) -> bool:
     """Return whether one fat ARM64 slice is a bounded executable image."""
     try:
@@ -1780,6 +1832,7 @@ def _fat_macho_arm64_slice_is_native(
         stream,
         thin_order,
         size,
+        expected_platform,
         cpu_subtype,
     )
 
@@ -1800,6 +1853,7 @@ def _fat_macho_contains_arm64(
     byte_order: str,
     entry_size: int,
     file_size: int,
+    expected_platform: int,
 ) -> bool:
     """Return whether one bounded universal Mach-O contains an ARM64 slice."""
     count_bytes = stream.read(4)
@@ -1842,6 +1896,7 @@ def _fat_macho_contains_arm64(
                 offset,
                 size,
                 cpu_subtype,
+                expected_platform,
             )
             for offset, size, cpu_subtype in arm64_slices
         )
@@ -1851,15 +1906,22 @@ def _fat_macho_contains_arm64(
 def _matches_macho(
     stream: object,
     prefix: bytes,
+    system: str,
     architecture: str,
     file_size: int,
 ) -> bool:
-    """Return whether one Mach-O header contains the selected architecture."""
-    if architecture != "arm64":
+    """Return whether one Mach-O header matches target platform and CPU."""
+    expected_platform = _MACHO_PLATFORMS.get(system)
+    if architecture != "arm64" or expected_platform is None:
         return False
     thin_order = _MACHO_THIN_ENDIAN.get(prefix)
     if thin_order is not None:
-        return _matches_thin_macho(stream, thin_order, file_size)
+        return _matches_thin_macho(
+            stream,
+            thin_order,
+            file_size,
+            expected_platform,
+        )
     fat = _MACHO_FAT.get(prefix)
     if fat is None:
         return False
@@ -1869,6 +1931,7 @@ def _matches_macho(
         byte_order,
         entry_size,
         file_size,
+        expected_platform,
     )
 
 
@@ -1892,6 +1955,7 @@ def _matches_native_binary_stream(
         return _matches_macho(
             stream,
             prefix,
+            system,
             architecture,
             file_size,
         )
@@ -2120,6 +2184,7 @@ def _ios_archive_contains_arm64(archive: zipfile.ZipFile) -> bool:
         return _matches_macho(
             stream,
             prefix,
+            "ios",
             "arm64",
             binary_info.file_size,
         )
