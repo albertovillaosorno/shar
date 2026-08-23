@@ -1912,6 +1912,8 @@ def _macho_symtab_ranges(
         (symbol_offset, symbol_size),
         (string_offset, string_size),
     )
+    if symbol_offset + symbol_size > string_offset:
+        return None
     if any(
         offset > file_size or size > file_size - offset
         for offset, size in ranges

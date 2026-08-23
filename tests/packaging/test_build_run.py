@@ -3930,6 +3930,30 @@ class MachOSymbolTableTests(unittest.TestCase):
         self.assertIsNotNone(auxiliary)
         self.assertEqual((auxiliary or _RUN._MachOAuxiliary("")).size, 5)
 
+    def test_requires_symbol_table_before_string_table(self) -> None:
+        for label, symbol_offset, string_offset, admitted in (
+            ("ordered", 0x100, 0x120, True),
+            ("overlap", 0x100, 0x110, False),
+            ("reversed", 0x140, 0x100, False),
+        ):
+            body = (
+                symbol_offset.to_bytes(4, "little")
+                + (2).to_bytes(4, "little")
+                + string_offset.to_bytes(4, "little")
+                + (0x20).to_bytes(4, "little")
+            )
+            with self.subTest(label=label):
+                self.assertEqual(
+                    _RUN._macho_symtab_ranges(
+                        body,
+                        24,
+                        "little",
+                        0x200,
+                    )
+                    is not None,
+                    admitted,
+                )
+
     def test_rejects_out_of_file_symbol_table(self) -> None:
         payload = bytearray(
             _synthetic_macho(
@@ -3960,30 +3984,15 @@ class MachOSymbolTableTests(unittest.TestCase):
         payload[104:152] = record + record
         self.assertFalse(self._matches(bytes(payload)))
 
-    def test_symbol_and_string_ranges_share_overlap_gate(self) -> None:
+    def test_rejects_overlapping_symbol_and_string_ranges(self) -> None:
         body = (
             (0x120).to_bytes(4, "little")
             + (2).to_bytes(4, "little")
             + (0x130).to_bytes(4, "little")
             + (0x20).to_bytes(4, "little")
         )
-        ranges = _RUN._macho_symtab_ranges(body, 24, "little", 0x200)
-        self.assertIsNotNone(ranges)
-        segments = [
-            _RUN._MachOSegment(
-                b"__LINKEDIT",
-                0x1000,
-                0x100,
-                0x100,
-                0x100,
-                0x1,
-            )
-        ]
-        self.assertFalse(
-            _RUN._macho_linkedit_ranges_fit_segment(
-                segments,
-                ranges or (),
-            )
+        self.assertIsNone(
+            _RUN._macho_symtab_ranges(body, 24, "little", 0x200)
         )
 
 
