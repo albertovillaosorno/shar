@@ -214,7 +214,9 @@ Its local, defined-external, and undefined symbol start/count groups must each
 remain inside the companion `LC_SYMTAB` symbol count, including their end index.
 A
 structurally bounded `LC_LOAD_DYLINKER` must carry a nonempty, NUL-terminated
-embedded path so the Apple loader does not classify it as a static executable.
+embedded path so the Apple loader does not classify it as a static executable;
+it may appear only once, and executable images reject the dynamic-linker-only
+`LC_ID_DYLINKER` identity command.
 Present dylib-load and `LC_RPATH` commands must likewise keep their string
 offsets beyond the fixed command structure and terminate the embedded string
 inside the command; `LC_ID_DYLIB` is rejected in these executable images. A
