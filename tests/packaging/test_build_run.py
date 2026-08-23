@@ -31,7 +31,7 @@
 """Tests for canonical build-runner project-state migration."""
 
 # CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit
-# CSpell:ignore osabi phdr rva shlib
+# CSpell:ignore osabi phdr rva shlib rpath runpath
 
 from __future__ import annotations
 
@@ -3675,6 +3675,103 @@ class MachOPlatformTests(unittest.TestCase):
                             len(payload),
                         )
                     )
+
+
+class MachOLoaderPathTests(unittest.TestCase):
+    """Require bounded dylib and runpath strings in executable images."""
+
+    def test_validates_dylib_and_runpath_strings(self) -> None:
+        cases = (
+            (0xC, 24, True),
+            (0x80000018, 24, True),
+            (0x8000001F, 24, True),
+            (0x80000023, 24, True),
+            (0x8000001C, 12, True),
+        )
+        for command, minimum_offset, admitted in cases:
+            command_size = 32
+            body = bytearray(command_size - 8)
+            body[:4] = minimum_offset.to_bytes(4, "little")
+            body[minimum_offset - 8 :] = b"x\0" + (
+                b"\0" * (command_size - minimum_offset - 2)
+            )
+            with self.subTest(command=hex(command)):
+                self.assertEqual(
+                    _RUN._macho_auxiliary_command(
+                        command,
+                        command_size,
+                        bytes(body),
+                        "little",
+                        0x200,
+                    )
+                    is not None,
+                    admitted,
+                )
+
+    def test_rejects_malformed_loader_paths(self) -> None:
+        for reason, command, string_offset in (
+            ("dylib-offset", 0xC, 16),
+            ("weak-offset", 0x80000018, 16),
+            ("reexport-offset", 0x8000001F, 16),
+            ("upward-offset", 0x80000023, 16),
+            ("rpath-offset", 0x8000001C, 8),
+        ):
+            body = bytearray(24)
+            body[:4] = string_offset.to_bytes(4, "little")
+            with self.subTest(reason=reason):
+                self.assertIsNone(
+                    _RUN._macho_auxiliary_command(
+                        command,
+                        32,
+                        bytes(body),
+                        "little",
+                        0x200,
+                    )
+                )
+        body = (24).to_bytes(4, "little") + (b"A" * 20)
+        self.assertIsNone(
+            _RUN._macho_auxiliary_command(
+                0xC,
+                32,
+                body,
+                "little",
+                0x200,
+            )
+        )
+
+    def test_rejects_dylib_identity_in_executable(self) -> None:
+        body = (24).to_bytes(4, "little") + (b"\0" * 20)
+        self.assertIsNone(
+            _RUN._macho_auxiliary_command(
+                0xD,
+                32,
+                body,
+                "little",
+                0x200,
+            )
+        )
+
+    def test_rejects_malformed_loader_path_in_image(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=32,
+            )
+        )
+        start = 32 + 72
+        payload[start : start + 4] = (0xC).to_bytes(4, "little")
+        payload[start + 8 : start + 12] = (16).to_bytes(4, "little")
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        self.assertFalse(
+            _RUN._matches_macho(
+                stream,
+                prefix,
+                "macos",
+                "arm64",
+                len(payload),
+            )
+        )
 
 
 class MachODynamicLinkerTests(unittest.TestCase):

@@ -903,6 +903,7 @@ _PE_MACHINES = {"amd64": 0x8664, "arm64": 0xAA64}
 _MACHO_ARM64_CPU = 0x0100000C
 _MACHO_PLATFORMS = {"macos": 1, "ios": 2}
 _MACHO_CPU_SUBTYPE_MASK = 0xFF000000
+_MACHO_DYLIB_LOAD_COMMANDS = {0xC, 0x80000018, 0x8000001F, 0x80000023}
 _MACHO_LINKEDIT_DATA_COMMANDS = {
     0x1D,
     0x1E,
@@ -1789,6 +1790,21 @@ def _macho_build_platform(
     return int.from_bytes(body[:4], byte_order)
 
 
+def _macho_lc_string_is_valid(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    minimum_offset: int,
+) -> bool:
+    """Return whether one lc_str points to a bounded terminated string."""
+    if command_size < minimum_offset or len(body) != command_size - 8:
+        return False
+    string_offset = int.from_bytes(body[:4], byte_order)
+    if string_offset < minimum_offset or string_offset >= command_size:
+        return False
+    return b"\0" in body[string_offset - 8 :]
+
+
 def _macho_dylinker_is_valid(
     body: bytes,
     command_size: int,
@@ -1861,7 +1877,25 @@ def _macho_auxiliary_command(
 ) -> _MachOAuxiliary | None:
     """Parse one non-segment Mach-O command used by admission."""
     result: _MachOAuxiliary | None = _MachOAuxiliary("ignored")
-    if command in _MACHO_LINKEDIT_DATA_COMMANDS:
+    if command == 0xD:
+        result = None
+    elif command in _MACHO_DYLIB_LOAD_COMMANDS:
+        if not _macho_lc_string_is_valid(
+            body,
+            command_size,
+            byte_order,
+            24,
+        ):
+            result = None
+    elif command == 0x8000001C:
+        if not _macho_lc_string_is_valid(
+            body,
+            command_size,
+            byte_order,
+            12,
+        ):
+            result = None
+    elif command in _MACHO_LINKEDIT_DATA_COMMANDS:
         data_range = _macho_linkedit_data_range(
             body,
             command_size,
