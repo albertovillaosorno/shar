@@ -1273,6 +1273,48 @@ class PublicationTransactionTests(unittest.TestCase):
             self.assertTrue((candidate / "new.txt").is_file())
             self.assertFalse(backup.exists())
 
+    def test_invalid_candidate_preserves_publication_state(self) -> None:
+        for stale_backup in (False, True):
+            with (
+                self.subTest(stale_backup=stale_backup),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-publish-invalid-candidate-"
+                ) as raw,
+            ):
+                root = Path(raw)
+                candidate = root / "candidate"
+                candidate.mkdir()
+                runtime = candidate / "shar"
+                runtime.write_bytes(b"not-elf")
+                if _RUN.os.name != "nt":
+                    runtime.chmod(0o755)
+                destination = root / "dist/linux-x64"
+                backup = destination.with_name(".linux-x64.previous")
+                if stale_backup:
+                    destination.parent.mkdir()
+                    backup.mkdir()
+                    (backup / "old.txt").write_text("old", encoding="utf-8")
+
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._publish(
+                        candidate,
+                        destination,
+                        _RUN._TARGETS_BY_ID["linux-x64"],
+                    )
+
+                self.assertTrue(runtime.is_file())
+                self.assertFalse(destination.exists())
+                if stale_backup:
+                    self.assertEqual(
+                        (backup / "old.txt").read_text(encoding="utf-8"),
+                        "old",
+                    )
+                else:
+                    self.assertFalse(destination.parent.exists())
+
     def test_rejects_linked_dist_root_before_candidate_moves(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-publish-link-") as raw:
             root = Path(raw)
@@ -1523,6 +1565,58 @@ class PublicationTransactionTests(unittest.TestCase):
             self.assertTrue((candidate / "new.txt").is_file())
             self.assertFalse(destination.exists())
             self.assertTrue(backup.is_dir())
+
+    def test_rejects_backup_replacement_before_cleanup(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-publish-backup-race-"
+        ) as raw:
+            root = Path(raw)
+            candidate = root / "candidate"
+            candidate.mkdir()
+            (candidate / "new.txt").write_text("new", encoding="utf-8")
+            destination = root / "dist/linux-x64"
+            destination.parent.mkdir()
+            backup = destination.with_name(".linux-x64.previous")
+            backup.mkdir()
+            (backup / "old.txt").write_text("old", encoding="utf-8")
+            displaced = root / "displaced-backup"
+            real_validate = _RUN._validate_publication_candidate
+
+            def replace_after_validation(
+                package: Path,
+                target: object,
+            ) -> object:
+                snapshot = real_validate(package, target)
+                backup.replace(displaced)
+                backup.mkdir()
+                (backup / "intruder.txt").write_text(
+                    "intruder", encoding="utf-8"
+                )
+                return snapshot
+
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_validate_publication_candidate",
+                    side_effect=replace_after_validation,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "publication backup changed before publication",
+                ),
+            ):
+                _RUN._publish(candidate, destination)
+
+            self.assertTrue((candidate / "new.txt").is_file())
+            self.assertFalse(destination.exists())
+            self.assertEqual(
+                (displaced / "old.txt").read_text(encoding="utf-8"),
+                "old",
+            )
+            self.assertEqual(
+                (backup / "intruder.txt").read_text(encoding="utf-8"),
+                "intruder",
+            )
 
     def test_cleanup_failure_rolls_back_publication_swap(self) -> None:
         with tempfile.TemporaryDirectory(
