@@ -1,4 +1,3 @@
-# cspell:ignore linkedit LINKEDIT
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -31,7 +30,7 @@
 
 """Tests for canonical build-runner project-state migration."""
 
-# CSpell:ignore osabi
+# CSpell:ignore linkedit osabi
 
 from __future__ import annotations
 
