@@ -30,7 +30,8 @@
 
 """Tests for canonical build-runner project-state migration."""
 
-# CSpell:ignore dylinker linkedit osabi APPL FMWK BNDL RVA rva SHLIB shlib
+# CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit
+# CSpell:ignore osabi phdr rva shlib
 
 from __future__ import annotations
 
@@ -126,6 +127,54 @@ def _synthetic_elf_with_interpreter(
     else:
         programs = [load, interpreter]
     return bytes(header + b"".join(programs) + path + b"\0")
+
+
+def _synthetic_elf_with_program_header(
+    *,
+    phdr_first: bool = True,
+    duplicate: bool = False,
+    offset_delta: int = 0,
+    size_delta: int = 0,
+    mapped: bool = True,
+) -> bytes:
+    """Return one ELF executable carrying an explicit PT_PHDR segment."""
+    program_count = 3 if duplicate else 2
+    program_end = 64 + (56 * program_count)
+    load_offset = 0 if mapped else program_end
+    load_size = program_end + 1 if mapped else 1
+    entrypoint = 0x400000 + (program_end if mapped else 0)
+    baseline = bytearray(
+        _synthetic_elf(
+            0x003E,
+            image_type=2,
+            entrypoint=entrypoint,
+            segment_offset=load_offset,
+            segment_file_size=load_size,
+            segment_memory_size=load_size,
+        )
+    )
+    header = bytearray(baseline[:64])
+    load = bytearray(baseline[64:120])
+    header[56:58] = program_count.to_bytes(2, "little")
+    load[8:16] = load_offset.to_bytes(8, "little")
+    load[32:40] = load_size.to_bytes(8, "little")
+    load[40:48] = load_size.to_bytes(8, "little")
+    table_size = 56 * program_count
+    phdr = bytearray(56)
+    phdr[:4] = (6).to_bytes(4, "little")
+    phdr[8:16] = (64 + offset_delta).to_bytes(8, "little")
+    phdr[16:24] = (0x400040).to_bytes(8, "little")
+    declared_size = table_size + size_delta
+    phdr[32:40] = declared_size.to_bytes(8, "little")
+    phdr[40:48] = declared_size.to_bytes(8, "little")
+    if phdr_first:
+        programs = [phdr]
+        if duplicate:
+            programs.append(bytearray(phdr))
+        programs.append(load)
+    else:
+        programs = [load, phdr]
+    return bytes(header + b"".join(programs) + b"\0")
 
 
 def _synthetic_big_endian_elf(machine: int) -> bytes:
@@ -3075,6 +3124,50 @@ class ElfEntrypointTests(unittest.TestCase):
                 _RUN._validate_candidate_artifact(
                     candidate,
                     _RUN._TARGETS_BY_ID["linux-x64"],
+                )
+
+    def test_validates_program_header_segment(self) -> None:
+        cases = (
+            ("valid", _synthetic_elf_with_program_header(), True),
+            (
+                "after-load",
+                _synthetic_elf_with_program_header(phdr_first=False),
+                False,
+            ),
+            (
+                "duplicate",
+                _synthetic_elf_with_program_header(duplicate=True),
+                False,
+            ),
+            (
+                "offset",
+                _synthetic_elf_with_program_header(offset_delta=1),
+                False,
+            ),
+            (
+                "size",
+                _synthetic_elf_with_program_header(size_delta=-1),
+                False,
+            ),
+            (
+                "unmapped",
+                _synthetic_elf_with_program_header(mapped=False),
+                False,
+            ),
+        )
+        for reason, payload, admitted in cases:
+            stream = io.BytesIO(payload)
+            prefix = stream.read(4)
+            with self.subTest(reason=reason):
+                self.assertEqual(
+                    _RUN._matches_elf(
+                        stream,
+                        prefix,
+                        "amd64",
+                        len(payload),
+                        require_entrypoint=True,
+                    ),
+                    admitted,
                 )
 
     def test_validates_interpreter_program_header(self) -> None:
