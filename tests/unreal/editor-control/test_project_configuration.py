@@ -108,8 +108,8 @@ def test_project_plugins_remain_local_and_translator_is_not_a_server() -> None:
     assert "future fallback" in translator_readme
 
 
-def test_persistent_project_state_links_are_ignored_explicitly() -> None:
-    """Git must ignore the persistent links, not only real directories."""
+def test_project_state_links_are_ignored_explicitly() -> None:
+    """Git must ignore runner links, not only real directories."""
     ignore_lines = (_REPOSITORY_ROOT / ".gitignore").read_text(
         encoding="utf-8"
     ).splitlines()

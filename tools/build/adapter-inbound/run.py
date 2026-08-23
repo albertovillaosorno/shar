@@ -636,6 +636,41 @@ def _rollback_project_state(actions: list[_ProjectStateAction]) -> None:
         )
 
 
+def _detach_project_state_link(
+    link: Path,
+    canonical: Path,
+    name: str,
+) -> None:
+    """Detach one canonical project-state link without touching its target."""
+    _require_real_directory(canonical, f"canonical project {name}")
+    if not _is_directory_link(link):
+        raise RunFailure(f"project {name} link changed before detach")
+    if link.resolve() != canonical.resolve():
+        raise RunFailure(f"project {name} link changed before detach")
+    _remove_directory_link(link)
+
+
+def _detach_project_state(root: Path, project: Path) -> None:
+    """Detach runner-created project links while retaining cache contents."""
+    project_dir = project.parent
+    state_root = root / _PROJECT_STATE_ROOT
+    _require_real_directory(state_root, "project-state cache root")
+    failures: list[str] = []
+    for name in _PROJECT_STATE_NAMES:
+        try:
+            _detach_project_state_link(
+                project_dir / name,
+                state_root / name,
+                name,
+            )
+        except (OSError, RunFailure) as error:
+            failures.append(f"{name}:{error}")
+    if failures:
+        raise RunFailure(
+            "project-state detach failed: " + "; ".join(failures)
+        )
+
+
 def _prepare_project_state(root: Path, project: Path) -> Path:
     """Keep Unreal project-generated state physically below repository cache."""
     project_dir = project.parent
@@ -3855,6 +3890,35 @@ def _require_unreal_evidence(check: dict[str, object]) -> dict[str, object]:
     return unreal
 
 
+def _build_selected_targets(
+    root: Path,
+    engine_root: Path,
+    project: Path,
+    targets: list[Target],
+    *,
+    validate_only: bool,
+) -> None:
+    """Attach cached project state only for the selected build lifecycle."""
+    _prepare_project_state(root, project)
+    try:
+        uat = _uat_path(engine_root)
+        for target in targets:
+            _build_target(
+                root,
+                uat,
+                project,
+                target,
+                validate_only=validate_only,
+            )
+    except BaseException as error:
+        try:
+            _detach_project_state(root, project)
+        except (OSError, RunFailure) as cleanup:
+            raise RunFailure(f"{error}; {cleanup}") from error
+        raise
+    _detach_project_state(root, project)
+
+
 def main() -> int:
     """Revalidate saved decisions and build every selected target."""
     args = _parser().parse_args()
@@ -3873,16 +3937,13 @@ def main() -> int:
         unreal = _require_unreal_evidence(check)
         engine_root = Path(str(unreal["root"])).resolve()
         project = _project_from_evidence(root, unreal)
-        _prepare_project_state(root, project)
-        uat = _uat_path(engine_root)
-        for target in targets:
-            _build_target(
-                root,
-                uat,
-                project,
-                target,
-                validate_only=args.validate_only,
-            )
+        _build_selected_targets(
+            root,
+            engine_root,
+            project,
+            targets,
+            validate_only=args.validate_only,
+        )
     except (RunFailure, OSError) as error:
         print(f"run: {error}", file=sys.stderr)
         return 1
