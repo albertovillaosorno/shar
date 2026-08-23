@@ -2779,6 +2779,25 @@ class MachOEntrypointTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["macos-arm64"],
                 )
 
+    def test_rejects_section_with_mismatched_segment_name(self) -> None:
+        payload = _synthetic_macho(_RUN._MACHO_ARM64_CPU)
+        body = bytearray(payload[40:104])
+        body[56:60] = (1).to_bytes(4, "little")
+        section = bytearray(80)
+        section[16:32] = b"__DATA" + (b"\0" * 10)
+        virtual_address = int.from_bytes(body[16:24], "little")
+        section[32:40] = virtual_address.to_bytes(8, "little")
+        section[40:48] = (1).to_bytes(8, "little")
+        section[48:52] = (128).to_bytes(4, "little")
+        self.assertIsNone(
+            _RUN._macho_segment64(
+                bytes(body + section),
+                152,
+                "little",
+                len(payload),
+            )
+        )
+
     def test_rejects_section_file_offset_inconsistent_with_type(self) -> None:
         payload = _synthetic_macho(_RUN._MACHO_ARM64_CPU)
         body = bytearray(payload[40:104])
