@@ -2786,9 +2786,9 @@ class MachOEntrypointTests(unittest.TestCase):
         virtual_address = int.from_bytes(body[16:24], "little")
         for reason, section_type, section_offset in (
             ("regular-without-file-offset", 0x0, 0),
-            ("zerofill-with-file-offset", 0x1, 1),
-            ("gb-zerofill-with-file-offset", 0xC, 1),
-            ("tls-zerofill-with-file-offset", 0x12, 1),
+            ("zero-fill-with-file-offset", 0x1, 1),
+            ("gb-zero-fill-with-file-offset", 0xC, 1),
+            ("tls-zero-fill-with-file-offset", 0x12, 1),
         ):
             section = bytearray(80)
             section[32:40] = virtual_address.to_bytes(8, "little")
