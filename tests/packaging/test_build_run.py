@@ -2574,6 +2574,29 @@ class PeOptionalHeaderTests(unittest.TestCase):
                         _RUN._TARGETS_BY_ID["windows-x64"],
                     )
 
+    def test_limits_pe32_plus_image_size_to_two_gib(self) -> None:
+        base = bytearray(112)
+        base[32:36] = (0x1000).to_bytes(4, "little")
+        base[36:40] = (0x200).to_bytes(4, "little")
+        base[60:64] = (0x200).to_bytes(4, "little")
+        for image_size, admitted in (
+            (0x2000, True),
+            (0x80000000, True),
+            (0x80001000, False),
+            (0xFFFFF000, False),
+        ):
+            optional = bytearray(base)
+            optional[56:60] = image_size.to_bytes(4, "little")
+            with self.subTest(image_size=hex(image_size)):
+                self.assertEqual(
+                    _RUN._pe_loader_fields_are_valid(
+                        bytes(optional),
+                        header_end=0x180,
+                        file_size=0x1000,
+                    ),
+                    admitted,
+                )
+
     def test_rejects_misaligned_section_virtual_address(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-windows-alignment-",

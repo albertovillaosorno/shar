@@ -1198,6 +1198,7 @@ def _pe_loader_fields_are_valid(
     return (
         win32_version == 0
         and loader_flags == 0
+        and image_size <= 0x80000000
         and image_size % section_alignment == 0
         and header_size == expected_header_size
         and header_size <= file_size

@@ -214,8 +214,9 @@ alignment below 4 KiB must equal file alignment, and nonempty section file
 offsets must then equal their RVAs. Reserved loader fields remain zero,
 including
 Microsoft-reserved low `DllCharacteristics` bits, while defined
-flags such as NX compatibility remain admissible. The declared image size
-matches the final aligned loaded section span,
+flags such as NX compatibility remain admissible. PE32+ image size stays at or
+below Microsoft's 2 GiB image limit, and the declared image size matches the
+final aligned loaded section span,
 the header size matches the rounded header table, and the data directory count
 must fit the optional header. Nonempty data directories must use a nonzero
 address. Microsoft's Architecture and final Reserved directory slots must remain
