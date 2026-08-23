@@ -1005,6 +1005,29 @@ def _elf_load_contains_program_table(
     return offset <= layout[0] and table_end <= offset + file_bytes
 
 
+def _elf_tls_segment_is_valid(
+    program: bytes,
+    byte_order: str,
+) -> bool:
+    """Return whether one PT_TLS header has a coherent TLS template."""
+    flags = int.from_bytes(program[4:8], byte_order)
+    offset = int.from_bytes(program[8:16], byte_order)
+    virtual_address = int.from_bytes(program[16:24], byte_order)
+    file_bytes = int.from_bytes(program[32:40], byte_order)
+    memory_bytes = int.from_bytes(program[40:48], byte_order)
+    alignment = int.from_bytes(program[48:56], byte_order)
+    aligned = alignment in {0, 1} or (
+        alignment & (alignment - 1) == 0
+        and virtual_address % alignment == offset % alignment
+    )
+    return (
+        flags == 0x4
+        and file_bytes <= memory_bytes
+        and memory_bytes <= ((1 << 64) - 1) - virtual_address
+        and aligned
+    )
+
+
 def _elf_interpreter_path_is_valid(
     stream: object,
     program: bytes,
@@ -1079,6 +1102,11 @@ def _elf_supplementary_program_state(
             )
         )
         result = state | 0x2 if valid else -1
+    elif program_type == 7 and not _elf_tls_segment_is_valid(
+        program,
+        context.byte_order,
+    ):
+        result = -1
     return result
 
 
