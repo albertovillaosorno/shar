@@ -92,6 +92,42 @@ def _synthetic_elf(
     return bytes(header + program + b"\0")
 
 
+def _synthetic_elf_with_interpreter(
+    path: bytes,
+    *,
+    interpreter_first: bool = True,
+    duplicate: bool = False,
+) -> bytes:
+    """Return one ELF executable with explicit interpreter program headers."""
+    program_count = 3 if duplicate else 2
+    program_end = 64 + (56 * program_count)
+    load_offset = program_end + len(path)
+    baseline = bytearray(
+        _synthetic_elf(
+            0x003E,
+            image_type=2,
+            segment_offset=load_offset,
+        )
+    )
+    header = bytearray(baseline[:64])
+    load = bytearray(baseline[64:120])
+    header[56:58] = program_count.to_bytes(2, "little")
+    load[8:16] = load_offset.to_bytes(8, "little")
+    interpreter = bytearray(56)
+    interpreter[:4] = (3).to_bytes(4, "little")
+    interpreter[8:16] = program_end.to_bytes(8, "little")
+    interpreter[32:40] = len(path).to_bytes(8, "little")
+    interpreter[40:48] = len(path).to_bytes(8, "little")
+    if interpreter_first:
+        programs = [interpreter]
+        if duplicate:
+            programs.append(bytearray(interpreter))
+        programs.append(load)
+    else:
+        programs = [load, interpreter]
+    return bytes(header + b"".join(programs) + path + b"\0")
+
+
 def _synthetic_big_endian_elf(machine: int) -> bytes:
     """Return the minimal ELF fixture encoded as big endian."""
     payload = bytearray(_synthetic_elf(machine))
@@ -3039,6 +3075,52 @@ class ElfEntrypointTests(unittest.TestCase):
                 _RUN._validate_candidate_artifact(
                     candidate,
                     _RUN._TARGETS_BY_ID["linux-x64"],
+                )
+
+    def test_validates_interpreter_program_header(self) -> None:
+        cases = (
+            ("valid", _synthetic_elf_with_interpreter(b"/lib/ld.so\0"), True),
+            (
+                "after-load",
+                _synthetic_elf_with_interpreter(
+                    b"/lib/ld.so\0",
+                    interpreter_first=False,
+                ),
+                False,
+            ),
+            (
+                "duplicate",
+                _synthetic_elf_with_interpreter(
+                    b"/lib/ld.so\0",
+                    duplicate=True,
+                ),
+                False,
+            ),
+            (
+                "unterminated",
+                _synthetic_elf_with_interpreter(b"/lib/ld.so"),
+                False,
+            ),
+            (
+                "embedded-nul",
+                _synthetic_elf_with_interpreter(b"/lib\0x\0"),
+                False,
+            ),
+            ("empty", _synthetic_elf_with_interpreter(b"\0"), False),
+        )
+        for reason, payload, admitted in cases:
+            stream = io.BytesIO(payload)
+            prefix = stream.read(4)
+            with self.subTest(reason=reason):
+                self.assertEqual(
+                    _RUN._matches_elf(
+                        stream,
+                        prefix,
+                        "amd64",
+                        len(payload),
+                        require_entrypoint=True,
+                    ),
+                    admitted,
                 )
 
     def test_rejects_reserved_shlib_segment(self) -> None:
