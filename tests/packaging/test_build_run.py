@@ -3509,8 +3509,52 @@ class MachOFatSliceTests(unittest.TestCase):
             )
 
 
+def _synthetic_macho_with_linkedit_payload(*, inside: bool) -> bytes:
+    """Return one Mach-O whose link-edit command has one data byte."""
+    payload = bytearray(
+        _synthetic_macho(
+            _RUN._MACHO_ARM64_CPU,
+            prefix_command_size=16,
+        )
+    )
+    if inside:
+        payload.extend(b"\0\0")
+    command = 32 + 72
+    data_offset = len(payload) - 1
+    payload[command : command + 4] = (0x26).to_bytes(4, "little")
+    payload[command + 8 : command + 12] = data_offset.to_bytes(4, "little")
+    payload[command + 12 : command + 16] = (1).to_bytes(4, "little")
+    if inside:
+        payload[32 + 48 : 32 + 56] = data_offset.to_bytes(8, "little")
+        linkedit = 32 + 72 + 16 + 24
+        payload[linkedit + 32 : linkedit + 40] = (1).to_bytes(8, "little")
+        payload[linkedit + 40 : linkedit + 48] = data_offset.to_bytes(
+            8,
+            "little",
+        )
+        payload[linkedit + 48 : linkedit + 56] = (1).to_bytes(8, "little")
+    return bytes(payload)
+
+
 class MachOLinkEditDataTests(unittest.TestCase):
     """Require Mach-O link-edit data commands to stay file-bounded."""
+
+    def test_requires_positive_payloads_inside_linkedit_segment(self) -> None:
+        for inside in (True, False):
+            payload = _synthetic_macho_with_linkedit_payload(inside=inside)
+            stream = io.BytesIO(payload)
+            prefix = stream.read(4)
+            with self.subTest(inside=inside):
+                self.assertEqual(
+                    _RUN._matches_macho(
+                        stream,
+                        prefix,
+                        "macos",
+                        "arm64",
+                        len(payload),
+                    ),
+                    inside,
+                )
 
     def test_validates_linkedit_data_command_ranges(self) -> None:
         for reason, command_size, offset, size, file_size, admitted in (
