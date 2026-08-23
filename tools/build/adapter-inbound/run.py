@@ -34,6 +34,7 @@
 """Build selected SHAR targets and publish only complete native packages."""
 
 # CSpell:ignore APPL BNDL FMWK PHDR RVA dylinker linkedit symtab
+# CSpell:ignore DYSYMTAB dysymtab
 # CSpell:ignore phdr
 
 from __future__ import annotations
@@ -1847,6 +1848,35 @@ def _macho_dyld_info_ranges(
     return ranges
 
 
+def _macho_dysymtab_ranges(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    file_size: int,
+) -> tuple[tuple[int, int], ...] | None:
+    """Return bounded file tables from one LC_DYSYMTAB command."""
+    if command_size != 80 or len(body) != 72:
+        return None
+    fields = tuple(
+        int.from_bytes(body[index : index + 4], byte_order)
+        for index in range(0, 72, 4)
+    )
+    ranges = (
+        (fields[6], fields[7] * 8),
+        (fields[8], fields[9] * 56),
+        (fields[10], fields[11] * 4),
+        (fields[12], fields[13] * 4),
+        (fields[14], fields[15] * 8),
+        (fields[16], fields[17] * 8),
+    )
+    if any(
+        offset > file_size or size > file_size - offset
+        for offset, size in ranges
+    ):
+        return None
+    return ranges
+
+
 def _macho_symtab_ranges(
     body: bytes,
     command_size: int,
@@ -1962,6 +1992,18 @@ def _macho_linkedit_auxiliary(
             if ranges is None
             else _MachOAuxiliary("dyld-info", ranges=ranges)
         )
+    if command == 0xB:
+        ranges = _macho_dysymtab_ranges(
+            body,
+            command_size,
+            byte_order,
+            file_size,
+        )
+        return (
+            None
+            if ranges is None
+            else _MachOAuxiliary("dysymtab", ranges=ranges)
+        )
     if command == 0x2:
         ranges = _macho_symtab_ranges(
             body,
@@ -2038,7 +2080,7 @@ def _macho_auxiliary_command(
             12,
         ):
             result = None
-    elif command == 0x2 or command in (
+    elif command in {0x2, 0xB} or command in (
         _MACHO_LINKEDIT_DATA_COMMANDS | _MACHO_DYLD_INFO_COMMANDS
     ):
         result = _macho_linkedit_auxiliary(
@@ -2077,18 +2119,29 @@ def _macho_auxiliary_command(
     return result
 
 
-def _macho_auxiliary_singletons_are_valid(
+def _macho_auxiliary_metadata_is_valid(
     auxiliaries: Sequence[_MachOAuxiliary],
 ) -> bool:
-    """Return whether singleton Mach-O auxiliary commands are unique."""
+    """Return whether singleton and companion Mach-O metadata is valid."""
     singleton_kinds = [
         item.kind
         for item in auxiliaries
         if item.kind
-        in {"uuid", "dyld-info", "encryption", "symtab", "code-signature"}
+        in {
+            "uuid",
+            "dyld-info",
+            "encryption",
+            "symtab",
+            "dysymtab",
+            "code-signature",
+        }
         or item.kind.startswith("linkedit-")
     ]
-    return len(singleton_kinds) == len(set(singleton_kinds))
+    kinds = set(singleton_kinds)
+    return (
+        len(singleton_kinds) == len(kinds)
+        and ("dysymtab" not in kinds or "symtab" in kinds)
+    )
 
 
 def _macho_command_evidence(
@@ -2139,9 +2192,7 @@ def _macho_command_evidence(
                 return None
             auxiliaries.append(auxiliary)
         remaining -= command_size
-    if remaining != 0 or not _macho_auxiliary_singletons_are_valid(
-        auxiliaries
-    ):
+    if remaining != 0 or not _macho_auxiliary_metadata_is_valid(auxiliaries):
         return None
     entrypoints = [
         (item.kind, item.value)
