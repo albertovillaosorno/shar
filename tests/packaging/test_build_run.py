@@ -3578,6 +3578,30 @@ class MachOLinkEditDataTests(unittest.TestCase):
                     admitted,
                 )
 
+    def test_rejects_overlapping_linkedit_payloads(self) -> None:
+        segments = [
+            _RUN._MachOSegment(
+                b"__LINKEDIT",
+                0x1000,
+                0x100,
+                0x100,
+                0x100,
+                0x1,
+            )
+        ]
+        for ranges, admitted in (
+            ([(0x120, 0x20), (0x140, 0x20)], True),
+            ([(0x120, 0x20), (0x130, 0x20)], False),
+        ):
+            with self.subTest(ranges=ranges):
+                self.assertEqual(
+                    _RUN._macho_linkedit_ranges_fit_segment(
+                        segments,
+                        ranges,
+                    ),
+                    admitted,
+                )
+
     def test_applies_bounds_to_all_linkedit_command_ids(self) -> None:
         commands = (
             0x1D,
