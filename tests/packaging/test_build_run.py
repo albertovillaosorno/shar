@@ -3677,6 +3677,91 @@ class MachOPlatformTests(unittest.TestCase):
                     )
 
 
+class MachODyldInfoTests(unittest.TestCase):
+    """Validate classic dyld link-edit range commands."""
+
+    def _matches(self, payload: bytes) -> bool:
+        stream = io.BytesIO(payload)
+        prefix = stream.read(4)
+        return _RUN._matches_macho(
+            stream,
+            prefix,
+            "macos",
+            "arm64",
+            len(payload),
+        )
+
+    def test_allows_one_zero_range_dyld_info_command(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=48,
+            )
+        )
+        payload[104:108] = (0x80000022).to_bytes(4, "little")
+        self.assertTrue(self._matches(bytes(payload)))
+
+    def test_rejects_out_of_file_dyld_info_range(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=48,
+            )
+        )
+        payload[104:108] = (0x80000022).to_bytes(4, "little")
+        payload[112:116] = (len(payload) + 1).to_bytes(4, "little")
+        payload[116:120] = (1).to_bytes(4, "little")
+        self.assertFalse(self._matches(bytes(payload)))
+
+    def test_rejects_duplicate_dyld_info_commands(self) -> None:
+        payload = bytearray(
+            _synthetic_macho(
+                _RUN._MACHO_ARM64_CPU,
+                prefix_command_size=96,
+            )
+        )
+        payload[16:20] = (
+            int.from_bytes(payload[16:20], "little") + 1
+        ).to_bytes(4, "little")
+        record = (
+            (0x80000022).to_bytes(4, "little")
+            + (48).to_bytes(4, "little")
+            + (b"\0" * 40)
+        )
+        payload[104:200] = record + record
+        self.assertFalse(self._matches(bytes(payload)))
+
+    def test_rejects_overlapping_dyld_info_ranges(self) -> None:
+        ranges = bytearray(40)
+        ranges[0:4] = (0x120).to_bytes(4, "little")
+        ranges[4:8] = (0x20).to_bytes(4, "little")
+        ranges[8:12] = (0x130).to_bytes(4, "little")
+        ranges[12:16] = (0x20).to_bytes(4, "little")
+        parsed = _RUN._macho_dyld_info_ranges(
+            bytes(ranges),
+            48,
+            "little",
+            0x200,
+        )
+        self.assertIsNotNone(parsed)
+        segments = [
+            _RUN._MachOSegment(
+                b"__LINKEDIT",
+                0x1000,
+                0x100,
+                0x100,
+                0x100,
+                0x1,
+            )
+        ]
+        self.assertFalse(
+            _RUN._macho_linkedit_ranges_fit_segment(
+                segments,
+                parsed or (),
+            )
+        )
+
+
 class MachOUuidTests(unittest.TestCase):
     """Validate optional UUID load-command structure and uniqueness."""
 
