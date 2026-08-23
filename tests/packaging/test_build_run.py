@@ -2229,24 +2229,35 @@ class PeEntrypointTests(unittest.TestCase):
 class ElfEntrypointTests(unittest.TestCase):
     """Require Linux process entrypoints to resolve to file-backed code."""
 
-    def test_rejects_big_endian_x64_image(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
-            candidate = Path(raw)
-            executable = candidate / "shar/Binaries/Linux/shar-Linux-Shipping"
-            executable.parent.mkdir(parents=True)
-            executable.write_bytes(
-                _synthetic_big_endian_elf(0x003E)
-            )
-            if _RUN.os.name != "nt":
-                executable.chmod(0o755)
-            with self.assertRaisesRegex(
-                _RUN.RunFailure,
-                "Linux SHAR executable",
+    def test_rejects_big_endian_supported_images(self) -> None:
+        for target_id, platform, machine in (
+            ("linux-x64", "Linux", 0x003E),
+            ("linux-arm64", "LinuxArm64", 0x00B7),
+        ):
+            with (
+                self.subTest(target=target_id),
+                tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw,
             ):
-                _RUN._validate_candidate_artifact(
-                    candidate,
-                    _RUN._TARGETS_BY_ID["linux-x64"],
+                candidate = Path(raw)
+                executable = (
+                    candidate
+                    / "shar"
+                    / "Binaries"
+                    / platform
+                    / f"shar-{platform}-Shipping"
                 )
+                executable.parent.mkdir(parents=True)
+                executable.write_bytes(_synthetic_big_endian_elf(machine))
+                if _RUN.os.name != "nt":
+                    executable.chmod(0o755)
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
 
     def test_rejects_x64_processor_flags(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
@@ -2647,6 +2658,21 @@ class CandidateArtifactTests(unittest.TestCase):
                 archive.writestr(
                     "lib/arm64-v8a/libUnreal.so",
                     _synthetic_elf(0x00B7, image_type=2),
+                )
+            with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["android-arm64"],
+                )
+
+            with _RUN.zipfile.ZipFile(apk, "w") as archive:
+                archive.writestr(
+                    "AndroidManifest.xml",
+                    b"synthetic manifest",
+                )
+                archive.writestr(
+                    "lib/arm64-v8a/libUnreal.so",
+                    _synthetic_big_endian_elf(0x00B7),
                 )
             with self.assertRaisesRegex(_RUN.RunFailure, "Android APK"):
                 _RUN._validate_candidate_artifact(

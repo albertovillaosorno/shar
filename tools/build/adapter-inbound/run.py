@@ -979,11 +979,10 @@ def _matches_elf(
         return False
     byte_order = {1: "little", 2: "big"}.get(header[5])
     expected = _ELF_MACHINES.get(architecture)
-    processor_flags = int.from_bytes(header[48:52], byte_order or "little")
-    invalid_x64_abi = architecture == "amd64" and (
-        byte_order != "little" or processor_flags != 0
-    )
-    if byte_order is None or expected is None or invalid_x64_abi:
+    if byte_order is None or expected is None or byte_order != "little":
+        return False
+    processor_flags = int.from_bytes(header[48:52], byte_order)
+    if architecture == "amd64" and processor_flags != 0:
         return False
     image_type = int.from_bytes(header[16:18], byte_order)
     if require_shared_object and image_type != 3:
