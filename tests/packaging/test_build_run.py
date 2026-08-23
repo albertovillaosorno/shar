@@ -3789,11 +3789,13 @@ class MachODynamicSymbolTableTests(unittest.TestCase):
             len(payload),
         )
 
-    def _symtab(self) -> bytes:
+    def _symtab(self, symbol_count: int = 0) -> bytes:
+        body = bytearray(16)
+        body[4:8] = symbol_count.to_bytes(4, "little")
         return (
             (0x2).to_bytes(4, "little")
             + (24).to_bytes(4, "little")
-            + (b"\0" * 16)
+            + bytes(body)
         )
 
     def _dysymtab(self, body: bytes | None = None) -> bytes:
@@ -3817,6 +3819,44 @@ class MachODynamicSymbolTableTests(unittest.TestCase):
                 (self._symtab(), self._dysymtab(), self._dysymtab())
             )
         )
+
+    def test_rejects_symbol_groups_outside_symbol_table(self) -> None:
+        valid_groups = ((1, 2), (3, 1), (4, 1))
+        symtab = _RUN._MachOAuxiliary("symtab", size=5)
+        self.assertTrue(
+            _RUN._macho_auxiliary_metadata_is_valid(
+                [
+                    symtab,
+                    _RUN._MachOAuxiliary(
+                        "dysymtab",
+                        symbol_groups=valid_groups,
+                    ),
+                ]
+            )
+        )
+        for reason, groups in (
+            ("local-start", ((6, 0), (3, 1), (4, 1))),
+            ("local-count", ((0, 6), (3, 1), (4, 1))),
+            ("local-end", ((1, 5), (3, 1), (4, 1))),
+            ("external-start", ((1, 2), (6, 0), (4, 1))),
+            ("external-count", ((1, 2), (0, 6), (4, 1))),
+            ("external-end", ((1, 2), (3, 3), (4, 1))),
+            ("undefined-start", ((1, 2), (3, 1), (6, 0))),
+            ("undefined-count", ((1, 2), (3, 1), (0, 6))),
+            ("undefined-end", ((1, 2), (3, 1), (4, 2))),
+        ):
+            with self.subTest(reason=reason):
+                self.assertFalse(
+                    _RUN._macho_auxiliary_metadata_is_valid(
+                        [
+                            symtab,
+                            _RUN._MachOAuxiliary(
+                                "dysymtab",
+                                symbol_groups=groups,
+                            ),
+                        ]
+                    )
+                )
 
     def test_validates_dynamic_symbol_table_file_ranges(self) -> None:
         valid = bytearray(72)
@@ -3872,6 +3912,23 @@ class MachOSymbolTableTests(unittest.TestCase):
         )
         payload[104:108] = (0x2).to_bytes(4, "little")
         self.assertTrue(self._matches(bytes(payload)))
+
+    def test_carries_symbol_count_into_metadata_evidence(self) -> None:
+        body = (
+            (0x100).to_bytes(4, "little")
+            + (5).to_bytes(4, "little")
+            + (0x150).to_bytes(4, "little")
+            + (0).to_bytes(4, "little")
+        )
+        auxiliary = _RUN._macho_auxiliary_command(
+            0x2,
+            24,
+            body,
+            "little",
+            0x200,
+        )
+        self.assertIsNotNone(auxiliary)
+        self.assertEqual((auxiliary or _RUN._MachOAuxiliary("")).size, 5)
 
     def test_rejects_out_of_file_symbol_table(self) -> None:
         payload = bytearray(
