@@ -181,9 +181,11 @@ section span, a 64 KiB-aligned image base, and a
 alignment below 4 KiB must equal file alignment. Reserved loader fields remain
 zero, the declared image size matches the final aligned loaded section span,
 the header size matches the rounded header table, and the data directory count
-must fit the optional header. Nonempty ordinary data-directory ranges must stay
-inside the loaded image; the certificate-table exception is bounded by the file
-instead. Executable-image section headers keep COFF
+must fit the optional header. Nonempty data directories must use a nonzero
+address. Ordinary ranges must stay inside the loaded image; the
+certificate-table file-offset exception is bounded by the file instead.
+Executable-image section
+headers keep COFF
 relocation and line-number pointers/counts at zero. Nonempty section raw-data
 sizes and file offsets must be multiples of file alignment while remaining
 file-bounded.
