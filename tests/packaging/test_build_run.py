@@ -2709,6 +2709,23 @@ class PeSectionLayoutTests(unittest.TestCase):
                         _RUN._TARGETS_BY_ID["windows-x64"],
                     )
 
+    def test_rejects_object_group_section_names(self) -> None:
+        baseline = bytearray(_synthetic_pe(0x8664))
+        section = bytearray(baseline[0x108:0x130])
+        for name, admitted in (
+            (b".text\0\0\0", True),
+            (b".text$X\0", False),
+            (b"$bad\0\0\0\0", False),
+            (b"\0" * 8, True),
+        ):
+            candidate = bytearray(section)
+            candidate[:8] = name
+            with self.subTest(name=name):
+                self.assertEqual(
+                    _RUN._pe_section_image_metadata_is_valid(bytes(candidate)),
+                    admitted,
+                )
+
     def test_rejects_object_only_section_characteristics(self) -> None:
         object_only_flags = (
             0x00000008,
