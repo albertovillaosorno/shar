@@ -2938,7 +2938,9 @@ class MachOSegmentOrderTests(unittest.TestCase):
         )
         for reason, segments in cases:
             with self.subTest(reason=reason):
-                self.assertFalse(_RUN._macho_segments_follow_layout_order(segments))
+                self.assertFalse(
+                    _RUN._macho_segments_follow_layout_order(segments)
+                )
 
     def test_allows_dwarf_segment_order_exception(self) -> None:
         segments = [
