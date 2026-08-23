@@ -1546,6 +1546,19 @@ def _macho_dylinker_is_valid(
     return terminator > 0
 
 
+def _macho_platform_command(
+    command: int,
+    command_size: int,
+    body: bytes,
+    byte_order: str,
+) -> tuple[str, int] | None:
+    """Parse one modern ARM64 platform command or reject a legacy form."""
+    if command != 0x32:
+        return None
+    platform = _macho_build_platform(body, command_size, byte_order)
+    return None if platform is None else ("platform", platform)
+
+
 def _macho_auxiliary_command(
     command: int,
     command_size: int,
@@ -1559,9 +1572,13 @@ def _macho_auxiliary_command(
             if _macho_dylinker_is_valid(body, command_size, byte_order)
             else None
         )
-    if command == 0x32:
-        platform = _macho_build_platform(body, command_size, byte_order)
-        return None if platform is None else ("platform", platform)
+    if command in {0x24, 0x25, 0x2F, 0x30, 0x32}:
+        return _macho_platform_command(
+            command,
+            command_size,
+            body,
+            byte_order,
+        )
     if command == 0x80000028:
         if command_size != 24:
             return None
