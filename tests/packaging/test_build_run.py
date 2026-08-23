@@ -2883,6 +2883,83 @@ class MachOLoaderSegmentTests(unittest.TestCase):
                     )
 
 
+class MachOSegmentOrderTests(unittest.TestCase):
+    """Require dyld-compatible Mach-O segment load-command ordering."""
+
+    def test_rejects_segment_layout_order_inversions(self) -> None:
+        text = _RUN._MachOSegment(
+            b"__TEXT", 0x100000000, 0x100, 0, 0x100, 0x5
+        )
+        cases = (
+            (
+                "virtual",
+                [
+                    text,
+                    _RUN._MachOSegment(
+                        b"__LINKEDIT",
+                        0x100003000,
+                        0x100,
+                        0x300,
+                        0x100,
+                        0x1,
+                    ),
+                    _RUN._MachOSegment(
+                        b"__DATA",
+                        0x100002000,
+                        0x100,
+                        0x400,
+                        0x100,
+                        0x3,
+                    ),
+                ],
+            ),
+            (
+                "file",
+                [
+                    text,
+                    _RUN._MachOSegment(
+                        b"__DATA",
+                        0x100002000,
+                        0x100,
+                        0x400,
+                        0x100,
+                        0x3,
+                    ),
+                    _RUN._MachOSegment(
+                        b"__LINKEDIT",
+                        0x100003000,
+                        0x100,
+                        0x300,
+                        0x100,
+                        0x1,
+                    ),
+                ],
+            ),
+        )
+        for reason, segments in cases:
+            with self.subTest(reason=reason):
+                self.assertFalse(_RUN._macho_segments_follow_layout_order(segments))
+
+    def test_allows_dwarf_segment_order_exception(self) -> None:
+        segments = [
+            _RUN._MachOSegment(
+                b"__TEXT", 0x100000000, 0x100, 0, 0x100, 0x5
+            ),
+            _RUN._MachOSegment(
+                b"__DWARF", 0x100004000, 0x100, 0x500, 0x100, 0x1
+            ),
+            _RUN._MachOSegment(
+                b"__LINKEDIT",
+                0x100003000,
+                0x100,
+                0x400,
+                0x100,
+                0x1,
+            ),
+        ]
+        self.assertTrue(_RUN._macho_segments_follow_layout_order(segments))
+
+
 class MachOEntrypointTests(unittest.TestCase):
     """Require one unambiguous Mach-O process entry command."""
 
