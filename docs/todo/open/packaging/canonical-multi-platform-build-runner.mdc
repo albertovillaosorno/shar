@@ -139,8 +139,9 @@ zero, one, or a power of two, and aligned segments require congruent file
 offsets and virtual addresses. `PT_LOAD` entries must also remain in ascending
 virtual-address order. Linux desktop runtimes must also declare a
 nonzero entrypoint inside
-executable file-backed bytes of a load segment rather than its zero-fill tail;
-Android loader-path libraries must be ELF shared objects and may legitimately
+executable file-backed bytes of a load segment rather than its zero-fill tail or
+the ELF/program-header metadata; Android loader-path libraries must be ELF
+shared objects and may legitimately
 declare no process entrypoint.
 Truncated, relocatable, machine-only, or out-of-bounds
 segment lookalikes fail.

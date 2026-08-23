@@ -906,6 +906,23 @@ def _elf_load_segment_state(
     return bounded, executable, contains_entrypoint
 
 
+def _elf_entrypoint_is_metadata(
+    program: bytes,
+    byte_order: str,
+    entrypoint: int,
+    virtual_address: int,
+    layout: tuple[int, int, int],
+) -> bool:
+    """Return whether one mapped ELF entrypoint resolves to image metadata."""
+    file_offset = int.from_bytes(program[8:16], byte_order)
+    entry_file_offset = file_offset + (entrypoint - virtual_address)
+    program_offset, program_size, program_count = layout
+    program_end = program_offset + (program_size * program_count)
+    return entry_file_offset < 64 or (
+        program_offset <= entry_file_offset < program_end
+    )
+
+
 def _elf_load_programs_match(
     stream: object,
     byte_order: str,
@@ -947,6 +964,14 @@ def _elf_load_programs_match(
                 entrypoint,
             )
         )
+        if contains_entrypoint and _elf_entrypoint_is_metadata(
+            program,
+            byte_order,
+            entrypoint,
+            virtual_address,
+            layout,
+        ):
+            contains_entrypoint = False
         load_segments_valid = load_segments_valid and bounded
         loadable = True
         executable = executable or segment_executable
