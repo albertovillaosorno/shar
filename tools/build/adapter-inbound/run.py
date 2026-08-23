@@ -121,6 +121,7 @@ class _MachOAuxiliary(NamedTuple):
     kind: str
     value: int = 0
     size: int = 0
+    ranges: tuple[tuple[int, int], ...] = ()
 
 
 class _PeSectionPolicy(NamedTuple):
@@ -904,6 +905,7 @@ _MACHO_ARM64_CPU = 0x0100000C
 _MACHO_PLATFORMS = {"macos": 1, "ios": 2}
 _MACHO_CPU_SUBTYPE_MASK = 0xFF000000
 _MACHO_DYLIB_LOAD_COMMANDS = {0xC, 0x80000018, 0x8000001F, 0x80000023}
+_MACHO_DYLD_INFO_COMMANDS = {0x22, 0x80000022}
 _MACHO_LINKEDIT_DATA_COMMANDS = {
     0x1D,
     0x1E,
@@ -1821,6 +1823,30 @@ def _macho_dylinker_is_valid(
     return terminator > 0
 
 
+def _macho_dyld_info_ranges(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    file_size: int,
+) -> tuple[tuple[int, int], ...] | None:
+    """Return the five bounded ranges from one dyld_info_command."""
+    if command_size != 48 or len(body) != 40:
+        return None
+    ranges = tuple(
+        (
+            int.from_bytes(body[index : index + 4], byte_order),
+            int.from_bytes(body[index + 4 : index + 8], byte_order),
+        )
+        for index in range(0, 40, 8)
+    )
+    if any(
+        offset > file_size or size > file_size - offset
+        for offset, size in ranges
+    ):
+        return None
+    return ranges
+
+
 def _macho_linkedit_data_range(
     body: bytes,
     command_size: int,
@@ -1852,6 +1878,39 @@ def _macho_linkedit_data_is_valid(
             file_size,
         )
         is not None
+    )
+
+
+def _macho_linkedit_auxiliary(
+    command: int,
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    file_size: int,
+) -> _MachOAuxiliary | None:
+    """Parse one command whose payload belongs in __LINKEDIT."""
+    if command in _MACHO_DYLD_INFO_COMMANDS:
+        ranges = _macho_dyld_info_ranges(
+            body,
+            command_size,
+            byte_order,
+            file_size,
+        )
+        return (
+            None
+            if ranges is None
+            else _MachOAuxiliary("dyld-info", ranges=ranges)
+        )
+    data_range = _macho_linkedit_data_range(
+        body,
+        command_size,
+        byte_order,
+        file_size,
+    )
+    return (
+        None
+        if data_range is None
+        else _MachOAuxiliary("linkedit", ranges=(data_range,))
     )
 
 
@@ -1899,17 +1958,13 @@ def _macho_auxiliary_command(
             12,
         ):
             result = None
-    elif command in _MACHO_LINKEDIT_DATA_COMMANDS:
-        data_range = _macho_linkedit_data_range(
+    elif command in _MACHO_LINKEDIT_DATA_COMMANDS | _MACHO_DYLD_INFO_COMMANDS:
+        result = _macho_linkedit_auxiliary(
+            command,
             body,
             command_size,
             byte_order,
             file_size,
-        )
-        result = (
-            None
-            if data_range is None
-            else _MachOAuxiliary("linkedit", *data_range)
         )
     elif command == 0xE:
         result = (
@@ -1989,7 +2044,8 @@ def _macho_command_evidence(
             auxiliaries.append(auxiliary)
         remaining -= command_size
     uuid_count = sum(item.kind == "uuid" for item in auxiliaries)
-    if remaining != 0 or uuid_count > 1:
+    dyld_info_count = sum(item.kind == "dyld-info" for item in auxiliaries)
+    if remaining != 0 or uuid_count > 1 or dyld_info_count > 1:
         return None
     entrypoints = [
         (item.kind, item.value)
@@ -1998,9 +2054,10 @@ def _macho_command_evidence(
     ]
     platforms = [item.value for item in auxiliaries if item.kind == "platform"]
     linkedit_ranges = [
-        (item.value, item.size)
+        data_range
         for item in auxiliaries
-        if item.kind == "linkedit" and item.size
+        for data_range in item.ranges
+        if data_range[1]
     ]
     has_dynamic_linker = any(item.kind == "dylinker" for item in auxiliaries)
     return (
