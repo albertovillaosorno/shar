@@ -1005,6 +1005,31 @@ def _elf_load_contains_program_table(
     return offset <= layout[0] and table_end <= offset + file_bytes
 
 
+def _elf_dynamic_array_is_valid(
+    stream: object,
+    program: bytes,
+    byte_order: str,
+) -> bool:
+    """Return whether one PT_DYNAMIC has whole ELF64 entries and DT_NULL."""
+    offset = int.from_bytes(program[8:16], byte_order)
+    file_bytes = int.from_bytes(program[32:40], byte_order)
+    if file_bytes < 16 or file_bytes % 16:
+        return False
+    try:
+        cursor = stream.tell()
+        stream.seek(offset)
+        payload = stream.read(file_bytes)
+        stream.seek(cursor)
+    except (OSError, ValueError):
+        return False
+    if len(payload) != file_bytes:
+        return False
+    return any(
+        int.from_bytes(payload[start : start + 8], byte_order) == 0
+        for start in range(0, file_bytes, 16)
+    )
+
+
 def _elf_tls_segment_is_valid(
     program: bytes,
     byte_order: str,
@@ -1080,7 +1105,14 @@ def _elf_supplementary_program_state(
     ):
         return -1
     result = state
-    if program_type == 3:
+    if program_type == 2:
+        if not _elf_dynamic_array_is_valid(
+            stream,
+            program,
+            context.byte_order,
+        ):
+            result = -1
+    elif program_type == 3:
         valid = (
             not loadable
             and state & 0x1 == 0

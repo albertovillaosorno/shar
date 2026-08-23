@@ -11,7 +11,7 @@ children: []
 ---
 
 <!-- CSpell:ignore APPL COMDAT DYLINKER LINKEDIT -->
-<!-- CSpell:ignore OSABI pdb PHDR TLS RVA rva SHLIB UNIXTHREAD -->
+<!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD -->
 
 # Canonical multi-platform build runner
 
@@ -152,9 +152,12 @@ must use an
 executable/shared-object image type and a bounded ELF64 program-header table.
 Every non-null program segment with file-backed bytes must stay inside the
 image, and the nonconforming reserved `PT_SHLIB` segment type is rejected while
-OS/processor-specific segment ranges remain admissible. `PT_INTERP`, when
-present, must occur once before every load segment and name one nonempty
-NUL-terminated interpreter path. `PT_PHDR`, when present, must likewise occur
+OS/processor-specific segment ranges remain admissible. `PT_DYNAMIC` file
+images must contain complete ELF64 dynamic-array entries and at least one
+mandatory `DT_NULL` terminator. `PT_INTERP`, when present, must occur once
+before
+every load segment and name one nonempty NUL-terminated interpreter path.
+`PT_PHDR`, when present, must likewise occur
 once before load segments, exactly describe the program-header table, and that
 table must be mapped by a loadable segment. Optional `PT_TLS` templates must
 remain read-only, keep initialized bytes no larger than the total template,
