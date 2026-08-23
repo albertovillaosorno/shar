@@ -35,7 +35,8 @@
 
 # CSpell:ignore APPL BNDL FMWK PHDR RVA dylinker linkedit symtab
 # CSpell:ignore DYSYMTAB dysymtab NBLCK msvcrt
-# CSpell:ignore phdr creationflags killpg taskkill
+# CSpell:ignore phdr creationflags killpg taskkill axo ppid
+# CSpell:ignore pthread sigmask SETMASK
 
 from __future__ import annotations
 
@@ -50,6 +51,7 @@ import os
 from pathlib import Path
 import plistlib
 import signal
+import time
 
 if os.name == "nt":
     import msvcrt
@@ -78,6 +80,14 @@ _UAT_STOP_TIMEOUT_SECONDS = 5
 
 class RunFailure(RuntimeError):
     """One actionable build-runner failure."""
+
+
+class _RunSignal(BaseException):
+    """One runner termination signal converted into controlled cleanup."""
+
+    def __init__(self, signum: int) -> None:
+        self.signum = signum
+        super().__init__(signum)
 
 
 class Target(NamedTuple):
@@ -814,6 +824,69 @@ def _uat_process_options() -> dict[str, object]:
     return {"start_new_session": True}
 
 
+def _posix_process_table() -> list[tuple[int, int, str]]:
+    """Return one POSIX process snapshot for UAT descendant cleanup."""
+    result = subprocess.run(
+        ["ps", "-axo", "pid=,ppid=,stat="],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode:
+        raise RunFailure("cannot enumerate UAT descendants")
+    rows: list[tuple[int, int, str]] = []
+    for line in result.stdout.splitlines():
+        fields = line.split(None, 2)
+        if len(fields) != 3:
+            continue
+        if not fields[0].isdigit() or not fields[1].isdigit():
+            continue
+        rows.append((int(fields[0]), int(fields[1]), fields[2]))
+    return rows
+
+
+def _uat_posix_tree_pids(root_pid: int) -> list[int]:
+    """Return live UAT descendants, including children in new sessions."""
+    table = _posix_process_table()
+    children: dict[int, list[int]] = {}
+    live: set[int] = set()
+    for pid, parent, state in table:
+        if state.startswith("Z"):
+            continue
+        live.add(pid)
+        children.setdefault(parent, []).append(pid)
+    if root_pid not in live:
+        return []
+    found = [root_pid]
+    pending = [root_pid]
+    while pending:
+        parent = pending.pop()
+        for child in children.get(parent, []):
+            found.append(child)
+            pending.append(child)
+    return found
+
+
+def _wait_for_posix_pids(pids: set[int], timeout: float) -> set[int]:
+    """Return UAT PIDs still live after one bounded wait."""
+    deadline = time.monotonic() + timeout
+    remaining = set(pids)
+    while remaining and time.monotonic() < deadline:
+        live = {pid for pid, _parent, state in _posix_process_table()
+                if not state.startswith("Z")}
+        remaining.intersection_update(live)
+        if remaining:
+            time.sleep(0.05)
+    return remaining
+
+
+def _signal_posix_pids(pids: set[int], signum: int) -> None:
+    """Signal one snapshotted UAT tree without following replacement PIDs."""
+    for pid in sorted(pids):
+        with suppress(ProcessLookupError):
+            os.kill(pid, signum)
+
+
 def _terminate_uat_tree(process: subprocess.Popen[str]) -> None:
     """Stop one interrupted UAT process tree before project-state cleanup."""
     if os.name == "nt":
@@ -825,14 +898,15 @@ def _terminate_uat_tree(process: subprocess.Popen[str]) -> None:
         )
         process.wait()
         return
-    with suppress(ProcessLookupError):
-        os.killpg(process.pid, signal.SIGTERM)
-    try:
-        process.wait(timeout=_UAT_STOP_TIMEOUT_SECONDS)
-    except subprocess.TimeoutExpired:
-        with suppress(ProcessLookupError):
-            os.killpg(process.pid, signal.SIGKILL)
-        process.wait()
+    pids = set(_uat_posix_tree_pids(process.pid))
+    _signal_posix_pids(pids, signal.SIGTERM)
+    remaining = _wait_for_posix_pids(pids, _UAT_STOP_TIMEOUT_SECONDS)
+    if remaining:
+        _signal_posix_pids(remaining, signal.SIGKILL)
+        remaining = _wait_for_posix_pids(remaining, _UAT_STOP_TIMEOUT_SECONDS)
+    process.wait()
+    if remaining:
+        raise RunFailure("interrupted UAT descendants did not terminate")
 
 
 def _run_uat(
@@ -868,7 +942,7 @@ def _run_uat(
         )
         try:
             returncode = process.wait()
-        except (KeyboardInterrupt, OSError):
+        except (KeyboardInterrupt, OSError, _RunSignal):
             _terminate_uat_tree(process)
             raise
     if returncode:
@@ -4021,6 +4095,36 @@ def _build_selected_targets(
     _detach_project_state(root, project)
 
 
+def _raise_run_signal(signum: int, frame: object | None) -> None:
+    """Convert one external termination signal into controlled cleanup."""
+    del frame
+    raise _RunSignal(signum)
+
+
+def _install_run_signal_handlers(
+) -> tuple[dict[int, object], set[signal.Signals] | None]:
+    """Install and unblock signals ignored or masked by background shells."""
+    previous: dict[int, object] = {}
+    previous_mask: set[signal.Signals] | None = None
+    watched = {signal.SIGINT, signal.SIGTERM}
+    if os.name != "nt":
+        previous_mask = signal.pthread_sigmask(signal.SIG_UNBLOCK, watched)
+    for signum in watched:
+        previous[signum] = signal.signal(signum, _raise_run_signal)
+    return previous, previous_mask
+
+
+def _restore_run_signal_handlers(
+    previous: dict[int, object],
+    previous_mask: set[signal.Signals] | None,
+) -> None:
+    """Restore caller signal dispositions and mask after main."""
+    for signum, handler in previous.items():
+        signal.signal(signum, handler)
+    if previous_mask is not None:
+        signal.pthread_sigmask(signal.SIG_SETMASK, previous_mask)
+
+
 def main() -> int:
     """Revalidate saved decisions and build every selected target."""
     args = _parser().parse_args()
@@ -4032,6 +4136,7 @@ def main() -> int:
     if not check_path.is_absolute():
         check_path = root / check_path
     lock: TextIO | None = None
+    handlers, previous_mask = _install_run_signal_handlers()
     try:
         lock = _acquire_run_lock(root)
         arch_snapshot = _revalidate_arch(root, arch_path)
@@ -4048,12 +4153,17 @@ def main() -> int:
             targets,
             validate_only=args.validate_only,
         )
+    except _RunSignal as error:
+        name = signal.Signals(error.signum).name
+        print(f"run: interrupted by {name}", file=sys.stderr)
+        return 128 + error.signum
     except (RunFailure, OSError) as error:
         print(f"run: {error}", file=sys.stderr)
         return 1
     finally:
         if lock is not None:
             lock.close()
+        _restore_run_signal_handlers(handlers, previous_mask)
     if args.validate_only:
         print(f"run: validated {len(targets)} selected target(s)")
     else:
