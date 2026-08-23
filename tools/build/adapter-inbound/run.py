@@ -34,7 +34,7 @@
 """Build selected SHAR targets and publish only complete native packages."""
 
 # CSpell:ignore APPL BNDL FMWK PHDR RVA dylinker linkedit symtab
-# CSpell:ignore DYSYMTAB dysymtab
+# CSpell:ignore DYSYMTAB dysymtab NBLCK msvcrt
 # CSpell:ignore phdr
 
 from __future__ import annotations
@@ -48,6 +48,11 @@ import json
 import os
 from pathlib import Path
 import plistlib
+
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
 import shutil
 import stat
 import subprocess
@@ -62,6 +67,7 @@ _ARCH_PATH = Path(".cache/build/data/arch.json")
 _CHECK_PATH = Path(".cache/build/data/check.json")
 _PROJECT_PATH = Path("src/unreal/project/composition/uproject/shar.uproject")
 _WORK_ROOT = Path(".cache/build/run")
+_RUN_LOCK_PATH = Path(".cache/build/run.lock")
 _PROJECT_STATE_ROOT = Path(".cache/build/project-state")
 _PROJECT_STATE_NAMES = ("Binaries", "DerivedDataCache", "Intermediate", "Saved")
 _DIST_ROOT = Path("dist")
@@ -521,6 +527,60 @@ def _reset_real_directory(path: Path, label: str) -> None:
         _require_real_directory(path, label)
         shutil.rmtree(path)
     path.mkdir()
+
+
+def _lock_run_handle(handle: TextIO) -> None:
+    """Acquire one non-blocking host-native advisory build-runner lock."""
+    try:
+        if os.name == "nt":
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError as error:
+        message = "another build runner is already active"
+        raise RunFailure(message) from error
+
+
+def _require_run_lock_identity(
+    path: Path,
+    handle: TextIO,
+    expected: tuple[int, ...] | None,
+) -> None:
+    """Require one opened runner-lock descriptor to match its path."""
+    opened = _file_identity(os.fstat(handle.fileno()))
+    if expected is not None and opened != expected:
+        raise RunFailure(f"build runner lock changed before opening: {path}")
+    current = _real_file_identity(path, "build runner lock")
+    if current != opened:
+        raise RunFailure(f"build runner lock changed before opening: {path}")
+
+
+def _acquire_run_lock(root: Path) -> TextIO:
+    """Open and lock the repository-local runner identity."""
+    _ensure_build_cache_root(root)
+    path = root / _RUN_LOCK_PATH
+    existed = _path_present(path)
+    expected = (
+        _real_file_identity(path, "build runner lock")
+        if existed
+        else None
+    )
+    try:
+        handle = path.open("a+", encoding="utf-8", newline="\n")
+    except OSError as error:
+        raise RunFailure(f"cannot open build runner lock: {path}") from error
+    try:
+        _require_run_lock_identity(path, handle, expected)
+        handle.seek(0, os.SEEK_END)
+        if handle.tell() == 0:
+            handle.write("\0")
+            handle.flush()
+        _lock_run_handle(handle)
+    except BaseException:
+        handle.close()
+        raise
+    return handle
 
 
 def _ensure_build_cache_root(root: Path) -> Path:
@@ -3929,7 +3989,9 @@ def main() -> int:
         arch_path = root / arch_path
     if not check_path.is_absolute():
         check_path = root / check_path
+    lock: TextIO | None = None
     try:
+        lock = _acquire_run_lock(root)
         arch_snapshot = _revalidate_arch(root, arch_path)
         targets = _selected_targets(arch_snapshot)
         check_snapshot = _revalidate_check(root, check_path)
@@ -3947,6 +4009,9 @@ def main() -> int:
     except (RunFailure, OSError) as error:
         print(f"run: {error}", file=sys.stderr)
         return 1
+    finally:
+        if lock is not None:
+            lock.close()
     if args.validate_only:
         print(f"run: validated {len(targets)} selected target(s)")
     else:

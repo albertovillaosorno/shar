@@ -684,6 +684,29 @@ def _write_ios_ipa(
         )
 
 
+class RunLockTests(unittest.TestCase):
+    """Serialize runner side effects before project-state migration."""
+
+    def test_rejects_concurrent_lock_and_allows_reacquisition(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-run-lock-") as raw:
+            root = Path(raw)
+            first = _RUN._acquire_run_lock(root)
+            try:
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "another build runner is already active",
+                ):
+                    _RUN._acquire_run_lock(root)
+            finally:
+                first.close()
+
+            second = _RUN._acquire_run_lock(root)
+            second.close()
+            lock = root / _RUN._RUN_LOCK_PATH
+            self.assertTrue(lock.is_file())
+            self.assertFalse(lock.is_symlink())
+
+
 class ProjectStateMigrationTests(unittest.TestCase):
     """Exercise build-state adoption without running Unreal."""
 
@@ -6734,8 +6757,14 @@ class ArchitectureRevalidationTests(unittest.TestCase):
             "root": "/engine",
             "version": "5.8.1",
         }
+        lock = io.StringIO("\0")
         with (
             mock.patch.object(_RUN, "_root", return_value=root),
+            mock.patch.object(
+                _RUN,
+                "_acquire_run_lock",
+                return_value=lock,
+            ),
             mock.patch.object(
                 _RUN,
                 "_revalidate_arch",
@@ -6784,6 +6813,7 @@ class ArchitectureRevalidationTests(unittest.TestCase):
             [],
             validate_only=True,
         )
+        self.assertTrue(lock.closed)
 
 
 if __name__ == "__main__":
