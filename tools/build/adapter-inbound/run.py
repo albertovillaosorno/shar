@@ -328,12 +328,13 @@ def _revalidate_snapshot(
     """Return the exact saved bytes validated by one child process."""
     before = _read_real_bytes(path, f"saved {label}")
     expected_sha256 = hashlib.sha256(before).hexdigest()
-    result = subprocess.run(
+    process = subprocess.Popen(
         [*command, "--expected-sha256", expected_sha256],
         cwd=root,
-        check=False,
+        **_child_process_options(),
     )
-    if result.returncode:
+    returncode = _wait_managed_child(process)
+    if returncode:
         raise RunFailure(f"saved {label} did not revalidate")
     after = _read_real_bytes(path, f"saved {label}")
     if after != before:
@@ -811,8 +812,8 @@ def _uat_command(uat: Path, arguments: list[str]) -> list[str]:
     return [str(uat), *arguments]
 
 
-def _uat_process_options() -> dict[str, object]:
-    """Return host-native process-group isolation for one UAT tree."""
+def _child_process_options() -> dict[str, object]:
+    """Return host-native process isolation for one runner-owned child."""
     if os.name == "nt":
         return {
             "creationflags": getattr(
@@ -825,7 +826,7 @@ def _uat_process_options() -> dict[str, object]:
 
 
 def _posix_process_table() -> list[tuple[int, int, str]]:
-    """Return one POSIX process snapshot for UAT descendant cleanup."""
+    """Return one POSIX process snapshot for child descendant cleanup."""
     result = subprocess.run(
         ["ps", "-axo", "pid=,ppid=,stat="],
         check=False,
@@ -833,7 +834,7 @@ def _posix_process_table() -> list[tuple[int, int, str]]:
         text=True,
     )
     if result.returncode:
-        raise RunFailure("cannot enumerate UAT descendants")
+        raise RunFailure("cannot enumerate child descendants")
     rows: list[tuple[int, int, str]] = []
     for line in result.stdout.splitlines():
         fields = line.split(None, 2)
@@ -845,8 +846,8 @@ def _posix_process_table() -> list[tuple[int, int, str]]:
     return rows
 
 
-def _uat_posix_tree_pids(root_pid: int) -> list[int]:
-    """Return live UAT descendants, including children in new sessions."""
+def _posix_tree_pids(root_pid: int) -> list[int]:
+    """Return live child descendants, including processes in new sessions."""
     table = _posix_process_table()
     children: dict[int, list[int]] = {}
     live: set[int] = set()
@@ -868,7 +869,7 @@ def _uat_posix_tree_pids(root_pid: int) -> list[int]:
 
 
 def _wait_for_posix_pids(pids: set[int], timeout: float) -> set[int]:
-    """Return UAT PIDs still live after one bounded wait."""
+    """Return child PIDs still live after one bounded wait."""
     deadline = time.monotonic() + timeout
     remaining = set(pids)
     while remaining and time.monotonic() < deadline:
@@ -881,14 +882,14 @@ def _wait_for_posix_pids(pids: set[int], timeout: float) -> set[int]:
 
 
 def _signal_posix_pids(pids: set[int], signum: int) -> None:
-    """Signal one snapshotted UAT tree without following replacement PIDs."""
+    """Signal one snapshotted child tree without following replacement PIDs."""
     for pid in sorted(pids):
         with suppress(ProcessLookupError):
             os.kill(pid, signum)
 
 
-def _terminate_uat_tree(process: subprocess.Popen[str]) -> None:
-    """Stop one interrupted UAT process tree before project-state cleanup."""
+def _terminate_child_tree(process: subprocess.Popen[str]) -> None:
+    """Stop one interrupted runner-owned process tree before cleanup."""
     if os.name == "nt":
         subprocess.run(
             ["taskkill", "/pid", str(process.pid), "/t", "/f"],
@@ -898,7 +899,7 @@ def _terminate_uat_tree(process: subprocess.Popen[str]) -> None:
         )
         process.wait()
         return
-    pids = set(_uat_posix_tree_pids(process.pid))
+    pids = set(_posix_tree_pids(process.pid))
     _signal_posix_pids(pids, signal.SIGTERM)
     remaining = _wait_for_posix_pids(pids, _UAT_STOP_TIMEOUT_SECONDS)
     if remaining:
@@ -906,7 +907,16 @@ def _terminate_uat_tree(process: subprocess.Popen[str]) -> None:
         remaining = _wait_for_posix_pids(remaining, _UAT_STOP_TIMEOUT_SECONDS)
     process.wait()
     if remaining:
-        raise RunFailure("interrupted UAT descendants did not terminate")
+        raise RunFailure("interrupted child descendants did not terminate")
+
+
+def _wait_managed_child(process: subprocess.Popen[str]) -> int:
+    """Wait for one runner-owned child and reap its tree on interruption."""
+    try:
+        return process.wait()
+    except (KeyboardInterrupt, OSError, _RunSignal):
+        _terminate_child_tree(process)
+        raise
 
 
 def _run_uat(
@@ -938,13 +948,9 @@ def _run_uat(
             stdout=handle,
             stderr=subprocess.STDOUT,
             text=True,
-            **_uat_process_options(),
+            **_child_process_options(),
         )
-        try:
-            returncode = process.wait()
-        except (KeyboardInterrupt, OSError, _RunSignal):
-            _terminate_uat_tree(process)
-            raise
+        returncode = _wait_managed_child(process)
     if returncode:
         raise RunFailure(
             f"Unreal AutomationTool failed with {returncode}; see {log}"

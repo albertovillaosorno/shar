@@ -12,7 +12,7 @@ children: []
 
 <!-- CSpell:ignore APPL COMDAT DYLD DYLINKER LINKEDIT SYMTAB DYSYMTAB -->
 <!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD rpath -->
-<!-- CSpell:ignore taskkill -->
+<!-- CSpell:ignore taskkill Popen -->
 
 # Canonical multi-platform build runner
 
@@ -540,10 +540,21 @@ but left the signal pending forever. Runner entry now explicitly unblocks
 `SIGTERM` on POSIX, installs controlled handlers for both signals, and restores
 the caller mask and dispositions when `main` returns. A background probe showed
 `SigBlk` change from signal 2 set to zero and then exited immediately on
-`SIGINT`. The current bounded Linux Shipping build reached 249 of 11,807 native
-actions with no compiler, UBA rename, or copy-failure markers and grew retained
-project state to about 4.0 GiB before the interruption experiments; the package
-is still incomplete and remains non-admissible evidence for this criterion.
+`SIGINT`.
+
+The same interruption contract now covers saved-evidence revalidation.
+A live `SIGTERM` during `check.py --revalidate`, while it owned
+`validate-source-deep`, reproduced a pre-UAT orphan: the runner and direct
+check process exited, but the deep
+validator survived under PID 1. Revalidation now uses an isolated `Popen` child
+and the same descendant-tree reaper as UAT, so runner cleanup cannot return
+while a revalidation descendant is still active. Unit regressions cover managed
+revalidation success, failure, drift, and interruption.
+
+The current bounded Linux Shipping build reached 249 of 11,807 native actions
+with no compiler, UBA rename, or copy-failure markers and grew retained project
+state to about 4.0 GiB before the interruption experiments; the package is still
+incomplete and remains non-admissible evidence for this criterion.
 
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
