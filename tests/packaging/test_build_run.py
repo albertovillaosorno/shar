@@ -411,6 +411,21 @@ def _synthetic_fat64_macho(*, reserved: int = 0) -> bytes:
     )
 
 
+def _android_pool_length8(value: int) -> bytes:
+    """Encode one synthetic Android UTF-8 string-pool length."""
+    if value < 0x80:
+        return bytes([value])
+    return bytes([0x80 | (value >> 8), value & 0xFF])
+
+
+def _android_pool_length16(value: int) -> bytes:
+    """Encode one synthetic Android UTF-16 string-pool length."""
+    if value < 0x8000:
+        return value.to_bytes(2, "little")
+    first = 0x8000 | (value >> 16)
+    return first.to_bytes(2, "little") + (value & 0xFFFF).to_bytes(2, "little")
+
+
 def _synthetic_android_manifest(
     *,
     root_name: str = "manifest",
@@ -444,10 +459,11 @@ def _synthetic_android_manifest(
         offsets.append(len(string_data))
         if utf8:
             encoded = name.encode("utf-8")
-            string_data += bytes([len(name), len(encoded)]) + encoded + b"\0"
+            string_data += _android_pool_length8(len(name))
+            string_data += _android_pool_length8(len(encoded)) + encoded + b"\0"
         else:
             encoded = name.encode("utf-16-le")
-            string_data += len(name).to_bytes(2, "little") + encoded + b"\0\0"
+            string_data += _android_pool_length16(len(name)) + encoded + b"\0\0"
     while len(string_data) % 4:
         string_data += b"\0"
     strings_start = 28 + (4 * len(names))
@@ -3716,6 +3732,27 @@ class AndroidManifestStructureTests(unittest.TestCase):
                         _synthetic_elf(0x00B7),
                     )
                 self.assertEqual(_RUN._is_android_apk(package), admitted)
+
+    def test_applies_package_length_bound_to_both_string_encodings(
+        self,
+    ) -> None:
+        for length, admitted in ((128, True), (223, True), (224, False)):
+            package_name = "a." + ("b" * (length - 2))
+            for utf8 in (True, False):
+                with self.subTest(length=length, utf8=utf8):
+                    manifest = _synthetic_android_manifest(
+                        package_name=package_name,
+                        utf8=utf8,
+                    )
+                    layout = _RUN._android_xml_root_layout(manifest)
+                    self.assertIsNotNone(layout)
+                    if layout is None:
+                        continue
+                    actual = _RUN._android_xml_children_are_valid(
+                        manifest,
+                        *layout,
+                    )
+                    self.assertEqual(actual, admitted)
 
     def test_accepts_supported_root_string_encodings_and_child_tags(
         self,
