@@ -2198,6 +2198,50 @@ def _android_start_element_is_valid(
     )
 
 
+def _android_string_pool_is_valid(
+    payload: bytes,
+    cursor: int,
+    header_size: int,
+    chunk_size: int,
+) -> bool:
+    """Return whether one Android XML string-pool layout is bounded."""
+    if header_size < 28:
+        return False
+    string_count = int.from_bytes(payload[cursor + 8 : cursor + 12], "little")
+    style_count = int.from_bytes(payload[cursor + 12 : cursor + 16], "little")
+    flags = int.from_bytes(payload[cursor + 16 : cursor + 20], "little")
+    strings_start = int.from_bytes(payload[cursor + 20 : cursor + 24], "little")
+    styles_start = int.from_bytes(payload[cursor + 24 : cursor + 28], "little")
+    index_bytes = (string_count + style_count) * 4
+    if index_bytes > chunk_size - header_size:
+        return False
+    strings_valid = True
+    if string_count:
+        string_end = styles_start if style_count else chunk_size
+        terminator_size = 1 if flags & 0x100 else 2
+        range_valid = (
+            strings_start < chunk_size - 2
+            and string_end > strings_start
+            and string_end - strings_start >= terminator_size
+        )
+        terminator = payload[
+            cursor + string_end - terminator_size : cursor + string_end
+        ]
+        strings_valid = range_valid and not any(terminator)
+    styles_valid = True
+    if style_count:
+        range_valid = (
+            styles_start < chunk_size
+            and chunk_size - styles_start >= 12
+        )
+        style_end = cursor + chunk_size
+        styles_valid = (
+            range_valid
+            and payload[style_end - 12 : style_end] == b"\xff" * 12
+        )
+    return strings_valid and styles_valid
+
+
 def _android_xml_children_are_valid(
     payload: bytes,
     cursor: int,
@@ -2212,7 +2256,12 @@ def _android_xml_children_are_valid(
             return False
         chunk_type, header_size, chunk_size = layout
         if chunk_type == 0x0001:
-            if header_size < 28:
+            if not _android_string_pool_is_valid(
+                payload,
+                cursor,
+                header_size,
+                chunk_size,
+            ):
                 return False
             has_string_pool = True
         elif 0x0100 <= chunk_type <= 0x017F:
