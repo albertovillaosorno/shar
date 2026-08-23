@@ -2327,24 +2327,37 @@ class ElfEntrypointTests(unittest.TestCase):
                         _RUN._TARGETS_BY_ID[target_id],
                     )
 
-    def test_rejects_x64_processor_flags(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw:
-            candidate = Path(raw)
-            executable = candidate / "shar/Binaries/Linux/shar-Linux-Shipping"
-            executable.parent.mkdir(parents=True)
-            payload = bytearray(_synthetic_elf(0x003E))
-            payload[48:52] = (1).to_bytes(4, "little")
-            executable.write_bytes(payload)
-            if _RUN.os.name != "nt":
-                executable.chmod(0o755)
-            with self.assertRaisesRegex(
-                _RUN.RunFailure,
-                "Linux SHAR executable",
+    def test_rejects_supported_architecture_processor_flags(self) -> None:
+        for target_id, platform, machine in (
+            ("linux-x64", "Linux", 0x003E),
+            ("linux-arm64", "LinuxArm64", 0x00B7),
+        ):
+            with (
+                self.subTest(target=target_id),
+                tempfile.TemporaryDirectory(prefix="shar-linux-entry-") as raw,
             ):
-                _RUN._validate_candidate_artifact(
-                    candidate,
-                    _RUN._TARGETS_BY_ID["linux-x64"],
+                candidate = Path(raw)
+                executable = (
+                    candidate
+                    / "shar"
+                    / "Binaries"
+                    / platform
+                    / f"shar-{platform}-Shipping"
                 )
+                executable.parent.mkdir(parents=True)
+                payload = bytearray(_synthetic_elf(machine))
+                payload[48:52] = (1).to_bytes(4, "little")
+                executable.write_bytes(payload)
+                if _RUN.os.name != "nt":
+                    executable.chmod(0o755)
+                with self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR executable",
+                ):
+                    _RUN._validate_candidate_artifact(
+                        candidate,
+                        _RUN._TARGETS_BY_ID[target_id],
+                    )
 
     def test_rejects_nonzero_ident_reserved_bytes(self) -> None:
         for reason, offset in (
