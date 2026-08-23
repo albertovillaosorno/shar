@@ -201,7 +201,9 @@ Legacy thread entrypoints must carry the complete ARM64 thread-state
 flavor/count and a nonzero program counter; arbitrary
 nonempty thread-command bodies do not qualify. Windows
 images must also carry a complete COFF header, no deprecated image symbol-table
-metadata, the executable-image characteristic without the DLL flag, a bounded
+metadata, the executable-image characteristic without the DLL flag, and keep
+the obsolete Windows working-set-trim characteristic zero while retaining
+defined image flags. They require a bounded
 PE32+ optional header and section table with one to 96 sections whose virtual
 addresses remain beyond the loaded header span, aligned, and adjacent by loaded
 section span, a 64 KiB-aligned image base, and a
