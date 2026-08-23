@@ -3650,6 +3650,44 @@ class MachOLinkEditDataTests(unittest.TestCase):
             )
         )
 
+    def test_rejects_duplicate_linkedit_command_ids(self) -> None:
+        for command in (
+            0x1E,
+            0x26,
+            0x29,
+            0x2B,
+            0x2E,
+            0x80000033,
+            0x80000034,
+        ):
+            payload = bytearray(
+                _synthetic_macho(
+                    _RUN._MACHO_ARM64_CPU,
+                    prefix_command_size=32,
+                )
+            )
+            payload[16:20] = (
+                int.from_bytes(payload[16:20], "little") + 1
+            ).to_bytes(4, "little")
+            record = (
+                command.to_bytes(4, "little")
+                + (16).to_bytes(4, "little")
+                + (b"\0" * 8)
+            )
+            payload[104:136] = record + record
+            stream = io.BytesIO(payload)
+            prefix = stream.read(4)
+            with self.subTest(command=hex(command)):
+                self.assertFalse(
+                    _RUN._matches_macho(
+                        stream,
+                        prefix,
+                        "macos",
+                        "arm64",
+                        len(payload),
+                    )
+                )
+
     def test_applies_bounds_to_all_linkedit_command_ids(self) -> None:
         commands = (
             0x1D,
