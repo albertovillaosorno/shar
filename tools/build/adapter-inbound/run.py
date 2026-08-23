@@ -1787,6 +1787,20 @@ def _macho_dylinker_is_valid(
     return terminator > 0
 
 
+def _macho_linkedit_data_is_valid(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    file_size: int,
+) -> bool:
+    """Return whether one link-edit data command stays inside the file."""
+    if command_size != 16 or len(body) != 8:
+        return False
+    data_offset = int.from_bytes(body[:4], byte_order)
+    data_size = int.from_bytes(body[4:8], byte_order)
+    return data_offset <= file_size and data_size <= file_size - data_offset
+
+
 def _macho_platform_command(
     command: int,
     command_size: int,
@@ -1805,29 +1819,51 @@ def _macho_auxiliary_command(
     command_size: int,
     body: bytes,
     byte_order: str,
+    file_size: int,
 ) -> tuple[str, int] | None:
     """Parse one non-segment Mach-O command used by admission."""
-    if command == 0xE:
-        return (
+    linkedit_commands = {
+        0x1D,
+        0x1E,
+        0x26,
+        0x29,
+        0x2B,
+        0x2E,
+        0x80000033,
+        0x80000034,
+    }
+    result: tuple[str, int] | None = ("ignored", 0)
+    if command in linkedit_commands:
+        if not _macho_linkedit_data_is_valid(
+            body,
+            command_size,
+            byte_order,
+            file_size,
+        ):
+            result = None
+    elif command == 0xE:
+        result = (
             ("dylinker", 0)
             if _macho_dylinker_is_valid(body, command_size, byte_order)
             else None
         )
-    if command in {0x24, 0x25, 0x2F, 0x30, 0x32}:
-        return _macho_platform_command(
+    elif command in {0x24, 0x25, 0x2F, 0x30, 0x32}:
+        result = _macho_platform_command(
             command,
             command_size,
             body,
             byte_order,
         )
-    if command == 0x80000028:
-        if command_size != 24:
-            return None
-        return "main", int.from_bytes(body[:8], byte_order)
-    if command == 0x5:
+    elif command == 0x80000028:
+        result = (
+            ("main", int.from_bytes(body[:8], byte_order))
+            if command_size == 24
+            else None
+        )
+    elif command == 0x5:
         entrypoint = _macho_thread_state_entrypoint(body, byte_order)
-        return None if entrypoint is None else ("thread", entrypoint)
-    return "ignored", 0
+        result = None if entrypoint is None else ("thread", entrypoint)
+    return result
 
 
 def _macho_command_evidence(
@@ -1868,6 +1904,7 @@ def _macho_command_evidence(
                 command_size,
                 body,
                 byte_order,
+                file_size,
             )
             if auxiliary is None:
                 return None
