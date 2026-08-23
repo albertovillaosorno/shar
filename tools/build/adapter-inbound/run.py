@@ -1881,6 +1881,41 @@ def _macho_linkedit_data_is_valid(
     )
 
 
+def _macho_encryption_is_valid(
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    file_size: int,
+) -> bool:
+    """Return whether one 64-bit encryption range stays inside the file."""
+    if command_size != 24 or len(body) != 16:
+        return False
+    crypt_offset = int.from_bytes(body[:4], byte_order)
+    crypt_size = int.from_bytes(body[4:8], byte_order)
+    return crypt_offset <= file_size and crypt_size <= file_size - crypt_offset
+
+
+def _macho_fixed_auxiliary(
+    command: int,
+    body: bytes,
+    command_size: int,
+    byte_order: str,
+    file_size: int,
+) -> _MachOAuxiliary | None:
+    """Parse fixed-layout non-segment commands used by admission."""
+    result: _MachOAuxiliary | None = None
+    if command == 0x1B and command_size == 24:
+        result = _MachOAuxiliary("uuid")
+    elif command == 0x2C and _macho_encryption_is_valid(
+        body,
+        command_size,
+        byte_order,
+        file_size,
+    ):
+        result = _MachOAuxiliary("encryption")
+    return result
+
+
 def _macho_linkedit_auxiliary(
     command: int,
     body: bytes,
@@ -1936,11 +1971,13 @@ def _macho_auxiliary_command(
 ) -> _MachOAuxiliary | None:
     """Parse one non-segment Mach-O command used by admission."""
     result: _MachOAuxiliary | None = _MachOAuxiliary("ignored")
-    if command in {0xD, 0x1B}:
-        result = (
-            _MachOAuxiliary("uuid")
-            if command == 0x1B and command_size == 24
-            else None
+    if command in {0xD, 0x1B, 0x21, 0x2C}:
+        result = _macho_fixed_auxiliary(
+            command,
+            body,
+            command_size,
+            byte_order,
+            file_size,
         )
     elif command in _MACHO_DYLIB_LOAD_COMMANDS:
         if not _macho_lc_string_is_valid(
@@ -1995,6 +2032,16 @@ def _macho_auxiliary_command(
     return result
 
 
+def _macho_auxiliary_singletons_are_valid(
+    auxiliaries: Sequence[_MachOAuxiliary],
+) -> bool:
+    """Return whether singleton Mach-O auxiliary commands are unique."""
+    return all(
+        sum(item.kind == kind for item in auxiliaries) <= 1
+        for kind in ("uuid", "dyld-info", "encryption")
+    )
+
+
 def _macho_command_evidence(
     stream: object,
     byte_order: str,
@@ -2043,9 +2090,9 @@ def _macho_command_evidence(
                 return None
             auxiliaries.append(auxiliary)
         remaining -= command_size
-    uuid_count = sum(item.kind == "uuid" for item in auxiliaries)
-    dyld_info_count = sum(item.kind == "dyld-info" for item in auxiliaries)
-    if remaining != 0 or uuid_count > 1 or dyld_info_count > 1:
+    if remaining != 0 or not _macho_auxiliary_singletons_are_valid(
+        auxiliaries
+    ):
         return None
     entrypoints = [
         (item.kind, item.value)
