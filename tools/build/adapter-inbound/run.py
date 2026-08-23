@@ -1087,6 +1087,25 @@ def _pe_optional_fields_are_valid(optional: bytes) -> bool:
     )
 
 
+def _pe_data_directories_are_valid(
+    optional: bytes,
+    file_size: int,
+) -> bool:
+    """Return whether declared PE data-directory ranges are bounded."""
+    image_size = int.from_bytes(optional[56:60], "little")
+    directory_count = int.from_bytes(optional[108:112], "little")
+    for index in range(directory_count):
+        start = 112 + (8 * index)
+        address = int.from_bytes(optional[start : start + 4], "little")
+        size = int.from_bytes(optional[start + 4 : start + 8], "little")
+        if size == 0:
+            continue
+        limit = file_size if index == 4 else image_size
+        if address > limit or size > limit - address:
+            return False
+    return True
+
+
 def _pe_loader_fields_are_valid(
     optional: bytes,
     *,
@@ -1112,6 +1131,7 @@ def _pe_loader_fields_are_valid(
         and header_size == expected_header_size
         and header_size <= file_size
         and directory_count <= directory_capacity
+        and _pe_data_directories_are_valid(optional, file_size)
     )
 
 

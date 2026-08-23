@@ -1985,6 +1985,28 @@ class PeOptionalHeaderTests(unittest.TestCase):
                         _RUN._TARGETS_BY_ID["windows-x64"],
                     )
 
+    def test_rejects_data_directory_outside_image(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-windows-header-") as raw:
+            candidate = Path(raw)
+            executable = candidate / "shar-Win64-Shipping.exe"
+            payload = bytearray(_synthetic_pe(0x8664))
+            section = bytes(payload[0x108:0x130])
+            payload[0x110:0x138] = section
+            payload[0x108:0x110] = b"\0" * 8
+            payload[0x94:0x96] = (120).to_bytes(2, "little")
+            payload[0x104:0x108] = (1).to_bytes(4, "little")
+            payload[0x108:0x10C] = (0x2000).to_bytes(4, "little")
+            payload[0x10C:0x110] = (1).to_bytes(4, "little")
+            executable.write_bytes(payload)
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "Windows SHAR executable",
+            ):
+                _RUN._validate_candidate_artifact(
+                    candidate,
+                    _RUN._TARGETS_BY_ID["windows-x64"],
+                )
+
     def test_rejects_misaligned_image_base(self) -> None:
         with tempfile.TemporaryDirectory(
             prefix="shar-windows-alignment-",
