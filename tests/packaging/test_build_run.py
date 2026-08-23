@@ -2686,6 +2686,30 @@ class PeSectionLayoutTests(unittest.TestCase):
                         _RUN._TARGETS_BY_ID["windows-x64"],
                     )
 
+    def test_rejects_object_only_section_characteristics(self) -> None:
+        object_only_flags = (
+            0x00000008,
+            0x00000200,
+            0x00000800,
+            0x00001000,
+            0x00100000,
+            0x00E00000,
+            0x01000000,
+        )
+        baseline = bytearray(_synthetic_pe(0x8664))
+        section = bytearray(baseline[0x108:0x130])
+        original = int.from_bytes(section[36:40], "little")
+        for flag in object_only_flags:
+            candidate = bytearray(section)
+            candidate[36:40] = (original | flag).to_bytes(4, "little")
+            with self.subTest(flag=hex(flag)):
+                self.assertFalse(
+                    _RUN._pe_section_image_metadata_is_valid(bytes(candidate))
+                )
+
+        section[36:40] = (original | 0x02000000).to_bytes(4, "little")
+        self.assertTrue(_RUN._pe_section_image_metadata_is_valid(bytes(section)))
+
     def test_rejects_nonadjacent_section_virtual_addresses(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-windows-section-") as raw:
             candidate = Path(raw)
