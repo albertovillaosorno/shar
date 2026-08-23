@@ -33,7 +33,7 @@
 
 """Build selected SHAR targets and publish only complete native packages."""
 
-# CSpell:ignore dylinker linkedit
+# CSpell:ignore APPL BNDL FMWK dylinker linkedit
 
 from __future__ import annotations
 
@@ -2631,6 +2631,14 @@ def _ios_bundle_identifier_is_valid(value: object) -> bool:
     )
 
 
+def _ios_bundle_metadata_is_valid(document: dict[object, object]) -> bool:
+    """Return whether iOS bundle identity metadata is internally consistent."""
+    if not _ios_bundle_identifier_is_valid(document.get("CFBundleIdentifier")):
+        return False
+    package_type = document.get("CFBundlePackageType")
+    return package_type is None or package_type == "APPL"
+
+
 def _ios_main_binary(
     archive: zipfile.ZipFile,
     inventory: dict[str, zipfile.ZipInfo],
@@ -2650,7 +2658,7 @@ def _ios_main_binary(
     document = plistlib.loads(archive.read(plist_info))
     if not isinstance(document, dict):
         return None
-    if not _ios_bundle_identifier_is_valid(document.get("CFBundleIdentifier")):
+    if not _ios_bundle_metadata_is_valid(document):
         return None
     executable = document.get("CFBundleExecutable")
     if (

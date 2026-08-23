@@ -10,7 +10,7 @@ dependencies: []
 children: []
 ---
 
-<!-- CSpell:ignore DYLINKER LINKEDIT OSABI pdb UNIXTHREAD -->
+<!-- CSpell:ignore APPL DYLINKER LINKEDIT OSABI pdb UNIXTHREAD -->
 
 # Canonical multi-platform build runner
 
@@ -85,9 +85,11 @@ platform loader shape
 `lib/arm64-v8a/lib<name>.so`; nested or non-library-shaped lookalikes do not
 satisfy package admission. iOS IPAs must declare a nonempty
 `CFBundleIdentifier` using Apple's documented ASCII alphanumeric/hyphen/period
-character set, because iOS uses that identity during app-signature validation,
-and a main application executable in `Info.plist` whose Mach-O image contains
-ARM64. Invalid containers,
+character set, because iOS uses that identity during app-signature validation.
+If `CFBundlePackageType` is present it must identify an app as `APPL`; omission
+retains Apple's `.app`-extension fallback. The bundle must also declare a main
+application executable in `Info.plist` whose Mach-O image contains ARM64.
+Invalid containers,
 wrong-architecture mobile binaries, zero-byte packages, and ambiguous multiple
 APKs/IPAs cannot create a completed `dist/<ARCH>/` target. Mobile archive
 inventories also reject rooted or Windows drive-qualified, parent/current
