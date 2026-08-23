@@ -38,6 +38,7 @@ from collections.abc import Callable
 from collections.abc import Iterator
 import hashlib
 import importlib.util
+import io
 import os
 from pathlib import Path
 import tempfile
@@ -197,6 +198,18 @@ def _synthetic_linkedit_segment(file_size: int) -> bytes:
     )
 
 
+def _synthetic_build_version(platform: int) -> bytes:
+    """Return one minimal LC_BUILD_VERSION command for a target platform."""
+    return (
+        (0x32).to_bytes(4, "little")
+        + (24).to_bytes(4, "little")
+        + platform.to_bytes(4, "little")
+        + (0x000D0000).to_bytes(4, "little")
+        + (0x000D0000).to_bytes(4, "little")
+        + (0).to_bytes(4, "little")
+    )
+
+
 def _synthetic_macho(
     cpu: int,
     file_type: int = 2,
@@ -204,7 +217,7 @@ def _synthetic_macho(
     command: int = 0x80000028,
     entry_offset: int | None = None,
     prefix_command_size: int = 0,
-    include_linkedit: bool = True,
+    platform: int = 1,
 ) -> bytes:
     """Return one minimal little-endian Mach-O64 image fixture."""
     entry_command_size = 24
@@ -216,15 +229,17 @@ def _synthetic_macho(
             + (b"\0" * (prefix_command_size - 8))
         )
     segment_size = 72
-    linkedit_size = segment_size if include_linkedit else 0
+    linkedit_size = segment_size
     dylinker_size = 8
-    command_count = 3 + bool(prefix_command) + bool(include_linkedit)
+    build_version = _synthetic_build_version(platform)
+    command_count = 5 + bool(prefix_command)
     command_bytes = (
         segment_size
         + len(prefix_command)
         + entry_command_size
         + linkedit_size
         + dylinker_size
+        + len(build_version)
     )
     command_end = 32 + command_bytes
     resolved_entry = command_end if entry_offset is None else entry_offset
@@ -242,9 +257,7 @@ def _synthetic_macho(
         + (0x5).to_bytes(4, "little")
         + (0).to_bytes(8, "little")
     )
-    linkedit = (
-        _synthetic_linkedit_segment(file_size) if include_linkedit else b""
-    )
+    linkedit = _synthetic_linkedit_segment(file_size)
     dylinker = (0xE).to_bytes(4, "little") + (8).to_bytes(4, "little")
     return (
         bytes.fromhex("cffaedfe")
@@ -262,6 +275,7 @@ def _synthetic_macho(
         + (0).to_bytes(8, "little")
         + linkedit
         + dylinker
+        + build_version
         + b"\0"
     )
 
@@ -277,7 +291,14 @@ def _synthetic_thread_entry_macho(
     segment_size = 72
     thread_size = 288
     dylinker_size = 8
-    command_bytes = segment_size + thread_size + segment_size + dylinker_size
+    build_version = _synthetic_build_version(1)
+    command_bytes = (
+        segment_size
+        + thread_size
+        + segment_size
+        + dylinker_size
+        + len(build_version)
+    )
     command_end = 32 + command_bytes
     resolved_pc = 0x100000000 + command_end if pc is None else pc
     file_size = command_end + 1
@@ -307,7 +328,7 @@ def _synthetic_thread_entry_macho(
         + cpu.to_bytes(4, "little")
         + (0).to_bytes(4, "little")
         + (2).to_bytes(4, "little")
-        + (4).to_bytes(4, "little")
+        + (5).to_bytes(4, "little")
         + command_bytes.to_bytes(4, "little")
         + (0).to_bytes(8, "little")
         + segment
@@ -317,15 +338,19 @@ def _synthetic_thread_entry_macho(
         + linkedit
         + (0xE).to_bytes(4, "little")
         + (8).to_bytes(4, "little")
+        + build_version
         + b"\0"
     )
 
 
-def _synthetic_fat_macho(cpu_types: tuple[int, ...]) -> bytes:
+def _synthetic_fat_macho(
+    cpu_types: tuple[int, ...],
+    platform: int = 1,
+) -> bytes:
     """Return one page-aligned big-endian universal Mach-O fixture."""
     entry_size = 20
     table_end = 8 + (entry_size * len(cpu_types))
-    slices = [_synthetic_macho(cpu) for cpu in cpu_types]
+    slices = [_synthetic_macho(cpu, platform=platform) for cpu in cpu_types]
     cursor = table_end
     entries: list[bytes] = []
     body = bytearray()
@@ -427,7 +452,7 @@ def _write_ios_ipa(
         )
         archive.writestr(
             "Payload/SHAR.app/shar",
-            _synthetic_macho(cpu) if binary is None else binary,
+            _synthetic_macho(cpu, platform=2) if binary is None else binary,
         )
 
 
@@ -2834,6 +2859,31 @@ class MachOFatSliceTests(unittest.TestCase):
             )
 
 
+class MachOPlatformTests(unittest.TestCase):
+    """Bind ARM64 Mach-O admission to its target Apple platform."""
+
+    def test_requires_exact_build_platform(self) -> None:
+        for system, expected, other in (("macos", 1, 2), ("ios", 2, 1)):
+            for platform, admitted in ((expected, True), (other, False)):
+                payload = _synthetic_macho(
+                    _RUN._MACHO_ARM64_CPU,
+                    platform=platform,
+                )
+                stream = io.BytesIO(payload)
+                prefix = stream.read(4)
+                with self.subTest(system=system, platform=platform):
+                    self.assertEqual(
+                        _RUN._matches_macho(
+                            stream,
+                            prefix,
+                            system,
+                            "arm64",
+                            len(payload),
+                        ),
+                        admitted,
+                    )
+
+
 class MachOLoaderSegmentTests(unittest.TestCase):
     """Require dyld loader-facing segment identities and permissions."""
 
@@ -2842,12 +2892,9 @@ class MachOLoaderSegmentTests(unittest.TestCase):
             candidate = Path(raw)
             executable = candidate / "SHAR.app/Contents/MacOS/shar"
             executable.parent.mkdir(parents=True)
-            executable.write_bytes(
-                _synthetic_macho(
-                    _RUN._MACHO_ARM64_CPU,
-                    include_linkedit=False,
-                )
-            )
+            payload = bytearray(_synthetic_macho(_RUN._MACHO_ARM64_CPU))
+            payload[128:132] = (0x1B).to_bytes(4, "little")
+            executable.write_bytes(payload)
             if _RUN.os.name != "nt":
                 executable.chmod(0o755)
             with self.assertRaisesRegex(
@@ -2865,7 +2912,10 @@ class MachOLoaderSegmentTests(unittest.TestCase):
             executable = candidate / "SHAR.app/Contents/MacOS/shar"
             executable.parent.mkdir(parents=True)
             payload = bytearray(_synthetic_macho(_RUN._MACHO_ARM64_CPU))
-            payload[-9:-5] = (0x1B).to_bytes(4, "little")
+            command = (0xE).to_bytes(4, "little") + (8).to_bytes(4, "little")
+            offset = payload.find(command)
+            self.assertNotEqual(offset, -1)
+            payload[offset : offset + 4] = (0x1B).to_bytes(4, "little")
             executable.write_bytes(payload)
             if _RUN.os.name != "nt":
                 executable.chmod(0o755)
@@ -3656,10 +3706,10 @@ class CandidateArtifactTests(unittest.TestCase):
 
             _write_ios_ipa(
                 ipa,
-                binary=_synthetic_fat_macho((
-                    0x01000007,
-                    _RUN._MACHO_ARM64_CPU,
-                )),
+                binary=_synthetic_fat_macho(
+                    (0x01000007, _RUN._MACHO_ARM64_CPU),
+                    platform=2,
+                ),
             )
             _RUN._validate_candidate_artifact(
                 candidate,
