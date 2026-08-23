@@ -2752,6 +2752,33 @@ class PeSectionLayoutTests(unittest.TestCase):
                     _RUN._TARGETS_BY_ID["windows-x64"],
                 )
 
+    def test_low_alignment_requires_matching_raw_offset(self) -> None:
+        for raw_offset, admitted in ((0x200, False), (0x1000, True)):
+            payload = bytearray(
+                _synthetic_pe(
+                    0x8664,
+                    section_raw_offset=raw_offset,
+                )
+            )
+            required = raw_offset + 0x200
+            if len(payload) < required:
+                payload.extend(b"\0" * (required - len(payload)))
+            payload[0xB8:0xBC] = (0x200).to_bytes(4, "little")
+            payload[0xBC:0xC0] = (0x200).to_bytes(4, "little")
+            payload[0xD0:0xD4] = (0x1200).to_bytes(4, "little")
+            stream = io.BytesIO(payload)
+            prefix = stream.read(4)
+            with self.subTest(raw_offset=hex(raw_offset)):
+                self.assertEqual(
+                    _RUN._matches_pe(
+                        stream,
+                        prefix,
+                        "amd64",
+                        len(payload),
+                    ),
+                    admitted,
+                )
+
     def test_rejects_misaligned_raw_section_data(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-windows-section-") as raw:
             candidate = Path(raw)
