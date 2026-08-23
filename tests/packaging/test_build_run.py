@@ -426,6 +426,14 @@ def _write_android_apk(
         )
 
 
+def _unix_special_zip_member(name: str, kind: int) -> object:
+    """Return one ZIP member carrying a declared Unix special file type."""
+    info = _RUN.zipfile.ZipInfo(name)
+    info.create_system = 3
+    info.external_attr = (kind | 0o777) << 16
+    return info
+
+
 def _corrupt_stored_zip_member(path: Path, member: str) -> None:
     """Flip one stored byte without changing central metadata.
 
@@ -3531,6 +3539,83 @@ class MobileArchiveTreeTests(unittest.TestCase):
                     candidate,
                     _RUN._TARGETS_BY_ID["android-arm64"],
                 )
+
+
+class MobileArchiveMemberTypeTests(unittest.TestCase):
+    """Require loader-critical mobile ZIP members to be regular files."""
+
+    def test_android_rejects_special_required_members(self) -> None:
+        cases = (
+            ("manifest", "AndroidManifest.xml"),
+            ("native", "lib/arm64-v8a/libUnreal.so"),
+        )
+        for reason, special_name in cases:
+            with (
+                self.subTest(reason=reason),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-android-member-type-"
+                ) as raw,
+            ):
+                package = Path(raw) / "shar.apk"
+                with _RUN.zipfile.ZipFile(package, "w") as archive:
+                    manifest = b"synthetic manifest"
+                    native = _synthetic_elf(0x00B7)
+                    for name, payload in (
+                        ("AndroidManifest.xml", manifest),
+                        ("lib/arm64-v8a/libUnreal.so", native),
+                    ):
+                        member = (
+                            _unix_special_zip_member(name, _RUN.stat.S_IFLNK)
+                            if name == special_name
+                            else name
+                        )
+                        archive.writestr(member, payload)
+                self.assertFalse(_RUN._is_android_apk(package))
+
+    def test_ios_rejects_special_required_members(self) -> None:
+        cases = (
+            ("plist", "Payload/SHAR.app/Info.plist"),
+            ("binary", "Payload/SHAR.app/shar"),
+        )
+        for reason, special_name in cases:
+            with (
+                self.subTest(reason=reason),
+                tempfile.TemporaryDirectory(
+                    prefix="shar-ios-member-type-"
+                ) as raw,
+            ):
+                package = Path(raw) / "shar.ipa"
+                with _RUN.zipfile.ZipFile(package, "w") as archive:
+                    plist = _RUN.plistlib.dumps({"CFBundleExecutable": "shar"})
+                    binary = _synthetic_macho(
+                        _RUN._MACHO_ARM64_CPU,
+                        platform=2,
+                    )
+                    for name, payload in (
+                        ("Payload/SHAR.app/Info.plist", plist),
+                        ("Payload/SHAR.app/shar", binary),
+                    ):
+                        member = (
+                            _unix_special_zip_member(name, _RUN.stat.S_IFLNK)
+                            if name == special_name
+                            else name
+                        )
+                        archive.writestr(member, payload)
+                self.assertFalse(_RUN._is_ios_ipa(package))
+
+    def test_ios_allows_unrelated_symlink_member(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-ios-member-type-") as raw:
+            package = Path(raw) / "shar.ipa"
+            _write_ios_ipa(package)
+            with _RUN.zipfile.ZipFile(package, "a") as archive:
+                archive.writestr(
+                    _unix_special_zip_member(
+                        "Payload/SHAR.app/Frameworks/Current",
+                        _RUN.stat.S_IFLNK,
+                    ),
+                    b"A",
+                )
+            self.assertTrue(_RUN._is_ios_ipa(package))
 
 
 class MobileArtifactMultiplicityTests(unittest.TestCase):

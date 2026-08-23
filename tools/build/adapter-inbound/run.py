@@ -47,6 +47,7 @@ import os
 from pathlib import Path
 import plistlib
 import shutil
+import stat
 import subprocess
 import sys
 from typing import NamedTuple
@@ -2057,6 +2058,16 @@ def _zip_member_path_is_safe(info: zipfile.ZipInfo) -> bool:
     )
 
 
+def _zip_member_is_regular_file(info: zipfile.ZipInfo) -> bool:
+    """Return whether a ZIP member is not a declared Unix special node."""
+    if info.is_dir():
+        return False
+    if info.create_system != 3:
+        return True
+    file_type = stat.S_IFMT(info.external_attr >> 16)
+    return file_type in {0, stat.S_IFREG}
+
+
 def _zip_inventory(
     archive: zipfile.ZipFile,
 ) -> dict[str, zipfile.ZipInfo] | None:
@@ -2094,7 +2105,7 @@ def _zip_member_matches_elf(
     architecture: str,
 ) -> bool:
     """Return whether one ZIP member is an ELF for the selected CPU."""
-    if info.is_dir():
+    if not _zip_member_is_regular_file(info):
         return False
     with archive.open(info) as stream:
         prefix = stream.read(4)
@@ -2126,7 +2137,11 @@ def _android_archive_contains_arm64(archive: zipfile.ZipFile) -> bool:
     if inventory is None:
         return False
     manifest = inventory.get("AndroidManifest.xml")
-    if manifest is None or manifest.is_dir() or manifest.file_size == 0:
+    if (
+        manifest is None
+        or not _zip_member_is_regular_file(manifest)
+        or manifest.file_size == 0
+    ):
         return False
     return any(
         _is_android_arm64_library_path(name)
@@ -2187,7 +2202,7 @@ def _ios_main_binary(
         if len(name.split("/")) == 3
         and name.startswith("Payload/")
         and name.endswith(".app/Info.plist")
-        and not info.is_dir()
+        and _zip_member_is_regular_file(info)
     ]
     if len(property_lists) != 1:
         return None
@@ -2205,7 +2220,7 @@ def _ios_main_binary(
         return None
     app_root = plist_info.filename.rsplit("/", 1)[0]
     binary_info = inventory.get(f"{app_root}/{executable}")
-    if binary_info is None or binary_info.is_dir():
+    if binary_info is None or not _zip_member_is_regular_file(binary_info):
         return None
     return binary_info
 
