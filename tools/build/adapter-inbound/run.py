@@ -2365,6 +2365,42 @@ def _require_publication_destination_state(
     _require_directory_identity(destination, "published target", expected)
 
 
+def _publication_root_after_admission(
+    publication_root: Path,
+    expected: tuple[int, int, int] | None,
+) -> tuple[int, int, int]:
+    """Create a missing publication root or require its preflight identity."""
+    if expected is None:
+        if _path_present(publication_root):
+            raise RunFailure(
+                "publication root changed before publication: "
+                f"{publication_root}"
+            )
+        publication_root.mkdir(parents=True)
+        return _real_directory_identity(publication_root, "publication root")
+    _require_directory_identity(
+        publication_root,
+        "publication root",
+        expected,
+    )
+    return expected
+
+
+def _remove_preflighted_publication_backup(
+    backup: Path,
+    expected: tuple[int, int, int] | None,
+) -> None:
+    """Remove only the stale publication backup identity seen at preflight."""
+    if expected is None:
+        if _path_present(backup):
+            raise RunFailure(
+                f"publication backup changed before publication: {backup}"
+            )
+        return
+    _require_directory_identity(backup, "publication backup", expected)
+    shutil.rmtree(backup)
+
+
 def _rollback_publication_swap(
     candidate: Path,
     destination: Path,
@@ -2406,19 +2442,23 @@ def _publish(
         else None
     )
     publication_root = destination.parent
-    if _path_present(publication_root):
-        _require_real_directory(publication_root, "publication root")
-    else:
-        publication_root.mkdir(parents=True)
+    publication_root_identity = (
+        _real_directory_identity(publication_root, "publication root")
+        if _path_present(publication_root)
+        else None
+    )
     backup = destination.with_name(f".{destination.name}.previous")
-    if _path_present(backup):
-        _require_real_directory(backup, "publication backup")
-        shutil.rmtree(backup)
-    publication_identity = _real_directory_identity(
-        publication_root,
-        "publication root",
+    backup_identity = (
+        _real_directory_identity(backup, "publication backup")
+        if _path_present(backup)
+        else None
     )
     candidate_snapshot = _validate_publication_candidate(candidate, target)
+    publication_identity = _publication_root_after_admission(
+        publication_root,
+        publication_root_identity,
+    )
+    _remove_preflighted_publication_backup(backup, backup_identity)
     _require_directory_identity(
         publication_root,
         "publication root",
