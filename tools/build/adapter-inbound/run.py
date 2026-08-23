@@ -1,4 +1,3 @@
-# cspell:ignore linkedit LINKEDIT
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -33,6 +32,8 @@
 #
 
 """Build selected SHAR targets and publish only complete native packages."""
+
+# CSpell:ignore linkedit
 
 from __future__ import annotations
 
