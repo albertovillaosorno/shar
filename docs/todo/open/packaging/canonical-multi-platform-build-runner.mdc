@@ -585,13 +585,22 @@ parent chain before the runner can observe it. Managed children now inherit a
 unique `SHAR_BUILD_RUNNER_CHILD` token. Linux cleanup retains the normal
 descendant-tree termination, then scans `/proc/*/environ` for that exact token
 and force-stops any remaining tagged process until none remain. The token is
-randomized per managed child and does not rely on executable names, paths,
-process groups, or parentage. A real synthetic probe spawned a tagged
-new-session child, let its parent exit so PID 1 adopted the child, then
-confirmed
-the
-token sweep discovered and removed that orphan. Unit regressions cover token
-copying and a tagged PID that escapes the ancestry snapshot.
+fresh per managed child and does not rely on executable names, paths, process
+groups, or parentage. A real synthetic probe spawned a tagged new-session
+child, let its parent exit so PID 1 adopted the child, then confirmed the token
+sweep discovered and removed that orphan. Unit regressions cover token copying
+and a tagged PID that escapes the ancestry snapshot.
+
+A committed-runner canonical Linux interruption then exercised the same path
+under real native compilation. UBT started with 7,264 actions and reached
+26/7,264 before the probe signaled only the runner. The exact managed-child
+token was present on 12 live UAT, UBT, and compiler processes before `SIGTERM`.
+After the runner returned, an immediate `/proc` audit found zero processes
+with that token, zero SHAR UAT, UBT, or compiler processes, and
+all four project-state
+links detached. Retained Shipping objects reached 4,648 and project state
+8,126,657,114 bytes. This closes the captured PID-1 escape race without relying
+on a delayed second process audit.
 
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
