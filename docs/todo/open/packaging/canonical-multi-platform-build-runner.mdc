@@ -608,6 +608,20 @@ zero tagged processes, zero SHAR managed build processes, and all four links
 detached. No candidate package existed and the UBT log had no compiler, UBA
 rename, replacement-copy, fatal-error, or build-failure marker.
 
+A further canonical Linux resume reused that state again: UBT's initial agenda
+fell from 7,237 to 6,860 actions. The run reached 438/6,860 before the bounded
+stop, while retained Shipping objects grew from 5,025 to 5,476 with
+8,942,408,035 bytes of project state. Immediately before
+runner-only `SIGTERM`, the exact managed-child token was present on 14 live
+RunUAT, AutomationTool, UBT, orphan-killer, and compiler processes. The runner
+returned 143 within the first second; the immediate post-return audit found zero
+processes carrying that token, zero SHAR UAT, UBT, or compiler processes, all
+four project-state links detached, and the advisory lock could be acquired
+again.
+The UBT log again contained no compiler, UBA rename, replacement-copy,
+fatal-error, or build-failure marker. No Linux candidate package existed, so
+this remains cache progress rather than admissible platform-package evidence.
+
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
 721,654,073 bytes. An exact copy under `.cache/build/copy-probe/` matched every
