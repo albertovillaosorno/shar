@@ -75,7 +75,8 @@ _RUN_LOCK_PATH = Path(".cache/build/run.lock")
 _PROJECT_STATE_ROOT = Path(".cache/build/project-state")
 _PROJECT_STATE_NAMES = ("Binaries", "DerivedDataCache", "Intermediate", "Saved")
 _DIST_ROOT = Path("dist")
-_UAT_STOP_TIMEOUT_SECONDS = 5
+_CHILD_STOP_TIMEOUT_SECONDS = 5
+_MANAGED_CHILD_ENV = "SHAR_BUILD_RUNNER_CHILD"
 
 
 class RunFailure(RuntimeError):
@@ -328,12 +329,14 @@ def _revalidate_snapshot(
     """Return the exact saved bytes validated by one child process."""
     before = _read_real_bytes(path, f"saved {label}")
     expected_sha256 = hashlib.sha256(before).hexdigest()
+    environment, token = _managed_child_environment()
     process = subprocess.Popen(
         [*command, "--expected-sha256", expected_sha256],
         cwd=root,
+        env=environment,
         **_child_process_options(),
     )
-    returncode = _wait_managed_child(process)
+    returncode = _wait_managed_child(process, token)
     if returncode:
         raise RunFailure(f"saved {label} did not revalidate")
     after = _read_real_bytes(path, f"saved {label}")
@@ -825,6 +828,16 @@ def _child_process_options() -> dict[str, object]:
     return {"start_new_session": True}
 
 
+def _managed_child_environment(
+    environment: dict[str, str] | None = None,
+) -> tuple[dict[str, str], str]:
+    """Tag one child environment so escaped Linux descendants remain owned."""
+    values = os.environ.copy() if environment is None else environment.copy()
+    token = f"{os.getpid()}-{time.monotonic_ns()}"
+    values[_MANAGED_CHILD_ENV] = token
+    return values, token
+
+
 def _posix_process_table() -> list[tuple[int, int, str]]:
     """Return one POSIX process snapshot for child descendant cleanup."""
     result = subprocess.run(
@@ -888,7 +901,45 @@ def _signal_posix_pids(pids: set[int], signum: int) -> None:
             os.kill(pid, signum)
 
 
-def _terminate_child_tree(process: subprocess.Popen[str]) -> None:
+def _linux_tagged_child_pids(token: str) -> set[int]:
+    """Return Linux processes that still carry one managed-child token."""
+    if sys.platform != "linux":
+        return set()
+    marker = f"{_MANAGED_CHILD_ENV}={token}".encode()
+    found: set[int] = set()
+    for process_root in Path("/proc").iterdir():
+        if not process_root.name.isdigit():
+            continue
+        try:
+            environment = (process_root / "environ").read_bytes().split(b"\0")
+        except OSError:
+            environment = []
+        if marker in environment:
+            found.add(int(process_root.name))
+    return found
+
+
+def _kill_linux_tagged_children(token: str) -> None:
+    """Force-stop tagged Linux descendants that escaped ancestry cleanup."""
+    if sys.platform != "linux":
+        return
+    deadline = time.monotonic() + _CHILD_STOP_TIMEOUT_SECONDS
+    while True:
+        pids = _linux_tagged_child_pids(token)
+        if not pids:
+            return
+        _signal_posix_pids(pids, signal.SIGKILL)
+        if time.monotonic() >= deadline:
+            break
+        time.sleep(0.05)
+    remaining = _linux_tagged_child_pids(token)
+    if remaining:
+        raise RunFailure(
+            "interrupted tagged child descendants did not terminate"
+        )
+
+
+def _terminate_child_tree(process: subprocess.Popen[str], token: str) -> None:
     """Stop one interrupted runner-owned process tree before cleanup."""
     if os.name == "nt":
         subprocess.run(
@@ -901,21 +952,22 @@ def _terminate_child_tree(process: subprocess.Popen[str]) -> None:
         return
     pids = set(_posix_tree_pids(process.pid))
     _signal_posix_pids(pids, signal.SIGTERM)
-    remaining = _wait_for_posix_pids(pids, _UAT_STOP_TIMEOUT_SECONDS)
+    remaining = _wait_for_posix_pids(pids, _CHILD_STOP_TIMEOUT_SECONDS)
     if remaining:
         _signal_posix_pids(remaining, signal.SIGKILL)
-        remaining = _wait_for_posix_pids(remaining, _UAT_STOP_TIMEOUT_SECONDS)
+        remaining = _wait_for_posix_pids(remaining, _CHILD_STOP_TIMEOUT_SECONDS)
     process.wait()
     if remaining:
         raise RunFailure("interrupted child descendants did not terminate")
+    _kill_linux_tagged_children(token)
 
 
-def _wait_managed_child(process: subprocess.Popen[str]) -> int:
+def _wait_managed_child(process: subprocess.Popen[str], token: str) -> int:
     """Wait for one runner-owned child and reap its tree on interruption."""
     try:
         return process.wait()
     except (KeyboardInterrupt, OSError, _RunSignal):
-        _terminate_child_tree(process)
+        _terminate_child_tree(process, token)
         raise
 
 
@@ -935,7 +987,7 @@ def _run_uat(
     _ensure_real_directory(automation_logs, "UAT log root")
     ddc = work / "ddc"
     _ensure_real_directory(ddc, "UAT DDC root")
-    environment = os.environ.copy()
+    environment, token = _managed_child_environment()
     environment["uebp_EngineSavedFolder"] = str(automation_saved)
     environment["uebp_FinalLogFolder"] = str(automation_logs)
     environment["uebp_LogFolder"] = str(automation_logs)
@@ -950,7 +1002,7 @@ def _run_uat(
             text=True,
             **_child_process_options(),
         )
-        returncode = _wait_managed_child(process)
+        returncode = _wait_managed_child(process, token)
     if returncode:
         raise RunFailure(
             f"Unreal AutomationTool failed with {returncode}; see {log}"

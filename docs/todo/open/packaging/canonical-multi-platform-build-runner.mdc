@@ -569,10 +569,29 @@ agenda fell to 8,663 actions, the run reached 821/8,663, and retained Shipping
 objects grew from 3,203 to 4,040 while project state reached
 7,453,112,066 bytes.
 The new log also had no compiler, UBA rename, replacement-copy, or fatal-error
-marker. Sending `SIGTERM` to each tracked runner produced controlled
-interruption, reaped all managed descendants, and
-detached all four project-state links. No candidate package existed yet, so this
-progress remains non-admissible evidence for the platform-package criterion.
+marker. A sixth resume preserved the fifth run exactly: UBT's initial agenda
+fell to 7,841 actions and the run reached 576/7,841 before interruption, with
+4,621 retained Shipping objects and 8,103,899,743 bytes of project state. No
+candidate package existed yet, so this progress remains non-admissible evidence
+for the platform-package criterion.
+
+That sixth stop exposed one stricter Linux cleanup race. The runner and its
+known descendant snapshot exited and all project-state links detached, but an
+immediate process audit still captured one Shipping `clang++` process adopted
+by PID 1. It disappeared before the next audit, but returning while it was still
+active violated the runner-owned-process contract. An ancestry snapshot cannot
+close that race because a descendant may fork after the snapshot and lose its
+parent chain before the runner can observe it. Managed children now inherit a
+unique `SHAR_BUILD_RUNNER_CHILD` token. Linux cleanup retains the normal
+descendant-tree termination, then scans `/proc/*/environ` for that exact token
+and force-stops any remaining tagged process until none remain. The token is
+randomized per managed child and does not rely on executable names, paths,
+process groups, or parentage. A real synthetic probe spawned a tagged
+new-session child, let its parent exit so PID 1 adopted the child, then
+confirmed
+the
+token sweep discovered and removed that orphan. Unit regressions cover token
+copying and a tagged PID that escapes the ancestry snapshot.
 
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
