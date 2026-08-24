@@ -12,7 +12,7 @@ children: []
 
 <!-- CSpell:ignore APPL COMDAT DYLD DYLINKER LINKEDIT SYMTAB DYSYMTAB -->
 <!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD rpath -->
-<!-- CSpell:ignore taskkill Popen -->
+<!-- CSpell:ignore taskkill Popen NoUba -->
 
 # Canonical multi-platform build runner
 
@@ -551,10 +551,14 @@ and the same descendant-tree reaper as UAT, so runner cleanup cannot return
 while a revalidation descendant is still active. Unit regressions cover managed
 revalidation success, failure, drift, and interruption.
 
-The current bounded Linux Shipping build reached 249 of 11,807 native actions
-with no compiler, UBA rename, or copy-failure markers and grew retained project
-state to about 4.0 GiB before the interruption experiments; the package is still
-incomplete and remains non-admissible evidence for this criterion.
+A subsequent canonical Linux Shipping resume reused the retained native cache,
+reducing UBT's remaining agenda to 11,514 actions. The bounded run reached
+729/11,514 with every observed compile marked `[NoUba]`, no compiler, UBA
+rename, replacement-copy, or fatal-error marker, and 952 retained Shipping
+object files. Project state grew to about 4.51 GiB. Sending `SIGTERM` to the
+runner produced controlled interruption, reaped all managed descendants, and
+detached all four project-state links. No candidate package existed yet, so this
+progress remains non-admissible evidence for the platform-package criterion.
 
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
