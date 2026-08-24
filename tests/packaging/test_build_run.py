@@ -1455,8 +1455,9 @@ class UatProcessLifecycleTests(unittest.TestCase):
                 side_effect=[{103}, set()],
             ),
             mock.patch.object(_RUN.os, "kill") as kill_process,
+            mock.patch.object(_RUN, "_kill_linux_tagged_children"),
         ):
-            _RUN._terminate_child_tree(process)
+            _RUN._terminate_child_tree(process, "token")
 
         self.assertEqual(
             kill_process.call_args_list,
@@ -1467,6 +1468,54 @@ class UatProcessLifecycleTests(unittest.TestCase):
             ],
         )
         process.wait.assert_called_once_with()
+
+    def test_linux_forces_tagged_descendant_that_escaped_tree(self) -> None:
+        process = mock.Mock(pid=102)
+        process.wait.return_value = 0
+        with (
+            mock.patch.object(_RUN.os, "name", "posix"),
+            mock.patch.object(_RUN.sys, "platform", "linux"),
+            mock.patch.object(
+                _RUN,
+                "_posix_tree_pids",
+                return_value=[102],
+            ),
+            mock.patch.object(
+                _RUN,
+                "_wait_for_posix_pids",
+                return_value=set(),
+            ),
+            mock.patch.object(
+                _RUN,
+                "_linux_tagged_child_pids",
+                side_effect=[{103}, set()],
+            ),
+            mock.patch.object(_RUN.os, "kill") as kill_process,
+            mock.patch.object(_RUN.time, "sleep"),
+        ):
+            _RUN._terminate_child_tree(process, "token")
+
+        self.assertEqual(
+            kill_process.call_args_list,
+            [
+                mock.call(102, _RUN.signal.SIGTERM),
+                mock.call(103, _RUN.signal.SIGKILL),
+            ],
+        )
+        process.wait.assert_called_once_with()
+
+    def test_managed_child_environment_tags_copy(self) -> None:
+        original = {"EXAMPLE": "value"}
+        with (
+            mock.patch.object(_RUN.os, "getpid", return_value=7),
+            mock.patch.object(_RUN.time, "monotonic_ns", return_value=11),
+        ):
+            environment, token = _RUN._managed_child_environment(original)
+
+        self.assertEqual(token, "7-11")
+        self.assertEqual(environment["EXAMPLE"], "value")
+        self.assertEqual(environment[_RUN._MANAGED_CHILD_ENV], token)
+        self.assertEqual(original, {"EXAMPLE": "value"})
 
     def test_windows_interrupt_terminates_entire_process_tree(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-uat-process-") as raw:
@@ -6785,6 +6834,11 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                     return_value={},
                 ),
                 mock.patch.object(
+                    _RUN,
+                    "_managed_child_environment",
+                    return_value=({}, "token"),
+                ),
+                mock.patch.object(
                     _RUN.subprocess,
                     "Popen",
                     return_value=process,
@@ -6806,6 +6860,7 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                     ).hexdigest(),
                 ],
                 cwd=root,
+                env={},
             )
             process.wait.assert_called_once_with()
 
@@ -6825,6 +6880,11 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                     return_value={},
                 ),
                 mock.patch.object(
+                    _RUN,
+                    "_managed_child_environment",
+                    return_value=({}, "token"),
+                ),
+                mock.patch.object(
                     _RUN.subprocess,
                     "Popen",
                     return_value=process,
@@ -6834,7 +6894,7 @@ class ArchitectureRevalidationTests(unittest.TestCase):
             ):
                 _RUN._revalidate_arch(root, arch_path)
 
-            terminate.assert_called_once_with(process)
+            terminate.assert_called_once_with(process, "token")
 
     def test_rejects_failed_architecture_revalidation(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-arch-revalidate-") as raw:
