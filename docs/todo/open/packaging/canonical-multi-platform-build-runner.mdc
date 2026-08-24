@@ -555,7 +555,11 @@ A subsequent canonical Linux Shipping resume reused the retained native cache,
 reducing UBT's remaining agenda to 11,514 actions. The bounded run reached
 729/11,514 with every observed compile marked `[NoUba]`, no compiler, UBA
 rename, replacement-copy, or fatal-error marker, and 952 retained Shipping
-object files. Project state grew to about 4.51 GiB. Sending `SIGTERM` to the
+object files. Project state grew to about 4.51 GiB. A later resume preserved
+that work: UBT's initial agenda fell to 10,784 actions, the run reached
+285/10,784, and retained Shipping objects grew from 952 to 1,355 while project
+state reached 5,139,544,899 bytes. Its log likewise had no compiler, UBA rename,
+replacement-copy, or fatal-error marker. Sending `SIGTERM` to each tracked
 runner produced controlled interruption, reaped all managed descendants, and
 detached all four project-state links. No candidate package existed yet, so this
 progress remains non-admissible evidence for the platform-package criterion.
