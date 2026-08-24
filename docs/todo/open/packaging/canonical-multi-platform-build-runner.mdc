@@ -558,7 +558,10 @@ rename, replacement-copy, or fatal-error marker, and 952 retained Shipping
 object files. Project state grew to about 4.51 GiB. A later resume preserved
 that work: UBT's initial agenda fell to 10,784 actions, the run reached
 285/10,784, and retained Shipping objects grew from 952 to 1,355 while project
-state reached 5,139,544,899 bytes. Its log likewise had no compiler, UBA rename,
+state reached 5,139,544,899 bytes. A third resume preserved that work again:
+UBT's initial agenda fell to 10,498 actions, the run reached 409/10,498, and
+retained Shipping objects grew from 1,355 to 1,765 while project state reached
+5,533,484,783 bytes. The new log also had no compiler, UBA rename,
 replacement-copy, or fatal-error marker. Sending `SIGTERM` to each tracked
 runner produced controlled interruption, reaped all managed descendants, and
 detached all four project-state links. No candidate package existed yet, so this
