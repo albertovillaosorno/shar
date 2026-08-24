@@ -564,9 +564,13 @@ retained Shipping objects grew from 1,355 to 1,765 while project state reached
 5,533,484,783 bytes. A fourth resume preserved the cache again: UBT's initial
 agenda fell to 10,088 actions, the run reached 1,424/10,088, and retained
 Shipping objects grew from 1,765 to 3,203 while project state reached
-6,555,513,997 bytes. The new log also had no compiler, UBA rename,
-replacement-copy, or fatal-error marker. Sending `SIGTERM` to each tracked
-runner produced controlled interruption, reaped all managed descendants, and
+6,555,513,997 bytes. A fifth resume preserved the cache again: UBT's initial
+agenda fell to 8,663 actions, the run reached 821/8,663, and retained Shipping
+objects grew from 3,203 to 4,040 while project state reached
+7,453,112,066 bytes.
+The new log also had no compiler, UBA rename, replacement-copy, or fatal-error
+marker. Sending `SIGTERM` to each tracked runner produced controlled
+interruption, reaped all managed descendants, and
 detached all four project-state links. No candidate package existed yet, so this
 progress remains non-admissible evidence for the platform-package criterion.
 
