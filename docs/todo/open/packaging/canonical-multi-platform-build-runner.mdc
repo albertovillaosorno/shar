@@ -600,7 +600,13 @@ with that token, zero SHAR UAT, UBT, or compiler processes, and
 all four project-state
 links detached. Retained Shipping objects reached 4,648 and project state
 8,126,657,114 bytes. This closes the captured PID-1 escape race without relying
-on a delayed second process audit.
+on a delayed second process audit. A longer hardened resume then started with
+7,237 actions and reached 376/7,237 with 5,025 retained Shipping objects and
+8,484,851,155 bytes of project state. Its exact token was present on 13 live
+managed processes before `SIGTERM`; the immediate post-return audit again found
+zero tagged processes, zero SHAR managed build processes, and all four links
+detached. No candidate package existed and the UBT log had no compiler, UBA
+rename, replacement-copy, fatal-error, or build-failure marker.
 
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
