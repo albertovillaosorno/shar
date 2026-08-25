@@ -31,7 +31,7 @@ scope_applicability = "global"
 tool = "ruff"
 
 [gate.rust_nightly_clippy]
-args = ["--locked", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings"]
+args = ["--no-deps", "--locked", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings"]
 capability = "rust-clippy"
 config_files = [".jig/lang/rust/clippy.toml", "Cargo.lock", "Cargo.toml"]
 scope_applicability = "global"
