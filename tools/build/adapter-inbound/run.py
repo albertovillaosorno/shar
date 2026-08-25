@@ -66,10 +66,14 @@ from typing import TextIO
 import zipfile
 
 _ARCH_SCHEMA = "shar.build.arch.v1"
-_CHECK_SCHEMA = "shar.build.check.v1"
+_CHECK_SCHEMA = "shar.build.check.v2"
 _ARCH_PATH = Path(".cache/build/data/arch.json")
 _CHECK_PATH = Path(".cache/build/data/check.json")
 _PROJECT_PATH = Path("src/unreal/project/composition/uproject/shar.uproject")
+_CANONICAL_MAP_PATH = Path(
+    "src/unreal/project/composition/uproject/Content/SHAR/Maps/"
+    "OpenWorld/W_SHAR_OpenWorld.umap"
+)
 _WORK_ROOT = Path(".cache/build/run")
 _RUN_LOCK_PATH = Path(".cache/build/run.lock")
 _PROJECT_STATE_ROOT = Path(".cache/build/project-state")
@@ -270,22 +274,50 @@ def _check_evidence(snapshot: bytes) -> dict[str, object]:
     unreal = value.get("unreal")
     if not isinstance(unreal, dict):
         raise RunFailure("check evidence has no unreal object")
-    for key in ("project", "project_sha256", "root", "version"):
+    for key in (
+        "canonical_map",
+        "canonical_map_sha256",
+        "project",
+        "project_sha256",
+        "root",
+        "version",
+    ):
         if not isinstance(unreal.get(key), str) or not unreal.get(key):
             raise RunFailure(f"check evidence has invalid unreal.{key}")
-    project_sha256 = str(unreal["project_sha256"])
-    if (
-        len(project_sha256) != 64
-        or project_sha256 != project_sha256.casefold()
-        or any(
-            character not in "0123456789abcdef"
-            for character in project_sha256
-        )
-    ):
-        raise RunFailure("check evidence has invalid unreal.project_sha256")
+    for key in ("canonical_map_sha256", "project_sha256"):
+        sha256 = str(unreal[key])
+        if (
+            len(sha256) != 64
+            or sha256 != sha256.casefold()
+            or any(character not in "0123456789abcdef" for character in sha256)
+        ):
+            raise RunFailure(f"check evidence has invalid unreal.{key}")
     if unreal.get("version") != "5.8.1":
         raise RunFailure("check evidence must target Unreal Engine 5.8.1")
     return value
+
+
+def _require_real_canonical_map_roots(root: Path) -> None:
+    """Keep the canonical authored map under real repository directories."""
+    for path, label in (
+        (
+            root / "src/unreal/project/composition/uproject/Content",
+            "Unreal Content root",
+        ),
+        (
+            root / "src/unreal/project/composition/uproject/Content/SHAR",
+            "SHAR Content root",
+        ),
+        (
+            root / "src/unreal/project/composition/uproject/Content/SHAR/Maps",
+            "SHAR Maps root",
+        ),
+        (
+            root / _CANONICAL_MAP_PATH.parent,
+            "canonical map OpenWorld root",
+        ),
+    ):
+        _require_real_directory(path, label)
 
 
 def _project_from_evidence(
@@ -317,6 +349,14 @@ def _project_from_evidence(
         raise RunFailure(
             "Unreal project descriptor no longer matches preflight"
         )
+    _require_real_canonical_map_roots(root)
+    expected_map = root / _CANONICAL_MAP_PATH
+    if Path(str(unreal["canonical_map"])) != expected_map:
+        raise RunFailure("check evidence canonical map path is not canonical")
+    map_snapshot = _read_real_bytes(expected_map, "canonical Unreal map")
+    map_sha256 = hashlib.sha256(map_snapshot).hexdigest()
+    if map_sha256 != unreal["canonical_map_sha256"]:
+        raise RunFailure("canonical Unreal map no longer matches preflight")
     return expected_path
 
 

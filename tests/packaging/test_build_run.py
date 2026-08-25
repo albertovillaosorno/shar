@@ -42,6 +42,7 @@ from collections.abc import Iterator
 import hashlib
 import importlib.util
 import io
+import json
 import os
 from pathlib import Path
 import tempfile
@@ -6965,6 +6966,70 @@ class CandidateArtifactTests(unittest.TestCase):
             self.assertFalse((root / "dist/android-arm64").exists())
 
 
+class CheckEvidenceSchemaTests(unittest.TestCase):
+    """Require map-bound v2 preflight evidence before runner execution."""
+
+    def _snapshot(
+        self,
+        *,
+        schema: str | None = None,
+        unreal_updates: dict[str, str] | None = None,
+    ) -> bytes:
+        unreal = {
+            "canonical_map": "/repo/map.umap",
+            "canonical_map_sha256": "a" * 64,
+            "project": "/repo/shar.uproject",
+            "project_sha256": "b" * 64,
+            "root": "/engine",
+            "version": "5.8.1",
+        }
+        if unreal_updates:
+            unreal.update(unreal_updates)
+        return (
+            json.dumps(
+                {
+                    "schema": schema or _RUN._CHECK_SCHEMA,
+                    "unreal": unreal,
+                }
+            )
+            + "\n"
+        ).encode()
+
+    def test_accepts_map_bound_v2_evidence(self) -> None:
+        evidence = _RUN._check_evidence(self._snapshot())
+
+        self.assertEqual(evidence["schema"], _RUN._CHECK_SCHEMA)
+
+    def test_rejects_v1_evidence(self) -> None:
+        with self.assertRaisesRegex(
+            _RUN.RunFailure,
+            "check schema must be shar.build.check.v2",
+        ):
+            _RUN._check_evidence(
+                self._snapshot(schema="shar.build.check.v1")
+            )
+
+    def test_rejects_missing_canonical_map_path(self) -> None:
+        snapshot = self._snapshot(unreal_updates={"canonical_map": ""})
+
+        with self.assertRaisesRegex(
+            _RUN.RunFailure,
+            "invalid unreal.canonical_map",
+        ):
+            _RUN._check_evidence(snapshot)
+
+    def test_rejects_invalid_canonical_map_digest(self) -> None:
+        snapshot = self._snapshot(
+            unreal_updates={"canonical_map_sha256": "not-a-digest"}
+        )
+
+        with self.assertRaisesRegex(
+            _RUN.RunFailure,
+            "invalid unreal.canonical_map_sha256",
+        ):
+            _RUN._check_evidence(snapshot)
+
+
 class ArchitectureRevalidationTests(unittest.TestCase):
     """Require direct runner use to consume stable revalidated evidence."""
 
@@ -7213,6 +7278,59 @@ class ArchitectureRevalidationTests(unittest.TestCase):
             self.assertEqual(displaced.read_bytes(), payload)
             self.assertEqual(external.read_bytes(), payload)
 
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_project_evidence_rejects_linked_canonical_map_parent(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-run-map-parent-") as raw:
+            root = Path(raw)
+            project = root / _RUN._PROJECT_PATH
+            project.parent.mkdir(parents=True)
+            project_payload = b'{"EngineAssociation":"5.8"}\n'
+            project.write_bytes(project_payload)
+            maps = (root / _RUN._CANONICAL_MAP_PATH).parent.parent
+            maps.mkdir(parents=True)
+            outside = root / "outside-open-world"
+            outside.mkdir()
+            canonical_map = outside / _RUN._CANONICAL_MAP_PATH.name
+            map_payload = b"materialized map"
+            canonical_map.write_bytes(map_payload)
+            linked_parent = maps / "OpenWorld"
+            linked_parent.symlink_to(outside, target_is_directory=True)
+            unreal = {
+                "canonical_map": str(root / _RUN._CANONICAL_MAP_PATH),
+                "canonical_map_sha256": hashlib.sha256(map_payload).hexdigest(),
+                "project": str(project),
+                "project_sha256": hashlib.sha256(project_payload).hexdigest(),
+            }
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "canonical map OpenWorld root must be a real directory",
+            ):
+                _RUN._project_from_evidence(root, unreal)
+
+    def test_project_evidence_rejects_canonical_map_drift(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-run-map-drift-") as raw:
+            root = Path(raw)
+            project = root / _RUN._PROJECT_PATH
+            project.parent.mkdir(parents=True)
+            project_payload = b'{"EngineAssociation":"5.8"}\n'
+            project.write_bytes(project_payload)
+            canonical_map = root / _RUN._CANONICAL_MAP_PATH
+            canonical_map.parent.mkdir(parents=True)
+            canonical_map.write_bytes(b"changed map")
+            unreal = {
+                "canonical_map": str(canonical_map),
+                "canonical_map_sha256": "0" * 64,
+                "project": str(project),
+                "project_sha256": hashlib.sha256(project_payload).hexdigest(),
+            }
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "canonical Unreal map no longer matches preflight",
+            ):
+                _RUN._project_from_evidence(root, unreal)
+
     def test_project_evidence_accepts_current_canonical_descriptor(
         self,
     ) -> None:
@@ -7224,7 +7342,13 @@ class ArchitectureRevalidationTests(unittest.TestCase):
             project.parent.mkdir(parents=True)
             payload = b'{"EngineAssociation":"5.8"}\n'
             project.write_bytes(payload)
+            canonical_map = root / _RUN._CANONICAL_MAP_PATH
+            canonical_map.parent.mkdir(parents=True, exist_ok=True)
+            map_payload = b"materialized map"
+            canonical_map.write_bytes(map_payload)
             unreal = {
+                "canonical_map": str(canonical_map),
+                "canonical_map_sha256": hashlib.sha256(map_payload).hexdigest(),
                 "project": str(project),
                 "project_sha256": hashlib.sha256(payload).hexdigest(),
             }
