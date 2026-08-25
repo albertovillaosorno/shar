@@ -31,7 +31,7 @@
 """Tests for canonical build-runner project-state migration."""
 
 # CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit symtab
-# CSpell:ignore DYSYMTAB dysymtab uba
+# CSpell:ignore DYSYMTAB dysymtab uba userns lowerdir upperdir workdir
 # CSpell:ignore osabi phdr rva shlib rpath runpath
 # CSpell:ignore popen creationflags killpg taskkill DFL pthread sigmask
 
@@ -1106,6 +1106,7 @@ class BuildWorkRootTests(unittest.TestCase):
             ):
                 _RUN._build_target(
                     root,
+                    Path("/engine"),
                     Path("/uat"),
                     Path("/project/shar.uproject"),
                     _RUN._TARGETS_BY_ID["linux-x64"],
@@ -1142,6 +1143,7 @@ class BuildWorkRootTests(unittest.TestCase):
             ):
                 _RUN._build_target(
                     root,
+                    Path("/engine"),
                     Path("/uat"),
                     Path("/project/shar.uproject"),
                     target,
@@ -1181,6 +1183,7 @@ class BuildScratchPathTests(unittest.TestCase):
             ):
                 _RUN._build_target(
                     root,
+                    Path("/engine"),
                     Path("/uat"),
                     Path("/project"),
                     target,
@@ -1201,6 +1204,215 @@ class BuildScratchPathTests(unittest.TestCase):
             "stage",
             "staging scratch root",
         )
+
+
+class LinuxEditorNamespaceTests(unittest.TestCase):
+    """Keep Linux editor preparation inside an unprivileged kernel overlay."""
+
+    def _tool_side_effect(self, root: Path) -> Callable[[str], str | None]:
+        paths: dict[str, str] = {}
+        for name in ("unshare", "mount", "sh"):
+            path = root / name
+            path.write_text("#!/bin/sh\n", encoding="utf-8")
+            path.chmod(0o755)
+            paths[name] = str(path)
+        return paths.get
+
+    def test_command_uses_user_namespace_and_fresh_overlay(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-userns-editor-") as raw:
+            root = Path(raw)
+            engine = root / "engine"
+            launcher = engine / "Engine/Build/BatchFiles/Linux/Build.sh"
+            launcher.parent.mkdir(parents=True)
+            launcher.write_text("#!/bin/sh\n", encoding="utf-8")
+            launcher.chmod(0o755)
+            work = root / "work"
+            work.mkdir()
+            stale = work / "editor-engine-overlay/upper/stale"
+            stale.parent.mkdir(parents=True)
+            stale.write_text("stale", encoding="utf-8")
+
+            with mock.patch.object(
+                _RUN.shutil,
+                "which",
+                side_effect=self._tool_side_effect(root),
+            ):
+                command = _RUN._linux_editor_namespace_command(
+                    engine, Path("/project/shar.uproject"), work
+                )
+
+            self.assertEqual(command[1:4], ["-Ur", "-m", "--kill-child"])
+            self.assertIn('"$1" -t overlay overlay', command[6])
+            self.assertIn("lowerdir=", command[9])
+            self.assertIn("upperdir=", command[9])
+            self.assertIn("workdir=", command[9])
+            for argument in (
+                "-Module=shar",
+                "-UsePrecompiled",
+                "-NoUBTMakefiles",
+                "-NoEngineChanges",
+                "-NoUBA",
+                "-UBADisableRemote",
+            ):
+                self.assertIn(argument, command)
+            self.assertFalse(stale.exists())
+            self.assertTrue((work / "editor-engine-overlay/upper").is_dir())
+            self.assertTrue((work / "editor-uba").is_dir())
+
+    def test_missing_unshare_fails_before_editor_process(self) -> None:
+        with (
+            mock.patch.object(_RUN.shutil, "which", return_value=None),
+            self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "required Linux build tool is unavailable: unshare",
+            ),
+        ):
+            _RUN._linux_editor_namespace_command(
+                Path("/engine"), Path("/project"), Path("/work")
+            )
+
+    def test_success_requires_valid_editor_shared_object(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-userns-editor-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            output = (
+                root
+                / _RUN._PROJECT_STATE_ROOT
+                / "Binaries/Linux/libUnrealEditor-shar.so"
+            )
+            output.parent.mkdir(parents=True)
+            output.write_bytes(_synthetic_elf(0x003E, image_type=3))
+            process = mock.Mock()
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_linux_editor_namespace_command",
+                    return_value=["unshare", "probe"],
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_managed_child_environment",
+                    return_value=({}, "token"),
+                ),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=process,
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_wait_managed_child",
+                    return_value=0,
+                ),
+            ):
+                _RUN._prepare_linux_editor_module(
+                    root, Path("/engine"), Path("/project"), work
+                )
+
+            output.write_bytes(b"not an ELF")
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_linux_editor_namespace_command",
+                    return_value=["unshare", "probe"],
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_managed_child_environment",
+                    return_value=({}, "token"),
+                ),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=process,
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_wait_managed_child",
+                    return_value=0,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR editor module is not a valid ELF",
+                ),
+            ):
+                _RUN._prepare_linux_editor_module(
+                    root, Path("/engine"), Path("/project"), work
+                )
+
+    def test_editor_process_failure_is_actionable(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-userns-editor-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_linux_editor_namespace_command",
+                    return_value=["unshare", "probe"],
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_managed_child_environment",
+                    return_value=({}, "token"),
+                ),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=mock.Mock(),
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_wait_managed_child",
+                    return_value=7,
+                ),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux editor module build failed with 7",
+                ),
+            ):
+                _RUN._prepare_linux_editor_module(
+                    root, Path("/engine"), Path("/project"), work
+                )
+
+    def test_linux_build_prepares_editor_before_uat(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-editor-order-") as raw:
+            root = Path(raw)
+            target = _RUN._TARGETS_BY_ID["linux-x64"]
+            order: list[str] = []
+
+            def prepare(*_args: object, **_kwargs: object) -> None:
+                order.append("editor")
+
+            def run_uat(*_args: object, **_kwargs: object) -> None:
+                order.append("uat")
+
+            with (
+                mock.patch.object(_RUN, "_verify_sdk"),
+                mock.patch.object(
+                    _RUN,
+                    "_prepare_linux_editor_module",
+                    side_effect=prepare,
+                ),
+                mock.patch.object(_RUN, "_run_uat", side_effect=run_uat),
+                mock.patch.object(
+                    _RUN,
+                    "_validate_candidate_tree",
+                    side_effect=_RUN.RunFailure("stop after UAT"),
+                ),
+                self.assertRaisesRegex(_RUN.RunFailure, "stop after UAT"),
+            ):
+                _RUN._build_target(
+                    root,
+                    Path("/engine"),
+                    Path("/uat"),
+                    Path("/project/shar.uproject"),
+                    target,
+                    validate_only=False,
+                )
+
+            self.assertEqual(order, ["editor", "uat"])
 
 
 class UatWorkPathTests(unittest.TestCase):
@@ -2912,6 +3124,7 @@ class CandidateTreeTests(unittest.TestCase):
             target = _RUN._TARGETS_BY_ID["linux-x64"]
             with (
                 mock.patch.object(_RUN, "_verify_sdk"),
+                mock.patch.object(_RUN, "_prepare_linux_editor_module"),
                 mock.patch.object(_RUN, "_run_uat"),
                 mock.patch.object(
                     _RUN,
@@ -2926,6 +3139,7 @@ class CandidateTreeTests(unittest.TestCase):
             ):
                 _RUN._build_target(
                     root,
+                    Path("/engine"),
                     Path("/uat"),
                     Path("/project/shar.uproject"),
                     target,
@@ -6889,6 +7103,7 @@ class CandidateArtifactTests(unittest.TestCase):
 
             with (
                 mock.patch.object(_RUN, "_verify_sdk"),
+                mock.patch.object(_RUN, "_prepare_linux_editor_module"),
                 mock.patch.object(
                     _RUN,
                     "_run_uat",
@@ -6906,6 +7121,7 @@ class CandidateArtifactTests(unittest.TestCase):
             ):
                 _RUN._build_target(
                     root,
+                    Path("/engine"),
                     Path("/uat"),
                     Path("/project/shar.uproject"),
                     target,
@@ -6956,6 +7172,7 @@ class CandidateArtifactTests(unittest.TestCase):
             ):
                 _RUN._build_target(
                     root,
+                    Path("/engine"),
                     Path("/uat"),
                     Path("/project/shar.uproject"),
                     target,

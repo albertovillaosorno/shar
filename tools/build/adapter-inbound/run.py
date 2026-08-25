@@ -36,7 +36,7 @@
 # CSpell:ignore APPL BNDL FMWK PHDR RVA dylinker linkedit symtab
 # CSpell:ignore DYSYMTAB dysymtab NBLCK msvcrt
 # CSpell:ignore phdr creationflags killpg taskkill axo ppid
-# CSpell:ignore pthread sigmask SETMASK
+# CSpell:ignore pthread sigmask SETMASK uba lowerdir upperdir workdir rprivate
 
 from __future__ import annotations
 
@@ -45,6 +45,7 @@ from collections.abc import Callable
 from collections.abc import Sequence
 from contextlib import suppress
 import hashlib
+from io import BytesIO
 from itertools import pairwise
 import json
 import os
@@ -1047,6 +1048,134 @@ def _wait_managed_child(process: subprocess.Popen[str], token: str) -> int:
         raise
     _kill_linux_tagged_children(token)
     return returncode
+
+
+def _linux_namespace_tool(name: str, label: str) -> Path:
+    """Resolve one real executable required by the Linux editor namespace."""
+    value = shutil.which(name)
+    if value is None:
+        raise RunFailure(f"required Linux build tool is unavailable: {name}")
+    path = Path(value).resolve()
+    _require_real_file(path, label)
+    if not os.access(path, os.X_OK):
+        raise RunFailure(f"{label} is not executable: {path}")
+    return path
+
+
+def _linux_editor_namespace_command(
+    engine_root: Path,
+    project: Path,
+    work: Path,
+) -> list[str]:
+    """Return one unprivileged private kernel-overlay editor command."""
+    if os.name == "nt" or sys.platform != "linux":
+        raise RunFailure("Linux editor module preparation requires Linux")
+    unshare = _linux_namespace_tool("unshare", "Linux namespace executable")
+    mount = _linux_namespace_tool("mount", "Linux mount executable")
+    shell = _linux_namespace_tool("sh", "POSIX shell executable")
+    _require_real_directory(engine_root, "Unreal Engine root")
+    launcher = engine_root / "Engine/Build/BatchFiles/Linux/Build.sh"
+    _require_real_descendant_parents(
+        engine_root,
+        launcher,
+        "Linux Unreal build launcher",
+    )
+    _require_real_file(launcher, "Linux Unreal build launcher")
+    if not os.access(launcher, os.X_OK):
+        raise RunFailure(
+            f"Linux Unreal build launcher is not executable: {launcher}"
+        )
+
+    overlay_root = work / "editor-engine-overlay"
+    _reset_real_directory(overlay_root, "editor engine overlay root")
+    upper = overlay_root / "upper"
+    upper.mkdir()
+    overlay_work = overlay_root / "work"
+    overlay_work.mkdir()
+    merged = overlay_root / "merged"
+    merged.mkdir()
+    uba_root = work / "editor-uba"
+    _reset_real_directory(uba_root, "Linux editor UBA root")
+
+    options = (
+        f"lowerdir={engine_root},upperdir={upper},workdir={overlay_work}"
+    )
+    projected_launcher = merged / launcher.relative_to(engine_root)
+    namespace_script = (
+        'set -eu; "$1" --make-rprivate /; '
+        '"$1" -t overlay overlay -o "$2" "$3"; '
+        'shift 3; exec "$@"'
+    )
+    return [
+        str(unshare),
+        "-Ur",
+        "-m",
+        "--kill-child",
+        str(shell),
+        "-c",
+        namespace_script,
+        "sh",
+        str(mount),
+        options,
+        str(merged),
+        str(projected_launcher),
+        "sharEditor",
+        "Linux",
+        "Development",
+        str(project),
+        "-Module=shar",
+        "-UsePrecompiled",
+        "-NoUBTMakefiles",
+        "-NoEngineChanges",
+        "-NoUBA",
+        "-UBADisableRemote",
+        f"-UBARootDir={uba_root}",
+    ]
+
+
+def _prepare_linux_editor_module(
+    root: Path,
+    engine_root: Path,
+    project: Path,
+    work: Path,
+) -> None:
+    """Build one editor-loadable SHAR module without engine-tree writes."""
+    command = _linux_editor_namespace_command(engine_root, project, work)
+    log = work / "editor-module.log"
+    environment, token = _managed_child_environment()
+    with _open_uat_log(log) as handle:
+        process = subprocess.Popen(
+            command,
+            cwd=root,
+            env=environment,
+            stdout=handle,
+            stderr=subprocess.STDOUT,
+            text=True,
+            **_child_process_options(),
+        )
+        returncode = _wait_managed_child(process, token)
+    if returncode:
+        raise RunFailure(
+            f"Linux editor module build failed with {returncode}; see {log}"
+        )
+
+    output = (
+        root / _PROJECT_STATE_ROOT / "Binaries/Linux/libUnrealEditor-shar.so"
+    )
+    payload, identity = _capture_real_bytes(output, "Linux SHAR editor module")
+    stream = BytesIO(payload)
+    prefix = stream.read(4)
+    valid = prefix == b"\x7fELF" and _matches_elf(
+        stream,
+        prefix,
+        "amd64",
+        identity[5],
+        require_shared_object=True,
+    )
+    if not valid:
+        raise RunFailure(
+            f"Linux SHAR editor module is not a valid ELF: {output}"
+        )
 
 
 def _run_uat(
@@ -4139,6 +4268,7 @@ def _publish(
 
 def _build_target(
     root: Path,
+    engine_root: Path,
     uat: Path,
     project: Path,
     target: Target,
@@ -4161,6 +4291,8 @@ def _build_target(
     _reset_real_directory(candidate, "candidate scratch root")
     _reset_real_directory(staging, "staging scratch root")
     log = work / "build.log"
+    if target.system == "linux":
+        _prepare_linux_editor_module(root, engine_root, project, work)
     arguments = _build_arguments(project, target, candidate, staging)
     _run_uat(root, uat, arguments, log)
     candidate_tree = _validate_candidate_tree(candidate)
@@ -4217,6 +4349,7 @@ def _build_selected_targets(
         for target in targets:
             _build_target(
                 root,
+                engine_root,
                 uat,
                 project,
                 target,

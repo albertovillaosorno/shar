@@ -380,7 +380,9 @@ logs. If you only want to play, use the lightweight release flow above.
 1. Place a lawful source installation directly under `game/` with no extra
    directory layer.
 1. Use the repository-pinned Python/toolchain versions and supported Unreal
-   Engine version documented by the build tooling.
+   Engine version documented by the build tooling. Linux source-engine builds
+   also require unprivileged user/mount namespaces plus a kernel overlay
+   filesystem.
 1. Run `python tools/build/adapter-inbound/dependencies.py`.
 1. Ensure the canonical Git LFS open-world map is materialized rather than a
    pointer file.

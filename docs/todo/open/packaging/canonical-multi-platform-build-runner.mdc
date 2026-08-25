@@ -12,7 +12,7 @@ children: []
 
 <!-- CSpell:ignore APPL COMDAT DYLD DYLINKER LINKEDIT SYMTAB DYSYMTAB -->
 <!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD rpath -->
-<!-- CSpell:ignore taskkill Popen NoUba rootdirectory -->
+<!-- CSpell:ignore taskkill Popen NoUba rootdirectory overlayfs libc unshare -->
 
 # Canonical multi-platform build runner
 
@@ -950,11 +950,52 @@ of these switches is admitted for another external-engine probe. A future
 module-preload design must first provide a repository-owned complete writable
 engine/output projection rather than relying on nominal dry-run flags.
 
-The precompiled path remains worth a future clean proof: UE marks editor targets
-modular by default, and `UEBuildBinary.Build()` skips binaries already marked
-precompiled. That proof must force a fresh makefile without allowing makefile,
-history, metadata, or dependency-cache generation to write into the external
-source engine. No currently reviewed switch establishes that full boundary.
+The precompiled path now has a clean kernel-overlay proof, but not yet an
+admitted canonical implementation. A private Linux overlayfs mount used the
+external UE 5.8.1 tree only as its lower layer and kept its writable upper/work
+state below repository `.cache`; a sentinel write appeared only in the upper
+layer and never in the external engine.
+
+With that boundary and `-NoUBTMakefiles`, a fresh `sharEditor Linux Development
+-Module=shar -UsePrecompiled` graph contained exactly four actions: one shared
+PCH compile, `shar.cpp`, generated module code, and the final module link. A
+second bounded proof completed successfully in 143.20 seconds and produced
+`libUnrealEditor-shar.so` at 19,904 bytes, its 313,864-byte debug companion, and
+a 16,338-byte symbol file in retained project state. UE 5.8 still selects its
+UBA executor with `-NoUBA`, but each action was marked `[NoUba]`; redirecting
+`-UBARootDir` below repository cache left the pre-existing user UBA directory
+with zero session-new files.
+
+The available unprivileged `fuse-overlayfs` implementation is not equivalent
+for this build. Its basic overlay read/write smoke test succeeded, but the exact
+UnrealEd shared-PCH response-file compile failed through FUSE with invalid
+bundled Clang/libc++ type-resolution errors. The same response file compiled
+successfully against the direct external engine, and single-threaded FUSE still
+failed, so neither the response file nor FUSE worker concurrency explains the
+problem. The attempted FUSE runner integration was therefore reverted rather
+than admitted.
+
+The privilege boundary is now resolved without FUSE or sudo. On this host,
+`unshare -Ur -m` creates a private user/mount namespace with mount capability
+inside that namespace. A kernel overlayfs sentinel and the exact UnrealEd
+shared-PCH response-file compile both succeeded there while the lower engine
+remained unchanged. A complete fresh editor-module probe then regenerated the
+four-action graph and succeeded in 155.80 seconds with zero managed-token
+survivors, detached project-state links, a free runner lock, and zero new files
+in the pre-existing user UBA directory.
+
+The canonical Linux runner now uses that user-namespace kernel-overlay
+boundary before `BuildCookRun -SkipBuildEditor`: `unshare`, `mount`, and a POSIX
+shell are resolved as real executables; fresh overlay upper/work and UBA roots
+live below
+target work; `-NoUBTMakefiles` prevents stale graph reuse; `-UsePrecompiled`
+limits the build to the project editor module; remote UBA is disabled; and
+the resulting `libUnrealEditor-shar.so` must revalidate as a stable x86-64 ELF
+shared object. A direct invocation of the tracked helper repeated all four
+actions in
+142.97 seconds of UBT execution. Hosts that disable unprivileged user namespaces
+or kernel overlayfs fail closed before the external engine can be used as a
+writable build root.
 
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and
