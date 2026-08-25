@@ -1504,6 +1504,25 @@ class UatProcessLifecycleTests(unittest.TestCase):
         )
         process.wait.assert_called_once_with()
 
+    def test_linux_success_reaps_tagged_descendant_after_wait(self) -> None:
+        process = mock.Mock()
+        process.wait.return_value = 0
+        with (
+            mock.patch.object(_RUN.sys, "platform", "linux"),
+            mock.patch.object(
+                _RUN,
+                "_linux_tagged_child_pids",
+                side_effect=[{103}, set()],
+            ),
+            mock.patch.object(_RUN.os, "kill") as kill_process,
+            mock.patch.object(_RUN.time, "sleep"),
+        ):
+            returncode = _RUN._wait_managed_child(process, "token")
+
+        self.assertEqual(returncode, 0)
+        kill_process.assert_called_once_with(103, _RUN.signal.SIGKILL)
+        process.wait.assert_called_once_with()
+
     def test_managed_child_environment_tags_copy(self) -> None:
         original = {"EXAMPLE": "value"}
         with (

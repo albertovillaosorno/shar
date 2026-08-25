@@ -921,7 +921,7 @@ def _linux_tagged_child_pids(token: str) -> set[int]:
 
 def _kill_linux_tagged_children(token: str) -> None:
     """Force-stop tagged Linux descendants that escaped ancestry cleanup."""
-    if sys.platform != "linux":
+    if os.name == "nt" or sys.platform != "linux":
         return
     deadline = time.monotonic() + _CHILD_STOP_TIMEOUT_SECONDS
     while True:
@@ -934,9 +934,7 @@ def _kill_linux_tagged_children(token: str) -> None:
         time.sleep(0.05)
     remaining = _linux_tagged_child_pids(token)
     if remaining:
-        raise RunFailure(
-            "interrupted tagged child descendants did not terminate"
-        )
+        raise RunFailure("tagged child descendants did not terminate")
 
 
 def _terminate_child_tree(process: subprocess.Popen[str], token: str) -> None:
@@ -963,12 +961,14 @@ def _terminate_child_tree(process: subprocess.Popen[str], token: str) -> None:
 
 
 def _wait_managed_child(process: subprocess.Popen[str], token: str) -> int:
-    """Wait for one runner-owned child and reap its tree on interruption."""
+    """Wait for one runner-owned child and reap every tagged descendant."""
     try:
-        return process.wait()
+        returncode = process.wait()
     except (KeyboardInterrupt, OSError, _RunSignal):
         _terminate_child_tree(process, token)
         raise
+    _kill_linux_tagged_children(token)
+    return returncode
 
 
 def _run_uat(
