@@ -904,10 +904,16 @@ source-engine agenda to 23,798 actions, so that broad experiment was stopped
 cleanly after 204 seconds and reverted.
 
 UE 5.8.1 exposes `BuildTarget -NoTools` and UBT `-Module=` through
-`OnlyModuleNames`. A guarded `sharEditor` module-only probe reduced the
-agenda to
-4,972 actions, while adding `-UsePrecompiled` still scheduled 4,915 actions.
-After retained probe progress, the canonical runner still found 4,829 actions,
+`OnlyModuleNames`. A guarded `sharEditor` module-only probe reduced the agenda
+to 4,972 actions. A following `-UsePrecompiled` probe reported 4,915 actions,
+but that second count is not clean evidence that a fresh precompiled graph was
+constructed.
+
+UBT makefile reuse compares `TargetDescriptor.AdditionalArguments`, while
+`-UsePrecompiled` is a global `BuildConfiguration` flag and is absent from that
+comparison. The second probe could therefore reuse the preceding non-precompiled
+makefile; its smaller count is also consistent with actions completed by the
+first probe. A later canonical non-precompiled run still found 4,829 actions,
 starting with CoreUObject compilation.
 
 Those dependency actions write engine intermediates and binaries beneath the
@@ -919,11 +925,11 @@ module-preload integration was reverted rather than accepting external-engine
 mutation as part of the canonical packaging path.
 
 Linux publication is now blocked on providing the editor-loadable `shar` module
-without writing build products into the external engine installation. UE 5.8.1
-hardcodes engine-module intermediate roots below `Unreal.EngineDirectory`, and
-no supported command-line redirection was found in the reviewed UBT path.
-Further editor-module UBT probes are deferred until a repository-local or
-otherwise explicitly admitted build boundary is available.
+without writing build products into the external engine installation. When UE
+source-compiles engine modules, their intermediate roots resolve below
+`Unreal.EngineDirectory`; no supported direct output redirection was found in
+the reviewed UBT path. Further editor-module UBT probes are deferred until a
+repository-local or otherwise explicitly admitted build boundary is available.
 
 UE 5.8.1 source exposes `-rootdirectory=`, but this engine is a source build:
 `Engine/Build/InstalledBuild.txt` is absent, so `WritableEngineDirectory` is the
@@ -943,6 +949,12 @@ file-hash, source-metadata, and C++ dependency caches afterward. Therefore none
 of these switches is admitted for another external-engine probe. A future
 module-preload design must first provide a repository-owned complete writable
 engine/output projection rather than relying on nominal dry-run flags.
+
+The precompiled path remains worth a future clean proof: UE marks editor targets
+modular by default, and `UEBuildBinary.Build()` skips binaries already marked
+precompiled. That proof must force a fresh makefile without allowing makefile,
+history, metadata, or dependency-cache generation to write into the external
+source engine. No currently reviewed switch establishes that full boundary.
 
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and
