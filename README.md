@@ -382,6 +382,8 @@ logs. If you only want to play, use the lightweight release flow above.
 1. Use the repository-pinned Python/toolchain versions and supported Unreal
    Engine version documented by the build tooling.
 1. Run `python tools/build/adapter-inbound/dependencies.py`.
+1. Ensure the canonical Git LFS open-world map is materialized rather than a
+   pointer file.
 1. Run `python tools/build/adapter-inbound/check.py`.
 1. Run `python tools/build/adapter-inbound/arch.py`.
 1. Run `python tools/build/adapter-inbound/run.py`.

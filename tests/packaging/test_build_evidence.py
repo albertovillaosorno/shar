@@ -30,6 +30,8 @@
 
 """Tests for source-bound build validator evidence."""
 
+# CSpell:ignore oid
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -1371,6 +1373,101 @@ class CanonicalProjectBoundaryTests(unittest.TestCase):
                 _CHECK._check_project(root)
 
 
+class CanonicalMapBoundaryTests(unittest.TestCase):
+    """Require the authored LFS map payload before expensive Unreal work."""
+
+    def _map_path(self, root: Path) -> Path:
+        path = root / _CHECK._CANONICAL_MAP_PATH
+        path.parent.mkdir(parents=True)
+        return path
+
+    @unittest.skipIf(os.name == "nt", "symlink setup is Unix-focused")
+    def test_rejects_linked_open_world_parent(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-map-parent-link-") as raw:
+            root = Path(raw)
+            maps = (root / _CHECK._CANONICAL_MAP_PATH).parent.parent
+            maps.mkdir(parents=True)
+            outside = root / "outside-open-world"
+            outside.mkdir()
+            target = outside / _CHECK._CANONICAL_MAP_PATH.name
+            target.write_bytes(_CHECK._UNREAL_PACKAGE_TAG + b"fixture")
+            (maps / "OpenWorld").symlink_to(outside, target_is_directory=True)
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "canonical map OpenWorld root must be a real directory",
+            ):
+                _CHECK._check_canonical_map(root)
+
+    def test_rejects_junction_open_world_parent(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="shar-map-parent-junction-"
+        ) as raw:
+            root = Path(raw)
+            path = self._map_path(root)
+            path.write_bytes(_CHECK._UNREAL_PACKAGE_TAG + b"fixture")
+            open_world = path.parent
+            real_isjunction = _CHECK.os.path.isjunction
+
+            def report_open_world_as_junction(candidate: object) -> bool:
+                return (
+                    Path(candidate) == open_world
+                    or real_isjunction(candidate)
+                )
+
+            with (
+                mock.patch.object(
+                    _CHECK.os.path,
+                    "isjunction",
+                    side_effect=report_open_world_as_junction,
+                ),
+                self.assertRaisesRegex(
+                    _CHECK.CheckFailure,
+                    "canonical map OpenWorld root must be a real directory",
+                ),
+            ):
+                _CHECK._check_canonical_map(root)
+
+    def test_rejects_non_materialized_lfs_pointer(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-map-lfs-") as raw:
+            root = Path(raw)
+            path = self._map_path(root)
+            path.write_bytes(
+                b"version https://git-lfs.github.com/spec/v1\n"
+                b"oid sha256:" + (b"a" * 64) + b"\nsize 12878\n"
+            )
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "Git LFS pointer that has not been materialized",
+            ):
+                _CHECK._check_canonical_map(root)
+
+    def test_rejects_non_unreal_payload(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-map-invalid-") as raw:
+            root = Path(raw)
+            path = self._map_path(root)
+            path.write_bytes(b"not-an-unreal-package")
+
+            with self.assertRaisesRegex(
+                _CHECK.CheckFailure,
+                "is not an Unreal package",
+            ):
+                _CHECK._check_canonical_map(root)
+
+    def test_accepts_materialized_unreal_package(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-map-package-") as raw:
+            root = Path(raw)
+            path = self._map_path(root)
+            payload = _CHECK._UNREAL_PACKAGE_TAG + b"fixture"
+            path.write_bytes(payload)
+
+            actual_path, snapshot = _CHECK._check_canonical_map(root)
+
+            self.assertEqual(actual_path, path)
+            self.assertEqual(snapshot, payload)
+
+
 class PreflightEvidenceSnapshotTests(unittest.TestCase):
     """Bind preflight to one stable dependency-evidence snapshot."""
 
@@ -1417,6 +1514,13 @@ class PreflightEvidenceSnapshotTests(unittest.TestCase):
                     _CHECK,
                     "_check_project",
                     return_value=_CHECK.ProjectEvidence(project, b"{}"),
+                ),
+                mock.patch.object(
+                    _CHECK,
+                    "_check_canonical_map",
+                    return_value=_CHECK.CanonicalMapEvidence(
+                    root / _CHECK._CANONICAL_MAP_PATH, b"map"
+                ),
                 ),
                 mock.patch.object(
                     _CHECK,
@@ -1490,6 +1594,13 @@ class PreflightEvidenceSnapshotTests(unittest.TestCase):
                 ),
                 mock.patch.object(
                     _CHECK,
+                    "_check_canonical_map",
+                    return_value=_CHECK.CanonicalMapEvidence(
+                        root / _CHECK._CANONICAL_MAP_PATH, b"map"
+                    ),
+                ),
+                mock.patch.object(
+                    _CHECK,
                     "_resolve_validator",
                     return_value=validator,
                 ),
@@ -1551,6 +1662,13 @@ class PreflightEvidenceSnapshotTests(unittest.TestCase):
                 _CHECK,
                 "_check_project",
                 return_value=_CHECK.ProjectEvidence(project, b"project"),
+            ),
+            mock.patch.object(
+                _CHECK,
+                "_check_canonical_map",
+                return_value=_CHECK.CanonicalMapEvidence(
+                        root / _CHECK._CANONICAL_MAP_PATH, b"map"
+                    ),
             ),
             mock.patch.object(
                 _CHECK,
@@ -2093,6 +2211,13 @@ class SourceSelectionTests(unittest.TestCase):
             ),
             mock.patch.object(
                 _CHECK,
+                "_check_canonical_map",
+                return_value=_CHECK.CanonicalMapEvidence(
+                    root / _CHECK._CANONICAL_MAP_PATH, b"{}"
+                ),
+            ),
+            mock.patch.object(
+                _CHECK,
                 "_dependency_evidence",
                 return_value=(dependency_path, b"{}", {}),
             ),
@@ -2140,6 +2265,15 @@ class SourceSelectionTests(unittest.TestCase):
         )
         self.assertEqual(
             evidence["unreal"]["project_sha256"],
+            hashlib.sha256(b"{}").hexdigest(),
+        )
+        self.assertEqual(evidence["schema"], _CHECK._SCHEMA)
+        self.assertEqual(
+            evidence["unreal"]["canonical_map"],
+            str((root / _CHECK._CANONICAL_MAP_PATH).resolve()),
+        )
+        self.assertEqual(
+            evidence["unreal"]["canonical_map_sha256"],
             hashlib.sha256(b"{}").hexdigest(),
         )
 

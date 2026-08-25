@@ -48,7 +48,7 @@ platform prerequisites.
 ## Evidence
 
 `tools/build/adapter-inbound/run.py` now validates exact
-`shar.build.check.v1` and
+`shar.build.check.v2` and
 `shar.build.arch.v1` decisions, reruns `check.py --revalidate`, and rejects
 duplicate
 or drifted target records, and verifies each selected platform through Turnkey
@@ -512,11 +512,11 @@ link. UE 5.8.1 exposes the supported UBT `-NoUBA` switch through BuildCookRun's
 `-UbtArgs` forwarding path. Linux build arguments now pass
 `-UbtArgs=-NoUBA` so this repository-owned linked cache layout uses native
 compiler filesystem behavior. Linux also keeps `-SkipBuildEditor` so
-BuildCookRun does not schedule a complete source-engine editor rebuild; current
-Cook evidence shows the project `shar` editor module must instead be prepared
-separately. A bounded UE 5.8.1 probe reduced the native agenda to `shar` plus
-`UnrealPak`; other target families retain their existing build controls. The
-runner also takes a
+BuildCookRun does not schedule a complete source-engine editor rebuild. Current
+Cook evidence still requires an editor-loadable project `shar` module, but a
+safe repository-local way to prepare that module has not been proven. A bounded
+UE 5.8.1 probe reduced the Shipping agenda to `shar` plus `UnrealPak`; other
+target families retain their existing build controls. The runner also takes a
 repository-local advisory lock before revalidation or project-state migration,
 so a concurrent invocation cannot reset target scratch or detach links beneath
 an active build. The lock is held by the open descriptor rather than file
@@ -901,9 +901,52 @@ With that exact map payload present, UBT reported the Shipping target up to date
 but Cook failed because the editor could not load the project game module
 `shar`. Removing `-SkipBuildEditor` did request `sharEditor`, but expanded the
 source-engine agenda to 23,798 actions, so that broad experiment was stopped
-cleanly after 204 seconds and reverted. UE 5.8.1 exposes the supported UBT
-`-Module=` selector through `OnlyModuleNames`; the next integration step is to
-prove a narrow `shar` editor-module preload before the skipped-editor Cook path.
+cleanly after 204 seconds and reverted.
+
+UE 5.8.1 exposes `BuildTarget -NoTools` and UBT `-Module=` through
+`OnlyModuleNames`. A guarded `sharEditor` module-only probe reduced the
+agenda to
+4,972 actions, while adding `-UsePrecompiled` still scheduled 4,915 actions.
+After retained probe progress, the canonical runner still found 4,829 actions,
+starting with CoreUObject compilation.
+
+Those dependency actions write engine intermediates and binaries beneath the
+external Unreal installation rather than the repository project-state cache;
+the repository object count remained 11,911 while they ran. The canonical probe
+was therefore interrupted at exit 143, with zero exact-token survivors, all four
+uproject links detached, and the runner lock available. The uncommitted
+module-preload integration was reverted rather than accepting external-engine
+mutation as part of the canonical packaging path.
+
+Linux publication is now blocked on providing the editor-loadable `shar` module
+without writing build products into the external engine installation. UE 5.8.1
+hardcodes engine-module intermediate roots below `Unreal.EngineDirectory`, and
+no supported command-line redirection was found in the reviewed UBT path.
+Further editor-module UBT probes are deferred until a repository-local or
+otherwise explicitly admitted build boundary is available.
+
+Build preflight now fails earlier on the other observed Cook blocker. Saved
+`shar.build.check.v2` evidence binds the canonical authored map path and
+SHA-256,
+rejects a Git LFS pointer that has not been materialized, and requires the
+Unreal package tag
+before any native packaging work can consume that evidence. This turns the
+previous post-link `PACKAGE_FILE_TAG` Cook failure into a read-only preflight
+failure.
+
+The current checkout still contains the 130-byte LFS pointer, so a fresh
+canonical preflight correctly fails and the existing v1 saved success evidence
+is removed by the established fail-closed output policy. Regenerating
+`.cache/build/data/check.json` now requires materializing the declared
+12,878-byte
+map payload first. No further editor UBT work is admitted while that content and
+the external-engine editor-module boundary remain unresolved.
+
+The pointer declares SHA-256
+`88ef685f5d405bc26c217bd03157fe4aa87ccc3ea406fee05d33da03159ca038`.
+This checkout has neither a `git-lfs` executable nor that object under
+`.git/lfs/objects`, so repository-local materialization is not currently
+available without an external content transfer.
 
 The Windows interruption path now applies the same five-second cleanup bound to
 both `taskkill` and the post-termination child wait instead of allowing either

@@ -49,7 +49,7 @@ import subprocess
 import sys
 from typing import NamedTuple
 
-_SCHEMA = "shar.build.check.v1"
+_SCHEMA = "shar.build.check.v2"
 _PYTHON_VERSION = (3, 14, 6)
 _UNREAL_VERSION = (5, 8, 1)
 _UNREAL_ASSOCIATION = "5.8"
@@ -77,6 +77,12 @@ _DEEP_VALIDATOR_SOURCE_INPUTS = (
     Path("src/foundation/sha256"),
 )
 _PROJECT_PATH = Path("src/unreal/project/composition/uproject/shar.uproject")
+_CANONICAL_MAP_PATH = Path(
+    "src/unreal/project/composition/uproject/Content/SHAR/Maps/"
+    "OpenWorld/W_SHAR_OpenWorld.umap"
+)
+_UNREAL_PACKAGE_TAG = bytes.fromhex("c1832a9e")
+_LFS_POINTER_PREFIX = b"version https://git-lfs.github.com/spec/v1\n"
 
 
 class CheckFailure(RuntimeError):
@@ -92,6 +98,13 @@ class EngineEvidence(NamedTuple):
 
 class ProjectEvidence(NamedTuple):
     """Validated canonical Unreal project descriptor evidence."""
+
+    path: Path
+    snapshot: bytes
+
+
+class CanonicalMapEvidence(NamedTuple):
+    """Validated canonical authored Unreal map evidence."""
 
     path: Path
     snapshot: bytes
@@ -514,6 +527,32 @@ def _require_real_project_roots(root: Path) -> None:
     )
 
 
+def _require_real_canonical_map_roots(root: Path) -> None:
+    """Keep the canonical map under real repository directories."""
+    _require_real_project_roots(root)
+    _require_real_directories(
+        (
+            (
+                root / "src/unreal/project/composition/uproject/Content",
+                "Unreal Content root",
+            ),
+            (
+                root / "src/unreal/project/composition/uproject/Content/SHAR",
+                "SHAR Content root",
+            ),
+            (
+                root
+                / "src/unreal/project/composition/uproject/Content/SHAR/Maps",
+                "SHAR Maps root",
+            ),
+            (
+                root / _CANONICAL_MAP_PATH.parent,
+                "canonical map OpenWorld root",
+            ),
+        )
+    )
+
+
 def _dependency_evidence(
     root: Path,
 ) -> tuple[Path, bytes, dict[str, object]]:
@@ -787,6 +826,23 @@ def _unique_json_object(
     return result
 
 
+def _check_canonical_map(root: Path) -> CanonicalMapEvidence:
+    """Require one materialized canonical authored Unreal map package."""
+    _require_real_canonical_map_roots(root)
+    path = root / _CANONICAL_MAP_PATH
+    snapshot = _read_real_evidence_bytes(path, "canonical Unreal map")
+    if snapshot.startswith(_LFS_POINTER_PREFIX):
+        raise CheckFailure(
+            "canonical Unreal map is a Git LFS pointer that has not been "
+            f"materialized: {path}"
+        )
+    if not snapshot.startswith(_UNREAL_PACKAGE_TAG):
+        raise CheckFailure(
+            f"canonical Unreal map is not an Unreal package: {path}"
+        )
+    return CanonicalMapEvidence(path, snapshot)
+
+
 def _check_project(root: Path) -> ProjectEvidence:
     """Require the tracked Unreal project association used by the build."""
     _require_real_project_roots(root)
@@ -1057,6 +1113,7 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         "canonical game manifest",
     )
     project = _check_project(root)
+    canonical_map = _check_canonical_map(root)
     dependencies_path, dependencies_snapshot, dependencies = (
         _dependency_evidence(root)
     )
@@ -1065,13 +1122,13 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         args.manifest_validator,
         dependencies,
     )
-    manifest_result = _check_manifest(validator, game, manifest)
+    source_validation = {"manifest": _check_manifest(validator, game, manifest)}
     deep_validator = _resolve_deep_source_validator(
         root,
         args.deep_source_validator,
         dependencies,
     )
-    deep_result = _check_deep_source(deep_validator, game)
+    source_validation["deep"] = _check_deep_source(deep_validator, game)
     engine = _check_engine(args.engine_root)
     host = _host_evidence(dependencies)
     _require_unchanged_evidence(
@@ -1089,6 +1146,11 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
         "Unreal project descriptor",
         project.snapshot,
     )
+    _require_unchanged_evidence(
+        canonical_map.path,
+        "canonical Unreal map",
+        canonical_map.snapshot,
+    )
     return {
         "dependencies": {
             "path": _normalized(dependencies_path),
@@ -1099,13 +1161,17 @@ def _run(args: argparse.Namespace) -> dict[str, object]:
             "manifest": _normalized(manifest),
             "manifest_sha256": hashlib.sha256(manifest_snapshot).hexdigest(),
             "path": _normalized(game),
-            "validation": manifest_result,
-            "deep_validation": deep_result,
+            "validation": source_validation["manifest"],
+            "deep_validation": source_validation["deep"],
         },
         "host": host,
         "python": python,
         "schema": _SCHEMA,
         "unreal": {
+            "canonical_map": _normalized(canonical_map.path),
+            "canonical_map_sha256": hashlib.sha256(
+                canonical_map.snapshot
+            ).hexdigest(),
             "project": _normalized(project.path),
             "project_sha256": hashlib.sha256(project.snapshot).hexdigest(),
             "root": _normalized(engine.root),
