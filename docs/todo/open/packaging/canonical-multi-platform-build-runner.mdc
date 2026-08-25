@@ -511,11 +511,12 @@ assertions and replacement-race copies through the project-state directory
 link. UE 5.8.1 exposes the supported UBT `-NoUBA` switch through BuildCookRun's
 `-UbtArgs` forwarding path. Linux build arguments now pass
 `-UbtArgs=-NoUBA` so this repository-owned linked cache layout uses native
-compiler filesystem behavior. Linux also passes `-SkipBuildEditor`: preflight
-already requires a real executable host editor, so source-tree packaging can use
-that editor for cooking instead of redundantly rebuilding it. A bounded UE 5.8.1
-probe reduced the native agenda to `shar` plus `UnrealPak`; other target
-families retain their existing build controls. The runner also takes a
+compiler filesystem behavior. Linux also keeps `-SkipBuildEditor` so
+BuildCookRun does not schedule a complete source-engine editor rebuild; current
+Cook evidence shows the project `shar` editor module must instead be prepared
+separately. A bounded UE 5.8.1 probe reduced the native agenda to `shar` plus
+`UnrealPak`; other target families retain their existing build controls. The
+runner also takes a
 repository-local advisory lock before revalidation or project-state migration,
 so a concurrent invocation cannot reset target scratch or detach links beneath
 an active build. The lock is held by the open descriptor rather than file
@@ -887,6 +888,22 @@ uproject links and then invoked `--validate-only`. Startup recovery removed all
 four before saved preflight reported the still-unmounted Unreal Engine, while
 the 11,911 objects and 15,583,559,487-byte project-state cache remained
 unchanged.
+
+A later Linux resume completed the long Shipping link and symbol extraction,
+then reached Cook for the first time. The final stripped executable was
+187,825,920 bytes, with 1,813,036,472-byte debug and 225,137,328-byte symbol
+artifacts retained in project state. Cook rejected the tracked open-world map
+because the working tree contained its 130-byte Git LFS pointer; the exact
+12,878-byte GitHub media object matched the pointer's declared SHA-256 before
+being materialized only for a bounded build probe.
+
+With that exact map payload present, UBT reported the Shipping target up to date
+but Cook failed because the editor could not load the project game module
+`shar`. Removing `-SkipBuildEditor` did request `sharEditor`, but expanded the
+source-engine agenda to 23,798 actions, so that broad experiment was stopped
+cleanly after 204 seconds and reverted. UE 5.8.1 exposes the supported UBT
+`-Module=` selector through `OnlyModuleNames`; the next integration step is to
+prove a narrow `shar` editor-module preload before the skipped-editor Cook path.
 
 The Windows interruption path now applies the same five-second cleanup bound to
 both `taskkill` and the post-termination child wait instead of allowing either
