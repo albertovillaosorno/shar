@@ -748,6 +748,33 @@ def _detach_project_state(root: Path, project: Path) -> None:
         )
 
 
+def _detach_stale_project_state(root: Path) -> None:
+    """Recover canonical project links left by a hard-killed prior runner."""
+    project = root / _PROJECT_PATH
+    project_dir = project.parent
+    links = [project_dir / name for name in _PROJECT_STATE_NAMES]
+    if not any(_is_directory_link(link) for link in links):
+        return
+    for path, label in (
+        (root / "src", "source root"),
+        (root / "src/unreal", "Unreal source root"),
+        (root / "src/unreal/project", "Unreal project source root"),
+        (
+            root / "src/unreal/project/composition",
+            "Unreal project composition root",
+        ),
+        (project_dir, "Unreal project root"),
+    ):
+        _require_real_directory(path, label)
+    state_root = root / _PROJECT_STATE_ROOT
+    _require_real_directory(state_root, "project-state cache root")
+    _preflight_project_state(project_dir, state_root)
+    for name in _PROJECT_STATE_NAMES:
+        link = project_dir / name
+        if _is_directory_link(link):
+            _detach_project_state_link(link, state_root / name, name)
+
+
 def _prepare_project_state(root: Path, project: Path) -> Path:
     """Keep Unreal project-generated state physically below repository cache."""
     project_dir = project.parent
@@ -940,13 +967,24 @@ def _kill_linux_tagged_children(token: str) -> None:
 def _terminate_child_tree(process: subprocess.Popen[str], token: str) -> None:
     """Stop one interrupted runner-owned process tree before cleanup."""
     if os.name == "nt":
-        subprocess.run(
-            ["taskkill", "/pid", str(process.pid), "/t", "/f"],
-            check=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        process.wait()
+        try:
+            subprocess.run(
+                ["taskkill", "/pid", str(process.pid), "/t", "/f"],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=_CHILD_STOP_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired as error:
+            raise RunFailure(
+                "interrupted child tree termination timed out"
+            ) from error
+        try:
+            process.wait(timeout=_CHILD_STOP_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired as error:
+            raise RunFailure(
+                "interrupted child process did not terminate"
+            ) from error
         return
     pids = set(_posix_tree_pids(process.pid))
     _signal_posix_pids(pids, signal.SIGTERM)
@@ -4197,6 +4235,7 @@ def main() -> int:
     handlers, previous_mask = _install_run_signal_handlers()
     try:
         lock = _acquire_run_lock(root)
+        _detach_stale_project_state(root)
         arch_snapshot = _revalidate_arch(root, arch_path)
         targets = _selected_targets(arch_snapshot)
         check_snapshot = _revalidate_check(root, check_path)
