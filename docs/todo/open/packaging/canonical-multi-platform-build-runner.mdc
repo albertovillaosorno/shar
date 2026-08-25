@@ -12,7 +12,7 @@ children: []
 
 <!-- CSpell:ignore APPL COMDAT DYLD DYLINKER LINKEDIT SYMTAB DYSYMTAB -->
 <!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD rpath -->
-<!-- CSpell:ignore taskkill Popen NoUba -->
+<!-- CSpell:ignore taskkill Popen NoUba rootdirectory -->
 
 # Canonical multi-platform build runner
 
@@ -924,6 +924,25 @@ hardcodes engine-module intermediate roots below `Unreal.EngineDirectory`, and
 no supported command-line redirection was found in the reviewed UBT path.
 Further editor-module UBT probes are deferred until a repository-local or
 otherwise explicitly admitted build boundary is available.
+
+UE 5.8.1 source exposes `-rootdirectory=`, but this engine is a source build:
+`Engine/Build/InstalledBuild.txt` is absent, so `WritableEngineDirectory` is the
+engine directory itself. Plugin rule discovery also assigns each plugin's own
+directory as its default output base, which makes a broad symlinked shadow tree
+unsafe because plugin intermediates and binaries can resolve back to the
+external engine.
+
+The apparent UBT dry-run switches do not establish a read-only boundary either.
+`-NoEngineChanges` rejects changes only to engine outputs that already exist and
+explicitly permits creation of new engine files. `-WriteOutdatedActions` avoids
+the action executor but still deletes outdated outputs, saves action history,
+and creates produced-item directories before exporting JSON.
+
+`-SkipBuild` also performs target/makefile setup and the outer build mode saves
+file-hash, source-metadata, and C++ dependency caches afterward. Therefore none
+of these switches is admitted for another external-engine probe. A future
+module-preload design must first provide a repository-owned complete writable
+engine/output projection rather than relying on nominal dry-run flags.
 
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and
