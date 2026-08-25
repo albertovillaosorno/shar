@@ -789,6 +789,18 @@ Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so this remains incremental cache progress rather than admissible
 platform-package evidence.
 
+Another canonical Linux resume reduced UBT's initial agenda from 2,301 to
+2,259 actions and reached 653/2,259 during a 720-second external bound. Retained
+Shipping objects grew from 9,642 to 10,296 and project state reached
+14,227,101,154 bytes. Immediately before termination, the exact managed-child
+token was present on 34 live runner-owned descendants. The post-run audit found
+zero processes carrying that token, zero SHAR UAT, UBT, or compiler processes,
+all four project-state links detached, and the advisory lock available again.
+The UBT log contained no compiler, UBA rename, replacement-copy, fatal-error,
+or build-failure marker. Candidate and staging directories remained empty and
+`dist/linux-x64` was absent, so this remains incremental cache progress rather
+than admissible platform-package evidence.
+
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
 721,654,073 bytes. An exact copy under `.cache/build/copy-probe/` matched every
