@@ -801,6 +801,36 @@ or build-failure marker. Candidate and staging directories remained empty and
 `dist/linux-x64` was absent, so this remains incremental cache progress rather
 than admissible platform-package evidence.
 
+The next bounded Linux resume reduced UBT's initial agenda from 2,259 to
+1,605 actions and reached 105/1,605 during a 240-second external bound. Retained
+Shipping objects grew from 10,296 to 10,402 and project state reached
+14,306,691,290 bytes. The post-run audit found zero SHAR UAT, UBT, or compiler
+processes, all four project-state links detached, and the advisory lock
+available again. Candidate and staging directories remained empty and
+`dist/linux-x64` was absent, so the retained state advanced without package
+publication.
+
+A subsequent 900-second resume reduced the initial agenda from 1,605 to 1,499
+actions and reached 909/1,499. Retained Shipping objects grew from 10,402 to
+11,316 and project state reached 15,017,857,279 bytes without compiler or build
+failure markers. That run also exposed a cleanup gap: 32 orphaned MSBuild
+node-reuse workers from the successful Turnkey child still carried its exact
+managed-child token after the runner returned. The UAT, UBT, and compiler tree
+was gone, all four project-state links were detached, the advisory lock was
+available, candidate and staging directories were empty, and `dist/linux-x64`
+was absent, but successful managed children did not reap escaped tagged Linux
+descendants.
+
+The managed-child wait now force-reaps tagged Linux descendants after every
+successful child completion as well as on interruption. A focused lifecycle
+regression covers an escaped tagged descendant after a zero exit. A real patched
+`--validate-only` cycle revalidated saved architecture and source evidence,
+reported the Linux x64 SDK valid, returned zero, and left no process carrying
+that runner's token; project-state links remained detached and the advisory lock
+was available. This closes the successful-Turnkey process leak while keeping the
+platform package TODO open for a complete Linux publication and the other
+selected platforms.
+
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
 721,654,073 bytes. An exact copy under `.cache/build/copy-probe/` matched every
