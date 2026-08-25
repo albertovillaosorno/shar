@@ -854,6 +854,46 @@ post-patch `--validate-only` cycle returned zero with the Linux x64 SDK valid,
 left no exact-token descendants, detached all four project-state links, and
 released the advisory lock.
 
+A subsequent 900-second Linux resume reused all 11,911 retained Shipping objects
+and reduced UBT to two actions, entering `Link shar-Linux-Shipping` without
+recompilation. The successful Turnkey child token disappeared before
+BuildCookRun started, while a 35-second linker sample advanced physical reads
+from about 22.5 GB to 30.0 GB with active CPU use. The external supervisor
+ultimately reported exit 137 after its kill allowance; after terminal access
+recovered, no SHAR build process remained and the advisory lock was available.
+A later Jig/runtime audit corrected the initial root-level link check: all four
+actual uproject project-state links were still attached, while candidate and
+staging were empty and no Linux package existed.
+
+A later canonical resume stopped during saved-preflight revalidation because the
+external `UnrealEngine` volume was no longer mounted and `UE_5.8.1` could not be
+found at its recorded path. Because that failure happened before the selected
+build lifecycle, it returned one without detaching the four stale uproject
+links. The verified detach helper then removed exactly those canonical links
+while preserving the 11,911-object incremental state at 15,583,559,487 bytes.
+The physical volume is still visible to the host, but remounting it is outside
+this repository task, so real Linux publication remains externally blocked.
+
+The runner now recovers hard-kill project-state residue immediately after taking
+the build lock and before saved preflight revalidation. Recovery activates only
+when canonical uproject directory links exist, validates repository
+ancestors and every project-state identity before removal, and fails closed
+on a redirected or conflicting link. Focused tests prove retained cache data
+survives recovery
+and a redirected link prevents any of the canonical links from being detached.
+
+A real pinned-Python recovery probe deliberately reattached all four canonical
+uproject links and then invoked `--validate-only`. Startup recovery removed all
+four before saved preflight reported the still-unmounted Unreal Engine, while
+the 11,911 objects and 15,583,559,487-byte project-state cache remained
+unchanged.
+
+The Windows interruption path now applies the same five-second cleanup bound to
+both `taskkill` and the post-termination child wait instead of allowing either
+operation to block indefinitely. Focused lifecycle regressions cover a hung
+`taskkill`, a child that survives `taskkill`, and the normal interrupted Windows
+process-tree cleanup, while the full packaging suite remains green.
+
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
 721,654,073 bytes. An exact copy under `.cache/build/copy-probe/` matched every

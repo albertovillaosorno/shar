@@ -767,6 +767,47 @@ class ProjectStateMigrationTests(unittest.TestCase):
             self._unlink_project_state(project)
             temporary.cleanup()
 
+    def test_recovers_stale_canonical_links_before_next_run(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-stale-state-") as raw:
+            root = Path(raw)
+            project = root / _RUN._PROJECT_PATH
+            project.parent.mkdir(parents=True)
+            project.write_text("{}\n", encoding="utf-8")
+            state_root = _RUN._prepare_project_state(root, project)
+            sentinel = state_root / "Intermediate/sentinel.txt"
+            sentinel.write_text("cached", encoding="utf-8")
+
+            _RUN._detach_stale_project_state(root)
+
+            for name in _RUN._PROJECT_STATE_NAMES:
+                self.assertFalse(_RUN._path_present(project.parent / name))
+                self.assertTrue((state_root / name).is_dir())
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "cached")
+
+    def test_stale_recovery_rejects_redirected_link_before_detach(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-stale-state-") as raw:
+            root = Path(raw)
+            project = root / _RUN._PROJECT_PATH
+            project.parent.mkdir(parents=True)
+            project.write_text("{}\n", encoding="utf-8")
+            state_root = _RUN._prepare_project_state(root, project)
+            saved = project.parent / "Saved"
+            _RUN._remove_directory_link(saved)
+            outside = root / "outside"
+            outside.mkdir()
+            _RUN._create_directory_link(saved, outside)
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "project Saved link does not target canonical cache",
+            ):
+                _RUN._detach_stale_project_state(root)
+
+            for name in _RUN._PROJECT_STATE_NAMES:
+                self.assertTrue(_RUN._is_directory_link(project.parent / name))
+            self.assertEqual(saved.resolve(), outside.resolve())
+            self.assertTrue((state_root / "Saved").is_dir())
+
     def test_reuses_existing_canonical_links(self) -> None:
         temporary, root, project = self._fixture()
         try:
@@ -1608,10 +1649,63 @@ class UatProcessLifecycleTests(unittest.TestCase):
             check=False,
             stdout=_RUN.subprocess.DEVNULL,
             stderr=_RUN.subprocess.DEVNULL,
+            timeout=_RUN._CHILD_STOP_TIMEOUT_SECONDS,
         )
         self.assertEqual(
             process.wait.call_args_list,
-            [mock.call(), mock.call()],
+            [
+                mock.call(),
+                mock.call(timeout=_RUN._CHILD_STOP_TIMEOUT_SECONDS),
+            ],
+        )
+
+    def test_windows_taskkill_timeout_is_bounded(self) -> None:
+        process = mock.Mock(pid=103)
+        with (
+            mock.patch.object(_RUN.os, "name", "nt"),
+            mock.patch.object(
+                _RUN.subprocess,
+                "run",
+                side_effect=_RUN.subprocess.TimeoutExpired("taskkill", 5),
+            ) as run,
+            self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "interrupted child tree termination timed out",
+            ),
+        ):
+            _RUN._terminate_child_tree(process, "token")
+
+        run.assert_called_once_with(
+            ["taskkill", "/pid", "103", "/t", "/f"],
+            check=False,
+            stdout=_RUN.subprocess.DEVNULL,
+            stderr=_RUN.subprocess.DEVNULL,
+            timeout=_RUN._CHILD_STOP_TIMEOUT_SECONDS,
+        )
+        process.wait.assert_not_called()
+
+    def test_windows_post_taskkill_wait_is_bounded(self) -> None:
+        process = mock.Mock(pid=103)
+        process.wait.side_effect = _RUN.subprocess.TimeoutExpired("child", 5)
+        with (
+            mock.patch.object(_RUN.os, "name", "nt"),
+            mock.patch.object(_RUN.subprocess, "run") as run,
+            self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "interrupted child process did not terminate",
+            ),
+        ):
+            _RUN._terminate_child_tree(process, "token")
+
+        run.assert_called_once_with(
+            ["taskkill", "/pid", "103", "/t", "/f"],
+            check=False,
+            stdout=_RUN.subprocess.DEVNULL,
+            stderr=_RUN.subprocess.DEVNULL,
+            timeout=_RUN._CHILD_STOP_TIMEOUT_SECONDS,
+        )
+        process.wait.assert_called_once_with(
+            timeout=_RUN._CHILD_STOP_TIMEOUT_SECONDS,
         )
 
     def test_installs_int_and_term_handlers_if_previously_ignored(
@@ -7140,6 +7234,43 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                 project,
             )
 
+    def test_main_recovers_stale_state_before_arch_failure(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-run-stale-") as raw:
+            root = Path(raw)
+            project = root / _RUN._PROJECT_PATH
+            project.parent.mkdir(parents=True)
+            project.write_text("{}\n", encoding="utf-8")
+            state_root = _RUN._prepare_project_state(root, project)
+            sentinel = state_root / "Intermediate/sentinel.txt"
+            sentinel.write_text("cached", encoding="utf-8")
+            lock = io.StringIO("\0")
+
+            with (
+                mock.patch.object(_RUN, "_root", return_value=root),
+                mock.patch.object(
+                    _RUN,
+                    "_acquire_run_lock",
+                    return_value=lock,
+                ),
+                mock.patch.object(
+                    _RUN,
+                    "_revalidate_arch",
+                    side_effect=_RUN.RunFailure("injected arch failure"),
+                ),
+                mock.patch.object(
+                    _RUN.sys,
+                    "argv",
+                    ["run.py", "--validate-only"],
+                ),
+            ):
+                self.assertEqual(_RUN.main(), 1)
+
+            for name in _RUN._PROJECT_STATE_NAMES:
+                self.assertFalse(_RUN._path_present(project.parent / name))
+                self.assertTrue((state_root / name).is_dir())
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "cached")
+            self.assertTrue(lock.closed)
+
     def test_main_consumes_revalidated_snapshots(self) -> None:
         root = Path("/repo")
         arch_snapshot = b"validated arch"
@@ -7158,6 +7289,10 @@ class ArchitectureRevalidationTests(unittest.TestCase):
                 "_acquire_run_lock",
                 return_value=lock,
             ),
+            mock.patch.object(
+                _RUN,
+                "_detach_stale_project_state",
+            ) as detach_stale,
             mock.patch.object(
                 _RUN,
                 "_revalidate_arch",
@@ -7195,6 +7330,7 @@ class ArchitectureRevalidationTests(unittest.TestCase):
 
         arch_path = root / _RUN._ARCH_PATH
         check_path = root / _RUN._CHECK_PATH
+        detach_stale.assert_called_once_with(root)
         revalidate_arch.assert_called_once_with(root, arch_path)
         selected_targets.assert_called_once_with(arch_snapshot)
         revalidate_check.assert_called_once_with(root, check_path)
