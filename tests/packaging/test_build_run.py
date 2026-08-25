@@ -1469,6 +1469,43 @@ class UatProcessLifecycleTests(unittest.TestCase):
         )
         process.wait.assert_called_once_with()
 
+    def test_posix_does_not_wait_forever_for_unstoppable_descendants(
+        self,
+    ) -> None:
+        process = mock.Mock(pid=102)
+        with (
+            mock.patch.object(_RUN.os, "name", "posix"),
+            mock.patch.object(
+                _RUN,
+                "_posix_tree_pids",
+                return_value=[102, 103],
+            ),
+            mock.patch.object(
+                _RUN,
+                "_wait_for_posix_pids",
+                side_effect=[{102, 103}, {102, 103}],
+            ),
+            mock.patch.object(_RUN.os, "kill") as kill_process,
+            mock.patch.object(_RUN, "_kill_linux_tagged_children") as tagged,
+            self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "interrupted child descendants did not terminate",
+            ),
+        ):
+            _RUN._terminate_child_tree(process, "token")
+
+        self.assertEqual(
+            kill_process.call_args_list,
+            [
+                mock.call(102, _RUN.signal.SIGTERM),
+                mock.call(103, _RUN.signal.SIGTERM),
+                mock.call(102, _RUN.signal.SIGKILL),
+                mock.call(103, _RUN.signal.SIGKILL),
+            ],
+        )
+        process.wait.assert_not_called()
+        tagged.assert_not_called()
+
     def test_linux_forces_tagged_descendant_that_escaped_tree(self) -> None:
         process = mock.Mock(pid=102)
         process.wait.return_value = 0

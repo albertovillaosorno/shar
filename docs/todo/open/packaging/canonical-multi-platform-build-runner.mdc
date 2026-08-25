@@ -831,6 +831,29 @@ was available. This closes the successful-Turnkey process leak while keeping the
 platform package TODO open for a complete Linux publication and the other
 selected platforms.
 
+A later 900-second Linux resume reduced UBT's initial agenda from 1,499 to
+589 actions and compiled through 586/589 before the final Shipping link became
+the long pole. Retained Shipping objects grew from 11,316 to 11,911 and project
+state reached 15,583,559,487 bytes without compiler or build-failure markers.
+The external supervisor escalated after its 20-second cleanup allowance and
+reported exit 137 after 924 seconds while the linker process remained in
+uninterruptible I/O, leaving eight exact-token descendants and all four
+project-state links
+attached even though the runner lock had been released. The exact current-run
+token was then force-stopped, no live build descendants remained, and the
+runner's verified detach helper removed only those four canonical links while
+retaining the incremental project state.
+
+The interrupted POSIX cleanup path now checks the second bounded descendant
+wait before calling `process.wait()`. If TERM followed by KILL still cannot stop
+one of the captured descendants, cleanup raises immediately instead of entering
+an unbounded parent wait that can outlive the supervising termination budget. A
+focused lifecycle regression holds both captured PIDs live across both bounded
+waits and proves the blocking `process.wait()` is not called in that case. A
+post-patch `--validate-only` cycle returned zero with the Linux x64 SDK valid,
+left no exact-token descendants, detached all four project-state links, and
+released the advisory lock.
+
 A current full Windows x64 Shipping run then published `dist/windows-x64`
 through the canonical runner. The unpruned publication contained 30 files and
 721,654,073 bytes. An exact copy under `.cache/build/copy-probe/` matched every

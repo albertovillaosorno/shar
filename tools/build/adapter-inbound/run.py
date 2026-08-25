@@ -954,9 +954,9 @@ def _terminate_child_tree(process: subprocess.Popen[str], token: str) -> None:
     if remaining:
         _signal_posix_pids(remaining, signal.SIGKILL)
         remaining = _wait_for_posix_pids(remaining, _CHILD_STOP_TIMEOUT_SECONDS)
-    process.wait()
     if remaining:
         raise RunFailure("interrupted child descendants did not terminate")
+    process.wait()
     _kill_linux_tagged_children(token)
 
 
