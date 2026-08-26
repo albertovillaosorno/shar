@@ -14,6 +14,7 @@ children: []
 <!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD rpath -->
 <!-- CSpell:ignore taskkill Popen NoUba rootdirectory overlayfs libc unshare -->
 <!-- CSpell:ignore nocompileuat skipdeploy -->
+<!-- CSpell:ignore ispc ISPC -->
 
 # Canonical multi-platform build runner
 
@@ -1059,6 +1060,26 @@ argument is unquoted because the admitted repository path contains no spaces; a
 real UBT log then showed all three flags separately and the exact repo-local UBA
 root. That bounded run reached action 579 of 10,999 before its 600-second guard
 restored the 130-byte map pointer and released the runner lock.
+
+Two identical resumed Shipping runs then reused the stable makefile instead of
+regenerating it, reducing the remaining agenda from 10,999 to 10,423 and then
+9,028 actions. The second run exposed four retained ISPC generated headers whose
+missing namespace trailer made Clang parse Chaos implementations below `ispc`;
+the AST named the failing definition `ispc::Chaos::Collisions::GetTransform`.
+
+The corresponding combined `*.ispc.generated.dummy.h` producer outputs were
+also incomplete, while older per-ISA headers were balanced. Running the exact
+multi-target header-generation response to completion succeeded in 19.973
+seconds and produced a balanced 11,290-byte header. Invalidating only the four
+incomplete dummy/copy pairs made UBT schedule `Generate Header` and `Copy`
+actions, after which all four headers were balanced and the previously failing
+`CollisionResolutionUtil.cpp` compiled successfully.
+
+The runner now scans retained ISPC dummy headers before a non-validation build.
+A dummy that opens the generated ISPC namespace but lacks its closing trailer is
+removed so Unreal must regenerate the producer; an incomplete copied header is
+removed with it. Complete generated headers are preserved, and redirected or
+hard-linked candidates fail the existing real-file checks.
 
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and

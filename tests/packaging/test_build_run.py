@@ -1,4 +1,4 @@
-# CSpell:ignore nocompileuat
+# CSpell:ignore nocompileuat ispc Ispc
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -935,6 +935,114 @@ class ProjectStateMigrationTests(unittest.TestCase):
         finally:
             self._unlink_project_state(project)
             temporary.cleanup()
+
+
+class IncompleteIspcHeaderTests(unittest.TestCase):
+    """Invalidate only interrupted generated ISPC namespace outputs."""
+
+    def _state_root(self, root: Path) -> Path:
+        state_root = root / _RUN._PROJECT_STATE_ROOT
+        (state_root / "Intermediate/module").mkdir(parents=True)
+        return state_root
+
+    def test_removes_incomplete_dummy_and_copied_header(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-ispc-state-") as raw:
+            root = Path(raw)
+            state_root = self._state_root(root)
+            module = state_root / "Intermediate/module"
+            dummy = module / "Probe.ispc.generated.dummy.h"
+            copied = module / "Probe.ispc.generated.h"
+            payload = b"namespace ispc { /* namespace */\n"
+            dummy.write_bytes(payload)
+            copied.write_bytes(payload)
+
+            invalidated = _RUN._invalidate_incomplete_ispc_headers(state_root)
+
+            self.assertEqual(invalidated, (copied, dummy))
+            self.assertFalse(dummy.exists())
+            self.assertFalse(copied.exists())
+
+    def test_preserves_complete_generated_headers(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-ispc-state-") as raw:
+            root = Path(raw)
+            state_root = self._state_root(root)
+            module = state_root / "Intermediate/module"
+            dummy = module / "Probe.ispc.generated.dummy.h"
+            copied = module / "Probe.ispc.generated.h"
+            payload = (
+                b"namespace ispc { /* namespace */\n"
+                b"} /* namespace */\n"
+            )
+            dummy.write_bytes(payload)
+            copied.write_bytes(payload)
+
+            invalidated = _RUN._invalidate_incomplete_ispc_headers(state_root)
+
+            self.assertEqual(invalidated, ())
+            self.assertEqual(dummy.read_bytes(), payload)
+            self.assertEqual(copied.read_bytes(), payload)
+
+    def test_preserves_valid_copy_when_dummy_is_incomplete(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-ispc-state-") as raw:
+            root = Path(raw)
+            state_root = self._state_root(root)
+            module = state_root / "Intermediate/module"
+            dummy = module / "Probe.ispc.generated.dummy.h"
+            copied = module / "Probe.ispc.generated.h"
+            dummy.write_bytes(b"namespace ispc { /* namespace */\n")
+            valid = (
+                b"namespace ispc { /* namespace */\n"
+                b"} /* namespace */\n"
+            )
+            copied.write_bytes(valid)
+
+            invalidated = _RUN._invalidate_incomplete_ispc_headers(state_root)
+
+            self.assertEqual(invalidated, (dummy,))
+            self.assertFalse(dummy.exists())
+            self.assertEqual(copied.read_bytes(), valid)
+
+    def test_rejects_changed_header_before_invalidation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-ispc-state-") as raw:
+            path = Path(raw) / "Probe.ispc.generated.dummy.h"
+            path.write_bytes(b"namespace ispc { /* namespace */\n")
+            incomplete, identity = _RUN._capture_incomplete_ispc_header(
+                path,
+                "ISPC generated dummy header",
+            )
+            self.assertTrue(incomplete)
+            path.write_bytes(b"changed\n")
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "changed before invalidation",
+            ):
+                _RUN._unlink_captured_ispc_header(
+                    path,
+                    "ISPC generated dummy header",
+                    identity,
+                )
+
+            self.assertEqual(path.read_bytes(), b"changed\n")
+
+    def test_rejects_linked_incomplete_dummy_header(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-ispc-state-") as raw:
+            root = Path(raw)
+            state_root = self._state_root(root)
+            module = state_root / "Intermediate/module"
+            target = root / "outside.h"
+            target.write_bytes(b"namespace ispc { /* namespace */\n")
+            dummy = module / "Probe.ispc.generated.dummy.h"
+            dummy.symlink_to(target)
+
+            with self.assertRaisesRegex(
+                _RUN.RunFailure,
+                "ISPC generated dummy header must be a real file",
+            ):
+                _RUN._invalidate_incomplete_ispc_headers(state_root)
+
+            self.assertTrue(dummy.is_symlink())
+            self.assertTrue(target.is_file())
 
 
 class BuildLifecycleStateTests(unittest.TestCase):

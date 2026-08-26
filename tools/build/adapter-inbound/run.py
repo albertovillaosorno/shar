@@ -1,4 +1,4 @@
-# CSpell:ignore nocompileuat
+# CSpell:ignore nocompileuat ispc Ispc
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -843,6 +843,76 @@ def _prepare_project_state(root: Path, project: Path) -> Path:
             f"cannot migrate Unreal project build state: {error_name}"
         ) from error
     return state_root
+
+
+_ISPC_NAMESPACE_OPEN = b"namespace ispc { /* namespace */"
+_ISPC_NAMESPACE_CLOSE = b"} /* namespace */"
+
+
+def _capture_incomplete_ispc_header(
+    path: Path,
+    label: str,
+) -> tuple[bool, tuple[int, ...]]:
+    """Capture one generated header and whether its namespace is incomplete."""
+    payload, identity = _capture_real_bytes(path, label)
+    incomplete = (
+        _ISPC_NAMESPACE_OPEN in payload
+        and _ISPC_NAMESPACE_CLOSE not in payload
+    )
+    return incomplete, identity
+
+
+def _unlink_captured_ispc_header(
+    path: Path,
+    label: str,
+    identity: tuple[int, ...],
+) -> None:
+    """Delete only the generated header identity that was inspected."""
+    if _real_file_identity(path, label) != identity:
+        raise RunFailure(f"{label} changed before invalidation: {path}")
+    try:
+        path.unlink()
+    except OSError as error:
+        raise RunFailure(f"cannot invalidate {label}: {path}") from error
+
+
+def _invalidate_incomplete_ispc_headers(state_root: Path) -> tuple[Path, ...]:
+    """Drop interrupted ISPC header outputs so Unreal regenerates them."""
+    intermediate = state_root / "Intermediate"
+    _require_real_directory(intermediate, "canonical project Intermediate")
+    invalidated: list[Path] = []
+    pattern = "*.ispc.generated.dummy.h"
+    for dummy in sorted(intermediate.rglob(pattern)):
+        incomplete, dummy_identity = _capture_incomplete_ispc_header(
+            dummy,
+            "ISPC generated dummy header",
+        )
+        if not incomplete:
+            continue
+        copied = dummy.with_name(
+            dummy.name.removesuffix(".dummy.h") + ".h"
+        )
+        if _path_present(copied):
+            copied_incomplete, copied_identity = (
+                _capture_incomplete_ispc_header(
+                    copied,
+                    "ISPC generated header",
+                )
+            )
+            if copied_incomplete:
+                _unlink_captured_ispc_header(
+                    copied,
+                    "ISPC generated header",
+                    copied_identity,
+                )
+                invalidated.append(copied)
+        _unlink_captured_ispc_header(
+            dummy,
+            "ISPC generated dummy header",
+            dummy_identity,
+        )
+        invalidated.append(dummy)
+    return tuple(invalidated)
 
 
 def _require_real_descendant_parents(
@@ -4475,8 +4545,10 @@ def _build_selected_targets(
     validate_only: bool,
 ) -> None:
     """Attach cached project state only for the selected build lifecycle."""
-    _prepare_project_state(root, project)
+    state_root = _prepare_project_state(root, project)
     try:
+        if not validate_only:
+            _invalidate_incomplete_ispc_headers(state_root)
         uat = _uat_path(engine_root)
         for target in targets:
             _build_target(
