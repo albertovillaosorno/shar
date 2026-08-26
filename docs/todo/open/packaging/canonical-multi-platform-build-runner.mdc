@@ -13,6 +13,7 @@ children: []
 <!-- CSpell:ignore APPL COMDAT DYLD DYLINKER LINKEDIT SYMTAB DYSYMTAB -->
 <!-- CSpell:ignore OSABI pdb DYNAMIC PHDR TLS RVA rva SHLIB UNIXTHREAD rpath -->
 <!-- CSpell:ignore taskkill Popen NoUba rootdirectory overlayfs libc unshare -->
+<!-- CSpell:ignore nocompileuat skipdeploy -->
 
 # Canonical multi-platform build runner
 
@@ -1044,6 +1045,20 @@ the exact 130-byte LFS pointer was restored. A probe-harness stop hit the outer
 `timeout` supervisor rather than the Python owner and briefly orphaned tagged
 namespace descendants; the runner's exact managed-child token cleanup removed
 all of them, leaving zero token survivors.
+
+UE's Linux `RunUAT.sh` accepts `-nocompileuat`, which skips `BuildUAT.sh` and
+uses the existing AutomationTool binaries. A real isolated Turnkey proof
+completed in 3.57 seconds, rebuilt neither UBT nor AutomationTool, captured its
+one engine-side write in the repository overlay, and left the external engine
+unchanged. Linux UAT now always receives that flag.
+
+The first repository-local UBA argument used embedded quotes, which caused UAT
+to absorb `-skipdeploy -architecture=x64` into the UBA root string. The
+corrected
+argument is unquoted because the admitted repository path contains no spaces; a
+real UBT log then showed all three flags separately and the exact repo-local UBA
+root. That bounded run reached action 579 of 10,999 before its 600-second guard
+restored the 130-byte map pointer and released the runner lock.
 
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and
