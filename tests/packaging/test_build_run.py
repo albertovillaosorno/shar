@@ -1231,6 +1231,10 @@ class LinuxEditorNamespaceTests(unittest.TestCase):
             stale = work / "editor-engine-overlay/upper/stale"
             stale.parent.mkdir(parents=True)
             stale.write_text("stale", encoding="utf-8")
+            kernel_work = work / "editor-engine-overlay/work/work"
+            kernel_work.mkdir(parents=True)
+            (kernel_work / "state").write_text("kernel", encoding="utf-8")
+            kernel_work.chmod(0)
 
             with mock.patch.object(
                 _RUN.shutil,
@@ -1413,6 +1417,97 @@ class LinuxEditorNamespaceTests(unittest.TestCase):
                 )
 
             self.assertEqual(order, ["editor", "uat"])
+
+
+class LinuxUatNamespaceTests(unittest.TestCase):
+    """Keep Linux AutomationTool writes inside a private engine overlay."""
+
+    def _tool_side_effect(self, root: Path) -> Callable[[str], str | None]:
+        paths: dict[str, str] = {}
+        for name in ("unshare", "mount", "sh"):
+            path = root / name
+            path.write_text("#!/bin/sh\n", encoding="utf-8")
+            path.chmod(0o755)
+            paths[name] = str(path)
+        return paths.get
+
+    def test_command_projects_uat_into_fresh_overlay(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-userns-uat-") as raw:
+            root = Path(raw)
+            engine = root / "engine"
+            uat = engine / "Engine/Build/BatchFiles/RunUAT.sh"
+            uat.parent.mkdir(parents=True)
+            uat.write_text("#!/bin/sh\n", encoding="utf-8")
+            uat.chmod(0o755)
+            work = root / "work"
+            work.mkdir()
+            stale = work / "uat-engine-overlay/upper/stale"
+            stale.parent.mkdir(parents=True)
+            stale.write_text("stale", encoding="utf-8")
+            kernel_work = work / "uat-engine-overlay/work/work"
+            kernel_work.mkdir(parents=True)
+            (kernel_work / "state").write_text("kernel", encoding="utf-8")
+            kernel_work.chmod(0)
+
+            with mock.patch.object(
+                _RUN.shutil,
+                "which",
+                side_effect=self._tool_side_effect(root),
+            ):
+                command = _RUN._linux_uat_namespace_command(
+                    engine, work, [str(uat), "Turnkey", "-Unattended"]
+                )
+
+            self.assertEqual(command[1:4], ["-Ur", "-m", "--kill-child"])
+            self.assertIn('"$1" -t overlay overlay', command[6])
+            self.assertIn("lowerdir=", command[9])
+            self.assertIn("upperdir=", command[9])
+            self.assertIn("workdir=", command[9])
+            self.assertEqual(command[10], str(engine))
+            self.assertIn(str(uat), command)
+            self.assertIn("Turnkey", command)
+            self.assertFalse(stale.exists())
+            self.assertNotIn("/merged/", " ".join(command))
+
+    def test_run_uat_uses_linux_overlay_when_engine_is_supplied(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-userns-uat-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            log = work / "uat.log"
+            process = mock.Mock()
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_linux_uat_namespace_command",
+                    return_value=["unshare", "probe"],
+                ) as project,
+                mock.patch.object(
+                    _RUN,
+                    "_managed_child_environment",
+                    return_value=({}, "token"),
+                ),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=process,
+                ) as popen,
+                mock.patch.object(
+                    _RUN,
+                    "_wait_managed_child",
+                    return_value=0,
+                ),
+            ):
+                _RUN._run_uat(
+                    root,
+                    Path("/engine/Engine/Build/BatchFiles/RunUAT.sh"),
+                    ["Turnkey"],
+                    log,
+                    engine_root=Path("/engine"),
+                )
+
+            project.assert_called_once()
+            self.assertEqual(popen.call_args.args[0], ["unshare", "probe"])
 
 
 class UatWorkPathTests(unittest.TestCase):
@@ -7073,6 +7168,7 @@ class CandidateArtifactTests(unittest.TestCase):
                 _uat: Path,
                 arguments: list[str],
                 _log: Path,
+                **_kwargs: object,
             ) -> None:
                 nonlocal runtime_path
                 archive = next(
