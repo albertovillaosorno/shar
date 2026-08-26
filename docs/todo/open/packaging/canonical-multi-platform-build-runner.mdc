@@ -1022,6 +1022,29 @@ rejects redirects and foreign-owned directories, restores owner traversal
 permission on directories, and then performs the existing real-directory reset.
 Focused regressions cover that lifecycle for both editor and UAT overlays.
 
+A bounded private-namespace probe also restored the earlier engine pathname only
+inside an outer mount namespace because 11,747 retained project-state files
+still referenced that path. Nested user/mount namespaces consumed the alias
+correctly and the host path remained absent, but BuildCookRun still regenerated
+an 11,836-action agenda after UBT rebuilt. This shows the refreshed UBT
+assembly,
+not only the engine mount pathname, currently invalidates the retained Shipping
+action graph.
+
+That same probe showed UE 5.8 selecting the UBA executor root below the user's
+home even though every observed action was marked `[NoUba]`. No files there were
+newer than the probe start, but selecting an external runtime root is outside
+the
+repository boundary. Linux BuildCookRun now passes `-UBADisableRemote` and a
+target-local `-UBARootDir` below `.cache/build/run/` together with `-NoUBA`; the
+runner fails closed if the repository UBA root is not supplied.
+
+The bounded run was interrupted before accepting the 11,836-action rebuild and
+the exact 130-byte LFS pointer was restored. A probe-harness stop hit the outer
+`timeout` supervisor rather than the Python owner and briefly orphaned tagged
+namespace descendants; the runner's exact managed-child token cleanup removed
+all of them, leaving zero token survivors.
+
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and
 SHA-256,

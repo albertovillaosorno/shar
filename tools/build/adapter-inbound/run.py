@@ -1347,6 +1347,8 @@ def _build_arguments(
     target: Target,
     candidate: Path,
     staging: Path,
+    *,
+    uba_root: Path | None = None,
 ) -> list[str]:
     """Return the reviewed BuildCookRun argument vector for one target."""
     arguments = [
@@ -1368,7 +1370,17 @@ def _build_arguments(
         "-IoStore",
     ]
     if target.system == "linux":
-        arguments.extend(("-SkipBuildEditor", "-UbtArgs=-NoUBA"))
+        if uba_root is None:
+            raise RunFailure("Linux packaging requires a repository UBA root")
+        arguments.extend(
+            (
+                "-SkipBuildEditor",
+                (
+                    "-UbtArgs=-NoUBA -UBADisableRemote "
+                    f'-UBARootDir="{uba_root}"'
+                ),
+            )
+        )
     return arguments
 
 
@@ -4396,7 +4408,17 @@ def _build_target(
     log = work / "build.log"
     if target.system == "linux":
         _prepare_linux_editor_module(root, engine_root, project, work)
-    arguments = _build_arguments(project, target, candidate, staging)
+    uba_root: Path | None = None
+    if target.system == "linux":
+        uba_root = work / "uat-uba"
+        _reset_real_directory(uba_root, "Linux UAT UBA root")
+    arguments = _build_arguments(
+        project,
+        target,
+        candidate,
+        staging,
+        uba_root=uba_root,
+    )
     if target.system == "linux":
         _run_uat(root, uat, arguments, log, engine_root=engine_root)
     else:

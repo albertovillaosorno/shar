@@ -31,7 +31,7 @@
 """Tests for canonical build-runner project-state migration."""
 
 # CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit symtab
-# CSpell:ignore DYSYMTAB dysymtab uba userns lowerdir upperdir workdir
+# CSpell:ignore DYSYMTAB dysymtab uba ubt userns lowerdir upperdir workdir
 # CSpell:ignore osabi phdr rva shlib rpath runpath
 # CSpell:ignore popen creationflags killpg taskkill DFL pthread sigmask
 
@@ -1063,16 +1063,39 @@ class BuildArgumentTests(unittest.TestCase):
 
     def test_linux_uses_reviewed_source_engine_controls(self) -> None:
         for target in _RUN._TARGETS:
+            uba_root = Path("/repo/.cache/build/run/linux-x64/uat-uba")
             arguments = _RUN._build_arguments(
                 Path("/project/shar.uproject"),
                 target,
                 Path("/candidate"),
                 Path("/stage"),
+                uba_root=uba_root if target.system == "linux" else None,
             )
             linux = target.system == "linux"
             with self.subTest(target=target.identifier):
-                self.assertEqual("-UbtArgs=-NoUBA" in arguments, linux)
+                ubt = [
+                    value
+                    for value in arguments
+                    if value.startswith("-UbtArgs=")
+                ]
+                self.assertEqual(len(ubt), 1 if linux else 0)
+                if linux:
+                    self.assertIn("-NoUBA", ubt[0])
+                    self.assertIn("-UBADisableRemote", ubt[0])
+                    self.assertIn(f'-UBARootDir="{uba_root}"', ubt[0])
                 self.assertEqual("-SkipBuildEditor" in arguments, linux)
+
+    def test_linux_requires_repository_uba_root(self) -> None:
+        with self.assertRaisesRegex(
+            _RUN.RunFailure,
+            "Linux packaging requires a repository UBA root",
+        ):
+            _RUN._build_arguments(
+                Path("/project/shar.uproject"),
+                _RUN._TARGETS_BY_ID["linux-x64"],
+                Path("/candidate"),
+                Path("/stage"),
+            )
 
 
 class BuildWorkRootTests(unittest.TestCase):
