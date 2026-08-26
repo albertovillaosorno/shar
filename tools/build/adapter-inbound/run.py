@@ -1,3 +1,4 @@
+# CSpell:ignore nocompileuat
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -1276,7 +1277,10 @@ def _run_uat(
     """Run one bounded UAT command and persist its complete output."""
     work = log.parent
     _ensure_real_directory(work, "UAT work root")
-    command = _uat_command(uat, arguments)
+    uat_arguments = [*arguments]
+    if engine_root is not None:
+        uat_arguments.append("-nocompileuat")
+    command = _uat_command(uat, uat_arguments)
     if engine_root is not None:
         command = _linux_uat_namespace_command(engine_root, work, command)
     automation_saved = work / "automation-saved"
@@ -1377,7 +1381,7 @@ def _build_arguments(
                 "-SkipBuildEditor",
                 (
                     "-UbtArgs=-NoUBA -UBADisableRemote "
-                    f'-UBARootDir="{uba_root}"'
+                    f"-UBARootDir={uba_root}"
                 ),
             )
         )

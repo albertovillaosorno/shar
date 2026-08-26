@@ -1,3 +1,4 @@
+# CSpell:ignore nocompileuat
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -1082,7 +1083,8 @@ class BuildArgumentTests(unittest.TestCase):
                 if linux:
                     self.assertIn("-NoUBA", ubt[0])
                     self.assertIn("-UBADisableRemote", ubt[0])
-                    self.assertIn(f'-UBARootDir="{uba_root}"', ubt[0])
+                    self.assertIn(f"-UBARootDir={uba_root}", ubt[0])
+                    self.assertNotIn('"', ubt[0])
                 self.assertEqual("-SkipBuildEditor" in arguments, linux)
 
     def test_linux_requires_repository_uba_root(self) -> None:
@@ -1530,7 +1532,40 @@ class LinuxUatNamespaceTests(unittest.TestCase):
                 )
 
             project.assert_called_once()
+            projected = project.call_args.args[2]
+            self.assertIn("-nocompileuat", projected)
             self.assertEqual(popen.call_args.args[0], ["unshare", "probe"])
+
+    def test_run_uat_does_not_disable_compile_for_other_hosts(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-uat-") as raw:
+            root = Path(raw)
+            log = root / "uat.log"
+            process = mock.Mock()
+            with (
+                mock.patch.object(
+                    _RUN,
+                    "_managed_child_environment",
+                    return_value=({}, "token"),
+                ),
+                mock.patch.object(
+                    _RUN.subprocess,
+                    "Popen",
+                    return_value=process,
+                ) as popen,
+                mock.patch.object(
+                    _RUN,
+                    "_wait_managed_child",
+                    return_value=0,
+                ),
+            ):
+                _RUN._run_uat(
+                    root,
+                    Path("RunUAT.sh"),
+                    ["Turnkey"],
+                    log,
+                )
+
+            self.assertNotIn("-nocompileuat", popen.call_args.args[0])
 
 
 class UatWorkPathTests(unittest.TestCase):
