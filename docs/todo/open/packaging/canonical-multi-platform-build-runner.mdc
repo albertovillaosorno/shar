@@ -997,6 +997,31 @@ actions in
 or kernel overlayfs fail closed before the external engine can be used as a
 writable build root.
 
+Linux UAT is now protected by the same private kernel-overlay boundary. A
+canonical probe after the engine volume moved to a different mount path showed
+Turnkey rebuilding UnrealBuildTool and AutomationTool directly in the external
+engine, so that run was interrupted at exit 143 before packaging continued.
+The guarded map probe restored the exact 130-byte pointer afterward.
+
+The first UAT overlay mounted the engine at a repository-cache `merged` path.
+That isolated writes, and a Turnkey proof captured 572 files and about 140.6 MB
+in the overlay upper layer with zero newer external engine files. BuildCookRun
+then expanded to 12,087 actions because the changed engine path invalidated UBT
+action identities, so the bounded run stopped before Cook.
+
+The admitted UAT overlay now mounts over the original engine path only inside
+the private user/mount namespace. A sentinel proved writes still land only in
+the repository upper layer, while a real Turnkey proof completed in 15.26
+seconds and retained the original engine paths in its log. Targeted
+external `Binaries/DotNET`, `Intermediate`, and `Saved` trees had zero newer
+files after that proof.
+
+Kernel overlay work directories can leave mode-zero bookkeeping after unmount.
+Before reuse, the runner now traverses only the known repository overlay tree,
+rejects redirects and foreign-owned directories, restores owner traversal
+permission on directories, and then performs the existing real-directory reset.
+Focused regressions cover that lifecycle for both editor and UAT overlays.
+
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and
 SHA-256,

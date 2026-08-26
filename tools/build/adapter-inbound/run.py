@@ -37,6 +37,7 @@
 # CSpell:ignore DYSYMTAB dysymtab NBLCK msvcrt
 # CSpell:ignore phdr creationflags killpg taskkill axo ppid
 # CSpell:ignore pthread sigmask SETMASK uba lowerdir upperdir workdir rprivate
+# CSpell:ignore getuid
 
 from __future__ import annotations
 
@@ -1062,6 +1063,36 @@ def _linux_namespace_tool(name: str, label: str) -> Path:
     return path
 
 
+def _prepare_linux_overlay_reset(path: Path, label: str) -> None:
+    """Make runner-owned kernel-overlay work directories removable."""
+    if not _path_present(path):
+        return
+    _require_real_directory(path, label)
+    if not hasattr(os, "getuid"):
+        raise RunFailure(
+            "Linux engine overlay cleanup requires POSIX ownership"
+        )
+    owner = os.getuid()
+    pending = [path]
+    while pending:
+        directory = pending.pop()
+        metadata = directory.stat(follow_symlinks=False)
+        if metadata.st_uid != owner:
+            raise RunFailure(f"{label} contains a foreign-owned directory")
+        directory.chmod(stat.S_IRWXU)
+        try:
+            entries = list(directory.iterdir())
+        except OSError as error:
+            raise RunFailure(f"cannot scan {label}: {directory}") from error
+        for entry in entries:
+            if entry.is_symlink() or os.path.isjunction(entry):
+                raise RunFailure(
+                    f"{label} contains a redirected entry: {entry}"
+                )
+            if entry.is_dir():
+                pending.append(entry)
+
+
 def _linux_editor_namespace_command(
     engine_root: Path,
     project: Path,
@@ -1087,6 +1118,7 @@ def _linux_editor_namespace_command(
         )
 
     overlay_root = work / "editor-engine-overlay"
+    _prepare_linux_overlay_reset(overlay_root, "editor engine overlay root")
     _reset_real_directory(overlay_root, "editor engine overlay root")
     upper = overlay_root / "upper"
     upper.mkdir()
@@ -1130,6 +1162,61 @@ def _linux_editor_namespace_command(
         "-NoUBA",
         "-UBADisableRemote",
         f"-UBARootDir={uba_root}",
+    ]
+
+
+def _linux_uat_namespace_command(
+    engine_root: Path,
+    work: Path,
+    command: list[str],
+) -> list[str]:
+    """Project one Linux UAT command through a private writable engine view."""
+    if not command:
+        raise RunFailure("Linux UAT command is empty")
+    unshare = _linux_namespace_tool("unshare", "Linux namespace executable")
+    mount = _linux_namespace_tool("mount", "Linux mount executable")
+    shell = _linux_namespace_tool("sh", "POSIX shell executable")
+    _require_real_directory(engine_root, "Unreal Engine root")
+    launcher = Path(command[0])
+    _require_real_descendant_parents(
+        engine_root,
+        launcher,
+        "Unreal AutomationTool launcher",
+    )
+    _require_real_file(launcher, "Unreal AutomationTool launcher")
+    if not os.access(launcher, os.X_OK):
+        raise RunFailure(
+            f"Unreal AutomationTool launcher is not executable: {launcher}"
+        )
+
+    overlay_root = work / "uat-engine-overlay"
+    _prepare_linux_overlay_reset(overlay_root, "UAT engine overlay root")
+    _reset_real_directory(overlay_root, "UAT engine overlay root")
+    upper = overlay_root / "upper"
+    upper.mkdir()
+    overlay_work = overlay_root / "work"
+    overlay_work.mkdir()
+    options = (
+        f"lowerdir={engine_root},upperdir={upper},workdir={overlay_work}"
+    )
+    namespace_script = (
+        'set -eu; "$1" --make-rprivate /; '
+        '"$1" -t overlay overlay -o "$2" "$3"; '
+        'shift 3; exec "$@"'
+    )
+    return [
+        str(unshare),
+        "-Ur",
+        "-m",
+        "--kill-child",
+        str(shell),
+        "-c",
+        namespace_script,
+        "sh",
+        str(mount),
+        options,
+        str(engine_root),
+        *command,
     ]
 
 
@@ -1183,11 +1270,15 @@ def _run_uat(
     uat: Path,
     arguments: list[str],
     log: Path,
+    *,
+    engine_root: Path | None = None,
 ) -> None:
     """Run one bounded UAT command and persist its complete output."""
     work = log.parent
     _ensure_real_directory(work, "UAT work root")
     command = _uat_command(uat, arguments)
+    if engine_root is not None:
+        command = _linux_uat_namespace_command(engine_root, work, command)
     automation_saved = work / "automation-saved"
     _ensure_real_directory(automation_saved, "UAT saved root")
     automation_logs = automation_saved / "logs"
@@ -1222,6 +1313,8 @@ def _verify_sdk(
     project: Path,
     target: Target,
     work: Path,
+    *,
+    engine_root: Path | None = None,
 ) -> Path:
     """Require Turnkey to report a valid SDK without installing anything."""
     report = work / "turnkey.txt"
@@ -1237,7 +1330,7 @@ def _verify_sdk(
         f"-ReportFilename={report}",
         f"-Project={project}",
     ]
-    _run_uat(root, uat, arguments, log)
+    _run_uat(root, uat, arguments, log, engine_root=engine_root)
     if not _path_present(report):
         raise RunFailure(f"Turnkey did not produce an SDK report: {report}")
     text = _read_real_text(report, "Turnkey SDK report")
@@ -4281,7 +4374,17 @@ def _build_target(
     _ensure_real_directory(run_root, "build run root")
     work = run_root / target.identifier
     _ensure_real_directory(work, "target work root")
-    _verify_sdk(root, uat, project, target, work)
+    if target.system == "linux":
+        _verify_sdk(
+            root,
+            uat,
+            project,
+            target,
+            work,
+            engine_root=engine_root,
+        )
+    else:
+        _verify_sdk(root, uat, project, target, work)
     if validate_only:
         print(f"run: {target.identifier}: SDK valid")
         return
@@ -4294,7 +4397,10 @@ def _build_target(
     if target.system == "linux":
         _prepare_linux_editor_module(root, engine_root, project, work)
     arguments = _build_arguments(project, target, candidate, staging)
-    _run_uat(root, uat, arguments, log)
+    if target.system == "linux":
+        _run_uat(root, uat, arguments, log, engine_root=engine_root)
+    else:
+        _run_uat(root, uat, arguments, log)
     candidate_tree = _validate_candidate_tree(candidate)
     _validate_candidate_artifact(candidate, target, candidate_tree.files)
     _cache_nonruntime_artifacts(candidate, work, target, candidate_tree)
