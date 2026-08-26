@@ -1081,6 +1081,19 @@ removed so Unreal must regenerate the producer; an incomplete copied header is
 removed with it. Complete generated headers are preserved, and redirected or
 hard-linked candidates fail the existing real-file checks.
 
+Two further identical bounded resumes confirmed that recovery does not
+destabilize
+the retained Shipping graph. The first started at 8,780 actions and completed
+1,018 before its guard; the next reused the same makefile at 7,761 actions and
+completed another 313. Neither run produced compiler errors, incomplete ISPC
+headers, or writes to the user-level UBA cache.
+
+Each fresh UAT overlay still recompiles its private `UE5Rules.dll` and
+`UE5ProgramRules.dll` because the lower engine copies predate the current UBT
+assembly. That isolated startup work did not regenerate the retained Shipping
+makefile or prevent exact incremental reuse, so it is currently a performance
+cost rather than a correctness blocker.
+
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and
 SHA-256,
