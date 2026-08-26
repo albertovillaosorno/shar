@@ -1108,11 +1108,18 @@ shutdown left zero build descendants or project-state links, restored the map
 pointer, preserved ISPC header integrity, and wrote nothing to the user UBA
 cache.
 
-Two more direct-stop slices continued the same exact retention pattern. The first
+Two more direct-stop slices continued the same exact retention pattern. The
+first
 resumed at 4,600 actions and completed 725; the next therefore began at 3,875
 and completed another 479 before its guard. Neither slice regenerated the
 Shipping makefile or reported compiler errors. Both clean shutdowns again
 detached all project-state links and restored the tracked map pointer.
+
+The next two direct-stop slices reduced the remaining Shipping agenda from 3,395
+to 2,784 actions. The first completed 610 actions, and the second completed 465
+more before its guard. Both again reused the existing makefile without compiler
+errors, preserved generated ISPC header integrity, and left the user UBA cache
+unchanged after managed shutdown.
 
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and
