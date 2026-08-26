@@ -1094,6 +1094,20 @@ assembly. That isolated startup work did not regenerate the retained Shipping
 makefile or prevent exact incremental reuse, so it is currently a performance
 cost rather than a correctness blocker.
 
+The earlier probe harness used an outer GNU timeout around `run.py`. When that
+supervisor fired, the runner detached project state before an orphaned UAT
+namespace finished, so queued compiler actions lost their response files and a
+real project `Intermediate` tree was recreated with only `DependencyCache.bin`.
+That 130,987,882-byte failure-state cache was not promoted over canonical state.
+
+Subsequent probes signal the Python runner directly and wait for its managed
+cleanup. Two such slices reused the Shipping makefile at 6,041 and 5,125
+actions,
+reaching actions 915 and 524 respectively before clean SIGTERM shutdowns. Each
+shutdown left zero build descendants or project-state links, restored the map
+pointer, preserved ISPC header integrity, and wrote nothing to the user UBA
+cache.
+
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and
 SHA-256,
