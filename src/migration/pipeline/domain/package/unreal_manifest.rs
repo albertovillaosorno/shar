@@ -101,6 +101,27 @@ pub struct UnrealFbxArtifactEvidence {
     pub fbx_version: u32,
 }
 
+/// Verified generated UI-sprite raster supplied by the filesystem adapter.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UnrealUiRasterArtifactEvidence {
+    /// Semantic package that owns the generated raster artifact.
+    pub package_id: String,
+    /// Canonical repository-relative generated PNG path.
+    pub path: String,
+    /// Exact generated file size.
+    pub size_bytes: u64,
+    /// Exact lowercase SHA-256 digest of the generated PNG bytes.
+    pub sha256: String,
+    /// Revision binding normalized sprite metadata and ordered DDS children.
+    pub source_revision: String,
+    /// Verified raster width.
+    pub width: u32,
+    /// Verified raster height.
+    pub height: u32,
+    /// Number of normalized DDS tiles consumed by the compiler.
+    pub tile_count: usize,
+}
+
 /// Complete deterministic Unreal import manifest.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UnrealImportManifest {

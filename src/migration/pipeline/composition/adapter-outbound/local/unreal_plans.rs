@@ -31,7 +31,7 @@
 
 //! Unreal manifest plan projection.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use shar_sha256::domain::digest_hex;
 use shar_unreal_conversion::domain::{
@@ -41,7 +41,7 @@ use shar_unreal_conversion::domain::{
 
 use crate::domain::package::unreal_manifest::{
     UnrealFbxArtifactEvidence, UnrealImportManifest, UnrealPackageRecord,
-    UnrealSourceRecord, object_path,
+    UnrealSourceRecord, UnrealUiRasterArtifactEvidence, object_path,
 };
 
 const ENGINE_CONTRACT_REVISION: &str = "shar-unreal-porting-contract-v1";
@@ -59,7 +59,7 @@ impl UnrealImportManifest {
         &self,
         manifest_revision: &str,
     ) -> Result<PlanBundle, String> {
-        self.build_plan_bundle(manifest_revision, None)
+        self.build_plan_bundle(manifest_revision, None, None)
     }
 
     /// Build the six canonical plan families from one complete FBX catalog.
@@ -73,13 +73,33 @@ impl UnrealImportManifest {
         manifest_revision: &str,
         fbx_catalog: &[UnrealFbxArtifactEvidence],
     ) -> Result<PlanBundle, String> {
-        self.build_plan_bundle(manifest_revision, Some(fbx_catalog))
+        self.build_plan_bundle(manifest_revision, Some(fbx_catalog), None)
+    }
+
+    /// Build canonical plans with complete generated model and UI catalogs.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when either supplied catalog is partial, duplicated,
+    /// stale, unsafe, or cannot be claimed by its exact semantic package.
+    pub(crate) fn plan_bundle_with_complete_generated_catalogs(
+        &self,
+        manifest_revision: &str,
+        fbx_catalog: Option<&[UnrealFbxArtifactEvidence]>,
+        ui_raster_catalog: &[UnrealUiRasterArtifactEvidence],
+    ) -> Result<PlanBundle, String> {
+        self.build_plan_bundle(
+            manifest_revision,
+            fbx_catalog,
+            Some(ui_raster_catalog),
+        )
     }
 
     fn build_plan_bundle(
         &self,
         manifest_revision: &str,
         fbx_catalog: Option<&[UnrealFbxArtifactEvidence]>,
+        ui_raster_catalog: Option<&[UnrealUiRasterArtifactEvidence]>,
     ) -> Result<PlanBundle, String> {
         let require_complete_fbx = fbx_catalog.is_some();
         let mut fbx_by_package = BTreeMap::new();
@@ -98,11 +118,48 @@ impl UnrealImportManifest {
             }
         }
 
+        let require_complete_ui_raster = ui_raster_catalog.is_some();
+        let mut ui_raster_by_package = BTreeMap::new();
+        if let Some(entries) = ui_raster_catalog {
+            for entry in entries {
+                validate_ui_raster_evidence(entry)?;
+                if ui_raster_by_package
+                    .insert(entry.package_id.as_str(), entry)
+                    .is_some()
+                {
+                    return Err(concat!(
+                        "generated UI raster catalog contains a duplicate ",
+                        "package",
+                    )
+                    .to_owned());
+                }
+            }
+        }
+
+        let packages_by_id = self
+            .packages
+            .iter()
+            .map(|package| (package.package_id.as_str(), package))
+            .collect::<BTreeMap<_, _>>();
+        let ui_sprite_packages =
+            exact_ui_sprite_packages(&self.packages, &self.sources);
         let mut operations = Vec::new();
+        let mut generated = GeneratedCatalogState {
+            fbx_by_package,
+            require_complete_fbx,
+            ui_raster_by_package,
+            require_complete_ui_raster,
+            ui_sprite_packages,
+            promoted_ui_packages: BTreeSet::new(),
+        };
         for source in &self.sources {
-            if let Some(operation) =
-                direct_import_operation(source, &self.packages)?
-            {
+            let package = packages_by_id
+                .get(source.package_id.as_str())
+                .copied()
+                .ok_or_else(|| {
+                    format!("source {} has no owning package", source.id)
+                })?;
+            if let Some(operation) = direct_import_operation(source, package)? {
                 operations.push(operation);
             }
         }
@@ -111,17 +168,25 @@ impl UnrealImportManifest {
                 package,
                 &self.sources,
                 manifest_revision,
-                &mut fbx_by_package,
-                require_complete_fbx,
+                &mut generated,
             )? {
                 operations.push(operation);
             }
         }
-        if !fbx_by_package.is_empty() {
+        if !generated.fbx_by_package.is_empty() {
             return Err("generated FBX catalog contains an unclaimed package"
                 .to_owned());
         }
-        let semantic_blockers = semantic_blocker_classes(&self.packages)?;
+        if !generated.ui_raster_by_package.is_empty() {
+            return Err(
+                "generated UI raster catalog contains an unclaimed package"
+                    .to_owned(),
+            );
+        }
+        let semantic_blockers = semantic_blocker_classes(
+            &self.packages,
+            &generated.promoted_ui_packages,
+        )?;
         PlanBundle::build_with_semantic_blockers(
             &PlanContext {
                 source_manifest_revision: manifest_revision.to_owned(),
@@ -137,10 +202,13 @@ impl UnrealImportManifest {
 
 fn semantic_blocker_classes(
     packages: &[UnrealPackageRecord],
+    promoted_ui_packages: &BTreeSet<String>,
 ) -> Result<Vec<SemanticBlockerClass>, String> {
     let mut counts = BTreeMap::<(String, String, String), usize>::new();
     for package in packages {
-        if package.disposition != "requires-semantic-conversion" {
+        if package.disposition != "requires-semantic-conversion"
+            || promoted_ui_packages.contains(&package.package_id)
+        {
             continue;
         }
         let key = (
@@ -168,15 +236,11 @@ fn semantic_blocker_classes(
 
 fn direct_import_operation(
     source: &UnrealSourceRecord,
-    packages: &[UnrealPackageRecord],
+    package: &UnrealPackageRecord,
 ) -> Result<Option<ConversionPlan>, String> {
     let Some(import) = &source.direct_import else {
         return Ok(None);
     };
-    let package = packages
-        .iter()
-        .find(|package| package.package_id == source.package_id)
-        .ok_or_else(|| format!("source {} has no owning package", source.id))?;
     let (source_format, target_family) =
         match source.evidence.file_extension.as_str() {
             "png" => (SourceFormat::Image, NativeAssetFamily::Texture),
@@ -186,7 +250,7 @@ fn direct_import_operation(
                 return Err(format!(
                     "unsupported direct import extension: {extension}"
                 ));
-            },
+            }
         };
     Ok(Some(ConversionPlan {
         package_identity: source.package_id.clone(),
@@ -206,33 +270,132 @@ fn direct_import_operation(
     }))
 }
 
-fn package_operation<'catalog>(
+struct GeneratedCatalogState<'catalog> {
+    fbx_by_package:
+        BTreeMap<&'catalog str, &'catalog UnrealFbxArtifactEvidence>,
+    require_complete_fbx: bool,
+    ui_raster_by_package:
+        BTreeMap<&'catalog str, &'catalog UnrealUiRasterArtifactEvidence>,
+    require_complete_ui_raster: bool,
+    ui_sprite_packages: BTreeSet<String>,
+    promoted_ui_packages: BTreeSet<String>,
+}
+
+fn package_operation(
     package: &UnrealPackageRecord,
     sources: &[UnrealSourceRecord],
     manifest_revision: &str,
-    fbx_by_package: &mut BTreeMap<
-        &'catalog str,
-        &'catalog UnrealFbxArtifactEvidence,
-    >,
-    require_complete_fbx: bool,
+    generated: &mut GeneratedCatalogState<'_>,
 ) -> Result<Option<ConversionPlan>, String> {
     match package.disposition {
         "requires-fbx" => fbx_operation(
             package,
             sources,
-            fbx_by_package,
-            require_complete_fbx,
+            &mut generated.fbx_by_package,
+            generated.require_complete_fbx,
         )
         .map(Some),
         "requires-editor-factory" => {
             Ok(Some(construction_operation(package, manifest_revision)))
-        },
+        }
+        "requires-semantic-conversion"
+            if generated.ui_sprite_packages.contains(&package.package_id) =>
+        {
+            let verified = generated
+                .ui_raster_by_package
+                .remove(package.package_id.as_str());
+            if generated.require_complete_ui_raster && verified.is_none() {
+                return Err(concat!(
+                    "complete generated UI raster catalog is missing a ",
+                    "required package",
+                )
+                .to_owned());
+            }
+            verified.map_or(Ok(None), |evidence| {
+                let _inserted = generated
+                    .promoted_ui_packages
+                    .insert(package.package_id.clone());
+                Ok(Some(ui_raster_operation(package, evidence)))
+            })
+        }
         "direct-editor-import"
         | "metadata-only"
         | "requires-semantic-conversion" => Ok(None),
         disposition => {
             Err(format!("unsupported package disposition: {disposition}"))
-        },
+        }
+    }
+}
+
+fn exact_ui_sprite_packages(
+    packages: &[UnrealPackageRecord],
+    sources: &[UnrealSourceRecord],
+) -> BTreeSet<String> {
+    #[derive(Clone, Copy, Default)]
+    struct Coverage {
+        has_sprite: bool,
+        has_image: bool,
+        has_other: bool,
+    }
+
+    let mut coverage = packages
+        .iter()
+        .filter(|package| {
+            package.category == "ui-images"
+                && package.disposition == "requires-semantic-conversion"
+        })
+        .map(|package| (package.package_id.as_str(), Coverage::default()))
+        .collect::<BTreeMap<_, _>>();
+    for source in sources {
+        let Some(state) = coverage.get_mut(source.package_id.as_str()) else {
+            continue;
+        };
+        match source.evidence.source_chunk_kind.as_str() {
+            "sprite" => state.has_sprite = true,
+            "image" => state.has_image = true,
+            _ if is_package_manifest_bookkeeping(source) => {}
+            _ => state.has_other = true,
+        }
+    }
+    coverage
+        .into_iter()
+        .filter(|(_package_id, state)| {
+            state.has_sprite && state.has_image && !state.has_other
+        })
+        .map(|(package_id, _state)| package_id.to_owned())
+        .collect()
+}
+
+fn is_package_manifest_bookkeeping(source: &UnrealSourceRecord) -> bool {
+    source.role.as_str() == "metadata"
+        && source.evidence.unit_type == "metadata"
+        && source.evidence.kind == "package-manifest"
+        && source.evidence.source_chunk_kind == "none"
+        && source.evidence.file_extension == "jsonl"
+        && source.evidence.unreal_import_relation == "editor-only-metadata"
+        && source.evidence.future_normalization == "keep"
+        && source.evidence.path == source.evidence.source_path
+}
+
+fn ui_raster_operation(
+    package: &UnrealPackageRecord,
+    evidence: &UnrealUiRasterArtifactEvidence,
+) -> ConversionPlan {
+    ConversionPlan {
+        package_identity: package.package_id.clone(),
+        source_identity: format!("{}-ui-raster", package.package_id),
+        source_format: SourceFormat::Image,
+        target_family: NativeAssetFamily::Texture,
+        source_path: evidence.path.clone(),
+        source_revision: evidence.sha256.clone(),
+        destination: object_path(&package.package_path, &package.asset_name),
+        target_class: "Texture2D".to_owned(),
+        importer: "texture-factory".to_owned(),
+        import_profile: "shar-texture-v1".to_owned(),
+        dependencies: Vec::new(),
+        readiness: OperationReadiness::Ready,
+        world_owned: false,
+        runtime_bound: true,
     }
 }
 
@@ -354,6 +517,56 @@ fn validate_fbx_evidence(
     }
     if evidence.fbx_version != 7700 {
         return Err("generated FBX version is not supported".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_ui_raster_evidence(
+    evidence: &UnrealUiRasterArtifactEvidence,
+) -> Result<(), String> {
+    let id = evidence.package_id.as_bytes();
+    if id.is_empty()
+        || !id.first().is_some_and(u8::is_ascii_alphanumeric)
+        || !id.last().is_some_and(u8::is_ascii_alphanumeric)
+        || id.windows(2).any(|pair| pair == b"--")
+        || !id.iter().copied().all(|byte| {
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-'
+        })
+    {
+        return Err(
+            "generated UI raster package identity is not canonical".to_owned()
+        );
+    }
+    let expected_path =
+        format!("ui-raster-assets/rasters/{}.png", evidence.package_id);
+    if evidence.path != expected_path {
+        return Err(
+            "generated UI raster path does not match its package identity"
+                .to_owned(),
+        );
+    }
+    if evidence.size_bytes < 8 {
+        return Err("generated UI raster artifact is too small".to_owned());
+    }
+    for (label, digest) in [
+        ("digest", evidence.sha256.as_str()),
+        ("source revision", evidence.source_revision.as_str()),
+    ] {
+        if digest.len() != 64
+            || !digest.bytes().all(|byte| {
+                byte.is_ascii_digit() || matches!(byte, b'a'..=b'f')
+            })
+        {
+            return Err(format!(
+                "generated UI raster {label} is not canonical"
+            ));
+        }
+    }
+    if evidence.width == 0 || evidence.height == 0 || evidence.tile_count == 0 {
+        return Err(
+            "generated UI raster dimensions and tile count must be positive"
+                .to_owned(),
+        );
     }
     Ok(())
 }

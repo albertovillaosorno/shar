@@ -906,3 +906,6 @@ fn skeletal_fbx_reserves_primary_and_skeleton_outputs() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[path = "ui_raster_tests.rs"]
+mod ui_raster_tests;

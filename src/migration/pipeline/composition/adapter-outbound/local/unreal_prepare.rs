@@ -100,7 +100,10 @@ use crate::preflight_mission_script;
 use crate::manifest_paths::{
     FBX_MANIFEST_PATH, UNREAL_MANIFEST_GAME_RELATIVE_PATH,
 };
-use crate::workspace::{FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT};
+use crate::workspace::{
+    FBX_WORKSPACE_ROOT, UI_RASTER_WORKSPACE_ROOT,
+    UNREAL_STAGING_WORKSPACE_ROOT,
+};
 
 /// Canonical import-summary filename.
 const SUMMARY_FILE: &str = "summary.json";
@@ -177,22 +180,28 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     let summary_json = unreal_manifest.summary_json();
     validate_rendered_output(&manifest_jsonl, &summary_json)?;
     let manifest_revision = digest_hex(manifest_jsonl.as_bytes());
+    let ui_raster_catalog =
+        super::ui_sprite_raster::publish_complete_ui_sprite_raster_catalog(
+            &index,
+            &config.extracted_root,
+            Path::new(UI_RASTER_WORKSPACE_ROOT),
+        )?;
+    let verified_ui_raster_count = ui_raster_catalog.len();
     let fbx_catalog = verified_fbx_catalog_at(
         Path::new(FBX_WORKSPACE_ROOT),
         Path::new(FBX_MANIFEST_PATH),
     )?;
     let verified_fbx_count = fbx_catalog.as_ref().map_or(0, Vec::len);
-    let plan_bundle = fbx_catalog
-        .as_deref()
-        .map_or_else(
-            || unreal_manifest.plan_bundle(&manifest_revision),
-            |catalog| {
-                                // jig-ignore-next-line: expression
-                                unreal_manifest.plan_bundle_with_complete_fbx_catalog(&manifest_revision, catalog)
-            },
+    let plan_bundle = unreal_manifest
+        .plan_bundle_with_complete_generated_catalogs(
+            &manifest_revision,
+            fbx_catalog.as_deref(),
+            &ui_raster_catalog,
         )
-        // jig-ignore-next-line: literal
-        .map_err(|error| PipelineError::new(format!("Unreal plan generation failed: {error}")))?;
+        .map_err(|error| {
+            let message = format!("Unreal plan generation failed: {error}");
+            PipelineError::new(message)
+        })?;
     let unreal_manifest_path =
         config.game_root.join(UNREAL_MANIFEST_GAME_RELATIVE_PATH);
     publish_staging(
@@ -213,13 +222,14 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         ),
         note: format!(
             concat!(
-                "verified {} sources across {} semantic packages and {} ",
-                "generated FBX artifacts; published {} mission definitions ",
-                "to {} with plan bundle {}"
+                "verified {} sources across {} semantic packages, {} ",
+                "generated FBX artifacts, and {} compiled UI sprite rasters; ",
+                "published {} mission definitions to {} with plan bundle {}"
             ),
             unreal_manifest.source_count(),
             unreal_manifest.package_count(),
             verified_fbx_count,
+            verified_ui_raster_count,
             mission_definitions_jsonl.lines().count(),
             UNREAL_STAGING_WORKSPACE_ROOT,
             plan_bundle.index_revision(),
