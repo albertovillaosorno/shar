@@ -50,7 +50,8 @@ use crate::manifest_paths::{
 };
 use crate::ports::FbxExportOptions;
 use crate::workspace::{
-    EXTRACTED_WORKSPACE_ROOT, FBX_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT,
+    EXTRACTED_WORKSPACE_ROOT, FBX_WORKSPACE_ROOT, PIPELINE_WORKSPACE_ROOT,
+    UNREAL_STAGING_WORKSPACE_ROOT,
     migrate_legacy_extracted_workspace, migrate_legacy_fbx_workspace,
     migrate_legacy_unreal_workspace,
 };
@@ -460,7 +461,9 @@ fn run_complete_fbx_catalog(arguments: &[String]) -> CommandOutcome {
             },
         }
     };
-    let base_root = arguments.get(2).map_or(".", String::as_str);
+    let base_root = arguments
+        .get(2)
+        .map_or(PIPELINE_WORKSPACE_ROOT, String::as_str);
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
     let result = one_stage(application.export_complete_fbx_catalog(
@@ -483,7 +486,9 @@ fn run_character_catalog(arguments: &[String]) -> CommandOutcome {
     let Some(output_dir) = arguments.get(1) else {
         return missing_argument("output directory");
     };
-    let base_root = arguments.get(2).map_or(".", String::as_str);
+    let base_root = arguments
+        .get(2)
+        .map_or(PIPELINE_WORKSPACE_ROOT, String::as_str);
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
     let result = one_stage(application.export_character_catalog(
@@ -505,7 +510,9 @@ fn run_wasp_camera(arguments: &[String]) -> CommandOutcome {
     let Some(output_dir) = arguments.get(1) else {
         return missing_argument("output directory");
     };
-    let base_root = arguments.get(2).map_or(".", String::as_str);
+    let base_root = arguments
+        .get(2)
+        .map_or(PIPELINE_WORKSPACE_ROOT, String::as_str);
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
     let result = one_stage(application.export_wasp_camera(
@@ -527,7 +534,9 @@ fn run_wrench(arguments: &[String]) -> CommandOutcome {
     let Some(output_dir) = arguments.get(1) else {
         return missing_argument("output directory");
     };
-    let base_root = arguments.get(2).map_or(".", String::as_str);
+    let base_root = arguments
+        .get(2)
+        .map_or(PIPELINE_WORKSPACE_ROOT, String::as_str);
     let provider = LocalPipeline;
     let application = PipelineService::new(&provider);
     let result = one_stage(application.export_wrench(
@@ -683,7 +692,9 @@ fn run_fbx_export(
     let Some(output_dir) = arguments.get(2) else {
         return missing_argument("output directory");
     };
-    let base_root = arguments.get(3).map_or(".", String::as_str);
+    let base_root = arguments
+        .get(3)
+        .map_or(PIPELINE_WORKSPACE_ROOT, String::as_str);
     let selector = match PhaseThreePackageSelector::parse(raw_selector) {
         Ok(selector) => selector,
         Err(error) => {

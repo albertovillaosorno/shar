@@ -62,7 +62,8 @@ pub use property::CharacterBinaryFbxError;
 use property::{
     color_property, count_i32, double_property, enum_property, i32_node,
     id_property, integer_property, name_class, name_class_node, string,
-    string_node, string_property, time_property, vector_property,
+    string_node, string_property, time_property, user_string_property,
+    vector_property,
     visibility_property, xref_string_property,
 };
 
@@ -1103,7 +1104,7 @@ fn objects(
         })?;
         children.push(limb_model_node(
             ids.model,
-            &bone.id,
+            bone,
             &transform.local_parts,
         )?);
         children.push(limb_attribute_node(ids.attribute, &bone.id)?);
@@ -1400,7 +1401,13 @@ fn layer_element(element_type: &str) -> BinaryNode {
 fn export_root_node(
     transform: &TrsParts,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    model_node(EXPORT_ROOT_ID, "SHAR_Export_Root", "Null", transform)
+    model_node(
+        EXPORT_ROOT_ID,
+        "SHAR_Export_Root",
+        "Null",
+        transform,
+        Vec::new(),
+    )
 }
 
 /// Build one mesh model at the scene origin.
@@ -1412,16 +1419,64 @@ fn mesh_model_node(
         translation: [0., 0., 0.],
         rotation_degrees: [0., 0., 0.],
         scale: [1., 1., 1.],
-    })
+    }, Vec::new())
 }
 
 /// Build one skeleton limb-node model.
 fn limb_model_node(
     id: u64,
-    name: &str,
+    bone: &crate::domain::skeleton::bone::Bone,
     parts: &TrsParts,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    model_node(id, name, "LimbNode", parts)
+    let mut custom_properties = Vec::new();
+    if let Some(source_rig) = &bone.source_rig {
+        custom_properties.push(user_string_property(
+            "SHAR_P3D_RigMetadata",
+            &source_rig_json(source_rig),
+        ));
+    }
+    model_node(
+        id,
+        &bone.id,
+        "LimbNode",
+        parts,
+        custom_properties,
+    )
+}
+
+/// Render one source-rig record in a stable field order.
+fn source_rig_json(
+    rig: &crate::domain::skeleton::bone::BoneSourceRig,
+) -> String {
+    let mirror = rig.mirror_map.as_ref().map_or_else(
+        || "null".to_owned(),
+        |map| {
+            format!(
+                concat!(
+                    "{{\"index\":{},\"scale\":[{},{},{}]}}"
+                ),
+                map.index, map.scale[0], map.scale[1], map.scale[2]
+            )
+        },
+    );
+    let fix_flags = rig
+        .fix_flags
+        .map_or_else(|| "null".to_owned(), |value| value.to_string());
+    format!(
+        concat!(
+            "{{\"dof\":{},\"free_axes\":{},",
+            "\"primary_axis\":{},\"secondary_axis\":{},",
+            "\"twist_axis\":{},\"mirror_map\":{},",
+            "\"fix_flags\":{}}}}}"
+        ),
+        rig.dof,
+        rig.free_axes,
+        rig.primary_axis,
+        rig.secondary_axis,
+        rig.twist_axis,
+        mirror,
+        fix_flags
+    )
 }
 
 /// Build one model with local translation, rotation, and scale properties.
@@ -1430,7 +1485,20 @@ fn model_node(
     name: &str,
     model_type: &str,
     parts: &TrsParts,
+    mut custom_properties: Vec<BinaryNode>,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
+    let mut properties = vec![
+        integer_property("DefaultAttributeIndex", 0),
+        vector_property("Lcl Translation", parts.translation),
+        vector_property("Lcl Rotation", parts.rotation_degrees),
+        vector_property("Lcl Scaling", parts.scale),
+        visibility_property(if name.contains("__hidden-wheel-proxy") {
+            0.
+        } else {
+            1.
+        }),
+    ];
+    properties.append(&mut custom_properties);
     Ok(BinaryNode::new(
         "Model",
         vec![
@@ -1440,17 +1508,7 @@ fn model_node(
         ],
         vec![
             i32_node("Version", 232),
-            BinaryNode::branch("Properties70", vec![
-                integer_property("DefaultAttributeIndex", 0),
-                vector_property("Lcl Translation", parts.translation),
-                vector_property("Lcl Rotation", parts.rotation_degrees),
-                vector_property("Lcl Scaling", parts.scale),
-                visibility_property(if name.contains("__hidden-wheel-proxy") {
-                    0.
-                } else {
-                    1.
-                }),
-            ]),
+            BinaryNode::branch("Properties70", properties),
             BinaryNode::leaf("Shading", vec![BinaryProperty::Bool(true)]),
             string_node("Culling", "CullingOff"),
         ],

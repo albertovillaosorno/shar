@@ -47,10 +47,13 @@ cover source read-only containment, official track mapping, missing-evidence
 failure, deterministic repeated output, package publication, and manifest/report
 agreement without synthesizing unavailable Italian content.
 
-Authored mission registration preflight now also rejects one mission identity
-registered by multiple registry scripts within the same level. The duplicate
-guard is scoped by exact init-sibling path, so the same short mission id remains
-valid in different levels; focused regressions prove both cases.
+Authored mission registration preflight preserves registry-source identity
+instead of requiring one mission id per level. The reviewed corpus contains one
+intentional shared registration: level 2 `m1` appears in both the base and E3
+registry while both declarations reference the same validated `m1i`/`m1l`
+siblings. Duplicate ids inside one registry source still fail closed, and the
+same short mission id remains valid across different levels.
+
 Registration identities also use the same lowercase ASCII mission-id grammar as
 the published definition bundle, so case or punctuation drift fails at the
 cross-script source boundary instead of surviving until final publication.

@@ -177,23 +177,19 @@ impl MissionLocatorCatalog {
     ///
     /// # Errors
     ///
-    /// Returns an error when two entries publish the same decoded locator name
-    /// from one package or when the catalog is empty.
-        // jig-ignore-next-line: long identifier
-        pub fn from_entries(entries: Vec<MissionLocatorCatalogEntry>) -> Result<Self, String> {
+    /// Returns an error when the catalog is empty. Package-local duplicate
+    /// names are retained because source type and physical member identity may
+    /// disambiguate them later; unresolved duplicates remain typed ambiguity.
+    pub fn from_entries(
+        entries: Vec<MissionLocatorCatalogEntry>,
+    ) -> Result<Self, String> {
         if entries.is_empty() {
             return Err("mission locator catalog is empty".to_owned());
         }
-                // jig-ignore-next-line: expression
-                let mut by_source_name = BTreeMap::<String, Vec<MissionLocatorCatalogEntry>>::new();
-        let mut package_names = BTreeSet::<(String, String)>::new();
+        let mut by_source_name =
+            BTreeMap::<String, Vec<MissionLocatorCatalogEntry>>::new();
         for entry in entries {
-            let package_key = normalized_package_root(&entry.package_root)?;
-            let identity = (package_key, entry.source_name.clone());
-            if !package_names.insert(identity) {
-                                // jig-ignore-next-line: literal
-                return Err("mission locator name is duplicated inside one package".to_owned());
-            }
+            drop(normalized_package_root(&entry.package_root)?);
             by_source_name
                 .entry(entry.source_name.clone())
                 .or_default()

@@ -101,11 +101,13 @@ fn patterned_skeleton() -> Vec<Bone> {
             id: "root".to_owned(),
             parent_id: None,
             rest_matrix: identity,
+            source_rig: None,
         },
         Bone {
             id: "head".to_owned(),
             parent_id: Some("root".to_owned()),
             rest_matrix: identity,
+            source_rig: None,
         },
     ]
 }

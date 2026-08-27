@@ -111,11 +111,12 @@ impl LosslessPackageExporter {
             let kind = component.kind.label();
             let next_index = kind_counts.entry(kind).or_insert(0);
             *next_index += 1;
-            let recovered = recover_component(component, &bytes, *next_index)?;
+            let mut recovered =
+                recover_component(component, &bytes, *next_index)?;
             if !register_recovered_path(
                 &mut published_paths,
                 component,
-                &recovered,
+                &mut recovered,
             )? {
                 continue;
             }
@@ -150,22 +151,15 @@ impl LosslessPackageExporter {
 /// Register one recovered component under a portable output-path identity.
 ///
 /// Byte-identical nested repeats of the exact same path are references to the
-/// already-published component. Every other collision fails closed so source
-/// evidence cannot be overwritten or become host-filesystem dependent.
+/// already-published component. Other byte-identical duplicate identities
+/// retain their source ordinal under a deterministic qualified physical path.
+/// Semantic consumers reject ambiguous same-name payloads when selecting one.
 fn register_recovered_path(
     published_paths: &mut BTreeMap<String, (PathBuf, Vec<u8>)>,
     component: &ChunkRecord,
-    recovered: &RecoveredComponent,
+    recovered: &mut RecoveredComponent,
 ) -> Result<bool, P3dError> {
-    let relative = recovered.relative_path.to_str().ok_or_else(|| {
-        P3dError::invalid_source(
-            "recovered component path is not valid Unicode",
-        )
-    })?;
-    let identity = relative
-        .chars()
-        .flat_map(char::to_uppercase)
-        .collect::<String>();
+    let identity = portable_path_identity(&recovered.relative_path)?;
     if let Some((existing_path, existing_bytes)) =
         published_paths.get(&identity)
     {
@@ -175,17 +169,64 @@ fn register_recovered_path(
         {
             return Ok(false);
         }
-        return Err(P3dError::invalid_source(format!(
-            "recovered component paths collide on portable identity: {} and {}",
-            existing_path.display(),
-            recovered.relative_path.display()
-        )));
+        let alias = ordinal_qualified_path(
+            &recovered.relative_path,
+            component.ordinal,
+        )?;
+        let alias_identity = portable_path_identity(&alias)?;
+        if published_paths.contains_key(&alias_identity) {
+            return Err(P3dError::invalid_source(format!(
+                "recovered component alias path already exists: {}",
+                alias.display()
+            )));
+        }
+        recovered.relative_path = alias;
+        drop(published_paths.insert(
+            alias_identity,
+            (recovered.relative_path.clone(), recovered.bytes.clone()),
+        ));
+        return Ok(true);
     }
     drop(published_paths.insert(
         identity,
         (recovered.relative_path.clone(), recovered.bytes.clone()),
     ));
     Ok(true)
+}
+
+/// Return one case-insensitive portable identity for a generated path.
+fn portable_path_identity(path: &Path) -> Result<String, P3dError> {
+    let relative = path.to_str().ok_or_else(|| {
+        P3dError::invalid_source(
+            "recovered component path is not valid Unicode",
+        )
+    })?;
+    Ok(relative
+        .chars()
+        .flat_map(char::to_uppercase)
+        .collect::<String>())
+}
+
+/// Add a source-ordinal suffix before the generated file extension.
+fn ordinal_qualified_path(
+    path: &Path,
+    ordinal: usize,
+) -> Result<PathBuf, P3dError> {
+    let parent = path.parent().unwrap_or_else(|| Path::new(""));
+    let stem = path.file_stem().and_then(|value| value.to_str()).ok_or_else(|| {
+        P3dError::invalid_source(
+            "recovered component alias path has no portable file stem",
+        )
+    })?;
+    let extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| {
+            P3dError::invalid_source(
+                "recovered component alias path has no portable extension",
+            )
+        })?;
+    Ok(parent.join(format!("{stem}__ordinal_{ordinal:04}.{extension}")))
 }
 
 /// Recreate the normalized component directory for one package export.

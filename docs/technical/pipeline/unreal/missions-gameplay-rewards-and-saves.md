@@ -341,6 +341,10 @@ All 64 reviewed `AddMission` declarations across 16 base, demo, and E3 load
 sources retain their authored source ordinal and dense registration position.
 Each declaration is validated against exact `<id>i.mfk.json` and
 `<id>l.mfk.json` siblings, and the init sibling must select the same mission id.
+Registry-source identity remains part of the evidence: level 2 `m1` is authored
+once by the base registry and once by the E3 registry while sharing the same
+validated mission siblings.
+
 This establishes source registry order only; it does not create unlock,
 prerequisite, completion, or next-mission edges.
 

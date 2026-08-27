@@ -48,6 +48,8 @@ use schoenwald_filesystem::adapters::driving::local as local_filesystem;
 
 use crate::domain::{PipelineError, PipelineOutcome};
 
+/// Shared physical root for canonical generated pipeline workspaces.
+pub(crate) const PIPELINE_WORKSPACE_ROOT: &str = ".cache/pipeline";
 /// Default physical extraction workspace.
 pub(crate) const EXTRACTED_WORKSPACE_ROOT: &str = ".cache/pipeline/extracted";
 /// Default physical complete FBX catalog workspace.

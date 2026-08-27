@@ -319,8 +319,15 @@ fn texture_font_recovery_rejects_glyph_stride_mismatch() -> Result<(), String> {
 }
 
 fn publication_chunk(parent_ordinal: Option<usize>) -> ChunkRecord {
+    publication_chunk_at(1, parent_ordinal)
+}
+
+fn publication_chunk_at(
+    ordinal: usize,
+    parent_ordinal: Option<usize>,
+) -> ChunkRecord {
     ChunkRecord {
-        ordinal: 1,
+        ordinal,
         depth: 1,
         parent_ordinal,
         id: 0,
@@ -348,18 +355,18 @@ fn recovered_publication(path: &str, bytes: &[u8]) -> RecoveredComponent {
 fn publication_registry_reuses_only_identical_nested_exact_path()
 -> Result<(), String> {
     let mut paths = BTreeMap::new();
-    let first = recovered_publication("mesh/shared.json", b"same");
-    let nested = recovered_publication("mesh/shared.json", b"same");
+    let mut first = recovered_publication("mesh/shared.json", b"same");
+    let mut nested = recovered_publication("mesh/shared.json", b"same");
     let first_publish = register_recovered_path(
         &mut paths,
         &publication_chunk(Some(0)),
-        &first,
+        &mut first,
     )
     .map_err(|error| error.to_string())?;
     let nested_publish = register_recovered_path(
         &mut paths,
         &publication_chunk(Some(1)),
-        &nested,
+        &mut nested,
     )
     .map_err(|error| error.to_string())?;
     if !first_publish || nested_publish {
@@ -372,72 +379,129 @@ fn publication_registry_reuses_only_identical_nested_exact_path()
 }
 
 #[test]
-fn publication_registry_rejects_nested_payload_conflict() -> Result<(), String>
-{
+fn publication_registry_disambiguates_nested_payload_conflict()
+-> Result<(), String> {
     let mut paths = BTreeMap::new();
-    let first = recovered_publication("mesh/shared.json", b"first");
-    let nested = recovered_publication("mesh/shared.json", b"second");
+    let mut first = recovered_publication("mesh/shared.json", b"first");
+    let mut nested = recovered_publication("mesh/shared.json", b"second");
     let first_publish = register_recovered_path(
         &mut paths,
         &publication_chunk(Some(0)),
-        &first,
+        &mut first,
     )
     .map_err(|error| error.to_string())?;
     if !first_publish {
         return Err("first component path claim was skipped".to_owned());
     }
-    if register_recovered_path(&mut paths, &publication_chunk(Some(1)), &nested)
-        .is_ok()
+    if !register_recovered_path(
+        &mut paths,
+        &publication_chunk_at(9, Some(1)),
+        &mut nested,
+    )
+    .map_err(|error| error.to_string())?
     {
+        return Err("different nested payload was silently reused".to_owned());
+    }
+    if nested.relative_path != Path::new("mesh/shared__ordinal_0009.json") {
+        return Err("nested payload conflict was not disambiguated".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn publication_registry_disambiguates_identical_direct_root_duplicates()
+-> Result<(), String> {
+    let mut paths = BTreeMap::new();
+    let mut first = recovered_publication("mesh/shared.json", b"same");
+    let mut second = recovered_publication("mesh/shared.json", b"same");
+    if !register_recovered_path(
+        &mut paths,
+        &publication_chunk_at(1, Some(0)),
+        &mut first,
+    )
+    .map_err(|error| error.to_string())?
+    {
+        return Err("first component path claim was skipped".to_owned());
+    }
+    if !register_recovered_path(
+        &mut paths,
+        &publication_chunk_at(8, Some(0)),
+        &mut second,
+    )
+    .map_err(|error| error.to_string())?
+    {
+        return Err("identical direct-root duplicate was skipped".to_owned());
+    }
+    if second.relative_path != Path::new("mesh/shared__ordinal_0008.json") {
+        return Err("direct-root duplicate path was not qualified".to_owned());
+    }
+    if paths.len() != 2 {
+        return Err("direct-root duplicate lost source provenance".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn publication_registry_disambiguates_identical_case_aliases()
+-> Result<(), String> {
+    let mut paths = BTreeMap::new();
+    let mut first = recovered_publication("mesh/Shared.json", b"same");
+    let mut alias = recovered_publication("MESH/shared.json", b"same");
+    if !register_recovered_path(
+        &mut paths,
+        &publication_chunk_at(1, Some(0)),
+        &mut first,
+    )
+    .map_err(|error| error.to_string())?
+    {
+        return Err("first component path claim was skipped".to_owned());
+    }
+    if !register_recovered_path(
+        &mut paths,
+        &publication_chunk_at(27, Some(0)),
+        &mut alias,
+    )
+    .map_err(|error| error.to_string())?
+    {
+        return Err("case-only source alias was skipped".to_owned());
+    }
+    if alias.relative_path != Path::new("MESH/shared__ordinal_0027.json") {
+        return Err(format!(
+            "case alias path was not deterministic: {}",
+            alias.relative_path.display()
+        ));
+    }
+    if paths.len() != 2 {
         return Err(
-            "different nested payload reused one component path".to_owned()
+            "case aliases did not retain two provenance rows".to_owned(),
         );
     }
     Ok(())
 }
 
 #[test]
-fn publication_registry_rejects_direct_root_duplicate() -> Result<(), String> {
+fn publication_registry_disambiguates_case_alias_payload_conflict()
+-> Result<(), String> {
     let mut paths = BTreeMap::new();
-    let first = recovered_publication("mesh/shared.json", b"same");
-    let second = recovered_publication("mesh/shared.json", b"same");
-    let first_publish = register_recovered_path(
+    let mut first = recovered_publication("mesh/Shared.json", b"first");
+    let mut alias = recovered_publication("MESH/shared.json", b"second");
+    let _published = register_recovered_path(
         &mut paths,
-        &publication_chunk(Some(0)),
-        &first,
+        &publication_chunk_at(1, Some(0)),
+        &mut first,
     )
     .map_err(|error| error.to_string())?;
-    if !first_publish {
-        return Err("first component path claim was skipped".to_owned());
-    }
-    if register_recovered_path(&mut paths, &publication_chunk(Some(0)), &second)
-        .is_ok()
-    {
-        return Err(
-            "direct root duplicate component path was accepted".to_owned()
-        );
-    }
-    Ok(())
-}
-
-#[test]
-fn publication_registry_rejects_case_equivalent_path() -> Result<(), String> {
-    let mut paths = BTreeMap::new();
-    let first = recovered_publication("mesh/Shared.json", b"same");
-    let nested = recovered_publication("MESH/shared.json", b"same");
-    let first_publish = register_recovered_path(
+    if !register_recovered_path(
         &mut paths,
-        &publication_chunk(Some(0)),
-        &first,
+        &publication_chunk_at(27, Some(0)),
+        &mut alias,
     )
-    .map_err(|error| error.to_string())?;
-    if !first_publish {
-        return Err("first component path claim was skipped".to_owned());
-    }
-    if register_recovered_path(&mut paths, &publication_chunk(Some(1)), &nested)
-        .is_ok()
+    .map_err(|error| error.to_string())?
     {
-        return Err("case-equivalent component path was accepted".to_owned());
+        return Err("conflicting case alias payload was skipped".to_owned());
+    }
+    if alias.relative_path != Path::new("MESH/shared__ordinal_0027.json") {
+        return Err("conflicting case alias was not disambiguated".to_owned());
     }
     Ok(())
 }

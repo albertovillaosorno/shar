@@ -101,6 +101,7 @@ fn synthetic_character() -> Result<CharacterAsset, String> {
             rest_matrix: [
                 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 2., 3., 4., 1.,
             ],
+            source_rig: None,
         }],
         vec![SkinnedPart {
             mesh,

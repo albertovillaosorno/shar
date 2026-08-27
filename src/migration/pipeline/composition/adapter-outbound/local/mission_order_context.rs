@@ -104,8 +104,9 @@ impl MissionOrderSourceReport {
 ///
 /// # Errors
 ///
-/// Fails on duplicate source paths, malformed or duplicate mission ids,
-/// missing init/load siblings, or init selection drift.
+/// Fails on duplicate source paths, malformed or source-local duplicate
+/// mission ids, missing init/load siblings, or init selection drift. Alternate
+/// registry sources may intentionally reference the same mission siblings.
 pub(super) fn build_mission_order_source_reports(
     snapshots: &[MissionLocatorScriptSnapshot],
 ) -> Result<Vec<MissionOrderSourceReport>, String> {
@@ -117,7 +118,6 @@ pub(super) fn build_mission_order_source_reports(
     }
 
     let mut reports = Vec::new();
-    let mut seen_registration_targets = BTreeMap::new();
     for snapshot in snapshots {
         let declarations = snapshot
             .evidence()
@@ -157,15 +157,6 @@ pub(super) fn build_mission_order_source_reports(
             previous_ordinal = Some(declaration.ordinal());
 
             let init_source_path = format!("{directory}{mission_id}i.mfk.json");
-            if seen_registration_targets
-                .insert(init_source_path.clone(), snapshot.source_path())
-                .is_some()
-            {
-                return Err(
-                    "mission registration id is duplicated within level"
-                        .to_owned(),
-                );
-            }
             let load_source_path = format!("{directory}{mission_id}l.mfk.json");
             let init = by_path
                 .get(init_source_path.as_str())

@@ -77,11 +77,13 @@ fn cluster_bones_preserve_skeleton_ordinal_order() -> Result<(), String> {
                 id: "z_root".to_owned(),
                 parent_id: None,
                 rest_matrix,
+                source_rig: None,
             },
             Bone {
                 id: "a_child".to_owned(),
                 parent_id: Some("z_root".to_owned()),
                 rest_matrix,
+                source_rig: None,
             },
         ],
         vec![SkinnedPart {

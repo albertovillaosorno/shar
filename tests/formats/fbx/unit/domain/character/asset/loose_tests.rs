@@ -45,7 +45,8 @@ fn rejects_control_characters_in_character_identities() {
                 id: "root\nalias".to_owned(),
                 parent_id: None,
                 rest_matrix: [0f32; 16],
-            },],
+                source_rig: None,
+                },],
             Vec::new(),
         ),
         Err(CharacterError::NonCanonicalBoneId {
@@ -61,11 +62,13 @@ fn rejects_noncanonical_parent_identities() {
             id: "root".to_owned(),
             parent_id: None,
             rest_matrix: [0f32; 16],
+            source_rig: None,
         },
         Bone {
             id: "child".to_owned(),
             parent_id: Some("root\nalias".to_owned()),
             rest_matrix: [0f32; 16],
+            source_rig: None,
         },
     ];
 
