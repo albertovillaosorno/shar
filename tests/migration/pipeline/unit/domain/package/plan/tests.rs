@@ -241,6 +241,49 @@ fn single_skeletal_row() -> Result<PhaseThreePackageRow, String> {
     PhaseThreePackageRow::from_json_line(row).map_err(|error| error.to_string())
 }
 
+fn row_with_duplicate_skeleton() -> Result<PhaseThreePackageRow, String> {
+    let row = concat!(
+        "{\"package_id\":\"pkg\",\"package_root\":\"pkg\",",
+        "\"package_category\":\"characters\",",
+        "\"package_subcategory\":\"characters/test/base-model\",",
+        "\"unit_count\":4,\"text_key_count\":0,",
+        "\"unit_ids\":[\"composite-a\",\"skin-a\",",
+        "\"skeleton-a\",\"skeleton-b\"],",
+        "\"world_ids\":[],\"texture_ids\":[],",
+        "\"material_ids\":[],",
+        "\"model_ids\":[\"composite-a\",\"skin-a\"],",
+        "\"physics_ids\":[],",
+        "\"animation_ids\":[\"skeleton-a\",\"skeleton-b\"],",
+        "\"scene_ids\":[],\"locator_ids\":[],",
+        "\"camera_ids\":[],\"light_ids\":[],",
+        "\"particle_ids\":[],\"controller_ids\":[],",
+        "\"audio_ids\":[],\"movie_ids\":[],",
+        "\"script_ids\":[],\"text_ids\":[],",
+        "\"ui_ids\":[],\"metadata_ids\":[],",
+        "\"error_ids\":[],\"source_unit_ids\":[],",
+        "\"text_key_ids\":[],\"members\":[",
+        "{\"id\":\"composite-a\",\"role\":\"model\",",
+        "\"path\":\"extracted/composite.json\",",
+        "\"type\":\"model\",",
+        "\"kind\":\"p3d-composite-drawable\",",
+        "\"source_chunk_kind\":\"composite_drawable\"},",
+        "{\"id\":\"skin-a\",\"role\":\"model\",",
+        "\"path\":\"extracted/skin.json\",",
+        "\"type\":\"model\",\"kind\":\"p3d-skin\",",
+        "\"source_chunk_kind\":\"skin\"},",
+        "{\"id\":\"skeleton-a\",\"role\":\"animation\",",
+        "\"path\":\"extracted/skeleton-a.json\",",
+        "\"type\":\"animation\",\"kind\":\"p3d-skeleton\",",
+        "\"source_chunk_kind\":\"skeleton\"},",
+        "{\"id\":\"skeleton-b\",\"role\":\"animation\",",
+        "\"path\":\"extracted/skeleton-b.json\",",
+        "\"type\":\"animation\",\"kind\":\"p3d-skeleton\",",
+        "\"source_chunk_kind\":\"skeleton\"}],",
+        "\"text_keys\":[]}",
+    );
+    PhaseThreePackageRow::from_json_line(row).map_err(|error| error.to_string())
+}
+
 fn row_with_model_and_companion(
     companion_field: &str,
 ) -> Result<PhaseThreePackageRow, String> {
@@ -387,6 +430,21 @@ fn classifies_exact_single_skeletal_mesh_target() -> Result<(), String> {
     if fbx.target_kind != FbxTargetKind::SkeletalMesh {
         return Err(format!(
             "unexpected skeletal target: {:?}",
+            fbx.target_kind
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn multiple_skeletons_require_semantic_split() -> Result<(), String> {
+    let plan = PhaseThreePackagePlanner::plan(&row_with_duplicate_skeleton()?);
+    let Some(fbx) = plan.fbx else {
+        return Err("multi-skeleton package should produce an FBX plan".to_owned());
+    };
+    if fbx.target_kind != FbxTargetKind::SemanticSplit {
+        return Err(format!(
+            "multi-skeleton package bypassed semantic split: {:?}",
             fbx.target_kind
         ));
     }
