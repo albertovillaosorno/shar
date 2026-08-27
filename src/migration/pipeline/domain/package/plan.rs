@@ -300,6 +300,9 @@ fn single_skeletal_mesh_package(package: &PhaseThreePackageRow) -> bool {
             if member.kind == "p3d-skeleton"
                 && member.source_chunk_kind == "skeleton" =>
         {
+            if has_skeleton {
+                return false;
+            }
             has_skeleton = true;
             true
         },
