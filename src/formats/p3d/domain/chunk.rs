@@ -100,6 +100,8 @@ pub enum ChunkKind {
     /// Item.
     Texture,
     /// Item.
+    Image,
+    /// Item.
     ImageData,
     /// Item.
     Mesh,
@@ -224,6 +226,7 @@ impl ChunkKind {
             Self::TextBible => "text_bible",
             Self::Language => "language",
             Self::Texture => "texture",
+            Self::Image => "image",
             Self::ImageData => "image_data",
             Self::Mesh => "mesh",
             Self::Skin => "skin",
@@ -495,6 +498,7 @@ const fn classify_chunk(id: u32) -> ChunkKind {
         0x0001_800d => ChunkKind::TextBible,
         0x0001_800e => ChunkKind::Language,
         0x0001_9000 => ChunkKind::Texture,
+        0x0001_9001 => ChunkKind::Image,
         0x0001_9002 => ChunkKind::ImageData,
         0x0001_0000 => ChunkKind::Mesh,
         0x0001_0001 => ChunkKind::Skin,

@@ -673,6 +673,26 @@ fn sprite_layout_json_does_not_fabricate_texture_payload() -> Result<(), String>
 }
 
 #[test]
+// jig-ignore-next-line: long identifier
+fn embedded_sprite_dds_remains_semantic_until_compiler_support() -> Result<(), String> {
+    let package = row_with_texture_path(
+        "ui-images",
+        "p3d-texture",
+        "extracted/ui/components/image/icon.dds",
+    )?;
+    let plan = PhaseThreePackagePlanner::plan(&package);
+    let Some(unreal) = plan.unreal else {
+        return Err("embedded DDS should produce an Unreal plan".to_owned());
+    };
+    if unreal.target_kind != UnrealTargetKind::SemanticSource {
+        return Err(
+            "embedded DDS bypassed its semantic compiler gate".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn game_icon_category_without_pixels_remains_semantic() -> Result<(), String> {
     let package = row("game-icons", "game-icons", "text_ids")?;
     let plan = PhaseThreePackagePlanner::plan(&package);

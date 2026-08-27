@@ -213,11 +213,14 @@ fn ordinal_qualified_path(
     ordinal: usize,
 ) -> Result<PathBuf, P3dError> {
     let parent = path.parent().unwrap_or_else(|| Path::new(""));
-    let stem = path.file_stem().and_then(|value| value.to_str()).ok_or_else(|| {
-        P3dError::invalid_source(
-            "recovered component alias path has no portable file stem",
-        )
-    })?;
+    let stem = path
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| {
+            P3dError::invalid_source(
+                "recovered component alias path has no portable file stem",
+            )
+        })?;
     let extension = path
         .extension()
         .and_then(|value| value.to_str())
@@ -260,6 +263,12 @@ fn should_publish_component(
         return has_ancestor(component, chunks, |ancestor| {
             matches!(ancestor, "srr_chunk_set" | "texture_font")
         });
+    }
+    if kind == "image" {
+        return component
+            .parent_ordinal
+            .and_then(|ordinal| chunks.get(ordinal))
+            .is_some_and(|parent| parent.kind.label() == "sprite");
     }
     false
 }
@@ -413,6 +422,11 @@ fn recover_component(
     {
         return Ok(recovered);
     }
+    if component.kind.label() == "image"
+        && let Some(recovered) = recover_image(component, source)?
+    {
+        return Ok(recovered);
+    }
     if let Some(recovered) =
         schema::recover_schema_json(component, source, kind_index)
     {
@@ -440,6 +454,30 @@ fn recover_texture(
     let file_stem = strip_known_image_extension(&sanitize(&name));
     Ok(Some(RecoveredComponent {
         relative_path: PathBuf::from("texture")
+            .join(format!("{file_stem}.{extension}")),
+        name,
+        bytes: image_payload.to_vec(),
+        payload_format: format!("image/{extension}"),
+        recovery_status: "recovered_embedded_image_payload".to_owned(),
+    }))
+}
+
+/// Recover one embedded image child as its exact physical payload.
+fn recover_image(
+    component: &ChunkRecord,
+    source: &[u8],
+) -> Result<Option<RecoveredComponent>, P3dError> {
+    let name = component_name(component, source, 0);
+    let chunk = raw_component_bytes(component, source)?;
+    let Some(image_payload) = extract_image_payload(chunk) else {
+        return Ok(None);
+    };
+    let Some(extension) = detect_image_extension(image_payload) else {
+        return Ok(None);
+    };
+    let file_stem = strip_known_image_extension(&sanitize(&name));
+    Ok(Some(RecoveredComponent {
+        relative_path: PathBuf::from("image")
             .join(format!("{file_stem}.{extension}")),
         name,
         bytes: image_payload.to_vec(),
@@ -513,27 +551,48 @@ fn extract_first_image_payload(texture_chunk: &[u8]) -> Option<&[u8]> {
         read_chunk_header(texture_chunk, 0)?;
     let mut cursor = texture_header;
     while cursor + 12 <= texture_total {
-        let (child_id, child_header, child_total) =
+        let (child_id, _child_header, child_total) =
             read_chunk_header(texture_chunk, cursor)?;
         if child_id == 0x0001_9001 {
-            let mut sub = cursor + child_header;
-            let child_end = cursor + child_total;
-            while sub + 12 <= child_end {
-                let (sub_id, _sub_header, sub_total) =
-                    read_chunk_header(texture_chunk, sub)?;
-                if sub_id == 0x0001_9002 {
-                    let size_offset = sub + 12;
-                    let payload_size =
-                        read_u32(texture_chunk, size_offset)? as usize;
-                    let payload_start = size_offset + 4;
-                    let payload_end =
-                        payload_start.checked_add(payload_size)?;
-                    return texture_chunk.get(payload_start..payload_end);
-                }
-                sub += sub_total;
-            }
+            let child_end = cursor.checked_add(child_total)?;
+            let child = texture_chunk.get(cursor..child_end)?;
+            return extract_image_payload(child);
         }
         cursor += child_total;
+    }
+    None
+}
+
+/// Extract the exact payload from one `IMAGE` chunk's `IMAGE_DATA` child.
+fn extract_image_payload(image_chunk: &[u8]) -> Option<&[u8]> {
+    let (image_id, image_header, image_total) =
+        read_chunk_header(image_chunk, 0)?;
+    if image_id != 0x0001_9001 || image_total != image_chunk.len() {
+        return None;
+    }
+    let mut cursor = image_header;
+    while cursor + 12 <= image_total {
+        let (child_id, child_header, child_total) =
+            read_chunk_header(image_chunk, cursor)?;
+        let child_end = cursor.checked_add(child_total)?;
+        if child_end > image_total {
+            return None;
+        }
+        if child_id == 0x0001_9002 {
+            if child_header != child_total || child_header < 16 {
+                return None;
+            }
+            let size_offset = cursor.checked_add(12)?;
+            let payload_size =
+                usize::try_from(read_u32(image_chunk, size_offset)?).ok()?;
+            let payload_start = size_offset.checked_add(4)?;
+            let payload_end = payload_start.checked_add(payload_size)?;
+            if payload_end != child_end {
+                return None;
+            }
+            return image_chunk.get(payload_start..payload_end);
+        }
+        cursor = child_end;
     }
     None
 }

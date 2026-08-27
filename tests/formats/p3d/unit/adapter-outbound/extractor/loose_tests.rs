@@ -318,6 +318,119 @@ fn texture_font_recovery_rejects_glyph_stride_mismatch() -> Result<(), String> {
     Ok(())
 }
 
+fn dds_payload_fixture() -> Vec<u8> {
+    let mut payload = vec![0_u8; 128];
+    payload[..4].copy_from_slice(b"DDS ");
+    payload[4..8].copy_from_slice(&124_u32.to_le_bytes());
+    payload[12..16].copy_from_slice(&32_u32.to_le_bytes());
+    payload[16..20].copy_from_slice(&64_u32.to_le_bytes());
+    payload[76..80].copy_from_slice(&32_u32.to_le_bytes());
+    payload
+}
+
+fn image_fixture(
+    payload: &[u8],
+    declared_payload_size: usize,
+) -> Result<Vec<u8>, String> {
+    const IMAGE: u32 = 0x0001_9001;
+    const IMAGE_DATA: u32 = 0x0001_9002;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "sprite.png")?;
+    for value in [14_000, 64, 32, 32, 0, 1, 10] {
+        push_u32(&mut fields, value);
+    }
+    let image_header = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("fixture image header overflowed"))?;
+    let data_total = 16_usize
+        .checked_add(payload.len())
+        .ok_or_else(|| String::from("fixture image data overflowed"))?;
+    let image_total = image_header
+        .checked_add(data_total)
+        .ok_or_else(|| String::from("fixture image total overflowed"))?;
+    let image_header = u32::try_from(image_header).map_err(|error| {
+        format!("fixture image header exceeds u32: {error}")
+    })?;
+    let image_total = u32::try_from(image_total).map_err(|error| {
+        format!("fixture image total exceeds u32: {error}")
+    })?;
+    let data_total = u32::try_from(data_total).map_err(|error| {
+        format!("fixture image data exceeds u32: {error}")
+    })?;
+    let declared_payload_size = u32::try_from(declared_payload_size)
+        .map_err(|error| format!("fixture payload size exceeds u32: {error}"))?;
+
+    let mut bytes = Vec::new();
+    push_u32(&mut bytes, IMAGE);
+    push_u32(&mut bytes, image_header);
+    push_u32(&mut bytes, image_total);
+    bytes.extend_from_slice(&fields);
+    push_u32(&mut bytes, IMAGE_DATA);
+    push_u32(&mut bytes, data_total);
+    push_u32(&mut bytes, data_total);
+    push_u32(&mut bytes, declared_payload_size);
+    bytes.extend_from_slice(payload);
+    Ok(bytes)
+}
+
+fn image_record(source: &[u8]) -> Result<ChunkRecord, String> {
+    let header = read_u32(source, 4)
+        .ok_or_else(|| String::from("image header missing"))?;
+    let header_size = usize::try_from(header)
+    .map_err(|error| format!("image header exceeds usize: {error}"))?;
+    Ok(ChunkRecord {
+        ordinal: 2,
+        depth: 2,
+        parent_ordinal: Some(1),
+        id: 0x0001_9001,
+        kind: crate::ChunkKind::Image,
+        offset: 0,
+        header_size,
+        total_size: source.len(),
+        payload_offset: header_size,
+        payload_size: source.len().saturating_sub(header_size),
+        child_count: 1,
+    })
+}
+
+#[test]
+fn embedded_sprite_image_recovery_preserves_exact_dds_payload()
+-> Result<(), String> {
+    let payload = dds_payload_fixture();
+    let source = image_fixture(&payload, payload.len())?;
+    let component = image_record(&source)?;
+    let recovered = recover_component(&component, &source, 1)
+        .map_err(|error| error.to_string())?;
+    if recovered.relative_path != Path::new("image/sprite.dds")
+        || recovered.payload_format != "image/dds"
+        || recovered.recovery_status != "recovered_embedded_image_payload"
+        || recovered.bytes != payload
+    {
+        return Err(
+            "embedded sprite DDS recovery changed exact evidence".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn embedded_sprite_image_recovery_rejects_oversized_data_claim()
+-> Result<(), String> {
+    let payload = dds_payload_fixture();
+    let declared = payload
+        .len()
+        .checked_add(1)
+        .ok_or_else(|| String::from("fixture payload size overflowed"))?;
+    let source = image_fixture(&payload, declared)?;
+    let component = image_record(&source)?;
+    if recover_component(&component, &source, 1).is_ok() {
+        return Err(
+            "oversized IMAGE_DATA payload claim was accepted".to_owned(),
+        );
+    }
+    Ok(())
+}
+
 fn publication_chunk(parent_ordinal: Option<usize>) -> ChunkRecord {
     publication_chunk_at(1, parent_ordinal)
 }
