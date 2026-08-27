@@ -1250,6 +1250,7 @@ fn p3d_package_complete(output: &Path) -> bool {
         && !has_raw_component_output(&components)
         && !has_incomplete_component_json(&components)
         && component_ledger_files_exist(output)
+        && sprite_image_evidence_complete(output)
 }
 
 /// Has incomplete component JSON.
@@ -1333,6 +1334,68 @@ fn component_ledger_files_exist(output: &Path) -> bool {
         }
     }
     true
+}
+
+/// Require every decoded sprite to own exactly its declared image children.
+fn sprite_image_evidence_complete(output: &Path) -> bool {
+    let manifest = output.join("components.jsonl");
+    let components = output.join("components");
+    let Ok(text) = fs::read_to_string(&manifest) else {
+        return false;
+    };
+    let mut expected_by_sprite = BTreeMap::<usize, usize>::new();
+    let mut actual_by_sprite = BTreeMap::<usize, usize>::new();
+    for line in text.lines().skip(1) {
+        let Some(kind) = extract_json_string_field(line, "kind") else {
+            return false;
+        };
+        match kind.as_str() {
+            "sprite" => {
+                let Some(ordinal) = extract_json_usize_field(line, "ordinal")
+                else {
+                    return false;
+                };
+                let Some(path_text) = extract_json_string_field(line, "path")
+                else {
+                    return false;
+                };
+                let Ok(path) = resolve_under(&components, Path::new(&path_text))
+                else {
+                    return false;
+                };
+                let Ok(sprite) = fs::read_to_string(path) else {
+                    return false;
+                };
+                let Some(image_count) =
+                    extract_json_usize_field(&sprite, "image_count")
+                else {
+                    return false;
+                };
+                if expected_by_sprite.insert(ordinal, image_count).is_some() {
+                    return false;
+                }
+            },
+            "image" => {
+                let Some(parent) =
+                    extract_json_usize_field(line, "parent_ordinal")
+                else {
+                    return false;
+                };
+                let count = actual_by_sprite.entry(parent).or_default();
+                *count = count.saturating_add(1);
+            },
+            _ => {},
+        }
+    }
+    if actual_by_sprite
+        .keys()
+        .any(|parent| !expected_by_sprite.contains_key(parent))
+    {
+        return false;
+    }
+    expected_by_sprite.into_iter().all(|(ordinal, expected)| {
+        actual_by_sprite.get(&ordinal).copied().unwrap_or_default() == expected
+    })
 }
 
 /// Extract one required nonnegative top-level integer field.

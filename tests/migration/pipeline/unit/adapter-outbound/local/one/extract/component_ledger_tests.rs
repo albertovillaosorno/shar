@@ -36,6 +36,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
     UnrealHapPackagePlan, component_ledger_files_exist, movie_outputs_complete,
+    sprite_image_evidence_complete,
 };
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -52,6 +53,85 @@ fn case_dir(label: &str) -> Result<PathBuf, String> {
     fs::create_dir_all(case.join("components"))
         .map_err(|error| error.to_string())?;
     Ok(case)
+}
+
+
+#[test]
+fn stale_sprite_cache_requires_image_children() -> Result<(), String> {
+    let case = case_dir("stale-sprite-images")?;
+    fs::create_dir_all(case.join("components/sprite"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/sprite/sample.json"),
+        concat!(
+            r#"{"schema":"sprite","image_size":[4,4],"#,
+            r#""image_count":2,"blit_border":1}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":1}"#,
+            "\n",
+            r#"{"ordinal":1,"parent_ordinal":0,"kind":"sprite","#,
+            r#""path":"sprite/sample.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let complete = sprite_image_evidence_complete(&case);
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if complete {
+        return Err(
+            concat!(
+                "sprite cache without declared image children ",
+                "was reused",
+            )
+            .to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn current_sprite_cache_accepts_exact_images() -> Result<(), String> {
+    let case = case_dir("current-sprite-images")?;
+    fs::create_dir_all(case.join("components/sprite"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/sprite/sample.json"),
+        concat!(
+            r#"{"schema":"sprite","image_size":[4,4],"#,
+            r#""image_count":2,"blit_border":1}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":3}"#,
+            "\n",
+            r#"{"ordinal":1,"parent_ordinal":0,"kind":"sprite","#,
+            r#""path":"sprite/sample.json"}"#,
+            "\n",
+            r#"{"ordinal":2,"parent_ordinal":1,"kind":"image","#,
+            r#""path":"image/a.dds"}"#,
+            "\n",
+            r#"{"ordinal":4,"parent_ordinal":1,"kind":"image","#,
+            r#""path":"image/b.dds"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let complete = sprite_image_evidence_complete(&case);
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if !complete {
+        return Err("exact sprite image child count was rejected".to_owned());
+    }
+    Ok(())
 }
 
 #[test]
