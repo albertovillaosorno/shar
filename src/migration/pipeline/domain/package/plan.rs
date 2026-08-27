@@ -255,8 +255,11 @@ fn single_static_mesh_package(package: &PhaseThreePackageRow) -> bool {
         PackageRole::Model => {
             let exact =
                 member.kind == "p3d-mesh" && member.source_chunk_kind == "mesh";
-            has_mesh |= exact;
-            exact
+            if !exact || has_mesh {
+                return false;
+            }
+            has_mesh = true;
+            true
         },
         PackageRole::Material => {
             member.kind == "p3d-shader" && member.source_chunk_kind == "shader"

@@ -141,6 +141,38 @@ fn row_with_exact_member(
         .map_err(|error| error.to_string())
 }
 
+fn row_with_two_static_meshes() -> Result<PhaseThreePackageRow, String> {
+    let row = concat!(
+        "{\"package_id\":\"pkg\",\"package_root\":\"pkg\",",
+        "\"package_category\":\"ui-resources\",",
+        "\"package_subcategory\":\"ui-resources/test\",",
+        "\"unit_count\":2,\"text_key_count\":0,",
+        "\"unit_ids\":[\"mesh-a\",\"mesh-b\"],",
+        "\"world_ids\":[],\"texture_ids\":[],",
+        "\"material_ids\":[],",
+        "\"model_ids\":[\"mesh-a\",\"mesh-b\"],",
+        "\"physics_ids\":[],\"animation_ids\":[],",
+        "\"scene_ids\":[],\"locator_ids\":[],",
+        "\"camera_ids\":[],\"light_ids\":[],",
+        "\"particle_ids\":[],\"controller_ids\":[],",
+        "\"audio_ids\":[],\"movie_ids\":[],",
+        "\"script_ids\":[],\"text_ids\":[],",
+        "\"ui_ids\":[],\"metadata_ids\":[],",
+        "\"error_ids\":[],\"source_unit_ids\":[],",
+        "\"text_key_ids\":[],\"members\":[",
+        "{\"id\":\"mesh-a\",\"role\":\"model\",",
+        "\"path\":\"extracted/mesh-a.json\",",
+        "\"type\":\"model\",\"kind\":\"p3d-mesh\",",
+        "\"source_chunk_kind\":\"mesh\"},",
+        "{\"id\":\"mesh-b\",\"role\":\"model\",",
+        "\"path\":\"extracted/mesh-b.json\",",
+        "\"type\":\"model\",\"kind\":\"p3d-mesh\",",
+        "\"source_chunk_kind\":\"mesh\"}],",
+        "\"text_keys\":[]}",
+    );
+    PhaseThreePackageRow::from_json_line(row).map_err(|error| error.to_string())
+}
+
 fn row_with_texture_path(
     category: &str,
     kind: &str,
@@ -325,6 +357,21 @@ fn classifies_exact_single_static_mesh_target() -> Result<(), String> {
     };
     if fbx.target_kind != FbxTargetKind::StaticMesh {
         return Err(format!("unexpected static target: {:?}", fbx.target_kind));
+    }
+    Ok(())
+}
+
+#[test]
+fn multiple_static_meshes_require_semantic_split() -> Result<(), String> {
+    let plan = PhaseThreePackagePlanner::plan(&row_with_two_static_meshes()?);
+    let Some(fbx) = plan.fbx else {
+        return Err("multi-mesh package should produce an FBX plan".to_owned());
+    };
+    if fbx.target_kind != FbxTargetKind::SemanticSplit {
+        return Err(format!(
+            "multi-mesh package bypassed semantic split: {:?}",
+            fbx.target_kind
+        ));
     }
     Ok(())
 }
