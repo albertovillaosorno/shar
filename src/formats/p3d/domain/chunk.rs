@@ -173,8 +173,22 @@ pub enum ChunkKind {
     VertexExpressionMixer,
     /// Item.
     TextureFont,
-    /// Item.
+    /// Scrooby project container.
     ScroobyProject,
+    /// Scrooby screen declaration.
+    ScroobyScreen,
+    /// Scrooby page declaration.
+    ScroobyPage,
+    /// Scrooby layer declaration.
+    ScroobyLayer,
+    /// Scrooby image resource declaration.
+    ScroobyImageResource,
+    /// Scrooby `Pure3D` resource declaration.
+    ScroobyPure3dResource,
+    /// Scrooby text-style resource declaration.
+    ScroobyTextStyleResource,
+    /// Scrooby text-bible resource declaration.
+    ScroobyTextBibleResource,
     /// Item.
     FrameController,
     /// Item.
@@ -264,6 +278,13 @@ impl ChunkKind {
             Self::VertexExpressionMixer => "vertex_expression_mixer",
             Self::TextureFont => "texture_font",
             Self::ScroobyProject => "scrooby_project",
+            Self::ScroobyScreen => "scrooby_screen",
+            Self::ScroobyPage => "scrooby_page",
+            Self::ScroobyLayer => "scrooby_layer",
+            Self::ScroobyImageResource => "scrooby_image_resource",
+            Self::ScroobyPure3dResource => "scrooby_pure3d_resource",
+            Self::ScroobyTextStyleResource => "scrooby_text_style_resource",
+            Self::ScroobyTextBibleResource => "scrooby_text_bible_resource",
             Self::FrameController => "frame_controller",
             Self::FrameControllerVariantA => "frame_controller_variant_a",
             Self::FrameControllerVariantB => "frame_controller_variant_b",
@@ -536,6 +557,13 @@ const fn classify_chunk(id: u32) -> ChunkKind {
         0x0002_1002 => ChunkKind::VertexExpressionMixer,
         0x0002_2000 => ChunkKind::TextureFont,
         0x0001_8000 => ChunkKind::ScroobyProject,
+        0x0001_8001 => ChunkKind::ScroobyScreen,
+        0x0001_8002 => ChunkKind::ScroobyPage,
+        0x0001_8003 => ChunkKind::ScroobyLayer,
+        0x0001_8100 => ChunkKind::ScroobyImageResource,
+        0x0001_8101 => ChunkKind::ScroobyPure3dResource,
+        0x0001_8104 => ChunkKind::ScroobyTextStyleResource,
+        0x0001_8105 => ChunkKind::ScroobyTextBibleResource,
         0x0012_1200 => ChunkKind::FrameController,
         0x0012_1201 => ChunkKind::FrameControllerVariantA,
         0x0012_1202 => ChunkKind::FrameControllerVariantB,

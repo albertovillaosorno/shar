@@ -270,6 +270,25 @@ fn should_publish_component(
             .and_then(|ordinal| chunks.get(ordinal))
             .is_some_and(|parent| parent.kind.label() == "sprite");
     }
+    if matches!(kind, "scrooby_screen" | "scrooby_page") {
+        return component
+            .parent_ordinal
+            .and_then(|ordinal| chunks.get(ordinal))
+            .is_some_and(|parent| parent.kind.label() == "scrooby_project");
+    }
+    if matches!(
+        kind,
+        "scrooby_layer"
+            | "scrooby_image_resource"
+            | "scrooby_pure3d_resource"
+            | "scrooby_text_style_resource"
+            | "scrooby_text_bible_resource"
+    ) {
+        return component
+            .parent_ordinal
+            .and_then(|ordinal| chunks.get(ordinal))
+            .is_some_and(|parent| parent.kind.label() == "scrooby_page");
+    }
     false
 }
 
@@ -706,3 +725,7 @@ mod loose_tests;
 // jig-ignore-next-line: exact syntax is indivisible
 #[path = "../../../../../tests/formats/p3d/unit/adapter-outbound/extractor/nested_model_component_tests.rs"]
 mod nested_model_component_tests;
+#[cfg(test)]
+// jig-ignore-next-line: canonical test module path is indivisible.
+#[path = "../../../../../tests/formats/p3d/unit/adapter-outbound/extractor/scrooby_project_child_tests.rs"]
+mod scrooby_project_child_tests;
