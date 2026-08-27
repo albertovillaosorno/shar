@@ -218,6 +218,23 @@ fn component_bucket(segment: &str) -> ComponentBucket {
             "p3d-scrooby-project-to-ui-project",
             "Scrooby UI project reconstruction",
         ),
+        "scrooby_screen" | "scrooby_page" | "scrooby_layer" => bucket(
+            "ui",
+            "p3d-scrooby-layout",
+            "compose-into-asset",
+            "p3d-scrooby-project-to-ui-project",
+            "Scrooby UI layout reconstruction",
+        ),
+        "scrooby_image_resource"
+        | "scrooby_pure3d_resource"
+        | "scrooby_text_style_resource"
+        | "scrooby_text_bible_resource" => bucket(
+            "ui",
+            "p3d-scrooby-resource",
+            "compose-into-asset",
+            "p3d-scrooby-project-to-ui-project",
+            "Scrooby UI resource binding reconstruction",
+        ),
         "vertex_anim_key"
         | "vertex_expression_group"
         | "vertex_expression_mixer" => bucket(
