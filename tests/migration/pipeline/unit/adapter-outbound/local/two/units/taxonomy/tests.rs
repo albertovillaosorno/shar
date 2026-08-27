@@ -48,3 +48,13 @@ fn maps_decoded_and_image_payloads_to_fully_decoded() {
 fn maps_unrecognized_status_to_error_sentinel() {
     assert_eq!(map_recovery_status("something_new"), super::UNKNOWN);
 }
+
+#[test]
+fn scrooby_child_kinds_are_controlled() {
+    let kinds = super::controlled_values("kind")
+        .expect("kind vocabulary should remain controlled");
+    assert!(kinds.contains(&"p3d-scrooby-layout"));
+    assert!(kinds.contains(&"p3d-scrooby-resource"));
+    assert!(super::TAXONOMY_JSON.contains("p3d-scrooby-layout"));
+    assert!(super::TAXONOMY_JSON.contains("p3d-scrooby-resource"));
+}

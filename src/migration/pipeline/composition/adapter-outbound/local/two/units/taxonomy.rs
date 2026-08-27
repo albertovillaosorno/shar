@@ -174,6 +174,8 @@ const KIND_VALUES: &[&str] = &[
     "p3d-text-bible",
     "p3d-export-info",
     "p3d-scrooby-project",
+    "p3d-scrooby-layout",
+    "p3d-scrooby-resource",
     "p3d-vertex-animation",
     "p3d-animated-prop",
     "p3d-light-group",
