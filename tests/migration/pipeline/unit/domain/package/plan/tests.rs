@@ -440,7 +440,9 @@ fn classifies_exact_single_skeletal_mesh_target() -> Result<(), String> {
 fn multiple_skeletons_require_semantic_split() -> Result<(), String> {
     let plan = PhaseThreePackagePlanner::plan(&row_with_duplicate_skeleton()?);
     let Some(fbx) = plan.fbx else {
-        return Err("multi-skeleton package should produce an FBX plan".to_owned());
+        return Err(
+            "multi-skeleton package should produce an FBX plan".to_owned(),
+        );
     };
     if fbx.target_kind != FbxTargetKind::SemanticSplit {
         return Err(format!(
