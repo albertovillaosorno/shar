@@ -34,6 +34,6 @@ mod conversion_plan;
 
 pub use conversion_plan::{
     ConversionPlan, NativeAssetFamily, OperationReadiness, PlanArtifact,
-    PlanBundle, PlanContext, PlanDependency, PlanFamily, SourceFormat,
-    UNREAL_PLAN_BUNDLE_SCHEMA, UNREAL_PLAN_SCHEMA,
+    PlanBundle, PlanContext, PlanDependency, PlanFamily, SemanticBlockerClass,
+    SourceFormat, UNREAL_PLAN_BUNDLE_SCHEMA, UNREAL_PLAN_SCHEMA,
 };

@@ -32,6 +32,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -67,6 +68,14 @@ def _split_bundle(
     return index, files
 
 
+def _revised_index(payload: dict[str, object]) -> str:
+    body = dict(payload)
+    body["revision"] = ""
+    canonical = json.dumps(body, ensure_ascii=False, separators=(",", ":"))
+    payload["revision"] = hashlib.sha256(canonical.encode()).hexdigest()
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n"
+
+
 def _create_file_link(target: Path, link: Path) -> None:
     try:
         link.symlink_to(target)
@@ -99,7 +108,21 @@ def test_domain_preserves_semantic_blockers_in_bundle_identity() -> None:
     assert baseline.report.semantic_blocker_count == 0
     assert blocked.report.semantic_blocker_count == 3
     assert blocked.report.to_json()["semanticBlockerCount"] == 3
+    assert blocked.report.to_json()["semanticBlockers"] == [{
+        "category": "missions",
+        "count": 3,
+        "importProfile": "shar-semantic-source-v1",
+        "targetKind": "SemanticSource",
+    }]
     assert blocked.report.revision != baseline.report.revision
+
+
+def test_domain_rejects_semantic_blocker_total_drift() -> None:
+    index, plans = _split_bundle(semantic_blocker_count=3)
+    payload = json.loads(index)
+    payload["semantic_blocker_count"] = 4
+    with pytest.raises(ProtocolError, match="blocker total"):
+        parse_plan_bundle(_revised_index(payload), plans)
 
 
 def test_domain_validates_nonempty_operation_identity_and_readiness() -> None:

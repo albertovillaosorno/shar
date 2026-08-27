@@ -296,12 +296,18 @@ package instead of a sprite/layout JSON row.
 Only after semantic compilation produces a concrete target can the resulting
 work enter an operation plan and acquire operation readiness.
 
-Plan-bundle index v2 carries `semantic_blocker_count` as aggregate completion
-evidence. The count participates in the bundle revision and is validated by the
-local consumer before any MCP transport exists. Execution preflight therefore
-reports `complete=false` whenever the count is nonzero, including a bundle with
-zero emitted operations. This keeps unresolved semantic work visible without
-inventing a fake operation or a fourth operation-readiness state.
+Plan-bundle index v3 carries `semantic_blocker_count` together with a canonical
+`semantic_blockers` classification by package category, exact target kind, and
+required import profile. Every class has a positive count, classes are unique
+and sorted, and their checked sum must equal the aggregate count. Both the
+breakdown and aggregate participate in the bundle revision and are validated by
+the local consumer before any MCP transport exists.
+
+Execution preflight therefore reports `complete=false` whenever unresolved
+semantic work remains, including a bundle with zero emitted operations, while
+also exposing which semantic compiler families still block execution. This
+keeps unresolved work actionable without inventing a fake operation or a fourth
+operation-readiness state.
 
 ## Readiness states
 

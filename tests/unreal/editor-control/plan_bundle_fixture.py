@@ -195,15 +195,25 @@ def build_plan_bundle(
                 ("operation_count", len(operations)),
             ))
         )
+    semantic_blockers: list[JsonValue] = []
+    if semantic_blocker_count > 0:
+        semantic_blockers.append(OrderedDict((
+            ("category", "missions"),
+            ("target_kind", "SemanticSource"),
+            ("import_profile", "shar-semantic-source-v1"),
+            ("count", semantic_blocker_count),
+        )))
     index_body = _index_body(
         revision="",
         semantic_blocker_count=semantic_blocker_count,
+        semantic_blockers=semantic_blockers,
         plans=entries,
     )
     index_revision = _digest(_canonical(index_body))
     rendered_index = _index_body(
         revision=index_revision,
         semantic_blocker_count=semantic_blocker_count,
+        semantic_blockers=semantic_blockers,
         plans=entries,
     )
     files["index.json"] = _canonical(rendered_index) + chr(10)
@@ -529,13 +539,15 @@ def _index_body(
     *,
     revision: str,
     semantic_blocker_count: int,
+    semantic_blockers: list[JsonValue],
     plans: list[JsonValue],
 ) -> OrderedDict[str, JsonValue]:
     return OrderedDict((
-        ("schema", "shar-schoenwald.unreal-plan-bundle.v2"),
+        ("schema", "shar-schoenwald.unreal-plan-bundle.v3"),
         ("revision", revision),
         *_CONTEXT.items(),
         ("semantic_blocker_count", semantic_blocker_count),
+        ("semantic_blockers", semantic_blockers),
         ("plans", plans),
     ))
 
