@@ -60,3 +60,28 @@ planner heuristic. It must bind package identity, sprite evidence, raster path,
 byte count, SHA-256, and dimensions before any matching package is promoted to
 `Texture2D`; unmatched or dimension-conflicting packages must remain semantic
 blockers.
+
+The embedded-sprite extraction boundary is now implemented and corpus-proven.
+Commit `00bf92ac` publishes each sprite-owned `IMAGE_DATA` payload with exact
+ancestry and digest while deliberately leaving DDS behind the semantic compiler
+gate.
+
+- All 431 blocked UI-image P3Ds publish 4,083 DDS tiles with zero byte, digest,
+  ordinal, or parent mismatches; the tiles contain 39,368,064 source bytes.
+- The corpus uses DXT1, DXT3, and DXT5 DDS payloads. Every sprite's declared
+  `image_count` equals its actual direct `IMAGE` child count.
+- A reconstruction probe against all 308 exact-dimension sibling PNG references
+  found one structural rule with zero grid failures: flip each decoded tile on
+  Y, arrange the repeated tile grid row-major, overlap adjacent tiles by
+  `2 * blit_border`, then crop the result to `image_size`.
+- Across those 308 references, alpha mean-absolute error has median 0.10/255 and
+  maximum 0.235/255. Premultiplied RGB error has median 1.95/255 and maximum
+  6.17/255; all 308 combined errors are below 10/255 and 302 are below 5/255.
+- Independently of sibling PNGs, that grid derivation succeeds for all 431
+  sprites with zero structural failures. Every sprite uses `blit_border=1`,
+  across eight rectangular grid shapes.
+
+The next semantic compiler must implement deterministic BC1/DXT1, BC2/DXT3,
+and BC3/DXT5 decode plus that source-derived tile assembly. Sibling PNG files
+remain comparison evidence only and must not become reconstruction inputs or
+ownership heuristics.
