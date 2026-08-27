@@ -41,3 +41,22 @@ Parent task:
 
 Open work migrated from the canonical TODO. Add implementation and
 validation evidence here as the task advances.
+
+A corpus probe against the current lawful source installation narrowed the
+`ui-images` semantic blocker class without relaxing its conversion policy. All
+431 blocked packages contain one extracted `p3d-sprite` JSON member rather than
+a physical raster, so the existing direct-texture gate is behaving correctly.
+
+- 353 of the 431 package roots have a sibling source PNG beside the owning P3D.
+- 308 of those PNGs exactly match the sprite-declared `image_size` dimensions.
+- 45 sibling PNGs have different dimensions, and 78 packages have no sibling
+  PNG, so neither group is eligible for automatic promotion from this evidence.
+- The generated Pure3D contract declares `tlSpriteChunk` with one child
+  `image` chunk, while the current extractor publishes only the sprite wrapper
+  JSON.
+
+The next implementation boundary is a verified raster-authority catalog, not a
+planner heuristic. It must bind package identity, sprite evidence, raster path,
+byte count, SHA-256, and dimensions before any matching package is promoted to
+`Texture2D`; unmatched or dimension-conflicting packages must remain semantic
+blockers.
