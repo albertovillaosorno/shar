@@ -55,8 +55,6 @@ fn case_dir(label: &str) -> Result<PathBuf, String> {
     Ok(case)
 }
 
-
-
 #[test]
 fn stale_scrooby_cache_requires_project_children() -> Result<(), String> {
     let case = case_dir("stale-scrooby-project")?;
@@ -67,8 +65,7 @@ fn stale_scrooby_cache_requires_project_children() -> Result<(), String> {
         concat!(
             r#"{"schema":"scrooby_project","children":["#,
             r#"{"id_hex":"0x00018001"},{"id_hex":"0x00018002"}]}"#,
-            "
-",
+            "\n",
         ),
     )
     .map_err(|error| error.to_string())?;
@@ -76,12 +73,10 @@ fn stale_scrooby_cache_requires_project_children() -> Result<(), String> {
         case.join("components.jsonl"),
         concat!(
             r#"{"schema":"p3d.package.v1","component_count":1}"#,
-            "
-",
+            "\n",
             r#"{"ordinal":1,"parent_ordinal":0,"kind":"scrooby_project","#,
             r#""path":"scrooby_project/project.json"}"#,
-            "
-",
+            "\n",
         ),
     )
     .map_err(|error| error.to_string())?;
@@ -155,8 +150,7 @@ fn scrooby_cache_rejects_orphan_published_child() -> Result<(), String> {
 }
 
 #[test]
-fn current_scrooby_cache_accepts_exact_project_children()
--> Result<(), String> {
+fn current_scrooby_cache_accepts_project_children() -> Result<(), String> {
     let case = case_dir("current-scrooby-project")?;
     for kind in ["scrooby_project", "scrooby_screen", "scrooby_page"] {
         fs::create_dir_all(case.join("components").join(kind))
@@ -168,41 +162,33 @@ fn current_scrooby_cache_accepts_exact_project_children()
             r#"{"schema":"scrooby_project","children":["#,
             r#"{"id_hex":"0x00018001"},{"id_hex":"0x00018002"},"#,
             r#"{"id_hex":"0x00018002"}]}"#,
-            "
-",
+            "\n",
         ),
     )
     .map_err(|error| error.to_string())?;
-    fs::write(case.join("components/scrooby_screen/screen.json"), "{}
-")
+    fs::write(case.join("components/scrooby_screen/screen.json"), "{}\n")
         .map_err(|error| error.to_string())?;
     for page in ["page-a.json", "page-b.json"] {
-        fs::write(case.join("components/scrooby_page").join(page), "{}
-")
+        fs::write(case.join("components/scrooby_page").join(page), "{}\n")
             .map_err(|error| error.to_string())?;
     }
     fs::write(
         case.join("components.jsonl"),
         concat!(
             r#"{"schema":"p3d.package.v1","component_count":4}"#,
-            "
-",
+            "\n",
             r#"{"ordinal":1,"parent_ordinal":0,"kind":"scrooby_project","#,
             r#""path":"scrooby_project/project.json"}"#,
-            "
-",
+            "\n",
             r#"{"ordinal":2,"parent_ordinal":1,"kind":"scrooby_screen","#,
             r#""path":"scrooby_screen/screen.json"}"#,
-            "
-",
+            "\n",
             r#"{"ordinal":3,"parent_ordinal":1,"kind":"scrooby_page","#,
             r#""path":"scrooby_page/page-a.json"}"#,
-            "
-",
+            "\n",
             r#"{"ordinal":4,"parent_ordinal":1,"kind":"scrooby_page","#,
             r#""path":"scrooby_page/page-b.json"}"#,
-            "
-",
+            "\n",
         ),
     )
     .map_err(|error| error.to_string())?;
