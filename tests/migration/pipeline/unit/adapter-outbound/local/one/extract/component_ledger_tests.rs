@@ -88,13 +88,16 @@ fn stale_scrooby_cache_requires_project_children() -> Result<(), String> {
     let complete = p3d_package_complete(&case);
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
     if complete {
-        return Err("Scrooby cache without project children was reused".to_owned());
+        return Err(
+            "Scrooby cache without project children was reused".to_owned(),
+        );
     }
     Ok(())
 }
 
 #[test]
-fn current_scrooby_cache_accepts_exact_project_children() -> Result<(), String> {
+fn current_scrooby_cache_accepts_exact_project_children()
+-> Result<(), String> {
     let case = case_dir("current-scrooby-project")?;
     for kind in ["scrooby_project", "scrooby_screen", "scrooby_page"] {
         fs::create_dir_all(case.join("components").join(kind))
