@@ -299,4 +299,5 @@ pub use selector::PhaseThreePackageSelector;
 pub use unreal_manifest::{
     UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
     UnrealFbxArtifactEvidence, UnrealImportManifest, UnrealSourceEvidence,
+    UnrealUiRasterArtifactEvidence,
 };
