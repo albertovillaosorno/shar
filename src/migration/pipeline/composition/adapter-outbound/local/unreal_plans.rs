@@ -36,7 +36,7 @@ use std::collections::BTreeMap;
 use shar_sha256::domain::digest_hex;
 use shar_unreal_conversion::domain::{
     ConversionPlan, NativeAssetFamily, OperationReadiness, PlanBundle,
-    PlanContext, SourceFormat,
+    PlanContext, SemanticBlockerClass, SourceFormat,
 };
 
 use crate::domain::package::unreal_manifest::{
@@ -121,6 +121,7 @@ impl UnrealImportManifest {
             return Err("generated FBX catalog contains an unclaimed package"
                 .to_owned());
         }
+        let semantic_blockers = semantic_blocker_classes(&self.packages)?;
         PlanBundle::build_with_semantic_blockers(
             &PlanContext {
                 source_manifest_revision: manifest_revision.to_owned(),
@@ -129,9 +130,40 @@ impl UnrealImportManifest {
                 target_platform: TARGET_PLATFORM.to_owned(),
             },
             operations,
-            self.summary.requires_semantic_conversion,
+            semantic_blockers,
         )
     }
+}
+
+fn semantic_blocker_classes(
+    packages: &[UnrealPackageRecord],
+) -> Result<Vec<SemanticBlockerClass>, String> {
+    let mut counts = BTreeMap::<(String, String, String), usize>::new();
+    for package in packages {
+        if package.disposition != "requires-semantic-conversion" {
+            continue;
+        }
+        let key = (
+            package.category.clone(),
+            package.target_kind.to_owned(),
+            package.import_profile.to_owned(),
+        );
+        let count = counts.entry(key).or_default();
+        *count = count.checked_add(1).ok_or_else(|| {
+            "semantic blocker class count overflowed".to_owned()
+        })?;
+    }
+    Ok(counts
+        .into_iter()
+        .map(|((category, target_kind, import_profile), count)| {
+            SemanticBlockerClass {
+                category,
+                target_kind,
+                import_profile,
+                count,
+            }
+        })
+        .collect())
 }
 
 fn direct_import_operation(

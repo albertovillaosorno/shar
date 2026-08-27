@@ -36,7 +36,7 @@ use shar_sha256::digest_hex;
 
 use crate::domain::{
     ConversionPlan, PlanArtifact, PlanBundle, PlanContext, PlanDependency,
-    PlanFamily,
+    PlanFamily, SemanticBlockerClass,
 };
 
 mod render;
@@ -61,7 +61,7 @@ impl PlanBundle {
         context: &PlanContext,
         operations: Vec<ConversionPlan>,
     ) -> Result<Self, String> {
-        Self::build_with_semantic_blockers(context, operations, 0)
+        Self::build_with_semantic_blockers(context, operations, Vec::new())
     }
 
     /// Build a complete plan bundle with unresolved semantic-source evidence.
@@ -72,9 +72,26 @@ impl PlanBundle {
     pub fn build_with_semantic_blockers(
         context: &PlanContext,
         operations: Vec<ConversionPlan>,
-        semantic_blocker_count: usize,
+        mut semantic_blockers: Vec<SemanticBlockerClass>,
     ) -> Result<Self, String> {
         context.validate()?;
+        for blocker in &semantic_blockers {
+            blocker.validate()?;
+        }
+        semantic_blockers.sort();
+        if semantic_blockers.windows(2).any(|pair| {
+            pair.first().zip(pair.get(1)).is_some_and(|(left, right)| {
+                left.category == right.category
+                    && left.target_kind == right.target_kind
+                    && left.import_profile == right.import_profile
+            })
+        }) {
+            return Err("semantic blocker classes must be unique".to_owned());
+        }
+        let semantic_blocker_count = semantic_blockers
+            .iter()
+            .try_fold(0usize, |total, blocker| total.checked_add(blocker.count))
+            .ok_or_else(|| "semantic blocker count overflowed".to_owned())?;
         let mut validated = operations;
         for operation in &validated {
             let identity = operation.operation_id();
@@ -115,18 +132,21 @@ impl PlanBundle {
         let preimage = render::bundle_preimage(
             context,
             semantic_blocker_count,
+            &semantic_blockers,
             &artifacts,
         );
         let index_revision = digest_hex(preimage.as_bytes());
         let index_json = render::bundle_json(
             context,
             semantic_blocker_count,
+            &semantic_blockers,
             &index_revision,
             &artifacts,
         );
         Ok(Self {
             artifacts,
             semantic_blocker_count,
+            semantic_blockers,
             index_revision,
             index_json,
         })

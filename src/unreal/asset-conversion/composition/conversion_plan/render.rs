@@ -34,7 +34,7 @@ use shar_json_text::domain::escape;
 
 use crate::domain::{
     ConversionPlan, PlanArtifact, PlanContext, PlanDependency, PlanFamily,
-    UNREAL_PLAN_BUNDLE_SCHEMA, UNREAL_PLAN_SCHEMA,
+    SemanticBlockerClass, UNREAL_PLAN_BUNDLE_SCHEMA, UNREAL_PLAN_SCHEMA,
 };
 
 pub(super) fn plan_preimage(
@@ -206,23 +206,40 @@ fn validation_json(family: PlanFamily, operation_count: usize) -> String {
 pub(super) fn bundle_preimage(
     context: &PlanContext,
     semantic_blocker_count: usize,
+    semantic_blockers: &[SemanticBlockerClass],
     artifacts: &[PlanArtifact],
 ) -> String {
-    render_bundle(context, semantic_blocker_count, "", artifacts, false)
+    render_bundle(
+        context,
+        semantic_blocker_count,
+        semantic_blockers,
+        "",
+        artifacts,
+        false,
+    )
 }
 
 pub(super) fn bundle_json(
     context: &PlanContext,
     semantic_blocker_count: usize,
+    semantic_blockers: &[SemanticBlockerClass],
     revision: &str,
     artifacts: &[PlanArtifact],
 ) -> String {
-    render_bundle(context, semantic_blocker_count, revision, artifacts, true)
+    render_bundle(
+        context,
+        semantic_blocker_count,
+        semantic_blockers,
+        revision,
+        artifacts,
+        true,
+    )
 }
 
 fn render_bundle(
     context: &PlanContext,
     semantic_blocker_count: usize,
+    semantic_blockers: &[SemanticBlockerClass],
     revision: &str,
     artifacts: &[PlanArtifact],
     trailing_newline: bool,
@@ -250,7 +267,8 @@ fn render_bundle(
             "\"engine_contract_revision\":\"{}\",",
             "\"target_engine_version\":\"{}\",",
             "\"target_platform\":\"{}\",",
-            "\"semantic_blocker_count\":{},\"plans\":{}}}"
+            "\"semantic_blocker_count\":{},",
+            "\"semantic_blockers\":{},\"plans\":{}}}"
         ),
         UNREAL_PLAN_BUNDLE_SCHEMA,
         revision,
@@ -259,11 +277,32 @@ fn render_bundle(
         escape(&context.target_engine_version),
         escape(&context.target_platform),
         semantic_blocker_count,
+        semantic_blockers_json(semantic_blockers),
         plans,
     );
     if trailing_newline {
         output.push('\n');
     }
+    output
+}
+
+fn semantic_blockers_json(blockers: &[SemanticBlockerClass]) -> String {
+    let mut output = String::from("[");
+    for (index, blocker) in blockers.iter().enumerate() {
+        if index > 0 {
+            output.push(',');
+        }
+        output.push_str("{\"category\":\"");
+        output.push_str(&escape(&blocker.category));
+        output.push_str("\",\"target_kind\":\"");
+        output.push_str(&escape(&blocker.target_kind));
+        output.push_str("\",\"import_profile\":\"");
+        output.push_str(&escape(&blocker.import_profile));
+        output.push_str("\",\"count\":");
+        output.push_str(&blocker.count.to_string());
+        output.push('}');
+    }
+    output.push(']');
     output
 }
 

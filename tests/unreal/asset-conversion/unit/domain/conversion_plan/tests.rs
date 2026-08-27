@@ -32,8 +32,8 @@
 
 use super::{
     ConversionPlan, NativeAssetFamily, OperationReadiness, PlanBundle,
-    PlanContext, PlanFamily, SourceFormat, UNREAL_PLAN_BUNDLE_SCHEMA,
-    UNREAL_PLAN_SCHEMA,
+    PlanContext, PlanFamily, SemanticBlockerClass, SourceFormat,
+    UNREAL_PLAN_BUNDLE_SCHEMA, UNREAL_PLAN_SCHEMA,
 };
 
 fn context() -> PlanContext {
@@ -156,21 +156,72 @@ fn builds_all_plan_families_with_stable_revisions() -> Result<(), String> {
 #[test]
 fn semantic_blockers_participate_in_bundle_identity() -> Result<(), String> {
     let baseline = PlanBundle::build(&context(), Vec::new())?;
-    let blocked =
-        PlanBundle::build_with_semantic_blockers(&context(), Vec::new(), 3)?;
-    if blocked.semantic_blocker_count() != 3 {
-        return Err("semantic blocker count was not preserved".to_owned());
-    }
-    if !blocked
-        .index_json()
-        .contains(r#""semantic_blocker_count":3"#)
+    let blocked = PlanBundle::build_with_semantic_blockers(
+        &context(),
+        Vec::new(),
+        vec![
+            SemanticBlockerClass {
+                category: "ui-resources".to_owned(),
+                target_kind: "SemanticSource".to_owned(),
+                import_profile: "shar-semantic-source-v1".to_owned(),
+                count: 2,
+            },
+            SemanticBlockerClass {
+                category: "missions".to_owned(),
+                target_kind: "CompositeModel".to_owned(),
+                import_profile: "shar-fbx-semantic-split-v1".to_owned(),
+                count: 1,
+            },
+        ],
+    )?;
+    if blocked.semantic_blocker_count() != 3
+        || blocked.semantic_blockers().len() != 2
     {
-        return Err("bundle index omitted semantic blockers".to_owned());
+        return Err("semantic blocker classes were not preserved".to_owned());
+    }
+    for expected in [
+        r#""semantic_blocker_count":3"#,
+        r#""category":"missions","target_kind":"CompositeModel""#,
+        r#""category":"ui-resources","target_kind":"SemanticSource""#,
+    ] {
+        if !blocked.index_json().contains(expected) {
+            return Err(format!(
+                "bundle index omitted blocker evidence: {expected}"
+            ));
+        }
     }
     if baseline.index_revision() == blocked.index_revision() {
         return Err(
             "semantic blockers did not affect bundle identity".to_owned()
         );
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_invalid_semantic_blocker_classes() -> Result<(), String> {
+    let class = SemanticBlockerClass {
+        category: "missions".to_owned(),
+        target_kind: "SemanticSource".to_owned(),
+        import_profile: "shar-semantic-source-v1".to_owned(),
+        count: 1,
+    };
+    if PlanBundle::build_with_semantic_blockers(&context(), Vec::new(), vec![
+        class.clone(),
+        class.clone(),
+    ])
+    .is_ok()
+    {
+        return Err("duplicate semantic blocker class was accepted".to_owned());
+    }
+    let mut empty = class;
+    empty.count = 0;
+    if PlanBundle::build_with_semantic_blockers(&context(), Vec::new(), vec![
+        empty,
+    ])
+    .is_ok()
+    {
+        return Err("zero semantic blocker class was accepted".to_owned());
     }
     Ok(())
 }

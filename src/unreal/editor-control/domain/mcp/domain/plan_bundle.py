@@ -49,7 +49,7 @@ from mcp.domain.json_types import reject_duplicate_json_object
 from mcp.domain.json_types import require_json_object
 
 _PLAN_SCHEMA = "shar-schoenwald.unreal-plan.v1"
-_BUNDLE_SCHEMA = "shar-schoenwald.unreal-plan-bundle.v2"
+_BUNDLE_SCHEMA = "shar-schoenwald.unreal-plan-bundle.v3"
 _TARGET_ENGINE_VERSION = "5.8.1"
 _TARGET_PLATFORM = "editor"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -131,6 +131,7 @@ _INDEX_FIELDS = (
     "target_engine_version",
     "target_platform",
     "semantic_blocker_count",
+    "semantic_blockers",
     "plans",
 )
 _PLAN_FIELDS = (
@@ -195,6 +196,24 @@ class PlanOperation(NamedTuple):
     runtime_bound: bool
 
 
+class SemanticBlockerSummary(NamedTuple):
+    """One public-safe class of unresolved semantic conversion work."""
+
+    category: str
+    target_kind: str
+    import_profile: str
+    count: int
+
+    def to_json(self) -> JsonObject:
+        """Render one canonical blocker class without source identity."""
+        return {
+            "category": self.category,
+            "count": self.count,
+            "importProfile": self.import_profile,
+            "targetKind": self.target_kind,
+        }
+
+
 class PlanBundleReport(NamedTuple):
     """Independent preflight evidence for one complete plan bundle."""
 
@@ -207,6 +226,7 @@ class PlanBundleReport(NamedTuple):
     operation_count: int
     readiness_counts: dict[str, int]
     plans: tuple[PlanSummary, ...]
+    semantic_blockers: tuple[SemanticBlockerSummary, ...] = ()
 
     def to_json(self) -> JsonObject:
         """Render a deterministic public report without physical paths."""
@@ -225,6 +245,9 @@ class PlanBundleReport(NamedTuple):
             "readinessCounts": dict(sorted(self.readiness_counts.items())),
             "revision": self.revision,
             "semanticBlockerCount": self.semantic_blocker_count,
+            "semanticBlockers": [
+                blocker.to_json() for blocker in self.semantic_blockers
+            ],
             "sourceManifestRevision": self.source_manifest_revision,
             "targetEngineVersion": self.target_engine_version,
             "targetPlatform": self.target_platform,
@@ -246,7 +269,7 @@ def validate_plan_bundle(
     return parse_plan_bundle(index_text, plan_texts).report
 
 
-def parse_plan_bundle(  # noqa: PLR0914 - closed schema parser
+def parse_plan_bundle(  # noqa: PLR0912,PLR0914 - closed schema parser
     index_text: str,
     plan_texts: dict[str, str],
 ) -> ValidatedPlanBundle:
@@ -264,6 +287,10 @@ def parse_plan_bundle(  # noqa: PLR0914 - closed schema parser
         "semantic_blocker_count",
         context="plan bundle index",
     )
+    semantic_blockers = _semantic_blocker_summaries(index)
+    semantic_total = sum(blocker.count for blocker in semantic_blockers)
+    if semantic_total != semantic_blocker_count:
+        fail_protocol("plan bundle semantic blocker total is inconsistent")
     raw_entries = _array(index, "plans", context="plan bundle index")
     if len(raw_entries) != len(_PLAN_SPECS):
         fail_protocol("plan bundle index does not contain exactly six plans")
@@ -351,8 +378,49 @@ def parse_plan_bundle(  # noqa: PLR0914 - closed schema parser
         operation_count=sum(item.operation_count for item in summaries),
         readiness_counts=dict(readiness),
         plans=tuple(summaries),
+        semantic_blockers=semantic_blockers,
     )
     return ValidatedPlanBundle(report, tuple(typed_operations))
+
+
+def _semantic_blocker_summaries(
+    index: JsonObject,
+) -> tuple[SemanticBlockerSummary, ...]:
+    blockers: list[SemanticBlockerSummary] = []
+    previous: tuple[str, str, str] | None = None
+    for position, raw in enumerate(
+        _array(index, "semantic_blockers", context="plan bundle index")
+    ):
+        value = require_json_object(
+            raw, context=f"semantic blocker class {position}"
+        )
+        _require_exact_fields(
+            value,
+            ("category", "target_kind", "import_profile", "count"),
+            context="semantic blocker class",
+        )
+        blocker = SemanticBlockerSummary(
+            category=_identity_field(
+                value, "category", context="semantic blocker class"
+            ),
+            target_kind=_identity_field(
+                value, "target_kind", context="semantic blocker class"
+            ),
+            import_profile=_identity_field(
+                value, "import_profile", context="semantic blocker class"
+            ),
+            count=_nonnegative_integer(
+                value, "count", context="semantic blocker class"
+            ),
+        )
+        if blocker.count == 0:
+            fail_protocol("semantic blocker class count must be positive")
+        key = (blocker.category, blocker.target_kind, blocker.import_profile)
+        if previous is not None and key <= previous:
+            fail_protocol("semantic blocker classes are not unique and sorted")
+        previous = key
+        blockers.append(blocker)
+    return tuple(blockers)
 
 
 def _typed_operation(plan_id: str, operation: JsonObject) -> PlanOperation:
@@ -681,6 +749,15 @@ def _validate_acyclic_dependencies(
 
 
 def _canonical_index(index: JsonObject, *, revision: str) -> str:
+    blockers = [
+        OrderedDict((
+            ("category", blocker.category),
+            ("target_kind", blocker.target_kind),
+            ("import_profile", blocker.import_profile),
+            ("count", blocker.count),
+        ))
+        for blocker in _semantic_blocker_summaries(index)
+    ]
     plans = [
         OrderedDict((
             ("plan_id", _text(entry, "plan_id", context="plan index entry")),
@@ -731,6 +808,7 @@ def _canonical_index(index: JsonObject, *, revision: str) -> str:
                 context="plan bundle index",
             ),
         ),
+        ("semantic_blockers", blockers),
         ("plans", plans),
     ))
     return _canonical(payload)

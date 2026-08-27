@@ -34,7 +34,7 @@
 pub const UNREAL_PLAN_SCHEMA: &str = "shar-schoenwald.unreal-plan.v1";
 /// Schema for the compact plan-bundle index.
 pub const UNREAL_PLAN_BUNDLE_SCHEMA: &str =
-    "shar-schoenwald.unreal-plan-bundle.v2";
+    "shar-schoenwald.unreal-plan-bundle.v3";
 
 /// Normalized source representation accepted by Unreal conversion.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -331,11 +331,42 @@ pub struct PlanArtifact {
     pub operation_count: usize,
 }
 
+/// One public-safe class of unresolved semantic conversion work.
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct SemanticBlockerClass {
+    /// Stable generated package category.
+    pub category: String,
+    /// Exact Unreal target kind blocked on semantic compilation.
+    pub target_kind: String,
+    /// Exact semantic compiler profile required by the package.
+    pub import_profile: String,
+    /// Number of package rows in this exact class.
+    pub count: usize,
+}
+
+impl SemanticBlockerClass {
+    pub(crate) fn validate(&self) -> Result<(), String> {
+        validate_identity(&self.category, "semantic blocker category")?;
+        validate_identity(&self.target_kind, "semantic blocker target kind")?;
+        validate_identity(
+            &self.import_profile,
+            "semantic blocker import profile",
+        )?;
+        if self.count == 0 {
+            return Err(
+                "semantic blocker class count must be positive".to_owned()
+            );
+        }
+        Ok(())
+    }
+}
+
 /// Complete deterministic six-plan bundle.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PlanBundle {
     pub(crate) artifacts: Vec<PlanArtifact>,
     pub(crate) semantic_blocker_count: usize,
+    pub(crate) semantic_blockers: Vec<SemanticBlockerClass>,
     pub(crate) index_revision: String,
     pub(crate) index_json: String,
 }
@@ -351,6 +382,12 @@ impl PlanBundle {
     #[must_use]
     pub const fn semantic_blocker_count(&self) -> usize {
         self.semantic_blocker_count
+    }
+
+    /// Return the canonical unresolved semantic blocker classes.
+    #[must_use]
+    pub fn semantic_blockers(&self) -> &[SemanticBlockerClass] {
+        &self.semantic_blockers
     }
 
     /// Return the bundle-index revision.
