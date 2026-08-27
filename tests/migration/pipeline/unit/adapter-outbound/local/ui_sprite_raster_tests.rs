@@ -30,6 +30,8 @@
 
 //! Normalized UI-sprite raster compiler tests.
 
+// CSpell:ignore ATG badimage dimage
+
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -343,7 +345,9 @@ fn validates_p3dimage_history_and_binds_it_to_revision() -> Result<(), String> {
     let wrong_executable = serde_json::to_vec(&wrong_executable)
         .map_err(|error| error.to_string())?;
     if validate_p3dimage_history(&wrong_executable).is_ok() {
-        return Err("non-p3dimage executable was accepted as provenance".to_owned());
+        return Err(
+            "non-p3dimage executable was accepted as provenance".to_owned(),
+        );
     }
     let root = case_dir("png-history")?;
     write_png_history_fixture(&root, 13)?;
