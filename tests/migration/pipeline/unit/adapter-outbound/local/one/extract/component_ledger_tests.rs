@@ -96,6 +96,65 @@ fn stale_scrooby_cache_requires_project_children() -> Result<(), String> {
 }
 
 #[test]
+fn scrooby_cache_rejects_unknown_project_child_kind() -> Result<(), String> {
+    let case = case_dir("unknown-scrooby-project-child")?;
+    fs::create_dir_all(case.join("components/scrooby_project"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/scrooby_project/project.json"),
+        concat!(
+            r#"{"schema":"scrooby_project","children":["#,
+            r#"{"id_hex":"0x00018004"}]}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":1}"#,
+            "\n",
+            r#"{"ordinal":1,"parent_ordinal":0,"kind":"scrooby_project","#,
+            r#""path":"scrooby_project/project.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let complete = p3d_package_complete(&case);
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if complete {
+        return Err("unknown Scrooby project child was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn scrooby_cache_rejects_orphan_published_child() -> Result<(), String> {
+    let case = case_dir("orphan-scrooby-child")?;
+    fs::create_dir_all(case.join("components/scrooby_screen"))
+        .map_err(|error| error.to_string())?;
+    fs::write(case.join("components/scrooby_screen/screen.json"), "{}\n")
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":1}"#,
+            "\n",
+            r#"{"ordinal":1,"parent_ordinal":99,"kind":"scrooby_screen","#,
+            r#""path":"scrooby_screen/screen.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let complete = p3d_package_complete(&case);
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if complete {
+        return Err("orphan Scrooby child was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn current_scrooby_cache_accepts_exact_project_children()
 -> Result<(), String> {
     let case = case_dir("current-scrooby-project")?;
