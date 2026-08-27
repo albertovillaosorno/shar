@@ -30,7 +30,7 @@
 
 //! Tests unit tests.
 
-use super::{Endian, P3dError, analyze_p3d, parse_range, read_u32};
+use super::{ChunkKind, Endian, P3dError, analyze_p3d, parse_range, read_u32};
 
 #[test]
 fn invalid_source_error_escapes_control_characters() {
@@ -77,6 +77,27 @@ fn parses_minimal_root() -> Result<(), String> {
     })?;
     if root.kind.label() != "root" {
         return Err("minimal root chunk must retain the root kind".to_owned());
+    }
+    Ok(())
+}
+
+
+#[test]
+fn classifies_pure3d_image_container() -> Result<(), String> {
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(&0xff44_3350_u32.to_le_bytes());
+    bytes.extend_from_slice(&12_u32.to_le_bytes());
+    bytes.extend_from_slice(&24_u32.to_le_bytes());
+    bytes.extend_from_slice(&0x0001_9001_u32.to_le_bytes());
+    bytes.extend_from_slice(&12_u32.to_le_bytes());
+    bytes.extend_from_slice(&12_u32.to_le_bytes());
+    let document = analyze_p3d(&bytes).map_err(|error| error.to_string())?;
+    let image = document
+        .chunks
+        .get(1)
+        .ok_or_else(|| String::from("image child was not parsed"))?;
+    if image.kind != ChunkKind::Image || image.kind.label() != "image" {
+        return Err("Pure3D IMAGE chunk lost its typed identity".to_owned());
     }
     Ok(())
 }

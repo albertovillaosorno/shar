@@ -103,6 +103,23 @@ fn nested_texture_font_atlas_is_published() {
 }
 
 #[test]
+fn nested_sprite_image_is_published_only_for_direct_sprite_parent() {
+    let chunks = [
+        chunk(0, None, ChunkKind::Root),
+        chunk(1, Some(0), ChunkKind::Sprite),
+        chunk(2, Some(1), ChunkKind::Image),
+    ];
+    assert!(should_publish_component(&chunks[2], &chunks));
+
+    let unrelated = [
+        chunk(0, None, ChunkKind::Root),
+        chunk(1, Some(0), ChunkKind::Texture),
+        chunk(2, Some(1), ChunkKind::Image),
+    ];
+    assert!(!should_publish_component(&unrelated[2], &unrelated));
+}
+
+#[test]
 fn unrelated_nested_texture_is_not_published() {
     let chunks = [
         chunk(0, None, ChunkKind::Root),

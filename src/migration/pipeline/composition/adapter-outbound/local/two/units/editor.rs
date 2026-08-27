@@ -183,6 +183,13 @@ fn component_bucket(segment: &str) -> ComponentBucket {
             "p3d-texture-to-texture2d",
             "texture asset reconstruction",
         ),
+        "image" => bucket(
+            "image",
+            "p3d-texture",
+            "compose-into-asset",
+            "dds-to-texture2d",
+            "embedded sprite raster extraction",
+        ),
         "texture_font" => bucket(
             "ui",
             "p3d-texture-font",
@@ -449,3 +456,9 @@ fn replace_field(line: &str, field: &str, value: &str) -> String {
 fn io_error(path: &Path) -> impl FnOnce(std::io::Error) -> PipelineError + '_ {
     move |error| PipelineError::new(format!("{}: {error}", path.display()))
 }
+
+
+#[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
+#[path = "../../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/two/units/editor/tests.rs"]
+mod tests;

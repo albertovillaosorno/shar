@@ -13075,6 +13075,7 @@ pub fn schema_ref_for_kind(kind: &str) -> Option<&'static str> {
         "text_bible" => "text_bible",
         "language" => "language",
         "texture" => "texture",
+        "image" => "image",
         "image_data" => "image",
         "mesh" => "mesh",
         "skin" => "skin",
