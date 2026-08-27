@@ -1251,6 +1251,7 @@ fn p3d_package_complete(output: &Path) -> bool {
         && !has_incomplete_component_json(&components)
         && component_ledger_files_exist(output)
         && sprite_image_evidence_complete(output)
+        && scrooby_project_evidence_complete(output)
 }
 
 /// Has incomplete component JSON.
@@ -1334,6 +1335,92 @@ fn component_ledger_files_exist(output: &Path) -> bool {
         }
     }
     true
+}
+
+/// Require every Scrooby project to publish its declared screen/page children.
+fn scrooby_project_evidence_complete(output: &Path) -> bool {
+    let manifest = output.join("components.jsonl");
+    let components = output.join("components");
+    let Ok(text) = fs::read_to_string(&manifest) else {
+        return false;
+    };
+    let mut expected = BTreeMap::<usize, (usize, usize)>::new();
+    let mut actual = BTreeMap::<usize, (usize, usize)>::new();
+    for line in text.lines().skip(1) {
+        let Some(kind) = extract_json_string_field(line, "kind") else {
+            return false;
+        };
+        match kind.as_str() {
+            "scrooby_project" => {
+                let Some(ordinal) = extract_json_usize_field(line, "ordinal")
+                else {
+                    return false;
+                };
+                let Some(path_text) = extract_json_string_field(line, "path")
+                else {
+                    return false;
+                };
+                let Ok(path) = resolve_under(&components, Path::new(&path_text))
+                else {
+                    return false;
+                };
+                let Ok(project) = fs::read_to_string(path) else {
+                    return false;
+                };
+                let Some(counts) = scrooby_project_child_counts(&project) else {
+                    return false;
+                };
+                if expected.insert(ordinal, counts).is_some() {
+                    return false;
+                }
+            },
+            "scrooby_screen" | "scrooby_page" => {
+                let Some(parent) =
+                    extract_json_usize_field(line, "parent_ordinal")
+                else {
+                    return false;
+                };
+                let counts = actual.entry(parent).or_default();
+                let count = if kind == "scrooby_screen" {
+                    &mut counts.0
+                } else {
+                    &mut counts.1
+                };
+                let Some(next) = count.checked_add(1) else {
+                    return false;
+                };
+                *count = next;
+            },
+            _ => {},
+        }
+    }
+    if actual.keys().any(|parent| !expected.contains_key(parent)) {
+        return false;
+    }
+    expected.into_iter().all(|(ordinal, counts)| {
+        actual.get(&ordinal).copied().unwrap_or_default() == counts
+    })
+}
+
+/// Count exact screen/page declarations carried by one Scrooby project JSON.
+fn scrooby_project_child_counts(project: &str) -> Option<(usize, usize)> {
+    let value = serde_json::from_str::<serde_json::Value>(project).ok()?;
+    let object = value.as_object()?;
+    if object.get("schema")?.as_str()? != "scrooby_project" {
+        return None;
+    }
+    let children = object.get("children")?.as_array()?;
+    let mut screens = 0usize;
+    let mut pages = 0usize;
+    for child in children {
+        let id = child.as_object()?.get("id_hex")?.as_str()?;
+        match id {
+            "0x00018001" => screens = screens.checked_add(1)?,
+            "0x00018002" => pages = pages.checked_add(1)?,
+            _ => return None,
+        }
+    }
+    Some((screens, pages))
 }
 
 /// Require every decoded sprite to own exactly its declared image children.
