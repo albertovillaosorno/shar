@@ -85,3 +85,24 @@ The next semantic compiler must implement deterministic BC1/DXT1, BC2/DXT3,
 and BC3/DXT5 decode plus that source-derived tile assembly. Sibling PNG files
 remain comparison evidence only and must not become reconstruction inputs or
 ownership heuristics.
+
+Commit `2363a5b0` now implements the source-derived raster core without using
+sibling PNG files as inputs. The `p3d` crate accepts only the corpus-proven
+single-level legacy DDS subset and fails closed on unsupported or ambiguous
+variants.
+
+- The decoder supports DXT1, DXT3, and DXT5 only. Representative lawful-source
+  tiles for all three formats decode byte-for-byte identically to Pillow RGBA.
+- The assembler requires exactly one structural grid, flips each decoded tile
+  on Y, overlaps adjacent tiles by `2 * blit_border`, and crops to `image_size`.
+- Running the actual Rust decoder and assembler across all 431 sprite packages
+  assembled all 4,083 tiles with zero structural failures and 39,368,064 DDS
+  source bytes consumed.
+- The 308 exact-dimension PNG comparisons retained the earlier independent
+  measurements: alpha error median 0.10/255 and maximum 0.235/255, with
+  premultiplied RGB median 1.95/255 and maximum 6.17/255.
+
+The remaining UI-image compiler boundary is artifact publication and package
+promotion. It must encode the assembled source-backed RGBA raster into a
+canonical importable artifact, bind that artifact to package provenance, and
+only then replace the current `SemanticSource` plan with `Texture2D` import.
