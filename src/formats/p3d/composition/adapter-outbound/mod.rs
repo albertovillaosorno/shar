@@ -31,6 +31,7 @@
 //! Adapter outbound outbound adapter.
 
 pub mod decoders;
+mod dds;
 pub mod expression;
 /// Item.
 pub mod extractor;
@@ -42,7 +43,10 @@ mod json;
 /// Item.
 pub mod package;
 mod root_identity;
+mod sprite_raster;
 
+pub use dds::{DecodedRgbaImage, decode_legacy_dds};
 pub use extractor::LosslessPackageExporter;
 pub use filesystem_batch_exporter::FilesystemBatchExporter;
 pub use package::write_lossless_package;
+pub use sprite_raster::{SpriteRasterLayout, assemble_sprite_rgba};
