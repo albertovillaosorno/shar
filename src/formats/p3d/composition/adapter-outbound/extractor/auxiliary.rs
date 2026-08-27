@@ -31,6 +31,8 @@
 
 //! P3D auxiliary schema recovery helpers.
 
+use std::fmt::Write as _;
+
 use super::{
     ChunkRecord, RecoveredComponent, component_name, escape_json,
     raw_component_bytes, read_chunk_header, read_u32, render, render_f32,
@@ -550,6 +552,249 @@ pub(super) fn recover_scrooby_project_json(
         escape_json(&resource_path),
         escape_json(&screen_path),
         children
+    );
+    Some(render::json_component(
+        kind,
+        &file_name,
+        name,
+        json,
+        "decoded_schema_payload",
+    ))
+}
+
+/// Recover one Scrooby screen declaration.
+pub(super) fn recover_scrooby_screen_json(
+    component: &ChunkRecord,
+    source: &[u8],
+    kind_index: usize,
+) -> Option<RecoveredComponent> {
+    let chunk = raw_component_bytes(component, source).ok()?;
+    let mut cursor = 12;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let version = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let page_count = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let mut pages = Vec::with_capacity(page_count);
+    for _ in 0..page_count {
+        pages.push(schema::read_pascal_at(chunk, &mut cursor)?);
+    }
+    if cursor != component.header_size
+        || component.header_size != component.total_size
+    {
+        return None;
+    }
+    let page_names = pages
+        .iter()
+        .map(|page| format!("\"{}\"", escape_json(page)))
+        .collect::<Vec<_>>()
+        .join(",");
+    let kind = component.kind.label();
+    let file_name = schema::fallback_name(kind, kind_index, &name);
+    let json = format!(
+        concat!(
+            r#"{{"schema":"scrooby_screen","name":"{}","#,
+            r#""version":{},"page_count":{},"page_names":[{}]}}"#,
+        ),
+        escape_json(&name),
+        version,
+        page_count,
+        page_names,
+    );
+    Some(render::json_component(
+        kind,
+        &file_name,
+        name,
+        json,
+        "decoded_schema_payload",
+    ))
+}
+
+/// Recover one Scrooby page declaration and its child inventory.
+pub(super) fn recover_scrooby_page_json(
+    component: &ChunkRecord,
+    source: &[u8],
+    kind_index: usize,
+) -> Option<RecoveredComponent> {
+    let chunk = raw_component_bytes(component, source).ok()?;
+    let mut cursor = 12;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let version = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let resolution_x = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let resolution_y = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != component.header_size {
+        return None;
+    }
+    let children = child_chunks_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+    );
+    let kind = component.kind.label();
+    let file_name = schema::fallback_name(kind, kind_index, &name);
+    let json = format!(
+        concat!(
+            r#"{{"schema":"scrooby_page","name":"{}","version":{},"#,
+            r#""resolution":[{},{}],"children":[{}]}}"#,
+        ),
+        escape_json(&name),
+        version,
+        resolution_x,
+        resolution_y,
+        children,
+    );
+    Some(render::json_component(
+        kind,
+        &file_name,
+        name,
+        json,
+        "decoded_schema_payload",
+    ))
+}
+
+/// Recover one Scrooby layer declaration and its child inventory.
+pub(super) fn recover_scrooby_layer_json(
+    component: &ChunkRecord,
+    source: &[u8],
+    kind_index: usize,
+) -> Option<RecoveredComponent> {
+    let chunk = raw_component_bytes(component, source).ok()?;
+    let mut cursor = 12;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let version = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let visible = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let editable = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let alpha = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != component.header_size {
+        return None;
+    }
+    let children = child_chunks_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+    );
+    let kind = component.kind.label();
+    let file_name = schema::fallback_name(kind, kind_index, &name);
+    let json = format!(
+        concat!(
+            r#"{{"schema":"scrooby_layer","name":"{}","version":{},"#,
+            r#""visible":{},"editable":{},"alpha":{},"children":[{}]}}"#,
+        ),
+        escape_json(&name),
+        version,
+        visible,
+        editable,
+        alpha,
+        children,
+    );
+    Some(render::json_component(
+        kind,
+        &file_name,
+        name,
+        json,
+        "decoded_schema_payload",
+    ))
+}
+
+/// Recover one Scrooby image-resource declaration.
+pub(super) fn recover_scrooby_image_resource_json(
+    component: &ChunkRecord,
+    source: &[u8],
+    kind_index: usize,
+) -> Option<RecoveredComponent> {
+    recover_scrooby_resource_json(
+        component,
+        source,
+        kind_index,
+        &["filename"],
+    )
+}
+
+/// Recover one Scrooby Pure3D-resource declaration.
+pub(super) fn recover_scrooby_pure3d_resource_json(
+    component: &ChunkRecord,
+    source: &[u8],
+    kind_index: usize,
+) -> Option<RecoveredComponent> {
+    recover_scrooby_resource_json(
+        component,
+        source,
+        kind_index,
+        &["filename", "inventory_name", "camera_name", "animation_name"],
+    )
+}
+
+/// Recover one Scrooby text-style resource declaration.
+pub(super) fn recover_scrooby_text_style_resource_json(
+    component: &ChunkRecord,
+    source: &[u8],
+    kind_index: usize,
+) -> Option<RecoveredComponent> {
+    recover_scrooby_resource_json(
+        component,
+        source,
+        kind_index,
+        &["filename", "inventory_name"],
+    )
+}
+
+/// Recover one Scrooby text-bible resource declaration.
+pub(super) fn recover_scrooby_text_bible_resource_json(
+    component: &ChunkRecord,
+    source: &[u8],
+    kind_index: usize,
+) -> Option<RecoveredComponent> {
+    recover_scrooby_resource_json(
+        component,
+        source,
+        kind_index,
+        &["filename", "inventory_name"],
+    )
+}
+
+/// Recover one leaf Scrooby resource whose remaining fields are Pascal strings.
+fn recover_scrooby_resource_json(
+    component: &ChunkRecord,
+    source: &[u8],
+    kind_index: usize,
+    string_fields: &[&str],
+) -> Option<RecoveredComponent> {
+    let chunk = raw_component_bytes(component, source).ok()?;
+    let mut cursor = 12;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let version = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let mut fields = String::new();
+    for field in string_fields {
+        let value = schema::read_pascal_at(chunk, &mut cursor)?;
+        write!(
+            fields,
+            ",\"{}\":\"{}\"",
+            field,
+            escape_json(&value),
+        )
+        .ok()?;
+    }
+    if cursor != component.header_size
+        || component.header_size != component.total_size
+    {
+        return None;
+    }
+    let kind = component.kind.label();
+    let file_name = schema::fallback_name(kind, kind_index, &name);
+    let json = format!(
+        r#"{{"schema":"{}","name":"{}","version":{}{}}}"#,
+        kind,
+        escape_json(&name),
+        version,
+        fields,
     );
     Some(render::json_component(
         kind,
