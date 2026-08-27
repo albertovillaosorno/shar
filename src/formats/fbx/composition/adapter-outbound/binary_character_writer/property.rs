@@ -127,6 +127,17 @@ pub(super) fn xref_string_property(name: &str, value: &str) -> BinaryNode {
     ])
 }
 
+/// Build one user-defined string property entry.
+pub(super) fn user_string_property(name: &str, value: &str) -> BinaryNode {
+    BinaryNode::leaf("P", vec![
+        string(name),
+        string("KString"),
+        string(""),
+        string("U"),
+        string(value),
+    ])
+}
+
 /// Build one string property entry.
 pub(super) fn string_property(name: &str, value: &str) -> BinaryNode {
     BinaryNode::leaf("P", vec![

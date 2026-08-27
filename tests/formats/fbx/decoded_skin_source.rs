@@ -74,48 +74,66 @@ fn rejects_declared_joint_count_mismatch() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_unrepresentable_joint_rig_semantics() -> Result<(), String> {
-    let cases = [
-        (
-            "dof",
-            concat!(
-                r#"{"schema":"skeleton","name":"skeleton","version":0,"#,
-                r#""num_joints":1,"joints":[{"name":"root","parent":0,"#,
-                r#""dof":1,"free_axes":0,"primary_axis":0,"#,
-                r#""secondary_axis":0,"twist_axis":0,"#,
-                r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}]}"#,
-            ),
-        ),
-        (
-            "metadata",
-            concat!(
-                r#"{"schema":"skeleton","name":"skeleton","version":0,"#,
-                r#""num_joints":1,"joints":[{"name":"root","parent":0,"#,
-                r#""dof":0,"free_axes":0,"primary_axis":0,"#,
-                r#""secondary_axis":0,"twist_axis":0,"#,
-                r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],"#,
-                r#""joint_metadata":[{"kind":"joint_fix_flag","flags":1}]}]}"#,
-            ),
-        ),
-    ];
-    for (label, fixture) in cases {
-        let path = temp_path(&format!("skeleton-rig-{label}"));
-        fs::write(&path, fixture)
-            .map_err(|write_error| write_error.to_string())?;
-        let error = load_skeleton(&path).err();
-        fs::remove_file(&path)
-            .map_err(|remove_error| remove_error.to_string())?;
-        let expected = Some(SkinSourceError::UnsupportedJointRigSemantics {
-            path: path.display().to_string(),
-            joint: 0,
-        });
-        if error != expected {
-            return Err(format!(
-                "unrepresentable {label} joint semantics were accepted"
-            ));
-        }
+fn preserves_typed_source_joint_rig_semantics() -> Result<(), String> {
+    let path = temp_path("skeleton-source-rig");
+    let fixture = concat!(
+        r#"{"schema":"skeleton","name":"skeleton","version":0,"#,
+        r#""num_joints":1,"joints":[{"name":"root","parent":0,"#,
+        r#""dof":4294967295,"free_axes":4294967295,"#,
+        r#""primary_axis":4294967295,"secondary_axis":4294967295,"#,
+        r#""twist_axis":4294967295,"#,
+        r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],"#,
+        r#""joint_metadata":[{"kind":"joint_mirror_map","index":7,"#,
+        r#""scale":[1,1,1]},{"kind":"joint_fix_flag","flags":1}]}]}"#,
+    );
+    fs::write(&path, fixture).map_err(|error| error.to_string())?;
+    let (_name, bones) =
+        load_skeleton(&path).map_err(|error| format!("{error:?}"))?;
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+    let rig = bones
+        .first()
+        .and_then(|bone| bone.source_rig)
+        .ok_or_else(|| "source rig metadata was dropped".to_owned())?;
+    if rig.dof != u32::MAX
+        || rig.free_axes != u32::MAX
+        || rig.primary_axis != u32::MAX
+        || rig.secondary_axis != u32::MAX
+        || rig.twist_axis != u32::MAX
+        || rig.fix_flags != Some(1)
+    {
+        return Err("source rig scalar controls changed".to_owned());
+    }
+    let mirror = rig
+        .mirror_map
+        .ok_or_else(|| "source mirror map was dropped".to_owned())?;
+    if mirror.index != 7 || mirror.scale != [1., 1., 1.] {
+        return Err("source mirror map changed".to_owned());
     }
     Ok(())
+}
+
+#[test]
+fn rejects_unknown_source_joint_metadata() -> Result<(), String> {
+    let path = temp_path("skeleton-unknown-rig-metadata");
+    let fixture = concat!(
+        r#"{"schema":"skeleton","name":"skeleton","version":0,"#,
+        r#""num_joints":1,"joints":[{"name":"root","parent":0,"#,
+        r#""dof":0,"free_axes":0,"primary_axis":0,"#,
+        r#""secondary_axis":0,"twist_axis":0,"#,
+        r#""rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],"#,
+        r#""joint_metadata":[{"kind":"unknown_rig_record"}]}]}"#,
+    );
+    fs::write(&path, fixture).map_err(|error| error.to_string())?;
+    let error = load_skeleton(&path).err();
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+    match error {
+        Some(SkinSourceError::Parse { path: found, .. })
+            if found == path.display().to_string() =>
+        {
+            Ok(())
+        },
+        _ => Err("unknown source joint metadata was accepted".to_owned()),
+    }
 }
 
 #[test]

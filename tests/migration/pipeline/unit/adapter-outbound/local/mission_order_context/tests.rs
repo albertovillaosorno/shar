@@ -189,36 +189,46 @@ fn preserves_authored_registration_order_and_siblings() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_duplicate_registration_across_level_sources() -> Result<(), String> {
+fn preserves_shared_registration_across_alternate_level_sources()
+-> Result<(), String> {
     let snapshots = vec![
         snapshot(
-            "extracted/game/scripts/missions/level01/level.mfk.json",
+            "extracted/game/scripts/missions/level02/level.mfk.json",
             Some("addmission"),
             &["m1"],
         )?,
         snapshot(
-            "extracted/game/scripts/missions/level01/demo.mfk.json",
+            "extracted/game/scripts/missions/level02/e3level.mfk.json",
             Some("addmission"),
             &["m1"],
         )?,
         snapshot(
-            "extracted/game/scripts/missions/level01/m1i.mfk.json",
+            "extracted/game/scripts/missions/level02/m1i.mfk.json",
             Some("selectmission"),
             &["m1"],
         )?,
         snapshot(
-            "extracted/game/scripts/missions/level01/m1l.mfk.json",
+            "extracted/game/scripts/missions/level02/m1l.mfk.json",
             None,
             &[],
         )?,
     ];
 
-    let Err(error) = build_mission_order_source_reports(&snapshots) else {
-        return Err(
-            "duplicate level registration unexpectedly passed".to_owned(),
-        );
+    let reports = build_mission_order_source_reports(&snapshots)?;
+    let [first_report, second_report] = reports.as_slice() else {
+        return Err("alternate registry report count drifted".to_owned());
     };
-    assert!(error.contains("registration id is duplicated"));
+    for report in &reports {
+        let [registration] = report.registrations() else {
+            return Err(
+                "alternate registry registration count drifted".to_owned(),
+            );
+        };
+        assert_eq!(registration.mission_id(), "m1");
+        assert!(registration.init_source_path().ends_with("/m1i.mfk.json"));
+        assert!(registration.load_source_path().ends_with("/m1l.mfk.json"));
+    }
+    assert_ne!(first_report.source_path(), second_report.source_path());
     Ok(())
 }
 

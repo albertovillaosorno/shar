@@ -100,6 +100,7 @@ fn character() -> Result<CharacterAsset, String> {
             rest_matrix: [
                 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
             ],
+            source_rig: None,
         }],
         vec![SkinnedPart {
             mesh,

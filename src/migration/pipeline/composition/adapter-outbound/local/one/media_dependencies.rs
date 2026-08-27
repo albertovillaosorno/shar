@@ -29,6 +29,7 @@
 //
 
 //! Media dependencies outbound adapter.
+// CSpell:ignore ima
 
 #![expect(
     clippy::filetype_is_file,
@@ -43,8 +44,13 @@ use std::process::Command;
 /// Keeps portable media tools outside Git but inside the repository tree.
 const REPO_FFMPEG_DIR: &str = ".dependencies/ffmpeg";
 /// Downloads the full Windows build because the essentials build omits HAP.
-const FFMPEG_FULL_BUILD_URL: &str =
+const FFMPEG_WINDOWS_FULL_BUILD_URL: &str =
     "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-full.7z";
+/// Downloads a full GPL Linux build when the host codec set is incomplete.
+const FFMPEG_LINUX_FULL_BUILD_URL: &str = concat!(
+    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/",
+    "ffmpeg-master-latest-linux64-gpl.tar.xz"
+);
 /// Bootstraps 7z extraction without requiring a system-wide install.
 const SEVEN_ZIP_REDUCED_URL: &str = "https://www.7-zip.org/a/7zr.exe";
 
@@ -70,36 +76,50 @@ fn is_regular_media_tool(path: &Path) -> bool {
         .is_ok_and(|metadata| metadata.file_type().is_file())
 }
 
-/// Ensures movie export has ffmpeg, ffprobe, and the HAP encoder.
+/// Ensures movie export has the complete `FFmpeg` capabilities used by SHAR.
 pub(super) fn ensure_ffmpeg_dependency() -> Result<(), String> {
+    if selected_ffmpeg_dependency_ready()? {
+        return Ok(());
+    }
     if std::env::var_os("SHAR_UNREAL_FFMPEG_DIR").is_none() {
         ensure_repo_ffmpeg_dependency()?;
     }
+    if selected_ffmpeg_dependency_ready()? {
+        return Ok(());
+    }
+    Err(concat!(
+        "movie export requires working ffmpeg and ffprobe executables with ",
+        "the HAP encoder and Xbox IMA ADPCM decoder; the pipeline installs ",
+        "them under ",
+        ".dependencies/ffmpeg unless SHAR_UNREAL_FFMPEG_DIR overrides the ",
+        "tool directory"
+    )
+    .to_owned())
+}
+
+/// Validates the currently selected media tool pair without installing it.
+fn selected_ffmpeg_dependency_ready() -> Result<bool, String> {
     for executable in ["ffmpeg", "ffprobe"] {
-        let output = Command::new(media_tool_path(executable))
+        let output = match Command::new(media_tool_path(executable))
             .arg("-version")
             .output()
-            .map_err(|error| {
-                dependency_io_error(
+        {
+            Ok(output) => output,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                return Ok(false);
+            },
+            Err(error) => {
+                return Err(dependency_io_error(
                     &format!("start {executable} dependency check"),
                     &error,
-                )
-            })?;
+                ));
+            },
+        };
         if !output.status.success() {
-            return Err(format!(
-                "movie export requires a working {executable} executable"
-            ));
+            return Ok(false);
         }
     }
-    if !media_tool_has_hap_encoder(&media_tool_path("ffmpeg"))? {
-        return Err(concat!(
-            "movie export requires an ffmpeg build with the HAP encoder; ",
-            "the pipeline installs one under .dependencies/ffmpeg unless ",
-            "SHAR_UNREAL_FFMPEG_DIR overrides the tool directory"
-        )
-        .to_owned());
-    }
-    Ok(())
+    media_tool_has_required_codecs(&media_tool_path("ffmpeg"))
 }
 
 /// Installs local ffmpeg only when the cached copy is missing or unsuitable.
@@ -108,46 +128,63 @@ fn ensure_repo_ffmpeg_dependency() -> Result<(), String> {
     let ffprobe = repo_ffmpeg_bin_dir().join(media_tool_file_name("ffprobe"));
     if ffmpeg.is_file()
         && ffprobe.is_file()
-        && media_tool_has_hap_encoder(&ffmpeg)?
+        && media_tool_has_required_codecs(&ffmpeg)?
     {
         return Ok(());
     }
-    if !cfg!(windows) {
-        return Err(concat!(
-            "automatic ffmpeg dependency install currently supports ",
-            "Windows portable tools; set SHAR_UNREAL_FFMPEG_DIR on ",
-            "this platform"
-        )
-        .to_owned());
+    if cfg!(windows) {
+        return install_windows_ffmpeg_dependency();
     }
-    install_repo_ffmpeg_dependency()
+    if cfg!(target_os = "linux") {
+        return install_linux_ffmpeg_dependency();
+    }
+    Err(concat!(
+        "automatic ffmpeg dependency install currently supports Windows and ",
+        "Linux; set SHAR_UNREAL_FFMPEG_DIR on this platform"
+    )
+    .to_owned())
 }
 
-/// Downloads and extracts portable ffmpeg into the ignored dependency cache.
-fn install_repo_ffmpeg_dependency() -> Result<(), String> {
+/// Creates the ignored dependency directories shared by platform installers.
+fn prepare_dependency_directories(
+) -> Result<(PathBuf, PathBuf, PathBuf), String> {
     let root = PathBuf::from(REPO_FFMPEG_DIR);
     let download_dir = root.join("download");
     let staging_dir = root.join("staging");
-    let bootstrap_dir = root.join("bootstrap");
     let bin_dir = repo_ffmpeg_bin_dir();
     fs::create_dir_all(&download_dir)
         .map_err(dependency_path_error("create download cache"))?;
-    fs::create_dir_all(&bootstrap_dir)
-        .map_err(dependency_path_error("create bootstrap cache"))?;
     fs::create_dir_all(&bin_dir)
         .map_err(dependency_path_error("create media tool cache"))?;
+    reset_dependency_staging(&staging_dir)?;
+    Ok((download_dir, staging_dir, bin_dir))
+}
 
+/// Recreates the private extraction staging directory from an empty state.
+fn reset_dependency_staging(staging_dir: &Path) -> Result<(), String> {
+    if staging_dir.exists() {
+        fs::remove_dir_all(staging_dir)
+            .map_err(dependency_path_error("reset media staging"))?;
+    }
+    fs::create_dir_all(staging_dir)
+        .map_err(dependency_path_error("create media staging"))
+}
+
+/// Downloads and extracts the existing Windows portable dependency.
+fn install_windows_ffmpeg_dependency() -> Result<(), String> {
+    let (download_dir, staging_dir, bin_dir) =
+        prepare_dependency_directories()?;
+    let bootstrap_dir = PathBuf::from(REPO_FFMPEG_DIR).join("bootstrap");
+    fs::create_dir_all(&bootstrap_dir)
+        .map_err(dependency_path_error("create bootstrap cache"))?;
     let seven_zip = bootstrap_dir.join("7zr.exe");
     download_file(SEVEN_ZIP_REDUCED_URL, &seven_zip, "7-Zip extractor")?;
     let archive = download_dir.join("ffmpeg-release-full.7z");
-    download_file(FFMPEG_FULL_BUILD_URL, &archive, "ffmpeg full build")?;
-
-    if staging_dir.exists() {
-        fs::remove_dir_all(&staging_dir)
-            .map_err(dependency_path_error("reset media staging"))?;
-    }
-    fs::create_dir_all(&staging_dir)
-        .map_err(dependency_path_error("create media staging"))?;
+    download_file(
+        FFMPEG_WINDOWS_FULL_BUILD_URL,
+        &archive,
+        "ffmpeg full build",
+    )?;
     let output_dir = format!("-o{}", staging_dir.display());
     let status = Command::new(&seven_zip)
         .arg("x")
@@ -163,23 +200,58 @@ fn install_repo_ffmpeg_dependency() -> Result<(), String> {
             "failed to extract repository-local ffmpeg dependency".to_owned()
         );
     }
+    publish_dependency_tools(&staging_dir, &bin_dir)
+}
 
+/// Downloads and extracts a full GPL Linux dependency into the local cache.
+fn install_linux_ffmpeg_dependency() -> Result<(), String> {
+    let (download_dir, staging_dir, bin_dir) =
+        prepare_dependency_directories()?;
+    let archive = download_dir.join("ffmpeg-linux64-gpl.tar.xz");
+    download_file(
+        FFMPEG_LINUX_FULL_BUILD_URL,
+        &archive,
+        "ffmpeg Linux GPL build",
+    )?;
+    let status = Command::new("tar")
+        .arg("-xJf")
+        .arg(&archive)
+        .arg("-C")
+        .arg(&staging_dir)
+        .status()
+        .map_err(|error| {
+            dependency_io_error("run tar for ffmpeg dependency", &error)
+        })?;
+    if !status.success() {
+        return Err(
+            "failed to extract repository-local ffmpeg dependency".to_owned()
+        );
+    }
+    publish_dependency_tools(&staging_dir, &bin_dir)
+}
+
+/// Publishes and verifies the two runtime tools from one extracted archive.
+fn publish_dependency_tools(
+    staging_dir: &Path,
+    bin_dir: &Path,
+) -> Result<(), String> {
     copy_dependency_tool(
-        &staging_dir,
-        &bin_dir,
+        staging_dir,
+        bin_dir,
         &media_tool_file_name("ffmpeg"),
     )?;
     copy_dependency_tool(
-        &staging_dir,
-        &bin_dir,
+        staging_dir,
+        bin_dir,
         &media_tool_file_name("ffprobe"),
     )?;
     let installed_ffmpeg = bin_dir.join(media_tool_file_name("ffmpeg"));
-    if !media_tool_has_hap_encoder(&installed_ffmpeg)? {
-        return Err(
-            "installed ffmpeg dependency does not report the hap encoder"
-                .to_owned(),
-        );
+    if !media_tool_has_required_codecs(&installed_ffmpeg)? {
+        return Err(concat!(
+            "installed ffmpeg dependency does not report the HAP encoder and ",
+            "Xbox IMA ADPCM decoder"
+        )
+        .to_owned());
     }
     Ok(())
 }
@@ -261,25 +333,45 @@ fn find_file_named(root: &Path, file_name: &str) -> Result<PathBuf, String> {
     Err(format!("dependency archive did not contain {file_name}"))
 }
 
-/// Checks the exact encoder needed before any movie package is written.
-fn media_tool_has_hap_encoder(ffmpeg: &Path) -> Result<bool, String> {
-    if !ffmpeg.exists() {
-        return Ok(false);
-    }
-    let output = Command::new(ffmpeg)
+/// Checks the exact encoder and decoder needed by canonical movie export.
+fn media_tool_has_required_codecs(ffmpeg: &Path) -> Result<bool, String> {
+    Ok(media_tool_lists_codec(ffmpeg, "-encoders", "hap")?
+        && media_tool_lists_codec(
+            ffmpeg,
+            "-decoders",
+            "adpcm_ima_xbox",
+        )?)
+}
+
+/// Checks one exact codec token in an `FFmpeg` capability listing.
+fn media_tool_lists_codec(
+    ffmpeg: &Path,
+    listing: &str,
+    codec: &str,
+) -> Result<bool, String> {
+    let output = match Command::new(ffmpeg)
         .arg("-hide_banner")
-        .arg("-encoders")
+        .arg(listing)
         .output()
-        .map_err(|error| {
-            dependency_io_error("run ffmpeg encoder check", &error)
-        })?;
+    {
+        Ok(output) => output,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(false);
+        },
+        Err(error) => {
+            return Err(dependency_io_error(
+                "run ffmpeg codec check",
+                &error,
+            ));
+        },
+    };
     if !output.status.success() {
         return Ok(false);
     }
-    let encoders = String::from_utf8_lossy(&output.stdout);
-    Ok(encoders
-        .lines()
-        .any(|line| line.split_whitespace().any(|token| token == "hap")))
+    let capabilities = String::from_utf8_lossy(&output.stdout);
+    Ok(capabilities.lines().any(|line| {
+        line.split_whitespace().any(|token| token == codec)
+    }))
 }
 
 /// Adds the Windows executable suffix while keeping override names portable.

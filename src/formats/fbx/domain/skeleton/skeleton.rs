@@ -33,7 +33,7 @@
 pub mod bone;
 pub mod translator;
 
-pub use bone::Bone;
+pub use bone::{Bone, BoneMirrorMap, BoneSourceRig};
 // Explicit facade names keep downstream imports unambiguous across domain
 // modules.
 #[expect(

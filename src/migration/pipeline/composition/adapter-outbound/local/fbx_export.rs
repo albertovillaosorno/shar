@@ -1277,10 +1277,11 @@ fn build_character(
         &mesh_path_refs,
         &composite_path_refs,
     )
-    .map_err(|_error| {
+    .map_err(|error| {
         PipelineError::new(format!(
-            "character assembly failed for {}",
-            package.package_id
+            "character assembly failed for {}: {}",
+            package.package_id,
+            error.diagnostic_kind()
         ))
     })
 }

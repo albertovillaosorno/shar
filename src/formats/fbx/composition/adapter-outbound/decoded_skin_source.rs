@@ -41,7 +41,7 @@ use crate::domain::character::{CharacterAsset, CharacterError, SkinnedPart};
 use crate::domain::mesh::{
     MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
 };
-use crate::domain::skeleton::Bone;
+use crate::domain::skeleton::{Bone, BoneMirrorMap, BoneSourceRig};
 use crate::domain::skin::SkinInfluence;
 
 /// Weight tolerance shared with the domain aggregate contract.
@@ -206,37 +206,71 @@ pub fn load_skeleton(
                 joint: index,
             });
         }
-        validate_joint_rig_semantics(path, index, joint)?;
+        let source_rig = source_rig_metadata(path, index, joint)?;
         let parent_id = joint_parent_id(path, index, joint, &names)?;
         names.push(joint_name.clone());
         bones.push(Bone {
             id: joint_name,
             parent_id,
             rest_matrix: joint.rest_pose,
+            source_rig,
         });
     }
     Ok((skeleton_name, bones))
 }
 
-/// Reject authored joint controls that plain FBX bones cannot preserve.
-fn validate_joint_rig_semantics(
+/// Preserve source joint controls outside standard FBX transform fields.
+fn source_rig_metadata(
     path: &Path,
     index: usize,
     joint: &DecodedJoint,
-) -> Result<(), SkinSourceError> {
-    if joint.dof != 0
-        || joint.free_axes != 0
-        || joint.primary_axis != 0
-        || joint.secondary_axis != 0
-        || joint.twist_axis != 0
-        || !joint.joint_metadata.is_empty()
+) -> Result<Option<BoneSourceRig>, SkinSourceError> {
+    if joint.dof == 0
+        && joint.free_axes == 0
+        && joint.primary_axis == 0
+        && joint.secondary_axis == 0
+        && joint.twist_axis == 0
+        && joint.joint_metadata.is_empty()
     {
-        return Err(SkinSourceError::UnsupportedJointRigSemantics {
-            path: path_text(path),
-            joint: index,
-        });
+        return Ok(None);
     }
-    Ok(())
+    let mut mirror_map = None;
+    let mut fix_flags = None;
+    for metadata in &joint.joint_metadata {
+        match metadata {
+            DecodedJointMetadata::MirrorMap { scale, index: mirror_index } => {
+                if mirror_map
+                    .replace(BoneMirrorMap {
+                        index: *mirror_index,
+                        scale: *scale,
+                    })
+                    .is_some()
+                {
+                    return Err(SkinSourceError::UnsupportedJointRigSemantics {
+                        path: path_text(path),
+                        joint: index,
+                    });
+                }
+            },
+            DecodedJointMetadata::FixFlag { flags } => {
+                if fix_flags.replace(*flags).is_some() {
+                    return Err(SkinSourceError::UnsupportedJointRigSemantics {
+                        path: path_text(path),
+                        joint: index,
+                    });
+                }
+            },
+        }
+    }
+    Ok(Some(BoneSourceRig {
+        dof: joint.dof,
+        free_axes: joint.free_axes,
+        primary_axis: joint.primary_axis,
+        secondary_axis: joint.secondary_axis,
+        twist_axis: joint.twist_axis,
+        mirror_map,
+        fix_flags,
+    }))
 }
 
 /// Resolve one joint parent identity from previously loaded joint names.
@@ -1061,6 +1095,69 @@ pub enum SkinSourceError {
     Character(CharacterError),
 }
 
+impl SkinSourceError {
+    /// Return one path-free diagnostic class for boundary reporting.
+    #[must_use]
+    pub const fn diagnostic_kind(&self) -> &'static str {
+        match self {
+            Self::Read { .. } => "read",
+            Self::Parse { .. } => "parse",
+            Self::UnsupportedSchema { .. } => "unsupported-schema",
+            Self::BlankComponentName { .. } => "blank-component-name",
+            Self::EmptySkeleton { .. } => "empty-skeleton",
+            Self::UnsupportedSkeletonVersion { .. } => {
+                "unsupported-skeleton-version"
+            },
+            Self::JointCountMismatch { .. } => "joint-count-mismatch",
+            Self::UnsupportedSkinVersion { .. } => "unsupported-skin-version",
+            Self::PrimitiveGroupCountMismatch { .. } => {
+                "primitive-group-count-mismatch"
+            },
+            Self::VertexCountMismatch { .. } => "vertex-count-mismatch",
+            Self::IndexCountMismatch { .. } => "index-count-mismatch",
+            Self::MatrixPaletteCountMismatch { .. } => {
+                "matrix-palette-count-mismatch"
+            },
+            Self::CompositeSkinCountMismatch { .. } => {
+                "composite-skin-count-mismatch"
+            },
+            Self::CompositePropCountMismatch { .. } => {
+                "composite-prop-count-mismatch"
+            },
+            Self::CompositeEffectCountMismatch { .. } => {
+                "composite-effect-count-mismatch"
+            },
+            Self::BlankJointName { .. } => "blank-joint-name",
+            Self::UnsupportedJointRigSemantics { .. } => {
+                "unsupported-joint-rig-semantics"
+            },
+            Self::InvalidJointParent { .. } => "invalid-joint-parent",
+            Self::SkeletonReferenceMismatch { .. } => {
+                "skeleton-reference-mismatch"
+            },
+            Self::UnsupportedCompositeEffects { .. } => {
+                "unsupported-composite-effects"
+            },
+            Self::CompositeSkinMissing { .. } => "composite-skin-missing",
+            Self::UnsupportedPrimType { .. } => "unsupported-primitive-type",
+            Self::UnsupportedUvChannel { .. } => "unsupported-uv-channel",
+            Self::DuplicateUvChannel { .. } => "duplicate-uv-channel",
+            Self::MatrixCountMismatch { .. } => "matrix-count-mismatch",
+            Self::WeightCountMismatch { .. } => "weight-count-mismatch",
+            Self::InvalidStoredWeight { .. } => "invalid-stored-weight",
+            Self::PaletteSlotOutOfRange { .. } => "palette-slot-out-of-range",
+            Self::PaletteJointOutOfRange { .. } => {
+                "palette-joint-out-of-range"
+            },
+            Self::VertexIndexOverflow { .. } => "vertex-index-overflow",
+            Self::EmptyMatrixPalette { .. } => "empty-matrix-palette",
+            Self::Mesh { .. } => "mesh",
+            Self::Prop(_) => "prop",
+            Self::Character(_) => "character",
+        }
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 /// Internal data shape for the adapter implementation.
@@ -1101,7 +1198,32 @@ struct DecodedJoint {
     rest_pose: [f32; 16],
     /// Decoder-produced joint metadata records.
     #[serde(default)]
-    joint_metadata: Vec<serde_json::Value>,
+    joint_metadata: Vec<DecodedJointMetadata>,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "kind")]
+#[expect(
+    variant_size_differences,
+    reason = "Tagged source metadata variants preserve their exact typed \
+              payloads."
+)]
+/// One typed decoder-produced joint metadata record.
+enum DecodedJointMetadata {
+    /// Source mirror-map record.
+    #[serde(rename = "joint_mirror_map")]
+    MirrorMap {
+        /// Source mirror index.
+        index: u32,
+        /// Source mirror scale.
+        scale: [f32; 3],
+    },
+    /// Source joint-fix flags.
+    #[serde(rename = "joint_fix_flag")]
+    FixFlag {
+        /// Exact source flag mask.
+        flags: u32,
+    },
 }
 
 #[derive(Deserialize)]

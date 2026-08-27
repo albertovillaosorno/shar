@@ -83,6 +83,7 @@ fn grounded_fixture() -> Result<CharacterAsset, String> {
         rest_matrix: [
             1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
         ],
+        source_rig: None,
     }];
     for wheel in ["w0", "w1", "w2", "w3"] {
         bones.push(Bone {
@@ -91,6 +92,7 @@ fn grounded_fixture() -> Result<CharacterAsset, String> {
             rest_matrix: [
                 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
             ],
+            source_rig: None,
         });
     }
     let parts = ["w0", "w1", "w2", "w3"]

@@ -216,11 +216,13 @@ fn reconstructs_compact_channels_and_preserves_helper_evidence() {
             id: "Root".to_owned(),
             parent_id: None,
             rest_matrix: rest_matrix([1f32, 2f32, 3f32]),
+            source_rig: None,
         },
         Bone {
             id: "Child".to_owned(),
             parent_id: Some("Root".to_owned()),
             rest_matrix: rest_matrix([4f32, 5f32, 6f32]),
+            source_rig: None,
         },
     ];
     let result = load_animation_clips(&[path.as_path()], &bones);
@@ -296,6 +298,7 @@ fn rejects_unbound_top_level_animation_data() {
             id: "Root".to_owned(),
             parent_id: None,
             rest_matrix: rest_matrix([1., 2., 3.]),
+            source_rig: None,
         }];
         let result = load_animation_clips(&[path.as_path()], &bones);
         let cleanup = fs::remove_dir_all(&root);

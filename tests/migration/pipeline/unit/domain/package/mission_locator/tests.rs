@@ -202,8 +202,11 @@ fn missing_or_inactive_name_stays_missing() -> Result<(), String> {
     let inactive = vec!["extracted/art/missions/level01/level".to_owned()];
     for name in ["l1_tommaco", "not_authored"] {
         assert_eq!(
-                        // jig-ignore-next-line: expression
-                        catalog.resolve(name, &inactive, MissionLocatorTypeConstraint::Any)?,
+            catalog.resolve(
+                name,
+                &inactive,
+                MissionLocatorTypeConstraint::Any,
+            )?,
             MissionLocatorResolution::Missing
         );
     }
@@ -211,22 +214,67 @@ fn missing_or_inactive_name_stays_missing() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_duplicate_decoded_name_inside_one_package() -> Result<(), String> {
+fn preserves_package_local_duplicates_for_typed_resolution()
+-> Result<(), String> {
     let package_id = "extracted-art-missions-level01-bm1";
     let package_root = "extracted/art/missions/level01/bm1";
     let first = entry(package_id, package_root, "duplicate", 0)?;
     let mut second = entry(package_id, package_root, "duplicate", 3)?;
     second.member_id = "locator-other".to_owned();
-    // jig-ignore-next-line: literal
-    second.member_path = format!("{package_root}/components/srr_locator/duplicate2.json");
-        // jig-ignore-next-line: expression
-        let Err(error) = MissionLocatorCatalog::from_entries(vec![first, second]) else {
-        return Err("package-local duplicate did not fail closed".to_owned());
-    };
-    assert_eq!(
-        error,
-        "mission locator name is duplicated inside one package"
+    second.member_path = format!(
+        "{package_root}/components/srr_locator/duplicate2.json"
     );
+    let catalog = MissionLocatorCatalog::from_entries(vec![first, second])?;
+    let active = vec![package_root.to_owned()];
+    let any = catalog.resolve(
+        "duplicate",
+        &active,
+        MissionLocatorTypeConstraint::Any,
+    )?;
+    let MissionLocatorResolution::Ambiguous(candidates) = any else {
+        return Err(
+            "package-local duplicate did not remain ambiguous".to_owned(),
+        );
+    };
+    if candidates.len() != 2 {
+        return Err(
+            "package-local duplicate candidate count drifted".to_owned(),
+        );
+    }
+    let exact = catalog.resolve(
+        "duplicate",
+        &active,
+        MissionLocatorTypeConstraint::Exact(3),
+    )?;
+    let MissionLocatorResolution::Resolved(reference) = exact else {
+        return Err("typed package-local duplicate did not resolve".to_owned());
+    };
+    assert_eq!(reference.entry().locator_type(), 3);
+    assert_eq!(reference.entry().member_id(), "locator-other");
+    Ok(())
+}
+
+#[test]
+fn preserves_same_type_package_local_duplicates_as_ambiguous()
+-> Result<(), String> {
+    let package_id = "extracted-art-missions-level01-bm1";
+    let package_root = "extracted/art/missions/level01/bm1";
+    let first = entry(package_id, package_root, "duplicate", 3)?;
+    let mut second = entry(package_id, package_root, "duplicate", 3)?;
+    second.member_id = "locator-other".to_owned();
+    second.member_path = format!(
+        "{package_root}/components/srr_locator/duplicate2.json"
+    );
+    let catalog = MissionLocatorCatalog::from_entries(vec![first, second])?;
+    let resolution = catalog.resolve(
+        "duplicate",
+        &[package_root.to_owned()],
+        MissionLocatorTypeConstraint::Exact(3),
+    )?;
+    let MissionLocatorResolution::Ambiguous(candidates) = resolution else {
+        return Err("same-type package duplicate was guessed".to_owned());
+    };
+    assert_eq!(candidates.len(), 2);
     Ok(())
 }
 

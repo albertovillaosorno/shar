@@ -29,14 +29,16 @@
 //
 
 //! Media dependency path unit tests.
+// CSpell:ignore esac ima
 
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
-    REPO_FFMPEG_DIR, dependency_io_error, dependency_path_error,
-    is_regular_media_tool, repo_ffmpeg_bin_dir,
+    FFMPEG_LINUX_FULL_BUILD_URL, REPO_FFMPEG_DIR, dependency_io_error,
+    dependency_path_error, is_regular_media_tool,
+    media_tool_has_required_codecs, repo_ffmpeg_bin_dir,
 };
 
 
@@ -106,4 +108,55 @@ fn media_tool_candidates_require_direct_regular_files() -> Result<(), String> {
     }
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     Ok(())
+}
+
+#[cfg(unix)]
+#[test]
+fn codec_probe_requires_hap_and_xbox_adpcm() -> Result<(), String> {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let root = case_dir("hap-probe")?;
+    let ffmpeg = root.join("ffmpeg");
+    fs::write(
+        &ffmpeg,
+        concat!(
+            "#!/bin/sh\n",
+            "case \"$2\" in\n",
+            "  -encoders) printf ' V..... hap HAP codec\\n' ;;\n",
+            "  -decoders) printf ' A....D adpcm_ima_xbox Xbox ADPCM\\n' ;;\n",
+            "  *) exit 1 ;;\n",
+            "esac\n",
+        )
+        .as_bytes(),
+    )
+    .map_err(|error| error.to_string())?;
+    let mut permissions = fs::metadata(&ffmpeg)
+        .map_err(|error| error.to_string())?
+        .permissions();
+    permissions.set_mode(0o700);
+    fs::set_permissions(&ffmpeg, permissions)
+        .map_err(|error| error.to_string())?;
+    if !media_tool_has_required_codecs(&ffmpeg)? {
+        return Err(
+            "complete explicit ffmpeg codec set was rejected".to_owned(),
+        );
+    }
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn missing_codec_probe_is_not_an_error() -> Result<(), String> {
+    let root = case_dir("missing-codec-probe")?;
+    let missing = root.join("missing-ffmpeg");
+    if media_tool_has_required_codecs(&missing)? {
+        return Err("missing ffmpeg reported required codecs".to_owned());
+    }
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn linux_dependency_uses_full_gpl_archive() {
+    assert!(FFMPEG_LINUX_FULL_BUILD_URL.contains("linux64-gpl.tar.xz"));
 }
