@@ -335,16 +335,26 @@ fn exact_ui_sprite_packages(
     struct Coverage {
         has_sprite: bool,
         has_image: bool,
+        history_count: usize,
+        requires_history: bool,
         has_other: bool,
     }
 
     let mut coverage = packages
         .iter()
         .filter(|package| {
-            package.category == "ui-images"
+            matches!(package.category.as_str(), "ui-images" | "ui-resources")
                 && package.disposition == "requires-semantic-conversion"
         })
-        .map(|package| (package.package_id.as_str(), Coverage::default()))
+        .map(|package| {
+            (
+                package.package_id.as_str(),
+                Coverage {
+                    requires_history: package.category == "ui-resources",
+                    ..Coverage::default()
+                },
+            )
+        })
         .collect::<BTreeMap<_, _>>();
     for source in sources {
         let Some(state) = coverage.get_mut(source.package_id.as_str()) else {
@@ -353,6 +363,9 @@ fn exact_ui_sprite_packages(
         match source.evidence.source_chunk_kind.as_str() {
             "sprite" => state.has_sprite = true,
             "image" => state.has_image = true,
+            "history" => {
+                state.history_count = state.history_count.saturating_add(1)
+            }
             _ if is_package_manifest_bookkeeping(source) => {}
             _ => state.has_other = true,
         }
@@ -360,7 +373,15 @@ fn exact_ui_sprite_packages(
     coverage
         .into_iter()
         .filter(|(_package_id, state)| {
-            state.has_sprite && state.has_image && !state.has_other
+            let history_matches = if state.requires_history {
+                state.history_count == 1
+            } else {
+                state.history_count == 0
+            };
+            state.has_sprite
+                && state.has_image
+                && history_matches
+                && !state.has_other
         })
         .map(|(package_id, _state)| package_id.to_owned())
         .collect()

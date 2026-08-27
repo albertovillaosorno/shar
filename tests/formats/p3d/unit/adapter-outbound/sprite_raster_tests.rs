@@ -71,9 +71,10 @@ fn assembles_grid_with_flip_and_overlap() -> Result<(), String> {
     ];
     let image = assemble_sprite_rgba(
         SpriteRasterLayout {
-            width: 6,
-            height: 6,
+            width: 4,
+            height: 4,
             blit_border: 1,
+            flip_vertical: true,
         },
         &tiles,
     )
@@ -95,11 +96,53 @@ fn rejects_ambiguous_grid_instead_of_choosing_a_divisor() {
         SpriteRasterLayout {
             width: 4,
             height: 4,
-            blit_border: 1,
+            blit_border: 0,
+            flip_vertical: true,
         },
         &tiles,
     );
     assert!(result.is_err());
+}
+
+#[test]
+fn padded_extent_disambiguates_border_tiles() -> Result<(), String> {
+    let tiles = std::iter::repeat_with(|| solid([1, 2, 3, 4]))
+        .take(4)
+        .collect::<Vec<_>>();
+    let image = assemble_sprite_rgba(
+        SpriteRasterLayout {
+            width: 4,
+            height: 4,
+            blit_border: 1,
+            flip_vertical: false,
+        },
+        &tiles,
+    )
+    .map_err(|error| error.to_string())?;
+    assert_eq!((image.width, image.height), (4, 4));
+    Ok(())
+}
+
+#[test]
+fn preserves_source_rows_without_vertical_flip() -> Result<(), String> {
+    let image = assemble_sprite_rgba(
+        SpriteRasterLayout {
+            width: 4,
+            height: 4,
+            blit_border: 0,
+            flip_vertical: false,
+        },
+        &[tile([
+            [10, 0, 0, 255],
+            [20, 0, 0, 255],
+            [30, 0, 0, 255],
+            [40, 0, 0, 255],
+        ])],
+    )
+    .map_err(|error| error.to_string())?;
+    assert_eq!(pixel(&image, 0, 0), Some([10, 0, 0, 255].as_slice()));
+    assert_eq!(pixel(&image, 0, 3), Some([40, 0, 0, 255].as_slice()));
+    Ok(())
 }
 
 #[test]
@@ -118,6 +161,7 @@ fn rejects_inconsistent_row_width_pattern() {
             width: 6,
             height: 6,
             blit_border: 1,
+            flip_vertical: true,
         },
         &tiles,
     );
@@ -136,6 +180,7 @@ fn rejects_overlap_that_consumes_a_preceding_tile() {
             width: 2,
             height: 4,
             blit_border: 1,
+            flip_vertical: true,
         },
         &[narrow.clone(), narrow],
     );
@@ -154,6 +199,7 @@ fn rejects_malformed_rgba_storage() {
             width: 4,
             height: 4,
             blit_border: 0,
+            flip_vertical: true,
         },
         &[malformed],
     );

@@ -52,8 +52,8 @@ use serde_json::{Value, json};
 use shar_sha256::digest_hex;
 
 use crate::domain::{
-    PhaseThreePackageIndex, PipelineError, PipelineOutcome,
-    UnrealUiRasterArtifactEvidence,
+    PhaseThreePackageIndex, PhaseThreePackageMember, PhaseThreePackageRow,
+    PipelineError, PipelineOutcome, UnrealUiRasterArtifactEvidence,
 };
 
 /// One complete generated sprite raster before filesystem publication.
@@ -67,7 +67,7 @@ pub(super) struct CompiledUiSpriteRaster {
     pub png_bytes: Vec<u8>,
     /// SHA-256 of the generated PNG bytes.
     pub png_sha256: String,
-    /// Revision binding the sprite JSON and ordered DDS children.
+    /// Revision binding sprite, ordered image children, and provenance history.
     pub source_revision: String,
     /// Logical raster width.
     pub width: u32,
@@ -94,6 +94,18 @@ struct SpriteMetadata {
     blit_border: u32,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum SpriteTileEncoding {
+    LegacyDds,
+    P3dImagePng,
+}
+
+impl SpriteTileEncoding {
+    const fn flip_vertical(self) -> bool {
+        matches!(self, Self::LegacyDds)
+    }
+}
+
 /// Compile every indexed UI-sprite package from canonical normalized evidence.
 ///
 /// # Errors
@@ -105,35 +117,27 @@ pub(super) fn compile_ui_sprite_raster_catalog(
     extracted_root: &Path,
 ) -> PipelineOutcome<Vec<CompiledUiSpriteRaster>> {
     let mut artifacts = Vec::new();
-    for package in index.packages().iter().filter(|package| {
-        package.category() == "ui-images"
-            && package
-                .members()
-                .iter()
-                .any(|member| member.source_chunk_kind == "sprite")
-            && package
-                .members()
-                .iter()
-                .any(|member| member.source_chunk_kind == "image")
-            && package.members().iter().all(|member| {
-                matches!(member.source_chunk_kind.as_str(), "sprite" | "image")
-                    || (member.source_chunk_kind == "none"
-                        && member.kind == "package-manifest"
-                        && member.role.as_str() == "metadata"
-                        && member.unit_type == "metadata")
-            })
-    }) {
+    for package in index.packages() {
+        let Some(tile_encoding) = sprite_tile_encoding(package) else {
+            continue;
+        };
         let package_root = resolve_normalized_package_root(
             extracted_root,
             &package.package_root,
         )?;
-        let artifact =
-            compile_ui_sprite_raster(&package.package_id, &package_root)?;
+        let artifact = compile_ui_sprite_raster(
+            &package.package_id,
+            &package_root,
+            tile_encoding,
+        )?;
         let indexed_paths = package
             .members()
             .iter()
             .filter(|member| {
-                matches!(member.source_chunk_kind.as_str(), "sprite" | "image")
+                matches!(
+                    member.source_chunk_kind.as_str(),
+                    "sprite" | "image" | "history"
+                )
             })
             .map(|member| member.path.as_str())
             .collect::<BTreeSet<_>>();
@@ -156,6 +160,57 @@ pub(super) fn compile_ui_sprite_raster_catalog(
         artifacts.push(artifact);
     }
     Ok(artifacts)
+}
+
+fn sprite_tile_encoding(
+    package: &PhaseThreePackageRow,
+) -> Option<SpriteTileEncoding> {
+    let members = package.members();
+    let has_sprite = members
+        .iter()
+        .any(|member| member.source_chunk_kind == "sprite");
+    let has_image = members
+        .iter()
+        .any(|member| member.source_chunk_kind == "image");
+    if !has_sprite || !has_image {
+        return None;
+    }
+    let history_count = members
+        .iter()
+        .filter(|member| member.source_chunk_kind == "history")
+        .count();
+    match package.category() {
+        "ui-images"
+            if history_count == 0
+                && members.iter().all(|member| {
+                    matches!(
+                        member.source_chunk_kind.as_str(),
+                        "sprite" | "image"
+                    ) || is_package_manifest_member(member)
+                }) =>
+        {
+            Some(SpriteTileEncoding::LegacyDds)
+        }
+        "ui-resources"
+            if history_count == 1
+                && members.iter().all(|member| {
+                    matches!(
+                        member.source_chunk_kind.as_str(),
+                        "sprite" | "image" | "history"
+                    ) || is_package_manifest_member(member)
+                }) =>
+        {
+            Some(SpriteTileEncoding::P3dImagePng)
+        }
+        _ => None,
+    }
+}
+
+fn is_package_manifest_member(member: &PhaseThreePackageMember) -> bool {
+    member.source_chunk_kind == "none"
+        && member.kind == "package-manifest"
+        && member.role.as_str() == "metadata"
+        && member.unit_type == "metadata"
 }
 
 fn resolve_normalized_package_root(
@@ -192,6 +247,7 @@ fn resolve_normalized_package_root(
 fn compile_ui_sprite_raster(
     package_id: &str,
     normalized_package_root: &Path,
+    tile_encoding: SpriteTileEncoding,
 ) -> PipelineOutcome<CompiledUiSpriteRaster> {
     validate_package_id(package_id)?;
     let components = normalized_package_root.join("components");
@@ -231,12 +287,54 @@ fn compile_ui_sprite_raster(
             "UI sprite package contains an image outside the owning sprite",
         ));
     }
+    let history_rows = rows
+        .iter()
+        .filter(|row| row.kind == "history")
+        .collect::<Vec<_>>();
+    let history = match tile_encoding {
+        SpriteTileEncoding::LegacyDds => {
+            if !history_rows.is_empty() {
+                return Err(PipelineError::new(
+                    "DDS sprite package unexpectedly contains history evidence",
+                ));
+            }
+            None
+        }
+        SpriteTileEncoding::P3dImagePng => {
+            let [history] = history_rows.as_slice() else {
+                return Err(PipelineError::new(
+                    "PNG sprite package must contain exactly one history component",
+                ));
+            };
+            Some(*history)
+        }
+    };
     let mut revision_preimage = format!(
         "package={package_id}\nsprite={}:{}\n",
         sprite.ordinal,
         digest_hex(&sprite_bytes),
     );
     let mut source_component_paths = vec![sprite.path.clone()];
+    if let Some(history) = history {
+        let path = resolve_component_path(&components, &history.path)?;
+        let bytes = fs::read(&path).map_err(|error| {
+            io_error("read normalized sprite history", &error)
+        })?;
+        validate_p3dimage_history(&bytes)?;
+        writeln!(
+            revision_preimage,
+            "history={}:{}:{}",
+            history.ordinal,
+            history.path,
+            digest_hex(&bytes),
+        )
+        .map_err(|_error| {
+            PipelineError::new(
+                "UI sprite provenance revision formatting failed",
+            )
+        })?;
+        source_component_paths.push(history.path.clone());
+    }
     let mut tiles = Vec::with_capacity(image_rows.len());
     for row in image_rows {
         let path = resolve_component_path(&components, &row.path)?;
@@ -256,15 +354,14 @@ fn compile_ui_sprite_raster(
             )
         })?;
         source_component_paths.push(row.path.clone());
-        tiles.push(decode_legacy_dds(&bytes).map_err(|error| {
-            PipelineError::new(format!("UI sprite DDS decode failed: {error}"))
-        })?);
+        tiles.push(decode_sprite_tile(&bytes, tile_encoding)?);
     }
     let raster = assemble_sprite_rgba(
         SpriteRasterLayout {
             width: metadata.width,
             height: metadata.height,
             blit_border: metadata.blit_border,
+            flip_vertical: tile_encoding.flip_vertical(),
         },
         &tiles,
     )
@@ -284,6 +381,128 @@ fn compile_ui_sprite_raster(
         tile_count: tiles.len(),
         source_component_paths,
     })
+}
+
+fn decode_sprite_tile(
+    bytes: &[u8],
+    encoding: SpriteTileEncoding,
+) -> PipelineOutcome<DecodedRgbaImage> {
+    match encoding {
+        SpriteTileEncoding::LegacyDds => {
+            decode_legacy_dds(bytes).map_err(|error| {
+                PipelineError::new(format!(
+                    "UI sprite DDS decode failed: {error}"
+                ))
+            })
+        }
+        SpriteTileEncoding::P3dImagePng => {
+            let image = decode_png_bytes(bytes).map_err(|error| {
+                PipelineError::new(format!(
+                    "UI sprite PNG decode failed: {error:?}"
+                ))
+            })?;
+            Ok(DecodedRgbaImage {
+                width: image.width(),
+                height: image.height(),
+                rgba: image.rgba_bytes(),
+            })
+        }
+    }
+}
+
+fn validate_p3dimage_history(bytes: &[u8]) -> PipelineOutcome<()> {
+    let value: Value = serde_json::from_slice(bytes).map_err(|error| {
+        PipelineError::new(format!("UI sprite history JSON failed: {error}"))
+    })?;
+    let object = value.as_object().ok_or_else(|| {
+        PipelineError::new("UI sprite history must be a JSON object")
+    })?;
+    if object.len() != 3
+        || object.get("schema").and_then(Value::as_str) != Some("history")
+        || object.get("num_lines").and_then(Value::as_u64) != Some(3)
+    {
+        return Err(PipelineError::new(
+            "UI sprite history header is not canonical p3dimage provenance",
+        ));
+    }
+    let lines =
+        object
+            .get("history")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                PipelineError::new("UI sprite history lines are missing")
+            })?;
+    let [version, command, run] = lines.as_slice() else {
+        return Err(PipelineError::new(
+            "UI sprite p3dimage history must contain exactly three lines",
+        ));
+    };
+    let version = history_line(version, "version")?;
+    let command = history_line(command, "command")?;
+    let run = history_line(run, "run stamp")?;
+    if trim_history_padding(version) != "p3dimage version 1.4.0 (with ATG 2.0)"
+    {
+        return Err(PipelineError::new(
+            "UI sprite history is not from the evidenced p3dimage version",
+        ));
+    }
+    let command = trim_history_padding(command).replace('\\', "/");
+    let tokens = command.split_ascii_whitespace().collect::<Vec<_>>();
+    let [executable, ntsc_fix, size_flag, output_flag, output_path, input_path] =
+        tokens.as_slice()
+    else {
+        return Err(PipelineError::new(
+            "UI sprite history command is not the evidenced p3dimage invocation",
+        ));
+    };
+    if executable.rsplit('/').next() != Some("p3dimage")
+        || *ntsc_fix != "--ntsc_fix"
+        || *size_flag != "-S"
+        || *output_flag != "-o"
+    {
+        return Err(PipelineError::new(
+            "UI sprite history command is not the evidenced p3dimage invocation",
+        ));
+    }
+    if !output_path.to_ascii_lowercase().ends_with(".p3d")
+        || !input_path.to_ascii_lowercase().ends_with(".png")
+    {
+        return Err(PipelineError::new(
+            "UI sprite history command operands are not canonical",
+        ));
+    }
+    let run = trim_history_padding(run);
+    let Some((when, who)) = run
+        .strip_prefix("Run at ")
+        .and_then(|value| value.rsplit_once(" by "))
+    else {
+        return Err(PipelineError::new(
+            "UI sprite history run stamp is not canonical",
+        ));
+    };
+    if when.is_empty() || who.is_empty() {
+        return Err(PipelineError::new(
+            "UI sprite history run stamp is incomplete",
+        ));
+    }
+    Ok(())
+}
+
+fn history_line<'value>(
+    value: &'value Value,
+    label: &str,
+) -> PipelineOutcome<&'value str> {
+    value.as_str().ok_or_else(|| {
+        PipelineError::new(format!("UI sprite history {label} is not text"))
+    })
+}
+
+fn trim_history_padding(mut value: &str) -> &str {
+    value = value.trim_end_matches(char::from(0));
+    while let Some(stripped) = value.strip_suffix(r"\x00") {
+        value = stripped;
+    }
+    value.trim_end_matches(char::from(0))
 }
 
 fn parse_ledger(text: &str) -> PipelineOutcome<Vec<LedgerRow>> {

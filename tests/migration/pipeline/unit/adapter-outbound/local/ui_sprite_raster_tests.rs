@@ -34,11 +34,15 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use fbx::adapters::driven::semantic_texture_png::decode_png_bytes;
+use fbx::adapters::driven::semantic_texture_png::{
+    decode_png_bytes, encode_png_bytes,
+};
+use fbx::domain::texture::semantic::{Rgba8, RgbaImage};
 
 use super::{
-    compile_ui_sprite_raster, publish_complete_ui_sprite_raster_catalog,
-    transaction_paths, verified_ui_sprite_raster_catalog,
+    SpriteTileEncoding, compile_ui_sprite_raster,
+    publish_complete_ui_sprite_raster_catalog, transaction_paths,
+    validate_p3dimage_history, verified_ui_sprite_raster_catalog,
 };
 use crate::domain::PhaseThreePackageIndex;
 
@@ -130,6 +134,63 @@ fn write_fixture(root: &Path, declared_count: usize) -> Result<(), String> {
     Ok(())
 }
 
+fn p3dimage_history_bytes(run_day: u8) -> Result<Vec<u8>, String> {
+    serde_json::to_vec(&serde_json::json!({
+        "schema": "history",
+        "num_lines": 3,
+        "history": [
+            "p3dimage version 1.4.0 (with ATG 2.0)\\x00",
+            concat!(
+                "..\\bin\\p3dimage --ntsc_fix -S -o ",
+                "resource\\test.p3d resource\\test.png\\x00"
+            ),
+            format!("Run at August {run_day}, 2003, 11:21:18 by tester\\x00"),
+        ],
+    }))
+    .map_err(|error| error.to_string())
+}
+
+fn source_row_png() -> Result<Vec<u8>, String> {
+    let pixels = [10_u8, 20, 30, 40]
+        .into_iter()
+        .flat_map(|red| std::iter::repeat_n(Rgba8::new(red, 0, 0, 255), 4))
+        .collect::<Vec<_>>();
+    let image =
+        RgbaImage::new(4, 4, pixels).map_err(|error| format!("{error:?}"))?;
+    encode_png_bytes(&image).map_err(|error| format!("{error:?}"))
+}
+
+fn write_png_history_fixture(root: &Path, run_day: u8) -> Result<(), String> {
+    fs::create_dir_all(root.join("components/history"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components/sprite/main.json"),
+        "{\"image_size\":[4,4],\"image_count\":1,\"blit_border\":0}\n",
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(root.join("components/image/tile.png"), source_row_png()?)
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components/history/history.json"),
+        p3dimage_history_bytes(run_day)?,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components.jsonl"),
+        concat!(
+            "{\"schema\":\"p3d.package.v1\",\"component_count\":3}\n",
+            "{\"ordinal\":1,\"parent_ordinal\":0,\"kind\":\"history\",",
+            "\"path\":\"history/history.json\"}\n",
+            "{\"ordinal\":2,\"parent_ordinal\":0,\"kind\":\"sprite\",",
+            "\"path\":\"sprite/main.json\"}\n",
+            "{\"ordinal\":3,\"parent_ordinal\":2,\"kind\":\"image\",",
+            "\"path\":\"image/tile.png\"}\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    Ok(())
+}
+
 fn sprite_index(package_root: &Path) -> Result<PhaseThreePackageIndex, String> {
     let extracted_root = package_root
         .parent()
@@ -181,10 +242,18 @@ fn sprite_index(package_root: &Path) -> Result<PhaseThreePackageIndex, String> {
 fn compiles_normalized_sprite_to_deterministic_png() -> Result<(), String> {
     let root = case_dir("compile")?;
     write_fixture(&root, 1)?;
-    let first = compile_ui_sprite_raster("ui-test", &root)
-        .map_err(|error| error.to_string())?;
-    let second = compile_ui_sprite_raster("ui-test", &root)
-        .map_err(|error| error.to_string())?;
+    let first = compile_ui_sprite_raster(
+        "ui-test",
+        &root,
+        SpriteTileEncoding::LegacyDds,
+    )
+    .map_err(|error| error.to_string())?;
+    let second = compile_ui_sprite_raster(
+        "ui-test",
+        &root,
+        SpriteTileEncoding::LegacyDds,
+    )
+    .map_err(|error| error.to_string())?;
     if first != second {
         return Err("identical normalized sprite produced different artifacts"
             .to_owned());
@@ -211,7 +280,11 @@ fn compiles_normalized_sprite_to_deterministic_png() -> Result<(), String> {
 fn rejects_declared_image_count_mismatch() -> Result<(), String> {
     let root = case_dir("count-mismatch")?;
     write_fixture(&root, 2)?;
-    let result = compile_ui_sprite_raster("ui-test", &root);
+    let result = compile_ui_sprite_raster(
+        "ui-test",
+        &root,
+        SpriteTileEncoding::LegacyDds,
+    );
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     if result.is_ok() {
         return Err("sprite image-count mismatch was accepted".to_owned());
@@ -223,8 +296,12 @@ fn rejects_declared_image_count_mismatch() -> Result<(), String> {
 fn source_revision_changes_with_ordered_dds_evidence() -> Result<(), String> {
     let root = case_dir("revision")?;
     write_fixture(&root, 1)?;
-    let before = compile_ui_sprite_raster("ui-test", &root)
-        .map_err(|error| error.to_string())?;
+    let before = compile_ui_sprite_raster(
+        "ui-test",
+        &root,
+        SpriteTileEncoding::LegacyDds,
+    )
+    .map_err(|error| error.to_string())?;
     let mut changed = red_bc1_dds()?;
     let byte = changed
         .get_mut(132)
@@ -232,12 +309,86 @@ fn source_revision_changes_with_ordered_dds_evidence() -> Result<(), String> {
     *byte = 1;
     fs::write(root.join("components/image/tile.dds"), changed)
         .map_err(|error| error.to_string())?;
-    let after = compile_ui_sprite_raster("ui-test", &root)
-        .map_err(|error| error.to_string())?;
+    let after = compile_ui_sprite_raster(
+        "ui-test",
+        &root,
+        SpriteTileEncoding::LegacyDds,
+    )
+    .map_err(|error| error.to_string())?;
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     if before.source_revision == after.source_revision {
         return Err(
             "sprite source revision ignored changed DDS bytes".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn validates_p3dimage_history_and_binds_it_to_revision() -> Result<(), String> {
+    validate_p3dimage_history(&p3dimage_history_bytes(13)?)
+        .map_err(|error| error.to_string())?;
+    let mut wrong_executable: serde_json::Value =
+        serde_json::from_slice(&p3dimage_history_bytes(13)?)
+            .map_err(|error| error.to_string())?;
+    let command = wrong_executable
+        .get_mut("history")
+        .and_then(serde_json::Value::as_array_mut)
+        .and_then(|values| values.get_mut(1))
+        .ok_or_else(|| "synthetic history command is missing".to_owned())?;
+    *command = serde_json::json!(concat!(
+        "..\\bin\\badimage --ntsc_fix -S -o ",
+        "resource\\test.p3d resource\\test.png\\x00"
+    ));
+    let wrong_executable = serde_json::to_vec(&wrong_executable)
+        .map_err(|error| error.to_string())?;
+    if validate_p3dimage_history(&wrong_executable).is_ok() {
+        return Err("non-p3dimage executable was accepted as provenance".to_owned());
+    }
+    let root = case_dir("png-history")?;
+    write_png_history_fixture(&root, 13)?;
+    let before = compile_ui_sprite_raster(
+        "ui-test",
+        &root,
+        SpriteTileEncoding::P3dImagePng,
+    )
+    .map_err(|error| error.to_string())?;
+    let decoded = decode_png_bytes(&before.png_bytes)
+        .map_err(|error| format!("compiled PNG decode failed: {error:?}"))?;
+    if decoded.pixel(0, 0).map_err(|error| format!("{error:?}"))?
+        != Rgba8::new(10, 0, 0, 255)
+        || decoded.pixel(0, 3).map_err(|error| format!("{error:?}"))?
+            != Rgba8::new(40, 0, 0, 255)
+    {
+        return Err("PNG sprite tile rows were vertically inverted".to_owned());
+    }
+    write_png_history_fixture(&root, 14)?;
+    let after = compile_ui_sprite_raster(
+        "ui-test",
+        &root,
+        SpriteTileEncoding::P3dImagePng,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    if before.source_revision == after.source_revision {
+        return Err(
+            "UI raster revision ignored changed p3dimage provenance".to_owned()
+        );
+    }
+    let mut invalid: serde_json::Value =
+        serde_json::from_slice(&p3dimage_history_bytes(13)?)
+            .map_err(|error| error.to_string())?;
+    let history = invalid
+        .get_mut("history")
+        .and_then(serde_json::Value::as_array_mut)
+        .and_then(|values| values.first_mut())
+        .ok_or_else(|| "synthetic history row is missing".to_owned())?;
+    *history = serde_json::json!("other tool");
+    let invalid =
+        serde_json::to_vec(&invalid).map_err(|error| error.to_string())?;
+    if validate_p3dimage_history(&invalid).is_ok() {
+        return Err(
+            "non-p3dimage history was accepted as provenance".to_owned()
         );
     }
     Ok(())

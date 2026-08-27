@@ -13,7 +13,7 @@
 // - Must-Not:
 //   - Use sibling images, guess ambiguous grids, or perform filesystem I/O.
 // - Allows:
-//   - Source-derived grid validation, per-tile Y flip, overlap, and crop.
+//   - Source-derived grid validation, explicit tile orientation, overlap, crop.
 // - Split-When:
 //   - Sprite placement gains another independently evidenced layout family.
 // - Merge-When:
@@ -23,7 +23,7 @@
 // - Description:
 //   - Requires one unique structural grid and preserves row-major overwrite.
 // - Usage:
-//   - Runs after each embedded DDS tile has been decoded to RGBA8.
+//   - Runs after each embedded image tile has been decoded to RGBA8.
 // - Defaults:
 //   - Missing, malformed, or ambiguous tile evidence fails explicitly.
 //
@@ -49,6 +49,8 @@ pub struct SpriteRasterLayout {
     pub height: u32,
     /// Source `blit_border` value from the owning sprite chunk.
     pub blit_border: u32,
+    /// Whether each decoded tile is vertically inverted before placement.
+    pub flip_vertical: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -112,7 +114,15 @@ pub fn assemble_sprite_rgba(
             let origin_y = *row_origins.get(row).ok_or_else(|| {
                 P3dError::invalid_source("sprite row origin is missing")
             })?;
-            blit_flipped(tile, origin_x, origin_y, width, height, &mut rgba)?;
+            blit_tile(
+                tile,
+                origin_x,
+                origin_y,
+                width,
+                height,
+                layout.flip_vertical,
+                &mut rgba,
+            )?;
         }
     }
     Ok(DecodedRgbaImage {
@@ -181,6 +191,14 @@ fn unique_grid(
             "sprite height exceeds usize: {error}"
         ))
     })?;
+    let required_width =
+        logical_width.checked_add(overlap).ok_or_else(|| {
+            P3dError::invalid_source("sprite padded width overflowed")
+        })?;
+    let required_height =
+        logical_height.checked_add(overlap).ok_or_else(|| {
+            P3dError::invalid_source("sprite padded height overflowed")
+        })?;
     let mut candidate = None;
     for columns in 1..=tiles.len() {
         if !tiles.len().is_multiple_of(columns) {
@@ -193,7 +211,8 @@ fn unique_grid(
         else {
             continue;
         };
-        if coverage_width < logical_width || coverage_height < logical_height {
+        if coverage_width < required_width || coverage_height < required_height
+        {
             continue;
         }
         if candidate.replace(grid).is_some() {
@@ -250,11 +269,12 @@ fn grid_coverage(
             if tile_width != *expected_width {
                 return Ok(None);
             }
-            let tile_height = usize::try_from(tile.height).map_err(|error| {
-                P3dError::invalid_source(format!(
-                    "sprite tile height exceeds usize: {error}"
-                ))
-            })?;
+            let tile_height =
+                usize::try_from(tile.height).map_err(|error| {
+                    P3dError::invalid_source(format!(
+                        "sprite tile height exceeds usize: {error}"
+                    ))
+                })?;
             if let Some(expected_height) = row_height {
                 if tile_height != expected_height {
                     return Ok(None);
@@ -367,21 +387,20 @@ fn origins(sizes: &[usize], overlap: usize) -> Result<Vec<usize>, P3dError> {
         let advance = size.checked_sub(overlap).ok_or_else(|| {
             P3dError::invalid_source("sprite overlap subtraction underflowed")
         })?;
-        current = current
-            .checked_add(advance)
-            .ok_or_else(|| {
-                P3dError::invalid_source("sprite tile origin overflowed")
-            })?;
+        current = current.checked_add(advance).ok_or_else(|| {
+            P3dError::invalid_source("sprite tile origin overflowed")
+        })?;
     }
     Ok(values)
 }
 
-fn blit_flipped(
+fn blit_tile(
     tile: &DecodedRgbaImage,
     origin_x: usize,
     origin_y: usize,
     output_width: usize,
     output_height: usize,
+    flip_vertical: bool,
     output: &mut [u8],
 ) -> Result<(), P3dError> {
     let tile_width = usize::try_from(tile.width).map_err(|error| {
@@ -395,12 +414,16 @@ fn blit_flipped(
         ))
     })?;
     for source_y in 0..tile_height {
-        let flipped_y = tile_height
-            .checked_sub(source_y)
-            .and_then(|value| value.checked_sub(1))
-            .ok_or_else(|| {
-                P3dError::invalid_source("sprite tile Y flip underflowed")
-            })?;
+        let read_y = if flip_vertical {
+            tile_height
+                .checked_sub(source_y)
+                .and_then(|value| value.checked_sub(1))
+                .ok_or_else(|| {
+                    P3dError::invalid_source("sprite tile Y flip underflowed")
+                })?
+        } else {
+            source_y
+        };
         let target_y = origin_y.checked_add(source_y).ok_or_else(|| {
             P3dError::invalid_source("sprite target Y coordinate overflowed")
         })?;
@@ -416,7 +439,7 @@ fn blit_flipped(
             if target_x >= output_width {
                 continue;
             }
-            let source_offset = flipped_y
+            let source_offset = read_y
                 .checked_mul(tile_width)
                 .and_then(|value| value.checked_add(source_x))
                 .and_then(|value| value.checked_mul(4))
@@ -440,10 +463,8 @@ fn blit_flipped(
             let target_end = target_offset.checked_add(4).ok_or_else(|| {
                 P3dError::invalid_source("sprite target RGBA end overflowed")
             })?;
-            let source_pixel = tile
-                .rgba
-                .get(source_offset..source_end)
-                .ok_or_else(|| {
+            let source_pixel =
+                tile.rgba.get(source_offset..source_end).ok_or_else(|| {
                     P3dError::invalid_source(
                         "sprite source RGBA pixel is out of bounds",
                     )
