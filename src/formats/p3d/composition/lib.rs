@@ -45,7 +45,10 @@ pub mod ports;
 #[path = "../contract/schema.rs"]
 pub mod schema;
 
-pub use adapters::driven::{LosslessPackageExporter, write_lossless_package};
+pub use adapters::driven::{
+    DecodedRgbaImage, LosslessPackageExporter, SpriteRasterLayout,
+    assemble_sprite_rgba, decode_legacy_dds, write_lossless_package,
+};
 pub use application::ExportPackage;
 pub use domain::{ChunkKind, ChunkRecord, P3dDocument, P3dError, analyze_p3d};
 pub use ports::PackageExporter;
