@@ -34,6 +34,8 @@
 
 //! Normalized `Pure3D` sprite raster compiler.
 
+// CSpell:ignore ATG dimage
+
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
 use std::fs;
@@ -302,9 +304,10 @@ fn compile_ui_sprite_raster(
         }
         SpriteTileEncoding::P3dImagePng => {
             let [history] = history_rows.as_slice() else {
-                return Err(PipelineError::new(
-                    "PNG sprite package must contain exactly one history component",
-                ));
+                return Err(PipelineError::new(concat!(
+                    "PNG sprite package must contain exactly one history ",
+                    "component",
+                )));
             };
             Some(*history)
         }
@@ -448,20 +451,26 @@ fn validate_p3dimage_history(bytes: &[u8]) -> PipelineOutcome<()> {
     }
     let command = trim_history_padding(command).replace('\\', "/");
     let tokens = command.split_ascii_whitespace().collect::<Vec<_>>();
-    let [executable, ntsc_fix, size_flag, output_flag, output_path, input_path] =
+    let [tool, ntsc, size, output, output_path, input_path] =
         tokens.as_slice()
     else {
         return Err(PipelineError::new(
-            "UI sprite history command is not the evidenced p3dimage invocation",
+            concat!(
+                "UI sprite history command is not the evidenced ",
+                "p3dimage invocation",
+            ),
         ));
     };
-    if executable.rsplit('/').next() != Some("p3dimage")
-        || *ntsc_fix != "--ntsc_fix"
-        || *size_flag != "-S"
-        || *output_flag != "-o"
+    if tool.rsplit('/').next() != Some("p3dimage")
+        || *ntsc != "--ntsc_fix"
+        || *size != "-S"
+        || *output != "-o"
     {
         return Err(PipelineError::new(
-            "UI sprite history command is not the evidenced p3dimage invocation",
+            concat!(
+                "UI sprite history command is not the evidenced ",
+                "p3dimage invocation",
+            ),
         ));
     }
     if !output_path.to_ascii_lowercase().ends_with(".p3d")
@@ -1187,6 +1196,6 @@ fn rollback_publication(
 }
 
 #[cfg(test)]
-// jig-ignore-next-line: canonical test module path is indivisible.
+// jig-ignore-next-line: exact test module path is indivisible
 #[path = "../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/ui_sprite_raster_tests.rs"]
 mod tests;
