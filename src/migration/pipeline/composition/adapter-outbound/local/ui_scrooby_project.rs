@@ -14,22 +14,23 @@
 //   - Invent widget runtime behavior, signed layout semantics, or Unreal
 //     assets.
 // - Allows:
-//   - Resolve exact package-local authored identities across normalized UI
-//     data.
+//   - Resolve exact package-local authored identities and source-backed
+//     normalized resource-package paths across UI evidence.
 // - Split-When:
 //   - UI artifact publication or WidgetBlueprint construction gains a
 //     lifecycle.
 // - Merge-When:
 //   - Another adapter owns the identical Scrooby semantic binding preflight.
 // - Summary:
-//   - Validate package-local Scrooby references before Unreal planning.
+//   - Validate Scrooby references and resource-package backing before Unreal.
 // - Description:
 //   - Requires every observed screen, image, style, text-bible, and Pure3D
 //     reference to resolve to exactly one normalized resource declaration.
 // - Usage:
 //   - Called by prepare-unreal after canonical package-index intake.
 // - Defaults:
-//   - Missing, ambiguous, malformed, or cross-package references fail closed.
+//   - Missing, ambiguous, malformed, or unsafe authored references fail closed;
+//     absent optional resource packages remain explicitly unresolved.
 //
 
 //! Normalized Scrooby project semantic preflight.
@@ -47,7 +48,7 @@ use crate::domain::{
 };
 
 const BINDING_CATALOG_SCHEMA: &str =
-    "shar-schoenwald.scrooby-binding-catalog.v3";
+    "shar-schoenwald.scrooby-binding-catalog.v4";
 const BINDING_CATALOG_FILE: &str = "catalog.jsonl";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -73,6 +74,8 @@ struct ScroobyPackageBinding {
     match_basis: &'static str,
     target_source_unit_id: Option<String>,
     target_source_match_basis: Option<&'static str>,
+    target_package_id: Option<String>,
+    target_package_match_basis: Option<&'static str>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -102,6 +105,8 @@ pub(super) struct ScroobyPageResourceLifecycle {
     pub(super) target_ordinal: usize,
     pub(super) target_source_unit_id: Option<String>,
     pub(super) target_source_match_basis: Option<&'static str>,
+    pub(super) target_package_id: Option<String>,
+    pub(super) target_package_match_basis: Option<&'static str>,
 }
 
 impl ScroobyUiPreflight {
@@ -121,6 +126,14 @@ impl ScroobyUiPreflight {
             .iter()
             .flat_map(|package| &package.bindings)
             .filter(|binding| binding.target_source_unit_id.is_some())
+            .count()
+    }
+
+    pub(super) fn normalized_package_binding_count(&self) -> usize {
+        self.packages
+            .iter()
+            .flat_map(|package| &package.bindings)
+            .filter(|binding| binding.target_package_id.is_some())
             .count()
     }
 
@@ -148,6 +161,9 @@ impl ScroobyUiPreflight {
                         .clone(),
                     target_source_match_basis: binding
                         .target_source_match_basis,
+                    target_package_id: binding.target_package_id.clone(),
+                    target_package_match_basis: binding
+                        .target_package_match_basis,
                 });
             }
         }
@@ -182,6 +198,8 @@ impl ScroobyUiPreflight {
             "package_count": self.package_count(),
             "binding_count": self.binding_count(),
             "direct_import_binding_count": self.direct_import_binding_count(),
+            "normalized_package_binding_count":
+                self.normalized_package_binding_count(),
         }));
         for package in packages {
             let mut bindings = package.bindings.iter().collect::<Vec<_>>();
@@ -238,6 +256,32 @@ impl ScroobyUiPreflight {
                         ));
                     },
                 }
+                match (
+                    &binding.target_package_id,
+                    binding.target_package_match_basis,
+                ) {
+                    (Some(package_id), Some(package_match_basis)) => {
+                        let object = row.as_object_mut().ok_or_else(|| {
+                            PipelineError::new(
+                                "Scrooby binding row is not a JSON object",
+                            )
+                        })?;
+                        let _previous = object.insert(
+                            "target_package_id".to_owned(),
+                            json!(package_id),
+                        );
+                        let _previous = object.insert(
+                            "target_package_match_basis".to_owned(),
+                            json!(package_match_basis),
+                        );
+                    },
+                    (None, None) => {},
+                    _ => {
+                        return Err(PipelineError::new(
+                            "Scrooby normalized-package binding is incomplete",
+                        ));
+                    },
+                }
                 rows.push(row);
             }
         }
@@ -290,8 +334,14 @@ pub(super) fn preflight_scrooby_ui_projects(
             extracted_root,
             &package.package_root,
         )?;
-        let (package_bindings, image_resources) =
+        let (mut package_bindings, image_resources) =
             preflight_scrooby_package_evidence(&root)?;
+        bind_scrooby_normalized_resource_packages(
+            index,
+            &package.package_root,
+            &root,
+            &mut package_bindings,
+        )?;
         packages.push(ScroobyPackageBindings {
             package_id: package.package_id.clone(),
             bindings: package_bindings,
@@ -570,6 +620,28 @@ fn preflight_scrooby_package_evidence(
     Vec<ScroobyPackageBinding>,
     Vec<ScroobyImageResourceSource>,
 )> {
+    let decoded = read_scrooby_components(root)?;
+    if decoded
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_project")
+        .count()
+        != 1
+    {
+        return Err(PipelineError::new(
+            "Scrooby package must contain exactly one project",
+        ));
+    }
+    validate_project_structure(&decoded)?;
+    validate_layout_children(&decoded)?;
+    validate_screen_pages(&decoded)?;
+    validate_page_resources(&decoded)?;
+    validate_widget_resources(&decoded)?;
+    let bindings = collect_named_bindings(&decoded)?;
+    let image_resources = collect_image_resource_sources(&decoded)?;
+    Ok((bindings, image_resources))
+}
+
+fn read_scrooby_components(root: &Path) -> PipelineOutcome<Vec<Component>> {
     let rows = read_ledger(root)?;
     let components = root.join("components");
     let mut decoded = Vec::new();
@@ -593,24 +665,7 @@ fn preflight_scrooby_package_evidence(
         }
         decoded.push(Component { row, payload });
     }
-    if decoded
-        .iter()
-        .filter(|component| component.row.kind == "scrooby_project")
-        .count()
-        != 1
-    {
-        return Err(PipelineError::new(
-            "Scrooby package must contain exactly one project",
-        ));
-    }
-    validate_project_structure(&decoded)?;
-    validate_layout_children(&decoded)?;
-    validate_screen_pages(&decoded)?;
-    validate_page_resources(&decoded)?;
-    validate_widget_resources(&decoded)?;
-    let bindings = collect_named_bindings(&decoded)?;
-    let image_resources = collect_image_resource_sources(&decoded)?;
-    Ok((bindings, image_resources))
+    Ok(decoded)
 }
 
 fn read_ledger(root: &Path) -> PipelineOutcome<Vec<LedgerRow>> {
@@ -1270,7 +1325,132 @@ fn push_binding(
         match_basis,
         target_source_unit_id: None,
         target_source_match_basis: None,
+        target_package_id: None,
+        target_package_match_basis: None,
     });
+}
+
+fn bind_scrooby_normalized_resource_packages(
+    index: &PhaseThreePackageIndex,
+    owner_package_root: &str,
+    root: &Path,
+    bindings: &mut [ScroobyPackageBinding],
+) -> PipelineOutcome<()> {
+    let decoded = read_scrooby_components(root)?;
+    let project = decoded
+        .iter()
+        .find(|component| component.row.kind == "scrooby_project")
+        .ok_or_else(|| PipelineError::new("Scrooby project is missing"))?;
+    let resource_path = required_string(&project.payload, "resource_path")?;
+    let mut package_by_ordinal = BTreeMap::<usize, String>::new();
+    for resource in decoded.iter().filter(|component| {
+        matches!(
+            component.row.kind.as_str(),
+            "scrooby_image_resource"
+                | "scrooby_pure3d_resource"
+                | "scrooby_text_style_resource"
+                | "scrooby_text_bible_resource"
+        )
+    }) {
+        let filename = required_string(&resource.payload, "filename")?;
+        let Some(target_root) = scrooby_resource_package_root(
+            owner_package_root,
+            resource_path,
+            filename,
+        )? else {
+            continue;
+        };
+        let matches = index
+            .packages()
+            .iter()
+            .filter(|package| {
+                package.package_root.eq_ignore_ascii_case(&target_root)
+            })
+            .collect::<Vec<_>>();
+        let target = match matches.as_slice() {
+            [] => continue,
+            [target] => target.package_id.clone(),
+            _ => {
+                return Err(PipelineError::new(
+                    "Scrooby resource package path is ambiguous",
+                ));
+            },
+        };
+        if package_by_ordinal
+            .insert(resource.row.ordinal, target)
+            .is_some()
+        {
+            return Err(PipelineError::new(
+                "Scrooby resource package ordinal is duplicated",
+            ));
+        }
+    }
+    for binding in bindings {
+        if let Some(package_id) =
+            package_by_ordinal.get(&binding.target_ordinal)
+        {
+            binding.target_package_id = Some(package_id.clone());
+            binding.target_package_match_basis =
+                Some("project-resource-path-exact");
+        }
+    }
+    Ok(())
+}
+
+fn scrooby_resource_package_root(
+    owner_package_root: &str,
+    resource_path: &str,
+    filename: &str,
+) -> PipelineOutcome<Option<String>> {
+    let filename = trim_padding(filename);
+    let Some(extension_offset) = filename.len().checked_sub(4) else {
+        return Ok(None);
+    };
+    let Some(extension) = filename.get(extension_offset..) else {
+        return Ok(None);
+    };
+    if !extension.eq_ignore_ascii_case(".p3d") {
+        return Ok(None);
+    }
+    let without_extension = filename.get(..extension_offset).ok_or_else(|| {
+        PipelineError::new("Scrooby resource filename cannot strip extension")
+    })?;
+    let parent = owner_package_root
+        .rsplit_once('/')
+        .map(|(parent, _name)| parent)
+        .ok_or_else(|| {
+            PipelineError::new("Scrooby package root has no parent")
+        })?;
+    let resource_segments = scrooby_relative_segments(resource_path)?;
+    let filename_segments = scrooby_relative_segments(without_extension)?;
+    let mut target = String::from(parent);
+    for segment in resource_segments.into_iter().chain(filename_segments) {
+        target.push('/');
+        target.push_str(segment);
+    }
+    Ok(Some(target))
+}
+
+fn scrooby_relative_segments(value: &str) -> PipelineOutcome<Vec<&str>> {
+    let value = trim_padding(value).trim_end_matches(['/', '\\']);
+    if value.is_empty() || value.starts_with(['/', '\\']) {
+        return Err(PipelineError::new(
+            "Scrooby resource path is not a portable relative path",
+        ));
+    }
+    let mut segments = Vec::new();
+    for segment in value.split(['/', '\\']) {
+        if segment.is_empty()
+            || matches!(segment, "." | "..")
+            || segment.contains(':')
+        {
+            return Err(PipelineError::new(
+                "Scrooby resource path contains an unsafe segment",
+            ));
+        }
+        segments.push(segment);
+    }
+    Ok(segments)
 }
 
 fn collect_image_resource_sources(

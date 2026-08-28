@@ -37,7 +37,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
     preflight_scrooby_package, publish_scrooby_binding_catalog,
-    resolve_exact_image_source, trim_padding,
+    resolve_exact_image_source, scrooby_resource_package_root, trim_padding,
 };
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -88,8 +88,8 @@ fn write_valid_package(root: &Path) -> TestResult {
         write_component(
             root, 1, 0, "scrooby_project", "project",
             concat!(
-                r#"{"schema":"scrooby_project","children":["#,
-                r#"{"id_hex":"0x00018002"},"#,
+                r#"{"schema":"scrooby_project","resource_path":"resource\\","#,
+                r#""children":[{"id_hex":"0x00018002"},"#,
                 r#"{"id_hex":"0x00018001"}]}"#,
             ),
         )?,
@@ -135,7 +135,11 @@ fn write_valid_package(root: &Path) -> TestResult {
         )?,
         write_component(
             root, 7, 2, "scrooby_text_style_resource", "style",
-            r#"{"schema":"scrooby_text_style_resource","name":"Body"}"#,
+            concat!(
+                r#"{"schema":"scrooby_text_style_resource","#,
+                r#""name":"Body","filename":"fonts\\body.p3d","#,
+                r#""inventory_name":"BodyFont"}"#,
+            ),
         )?,
         write_component(
             root, 8, 5, "scrooby_multi_text", "text",
@@ -146,7 +150,11 @@ fn write_valid_package(root: &Path) -> TestResult {
         )?,
         write_component(
             root, 9, 2, "scrooby_text_bible_resource", "bible",
-            r#"{"schema":"scrooby_text_bible_resource","name":"srr2"}"#,
+            concat!(
+                r#"{"schema":"scrooby_text_bible_resource","#,
+                r#""name":"srr2","filename":"text\\srr2.p3d","#,
+                r#""inventory_name":"srr2"}"#,
+            ),
         )?,
         write_component(
             root, 10, 8, "scrooby_string_text_bible", "string",
@@ -156,6 +164,7 @@ fn write_valid_package(root: &Path) -> TestResult {
             root, 11, 2, "scrooby_pure3d_resource", "pure",
             concat!(
                 r#"{"schema":"scrooby_pure3d_resource","name":"dummy", "#,
+                r#""filename":"pure3d\\dummy.p3d","#,
                 r#""inventory_name":"DummyDrawable"}"#,
             ),
         )?,
@@ -174,6 +183,62 @@ fn write_valid_package(root: &Path) -> TestResult {
     }
     fs::write(root.join("components.jsonl"), ledger)
         .map_err(|error| error.to_string())
+}
+
+#[test]
+fn resource_package_root_uses_owner_path_and_strips_p3d() -> TestResult {
+    let observed = scrooby_resource_package_root(
+        "extracted/art/frontend/scrooby/project",
+        "resource\\",
+        "pure3d\\model.P3D\\x00",
+    )
+    .map_err(|error| error.to_string())?;
+    if observed.as_deref()
+        != Some("extracted/art/frontend/scrooby/resource/pure3d/model")
+    {
+        return Err(format!("unexpected resource package root: {observed:?}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn resource_package_root_ignores_non_p3d_files() -> TestResult {
+    let observed = scrooby_resource_package_root(
+        "extracted/art/frontend/scrooby/project",
+        "resource\\",
+        "images\\icon.png",
+    )
+    .map_err(|error| error.to_string())?;
+    if observed.is_some() {
+        return Err(format!(
+            "non-P3D resource produced package root: {observed:?}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn resource_package_root_rejects_unsafe_relative_segments() -> TestResult {
+    for (resource_path, filename) in [
+        ("../resource", "pure3d/model.p3d"),
+        ("/resource", "pure3d/model.p3d"),
+        ("C:\\resource", "pure3d/model.p3d"),
+        ("resource", "../model.p3d"),
+        ("resource", "pure3d//model.p3d"),
+    ] {
+        if scrooby_resource_package_root(
+            "extracted/art/frontend/scrooby/project",
+            resource_path,
+            filename,
+        )
+        .is_ok()
+        {
+            return Err(format!(
+                "unsafe path accepted: {resource_path:?} {filename:?}"
+            ));
+        }
+    }
+    Ok(())
 }
 
 #[test]
@@ -270,6 +335,13 @@ fn binding_catalog_publishes_public_source_identity_only() -> TestResult {
                 Some("filename-basename-exact");
         }
     }
+    let package_binding = bindings
+        .iter_mut()
+        .find(|binding| binding.relation == "page-pure3d-resource")
+        .ok_or_else(|| "page Pure3D binding is missing".to_owned())?;
+    package_binding.target_package_id = Some("resource-package".to_owned());
+    package_binding.target_package_match_basis =
+        Some("project-resource-path-exact");
     let preflight = super::ScroobyUiPreflight {
         packages: vec![super::ScroobyPackageBindings {
             package_id: "fixture-package".to_owned(),
@@ -297,6 +369,11 @@ fn binding_catalog_publishes_public_source_identity_only() -> TestResult {
         .and_then(|row| row.get("direct_import_binding_count"))
         .and_then(serde_json::Value::as_u64)
         != Some(2)
+        || rows
+            .first()
+            .and_then(|row| row.get("normalized_package_binding_count"))
+            .and_then(serde_json::Value::as_u64)
+            != Some(1)
     {
         return Err(format!(
             "unexpected source binding header: {:?}",
@@ -320,6 +397,21 @@ fn binding_catalog_publishes_public_source_identity_only() -> TestResult {
         })
     {
         return Err(format!("unexpected public source bindings: {resolved:?}"));
+    }
+    let package_resolved = rows
+        .iter()
+        .skip(1)
+        .filter(|row| row.get("target_package_id").is_some())
+        .collect::<Vec<_>>();
+    if package_resolved.len() != 1
+        || package_resolved.first().and_then(|row| {
+            row.get("target_package_id")
+                .and_then(serde_json::Value::as_str)
+        }) != Some("resource-package")
+    {
+        return Err(format!(
+            "unexpected public package binding: {package_resolved:?}"
+        ));
     }
     Ok(())
 }
@@ -394,6 +486,38 @@ fn binding_catalog_rejects_incomplete_source_identity() -> TestResult {
     };
     if !error.to_string().contains("direct-import binding is incomplete") {
         return Err(format!("unexpected incomplete binding error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn binding_catalog_rejects_incomplete_package_identity() -> TestResult {
+    let root = case_dir("binding-package-incomplete")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let binding = bindings
+        .iter_mut()
+        .find(|binding| binding.relation == "page-pure3d-resource")
+        .ok_or_else(|| "page Pure3D binding is missing".to_owned())?;
+    binding.target_package_id = Some("resource-package".to_owned());
+    let preflight = super::ScroobyUiPreflight {
+        packages: vec![super::ScroobyPackageBindings {
+            package_id: "fixture-package".to_owned(),
+            bindings,
+            image_resources: Vec::new(),
+        }],
+    };
+    let result = preflight.to_catalog_jsonl();
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("incomplete package identity was published".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("normalized-package binding is incomplete")
+    {
+        return Err(format!("unexpected package binding error: {error}"));
     }
     Ok(())
 }
