@@ -37,7 +37,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use super::{
     UnrealHapPackagePlan, component_ledger_files_exist, movie_outputs_complete,
     p3d_package_complete, scrooby_layout_evidence_complete,
-    sprite_image_evidence_complete,
+    scrooby_page_resource_names_complete, sprite_image_evidence_complete,
 };
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -170,8 +170,11 @@ fn current_scrooby_cache_accepts_project_children() -> Result<(), String> {
     fs::write(case.join("components/scrooby_screen/screen.json"), "{}\n")
         .map_err(|error| error.to_string())?;
     for page in ["page-a.json", "page-b.json"] {
-        fs::write(case.join("components/scrooby_page").join(page), "{}\n")
-            .map_err(|error| error.to_string())?;
+        fs::write(
+            case.join("components/scrooby_page").join(page),
+            r#"{"schema":"scrooby_page","children":[]}"#,
+        )
+        .map_err(|error| error.to_string())?;
     }
     fs::write(
         case.join("components.jsonl"),
@@ -197,6 +200,78 @@ fn current_scrooby_cache_accepts_project_children() -> Result<(), String> {
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
     if !complete {
         return Err("exact Scrooby project children were rejected".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn stale_scrooby_page_cache_requires_resource_names() -> Result<(), String> {
+    let case = case_dir("stale-scrooby-page-resources")?;
+    fs::create_dir_all(case.join("components/scrooby_page"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/scrooby_page/page.json"),
+        concat!(
+            r#"{"schema":"scrooby_page","children":["#,
+            r#"{"id_hex":"0x00018100"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":1}"#,
+            "\n",
+            r#"{"ordinal":2,"parent_ordinal":1,"kind":"scrooby_page","#,
+            r#""path":"scrooby_page/page.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let complete = scrooby_page_resource_names_complete(&case);
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if complete {
+        return Err(
+            "Scrooby page cache without resource name was reused".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn current_scrooby_page_cache_accepts_named_resources() -> Result<(), String> {
+    let case = case_dir("current-scrooby-page-resources")?;
+    fs::create_dir_all(case.join("components/scrooby_page"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/scrooby_page/page.json"),
+        concat!(
+            r#"{"schema":"scrooby_page","children":["#,
+            r#"{"id_hex":"0x00018003"},"#,
+            r#"{"id_hex":"0x00018100","name":"Image"},"#,
+            r#"{"id_hex":"0x00018101","name":"Pure3D"},"#,
+            r#"{"id_hex":"0x00018104","name":"Style"},"#,
+            r#"{"id_hex":"0x00018105","name":"Bible"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":1}"#,
+            "\n",
+            r#"{"ordinal":2,"parent_ordinal":1,"kind":"scrooby_page","#,
+            r#""path":"scrooby_page/page.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let complete = scrooby_page_resource_names_complete(&case);
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if !complete {
+        return Err(
+            "named Scrooby page resource cache was rejected".to_owned(),
+        );
     }
     Ok(())
 }

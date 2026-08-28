@@ -1252,6 +1252,7 @@ fn p3d_package_complete(output: &Path) -> bool {
         && component_ledger_files_exist(output)
         && sprite_image_evidence_complete(output)
         && scrooby_project_evidence_complete(output)
+        && scrooby_page_resource_names_complete(output)
         && scrooby_layout_evidence_complete(output)
 }
 
@@ -1422,6 +1423,69 @@ fn scrooby_project_child_counts(project: &str) -> Option<(usize, usize)> {
         }
     }
     Some((screens, pages))
+}
+
+/// Require page-owned resource references to preserve authored identity.
+fn scrooby_page_resource_names_complete(output: &Path) -> bool {
+    let manifest = output.join("components.jsonl");
+    let components = output.join("components");
+    let Ok(text) = fs::read_to_string(&manifest) else {
+        return false;
+    };
+    for line in text.lines().skip(1) {
+        let Some(kind) = extract_json_string_field(line, "kind") else {
+            return false;
+        };
+        if kind != "scrooby_page" {
+            continue;
+        }
+        let Some(path_text) = extract_json_string_field(line, "path") else {
+            return false;
+        };
+        let Ok(path) = resolve_under(&components, Path::new(&path_text)) else {
+            return false;
+        };
+        let Ok(page) = fs::read_to_string(path) else {
+            return false;
+        };
+        let Ok(value) = serde_json::from_str::<serde_json::Value>(&page) else {
+            return false;
+        };
+        if value.get("schema").and_then(serde_json::Value::as_str)
+            != Some("scrooby_page")
+        {
+            return false;
+        }
+        let Some(children) = value
+            .get("children")
+            .and_then(serde_json::Value::as_array)
+        else {
+            return false;
+        };
+        for child in children {
+            let Some(id) = child
+                .get("id_hex")
+                .and_then(serde_json::Value::as_str)
+            else {
+                return false;
+            };
+            match id {
+                "0x00018003" => {},
+                "0x00018100" | "0x00018101" | "0x00018104"
+                | "0x00018105" => {
+                    if child
+                        .get("name")
+                        .and_then(serde_json::Value::as_str)
+                        .is_none_or(str::is_empty)
+                    {
+                        return false;
+                    }
+                },
+                _ => return false,
+            }
+        }
+    }
+    true
 }
 
 /// Require every Scrooby layout owner to publish its declared typed children.
