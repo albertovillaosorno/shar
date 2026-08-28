@@ -60,6 +60,9 @@ pub(crate) const UI_RASTER_WORKSPACE_ROOT: &str =
 /// Default physical Scrooby semantic-binding catalog workspace.
 pub(crate) const UI_SCROOBY_BINDING_WORKSPACE_ROOT: &str =
     ".cache/pipeline/ui-scrooby-bindings";
+/// Default physical Scrooby runtime-layout catalog workspace.
+pub(crate) const UI_SCROOBY_LAYOUT_WORKSPACE_ROOT: &str =
+    ".cache/pipeline/ui-scrooby-layout";
 /// Default physical Unreal staging workspace.
 pub(crate) const UNREAL_STAGING_WORKSPACE_ROOT: &str =
     ".cache/pipeline/unreal-staging";

@@ -60,6 +60,7 @@ mod two;
 mod unreal_fbx_catalog;
 mod unreal_plans;
 mod unreal_prepare;
+mod ui_scrooby_layout;
 mod ui_scrooby_project;
 mod ui_sprite_raster;
 mod vehicle_catalog;
