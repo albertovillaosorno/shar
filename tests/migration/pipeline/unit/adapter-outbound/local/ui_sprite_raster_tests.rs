@@ -43,7 +43,8 @@ use fbx::domain::texture::semantic::{Rgba8, RgbaImage};
 
 use super::{
     SpriteTileEncoding, compile_ui_sprite_raster,
-    publish_complete_ui_sprite_raster_catalog, transaction_paths,
+    compile_ui_sprite_raster_catalog, publish_complete_ui_sprite_raster_catalog,
+    reusable_ui_sprite_raster_catalog, transaction_paths,
     validate_p3dimage_history, verified_ui_sprite_raster_catalog,
 };
 use crate::domain::PhaseThreePackageIndex;
@@ -448,6 +449,36 @@ fn publication_replaces_complete_catalog_atomically() -> Result<(), String> {
             "first UI raster publication returned stale evidence".to_owned()
         );
     }
+    let compiled = compile_ui_sprite_raster_catalog(&index, extracted_root)
+        .map_err(|error| error.to_string())?;
+    let reusable = reusable_ui_sprite_raster_catalog(&compiled, &output)
+        .ok_or_else(|| {
+            "current UI raster catalog was not reusable".to_owned()
+        })?;
+    if reusable != first {
+        return Err("reusable UI raster evidence changed".to_owned());
+    }
+    let reused = publish_complete_ui_sprite_raster_catalog(
+        &index,
+        extracted_root,
+        &output,
+    )
+    .map_err(|error| error.to_string())?;
+    if reused != first {
+        return Err("current UI raster catalog was not reused".to_owned());
+    }
+    fs::write(&staging, b"transaction debris must fail closed")
+        .map_err(|error| error.to_string())?;
+    if publish_complete_ui_sprite_raster_catalog(
+        &index,
+        extracted_root,
+        &output,
+    )
+    .is_ok()
+    {
+        return Err("UI raster reuse hid transaction debris".to_owned());
+    }
+    fs::remove_file(&staging).map_err(|error| error.to_string())?;
     let mut changed = red_bc1_dds()?;
     let selector = changed
         .get_mut(132)
@@ -455,6 +486,17 @@ fn publication_replaces_complete_catalog_atomically() -> Result<(), String> {
     *selector = 1;
     fs::write(package_root.join("components/image/tile.dds"), changed)
         .map_err(|error| error.to_string())?;
+    fs::write(&staging, b"stale catalog must start a transaction")
+        .map_err(|error| error.to_string())?;
+    let stale_result = publish_complete_ui_sprite_raster_catalog(
+        &index,
+        extracted_root,
+        &output,
+    );
+    fs::remove_file(&staging).map_err(|error| error.to_string())?;
+    if stale_result.is_ok() {
+        return Err("stale UI raster catalog bypassed compilation".to_owned());
+    }
     let second = publish_complete_ui_sprite_raster_catalog(
         &index,
         extracted_root,
@@ -478,6 +520,97 @@ fn publication_replaces_complete_catalog_atomically() -> Result<(), String> {
     if readback != second {
         return Err("accepted UI raster read-back disagrees with publication"
             .to_owned());
+    }
+    fs::remove_dir_all(&output).map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&package_root).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn publication_repairs_valid_png_catalog_tampering() -> Result<(), String> {
+    let package_root = case_dir("tampered-valid-png")?;
+    write_fixture(&package_root, 1)?;
+    let extracted_root = package_root.parent().ok_or_else(|| {
+        "tamper package has no extracted root".to_owned()
+    })?;
+    let index = sprite_index(&package_root)?;
+    let output = package_root.with_file_name(format!(
+        "{}-accepted",
+        package_root
+            .file_name()
+            .and_then(|value| value.to_str())
+            .ok_or_else(|| "tamper package has no portable name".to_owned())?,
+    ));
+    if output.exists() {
+        fs::remove_dir_all(&output).map_err(|error| error.to_string())?;
+    }
+    let expected = publish_complete_ui_sprite_raster_catalog(
+        &index,
+        extracted_root,
+        &output,
+    )
+    .map_err(|error| error.to_string())?;
+    let artifact = expected
+        .first()
+        .ok_or_else(|| "tamper publication is empty".to_owned())?;
+    let raster_path = output.join(
+        artifact
+            .path
+            .strip_prefix("ui-raster-assets/")
+            .ok_or_else(|| "tamper raster path is not logical".to_owned())?,
+    );
+    let pixels = std::iter::repeat_n(Rgba8::new(0, 0, 255, 255), 16)
+        .collect::<Vec<_>>();
+    let image =
+        RgbaImage::new(4, 4, pixels).map_err(|error| format!("{error:?}"))?;
+    let tampered =
+        encode_png_bytes(&image).map_err(|error| format!("{error:?}"))?;
+    let tampered_digest = shar_sha256::digest_hex(&tampered);
+    fs::write(&raster_path, &tampered).map_err(|error| error.to_string())?;
+    let catalog = output.join("catalog.jsonl");
+    let text = fs::read_to_string(&catalog).map_err(|error| error.to_string())?;
+    let mut lines = text.lines();
+    let header = lines
+        .next()
+        .ok_or_else(|| "tamper catalog header is missing".to_owned())?;
+    let row_text = lines
+        .next()
+        .ok_or_else(|| "tamper catalog row is missing".to_owned())?;
+    let mut row = serde_json::from_str::<serde_json::Value>(row_text)
+        .map_err(|error| error.to_string())?;
+    row["sha256"] = serde_json::json!(tampered_digest);
+    row["size_bytes"] = serde_json::json!(tampered.len());
+    let rendered = format!(
+        "{header}\n{}\n",
+        serde_json::to_string(&row).map_err(|error| error.to_string())?,
+    );
+    fs::write(&catalog, rendered).map_err(|error| error.to_string())?;
+    if verified_ui_sprite_raster_catalog(&output)
+        .map_err(|error| error.to_string())?
+        .is_none()
+    {
+        return Err(
+            "self-consistent tampered catalog was not readable".to_owned(),
+        );
+    }
+    let repaired = publish_complete_ui_sprite_raster_catalog(
+        &index,
+        extracted_root,
+        &output,
+    )
+    .map_err(|error| error.to_string())?;
+    if repaired != expected {
+        return Err(
+            "tampered valid PNG was not restored from source".to_owned(),
+        );
+    }
+    let restored = fs::read(&raster_path).map_err(|error| error.to_string())?;
+    if restored == tampered
+        || shar_sha256::digest_hex(&restored) != artifact.sha256
+    {
+        return Err(
+            "tampered raster bytes survived source-backed repair".to_owned(),
+        );
     }
     fs::remove_dir_all(&output).map_err(|error| error.to_string())?;
     fs::remove_dir_all(&package_root).map_err(|error| error.to_string())?;
@@ -513,10 +646,20 @@ fn verifier_rejects_extra_catalog_inventory() -> Result<(), String> {
     fs::write(output.join("rasters/unclaimed.png"), b"not catalogued")
         .map_err(|error| error.to_string())?;
     let result = verified_ui_sprite_raster_catalog(&output);
-    fs::remove_dir_all(&output).map_err(|error| error.to_string())?;
-    fs::remove_dir_all(&package_root).map_err(|error| error.to_string())?;
     if result.is_ok() {
         return Err("UI raster verifier accepted extra inventory".to_owned());
     }
+    let repaired = publish_complete_ui_sprite_raster_catalog(
+        &index,
+        extracted_root,
+        &output,
+    )
+    .map_err(|error| error.to_string())?;
+    if repaired.len() != 1 || output.join("rasters/unclaimed.png").exists() {
+        return Err("UI raster publication did not repair stale inventory"
+            .to_owned());
+    }
+    fs::remove_dir_all(&output).map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&package_root).map_err(|error| error.to_string())?;
     Ok(())
 }

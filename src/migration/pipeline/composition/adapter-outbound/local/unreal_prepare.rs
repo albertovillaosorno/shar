@@ -228,7 +228,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         note: format!(
             concat!(
                 "verified {} sources across {} semantic packages, {} ",
-                "generated FBX artifacts, {} compiled UI sprite rasters, and ",
+                "generated FBX artifacts, {} verified UI sprite rasters, and ",
                 "{} verified Scrooby projects; published {} mission ",
                 "definitions ",
                 "to {} with plan bundle {}"
