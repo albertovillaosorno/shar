@@ -27,7 +27,8 @@
 //   - Requires every observed screen, image, style, text-bible, and Pure3D
 //     reference to resolve to exactly one normalized resource declaration.
 //     Package-backed P3D resources must also expose the inventory evidence that
-//     Scrooby expects to find after loading that package.
+//     Scrooby expects to find after loading that package. Embedded text styles
+//     honor the owner's current inventory before any resource-file fallback.
 // - Usage:
 //   - Called by prepare-unreal after canonical package-index intake.
 // - Defaults:
@@ -50,7 +51,7 @@ use crate::domain::{
 };
 
 const BINDING_CATALOG_SCHEMA: &str =
-    "shar-schoenwald.scrooby-binding-catalog.v4";
+    "shar-schoenwald.scrooby-binding-catalog.v5";
 const BINDING_CATALOG_FILE: &str = "catalog.jsonl";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -341,7 +342,7 @@ pub(super) fn preflight_scrooby_ui_projects(
         bind_scrooby_normalized_resource_packages(
             index,
             extracted_root,
-            &package.package_root,
+            package,
             &root,
             &mut package_bindings,
         )?;
@@ -1336,7 +1337,7 @@ fn push_binding(
 fn bind_scrooby_normalized_resource_packages(
     index: &PhaseThreePackageIndex,
     extracted_root: &Path,
-    owner_package_root: &str,
+    owner_package: &PhaseThreePackageRow,
     root: &Path,
     bindings: &mut [ScroobyPackageBinding],
 ) -> PipelineOutcome<()> {
@@ -1346,7 +1347,8 @@ fn bind_scrooby_normalized_resource_packages(
         .find(|component| component.row.kind == "scrooby_project")
         .ok_or_else(|| PipelineError::new("Scrooby project is missing"))?;
     let resource_path = required_string(&project.payload, "resource_path")?;
-    let mut package_by_ordinal = BTreeMap::<usize, String>::new();
+    let mut package_by_ordinal =
+        BTreeMap::<usize, (String, &'static str)>::new();
     // Image P3D resources use a distinct FullFilename inventory contract.
     // Keep them unresolved until that identity is modeled explicitly.
     for resource in decoded.iter().filter(|component| {
@@ -1357,9 +1359,27 @@ fn bind_scrooby_normalized_resource_packages(
                 | "scrooby_text_bible_resource"
         )
     }) {
+        if let Some(target) = resolve_owner_text_style_inventory(
+            extracted_root,
+            owner_package,
+            resource,
+        )? {
+            if package_by_ordinal
+                .insert(
+                    resource.row.ordinal,
+                    (target.to_owned(), "owner-inventory-name-exact"),
+                )
+                .is_some()
+            {
+                return Err(PipelineError::new(
+                    "Scrooby resource package ordinal is duplicated",
+                ));
+            }
+            continue;
+        }
         let filename = required_string(&resource.payload, "filename")?;
         let Some(target_root) = scrooby_resource_package_root(
-            owner_package_root,
+            &owner_package.package_root,
             resource_path,
             filename,
         )? else {
@@ -1387,7 +1407,13 @@ fn bind_scrooby_normalized_resource_packages(
             target,
         )?;
         if package_by_ordinal
-            .insert(resource.row.ordinal, target.package_id.clone())
+            .insert(
+                resource.row.ordinal,
+                (
+                    target.package_id.clone(),
+                    "project-resource-path-exact",
+                ),
+            )
             .is_some()
         {
             return Err(PipelineError::new(
@@ -1396,12 +1422,11 @@ fn bind_scrooby_normalized_resource_packages(
         }
     }
     for binding in bindings {
-        if let Some(package_id) =
+        if let Some((package_id, match_basis)) =
             package_by_ordinal.get(&binding.target_ordinal)
         {
             binding.target_package_id = Some(package_id.clone());
-            binding.target_package_match_basis =
-                Some("project-resource-path-exact");
+            binding.target_package_match_basis = Some(*match_basis);
         }
     }
     Ok(())
@@ -1426,11 +1451,54 @@ fn validate_scrooby_resource_target_inventory(
             "Scrooby resource inventory name is empty",
         ));
     }
+    let matching_kinds = scrooby_package_inventory_matching_kinds(
+        extracted_root,
+        target,
+        inventory_name,
+    )?;
+    validate_scrooby_resource_inventory_kinds(
+        &resource.row.kind,
+        &matching_kinds,
+    )
+}
+
+fn resolve_owner_text_style_inventory<'package>(
+    extracted_root: &Path,
+    owner_package: &'package PhaseThreePackageRow,
+    resource: &Component,
+) -> PipelineOutcome<Option<&'package str>> {
+    if resource.row.kind != "scrooby_text_style_resource" {
+        return Ok(None);
+    }
+    let inventory_name = trim_padding(required_string(
+        &resource.payload,
+        "inventory_name",
+    )?);
+    if inventory_name.is_empty() {
+        return Ok(None);
+    }
+    let matches = scrooby_package_inventory_matching_kinds(
+        extracted_root,
+        owner_package,
+        inventory_name,
+    )?;
+    if matches == ["texture_font"] {
+        Ok(Some(owner_package.package_id.as_str()))
+    } else {
+        Ok(None)
+    }
+}
+
+fn scrooby_package_inventory_matching_kinds<'package>(
+    extracted_root: &Path,
+    package: &'package PhaseThreePackageRow,
+    inventory_name: &str,
+) -> PipelineOutcome<Vec<&'package str>> {
     let target_root =
-        resolve_normalized_package_root(extracted_root, &target.package_root)?;
-    let package_prefix = format!("{}/", target.package_root);
+        resolve_normalized_package_root(extracted_root, &package.package_root)?;
+    let package_prefix = format!("{}/", package.package_root);
     let mut matching_kinds = Vec::new();
-    for member in target.members().iter().filter(|member| {
+    for member in package.members().iter().filter(|member| {
         member.source_chunk_kind != "none"
             && Path::new(&member.path)
                 .extension()
@@ -1467,10 +1535,7 @@ fn validate_scrooby_resource_target_inventory(
             matching_kinds.push(member.source_chunk_kind.as_str());
         }
     }
-    validate_scrooby_resource_inventory_kinds(
-        &resource.row.kind,
-        &matching_kinds,
-    )
+    Ok(matching_kinds)
 }
 
 fn validate_scrooby_resource_inventory_kinds(

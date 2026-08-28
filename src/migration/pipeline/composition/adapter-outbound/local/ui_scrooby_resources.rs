@@ -48,7 +48,7 @@ use super::ui_scrooby_project::{
     ScroobyPageResourceLifecycle, ScroobyUiPreflight,
 };
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-resource-lifecycle.v2";
+const SCHEMA: &str = "shar-schoenwald.scrooby-resource-lifecycle.v3";
 const FILE: &str = "lifecycle.jsonl";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
