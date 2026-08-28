@@ -161,6 +161,21 @@ fn recovers_scrooby_page_header_and_child_inventory() -> Result<(), String> {
     source.extend_from_slice(&0x0001_8003_u32.to_le_bytes());
     source.extend_from_slice(&12_u32.to_le_bytes());
     source.extend_from_slice(&12_u32.to_le_bytes());
+    let image_start = source.len();
+    source.extend_from_slice(&[0_u8; 12]);
+    push_pascal(&mut source, "Icon")?;
+    source.extend_from_slice(&1_u32.to_le_bytes());
+    push_pascal(&mut source, "images\\icon.png")?;
+    let image_size = source.len() - image_start;
+    source[image_start..image_start + 4]
+        .copy_from_slice(&0x0001_8100_u32.to_le_bytes());
+    let image_size_u32 = u32::try_from(image_size).map_err(|error| {
+        format!("image resource fixture is too large: {error}")
+    })?;
+    source[image_start + 4..image_start + 8]
+        .copy_from_slice(&image_size_u32.to_le_bytes());
+    source[image_start + 8..image_start + 12]
+        .copy_from_slice(&image_size_u32.to_le_bytes());
     let total_size = source.len();
     source[0..4].copy_from_slice(&0x0001_8002_u32.to_le_bytes());
     source[4..8].copy_from_slice(
@@ -178,7 +193,7 @@ fn recovers_scrooby_page_header_and_child_inventory() -> Result<(), String> {
         0x0001_8002,
         header_size,
         total_size,
-        1,
+        2,
     );
     let recovered = recover_component(&component, &source, 1)
         .map_err(|error| error.to_string())?;
@@ -187,6 +202,8 @@ fn recovers_scrooby_page_header_and_child_inventory() -> Result<(), String> {
     if !json.contains(r#""schema":"scrooby_page""#)
         || !json.contains(r#""resolution":[640,480]"#)
         || !json.contains(r#""id_hex":"0x00018003""#)
+        || !json.contains(r#""id_hex":"0x00018100""#)
+        || !json.contains(r#""name":"Icon""#)
     {
         return Err("page recovery lost header or child inventory".to_owned());
     }

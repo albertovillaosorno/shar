@@ -628,11 +628,11 @@ pub(super) fn recover_scrooby_page_json(
     if cursor != component.header_size {
         return None;
     }
-    let children = child_chunks_json(
+    let children = scrooby_page_children_json(
         chunk,
         component.header_size,
         component.total_size,
-    );
+    )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -703,6 +703,108 @@ pub(super) fn recover_scrooby_layer_json(
     ))
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+struct ScroobyResourceFields {
+    name: String,
+    version: u32,
+    values: Vec<String>,
+}
+
+fn decode_scrooby_resource_fields(
+    chunk: &[u8],
+    header_size: usize,
+    total_size: usize,
+    field_count: usize,
+) -> Option<ScroobyResourceFields> {
+    if header_size != total_size || total_size != chunk.len() {
+        return None;
+    }
+    let mut cursor = 12;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let version = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let mut values = Vec::with_capacity(field_count);
+    for _ in 0..field_count {
+        values.push(schema::read_pascal_at(chunk, &mut cursor)?);
+    }
+    (cursor == header_size).then_some(ScroobyResourceFields {
+        name,
+        version,
+        values,
+    })
+}
+
+fn scrooby_page_children_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+) -> Option<String> {
+    const LAYER: u32 = 0x0001_8003;
+    const IMAGE: u32 = 0x0001_8100;
+    const PURE3D: u32 = 0x0001_8101;
+    const TEXT_STYLE: u32 = 0x0001_8104;
+    const TEXT_BIBLE: u32 = 0x0001_8105;
+    let mut children = Vec::new();
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if total_size < header_size || next > end {
+            return None;
+        }
+        let name = match id {
+            LAYER => None,
+            IMAGE => Some(decode_scrooby_resource_fields(
+                chunk.get(cursor..next)?,
+                header_size,
+                total_size,
+                1,
+            )?.name),
+            PURE3D => Some(decode_scrooby_resource_fields(
+                chunk.get(cursor..next)?,
+                header_size,
+                total_size,
+                4,
+            )?.name),
+            TEXT_STYLE | TEXT_BIBLE => Some(decode_scrooby_resource_fields(
+                chunk.get(cursor..next)?,
+                header_size,
+                total_size,
+                2,
+            )?.name),
+            _ => return None,
+        };
+        let payload_size = total_size.checked_sub(header_size)?;
+        let child = name.map_or_else(
+            || {
+                format!(
+                    concat!(
+                        r#"{{"id_hex":"0x{:08x}","header_size":{},"#,
+                        r#""total_size":{},"payload_size":{}}}"#,
+                    ),
+                    id, header_size, total_size, payload_size,
+                )
+            },
+            |name| {
+                format!(
+                    concat!(
+                        r#"{{"id_hex":"0x{:08x}","header_size":{},"#,
+                        r#""total_size":{},"payload_size":{},"#,
+                        r#""name":"{}"}}"#,
+                    ),
+                    id,
+                    header_size,
+                    total_size,
+                    payload_size,
+                    escape_json(&name),
+                )
+            },
+        );
+        children.push(child);
+        cursor = next;
+    }
+    (cursor == end).then(|| children.join(","))
+}
+
 /// Recover one Scrooby image-resource declaration.
 pub(super) fn recover_scrooby_image_resource_json(
     component: &ChunkRecord,
@@ -767,26 +869,24 @@ fn recover_scrooby_resource_json(
     string_fields: &[&str],
 ) -> Option<RecoveredComponent> {
     let chunk = raw_component_bytes(component, source).ok()?;
-    let mut cursor = 12;
-    let name = schema::read_pascal_at(chunk, &mut cursor)?;
-    let version = read_u32(chunk, cursor)?;
-    cursor = cursor.checked_add(4)?;
+    let decoded = decode_scrooby_resource_fields(
+        chunk,
+        component.header_size,
+        component.total_size,
+        string_fields.len(),
+    )?;
     let mut fields = String::new();
-    for field in string_fields {
-        let value = schema::read_pascal_at(chunk, &mut cursor)?;
+    for (field, value) in string_fields.iter().zip(&decoded.values) {
         write!(
             fields,
             ",\"{}\":\"{}\"",
             field,
-            escape_json(&value),
+            escape_json(value),
         )
         .ok()?;
     }
-    if cursor != component.header_size
-        || component.header_size != component.total_size
-    {
-        return None;
-    }
+    let name = decoded.name;
+    let version = decoded.version;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
