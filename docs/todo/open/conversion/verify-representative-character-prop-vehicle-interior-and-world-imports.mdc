@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: verify-representative-character-prop-vehicle-interior-and-world-imports
 status: open
-priority: P1
+priority: P0
 lane: conversion
 active: false
 parent: null

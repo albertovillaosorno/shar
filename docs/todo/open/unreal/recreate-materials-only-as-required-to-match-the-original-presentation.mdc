@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: recreate-materials-only-as-required-to-match-the-original-presentation
 status: open
-priority: P2
+priority: P1
 lane: unreal
 active: false
 parent: null

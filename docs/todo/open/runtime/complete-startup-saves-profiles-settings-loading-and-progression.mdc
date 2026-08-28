@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: complete-startup-saves-profiles-settings-loading-and-progression
 status: open
-priority: P3
+priority: P2
 lane: runtime
 active: false
 parent: null

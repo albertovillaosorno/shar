@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: report-progress-failures-provenance-and-final-artifacts
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: false
 parent: null

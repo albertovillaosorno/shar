@@ -4,7 +4,7 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: keep-gameplay-saves-package-identities-and-mod-contracts-consistent-across-supported
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: false
 parent: null

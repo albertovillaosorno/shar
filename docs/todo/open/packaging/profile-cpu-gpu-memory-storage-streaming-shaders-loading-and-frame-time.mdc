@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: profile-cpu-gpu-memory-storage-streaming-shaders-loading-and-frame-time
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: false
 parent: null

@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: apply-conversion-plans-through-tested-native-unreal-mcp-commands
 status: open
-priority: P2
+priority: P1
 lane: unreal
 active: false
 parent: null

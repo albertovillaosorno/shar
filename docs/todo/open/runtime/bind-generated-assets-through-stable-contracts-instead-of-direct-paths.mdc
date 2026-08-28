@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: bind-generated-assets-through-stable-contracts-instead-of-direct-paths
 status: open
-priority: P3
+priority: P2
 lane: runtime
 active: false
 parent: null

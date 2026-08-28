@@ -4,7 +4,7 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: package-linux-macos-android-windows-x86-64-and-any-windows-on-arm-target-that
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: true
 parent: null

@@ -1,9 +1,9 @@
 # SHAR TODO
 
-Only unfinished work appears here. P0 is the highest-priority horizon and P5
-is the final verification and publication horizon. Within each section, active
-work appears first and stable task identity breaks ties; typed lanes and
-dependencies remain execution authority.
+Only unfinished work appears here. P0 starts the internal game pipeline and P5
+contains final verification, public-safety gating, and publication. Work moves
+forward through the horizons unless a typed dependency explicitly blocks it;
+release-only legal/public-safety work must not preempt building the game.
 
 Full metadata, acceptance criteria, dependencies, evidence, and planning notes
 remain in typed records under `docs/todo/open/`. Completed records remain under
@@ -13,17 +13,7 @@ remain in typed records under `docs/todo/open/`. Completed records remain under
 then one direct Markdown link to the complete typed record. No per-item field
 labels belong here.
 
-## P0 — Authority and repository governance
-
-<!-- markdownlint-disable-next-line MD044 -->
-<!-- jig-ignore-next-line: TODO title is canonical -->
-### TODO - Define a public-safe reconstruction algorithm gate with bounded similarity
-
-Define and test the tentative 45–55% source-similarity window against a lawful
-100% reference without publishing payloads or reversible full-install evidence.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc](docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc)
+## P0 — Source extraction and deterministic conversion
 
 ### TODO - Preserve the original missions, mission order, world layout,…
 
@@ -32,15 +22,6 @@ gameplay structure, models, textures, audio, cinematics, UI, and localization.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/governance/preserve-the-original-missions-mission-order-world-layout-progression-gameplay.mdc](docs/todo/open/governance/preserve-the-original-missions-mission-order-world-layout-progression-gameplay.mdc)
-
-## P1 — Source extraction and deterministic conversion
-
-### TODO - Validate a user-supplied lawful source installation
-
-Validate a user-supplied lawful source installation.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/conversion/validate-a-user-supplied-lawful-source-installation.mdc](docs/todo/open/conversion/validate-a-user-supplied-lawful-source-installation.mdc)
 
 <!-- markdownlint-disable-next-line MD044 -->
 <!-- jig-ignore-next-line: TODO title is canonical -->
@@ -111,7 +92,7 @@ data in deterministic normalized forms.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in.mdc](docs/todo/open/conversion/preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in.mdc)
 
-## P2 — Unreal asset and mission compilation
+## P1 — Unreal asset and mission compilation
 
 ### TODO - Generate a public-safe deterministic Unreal import manifest
 
@@ -240,7 +221,7 @@ Make the complete import repeatable from a clean project.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/unreal/make-the-complete-import-repeatable-from-a-clean-project.mdc](docs/todo/open/unreal/make-the-complete-import-repeatable-from-a-clean-project.mdc)
 
-## P3 — Faithful runtime
+## P2 — Faithful runtime
 
 ### TODO - Complete startup, saves, profiles, settings, loading, and progression
 
@@ -305,7 +286,7 @@ Add parity tests for gameplay behavior and state transitions.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/runtime/add-parity-tests-for-gameplay-behavior-and-state-transitions.mdc](docs/todo/open/runtime/add-parity-tests-for-gameplay-behavior-and-state-transitions.mdc)
 
-## P4 — Build, packaging, mods, and product surface
+## P3 — Build and packaged-game pipeline
 
 ### TODO - Define the portable `dist/` layout and `game/manifest/dist.json`
 
@@ -314,23 +295,6 @@ Unreal runtime filenames or copying Fortnite launcher/anti-cheat structure.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/define-the-portable-dist-layout-and-machine-readable-dist-manifest.mdc](docs/todo/open/packaging/define-the-portable-dist-layout-and-machine-readable-dist-manifest.mdc)
-
-### TODO - Build the lightweight `src/user` exporter and cross-platform GUI
-
-Create the ordinary-player Python release surface that reads the original game
-in place, selects targets, and writes only to its own workspace and `dist/`.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/packaging/build-the-lightweight-src-user-exporter-and-cross-platform-gui.mdc](docs/todo/open/packaging/build-the-lightweight-src-user-exporter-and-cross-platform-gui.mdc)
-
-### TODO - Make `AGENTS.md` mod-first; validate C++ with Clang
-
-Make mod authoring the default user-facing agent posture, preserve a separate
-repository-engineering mode, and validate native mod C++ with strict Clang
-gates.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/mods/make-agents-md-default-to-shar-mod-authoring-and-validate-cpp-with-clang.mdc](docs/todo/open/mods/make-agents-md-default-to-shar-mod-authoring-and-validate-cpp-with-clang.mdc)
 
 ### TODO - Canonical multi-platform build runner
 
@@ -359,60 +323,6 @@ Apple signing or build-host constraints explicitly.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-submission.mdc](docs/todo/open/packaging/produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-submission.mdc)
-
-### TODO - Define deterministic mod identity, dependencies, priority,…
-
-Define deterministic mod identity, dependencies, priority, compatibility,
-supersession, and conflict rules.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/mods/define-deterministic-mod-identity-dependencies-priority-compatibility-supersession.mdc](docs/todo/open/mods/define-deterministic-mod-identity-dependencies-priority-compatibility-supersession.mdc)
-
-<!-- markdownlint-disable-next-line MD044 -->
-<!-- jig-ignore-next-line: TODO title is canonical -->
-### TODO - Support validated replacement and extension packages for assets and data
-
-Support validated replacement and extension packages for assets and data.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/mods/support-validated-replacement-and-extension-packages-for-assets-and-data.mdc](docs/todo/open/mods/support-validated-replacement-and-extension-packages-for-assets-and-data.mdc)
-
-### TODO - Keep the unmodified faithful port as the default base-game package
-
-Keep the unmodified faithful port as the default base-game package.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/mods/keep-the-unmodified-faithful-port-as-the-default-base-game-package.mdc](docs/todo/open/mods/keep-the-unmodified-faithful-port-as-the-default-base-game-package.mdc)
-
-### TODO - Use one normalized portable mod import contract
-
-Use one inspectable SHAR mod-package contract across desktop and mobile.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/mods/use-one-normalized-desktop-and-android-mod-import-contract.mdc](docs/todo/open/mods/use-one-normalized-desktop-and-android-mod-import-contract.mdc)
-
-### TODO - Keep native-code mods behind an explicit trust boundary
-
-Keep native-code mods behind an explicit trust boundary.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/mods/keep-native-code-mods-behind-an-explicit-trust-boundary.mdc](docs/todo/open/mods/keep-native-code-mods-behind-an-explicit-trust-boundary.mdc)
-
-<!-- markdownlint-disable-next-line MD044 -->
-<!-- jig-ignore-next-line: TODO title is canonical -->
-### TODO - Validate schemas, paths, integrity, limits, references, and load order
-
-Validate schemas, paths, integrity, limits, references, and load order.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/mods/validate-schemas-paths-integrity-limits-references-and-load-order.mdc](docs/todo/open/mods/validate-schemas-paths-integrity-limits-references-and-load-order.mdc)
-
-### TODO - Finish user-facing and AI-agent modding skills
-
-Finish user-facing and AI-agent modding skills.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/mods/finish-user-facing-and-ai-agent-modding-skills.mdc](docs/todo/open/mods/finish-user-facing-and-ai-agent-modding-skills.mdc)
 
 ### TODO - Package and launch the selected native desktop and Android targets
 
@@ -475,6 +385,79 @@ Report progress, failures, provenance, and final artifacts.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/packaging/report-progress-failures-provenance-and-final-artifacts.mdc](docs/todo/open/packaging/report-progress-failures-provenance-and-final-artifacts.mdc)
+
+## P4 — Mods, product surface, and user tooling
+
+### TODO - Build the lightweight `src/user` exporter and cross-platform GUI
+
+Create the ordinary-player Python release surface that reads the original game
+in place, selects targets, and writes only to its own workspace and `dist/`.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/packaging/build-the-lightweight-src-user-exporter-and-cross-platform-gui.mdc](docs/todo/open/packaging/build-the-lightweight-src-user-exporter-and-cross-platform-gui.mdc)
+
+### TODO - Make `AGENTS.md` mod-first; validate C++ with Clang
+
+Make mod authoring the default user-facing agent posture, preserve a separate
+repository-engineering mode, and validate native mod C++ with strict Clang
+gates.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/make-agents-md-default-to-shar-mod-authoring-and-validate-cpp-with-clang.mdc](docs/todo/open/mods/make-agents-md-default-to-shar-mod-authoring-and-validate-cpp-with-clang.mdc)
+
+### TODO - Define deterministic mod identity, dependencies, priority,…
+
+Define deterministic mod identity, dependencies, priority, compatibility,
+supersession, and conflict rules.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/define-deterministic-mod-identity-dependencies-priority-compatibility-supersession.mdc](docs/todo/open/mods/define-deterministic-mod-identity-dependencies-priority-compatibility-supersession.mdc)
+
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
+### TODO - Support validated replacement and extension packages for assets and data
+
+Support validated replacement and extension packages for assets and data.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/support-validated-replacement-and-extension-packages-for-assets-and-data.mdc](docs/todo/open/mods/support-validated-replacement-and-extension-packages-for-assets-and-data.mdc)
+
+### TODO - Keep the unmodified faithful port as the default base-game package
+
+Keep the unmodified faithful port as the default base-game package.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/keep-the-unmodified-faithful-port-as-the-default-base-game-package.mdc](docs/todo/open/mods/keep-the-unmodified-faithful-port-as-the-default-base-game-package.mdc)
+
+### TODO - Use one normalized portable mod import contract
+
+Use one inspectable SHAR mod-package contract across desktop and mobile.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/use-one-normalized-desktop-and-android-mod-import-contract.mdc](docs/todo/open/mods/use-one-normalized-desktop-and-android-mod-import-contract.mdc)
+
+### TODO - Keep native-code mods behind an explicit trust boundary
+
+Keep native-code mods behind an explicit trust boundary.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/keep-native-code-mods-behind-an-explicit-trust-boundary.mdc](docs/todo/open/mods/keep-native-code-mods-behind-an-explicit-trust-boundary.mdc)
+
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
+### TODO - Validate schemas, paths, integrity, limits, references, and load order
+
+Validate schemas, paths, integrity, limits, references, and load order.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/validate-schemas-paths-integrity-limits-references-and-load-order.mdc](docs/todo/open/mods/validate-schemas-paths-integrity-limits-references-and-load-order.mdc)
+
+### TODO - Finish user-facing and AI-agent modding skills
+
+Finish user-facing and AI-agent modding skills.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/mods/finish-user-facing-and-ai-agent-modding-skills.mdc](docs/todo/open/mods/finish-user-facing-and-ai-agent-modding-skills.mdc)
 
 ### TODO - Ship four independent base save slots; add autosave only after…
 
@@ -636,22 +619,7 @@ quality-of-life improvements second, richer community mod content third.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/product/preserve-the-delivery-order-faithful-port-first-compatibility-and-quality-of-life.mdc](docs/todo/open/product/preserve-the-delivery-order-faithful-port-first-compatibility-and-quality-of-life.mdc)
 
-## P5 — Final verification and publication
-
-### TODO - Publish `src/user` as the versioned SHAR release ZIP
-
-Publish only the declared lightweight user tree as `shar-v<version>.zip`, with
-integrity hashes and clean end-to-end platform evidence.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/verification/publish-src-user-as-the-versioned-shar-release-zip.mdc](docs/todo/open/verification/publish-src-user-as-the-versioned-shar-release-zip.mdc)
-
-### TODO - Add final player-facing README screenshots
-
-Add screenshots only after the player GUI and final package layout stabilize.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/verification/add-final-player-facing-readme-screenshots.mdc](docs/todo/open/verification/add-final-player-facing-readme-screenshots.mdc)
+## P5 — Final verification, public-safety gate, and publication
 
 <!-- markdownlint-disable-next-line MD044 -->
 <!-- jig-ignore-next-line: TODO title is canonical -->
@@ -709,9 +677,34 @@ Record known compatibility limitations honestly.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/verification/record-known-compatibility-limitations-honestly.mdc](docs/todo/open/verification/record-known-compatibility-limitations-honestly.mdc)
 
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- jig-ignore-next-line: TODO title is canonical -->
+### TODO - Define a public-safe reconstruction algorithm gate with bounded similarity
+
+Define and test the tentative 45–55% source-similarity window against a lawful
+100% reference without publishing payloads or reversible full-install evidence.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc](docs/todo/open/security/define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-similarity-window.mdc)
+
 ### TODO - Run the canonical global validation without cache
 
 Run the canonical global validation without cache.
 
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/verification/run-the-canonical-global-validation-without-cache.mdc](docs/todo/open/verification/run-the-canonical-global-validation-without-cache.mdc)
+
+### TODO - Add final player-facing README screenshots
+
+Add screenshots only after the player GUI and final package layout stabilize.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/add-final-player-facing-readme-screenshots.mdc](docs/todo/open/verification/add-final-player-facing-readme-screenshots.mdc)
+
+### TODO - Publish `src/user` as the versioned SHAR release ZIP
+
+Publish only the declared lightweight user tree as `shar-v<version>.zip`, with
+integrity hashes and clean end-to-end platform evidence.
+
+<!-- MarkdownLint-disable-next-line MD013 MD044 -->
+[docs/todo/open/verification/publish-src-user-as-the-versioned-shar-release-zip.mdc](docs/todo/open/verification/publish-src-user-as-the-versioned-shar-release-zip.mdc)

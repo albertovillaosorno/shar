@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: preserve-provenance-and-deterministic-unreal-object-identities
 status: open
-priority: P2
+priority: P1
 lane: unreal
 active: false
 parent: null

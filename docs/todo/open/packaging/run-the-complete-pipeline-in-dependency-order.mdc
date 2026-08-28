@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: run-the-complete-pipeline-in-dependency-order
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: false
 parent: null

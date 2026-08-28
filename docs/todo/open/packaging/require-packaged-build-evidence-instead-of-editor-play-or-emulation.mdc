@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: require-packaged-build-evidence-instead-of-editor-play-or-emulation
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: false
 parent: null

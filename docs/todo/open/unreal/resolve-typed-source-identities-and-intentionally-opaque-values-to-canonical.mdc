@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: resolve-typed-source-identities-and-intentionally-opaque-values-to-canonical
 status: open
-priority: P2
+priority: P1
 lane: unreal
 active: false
 <!-- markdownlint-disable-next-line MD044 -->

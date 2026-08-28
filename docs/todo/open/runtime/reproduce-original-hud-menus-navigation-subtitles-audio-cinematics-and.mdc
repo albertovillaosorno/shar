@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: reproduce-original-hud-menus-navigation-subtitles-audio-cinematics-and
 status: open
-priority: P3
+priority: P2
 lane: runtime
 active: false
 parent: null

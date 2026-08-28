@@ -4,7 +4,7 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: audit-reported-map-wide-lod-geometry-overlaps-before-removing-any-vertices-permit-only
 status: open
-priority: P1
+priority: P0
 lane: conversion
 active: false
 parent: null

@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: optimize-only-from-measured-evidence-without-removing-original-behavior
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: false
 parent: null
