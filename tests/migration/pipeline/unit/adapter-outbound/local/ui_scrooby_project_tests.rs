@@ -37,8 +37,9 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
     preflight_scrooby_package, publish_scrooby_binding_catalog,
-    resolve_exact_image_source, scrooby_resource_package_root, trim_padding,
-    validate_scrooby_resource_inventory_kinds,
+    PhaseThreePackageIndex, resolve_exact_image_source,
+    resolve_owner_text_style_inventory, scrooby_resource_package_root,
+    trim_padding, validate_scrooby_resource_inventory_kinds,
 };
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -224,6 +225,123 @@ fn rejects_invalid_resource_target_inventory_cardinality() -> TestResult {
         if validate_scrooby_resource_inventory_kinds(kind, &matches).is_ok() {
             return Err(format!(
                 "invalid inventory cardinality passed: {kind} {matches:?}"
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn owner_inventory_index(
+    root: &Path,
+    font_names: &[&str],
+) -> Result<PhaseThreePackageIndex, String> {
+    let root_name = root
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| "fixture root has no portable name".to_owned())?;
+    let package_root = format!("{root_name}/ui/project");
+    let package_id = format!("{root_name}-ui-project");
+    let physical_root = root.join("ui/project/components/texture_font");
+    fs::create_dir_all(&physical_root).map_err(|error| error.to_string())?;
+    let mut ids = Vec::new();
+    let mut members = Vec::new();
+    for (index, name) in font_names.iter().enumerate() {
+        let id = format!("font-{index}");
+        let relative = format!("font-{index}.json");
+        fs::write(
+            physical_root.join(&relative),
+            serde_json::to_vec(&serde_json::json!({
+                "schema": "texture_font",
+                "name": name,
+            }))
+            .map_err(|error| error.to_string())?,
+        )
+        .map_err(|error| error.to_string())?;
+        let member_path =
+            format!("{package_root}/components/texture_font/{relative}");
+        let id_json =
+            serde_json::to_string(&id).map_err(|error| error.to_string())?;
+        let path_json = serde_json::to_string(&member_path)
+            .map_err(|error| error.to_string())?;
+        members.push(format!(
+            concat!(
+                r#"{{"id":{},"role":"ui","path":{},"#,
+                r#""type":"ui","kind":"p3d-texture-font","#,
+                r#""source_chunk_kind":"texture_font"}}"#,
+            ),
+            id_json,
+            path_json,
+        ));
+        ids.push(id);
+    }
+    let ids_json =
+        serde_json::to_string(&ids).map_err(|error| error.to_string())?;
+    let members_json = format!("[{}]", members.join(","));
+    let row = format!(
+        concat!(
+            r#"{{"package_id":"{}","package_root":"{}","#,
+            r#""package_category":"ui-screens","#,
+            r#""package_subcategory":"ui-screens/test","unit_count":{},"#,
+            r#""text_key_count":0,"unit_ids":{},"world_ids":[],"#,
+            r#""texture_ids":[],"material_ids":[],"model_ids":[],"#,
+            r#""physics_ids":[],"animation_ids":[],"scene_ids":[],"#,
+            r#""locator_ids":[],"camera_ids":[],"light_ids":[],"#,
+            r#""particle_ids":[],"controller_ids":[],"audio_ids":[],"#,
+            r#""movie_ids":[],"script_ids":[],"text_ids":[],"#,
+            r#""ui_ids":{},"metadata_ids":[],"error_ids":[],"#,
+            r#""source_unit_ids":[],"text_key_ids":[],"members":{},"#,
+            r#""text_keys":[]}}"#,
+        ),
+        package_id,
+        package_root,
+        ids.len(),
+        ids_json,
+        ids_json,
+        members_json,
+    );
+    PhaseThreePackageIndex::from_jsonl(&format!("{row}\n"))
+        .map_err(|error| error.to_string())
+}
+
+fn text_style_resource(inventory_name: &str) -> super::Component {
+    super::Component {
+        row: super::LedgerRow {
+            ordinal: 1,
+            parent_ordinal: Some(0),
+            kind: "scrooby_text_style_resource".to_owned(),
+            path: "style.json".to_owned(),
+        },
+        payload: serde_json::json!({
+            "schema": "scrooby_text_style_resource",
+            "inventory_name": inventory_name,
+        }),
+    }
+}
+
+#[test]
+fn owner_text_style_inventory_requires_one_texture_font() -> TestResult {
+    for (label, names, expected) in [
+        ("unique", vec!["Body"], true),
+        ("missing", vec!["Other"], false),
+        ("duplicate", vec!["Body", "Body"], false),
+    ] {
+        let root = case_dir(&format!("owner-inventory-{label}"))?;
+        let index = owner_inventory_index(&root, &names)?;
+        let package = index
+            .packages()
+            .first()
+            .ok_or_else(|| "owner package fixture is empty".to_owned())?;
+        let resource = text_style_resource("Body");
+        let resolved = resolve_owner_text_style_inventory(
+            &root,
+            package,
+            &resource,
+        )
+        .map_err(|error| error.to_string())?;
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+        if resolved.is_some() != expected {
+            return Err(format!(
+                "unexpected owner inventory result for {label}: {resolved:?}"
             ));
         }
     }
