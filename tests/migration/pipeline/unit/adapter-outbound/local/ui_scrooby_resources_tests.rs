@@ -69,6 +69,8 @@ fn row(
         target_source_match_basis: source.map(|_| "filename-basename-exact"),
         target_package_id: None,
         target_package_match_basis: None,
+        target_entity_ordinal: None,
+        target_entity_match_basis: None,
     }
 }
 
@@ -79,15 +81,22 @@ fn renders_page_owned_preloads_without_authored_resource_identity() -> TestResul
     package_backed.target_package_id = Some("resource-package".to_owned());
     package_backed.target_package_match_basis =
         Some("project-resource-path-exact");
+    let mut entity_backed = row("package-a", 7, 5, "image", 11, None);
+    entity_backed.target_package_id = Some("package-a".to_owned());
+    entity_backed.target_package_match_basis =
+        Some("owner-joined-sprite-exact");
+    entity_backed.target_entity_ordinal = Some(29);
+    entity_backed.target_entity_match_basis = Some("full-filename-exact");
     let rows = vec![
         row("package-a", 7, 2, "image", 11, Some("source-a")),
         package_backed,
-        row("package-a", 7, 5, "image", 11, Some("source-a")),
+        entity_backed,
     ];
     let summary = summarize(&rows).map_err(|error| error.to_string())?;
     if summary.preload_count != 3
-        || summary.direct_import_backed_preload_count != 2
-        || summary.normalized_package_backed_preload_count != 1
+        || summary.direct_import_backed_preload_count != 1
+        || summary.normalized_package_backed_preload_count != 2
+        || summary.normalized_entity_backed_preload_count != 1
         || summary.fully_direct_import_backed_package_count != 0
     {
         return Err(format!("unexpected lifecycle summary: {summary:?}"));
@@ -110,7 +119,11 @@ fn renders_page_owned_preloads_without_authored_resource_identity() -> TestResul
         || header
             .get("direct_import_backed_preload_count")
             .and_then(serde_json::Value::as_u64)
-            != Some(2)
+            != Some(1)
+        || header
+            .get("normalized_entity_backed_preload_count")
+            .and_then(serde_json::Value::as_u64)
+            != Some(1)
     {
         return Err(format!("unexpected lifecycle header: {header}"));
     }
@@ -134,6 +147,16 @@ fn renders_page_owned_preloads_without_authored_resource_identity() -> TestResul
             .and_then(|value| value.get("target_package_match_basis"))
             .and_then(serde_json::Value::as_str)
             != Some("project-resource-path-exact")
+        || payload
+            .get(2)
+            .and_then(|value| value.get("target_entity_ordinal"))
+            .and_then(serde_json::Value::as_u64)
+            != Some(29)
+        || payload
+            .get(2)
+            .and_then(|value| value.get("target_entity_match_basis"))
+            .and_then(serde_json::Value::as_str)
+            != Some("full-filename-exact")
         || payload.iter().any(|value| {
             value.get("load_policy").and_then(serde_json::Value::as_str)
                 != Some("eager-page-preload")
@@ -185,6 +208,39 @@ fn rejects_incomplete_normalized_package_backing_identity() -> TestResult {
         .contains("resource package backing identity is incomplete")
     {
         return Err(format!("unexpected package identity error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_incomplete_normalized_entity_backing_identity() -> TestResult {
+    let mut incomplete = row("package-a", 7, 2, "image", 11, None);
+    incomplete.target_package_id = Some("package-a".to_owned());
+    incomplete.target_package_match_basis = Some("owner-joined-sprite-exact");
+    incomplete.target_entity_ordinal = Some(29);
+    let result = summarize(&[incomplete]);
+    let Err(error) = result else {
+        return Err("incomplete normalized entity identity was accepted".into());
+    };
+    if !error.to_string().contains("entity backing identity is incomplete") {
+        return Err(format!("unexpected entity identity error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_entity_backing_without_package_identity() -> TestResult {
+    let mut incomplete = row("package-a", 7, 2, "image", 11, None);
+    incomplete.target_entity_ordinal = Some(29);
+    incomplete.target_entity_match_basis = Some("full-filename-exact");
+    let result = summarize(&[incomplete]);
+    let Err(error) = result else {
+        return Err(
+            "package-less normalized entity identity was accepted".into(),
+        );
+    };
+    if !error.to_string().contains("has no package identity") {
+        return Err(format!("unexpected entity package error: {error}"));
     }
     Ok(())
 }

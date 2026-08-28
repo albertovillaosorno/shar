@@ -37,7 +37,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
     preflight_scrooby_package, publish_scrooby_binding_catalog,
-    PhaseThreePackageIndex, resolve_exact_image_source,
+    PhaseThreePackageIndex, bind_scrooby_joined_image_entities,
+    resolve_exact_image_source, resolve_exact_joined_sprite_ordinal,
     resolve_owner_text_style_inventory, scrooby_resource_package_root,
     trim_padding, validate_scrooby_resource_inventory_kinds,
 };
@@ -512,6 +513,7 @@ fn binding_catalog_publishes_public_source_identity_only() -> TestResult {
             image_resources: vec![super::ScroobyImageResourceSource {
                 ordinal: 4,
                 filename: "private/authored/Icon.png".to_owned(),
+                joined_sprite_ordinal: None,
             }],
         }],
     };
@@ -649,6 +651,37 @@ fn binding_catalog_rejects_incomplete_source_identity() -> TestResult {
     };
     if !error.to_string().contains("direct-import binding is incomplete") {
         return Err(format!("unexpected incomplete binding error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn binding_catalog_rejects_incomplete_entity_identity() -> TestResult {
+    let root = case_dir("binding-entity-incomplete")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let binding = bindings
+        .iter_mut()
+        .find(|binding| binding.relation == "page-image-resource")
+        .ok_or_else(|| "page image binding is missing".to_owned())?;
+    binding.target_package_id = Some("fixture-package".to_owned());
+    binding.target_package_match_basis = Some("owner-joined-sprite-exact");
+    binding.target_entity_ordinal = Some(29);
+    let preflight = super::ScroobyUiPreflight {
+        packages: vec![super::ScroobyPackageBindings {
+            package_id: "fixture-package".to_owned(),
+            bindings,
+            image_resources: Vec::new(),
+        }],
+    };
+    let result = preflight.to_catalog_jsonl();
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("incomplete entity binding was accepted".to_owned());
+    };
+    if !error.to_string().contains("normalized-entity binding is incomplete") {
+        return Err(format!("unexpected entity binding error: {error}"));
     }
     Ok(())
 }
@@ -1133,6 +1166,75 @@ fn pure3d_name_precedes_inventory_aliases() -> TestResult {
         .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     result
+}
+
+#[test]
+fn joined_sprite_identity_is_exact_and_unambiguous() -> TestResult {
+    if resolve_exact_joined_sprite_ordinal("Icon.png", Some(&[29]))
+        .map_err(|error| error.to_string())?
+        != Some(29)
+    {
+        return Err("exact joined sprite ordinal was not resolved".to_owned());
+    }
+    if resolve_exact_joined_sprite_ordinal("icon.png", None)
+        .map_err(|error| error.to_string())?
+        .is_some()
+    {
+        return Err(
+            "case-folded joined sprite identity was accepted".to_owned(),
+        );
+    }
+    if resolve_exact_joined_sprite_ordinal(
+        "Icon.png",
+        Some(&[29, 30]),
+    )
+    .is_ok()
+    {
+        return Err("ambiguous joined sprite identity was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn joined_image_binding_targets_owner_sprite_entity() -> TestResult {
+    let root = case_dir("joined-image-entity")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let resources = [super::ScroobyImageResourceSource {
+        ordinal: 4,
+        filename: "Icon.png".to_owned(),
+        joined_sprite_ordinal: Some(29),
+    }];
+    bind_scrooby_joined_image_entities(
+        "fixture-package",
+        &resources,
+        &mut bindings,
+    )
+    .map_err(|error| error.to_string())?;
+    let resolved = bindings
+        .iter()
+        .filter(|binding| {
+            matches!(
+                binding.relation,
+                "page-image-resource" | "sprite-image-resource"
+            ) && binding.target_ordinal == 4
+        })
+        .collect::<Vec<_>>();
+    if resolved.is_empty()
+        || resolved.iter().any(|binding| {
+            binding.target_package_id.as_deref() != Some("fixture-package")
+                || binding.target_package_match_basis
+                    != Some("owner-joined-sprite-exact")
+                || binding.target_entity_ordinal != Some(29)
+                || binding.target_entity_match_basis
+                    != Some("full-filename-exact")
+        })
+    {
+        return Err(format!("unexpected joined image bindings: {resolved:?}"));
+    }
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    Ok(())
 }
 
 #[test]

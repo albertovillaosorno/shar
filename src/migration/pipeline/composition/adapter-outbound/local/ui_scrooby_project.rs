@@ -51,7 +51,7 @@ use crate::domain::{
 };
 
 const BINDING_CATALOG_SCHEMA: &str =
-    "shar-schoenwald.scrooby-binding-catalog.v5";
+    "shar-schoenwald.scrooby-binding-catalog.v6";
 const BINDING_CATALOG_FILE: &str = "catalog.jsonl";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -79,12 +79,15 @@ struct ScroobyPackageBinding {
     target_source_match_basis: Option<&'static str>,
     target_package_id: Option<String>,
     target_package_match_basis: Option<&'static str>,
+    target_entity_ordinal: Option<usize>,
+    target_entity_match_basis: Option<&'static str>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct ScroobyImageResourceSource {
     ordinal: usize,
     filename: String,
+    joined_sprite_ordinal: Option<usize>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -110,6 +113,8 @@ pub(super) struct ScroobyPageResourceLifecycle {
     pub(super) target_source_match_basis: Option<&'static str>,
     pub(super) target_package_id: Option<String>,
     pub(super) target_package_match_basis: Option<&'static str>,
+    pub(super) target_entity_ordinal: Option<usize>,
+    pub(super) target_entity_match_basis: Option<&'static str>,
 }
 
 impl ScroobyUiPreflight {
@@ -140,6 +145,14 @@ impl ScroobyUiPreflight {
             .count()
     }
 
+    pub(super) fn normalized_entity_binding_count(&self) -> usize {
+        self.packages
+            .iter()
+            .flat_map(|package| &package.bindings)
+            .filter(|binding| binding.target_entity_ordinal.is_some())
+            .count()
+    }
+
     pub(super) fn page_resource_lifecycle(
         &self,
     ) -> Vec<ScroobyPageResourceLifecycle> {
@@ -167,6 +180,9 @@ impl ScroobyUiPreflight {
                     target_package_id: binding.target_package_id.clone(),
                     target_package_match_basis: binding
                         .target_package_match_basis,
+                    target_entity_ordinal: binding.target_entity_ordinal,
+                    target_entity_match_basis: binding
+                        .target_entity_match_basis,
                 });
             }
         }
@@ -203,6 +219,8 @@ impl ScroobyUiPreflight {
             "direct_import_binding_count": self.direct_import_binding_count(),
             "normalized_package_binding_count":
                 self.normalized_package_binding_count(),
+            "normalized_entity_binding_count":
+                self.normalized_entity_binding_count(),
         }));
         for package in packages {
             let mut bindings = package.bindings.iter().collect::<Vec<_>>();
@@ -285,6 +303,32 @@ impl ScroobyUiPreflight {
                         ));
                     },
                 }
+                match (
+                    binding.target_entity_ordinal,
+                    binding.target_entity_match_basis,
+                ) {
+                    (Some(entity_ordinal), Some(entity_match_basis)) => {
+                        let object = row.as_object_mut().ok_or_else(|| {
+                            PipelineError::new(
+                                "Scrooby binding row is not a JSON object",
+                            )
+                        })?;
+                        let _previous = object.insert(
+                            "target_entity_ordinal".to_owned(),
+                            json!(entity_ordinal),
+                        );
+                        let _previous = object.insert(
+                            "target_entity_match_basis".to_owned(),
+                            json!(entity_match_basis),
+                        );
+                    },
+                    (None, None) => {},
+                    _ => {
+                        return Err(PipelineError::new(
+                            "Scrooby normalized-entity binding is incomplete",
+                        ));
+                    },
+                }
                 rows.push(row);
             }
         }
@@ -344,6 +388,11 @@ pub(super) fn preflight_scrooby_ui_projects(
             extracted_root,
             package,
             &root,
+            &mut package_bindings,
+        )?;
+        bind_scrooby_joined_image_entities(
+            &package.package_id,
+            &image_resources,
             &mut package_bindings,
         )?;
         packages.push(ScroobyPackageBindings {
@@ -421,6 +470,9 @@ pub(super) fn bind_scrooby_direct_import_sources(
             .collect::<Vec<_>>();
         let mut source_by_ordinal = BTreeMap::new();
         for resource in &package.image_resources {
+            if resource.joined_sprite_ordinal.is_some() {
+                continue;
+            }
             let source = resolve_exact_image_source(
                 &resource.filename,
                 candidates.iter().copied(),
@@ -641,7 +693,7 @@ fn preflight_scrooby_package_evidence(
     validate_page_resources(&decoded)?;
     validate_widget_resources(&decoded)?;
     let bindings = collect_named_bindings(&decoded)?;
-    let image_resources = collect_image_resource_sources(&decoded)?;
+    let image_resources = collect_image_resource_sources(root, &decoded)?;
     Ok((bindings, image_resources))
 }
 
@@ -1331,6 +1383,8 @@ fn push_binding(
         target_source_match_basis: None,
         target_package_id: None,
         target_package_match_basis: None,
+        target_entity_ordinal: None,
+        target_entity_match_basis: None,
     });
 }
 
@@ -1620,8 +1674,29 @@ fn scrooby_relative_segments(value: &str) -> PipelineOutcome<Vec<&str>> {
 }
 
 fn collect_image_resource_sources(
+    root: &Path,
     components: &[Component],
 ) -> PipelineOutcome<Vec<ScroobyImageResourceSource>> {
+    let components_root = root.join("components");
+    let mut sprite_ordinals = BTreeMap::<String, Vec<usize>>::new();
+    for row in read_ledger(root)?
+        .into_iter()
+        .filter(|row| row.kind == "sprite")
+    {
+        let path = resolve_under(&components_root, Path::new(&row.path))
+            .map_err(|_error| {
+                PipelineError::new("Scrooby joined sprite path escapes package")
+            })?;
+        let bytes = fs::read(&path)
+            .map_err(|error| io_error("read Scrooby joined sprite", &error))?;
+        let payload = serde_json::from_slice::<Value>(&bytes).map_err(|error| {
+            PipelineError::new(format!(
+                "Scrooby joined sprite JSON failed: {error}"
+            ))
+        })?;
+        let name = trim_padding(required_string(&payload, "name")?).to_owned();
+        sprite_ordinals.entry(name).or_default().push(row.ordinal);
+    }
     components
         .iter()
         .filter(|component| component.row.kind == "scrooby_image_resource")
@@ -1630,17 +1705,80 @@ fn collect_image_resource_sources(
                 &component.payload,
                 "filename",
             )?);
-            let _basename = exact_basename(filename).ok_or_else(|| {
+            let basename = exact_basename(filename).ok_or_else(|| {
                 PipelineError::new(
                     "Scrooby image resource filename has no basename",
                 )
             })?;
+            let joined_sprite_ordinal = resolve_exact_joined_sprite_ordinal(
+                basename,
+                sprite_ordinals.get(basename).map(Vec::as_slice),
+            )?;
             Ok(ScroobyImageResourceSource {
                 ordinal: component.row.ordinal,
                 filename: filename.to_owned(),
+                joined_sprite_ordinal,
             })
         })
         .collect()
+}
+
+fn resolve_exact_joined_sprite_ordinal(
+    basename: &str,
+    candidates: Option<&[usize]>,
+) -> PipelineOutcome<Option<usize>> {
+    if basename.is_empty() {
+        return Err(PipelineError::new(
+            "Scrooby joined sprite basename is empty",
+        ));
+    }
+    match candidates.unwrap_or_default() {
+        [] => Ok(None),
+        [ordinal] => Ok(Some(*ordinal)),
+        _ => Err(PipelineError::new(
+            "Scrooby joined sprite inventory identity is ambiguous",
+        )),
+    }
+}
+
+fn bind_scrooby_joined_image_entities(
+    owner_package_id: &str,
+    image_resources: &[ScroobyImageResourceSource],
+    bindings: &mut [ScroobyPackageBinding],
+) -> PipelineOutcome<()> {
+    let joined = image_resources
+        .iter()
+        .filter_map(|resource| {
+            resource
+                .joined_sprite_ordinal
+                .map(|ordinal| (resource.ordinal, ordinal))
+        })
+        .collect::<BTreeMap<_, _>>();
+    for binding in bindings.iter_mut().filter(|binding| {
+        matches!(
+            binding.relation,
+            "page-image-resource" | "sprite-image-resource"
+        )
+    }) {
+        let Some(entity_ordinal) = joined.get(&binding.target_ordinal) else {
+            continue;
+        };
+        if binding.target_package_id.is_some()
+            || binding.target_package_match_basis.is_some()
+            || binding.target_entity_ordinal.is_some()
+            || binding.target_entity_match_basis.is_some()
+        {
+            return Err(PipelineError::new(
+                "Scrooby joined image binding already has backing identity",
+            ));
+        }
+        binding.target_package_id = Some(owner_package_id.to_owned());
+        binding.target_package_match_basis =
+            Some("owner-joined-sprite-exact");
+        binding.target_entity_ordinal = Some(*entity_ordinal);
+        binding.target_entity_match_basis = Some("full-filename-exact");
+    }
+    Ok(())
 }
 
 fn exact_basename(value: &str) -> Option<&str> {
