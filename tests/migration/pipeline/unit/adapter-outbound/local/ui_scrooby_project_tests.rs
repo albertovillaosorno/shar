@@ -94,7 +94,11 @@ fn write_valid_package(root: &Path) -> TestResult {
             root, 2, 1, "scrooby_page", "page",
             concat!(
                 r#"{"schema":"scrooby_page","name":"Main\\x00","#,
-                r#""children":[{"id_hex":"0x00018003"}]}"#,
+                r#""children":[{"id_hex":"0x00018003"},"#,
+                r#"{"id_hex":"0x00018100","name":"Icon\\x00"},"#,
+                r#"{"id_hex":"0x00018101","name":"dummy"},"#,
+                r#"{"id_hex":"0x00018104","name":"Body"},"#,
+                r#"{"id_hex":"0x00018105","name":"srr2"}]}"#,
             ),
         )?,
         write_component(
@@ -105,7 +109,7 @@ fn write_valid_package(root: &Path) -> TestResult {
             ),
         )?,
         write_component(
-            root, 4, 1, "scrooby_image_resource", "image",
+            root, 4, 2, "scrooby_image_resource", "image",
             r#"{"schema":"scrooby_image_resource","name":"Icon\\x00"}"#,
         )?,
         write_component(
@@ -124,7 +128,7 @@ fn write_valid_package(root: &Path) -> TestResult {
             ),
         )?,
         write_component(
-            root, 7, 1, "scrooby_text_style_resource", "style",
+            root, 7, 2, "scrooby_text_style_resource", "style",
             r#"{"schema":"scrooby_text_style_resource","name":"Body"}"#,
         )?,
         write_component(
@@ -135,7 +139,7 @@ fn write_valid_package(root: &Path) -> TestResult {
             ),
         )?,
         write_component(
-            root, 9, 1, "scrooby_text_bible_resource", "bible",
+            root, 9, 2, "scrooby_text_bible_resource", "bible",
             r#"{"schema":"scrooby_text_bible_resource","name":"srr2"}"#,
         )?,
         write_component(
@@ -143,7 +147,7 @@ fn write_valid_package(root: &Path) -> TestResult {
             r#"{"schema":"scrooby_string_text_bible","bible_name":"srr2"}"#,
         )?,
         write_component(
-            root, 11, 1, "scrooby_pure3d_resource", "pure",
+            root, 11, 2, "scrooby_pure3d_resource", "pure",
             concat!(
                 r#"{"schema":"scrooby_pure3d_resource","name":"dummy", "#,
                 r#""inventory_name":"DummyDrawable"}"#,
@@ -202,23 +206,88 @@ fn rejects_missing_declared_project_child() -> TestResult {
 }
 
 #[test]
-fn accepts_opaque_page_resource_references() -> TestResult {
-    let root = case_dir("opaque-page-resources")?;
+fn accepts_named_page_resource_references() -> TestResult {
+    let root = case_dir("named-page-resources")?;
+    write_valid_package(&root)?;
+    let result = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string());
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    result
+}
+
+#[test]
+fn rejects_unnamed_page_resource_reference() -> TestResult {
+    let root = case_dir("unnamed-page-resource")?;
     write_valid_package(&root)?;
     fs::write(
         root.join("components/scrooby_page/page.json"),
         concat!(
             r#"{"schema":"scrooby_page","name":"Main\\x00","#,
             r#""children":[{"id_hex":"0x00018003"},"#,
-            r#"{"id_hex":"0x00018100"},{"id_hex":"0x00018101"},"#,
-            r#"{"id_hex":"0x00018104"},{"id_hex":"0x00018105"}]}"#,
+            r#"{"id_hex":"0x00018100"}]}"#,
         ),
     )
     .map_err(|error| error.to_string())?;
-    let result = preflight_scrooby_package(&root)
-        .map_err(|error| error.to_string());
+    let result = preflight_scrooby_package(&root);
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
-    result
+    let Err(error) = result else {
+        return Err("unnamed page resource passed Scrooby preflight".to_owned());
+    };
+    if !error.to_string().contains("name is not a string") {
+        return Err(format!("unexpected unnamed-resource error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_missing_page_resource_declaration() -> TestResult {
+    let root = case_dir("missing-page-resource")?;
+    write_valid_package(&root)?;
+    let page = root.join("components/scrooby_page/page.json");
+    let text = fs::read_to_string(&page).map_err(|error| error.to_string())?;
+    let changed = text.replace(
+        r#"{"id_hex":"0x00018100","name":"Icon\\x00"}"#,
+        r#"{"id_hex":"0x00018100","name":"Missing"}"#,
+    );
+    if changed == text {
+        return Err("page image reference fixture was not found".to_owned());
+    }
+    fs::write(&page, changed).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("missing page resource declaration was accepted".to_owned());
+    };
+    if !error.to_string().contains("page image resource is missing") {
+        return Err(format!("unexpected page-resource error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_resource_outside_page_ancestry() -> TestResult {
+    let root = case_dir("resource-parent")?;
+    write_valid_package(&root)?;
+    let ledger = root.join("components.jsonl");
+    let text = fs::read_to_string(&ledger).map_err(|error| error.to_string())?;
+    let changed = text.replacen(
+        r#"{"ordinal":4,"parent_ordinal":2,"kind":"scrooby_image_resource""#,
+        r#"{"ordinal":4,"parent_ordinal":1,"kind":"scrooby_image_resource""#,
+        1,
+    );
+    if changed == text {
+        return Err("resource fixture row was not found".to_owned());
+    }
+    fs::write(&ledger, changed).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("resource outside page ancestry was accepted".to_owned());
+    };
+    if !error.to_string().contains("unsupported owning parent") {
+        return Err(format!("unexpected resource-parent error: {error}"));
+    }
+    Ok(())
 }
 
 #[test]
@@ -332,7 +401,7 @@ fn rejects_ambiguous_pure3d_resource_name() -> TestResult {
     let row = write_component(
         &root,
         13,
-        1,
+        2,
         "scrooby_pure3d_resource",
         "duplicate",
         concat!(
@@ -352,7 +421,7 @@ fn rejects_ambiguous_pure3d_resource_name() -> TestResult {
     let Err(error) = result else {
         return Err("ambiguous Pure3D resource name was accepted".to_owned());
     };
-    if !error.to_string().contains("resource name is ambiguous") {
+    if !error.to_string().contains("Pure3D resource is ambiguous") {
         return Err(format!("unexpected Pure3D ambiguity error: {error}"));
     }
     Ok(())
@@ -365,7 +434,7 @@ fn pure3d_name_precedes_inventory_aliases() -> TestResult {
     let row = write_component(
         &root,
         13,
-        1,
+        2,
         "scrooby_pure3d_resource",
         "alias",
         concat!(
@@ -389,5 +458,7 @@ fn pure3d_name_precedes_inventory_aliases() -> TestResult {
 #[test]
 fn visible_nul_padding_is_removed_only_from_the_end() {
     assert_eq!(trim_padding("name\\x00\\x00"), "name");
+    assert_eq!(trim_padding("name\0\0"), "name");
     assert_eq!(trim_padding("na\\x00me"), "na\\x00me");
+    assert_eq!(trim_padding("na\0me"), "na\0me");
 }

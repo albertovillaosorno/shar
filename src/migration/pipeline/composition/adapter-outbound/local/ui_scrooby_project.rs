@@ -196,6 +196,7 @@ fn preflight_scrooby_package(root: &Path) -> PipelineOutcome<()> {
     validate_project_structure(&decoded)?;
     validate_layout_children(&decoded)?;
     validate_screen_pages(&decoded)?;
+    validate_page_resources(&decoded)?;
     validate_widget_resources(&decoded)
 }
 
@@ -353,6 +354,111 @@ fn validate_page_layers(components: &[Component]) -> PipelineOutcome<()> {
         }
     }
     Ok(())
+}
+
+fn validate_page_resources(components: &[Component]) -> PipelineOutcome<()> {
+    let pages = components
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_page")
+        .map(|component| component.row.ordinal)
+        .collect::<BTreeSet<_>>();
+    for resource in components.iter().filter(|component| {
+        is_page_resource_kind(&component.row.kind)
+    }) {
+        let Some(parent) = resource.row.parent_ordinal else {
+            return Err(PipelineError::new(
+                "Scrooby resource has no owning page",
+            ));
+        };
+        if !pages.contains(&parent) {
+            return Err(PipelineError::new(
+                "Scrooby resource has an unsupported owning parent",
+            ));
+        }
+    }
+
+    let images = identity_counts(
+        components,
+        "scrooby_image_resource",
+        "name",
+    )?;
+    let pure = identity_counts(
+        components,
+        "scrooby_pure3d_resource",
+        "name",
+    )?;
+    let styles = identity_counts(
+        components,
+        "scrooby_text_style_resource",
+        "name",
+    )?;
+    let bibles = identity_counts(
+        components,
+        "scrooby_text_bible_resource",
+        "name",
+    )?;
+    for page in components
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_page")
+    {
+        let children = page
+            .payload
+            .get("children")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                PipelineError::new("Scrooby page has no child inventory")
+            })?;
+        for child in children {
+            let id = required_string(child, "id_hex")?;
+            if id == "0x00018003" {
+                continue;
+            }
+            let name = trim_padding(required_string(child, "name")?);
+            if name.is_empty() {
+                return Err(PipelineError::new(
+                    "Scrooby page resource name is empty",
+                ));
+            }
+            match id {
+                "0x00018100" => require_unique(
+                    &images,
+                    name,
+                    "Scrooby page image resource",
+                )?,
+                "0x00018101" => require_unique(
+                    &pure,
+                    name,
+                    "Scrooby page Pure3D resource",
+                )?,
+                "0x00018104" => require_unique(
+                    &styles,
+                    name,
+                    "Scrooby page text style",
+                )?,
+                "0x00018105" => require_unique(
+                    &bibles,
+                    name,
+                    "Scrooby page text bible",
+                )?,
+                _ => {
+                    return Err(PipelineError::new(
+                        "Scrooby page declares an unsupported child kind",
+                    ));
+                },
+            }
+        }
+    }
+    Ok(())
+}
+
+fn is_page_resource_kind(kind: &str) -> bool {
+    matches!(
+        kind,
+        "scrooby_image_resource"
+            | "scrooby_pure3d_resource"
+            | "scrooby_text_style_resource"
+            | "scrooby_text_bible_resource"
+    )
 }
 
 fn validate_layout_children(components: &[Component]) -> PipelineOutcome<()> {
@@ -662,6 +768,7 @@ fn required_string_array<'value>(
 }
 
 fn trim_padding(mut value: &str) -> &str {
+    value = value.trim_end_matches(char::from(0));
     while let Some(trimmed) = value.strip_suffix("\\x00") {
         value = trimmed;
     }
