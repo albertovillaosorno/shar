@@ -256,7 +256,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
                 "{} verified Scrooby projects with {} resolved bindings, ",
                 "{} direct-import-backed bindings, {} layout rows, and {} ",
                 "page-owned resource preloads ({} direct-import-backed; {} ",
-                "packages fully direct-import-backed); published {} mission ",
+                "normalized-package-backed; {} packages fully direct-import-",
+                "backed); published {} mission ",
                 "definitions to {} with plan bundle {}"
             ),
             unreal_manifest.source_count(),
@@ -269,6 +270,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             verified_scrooby_layout_rows,
             scrooby_resource_lifecycle.preload_count,
             scrooby_resource_lifecycle.direct_import_backed_preload_count,
+            scrooby_resource_lifecycle
+                .normalized_package_backed_preload_count,
             scrooby_resource_lifecycle
                 .fully_direct_import_backed_package_count,
             mission_definitions_jsonl.lines().count(),

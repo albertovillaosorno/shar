@@ -67,20 +67,27 @@ fn row(
         target_ordinal,
         target_source_unit_id: source.map(str::to_owned),
         target_source_match_basis: source.map(|_| "filename-basename-exact"),
+        target_package_id: None,
+        target_package_match_basis: None,
     }
 }
 
 #[test]
 // jig-ignore-next-line: long identifier
 fn renders_page_owned_preloads_without_authored_resource_identity() -> TestResult {
+    let mut package_backed = row("package-a", 7, 4, "pure3d", 13, None);
+    package_backed.target_package_id = Some("resource-package".to_owned());
+    package_backed.target_package_match_basis =
+        Some("project-resource-path-exact");
     let rows = vec![
         row("package-a", 7, 2, "image", 11, Some("source-a")),
-        row("package-a", 7, 4, "pure3d", 13, None),
+        package_backed,
         row("package-a", 7, 5, "image", 11, Some("source-a")),
     ];
     let summary = summarize(&rows).map_err(|error| error.to_string())?;
     if summary.preload_count != 3
         || summary.direct_import_backed_preload_count != 2
+        || summary.normalized_package_backed_preload_count != 1
         || summary.fully_direct_import_backed_package_count != 0
     {
         return Err(format!("unexpected lifecycle summary: {summary:?}"));
@@ -119,6 +126,14 @@ fn renders_page_owned_preloads_without_authored_resource_identity() -> TestResul
         })
         .collect::<Vec<_>>();
     if indices != [Some(2), Some(4), Some(5)]
+        || payload.get(1).and_then(|value| value.get("target_package_id"))
+            .and_then(serde_json::Value::as_str)
+            != Some("resource-package")
+        || payload
+            .get(1)
+            .and_then(|value| value.get("target_package_match_basis"))
+            .and_then(serde_json::Value::as_str)
+            != Some("project-resource-path-exact")
         || payload.iter().any(|value| {
             value.get("load_policy").and_then(serde_json::Value::as_str)
                 != Some("eager-page-preload")
@@ -151,6 +166,25 @@ fn rejects_incomplete_direct_import_backing_identity() -> TestResult {
     };
     if !error.to_string().contains("backing identity is incomplete") {
         return Err(format!("unexpected lifecycle identity error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_incomplete_normalized_package_backing_identity() -> TestResult {
+    let mut incomplete = row("package-a", 7, 2, "pure3d", 11, None);
+    incomplete.target_package_id = Some("resource-package".to_owned());
+    let result = summarize(&[incomplete]);
+    let Err(error) = result else {
+        return Err(
+            "incomplete normalized package identity was accepted".into(),
+        );
+    };
+    if !error
+        .to_string()
+        .contains("resource package backing identity is incomplete")
+    {
+        return Err(format!("unexpected package identity error: {error}"));
     }
     Ok(())
 }

@@ -48,13 +48,14 @@ use super::ui_scrooby_project::{
     ScroobyPageResourceLifecycle, ScroobyUiPreflight,
 };
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-resource-lifecycle.v1";
+const SCHEMA: &str = "shar-schoenwald.scrooby-resource-lifecycle.v2";
 const FILE: &str = "lifecycle.jsonl";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(super) struct ScroobyResourceLifecycleSummary {
     pub(super) preload_count: usize,
     pub(super) direct_import_backed_preload_count: usize,
+    pub(super) normalized_package_backed_preload_count: usize,
     pub(super) fully_direct_import_backed_package_count: usize,
 }
 
@@ -73,6 +74,7 @@ fn summarize(
     rows: &[ScroobyPageResourceLifecycle],
 ) -> PipelineOutcome<ScroobyResourceLifecycleSummary> {
     let mut backed = 0usize;
+    let mut package_backed = 0usize;
     let mut packages = BTreeMap::<&str, (usize, usize)>::new();
     for row in rows {
         let has_source = row.target_source_unit_id.is_some();
@@ -81,6 +83,16 @@ fn summarize(
             return Err(PipelineError::new(
                 "Scrooby resource lifecycle backing identity is incomplete",
             ));
+        }
+        let has_package = row.target_package_id.is_some();
+        let has_package_basis = row.target_package_match_basis.is_some();
+        if has_package != has_package_basis {
+            return Err(PipelineError::new(
+                "Scrooby resource package backing identity is incomplete",
+            ));
+        }
+        if has_package {
+            package_backed = package_backed.saturating_add(1);
         }
         let counts = packages.entry(&row.package_id).or_default();
         counts.0 = counts.0.saturating_add(1);
@@ -96,6 +108,7 @@ fn summarize(
     Ok(ScroobyResourceLifecycleSummary {
         preload_count: rows.len(),
         direct_import_backed_preload_count: backed,
+        normalized_package_backed_preload_count: package_backed,
         fully_direct_import_backed_package_count: fully_backed,
     })
 }
@@ -114,6 +127,8 @@ fn render_catalog(
         "preload_count": summary.preload_count,
         "direct_import_backed_preload_count":
             summary.direct_import_backed_preload_count,
+        "normalized_package_backed_preload_count":
+            summary.normalized_package_backed_preload_count,
         "fully_direct_import_backed_package_count":
             summary.fully_direct_import_backed_package_count,
     }))
@@ -160,6 +175,29 @@ fn render_catalog(
             _ => {
                 return Err(PipelineError::new(
                     "Scrooby resource lifecycle backing identity is incomplete",
+                ));
+            },
+        }
+        match (&row.target_package_id, row.target_package_match_basis) {
+            (Some(package_id), Some(match_basis)) => {
+                let object = value.as_object_mut().ok_or_else(|| {
+                    PipelineError::new(
+                        "Scrooby resource lifecycle row is not an object",
+                    )
+                })?;
+                let _previous = object.insert(
+                    "target_package_id".to_owned(),
+                    json!(package_id),
+                );
+                let _previous = object.insert(
+                    "target_package_match_basis".to_owned(),
+                    json!(match_basis),
+                );
+            },
+            (None, None) => {},
+            _ => {
+                return Err(PipelineError::new(
+                    "Scrooby resource package backing identity is incomplete",
                 ));
             },
         }
