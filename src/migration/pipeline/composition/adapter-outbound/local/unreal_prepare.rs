@@ -102,7 +102,8 @@ use crate::manifest_paths::{
 };
 use crate::workspace::{
     FBX_WORKSPACE_ROOT, UI_RASTER_WORKSPACE_ROOT,
-    UI_SCROOBY_BINDING_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT,
+    UI_SCROOBY_BINDING_WORKSPACE_ROOT, UI_SCROOBY_LAYOUT_WORKSPACE_ROOT,
+    UNREAL_STAGING_WORKSPACE_ROOT,
 };
 
 /// Canonical import-summary filename.
@@ -198,6 +199,12 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &scrooby_preflight,
             Path::new(UI_SCROOBY_BINDING_WORKSPACE_ROOT),
         )?;
+    let verified_scrooby_layout_rows =
+        super::ui_scrooby_layout::publish_scrooby_layout_catalog(
+            &index,
+            &config.extracted_root,
+            Path::new(UI_SCROOBY_LAYOUT_WORKSPACE_ROOT),
+        )?;
     let fbx_catalog = verified_fbx_catalog_at(
         Path::new(FBX_WORKSPACE_ROOT),
         Path::new(FBX_MANIFEST_PATH),
@@ -235,8 +242,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             concat!(
                 "verified {} sources across {} semantic packages, {} ",
                 "generated FBX artifacts, {} verified UI sprite rasters, and ",
-                "{} verified Scrooby projects with {} resolved bindings; ",
-                "published {} mission definitions ",
+                "{} verified Scrooby projects with {} resolved bindings ",
+                "and {} layout rows; published {} mission definitions ",
                 "to {} with plan bundle {}"
             ),
             unreal_manifest.source_count(),
@@ -245,6 +252,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             verified_ui_raster_count,
             verified_scrooby_projects,
             verified_scrooby_bindings,
+            verified_scrooby_layout_rows,
             mission_definitions_jsonl.lines().count(),
             UNREAL_STAGING_WORKSPACE_ROOT,
             plan_bundle.index_revision(),
