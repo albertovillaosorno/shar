@@ -246,6 +246,57 @@ fn publishes_deterministic_package_scoped_binding_catalog() -> TestResult {
 }
 
 #[test]
+fn binding_catalog_reuse_rejects_transaction_debris() -> TestResult {
+    let root = case_dir("binding-debris-input")?;
+    write_valid_package(&root)?;
+    let bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let preflight = super::ScroobyUiPreflight {
+        packages: vec![super::ScroobyPackageBindings {
+            package_id: "fixture-package".to_owned(),
+            bindings,
+        }],
+    };
+    let output = case_dir("binding-debris-output")?;
+    fs::remove_dir_all(&output).map_err(|error| error.to_string())?;
+    let _count = publish_scrooby_binding_catalog(&preflight, &output)
+        .map_err(|error| error.to_string())?;
+    let catalog = output.join("catalog.jsonl");
+    let accepted = fs::read_to_string(&catalog)
+        .map_err(|error| error.to_string())?;
+    let name = output
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| "binding debris output has no file name".to_owned())?;
+    let parent = output
+        .parent()
+        .ok_or_else(|| "binding debris output has no parent".to_owned())?;
+    for (suffix, expected) in [
+        ("complete-staging", "Scrooby binding staging already exists"),
+        ("complete-backup", "Scrooby binding backup already exists"),
+    ] {
+        let debris = parent.join(format!(".{name}.{suffix}"));
+        fs::create_dir_all(&debris).map_err(|error| error.to_string())?;
+        let result = publish_scrooby_binding_catalog(&preflight, &output);
+        fs::remove_dir_all(&debris).map_err(|error| error.to_string())?;
+        let Err(error) = result else {
+            return Err(format!("binding reuse accepted {suffix} debris"));
+        };
+        if !error.to_string().contains(expected) {
+            return Err(format!("unexpected {suffix} debris error: {error}"));
+        }
+        let unchanged = fs::read_to_string(&catalog)
+            .map_err(|error| error.to_string())?;
+        if unchanged != accepted {
+            return Err(format!("{suffix} debris changed accepted catalog"));
+        }
+    }
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&output).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
 fn accepts_complete_package_local_bindings() -> TestResult {
     let root = case_dir("complete")?;
     write_valid_package(&root)?;
