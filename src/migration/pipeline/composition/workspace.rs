@@ -57,6 +57,9 @@ pub(crate) const FBX_WORKSPACE_ROOT: &str = ".cache/pipeline/fbx-assets";
 /// Default physical complete UI-sprite raster catalog workspace.
 pub(crate) const UI_RASTER_WORKSPACE_ROOT: &str =
     ".cache/pipeline/ui-raster-assets";
+/// Default physical Scrooby semantic-binding catalog workspace.
+pub(crate) const UI_SCROOBY_BINDING_WORKSPACE_ROOT: &str =
+    ".cache/pipeline/ui-scrooby-bindings";
 /// Default physical Unreal staging workspace.
 pub(crate) const UNREAL_STAGING_WORKSPACE_ROOT: &str =
     ".cache/pipeline/unreal-staging";

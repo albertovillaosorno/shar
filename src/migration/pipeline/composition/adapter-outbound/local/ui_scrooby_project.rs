@@ -39,9 +39,13 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use schoenwald_filesystem::resolve_under;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
+
+const BINDING_CATALOG_SCHEMA: &str =
+    "shar-schoenwald.scrooby-binding-catalog.v1";
+const BINDING_CATALOG_FILE: &str = "catalog.jsonl";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct LedgerRow {
@@ -57,6 +61,90 @@ struct Component {
     payload: Value,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ScroobyPackageBinding {
+    source_ordinal: usize,
+    target_ordinal: usize,
+    relation: &'static str,
+    match_basis: &'static str,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ScroobyPackageBindings {
+    package_id: String,
+    bindings: Vec<ScroobyPackageBinding>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct ScroobyUiPreflight {
+    packages: Vec<ScroobyPackageBindings>,
+}
+
+impl ScroobyUiPreflight {
+    pub(super) const fn package_count(&self) -> usize {
+        self.packages.len()
+    }
+
+    pub(super) fn binding_count(&self) -> usize {
+        self.packages
+            .iter()
+            .map(|package| package.bindings.len())
+            .sum()
+    }
+
+    fn to_catalog_jsonl(&self) -> PipelineOutcome<String> {
+        let mut packages = self.packages.iter().collect::<Vec<_>>();
+        packages.sort_by(|left, right| left.package_id.cmp(&right.package_id));
+        let capacity = self.binding_count().saturating_add(1);
+        let mut rows = Vec::with_capacity(capacity);
+        rows.push(json!({
+            "schema": BINDING_CATALOG_SCHEMA,
+            "record_type": "header",
+            "status": "complete",
+            "package_count": self.package_count(),
+            "binding_count": self.binding_count(),
+        }));
+        for package in packages {
+            let mut bindings = package.bindings.iter().collect::<Vec<_>>();
+            bindings.sort_by(|left, right| {
+                (
+                    left.source_ordinal,
+                    left.target_ordinal,
+                    left.relation,
+                    left.match_basis,
+                )
+                    .cmp(&(
+                        right.source_ordinal,
+                        right.target_ordinal,
+                        right.relation,
+                        right.match_basis,
+                    ))
+            });
+            for binding in bindings {
+                rows.push(json!({
+                    "schema": BINDING_CATALOG_SCHEMA,
+                    "record_type": "binding",
+                    "package_id": package.package_id,
+                    "source_ordinal": binding.source_ordinal,
+                    "target_ordinal": binding.target_ordinal,
+                    "relation": binding.relation,
+                    "match_basis": binding.match_basis,
+                }));
+            }
+        }
+        let mut rendered = String::new();
+        for row in rows {
+            rendered.push_str(&serde_json::to_string(&row).map_err(|error| {
+                PipelineError::new(format!(
+                    "Scrooby binding catalog JSON failed: {error}"
+                ))
+            })?);
+            rendered.push('\n');
+        }
+        Ok(rendered)
+    }
+}
+
 /// Validate every indexed normalized Scrooby project package.
 ///
 /// # Errors
@@ -66,8 +154,8 @@ struct Component {
 pub(super) fn preflight_scrooby_ui_projects(
     index: &PhaseThreePackageIndex,
     extracted_root: &Path,
-) -> PipelineOutcome<usize> {
-    let mut count = 0usize;
+) -> PipelineOutcome<ScroobyUiPreflight> {
+    let mut packages = Vec::new();
     for package in index.packages() {
         let scrooby_members = package
             .members()
@@ -93,7 +181,11 @@ pub(super) fn preflight_scrooby_ui_projects(
             extracted_root,
             &package.package_root,
         )?;
-        preflight_scrooby_package(&root)?;
+        let package_bindings = preflight_scrooby_package(&root)?;
+        packages.push(ScroobyPackageBindings {
+            package_id: package.package_id.clone(),
+            bindings: package_bindings,
+        });
         let indexed = package
             .members()
             .iter()
@@ -130,11 +222,140 @@ pub(super) fn preflight_scrooby_ui_projects(
                 "Scrooby package index disagrees with normalized components",
             ));
         }
-        count = count.checked_add(1).ok_or_else(|| {
-            PipelineError::new("Scrooby project count overflowed")
+    }
+    packages.sort_by(|left, right| left.package_id.cmp(&right.package_id));
+    Ok(ScroobyUiPreflight { packages })
+}
+
+pub(super) fn publish_scrooby_binding_catalog(
+    preflight: &ScroobyUiPreflight,
+    output_root: &Path,
+) -> PipelineOutcome<usize> {
+    let rendered = preflight.to_catalog_jsonl()?;
+    let catalog = output_root.join(BINDING_CATALOG_FILE);
+    if let Ok(metadata) = fs::symlink_metadata(output_root) {
+        if !metadata.is_dir() || metadata.file_type().is_symlink() {
+            return Err(PipelineError::new(
+                "Scrooby binding output is not a regular directory",
+            ));
+        }
+        if fs::read_to_string(&catalog).ok().as_deref() == Some(&rendered) {
+            return Ok(preflight.binding_count());
+        }
+    }
+    let name = output_root
+        .file_name()
+        .and_then(|value| value.to_str())
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| {
+            PipelineError::new("Scrooby binding output has no portable name")
+        })?;
+    let parent = output_root.parent().unwrap_or_else(|| Path::new("."));
+    fs::create_dir_all(parent)
+        .map_err(|error| io_error("create Scrooby binding parent", &error))?;
+    let staging = parent.join(format!(".{name}.complete-staging"));
+    let backup = parent.join(format!(".{name}.complete-backup"));
+    ensure_binding_path_absent(&staging, "Scrooby binding staging")?;
+    ensure_binding_path_absent(&backup, "Scrooby binding backup")?;
+    fs::create_dir_all(&staging)
+        .map_err(|error| io_error("create Scrooby binding staging", &error))?;
+    let staged_catalog = staging.join(BINDING_CATALOG_FILE);
+    if let Err(error) = fs::write(&staged_catalog, &rendered) {
+        let _cleanup = fs::remove_dir_all(&staging);
+        return Err(io_error("write Scrooby binding catalog", &error));
+    }
+    if fs::read_to_string(&staged_catalog)
+        .map_err(|error| {
+            io_error("read staged Scrooby binding catalog", &error)
+        })?
+        != rendered
+    {
+        let _cleanup = fs::remove_dir_all(&staging);
+        return Err(PipelineError::new(
+            "staged Scrooby binding catalog changed during read-back",
+        ));
+    }
+    let had_output = match fs::symlink_metadata(output_root) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
+        Err(error) => {
+            let _cleanup = fs::remove_dir_all(&staging);
+            return Err(io_error("inspect Scrooby binding output", &error));
+        },
+        Ok(metadata) => {
+            if !metadata.is_dir() || metadata.file_type().is_symlink() {
+                let _cleanup = fs::remove_dir_all(&staging);
+                return Err(PipelineError::new(
+                    "Scrooby binding output is not a regular directory",
+                ));
+            }
+            fs::rename(output_root, &backup).map_err(|error| {
+                io_error("back up Scrooby binding output", &error)
+            })?;
+            true
+        },
+    };
+    if let Err(error) = fs::rename(&staging, output_root) {
+        let publish_error = io_error("publish Scrooby binding catalog", &error);
+        let cleanup_error = fs::remove_dir_all(&staging).err();
+        let rollback_error = had_output
+            .then(|| fs::rename(&backup, output_root).err())
+            .flatten();
+        return match (rollback_error, cleanup_error) {
+            (None, None) => Err(publish_error),
+            (rollback, cleanup) => Err(PipelineError::new(format!(
+                "{publish_error}; rollback={:?}; cleanup={:?}",
+                rollback.map(|value| value.kind()),
+                cleanup.map(|value| value.kind()),
+            ))),
+        };
+    }
+    let published = fs::read_to_string(output_root.join(BINDING_CATALOG_FILE))
+        .map_err(|error| {
+            io_error("read published Scrooby binding catalog", &error)
+        })?;
+    if published != rendered {
+        rollback_binding_catalog(output_root, &backup, had_output)?;
+        return Err(PipelineError::new(
+            "published Scrooby binding catalog changed during read-back",
+        ));
+    }
+    if had_output {
+        fs::remove_dir_all(&backup)
+            .map_err(|error| {
+                io_error("remove Scrooby binding backup", &error)
+            })?;
+    }
+    Ok(preflight.binding_count())
+}
+
+fn ensure_binding_path_absent(path: &Path, label: &str) -> PipelineOutcome<()> {
+    match fs::symlink_metadata(path) {
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(io_error(
+            "inspect Scrooby binding transaction",
+            &error,
+        )),
+        Ok(_metadata) => Err(PipelineError::new(format!(
+            "{label} already exists"
+        ))),
+    }
+}
+
+fn rollback_binding_catalog(
+    output_root: &Path,
+    backup: &Path,
+    had_output: bool,
+) -> PipelineOutcome<()> {
+    fs::remove_dir_all(output_root)
+        .map_err(|error| {
+            io_error("remove invalid Scrooby binding output", &error)
+        })?;
+    if had_output {
+        fs::rename(backup, output_root).map_err(|error| {
+            io_error("restore previous Scrooby binding output", &error)
         })?;
     }
-    Ok(count)
+    Ok(())
 }
 
 fn resolve_normalized_package_root(
@@ -159,7 +380,9 @@ fn resolve_normalized_package_root(
     })
 }
 
-fn preflight_scrooby_package(root: &Path) -> PipelineOutcome<()> {
+fn preflight_scrooby_package(
+    root: &Path,
+) -> PipelineOutcome<Vec<ScroobyPackageBinding>> {
     let rows = read_ledger(root)?;
     let components = root.join("components");
     let mut decoded = Vec::new();
@@ -197,7 +420,8 @@ fn preflight_scrooby_package(root: &Path) -> PipelineOutcome<()> {
     validate_layout_children(&decoded)?;
     validate_screen_pages(&decoded)?;
     validate_page_resources(&decoded)?;
-    validate_widget_resources(&decoded)
+    validate_widget_resources(&decoded)?;
+    collect_named_bindings(&decoded)
 }
 
 fn read_ledger(root: &Path) -> PipelineOutcome<Vec<LedgerRow>> {
@@ -603,7 +827,7 @@ fn validate_widget_resources(components: &[Component]) -> PipelineOutcome<()> {
         "scrooby_text_bible_resource",
         "name",
     )?;
-    let pure = resource_identities(components, "scrooby_pure3d_resource")?;
+    let pure = pure3d_resource_bindings(components)?;
     for component in components {
         match component.row.kind.as_str() {
             "scrooby_multi_sprite" => {
@@ -638,12 +862,288 @@ fn validate_widget_resources(components: &[Component]) -> PipelineOutcome<()> {
                     &component.payload,
                     "filename",
                 )?);
-                require_pure3d_resource(&pure, name)?;
+                let _binding = resolve_pure3d_resource(&pure, name)?;
             },
             _ => {},
         }
     }
     Ok(())
+}
+
+fn collect_named_bindings(
+    components: &[Component],
+) -> PipelineOutcome<Vec<ScroobyPackageBinding>> {
+    let pages = identity_ordinals(components, "scrooby_page", "name")?;
+    let images = identity_ordinals(
+        components,
+        "scrooby_image_resource",
+        "name",
+    )?;
+    let styles = identity_ordinals(
+        components,
+        "scrooby_text_style_resource",
+        "name",
+    )?;
+    let bibles = identity_ordinals(
+        components,
+        "scrooby_text_bible_resource",
+        "name",
+    )?;
+    let pure_names = identity_ordinals(
+        components,
+        "scrooby_pure3d_resource",
+        "name",
+    )?;
+    let pure = pure3d_resource_bindings(components)?;
+    let mut bindings = Vec::new();
+    for component in components {
+        match component.row.kind.as_str() {
+            "scrooby_screen" => {
+                for page in required_string_array(
+                    &component.payload,
+                    "page_names",
+                )? {
+                    push_binding(
+                        &mut bindings,
+                        component.row.ordinal,
+                        resolve_unique_ordinal(
+                            &pages,
+                            trim_padding(page),
+                            "Scrooby page",
+                        )?,
+                        "screen-page",
+                        "name",
+                    );
+                }
+            },
+            "scrooby_page" => {
+                let children = component
+                    .payload
+                    .get("children")
+                    .and_then(Value::as_array)
+                    .ok_or_else(|| {
+                        PipelineError::new(
+                            "Scrooby page has no child inventory",
+                        )
+                    })?;
+                for child in children {
+                    let id = required_string(child, "id_hex")?;
+                    if id == "0x00018003" {
+                        continue;
+                    }
+                    let name = trim_padding(required_string(child, "name")?);
+                    let (targets, label, relation) = match id {
+                        "0x00018100" => (
+                            &images,
+                            "Scrooby page image resource",
+                            "page-image-resource",
+                        ),
+                        "0x00018104" => (
+                            &styles,
+                            "Scrooby page text style",
+                            "page-text-style",
+                        ),
+                        "0x00018105" => (
+                            &bibles,
+                            "Scrooby page text bible",
+                            "page-text-bible",
+                        ),
+                        "0x00018101" => {
+                            push_binding(
+                                &mut bindings,
+                                component.row.ordinal,
+                                resolve_unique_ordinal(
+                                    &pure_names,
+                                    name,
+                                    "Scrooby page Pure3D resource",
+                                )?,
+                                "page-pure3d-resource",
+                                "name",
+                            );
+                            continue;
+                        },
+                        _ => {
+                            return Err(PipelineError::new(
+                                concat!(
+                                    "Scrooby page declares an unsupported ",
+                                    "child kind",
+                                ),
+                            ));
+                        },
+                    };
+                    push_binding(
+                        &mut bindings,
+                        component.row.ordinal,
+                        resolve_unique_ordinal(targets, name, label)?,
+                        relation,
+                        "name",
+                    );
+                }
+            },
+            "scrooby_multi_sprite" => {
+                for image in required_string_array(
+                    &component.payload,
+                    "image_names",
+                )? {
+                    push_binding(
+                        &mut bindings,
+                        component.row.ordinal,
+                        resolve_unique_ordinal(
+                            &images,
+                            trim_padding(image),
+                            "Scrooby image resource",
+                        )?,
+                        "sprite-image-resource",
+                        "name",
+                    );
+                }
+            },
+            "scrooby_multi_text" => {
+                let style = trim_padding(required_string(
+                    &component.payload,
+                    "text_style",
+                )?);
+                push_binding(
+                    &mut bindings,
+                    component.row.ordinal,
+                    resolve_unique_ordinal(
+                        &styles,
+                        style,
+                        "Scrooby text style",
+                    )?,
+                    "text-style-resource",
+                    "name",
+                );
+            },
+            "scrooby_string_text_bible" => {
+                let bible = trim_padding(required_string(
+                    &component.payload,
+                    "bible_name",
+                )?);
+                push_binding(
+                    &mut bindings,
+                    component.row.ordinal,
+                    resolve_unique_ordinal(
+                        &bibles,
+                        bible,
+                        "Scrooby text bible",
+                    )?,
+                    "string-text-bible",
+                    "name",
+                );
+            },
+            "scrooby_pure3d_object" => {
+                let name = trim_padding(required_string(
+                    &component.payload,
+                    "filename",
+                )?);
+                let (target, basis) = resolve_pure3d_resource(&pure, name)?;
+                push_binding(
+                    &mut bindings,
+                    component.row.ordinal,
+                    target,
+                    "pure3d-object-resource",
+                    basis,
+                );
+            },
+            _ => {},
+        }
+    }
+    Ok(bindings)
+}
+
+fn push_binding(
+    bindings: &mut Vec<ScroobyPackageBinding>,
+    source_ordinal: usize,
+    target_ordinal: usize,
+    relation: &'static str,
+    match_basis: &'static str,
+) {
+    bindings.push(ScroobyPackageBinding {
+        source_ordinal,
+        target_ordinal,
+        relation,
+        match_basis,
+    });
+}
+
+fn identity_ordinals(
+    components: &[Component],
+    kind: &str,
+    field: &str,
+) -> PipelineOutcome<BTreeMap<String, Vec<usize>>> {
+    let mut ordinals = BTreeMap::<String, Vec<usize>>::new();
+    for component in components.iter().filter(|item| item.row.kind == kind) {
+        let identity = trim_padding(required_string(&component.payload, field)?)
+            .to_owned();
+        ordinals.entry(identity).or_default().push(component.row.ordinal);
+    }
+    Ok(ordinals)
+}
+
+fn resolve_unique_ordinal(
+    identities: &BTreeMap<String, Vec<usize>>,
+    reference: &str,
+    label: &str,
+) -> PipelineOutcome<usize> {
+    let Some(matches) = identities.get(reference) else {
+        return Err(PipelineError::new(format!("{label} is missing")));
+    };
+    match matches.as_slice() {
+        [ordinal] => Ok(*ordinal),
+        _ => Err(PipelineError::new(format!("{label} is ambiguous"))),
+    }
+}
+
+fn pure3d_resource_bindings(
+    components: &[Component],
+) -> PipelineOutcome<Vec<(usize, String, String)>> {
+    components
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_pure3d_resource")
+        .map(|component| {
+            Ok((
+                component.row.ordinal,
+                trim_padding(required_string(&component.payload, "name")?)
+                    .to_owned(),
+                trim_padding(required_string(
+                    &component.payload,
+                    "inventory_name",
+                )?)
+                .to_owned(),
+            ))
+        })
+        .collect()
+}
+
+fn resolve_pure3d_resource(
+    resources: &[(usize, String, String)],
+    reference: &str,
+) -> PipelineOutcome<(usize, &'static str)> {
+    let by_name = resources
+        .iter()
+        .filter(|(_ordinal, name, _inventory)| name == reference)
+        .collect::<Vec<_>>();
+    match by_name.as_slice() {
+        [(ordinal, _name, _inventory)] => return Ok((*ordinal, "name")),
+        [] => {},
+        _ => {
+            return Err(PipelineError::new(
+                "Scrooby Pure3D resource name is ambiguous",
+            ));
+        },
+    }
+    let by_inventory = resources
+        .iter()
+        .filter(|(_ordinal, _name, inventory)| inventory == reference)
+        .collect::<Vec<_>>();
+    match by_inventory.as_slice() {
+        [(ordinal, _name, _inventory)] => Ok((*ordinal, "inventory_name")),
+        [] => Err(PipelineError::new("Scrooby Pure3D resource is missing")),
+        _ => Err(PipelineError::new(
+            "Scrooby Pure3D inventory identity is ambiguous",
+        )),
+    }
 }
 
 fn identity_counts(
@@ -661,58 +1161,6 @@ fn identity_counts(
         })?;
     }
     Ok(counts)
-}
-
-fn resource_identities(
-    components: &[Component],
-    kind: &str,
-) -> PipelineOutcome<Vec<(String, String)>> {
-    components
-        .iter()
-        .filter(|component| component.row.kind == kind)
-        .map(|component| {
-            Ok((
-                trim_padding(required_string(&component.payload, "name")?)
-                    .to_owned(),
-                trim_padding(required_string(
-                    &component.payload,
-                    "inventory_name",
-                )?)
-                .to_owned(),
-            ))
-        })
-        .collect()
-}
-
-fn require_pure3d_resource(
-    resources: &[(String, String)],
-    reference: &str,
-) -> PipelineOutcome<()> {
-    let by_name = resources
-        .iter()
-        .filter(|(name, _inventory)| name == reference)
-        .count();
-    if by_name == 1 {
-        return Ok(());
-    }
-    if by_name > 1 {
-        return Err(PipelineError::new(
-            "Scrooby Pure3D resource name is ambiguous",
-        ));
-    }
-    let by_inventory = resources
-        .iter()
-        .filter(|(_name, inventory)| inventory == reference)
-        .count();
-    if by_inventory == 1 {
-        Ok(())
-    } else if by_inventory == 0 {
-        Err(PipelineError::new("Scrooby Pure3D resource is missing"))
-    } else {
-        Err(PipelineError::new(
-            "Scrooby Pure3D inventory identity is ambiguous",
-        ))
-    }
 }
 
 fn require_unique(
