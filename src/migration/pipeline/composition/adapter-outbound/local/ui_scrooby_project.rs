@@ -323,13 +323,25 @@ fn validate_page_layers(components: &[Component]) -> PipelineOutcome<()> {
             .ok_or_else(|| {
                 PipelineError::new("Scrooby page has no child inventory")
             })?;
-        let declared = children
-            .iter()
-            .filter(|child| {
-                child.get("id_hex").and_then(Value::as_str)
-                    == Some("0x00018003")
-            })
-            .count();
+        let mut declared = 0usize;
+        for child in children {
+            match required_string(child, "id_hex")? {
+                "0x00018003" => {
+                    declared = declared.checked_add(1).ok_or_else(|| {
+                        PipelineError::new(
+                            "Scrooby page layer count overflowed",
+                        )
+                    })?;
+                },
+                "0x00018100" | "0x00018101" | "0x00018104"
+                | "0x00018105" => {},
+                _ => {
+                    return Err(PipelineError::new(
+                        "Scrooby page declares an unsupported child kind",
+                    ));
+                },
+            }
+        }
         let observed = actual
             .get(&page.row.ordinal)
             .copied()

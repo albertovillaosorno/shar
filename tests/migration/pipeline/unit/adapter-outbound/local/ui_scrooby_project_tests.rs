@@ -202,6 +202,52 @@ fn rejects_missing_declared_project_child() -> TestResult {
 }
 
 #[test]
+fn accepts_opaque_page_resource_references() -> TestResult {
+    let root = case_dir("opaque-page-resources")?;
+    write_valid_package(&root)?;
+    fs::write(
+        root.join("components/scrooby_page/page.json"),
+        concat!(
+            r#"{"schema":"scrooby_page","name":"Main\\x00","#,
+            r#""children":[{"id_hex":"0x00018003"},"#,
+            r#"{"id_hex":"0x00018100"},{"id_hex":"0x00018101"},"#,
+            r#"{"id_hex":"0x00018104"},{"id_hex":"0x00018105"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string());
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    result
+}
+
+#[test]
+fn rejects_unknown_page_child_kind() -> TestResult {
+    let root = case_dir("unknown-page-child")?;
+    write_valid_package(&root)?;
+    fs::write(
+        root.join("components/scrooby_page/page.json"),
+        concat!(
+            r#"{"schema":"scrooby_page","name":"Main\\x00","#,
+            r#""children":[{"id_hex":"0x00018003"},"#,
+            r#"{"id_hex":"0x00018102"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err(
+            "unknown page child kind passed Scrooby preflight".to_owned(),
+        );
+    };
+    if !error.to_string().contains("unsupported child kind") {
+        return Err(format!("unexpected page-child error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_layer_outside_page_ancestry() -> TestResult {
     let root = case_dir("wrong-layer-parent")?;
     write_valid_package(&root)?;
