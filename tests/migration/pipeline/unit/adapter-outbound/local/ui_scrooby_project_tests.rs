@@ -325,6 +325,51 @@ fn binding_catalog_publishes_public_source_identity_only() -> TestResult {
 }
 
 #[test]
+fn page_resource_lifecycle_preserves_authored_occurrences() -> TestResult {
+    let root = case_dir("page-resource-lifecycle")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let image = bindings
+        .iter_mut()
+        .find(|binding| binding.relation == "page-image-resource")
+        .ok_or_else(|| "page image binding is missing".to_owned())?;
+    image.target_source_unit_id = Some("texture-source".to_owned());
+    image.target_source_match_basis = Some("filename-basename-exact");
+    let preflight = super::ScroobyUiPreflight {
+        packages: vec![super::ScroobyPackageBindings {
+            package_id: "fixture-package".to_owned(),
+            bindings,
+            image_resources: Vec::new(),
+        }],
+    };
+    let rows = preflight.page_resource_lifecycle();
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let observed = rows
+        .iter()
+        .map(|row| {
+            (
+                row.page_ordinal,
+                row.source_index,
+                row.resource_kind,
+                row.target_ordinal,
+                row.target_source_unit_id.as_deref(),
+            )
+        })
+        .collect::<Vec<_>>();
+    let expected = vec![
+        (2, 1, "image", 4, Some("texture-source")),
+        (2, 2, "pure3d", 11, None),
+        (2, 3, "text-style", 7, None),
+        (2, 4, "text-bible", 9, None),
+    ];
+    if observed != expected {
+        return Err(format!("unexpected page resource lifecycle: {observed:?}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn binding_catalog_rejects_incomplete_source_identity() -> TestResult {
     let root = case_dir("binding-source-incomplete")?;
     write_valid_package(&root)?;

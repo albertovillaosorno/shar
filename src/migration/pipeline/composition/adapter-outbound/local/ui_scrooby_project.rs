@@ -93,6 +93,17 @@ pub(super) struct ScroobyUiPreflight {
     packages: Vec<ScroobyPackageBindings>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct ScroobyPageResourceLifecycle {
+    pub(super) package_id: String,
+    pub(super) page_ordinal: usize,
+    pub(super) source_index: usize,
+    pub(super) resource_kind: &'static str,
+    pub(super) target_ordinal: usize,
+    pub(super) target_source_unit_id: Option<String>,
+    pub(super) target_source_match_basis: Option<&'static str>,
+}
+
 impl ScroobyUiPreflight {
     pub(super) const fn package_count(&self) -> usize {
         self.packages.len()
@@ -111,6 +122,52 @@ impl ScroobyUiPreflight {
             .flat_map(|package| &package.bindings)
             .filter(|binding| binding.target_source_unit_id.is_some())
             .count()
+    }
+
+    pub(super) fn page_resource_lifecycle(
+        &self,
+    ) -> Vec<ScroobyPageResourceLifecycle> {
+        let mut rows = Vec::new();
+        for package in &self.packages {
+            for binding in &package.bindings {
+                let resource_kind = match binding.relation {
+                    "page-image-resource" => "image",
+                    "page-pure3d-resource" => "pure3d",
+                    "page-text-style" => "text-style",
+                    "page-text-bible" => "text-bible",
+                    _ => continue,
+                };
+                rows.push(ScroobyPageResourceLifecycle {
+                    package_id: package.package_id.clone(),
+                    page_ordinal: binding.source_ordinal,
+                    source_index: binding.source_index,
+                    resource_kind,
+                    target_ordinal: binding.target_ordinal,
+                    target_source_unit_id: binding
+                        .target_source_unit_id
+                        .clone(),
+                    target_source_match_basis: binding
+                        .target_source_match_basis,
+                });
+            }
+        }
+        rows.sort_by(|left, right| {
+            (
+                left.package_id.as_str(),
+                left.page_ordinal,
+                left.source_index,
+                left.target_ordinal,
+                left.resource_kind,
+            )
+                .cmp(&(
+                    right.package_id.as_str(),
+                    right.page_ordinal,
+                    right.source_index,
+                    right.target_ordinal,
+                    right.resource_kind,
+                ))
+        });
+        rows
     }
 
     fn to_catalog_jsonl(&self) -> PipelineOutcome<String> {

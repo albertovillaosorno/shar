@@ -103,6 +103,7 @@ use crate::manifest_paths::{
 use crate::workspace::{
     FBX_WORKSPACE_ROOT, UI_RASTER_WORKSPACE_ROOT,
     UI_SCROOBY_BINDING_WORKSPACE_ROOT, UI_SCROOBY_LAYOUT_WORKSPACE_ROOT,
+    UI_SCROOBY_RESOURCE_WORKSPACE_ROOT,
     UNREAL_STAGING_WORKSPACE_ROOT,
 };
 
@@ -210,6 +211,11 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &config.extracted_root,
             Path::new(UI_SCROOBY_LAYOUT_WORKSPACE_ROOT),
         )?;
+    let scrooby_resource_lifecycle =
+        super::ui_scrooby_resources::publish_scrooby_resource_lifecycle_catalog(
+            &scrooby_preflight,
+            Path::new(UI_SCROOBY_RESOURCE_WORKSPACE_ROOT),
+        )?;
     let fbx_catalog = verified_fbx_catalog_at(
         Path::new(FBX_WORKSPACE_ROOT),
         Path::new(FBX_MANIFEST_PATH),
@@ -248,8 +254,10 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
                 "verified {} sources across {} semantic packages, {} ",
                 "generated FBX artifacts, {} verified UI sprite rasters, and ",
                 "{} verified Scrooby projects with {} resolved bindings, ",
-                "{} direct-import-backed bindings, and {} layout rows; ",
-                "published {} mission definitions to {} with plan bundle {}"
+                "{} direct-import-backed bindings, {} layout rows, and {} ",
+                "page-owned resource preloads ({} direct-import-backed; {} ",
+                "packages fully direct-import-backed); published {} mission ",
+                "definitions to {} with plan bundle {}"
             ),
             unreal_manifest.source_count(),
             unreal_manifest.package_count(),
@@ -259,6 +267,10 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             verified_scrooby_bindings,
             direct_import_scrooby_bindings,
             verified_scrooby_layout_rows,
+            scrooby_resource_lifecycle.preload_count,
+            scrooby_resource_lifecycle.direct_import_backed_preload_count,
+            scrooby_resource_lifecycle
+                .fully_direct_import_backed_package_count,
             mission_definitions_jsonl.lines().count(),
             UNREAL_STAGING_WORKSPACE_ROOT,
             plan_bundle.index_revision(),
