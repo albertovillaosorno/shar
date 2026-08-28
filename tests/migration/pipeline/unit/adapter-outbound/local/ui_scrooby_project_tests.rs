@@ -225,6 +225,10 @@ fn publishes_deterministic_package_scoped_binding_catalog() -> TestResult {
             .and_then(serde_json::Value::as_u64)
             != Some(2)
         || first_binding
+            .get("source_index")
+            .and_then(serde_json::Value::as_u64)
+            != Some(1)
+        || first_binding
             .get("target_ordinal")
             .and_then(serde_json::Value::as_u64)
             != Some(4)
@@ -297,6 +301,36 @@ fn binding_catalog_reuse_rejects_transaction_debris() -> TestResult {
 }
 
 #[test]
+fn binding_catalog_preserves_authored_source_order() -> TestResult {
+    let root = case_dir("binding-order")?;
+    write_valid_package(&root)?;
+    let sprite = root.join("components/scrooby_multi_sprite/sprite.json");
+    fs::write(
+        &sprite,
+        concat!(
+            r#"{"schema":"scrooby_multi_sprite","name":"sprite","#,
+            r#""position":[0,0],"dimensions":[10,10],"#,
+            r#""justification":[0,2],"color":4294967295,"#,
+            r#""translucency":0,"rotation":0,"image_count":2,"#,
+            r#""image_names":["Icon","Icon"]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let indices = bindings
+        .iter()
+        .filter(|binding| binding.relation == "sprite-image-resource")
+        .map(|binding| binding.source_index)
+        .collect::<Vec<_>>();
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    if indices != [0, 1] {
+        return Err(format!("unexpected sprite binding order: {indices:?}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn accepts_complete_package_local_bindings() -> TestResult {
     let root = case_dir("complete")?;
     write_valid_package(&root)?;
@@ -307,6 +341,7 @@ fn accepts_complete_package_local_bindings() -> TestResult {
         .map(|binding| {
             (
                 binding.source_ordinal,
+                binding.source_index,
                 binding.target_ordinal,
                 binding.relation,
                 binding.match_basis,
@@ -314,15 +349,15 @@ fn accepts_complete_package_local_bindings() -> TestResult {
         })
         .collect::<Vec<_>>();
     let expected = vec![
-        (2, 4, "page-image-resource", "name"),
-        (2, 11, "page-pure3d-resource", "name"),
-        (2, 7, "page-text-style", "name"),
-        (2, 9, "page-text-bible", "name"),
-        (3, 2, "screen-page", "name"),
-        (6, 4, "sprite-image-resource", "name"),
-        (8, 7, "text-style-resource", "name"),
-        (10, 9, "string-text-bible", "name"),
-        (12, 11, "pure3d-object-resource", "name"),
+        (2, 1, 4, "page-image-resource", "name"),
+        (2, 2, 11, "page-pure3d-resource", "name"),
+        (2, 3, 7, "page-text-style", "name"),
+        (2, 4, 9, "page-text-bible", "name"),
+        (3, 0, 2, "screen-page", "name"),
+        (6, 0, 4, "sprite-image-resource", "name"),
+        (8, 0, 7, "text-style-resource", "name"),
+        (10, 0, 9, "string-text-bible", "name"),
+        (12, 0, 11, "pure3d-object-resource", "name"),
     ];
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     if observed != expected {
