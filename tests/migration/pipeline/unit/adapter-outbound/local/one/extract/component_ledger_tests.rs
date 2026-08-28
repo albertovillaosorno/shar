@@ -36,7 +36,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
     UnrealHapPackagePlan, component_ledger_files_exist, movie_outputs_complete,
-    p3d_package_complete, sprite_image_evidence_complete,
+    p3d_package_complete, scrooby_layout_evidence_complete,
+    sprite_image_evidence_complete,
 };
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -196,6 +197,112 @@ fn current_scrooby_cache_accepts_project_children() -> Result<(), String> {
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
     if !complete {
         return Err("exact Scrooby project children were rejected".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn stale_scrooby_layout_cache_requires_widget_children() -> Result<(), String> {
+    let case = case_dir("stale-scrooby-layout")?;
+    fs::create_dir_all(case.join("components/scrooby_layer"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/scrooby_layer/layer.json"),
+        concat!(
+            r#"{"schema":"scrooby_layer","children":["#,
+            r#"{"id_hex":"0x00018004"}]}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":1}"#,
+            "\n",
+            r#"{"ordinal":3,"parent_ordinal":2,"kind":"scrooby_layer","#,
+            r#""path":"scrooby_layer/layer.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let complete = p3d_package_complete(&case);
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if complete {
+        return Err("Scrooby layout without widget child was reused".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn current_scrooby_layout_cache_accepts_exact_tree() -> Result<(), String> {
+    let case = case_dir("current-scrooby-layout")?;
+    for kind in [
+        "scrooby_layer",
+        "scrooby_group",
+        "scrooby_multi_text",
+        "scrooby_string_hardcoded",
+    ] {
+        fs::create_dir_all(case.join("components").join(kind))
+            .map_err(|error| error.to_string())?;
+    }
+    fs::write(
+        case.join("components/scrooby_layer/layer.json"),
+        concat!(
+            r#"{"schema":"scrooby_layer","children":["#,
+            r#"{"id_hex":"0x00018004"}]}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/scrooby_group/group.json"),
+        concat!(
+            r#"{"schema":"scrooby_group","children":["#,
+            r#"{"id_hex":"0x00018007"}]}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/scrooby_multi_text/text.json"),
+        concat!(
+            r#"{"schema":"scrooby_multi_text","children":["#,
+            r#"{"id_hex":"0x0001800c"}]}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/scrooby_string_hardcoded/value.json"),
+        r#"{"schema":"scrooby_string_hardcoded","value":"hello"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":4}"#,
+            "\n",
+            r#"{"ordinal":3,"parent_ordinal":2,"kind":"scrooby_layer","#,
+            r#""path":"scrooby_layer/layer.json"}"#,
+            "\n",
+            r#"{"ordinal":4,"parent_ordinal":3,"kind":"scrooby_group","#,
+            r#""path":"scrooby_group/group.json"}"#,
+            "\n",
+            r#"{"ordinal":5,"parent_ordinal":4,"kind":"scrooby_multi_text","#,
+            r#""path":"scrooby_multi_text/text.json"}"#,
+            "\n",
+            r#"{"ordinal":6,"parent_ordinal":5,"#,
+            r#""kind":"scrooby_string_hardcoded","#,
+            r#""path":"scrooby_string_hardcoded/value.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let complete = scrooby_layout_evidence_complete(&case);
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if !complete {
+        return Err("exact Scrooby layout tree was rejected".to_owned());
     }
     Ok(())
 }
