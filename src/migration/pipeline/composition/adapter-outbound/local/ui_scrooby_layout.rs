@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v1";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v2";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -217,9 +217,15 @@ fn add_semantics(
             }
             let _previous =
                 row.insert("shadow_enabled".to_owned(), json!(shadow == 1));
+            let shadow_color =
+                required_u32(&component.payload, "shadow_color")?;
             let _previous = row.insert(
                 "shadow_color_raw_u32".to_owned(),
-                json!(required_u32(&component.payload, "shadow_color")?),
+                json!(shadow_color),
+            );
+            let _previous = row.insert(
+                "shadow_color_rgba_u8".to_owned(),
+                json!(packed_rgba_u8(shadow_color)),
             );
             let shadow_offset =
                 required_u32_pair(&component.payload, "shadow_offset")?;
@@ -284,10 +290,11 @@ fn add_widget_frame(
             vertical_justification(justification[1])?,
         ]),
     );
-    let _previous = row.insert(
-        "color_raw_u32".to_owned(),
-        json!(required_u32(payload, "color")?),
-    );
+    let color = required_u32(payload, "color")?;
+    let _previous =
+        row.insert("color_raw_u32".to_owned(), json!(color));
+    let _previous =
+        row.insert("color_rgba_u8".to_owned(), json!(packed_rgba_u8(color)));
     let _previous = row.insert(
         "raw_translucency_u32".to_owned(),
         json!(required_u32(payload, "translucency")?),
@@ -353,7 +360,13 @@ fn add_polygon(
         "screen_points_i32".to_owned(),
         Value::Array(screen_points),
     );
+    let rgba = colors
+        .iter()
+        .copied()
+        .map(packed_rgba_u8)
+        .collect::<Vec<_>>();
     let _previous = row.insert("colors_raw_u32".to_owned(), json!(colors));
+    let _previous = row.insert("colors_rgba_u8".to_owned(), json!(rgba));
     Ok(())
 }
 
@@ -477,6 +490,11 @@ fn is_layout_kind(kind: &str) -> bool {
 
 const fn semantic_i32(value: u32) -> i32 {
     i32::from_le_bytes(value.to_le_bytes())
+}
+
+const fn packed_rgba_u8(value: u32) -> [u8; 4] {
+    let [alpha, red, green, blue] = value.to_be_bytes();
+    [red, green, blue, alpha]
 }
 
 fn horizontal_justification(value: u32) -> PipelineOutcome<&'static str> {

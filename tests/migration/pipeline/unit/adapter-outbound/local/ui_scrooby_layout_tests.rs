@@ -36,8 +36,9 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
-    collect_package_layout, horizontal_justification, publish_rendered,
-    screen_i32, semantic_i32, vertical_justification,
+    add_polygon, collect_package_layout, horizontal_justification,
+    packed_rgba_u8, publish_rendered, screen_i32, semantic_i32,
+    vertical_justification,
 };
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -95,7 +96,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v1","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v2","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -243,6 +244,7 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
     };
     let page = row(2)?;
     let layer = row(4)?;
+    let text = row(5)?;
     let string = row(6)?;
     let screen = row(7)?;
     let index = |value: &serde_json::Value, field: &str| {
@@ -254,10 +256,14 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
         || index(string, "runtime_index") != Some(0)
         || index(screen, "source_sibling_index") != Some(1)
         || index(screen, "runtime_index") != Some(0)
+        || text.get("color_rgba_u8")
+            != Some(&serde_json::json!([255, 255, 255, 255]))
+        || text.get("shadow_color_rgba_u8")
+            != Some(&serde_json::json!([0, 0, 0, 0]))
     {
         return Err(format!(
-            "unexpected runtime indices: page={page} layer={layer} \
-             string={string} screen={screen}"
+            "unexpected runtime/layout semantics: page={page} layer={layer} \
+             text={text} string={string} screen={screen}"
         ));
     }
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
@@ -270,6 +276,13 @@ fn signed_screen_values_preserve_source_bits() {
     assert_eq!(semantic_i32(0xffff_ffec), -20);
     assert_eq!(semantic_i32(0xffff_ffcd), -51);
     assert_eq!(semantic_i32(640), 640);
+}
+
+#[test]
+fn packed_colors_follow_pddi_channel_order() {
+    assert_eq!(packed_rgba_u8(0xc011_2233), [0x11, 0x22, 0x33, 0xc0]);
+    assert_eq!(packed_rgba_u8(0xffff_ffff), [255, 255, 255, 255]);
+    assert_eq!(packed_rgba_u8(0x0000_0000), [0, 0, 0, 0]);
 }
 
 #[test]
@@ -295,5 +308,25 @@ fn justification_matches_scrooby_runtime_axes() -> Result<(), String> {
 fn polygon_screen_coordinates_truncate_toward_zero() -> Result<(), String> {
     assert_eq!(screen_i32(12.9).map_err(|e| e.to_string())?, 12);
     assert_eq!(screen_i32(-12.9).map_err(|e| e.to_string())?, -12);
+    Ok(())
+}
+
+#[test]
+fn polygon_layout_publishes_runtime_rgba_channels() -> Result<(), String> {
+    let payload = serde_json::json!({
+        "translucency": 0,
+        "points": [[0, 0, 0], [10, 0, 0], [0, 10, 0]],
+        "colors": [0xc011_2233_u32, 0xff44_5566_u32, 0x0077_8899_u32],
+    });
+    let mut row = serde_json::Map::new();
+    add_polygon(&payload, &mut row).map_err(|error| error.to_string())?;
+    assert_eq!(
+        row.get("colors_rgba_u8"),
+        Some(&serde_json::json!([
+            [0x11, 0x22, 0x33, 0xc0],
+            [0x44, 0x55, 0x66, 0xff],
+            [0x77, 0x88, 0x99, 0x00],
+        ])),
+    );
     Ok(())
 }
