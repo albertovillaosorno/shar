@@ -41,10 +41,13 @@ use std::path::{Path, PathBuf};
 use schoenwald_filesystem::resolve_under;
 use serde_json::{Value, json};
 
-use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
+use crate::domain::{
+    PackageRole, PhaseThreePackageIndex, PipelineError, PipelineOutcome,
+    UnrealImportManifest,
+};
 
 const BINDING_CATALOG_SCHEMA: &str =
-    "shar-schoenwald.scrooby-binding-catalog.v2";
+    "shar-schoenwald.scrooby-binding-catalog.v3";
 const BINDING_CATALOG_FILE: &str = "catalog.jsonl";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -68,12 +71,21 @@ struct ScroobyPackageBinding {
     target_ordinal: usize,
     relation: &'static str,
     match_basis: &'static str,
+    target_source_unit_id: Option<String>,
+    target_source_match_basis: Option<&'static str>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ScroobyImageResourceSource {
+    ordinal: usize,
+    filename: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct ScroobyPackageBindings {
     package_id: String,
     bindings: Vec<ScroobyPackageBinding>,
+    image_resources: Vec<ScroobyImageResourceSource>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -93,6 +105,14 @@ impl ScroobyUiPreflight {
             .sum()
     }
 
+    pub(super) fn direct_import_binding_count(&self) -> usize {
+        self.packages
+            .iter()
+            .flat_map(|package| &package.bindings)
+            .filter(|binding| binding.target_source_unit_id.is_some())
+            .count()
+    }
+
     fn to_catalog_jsonl(&self) -> PipelineOutcome<String> {
         let mut packages = self.packages.iter().collect::<Vec<_>>();
         packages.sort_by(|left, right| left.package_id.cmp(&right.package_id));
@@ -104,6 +124,7 @@ impl ScroobyUiPreflight {
             "status": "complete",
             "package_count": self.package_count(),
             "binding_count": self.binding_count(),
+            "direct_import_binding_count": self.direct_import_binding_count(),
         }));
         for package in packages {
             let mut bindings = package.bindings.iter().collect::<Vec<_>>();
@@ -124,7 +145,7 @@ impl ScroobyUiPreflight {
                     ))
             });
             for binding in bindings {
-                rows.push(json!({
+                let mut row = json!({
                     "schema": BINDING_CATALOG_SCHEMA,
                     "record_type": "binding",
                     "package_id": package.package_id,
@@ -133,7 +154,34 @@ impl ScroobyUiPreflight {
                     "target_ordinal": binding.target_ordinal,
                     "relation": binding.relation,
                     "match_basis": binding.match_basis,
-                }));
+                });
+                match (
+                    &binding.target_source_unit_id,
+                    binding.target_source_match_basis,
+                ) {
+                    (Some(source_unit_id), Some(source_match_basis)) => {
+                        let object = row.as_object_mut().ok_or_else(|| {
+                            PipelineError::new(
+                                "Scrooby binding row is not a JSON object",
+                            )
+                        })?;
+                        let _previous = object.insert(
+                            "target_source_unit_id".to_owned(),
+                            json!(source_unit_id),
+                        );
+                        let _previous = object.insert(
+                            "target_source_match_basis".to_owned(),
+                            json!(source_match_basis),
+                        );
+                    },
+                    (None, None) => {},
+                    _ => {
+                        return Err(PipelineError::new(
+                            "Scrooby direct-import binding is incomplete",
+                        ));
+                    },
+                }
+                rows.push(row);
             }
         }
         let mut rendered = String::new();
@@ -185,10 +233,12 @@ pub(super) fn preflight_scrooby_ui_projects(
             extracted_root,
             &package.package_root,
         )?;
-        let package_bindings = preflight_scrooby_package(&root)?;
+        let (package_bindings, image_resources) =
+            preflight_scrooby_package_evidence(&root)?;
         packages.push(ScroobyPackageBindings {
             package_id: package.package_id.clone(),
             bindings: package_bindings,
+            image_resources,
         });
         let indexed = package
             .members()
@@ -229,6 +279,71 @@ pub(super) fn preflight_scrooby_ui_projects(
     }
     packages.sort_by(|left, right| left.package_id.cmp(&right.package_id));
     Ok(ScroobyUiPreflight { packages })
+}
+
+/// Bind package-local image resources to verified direct texture imports.
+///
+/// # Errors
+///
+/// Returns an error when one authored image filename matches more than one
+/// direct texture import in the same semantic package.
+pub(super) fn bind_scrooby_direct_import_sources(
+    preflight: &mut ScroobyUiPreflight,
+    manifest: &UnrealImportManifest,
+) -> PipelineOutcome<usize> {
+    let mut resolved_count = 0usize;
+    for package in &mut preflight.packages {
+        let candidates = manifest
+            .sources
+            .iter()
+            .filter(|source| {
+                source.package_id == package.package_id
+                    && source.role == PackageRole::Texture
+                    && source.evidence.file_extension == "png"
+                    && source.direct_import.as_ref().is_some_and(|import| {
+                        import.target_class == "Texture2D"
+                            && import.importer == "texture-factory"
+                            && import.import_profile == "shar-texture-v1"
+                    })
+            })
+            .map(|source| (source.id.as_str(), source.evidence.path.as_str()))
+            .collect::<Vec<_>>();
+        let mut source_by_ordinal = BTreeMap::new();
+        for resource in &package.image_resources {
+            let source = resolve_exact_image_source(
+                &resource.filename,
+                candidates.iter().copied(),
+            )?;
+            if let Some(source_unit_id) = source
+                && source_by_ordinal
+                    .insert(resource.ordinal, source_unit_id.to_owned())
+                    .is_some()
+            {
+                return Err(PipelineError::new(
+                    "Scrooby image resource ordinal is duplicated",
+                ));
+            }
+        }
+        for binding in &mut package.bindings {
+            binding.target_source_unit_id = None;
+            binding.target_source_match_basis = None;
+            if !matches!(
+                binding.relation,
+                "page-image-resource" | "sprite-image-resource"
+            ) {
+                continue;
+            }
+            let Some(source_unit_id) =
+                source_by_ordinal.get(&binding.target_ordinal)
+            else {
+                continue;
+            };
+            binding.target_source_unit_id = Some(source_unit_id.clone());
+            binding.target_source_match_basis = Some("filename-basename-exact");
+            resolved_count = resolved_count.saturating_add(1);
+        }
+    }
+    Ok(resolved_count)
 }
 
 pub(super) fn publish_scrooby_binding_catalog(
@@ -384,9 +499,20 @@ fn resolve_normalized_package_root(
     })
 }
 
+#[cfg(test)]
 fn preflight_scrooby_package(
     root: &Path,
 ) -> PipelineOutcome<Vec<ScroobyPackageBinding>> {
+    preflight_scrooby_package_evidence(root)
+        .map(|(bindings, _resources)| bindings)
+}
+
+fn preflight_scrooby_package_evidence(
+    root: &Path,
+) -> PipelineOutcome<(
+    Vec<ScroobyPackageBinding>,
+    Vec<ScroobyImageResourceSource>,
+)> {
     let rows = read_ledger(root)?;
     let components = root.join("components");
     let mut decoded = Vec::new();
@@ -425,7 +551,9 @@ fn preflight_scrooby_package(
     validate_screen_pages(&decoded)?;
     validate_page_resources(&decoded)?;
     validate_widget_resources(&decoded)?;
-    collect_named_bindings(&decoded)
+    let bindings = collect_named_bindings(&decoded)?;
+    let image_resources = collect_image_resource_sources(&decoded)?;
+    Ok((bindings, image_resources))
 }
 
 fn read_ledger(root: &Path) -> PipelineOutcome<Vec<LedgerRow>> {
@@ -1083,7 +1211,61 @@ fn push_binding(
         target_ordinal,
         relation,
         match_basis,
+        target_source_unit_id: None,
+        target_source_match_basis: None,
     });
+}
+
+fn collect_image_resource_sources(
+    components: &[Component],
+) -> PipelineOutcome<Vec<ScroobyImageResourceSource>> {
+    components
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_image_resource")
+        .map(|component| {
+            let filename = trim_padding(required_string(
+                &component.payload,
+                "filename",
+            )?);
+            let _basename = exact_basename(filename).ok_or_else(|| {
+                PipelineError::new(
+                    "Scrooby image resource filename has no basename",
+                )
+            })?;
+            Ok(ScroobyImageResourceSource {
+                ordinal: component.row.ordinal,
+                filename: filename.to_owned(),
+            })
+        })
+        .collect()
+}
+
+fn exact_basename(value: &str) -> Option<&str> {
+    value
+        .rsplit(['/', '\\'])
+        .next()
+        .filter(|name| !name.is_empty())
+}
+
+fn resolve_exact_image_source<'source>(
+    filename: &str,
+    candidates: impl Iterator<Item = (&'source str, &'source str)>,
+) -> PipelineOutcome<Option<&'source str>> {
+    let basename = exact_basename(filename).ok_or_else(|| {
+        PipelineError::new("Scrooby image resource filename has no basename")
+    })?;
+    let mut matched = None;
+    for (source_unit_id, source_path) in candidates {
+        if exact_basename(source_path) != Some(basename) {
+            continue;
+        }
+        if matched.replace(source_unit_id).is_some() {
+            return Err(PipelineError::new(
+                "Scrooby image resource direct import is ambiguous",
+            ));
+        }
+    }
+    Ok(matched)
 }
 
 fn identity_ordinals(

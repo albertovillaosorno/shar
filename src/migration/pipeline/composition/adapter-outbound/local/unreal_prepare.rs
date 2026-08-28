@@ -145,7 +145,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         // jig-ignore-next-line: literal
         PipelineError::new(format!("Unreal package-index intake failed: {error}"))
     })?;
-    let scrooby_preflight =
+    let mut scrooby_preflight =
         super::ui_scrooby_project::preflight_scrooby_ui_projects(
             &index,
             &config.extracted_root,
@@ -186,6 +186,11 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     let manifest_jsonl = unreal_manifest.to_jsonl();
     let summary_json = unreal_manifest.summary_json();
     validate_rendered_output(&manifest_jsonl, &summary_json)?;
+    let direct_import_scrooby_bindings =
+        super::ui_scrooby_project::bind_scrooby_direct_import_sources(
+            &mut scrooby_preflight,
+            &unreal_manifest,
+        )?;
     let manifest_revision = digest_hex(manifest_jsonl.as_bytes());
     let ui_raster_catalog =
         super::ui_sprite_raster::publish_complete_ui_sprite_raster_catalog(
@@ -242,9 +247,9 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             concat!(
                 "verified {} sources across {} semantic packages, {} ",
                 "generated FBX artifacts, {} verified UI sprite rasters, and ",
-                "{} verified Scrooby projects with {} resolved bindings ",
-                "and {} layout rows; published {} mission definitions ",
-                "to {} with plan bundle {}"
+                "{} verified Scrooby projects with {} resolved bindings, ",
+                "{} direct-import-backed bindings, and {} layout rows; ",
+                "published {} mission definitions to {} with plan bundle {}"
             ),
             unreal_manifest.source_count(),
             unreal_manifest.package_count(),
@@ -252,6 +257,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             verified_ui_raster_count,
             verified_scrooby_projects,
             verified_scrooby_bindings,
+            direct_import_scrooby_bindings,
             verified_scrooby_layout_rows,
             mission_definitions_jsonl.lines().count(),
             UNREAL_STAGING_WORKSPACE_ROOT,
