@@ -3,7 +3,7 @@ schema: shar.todo.v1
 id: "produce-a-local-ios-ipa-package-for-sideloading-testing-without-app-store-\
   submission"
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: true
 parent: null

@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: define-the-portable-dist-layout-and-machine-readable-dist-manifest
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: true
 parent: null

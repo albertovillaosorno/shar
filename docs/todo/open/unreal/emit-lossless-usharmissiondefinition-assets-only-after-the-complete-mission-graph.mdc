@@ -4,7 +4,7 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: emit-lossless-usharmissiondefinition-assets-only-after-the-complete-mission-graph
 status: open
-priority: P2
+priority: P1
 lane: unreal
 active: false
 <!-- markdownlint-disable-next-line MD044 -->

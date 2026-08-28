@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: provide-graphics-and-performance-settings-without-changing-base-content
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: false
 parent: null

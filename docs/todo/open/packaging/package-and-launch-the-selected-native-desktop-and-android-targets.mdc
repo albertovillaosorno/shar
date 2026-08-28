@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: package-and-launch-the-selected-native-desktop-and-android-targets
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: false
 parent: null

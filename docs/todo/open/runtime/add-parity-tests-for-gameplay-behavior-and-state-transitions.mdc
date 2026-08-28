@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: add-parity-tests-for-gameplay-behavior-and-state-transitions
 status: open
-priority: P3
+priority: P2
 lane: runtime
 active: false
 parent: null

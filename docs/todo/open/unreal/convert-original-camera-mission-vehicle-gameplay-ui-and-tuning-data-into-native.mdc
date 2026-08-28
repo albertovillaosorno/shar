@@ -4,7 +4,7 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: convert-original-camera-mission-vehicle-gameplay-ui-and-tuning-data-into-native
 status: open
-priority: P2
+priority: P1
 lane: unreal
 active: false
 parent: null

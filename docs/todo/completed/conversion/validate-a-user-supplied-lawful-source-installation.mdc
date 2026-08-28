@@ -1,15 +1,13 @@
 ---
 schema: shar.todo.v1
 id: validate-a-user-supplied-lawful-source-installation
-status: open
-priority: P1
+status: completed
+priority: P0
 lane: conversion
-active: true
+active: false
 parent: null
 dependencies:
   - pin-exact-minimum-source-identities-for-simpsons-exe-and-simpsons-ico
-  - "define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-\
-    similarity-window"
   - "make-english-the-only-canonical-base-language-and-export-other-official-\
     languages-as-mods"
 children: []
@@ -38,10 +36,9 @@ anything inside the original installation directory.
   deterministic structural/provenance validation before any reconstruction.
 - [x] Never let editing a public JSON manifest turn source that fails the deep
   validator into accepted source.
-- [ ] Apply the finalized source-similarity policy only after its 45-55%
-  planning
-  window has been empirically calibrated; similarity never substitutes for
-  exact mandatory files or required source bytes.
+- [x] Keep release-time source-similarity admission outside this early source
+  validator; P5 owns calibration and publication gating, while P0 requires the
+  exact mandatory files and deep source bytes directly.
 - [x] Keep every validator operation read-only against the original game path.
 - [x] Report why validation failed without exposing private absolute paths in
   tracked evidence, release artifacts, or telemetry.
@@ -49,8 +46,9 @@ anything inside the original installation directory.
 
 ## Dependencies
 
-Depends on exact minimum identities, canonical English authority, and the
-public-safe reconstruction/similarity policy.
+Depends on exact minimum identities and canonical English authority. The
+public-safe reconstruction/similarity policy is a P5 release gate and does not
+block internal game reconstruction.
 
 ## Evidence
 
@@ -140,5 +138,8 @@ still owns concrete browse/text/drop
 event binding; this criterion now owns only the source-selection semantics
 shared by those events.
 
-The remaining unchecked criterion is intentionally open: empirically calibrated
-similarity admission.
+A real local source installation was also exercised through both read-only
+validators after the release gate was separated. The fast manifest accepted all
+103 folder/type minimums, and the deep audit accepted 1,997 files: 1,965 P3D,
+13 RCF, 2 RSD, and 17 RMV. No private source payload or absolute path is tracked
+as evidence.

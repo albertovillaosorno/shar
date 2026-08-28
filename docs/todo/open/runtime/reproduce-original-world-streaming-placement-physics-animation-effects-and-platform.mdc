@@ -4,7 +4,7 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: reproduce-original-world-streaming-placement-physics-animation-effects-and-platform
 status: open
-priority: P3
+priority: P2
 lane: runtime
 active: false
 parent: null

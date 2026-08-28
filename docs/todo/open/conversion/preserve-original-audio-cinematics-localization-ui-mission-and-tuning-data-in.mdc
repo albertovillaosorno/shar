@@ -4,7 +4,7 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in
 status: open
-priority: P1
+priority: P0
 lane: conversion
 active: false
 parent: null

@@ -4,7 +4,7 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: preserve-original-mission-timing-gameplay-rules-and-progression-unless-a-technical
 status: open
-priority: P3
+priority: P2
 lane: runtime
 active: false
 parent: null

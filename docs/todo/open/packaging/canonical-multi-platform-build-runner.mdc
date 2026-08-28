@@ -1131,8 +1131,9 @@ Linux UAT now mounts the private engine overlay in that outer namespace and then
 enters a nested user namespace mapped back to the non-root parent identity. A
 live canonical Cook process reported UID/GID 1000 and progressed through normal
 editor, DDC, shader-worker, asset-registry, and target-platform initialization.
-Linux UAT also uses a repository-local HOME so Zen/user settings stay under build
-work instead of the real user profile. The next Cook blocker is metadata: the
+Linux UAT also uses a repository-local HOME so Zen/user settings stay under
+build work instead of the real user profile. The next Cook blocker is
+metadata: the
 retained `sharEditor.target` is stale and unreadable and `UnrealEditor.modules`
 is absent, so the editor cannot discover the otherwise current
 `libUnrealEditor-shar.so`.

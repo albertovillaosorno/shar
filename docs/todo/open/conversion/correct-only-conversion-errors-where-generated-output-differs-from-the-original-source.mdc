@@ -4,7 +4,7 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: correct-only-conversion-errors-where-generated-output-differs-from-the-original-source
 status: open
-priority: P1
+priority: P0
 lane: conversion
 active: false
 parent: null

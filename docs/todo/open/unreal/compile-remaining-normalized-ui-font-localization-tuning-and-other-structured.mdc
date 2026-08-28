@@ -4,7 +4,7 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: compile-remaining-normalized-ui-font-localization-tuning-and-other-structured
 status: open
-priority: P2
+priority: P1
 lane: unreal
 active: false
 <!-- markdownlint-disable-next-line MD044 -->

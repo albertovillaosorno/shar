@@ -3,7 +3,7 @@ schema: shar.todo.v1
 id: "define-a-public-safe-reconstruction-algorithm-gate-with-a-bounded-source-\
   similarity-window"
 status: open
-priority: P0
+priority: P5
 lane: security
 active: true
 parent: null
