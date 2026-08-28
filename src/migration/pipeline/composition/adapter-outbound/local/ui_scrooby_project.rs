@@ -193,6 +193,7 @@ fn preflight_scrooby_package(root: &Path) -> PipelineOutcome<()> {
             "Scrooby package must contain exactly one project",
         ));
     }
+    validate_project_structure(&decoded)?;
     validate_layout_children(&decoded)?;
     validate_screen_pages(&decoded)?;
     validate_widget_resources(&decoded)
@@ -222,6 +223,124 @@ fn read_ledger(root: &Path) -> PipelineOutcome<Vec<LedgerRow>> {
         });
     }
     Ok(rows)
+}
+
+fn validate_project_structure(components: &[Component]) -> PipelineOutcome<()> {
+    let project = components
+        .iter()
+        .find(|component| component.row.kind == "scrooby_project")
+        .ok_or_else(|| PipelineError::new("Scrooby project is missing"))?;
+    if project.row.parent_ordinal != Some(0) {
+        return Err(PipelineError::new(
+            "Scrooby project is not rooted at the package boundary",
+        ));
+    }
+    let children = project
+        .payload
+        .get("children")
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            PipelineError::new("Scrooby project has no child inventory")
+        })?;
+    let mut expected = BTreeMap::<&str, usize>::new();
+    for child in children {
+        let id = required_string(child, "id_hex")?;
+        let kind = match id {
+            "0x00018001" => "scrooby_screen",
+            "0x00018002" => "scrooby_page",
+            _ => {
+                return Err(PipelineError::new(
+                    "Scrooby project declares an unsupported child kind",
+                ));
+            },
+        };
+        let count = expected.entry(kind).or_default();
+        *count = count.checked_add(1).ok_or_else(|| {
+            PipelineError::new("Scrooby project child count overflowed")
+        })?;
+    }
+    let mut observed = BTreeMap::<&str, usize>::new();
+    for component in components.iter().filter(|component| {
+        matches!(
+            component.row.kind.as_str(),
+            "scrooby_page" | "scrooby_screen"
+        )
+    }) {
+        if component.row.parent_ordinal != Some(project.row.ordinal) {
+            return Err(PipelineError::new(
+                "Scrooby project child has incorrect ancestry",
+            ));
+        }
+        let count = observed.entry(component.row.kind.as_str()).or_default();
+        *count = count.checked_add(1).ok_or_else(|| {
+            PipelineError::new(
+                "Scrooby observed project child count overflowed",
+            )
+        })?;
+    }
+    if expected != observed {
+        return Err(PipelineError::new(
+            "Scrooby project child inventory disagrees with ledger ancestry",
+        ));
+    }
+    validate_page_layers(components)
+}
+
+fn validate_page_layers(components: &[Component]) -> PipelineOutcome<()> {
+    let pages = components
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_page")
+        .map(|component| component.row.ordinal)
+        .collect::<BTreeSet<_>>();
+    let mut actual = BTreeMap::<usize, usize>::new();
+    for layer in components
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_layer")
+    {
+        let Some(parent) = layer.row.parent_ordinal else {
+            return Err(PipelineError::new(
+                "Scrooby layer has no owning page",
+            ));
+        };
+        if !pages.contains(&parent) {
+            return Err(PipelineError::new(
+                "Scrooby layer has an unsupported owning parent",
+            ));
+        }
+        let count = actual.entry(parent).or_default();
+        *count = count.checked_add(1).ok_or_else(|| {
+            PipelineError::new("Scrooby layer count overflowed")
+        })?;
+    }
+    for page in components
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_page")
+    {
+        let children = page
+            .payload
+            .get("children")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                PipelineError::new("Scrooby page has no child inventory")
+            })?;
+        let declared = children
+            .iter()
+            .filter(|child| {
+                child.get("id_hex").and_then(Value::as_str)
+                    == Some("0x00018003")
+            })
+            .count();
+        let observed = actual
+            .get(&page.row.ordinal)
+            .copied()
+            .unwrap_or_default();
+        if declared != observed {
+            return Err(PipelineError::new(
+                "Scrooby page layer inventory disagrees with ledger ancestry",
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn validate_layout_children(components: &[Component]) -> PipelineOutcome<()> {
