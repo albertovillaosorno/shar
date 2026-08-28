@@ -50,11 +50,13 @@ fn maps_unrecognized_status_to_error_sentinel() {
 }
 
 #[test]
-fn scrooby_child_kinds_are_controlled() {
-    let kinds = super::controlled_values("kind")
-        .expect("kind vocabulary should remain controlled");
+fn scrooby_child_kinds_are_controlled() -> Result<(), String> {
+    let Some(kinds) = super::controlled_values("kind") else {
+        return Err("kind vocabulary should remain controlled".to_owned());
+    };
     assert!(kinds.contains(&"p3d-scrooby-layout"));
     assert!(kinds.contains(&"p3d-scrooby-resource"));
     assert!(super::TAXONOMY_JSON.contains("p3d-scrooby-layout"));
     assert!(super::TAXONOMY_JSON.contains("p3d-scrooby-resource"));
+    Ok(())
 }

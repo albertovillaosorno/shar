@@ -166,6 +166,7 @@ fn register_recovered_path(
         if existing_path == &recovered.relative_path
             && existing_bytes == &recovered.bytes
             && component.parent_ordinal != Some(0)
+            && !requires_distinct_nested_occurrence(component.kind.label())
         {
             return Ok(false);
         }
@@ -192,6 +193,24 @@ fn register_recovered_path(
         (recovered.relative_path.clone(), recovered.bytes.clone()),
     ));
     Ok(true)
+}
+
+
+/// Return whether repeated nested evidence has parent-local occurrence meaning.
+fn requires_distinct_nested_occurrence(kind: &str) -> bool {
+    matches!(
+        kind,
+        "scrooby_screen"
+            | "scrooby_page"
+            | "scrooby_layer"
+            | "scrooby_group"
+            | "scrooby_multi_sprite"
+            | "scrooby_multi_text"
+            | "scrooby_pure3d_object"
+            | "scrooby_polygon"
+            | "scrooby_string_text_bible"
+            | "scrooby_string_hardcoded"
+    )
 }
 
 /// Return one case-insensitive portable identity for a generated path.
@@ -275,6 +294,30 @@ fn should_publish_component(
             .parent_ordinal
             .and_then(|ordinal| chunks.get(ordinal))
             .is_some_and(|parent| parent.kind.label() == "scrooby_project");
+    }
+    if matches!(
+        kind,
+        "scrooby_group"
+            | "scrooby_multi_sprite"
+            | "scrooby_multi_text"
+            | "scrooby_pure3d_object"
+            | "scrooby_polygon"
+    ) {
+        return component
+            .parent_ordinal
+            .and_then(|ordinal| chunks.get(ordinal))
+            .is_some_and(|parent| {
+                matches!(parent.kind.label(), "scrooby_layer" | "scrooby_group")
+            });
+    }
+    if matches!(
+        kind,
+        "scrooby_string_text_bible" | "scrooby_string_hardcoded"
+    ) {
+        return component
+            .parent_ordinal
+            .and_then(|ordinal| chunks.get(ordinal))
+            .is_some_and(|parent| parent.kind.label() == "scrooby_multi_text");
     }
     if matches!(
         kind,
@@ -715,6 +758,7 @@ fn sanitize(value: &str) -> String {
 mod auxiliary;
 mod render;
 mod schema;
+mod scrooby_widget;
 mod schema_recovery;
 
 #[cfg(test)]
@@ -729,3 +773,7 @@ mod nested_model_component_tests;
 // jig-ignore-next-line: canonical test module path is indivisible.
 #[path = "../../../../../tests/formats/p3d/unit/adapter-outbound/extractor/scrooby_project_child_tests.rs"]
 mod scrooby_project_child_tests;
+#[cfg(test)]
+// jig-ignore-next-line: canonical test module path is indivisible.
+#[path = "../../../../../tests/formats/p3d/unit/adapter-outbound/extractor/scrooby_widget_tests.rs"]
+mod scrooby_widget_tests;

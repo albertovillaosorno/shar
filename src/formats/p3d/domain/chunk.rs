@@ -181,6 +181,20 @@ pub enum ChunkKind {
     ScroobyPage,
     /// Scrooby layer declaration.
     ScroobyLayer,
+    /// Scrooby nested group declaration.
+    ScroobyGroup,
+    /// Scrooby multi-sprite widget declaration.
+    ScroobyMultiSprite,
+    /// Scrooby multi-text widget declaration.
+    ScroobyMultiText,
+    /// Scrooby `Pure3D` object widget declaration.
+    ScroobyPure3dObject,
+    /// Scrooby polygon widget declaration.
+    ScroobyPolygon,
+    /// Scrooby text-bible string reference.
+    ScroobyStringTextBible,
+    /// Scrooby hardcoded string value.
+    ScroobyStringHardcoded,
     /// Scrooby image resource declaration.
     ScroobyImageResource,
     /// Scrooby `Pure3D` resource declaration.
@@ -281,6 +295,13 @@ impl ChunkKind {
             Self::ScroobyScreen => "scrooby_screen",
             Self::ScroobyPage => "scrooby_page",
             Self::ScroobyLayer => "scrooby_layer",
+            Self::ScroobyGroup => "scrooby_group",
+            Self::ScroobyMultiSprite => "scrooby_multi_sprite",
+            Self::ScroobyMultiText => "scrooby_multi_text",
+            Self::ScroobyPure3dObject => "scrooby_pure3d_object",
+            Self::ScroobyPolygon => "scrooby_polygon",
+            Self::ScroobyStringTextBible => "scrooby_string_text_bible",
+            Self::ScroobyStringHardcoded => "scrooby_string_hardcoded",
             Self::ScroobyImageResource => "scrooby_image_resource",
             Self::ScroobyPure3dResource => "scrooby_pure3d_resource",
             Self::ScroobyTextStyleResource => "scrooby_text_style_resource",
@@ -560,6 +581,13 @@ const fn classify_chunk(id: u32) -> ChunkKind {
         0x0001_8001 => ChunkKind::ScroobyScreen,
         0x0001_8002 => ChunkKind::ScroobyPage,
         0x0001_8003 => ChunkKind::ScroobyLayer,
+        0x0001_8004 => ChunkKind::ScroobyGroup,
+        0x0001_8006 => ChunkKind::ScroobyMultiSprite,
+        0x0001_8007 => ChunkKind::ScroobyMultiText,
+        0x0001_8008 => ChunkKind::ScroobyPure3dObject,
+        0x0001_8009 => ChunkKind::ScroobyPolygon,
+        0x0001_800b => ChunkKind::ScroobyStringTextBible,
+        0x0001_800c => ChunkKind::ScroobyStringHardcoded,
         0x0001_8100 => ChunkKind::ScroobyImageResource,
         0x0001_8101 => ChunkKind::ScroobyPure3dResource,
         0x0001_8104 => ChunkKind::ScroobyTextStyleResource,
