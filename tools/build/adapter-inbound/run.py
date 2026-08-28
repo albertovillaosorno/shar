@@ -1,4 +1,3 @@
-# CSpell:ignore nocompileuat ispc Ispc
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -38,7 +37,7 @@
 # CSpell:ignore DYSYMTAB dysymtab NBLCK msvcrt
 # CSpell:ignore phdr creationflags killpg taskkill axo ppid
 # CSpell:ignore pthread sigmask SETMASK uba lowerdir upperdir workdir rprivate
-# CSpell:ignore getuid
+# CSpell:ignore getuid getgid nocompileuat ispc Ispc
 
 from __future__ import annotations
 
@@ -1134,6 +1133,42 @@ def _linux_namespace_tool(name: str, label: str) -> Path:
     return path
 
 
+def _linux_uat_inner_identity(
+    uid_map: Path = Path("/proc/self/uid_map"),
+    gid_map: Path = Path("/proc/self/gid_map"),
+) -> tuple[int, int]:
+    """Return one non-root nested identity for Linux UAT execution."""
+    uid = os.getuid()
+    gid = os.getgid()
+    if uid != 0:
+        return uid, gid
+
+    def parent_id(path: Path, current: int, label: str) -> int:
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError as error:
+            message = f"cannot read Linux {label} map: {path}"
+            raise RunFailure(message) from error
+        for line in lines:
+            fields = line.split()
+            if len(fields) != 3 or not all(
+                field.isdecimal() for field in fields
+            ):
+                continue
+            inner, outer, count = (int(field) for field in fields)
+            if count > 0 and inner <= current < inner + count:
+                return outer + current - inner
+        message = f"Linux {label} map does not cover id {current}: {path}"
+        raise RunFailure(message)
+
+    parent_uid = parent_id(uid_map, uid, "user")
+    parent_gid = parent_id(gid_map, gid, "group")
+    if parent_uid == 0:
+        raise RunFailure("Linux UAT packaging requires a non-root host user")
+    inner_gid = parent_gid if parent_gid != 0 else parent_uid
+    return parent_uid, inner_gid
+
+
 def _prepare_linux_overlay_reset(path: Path, label: str) -> None:
     """Make runner-owned kernel-overlay work directories removable."""
     if not _path_present(path):
@@ -1270,10 +1305,13 @@ def _linux_uat_namespace_command(
     options = (
         f"lowerdir={engine_root},upperdir={upper},workdir={overlay_work}"
     )
+    inner_uid, inner_gid = _linux_uat_inner_identity()
     namespace_script = (
         'set -eu; "$1" --make-rprivate /; '
         '"$1" -t overlay overlay -o "$2" "$3"; '
-        'shift 3; exec "$@"'
+        'shift 3; nested="$1"; uid="$2"; gid="$3"; shift 3; '
+        'exec "$nested" -U --map-user="$uid" --map-group="$gid" '
+        '--kill-child "$@"'
     )
     return [
         str(unshare),
@@ -1287,6 +1325,9 @@ def _linux_uat_namespace_command(
         str(mount),
         options,
         str(engine_root),
+        str(unshare),
+        str(inner_uid),
+        str(inner_gid),
         *command,
     ]
 
@@ -1360,6 +1401,10 @@ def _run_uat(
     ddc = work / "ddc"
     _ensure_real_directory(ddc, "UAT DDC root")
     environment, token = _managed_child_environment()
+    if engine_root is not None and sys.platform == "linux":
+        uat_home = work / "uat-home"
+        _ensure_real_directory(uat_home, "Linux UAT home")
+        environment["HOME"] = str(uat_home)
     environment["uebp_EngineSavedFolder"] = str(automation_saved)
     environment["uebp_FinalLogFolder"] = str(automation_logs)
     environment["uebp_LogFolder"] = str(automation_logs)
