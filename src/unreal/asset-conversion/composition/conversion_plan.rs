@@ -97,7 +97,7 @@ impl PlanBundle {
             let identity = operation.operation_id();
             operation.validate(&identity)?;
         }
-        validated.sort_by_key(ConversionPlan::operation_id);
+        validated.sort_by_cached_key(ConversionPlan::operation_id);
         validate_operation_set(&validated)?;
         let mut artifacts = Vec::with_capacity(PlanFamily::all().len());
         for family in PlanFamily::all() {
