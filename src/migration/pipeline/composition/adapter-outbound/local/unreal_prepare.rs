@@ -144,6 +144,11 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         // jig-ignore-next-line: literal
         PipelineError::new(format!("Unreal package-index intake failed: {error}"))
     })?;
+    let verified_scrooby_projects =
+        super::ui_scrooby_project::preflight_scrooby_ui_projects(
+            &index,
+            &config.extracted_root,
+        )?;
     let mission_cameras =
         load_mission_camera_catalog(&index, &config.extracted_root)?;
         // jig-ignore-next-line: expression
@@ -223,13 +228,16 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         note: format!(
             concat!(
                 "verified {} sources across {} semantic packages, {} ",
-                "generated FBX artifacts, and {} compiled UI sprite rasters; ",
-                "published {} mission definitions to {} with plan bundle {}"
+                "generated FBX artifacts, {} compiled UI sprite rasters, and ",
+                "{} verified Scrooby projects; published {} mission ",
+                "definitions ",
+                "to {} with plan bundle {}"
             ),
             unreal_manifest.source_count(),
             unreal_manifest.package_count(),
             verified_fbx_count,
             verified_ui_raster_count,
+            verified_scrooby_projects,
             mission_definitions_jsonl.lines().count(),
             UNREAL_STAGING_WORKSPACE_ROOT,
             plan_bundle.index_revision(),
