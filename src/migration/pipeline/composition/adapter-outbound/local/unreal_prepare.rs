@@ -254,9 +254,11 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
                 "verified {} sources across {} semantic packages, {} ",
                 "generated FBX artifacts, {} verified UI sprite rasters, and ",
                 "{} verified Scrooby projects with {} resolved bindings, ",
-                "{} direct-import-backed bindings, {} layout rows, and {} ",
-                "page-owned resource preloads ({} direct-import-backed; {} ",
-                "normalized-package-backed; {} packages fully direct-import-",
+                "{} direct-import-backed bindings, {} normalized-entity-",
+                "backed bindings, {} layout rows, and {} page-owned resource ",
+                "preloads ({} direct-import-backed; {} normalized-package-",
+                "backed; {} normalized-entity-backed; {} packages fully ",
+                "direct-import-",
                 "backed); published {} mission ",
                 "definitions to {} with plan bundle {}"
             ),
@@ -267,11 +269,14 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             verified_scrooby_projects,
             verified_scrooby_bindings,
             direct_import_scrooby_bindings,
+            scrooby_preflight.normalized_entity_binding_count(),
             verified_scrooby_layout_rows,
             scrooby_resource_lifecycle.preload_count,
             scrooby_resource_lifecycle.direct_import_backed_preload_count,
             scrooby_resource_lifecycle
                 .normalized_package_backed_preload_count,
+            scrooby_resource_lifecycle
+                .normalized_entity_backed_preload_count,
             scrooby_resource_lifecycle
                 .fully_direct_import_backed_package_count,
             mission_definitions_jsonl.lines().count(),
