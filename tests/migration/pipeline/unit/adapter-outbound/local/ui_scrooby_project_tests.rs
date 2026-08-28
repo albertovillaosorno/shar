@@ -36,7 +36,8 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
-    preflight_scrooby_package, publish_scrooby_binding_catalog, trim_padding,
+    preflight_scrooby_package, publish_scrooby_binding_catalog,
+    resolve_exact_image_source, trim_padding,
 };
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -112,7 +113,10 @@ fn write_valid_package(root: &Path) -> TestResult {
         )?,
         write_component(
             root, 4, 2, "scrooby_image_resource", "image",
-            r#"{"schema":"scrooby_image_resource","name":"Icon\\x00"}"#,
+            concat!(
+                r#"{"schema":"scrooby_image_resource","#,
+                r#""name":"Icon\\x00","filename":"Icon.png"}"#,
+            ),
         )?,
         write_component(
             root, 5, 2, "scrooby_layer", "layer",
@@ -182,6 +186,7 @@ fn publishes_deterministic_package_scoped_binding_catalog() -> TestResult {
         packages: vec![super::ScroobyPackageBindings {
             package_id: "fixture-package".to_owned(),
             bindings,
+            image_resources: Vec::new(),
         }],
     };
     let output = case_dir("binding-catalog-output")?;
@@ -250,6 +255,105 @@ fn publishes_deterministic_package_scoped_binding_catalog() -> TestResult {
 }
 
 #[test]
+fn binding_catalog_publishes_public_source_identity_only() -> TestResult {
+    let root = case_dir("binding-source-identity")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    for binding in &mut bindings {
+        if matches!(
+            binding.relation,
+            "page-image-resource" | "sprite-image-resource"
+        ) {
+            binding.target_source_unit_id = Some("texture-source".to_owned());
+            binding.target_source_match_basis =
+                Some("filename-basename-exact");
+        }
+    }
+    let preflight = super::ScroobyUiPreflight {
+        packages: vec![super::ScroobyPackageBindings {
+            package_id: "fixture-package".to_owned(),
+            bindings,
+            image_resources: vec![super::ScroobyImageResourceSource {
+                ordinal: 4,
+                filename: "private/authored/Icon.png".to_owned(),
+            }],
+        }],
+    };
+    let rendered = preflight
+        .to_catalog_jsonl()
+        .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    if rendered.contains("private/authored") || rendered.contains("Icon.png") {
+        return Err("binding catalog leaked private image filename".to_owned());
+    }
+    let rows = rendered
+        .lines()
+        .map(|line| serde_json::from_str::<serde_json::Value>(line))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?;
+    if rows
+        .first()
+        .and_then(|row| row.get("direct_import_binding_count"))
+        .and_then(serde_json::Value::as_u64)
+        != Some(2)
+    {
+        return Err(format!(
+            "unexpected source binding header: {:?}",
+            rows.first(),
+        ));
+    }
+    let resolved = rows
+        .iter()
+        .skip(1)
+        .filter(|row| row.get("target_source_unit_id").is_some())
+        .collect::<Vec<_>>();
+    if resolved.len() != 2
+        || resolved.iter().any(|row| {
+            row.get("target_source_unit_id")
+                .and_then(serde_json::Value::as_str)
+                != Some("texture-source")
+                || row
+                    .get("target_source_match_basis")
+                    .and_then(serde_json::Value::as_str)
+                    != Some("filename-basename-exact")
+        })
+    {
+        return Err(format!("unexpected public source bindings: {resolved:?}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn binding_catalog_rejects_incomplete_source_identity() -> TestResult {
+    let root = case_dir("binding-source-incomplete")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let binding = bindings
+        .iter_mut()
+        .find(|binding| binding.relation == "page-image-resource")
+        .ok_or_else(|| "page image binding is missing".to_owned())?;
+    binding.target_source_unit_id = Some("texture-source".to_owned());
+    let preflight = super::ScroobyUiPreflight {
+        packages: vec![super::ScroobyPackageBindings {
+            package_id: "fixture-package".to_owned(),
+            bindings,
+            image_resources: Vec::new(),
+        }],
+    };
+    let result = preflight.to_catalog_jsonl();
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("incomplete source identity was published".to_owned());
+    };
+    if !error.to_string().contains("direct-import binding is incomplete") {
+        return Err(format!("unexpected incomplete binding error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn binding_catalog_reuse_rejects_transaction_debris() -> TestResult {
     let root = case_dir("binding-debris-input")?;
     write_valid_package(&root)?;
@@ -259,6 +363,7 @@ fn binding_catalog_reuse_rejects_transaction_debris() -> TestResult {
         packages: vec![super::ScroobyPackageBindings {
             package_id: "fixture-package".to_owned(),
             bindings,
+            image_resources: Vec::new(),
         }],
     };
     let output = case_dir("binding-debris-output")?;
@@ -696,6 +801,47 @@ fn pure3d_name_precedes_inventory_aliases() -> TestResult {
         .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     result
+}
+
+#[test]
+fn image_source_binding_requires_exact_case_sensitive_basename() -> TestResult {
+    let candidates = [
+        ("texture-a", "extracted/ui/Icon.png"),
+        ("texture-b", "extracted/ui/Other.png"),
+    ];
+    let matched = resolve_exact_image_source(
+        "folder\\Icon.png",
+        candidates.into_iter(),
+    )
+    .map_err(|error| error.to_string())?;
+    if matched != Some("texture-a") {
+        return Err(format!("unexpected image source binding: {matched:?}"));
+    }
+    let folded = resolve_exact_image_source(
+        "folder/icon.png",
+        candidates.into_iter(),
+    )
+    .map_err(|error| error.to_string())?;
+    if folded.is_some() {
+        return Err("case-folded image basename was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn image_source_binding_rejects_ambiguous_direct_imports() -> TestResult {
+    let candidates = [
+        ("texture-a", "first/Icon.png"),
+        ("texture-b", "second/Icon.png"),
+    ];
+    let result = resolve_exact_image_source("Icon.png", candidates.into_iter());
+    let Err(error) = result else {
+        return Err("ambiguous image source binding was accepted".to_owned());
+    };
+    if !error.to_string().contains("direct import is ambiguous") {
+        return Err(format!("unexpected image source ambiguity: {error}"));
+    }
+    Ok(())
 }
 
 #[test]
