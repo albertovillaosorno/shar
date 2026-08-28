@@ -43,7 +43,18 @@ fn embedded_image_component_routes_to_dds_texture_conversion() {
 
 #[test]
 fn scrooby_layout_components_remain_composed_ui_evidence() {
-    for segment in ["scrooby_screen", "scrooby_page", "scrooby_layer"] {
+    for segment in [
+        "scrooby_screen",
+        "scrooby_page",
+        "scrooby_layer",
+        "scrooby_group",
+        "scrooby_multi_sprite",
+        "scrooby_multi_text",
+        "scrooby_pure3d_object",
+        "scrooby_polygon",
+        "scrooby_string_text_bible",
+        "scrooby_string_hardcoded",
+    ] {
         let bucket = component_bucket(segment);
         assert_eq!(bucket.type_, "ui", "unexpected type for {segment}");
         assert_eq!(

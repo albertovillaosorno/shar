@@ -218,7 +218,16 @@ fn component_bucket(segment: &str) -> ComponentBucket {
             "p3d-scrooby-project-to-ui-project",
             "Scrooby UI project reconstruction",
         ),
-        "scrooby_screen" | "scrooby_page" | "scrooby_layer" => bucket(
+        "scrooby_screen"
+        | "scrooby_page"
+        | "scrooby_layer"
+        | "scrooby_group"
+        | "scrooby_multi_sprite"
+        | "scrooby_multi_text"
+        | "scrooby_pure3d_object"
+        | "scrooby_polygon"
+        | "scrooby_string_text_bible"
+        | "scrooby_string_hardcoded" => bucket(
             "ui",
             "p3d-scrooby-layout",
             "compose-into-asset",

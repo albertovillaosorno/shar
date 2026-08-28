@@ -172,6 +172,31 @@ pub(super) fn recover_auxiliary_schema_json(
         "scrooby_layer" => auxiliary::recover_scrooby_layer_json(
             component, source, kind_index,
         ),
+        "scrooby_group" => super::scrooby_widget::recover_group_json(
+            component, source, kind_index,
+        ),
+        "scrooby_multi_sprite" =>
+            super::scrooby_widget::recover_multi_sprite_json(
+                component, source, kind_index,
+            ),
+        "scrooby_multi_text" => super::scrooby_widget::recover_multi_text_json(
+            component, source, kind_index,
+        ),
+        "scrooby_pure3d_object" =>
+            super::scrooby_widget::recover_pure3d_object_json(
+                component, source, kind_index,
+            ),
+        "scrooby_polygon" => super::scrooby_widget::recover_polygon_json(
+            component, source, kind_index,
+        ),
+        "scrooby_string_text_bible" =>
+            super::scrooby_widget::recover_string_text_bible_json(
+                component, source, kind_index,
+            ),
+        "scrooby_string_hardcoded" =>
+            super::scrooby_widget::recover_string_hardcoded_json(
+                component, source, kind_index,
+            ),
         "scrooby_image_resource" =>
             auxiliary::recover_scrooby_image_resource_json(
                 component, source, kind_index,
