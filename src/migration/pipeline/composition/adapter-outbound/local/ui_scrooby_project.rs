@@ -44,7 +44,7 @@ use serde_json::{Value, json};
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
 const BINDING_CATALOG_SCHEMA: &str =
-    "shar-schoenwald.scrooby-binding-catalog.v1";
+    "shar-schoenwald.scrooby-binding-catalog.v2";
 const BINDING_CATALOG_FILE: &str = "catalog.jsonl";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -64,6 +64,7 @@ struct Component {
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct ScroobyPackageBinding {
     source_ordinal: usize,
+    source_index: usize,
     target_ordinal: usize,
     relation: &'static str,
     match_basis: &'static str,
@@ -109,14 +110,16 @@ impl ScroobyUiPreflight {
             bindings.sort_by(|left, right| {
                 (
                     left.source_ordinal,
-                    left.target_ordinal,
                     left.relation,
+                    left.source_index,
+                    left.target_ordinal,
                     left.match_basis,
                 )
                     .cmp(&(
                         right.source_ordinal,
-                        right.target_ordinal,
                         right.relation,
+                        right.source_index,
+                        right.target_ordinal,
                         right.match_basis,
                     ))
             });
@@ -126,6 +129,7 @@ impl ScroobyUiPreflight {
                     "record_type": "binding",
                     "package_id": package.package_id,
                     "source_ordinal": binding.source_ordinal,
+                    "source_index": binding.source_index,
                     "target_ordinal": binding.target_ordinal,
                     "relation": binding.relation,
                     "match_basis": binding.match_basis,
@@ -899,13 +903,17 @@ fn collect_named_bindings(
     for component in components {
         match component.row.kind.as_str() {
             "scrooby_screen" => {
-                for page in required_string_array(
+                for (source_index, page) in required_string_array(
                     &component.payload,
                     "page_names",
-                )? {
+                )?
+                .into_iter()
+                .enumerate()
+                {
                     push_binding(
                         &mut bindings,
                         component.row.ordinal,
+                        source_index,
                         resolve_unique_ordinal(
                             &pages,
                             trim_padding(page),
@@ -926,7 +934,7 @@ fn collect_named_bindings(
                             "Scrooby page has no child inventory",
                         )
                     })?;
-                for child in children {
+                for (source_index, child) in children.iter().enumerate() {
                     let id = required_string(child, "id_hex")?;
                     if id == "0x00018003" {
                         continue;
@@ -952,6 +960,7 @@ fn collect_named_bindings(
                             push_binding(
                                 &mut bindings,
                                 component.row.ordinal,
+                                source_index,
                                 resolve_unique_ordinal(
                                     &pure_names,
                                     name,
@@ -974,6 +983,7 @@ fn collect_named_bindings(
                     push_binding(
                         &mut bindings,
                         component.row.ordinal,
+                        source_index,
                         resolve_unique_ordinal(targets, name, label)?,
                         relation,
                         "name",
@@ -981,13 +991,17 @@ fn collect_named_bindings(
                 }
             },
             "scrooby_multi_sprite" => {
-                for image in required_string_array(
+                for (source_index, image) in required_string_array(
                     &component.payload,
                     "image_names",
-                )? {
+                )?
+                .into_iter()
+                .enumerate()
+                {
                     push_binding(
                         &mut bindings,
                         component.row.ordinal,
+                        source_index,
                         resolve_unique_ordinal(
                             &images,
                             trim_padding(image),
@@ -1006,6 +1020,7 @@ fn collect_named_bindings(
                 push_binding(
                     &mut bindings,
                     component.row.ordinal,
+                    0,
                     resolve_unique_ordinal(
                         &styles,
                         style,
@@ -1023,6 +1038,7 @@ fn collect_named_bindings(
                 push_binding(
                     &mut bindings,
                     component.row.ordinal,
+                    0,
                     resolve_unique_ordinal(
                         &bibles,
                         bible,
@@ -1041,6 +1057,7 @@ fn collect_named_bindings(
                 push_binding(
                     &mut bindings,
                     component.row.ordinal,
+                    0,
                     target,
                     "pure3d-object-resource",
                     basis,
@@ -1055,12 +1072,14 @@ fn collect_named_bindings(
 fn push_binding(
     bindings: &mut Vec<ScroobyPackageBinding>,
     source_ordinal: usize,
+    source_index: usize,
     target_ordinal: usize,
     relation: &'static str,
     match_basis: &'static str,
 ) {
     bindings.push(ScroobyPackageBinding {
         source_ordinal,
+        source_index,
         target_ordinal,
         relation,
         match_basis,
