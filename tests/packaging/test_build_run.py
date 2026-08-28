@@ -1,3 +1,4 @@
+# CSpell:ignore getuid getgid
 # CSpell:ignore nocompileuat ispc Ispc
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
@@ -1597,10 +1598,47 @@ class LinuxUatNamespaceTests(unittest.TestCase):
             self.assertIn("upperdir=", command[9])
             self.assertIn("workdir=", command[9])
             self.assertEqual(command[10], str(engine))
+            self.assertEqual(command[11], str(root / "unshare"))
+            self.assertEqual(command[12], str(_RUN.os.getuid()))
+            self.assertEqual(command[13], str(_RUN.os.getgid()))
+            self.assertIn('nested="$1"', command[6])
+            self.assertIn('--map-user="$uid"', command[6])
+            self.assertIn('--map-group="$gid"', command[6])
             self.assertIn(str(uat), command)
             self.assertIn("Turnkey", command)
             self.assertFalse(stale.exists())
             self.assertNotIn("/merged/", " ".join(command))
+
+    def test_user_namespace_root_maps_back_to_nonzero_identity(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-userns-map-") as raw:
+            root = Path(raw)
+            uid_map = root / "uid_map"
+            gid_map = root / "gid_map"
+            uid_map.write_text("0 1000 1\n", encoding="utf-8")
+            gid_map.write_text("0 1000 1\n", encoding="utf-8")
+            with (
+                mock.patch.object(_RUN.os, "getuid", return_value=0),
+                mock.patch.object(_RUN.os, "getgid", return_value=0),
+            ):
+                identity = _RUN._linux_uat_inner_identity(uid_map, gid_map)
+            self.assertEqual(identity, (1000, 1000))
+
+    def test_initial_namespace_root_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-userns-map-") as raw:
+            root = Path(raw)
+            uid_map = root / "uid_map"
+            gid_map = root / "gid_map"
+            uid_map.write_text("0 0 4294967295\n", encoding="utf-8")
+            gid_map.write_text("0 0 4294967295\n", encoding="utf-8")
+            with (
+                mock.patch.object(_RUN.os, "getuid", return_value=0),
+                mock.patch.object(_RUN.os, "getgid", return_value=0),
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux UAT packaging requires a non-root host user",
+                ),
+            ):
+                _RUN._linux_uat_inner_identity(uid_map, gid_map)
 
     def test_run_uat_uses_linux_overlay_when_engine_is_supplied(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-userns-uat-") as raw:
@@ -1643,6 +1681,9 @@ class LinuxUatNamespaceTests(unittest.TestCase):
             projected = project.call_args.args[2]
             self.assertIn("-nocompileuat", projected)
             self.assertEqual(popen.call_args.args[0], ["unshare", "probe"])
+            environment = popen.call_args.kwargs["env"]
+            self.assertEqual(environment["HOME"], str(work / "uat-home"))
+            self.assertTrue((work / "uat-home").is_dir())
 
     def test_run_uat_does_not_disable_compile_for_other_hosts(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-uat-") as raw:

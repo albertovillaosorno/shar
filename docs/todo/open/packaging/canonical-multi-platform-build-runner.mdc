@@ -2,7 +2,7 @@
 schema: shar.todo.v1
 id: canonical-multi-platform-build-runner
 status: open
-priority: P4
+priority: P3
 lane: packaging
 active: true
 parent: null
@@ -1120,6 +1120,22 @@ to 2,784 actions. The first completed 610 actions, and the second completed 465
 more before its guard. Both again reused the existing makefile without compiler
 errors, preserved generated ISPC header integrity, and left the user UBA cache
 unchanged after managed shutdown.
+
+The retained Linux Shipping graph subsequently reached 185 actions and completed
+all 185, including the final link and target metadata. UBT succeeded in 530.51
+seconds and produced the 187,825,920-byte Shipping executable plus debug and
+symbol files. Cook then exposed a namespace-specific root check because the
+outer unprivileged user namespace presents effective UID 0.
+
+Linux UAT now mounts the private engine overlay in that outer namespace and then
+enters a nested user namespace mapped back to the non-root parent identity. A
+live canonical Cook process reported UID/GID 1000 and progressed through normal
+editor, DDC, shader-worker, asset-registry, and target-platform initialization.
+Linux UAT also uses a repository-local HOME so Zen/user settings stay under build
+work instead of the real user profile. The next Cook blocker is metadata: the
+retained `sharEditor.target` is stale and unreadable and `UnrealEditor.modules`
+is absent, so the editor cannot discover the otherwise current
+`libUnrealEditor-shar.so`.
 
 Build preflight now fails earlier on the other observed Cook blocker. Saved
 `shar.build.check.v2` evidence binds the canonical authored map path and
