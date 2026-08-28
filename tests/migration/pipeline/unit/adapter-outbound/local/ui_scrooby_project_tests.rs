@@ -35,7 +35,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use super::{preflight_scrooby_package, trim_padding};
+use super::{
+    preflight_scrooby_package, publish_scrooby_binding_catalog, trim_padding,
+};
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -171,13 +173,111 @@ fn write_valid_package(root: &Path) -> TestResult {
 }
 
 #[test]
+fn publishes_deterministic_package_scoped_binding_catalog() -> TestResult {
+    let root = case_dir("binding-catalog-input")?;
+    write_valid_package(&root)?;
+    let bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let preflight = super::ScroobyUiPreflight {
+        packages: vec![super::ScroobyPackageBindings {
+            package_id: "fixture-package".to_owned(),
+            bindings,
+        }],
+    };
+    let output = case_dir("binding-catalog-output")?;
+    fs::remove_dir_all(&output).map_err(|error| error.to_string())?;
+    let count = publish_scrooby_binding_catalog(&preflight, &output)
+        .map_err(|error| error.to_string())?;
+    if count != 9 {
+        return Err(format!("unexpected binding catalog count: {count}"));
+    }
+    let catalog = output.join("catalog.jsonl");
+    let first = fs::read_to_string(&catalog)
+        .map_err(|error| error.to_string())?;
+    let mut lines = first.lines();
+    let header = lines
+        .next()
+        .ok_or_else(|| "binding catalog header is missing".to_owned())?;
+    let header = serde_json::from_str::<serde_json::Value>(header)
+        .map_err(|error| error.to_string())?;
+    if header
+        .get("package_count")
+        .and_then(serde_json::Value::as_u64)
+        != Some(1)
+        || header.get("binding_count").and_then(serde_json::Value::as_u64)
+            != Some(9)
+    {
+        return Err(format!("unexpected binding catalog header: {header}"));
+    }
+    let rows = lines
+        .map(|line| {
+            serde_json::from_str::<serde_json::Value>(line)
+                .map_err(|error| error.to_string())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let first_binding = rows
+        .first()
+        .ok_or_else(|| "binding catalog rows are missing".to_owned())?;
+    if first_binding.get("package_id").and_then(serde_json::Value::as_str)
+        != Some("fixture-package")
+        || first_binding
+            .get("source_ordinal")
+            .and_then(serde_json::Value::as_u64)
+            != Some(2)
+        || first_binding
+            .get("target_ordinal")
+            .and_then(serde_json::Value::as_u64)
+            != Some(4)
+    {
+        return Err(format!("unexpected first binding row: {first_binding}"));
+    }
+    let second_count = publish_scrooby_binding_catalog(&preflight, &output)
+        .map_err(|error| error.to_string())?;
+    let second = fs::read_to_string(&catalog)
+        .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&output).map_err(|error| error.to_string())?;
+    if second_count != count || second != first {
+        return Err(
+            "binding catalog reuse changed deterministic output".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn accepts_complete_package_local_bindings() -> TestResult {
     let root = case_dir("complete")?;
     write_valid_package(&root)?;
     let result = preflight_scrooby_package(&root)
-        .map_err(|error| error.to_string());
+        .map_err(|error| error.to_string())?;
+    let observed = result
+        .iter()
+        .map(|binding| {
+            (
+                binding.source_ordinal,
+                binding.target_ordinal,
+                binding.relation,
+                binding.match_basis,
+            )
+        })
+        .collect::<Vec<_>>();
+    let expected = vec![
+        (2, 4, "page-image-resource", "name"),
+        (2, 11, "page-pure3d-resource", "name"),
+        (2, 7, "page-text-style", "name"),
+        (2, 9, "page-text-bible", "name"),
+        (3, 2, "screen-page", "name"),
+        (6, 4, "sprite-image-resource", "name"),
+        (8, 7, "text-style-resource", "name"),
+        (10, 9, "string-text-bible", "name"),
+        (12, 11, "pure3d-object-resource", "name"),
+    ];
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
-    result
+    if observed != expected {
+        return Err(format!("unexpected Scrooby bindings: {observed:?}"));
+    }
+    Ok(())
 }
 
 #[test]
@@ -210,6 +310,7 @@ fn accepts_named_page_resource_references() -> TestResult {
     let root = case_dir("named-page-resources")?;
     write_valid_package(&root)?;
     let result = preflight_scrooby_package(&root)
+        .map(|_bindings| ())
         .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     result
@@ -286,6 +387,34 @@ fn rejects_resource_outside_page_ancestry() -> TestResult {
     };
     if !error.to_string().contains("unsupported owning parent") {
         return Err(format!("unexpected resource-parent error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_page_pure3d_inventory_alias() -> TestResult {
+    let root = case_dir("page-pure-inventory-alias")?;
+    write_valid_package(&root)?;
+    let page = root.join("components/scrooby_page/page.json");
+    let text = fs::read_to_string(&page).map_err(|error| error.to_string())?;
+    let changed = text.replace(
+        r#"{"id_hex":"0x00018101","name":"dummy"}"#,
+        r#"{"id_hex":"0x00018101","name":"DummyDrawable"}"#,
+    );
+    if changed == text {
+        return Err("page Pure3D reference fixture was not found".to_owned());
+    }
+    fs::write(&page, changed).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("page Pure3D inventory alias was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("page Pure3D resource is missing")
+    {
+        return Err(format!("unexpected page Pure3D alias error: {error}"));
     }
     Ok(())
 }
@@ -428,6 +557,33 @@ fn rejects_ambiguous_pure3d_resource_name() -> TestResult {
 }
 
 #[test]
+fn pure3d_object_uses_inventory_fallback() -> TestResult {
+    let root = case_dir("pure-inventory-fallback")?;
+    write_valid_package(&root)?;
+    fs::write(
+        root.join("components/scrooby_pure3d_object/object.json"),
+        concat!(
+            r#"{"schema":"scrooby_pure3d_object","#,
+            r#""filename":"DummyDrawable"}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let observed = bindings
+        .iter()
+        .find(|binding| binding.relation == "pure3d-object-resource")
+        .map(|binding| (binding.target_ordinal, binding.match_basis));
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    if observed != Some((11, "inventory_name")) {
+        return Err(format!(
+            "unexpected Pure3D inventory binding: {observed:?}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn pure3d_name_precedes_inventory_aliases() -> TestResult {
     let root = case_dir("pure-name-first")?;
     write_valid_package(&root)?;
@@ -450,6 +606,7 @@ fn pure3d_name_precedes_inventory_aliases() -> TestResult {
     ledger.push('\n');
     fs::write(&ledger_path, ledger).map_err(|error| error.to_string())?;
     let result = preflight_scrooby_package(&root)
+        .map(|_bindings| ())
         .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     result

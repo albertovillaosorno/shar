@@ -102,7 +102,7 @@ use crate::manifest_paths::{
 };
 use crate::workspace::{
     FBX_WORKSPACE_ROOT, UI_RASTER_WORKSPACE_ROOT,
-    UNREAL_STAGING_WORKSPACE_ROOT,
+    UI_SCROOBY_BINDING_WORKSPACE_ROOT, UNREAL_STAGING_WORKSPACE_ROOT,
 };
 
 /// Canonical import-summary filename.
@@ -144,11 +144,12 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         // jig-ignore-next-line: literal
         PipelineError::new(format!("Unreal package-index intake failed: {error}"))
     })?;
-    let verified_scrooby_projects =
+    let scrooby_preflight =
         super::ui_scrooby_project::preflight_scrooby_ui_projects(
             &index,
             &config.extracted_root,
         )?;
+    let verified_scrooby_projects = scrooby_preflight.package_count();
     let mission_cameras =
         load_mission_camera_catalog(&index, &config.extracted_root)?;
         // jig-ignore-next-line: expression
@@ -192,6 +193,11 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             Path::new(UI_RASTER_WORKSPACE_ROOT),
         )?;
     let verified_ui_raster_count = ui_raster_catalog.len();
+    let verified_scrooby_bindings =
+        super::ui_scrooby_project::publish_scrooby_binding_catalog(
+            &scrooby_preflight,
+            Path::new(UI_SCROOBY_BINDING_WORKSPACE_ROOT),
+        )?;
     let fbx_catalog = verified_fbx_catalog_at(
         Path::new(FBX_WORKSPACE_ROOT),
         Path::new(FBX_MANIFEST_PATH),
@@ -229,8 +235,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             concat!(
                 "verified {} sources across {} semantic packages, {} ",
                 "generated FBX artifacts, {} verified UI sprite rasters, and ",
-                "{} verified Scrooby projects; published {} mission ",
-                "definitions ",
+                "{} verified Scrooby projects with {} resolved bindings; ",
+                "published {} mission definitions ",
                 "to {} with plan bundle {}"
             ),
             unreal_manifest.source_count(),
@@ -238,6 +244,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             verified_fbx_count,
             verified_ui_raster_count,
             verified_scrooby_projects,
+            verified_scrooby_bindings,
             mission_definitions_jsonl.lines().count(),
             UNREAL_STAGING_WORKSPACE_ROOT,
             plan_bundle.index_revision(),
