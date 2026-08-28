@@ -232,17 +232,6 @@ pub(super) fn publish_scrooby_binding_catalog(
     output_root: &Path,
 ) -> PipelineOutcome<usize> {
     let rendered = preflight.to_catalog_jsonl()?;
-    let catalog = output_root.join(BINDING_CATALOG_FILE);
-    if let Ok(metadata) = fs::symlink_metadata(output_root) {
-        if !metadata.is_dir() || metadata.file_type().is_symlink() {
-            return Err(PipelineError::new(
-                "Scrooby binding output is not a regular directory",
-            ));
-        }
-        if fs::read_to_string(&catalog).ok().as_deref() == Some(&rendered) {
-            return Ok(preflight.binding_count());
-        }
-    }
     let name = output_root
         .file_name()
         .and_then(|value| value.to_str())
@@ -257,6 +246,17 @@ pub(super) fn publish_scrooby_binding_catalog(
     let backup = parent.join(format!(".{name}.complete-backup"));
     ensure_binding_path_absent(&staging, "Scrooby binding staging")?;
     ensure_binding_path_absent(&backup, "Scrooby binding backup")?;
+    let catalog = output_root.join(BINDING_CATALOG_FILE);
+    if let Ok(metadata) = fs::symlink_metadata(output_root) {
+        if !metadata.is_dir() || metadata.file_type().is_symlink() {
+            return Err(PipelineError::new(
+                "Scrooby binding output is not a regular directory",
+            ));
+        }
+        if fs::read_to_string(&catalog).ok().as_deref() == Some(&rendered) {
+            return Ok(preflight.binding_count());
+        }
+    }
     fs::create_dir_all(&staging)
         .map_err(|error| io_error("create Scrooby binding staging", &error))?;
     let staged_catalog = staging.join(BINDING_CATALOG_FILE);
