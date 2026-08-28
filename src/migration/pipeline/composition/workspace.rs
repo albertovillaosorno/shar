@@ -63,6 +63,9 @@ pub(crate) const UI_SCROOBY_BINDING_WORKSPACE_ROOT: &str =
 /// Default physical Scrooby runtime-layout catalog workspace.
 pub(crate) const UI_SCROOBY_LAYOUT_WORKSPACE_ROOT: &str =
     ".cache/pipeline/ui-scrooby-layout";
+/// Default physical Scrooby page-resource lifecycle catalog workspace.
+pub(crate) const UI_SCROOBY_RESOURCE_WORKSPACE_ROOT: &str =
+    ".cache/pipeline/ui-scrooby-resources";
 /// Default physical Unreal staging workspace.
 pub(crate) const UNREAL_STAGING_WORKSPACE_ROOT: &str =
     ".cache/pipeline/unreal-staging";
