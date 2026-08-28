@@ -1252,6 +1252,7 @@ fn p3d_package_complete(output: &Path) -> bool {
         && component_ledger_files_exist(output)
         && sprite_image_evidence_complete(output)
         && scrooby_project_evidence_complete(output)
+        && scrooby_layout_evidence_complete(output)
 }
 
 /// Has incomplete component JSON.
@@ -1421,6 +1422,131 @@ fn scrooby_project_child_counts(project: &str) -> Option<(usize, usize)> {
         }
     }
     Some((screens, pages))
+}
+
+/// Require every Scrooby layout owner to publish its declared typed children.
+fn scrooby_layout_evidence_complete(output: &Path) -> bool {
+    let manifest = output.join("components.jsonl");
+    let components = output.join("components");
+    let Ok(text) = fs::read_to_string(&manifest) else {
+        return false;
+    };
+    let mut expected = BTreeMap::<usize, [usize; 7]>::new();
+    let mut actual = BTreeMap::<usize, [usize; 7]>::new();
+    for line in text.lines().skip(1) {
+        let Some(kind) = extract_json_string_field(line, "kind") else {
+            return false;
+        };
+        if matches!(
+            kind.as_str(),
+            "scrooby_layer" | "scrooby_group" | "scrooby_multi_text"
+        ) {
+            let Some(ordinal) = extract_json_usize_field(line, "ordinal")
+            else {
+                return false;
+            };
+            let Some(path_text) = extract_json_string_field(line, "path") else {
+                return false;
+            };
+            let Ok(path) = resolve_under(&components, Path::new(&path_text))
+            else {
+                return false;
+            };
+            let Ok(owner) = fs::read_to_string(path) else {
+                return false;
+            };
+            let Some(counts) = scrooby_layout_child_counts(&owner, &kind) else {
+                return false;
+            };
+            if expected.insert(ordinal, counts).is_some() {
+                return false;
+            }
+        }
+        let Some(slot) = scrooby_layout_kind_slot(&kind) else {
+            continue;
+        };
+        let Some(parent) = extract_json_usize_field(line, "parent_ordinal")
+        else {
+            return false;
+        };
+        let counts = actual.entry(parent).or_insert([0; 7]);
+        let Some(count) = counts.get_mut(slot) else {
+            return false;
+        };
+        let Some(next) = count.checked_add(1) else {
+            return false;
+        };
+        *count = next;
+    }
+    if actual.keys().any(|parent| !expected.contains_key(parent)) {
+        return false;
+    }
+    expected.into_iter().all(|(ordinal, counts)| {
+        actual.get(&ordinal).copied().unwrap_or([0; 7]) == counts
+    })
+}
+
+/// Count contract-backed child kinds declared by one Scrooby layout owner.
+fn scrooby_layout_child_counts(
+    owner: &str,
+    owner_kind: &str,
+) -> Option<[usize; 7]> {
+    let value = serde_json::from_str::<serde_json::Value>(owner).ok()?;
+    let object = value.as_object()?;
+    let expected_schema = match owner_kind {
+        "scrooby_layer" => "scrooby_layer",
+        "scrooby_group" => "scrooby_group",
+        "scrooby_multi_text" => "scrooby_multi_text",
+        _ => return None,
+    };
+    if object.get("schema")?.as_str()? != expected_schema {
+        return None;
+    }
+    let children = object.get("children")?.as_array()?;
+    let mut counts = [0usize; 7];
+    for child in children {
+        let id = child.as_object()?.get("id_hex")?.as_str()?;
+        let slot = scrooby_layout_id_slot(id)?;
+        let allowed = if owner_kind == "scrooby_multi_text" {
+            slot >= 5
+        } else {
+            slot < 5
+        };
+        if !allowed {
+            return None;
+        }
+        let count = counts.get_mut(slot)?;
+        *count = count.checked_add(1)?;
+    }
+    Some(counts)
+}
+
+/// Map one authored Scrooby child identifier to its stable count slot.
+fn scrooby_layout_id_slot(id: &str) -> Option<usize> {
+    match id {
+        "0x00018004" => Some(0),
+        "0x00018006" => Some(1),
+        "0x00018007" => Some(2),
+        "0x00018008" => Some(3),
+        "0x00018009" => Some(4),
+        "0x0001800b" => Some(5),
+        "0x0001800c" => Some(6),
+        _ => None,
+    }
+}
+
+/// Map one published Scrooby child kind to its stable count slot.
+fn scrooby_layout_kind_slot(kind: &str) -> Option<usize> {
+    match kind {
+        "scrooby_group" => Some(0),
+        "scrooby_multi_sprite" => Some(1),
+        "scrooby_multi_text" => Some(2),
+        "scrooby_pure3d_object" => Some(3),
+        "scrooby_polygon" => Some(4),
+        "scrooby_string_text_bible" => Some(5),
+        "scrooby_string_hardcoded" => Some(6),
+        _ => None,
+    }
 }
 
 /// Require every decoded sprite to own exactly its declared image children.
