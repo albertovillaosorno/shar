@@ -289,7 +289,7 @@ fn binding_catalog_publishes_public_source_identity_only() -> TestResult {
     }
     let rows = rendered
         .lines()
-        .map(|line| serde_json::from_str::<serde_json::Value>(line))
+        .map(serde_json::from_str::<serde_json::Value>)
         .collect::<Result<Vec<_>, _>>()
         .map_err(|error| error.to_string())?;
     if rows
