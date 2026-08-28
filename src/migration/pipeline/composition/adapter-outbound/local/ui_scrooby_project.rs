@@ -26,6 +26,8 @@
 // - Description:
 //   - Requires every observed screen, image, style, text-bible, and Pure3D
 //     reference to resolve to exactly one normalized resource declaration.
+//     Package-backed P3D resources must also expose the inventory evidence that
+//     Scrooby expects to find after loading that package.
 // - Usage:
 //   - Called by prepare-unreal after canonical package-index intake.
 // - Defaults:
@@ -43,8 +45,8 @@ use schoenwald_filesystem::resolve_under;
 use serde_json::{Value, json};
 
 use crate::domain::{
-    PackageRole, PhaseThreePackageIndex, PipelineError, PipelineOutcome,
-    UnrealImportManifest,
+    PackageRole, PhaseThreePackageIndex, PhaseThreePackageRow, PipelineError,
+    PipelineOutcome, UnrealImportManifest,
 };
 
 const BINDING_CATALOG_SCHEMA: &str =
@@ -338,6 +340,7 @@ pub(super) fn preflight_scrooby_ui_projects(
             preflight_scrooby_package_evidence(&root)?;
         bind_scrooby_normalized_resource_packages(
             index,
+            extracted_root,
             &package.package_root,
             &root,
             &mut package_bindings,
@@ -1332,6 +1335,7 @@ fn push_binding(
 
 fn bind_scrooby_normalized_resource_packages(
     index: &PhaseThreePackageIndex,
+    extracted_root: &Path,
     owner_package_root: &str,
     root: &Path,
     bindings: &mut [ScroobyPackageBinding],
@@ -1343,11 +1347,12 @@ fn bind_scrooby_normalized_resource_packages(
         .ok_or_else(|| PipelineError::new("Scrooby project is missing"))?;
     let resource_path = required_string(&project.payload, "resource_path")?;
     let mut package_by_ordinal = BTreeMap::<usize, String>::new();
+    // Image P3D resources use a distinct FullFilename inventory contract.
+    // Keep them unresolved until that identity is modeled explicitly.
     for resource in decoded.iter().filter(|component| {
         matches!(
             component.row.kind.as_str(),
-            "scrooby_image_resource"
-                | "scrooby_pure3d_resource"
+            "scrooby_pure3d_resource"
                 | "scrooby_text_style_resource"
                 | "scrooby_text_bible_resource"
         )
@@ -1369,15 +1374,20 @@ fn bind_scrooby_normalized_resource_packages(
             .collect::<Vec<_>>();
         let target = match matches.as_slice() {
             [] => continue,
-            [target] => target.package_id.clone(),
+            [target] => *target,
             _ => {
                 return Err(PipelineError::new(
                     "Scrooby resource package path is ambiguous",
                 ));
             },
         };
+        validate_scrooby_resource_target_inventory(
+            extracted_root,
+            resource,
+            target,
+        )?;
         if package_by_ordinal
-            .insert(resource.row.ordinal, target)
+            .insert(resource.row.ordinal, target.package_id.clone())
             .is_some()
         {
             return Err(PipelineError::new(
@@ -1395,6 +1405,97 @@ fn bind_scrooby_normalized_resource_packages(
         }
     }
     Ok(())
+}
+
+fn validate_scrooby_resource_target_inventory(
+    extracted_root: &Path,
+    resource: &Component,
+    target: &PhaseThreePackageRow,
+) -> PipelineOutcome<()> {
+    if target.category() != "ui-resources" {
+        return Err(PipelineError::new(
+            "Scrooby resource package has an unsupported category",
+        ));
+    }
+    let inventory_name = trim_padding(required_string(
+        &resource.payload,
+        "inventory_name",
+    )?);
+    if inventory_name.is_empty() {
+        return Err(PipelineError::new(
+            "Scrooby resource inventory name is empty",
+        ));
+    }
+    let target_root =
+        resolve_normalized_package_root(extracted_root, &target.package_root)?;
+    let package_prefix = format!("{}/", target.package_root);
+    let mut matching_kinds = Vec::new();
+    for member in target.members().iter().filter(|member| {
+        member.source_chunk_kind != "none"
+            && Path::new(&member.path)
+                .extension()
+                .is_some_and(|extension| {
+                    extension.eq_ignore_ascii_case("json")
+                })
+    }) {
+        let relative = member.path.strip_prefix(&package_prefix).ok_or_else(|| {
+            PipelineError::new(
+                "Scrooby target member is outside its normalized package",
+            )
+        })?;
+        let path = resolve_under(&target_root, Path::new(relative)).map_err(
+            |_error| {
+                PipelineError::new(
+                    "Scrooby target member escapes its normalized package",
+                )
+            },
+        )?;
+        let bytes = fs::read(&path).map_err(|error| {
+            io_error("read Scrooby target inventory member", &error)
+        })?;
+        let payload = serde_json::from_slice::<Value>(&bytes).map_err(|error| {
+            PipelineError::new(format!(
+                "Scrooby target inventory JSON failed: {error}"
+            ))
+        })?;
+        if payload
+            .get("name")
+            .and_then(Value::as_str)
+            .map(trim_padding)
+            == Some(inventory_name)
+        {
+            matching_kinds.push(member.source_chunk_kind.as_str());
+        }
+    }
+    validate_scrooby_resource_inventory_kinds(
+        &resource.row.kind,
+        &matching_kinds,
+    )
+}
+
+fn validate_scrooby_resource_inventory_kinds(
+    resource_kind: &str,
+    matching_kinds: &[&str],
+) -> PipelineOutcome<()> {
+    match resource_kind {
+        "scrooby_pure3d_resource" if !matching_kinds.is_empty() => Ok(()),
+        "scrooby_pure3d_resource" => Err(PipelineError::new(
+            "Scrooby Pure3D resource target lacks its inventory entity",
+        )),
+        "scrooby_text_style_resource"
+            if matching_kinds == ["texture_font"] => Ok(()),
+        "scrooby_text_style_resource" => Err(PipelineError::new(
+            "Scrooby text-style target lacks one exact texture font",
+        )),
+        "scrooby_text_bible_resource"
+            if matching_kinds == ["text_bible"] => Ok(()),
+        "scrooby_text_bible_resource" => Err(PipelineError::new(
+            "Scrooby text-bible target lacks one exact text bible",
+        )),
+        _ => Err(PipelineError::new(
+            "Scrooby resource target inventory kind is unsupported",
+        )),
+    }
 }
 
 fn scrooby_resource_package_root(

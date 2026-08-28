@@ -38,6 +38,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use super::{
     preflight_scrooby_package, publish_scrooby_binding_catalog,
     resolve_exact_image_source, scrooby_resource_package_root, trim_padding,
+    validate_scrooby_resource_inventory_kinds,
 };
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -183,6 +184,50 @@ fn write_valid_package(root: &Path) -> TestResult {
     }
     fs::write(root.join("components.jsonl"), ledger)
         .map_err(|error| error.to_string())
+}
+
+#[test]
+fn validates_resource_target_inventory_cardinality() -> TestResult {
+    for (kind, matches) in [
+        ("scrooby_pure3d_resource", vec!["scenegraph"]),
+        (
+            "scrooby_pure3d_resource",
+            vec!["mesh", "composite_drawable"],
+        ),
+        ("scrooby_text_style_resource", vec!["texture_font"]),
+        ("scrooby_text_bible_resource", vec!["text_bible"]),
+    ] {
+        validate_scrooby_resource_inventory_kinds(kind, &matches)
+            .map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_invalid_resource_target_inventory_cardinality() -> TestResult {
+    for (kind, matches) in [
+        ("scrooby_pure3d_resource", Vec::new()),
+        ("scrooby_text_style_resource", Vec::new()),
+        ("scrooby_text_style_resource", vec!["mesh"]),
+        (
+            "scrooby_text_style_resource",
+            vec!["texture_font", "texture_font"],
+        ),
+        ("scrooby_text_bible_resource", Vec::new()),
+        ("scrooby_text_bible_resource", vec!["language"]),
+        ("scrooby_image_resource", vec!["sprite"]),
+        (
+            "scrooby_text_bible_resource",
+            vec!["text_bible", "text_bible"],
+        ),
+    ] {
+        if validate_scrooby_resource_inventory_kinds(kind, &matches).is_ok() {
+            return Err(format!(
+                "invalid inventory cardinality passed: {kind} {matches:?}"
+            ));
+        }
+    }
+    Ok(())
 }
 
 #[test]
