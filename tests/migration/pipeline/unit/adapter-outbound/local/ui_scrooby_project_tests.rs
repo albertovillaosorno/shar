@@ -84,11 +84,18 @@ fn write_valid_package(root: &Path) -> TestResult {
     let rows = vec![
         write_component(
             root, 1, 0, "scrooby_project", "project",
-            r#"{"schema":"scrooby_project"}"#,
+            concat!(
+                r#"{"schema":"scrooby_project","children":["#,
+                r#"{"id_hex":"0x00018002"},"#,
+                r#"{"id_hex":"0x00018001"}]}"#,
+            ),
         )?,
         write_component(
             root, 2, 1, "scrooby_page", "page",
-            r#"{"schema":"scrooby_page","name":"Main\\x00"}"#,
+            concat!(
+                r#"{"schema":"scrooby_page","name":"Main\\x00","#,
+                r#""children":[{"id_hex":"0x00018003"}]}"#,
+            ),
         )?,
         write_component(
             root, 3, 1, "scrooby_screen", "screen",
@@ -167,6 +174,57 @@ fn accepts_complete_package_local_bindings() -> TestResult {
         .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     result
+}
+
+#[test]
+fn rejects_missing_declared_project_child() -> TestResult {
+    let root = case_dir("missing-project-child")?;
+    write_valid_package(&root)?;
+    fs::write(
+        root.join("components/scrooby_project/project.json"),
+        concat!(
+            r#"{"schema":"scrooby_project","children":["#,
+            r#"{"id_hex":"0x00018002"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err(
+            "missing declared screen passed Scrooby preflight".to_owned(),
+        );
+    };
+    if !error.to_string().contains("project child inventory disagrees") {
+        return Err(format!("unexpected project-child error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_layer_outside_page_ancestry() -> TestResult {
+    let root = case_dir("wrong-layer-parent")?;
+    write_valid_package(&root)?;
+    let ledger = root.join("components.jsonl");
+    let text = fs::read_to_string(&ledger).map_err(|error| error.to_string())?;
+    let changed = text.replacen(
+        r#"{"ordinal":5,"parent_ordinal":2,"kind":"scrooby_layer""#,
+        r#"{"ordinal":5,"parent_ordinal":1,"kind":"scrooby_layer""#,
+        1,
+    );
+    if changed == text {
+        return Err("layer fixture row was not found".to_owned());
+    }
+    fs::write(&ledger, changed).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("layer outside page ancestry passed preflight".to_owned());
+    };
+    if !error.to_string().contains("unsupported owning parent") {
+        return Err(format!("unexpected layer-parent error: {error}"));
+    }
+    Ok(())
 }
 
 #[test]
