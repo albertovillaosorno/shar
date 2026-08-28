@@ -36,7 +36,7 @@
 
 // CSpell:ignore ATG dimage
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -132,33 +132,10 @@ pub(super) fn compile_ui_sprite_raster_catalog(
             &package_root,
             tile_encoding,
         )?;
-        let indexed_paths = package
-            .members()
-            .iter()
-            .filter(|member| {
-                matches!(
-                    member.source_chunk_kind.as_str(),
-                    "sprite" | "image" | "history"
-                )
-            })
-            .map(|member| member.path.as_str())
-            .collect::<BTreeSet<_>>();
-        let expected_paths = artifact
-            .source_component_paths
-            .iter()
-            .map(|relative| {
-                format!("{}/components/{relative}", package.package_root)
-            })
-            .collect::<BTreeSet<_>>();
-        let expected_refs = expected_paths
-            .iter()
-            .map(String::as_str)
-            .collect::<BTreeSet<_>>();
-        if indexed_paths != expected_refs {
-            return Err(PipelineError::new(
-                "UI sprite package index disagrees with normalized components",
-            ));
-        }
+        validate_indexed_source_paths(
+            package,
+            &artifact.source_component_paths,
+        )?;
         artifacts.push(artifact);
     }
     Ok(artifacts)
@@ -384,6 +361,39 @@ fn compile_ui_sprite_raster(
         tile_count: tiles.len(),
         source_component_paths,
     })
+}
+
+fn validate_indexed_source_paths(
+    package: &PhaseThreePackageRow,
+    source_component_paths: &[String],
+) -> PipelineOutcome<()> {
+    let indexed_paths = package
+        .members()
+        .iter()
+        .filter(|member| {
+            matches!(
+                member.source_chunk_kind.as_str(),
+                "sprite" | "image" | "history"
+            )
+        })
+        .map(|member| member.path.as_str())
+        .collect::<BTreeSet<_>>();
+    let expected_paths = source_component_paths
+        .iter()
+        .map(|relative| {
+            format!("{}/components/{relative}", package.package_root)
+        })
+        .collect::<BTreeSet<_>>();
+    let expected_refs = expected_paths
+        .iter()
+        .map(String::as_str)
+        .collect::<BTreeSet<_>>();
+    if indexed_paths != expected_refs {
+        return Err(PipelineError::new(
+            "UI sprite package index disagrees with normalized components",
+        ));
+    }
+    Ok(())
 }
 
 fn decode_sprite_tile(
@@ -685,6 +695,43 @@ const RASTER_DIR: &str = "rasters";
 const LOGICAL_ROOT: &str = "ui-raster-assets";
 const PNG_MAGIC: &[u8] = &[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
+fn reusable_ui_sprite_raster_catalog(
+    compiled: &[CompiledUiSpriteRaster],
+    output_root: &Path,
+) -> Option<Vec<UnrealUiRasterArtifactEvidence>> {
+    let Ok(Some(existing)) = verified_ui_sprite_raster_catalog(output_root)
+    else {
+        return None;
+    };
+    if existing.len() != compiled.len() {
+        return None;
+    }
+    let by_package = existing
+        .iter()
+        .map(|artifact| (artifact.package_id.as_str(), artifact))
+        .collect::<BTreeMap<_, _>>();
+    for artifact in compiled {
+        let candidate = by_package.get(artifact.package_id.as_str())?;
+        let size_bytes =
+            u64::try_from(artifact.png_bytes.len()).unwrap_or(u64::MAX);
+        let expected_path = format!(
+            "{LOGICAL_ROOT}/{RASTER_DIR}/{}",
+            artifact.filename,
+        );
+        if candidate.path != expected_path
+            || candidate.size_bytes != size_bytes
+            || candidate.sha256 != artifact.png_sha256
+            || candidate.source_revision != artifact.source_revision
+            || candidate.width != artifact.width
+            || candidate.height != artifact.height
+            || candidate.tile_count != artifact.tile_count
+        {
+            return None;
+        }
+    }
+    Some(existing)
+}
+
 /// Compile, verify, and atomically publish the complete UI-sprite raster
 /// catalog.
 ///
@@ -701,6 +748,11 @@ pub(super) fn publish_complete_ui_sprite_raster_catalog(
     let (staging, backup) = transaction_paths(output_root)?;
     ensure_absent(&staging, "UI raster staging")?;
     ensure_absent(&backup, "UI raster backup")?;
+    if let Some(existing) =
+        reusable_ui_sprite_raster_catalog(&compiled, output_root)
+    {
+        return Ok(existing);
+    }
     ensure_output_parent(output_root)?;
     fs::create_dir_all(staging.join(RASTER_DIR))
         .map_err(|error| io_error("create UI raster staging", &error))?;
