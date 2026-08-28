@@ -578,8 +578,17 @@ fn publication_repairs_valid_png_catalog_tampering() -> Result<(), String> {
         .ok_or_else(|| "tamper catalog row is missing".to_owned())?;
     let mut row = serde_json::from_str::<serde_json::Value>(row_text)
         .map_err(|error| error.to_string())?;
-    row["sha256"] = serde_json::json!(tampered_digest);
-    row["size_bytes"] = serde_json::json!(tampered.len());
+    let row_object = row
+        .as_object_mut()
+        .ok_or_else(|| "tamper catalog row is not an object".to_owned())?;
+    let digest = row_object
+        .get_mut("sha256")
+        .ok_or_else(|| "tamper catalog digest is missing".to_owned())?;
+    *digest = serde_json::json!(tampered_digest);
+    let size = row_object
+        .get_mut("size_bytes")
+        .ok_or_else(|| "tamper catalog size is missing".to_owned())?;
+    *size = serde_json::json!(tampered.len());
     let rendered = format!(
         "{header}\n{}\n",
         serde_json::to_string(&row).map_err(|error| error.to_string())?,
