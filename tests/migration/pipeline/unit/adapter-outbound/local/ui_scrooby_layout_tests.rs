@@ -37,7 +37,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
     add_bounded_alignment_policy, add_multi_text, add_owner_color_policy,
-    add_polygon,
+    add_polygon, add_runtime_field_consumption,
     collect_package_layout,
     horizontal_justification,
     packed_rgba_u8, publish_rendered, screen_i32, semantic_i32,
@@ -99,7 +99,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v12","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v13","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -269,6 +269,14 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             != Some(&serde_json::json!(false))
         || index(layer, "source_sibling_index") != Some(1)
         || index(layer, "runtime_index") != Some(0)
+        || layer.get("runtime_editable_consumed")
+            != Some(&serde_json::json!(false))
+        || layer.get("runtime_alpha_consumed")
+            != Some(&serde_json::json!(false))
+        || text.get("runtime_translucency_consumed")
+            != Some(&serde_json::json!(false))
+        || text.get("runtime_rotation_consumed")
+            != Some(&serde_json::json!(false))
         || index(string, "runtime_index") != Some(0)
         || index(screen, "source_sibling_index") != Some(1)
         || index(screen, "runtime_index") != Some(0)
@@ -565,6 +573,61 @@ fn owner_color_policy_matches_runtime_render_consumers() {
         let mut row = serde_json::Map::new();
         add_owner_color_policy(kind, &mut row);
         assert!(row.is_empty(), "unexpected color policy for {kind}");
+    }
+}
+
+#[test]
+fn ignored_authored_fields_are_not_promoted_to_runtime_state() {
+    for (kind, expected) in [
+        (
+            "scrooby_layer",
+            &["runtime_editable_consumed", "runtime_alpha_consumed"][..],
+        ),
+        ("scrooby_group", &["runtime_alpha_consumed"][..]),
+        (
+            "scrooby_multi_sprite",
+            &[
+                "runtime_translucency_consumed",
+                "runtime_rotation_consumed",
+            ][..],
+        ),
+        (
+            "scrooby_multi_text",
+            &[
+                "runtime_translucency_consumed",
+                "runtime_rotation_consumed",
+            ][..],
+        ),
+        (
+            "scrooby_pure3d_object",
+            &[
+                "runtime_translucency_consumed",
+                "runtime_rotation_consumed",
+            ][..],
+        ),
+        (
+            "scrooby_polygon",
+            &["runtime_translucency_consumed"][..],
+        ),
+    ] {
+        let mut row = serde_json::Map::new();
+        add_runtime_field_consumption(kind, &mut row);
+        assert_eq!(row.len(), expected.len(), "unexpected fields for {kind}");
+        for field in expected {
+            assert_eq!(row.get(*field), Some(&serde_json::json!(false)));
+        }
+    }
+
+    for kind in [
+        "scrooby_project",
+        "scrooby_page",
+        "scrooby_screen",
+        "scrooby_string_text_bible",
+        "scrooby_string_hardcoded",
+    ] {
+        let mut row = serde_json::Map::new();
+        add_runtime_field_consumption(kind, &mut row);
+        assert!(row.is_empty(), "unexpected ignored-field policy for {kind}");
     }
 }
 

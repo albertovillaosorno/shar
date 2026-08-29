@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v12";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v13";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -203,6 +203,7 @@ fn add_semantics(
     row: &mut Map<String, Value>,
 ) -> PipelineOutcome<()> {
     add_raw_version(&component.kind, &component.payload, row)?;
+    add_runtime_field_consumption(&component.kind, row);
     match component.kind.as_str() {
         "scrooby_project" => {
             let resolution =
@@ -291,6 +292,42 @@ fn add_semantics(
         },
     }
     Ok(())
+}
+
+fn add_runtime_field_consumption(kind: &str, row: &mut Map<String, Value>) {
+    match kind {
+        "scrooby_layer" => {
+            let _previous = row.insert(
+                "runtime_editable_consumed".to_owned(),
+                json!(false),
+            );
+            let _previous =
+                row.insert("runtime_alpha_consumed".to_owned(), json!(false));
+        },
+        "scrooby_group" => {
+            let _previous =
+                row.insert("runtime_alpha_consumed".to_owned(), json!(false));
+        },
+        "scrooby_multi_sprite"
+        | "scrooby_multi_text"
+        | "scrooby_pure3d_object" => {
+            let _previous = row.insert(
+                "runtime_translucency_consumed".to_owned(),
+                json!(false),
+            );
+            let _previous = row.insert(
+                "runtime_rotation_consumed".to_owned(),
+                json!(false),
+            );
+        },
+        "scrooby_polygon" => {
+            let _previous = row.insert(
+                "runtime_translucency_consumed".to_owned(),
+                json!(false),
+            );
+        },
+        _ => {},
+    }
 }
 
 fn add_raw_version(
