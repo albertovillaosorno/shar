@@ -98,8 +98,9 @@ fn write_valid_package(root: &Path) -> TestResult {
         write_component(
             root, 1, 0, "scrooby_project", "project",
             concat!(
-                r#"{"schema":"scrooby_project","resource_path":"resource\\","#,
-                r#""children":[{"id_hex":"0x00018002"},"#,
+                r#"{"schema":"scrooby_project","resolution":[640,480],"#,
+                r#""resource_path":"resource\\","children":["#,
+                r#"{"id_hex":"0x00018002"},"#,
                 r#"{"id_hex":"0x00018001"}]}"#,
             ),
         )?,
@@ -952,13 +953,50 @@ fn accepts_complete_package_local_bindings() -> TestResult {
 }
 
 #[test]
+fn rejects_zero_project_resolution() -> TestResult {
+    for (label, resolution) in [
+        ("zero-width", [0, 480]),
+        ("zero-height", [640, 0]),
+    ] {
+        let root = case_dir(label)?;
+        write_valid_package(&root)?;
+        let path = root.join("components/scrooby_project/project.json");
+        let mut value = serde_json::from_slice::<serde_json::Value>(
+            &fs::read(&path).map_err(|error| error.to_string())?,
+        )
+        .map_err(|error| error.to_string())?;
+        let slot = value
+            .get_mut("resolution")
+            .ok_or_else(|| {
+                String::from("project resolution fixture is missing")
+            })?;
+        *slot = serde_json::json!(resolution);
+        fs::write(
+            &path,
+            serde_json::to_vec(&value).map_err(|error| error.to_string())?,
+        )
+        .map_err(|error| error.to_string())?;
+        let result = preflight_scrooby_package(&root);
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+        let Err(error) = result else {
+            return Err(format!("{label} project resolution was accepted"));
+        };
+        if error.to_string() != "Scrooby project resolution is non-positive" {
+            return Err(format!("unexpected {label} failure: {error}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_missing_declared_project_child() -> TestResult {
     let root = case_dir("missing-project-child")?;
     write_valid_package(&root)?;
     fs::write(
         root.join("components/scrooby_project/project.json"),
         concat!(
-            r#"{"schema":"scrooby_project","children":["#,
+            r#"{"schema":"scrooby_project","resolution":[640,480],"#,
+            r#""children":["#,
             r#"{"id_hex":"0x00018002"}]}"#,
         ),
     )
