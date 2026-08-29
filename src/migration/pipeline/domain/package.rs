@@ -106,6 +106,8 @@ pub mod selector;
 pub mod unreal_manifest;
 /// Normalized vehicle-tuning semantic preflight.
 pub mod vehicle_tuning;
+/// Source-backed contextual vehicle-tuning usage bindings.
+pub mod vehicle_tuning_usage;
 
 // Re-exporting the domain-qualified names keeps downstream imports explicit
 // while preserving one public package boundary instead of exposing file layout.
@@ -277,6 +279,12 @@ pub use mission_script::{
 pub use vehicle_tuning::{
     VEHICLE_TUNING_SCHEMA, VehicleTuningCommandInvocation,
     VehicleTuningEvidence,
+};
+pub use vehicle_tuning_usage::{
+    VehicleTuningSourceCatalog, VehicleTuningSourceReference,
+    VehicleTuningUsageBinding, VehicleTuningUsageReport,
+    VehicleTuningUsageScope,
+    preflight_vehicle_tuning_usages,
 };
 pub use mission_stage::{
     MissionStageDirective, MissionStageKind, MissionStageMessageKind,

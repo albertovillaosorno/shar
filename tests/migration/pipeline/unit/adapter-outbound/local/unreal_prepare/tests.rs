@@ -40,6 +40,7 @@ use shar_sha256::digest_hex;
 use super::super::run_registry::{RunMode, RunRegistry};
 use super::{
     MISSION_DEFINITIONS_FILE, PLAN_INDEX_FILE, PUBLISHED_FILE_COUNT,
+    VEHICLE_TUNING_USAGE_FILE,
     PUBLISHED_FILES, SUMMARY_FILE, VEHICLE_TUNING_FILE, SourceEvidenceInput,
         ensure_generated_directory,
         open_stable_source,
@@ -941,6 +942,7 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
             SUMMARY_FILE,
             MISSION_DEFINITIONS_FILE,
             VEHICLE_TUNING_FILE,
+            VEHICLE_TUNING_USAGE_FILE,
             PLAN_INDEX_FILE,
             "plans/asset-import-plan.json",
             "plans/asset-construction-plan.json",
@@ -952,9 +954,9 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
     {
         return Err("prepare-unreal publication inventory drifted".to_owned());
     }
-    if PUBLISHED_FILES.len() != 10 || PUBLISHED_FILE_COUNT != 11 {
+    if PUBLISHED_FILES.len() != 11 || PUBLISHED_FILE_COUNT != 12 {
         return Err(
-            "prepare-unreal must publish ten cache files plus one manifest"
+            "prepare-unreal must publish eleven cache files plus one manifest"
                 .to_owned(),
         );
     }
