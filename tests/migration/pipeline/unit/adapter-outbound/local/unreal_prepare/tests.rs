@@ -37,6 +37,7 @@ use std::path::PathBuf;
 use serde_json::json;
 use shar_sha256::digest_hex;
 
+use super::super::run_registry::{RunMode, RunRegistry};
 use super::{
     MISSION_DEFINITIONS_FILE, PLAN_INDEX_FILE, PUBLISHED_FILE_COUNT,
     PUBLISHED_FILES, SUMMARY_FILE, SourceEvidenceInput,
@@ -278,6 +279,63 @@ fn parallel_source_verification_reports_first_manifest_error() -> Result<(), Str
     let rendered = error.to_string();
     if !rendered.starts_with("source size changed for extracted/first.bin:") {
         return Err(format!("parallel error priority changed: {rendered}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn parallel_source_verification_observes_requested_cancellation()
+-> Result<(), String> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(".temp")
+        .join(format!("unreal-source-cancel-{}", std::process::id()));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let source_path = root.join("source.bin");
+    fs::write(&source_path, b"source").map_err(|error| error.to_string())?;
+    let registry_root = root.join("registry");
+    let registry = RunRegistry::from_root(registry_root);
+    let guard = registry
+        .start("prepare-unreal", None, RunMode::Exclusive)
+        .map_err(|error| error.message().to_owned())?;
+    let run_id = guard.run_id().to_owned();
+    let _requested = registry.request_cancel(&run_id)?;
+    let inputs = [SourceEvidenceInput {
+        id: "source".to_owned(),
+        path: "extracted/source.bin".to_owned(),
+        resolved: source_path,
+        expected_size: 6,
+        file_extension: "bin".to_owned(),
+        unit_type: "metadata".to_owned(),
+        subtype: "none".to_owned(),
+        kind: "test".to_owned(),
+        function: "test".to_owned(),
+        schema: "none".to_owned(),
+        origin: "test".to_owned(),
+        source_path: "none".to_owned(),
+        source_chunk_kind: "none".to_owned(),
+        unreal_import_relation: "none".to_owned(),
+        future_normalization: "none".to_owned(),
+    }];
+    let result = parallel_source_evidence(
+        &inputs,
+        &MissionReferenceCatalog::empty_for_tests(),
+        &MissionP3dReferenceCatalog::empty_for_tests(),
+    );
+    guard.finish()?;
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err(
+            "parallel source verification ignored cancellation".to_owned(),
+        );
+    };
+    let rendered = error.to_string();
+    if !rendered.contains("cancelled by request")
+        || !rendered.contains(&run_id)
+    {
+        return Err(format!("unexpected cancellation error: {rendered}"));
     }
     Ok(())
 }
