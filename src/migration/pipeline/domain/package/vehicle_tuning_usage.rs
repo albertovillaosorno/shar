@@ -35,7 +35,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
-use super::index::PhaseThreePackageIndex;
+use super::index::{PackageRole, PhaseThreePackageIndex};
 use super::mission_reference::{
     MissionReferenceCatalog, MissionVehicleCatalogReference,
 };
@@ -120,9 +120,20 @@ impl VehicleTuningSourceCatalog {
             if package.category() != "vehicle-tuning" {
                 continue;
             }
+            if !package
+                .subcategory()
+                .split('/')
+                .any(|segment| segment == "vehicle-tuning")
+            {
+                return Err(
+                    "vehicle tuning package subcategory drifted".to_owned(),
+                );
+            }
             for member in package.members() {
                 if member.kind != "vehicle-tuning"
                     || member.unit_type != "config"
+                    || member.role != PackageRole::Metadata
+                    || member.source_chunk_kind != "none"
                 {
                     return Err(
                         "vehicle tuning package contains a non-tuning member"

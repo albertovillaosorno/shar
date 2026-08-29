@@ -244,3 +244,118 @@ fn rejects_scope_arity_vehicle_and_path_drift() -> Result<(), String> {
     }
     Ok(())
 }
+
+fn production_tuning_row() -> String {
+    concat!(
+        "{\"package_id\":\"extracted-game-scripts-cars-missions-level01\",",
+        "\"package_root\":\"extracted/game/scripts/cars/missions/level01\",",
+        "\"package_category\":\"vehicle-tuning\",",
+        "\"package_subcategory\":\"vehicle-tuning/mission/level-01\",",
+        "\"unit_count\":1,\"text_key_count\":0,",
+        "\"unit_ids\":[\"config-a\"],",
+        "\"world_ids\":[],\"texture_ids\":[],",
+        "\"material_ids\":[],\"model_ids\":[],",
+        "\"physics_ids\":[],\"animation_ids\":[],",
+        "\"scene_ids\":[],\"locator_ids\":[],",
+        "\"camera_ids\":[],\"light_ids\":[],",
+        "\"particle_ids\":[],\"controller_ids\":[],",
+        "\"audio_ids\":[],\"movie_ids\":[],",
+        "\"script_ids\":[],\"text_ids\":[],",
+        "\"ui_ids\":[],\"metadata_ids\":[\"config-a\"],",
+        "\"error_ids\":[],\"source_unit_ids\":[],",
+        "\"text_key_ids\":[],",
+        "\"members\":[{\"id\":\"config-a\",",
+        "\"role\":\"metadata\",",
+        "\"path\":\"extracted/game/scripts/cars/",
+        "Missions/level01/M1race.con.json\",",
+        "\"type\":\"config\",\"kind\":\"vehicle-tuning\",",
+        "\"source_chunk_kind\":\"none\"}],",
+        "\"text_keys\":[]}",
+    )
+    .to_owned()
+}
+
+fn production_tuning_index() -> Result<PhaseThreePackageIndex, String> {
+    PhaseThreePackageIndex::from_jsonl(&production_tuning_row())
+        .map_err(|error| error.to_string())
+}
+
+#[test]
+fn production_catalog_binds_exact_normalized_member_path()
+-> Result<(), String> {
+    let index = production_tuning_index()?;
+    let catalog = VehicleTuningSourceCatalog::from_package_index(&index)?;
+    let source = catalog
+        .resolve_optional(r"Missions\level01\M1race.con")?
+        .ok_or_else(|| {
+            "production tuning catalog did not resolve member".to_owned()
+        })?;
+    if source.source_id() != "config-a"
+        || source.package_id()
+            != "extracted-game-scripts-cars-missions-level01"
+        || source.package_subcategory() != "vehicle-tuning/mission/level-01"
+    {
+        return Err(
+            "production tuning catalog lost package provenance".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn production_catalog_rejects_tuning_taxonomy_drift() -> Result<(), String> {
+    let base = production_tuning_row();
+    let drifts = [
+        base.replace(
+            "\"package_subcategory\":\"vehicle-tuning/mission/level-01\"",
+            "\"package_subcategory\":\"missions/level-01\"",
+        ),
+        base.replace(
+            "\"metadata_ids\":[\"config-a\"]",
+            "\"metadata_ids\":[]",
+        )
+        .replace(
+            "\"script_ids\":[]",
+            "\"script_ids\":[\"config-a\"]",
+        )
+        .replace(
+            "\"role\":\"metadata\"",
+            "\"role\":\"script\"",
+        ),
+        base.replace(
+            "\"source_chunk_kind\":\"none\"",
+            "\"source_chunk_kind\":\"mesh\"",
+        ),
+    ];
+    for drift in drifts {
+        let index = PhaseThreePackageIndex::from_jsonl(&drift)
+            .map_err(|error| error.to_string())?;
+        if VehicleTuningSourceCatalog::from_package_index(&index).is_ok() {
+            return Err(
+                "drifted tuning package taxonomy entered usage catalog"
+                    .to_owned(),
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn production_catalog_accepts_scoped_tuning_taxonomy() -> Result<(), String> {
+    let row = production_tuning_row().replace(
+        "\"package_subcategory\":\"vehicle-tuning/mission/level-01\"",
+        "\"package_subcategory\":\"missions/level-01/vehicle-tuning/m1\"",
+    );
+    let index = PhaseThreePackageIndex::from_jsonl(&row)
+        .map_err(|error| error.to_string())?;
+    let catalog = VehicleTuningSourceCatalog::from_package_index(&index)?;
+    let source = catalog
+        .resolve_optional(r"Missions\level01\M1race.con")?
+        .ok_or_else(|| "scoped tuning taxonomy did not resolve".to_owned())?;
+    if source.package_subcategory()
+        != "missions/level-01/vehicle-tuning/m1"
+    {
+        return Err("scoped tuning taxonomy lost exact provenance".to_owned());
+    }
+    Ok(())
+}

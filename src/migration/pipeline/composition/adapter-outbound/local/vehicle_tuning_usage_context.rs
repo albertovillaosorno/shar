@@ -92,3 +92,8 @@ fn tuning_source_json(reference: &VehicleTuningSourceReference) -> Value {
         "source_id": reference.source_id(),
     })
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact test module path is indivisible
+#[path = "../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/vehicle_tuning_usage_context/tests.rs"]
+mod tests;
