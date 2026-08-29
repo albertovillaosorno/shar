@@ -35,7 +35,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read as _;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc;
 use std::time::SystemTime;
 use std::{fs, thread};
@@ -194,6 +194,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &unreal_manifest,
         )?;
     let manifest_revision = digest_hex(manifest_jsonl.as_bytes());
+    check_cancellation()?;
     let ui_raster_catalog =
         super::ui_sprite_raster::publish_complete_ui_sprite_raster_catalog(
             &index,
@@ -207,6 +208,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &index,
             &ui_raster_catalog,
         )?;
+    check_cancellation()?;
     let scrooby_joined_rasters =
         super::ui_scrooby_joined_raster::publish_scrooby_joined_raster_catalog(
             &index,
@@ -214,22 +216,26 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &scrooby_preflight,
             Path::new(UI_SCROOBY_JOINED_RASTER_WORKSPACE_ROOT),
         )?;
+    check_cancellation()?;
     let verified_scrooby_bindings =
         super::ui_scrooby_project::publish_scrooby_binding_catalog(
             &scrooby_preflight,
             Path::new(UI_SCROOBY_BINDING_WORKSPACE_ROOT),
         )?;
+    check_cancellation()?;
     let verified_scrooby_layout_rows =
         super::ui_scrooby_layout::publish_scrooby_layout_catalog(
             &index,
             &config.extracted_root,
             Path::new(UI_SCROOBY_LAYOUT_WORKSPACE_ROOT),
         )?;
+    check_cancellation()?;
     let scrooby_resource_lifecycle =
         super::ui_scrooby_resources::publish_scrooby_resource_lifecycle_catalog(
             &scrooby_preflight,
             Path::new(UI_SCROOBY_RESOURCE_WORKSPACE_ROOT),
         )?;
+    check_cancellation()?;
     let fbx_catalog = verified_fbx_catalog_at(
         Path::new(FBX_WORKSPACE_ROOT),
         Path::new(FBX_MANIFEST_PATH),
@@ -247,6 +253,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         })?;
     let unreal_manifest_path =
         config.game_root.join(UNREAL_MANIFEST_GAME_RELATIVE_PATH);
+    check_cancellation()?;
     publish_staging(
         &manifest_jsonl,
         &summary_json,
@@ -410,6 +417,7 @@ fn source_evidence(
         mission_references,
         mission_p3d_references,
     )?;
+    check_cancellation()?;
     preflight_cross_source_mission_locators(
         &inputs,
         &report.evidence,
@@ -467,21 +475,27 @@ fn parallel_source_evidence(
             mission_definitions: Vec::new(),
         });
     }
+    check_cancellation()?;
+    let stop = AtomicBool::new(false);
     let next = AtomicUsize::new(0);
     let (sender, receiver) = mpsc::channel();
     let workers = source_worker_count(inputs.len());
     // jig-ignore-next-line: literal
     let mut progress = StageProgress::begin("Unreal source evidence", inputs.len());
     let mut collected = Vec::with_capacity(inputs.len());
-    thread::scope(|scope| {
+    thread::scope(|scope| -> PipelineOutcome<()> {
         for _worker in 0..workers {
             let worker_sender = sender.clone();
+            let worker_stop = &stop;
             let worker_next = &next;
             let worker_inputs = inputs;
             let worker_mission_references = mission_references;
             let worker_mission_p3d_references = mission_p3d_references;
             let _handle = scope.spawn(move || {
                 loop {
+                    if worker_stop.load(Ordering::Acquire) {
+                        break;
+                    }
                     let position = worker_next.fetch_add(1, Ordering::Relaxed);
                     let Some(input) = worker_inputs.get(position) else {
                         break;
@@ -502,10 +516,15 @@ fn parallel_source_evidence(
         }
         drop(sender);
         while let Ok((position, id, result)) = receiver.recv() {
+            if let Err(error) = check_cancellation() {
+                stop.store(true, Ordering::Release);
+                return Err(error);
+            }
             progress.advance(&id);
             collected.push((position, result));
         }
-    });
+        Ok(())
+    })?;
     if collected.len() != inputs.len() {
         return Err(PipelineError::new(format!(
             "Unreal source workers returned {} of {} rows",
@@ -557,6 +576,7 @@ fn preflight_cross_source_mission_locators(
 
     let mut snapshots = Vec::new();
     for input in inputs {
+        check_cancellation()?;
         if input.kind != "mission-script" {
             continue;
         }
@@ -615,6 +635,7 @@ fn preflight_cross_source_mission_locators(
         ));
     }
 
+    check_cancellation()?;
     drop(
         build_mission_order_source_reports(&snapshots).map_err(|error| {
             PipelineError::new(format!(
@@ -643,6 +664,7 @@ fn preflight_cross_source_mission_locators(
         .iter()
         .map(|package| package.package_root.to_ascii_lowercase())
         .collect::<BTreeSet<_>>();
+    check_cancellation()?;
     let level_contexts = build_level_locator_source_contexts(&snapshots)
         .map_err(|error| {
             PipelineError::new(format!(
@@ -650,6 +672,7 @@ fn preflight_cross_source_mission_locators(
             ))
         })?;
     for snapshot in &snapshots {
+        check_cancellation()?;
         let Some(level_context) =
             level_contexts.get(snapshot.source_path())
         else {
@@ -700,6 +723,7 @@ fn preflight_cross_source_mission_locators(
             ))
         })?;
     for snapshot in &snapshots {
+        check_cancellation()?;
         let Some(context) = contexts.get(snapshot.source_path()) else {
             continue;
         };

@@ -79,7 +79,7 @@ impl RunRegistry {
 
     /// Construct one explicit registry root for tests.
     #[cfg(test)]
-    const fn from_root(root: PathBuf) -> Self {
+    pub(super) const fn from_root(root: PathBuf) -> Self {
         Self {
             storage: RegistryStorage::new(root),
         }
