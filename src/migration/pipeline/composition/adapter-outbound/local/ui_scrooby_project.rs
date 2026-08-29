@@ -102,6 +102,12 @@ pub(super) struct ScroobyUiPreflight {
     packages: Vec<ScroobyPackageBindings>,
 }
 
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub(super) struct ScroobyJoinedSpriteTarget {
+    pub(super) package_id: String,
+    pub(super) sprite_ordinal: usize,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct ScroobyPageResourceLifecycle {
     pub(super) package_id: String,
@@ -151,6 +157,35 @@ impl ScroobyUiPreflight {
             .flat_map(|package| &package.bindings)
             .filter(|binding| binding.target_entity_ordinal.is_some())
             .count()
+    }
+
+    pub(super) fn joined_sprite_targets(
+        &self,
+    ) -> Vec<ScroobyJoinedSpriteTarget> {
+        let mut targets = BTreeSet::new();
+        for binding in self
+            .packages
+            .iter()
+            .flat_map(|package| &package.bindings)
+        {
+            if binding.target_package_match_basis
+                != Some("owner-joined-sprite-exact")
+                || binding.target_entity_match_basis
+                    != Some("full-filename-exact")
+            {
+                continue;
+            }
+            if let (Some(package_id), Some(sprite_ordinal)) = (
+                binding.target_package_id.as_ref(),
+                binding.target_entity_ordinal,
+            ) {
+                let _inserted = targets.insert(ScroobyJoinedSpriteTarget {
+                    package_id: package_id.clone(),
+                    sprite_ordinal,
+                });
+            }
+        }
+        targets.into_iter().collect()
     }
 
     pub(super) fn page_resource_lifecycle(

@@ -672,3 +672,89 @@ fn verifier_rejects_extra_catalog_inventory() -> Result<(), String> {
     fs::remove_dir_all(&package_root).map_err(|error| error.to_string())?;
     Ok(())
 }
+
+#[test]
+fn compiles_joined_scrooby_sprite_by_exact_ordinal() -> Result<(), String> {
+    let root = case_dir("joined-ordinal")?;
+    write_png_history_fixture(&root, 12)?;
+    fs::write(
+        root.join("components/sprite/main.json"),
+        "{\"image_size\":[0,0],\"image_count\":1,\"blit_border\":0}\n",
+    )
+    .map_err(|error| error.to_string())?;
+    let extracted_root = root
+        .parent()
+        .ok_or_else(|| "joined fixture has no extracted root".to_owned())?;
+    let root_name = extracted_root
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| "joined fixture extracted root has no name".to_owned())?;
+    let package_name = root
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| "joined fixture package has no name".to_owned())?;
+    let published_root = format!("{root_name}/{package_name}");
+    let package_id = published_root.replace('/', "-");
+    let canonical = format!(
+        concat!(
+            "{{\"package_id\":\"{0}\",",
+            "\"package_root\":\"{1}\",",
+            "\"package_category\":\"ui-screens\",",
+            "\"package_subcategory\":\"ui-screens/test\",",
+            "\"unit_count\":3,\"text_key_count\":0,",
+            "\"unit_ids\":[\"image-a\",\"sprite-a\",\"history-a\"],",
+            "\"world_ids\":[],\"texture_ids\":[\"image-a\"],",
+            "\"material_ids\":[],\"model_ids\":[],\"physics_ids\":[],",
+            "\"animation_ids\":[],\"scene_ids\":[],\"locator_ids\":[],",
+            "\"camera_ids\":[],\"light_ids\":[],\"particle_ids\":[],",
+            "\"controller_ids\":[],\"audio_ids\":[],\"movie_ids\":[],",
+            "\"script_ids\":[],\"text_ids\":[],\"ui_ids\":[\"sprite-a\"],",
+            "\"metadata_ids\":[\"history-a\"],\"error_ids\":[],",
+            "\"source_unit_ids\":[],\"text_key_ids\":[],\"members\":[",
+            "{{\"id\":\"image-a\",\"role\":\"texture\",",
+            "\"path\":\"{1}/components/image/tile.png\",",
+            "\"type\":\"texture\",\"kind\":\"p3d-image\",",
+            "\"source_chunk_kind\":\"image\"}},",
+            "{{\"id\":\"sprite-a\",\"role\":\"ui\",",
+            "\"path\":\"{1}/components/sprite/main.json\",",
+            "\"type\":\"ui\",\"kind\":\"p3d-sprite\",",
+            "\"source_chunk_kind\":\"sprite\"}},",
+            "{{\"id\":\"history-a\",\"role\":\"metadata\",",
+            "\"path\":\"{1}/components/history/history.json\",",
+            "\"type\":\"metadata\",\"kind\":\"p3d-history\",",
+            "\"source_chunk_kind\":\"history\"}}],\"text_keys\":[]}}"
+        ),
+        package_id,
+        published_root,
+    );
+    let index = PhaseThreePackageIndex::from_jsonl(&format!("{canonical}\n"))
+        .map_err(|error| error.to_string())?;
+    let package = index
+        .packages()
+        .first()
+        .ok_or_else(|| "joined fixture package is missing".to_owned())?;
+    let artifact = super::compile_scrooby_joined_sprite_raster(
+        package,
+        extracted_root,
+        2,
+    )
+    .map_err(|error| error.to_string())?;
+    let wrong = super::compile_scrooby_joined_sprite_raster(
+        package,
+        extracted_root,
+        1,
+    );
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    if artifact.sprite_ordinal != 2
+        || artifact.tile_count != 1
+        || artifact.width != 4
+        || artifact.height != 4
+        || !artifact.filename.ends_with("--sprite-2.png")
+    {
+        return Err(format!("joined raster metadata drifted: {artifact:?}"));
+    }
+    if wrong.is_ok() {
+        return Err("non-sprite joined ordinal was accepted".to_owned());
+    }
+    Ok(())
+}

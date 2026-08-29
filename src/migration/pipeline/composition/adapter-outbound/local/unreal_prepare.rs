@@ -102,7 +102,8 @@ use crate::manifest_paths::{
 };
 use crate::workspace::{
     FBX_WORKSPACE_ROOT, UI_RASTER_WORKSPACE_ROOT,
-    UI_SCROOBY_BINDING_WORKSPACE_ROOT, UI_SCROOBY_LAYOUT_WORKSPACE_ROOT,
+    UI_SCROOBY_BINDING_WORKSPACE_ROOT, UI_SCROOBY_JOINED_RASTER_WORKSPACE_ROOT,
+    UI_SCROOBY_LAYOUT_WORKSPACE_ROOT,
     UI_SCROOBY_RESOURCE_WORKSPACE_ROOT,
     UNREAL_STAGING_WORKSPACE_ROOT,
 };
@@ -200,6 +201,13 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             Path::new(UI_RASTER_WORKSPACE_ROOT),
         )?;
     let verified_ui_raster_count = ui_raster_catalog.len();
+    let scrooby_joined_rasters =
+        super::ui_scrooby_joined_raster::publish_scrooby_joined_raster_catalog(
+            &index,
+            &config.extracted_root,
+            &scrooby_preflight,
+            Path::new(UI_SCROOBY_JOINED_RASTER_WORKSPACE_ROOT),
+        )?;
     let verified_scrooby_bindings =
         super::ui_scrooby_project::publish_scrooby_binding_catalog(
             &scrooby_preflight,
@@ -252,8 +260,9 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         note: format!(
             concat!(
                 "verified {} sources across {} semantic packages, {} ",
-                "generated FBX artifacts, {} verified UI sprite rasters, and ",
-                "{} verified Scrooby projects with {} resolved bindings, ",
+                "generated FBX artifacts, {} verified UI sprite rasters, {} ",
+                "joined Scrooby sprite rasters across {} packages, and {} ",
+                "verified Scrooby projects with {} resolved bindings, ",
                 "{} direct-import-backed bindings, {} normalized-entity-",
                 "backed bindings, {} layout rows, and {} page-owned resource ",
                 "preloads ({} direct-import-backed; {} normalized-package-",
@@ -266,6 +275,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             unreal_manifest.package_count(),
             verified_fbx_count,
             verified_ui_raster_count,
+            scrooby_joined_rasters.raster_count,
+            scrooby_joined_rasters.package_count,
             verified_scrooby_projects,
             verified_scrooby_bindings,
             direct_import_scrooby_bindings,

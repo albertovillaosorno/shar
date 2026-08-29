@@ -81,6 +81,19 @@ pub(super) struct CompiledUiSpriteRaster {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct CompiledScroobyJoinedRaster {
+    pub(super) package_id: String,
+    pub(super) sprite_ordinal: usize,
+    pub(super) filename: String,
+    pub(super) png_bytes: Vec<u8>,
+    pub(super) png_sha256: String,
+    pub(super) source_revision: String,
+    pub(super) width: u32,
+    pub(super) height: u32,
+    pub(super) tile_count: usize,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct LedgerRow {
     ordinal: usize,
     parent_ordinal: Option<usize>,
@@ -360,6 +373,159 @@ fn compile_ui_sprite_raster(
         height: raster.height,
         tile_count: tiles.len(),
         source_component_paths,
+    })
+}
+
+/// Compile one joined Scrooby sprite embedded in a mixed Project package.
+///
+/// # Errors
+///
+/// Returns an error when the target ordinal is not one exact sprite, its
+/// ordered PNG children disagree with metadata/index evidence, or raster
+/// assembly fails.
+pub(super) fn compile_scrooby_joined_sprite_raster(
+    package: &PhaseThreePackageRow,
+    extracted_root: &Path,
+    sprite_ordinal: usize,
+) -> PipelineOutcome<CompiledScroobyJoinedRaster> {
+    validate_package_id(&package.package_id)?;
+    let normalized_package_root = resolve_normalized_package_root(
+        extracted_root,
+        &package.package_root,
+    )?;
+    let components = normalized_package_root.join("components");
+    let ledger_text = fs::read_to_string(
+        normalized_package_root.join("components.jsonl"),
+    )
+    .map_err(|error| io_error("read joined sprite component ledger", &error))?;
+    let rows = parse_ledger(&ledger_text)?;
+    let sprite = rows
+        .iter()
+        .find(|row| row.ordinal == sprite_ordinal)
+        .filter(|row| row.kind == "sprite")
+        .ok_or_else(|| {
+            PipelineError::new("joined Scrooby sprite ordinal is not a sprite")
+        })?;
+    if rows.iter().any(|row| {
+        row.parent_ordinal == Some(sprite_ordinal) && row.kind != "image"
+    }) {
+        return Err(PipelineError::new(
+            "joined Scrooby sprite contains a non-image child",
+        ));
+    }
+    let sprite_path = resolve_component_path(&components, &sprite.path)?;
+    let sprite_bytes = fs::read(&sprite_path)
+        .map_err(|error| io_error("read joined sprite metadata", &error))?;
+    let metadata = parse_sprite_metadata(&sprite_bytes)?;
+    let mut image_rows = rows
+        .iter()
+        .filter(|row| {
+            row.kind == "image" && row.parent_ordinal == Some(sprite_ordinal)
+        })
+        .collect::<Vec<_>>();
+    image_rows.sort_by_key(|row| row.ordinal);
+    if image_rows.len() != metadata.image_count {
+        return Err(PipelineError::new(
+            "joined Scrooby sprite image count disagrees with metadata",
+        ));
+    }
+    let mut revision_preimage = format!(
+        "package={}\nsprite={}:{}\n",
+        package.package_id,
+        sprite.ordinal,
+        digest_hex(&sprite_bytes),
+    );
+    let mut expected_paths = BTreeSet::new();
+    let _inserted = expected_paths.insert(format!(
+        "{}/components/{}",
+        package.package_root,
+        sprite.path,
+    ));
+    let mut tiles = Vec::with_capacity(image_rows.len());
+    for row in image_rows {
+        let path = resolve_component_path(&components, &row.path)?;
+        let bytes = fs::read(&path)
+            .map_err(|error| io_error("read joined sprite image", &error))?;
+        if Path::new(&row.path)
+            .extension()
+            .and_then(|value| value.to_str())
+            .is_none_or(|value| !value.eq_ignore_ascii_case("png"))
+        {
+            return Err(PipelineError::new(
+                "joined Scrooby sprite child is not a PNG",
+            ));
+        }
+        writeln!(
+            revision_preimage,
+            "image={}:{}:{}",
+            row.ordinal,
+            row.path,
+            digest_hex(&bytes),
+        )
+        .map_err(|_error| {
+            PipelineError::new("joined sprite revision formatting failed")
+        })?;
+        let _inserted = expected_paths.insert(format!(
+            "{}/components/{}",
+            package.package_root,
+            row.path,
+        ));
+        tiles.push(decode_sprite_tile(
+            &bytes,
+            SpriteTileEncoding::P3dImagePng,
+        )?);
+    }
+    let indexed_paths = package
+        .members()
+        .iter()
+        .map(|member| member.path.as_str())
+        .collect::<BTreeSet<_>>();
+    if expected_paths
+        .iter()
+        .any(|path| !indexed_paths.contains(path.as_str()))
+    {
+        return Err(PipelineError::new(
+            "joined Scrooby sprite evidence is absent from the package index",
+        ));
+    }
+    let raster = if metadata.image_count == 1 && metadata.blit_border == 0 {
+        let [tile] = tiles.as_slice() else {
+            return Err(PipelineError::new(
+                "joined Scrooby single-image sprite has wrong tile count",
+            ));
+        };
+        tile.clone()
+    } else {
+        assemble_sprite_rgba(
+            SpriteRasterLayout {
+                width: metadata.width,
+                height: metadata.height,
+                blit_border: metadata.blit_border,
+                flip_vertical: false,
+            },
+            &tiles,
+        )
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "joined Scrooby sprite raster assembly failed: {error}"
+            ))
+        })?
+    };
+    let png_bytes = encode_raster_png(&raster)?;
+    let png_sha256 = digest_hex(&png_bytes);
+    Ok(CompiledScroobyJoinedRaster {
+        package_id: package.package_id.clone(),
+        sprite_ordinal,
+        filename: format!(
+            "{}--sprite-{sprite_ordinal}.png",
+            package.package_id,
+        ),
+        png_bytes,
+        png_sha256,
+        source_revision: digest_hex(revision_preimage.as_bytes()),
+        width: raster.width,
+        height: raster.height,
+        tile_count: tiles.len(),
     })
 }
 
