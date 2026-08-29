@@ -85,14 +85,17 @@ fn source(id: &str) -> UnrealSourceEvidence {
 fn tuning_source(id: &str) -> UnrealSourceEvidence {
     let mut source = source(id);
     source.kind = "vehicle-tuning".to_owned();
+    source.path = format!("extracted/game/scripts/cars/{id}.con.json");
+    source.source_path = source.path.clone();
     source
 }
 
 fn tuning_core_row(source_id: &str) -> Result<String, String> {
     let value = json!({
         "commands": [],
+        "physical_vehicle": null,
         "route_class": "vehicle-config",
-        "schema": "shar-schoenwald.vehicle-tuning-core.v1",
+        "schema": "shar-schoenwald.vehicle-tuning-core.v2",
         "source_bytes": 0,
         "source_id": source_id,
         "source_statements": [],
@@ -720,16 +723,84 @@ fn clean_vehicle_tuning_json() -> Result<Vec<u8>, String> {
 }
 
 #[test]
+fn vehicle_tuning_binding_uses_exact_normalized_con_basename()
+-> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let binding = super::vehicle_tuning_physical_vehicle(
+        "extracted/game/scripts/cars/CAR_A.con.json",
+        &references,
+    )
+    .map_err(|error| error.to_string())?
+    .ok_or_else(|| "exact tuning basename did not bind".to_owned())?;
+    if binding.source_id() != "CAR_A"
+        || binding.package_id() != "vehicle-car-a"
+    {
+        return Err("exact tuning basename binding drifted".to_owned());
+    }
+    if super::vehicle_tuning_physical_vehicle(
+        "extracted/game/scripts/cars/race_override.con.json",
+        &references,
+    )
+    .map_err(|error| error.to_string())?
+    .is_some()
+    {
+        return Err("unmatched tuning override invented a vehicle".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn vehicle_tuning_binding_rejects_non_normalized_source_path() {
+    let references = MissionReferenceCatalog::empty_for_tests();
+    for path in [
+        "extracted/game/scripts/cars/sample.json",
+        "extracted/game/scripts/cars/sample.con",
+        "../sample.con.json",
+    ] {
+        assert!(
+            super::vehicle_tuning_physical_vehicle(path, &references).is_err(),
+            "invalid normalized tuning path was accepted: {path}",
+        );
+    }
+}
+
+#[test]
+fn vehicle_tuning_binding_rejects_ambiguous_vehicle_identity()
+-> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[
+        ("car_a", "vehicle-car-a", "cars/traffic-vehicles/car-a"),
+        ("car_a", "vehicle-car-a-alt", "cars/traffic-variants/car-a"),
+    ]);
+    let Err(error) = super::vehicle_tuning_physical_vehicle(
+        "extracted/game/scripts/cars/car_a.con.json",
+        &references,
+    ) else {
+        return Err("ambiguous tuning vehicle identity was accepted".to_owned());
+    };
+    if !error.to_string().contains("ambiguous") {
+        return Err(format!("unexpected tuning binding failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn vehicle_tuning_gate_rejects_forged_invocation_evidence()
 -> Result<(), String> {
     let clean = clean_vehicle_tuning_json()?;
+    let references = MissionReferenceCatalog::empty_for_tests();
     let core = super::validate_normalized_vehicle_tuning_source(
         "tuning-source",
+        "extracted/game/scripts/cars/sample.con.json",
         "vehicle-tuning",
         "shar-schoenwald.straggler.config-script.v2",
         "json",
         "game-straggler-normalize",
         &clean,
+        &references,
     )
     .map_err(|error| error.to_string())?;
     if core.is_none() {
@@ -749,11 +820,13 @@ fn vehicle_tuning_gate_rejects_forged_invocation_evidence()
         .map_err(|error| error.to_string())?;
     let result = super::validate_normalized_vehicle_tuning_source(
         "tuning-source",
+        "extracted/game/scripts/cars/sample.con.json",
         "vehicle-tuning",
         "shar-schoenwald.straggler.config-script.v2",
         "json",
         "game-straggler-normalize",
         &forged,
+        &references,
     );
     let Err(error) = result else {
         return Err(
@@ -784,7 +857,7 @@ fn vehicle_tuning_source_verification_rejects_same_size_semantic_drift()
         .map_err(|error| error.to_string())?;
     let input = SourceEvidenceInput {
         id: "tuning-source".to_owned(),
-        path: "extracted/tuning.json".to_owned(),
+        path: "extracted/game/scripts/cars/sample.con.json".to_owned(),
         resolved: path.clone(),
         expected_size,
         file_extension: "json".to_owned(),
@@ -794,7 +867,7 @@ fn vehicle_tuning_source_verification_rejects_same_size_semantic_drift()
         function: "vehicle configuration".to_owned(),
         schema: "shar-schoenwald.straggler.config-script.v2".to_owned(),
         origin: "game-straggler-normalize".to_owned(),
-        source_path: "source.con".to_owned(),
+        source_path: "extracted/game/scripts/cars/sample.con.json".to_owned(),
         source_chunk_kind: "none".to_owned(),
         unreal_import_relation: "compose-into-asset".to_owned(),
         future_normalization: "vehicle-json-to-data-asset".to_owned(),
@@ -2187,9 +2260,83 @@ fn accepts_complete_vehicle_tuning_core_bundle() -> Result<(), String> {
         tuning_source("tuning-one"),
         tuning_source("tuning-two"),
     ];
-    let rendered = validate_vehicle_tuning_bundle(&rows, &verified)
+    let rendered = validate_vehicle_tuning_bundle(
+        &rows,
+        &verified,
+        &MissionReferenceCatalog::empty_for_tests(),
+    )
         .map_err(|error| error.to_string())?;
     assert_eq!(rendered, rows.concat());
+    Ok(())
+}
+
+#[test]
+fn accepts_exact_vehicle_tuning_physical_binding() -> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let mut verified = vec![tuning_source("car-a")];
+    verified
+        .first_mut()
+        .ok_or("missing tuning source fixture")?
+        .path = "extracted/game/scripts/cars/CAR_A.con.json".to_owned();
+    let mut value = serde_json::from_str::<serde_json::Value>(
+        tuning_core_row("car-a")?.trim_end(),
+    )
+    .map_err(|error| error.to_string())?;
+    let physical_vehicle = value
+        .get_mut("physical_vehicle")
+        .ok_or("tuning core physical vehicle field disappeared")?;
+    *physical_vehicle = json!({
+        "package_id": "vehicle-car-a",
+        "package_subcategory": "cars/traffic-vehicles/car-a",
+        "source_id": "CAR_A",
+    });
+    let mut row = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    row.push('\n');
+    let rendered = validate_vehicle_tuning_bundle(
+        &[row.clone()],
+        &verified,
+        &references,
+    )
+        .map_err(|error| error.to_string())?;
+    assert_eq!(rendered, row);
+    Ok(())
+}
+
+#[test]
+fn rejects_forged_vehicle_tuning_physical_binding() -> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let mut verified = vec![tuning_source("car-a")];
+    verified
+        .first_mut()
+        .ok_or("missing tuning source fixture")?
+        .path = "extracted/game/scripts/cars/car_a.con.json".to_owned();
+    let mut value = serde_json::from_str::<serde_json::Value>(
+        tuning_core_row("car-a")?.trim_end(),
+    )
+    .map_err(|error| error.to_string())?;
+    let physical_vehicle = value
+        .get_mut("physical_vehicle")
+        .ok_or("tuning core physical vehicle field disappeared")?;
+    *physical_vehicle = json!({
+        "package_id": "vehicle-other",
+        "package_subcategory": "cars/traffic-vehicles/other",
+        "source_id": "other",
+    });
+    let mut row = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    row.push('\n');
+    let error = validate_vehicle_tuning_bundle(&[row], &verified, &references)
+        .rejection("forged physical tuning binding must fail")?;
+    assert!(error.to_string().contains("binding drifted"));
     Ok(())
 }
 
@@ -2200,7 +2347,11 @@ fn rejects_incomplete_vehicle_tuning_core_bundle() -> Result<(), String> {
         tuning_source("tuning-one"),
         tuning_source("tuning-two"),
     ];
-    let error = validate_vehicle_tuning_bundle(&rows, &verified)
+    let error = validate_vehicle_tuning_bundle(
+        &rows,
+        &verified,
+        &MissionReferenceCatalog::empty_for_tests(),
+    )
         .rejection("missing tuning core must fail")?;
     assert!(error.to_string().contains("incomplete"));
     Ok(())
@@ -2211,7 +2362,11 @@ fn rejects_duplicate_vehicle_tuning_core_source() -> Result<(), String> {
     let row = tuning_core_row("tuning-one")?;
     let rows = vec![row.clone(), row];
     let verified = vec![tuning_source("tuning-one")];
-    let error = validate_vehicle_tuning_bundle(&rows, &verified)
+    let error = validate_vehicle_tuning_bundle(
+        &rows,
+        &verified,
+        &MissionReferenceCatalog::empty_for_tests(),
+    )
         .rejection("duplicate tuning core source must fail")?;
     assert!(error.to_string().contains("duplicates a source id"));
     Ok(())
@@ -2221,7 +2376,11 @@ fn rejects_duplicate_vehicle_tuning_core_source() -> Result<(), String> {
 fn rejects_unverified_vehicle_tuning_core_source() -> Result<(), String> {
     let rows = vec![tuning_core_row("tuning-one")?];
     let verified = vec![source("tuning-one")];
-    let error = validate_vehicle_tuning_bundle(&rows, &verified)
+    let error = validate_vehicle_tuning_bundle(
+        &rows,
+        &verified,
+        &MissionReferenceCatalog::empty_for_tests(),
+    )
         .rejection("non-tuning verified source must fail")?;
     assert!(error.to_string().contains("not verified tuning evidence"));
     Ok(())
@@ -2238,7 +2397,11 @@ fn rejects_vehicle_tuning_cores_out_of_verified_source_order()
         tuning_source("tuning-one"),
         tuning_source("tuning-two"),
     ];
-    let error = validate_vehicle_tuning_bundle(&rows, &verified)
+    let error = validate_vehicle_tuning_bundle(
+        &rows,
+        &verified,
+        &MissionReferenceCatalog::empty_for_tests(),
+    )
         .rejection("out-of-order tuning cores must fail")?;
     assert!(error.to_string().contains("verified source order"));
     Ok(())

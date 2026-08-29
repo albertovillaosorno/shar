@@ -74,6 +74,40 @@ fn resolves_physical_vehicle_and_symbolic_current() -> Result<(), String> {
 }
 
 #[test]
+fn optional_vehicle_lookup_distinguishes_missing_from_ambiguous()
+-> Result<(), String> {
+    let mut catalog = catalog();
+    let exact = catalog
+        .resolve_optional_vehicle("CLETU_V")?
+        .ok_or_else(|| "exact optional vehicle lookup disappeared".to_owned())?;
+    if exact.package_id() != "car-cletu-v"
+        || catalog.resolve_optional_vehicle("missing")?.is_some()
+    {
+        return Err(
+            "optional vehicle lookup lost exact/missing semantics".to_owned(),
+        );
+    }
+    let duplicate = catalog
+        .vehicles
+        .get("cletu_v")
+        .and_then(|entries| entries.first())
+        .cloned()
+        .ok_or_else(|| "test vehicle disappeared".to_owned())?;
+    catalog
+        .vehicles
+        .get_mut("cletu_v")
+        .ok_or_else(|| "test vehicle bucket disappeared".to_owned())?
+        .push(duplicate);
+    let Err(error) = catalog.resolve_optional_vehicle("CLETU_V") else {
+        return Err("ambiguous optional vehicle lookup was accepted".to_owned());
+    };
+    if !error.contains("ambiguous") {
+        return Err(format!("unexpected optional vehicle failure: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn preserves_character_costume_variant_and_canonical_participant()
 -> Result<(), String> {
     let reference = catalog().resolve_character("brn_unf")?;

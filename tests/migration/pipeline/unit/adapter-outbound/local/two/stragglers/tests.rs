@@ -208,6 +208,18 @@ fn rejects_undefined_windows_1252_text_stragglers() {
 }
 
 #[test]
+fn normalized_config_path_preserves_authored_filename() {
+    let output = super::normalized_json_path_at_root(
+        Path::new("normalized"),
+        Path::new("scripts/cars/CAR_A.con"),
+    );
+    assert_eq!(
+        output,
+        Path::new("normalized/scripts/cars/CAR_A.con.json"),
+    );
+}
+
+#[test]
 fn mission_v3_renderer_matches_semantic_preflight() -> Result<(), String> {
     let source = concat!(
         "SelectMission(\"m1\");\n",
