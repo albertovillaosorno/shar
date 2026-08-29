@@ -99,7 +99,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v13","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v14","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -258,9 +258,15 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
         value.get(field).and_then(serde_json::Value::as_u64)
     };
     if index(project, "raw_version_u32") != Some(10)
+        || project.get("runtime_version_consumed")
+            != Some(&serde_json::json!(false))
         || index(page, "raw_version_u32") != Some(11)
+        || page.get("runtime_version_consumed")
+            != Some(&serde_json::json!(false))
         || index(layer, "raw_version_u32") != Some(12)
         || index(screen, "raw_version_u32") != Some(13)
+        || screen.get("runtime_version_consumed")
+            != Some(&serde_json::json!(false))
         || page.get("runtime_index") != Some(&serde_json::Value::Null)
         || page.get("canvas").is_some()
         || page.get("raw_resolution_u32")
@@ -327,6 +333,8 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             ))
         || screen.get("owner_color_modulation").is_some()
         || index(text, "raw_version_u32") != Some(17)
+        || text.get("runtime_version_consumed")
+            != Some(&serde_json::json!(true))
         || index(text, "initial_index_i32") != Some(0)
     {
         return Err(format!(
@@ -612,16 +620,31 @@ fn ignored_authored_fields_are_not_promoted_to_runtime_state() {
     ] {
         let mut row = serde_json::Map::new();
         add_runtime_field_consumption(kind, &mut row);
-        assert_eq!(row.len(), expected.len(), "unexpected fields for {kind}");
+        assert_eq!(
+            row.len(),
+            expected.len() + 1,
+            "unexpected fields for {kind}",
+        );
+        assert_eq!(
+            row.get("runtime_version_consumed"),
+            Some(&serde_json::json!(kind == "scrooby_multi_text")),
+        );
         for field in expected {
             assert_eq!(row.get(*field), Some(&serde_json::json!(false)));
         }
     }
 
+    for kind in ["scrooby_project", "scrooby_page", "scrooby_screen"] {
+        let mut row = serde_json::Map::new();
+        add_runtime_field_consumption(kind, &mut row);
+        assert_eq!(
+            row.get("runtime_version_consumed"),
+            Some(&serde_json::json!(false)),
+        );
+        assert_eq!(row.len(), 1, "unexpected fields for {kind}");
+    }
+
     for kind in [
-        "scrooby_project",
-        "scrooby_page",
-        "scrooby_screen",
         "scrooby_string_text_bible",
         "scrooby_string_hardcoded",
     ] {
