@@ -1179,22 +1179,22 @@ fn validate_page_resources(components: &[Component]) -> PipelineOutcome<()> {
         }
     }
 
-    let images = identity_counts(
+    let images = identity_ordinals(
         components,
         "scrooby_image_resource",
         "name",
     )?;
-    let pure = identity_counts(
+    let pure = identity_ordinals(
         components,
         "scrooby_pure3d_resource",
         "name",
     )?;
-    let styles = identity_counts(
+    let styles = identity_ordinals(
         components,
         "scrooby_text_style_resource",
         "name",
     )?;
-    let bibles = identity_counts(
+    let bibles = identity_ordinals(
         components,
         "scrooby_text_bible_resource",
         "name",
@@ -1222,23 +1222,31 @@ fn validate_page_resources(components: &[Component]) -> PipelineOutcome<()> {
                 ));
             }
             match id {
-                "0x00018100" => require_unique(
+                "0x00018100" => require_page_resource(
+                    components,
                     &images,
+                    page.row.ordinal,
                     name,
                     "Scrooby page image resource",
                 )?,
-                "0x00018101" => require_unique(
+                "0x00018101" => require_page_resource(
+                    components,
                     &pure,
+                    page.row.ordinal,
                     name,
                     "Scrooby page Pure3D resource",
                 )?,
-                "0x00018104" => require_unique(
+                "0x00018104" => require_page_resource(
+                    components,
                     &styles,
+                    page.row.ordinal,
                     name,
                     "Scrooby page text style",
                 )?,
-                "0x00018105" => require_unique(
+                "0x00018105" => require_page_resource(
+                    components,
                     &bibles,
+                    page.row.ordinal,
                     name,
                     "Scrooby page text bible",
                 )?,
@@ -1249,6 +1257,29 @@ fn validate_page_resources(components: &[Component]) -> PipelineOutcome<()> {
                 },
             }
         }
+    }
+    Ok(())
+}
+
+fn require_page_resource(
+    components: &[Component],
+    identities: &BTreeMap<String, Vec<usize>>,
+    page_ordinal: usize,
+    reference: &str,
+    label: &str,
+) -> PipelineOutcome<()> {
+    let target_ordinal = resolve_unique_ordinal(identities, reference, label)?;
+    let target = components
+        .iter()
+        .find(|component| component.row.ordinal == target_ordinal)
+        .ok_or_else(|| PipelineError::new("Scrooby page resource is missing"))?;
+    if target.row.parent_ordinal != Some(page_ordinal) {
+        return Err(PipelineError::new(
+            concat!(
+                "Scrooby page resource declaration disagrees ",
+                "with resource ancestry",
+            ),
+        ));
     }
     Ok(())
 }
