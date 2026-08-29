@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v16";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v14";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -202,7 +202,6 @@ fn add_semantics(
     project_resolution: [u32; 2],
     row: &mut Map<String, Value>,
 ) -> PipelineOutcome<()> {
-    add_authored_name(&component.kind, &component.payload, row)?;
     add_raw_version(&component.kind, &component.payload, row)?;
     add_runtime_field_consumption(&component.kind, row);
     match component.kind.as_str() {
@@ -287,57 +286,10 @@ fn add_semantics(
             add_bounded_alignment_policy("scrooby_pure3d_object", row);
         },
         "scrooby_polygon" => add_polygon(&component.payload, row)?,
-        "scrooby_string_text_bible" => {
-            let _previous = row.insert(
-                "text_source_kind".to_owned(),
-                Value::String("text-bible-reference".to_owned()),
-            );
-            let _previous = row.insert(
-                "authored_bible_name".to_owned(),
-                json!(required_string(&component.payload, "bible_name")?),
-            );
-            let _previous = row.insert(
-                "authored_string_id".to_owned(),
-                json!(required_string(&component.payload, "string_id")?),
-            );
-        },
-        "scrooby_string_hardcoded" => {
-            let _previous = row.insert(
-                "text_source_kind".to_owned(),
-                Value::String("hardcoded".to_owned()),
-            );
-            let _previous = row.insert(
-                "authored_value".to_owned(),
-                json!(required_string(&component.payload, "value")?),
-            );
-        },
+        "scrooby_string_text_bible" | "scrooby_string_hardcoded" => {},
         _ => {
             return Err(PipelineError::new("unsupported Scrooby layout kind"));
         },
-    }
-    Ok(())
-}
-
-fn add_authored_name(
-    kind: &str,
-    payload: &Value,
-    row: &mut Map<String, Value>,
-) -> PipelineOutcome<()> {
-    if matches!(
-        kind,
-        "scrooby_page"
-            | "scrooby_screen"
-            | "scrooby_layer"
-            | "scrooby_group"
-            | "scrooby_multi_sprite"
-            | "scrooby_multi_text"
-            | "scrooby_pure3d_object"
-            | "scrooby_polygon"
-    ) {
-        let _previous = row.insert(
-            "authored_name".to_owned(),
-            json!(required_string(payload, "name")?),
-        );
     }
     Ok(())
 }

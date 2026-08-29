@@ -36,9 +36,9 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
-    Component, add_authored_name, add_bounded_alignment_policy,
-    add_multi_text, add_owner_color_policy, add_polygon,
-    add_runtime_field_consumption, add_semantics, collect_package_layout,
+    add_bounded_alignment_policy, add_multi_text, add_owner_color_policy,
+    add_polygon, add_runtime_field_consumption,
+    collect_package_layout,
     horizontal_justification,
     packed_rgba_u8, publish_rendered, screen_i32, semantic_i32,
     vertical_justification,
@@ -99,7 +99,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v16","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v14","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -177,10 +177,7 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             1,
             "scrooby_page",
             "page",
-            concat!(
-                r#"{"schema":"scrooby_page","name":"Main\\x00","#,
-                r#""version":11,"resolution":[640,480]}"#,
-            ),
+            r#"{"schema":"scrooby_page","version":11,"resolution":[640,480]}"#,
         )?,
         write_component(
             &root,
@@ -197,8 +194,7 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             "scrooby_layer",
             "layer",
             concat!(
-                r#"{"schema":"scrooby_layer","name":"Layer\\x00","#,
-                r#""version":12,"visible":1,"#,
+                r#"{"schema":"scrooby_layer","version":12,"visible":1,"#,
                 r#""editable":1,"alpha":255}"#,
             ),
         )?,
@@ -209,8 +205,7 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             "scrooby_multi_text",
             "text",
             concat!(
-                r#"{"schema":"scrooby_multi_text","name":"Title\\x00","#,
-                r#""position":[0,0],"#,
+                r#"{"schema":"scrooby_multi_text","position":[0,0],"#,
                 r#""dimensions":[100,20],"justification":[0,2],"#,
                 r#""color":4294967295,"translucency":0,"rotation":0,"#,
                 r#""version":17,"shadow_enabled":0,"shadow_color":0,"#,
@@ -223,7 +218,7 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             5,
             "scrooby_string_hardcoded",
             "string",
-            r#"{"schema":"scrooby_string_hardcoded","value":"Apply\\x00"}"#,
+            r#"{"schema":"scrooby_string_hardcoded"}"#,
         )?,
         write_component(
             &root,
@@ -231,7 +226,7 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             1,
             "scrooby_screen",
             "screen",
-            r#"{"schema":"scrooby_screen","name":"Front\\x00","version":13}"#,
+            r#"{"schema":"scrooby_screen","version":13}"#,
         )?,
     ];
     let mut ledger = String::from(
@@ -657,79 +652,6 @@ fn ignored_authored_fields_are_not_promoted_to_runtime_state() {
         add_runtime_field_consumption(kind, &mut row);
         assert!(row.is_empty(), "unexpected ignored-field policy for {kind}");
     }
-}
-
-#[test]
-fn named_layout_rows_preserve_authored_name() -> Result<(), String> {
-    for kind in [
-        "scrooby_page",
-        "scrooby_screen",
-        "scrooby_layer",
-        "scrooby_group",
-        "scrooby_multi_sprite",
-        "scrooby_multi_text",
-        "scrooby_pure3d_object",
-        "scrooby_polygon",
-    ] {
-        let mut row = serde_json::Map::new();
-        let payload = serde_json::json!({"name": "Title\\x00"});
-        add_authored_name(kind, &payload, &mut row)
-            .map_err(|error| error.to_string())?;
-        if row.get("authored_name")
-            != Some(&serde_json::json!("Title\\x00"))
-        {
-            return Err(format!("{kind} lost its authored name: {row:?}"));
-        }
-    }
-    Ok(())
-}
-
-#[test]
-fn text_string_rows_preserve_authored_identity() -> Result<(), String> {
-    for (kind, payload, expected) in [
-        (
-            "scrooby_string_hardcoded",
-            serde_json::json!({"value": "Apply\\x00"}),
-            serde_json::json!({
-                "text_source_kind": "hardcoded",
-                "authored_value": "Apply\\x00",
-            }),
-        ),
-        (
-            "scrooby_string_text_bible",
-            serde_json::json!({
-                "bible_name": "srr2",
-                "string_id": "MISSION_OBJECTIVE\\x00",
-            }),
-            serde_json::json!({
-                "text_source_kind": "text-bible-reference",
-                "authored_bible_name": "srr2",
-                "authored_string_id": "MISSION_OBJECTIVE\\x00",
-            }),
-        ),
-    ] {
-        let component = Component {
-            ordinal: 1,
-            parent_ordinal: Some(0),
-            kind: kind.to_owned(),
-            payload,
-        };
-        let mut row = serde_json::Map::new();
-        add_semantics(&component, [640, 480], &mut row)
-            .map_err(|error| error.to_string())?;
-        let observed = serde_json::Value::Object(row);
-        let expected = expected.as_object().ok_or_else(|| {
-            "expected string semantics are not an object".to_owned()
-        })?;
-        for (field, value) in expected {
-            if observed.get(field) != Some(value) {
-                return Err(format!(
-                    "{kind} lost {field}: observed={observed}"
-                ));
-            }
-        }
-    }
-    Ok(())
 }
 
 #[test]
