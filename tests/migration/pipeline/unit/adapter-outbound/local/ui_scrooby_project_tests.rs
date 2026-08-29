@@ -31,6 +31,7 @@
 
 //! Scrooby semantic-preflight unit regressions.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -38,6 +39,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use super::{
     preflight_scrooby_package, publish_scrooby_binding_catalog,
     PhaseThreePackageIndex, bind_scrooby_joined_image_entities,
+    bind_scrooby_paired_image_entities, paired_ui_screen_sprite_subcategory,
     resolve_exact_image_source, resolve_exact_joined_sprite_ordinal,
     resolve_owner_text_style_inventory, scrooby_resource_package_root,
     trim_padding, validate_scrooby_resource_inventory_kinds,
@@ -1234,6 +1236,107 @@ fn joined_image_binding_targets_owner_sprite_entity() -> TestResult {
         return Err(format!("unexpected joined image bindings: {resolved:?}"));
     }
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn paired_ui_screen_image_binding_targets_exact_counterpart() -> TestResult {
+    if paired_ui_screen_sprite_subcategory(
+        "ui-screens/scene-layouts/in-game/level-01",
+    ) != Some("ui-screens/sprite-layouts/in-game/level-01".to_owned())
+        || paired_ui_screen_sprite_subcategory(
+            "ui-screens/sprite-layouts/in-game/level-01",
+        )
+        .is_some()
+        || paired_ui_screen_sprite_subcategory(
+            "language/ui-text/scene-layouts",
+        )
+        .is_some()
+    {
+        return Err("Scrooby paired subcategory mapping drifted".to_owned());
+    }
+    let root = case_dir("paired-image-entity")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let resources = [super::ScroobyImageResourceSource {
+        ordinal: 4,
+        filename: "Icon.png".to_owned(),
+        joined_sprite_ordinal: None,
+    }];
+    let peer_sprites = BTreeMap::from([("Icon.png".to_owned(), vec![77])]);
+    bind_scrooby_paired_image_entities(
+        "peer-package",
+        &resources,
+        &peer_sprites,
+        &mut bindings,
+    )
+    .map_err(|error| error.to_string())?;
+    let resolved = bindings
+        .iter()
+        .filter(|binding| {
+            matches!(
+                binding.relation,
+                "page-image-resource" | "sprite-image-resource"
+            ) && binding.target_ordinal == 4
+        })
+        .collect::<Vec<_>>();
+    if resolved.is_empty()
+        || resolved.iter().any(|binding| {
+            binding.target_package_id.as_deref() != Some("peer-package")
+                || binding.target_package_match_basis
+                    != Some("paired-ui-screen-sprite-layout-exact")
+                || binding.target_entity_ordinal != Some(77)
+                || binding.target_entity_match_basis
+                    != Some("full-filename-exact")
+        })
+    {
+        return Err(format!("unexpected paired image bindings: {resolved:?}"));
+    }
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn paired_ui_screen_image_binding_keeps_missing_and_rejects_ambiguous(
+) -> TestResult {
+    let root = case_dir("paired-image-missing")?;
+    write_valid_package(&root)?;
+    let resources = [super::ScroobyImageResourceSource {
+        ordinal: 4,
+        filename: "Icon.png".to_owned(),
+        joined_sprite_ordinal: None,
+    }];
+    let mut missing = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    bind_scrooby_paired_image_entities(
+        "peer-package",
+        &resources,
+        &BTreeMap::new(),
+        &mut missing,
+    )
+    .map_err(|error| error.to_string())?;
+    if missing.iter().any(|binding| {
+        binding.target_ordinal == 4 && binding.target_entity_ordinal.is_some()
+    }) {
+        return Err("missing paired sprite was invented".to_owned());
+    }
+    let mut ambiguous = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let peer_sprites = BTreeMap::from([("Icon.png".to_owned(), vec![77, 78])]);
+    let result = bind_scrooby_paired_image_entities(
+        "peer-package",
+        &resources,
+        &peer_sprites,
+        &mut ambiguous,
+    );
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("ambiguous paired sprite was accepted".to_owned());
+    };
+    if !error.to_string().contains("inventory identity is ambiguous") {
+        return Err(format!("unexpected paired ambiguity error: {error}"));
+    }
     Ok(())
 }
 
