@@ -1943,6 +1943,42 @@ fn image_source_binding_rejects_ambiguous_direct_imports() -> TestResult {
 }
 
 #[test]
+fn rejects_padding_only_page_identity() -> TestResult {
+    let root = case_dir("padding-only-page")?;
+    write_valid_package(&root)?;
+    let page = root.join("components/scrooby_page/page.json");
+    let page_bytes = fs::read(&page).map_err(|error| error.to_string())?;
+    let mut page_payload = serde_json::from_slice::<serde_json::Value>(&page_bytes)
+        .map_err(|error| error.to_string())?;
+    page_payload["name"] = serde_json::json!("\\x00");
+    fs::write(
+        &page,
+        serde_json::to_vec(&page_payload).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    let screen = root.join("components/scrooby_screen/screen.json");
+    let screen_bytes = fs::read(&screen).map_err(|error| error.to_string())?;
+    let mut screen_payload =
+        serde_json::from_slice::<serde_json::Value>(&screen_bytes)
+            .map_err(|error| error.to_string())?;
+    screen_payload["page_names"] = serde_json::json!(["\\x00"]);
+    fs::write(
+        &screen,
+        serde_json::to_vec(&screen_payload).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("padding-only page identity passed preflight".to_owned());
+    };
+    if !error.to_string().contains("identity is empty") {
+        return Err(format!("unexpected empty identity error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn visible_nul_padding_is_removed_only_from_the_end() {
     assert_eq!(trim_padding("name\\x00\\x00"), "name");
     assert_eq!(trim_padding("name\0\0"), "name");
