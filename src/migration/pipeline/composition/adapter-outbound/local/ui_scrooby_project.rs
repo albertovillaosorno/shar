@@ -1400,7 +1400,15 @@ fn validate_screen_pages(components: &[Component]) -> PipelineOutcome<()> {
         .iter()
         .filter(|component| component.row.kind == "scrooby_screen")
     {
-        for page in required_string_array(&component.payload, "page_names")? {
+        let page_names =
+            required_string_array(&component.payload, "page_names")?;
+        let page_count = required_usize(&component.payload, "page_count")?;
+        if page_count != page_names.len() {
+            return Err(PipelineError::new(
+                "Scrooby screen page count disagrees with names",
+            ));
+        }
+        for page in page_names {
             require_unique(&pages, trim_padding(page), "Scrooby page")?;
         }
     }

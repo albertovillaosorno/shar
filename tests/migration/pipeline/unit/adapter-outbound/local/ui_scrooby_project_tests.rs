@@ -118,7 +118,7 @@ fn write_valid_package(root: &Path) -> TestResult {
         write_component(
             root, 3, 1, "scrooby_screen", "screen",
             concat!(
-                r#"{"schema":"scrooby_screen","#,
+                r#"{"schema":"scrooby_screen","page_count":1,"#,
                 r#""page_names":["Main"]}"#,
             ),
         )?,
@@ -1203,6 +1203,36 @@ fn rejects_declared_widget_without_published_child() -> TestResult {
     };
     if !error.to_string().contains("child inventory disagrees") {
         return Err(format!("unexpected missing-widget error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_screen_page_count_mismatch() -> TestResult {
+    let root = case_dir("screen-page-count")?;
+    write_valid_package(&root)?;
+    let screen = root.join("components/scrooby_screen/screen.json");
+    let payload =
+        fs::read_to_string(&screen).map_err(|error| error.to_string())?;
+    let changed = payload.replacen(
+        r#""page_count":1"#,
+        r#""page_count":2"#,
+        1,
+    );
+    if changed == payload {
+        return Err("screen page count fixture was not found".to_owned());
+    }
+    fs::write(&screen, changed).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("mismatched screen page count passed preflight".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("screen page count disagrees with names")
+    {
+        return Err(format!("unexpected screen page count error: {error}"));
     }
     Ok(())
 }
