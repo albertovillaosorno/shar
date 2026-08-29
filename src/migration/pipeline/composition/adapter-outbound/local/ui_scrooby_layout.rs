@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v10";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v11";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -203,10 +203,20 @@ fn add_semantics(
     row: &mut Map<String, Value>,
 ) -> PipelineOutcome<()> {
     match component.kind.as_str() {
-        "scrooby_project" | "scrooby_page" => {
+        "scrooby_project" => {
             let resolution =
                 required_u32_pair(&component.payload, "resolution")?;
             let _previous = row.insert("canvas".to_owned(), json!(resolution));
+        },
+        "scrooby_page" => {
+            let resolution =
+                required_u32_pair(&component.payload, "resolution")?;
+            let _previous =
+                row.insert("raw_resolution_u32".to_owned(), json!(resolution));
+            let _previous = row.insert(
+                "runtime_resolution_consumed".to_owned(),
+                json!(false),
+            );
         },
         "scrooby_screen" => {
             let _previous =
