@@ -48,7 +48,7 @@ use super::ui_scrooby_project::{
     ScroobyPageResourceLifecycle, ScroobyUiPreflight,
 };
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-resource-lifecycle.v4";
+const SCHEMA: &str = "shar-schoenwald.scrooby-resource-lifecycle.v5";
 const FILE: &str = "lifecycle.jsonl";
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -57,6 +57,7 @@ pub(super) struct ScroobyResourceLifecycleSummary {
     pub(super) direct_import_backed_preload_count: usize,
     pub(super) normalized_package_backed_preload_count: usize,
     pub(super) normalized_entity_backed_preload_count: usize,
+    pub(super) equivalent_content_backed_preload_count: usize,
     pub(super) fully_direct_import_backed_package_count: usize,
 }
 
@@ -77,6 +78,7 @@ fn summarize(
     let mut backed = 0usize;
     let mut package_backed = 0usize;
     let mut entity_backed = 0usize;
+    let mut content_backed = 0usize;
     let mut packages = BTreeMap::<&str, (usize, usize)>::new();
     for row in rows {
         let has_source = row.target_source_unit_id.is_some();
@@ -111,6 +113,16 @@ fn summarize(
         if has_entity {
             entity_backed = entity_backed.saturating_add(1);
         }
+        let has_content = row.target_content_sha256.is_some();
+        let has_content_basis = row.target_content_match_basis.is_some();
+        if has_content != has_content_basis {
+            return Err(PipelineError::new(
+                "Scrooby resource content backing identity is incomplete",
+            ));
+        }
+        if has_content {
+            content_backed = content_backed.saturating_add(1);
+        }
         let counts = packages.entry(&row.package_id).or_default();
         counts.0 = counts.0.saturating_add(1);
         if has_source {
@@ -127,6 +139,7 @@ fn summarize(
         direct_import_backed_preload_count: backed,
         normalized_package_backed_preload_count: package_backed,
         normalized_entity_backed_preload_count: entity_backed,
+        equivalent_content_backed_preload_count: content_backed,
         fully_direct_import_backed_package_count: fully_backed,
     })
 }
@@ -149,6 +162,8 @@ fn render_catalog(
             summary.normalized_package_backed_preload_count,
         "normalized_entity_backed_preload_count":
             summary.normalized_entity_backed_preload_count,
+        "equivalent_content_backed_preload_count":
+            summary.equivalent_content_backed_preload_count,
         "fully_direct_import_backed_package_count":
             summary.fully_direct_import_backed_package_count,
     }))
@@ -244,6 +259,32 @@ fn render_catalog(
             _ => {
                 return Err(PipelineError::new(
                     "Scrooby resource entity backing identity is incomplete",
+                ));
+            },
+        }
+        match (
+            &row.target_content_sha256,
+            row.target_content_match_basis,
+        ) {
+            (Some(sha256), Some(match_basis)) => {
+                let object = value.as_object_mut().ok_or_else(|| {
+                    PipelineError::new(
+                        "Scrooby resource lifecycle row is not an object",
+                    )
+                })?;
+                let _previous = object.insert(
+                    "target_content_sha256".to_owned(),
+                    json!(sha256),
+                );
+                let _previous = object.insert(
+                    "target_content_match_basis".to_owned(),
+                    json!(match_basis),
+                );
+            },
+            (None, None) => {},
+            _ => {
+                return Err(PipelineError::new(
+                    "Scrooby resource content backing identity is incomplete",
                 ));
             },
         }

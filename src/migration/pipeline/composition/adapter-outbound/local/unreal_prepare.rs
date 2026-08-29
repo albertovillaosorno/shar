@@ -201,6 +201,12 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             Path::new(UI_RASTER_WORKSPACE_ROOT),
         )?;
     let verified_ui_raster_count = ui_raster_catalog.len();
+    let equivalent_content_scrooby_bindings =
+        super::ui_scrooby_project::bind_scrooby_equivalent_raster_content(
+            &mut scrooby_preflight,
+            &index,
+            &ui_raster_catalog,
+        )?;
     let scrooby_joined_rasters =
         super::ui_scrooby_joined_raster::publish_scrooby_joined_raster_catalog(
             &index,
@@ -264,9 +270,10 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
                 "joined Scrooby sprite rasters across {} packages, and {} ",
                 "verified Scrooby projects with {} resolved bindings, ",
                 "{} direct-import-backed bindings, {} normalized-entity-",
-                "backed bindings, {} layout rows, and {} page-owned resource ",
-                "preloads ({} direct-import-backed; {} normalized-package-",
-                "backed; {} normalized-entity-backed; {} packages fully ",
+                "backed bindings, {} content-equivalent bindings, {} layout ",
+                "rows, and {} page-owned resource preloads ({} direct-import-",
+                "backed; {} normalized-package-backed; {} normalized-entity-",
+                "backed; {} content-equivalent; {} packages fully ",
                 "direct-import-",
                 "backed); published {} mission ",
                 "definitions to {} with plan bundle {}"
@@ -281,6 +288,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             verified_scrooby_bindings,
             direct_import_scrooby_bindings,
             scrooby_preflight.normalized_entity_binding_count(),
+            equivalent_content_scrooby_bindings,
             verified_scrooby_layout_rows,
             scrooby_resource_lifecycle.preload_count,
             scrooby_resource_lifecycle.direct_import_backed_preload_count,
@@ -288,6 +296,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
                 .normalized_package_backed_preload_count,
             scrooby_resource_lifecycle
                 .normalized_entity_backed_preload_count,
+            scrooby_resource_lifecycle
+                .equivalent_content_backed_preload_count,
             scrooby_resource_lifecycle
                 .fully_direct_import_backed_package_count,
             mission_definitions_jsonl.lines().count(),

@@ -39,7 +39,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
     preflight_scrooby_package, publish_scrooby_binding_catalog,
-    PhaseThreePackageIndex, bind_scrooby_joined_image_entities,
+    PhaseThreePackageIndex, bind_scrooby_equivalent_image_content,
+    bind_scrooby_joined_image_entities, equivalent_raster_sha256,
     bind_scrooby_language_aggregate_image_entities,
     bind_scrooby_paired_image_entities, language_p3djoin_resource_subcategory,
     language_p3djoin_sprite_ordinals, paired_ui_screen_sprite_subcategory,
@@ -47,6 +48,7 @@ use super::{
     resolve_owner_text_style_inventory, scrooby_resource_package_root,
     trim_padding, validate_scrooby_resource_inventory_kinds,
 };
+use crate::domain::UnrealUiRasterArtifactEvidence;
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -582,6 +584,113 @@ fn binding_catalog_publishes_public_source_identity_only() -> TestResult {
         return Err(format!(
             "unexpected public package binding: {package_resolved:?}"
         ));
+    }
+    Ok(())
+}
+
+#[test]
+fn binding_catalog_publishes_content_identity_without_package_identity(
+) -> TestResult {
+    let root = case_dir("binding-content-identity")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let sha256 = "a".repeat(64);
+    for binding in &mut bindings {
+        if matches!(
+            binding.relation,
+            "page-image-resource" | "sprite-image-resource"
+        ) {
+            binding.target_content_sha256 = Some(sha256.clone());
+            binding.target_content_match_basis =
+                Some("equivalent-scoped-ui-raster-sha256");
+        }
+    }
+    let preflight = super::ScroobyUiPreflight {
+        packages: vec![super::ScroobyPackageBindings {
+            package_id: "fixture-package".to_owned(),
+            bindings,
+            image_resources: vec![super::ScroobyImageResourceSource {
+                ordinal: 4,
+                filename: "private/authored/Icon.png".to_owned(),
+                joined_sprite_ordinal: None,
+            }],
+        }],
+    };
+    let rendered = preflight
+        .to_catalog_jsonl()
+        .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    if rendered.contains("private/authored") || rendered.contains("Icon.png") {
+        return Err("content binding leaked private image filename".to_owned());
+    }
+    let rows = rendered
+        .lines()
+        .map(serde_json::from_str::<serde_json::Value>)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?;
+    let header = rows
+        .first()
+        .ok_or_else(|| "content binding header is missing".to_owned())?;
+    if header
+        .get("equivalent_content_binding_count")
+        .and_then(serde_json::Value::as_u64)
+        != Some(2)
+    {
+        return Err(format!("unexpected content binding header: {header}"));
+    }
+    let resolved = rows
+        .iter()
+        .skip(1)
+        .filter(|row| row.get("target_content_sha256").is_some())
+        .collect::<Vec<_>>();
+    if resolved.len() != 2
+        || resolved.iter().any(|row| {
+            row.get("target_content_sha256")
+                .and_then(serde_json::Value::as_str)
+                != Some(sha256.as_str())
+                || row
+                    .get("target_content_match_basis")
+                    .and_then(serde_json::Value::as_str)
+                    != Some("equivalent-scoped-ui-raster-sha256")
+                || row.get("target_package_id").is_some()
+                || row.get("target_entity_ordinal").is_some()
+                || row.get("target_source_unit_id").is_some()
+        })
+    {
+        return Err(format!("unexpected content bindings: {resolved:?}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn binding_catalog_rejects_incomplete_content_identity() -> TestResult {
+    let root = case_dir("binding-content-incomplete")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let binding = bindings
+        .iter_mut()
+        .find(|binding| binding.relation == "page-image-resource")
+        .ok_or_else(|| "page image binding is missing".to_owned())?;
+    binding.target_content_sha256 = Some("a".repeat(64));
+    let preflight = super::ScroobyUiPreflight {
+        packages: vec![super::ScroobyPackageBindings {
+            package_id: "fixture-package".to_owned(),
+            bindings,
+            image_resources: Vec::new(),
+        }],
+    };
+    let result = preflight.to_catalog_jsonl();
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("incomplete content binding was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("equivalent-content binding is incomplete")
+    {
+        return Err(format!("unexpected content binding error: {error}"));
     }
     Ok(())
 }
@@ -1171,6 +1280,90 @@ fn pure3d_name_precedes_inventory_aliases() -> TestResult {
         .map_err(|error| error.to_string());
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     result
+}
+
+fn raster_evidence(
+    package_id: &str,
+    sha256: &str,
+) -> UnrealUiRasterArtifactEvidence {
+    UnrealUiRasterArtifactEvidence {
+        package_id: package_id.to_owned(),
+        path: format!("rasters/{package_id}.png"),
+        size_bytes: 1,
+        sha256: sha256.to_owned(),
+        source_revision: "b".repeat(64),
+        width: 1,
+        height: 1,
+        tile_count: 1,
+    }
+}
+
+#[test]
+fn equivalent_raster_content_requires_multiple_unanimous_candidates(
+) -> TestResult {
+    let same = [
+        raster_evidence("package-a", &"a".repeat(64)),
+        raster_evidence("package-b", &"a".repeat(64)),
+    ];
+    let expected_sha = "a".repeat(64);
+    if equivalent_raster_sha256(same.iter()).as_deref()
+        != Some(expected_sha.as_str())
+    {
+        return Err("equivalent raster SHA was not retained".to_owned());
+    }
+    if equivalent_raster_sha256(same[..1].iter()).is_some() {
+        return Err(
+            "single raster candidate was treated as equivalent".to_owned(),
+        );
+    }
+    let different = [
+        raster_evidence("package-a", &"a".repeat(64)),
+        raster_evidence("package-b", &"c".repeat(64)),
+    ];
+    if equivalent_raster_sha256(different.iter()).is_some() {
+        return Err(
+            "different raster candidates were treated as equal".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn equivalent_image_content_keeps_package_identity_unresolved() -> TestResult {
+    let root = case_dir("equivalent-image-content")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let sha256 = "d".repeat(64);
+    let count = bind_scrooby_equivalent_image_content(
+        &BTreeMap::from([(4, sha256.clone())]),
+        &mut bindings,
+    )
+    .map_err(|error| error.to_string())?;
+    let resolved = bindings
+        .iter()
+        .filter(|binding| {
+            matches!(
+                binding.relation,
+                "page-image-resource" | "sprite-image-resource"
+            ) && binding.target_ordinal == 4
+        })
+        .collect::<Vec<_>>();
+    if count != resolved.len()
+        || resolved.is_empty()
+        || resolved.iter().any(|binding| {
+            binding.target_source_unit_id.is_some()
+                || binding.target_package_id.is_some()
+                || binding.target_entity_ordinal.is_some()
+                || binding.target_content_sha256.as_deref() != Some(&sha256)
+                || binding.target_content_match_basis
+                    != Some("equivalent-scoped-ui-raster-sha256")
+        })
+    {
+        return Err(format!("unexpected content-only bindings: {resolved:?}"));
+    }
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    Ok(())
 }
 
 #[test]
