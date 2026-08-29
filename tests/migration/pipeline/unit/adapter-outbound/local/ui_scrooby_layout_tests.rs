@@ -98,7 +98,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v7","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v8","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -272,6 +272,11 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             != Some(&serde_json::json!(false))
         || text.get("runtime_outline_enabled")
             != Some(&serde_json::json!(false))
+        || text.get("runtime_frame_normalization")
+            != Some(&serde_json::json!(
+                "position-and-bounds-both-axes-divide-by-project-width"
+            ))
+        || index(text, "runtime_frame_denominator_u32") != Some(640)
         || page.get("owner_color_modulation").is_some()
         || layer.get("owner_color_restore")
             != Some(&serde_json::json!("original-after-display"))
@@ -289,6 +294,45 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
         ));
     }
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn layout_rejects_zero_project_resolution() -> TestResult {
+    for (label, resolution) in [
+        ("zero-project-width", [0, 480]),
+        ("zero-project-height", [640, 0]),
+    ] {
+        let root = case_dir(label)?;
+        let project = write_component(
+            &root,
+            1,
+            0,
+            "scrooby_project",
+            "project",
+            &format!(
+                r#"{{"schema":"scrooby_project","resolution":[{},{}]}}"#,
+                resolution[0], resolution[1],
+            ),
+        )?;
+        let ledger = format!(
+            r#"{{"schema":"p3d.package.v1","component_count":1}}
+{project}
+"#
+        );
+        fs::write(root.join("components.jsonl"), ledger)
+            .map_err(|error| error.to_string())?;
+        let result = collect_package_layout(&root);
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+        let Err(error) = result else {
+            return Err(format!("{label} was accepted"));
+        };
+        if error.to_string()
+            != "Scrooby layout project resolution is non-positive"
+        {
+            return Err(format!("unexpected {label} error: {error}"));
+        }
+    }
     Ok(())
 }
 
@@ -342,7 +386,8 @@ fn text_zero_shadow_offset_promotes_runtime_outline() -> Result<(), String> {
         "current_text": 2,
     });
     let mut row = serde_json::Map::new();
-    add_multi_text(&payload, &mut row).map_err(|error| error.to_string())?;
+    add_multi_text(&payload, 640, &mut row)
+        .map_err(|error| error.to_string())?;
     assert_eq!(
         row.get("authored_shadow_enabled"),
         Some(&serde_json::json!(true)),
@@ -387,7 +432,8 @@ fn text_nonzero_shadow_offset_remains_runtime_shadow() -> Result<(), String> {
         "current_text": 1,
     });
     let mut row = serde_json::Map::new();
-    add_multi_text(&payload, &mut row).map_err(|error| error.to_string())?;
+    add_multi_text(&payload, 640, &mut row)
+        .map_err(|error| error.to_string())?;
     assert_eq!(
         row.get("authored_shadow_offset_i32"),
         Some(&serde_json::json!([3, -2])),
