@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v4";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v5";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -166,7 +166,18 @@ fn add_semantics(
                 required_u32_pair(&component.payload, "resolution")?;
             let _previous = row.insert("canvas".to_owned(), json!(resolution));
         },
-        "scrooby_screen" => {},
+        "scrooby_screen" => {
+            let _previous =
+                row.insert("z_buffer_enabled".to_owned(), json!(false));
+            let _previous = row.insert(
+                "projection_mode".to_owned(),
+                Value::String("perspective".to_owned()),
+            );
+            let _previous = row.insert(
+                "cull_mode".to_owned(),
+                Value::String("none".to_owned()),
+            );
+        },
         "scrooby_layer" => {
             let visible = required_u32(&component.payload, "visible")?;
             if visible > 1 {
@@ -388,6 +399,14 @@ fn add_polygon(
     let _previous = row.insert(
         "render_topology".to_owned(),
         Value::String("triangle-fan".to_owned()),
+    );
+    let _previous = row.insert(
+        "blend_mode".to_owned(),
+        Value::String("alpha".to_owned()),
+    );
+    let _previous = row.insert(
+        "shade_mode".to_owned(),
+        Value::String("gouraud".to_owned()),
     );
     let _previous = row.insert("triangle_indices".to_owned(), json!(triangles));
     Ok(())

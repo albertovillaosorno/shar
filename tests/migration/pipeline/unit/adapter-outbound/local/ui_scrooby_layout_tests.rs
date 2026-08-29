@@ -96,7 +96,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v4","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v5","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -256,6 +256,10 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
         || index(string, "runtime_index") != Some(0)
         || index(screen, "source_sibling_index") != Some(1)
         || index(screen, "runtime_index") != Some(0)
+        || screen.get("z_buffer_enabled") != Some(&serde_json::json!(false))
+        || screen.get("projection_mode")
+            != Some(&serde_json::json!("perspective"))
+        || screen.get("cull_mode") != Some(&serde_json::json!("none"))
         || text.get("color_rgba_u8")
             != Some(&serde_json::json!([255, 255, 255, 255]))
         || text.get("shadow_color_rgba_u8")
@@ -334,6 +338,11 @@ fn polygon_layout_publishes_runtime_triangle_fan() -> Result<(), String> {
     assert_eq!(
         row.get("triangle_indices"),
         Some(&serde_json::json!([[0, 1, 2], [0, 2, 3]])),
+    );
+    assert_eq!(row.get("blend_mode"), Some(&serde_json::json!("alpha")));
+    assert_eq!(
+        row.get("shade_mode"),
+        Some(&serde_json::json!("gouraud")),
     );
     Ok(())
 }
