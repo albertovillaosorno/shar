@@ -198,6 +198,41 @@ fn write_valid_package(root: &Path) -> TestResult {
 }
 
 #[test]
+fn rejects_project_child_order_drift() -> TestResult {
+    let root = case_dir("project-child-order")?;
+    write_valid_package(&root)?;
+    let project = root.join("components/scrooby_project/project.json");
+    let bytes = fs::read(&project).map_err(|error| error.to_string())?;
+    let mut payload = serde_json::from_slice::<serde_json::Value>(&bytes)
+        .map_err(|error| error.to_string())?;
+    let children = payload
+        .get_mut("children")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or_else(|| "project child-order fixture is missing".to_owned())?;
+    if children.len() < 2 {
+        return Err("project child-order fixture is too short".to_owned());
+    }
+    children.swap(0, 1);
+    fs::write(
+        &project,
+        serde_json::to_vec(&payload).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("project child-order drift passed preflight".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("project child inventory disagrees with ledger ancestry")
+    {
+        return Err(format!("unexpected project child-order error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn validates_resource_target_inventory_cardinality() -> TestResult {
     for (kind, matches) in [
         ("scrooby_pure3d_resource", vec!["scenegraph"]),
