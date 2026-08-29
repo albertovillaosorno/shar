@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v3";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v4";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -372,6 +372,24 @@ fn add_polygon(
         .collect::<Vec<_>>();
     let _previous = row.insert("colors_raw_u32".to_owned(), json!(colors));
     let _previous = row.insert("colors_rgba_u8".to_owned(), json!(rgba));
+    let triangles = (2..points.len())
+        .map(|index| {
+            index
+                .checked_sub(1)
+                .map(|previous| [0, previous, index])
+                .ok_or_else(|| {
+                    PipelineError::new(concat!(
+                        "Scrooby polygon triangle fan ",
+                        "underflowed",
+                    ))
+                })
+        })
+        .collect::<PipelineOutcome<Vec<_>>>()?;
+    let _previous = row.insert(
+        "render_topology".to_owned(),
+        Value::String("triangle-fan".to_owned()),
+    );
+    let _previous = row.insert("triangle_indices".to_owned(), json!(triangles));
     Ok(())
 }
 
