@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v11";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v12";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -202,6 +202,7 @@ fn add_semantics(
     project_resolution: [u32; 2],
     row: &mut Map<String, Value>,
 ) -> PipelineOutcome<()> {
+    add_raw_version(&component.kind, &component.payload, row)?;
     match component.kind.as_str() {
         "scrooby_project" => {
             let resolution =
@@ -250,10 +251,6 @@ fn add_semantics(
         },
         "scrooby_group" => {
             let _previous = row.insert(
-                "raw_version_u32".to_owned(),
-                json!(required_u32(&component.payload, "version")?),
-            );
-            let _previous = row.insert(
                 "raw_alpha_u32".to_owned(),
                 json!(required_u32(&component.payload, "alpha")?),
             );
@@ -292,6 +289,31 @@ fn add_semantics(
         _ => {
             return Err(PipelineError::new("unsupported Scrooby layout kind"));
         },
+    }
+    Ok(())
+}
+
+fn add_raw_version(
+    kind: &str,
+    payload: &Value,
+    row: &mut Map<String, Value>,
+) -> PipelineOutcome<()> {
+    if matches!(
+        kind,
+        "scrooby_project"
+            | "scrooby_page"
+            | "scrooby_screen"
+            | "scrooby_layer"
+            | "scrooby_group"
+            | "scrooby_multi_sprite"
+            | "scrooby_multi_text"
+            | "scrooby_pure3d_object"
+            | "scrooby_polygon"
+    ) {
+        let _previous = row.insert(
+            "raw_version_u32".to_owned(),
+            json!(required_u32(payload, "version")?),
+        );
     }
     Ok(())
 }
@@ -367,10 +389,6 @@ fn add_multi_text(
     row: &mut Map<String, Value>,
 ) -> PipelineOutcome<()> {
     add_widget_frame(payload, project_resolution[0], row)?;
-    let _previous = row.insert(
-        "raw_version_u32".to_owned(),
-        json!(required_u32(payload, "version")?),
-    );
     let _previous = row.insert(
         "runtime_text_mode".to_owned(),
         Value::String("overlap".to_owned()),
