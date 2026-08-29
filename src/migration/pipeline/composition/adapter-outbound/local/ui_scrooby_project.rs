@@ -38,6 +38,7 @@
 
 //! Normalized Scrooby project semantic preflight.
 
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -51,7 +52,7 @@ use crate::domain::{
 };
 
 const BINDING_CATALOG_SCHEMA: &str =
-    "shar-schoenwald.scrooby-binding-catalog.v6";
+    "shar-schoenwald.scrooby-binding-catalog.v7";
 const BINDING_CATALOG_FILE: &str = "catalog.jsonl";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -173,6 +174,7 @@ impl ScroobyUiPreflight {
                 Some(
                     "owner-joined-sprite-exact"
                         | "paired-ui-screen-sprite-layout-exact"
+                        | "language-p3djoin-aggregate-exact"
                 )
             ) || binding.target_entity_match_basis
                 != Some("full-filename-exact")
@@ -478,6 +480,11 @@ pub(super) fn preflight_scrooby_ui_projects(
     }
     packages.sort_by(|left, right| left.package_id.cmp(&right.package_id));
     bind_scrooby_paired_ui_screen_image_entities(
+        index,
+        extracted_root,
+        &mut packages,
+    )?;
+    bind_scrooby_language_p3djoin_image_entities(
         index,
         extracted_root,
         &mut packages,
@@ -1792,6 +1799,15 @@ fn paired_ui_screen_sprite_subcategory(subcategory: &str) -> Option<String> {
     (!suffix.is_empty()).then(|| format!("ui-screens/sprite-layouts/{suffix}"))
 }
 
+fn language_p3djoin_resource_subcategory(
+    category: &str,
+    subcategory: &str,
+) -> Option<&'static str> {
+    (category == "language"
+        && subcategory == "language/ui-text/scene-layouts")
+        .then_some("ui-resources/language/art-assets/scene-layouts/language")
+}
+
 fn bind_scrooby_paired_ui_screen_image_entities(
     index: &PhaseThreePackageIndex,
     extracted_root: &Path,
@@ -1842,8 +1858,130 @@ fn bind_scrooby_paired_ui_screen_image_entities(
     Ok(())
 }
 
+fn bind_scrooby_language_p3djoin_image_entities(
+    index: &PhaseThreePackageIndex,
+    extracted_root: &Path,
+    packages: &mut [ScroobyPackageBindings],
+) -> PipelineOutcome<()> {
+    let rows_by_id = index
+        .packages()
+        .iter()
+        .map(|package| (package.package_id.as_str(), package))
+        .collect::<BTreeMap<_, _>>();
+    for package in packages {
+        let owner = rows_by_id.get(package.package_id.as_str()).ok_or_else(|| {
+            PipelineError::new("Scrooby preflight package is absent from index")
+        })?;
+        let Some(peer_subcategory) = language_p3djoin_resource_subcategory(
+            owner.category(),
+            owner.subcategory(),
+        ) else {
+            continue;
+        };
+        let peers = index
+            .packages()
+            .iter()
+            .filter(|candidate| {
+                candidate.category() == "ui-resources"
+                    && candidate.subcategory() == peer_subcategory
+            })
+            .collect::<Vec<_>>();
+        let [peer] = peers.as_slice() else {
+            return Err(PipelineError::new(
+                "Scrooby language project has no unique p3djoin aggregate",
+            ));
+        };
+        let peer_root = resolve_normalized_package_root(
+            extracted_root,
+            &peer.package_root,
+        )?;
+        let peer_sprites = language_p3djoin_sprite_ordinals(&peer_root)?;
+        bind_scrooby_language_aggregate_image_entities(
+            &peer.package_id,
+            &package.image_resources,
+            &peer_sprites,
+            &mut package.bindings,
+        )?;
+    }
+    Ok(())
+}
+
+fn language_p3djoin_sprite_ordinals(
+    root: &Path,
+) -> PipelineOutcome<BTreeMap<String, Vec<usize>>> {
+    const COMMAND: &str = "p3djoin -s -o ..\\language.p3d *.p3d";
+    let components_root = root.join("components");
+    let mut commands = Vec::new();
+    for row in read_ledger(root)?
+        .into_iter()
+        .filter(|row| row.kind == "history")
+    {
+        let path = resolve_under(&components_root, Path::new(&row.path))
+            .map_err(|_error| {
+                PipelineError::new(
+                    "Scrooby p3djoin history path escapes package",
+                )
+            })?;
+        let bytes = fs::read(&path)
+            .map_err(|error| io_error("read Scrooby p3djoin history", &error))?;
+        let payload = serde_json::from_slice::<Value>(&bytes).map_err(|error| {
+            PipelineError::new(format!(
+                "Scrooby p3djoin history JSON failed: {error}"
+            ))
+        })?;
+        if payload.get("schema").and_then(Value::as_str) != Some("history") {
+            return Err(PipelineError::new(
+                "Scrooby p3djoin history schema is invalid",
+            ));
+        }
+        for line in required_string_array(&payload, "history")? {
+            let line = trim_padding(line);
+            if line.starts_with("p3djoin -") {
+                commands.push(line.to_owned());
+            }
+        }
+    }
+    if commands.as_slice() != [COMMAND] {
+        return Err(PipelineError::new(
+            "Scrooby language aggregate lacks one exact p3djoin command",
+        ));
+    }
+    joined_sprite_ordinals(root)
+}
+
+fn bind_scrooby_language_aggregate_image_entities(
+    peer_package_id: &str,
+    image_resources: &[ScroobyImageResourceSource],
+    peer_sprites: &BTreeMap<String, Vec<usize>>,
+    bindings: &mut [ScroobyPackageBinding],
+) -> PipelineOutcome<()> {
+    bind_scrooby_external_image_entities(
+        peer_package_id,
+        "language-p3djoin-aggregate-exact",
+        image_resources,
+        peer_sprites,
+        bindings,
+    )
+}
+
 fn bind_scrooby_paired_image_entities(
     peer_package_id: &str,
+    image_resources: &[ScroobyImageResourceSource],
+    peer_sprites: &BTreeMap<String, Vec<usize>>,
+    bindings: &mut [ScroobyPackageBinding],
+) -> PipelineOutcome<()> {
+    bind_scrooby_external_image_entities(
+        peer_package_id,
+        "paired-ui-screen-sprite-layout-exact",
+        image_resources,
+        peer_sprites,
+        bindings,
+    )
+}
+
+fn bind_scrooby_external_image_entities(
+    peer_package_id: &str,
+    peer_package_match_basis: &'static str,
     image_resources: &[ScroobyImageResourceSource],
     peer_sprites: &BTreeMap<String, Vec<usize>>,
     bindings: &mut [ScroobyPackageBinding],
@@ -1890,8 +2028,7 @@ fn bind_scrooby_paired_image_entities(
             ));
         }
         binding.target_package_id = Some(peer_package_id.to_owned());
-        binding.target_package_match_basis =
-            Some("paired-ui-screen-sprite-layout-exact");
+        binding.target_package_match_basis = Some(peer_package_match_basis);
         binding.target_entity_ordinal = Some(*entity_ordinal);
         binding.target_entity_match_basis = Some("full-filename-exact");
     }

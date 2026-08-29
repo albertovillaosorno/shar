@@ -31,6 +31,7 @@
 
 //! Scrooby semantic-preflight unit regressions.
 
+
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -39,7 +40,9 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use super::{
     preflight_scrooby_package, publish_scrooby_binding_catalog,
     PhaseThreePackageIndex, bind_scrooby_joined_image_entities,
-    bind_scrooby_paired_image_entities, paired_ui_screen_sprite_subcategory,
+    bind_scrooby_language_aggregate_image_entities,
+    bind_scrooby_paired_image_entities, language_p3djoin_resource_subcategory,
+    language_p3djoin_sprite_ordinals, paired_ui_screen_sprite_subcategory,
     resolve_exact_image_source, resolve_exact_joined_sprite_ordinal,
     resolve_owner_text_style_inventory, scrooby_resource_package_root,
     trim_padding, validate_scrooby_resource_inventory_kinds,
@@ -1234,6 +1237,144 @@ fn joined_image_binding_targets_owner_sprite_entity() -> TestResult {
         })
     {
         return Err(format!("unexpected joined image bindings: {resolved:?}"));
+    }
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+fn write_language_p3djoin_aggregate(
+    root: &Path,
+    command: &str,
+) -> TestResult {
+    let history = serde_json::to_string(&serde_json::json!({
+        "schema": "history",
+        "history": [
+            "join tool version 1.0.5",
+            command,
+            "Run at August 13, 2003, 11:21:48 by test",
+        ],
+    }))
+    .map_err(|error| error.to_string())?;
+    let sprite = serde_json::to_string(&serde_json::json!({
+        "schema": "sprite",
+        "name": "Icon.png",
+    }))
+    .map_err(|error| error.to_string())?;
+    let rows = [
+        write_component(root, 1, 0, "history", "join", &history)?,
+        write_component(root, 2, 0, "sprite", "icon", &sprite)?,
+    ];
+    let mut ledger = format!(
+        "{}\n",
+        r#"{"schema":"p3d.package.v1","component_count":2}"#,
+    );
+    for row in rows {
+        ledger.push_str(&row);
+        ledger.push('\n');
+    }
+    fs::write(root.join("components.jsonl"), ledger)
+        .map_err(|error| error.to_string())
+}
+
+#[test]
+fn language_p3djoin_mapping_requires_exact_language_scene() -> TestResult {
+    let expected = "ui-resources/language/art-assets/scene-layouts/language";
+    if language_p3djoin_resource_subcategory(
+        "language",
+        "language/ui-text/scene-layouts",
+    ) != Some(expected)
+        || language_p3djoin_resource_subcategory(
+            "language",
+            "language/ui-text/sprite-layouts",
+        )
+        .is_some()
+        || language_p3djoin_resource_subcategory(
+            "ui-screens",
+            "language/ui-text/scene-layouts",
+        )
+        .is_some()
+    {
+        return Err("Scrooby language aggregate mapping drifted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn language_p3djoin_aggregate_requires_exact_join_evidence() -> TestResult {
+    let valid = case_dir("language-p3djoin-valid")?;
+    write_language_p3djoin_aggregate(
+        &valid,
+        r"p3djoin -s -o ..\language.p3d *.p3d",
+    )?;
+    let sprites = language_p3djoin_sprite_ordinals(&valid)
+        .map_err(|error| error.to_string())?;
+    if sprites.get("Icon.png").map(Vec::as_slice) != Some(&[2]) {
+        return Err(format!(
+            "unexpected language aggregate sprites: {sprites:?}"
+        ));
+    }
+    fs::remove_dir_all(&valid).map_err(|error| error.to_string())?;
+
+    let invalid = case_dir("language-p3djoin-invalid")?;
+    write_language_p3djoin_aggregate(
+        &invalid,
+        r"p3djoin -s -o ..\other.p3d *.p3d",
+    )?;
+    let result = language_p3djoin_sprite_ordinals(&invalid);
+    fs::remove_dir_all(&invalid).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err(
+            "unexpected language p3djoin command was accepted".to_owned(),
+        );
+    };
+    if !error.to_string().contains("one exact p3djoin command") {
+        return Err(format!("unexpected p3djoin evidence error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn language_aggregate_binding_targets_exact_joined_sprite() -> TestResult {
+    let root = case_dir("language-aggregate-image-entity")?;
+    write_valid_package(&root)?;
+    let mut bindings = preflight_scrooby_package(&root)
+        .map_err(|error| error.to_string())?;
+    let resources = [super::ScroobyImageResourceSource {
+        ordinal: 4,
+        filename: "Icon.png".to_owned(),
+        joined_sprite_ordinal: None,
+    }];
+    let peer_sprites = BTreeMap::from([("Icon.png".to_owned(), vec![73])]);
+    bind_scrooby_language_aggregate_image_entities(
+        "language-aggregate-package",
+        &resources,
+        &peer_sprites,
+        &mut bindings,
+    )
+    .map_err(|error| error.to_string())?;
+    let resolved = bindings
+        .iter()
+        .filter(|binding| {
+            matches!(
+                binding.relation,
+                "page-image-resource" | "sprite-image-resource"
+            ) && binding.target_ordinal == 4
+        })
+        .collect::<Vec<_>>();
+    if resolved.is_empty()
+        || resolved.iter().any(|binding| {
+            binding.target_package_id.as_deref()
+                != Some("language-aggregate-package")
+                || binding.target_package_match_basis
+                    != Some("language-p3djoin-aggregate-exact")
+                || binding.target_entity_ordinal != Some(73)
+                || binding.target_entity_match_basis
+                    != Some("full-filename-exact")
+        })
+    {
+        return Err(format!(
+            "unexpected language aggregate image bindings: {resolved:?}"
+        ));
     }
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     Ok(())
