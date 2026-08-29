@@ -1045,24 +1045,17 @@ fn validate_project_structure(components: &[Component]) -> PipelineOutcome<()> {
         .ok_or_else(|| {
             PipelineError::new("Scrooby project has no child inventory")
         })?;
-    let mut expected = BTreeMap::<&str, usize>::new();
-    for child in children {
-        let id = required_string(child, "id_hex")?;
-        let kind = match id {
-            "0x00018001" => "scrooby_screen",
-            "0x00018002" => "scrooby_page",
-            _ => {
-                return Err(PipelineError::new(
-                    "Scrooby project declares an unsupported child kind",
-                ));
-            },
-        };
-        let count = expected.entry(kind).or_default();
-        *count = count.checked_add(1).ok_or_else(|| {
-            PipelineError::new("Scrooby project child count overflowed")
-        })?;
-    }
-    let mut observed = BTreeMap::<&str, usize>::new();
+    let expected = children
+        .iter()
+        .map(|child| match required_string(child, "id_hex")? {
+            "0x00018001" => Ok("scrooby_screen"),
+            "0x00018002" => Ok("scrooby_page"),
+            _ => Err(PipelineError::new(
+                "Scrooby project declares an unsupported child kind",
+            )),
+        })
+        .collect::<PipelineOutcome<Vec<_>>>()?;
+    let mut observed = Vec::<(usize, &str)>::new();
     for component in components.iter().filter(|component| {
         matches!(
             component.row.kind.as_str(),
@@ -1074,13 +1067,13 @@ fn validate_project_structure(components: &[Component]) -> PipelineOutcome<()> {
                 "Scrooby project child has incorrect ancestry",
             ));
         }
-        let count = observed.entry(component.row.kind.as_str()).or_default();
-        *count = count.checked_add(1).ok_or_else(|| {
-            PipelineError::new(
-                "Scrooby observed project child count overflowed",
-            )
-        })?;
+        observed.push((component.row.ordinal, component.row.kind.as_str()));
     }
+    observed.sort_by_key(|(ordinal, _kind)| *ordinal);
+    let observed = observed
+        .into_iter()
+        .map(|(_ordinal, kind)| kind)
+        .collect::<Vec<_>>();
     if expected != observed {
         return Err(PipelineError::new(
             "Scrooby project child inventory disagrees with ledger ancestry",
