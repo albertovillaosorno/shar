@@ -665,6 +665,7 @@ fn polygon_screen_coordinates_truncate_toward_zero() -> Result<(), String> {
 fn polygon_layout_publishes_runtime_triangle_fan() -> Result<(), String> {
     let payload = serde_json::json!({
         "translucency": 0,
+        "point_count": 4,
         "points": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
         "colors": [
             4_294_967_295_u32,
@@ -704,9 +705,32 @@ fn polygon_layout_publishes_runtime_triangle_fan() -> Result<(), String> {
 }
 
 #[test]
+fn polygon_layout_rejects_declared_point_count_drift() -> Result<(), String> {
+    let payload = serde_json::json!({
+        "translucency": 0,
+        "point_count": 4,
+        "points": [[0, 0, 0], [10, 0, 0], [0, 10, 0]],
+        "colors": [
+            4_294_967_295_u32,
+            4_294_967_295_u32,
+            4_294_967_295_u32,
+        ],
+    });
+    let mut row = serde_json::Map::new();
+    let error = add_polygon(&payload, &mut row)
+        .expect_err("mismatched polygon point count was accepted");
+    let expected = "Scrooby polygon point count disagrees with points";
+    if error.to_string() != expected {
+        return Err(format!("unexpected polygon point-count error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn polygon_layout_publishes_runtime_rgba_channels() -> Result<(), String> {
     let payload = serde_json::json!({
         "translucency": 0,
+        "point_count": 3,
         "points": [[0, 0, 0], [10, 0, 0], [0, 10, 0]],
         "colors": [0xc011_2233_u32, 0xff44_5566_u32, 0x0077_8899_u32],
     });
