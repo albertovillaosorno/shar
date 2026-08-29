@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v8";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v9";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -112,7 +112,7 @@ fn collect_layout_catalog(
 
 fn collect_package_layout(root: &Path) -> PipelineOutcome<Vec<Value>> {
     let components = read_components(root)?;
-    let project_width = project_width(&components)?;
+    let project_resolution = project_resolution(&components)?;
     let by_ordinal = components
         .iter()
         .map(|component| (component.ordinal, component))
@@ -151,14 +151,14 @@ fn collect_package_layout(root: &Path) -> PipelineOutcome<Vec<Value>> {
         );
         let _previous =
             row.insert("runtime_index".to_owned(), json!(runtime_index));
-        add_semantics(component, project_width, &mut row)?;
+        add_semantics(component, project_resolution, &mut row)?;
         add_owner_color_policy(&component.kind, &mut row);
         rows.push(Value::Object(row));
     }
     Ok(rows)
 }
 
-fn project_width(components: &[Component]) -> PipelineOutcome<u32> {
+fn project_resolution(components: &[Component]) -> PipelineOutcome<[u32; 2]> {
     let project = components
         .iter()
         .find(|component| component.kind == "scrooby_project")
@@ -171,7 +171,7 @@ fn project_width(components: &[Component]) -> PipelineOutcome<u32> {
             "Scrooby layout project resolution is non-positive",
         ));
     }
-    Ok(resolution[0])
+    Ok(resolution)
 }
 
 fn add_owner_color_policy(kind: &str, row: &mut Map<String, Value>) {
@@ -199,7 +199,7 @@ fn add_owner_color_policy(kind: &str, row: &mut Map<String, Value>) {
 
 fn add_semantics(
     component: &Component,
-    project_width: u32,
+    project_resolution: [u32; 2],
     row: &mut Map<String, Value>,
 ) -> PipelineOutcome<()> {
     match component.kind.as_str() {
@@ -253,7 +253,11 @@ fn add_semantics(
             );
         },
         "scrooby_multi_sprite" => {
-            add_widget_frame(&component.payload, project_width, row)?;
+            add_widget_frame(
+                &component.payload,
+                project_resolution[0],
+                row,
+            )?;
             let _previous = row.insert("initial_index".to_owned(), json!(0));
             let _previous = row.insert(
                 "image_count".to_owned(),
@@ -261,10 +265,14 @@ fn add_semantics(
             );
         },
         "scrooby_multi_text" => {
-            add_multi_text(&component.payload, project_width, row)?;
+            add_multi_text(&component.payload, project_resolution, row)?;
         },
         "scrooby_pure3d_object" => {
-            add_widget_frame(&component.payload, project_width, row)?;
+            add_widget_frame(
+                &component.payload,
+                project_resolution[0],
+                row,
+            )?;
         },
         "scrooby_polygon" => add_polygon(&component.payload, row)?,
         "scrooby_string_text_bible" | "scrooby_string_hardcoded" => {},
@@ -277,13 +285,33 @@ fn add_semantics(
 
 fn add_multi_text(
     payload: &Value,
-    project_width: u32,
+    project_resolution: [u32; 2],
     row: &mut Map<String, Value>,
 ) -> PipelineOutcome<()> {
-    add_widget_frame(payload, project_width, row)?;
+    add_widget_frame(payload, project_resolution[0], row)?;
     let _previous = row.insert(
         "raw_version_u32".to_owned(),
         json!(required_u32(payload, "version")?),
+    );
+    let _previous = row.insert(
+        "runtime_text_mode".to_owned(),
+        Value::String("overlap".to_owned()),
+    );
+    let _previous = row.insert(
+        "runtime_alignment_box_width_scale_f64".to_owned(),
+        json!(2.0),
+    );
+    let _previous = row.insert(
+        "runtime_glyph_scale_policy".to_owned(),
+        Value::String("project-height-reciprocal-then-half".to_owned()),
+    );
+    let _previous = row.insert(
+        "runtime_glyph_scale_denominator_u32".to_owned(),
+        json!(project_resolution[1]),
+    );
+    let _previous = row.insert(
+        "runtime_alignment_metrics".to_owned(),
+        Value::String("resolved-font-current-string".to_owned()),
     );
     let shadow = required_u32(payload, "shadow_enabled")?;
     if shadow > 1 {
