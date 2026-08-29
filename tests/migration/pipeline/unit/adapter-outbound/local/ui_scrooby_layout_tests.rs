@@ -36,9 +36,9 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
-    add_bounded_alignment_policy, add_multi_text, add_owner_color_policy,
-    add_polygon, add_runtime_field_consumption,
-    collect_package_layout,
+    Component, add_bounded_alignment_policy, add_multi_text,
+    add_owner_color_policy, add_polygon, add_runtime_field_consumption,
+    add_semantics, collect_package_layout,
     horizontal_justification,
     packed_rgba_u8, publish_rendered, screen_i32, semantic_i32,
     vertical_justification,
@@ -99,7 +99,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v14","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v15","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -218,7 +218,7 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             5,
             "scrooby_string_hardcoded",
             "string",
-            r#"{"schema":"scrooby_string_hardcoded"}"#,
+            r#"{"schema":"scrooby_string_hardcoded","value":"Apply\\x00"}"#,
         )?,
         write_component(
             &root,
@@ -652,6 +652,54 @@ fn ignored_authored_fields_are_not_promoted_to_runtime_state() {
         add_runtime_field_consumption(kind, &mut row);
         assert!(row.is_empty(), "unexpected ignored-field policy for {kind}");
     }
+}
+
+#[test]
+fn text_string_rows_preserve_authored_identity() -> Result<(), String> {
+    for (kind, payload, expected) in [
+        (
+            "scrooby_string_hardcoded",
+            serde_json::json!({"value": "Apply\\x00"}),
+            serde_json::json!({
+                "text_source_kind": "hardcoded",
+                "authored_value": "Apply\\x00",
+            }),
+        ),
+        (
+            "scrooby_string_text_bible",
+            serde_json::json!({
+                "bible_name": "srr2",
+                "string_id": "MISSION_OBJECTIVE\\x00",
+            }),
+            serde_json::json!({
+                "text_source_kind": "text-bible-reference",
+                "authored_bible_name": "srr2",
+                "authored_string_id": "MISSION_OBJECTIVE\\x00",
+            }),
+        ),
+    ] {
+        let component = Component {
+            ordinal: 1,
+            parent_ordinal: Some(0),
+            kind: kind.to_owned(),
+            payload,
+        };
+        let mut row = serde_json::Map::new();
+        add_semantics(&component, [640, 480], &mut row)
+            .map_err(|error| error.to_string())?;
+        let observed = serde_json::Value::Object(row);
+        let expected = expected.as_object().ok_or_else(|| {
+            "expected string semantics are not an object".to_owned()
+        })?;
+        for (field, value) in expected {
+            if observed.get(field) != Some(value) {
+                return Err(format!(
+                    "{kind} lost {field}: observed={observed}"
+                ));
+            }
+        }
+    }
+    Ok(())
 }
 
 #[test]

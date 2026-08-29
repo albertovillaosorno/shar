@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v14";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v15";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -286,7 +286,30 @@ fn add_semantics(
             add_bounded_alignment_policy("scrooby_pure3d_object", row);
         },
         "scrooby_polygon" => add_polygon(&component.payload, row)?,
-        "scrooby_string_text_bible" | "scrooby_string_hardcoded" => {},
+        "scrooby_string_text_bible" => {
+            let _previous = row.insert(
+                "text_source_kind".to_owned(),
+                Value::String("text-bible-reference".to_owned()),
+            );
+            let _previous = row.insert(
+                "authored_bible_name".to_owned(),
+                json!(required_string(&component.payload, "bible_name")?),
+            );
+            let _previous = row.insert(
+                "authored_string_id".to_owned(),
+                json!(required_string(&component.payload, "string_id")?),
+            );
+        },
+        "scrooby_string_hardcoded" => {
+            let _previous = row.insert(
+                "text_source_kind".to_owned(),
+                Value::String("hardcoded".to_owned()),
+            );
+            let _previous = row.insert(
+                "authored_value".to_owned(),
+                json!(required_string(&component.payload, "value")?),
+            );
+        },
         _ => {
             return Err(PipelineError::new("unsupported Scrooby layout kind"));
         },
