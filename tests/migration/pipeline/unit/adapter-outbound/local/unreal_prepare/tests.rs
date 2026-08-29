@@ -40,7 +40,7 @@ use shar_sha256::digest_hex;
 use super::super::run_registry::{RunMode, RunRegistry};
 use super::{
     MISSION_DEFINITIONS_FILE, PLAN_INDEX_FILE, PUBLISHED_FILE_COUNT,
-    PUBLISHED_FILES, SUMMARY_FILE, SourceEvidenceInput,
+    PUBLISHED_FILES, SUMMARY_FILE, VEHICLE_TUNING_FILE, SourceEvidenceInput,
         ensure_generated_directory,
         open_stable_source,
         parallel_source_evidence,
@@ -49,6 +49,7 @@ use super::{
     retain_source_ids, source_worker_count_for, stream_source_digest,
     validate_audit, validate_generated_chain,
     validate_mission_definition_bundle, validate_public_identifier,
+    validate_vehicle_tuning_bundle,
     validate_publication_inventory, validate_relative_path,
     validate_rendered_output,
     verify_stable_source,
@@ -79,6 +80,27 @@ fn source(id: &str) -> UnrealSourceEvidence {
         unreal_import_relation: "none".to_owned(),
         future_normalization: "none".to_owned(),
     }
+}
+
+fn tuning_source(id: &str) -> UnrealSourceEvidence {
+    let mut source = source(id);
+    source.kind = "vehicle-tuning".to_owned();
+    source
+}
+
+fn tuning_core_row(source_id: &str) -> Result<String, String> {
+    let value = json!({
+        "commands": [],
+        "route_class": "vehicle-config",
+        "schema": "shar-schoenwald.vehicle-tuning-core.v1",
+        "source_bytes": 0,
+        "source_id": source_id,
+        "source_statements": [],
+    });
+    let mut text = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    text.push('\n');
+    Ok(text)
 }
 
 trait RejectionResult<T, E> {
@@ -701,7 +723,8 @@ fn clean_vehicle_tuning_json() -> Result<Vec<u8>, String> {
 fn vehicle_tuning_gate_rejects_forged_invocation_evidence()
 -> Result<(), String> {
     let clean = clean_vehicle_tuning_json()?;
-    super::validate_normalized_vehicle_tuning_source(
+    let core = super::validate_normalized_vehicle_tuning_source(
+        "tuning-source",
         "vehicle-tuning",
         "shar-schoenwald.straggler.config-script.v2",
         "json",
@@ -709,6 +732,9 @@ fn vehicle_tuning_gate_rejects_forged_invocation_evidence()
         &clean,
     )
     .map_err(|error| error.to_string())?;
+    if core.is_none() {
+        return Err("clean tuning gate discarded its semantic core".to_owned());
+    }
 
     let mut forged = serde_json::from_slice::<serde_json::Value>(&clean)
         .map_err(|error| error.to_string())?;
@@ -722,6 +748,7 @@ fn vehicle_tuning_gate_rejects_forged_invocation_evidence()
     let forged = serde_json::to_vec(&forged)
         .map_err(|error| error.to_string())?;
     let result = super::validate_normalized_vehicle_tuning_source(
+        "tuning-source",
         "vehicle-tuning",
         "shar-schoenwald.straggler.config-script.v2",
         "json",
@@ -783,6 +810,7 @@ fn vehicle_tuning_source_verification_rejects_same_size_semantic_drift()
         .map_err(|error| error.to_string())?;
         if verified.evidence.sha256 != digest_hex(&clean)
             || verified.mission_definition.is_some()
+            || verified.vehicle_tuning_core.is_none()
         {
             return Err(
                 "clean tuning source verification changed evidence".to_owned(),
@@ -839,6 +867,7 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
         != [
             SUMMARY_FILE,
             MISSION_DEFINITIONS_FILE,
+            VEHICLE_TUNING_FILE,
             PLAN_INDEX_FILE,
             "plans/asset-import-plan.json",
             "plans/asset-construction-plan.json",
@@ -850,9 +879,9 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
     {
         return Err("prepare-unreal publication inventory drifted".to_owned());
     }
-    if PUBLISHED_FILES.len() != 9 || PUBLISHED_FILE_COUNT != 10 {
+    if PUBLISHED_FILES.len() != 10 || PUBLISHED_FILE_COUNT != 11 {
         return Err(
-            "prepare-unreal must publish nine cache files plus one manifest"
+            "prepare-unreal must publish ten cache files plus one manifest"
                 .to_owned(),
         );
     }
@@ -2145,6 +2174,73 @@ fn mission_semantic_gate_rejects_missing_participant_package() -> Result<(), Str
             "unexpected participant reference failure: {rendered}"
         ));
     }
+    Ok(())
+}
+
+#[test]
+fn accepts_complete_vehicle_tuning_core_bundle() -> Result<(), String> {
+    let rows = vec![
+        tuning_core_row("tuning-one")?,
+        tuning_core_row("tuning-two")?,
+    ];
+    let verified = vec![
+        tuning_source("tuning-one"),
+        tuning_source("tuning-two"),
+    ];
+    let rendered = validate_vehicle_tuning_bundle(&rows, &verified)
+        .map_err(|error| error.to_string())?;
+    assert_eq!(rendered, rows.concat());
+    Ok(())
+}
+
+#[test]
+fn rejects_incomplete_vehicle_tuning_core_bundle() -> Result<(), String> {
+    let rows = vec![tuning_core_row("tuning-one")?];
+    let verified = vec![
+        tuning_source("tuning-one"),
+        tuning_source("tuning-two"),
+    ];
+    let error = validate_vehicle_tuning_bundle(&rows, &verified)
+        .rejection("missing tuning core must fail")?;
+    assert!(error.to_string().contains("incomplete"));
+    Ok(())
+}
+
+#[test]
+fn rejects_duplicate_vehicle_tuning_core_source() -> Result<(), String> {
+    let row = tuning_core_row("tuning-one")?;
+    let rows = vec![row.clone(), row];
+    let verified = vec![tuning_source("tuning-one")];
+    let error = validate_vehicle_tuning_bundle(&rows, &verified)
+        .rejection("duplicate tuning core source must fail")?;
+    assert!(error.to_string().contains("duplicates a source id"));
+    Ok(())
+}
+
+#[test]
+fn rejects_unverified_vehicle_tuning_core_source() -> Result<(), String> {
+    let rows = vec![tuning_core_row("tuning-one")?];
+    let verified = vec![source("tuning-one")];
+    let error = validate_vehicle_tuning_bundle(&rows, &verified)
+        .rejection("non-tuning verified source must fail")?;
+    assert!(error.to_string().contains("not verified tuning evidence"));
+    Ok(())
+}
+
+#[test]
+fn rejects_vehicle_tuning_cores_out_of_verified_source_order()
+-> Result<(), String> {
+    let rows = vec![
+        tuning_core_row("tuning-two")?,
+        tuning_core_row("tuning-one")?,
+    ];
+    let verified = vec![
+        tuning_source("tuning-one"),
+        tuning_source("tuning-two"),
+    ];
+    let error = validate_vehicle_tuning_bundle(&rows, &verified)
+        .rejection("out-of-order tuning cores must fail")?;
+    assert!(error.to_string().contains("verified source order"));
     Ok(())
 }
 

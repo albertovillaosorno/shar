@@ -113,14 +113,17 @@ use crate::workspace::{
 const SUMMARY_FILE: &str = "summary.json";
 /// Canonical mission definition-core bundle filename.
 const MISSION_DEFINITIONS_FILE: &str = "mission-definitions.jsonl";
+/// Canonical vehicle-tuning core bundle filename.
+const VEHICLE_TUNING_FILE: &str = "vehicle-tuning.jsonl";
 /// Canonical generated plan directory.
 const PLAN_ROOT: &str = "plans";
 /// Canonical generated plan-bundle index filename.
 const PLAN_INDEX_FILE: &str = "plans/index.json";
 /// Complete set of files published by one prepare-unreal transaction.
-const PUBLISHED_FILES: [&str; 9] = [
+const PUBLISHED_FILES: [&str; 10] = [
     SUMMARY_FILE,
     MISSION_DEFINITIONS_FILE,
+    VEHICLE_TUNING_FILE,
     PLAN_INDEX_FILE,
     "plans/asset-import-plan.json",
     "plans/asset-construction-plan.json",
@@ -180,6 +183,10 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     )?;
     let mission_definitions_jsonl = validate_mission_definition_bundle(
         &source_report.mission_definitions,
+        &source_report.evidence,
+    )?;
+    let vehicle_tuning_jsonl = validate_vehicle_tuning_bundle(
+        &source_report.vehicle_tuning_cores,
         &source_report.evidence,
     )?;
     let evidence = retain_importable_evidence(&index, source_report.evidence);
@@ -259,6 +266,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &manifest_jsonl,
         &summary_json,
         &mission_definitions_jsonl,
+        &vehicle_tuning_jsonl,
         &plan_bundle,
         &unreal_manifest_path,
     )?;
@@ -269,6 +277,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &manifest_jsonl,
             &summary_json,
             &mission_definitions_jsonl,
+            &vehicle_tuning_jsonl,
             &plan_bundle,
         ),
         note: format!(
@@ -283,8 +292,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
                 "backed; {} normalized-package-backed; {} normalized-entity-",
                 "backed; {} content-equivalent; {} packages fully ",
                 "direct-import-",
-                "backed); published {} mission ",
-                "definitions to {} with plan bundle {}"
+                "backed); published {} mission definitions and {} vehicle-",
+                "tuning cores to {} with plan bundle {}"
             ),
             unreal_manifest.source_count(),
             unreal_manifest.package_count(),
@@ -309,6 +318,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             scrooby_resource_lifecycle
                 .fully_direct_import_backed_package_count,
             mission_definitions_jsonl.lines().count(),
+            vehicle_tuning_jsonl.lines().count(),
             UNREAL_STAGING_WORKSPACE_ROOT,
             plan_bundle.index_revision(),
         ),
@@ -436,12 +446,14 @@ fn source_evidence(
 struct SourceEvidenceReport {
     evidence: Vec<UnrealSourceEvidence>,
     mission_definitions: Vec<String>,
+    vehicle_tuning_cores: Vec<String>,
 }
 
 /// One verified physical source and its optional selected mission definition.
 struct VerifiedSourceOutput {
     evidence: UnrealSourceEvidence,
     mission_definition: Option<String>,
+    vehicle_tuning_core: Option<String>,
 }
 
 /// One parsed manifest row awaiting physical source verification.
@@ -474,6 +486,7 @@ fn parallel_source_evidence(
         return Ok(SourceEvidenceReport {
             evidence: Vec::new(),
             mission_definitions: Vec::new(),
+            vehicle_tuning_cores: Vec::new(),
         });
     }
     check_cancellation()?;
@@ -536,17 +549,22 @@ fn parallel_source_evidence(
     collected.sort_by_key(|(position, _result)| *position);
     let mut evidence = Vec::with_capacity(collected.len());
     let mut mission_definitions = Vec::new();
+    let mut vehicle_tuning_cores = Vec::new();
     for (_position, result) in collected {
         let output = result?;
         evidence.push(output.evidence);
         if let Some(definition) = output.mission_definition {
             mission_definitions.push(definition);
         }
+        if let Some(core) = output.vehicle_tuning_core {
+            vehicle_tuning_cores.push(core);
+        }
     }
     progress.finish();
     Ok(SourceEvidenceReport {
         evidence,
         mission_definitions,
+        vehicle_tuning_cores,
     })
 }
 
@@ -860,7 +878,8 @@ fn read_source_evidence(
     mission_references: &MissionReferenceCatalog,
     mission_p3d_references: &MissionP3dReferenceCatalog,
 ) -> PipelineOutcome<VerifiedSourceOutput> {
-    let (actual_size, sha256, mission_definition) = match input.kind.as_str() {
+    let (actual_size, sha256, mission_definition, vehicle_tuning_core) =
+        match input.kind.as_str() {
         "mission-script" => {
             let bytes = read_stable_source_bytes(&input.resolved)?;
             let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
@@ -874,23 +893,24 @@ fn read_source_evidence(
                 mission_references,
                 mission_p3d_references,
             )?;
-            (actual_size, digest_hex(&bytes), mission_definition)
+            (actual_size, digest_hex(&bytes), mission_definition, None)
         },
         "vehicle-tuning" => {
             let bytes = read_stable_source_bytes(&input.resolved)?;
             let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
-            validate_normalized_vehicle_tuning_source(
+            let vehicle_tuning_core = validate_normalized_vehicle_tuning_source(
+                &input.id,
                 &input.kind,
                 &input.schema,
                 &input.file_extension,
                 &input.origin,
                 &bytes,
             )?;
-            (actual_size, digest_hex(&bytes), None)
+            (actual_size, digest_hex(&bytes), None, vehicle_tuning_core)
         },
         _ => {
             let (actual_size, sha256) = stream_source_digest(&input.resolved)?;
-            (actual_size, sha256, None)
+            (actual_size, sha256, None, None)
         },
     };
     if actual_size != input.expected_size {
@@ -918,6 +938,7 @@ fn read_source_evidence(
             future_normalization: input.future_normalization.clone(),
         },
         mission_definition,
+        vehicle_tuning_core,
     })
 }
 
@@ -1072,14 +1093,15 @@ fn source_worker_count_for(available: usize, source_count: usize) -> usize {
 }
 
 fn validate_normalized_vehicle_tuning_source(
+    source_id: &str,
     kind: &str,
     schema: &str,
     file_extension: &str,
     origin: &str,
     bytes: &[u8],
-) -> PipelineOutcome<()> {
+) -> PipelineOutcome<Option<String>> {
     if kind != "vehicle-tuning" {
-        return Ok(());
+        return Ok(None);
     }
     if schema != VEHICLE_TUNING_SCHEMA {
         return Err(PipelineError::new(
@@ -1096,12 +1118,16 @@ fn validate_normalized_vehicle_tuning_source(
             "normalized vehicle tuning source is not valid UTF-8",
         )
     })?;
-    drop(preflight_vehicle_tuning(text).map_err(|error| {
+    let evidence = preflight_vehicle_tuning(text).map_err(|error| {
         PipelineError::new(format!(
             "vehicle tuning semantic preflight failed: {error}"
         ))
-    })?);
-    Ok(())
+    })?;
+    super::vehicle_tuning_context::render_vehicle_tuning_core(
+        source_id,
+        &evidence,
+    )
+    .map(Some)
 }
 
 #[expect(
@@ -1325,6 +1351,148 @@ fn validate_normalized_mission_source(
 
 const fn display_position(index: usize) -> usize {
     index.saturating_add(1)
+}
+
+fn validate_vehicle_tuning_bundle(
+    rows: &[String],
+    verified: &[UnrealSourceEvidence],
+) -> PipelineOutcome<String> {
+    let verified_tuning_sources = verified
+        .iter()
+        .enumerate()
+        .filter(|(_index, source)| source.kind == "vehicle-tuning")
+        .map(|(index, source)| (source.id.as_str(), index))
+        .collect::<BTreeMap<_, _>>();
+    let mut source_ids = BTreeSet::new();
+    let mut previous_source_position = None;
+    let mut output = String::new();
+    for (index, row) in rows.iter().enumerate() {
+        if !row.ends_with(char::from(10)) || row.lines().count() != 1 {
+            return Err(PipelineError::new(
+                "vehicle tuning core row is not one canonical JSONL record",
+            ));
+        }
+        let label = format!(
+            "vehicle tuning core row {}",
+            display_position(index)
+        );
+        let object = parse_object(
+            row.trim_end_matches(char::from(10)),
+            &label,
+        )?;
+        if object.len() != 6
+            || required_string(&object, "schema", &label)?
+                != super::vehicle_tuning_context::VEHICLE_TUNING_CORE_SCHEMA
+        {
+            return Err(PipelineError::new(
+                "vehicle tuning core row has a noncanonical schema",
+            ));
+        }
+        let source_id = required_string(&object, "source_id", &label)?;
+        validate_public_identifier(
+            &source_id,
+            "vehicle tuning core source id",
+        )?;
+        if !source_ids.insert(source_id.clone()) {
+            return Err(PipelineError::new(
+                "vehicle tuning core bundle duplicates a source id",
+            ));
+        }
+        let source_position = verified_tuning_sources
+            .get(source_id.as_str())
+            .copied()
+            .ok_or_else(|| {
+                PipelineError::new(concat!(
+                    "vehicle tuning core source is not verified tuning ",
+                    "evidence",
+                ))
+            })?;
+        if previous_source_position
+            .is_some_and(|previous| source_position <= previous)
+        {
+            return Err(PipelineError::new(
+                "vehicle tuning core bundle is not in verified source order",
+            ));
+        }
+        previous_source_position = Some(source_position);
+        if !matches!(
+            required_string(&object, "route_class", &label)?.as_str(),
+            "vehicle-config" | "mission"
+        ) {
+            return Err(PipelineError::new(
+                "vehicle tuning core route provenance is invalid",
+            ));
+        }
+        let _source_bytes = required_u64(&object, "source_bytes", &label)?;
+        let statements = required_string_array(
+            &object,
+            "source_statements",
+            &label,
+        )?;
+        let commands = object
+            .get("commands")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "vehicle tuning core row is missing command array",
+                )
+            })?;
+        let mut previous_ordinal = 0_u64;
+        for (command_index, value) in commands.iter().enumerate() {
+            let command_label = format!(
+                "{label} command {}",
+                display_position(command_index)
+            );
+            let command = value.as_object().ok_or_else(|| {
+                PipelineError::new(format!(
+                    "{command_label} is not an object"
+                ))
+            })?;
+            if command.len() != 5 {
+                return Err(PipelineError::new(format!(
+                    "{command_label} has noncanonical fields"
+                )));
+            }
+            let ordinal = required_u64(command, "ordinal", &command_label)?;
+            if ordinal == 0
+                || ordinal <= previous_ordinal
+                || usize::try_from(ordinal).map_or(true, |ordinal| {
+                    ordinal > statements.len()
+                })
+            {
+                return Err(PipelineError::new(format!(
+                    "{command_label} has invalid source order"
+                )));
+            }
+            previous_ordinal = ordinal;
+            for field in ["name", "args_raw", "semantic_role"] {
+                let _value = required_string(command, field, &command_label)?;
+            }
+            let _arguments = required_string_array(
+                command,
+                "arguments",
+                &command_label,
+            )?;
+        }
+        let canonical = serde_json::to_string(&Value::Object(object))
+            .map_err(|_error| {
+                PipelineError::new(
+                    "vehicle tuning core canonical serialization failed",
+                )
+            })?;
+        if canonical != row.trim_end_matches(char::from(10)) {
+            return Err(PipelineError::new(
+                "vehicle tuning core row is not canonical JSON",
+            ));
+        }
+        output.push_str(row);
+    }
+    if source_ids.len() != verified_tuning_sources.len() {
+        return Err(PipelineError::new(
+            "vehicle tuning core bundle is incomplete",
+        ));
+    }
+    Ok(output)
 }
 
 fn validate_mission_definition_bundle(
@@ -2558,6 +2726,7 @@ fn published_byte_count(
     manifest: &str,
     summary: &str,
     mission_definitions: &str,
+    vehicle_tuning: &str,
     plans: &PlanBundle,
 ) -> u64 {
     let plan_bytes = plans
@@ -2571,6 +2740,7 @@ fn published_byte_count(
             .len()
             .saturating_add(summary.len())
             .saturating_add(mission_definitions.len())
+            .saturating_add(vehicle_tuning.len())
             .saturating_add(plan_bytes),
     )
     .unwrap_or(u64::MAX)
@@ -2580,6 +2750,7 @@ fn publish_staging(
     manifest: &str,
     summary: &str,
     mission_definitions: &str,
+    vehicle_tuning: &str,
     plans: &PlanBundle,
     manifest_destination: &Path,
 ) -> PipelineOutcome<()> {
@@ -2626,6 +2797,7 @@ fn publish_staging(
     for (relative_path, content) in [
         (SUMMARY_FILE, summary),
         (MISSION_DEFINITIONS_FILE, mission_definitions),
+        (VEHICLE_TUNING_FILE, vehicle_tuning),
         (PLAN_INDEX_FILE, plans.index_json()),
     ] {
         write_staged_file(&staging, relative_path, content)?;
