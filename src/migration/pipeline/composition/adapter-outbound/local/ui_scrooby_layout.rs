@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v5";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v6";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -151,9 +151,33 @@ fn collect_package_layout(root: &Path) -> PipelineOutcome<Vec<Value>> {
         let _previous =
             row.insert("runtime_index".to_owned(), json!(runtime_index));
         add_semantics(component, &mut row)?;
+        add_owner_color_policy(&component.kind, &mut row);
         rows.push(Value::Object(row));
     }
     Ok(rows)
+}
+
+fn add_owner_color_policy(kind: &str, row: &mut Map<String, Value>) {
+    if !matches!(
+        kind,
+        "scrooby_layer"
+            | "scrooby_group"
+            | "scrooby_multi_sprite"
+            | "scrooby_multi_text"
+            | "scrooby_polygon"
+    ) {
+        return;
+    }
+    let _previous = row.insert(
+        "owner_color_modulation".to_owned(),
+        Value::String(
+            "rgba-component-multiply-u8-floor-before-display".to_owned(),
+        ),
+    );
+    let _previous = row.insert(
+        "owner_color_restore".to_owned(),
+        Value::String("original-after-display".to_owned()),
+    );
 }
 
 fn add_semantics(
@@ -407,6 +431,16 @@ fn add_polygon(
     let _previous = row.insert(
         "shade_mode".to_owned(),
         Value::String("gouraud".to_owned()),
+    );
+    let _previous = row.insert(
+        "vertex_rgb_modulation".to_owned(),
+        Value::String("multiply-by-current-drawable-rgb-u8-floor".to_owned()),
+    );
+    let _previous = row.insert(
+        "stream_alpha_policy".to_owned(),
+        Value::String(
+            "uniform-min-vertex0-alpha-current-drawable-color-alpha".to_owned(),
+        ),
     );
     let _previous = row.insert("triangle_indices".to_owned(), json!(triangles));
     Ok(())

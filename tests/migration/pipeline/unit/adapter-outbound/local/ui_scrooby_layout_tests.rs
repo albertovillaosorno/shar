@@ -36,7 +36,8 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
-    add_polygon, collect_package_layout, horizontal_justification,
+    add_owner_color_policy, add_polygon, collect_package_layout,
+    horizontal_justification,
     packed_rgba_u8, publish_rendered, screen_i32, semantic_i32,
     vertical_justification,
 };
@@ -96,7 +97,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v5","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v6","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -264,6 +265,14 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             != Some(&serde_json::json!([255, 255, 255, 255]))
         || text.get("shadow_color_rgba_u8")
             != Some(&serde_json::json!([0, 0, 0, 0]))
+        || page.get("owner_color_modulation").is_some()
+        || layer.get("owner_color_restore")
+            != Some(&serde_json::json!("original-after-display"))
+        || text.get("owner_color_modulation")
+            != Some(&serde_json::json!(
+                "rgba-component-multiply-u8-floor-before-display"
+            ))
+        || screen.get("owner_color_modulation").is_some()
         || index(text, "raw_version_u32") != Some(17)
         || index(text, "initial_index_i32") != Some(0)
     {
@@ -311,6 +320,36 @@ fn justification_matches_scrooby_runtime_axes() -> Result<(), String> {
 }
 
 #[test]
+fn owner_color_policy_matches_runtime_render_consumers() {
+    for kind in [
+        "scrooby_layer",
+        "scrooby_group",
+        "scrooby_multi_sprite",
+        "scrooby_multi_text",
+        "scrooby_polygon",
+    ] {
+        let mut row = serde_json::Map::new();
+        add_owner_color_policy(kind, &mut row);
+        assert_eq!(
+            row.get("owner_color_modulation"),
+            Some(&serde_json::json!(
+                "rgba-component-multiply-u8-floor-before-display"
+            )),
+        );
+    }
+    for kind in [
+        "scrooby_project",
+        "scrooby_screen",
+        "scrooby_page",
+        "scrooby_pure3d_object",
+    ] {
+        let mut row = serde_json::Map::new();
+        add_owner_color_policy(kind, &mut row);
+        assert!(row.is_empty(), "unexpected color policy for {kind}");
+    }
+}
+
+#[test]
 fn polygon_screen_coordinates_truncate_toward_zero() -> Result<(), String> {
     assert_eq!(screen_i32(12.9).map_err(|e| e.to_string())?, 12);
     assert_eq!(screen_i32(-12.9).map_err(|e| e.to_string())?, -12);
@@ -343,6 +382,18 @@ fn polygon_layout_publishes_runtime_triangle_fan() -> Result<(), String> {
     assert_eq!(
         row.get("shade_mode"),
         Some(&serde_json::json!("gouraud")),
+    );
+    assert_eq!(
+        row.get("vertex_rgb_modulation"),
+        Some(&serde_json::json!(
+            "multiply-by-current-drawable-rgb-u8-floor"
+        )),
+    );
+    assert_eq!(
+        row.get("stream_alpha_policy"),
+        Some(&serde_json::json!(
+            "uniform-min-vertex0-alpha-current-drawable-color-alpha"
+        )),
     );
     Ok(())
 }
