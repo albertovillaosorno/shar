@@ -102,7 +102,11 @@ variants.
   measurements: alpha error median 0.10/255 and maximum 0.235/255, with
   premultiplied RGB median 1.95/255 and maximum 6.17/255.
 
-The remaining UI-image compiler boundary is artifact publication and package
-promotion. It must encode the assembled source-backed RGBA raster into a
-canonical importable artifact, bind that artifact to package provenance, and
-only then replace the current `SemanticSource` plan with `Texture2D` import.
+UI-image artifact publication and package promotion are now implemented. Commit
+`fdccee3d` publishes a verified `ui-raster-catalog.v1` with deterministic PNG
+artifacts, and `7d5c608a` extends the same compiler to provenance-bound P3DImage
+PNG tiles while preserving the legacy DDS orientation contract. Complete raster
+evidence now promotes eligible packages from `SemanticSource` to ready
+`Texture2D` imports, while partial, extra, stale, or mixed semantic packages
+continue to fail closed; this TODO remains open for the other structured UI,
+font, localization, tuning, and related compiler boundaries.
