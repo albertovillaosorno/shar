@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v9";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v10";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -258,6 +258,7 @@ fn add_semantics(
                 project_resolution[0],
                 row,
             )?;
+            add_bounded_alignment_policy("scrooby_multi_sprite", row);
             let _previous = row.insert("initial_index".to_owned(), json!(0));
             let _previous = row.insert(
                 "image_count".to_owned(),
@@ -266,6 +267,7 @@ fn add_semantics(
         },
         "scrooby_multi_text" => {
             add_multi_text(&component.payload, project_resolution, row)?;
+            add_bounded_alignment_policy("scrooby_multi_text", row);
         },
         "scrooby_pure3d_object" => {
             add_widget_frame(
@@ -273,6 +275,7 @@ fn add_semantics(
                 project_resolution[0],
                 row,
             )?;
+            add_bounded_alignment_policy("scrooby_pure3d_object", row);
         },
         "scrooby_polygon" => add_polygon(&component.payload, row)?,
         "scrooby_string_text_bible" | "scrooby_string_hardcoded" => {},
@@ -281,6 +284,71 @@ fn add_semantics(
         },
     }
     Ok(())
+}
+
+fn add_bounded_alignment_policy(
+    kind: &str,
+    row: &mut Map<String, Value>,
+) {
+    match kind {
+        "scrooby_multi_sprite" => {
+            let _previous = row.insert(
+                "runtime_alignment_metrics".to_owned(),
+                Value::String("resolved-current-sprite-bounds".to_owned()),
+            );
+            let _previous = row.insert(
+                "runtime_horizontal_alignment_policy".to_owned(),
+                Value::String(
+                    concat!(
+                        "left-zero-right-difference-",
+                        "centre-half-difference"
+                    )
+                    .to_owned(),
+                ),
+            );
+            let _previous = row.insert(
+                "runtime_vertical_alignment_policy".to_owned(),
+                Value::String(
+                    concat!(
+                        "bottom-zero-top-difference-",
+                        "centre-half-difference"
+                    )
+                    .to_owned(),
+                ),
+            );
+        },
+        "scrooby_multi_text" => {
+            let _previous = row.insert(
+                "runtime_horizontal_alignment_policy".to_owned(),
+                Value::String(
+                    concat!(
+                        "left-zero-right-box-minus-half-glyph-",
+                        "centre-half-box"
+                    )
+                    .to_owned(),
+                ),
+            );
+            let _previous = row.insert(
+                "runtime_vertical_alignment_policy".to_owned(),
+                Value::String(
+                    "centre-half-box-minus-glyph-otherwise-zero".to_owned(),
+                ),
+            );
+        },
+        "scrooby_pure3d_object" => {
+            let _previous = row.insert(
+                "runtime_justification_consumed".to_owned(),
+                json!(false),
+            );
+            let _previous = row.insert(
+                "runtime_alignment_policy".to_owned(),
+                Value::String(
+                    "none-render-uses-base-drawable-matrix".to_owned(),
+                ),
+            );
+        },
+        _ => {},
+    }
 }
 
 fn add_multi_text(
