@@ -1951,7 +1951,10 @@ fn rejects_padding_only_page_identity() -> TestResult {
     let mut page_payload =
         serde_json::from_slice::<serde_json::Value>(&page_bytes)
             .map_err(|error| error.to_string())?;
-    page_payload["name"] = serde_json::json!("\\x00");
+    let page_name = page_payload
+        .get_mut("name")
+        .ok_or_else(|| "page identity fixture is missing name".to_owned())?;
+    *page_name = serde_json::json!("\\x00");
     fs::write(
         &page,
         serde_json::to_vec(&page_payload).map_err(|error| error.to_string())?,
@@ -1962,7 +1965,10 @@ fn rejects_padding_only_page_identity() -> TestResult {
     let mut screen_payload =
         serde_json::from_slice::<serde_json::Value>(&screen_bytes)
             .map_err(|error| error.to_string())?;
-    screen_payload["page_names"] = serde_json::json!(["\\x00"]);
+    let page_names = screen_payload
+        .get_mut("page_names")
+        .ok_or_else(|| "screen fixture is missing page names".to_owned())?;
+    *page_names = serde_json::json!(["\\x00"]);
     fs::write(
         &screen,
         serde_json::to_vec(&screen_payload).map_err(|error| error.to_string())?,
