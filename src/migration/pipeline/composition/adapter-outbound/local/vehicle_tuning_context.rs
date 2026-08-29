@@ -13,7 +13,8 @@
 // - Must-Not:
 //   - Interpret gameplay units, map setters to Unreal fields, or emit assets.
 // - Allows:
-//   - Serialize preflighted tuning statements and command evidence exactly.
+//   - Serialize preflighted tuning statements, command evidence, and exact
+//     physical-vehicle package provenance when it resolves unambiguously.
 // - Split-When:
 //   - Native tuning application gains an independent lifecycle.
 // - Merge-When:
@@ -35,10 +36,11 @@ use serde_json::{Value, json};
 use crate::domain::package::vehicle_tuning::{
     VehicleTuningCommandInvocation, VehicleTuningEvidence,
 };
+use crate::domain::MissionVehicleCatalogReference;
 use crate::domain::{PipelineError, PipelineOutcome};
 
 pub(super) const VEHICLE_TUNING_CORE_SCHEMA: &str =
-    "shar-schoenwald.vehicle-tuning-core.v1";
+    "shar-schoenwald.vehicle-tuning-core.v2";
 
 /// Render one verified vehicle-tuning source as one canonical JSONL row.
 ///
@@ -49,14 +51,23 @@ pub(super) const VEHICLE_TUNING_CORE_SCHEMA: &str =
 pub(super) fn render_vehicle_tuning_core(
     source_id: &str,
     evidence: &VehicleTuningEvidence,
+    physical_vehicle: Option<&MissionVehicleCatalogReference>,
 ) -> PipelineOutcome<String> {
     validate_source_id(source_id)?;
+    let physical_vehicle = physical_vehicle.map_or(Value::Null, |vehicle| {
+        json!({
+            "package_id": vehicle.package_id(),
+            "package_subcategory": vehicle.package_subcategory(),
+            "source_id": vehicle.source_id(),
+        })
+    });
     let value = json!({
         "commands": evidence
             .invocations()
             .iter()
             .map(command_json)
             .collect::<Vec<_>>(),
+        "physical_vehicle": physical_vehicle,
         "route_class": evidence.route_class(),
         "schema": VEHICLE_TUNING_CORE_SCHEMA,
         "source_bytes": evidence.source_bytes(),

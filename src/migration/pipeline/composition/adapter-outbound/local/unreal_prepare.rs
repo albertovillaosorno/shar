@@ -69,7 +69,7 @@ use crate::domain::{
     MISSION_SCRIPT_SCHEMA, VEHICLE_TUNING_SCHEMA, MissionCameraCatalog,
     MissionInitializationBinding,
     MissionLocatorCatalog, MissionP3dReferenceCatalog, MissionReferenceCatalog,
-    PhaseThreePackageIndex,
+    MissionVehicleCatalogReference, PhaseThreePackageIndex,
         PipelineConfig,
         PipelineError,
         PipelineOutcome,
@@ -188,6 +188,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     let vehicle_tuning_jsonl = validate_vehicle_tuning_bundle(
         &source_report.vehicle_tuning_cores,
         &source_report.evidence,
+        &mission_references,
     )?;
     let evidence = retain_importable_evidence(&index, source_report.evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
@@ -900,11 +901,13 @@ fn read_source_evidence(
             let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
             let vehicle_tuning_core = validate_normalized_vehicle_tuning_source(
                 &input.id,
+                &input.path,
                 &input.kind,
                 &input.schema,
                 &input.file_extension,
                 &input.origin,
                 &bytes,
+                mission_references,
             )?;
             (actual_size, digest_hex(&bytes), None, vehicle_tuning_core)
         },
@@ -1092,13 +1095,19 @@ fn source_worker_count_for(available: usize, source_count: usize) -> usize {
         .min(source_count.max(1))
 }
 
+#[expect(
+    clippy::too_many_arguments,
+    reason = "Explicit tuning source identity fields keep validation auditable."
+)]
 fn validate_normalized_vehicle_tuning_source(
     source_id: &str,
+    source_path: &str,
     kind: &str,
     schema: &str,
     file_extension: &str,
     origin: &str,
     bytes: &[u8],
+    mission_references: &MissionReferenceCatalog,
 ) -> PipelineOutcome<Option<String>> {
     if kind != "vehicle-tuning" {
         return Ok(None);
@@ -1123,11 +1132,59 @@ fn validate_normalized_vehicle_tuning_source(
             "vehicle tuning semantic preflight failed: {error}"
         ))
     })?;
+    let physical_vehicle =
+        vehicle_tuning_physical_vehicle(source_path, mission_references)?;
     super::vehicle_tuning_context::render_vehicle_tuning_core(
         source_id,
         &evidence,
+        physical_vehicle.as_ref(),
     )
     .map(Some)
+}
+
+fn vehicle_tuning_physical_vehicle(
+    source_path: &str,
+    mission_references: &MissionReferenceCatalog,
+) -> PipelineOutcome<Option<MissionVehicleCatalogReference>> {
+    const SUFFIX: &str = ".con.json";
+
+    validate_relative_path(source_path)?;
+    let file_name = Path::new(source_path)
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| {
+            PipelineError::new(
+                concat!(
+                    "normalized vehicle tuning source path has no portable ",
+                    "file name",
+                ),
+            )
+        })?;
+    let lower = file_name.to_ascii_lowercase();
+    if !lower.ends_with(SUFFIX) || file_name.len() <= SUFFIX.len() {
+        return Err(PipelineError::new(
+            "normalized vehicle tuning source path is not a .con.json artifact",
+        ));
+    }
+    let source_id = file_name
+        .get(..file_name.len().saturating_sub(SUFFIX.len()))
+        .filter(|value| {
+            !value.is_empty()
+                && *value == value.trim()
+                && !value.chars().any(char::is_control)
+        })
+        .ok_or_else(|| {
+            PipelineError::new(
+                "normalized vehicle tuning source basename is malformed",
+            )
+        })?;
+    mission_references
+        .resolve_optional_vehicle(source_id)
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "vehicle tuning physical vehicle binding failed: {error}"
+            ))
+        })
 }
 
 #[expect(
@@ -1353,15 +1410,53 @@ const fn display_position(index: usize) -> usize {
     index.saturating_add(1)
 }
 
+fn validate_vehicle_tuning_physical_vehicle(
+    object: &Map<String, Value>,
+    expected: Option<&MissionVehicleCatalogReference>,
+    label: &str,
+) -> PipelineOutcome<()> {
+    let value = object.get("physical_vehicle").ok_or_else(|| {
+        PipelineError::new(format!(
+            "{label} is missing physical vehicle provenance"
+        ))
+    })?;
+    let Some(expected) = expected else {
+        if value.is_null() {
+            return Ok(());
+        }
+        return Err(PipelineError::new(format!(
+            "{label} invents a physical vehicle binding"
+        )));
+    };
+    let actual = value.as_object().ok_or_else(|| {
+        PipelineError::new(format!(
+            "{label} physical vehicle binding is not an object"
+        ))
+    })?;
+    if actual.len() != 3
+        || required_string(actual, "source_id", label)? != expected.source_id()
+        || required_string(actual, "package_id", label)?
+            != expected.package_id()
+        || required_string(actual, "package_subcategory", label)?
+            != expected.package_subcategory()
+    {
+        return Err(PipelineError::new(format!(
+            "{label} physical vehicle binding drifted"
+        )));
+    }
+    Ok(())
+}
+
 fn validate_vehicle_tuning_bundle(
     rows: &[String],
     verified: &[UnrealSourceEvidence],
+    mission_references: &MissionReferenceCatalog,
 ) -> PipelineOutcome<String> {
     let verified_tuning_sources = verified
         .iter()
         .enumerate()
         .filter(|(_index, source)| source.kind == "vehicle-tuning")
-        .map(|(index, source)| (source.id.as_str(), index))
+        .map(|(index, source)| (source.id.as_str(), (index, source)))
         .collect::<BTreeMap<_, _>>();
     let mut source_ids = BTreeSet::new();
     let mut previous_source_position = None;
@@ -1380,7 +1475,7 @@ fn validate_vehicle_tuning_bundle(
             row.trim_end_matches(char::from(10)),
             &label,
         )?;
-        if object.len() != 6
+        if object.len() != 7
             || required_string(&object, "schema", &label)?
                 != super::vehicle_tuning_context::VEHICLE_TUNING_CORE_SCHEMA
         {
@@ -1398,7 +1493,7 @@ fn validate_vehicle_tuning_bundle(
                 "vehicle tuning core bundle duplicates a source id",
             ));
         }
-        let source_position = verified_tuning_sources
+        let (source_position, verified_source) = verified_tuning_sources
             .get(source_id.as_str())
             .copied()
             .ok_or_else(|| {
@@ -1415,6 +1510,15 @@ fn validate_vehicle_tuning_bundle(
             ));
         }
         previous_source_position = Some(source_position);
+        let physical_vehicle = vehicle_tuning_physical_vehicle(
+            &verified_source.path,
+            mission_references,
+        )?;
+        validate_vehicle_tuning_physical_vehicle(
+            &object,
+            physical_vehicle.as_ref(),
+            &label,
+        )?;
         if !matches!(
             required_string(&object, "route_class", &label)?.as_str(),
             "vehicle-config" | "mission"

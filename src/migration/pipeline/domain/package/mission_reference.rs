@@ -15,8 +15,9 @@
 //   - Guess ambiguous locators, collapse authored character variants, or invent
 //     runtime participant policy.
 // - Allows:
-//   - Resolve exact source identities against the validated package index and
-//     retain symbolic runtime vehicle references explicitly.
+//   - Resolve exact source identities against the validated package index,
+//     expose optional physical-vehicle lookup, and retain symbolic runtime
+//     vehicle references explicitly.
 // - Split-When:
 //   - Locator, reward, or presentation catalogs gain independent namespaces.
 // - Merge-When:
@@ -416,6 +417,26 @@ impl MissionReferenceCatalog {
         })
     }
 
+    pub(crate) fn resolve_optional_vehicle(
+        &self,
+        source_id: &str,
+    ) -> Result<Option<MissionVehicleCatalogReference>, String> {
+        let key = source_id.to_ascii_lowercase();
+        let Some(entries) = self.vehicles.get(&key) else {
+            return Ok(None);
+        };
+        let [entry] = entries.as_slice() else {
+            return Err(
+                "mission vehicle source identity is ambiguous".to_owned()
+            );
+        };
+        Ok(Some(MissionVehicleCatalogReference {
+            source_id: source_id.to_owned(),
+            package_id: entry.package_id.clone(),
+            package_subcategory: entry.package_subcategory.clone(),
+        }))
+    }
+
     pub(crate) fn resolve_vehicle(
         &self,
         source_id: &str,
@@ -423,24 +444,12 @@ impl MissionReferenceCatalog {
         if source_id == "current" {
             return Ok(MissionVehicleReference::Current);
         }
-        let key = source_id.to_ascii_lowercase();
-        let Some(entries) = self.vehicles.get(&key) else {
-            return Err(
+        let reference = self
+            .resolve_optional_vehicle(source_id)?
+            .ok_or_else(|| {
                 "mission vehicle source identity has no package".to_owned()
-            );
-        };
-        let [entry] = entries.as_slice() else {
-            return Err(
-                "mission vehicle source identity is ambiguous".to_owned()
-            );
-        };
-        Ok(MissionVehicleReference::Catalog(
-            MissionVehicleCatalogReference {
-                source_id: source_id.to_owned(),
-                package_id: entry.package_id.clone(),
-                package_subcategory: entry.package_subcategory.clone(),
-            },
-        ))
+            })?;
+        Ok(MissionVehicleReference::Catalog(reference))
     }
 }
 

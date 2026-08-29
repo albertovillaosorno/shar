@@ -33,7 +33,7 @@
 use serde_json::json;
 
 use super::{VEHICLE_TUNING_CORE_SCHEMA, render_vehicle_tuning_core};
-use crate::domain::VehicleTuningEvidence;
+use crate::domain::{MissionReferenceCatalog, VehicleTuningEvidence};
 use crate::preflight_vehicle_tuning;
 
 fn normalized_tuning() -> Result<VehicleTuningEvidence, String> {
@@ -75,8 +75,12 @@ fn normalized_tuning() -> Result<VehicleTuningEvidence, String> {
 #[test]
 fn renders_exact_source_backed_tuning_core() -> Result<(), String> {
     let evidence = normalized_tuning()?;
-    let rendered = render_vehicle_tuning_core("tuning-source-01", &evidence)
-        .map_err(|error| error.to_string())?;
+    let rendered = render_vehicle_tuning_core(
+        "tuning-source-01",
+        &evidence,
+        None,
+    )
+    .map_err(|error| error.to_string())?;
     let value = serde_json::from_str::<serde_json::Value>(rendered.trim_end())
         .map_err(|error| error.to_string())?;
     let object = value
@@ -114,9 +118,56 @@ fn renders_exact_source_backed_tuning_core() -> Result<(), String> {
     {
         return Err("vehicle tuning core lost source evidence".to_owned());
     }
+    if !object
+        .get("physical_vehicle")
+        .is_some_and(serde_json::Value::is_null)
+    {
+        return Err(
+            "unbound tuning core invented a physical vehicle".to_owned(),
+        );
+    }
     if !rendered.ends_with('\n') || rendered.lines().count() != 1 {
         return Err(
             "vehicle tuning core is not one canonical JSONL row".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn renders_exact_physical_vehicle_binding() -> Result<(), String> {
+    let evidence = normalized_tuning()?;
+    let catalog = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let vehicle = catalog
+        .resolve_optional_vehicle("CAR_A")?
+        .ok_or_else(|| "vehicle fixture did not resolve".to_owned())?;
+    let rendered = render_vehicle_tuning_core(
+        "tuning-source-01",
+        &evidence,
+        Some(&vehicle),
+    )
+    .map_err(|error| error.to_string())?;
+    let value = serde_json::from_str::<serde_json::Value>(rendered.trim_end())
+        .map_err(|error| error.to_string())?;
+    let physical = value
+        .get("physical_vehicle")
+        .and_then(serde_json::Value::as_object)
+        .ok_or("bound tuning core lost physical vehicle")?;
+    if physical.get("source_id").and_then(serde_json::Value::as_str)
+            != Some("CAR_A")
+        || physical.get("package_id").and_then(serde_json::Value::as_str)
+            != Some("vehicle-car-a")
+        || physical
+            .get("package_subcategory")
+            .and_then(serde_json::Value::as_str)
+            != Some("cars/traffic-vehicles/car-a")
+    {
+        return Err(
+            "physical tuning binding drifted during rendering".to_owned(),
         );
     }
     Ok(())
