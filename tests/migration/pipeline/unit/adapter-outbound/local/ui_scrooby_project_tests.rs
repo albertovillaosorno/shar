@@ -1181,6 +1181,41 @@ fn rejects_layer_outside_page_ancestry() -> TestResult {
 }
 
 #[test]
+fn rejects_layout_child_order_drift() -> TestResult {
+    let root = case_dir("layout-child-order")?;
+    write_valid_package(&root)?;
+    let layer = root.join("components/scrooby_layer/layer.json");
+    let bytes = fs::read(&layer).map_err(|error| error.to_string())?;
+    let mut payload = serde_json::from_slice::<serde_json::Value>(&bytes)
+        .map_err(|error| error.to_string())?;
+    let children = payload
+        .get_mut("children")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or_else(|| "layout child-order fixture is missing".to_owned())?;
+    if children.len() < 2 {
+        return Err("layout child-order fixture is too short".to_owned());
+    }
+    children.swap(0, 1);
+    fs::write(
+        &layer,
+        serde_json::to_vec(&payload).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("layout child-order drift passed preflight".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("child inventory disagrees with ledger ancestry")
+    {
+        return Err(format!("unexpected child-order error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_declared_widget_without_published_child() -> TestResult {
     let root = case_dir("missing-widget")?;
     write_valid_package(&root)?;

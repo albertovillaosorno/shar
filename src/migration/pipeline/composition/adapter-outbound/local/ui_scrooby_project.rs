@@ -1274,7 +1274,7 @@ fn validate_layout_children(components: &[Component]) -> PipelineOutcome<()> {
         })
         .map(|component| component.row.ordinal)
         .collect::<BTreeSet<_>>();
-    let mut actual = BTreeMap::<usize, BTreeMap<&str, usize>>::new();
+    let mut actual = BTreeMap::<usize, Vec<(usize, &str)>>::new();
     for component in components {
         if !is_layout_child_kind(&component.row.kind) {
             continue;
@@ -1289,11 +1289,13 @@ fn validate_layout_children(components: &[Component]) -> PipelineOutcome<()> {
                 "Scrooby layout child has an unsupported owning parent",
             ));
         }
-        let counts = actual.entry(parent).or_default();
-        let count = counts.entry(component.row.kind.as_str()).or_default();
-        *count = count.checked_add(1).ok_or_else(|| {
-            PipelineError::new("Scrooby layout child count overflowed")
-        })?;
+        actual.entry(parent).or_default().push((
+            component.row.ordinal,
+            component.row.kind.as_str(),
+        ));
+    }
+    for children in actual.values_mut() {
+        children.sort_by_key(|(ordinal, _kind)| *ordinal);
     }
     for owner in components.iter().filter(|component| {
         owners.contains(&component.row.ordinal)
@@ -1307,18 +1309,21 @@ fn validate_layout_children(components: &[Component]) -> PipelineOutcome<()> {
                     "Scrooby layout owner has no child inventory",
                 )
             })?;
-        let mut expected = BTreeMap::<&str, usize>::new();
-        for child in children {
-            let id = required_string(child, "id_hex")?;
-            let kind = layout_child_kind(&owner.row.kind, id)?;
-            let count = expected.entry(kind).or_default();
-            *count = count.checked_add(1).ok_or_else(|| {
-                PipelineError::new("Scrooby declared child count overflowed")
-            })?;
-        }
+        let expected = children
+            .iter()
+            .map(|child| {
+                required_string(child, "id_hex")
+                    .and_then(|id| layout_child_kind(&owner.row.kind, id))
+            })
+            .collect::<PipelineOutcome<Vec<_>>>()?;
         let observed = actual
             .get(&owner.row.ordinal)
-            .cloned()
+            .map(|children| {
+                children
+                    .iter()
+                    .map(|(_ordinal, kind)| *kind)
+                    .collect::<Vec<_>>()
+            })
             .unwrap_or_default();
         if expected != observed {
             return Err(PipelineError::new(
@@ -1327,15 +1332,14 @@ fn validate_layout_children(components: &[Component]) -> PipelineOutcome<()> {
         }
         if owner.row.kind == "scrooby_multi_text" {
             let text_count = observed
-                .get("scrooby_string_text_bible")
-                .copied()
-                .unwrap_or(0)
-                .saturating_add(
-                    observed
-                        .get("scrooby_string_hardcoded")
-                        .copied()
-                        .unwrap_or(0),
-                );
+                .iter()
+                .filter(|kind| {
+                    matches!(
+                        **kind,
+                        "scrooby_string_text_bible" | "scrooby_string_hardcoded"
+                    )
+                })
+                .count();
             let current_text = required_usize(&owner.payload, "current_text")?;
             if current_text >= text_count {
                 return Err(PipelineError::new(
