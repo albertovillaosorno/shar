@@ -36,9 +36,9 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
-    add_bounded_alignment_policy, add_multi_text, add_owner_color_policy,
-    add_polygon, add_runtime_field_consumption,
-    collect_package_layout,
+    Component, add_bounded_alignment_policy, add_multi_text,
+    add_owner_color_policy, add_polygon, add_runtime_field_consumption,
+    add_semantics, collect_package_layout,
     horizontal_justification,
     packed_rgba_u8, publish_rendered, screen_i32, semantic_i32,
     vertical_justification,
@@ -652,6 +652,54 @@ fn ignored_authored_fields_are_not_promoted_to_runtime_state() {
         add_runtime_field_consumption(kind, &mut row);
         assert!(row.is_empty(), "unexpected ignored-field policy for {kind}");
     }
+}
+
+#[test]
+fn layout_rows_do_not_copy_authored_names_or_text() -> Result<(), String> {
+    for component in [
+        Component {
+            ordinal: 1,
+            parent_ordinal: None,
+            kind: "scrooby_page".to_owned(),
+            payload: serde_json::json!({
+                "name": "Title\\x00",
+                "version": 0,
+                "resolution": [640, 480],
+            }),
+        },
+        Component {
+            ordinal: 2,
+            parent_ordinal: Some(1),
+            kind: "scrooby_string_hardcoded".to_owned(),
+            payload: serde_json::json!({"value": "Apply\\x00"}),
+        },
+        Component {
+            ordinal: 3,
+            parent_ordinal: Some(1),
+            kind: "scrooby_string_text_bible".to_owned(),
+            payload: serde_json::json!({
+                "bible_name": "Body\\x00",
+                "string_id": "Title\\x00",
+            }),
+        },
+    ] {
+        let mut row = serde_json::Map::new();
+        add_semantics(&component, [640, 480], &mut row)
+            .map_err(|error| error.to_string())?;
+        let copied = row.values().filter_map(serde_json::Value::as_str).any(
+            |value| matches!(
+                value,
+                "Title\\x00" | "Apply\\x00" | "Body\\x00"
+            ),
+        );
+        if copied {
+            return Err(format!(
+                "{} copied authored identity into layout evidence",
+                component.kind
+            ));
+        }
+    }
+    Ok(())
 }
 
 #[test]
