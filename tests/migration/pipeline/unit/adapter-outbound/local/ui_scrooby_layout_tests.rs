@@ -36,7 +36,8 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
-    add_multi_text, add_owner_color_policy, add_polygon,
+    add_bounded_alignment_policy, add_multi_text, add_owner_color_policy,
+    add_polygon,
     collect_package_layout,
     horizontal_justification,
     packed_rgba_u8, publish_rendered, screen_i32, semantic_i32,
@@ -98,7 +99,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v9","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v10","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -288,6 +289,14 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
         || index(text, "runtime_glyph_scale_denominator_u32") != Some(480)
         || text.get("runtime_alignment_metrics")
             != Some(&serde_json::json!("resolved-font-current-string"))
+        || text.get("runtime_horizontal_alignment_policy")
+            != Some(&serde_json::json!(
+                "left-zero-right-box-minus-half-glyph-centre-half-box"
+            ))
+        || text.get("runtime_vertical_alignment_policy")
+            != Some(&serde_json::json!(
+                "centre-half-box-minus-glyph-otherwise-zero"
+            ))
         || page.get("owner_color_modulation").is_some()
         || layer.get("owner_color_restore")
             != Some(&serde_json::json!("original-after-display"))
@@ -463,6 +472,54 @@ fn text_nonzero_shadow_offset_remains_runtime_shadow() -> Result<(), String> {
     );
     assert!(row.get("runtime_outline_color_rgba_u8").is_none());
     Ok(())
+}
+
+#[test]
+fn bounded_alignment_policy_matches_runtime_dispatch() {
+    let mut sprite = serde_json::Map::new();
+    add_bounded_alignment_policy("scrooby_multi_sprite", &mut sprite);
+    assert_eq!(
+        sprite.get("runtime_alignment_metrics"),
+        Some(&serde_json::json!("resolved-current-sprite-bounds")),
+    );
+    assert_eq!(
+        sprite.get("runtime_horizontal_alignment_policy"),
+        Some(&serde_json::json!(
+            "left-zero-right-difference-centre-half-difference"
+        )),
+    );
+    assert_eq!(
+        sprite.get("runtime_vertical_alignment_policy"),
+        Some(&serde_json::json!(
+            "bottom-zero-top-difference-centre-half-difference"
+        )),
+    );
+
+    let mut text = serde_json::Map::new();
+    add_bounded_alignment_policy("scrooby_multi_text", &mut text);
+    assert_eq!(
+        text.get("runtime_horizontal_alignment_policy"),
+        Some(&serde_json::json!(
+            "left-zero-right-box-minus-half-glyph-centre-half-box"
+        )),
+    );
+    assert_eq!(
+        text.get("runtime_vertical_alignment_policy"),
+        Some(&serde_json::json!(
+            "centre-half-box-minus-glyph-otherwise-zero"
+        )),
+    );
+
+    let mut pure3d = serde_json::Map::new();
+    add_bounded_alignment_policy("scrooby_pure3d_object", &mut pure3d);
+    assert_eq!(
+        pure3d.get("runtime_justification_consumed"),
+        Some(&serde_json::json!(false)),
+    );
+    assert_eq!(
+        pure3d.get("runtime_alignment_policy"),
+        Some(&serde_json::json!("none-render-uses-base-drawable-matrix")),
+    );
 }
 
 #[test]
