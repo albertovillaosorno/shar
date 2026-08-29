@@ -70,6 +70,7 @@ use crate::domain::{
     MissionInitializationBinding,
     MissionLocatorCatalog, MissionP3dReferenceCatalog, MissionReferenceCatalog,
     MissionVehicleCatalogReference, PhaseThreePackageIndex,
+    VehicleTuningSourceCatalog, preflight_vehicle_tuning_usages,
         PipelineConfig,
         PipelineError,
         PipelineOutcome,
@@ -115,15 +116,18 @@ const SUMMARY_FILE: &str = "summary.json";
 const MISSION_DEFINITIONS_FILE: &str = "mission-definitions.jsonl";
 /// Canonical vehicle-tuning core bundle filename.
 const VEHICLE_TUNING_FILE: &str = "vehicle-tuning.jsonl";
+/// Canonical contextual vehicle-tuning usage bundle filename.
+const VEHICLE_TUNING_USAGE_FILE: &str = "vehicle-tuning-usage.jsonl";
 /// Canonical generated plan directory.
 const PLAN_ROOT: &str = "plans";
 /// Canonical generated plan-bundle index filename.
 const PLAN_INDEX_FILE: &str = "plans/index.json";
 /// Complete set of files published by one prepare-unreal transaction.
-const PUBLISHED_FILES: [&str; 10] = [
+const PUBLISHED_FILES: [&str; 11] = [
     SUMMARY_FILE,
     MISSION_DEFINITIONS_FILE,
     VEHICLE_TUNING_FILE,
+    VEHICLE_TUNING_USAGE_FILE,
     PLAN_INDEX_FILE,
     "plans/asset-import-plan.json",
     "plans/asset-construction-plan.json",
@@ -190,6 +194,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &source_report.evidence,
         &mission_references,
     )?;
+    let vehicle_tuning_usage_jsonl = source_report.vehicle_tuning_usages;
     let evidence = retain_importable_evidence(&index, source_report.evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
         // jig-ignore-next-line: literal
@@ -268,6 +273,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &summary_json,
         &mission_definitions_jsonl,
         &vehicle_tuning_jsonl,
+        &vehicle_tuning_usage_jsonl,
         &plan_bundle,
         &unreal_manifest_path,
     )?;
@@ -279,6 +285,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &summary_json,
             &mission_definitions_jsonl,
             &vehicle_tuning_jsonl,
+            &vehicle_tuning_usage_jsonl,
             &plan_bundle,
         ),
         note: format!(
@@ -293,8 +300,9 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
                 "backed; {} normalized-package-backed; {} normalized-entity-",
                 "backed; {} content-equivalent; {} packages fully ",
                 "direct-import-",
-                "backed); published {} mission definitions and {} vehicle-",
-                "tuning cores to {} with plan bundle {}"
+                "backed); published {} mission definitions, {} vehicle-",
+                "tuning cores, and {} contextual tuning usages to {} with ",
+                "plan bundle {}"
             ),
             unreal_manifest.source_count(),
             unreal_manifest.package_count(),
@@ -320,6 +328,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
                 .fully_direct_import_backed_package_count,
             mission_definitions_jsonl.lines().count(),
             vehicle_tuning_jsonl.lines().count(),
+            vehicle_tuning_usage_jsonl.lines().count(),
             UNREAL_STAGING_WORKSPACE_ROOT,
             plan_bundle.index_revision(),
         ),
@@ -424,13 +433,13 @@ fn source_evidence(
             future_normalization: manifest_string(&row, "future_normalization", line_number)?,
         });
     }
-    let report = parallel_source_evidence(
+    let mut report = parallel_source_evidence(
         &inputs,
         mission_references,
         mission_p3d_references,
     )?;
     check_cancellation()?;
-    preflight_cross_source_mission_locators(
+    report.vehicle_tuning_usages = preflight_cross_source_mission_locators(
         &inputs,
         &report.evidence,
         mission_references,
@@ -448,6 +457,7 @@ struct SourceEvidenceReport {
     evidence: Vec<UnrealSourceEvidence>,
     mission_definitions: Vec<String>,
     vehicle_tuning_cores: Vec<String>,
+    vehicle_tuning_usages: String,
 }
 
 /// One verified physical source and its optional selected mission definition.
@@ -488,6 +498,7 @@ fn parallel_source_evidence(
             evidence: Vec::new(),
             mission_definitions: Vec::new(),
             vehicle_tuning_cores: Vec::new(),
+            vehicle_tuning_usages: String::new(),
         });
     }
     check_cancellation()?;
@@ -566,6 +577,7 @@ fn parallel_source_evidence(
         evidence,
         mission_definitions,
         vehicle_tuning_cores,
+        vehicle_tuning_usages: String::new(),
     })
 }
 
@@ -584,7 +596,7 @@ fn preflight_cross_source_mission_locators(
     mission_p3d_references: &MissionP3dReferenceCatalog,
     index: &PhaseThreePackageIndex,
     extracted_root: &Path,
-) -> PipelineOutcome<()> {
+) -> PipelineOutcome<String> {
     let mut verified_by_id = BTreeMap::new();
     for source in verified {
         if verified_by_id.insert(source.id.as_str(), source).is_some() {
@@ -594,6 +606,13 @@ fn preflight_cross_source_mission_locators(
         }
     }
 
+    let tuning_sources = VehicleTuningSourceCatalog::from_package_index(index)
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "vehicle tuning usage catalog intake failed: {error}"
+            ))
+        })?;
+    let mut mission_source_ids = BTreeMap::new();
     let mut snapshots = Vec::new();
     for input in inputs {
         check_cancellation()?;
@@ -648,11 +667,52 @@ fn preflight_cross_source_mission_locators(
             .iter()
             .map(|binding| binding.package_root().to_owned())
             .collect();
+        if mission_source_ids
+            .insert(input.source_path.clone(), input.id.clone())
+            .is_some()
+        {
+            return Err(PipelineError::new(
+                "mission tuning usage source path is duplicated",
+            ));
+        }
         snapshots.push(MissionLocatorScriptSnapshot::new(
             input.source_path.clone(),
             evidence,
             package_roots,
         ));
+    }
+
+    check_cancellation()?;
+    let mut vehicle_tuning_usages = String::new();
+    for snapshot in &snapshots {
+        let source_id = mission_source_ids
+            .get(snapshot.source_path())
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "mission tuning usage source identity disappeared",
+                )
+            })?;
+        let scopes = compile_mission_scope_graphs(snapshot.evidence())
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "vehicle tuning usage scope preflight failed: {error}"
+                ))
+            })?;
+        let report = preflight_vehicle_tuning_usages(
+            source_id,
+            &scopes,
+            mission_references,
+            &tuning_sources,
+        )
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "vehicle tuning usage binding failed: {error}"
+            ))
+        })?;
+        vehicle_tuning_usages.push_str(
+            &super::vehicle_tuning_usage_context::
+                render_vehicle_tuning_usage_report(&report)?,
+        );
     }
 
     check_cancellation()?;
@@ -870,7 +930,7 @@ fn preflight_cross_source_mission_locators(
             })?,
         );
     }
-    Ok(())
+    Ok(vehicle_tuning_usages)
 }
 
 /// Read, validate, and hash one physical source row.
@@ -2831,6 +2891,7 @@ fn published_byte_count(
     summary: &str,
     mission_definitions: &str,
     vehicle_tuning: &str,
+    vehicle_tuning_usage: &str,
     plans: &PlanBundle,
 ) -> u64 {
     let plan_bytes = plans
@@ -2845,6 +2906,7 @@ fn published_byte_count(
             .saturating_add(summary.len())
             .saturating_add(mission_definitions.len())
             .saturating_add(vehicle_tuning.len())
+            .saturating_add(vehicle_tuning_usage.len())
             .saturating_add(plan_bytes),
     )
     .unwrap_or(u64::MAX)
@@ -2855,6 +2917,7 @@ fn publish_staging(
     summary: &str,
     mission_definitions: &str,
     vehicle_tuning: &str,
+    vehicle_tuning_usage: &str,
     plans: &PlanBundle,
     manifest_destination: &Path,
 ) -> PipelineOutcome<()> {
@@ -2902,6 +2965,7 @@ fn publish_staging(
         (SUMMARY_FILE, summary),
         (MISSION_DEFINITIONS_FILE, mission_definitions),
         (VEHICLE_TUNING_FILE, vehicle_tuning),
+        (VEHICLE_TUNING_USAGE_FILE, vehicle_tuning_usage),
         (PLAN_INDEX_FILE, plans.index_json()),
     ] {
         write_staged_file(&staging, relative_path, content)?;
