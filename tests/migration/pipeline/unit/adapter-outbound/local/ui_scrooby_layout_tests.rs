@@ -96,7 +96,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v3","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v4","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -310,6 +310,31 @@ fn justification_matches_scrooby_runtime_axes() -> Result<(), String> {
 fn polygon_screen_coordinates_truncate_toward_zero() -> Result<(), String> {
     assert_eq!(screen_i32(12.9).map_err(|e| e.to_string())?, 12);
     assert_eq!(screen_i32(-12.9).map_err(|e| e.to_string())?, -12);
+    Ok(())
+}
+
+#[test]
+fn polygon_layout_publishes_runtime_triangle_fan() -> Result<(), String> {
+    let payload = serde_json::json!({
+        "translucency": 0,
+        "points": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0]],
+        "colors": [
+            4_294_967_295_u32,
+            4_294_967_295_u32,
+            4_294_967_295_u32,
+            4_294_967_295_u32,
+        ],
+    });
+    let mut row = serde_json::Map::new();
+    add_polygon(&payload, &mut row).map_err(|error| error.to_string())?;
+    assert_eq!(
+        row.get("render_topology"),
+        Some(&serde_json::json!("triangle-fan")),
+    );
+    assert_eq!(
+        row.get("triangle_indices"),
+        Some(&serde_json::json!([[0, 1, 2], [0, 2, 3]])),
+    );
     Ok(())
 }
 
