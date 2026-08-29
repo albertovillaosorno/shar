@@ -1032,6 +1032,12 @@ fn validate_project_structure(components: &[Component]) -> PipelineOutcome<()> {
             "Scrooby project is not rooted at the package boundary",
         ));
     }
+    let resolution = required_usize_pair(&project.payload, "resolution")?;
+    if resolution[0] == 0 || resolution[1] == 0 {
+        return Err(PipelineError::new(
+            "Scrooby project resolution is non-positive",
+        ));
+    }
     let children = project
         .payload
         .get("children")
@@ -2487,6 +2493,38 @@ fn required_usize(value: &Value, field: &str) -> PipelineOutcome<usize> {
         .ok_or_else(|| {
             PipelineError::new(format!("Scrooby {field} is not an integer"))
         })
+}
+
+fn required_usize_pair(
+    value: &Value,
+    field: &str,
+) -> PipelineOutcome<[usize; 2]> {
+    let values = value
+        .get(field)
+        .and_then(Value::as_array)
+        .filter(|values| values.len() == 2)
+        .ok_or_else(|| {
+            PipelineError::new(format!("Scrooby {field} is not a pair"))
+        })?;
+    let first = values
+        .first()
+        .and_then(Value::as_u64)
+        .and_then(|value| usize::try_from(value).ok())
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "Scrooby {field} contains a non-integer"
+            ))
+        })?;
+    let second = values
+        .get(1)
+        .and_then(Value::as_u64)
+        .and_then(|value| usize::try_from(value).ok())
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "Scrooby {field} contains a non-integer"
+            ))
+        })?;
+    Ok([first, second])
 }
 
 fn required_string_array<'value>(
