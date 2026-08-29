@@ -40,6 +40,7 @@ pub mod domain;
 mod manifest_paths;
 mod mission_script;
 mod package_index;
+mod vehicle_tuning;
 mod workspace;
 #[rustfmt::skip]
 #[path = "../port-outbound/mod.rs"]
@@ -57,3 +58,4 @@ pub use domain::{
 };
 pub use mission_script::preflight_mission_script;
 pub use ports::{OutputInventory, PipelineOperations};
+pub use vehicle_tuning::preflight_vehicle_tuning;

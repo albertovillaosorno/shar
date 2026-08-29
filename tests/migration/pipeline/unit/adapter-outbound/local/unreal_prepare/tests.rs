@@ -642,6 +642,185 @@ fn mission_semantic_gate_rejects_stale_schema_and_context_findings() -> Result<(
     Ok(())
 }
 
+
+fn clean_vehicle_tuning_json() -> Result<Vec<u8>, String> {
+    serde_json::to_vec(&json!({
+        "schema": "shar-schoenwald.straggler.config-script.v2",
+        "source_extension": "con",
+        "route_class": "vehicle-config",
+        "source_bytes": 64,
+        "context_command_count": 0,
+        "context_adaptation_count": 0,
+        "context_adaptations": [],
+        "context_finding_count": 0,
+        "context_findings": [],
+        "statement_count": 3,
+        "unique_command_count": 2,
+        "load_p3d_reference_count": 0,
+        "mission_flow_command_count": 0,
+        "vehicle_physics_command_count": 2,
+        "semantic_family": "vehicle-config-script",
+        "command_counts": std::collections::BTreeMap::from([
+            (concat!("set", "driver"), 1),
+            (concat!("set", "mass"), 2),
+        ]),
+        "source_statements": [
+            "SetMass(1.0);",
+            "SetMass(1.0); // authored duplicate",
+            "SetDriver(\"homer\");"
+        ],
+        "p3d_references": [],
+        "command_invocations": [
+            {
+                "ordinal": 1,
+                "name": concat!("set", "mass"),
+                "args_raw": "1.0",
+                "semantic_role": "vehicle-physics",
+                "arguments": ["1.0"]
+            },
+            {
+                "ordinal": 2,
+                "name": concat!("set", "mass"),
+                "args_raw": "1.0",
+                "semantic_role": "vehicle-physics",
+                "arguments": ["1.0"]
+            },
+            {
+                "ordinal": 3,
+                "name": concat!("set", "driver"),
+                "args_raw": "\"homer\"",
+                "semantic_role": "vehicle-config",
+                "arguments": ["homer"]
+            }
+        ]
+    }))
+    .map_err(|error| error.to_string())
+}
+
+#[test]
+fn vehicle_tuning_gate_rejects_forged_invocation_evidence()
+-> Result<(), String> {
+    let clean = clean_vehicle_tuning_json()?;
+    super::validate_normalized_vehicle_tuning_source(
+        "vehicle-tuning",
+        "shar-schoenwald.straggler.config-script.v2",
+        "json",
+        "game-straggler-normalize",
+        &clean,
+    )
+    .map_err(|error| error.to_string())?;
+
+    let mut forged = serde_json::from_slice::<serde_json::Value>(&clean)
+        .map_err(|error| error.to_string())?;
+    let invocation = forged
+        .get_mut("command_invocations")
+        .and_then(serde_json::Value::as_array_mut)
+        .and_then(|values| values.first_mut())
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or("missing tuning invocation fixture")?;
+    let _previous = invocation.insert("args_raw".to_owned(), json!("2.0"));
+    let forged = serde_json::to_vec(&forged)
+        .map_err(|error| error.to_string())?;
+    let result = super::validate_normalized_vehicle_tuning_source(
+        "vehicle-tuning",
+        "shar-schoenwald.straggler.config-script.v2",
+        "json",
+        "game-straggler-normalize",
+        &forged,
+    );
+    let Err(error) = result else {
+        return Err(
+            "forged tuning invocation reached Unreal planning".to_owned(),
+        );
+    };
+    if !error.to_string().contains("not reproducible") {
+        return Err(format!("unexpected tuning replay failure: {error}"));
+    }
+    Ok(())
+}
+
+
+#[test]
+fn vehicle_tuning_source_verification_rejects_same_size_semantic_drift()
+-> Result<(), String> {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(".temp")
+        .join(format!("unreal-tuning-source-{}", std::process::id()));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let path = root.join("tuning.json");
+    let clean = clean_vehicle_tuning_json()?;
+    fs::write(&path, &clean).map_err(|error| error.to_string())?;
+    let expected_size = u64::try_from(clean.len())
+        .map_err(|error| error.to_string())?;
+    let input = SourceEvidenceInput {
+        id: "tuning-source".to_owned(),
+        path: "extracted/tuning.json".to_owned(),
+        resolved: path.clone(),
+        expected_size,
+        file_extension: "json".to_owned(),
+        unit_type: "metadata".to_owned(),
+        subtype: "vehicle".to_owned(),
+        kind: "vehicle-tuning".to_owned(),
+        function: "vehicle configuration".to_owned(),
+        schema: "shar-schoenwald.straggler.config-script.v2".to_owned(),
+        origin: "game-straggler-normalize".to_owned(),
+        source_path: "source.con".to_owned(),
+        source_chunk_kind: "none".to_owned(),
+        unreal_import_relation: "compose-into-asset".to_owned(),
+        future_normalization: "vehicle-json-to-data-asset".to_owned(),
+    };
+    let references = MissionReferenceCatalog::empty_for_tests();
+    let p3d_references = MissionP3dReferenceCatalog::empty_for_tests();
+    let result = (|| -> Result<(), String> {
+        let verified = super::read_source_evidence(
+            &input,
+            &references,
+            &p3d_references,
+        )
+        .map_err(|error| error.to_string())?;
+        if verified.evidence.sha256 != digest_hex(&clean)
+            || verified.mission_definition.is_some()
+        {
+            return Err(
+                "clean tuning source verification changed evidence".to_owned(),
+            );
+        }
+
+        let text = String::from_utf8(clean.clone())
+            .map_err(|error| error.to_string())?;
+        let forged = text.replacen(
+            "\"args_raw\":\"1.0\"",
+            "\"args_raw\":\"2.0\"",
+            1,
+        );
+        if forged.len() != clean.len() {
+            return Err(
+                "same-size tuning drift fixture changed length".to_owned(),
+            );
+        }
+        fs::write(&path, forged).map_err(|error| error.to_string())?;
+        let result = super::read_source_evidence(
+            &input,
+            &references,
+            &p3d_references,
+        );
+        let Err(error) = result else {
+            return Err(
+                "same-size tuning semantic drift was accepted".to_owned(),
+            );
+        };
+        if !error.to_string().contains("not reproducible") {
+            return Err(format!("unexpected tuning source failure: {error}"));
+        }
+        Ok(())
+    })();
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    result
+}
+
 fn clean_audit(manifest: &str, rows: usize) -> String {
     format!(
         concat!(

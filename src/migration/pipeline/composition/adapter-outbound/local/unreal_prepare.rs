@@ -66,7 +66,8 @@ use super::unreal_fbx_catalog::verified_fbx_catalog_at;
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
-    MISSION_SCRIPT_SCHEMA, MissionCameraCatalog, MissionInitializationBinding,
+    MISSION_SCRIPT_SCHEMA, VEHICLE_TUNING_SCHEMA, MissionCameraCatalog,
+    MissionInitializationBinding,
     MissionLocatorCatalog, MissionP3dReferenceCatalog, MissionReferenceCatalog,
     PhaseThreePackageIndex,
         PipelineConfig,
@@ -96,7 +97,7 @@ use crate::domain::{
     preflight_mission_traffic_groups,
     preflight_mission_vehicle_attributes, preflight_mission_vehicle_selects,
 };
-use crate::preflight_mission_script;
+use crate::{preflight_mission_script, preflight_vehicle_tuning};
 use crate::manifest_paths::{
     FBX_MANIFEST_PATH, UNREAL_MANIFEST_GAME_RELATIVE_PATH,
 };
@@ -859,24 +860,38 @@ fn read_source_evidence(
     mission_references: &MissionReferenceCatalog,
     mission_p3d_references: &MissionP3dReferenceCatalog,
 ) -> PipelineOutcome<VerifiedSourceOutput> {
-    let (actual_size, sha256, mission_definition) =
-        if input.kind == "mission-script" {
-        let bytes = read_stable_source_bytes(&input.resolved)?;
-        let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
-        let mission_definition = validate_normalized_mission_source(
-            &input.id,
-            &input.kind,
-            &input.schema,
-            &input.file_extension,
-            &input.origin,
-            &bytes,
-            mission_references,
-            mission_p3d_references,
-        )?;
-        (actual_size, digest_hex(&bytes), mission_definition)
-    } else {
-        let (actual_size, sha256) = stream_source_digest(&input.resolved)?;
-        (actual_size, sha256, None)
+    let (actual_size, sha256, mission_definition) = match input.kind.as_str() {
+        "mission-script" => {
+            let bytes = read_stable_source_bytes(&input.resolved)?;
+            let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+            let mission_definition = validate_normalized_mission_source(
+                &input.id,
+                &input.kind,
+                &input.schema,
+                &input.file_extension,
+                &input.origin,
+                &bytes,
+                mission_references,
+                mission_p3d_references,
+            )?;
+            (actual_size, digest_hex(&bytes), mission_definition)
+        },
+        "vehicle-tuning" => {
+            let bytes = read_stable_source_bytes(&input.resolved)?;
+            let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+            validate_normalized_vehicle_tuning_source(
+                &input.kind,
+                &input.schema,
+                &input.file_extension,
+                &input.origin,
+                &bytes,
+            )?;
+            (actual_size, digest_hex(&bytes), None)
+        },
+        _ => {
+            let (actual_size, sha256) = stream_source_digest(&input.resolved)?;
+            (actual_size, sha256, None)
+        },
     };
     if actual_size != input.expected_size {
         return Err(PipelineError::new(format!(
@@ -983,7 +998,7 @@ fn verify_stable_source(
     Ok(())
 }
 
-/// Read one mission source completely while preserving the same stable-source
+/// Read one semantic source completely while preserving the same stable-source
 /// identity checks used by streamed source hashing.
 #[expect(
     clippy::verbose_file_reads,
@@ -1005,8 +1020,8 @@ fn read_stable_source_bytes(path: &Path) -> PipelineOutcome<Vec<u8>> {
     Ok(bytes)
 }
 
-/// Stream one non-mission source into the shared SHA-256 boundary without
-/// retaining the complete payload in memory.
+/// Stream one source without semantic replay into the shared SHA-256 boundary
+/// without retaining the complete payload in memory.
 fn stream_source_digest(path: &Path) -> PipelineOutcome<(u64, String)> {
     const BUFFER_BYTES: usize = 1024 * 1024;
     let (mut file, identity) = open_stable_source(path)?;
@@ -1054,6 +1069,39 @@ fn source_worker_count_for(available: usize, source_count: usize) -> usize {
         .unwrap_or(1)
         .clamp(1, 8)
         .min(source_count.max(1))
+}
+
+fn validate_normalized_vehicle_tuning_source(
+    kind: &str,
+    schema: &str,
+    file_extension: &str,
+    origin: &str,
+    bytes: &[u8],
+) -> PipelineOutcome<()> {
+    if kind != "vehicle-tuning" {
+        return Ok(());
+    }
+    if schema != VEHICLE_TUNING_SCHEMA {
+        return Err(PipelineError::new(
+            "normalized vehicle tuning source schema is stale",
+        ));
+    }
+    if file_extension != "json" || origin != "game-straggler-normalize" {
+        return Err(PipelineError::new(
+            "normalized vehicle tuning source routing identity is invalid",
+        ));
+    }
+    let text = std::str::from_utf8(bytes).map_err(|_error| {
+        PipelineError::new(
+            "normalized vehicle tuning source is not valid UTF-8",
+        )
+    })?;
+    drop(preflight_vehicle_tuning(text).map_err(|error| {
+        PipelineError::new(format!(
+            "vehicle tuning semantic preflight failed: {error}"
+        ))
+    })?);
+    Ok(())
 }
 
 #[expect(

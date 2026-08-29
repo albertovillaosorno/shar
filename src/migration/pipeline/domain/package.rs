@@ -104,6 +104,8 @@ pub mod plan;
 pub mod selector;
 /// Unreal import-manifest planning.
 pub mod unreal_manifest;
+/// Normalized vehicle-tuning semantic preflight.
+pub mod vehicle_tuning;
 
 // Re-exporting the domain-qualified names keeps downstream imports explicit
 // while preserving one public package boundary instead of exposing file layout.
@@ -271,6 +273,10 @@ pub use mission_traffic_group::{
 pub use mission_script::{
     MISSION_SCRIPT_SCHEMA, MissionCommandInvocation, MissionContextAdaptation,
     MissionScriptEvidence,
+};
+pub use vehicle_tuning::{
+    VEHICLE_TUNING_SCHEMA, VehicleTuningCommandInvocation,
+    VehicleTuningEvidence,
 };
 pub use mission_stage::{
     MissionStageDirective, MissionStageKind, MissionStageMessageKind,
