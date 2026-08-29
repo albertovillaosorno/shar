@@ -71,6 +71,8 @@ fn row(
         target_package_match_basis: None,
         target_entity_ordinal: None,
         target_entity_match_basis: None,
+        target_content_sha256: None,
+        target_content_match_basis: None,
     }
 }
 
@@ -87,16 +89,22 @@ fn renders_page_owned_preloads_without_authored_resource_identity() -> TestResul
         Some("owner-joined-sprite-exact");
     entity_backed.target_entity_ordinal = Some(29);
     entity_backed.target_entity_match_basis = Some("full-filename-exact");
+    let mut content_backed = row("package-a", 7, 6, "image", 15, None);
+    content_backed.target_content_sha256 = Some("a".repeat(64));
+    content_backed.target_content_match_basis =
+        Some("equivalent-scoped-ui-raster-sha256");
     let rows = vec![
         row("package-a", 7, 2, "image", 11, Some("source-a")),
         package_backed,
         entity_backed,
+        content_backed,
     ];
     let summary = summarize(&rows).map_err(|error| error.to_string())?;
-    if summary.preload_count != 3
+    if summary.preload_count != 4
         || summary.direct_import_backed_preload_count != 1
         || summary.normalized_package_backed_preload_count != 2
         || summary.normalized_entity_backed_preload_count != 1
+        || summary.equivalent_content_backed_preload_count != 1
         || summary.fully_direct_import_backed_package_count != 0
     {
         return Err(format!("unexpected lifecycle summary: {summary:?}"));
@@ -115,13 +123,17 @@ fn renders_page_owned_preloads_without_authored_resource_identity() -> TestResul
         .map_err(|error| error.to_string())?;
     let header = values.first().ok_or("lifecycle header is missing")?;
     if header.get("preload_count").and_then(serde_json::Value::as_u64)
-        != Some(3)
+        != Some(4)
         || header
             .get("direct_import_backed_preload_count")
             .and_then(serde_json::Value::as_u64)
             != Some(1)
         || header
             .get("normalized_entity_backed_preload_count")
+            .and_then(serde_json::Value::as_u64)
+            != Some(1)
+        || header
+            .get("equivalent_content_backed_preload_count")
             .and_then(serde_json::Value::as_u64)
             != Some(1)
     {
@@ -138,7 +150,7 @@ fn renders_page_owned_preloads_without_authored_resource_identity() -> TestResul
                 .and_then(serde_json::Value::as_u64)
         })
         .collect::<Vec<_>>();
-    if indices != [Some(2), Some(4), Some(5)]
+    if indices != [Some(2), Some(4), Some(5), Some(6)]
         || payload.get(1).and_then(|value| value.get("target_package_id"))
             .and_then(serde_json::Value::as_str)
             != Some("resource-package")
@@ -157,6 +169,19 @@ fn renders_page_owned_preloads_without_authored_resource_identity() -> TestResul
             .and_then(|value| value.get("target_entity_match_basis"))
             .and_then(serde_json::Value::as_str)
             != Some("full-filename-exact")
+        || payload
+            .get(3)
+            .and_then(|value| value.get("target_content_sha256"))
+            .and_then(serde_json::Value::as_str)
+            != Some(concat!(
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            ))
+        || payload
+            .get(3)
+            .and_then(|value| value.get("target_content_match_basis"))
+            .and_then(serde_json::Value::as_str)
+            != Some("equivalent-scoped-ui-raster-sha256")
         || payload.iter().any(|value| {
             value.get("load_policy").and_then(serde_json::Value::as_str)
                 != Some("eager-page-preload")
@@ -208,6 +233,23 @@ fn rejects_incomplete_normalized_package_backing_identity() -> TestResult {
         .contains("resource package backing identity is incomplete")
     {
         return Err(format!("unexpected package identity error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_incomplete_equivalent_content_backing_identity() -> TestResult {
+    let mut incomplete = row("package-a", 7, 2, "image", 11, None);
+    incomplete.target_content_sha256 = Some("a".repeat(64));
+    let result = summarize(&[incomplete]);
+    let Err(error) = result else {
+        return Err("incomplete content identity was accepted".into());
+    };
+    if !error
+        .to_string()
+        .contains("content backing identity is incomplete")
+    {
+        return Err(format!("unexpected content identity error: {error}"));
     }
     Ok(())
 }

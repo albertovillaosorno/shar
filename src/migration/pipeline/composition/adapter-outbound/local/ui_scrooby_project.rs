@@ -48,11 +48,11 @@ use serde_json::{Value, json};
 
 use crate::domain::{
     PackageRole, PhaseThreePackageIndex, PhaseThreePackageRow, PipelineError,
-    PipelineOutcome, UnrealImportManifest,
+    PipelineOutcome, UnrealImportManifest, UnrealUiRasterArtifactEvidence,
 };
 
 const BINDING_CATALOG_SCHEMA: &str =
-    "shar-schoenwald.scrooby-binding-catalog.v7";
+    "shar-schoenwald.scrooby-binding-catalog.v8";
 const BINDING_CATALOG_FILE: &str = "catalog.jsonl";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -82,6 +82,8 @@ struct ScroobyPackageBinding {
     target_package_match_basis: Option<&'static str>,
     target_entity_ordinal: Option<usize>,
     target_entity_match_basis: Option<&'static str>,
+    target_content_sha256: Option<String>,
+    target_content_match_basis: Option<&'static str>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -122,6 +124,8 @@ pub(super) struct ScroobyPageResourceLifecycle {
     pub(super) target_package_match_basis: Option<&'static str>,
     pub(super) target_entity_ordinal: Option<usize>,
     pub(super) target_entity_match_basis: Option<&'static str>,
+    pub(super) target_content_sha256: Option<String>,
+    pub(super) target_content_match_basis: Option<&'static str>,
 }
 
 impl ScroobyUiPreflight {
@@ -157,6 +161,14 @@ impl ScroobyUiPreflight {
             .iter()
             .flat_map(|package| &package.bindings)
             .filter(|binding| binding.target_entity_ordinal.is_some())
+            .count()
+    }
+
+    pub(super) fn equivalent_content_binding_count(&self) -> usize {
+        self.packages
+            .iter()
+            .flat_map(|package| &package.bindings)
+            .filter(|binding| binding.target_content_sha256.is_some())
             .count()
     }
 
@@ -224,6 +236,11 @@ impl ScroobyUiPreflight {
                     target_entity_ordinal: binding.target_entity_ordinal,
                     target_entity_match_basis: binding
                         .target_entity_match_basis,
+                    target_content_sha256: binding
+                        .target_content_sha256
+                        .clone(),
+                    target_content_match_basis: binding
+                        .target_content_match_basis,
                 });
             }
         }
@@ -262,6 +279,8 @@ impl ScroobyUiPreflight {
                 self.normalized_package_binding_count(),
             "normalized_entity_binding_count":
                 self.normalized_entity_binding_count(),
+            "equivalent_content_binding_count":
+                self.equivalent_content_binding_count(),
         }));
         for package in packages {
             let mut bindings = package.bindings.iter().collect::<Vec<_>>();
@@ -367,6 +386,32 @@ impl ScroobyUiPreflight {
                     _ => {
                         return Err(PipelineError::new(
                             "Scrooby normalized-entity binding is incomplete",
+                        ));
+                    },
+                }
+                match (
+                    &binding.target_content_sha256,
+                    binding.target_content_match_basis,
+                ) {
+                    (Some(sha256), Some(content_match_basis)) => {
+                        let object = row.as_object_mut().ok_or_else(|| {
+                            PipelineError::new(
+                                "Scrooby binding row is not a JSON object",
+                            )
+                        })?;
+                        let _previous = object.insert(
+                            "target_content_sha256".to_owned(),
+                            json!(sha256),
+                        );
+                        let _previous = object.insert(
+                            "target_content_match_basis".to_owned(),
+                            json!(content_match_basis),
+                        );
+                    },
+                    (None, None) => {},
+                    _ => {
+                        return Err(PipelineError::new(
+                            "Scrooby equivalent-content binding is incomplete",
                         ));
                     },
                 }
@@ -490,6 +535,169 @@ pub(super) fn preflight_scrooby_ui_projects(
         &mut packages,
     )?;
     Ok(ScroobyUiPreflight { packages })
+}
+
+const SCOPED_CONTROL_PREFIXES: [&str; 4] = [
+    "ui-resources/frontend/controls/",
+    "ui-resources/in-game/controls/",
+    "ui-resources/language/controls/",
+    "ui-resources/mini-game/controls/",
+];
+
+fn scoped_control_key(filename: &str) -> Option<String> {
+    let basename = exact_basename(filename)?;
+    let path = Path::new(basename);
+    if path.extension().and_then(|value| value.to_str())
+        .is_none_or(|value| !value.eq_ignore_ascii_case("png"))
+    {
+        return None;
+    }
+    let stem = path.file_stem()?.to_str()?.to_ascii_lowercase();
+    (!stem.is_empty()).then_some(stem)
+}
+
+fn is_scoped_control_candidate(
+    package: &PhaseThreePackageRow,
+    key: &str,
+) -> bool {
+    package.category() == "ui-resources"
+        && SCOPED_CONTROL_PREFIXES.iter().any(|prefix| {
+            package.subcategory() == format!("{prefix}{key}")
+        })
+}
+
+fn equivalent_raster_sha256<'a>(
+    candidates: impl Iterator<Item = &'a UnrealUiRasterArtifactEvidence>,
+) -> Option<String> {
+    let candidates = candidates.collect::<Vec<_>>();
+    if candidates.len() < 2 {
+        return None;
+    }
+    let sha256 = candidates.first()?.sha256.as_str();
+    candidates
+        .iter()
+        .all(|candidate| candidate.sha256 == sha256)
+        .then(|| sha256.to_owned())
+}
+
+/// Bind unresolved image resources to content-equivalent generated rasters.
+///
+/// # Errors
+///
+/// Returns an error when an exact scoped control package lacks its verified
+/// generated raster or an existing content identity would be overwritten.
+pub(super) fn bind_scrooby_equivalent_raster_content(
+    preflight: &mut ScroobyUiPreflight,
+    index: &PhaseThreePackageIndex,
+    rasters: &[UnrealUiRasterArtifactEvidence],
+) -> PipelineOutcome<usize> {
+    let mut raster_by_package = BTreeMap::new();
+    for raster in rasters {
+        if raster_by_package
+            .insert(raster.package_id.as_str(), raster)
+            .is_some()
+        {
+            return Err(PipelineError::new(
+                "UI raster catalog contains a duplicated package identity",
+            ));
+        }
+    }
+    let mut resolved_count = 0usize;
+    for package in &mut preflight.packages {
+        let unresolved_ordinals = package
+            .bindings
+            .iter()
+            .filter(|binding| {
+                matches!(
+                    binding.relation,
+                    "page-image-resource" | "sprite-image-resource"
+                ) && binding.target_source_unit_id.is_none()
+                    && binding.target_package_id.is_none()
+                    && binding.target_entity_ordinal.is_none()
+            })
+            .map(|binding| binding.target_ordinal)
+            .collect::<BTreeSet<_>>();
+        let mut content_by_ordinal = BTreeMap::new();
+        for resource in &package.image_resources {
+            if !unresolved_ordinals.contains(&resource.ordinal) {
+                continue;
+            }
+            let Some(key) = scoped_control_key(&resource.filename) else {
+                continue;
+            };
+            let candidate_packages = index
+                .packages()
+                .iter()
+                .filter(|candidate| {
+                    is_scoped_control_candidate(candidate, &key)
+                })
+                .collect::<Vec<_>>();
+            let mut candidates = Vec::with_capacity(candidate_packages.len());
+            for candidate in candidate_packages {
+                let raster = raster_by_package
+                    .get(candidate.package_id.as_str())
+                    .copied()
+                    .ok_or_else(|| {
+                        PipelineError::new(
+                            "scoped Scrooby control package lacks UI raster",
+                        )
+                    })?;
+                candidates.push(raster);
+            }
+            if let Some(sha256) =
+                equivalent_raster_sha256(candidates.into_iter())
+            {
+                let previous =
+                    content_by_ordinal.insert(resource.ordinal, sha256);
+                if previous.is_some() {
+                    return Err(PipelineError::new(
+                        "Scrooby equivalent-content resource is duplicated",
+                    ));
+                }
+            }
+        }
+        resolved_count = resolved_count.saturating_add(
+            bind_scrooby_equivalent_image_content(
+                &content_by_ordinal,
+                &mut package.bindings,
+            )?,
+        );
+    }
+    Ok(resolved_count)
+}
+
+fn bind_scrooby_equivalent_image_content(
+    content_by_ordinal: &BTreeMap<usize, String>,
+    bindings: &mut [ScroobyPackageBinding],
+) -> PipelineOutcome<usize> {
+    let mut resolved_count = 0usize;
+    for binding in bindings.iter_mut().filter(|binding| {
+        matches!(
+            binding.relation,
+            "page-image-resource" | "sprite-image-resource"
+        )
+    }) {
+        let Some(sha256) =
+            content_by_ordinal.get(&binding.target_ordinal)
+        else {
+            continue;
+        };
+        if binding.target_source_unit_id.is_some()
+            || binding.target_package_id.is_some()
+            || binding.target_entity_ordinal.is_some()
+            || binding.target_content_sha256.is_some()
+            || binding.target_content_match_basis.is_some()
+        {
+            return Err(PipelineError::new(
+                "Scrooby equivalent-content binding already has identity",
+            ));
+        }
+        binding.target_content_sha256 = Some(sha256.clone());
+        binding.target_content_match_basis =
+            Some("equivalent-scoped-ui-raster-sha256");
+        resolved_count = resolved_count.saturating_add(1);
+    }
+    Ok(resolved_count)
 }
 
 /// Bind package-local image resources to verified direct texture imports.
@@ -1449,6 +1657,8 @@ fn push_binding(
         target_package_match_basis: None,
         target_entity_ordinal: None,
         target_entity_match_basis: None,
+        target_content_sha256: None,
+        target_content_match_basis: None,
     });
 }
 
