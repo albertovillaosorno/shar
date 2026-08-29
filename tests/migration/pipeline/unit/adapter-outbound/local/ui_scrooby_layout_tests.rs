@@ -36,7 +36,8 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::{
-    add_owner_color_policy, add_polygon, collect_package_layout,
+    add_multi_text, add_owner_color_policy, add_polygon,
+    collect_package_layout,
     horizontal_justification,
     packed_rgba_u8, publish_rendered, screen_i32, semantic_i32,
     vertical_justification,
@@ -97,7 +98,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v6","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v7","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -265,6 +266,12 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             != Some(&serde_json::json!([255, 255, 255, 255]))
         || text.get("shadow_color_rgba_u8")
             != Some(&serde_json::json!([0, 0, 0, 0]))
+        || text.get("authored_shadow_enabled")
+            != Some(&serde_json::json!(false))
+        || text.get("runtime_shadow_enabled")
+            != Some(&serde_json::json!(false))
+        || text.get("runtime_outline_enabled")
+            != Some(&serde_json::json!(false))
         || page.get("owner_color_modulation").is_some()
         || layer.get("owner_color_restore")
             != Some(&serde_json::json!("original-after-display"))
@@ -316,6 +323,88 @@ fn justification_matches_scrooby_runtime_axes() -> Result<(), String> {
     }
     assert!(horizontal_justification(2).is_err());
     assert!(vertical_justification(0).is_err());
+    Ok(())
+}
+
+#[test]
+fn text_zero_shadow_offset_promotes_runtime_outline() -> Result<(), String> {
+    let payload = serde_json::json!({
+        "position": [0, 0],
+        "dimensions": [100, 20],
+        "justification": [0, 2],
+        "color": 4_294_967_295_u32,
+        "translucency": 0,
+        "rotation": 0,
+        "version": 17,
+        "shadow_enabled": 1,
+        "shadow_color": 0xc011_2233_u32,
+        "shadow_offset": [0, 0],
+        "current_text": 2,
+    });
+    let mut row = serde_json::Map::new();
+    add_multi_text(&payload, &mut row).map_err(|error| error.to_string())?;
+    assert_eq!(
+        row.get("authored_shadow_enabled"),
+        Some(&serde_json::json!(true)),
+    );
+    assert_eq!(
+        row.get("runtime_shadow_enabled"),
+        Some(&serde_json::json!(false)),
+    );
+    assert_eq!(
+        row.get("runtime_outline_enabled"),
+        Some(&serde_json::json!(true)),
+    );
+    assert_eq!(
+        row.get("runtime_outline_color_rgba_u8"),
+        Some(&serde_json::json!([0x11, 0x22, 0x33, 0xc0])),
+    );
+    assert_eq!(
+        row.get("runtime_outline_pass_offsets_i32"),
+        Some(&serde_json::json!([[-1, -1], [-1, 1], [1, -1], [1, 1]])),
+    );
+    assert_eq!(
+        row.get("runtime_outline_thickness_font_fraction_f64"),
+        Some(&serde_json::json!(0.05)),
+    );
+    assert!(row.get("runtime_shadow_offset_i32").is_none());
+    Ok(())
+}
+
+#[test]
+fn text_nonzero_shadow_offset_remains_runtime_shadow() -> Result<(), String> {
+    let payload = serde_json::json!({
+        "position": [0, 0],
+        "dimensions": [100, 20],
+        "justification": [0, 2],
+        "color": 4_294_967_295_u32,
+        "translucency": 0,
+        "rotation": 0,
+        "version": 17,
+        "shadow_enabled": 1,
+        "shadow_color": 0x8044_5566_u32,
+        "shadow_offset": [3, 4_294_967_294_u32],
+        "current_text": 1,
+    });
+    let mut row = serde_json::Map::new();
+    add_multi_text(&payload, &mut row).map_err(|error| error.to_string())?;
+    assert_eq!(
+        row.get("authored_shadow_offset_i32"),
+        Some(&serde_json::json!([3, -2])),
+    );
+    assert_eq!(
+        row.get("runtime_shadow_enabled"),
+        Some(&serde_json::json!(true)),
+    );
+    assert_eq!(
+        row.get("runtime_outline_enabled"),
+        Some(&serde_json::json!(false)),
+    );
+    assert_eq!(
+        row.get("runtime_shadow_offset_i32"),
+        Some(&serde_json::json!([3, -2])),
+    );
+    assert!(row.get("runtime_outline_color_rgba_u8").is_none());
     Ok(())
 }
 

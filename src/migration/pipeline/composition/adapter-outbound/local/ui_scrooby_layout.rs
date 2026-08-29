@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v6";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v7";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -242,48 +242,7 @@ fn add_semantics(
                 json!(required_u32(&component.payload, "image_count")?),
             );
         },
-        "scrooby_multi_text" => {
-            add_widget_frame(&component.payload, row)?;
-            let _previous = row.insert(
-                "raw_version_u32".to_owned(),
-                json!(required_u32(&component.payload, "version")?),
-            );
-            let shadow = required_u32(&component.payload, "shadow_enabled")?;
-            if shadow > 1 {
-                return Err(PipelineError::new(
-                    "Scrooby text shadow flag is invalid",
-                ));
-            }
-            let _previous =
-                row.insert("shadow_enabled".to_owned(), json!(shadow == 1));
-            let shadow_color =
-                required_u32(&component.payload, "shadow_color")?;
-            let _previous = row.insert(
-                "shadow_color_raw_u32".to_owned(),
-                json!(shadow_color),
-            );
-            let _previous = row.insert(
-                "shadow_color_rgba_u8".to_owned(),
-                json!(packed_rgba_u8(shadow_color)),
-            );
-            let shadow_offset =
-                required_u32_pair(&component.payload, "shadow_offset")?;
-            let _previous = row.insert(
-                "shadow_offset_i32".to_owned(),
-                json!([
-                    semantic_i32(shadow_offset[0]),
-                    semantic_i32(shadow_offset[1]),
-                ]),
-            );
-            let current_text = semantic_i32(required_u32(
-                &component.payload,
-                "current_text",
-            )?);
-            let _previous =
-                row.insert("current_text_i32".to_owned(), json!(current_text));
-            let _previous =
-                row.insert("initial_index_i32".to_owned(), json!(current_text));
-        },
+        "scrooby_multi_text" => add_multi_text(&component.payload, row)?,
         "scrooby_pure3d_object" => add_widget_frame(&component.payload, row)?,
         "scrooby_polygon" => add_polygon(&component.payload, row)?,
         "scrooby_string_text_bible" | "scrooby_string_hardcoded" => {},
@@ -291,6 +250,94 @@ fn add_semantics(
             return Err(PipelineError::new("unsupported Scrooby layout kind"));
         },
     }
+    Ok(())
+}
+
+fn add_multi_text(
+    payload: &Value,
+    row: &mut Map<String, Value>,
+) -> PipelineOutcome<()> {
+    add_widget_frame(payload, row)?;
+    let _previous = row.insert(
+        "raw_version_u32".to_owned(),
+        json!(required_u32(payload, "version")?),
+    );
+    let shadow = required_u32(payload, "shadow_enabled")?;
+    if shadow > 1 {
+        return Err(PipelineError::new(
+            "Scrooby text shadow flag is invalid",
+        ));
+    }
+    let authored_shadow_enabled = shadow == 1;
+    let _previous = row.insert(
+        "authored_shadow_enabled".to_owned(),
+        json!(authored_shadow_enabled),
+    );
+    let shadow_color = required_u32(payload, "shadow_color")?;
+    let shadow_rgba = packed_rgba_u8(shadow_color);
+    let _previous = row.insert(
+        "shadow_color_raw_u32".to_owned(),
+        json!(shadow_color),
+    );
+    let _previous = row.insert(
+        "shadow_color_rgba_u8".to_owned(),
+        json!(shadow_rgba),
+    );
+    let shadow_offset = required_u32_pair(payload, "shadow_offset")?;
+    let authored_shadow_offset = [
+        semantic_i32(shadow_offset[0]),
+        semantic_i32(shadow_offset[1]),
+    ];
+    let _previous = row.insert(
+        "authored_shadow_offset_i32".to_owned(),
+        json!(authored_shadow_offset),
+    );
+    let zero_offset = authored_shadow_offset == [0, 0];
+    let runtime_shadow_enabled = authored_shadow_enabled && !zero_offset;
+    let runtime_outline_enabled = authored_shadow_enabled && zero_offset;
+    let _previous = row.insert(
+        "runtime_shadow_enabled".to_owned(),
+        json!(runtime_shadow_enabled),
+    );
+    let _previous = row.insert(
+        "runtime_outline_enabled".to_owned(),
+        json!(runtime_outline_enabled),
+    );
+    if runtime_shadow_enabled {
+        let _previous = row.insert(
+            "runtime_shadow_offset_i32".to_owned(),
+            json!(authored_shadow_offset),
+        );
+    }
+    if runtime_outline_enabled {
+        let _previous = row.insert(
+            "runtime_outline_color_raw_u32".to_owned(),
+            json!(shadow_color),
+        );
+        let _previous = row.insert(
+            "runtime_outline_color_rgba_u8".to_owned(),
+            json!(shadow_rgba),
+        );
+        let _previous = row.insert(
+            "runtime_outline_pass_offsets_i32".to_owned(),
+            json!([[-1, -1], [-1, 1], [1, -1], [1, 1]]),
+        );
+        let _previous = row.insert(
+            "runtime_outline_thickness_font_fraction_f64".to_owned(),
+            json!(0.05),
+        );
+    }
+    let _previous = row.insert(
+        "runtime_effect_alpha_policy".to_owned(),
+        Value::String(
+            "min-effect-alpha-current-drawable-color-alpha".to_owned(),
+        ),
+    );
+    let current_text = semantic_i32(required_u32(payload, "current_text")?);
+    let _previous =
+        row.insert("current_text_i32".to_owned(), json!(current_text));
+    let _previous =
+        row.insert("initial_index_i32".to_owned(), json!(current_text));
     Ok(())
 }
 
