@@ -2380,8 +2380,7 @@ fn identity_ordinals(
 ) -> PipelineOutcome<BTreeMap<String, Vec<usize>>> {
     let mut ordinals = BTreeMap::<String, Vec<usize>>::new();
     for component in components.iter().filter(|item| item.row.kind == kind) {
-        let identity = trim_padding(required_string(&component.payload, field)?)
-            .to_owned();
+        let identity = normalized_identity(&component.payload, field)?;
         ordinals.entry(identity).or_default().push(component.row.ordinal);
     }
     Ok(ordinals)
@@ -2459,14 +2458,21 @@ fn identity_counts(
 ) -> PipelineOutcome<BTreeMap<String, usize>> {
     let mut counts = BTreeMap::<String, usize>::new();
     for component in components.iter().filter(|item| item.row.kind == kind) {
-        let identity = trim_padding(required_string(&component.payload, field)?)
-            .to_owned();
+        let identity = normalized_identity(&component.payload, field)?;
         let count = counts.entry(identity).or_default();
         *count = count.checked_add(1).ok_or_else(|| {
             PipelineError::new("Scrooby resource identity count overflowed")
         })?;
     }
     Ok(counts)
+}
+
+fn normalized_identity(value: &Value, field: &str) -> PipelineOutcome<String> {
+    let identity = trim_padding(required_string(value, field)?);
+    if identity.is_empty() {
+        return Err(PipelineError::new("Scrooby identity is empty"));
+    }
+    Ok(identity.to_owned())
 }
 
 fn require_unique(
