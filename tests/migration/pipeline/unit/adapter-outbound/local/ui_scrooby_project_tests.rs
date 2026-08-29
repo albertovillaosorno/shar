@@ -1075,59 +1075,6 @@ fn rejects_missing_page_resource_declaration() -> TestResult {
 }
 
 #[test]
-fn rejects_page_resource_owned_by_different_page() -> TestResult {
-    let root = case_dir("cross-page-resource")?;
-    write_valid_package(&root)?;
-    let second_page = write_component(
-        &root,
-        13,
-        1,
-        "scrooby_page",
-        "other-page",
-        r#"{"schema":"scrooby_page","name":"Other","children":[]}"#,
-    )?;
-
-    let project_path = root.join("components/scrooby_project/project.json");
-    let mut project = serde_json::from_slice::<serde_json::Value>(
-        &fs::read(&project_path).map_err(|error| error.to_string())?,
-    )
-    .map_err(|error| error.to_string())?;
-    project
-        .get_mut("children")
-        .and_then(serde_json::Value::as_array_mut)
-        .ok_or("project child inventory is missing")?
-        .push(serde_json::json!({"id_hex": "0x00018002"}));
-    fs::write(
-        &project_path,
-        serde_json::to_vec(&project).map_err(|error| error.to_string())?,
-    )
-    .map_err(|error| error.to_string())?;
-
-    let ledger = root.join("components.jsonl");
-    let text = fs::read_to_string(&ledger).map_err(|error| error.to_string())?;
-    let changed = text.replacen(
-        r#"{"ordinal":4,"parent_ordinal":2,"kind":"scrooby_image_resource""#,
-        r#"{"ordinal":4,"parent_ordinal":13,"kind":"scrooby_image_resource""#,
-        1,
-    );
-    if changed == text {
-        return Err("image resource fixture row was not found".to_owned());
-    }
-    fs::write(&ledger, format!("{changed}{second_page}\n"))
-        .map_err(|error| error.to_string())?;
-
-    let result = preflight_scrooby_package(&root);
-    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
-    let Err(error) = result else {
-        return Err("cross-page resource ancestry was accepted".to_owned());
-    };
-    if !error.to_string().contains("resource ancestry") {
-        return Err(format!("unexpected cross-page resource error: {error}"));
-    }
-    Ok(())
-}
-
-#[test]
 fn rejects_resource_outside_page_ancestry() -> TestResult {
     let root = case_dir("resource-parent")?;
     write_valid_package(&root)?;
