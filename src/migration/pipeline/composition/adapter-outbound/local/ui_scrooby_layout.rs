@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v15";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v16";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -202,6 +202,7 @@ fn add_semantics(
     project_resolution: [u32; 2],
     row: &mut Map<String, Value>,
 ) -> PipelineOutcome<()> {
+    add_authored_name(&component.kind, &component.payload, row)?;
     add_raw_version(&component.kind, &component.payload, row)?;
     add_runtime_field_consumption(&component.kind, row);
     match component.kind.as_str() {
@@ -313,6 +314,30 @@ fn add_semantics(
         _ => {
             return Err(PipelineError::new("unsupported Scrooby layout kind"));
         },
+    }
+    Ok(())
+}
+
+fn add_authored_name(
+    kind: &str,
+    payload: &Value,
+    row: &mut Map<String, Value>,
+) -> PipelineOutcome<()> {
+    if matches!(
+        kind,
+        "scrooby_page"
+            | "scrooby_screen"
+            | "scrooby_layer"
+            | "scrooby_group"
+            | "scrooby_multi_sprite"
+            | "scrooby_multi_text"
+            | "scrooby_pure3d_object"
+            | "scrooby_polygon"
+    ) {
+        let _previous = row.insert(
+            "authored_name".to_owned(),
+            json!(required_string(payload, "name")?),
+        );
     }
     Ok(())
 }
