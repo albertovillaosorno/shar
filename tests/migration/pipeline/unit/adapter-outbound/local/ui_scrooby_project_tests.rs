@@ -1948,8 +1948,9 @@ fn rejects_padding_only_page_identity() -> TestResult {
     write_valid_package(&root)?;
     let page = root.join("components/scrooby_page/page.json");
     let page_bytes = fs::read(&page).map_err(|error| error.to_string())?;
-    let mut page_payload = serde_json::from_slice::<serde_json::Value>(&page_bytes)
-        .map_err(|error| error.to_string())?;
+    let mut page_payload =
+        serde_json::from_slice::<serde_json::Value>(&page_bytes)
+            .map_err(|error| error.to_string())?;
     page_payload["name"] = serde_json::json!("\\x00");
     fs::write(
         &page,
