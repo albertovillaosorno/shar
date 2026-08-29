@@ -615,6 +615,12 @@ fn add_polygon(
     let points = payload.get("points").and_then(Value::as_array).ok_or_else(|| {
         PipelineError::new("Scrooby polygon points are not an array")
     })?;
+    let point_count = required_usize(payload, "point_count")?;
+    if point_count != points.len() {
+        return Err(PipelineError::new(
+            "Scrooby polygon point count disagrees with points",
+        ));
+    }
     let mut raw_points = Vec::with_capacity(points.len());
     let mut screen_points = Vec::with_capacity(points.len());
     for point in points {
