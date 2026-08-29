@@ -166,7 +166,10 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             0,
             "scrooby_project",
             "project",
-            r#"{"schema":"scrooby_project","version":10,"resolution":[640,480]}"#,
+            concat!(
+                r#"{"schema":"scrooby_project","version":10,"#,
+                r#""resolution":[640,480]}"#,
+            ),
         )?,
         write_component(
             &root,
@@ -191,8 +194,8 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             "scrooby_layer",
             "layer",
             concat!(
-                r#"{"schema":"scrooby_layer","version":12,"visible":1,"editable":1,"#,
-                r#""alpha":255}"#,
+                r#"{"schema":"scrooby_layer","version":12,"visible":1,"#,
+                r#""editable":1,"alpha":255}"#,
             ),
         )?,
         write_component(
@@ -260,7 +263,8 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
         || index(screen, "raw_version_u32") != Some(13)
         || page.get("runtime_index") != Some(&serde_json::Value::Null)
         || page.get("canvas").is_some()
-        || page.get("raw_resolution_u32") != Some(&serde_json::json!([640, 480]))
+        || page.get("raw_resolution_u32")
+            != Some(&serde_json::json!([640, 480]))
         || page.get("runtime_resolution_consumed")
             != Some(&serde_json::json!(false))
         || index(layer, "source_sibling_index") != Some(1)
@@ -340,7 +344,10 @@ fn layout_rejects_zero_project_resolution() -> TestResult {
             "scrooby_project",
             "project",
             &format!(
-                r#"{{"schema":"scrooby_project","version":10,"resolution":[{},{}]}}"#,
+                concat!(
+                    r#"{{"schema":"scrooby_project","version":10,"#,
+                    r#""resolution":[{},{}]}}"#,
+                ),
                 resolution[0], resolution[1],
             ),
         )?;
