@@ -66,6 +66,7 @@ mod ui_scrooby_project;
 mod ui_scrooby_resources;
 mod ui_sprite_raster;
 mod vehicle_catalog;
+mod vehicle_tuning_context;
 mod wasp_camera;
 mod wrench;
 
