@@ -168,10 +168,14 @@ impl ScroobyUiPreflight {
             .iter()
             .flat_map(|package| &package.bindings)
         {
-            if binding.target_package_match_basis
-                != Some("owner-joined-sprite-exact")
-                || binding.target_entity_match_basis
-                    != Some("full-filename-exact")
+            if !matches!(
+                binding.target_package_match_basis,
+                Some(
+                    "owner-joined-sprite-exact"
+                        | "paired-ui-screen-sprite-layout-exact"
+                )
+            ) || binding.target_entity_match_basis
+                != Some("full-filename-exact")
             {
                 continue;
             }
@@ -473,6 +477,11 @@ pub(super) fn preflight_scrooby_ui_projects(
         }
     }
     packages.sort_by(|left, right| left.package_id.cmp(&right.package_id));
+    bind_scrooby_paired_ui_screen_image_entities(
+        index,
+        extracted_root,
+        &mut packages,
+    )?;
     Ok(ScroobyUiPreflight { packages })
 }
 
@@ -503,9 +512,22 @@ pub(super) fn bind_scrooby_direct_import_sources(
             })
             .map(|source| (source.id.as_str(), source.evidence.path.as_str()))
             .collect::<Vec<_>>();
+        let entity_backed_ordinals = package
+            .bindings
+            .iter()
+            .filter(|binding| {
+                matches!(
+                    binding.relation,
+                    "page-image-resource" | "sprite-image-resource"
+                ) && binding.target_entity_ordinal.is_some()
+            })
+            .map(|binding| binding.target_ordinal)
+            .collect::<BTreeSet<_>>();
         let mut source_by_ordinal = BTreeMap::new();
         for resource in &package.image_resources {
-            if resource.joined_sprite_ordinal.is_some() {
+            if resource.joined_sprite_ordinal.is_some()
+                || entity_backed_ordinals.contains(&resource.ordinal)
+            {
                 continue;
             }
             let source = resolve_exact_image_source(
@@ -1712,26 +1734,7 @@ fn collect_image_resource_sources(
     root: &Path,
     components: &[Component],
 ) -> PipelineOutcome<Vec<ScroobyImageResourceSource>> {
-    let components_root = root.join("components");
-    let mut sprite_ordinals = BTreeMap::<String, Vec<usize>>::new();
-    for row in read_ledger(root)?
-        .into_iter()
-        .filter(|row| row.kind == "sprite")
-    {
-        let path = resolve_under(&components_root, Path::new(&row.path))
-            .map_err(|_error| {
-                PipelineError::new("Scrooby joined sprite path escapes package")
-            })?;
-        let bytes = fs::read(&path)
-            .map_err(|error| io_error("read Scrooby joined sprite", &error))?;
-        let payload = serde_json::from_slice::<Value>(&bytes).map_err(|error| {
-            PipelineError::new(format!(
-                "Scrooby joined sprite JSON failed: {error}"
-            ))
-        })?;
-        let name = trim_padding(required_string(&payload, "name")?).to_owned();
-        sprite_ordinals.entry(name).or_default().push(row.ordinal);
-    }
+    let sprite_ordinals = joined_sprite_ordinals(root)?;
     components
         .iter()
         .filter(|component| component.row.kind == "scrooby_image_resource")
@@ -1756,6 +1759,143 @@ fn collect_image_resource_sources(
             })
         })
         .collect()
+}
+
+fn joined_sprite_ordinals(
+    root: &Path,
+) -> PipelineOutcome<BTreeMap<String, Vec<usize>>> {
+    let components_root = root.join("components");
+    let mut ordinals = BTreeMap::<String, Vec<usize>>::new();
+    for row in read_ledger(root)?
+        .into_iter()
+        .filter(|row| row.kind == "sprite")
+    {
+        let path = resolve_under(&components_root, Path::new(&row.path))
+            .map_err(|_error| {
+                PipelineError::new("Scrooby joined sprite path escapes package")
+            })?;
+        let bytes = fs::read(&path)
+            .map_err(|error| io_error("read Scrooby joined sprite", &error))?;
+        let payload = serde_json::from_slice::<Value>(&bytes).map_err(|error| {
+            PipelineError::new(format!(
+                "Scrooby joined sprite JSON failed: {error}"
+            ))
+        })?;
+        let name = trim_padding(required_string(&payload, "name")?).to_owned();
+        ordinals.entry(name).or_default().push(row.ordinal);
+    }
+    Ok(ordinals)
+}
+
+fn paired_ui_screen_sprite_subcategory(subcategory: &str) -> Option<String> {
+    let suffix = subcategory.strip_prefix("ui-screens/scene-layouts/")?;
+    (!suffix.is_empty()).then(|| format!("ui-screens/sprite-layouts/{suffix}"))
+}
+
+fn bind_scrooby_paired_ui_screen_image_entities(
+    index: &PhaseThreePackageIndex,
+    extracted_root: &Path,
+    packages: &mut [ScroobyPackageBindings],
+) -> PipelineOutcome<()> {
+    let rows_by_id = index
+        .packages()
+        .iter()
+        .map(|package| (package.package_id.as_str(), package))
+        .collect::<BTreeMap<_, _>>();
+    for package in packages {
+        let owner = rows_by_id.get(package.package_id.as_str()).ok_or_else(|| {
+            PipelineError::new("Scrooby preflight package is absent from index")
+        })?;
+        if owner.category() != "ui-screens" {
+            continue;
+        }
+        let Some(peer_subcategory) =
+            paired_ui_screen_sprite_subcategory(owner.subcategory())
+        else {
+            continue;
+        };
+        let peers = index
+            .packages()
+            .iter()
+            .filter(|candidate| {
+                candidate.category() == "ui-screens"
+                    && candidate.subcategory() == peer_subcategory
+            })
+            .collect::<Vec<_>>();
+        let [peer] = peers.as_slice() else {
+            return Err(PipelineError::new(
+                "Scrooby scene layout has no unique sprite-layout peer",
+            ));
+        };
+        let peer_root = resolve_normalized_package_root(
+            extracted_root,
+            &peer.package_root,
+        )?;
+        let peer_sprites = joined_sprite_ordinals(&peer_root)?;
+        bind_scrooby_paired_image_entities(
+            &peer.package_id,
+            &package.image_resources,
+            &peer_sprites,
+            &mut package.bindings,
+        )?;
+    }
+    Ok(())
+}
+
+fn bind_scrooby_paired_image_entities(
+    peer_package_id: &str,
+    image_resources: &[ScroobyImageResourceSource],
+    peer_sprites: &BTreeMap<String, Vec<usize>>,
+    bindings: &mut [ScroobyPackageBinding],
+) -> PipelineOutcome<()> {
+    let mut joined = BTreeMap::new();
+    for resource in image_resources {
+        if resource.joined_sprite_ordinal.is_some() {
+            continue;
+        }
+        let basename = exact_basename(&resource.filename).ok_or_else(|| {
+            PipelineError::new(concat!(
+                "Scrooby image resource filename has no ",
+                "basename"
+            ))
+        })?;
+        let Some(entity_ordinal) = resolve_exact_joined_sprite_ordinal(
+            basename,
+            peer_sprites.get(basename).map(Vec::as_slice),
+        )? else {
+            continue;
+        };
+        if joined.insert(resource.ordinal, entity_ordinal).is_some() {
+            return Err(PipelineError::new(
+                "Scrooby paired image resource ordinal is duplicated",
+            ));
+        }
+    }
+    for binding in bindings.iter_mut().filter(|binding| {
+        matches!(
+            binding.relation,
+            "page-image-resource" | "sprite-image-resource"
+        )
+    }) {
+        let Some(entity_ordinal) = joined.get(&binding.target_ordinal) else {
+            continue;
+        };
+        if binding.target_package_id.is_some()
+            || binding.target_package_match_basis.is_some()
+            || binding.target_entity_ordinal.is_some()
+            || binding.target_entity_match_basis.is_some()
+        {
+            return Err(PipelineError::new(
+                "Scrooby paired image binding already has backing identity",
+            ));
+        }
+        binding.target_package_id = Some(peer_package_id.to_owned());
+        binding.target_package_match_basis =
+            Some("paired-ui-screen-sprite-layout-exact");
+        binding.target_entity_ordinal = Some(*entity_ordinal);
+        binding.target_entity_match_basis = Some("full-filename-exact");
+    }
+    Ok(())
 }
 
 fn resolve_exact_joined_sprite_ordinal(
