@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v13";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v14";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -295,6 +295,22 @@ fn add_semantics(
 }
 
 fn add_runtime_field_consumption(kind: &str, row: &mut Map<String, Value>) {
+    if matches!(
+        kind,
+        "scrooby_project"
+            | "scrooby_page"
+            | "scrooby_screen"
+            | "scrooby_layer"
+            | "scrooby_group"
+            | "scrooby_multi_sprite"
+            | "scrooby_multi_text"
+            | "scrooby_pure3d_object"
+            | "scrooby_polygon"
+    ) {
+        let consumed = kind == "scrooby_multi_text";
+        let _previous =
+            row.insert("runtime_version_consumed".to_owned(), json!(consumed));
+    }
     match kind {
         "scrooby_layer" => {
             let _previous = row.insert(
