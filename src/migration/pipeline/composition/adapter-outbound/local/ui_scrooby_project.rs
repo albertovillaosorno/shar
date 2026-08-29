@@ -1421,9 +1421,22 @@ fn validate_widget_resources(components: &[Component]) -> PipelineOutcome<()> {
     for component in components {
         match component.row.kind.as_str() {
             "scrooby_multi_sprite" => {
-                for image in
-                    required_string_array(&component.payload, "image_names")?
-                {
+                let image_names =
+                    required_string_array(&component.payload, "image_names")?;
+                let image_count =
+                    required_usize(&component.payload, "image_count")?;
+                if image_count != image_names.len() {
+                    return Err(PipelineError::new(concat!(
+                        "Scrooby MultiSprite image count ",
+                        "disagrees with aliases",
+                    )));
+                }
+                if image_names.is_empty() {
+                    return Err(PipelineError::new(
+                        "Scrooby MultiSprite has no initial image alias",
+                    ));
+                }
+                for image in image_names {
                     require_unique(
                         &images,
                         trim_padding(image),

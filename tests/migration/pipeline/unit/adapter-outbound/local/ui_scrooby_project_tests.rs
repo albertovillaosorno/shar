@@ -139,7 +139,7 @@ fn write_valid_package(root: &Path) -> TestResult {
         write_component(
             root, 6, 5, "scrooby_multi_sprite", "sprite",
             concat!(
-                r#"{"schema":"scrooby_multi_sprite","#,
+                r#"{"schema":"scrooby_multi_sprite","image_count":1,"#,
                 r#""image_names":["Icon"]}"#,
             ),
         )?,
@@ -1199,13 +1199,72 @@ fn rejects_multi_text_initial_index_outside_strings() -> TestResult {
 }
 
 #[test]
+fn rejects_multi_sprite_alias_count_mismatch() -> TestResult {
+    let root = case_dir("multi-sprite-count")?;
+    write_valid_package(&root)?;
+    let sprite = root.join("components/scrooby_multi_sprite/sprite.json");
+    let payload = fs::read_to_string(&sprite)
+        .map_err(|error| error.to_string())?;
+    let changed = payload.replacen(
+        r#""image_count":1"#,
+        r#""image_count":2"#,
+        1,
+    );
+    if changed == payload {
+        return Err("MultiSprite image count fixture was not found".to_owned());
+    }
+    fs::write(&sprite, changed).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err(
+            "mismatched MultiSprite image count passed preflight".to_owned(),
+        );
+    };
+    if !error
+        .to_string()
+        .contains("MultiSprite image count disagrees with aliases")
+    {
+        return Err(format!("unexpected MultiSprite count error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_multi_sprite_without_initial_alias() -> TestResult {
+    let root = case_dir("multi-sprite-empty")?;
+    write_valid_package(&root)?;
+    let sprite = root.join("components/scrooby_multi_sprite/sprite.json");
+    fs::write(
+        &sprite,
+        concat!(
+            r#"{"schema":"scrooby_multi_sprite","image_count":0,"#,
+            r#""image_names":[]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("empty MultiSprite aliases passed preflight".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("MultiSprite has no initial image alias")
+    {
+        return Err(format!("unexpected empty MultiSprite error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_missing_image_resource() -> TestResult {
     let root = case_dir("missing-image")?;
     write_valid_package(&root)?;
     fs::write(
         root.join("components/scrooby_multi_sprite/sprite.json"),
         concat!(
-            r#"{"schema":"scrooby_multi_sprite","#,
+            r#"{"schema":"scrooby_multi_sprite","image_count":1,"#,
             r#""image_names":["Missing"]}"#,
         ),
     )
