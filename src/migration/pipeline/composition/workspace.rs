@@ -57,6 +57,9 @@ pub(crate) const FBX_WORKSPACE_ROOT: &str = ".cache/pipeline/fbx-assets";
 /// Default physical complete UI-sprite raster catalog workspace.
 pub(crate) const UI_RASTER_WORKSPACE_ROOT: &str =
     ".cache/pipeline/ui-raster-assets";
+/// Default physical joined Scrooby sprite-raster catalog workspace.
+pub(crate) const UI_SCROOBY_JOINED_RASTER_WORKSPACE_ROOT: &str =
+    ".cache/pipeline/ui-scrooby-joined-rasters";
 /// Default physical Scrooby semantic-binding catalog workspace.
 pub(crate) const UI_SCROOBY_BINDING_WORKSPACE_ROOT: &str =
     ".cache/pipeline/ui-scrooby-bindings";
