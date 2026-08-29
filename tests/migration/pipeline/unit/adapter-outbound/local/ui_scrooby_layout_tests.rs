@@ -795,8 +795,9 @@ fn polygon_layout_rejects_declared_point_count_drift() -> Result<(), String> {
         ],
     });
     let mut row = serde_json::Map::new();
-    let error = add_polygon(&payload, &mut row)
-        .expect_err("mismatched polygon point count was accepted");
+    let Err(error) = add_polygon(&payload, &mut row) else {
+        return Err("mismatched polygon point count was accepted".to_owned());
+    };
     let expected = "Scrooby polygon point count disagrees with points";
     if error.to_string() != expected {
         return Err(format!("unexpected polygon point-count error: {error}"));
