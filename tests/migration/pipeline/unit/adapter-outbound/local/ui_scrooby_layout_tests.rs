@@ -99,7 +99,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v10","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v11","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -254,6 +254,10 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
         value.get(field).and_then(serde_json::Value::as_u64)
     };
     if page.get("runtime_index") != Some(&serde_json::Value::Null)
+        || page.get("canvas").is_some()
+        || page.get("raw_resolution_u32") != Some(&serde_json::json!([640, 480]))
+        || page.get("runtime_resolution_consumed")
+            != Some(&serde_json::json!(false))
         || index(layer, "source_sibling_index") != Some(1)
         || index(layer, "runtime_index") != Some(0)
         || index(string, "runtime_index") != Some(0)
