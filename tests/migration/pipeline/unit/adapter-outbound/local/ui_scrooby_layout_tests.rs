@@ -96,7 +96,7 @@ fn layout_reuse_rejects_transaction_debris() -> TestResult {
     let output = root.join("layout-output");
     let rendered = concat!(
         r#"{"layout_count":0,"record_type":"header","#,
-        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v2","#,
+        r#""schema":"shar-schoenwald.scrooby-layout-catalog.v3","#,
         r#""status":"complete"}"#,
         "\n",
     );
@@ -202,7 +202,7 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
                 r#"{"schema":"scrooby_multi_text","position":[0,0],"#,
                 r#""dimensions":[100,20],"justification":[0,2],"#,
                 r#""color":4294967295,"translucency":0,"rotation":0,"#,
-                r#""shadow_enabled":0,"shadow_color":0,"#,
+                r#""version":17,"shadow_enabled":0,"shadow_color":0,"#,
                 r#""shadow_offset":[0,0],"current_text":0}"#,
             ),
         )?,
@@ -260,6 +260,8 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             != Some(&serde_json::json!([255, 255, 255, 255]))
         || text.get("shadow_color_rgba_u8")
             != Some(&serde_json::json!([0, 0, 0, 0]))
+        || index(text, "raw_version_u32") != Some(17)
+        || index(text, "initial_index_i32") != Some(0)
     {
         return Err(format!(
             "unexpected runtime/layout semantics: page={page} layer={layer} \

@@ -41,7 +41,7 @@ use serde_json::{Map, Value, json};
 
 use crate::domain::{PhaseThreePackageIndex, PipelineError, PipelineOutcome};
 
-const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v2";
+const SCHEMA: &str = "shar-schoenwald.scrooby-layout-catalog.v3";
 const FILE: &str = "layout.jsonl";
 
 #[derive(Clone, Debug)]
@@ -209,6 +209,10 @@ fn add_semantics(
         },
         "scrooby_multi_text" => {
             add_widget_frame(&component.payload, row)?;
+            let _previous = row.insert(
+                "raw_version_u32".to_owned(),
+                json!(required_u32(&component.payload, "version")?),
+            );
             let shadow = required_u32(&component.payload, "shadow_enabled")?;
             if shadow > 1 {
                 return Err(PipelineError::new(
@@ -236,13 +240,14 @@ fn add_semantics(
                     semantic_i32(shadow_offset[1]),
                 ]),
             );
-            let _previous = row.insert(
-                "current_text_i32".to_owned(),
-                json!(semantic_i32(required_u32(
-                    &component.payload,
-                    "current_text",
-                )?)),
-            );
+            let current_text = semantic_i32(required_u32(
+                &component.payload,
+                "current_text",
+            )?);
+            let _previous =
+                row.insert("current_text_i32".to_owned(), json!(current_text));
+            let _previous =
+                row.insert("initial_index_i32".to_owned(), json!(current_text));
         },
         "scrooby_pure3d_object" => add_widget_frame(&component.payload, row)?,
         "scrooby_polygon" => add_polygon(&component.payload, row)?,

@@ -154,7 +154,8 @@ fn write_valid_package(root: &Path) -> TestResult {
         write_component(
             root, 8, 5, "scrooby_multi_text", "text",
             concat!(
-                r#"{"schema":"scrooby_multi_text","text_style":"Body","#,
+                r#"{"schema":"scrooby_multi_text","version":17,"#,
+                r#""current_text":0,"text_style":"Body","#,
                 r#""children":[{"id_hex":"0x0001800b"}]}"#,
             ),
         )?,
@@ -1164,6 +1165,35 @@ fn rejects_declared_widget_without_published_child() -> TestResult {
     };
     if !error.to_string().contains("child inventory disagrees") {
         return Err(format!("unexpected missing-widget error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_multi_text_initial_index_outside_strings() -> TestResult {
+    let root = case_dir("multi-text-index")?;
+    write_valid_package(&root)?;
+    let text = root.join("components/scrooby_multi_text/text.json");
+    let payload = fs::read_to_string(&text).map_err(|error| error.to_string())?;
+    let changed = payload.replacen(
+        r#""current_text":0"#,
+        r#""current_text":1"#,
+        1,
+    );
+    if changed == payload {
+        return Err("MultiText current index fixture was not found".to_owned());
+    }
+    fs::write(&text, changed).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("out-of-range MultiText index passed preflight".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("MultiText initial index is outside its strings")
+    {
+        return Err(format!("unexpected MultiText index error: {error}"));
     }
     Ok(())
 }

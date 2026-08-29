@@ -1319,6 +1319,24 @@ fn validate_layout_children(components: &[Component]) -> PipelineOutcome<()> {
                 "Scrooby layout child inventory disagrees with ledger ancestry",
             ));
         }
+        if owner.row.kind == "scrooby_multi_text" {
+            let text_count = observed
+                .get("scrooby_string_text_bible")
+                .copied()
+                .unwrap_or(0)
+                .saturating_add(
+                    observed
+                        .get("scrooby_string_hardcoded")
+                        .copied()
+                        .unwrap_or(0),
+                );
+            let current_text = required_usize(&owner.payload, "current_text")?;
+            if current_text >= text_count {
+                return Err(PipelineError::new(
+                    "Scrooby MultiText initial index is outside its strings",
+                ));
+            }
+        }
     }
     Ok(())
 }
