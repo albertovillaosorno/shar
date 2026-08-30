@@ -603,13 +603,15 @@ fn animation_member_paths(
     let package = animation_package.ok_or_else(|| {
         PipelineError::new("character catalog animation package is missing")
     })?;
-    let paths = package
-        .members()
-        .iter()
-        .filter(|member| {
+    let members = source_ordered_character_members(
+        package.members().iter().filter(|member| {
             member.kind == "p3d-animation"
                 && member.source_chunk_kind == "animation"
-        })
+        }),
+        "animation",
+    )?;
+    let paths = members
+        .into_iter()
         .map(|member| base_root.join(&member.path))
         .collect::<Vec<_>>();
     if paths.is_empty() {
@@ -1193,21 +1195,24 @@ fn validate_character_package(
     Ok(())
 }
 
-/// Restore exact source chunk order for character rigid prop meshes.
-fn order_character_mesh_members(
-    meshes: &mut Vec<&PhaseThreePackageMember>,
-) -> Result<(), PipelineError> {
-    let mut ordered = meshes
-        .iter()
-        .copied()
+/// Restore exact source chunk order for selected character members.
+fn source_ordered_character_members<'row>(
+    members: impl IntoIterator<Item = &'row PhaseThreePackageMember>,
+    kind: &str,
+) -> Result<Vec<&'row PhaseThreePackageMember>, PipelineError> {
+    let mut ordered = members
+        .into_iter()
         .map(|member| {
             member
                 .source_chunk_ordinal
                 .map(|ordinal| (ordinal, member))
                 .ok_or_else(|| {
                     PipelineError::new(format!(
-                        "character mesh member {} has no source chunk ordinal",
-                        member.id
+                        concat!(
+                            "character {} member {} has no source chunk ",
+                            "ordinal"
+                        ),
+                        kind, member.id
                     ))
                 })
         })
@@ -1219,14 +1224,18 @@ fn order_character_mesh_members(
         };
         if left_ordinal == right_ordinal {
             return Err(PipelineError::new(format!(
-                "character package repeats source mesh ordinal {left_ordinal}"
+                "character package repeats source {kind} ordinal {left_ordinal}"
             )));
         }
     }
-    *meshes = ordered
-        .into_iter()
-        .map(|(_ordinal, member)| member)
-        .collect();
+    Ok(ordered.into_iter().map(|(_ordinal, member)| member).collect())
+}
+
+/// Restore exact source chunk order for character rigid prop meshes.
+fn order_character_mesh_members(
+    meshes: &mut Vec<&PhaseThreePackageMember>,
+) -> Result<(), PipelineError> {
+    *meshes = source_ordered_character_members(meshes.iter().copied(), "mesh")?;
     Ok(())
 }
 
