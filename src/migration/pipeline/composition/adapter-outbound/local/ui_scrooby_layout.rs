@@ -754,6 +754,13 @@ fn read_components(root: &Path) -> PipelineOutcome<Vec<Component>> {
         components.push(Component { ordinal, parent_ordinal, kind, payload });
     }
     components.sort_by_key(|component| component.ordinal);
+    if components.windows(2).any(|pair| {
+        matches!(pair, [left, right] if left.ordinal == right.ordinal)
+    }) {
+        return Err(PipelineError::new(
+            "Scrooby layout component ordinal is duplicated",
+        ));
+    }
     Ok(components)
 }
 
