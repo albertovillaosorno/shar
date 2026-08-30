@@ -178,5 +178,12 @@ Static and rigid-animated regressions now prove canonical naming leaves the
 source part sequence unchanged; all 86 focused prop-catalog tests and the 1,002
 pipeline library tests pass with strict pipeline Clippy clean.
 
+World structural-guide assembly now concatenates the accumulated
+`MasterContent` mesh vector directly instead of sorting it by mesh name before
+flattening geometry. A focused regression supplies `z` then `a` meshes with
+distinct source positions and proves the first published triangle still comes
+from `z`; the full pipeline library now passes 1,003 tests with strict pipeline
+Clippy clean.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
