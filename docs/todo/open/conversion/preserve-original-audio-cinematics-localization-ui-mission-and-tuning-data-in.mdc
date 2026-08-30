@@ -93,14 +93,17 @@ the publication gate rerenders each complete definition and rejects any wire
 field that differs. Selection, completeness, source order, and exact replay now
 derive from that single typed ledger rather than a parallel source-id list.
 
-The staging transaction verifies every semantic sidecar byte-for-byte and
-publishes an exact 12-file inventory, but the persistent `plans/index.json`
-contract currently binds only the source manifest and six plan artifacts. Its
-downstream reader also reads only the `plans/` tree. Final release integration
-therefore still needs one versioned producer-and-consumer contract that binds
-and verifies `mission-definitions.jsonl`, `mission-tuning.jsonl`,
-`vehicle-tuning.jsonl`, and `vehicle-tuning-usage.jsonl`; recording hashes that
-the consumer does not verify would not close that gap.
+Release integration now binds the semantic sidecars persistently. The published
+plan index v4 carries a fixed identity, sibling filename, exact byte count, and
+SHA-256 revision for `mission-definitions.jsonl`, `mission-tuning.jsonl`,
+`vehicle-tuning.jsonl`, and `vehicle-tuning-usage.jsonl`; those bindings
+participate in the release-index revision. The downstream local reader requires
+all four regular non-linked siblings and verifies their exact size and digest
+before accepting the plans. Synthetic tests reject both a missing sidecar and a
+same-size byte mutation.
+
+Corpus-level v4 publication evidence remains pending
+until an exclusive `prepare-unreal` run completes with the current producer.
 
 These preservation artifacts intentionally do not map legacy setters to
 gameplay units, native Unreal fields, conversion rules, or runtime ranges. This
