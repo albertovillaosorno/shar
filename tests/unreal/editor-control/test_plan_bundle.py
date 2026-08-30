@@ -223,6 +223,25 @@ def test_reader_accepts_exact_regular_file_inventory(tmp_path: Path) -> None:
     assert reader.read() == bundle.report
 
 
+def test_reader_rejects_tampered_semantic_artifact(tmp_path: Path) -> None:
+    root = tmp_path / "plans"
+    _ = write_plan_bundle(root)
+    sidecar = tmp_path / "mission-definitions.jsonl"
+    payload = bytearray(sidecar.read_bytes())
+    payload[2] = ord("X") if payload[2] != ord("X") else ord("Y")
+    sidecar.write_bytes(payload)
+    with pytest.raises(ProtocolError, match="semantic artifact revision"):
+        FilesystemPlanBundleReader(root).read()
+
+
+def test_reader_rejects_missing_semantic_artifact(tmp_path: Path) -> None:
+    root = tmp_path / "plans"
+    _ = write_plan_bundle(root)
+    (tmp_path / "mission-tuning.jsonl").unlink()
+    with pytest.raises(ProtocolError, match="semantic artifact is missing"):
+        FilesystemPlanBundleReader(root).read()
+
+
 def test_reader_rejects_extra_file_without_exposing_physical_root(
     tmp_path: Path,
 ) -> None:

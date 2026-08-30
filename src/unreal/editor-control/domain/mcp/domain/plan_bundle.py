@@ -21,7 +21,8 @@
 # - Summary:
 #   - Generated Unreal plan bundle preflight domain.
 # - Description:
-#   - Rejects stale, partial, noncanonical, or internally inconsistent bundles.
+#   - Rejects stale, partial, noncanonical, internally inconsistent, or
+#     semantically unbound release bundles.
 # - Usage:
 #   - Called by a read-only filesystem adapter before any native MCP mutation.
 # - Defaults:
@@ -49,7 +50,7 @@ from mcp.domain.json_types import reject_duplicate_json_object
 from mcp.domain.json_types import require_json_object
 
 _PLAN_SCHEMA = "shar-schoenwald.unreal-plan.v1"
-_BUNDLE_SCHEMA = "shar-schoenwald.unreal-plan-bundle.v3"
+_BUNDLE_SCHEMA = "shar-schoenwald.unreal-plan-bundle.v4"
 _TARGET_ENGINE_VERSION = "5.8.1"
 _TARGET_PLATFORM = "editor"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -57,6 +58,12 @@ _OPERATION_ID = re.compile(r"^operation-[0-9a-f]{16}$")
 _IDENTITY = re.compile(r"^[A-Za-z0-9_.-]{1,240}$")
 _UNREAL_NAME = re.compile(r"^[A-Za-z0-9_]+$")
 
+_SEMANTIC_ARTIFACT_SPECS: tuple[tuple[str, str], ...] = (
+    ("mission-definitions", "mission-definitions.jsonl"),
+    ("mission-tuning", "mission-tuning.jsonl"),
+    ("vehicle-tuning", "vehicle-tuning.jsonl"),
+    ("vehicle-tuning-usage", "vehicle-tuning-usage.jsonl"),
+)
 _PLAN_SPECS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("asset-import-plan", "asset-import-plan.json", ()),
     (
@@ -132,6 +139,7 @@ _INDEX_FIELDS = (
     "target_platform",
     "semantic_blocker_count",
     "semantic_blockers",
+    "semantic_artifacts",
     "plans",
 )
 _PLAN_FIELDS = (
@@ -214,6 +222,24 @@ class SemanticBlockerSummary(NamedTuple):
         }
 
 
+class SemanticArtifactSummary(NamedTuple):
+    """One exact semantic sidecar bound into the release index."""
+
+    artifact_id: str
+    filename: str
+    revision: str
+    byte_count: int
+
+    def to_json(self) -> JsonObject:
+        """Render canonical public semantic-artifact evidence."""
+        return {
+            "artifactId": self.artifact_id,
+            "byteCount": self.byte_count,
+            "filename": self.filename,
+            "revision": self.revision,
+        }
+
+
 class PlanBundleReport(NamedTuple):
     """Independent preflight evidence for one complete plan bundle."""
 
@@ -227,6 +253,7 @@ class PlanBundleReport(NamedTuple):
     readiness_counts: dict[str, int]
     plans: tuple[PlanSummary, ...]
     semantic_blockers: tuple[SemanticBlockerSummary, ...] = ()
+    semantic_artifacts: tuple[SemanticArtifactSummary, ...] = ()
 
     def to_json(self) -> JsonObject:
         """Render a deterministic public report without physical paths."""
@@ -244,6 +271,10 @@ class PlanBundleReport(NamedTuple):
             ],
             "readinessCounts": dict(sorted(self.readiness_counts.items())),
             "revision": self.revision,
+            "semanticArtifactCount": len(self.semantic_artifacts),
+            "semanticArtifacts": [
+                artifact.to_json() for artifact in self.semantic_artifacts
+            ],
             "semanticBlockerCount": self.semantic_blocker_count,
             "semanticBlockers": [
                 blocker.to_json() for blocker in self.semantic_blockers
@@ -288,6 +319,7 @@ def parse_plan_bundle(  # noqa: PLR0912,PLR0914 - closed schema parser
         context="plan bundle index",
     )
     semantic_blockers = _semantic_blocker_summaries(index)
+    semantic_artifacts = _semantic_artifact_summaries(index)
     semantic_total = sum(blocker.count for blocker in semantic_blockers)
     if semantic_total != semantic_blocker_count:
         fail_protocol("plan bundle semantic blocker total is inconsistent")
@@ -378,9 +410,52 @@ def parse_plan_bundle(  # noqa: PLR0912,PLR0914 - closed schema parser
         operation_count=sum(item.operation_count for item in summaries),
         readiness_counts=dict(readiness),
         plans=tuple(summaries),
+        semantic_artifacts=semantic_artifacts,
         semantic_blockers=semantic_blockers,
     )
     return ValidatedPlanBundle(report, tuple(typed_operations))
+
+
+def _semantic_artifact_summaries(
+    index: JsonObject,
+) -> tuple[SemanticArtifactSummary, ...]:
+    values = _array(index, "semantic_artifacts", context="plan bundle index")
+    if len(values) != len(_SEMANTIC_ARTIFACT_SPECS):
+        fail_protocol("plan bundle semantic artifact inventory is not exact")
+    artifacts: list[SemanticArtifactSummary] = []
+    for position, ((artifact_id, filename), raw) in enumerate(
+        zip(_SEMANTIC_ARTIFACT_SPECS, values, strict=True)
+    ):
+        value = require_json_object(
+            raw, context=f"semantic artifact {position}"
+        )
+        _require_exact_fields(
+            value,
+            ("artifact_id", "filename", "revision", "byte_count"),
+            context="semantic artifact",
+        )
+        observed_id = _text(
+            value, "artifact_id", context="semantic artifact"
+        )
+        if observed_id != artifact_id:
+            fail_protocol(
+                "plan bundle semantic artifact order is not canonical"
+            )
+        if _text(value, "filename", context="semantic artifact") != filename:
+            fail_protocol(
+                "plan bundle semantic artifact filename is not canonical"
+            )
+        artifacts.append(SemanticArtifactSummary(
+            artifact_id=artifact_id,
+            filename=filename,
+            revision=_sha256_field(
+                value, "revision", context="semantic artifact"
+            ),
+            byte_count=_nonnegative_integer(
+                value, "byte_count", context="semantic artifact"
+            ),
+        ))
+    return tuple(artifacts)
 
 
 def _semantic_blocker_summaries(
@@ -758,6 +833,15 @@ def _canonical_index(index: JsonObject, *, revision: str) -> str:
         ))
         for blocker in _semantic_blocker_summaries(index)
     ]
+    semantic_artifacts = [
+        OrderedDict((
+            ("artifact_id", artifact.artifact_id),
+            ("filename", artifact.filename),
+            ("revision", artifact.revision),
+            ("byte_count", artifact.byte_count),
+        ))
+        for artifact in _semantic_artifact_summaries(index)
+    ]
     plans = [
         OrderedDict((
             ("plan_id", _text(entry, "plan_id", context="plan index entry")),
@@ -809,6 +893,7 @@ def _canonical_index(index: JsonObject, *, revision: str) -> str:
             ),
         ),
         ("semantic_blockers", blockers),
+        ("semantic_artifacts", semantic_artifacts),
         ("plans", plans),
     ))
     return _canonical(payload)

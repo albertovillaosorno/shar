@@ -46,6 +46,12 @@ _CONTEXT = OrderedDict((
     ("target_engine_version", "5.8.1"),
     ("target_platform", "editor"),
 ))
+_SEMANTIC_ARTIFACTS = (
+    ("mission-definitions", "mission-definitions.jsonl"),
+    ("mission-tuning", "mission-tuning.jsonl"),
+    ("vehicle-tuning", "vehicle-tuning.jsonl"),
+    ("vehicle-tuning-usage", "vehicle-tuning-usage.jsonl"),
+)
 _PLAN_SPECS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("asset-import-plan", "asset-import-plan.json", ()),
     (
@@ -203,10 +209,12 @@ def build_plan_bundle(
             ("import_profile", "shar-semantic-source-v1"),
             ("count", semantic_blocker_count),
         )))
+    semantic_artifacts = _semantic_artifact_entries()
     index_body = _index_body(
         revision="",
         semantic_blocker_count=semantic_blocker_count,
         semantic_blockers=semantic_blockers,
+        semantic_artifacts=semantic_artifacts,
         plans=entries,
     )
     index_revision = _digest(_canonical(index_body))
@@ -214,6 +222,7 @@ def build_plan_bundle(
         revision=index_revision,
         semantic_blocker_count=semantic_blocker_count,
         semantic_blockers=semantic_blockers,
+        semantic_artifacts=semantic_artifacts,
         plans=entries,
     )
     files["index.json"] = _canonical(rendered_index) + chr(10)
@@ -254,6 +263,8 @@ def write_plan_bundle(
     root.mkdir(parents=True)
     for filename, text in files.items():
         _ = (root / filename).write_text(text, encoding="utf-8", newline="\n")
+    for filename, payload in semantic_artifact_files().items():
+        _ = (root.parent / filename).write_bytes(payload)
     return files
 
 
@@ -535,19 +546,42 @@ def _json_operation(
     return fields
 
 
+def semantic_artifact_files() -> dict[str, bytes]:
+    """Return exact synthetic sibling bytes for the release bundle."""
+    return {
+        filename: f'{{"artifact":"{artifact_id}"}}\n'.encode()
+        for artifact_id, filename in _SEMANTIC_ARTIFACTS
+    }
+
+
+def _semantic_artifact_entries() -> list[JsonValue]:
+    files = semantic_artifact_files()
+    return [
+        OrderedDict((
+            ("artifact_id", artifact_id),
+            ("filename", filename),
+            ("revision", hashlib.sha256(files[filename]).hexdigest()),
+            ("byte_count", len(files[filename])),
+        ))
+        for artifact_id, filename in _SEMANTIC_ARTIFACTS
+    ]
+
+
 def _index_body(
     *,
     revision: str,
     semantic_blocker_count: int,
     semantic_blockers: list[JsonValue],
+    semantic_artifacts: list[JsonValue],
     plans: list[JsonValue],
 ) -> OrderedDict[str, JsonValue]:
     return OrderedDict((
-        ("schema", "shar-schoenwald.unreal-plan-bundle.v3"),
+        ("schema", "shar-schoenwald.unreal-plan-bundle.v4"),
         ("revision", revision),
         *_CONTEXT.items(),
         ("semantic_blocker_count", semantic_blocker_count),
         ("semantic_blockers", semantic_blockers),
+        ("semantic_artifacts", semantic_artifacts),
         ("plans", plans),
     ))
 

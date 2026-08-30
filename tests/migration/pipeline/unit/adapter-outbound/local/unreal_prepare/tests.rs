@@ -36,10 +36,12 @@ use std::path::PathBuf;
 
 use serde_json::json;
 use shar_sha256::digest_hex;
+use shar_unreal_conversion::domain::{PlanBundle, PlanContext};
 
 use super::super::run_registry::{RunMode, RunRegistry};
 use super::{
     MISSION_DEFINITIONS_FILE, MISSION_TUNING_FILE, PLAN_INDEX_FILE,
+    RELEASE_PLAN_BUNDLE_SCHEMA,
     PUBLISHED_FILE_COUNT, VEHICLE_TUNING_USAGE_FILE,
     PUBLISHED_FILES, SUMMARY_FILE, VEHICLE_TUNING_FILE,
     MissionTuningReplayRecord, SourceEvidenceInput,
@@ -52,7 +54,7 @@ use super::{
         prepare_io_error,
     publication_error, read_utf8, restore_previous_publication,
     retain_source_ids, source_worker_count_for, stream_source_digest,
-    validate_audit, validate_generated_chain,
+    bind_release_plan_index, validate_audit, validate_generated_chain,
     validate_mission_tuning_bundle,
     validate_public_identifier,
     validate_vehicle_tuning_bundle, validate_vehicle_tuning_usage_bundle,
@@ -1315,6 +1317,79 @@ fn clean_audit(manifest: &str, rows: usize) -> String {
         rows,
         digest_hex(manifest.as_bytes()),
     )
+}
+
+#[test]
+fn release_plan_index_binds_exact_semantic_sidecars() -> Result<(), String> {
+    let plans = PlanBundle::build(
+        &PlanContext {
+            source_manifest_revision: "a".repeat(64),
+            engine_contract_revision:
+                "shar-unreal-porting-contract-v1".to_owned(),
+            target_engine_version: "5.8.1".to_owned(),
+            target_platform: "editor".to_owned(),
+        },
+        Vec::new(),
+    )?;
+    let contents = ["definitions\n", "mission-tuning\n", "cores\n", "usages\n"];
+    let release = bind_release_plan_index(
+        &plans,
+        contents[0],
+        contents[1],
+        contents[2],
+        contents[3],
+    )
+    .map_err(|error| error.to_string())?;
+    let value = serde_json::from_str::<serde_json::Value>(&release.json)
+        .map_err(|error| error.to_string())?;
+    if value.get("schema").and_then(serde_json::Value::as_str)
+        != Some(RELEASE_PLAN_BUNDLE_SCHEMA)
+    {
+        return Err("release plan index schema drifted".to_owned());
+    }
+    let artifacts = value
+        .get("semantic_artifacts")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "release semantic artifacts are missing".to_owned())?;
+    let expected = [
+        ("mission-definitions", MISSION_DEFINITIONS_FILE),
+        ("mission-tuning", MISSION_TUNING_FILE),
+        ("vehicle-tuning", VEHICLE_TUNING_FILE),
+        ("vehicle-tuning-usage", VEHICLE_TUNING_USAGE_FILE),
+    ];
+    if artifacts.len() != expected.len() {
+        return Err("release semantic artifact inventory drifted".to_owned());
+    }
+    for ((artifact_id, filename), (artifact, content)) in expected
+        .into_iter()
+        .zip(artifacts.iter().zip(contents))
+    {
+        if artifact.get("artifact_id").and_then(serde_json::Value::as_str)
+            != Some(artifact_id)
+            || artifact.get("filename").and_then(serde_json::Value::as_str)
+                != Some(filename)
+            || artifact.get("revision").and_then(serde_json::Value::as_str)
+                != Some(digest_hex(content.as_bytes()).as_str())
+            || artifact.get("byte_count").and_then(serde_json::Value::as_u64)
+                != u64::try_from(content.len()).ok()
+        {
+            return Err("release semantic artifact evidence drifted".to_owned());
+        }
+    }
+    let changed = bind_release_plan_index(
+        &plans,
+        "definitions!\n",
+        contents[1],
+        contents[2],
+        contents[3],
+    )
+    .map_err(|error| error.to_string())?;
+    if changed.revision == release.revision {
+        return Err(
+            "semantic sidecar drift did not change release identity".to_owned(),
+        );
+    }
+    Ok(())
 }
 
 #[test]
