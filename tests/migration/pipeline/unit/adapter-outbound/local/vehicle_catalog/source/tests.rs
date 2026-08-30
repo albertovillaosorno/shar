@@ -159,6 +159,89 @@ fn quad_group_paths_follow_source_chunk_ordinals() -> Result<(), String> {
 }
 
 #[test]
+fn source_order_projection_rejects_missing_ordinals() -> Result<(), String> {
+    let root = TestDirectory::new("missing-order")?;
+    create_component_files(root.path(), "mesh")?;
+    let json = concat!(
+            "{\"package_id\":\"pkg-car\",",
+            "\"package_root\":\"pkg-car\",",
+            "\"package_category\":\"cars\",",
+            "\"package_subcategory\":\"cars/test/car\",",
+            "\"unit_count\":1,\"text_key_count\":0,",
+            "\"unit_ids\":[\"model-a\"],",
+            "\"world_ids\":[],\"texture_ids\":[],",
+            "\"material_ids\":[],\"model_ids\":[\"model-a\"],",
+            "\"physics_ids\":[],\"animation_ids\":[],",
+            "\"scene_ids\":[],\"locator_ids\":[],",
+            "\"camera_ids\":[],\"light_ids\":[],",
+            "\"particle_ids\":[],\"controller_ids\":[],",
+            "\"audio_ids\":[],\"movie_ids\":[],",
+            "\"script_ids\":[],\"text_ids\":[],",
+            "\"ui_ids\":[],\"metadata_ids\":[],",
+            "\"error_ids\":[],\"source_unit_ids\":[],",
+            "\"text_key_ids\":[],\"members\":[",
+            "{\"id\":\"model-a\",\"role\":\"model\",",
+            "\"path\":\"extracted/a.json\",",
+            "\"type\":\"model\",\"kind\":\"p3d-mesh\",",
+            "\"source_chunk_kind\":\"mesh\"}],",
+            "\"text_keys\":[]}"
+    );
+    let package = PhaseThreePackageRow::from_json_line(json)
+        .map_err(|error| error.to_string())?;
+    let error = vehicle_mesh_paths(&package, root.path())
+        .expect_err("historical mirror without source ordinal was accepted");
+    if !error.to_string().contains("has no source chunk ordinal") {
+        return Err(format!("unexpected missing-ordinal error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn source_order_projection_rejects_duplicate_ordinals() -> Result<(), String> {
+    let root = TestDirectory::new("duplicate-order")?;
+    create_component_files(root.path(), "mesh")?;
+    let json = concat!(
+            "{\"package_id\":\"pkg-car\",",
+            "\"package_root\":\"pkg-car\",",
+            "\"package_category\":\"cars\",",
+            "\"package_subcategory\":\"cars/test/car\",",
+            "\"unit_count\":2,\"text_key_count\":0,",
+            "\"unit_ids\":[\"model-a\",\"model-z\"],",
+            "\"world_ids\":[],\"texture_ids\":[],",
+            "\"material_ids\":[],",
+            "\"model_ids\":[\"model-a\",\"model-z\"],",
+            "\"physics_ids\":[],\"animation_ids\":[],",
+            "\"scene_ids\":[],\"locator_ids\":[],",
+            "\"camera_ids\":[],\"light_ids\":[],",
+            "\"particle_ids\":[],\"controller_ids\":[],",
+            "\"audio_ids\":[],\"movie_ids\":[],",
+            "\"script_ids\":[],\"text_ids\":[],",
+            "\"ui_ids\":[],\"metadata_ids\":[],",
+            "\"error_ids\":[],\"source_unit_ids\":[],",
+            "\"text_key_ids\":[],\"members\":[",
+            "{\"id\":\"model-a\",\"role\":\"model\",",
+            "\"path\":\"extracted/a.json\",",
+            "\"type\":\"model\",\"kind\":\"p3d-mesh\",",
+            "\"source_chunk_kind\":\"mesh\",",
+            "\"source_chunk_ordinal\":\"10\"},",
+            "{\"id\":\"model-z\",\"role\":\"model\",",
+            "\"path\":\"extracted/z.json\",",
+            "\"type\":\"model\",\"kind\":\"p3d-mesh\",",
+            "\"source_chunk_kind\":\"mesh\",",
+            "\"source_chunk_ordinal\":\"10\"}],",
+            "\"text_keys\":[]}"
+    );
+    let package = PhaseThreePackageRow::from_json_line(json)
+        .map_err(|error| error.to_string())?;
+    let error = vehicle_mesh_paths(&package, root.path())
+        .expect_err("duplicate source ordinals were accepted");
+    if !error.to_string().contains("repeats source mesh ordinal 10") {
+        return Err(format!("unexpected duplicate-ordinal error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn projected_component_paths_preserve_supplied_order() -> Result<(), String> {
     let paths = unique_vehicle_component_paths(
         [PathBuf::from("mesh/z.json"), PathBuf::from("mesh/a.json")],
