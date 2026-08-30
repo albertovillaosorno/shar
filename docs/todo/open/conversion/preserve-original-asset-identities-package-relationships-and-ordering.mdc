@@ -140,11 +140,24 @@ outbound model cannot represent independently. Focused prop-catalog regressions
 prove a source order of `zebra`, `alpha`, `middle` remains unchanged and padded
 duplicate `shared` identities fail closed; all 84 prop-catalog tests pass.
 
-FBX shader resolution now preserves the package-order `p3d-shader` member
-sequence instead of alphabetically sorting and deduplicating file-stem
-identities before material resolution. Duplicate shader identities fail
-closed, and focused FBX-export tests prove `zebra`, `alpha`, `middle` remains
-in authored order.
+FBX character shader resolution preserves the canonical package-member input
+sequence instead of adding another alphabetical sort or silently deduplicating
+file-stem identities. Duplicate shader identities fail closed. This resolution
+order is not claimed as authored source order: binary FBX material slots are
+separately derived from first primitive-group use as described below.
+
+Character rigid prop meshes now reconstruct source order from preserved chunk
+ordinals before aggregate assembly. The current character corpus has one package
+where this is observable: `hibber_m` indexes its three prop meshes at source
+ordinals 181, 170, and 192 in canonical path order, so assembly now restores
+170, 181, 192 before those parts receive geometry identities.
+
+Character animation-bank paths now use the same fail-closed source-ordinal
+projection before clip loading. The current corpus contains 117 character
+packages with 482 animation members, including 13 multi-animation packages; all
+13 currently happen to match source-ordinal order. The explicit projection still
+matters because request path order becomes clip order and the first clip selects
+the active FBX animation stack.
 
 Vehicle mesh, billboard, and animation source projection now reconstructs exact
 source chunk order from preserved member ordinals instead of treating canonical
@@ -154,12 +167,10 @@ boundary.
 
 The current car corpus has 535 mesh, 716 quad-group, and 105 animation members
 with numeric source ordinals and no duplicate ordinals inside a package. Among
-multi-member packages, 85 of 88 mesh sequences and all 84 quad-group
-sequences
+multi-member packages, 85 of 88 mesh sequences and all 84 quad-group sequences
 differ from source-ordinal order, while all 22 animation sequences currently
 coincide. Animation projection still uses the explicit ordinal because clip
-order
-feeds FBX animation order and its first clip becomes the active stack.
+order feeds FBX animation order and its first clip becomes the active stack.
 
 Billboard quad-group decoding now preserves each authored child-quad identity
 through the typed primitive-group boundary and emits it as FBX user metadata
