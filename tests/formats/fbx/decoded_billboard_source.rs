@@ -102,7 +102,7 @@ fn writes_authored_quad_identity_as_fbx_metadata() -> Result<(), String> {
             r#"{"schema":"quad_group","version":0,"name":"groupShape","#,
             r#""shader":"material","z_test":1,"z_write":0,"fog":0,"#,
             r#""num_quads":1,"quads":[{"name":"leafShape","#,
-            r#""version":2,"billboard_mode":"NOAX","#,
+            r#""version":2,"billboard_mode":"LYAX","#,
             r#""translation":[0,0,0],"colour":4294967295,"#,
             r#""uvs":[[0,0],[1,0],[1,1],[0,1]],"#,
             r#""width":1,"height":1,"distance":0,"uv_offset":[0,0],"#,
@@ -128,7 +128,9 @@ fn writes_authored_quad_identity_as_fbx_metadata() -> Result<(), String> {
         .windows("leafShape".len())
         .any(|window| window == b"leafShape")
     {
-        return Err("authored quad identity was not preserved in FBX".to_owned());
+        return Err(
+            "authored quad identity was not preserved in FBX".to_owned()
+        );
     }
     Ok(())
 }
