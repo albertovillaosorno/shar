@@ -32,6 +32,25 @@
 
 use super::error::MeshError;
 
+/// Convert one exact triangle-list index stream into triangles.
+///
+/// # Errors
+///
+/// Returns an error when the stream is empty or has a partial triangle.
+pub fn triangulate_triangle_list(
+    indices: &[u32],
+) -> Result<Vec<[u32; 3]>, MeshError> {
+    if indices.is_empty() {
+        return Err(MeshError::UnsupportedIndexCount(0));
+    }
+    let (triangles, remainder) = indices.as_chunks::<3>();
+    if remainder.is_empty() {
+        Ok(triangles.to_vec())
+    } else {
+        Err(MeshError::UnsupportedIndexCount(indices.len()))
+    }
+}
+
 /// Convert decoded indices into triangles.
 ///
 /// # Errors
@@ -41,12 +60,8 @@ use super::error::MeshError;
 pub fn triangulate_indices(
     indices: &[u32],
 ) -> Result<Vec<[u32; 3]>, MeshError> {
-    if indices.is_empty() {
-        return Err(MeshError::UnsupportedIndexCount(0));
-    }
-    let (triangles, remainder) = indices.as_chunks::<3>();
-    if remainder.is_empty() {
-        return Ok(triangles.to_vec());
+    if let Ok(triangles) = triangulate_triangle_list(indices) {
+        return Ok(triangles);
     }
     if let [first, second, third, fourth] = indices {
         return Ok(vec![[*first, *second, *third], [*first, *third, *fourth]]);

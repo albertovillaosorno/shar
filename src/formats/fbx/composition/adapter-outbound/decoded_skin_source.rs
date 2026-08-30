@@ -40,6 +40,7 @@ use super::decoded_component_source::read_mesh;
 use crate::domain::character::{CharacterAsset, CharacterError, SkinnedPart};
 use crate::domain::mesh::{
     MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
+    triangulate_triangle_list,
 };
 use crate::domain::skeleton::{Bone, BoneMirrorMap, BoneSourceRig};
 use crate::domain::skin::SkinInfluence;
@@ -397,8 +398,15 @@ fn load_group(
         });
     }
     let uvs = channel_zero_uvs(path, index, decoded)?;
-    let triangles = match decoded.prim_type {
-        0 => decoded.indices.clone(),
+    let triangles: Vec<u32> = match decoded.prim_type {
+        0 => triangulate_triangle_list(&decoded.indices)
+            .map_err(|error| SkinSourceError::Mesh {
+                path: path_text(path),
+                error,
+            })?
+            .into_iter()
+            .flatten()
+            .collect(),
         1 => triangulate_strip(&decoded.indices)
             .map_err(|error| SkinSourceError::Mesh {
                 path: path_text(path),

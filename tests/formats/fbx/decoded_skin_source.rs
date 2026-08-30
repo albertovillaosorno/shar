@@ -214,6 +214,36 @@ fn rejects_declared_index_count_mismatch() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_four_index_skin_triangle_list_as_malformed_source()
+-> Result<(), String> {
+    let path = temp_path("skin-four-index-triangle-list");
+    let fixture = concat!(
+        r#"{"schema":"skin","name":"skin","version":3,"#,
+        r#""skeleton_name":"skeleton","num_prim_groups":1,"#,
+        r#""prim_groups":[{"shader":"shader","vertex_shader":"","#,
+        r#""prim_type":0,"vertex_format":0,"vertex_count":4,"#,
+        r#""index_count":4,"matrix_count":0,"#,
+        r#""positions":[[0,0,0],[1,0,0],[1,1,0],[0,1,0]],"#,
+        r#""normals":[[0,0,1],[0,0,1],[0,0,1],[0,0,1]],"#,
+        r#""matrices":[],"matrix_palette":[],"indices":[0,1,2,3],"#,
+        r#""uvs":[]}]}"#,
+    );
+    fs::write(&path, fixture).map_err(|error| error.to_string())?;
+    let error = load_skin_part(&path, &[]).err();
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+
+    match error {
+        Some(SkinSourceError::Mesh {
+            error: fbx::domain::mesh::MeshError::UnsupportedIndexCount(4),
+            ..
+        }) => Ok(()),
+        other => Err(format!(
+            "malformed skin triangle list was accepted: {other:?}"
+        )),
+    }
+}
+
+#[test]
 fn rejects_declared_matrix_palette_count_mismatch() -> Result<(), String> {
     let path = temp_path("skin-matrix-count");
     let fixture = concat!(
