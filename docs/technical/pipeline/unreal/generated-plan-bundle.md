@@ -12,7 +12,7 @@ License-File:
 # Generated Unreal plan bundle
 
 - Status: Active
-- Last reviewed: 2026-08-06
+- Last reviewed: 2026-08-30
 
 ## Purpose
 
@@ -179,11 +179,19 @@ that select a tuning profile, including an explicit `null` when source-backed
 profile resolution is unavailable. These artifacts do not assign gameplay
 units, native Unreal fields, conversion rules, or runtime ranges.
 
-The index records the six plan identities, revisions, filenames, and operation
-counts. Each plan repeats the source-manifest revision, engine-contract
-revision, target engine version, target platform, direct plan dependencies with
-their exact prerequisite revisions, expected outputs, ordered operations, and
-required validation gates.
+The published release index uses
+`shar-schoenwald.unreal-plan-bundle.v4`. It records the six plan identities,
+revisions, filenames, and operation counts plus exactly four semantic artifacts
+in canonical order: mission definitions, mission-local tuning, vehicle-tuning
+cores, and contextual tuning usage. Each semantic entry carries its stable
+artifact identity, fixed sibling filename, exact byte count, and lowercase
+SHA-256 revision. Those entries participate in the release-index revision, so a
+sidecar byte change changes the persistent bundle identity.
+
+Each plan still repeats the source-manifest revision, engine-contract revision,
+target engine version, target platform, direct plan dependencies with their
+exact prerequisite revisions, expected outputs, ordered operations, and required
+validation gates.
 
 ## Consumer preflight
 
@@ -201,18 +209,24 @@ shar-unreal-mcp plan-apply
 exactly `plans/index.json` plus the six declared plan files as direct regular
 files, rejects symbolic links and reparse boundaries, enforces bounded UTF-8
 input and canonical one-line JSON with LF termination, and independently
-recalculates every plan revision and the bundle revision using the canonical
-Rust hashing contract.
+recalculates every plan revision and the release-bundle revision using the
+canonical hashing contract.
+
+The same gate reads the four fixed semantic siblings from the parent staging
+root before accepting the bundle. Every sibling must be a regular non-linked
+file whose stable byte count and SHA-256 revision exactly match its v4 index
+entry. Missing, linked, truncated, replaced, or same-size tampered semantic
+evidence fails locally before any MCP transport is constructed.
 
 The first gate also validates exact plan order, filenames, dependency revisions,
 operation identities, source/readiness mappings, generated destinations,
 outputs, validation requirements, case-insensitive collisions, dependency
 family order, and cycle freedom. Construction operations retain the portable
-`manifest.jsonl` source identity
-and must repeat the bundle source-manifest revision. The MCP verifier resolves
-that identity physically to `game/manifest/unreal.jsonl`; `extracted/...` and
-`fbx-assets/...` plan identities similarly resolve beneath `.cache/pipeline/`
-without changing their canonical operation hashes.
+`manifest.jsonl` source identity and must repeat the bundle source-manifest
+revision. The MCP verifier resolves that identity physically to
+`game/manifest/unreal.jsonl`; `extracted/...` and `fbx-assets/...` plan
+identities similarly resolve beneath `.cache/pipeline/` without changing their
+canonical operation hashes.
 
 `plan-execution-preflight` remains local. It verifies every applicable source as
 a regular non-linked file beneath its declared generated root, streams SHA-256
@@ -312,12 +326,15 @@ package instead of a sprite/layout JSON row.
 Only after semantic compilation produces a concrete target can the resulting
 work enter an operation plan and acquire operation readiness.
 
-Plan-bundle index v3 carries `semantic_blocker_count` together with a canonical
-`semantic_blockers` classification by package category, exact target kind, and
-required import profile. Every class has a positive count, classes are unique
-and sorted, and their checked sum must equal the aggregate count. Both the
-breakdown and aggregate participate in the bundle revision and are validated by
-the local consumer before any MCP transport exists.
+The generic six-plan projection remains index v3 and carries
+`semantic_blocker_count` together with a canonical `semantic_blockers`
+classification by package category, exact target kind, and required import
+profile. Every class has a positive count, classes are unique and sorted, and
+their checked sum must equal the aggregate count. The published release boundary
+promotes that projection to v4 by retaining those blocker fields and adding the
+four exact semantic-artifact bindings. The breakdown, aggregate, and artifact
+bindings all participate in the release revision and are validated by the local
+consumer before any MCP transport exists.
 
 Execution preflight therefore reports `complete=false` whenever unresolved
 semantic work remains, including a bundle with zero emitted operations, while
