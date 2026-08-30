@@ -82,5 +82,19 @@ the shared binding parser and rejects non-empty effects because the current FBX
 character contract cannot preserve their joint/translucency/sort semantics.
 Explicit selected-rigid-prop export may still prune unrelated effect branches.
 
+Primitive-group normal attachment now preserves already validated authored
+triangle winding instead of swapping the second and third index when geometric
+facing disagrees with the summed source vertex normals. Source topology and
+source normals therefore remain independent evidence through the FBX domain;
+the declared FBX export-root transform remains the orientation conversion
+boundary.
+
+A normalized-corpus audit found the removed repair would have changed 327 of
+190,162 orientable mesh triangles across 64 primitive groups and 2,741 of
+268,870 orientable skin triangles across 211 groups. These are input-evidence
+counts, not a claim that every audited component is published. The complete FBX
+package and all 1,006 pipeline library tests pass with strict FBX and pipeline
+Clippy clean.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
