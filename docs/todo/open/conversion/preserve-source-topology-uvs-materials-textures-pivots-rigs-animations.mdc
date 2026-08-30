@@ -96,5 +96,14 @@ counts, not a claim that every audited component is published. The complete FBX
 package and all 1,006 pipeline library tests pass with strict FBX and pipeline
 Clippy clean.
 
+Decoded P3D triangle-list groups now require exact triples instead of allowing a
+four-index partial list to fall through the generic quad triangulation helper.
+Both mesh and skin adapters reject that malformed source before mesh or skin
+binding continues, while explicit non-P3D quad callers retain their separate
+domain helper contract. The normalized corpus contains 3,055 mesh and 198 skin
+`prim_type=0` groups; every one has an index count divisible by three. Focused
+red/green regressions cover both adapters and the full FBX and pipeline suites
+remain green.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
