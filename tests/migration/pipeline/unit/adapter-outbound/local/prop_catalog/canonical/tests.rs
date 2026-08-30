@@ -30,6 +30,9 @@
 
 //! Prop canonicalization ordering regressions.
 
+use fbx::domain::animation::{
+    AnimationClip, BoneAnimationTrack, LocalTransformSample,
+};
 use fbx::domain::character::{CharacterAsset, SkinnedPart};
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
@@ -77,6 +80,24 @@ fn root_bone() -> Bone {
         ],
         source_rig: None,
     }
+}
+
+fn animation_with_helpers() -> Result<AnimationClip, String> {
+    AnimationClip::new(
+        "source-animation",
+        30.,
+        false,
+        1,
+        vec![BoneAnimationTrack {
+            bone_id: "root".to_owned(),
+            samples: vec![LocalTransformSample {
+                translation: [0., 0., 0.],
+                rotation_wxyz: [1., 0., 0., 0.],
+            }],
+        }],
+        vec!["Z_Helper".to_owned(), "A_Helper".to_owned()],
+    )
+    .map_err(|error| format!("animation failed: {error:?}"))
 }
 
 #[test]
@@ -131,5 +152,24 @@ fn animated_canonical_names_preserve_source_part_order() -> Result<(), String> {
         actual,
         [("part-0000", "z-source"), ("part-0001", "a-source")]
     );
+    Ok(())
+}
+
+#[test]
+fn animated_canonicalization_preserves_ignored_group_evidence()
+-> Result<(), String> {
+    let mut asset = CharacterAsset::new(
+        "source-model",
+        vec![root_bone()],
+        vec![part("source-part", "source-material")?],
+    )
+    .map_err(|error| format!("character failed: {error:?}"))?;
+    let mut animations = vec![animation_with_helpers()?];
+    canonicalize_animated_asset(&mut asset, &mut animations)
+        .map_err(|error| error.to_string())?;
+    let clip = animations
+        .first()
+        .ok_or_else(|| "canonical animation was lost".to_owned())?;
+    assert_eq!(clip.ignored_group_ids, ["Z_Helper", "A_Helper"]);
     Ok(())
 }

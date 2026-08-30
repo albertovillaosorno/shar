@@ -78,7 +78,6 @@ pub(super) fn canonicalize_animated_asset(
     "model".clone_into(&mut asset.name);
     for (clip_ordinal, clip) in animations.iter_mut().enumerate() {
         clip.name = format!("animation-{clip_ordinal:04}");
-        clip.ignored_group_ids.clear();
         for track in &mut clip.tracks {
             track.bone_id = mapped_bone(&bone_names, &track.bone_id)?;
         }
