@@ -30,10 +30,16 @@
 
 //! Tests unit tests.
 
+use crate::domain::package::{
+    PackageRole, PhaseThreePackageMember, PhaseThreePackageRow,
+};
+
 use super::{
     GENERAL_CHARACTER_ANIMATION_SUBCATEGORY, animation_subcategory_candidates,
-    deferred_material_identity, fbx_io_error, normalized_texture_png_file_name,
-    ordered_shader_names, single_package_staging_path,
+    classify_members, deferred_material_identity, fbx_io_error,
+    normalized_texture_png_file_name, order_character_mesh_members,
+    ordered_shader_names,
+    single_package_staging_path,
 };
 
 #[test]
@@ -140,6 +146,101 @@ fn duplicate_shader_identity_fails_closed() -> Result<(), String> {
     assert_eq!(
         error.to_string(),
         "package material list repeats shader identity shared"
+    );
+    Ok(())
+}
+
+
+#[test]
+fn character_mesh_members_follow_source_chunk_ordinals() -> Result<(), String> {
+    let json = concat!(
+        r#"{"package_id":"character-order","package_root":"character-order","#,
+        r#""package_category":"characters","#,
+        r#""package_subcategory":"characters/test/base-model","#,
+        r#""unit_count":5,"text_key_count":0,"#,
+        r#""unit_ids":["skeleton","skin","mesh-181","mesh-170","mesh-192"],"#,
+        r#""world_ids":[],"texture_ids":[],"material_ids":[],"#,
+        r#""model_ids":["skeleton","skin","mesh-181","mesh-170","mesh-192"],"#,
+        r#""physics_ids":[],"animation_ids":[],"scene_ids":[],"#,
+        r#""locator_ids":[],"camera_ids":[],"light_ids":[],"#,
+        r#""particle_ids":[],"controller_ids":[],"audio_ids":[],"#,
+        r#""movie_ids":[],"script_ids":[],"text_ids":[],"ui_ids":[],"#,
+        r#""metadata_ids":[],"error_ids":[],"source_unit_ids":[],"#,
+        r#""text_key_ids":[],"members":["#,
+        r#"{"id":"skeleton","role":"model","path":"a-skeleton.json","#,
+        r#""type":"model","kind":"p3d-skeleton","#,
+        r#""source_chunk_kind":"skeleton","source_chunk_ordinal":"1"},"#,
+        r#"{"id":"skin","role":"model","path":"b-skin.json","#,
+        r#""type":"model","kind":"p3d-skin","#,
+        r#""source_chunk_kind":"skin","source_chunk_ordinal":"203"},"#,
+        r#"{"id":"mesh-181","role":"model","path":"c-mesh.json","#,
+        r#""type":"model","kind":"p3d-mesh","#,
+        r#""source_chunk_kind":"mesh","source_chunk_ordinal":"181"},"#,
+        r#"{"id":"mesh-170","role":"model","path":"d-mesh.json","#,
+        r#""type":"model","kind":"p3d-mesh","#,
+        r#""source_chunk_kind":"mesh","source_chunk_ordinal":"170"},"#,
+        r#"{"id":"mesh-192","role":"model","path":"e-mesh.json","#,
+        r#""type":"model","kind":"p3d-mesh","#,
+        r#""source_chunk_kind":"mesh","source_chunk_ordinal":"192"}],"#,
+        r#""text_keys":[]}"#,
+    );
+    let package = PhaseThreePackageRow::from_json_line(json)
+        .map_err(|error| error.to_string())?;
+    let members = classify_members(&package)
+        .map_err(|error| error.to_string())?;
+    let ids = members
+        .meshes
+        .iter()
+        .map(|member| member.id.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(ids, ["mesh-170", "mesh-181", "mesh-192"]);
+    Ok(())
+}
+
+
+fn character_mesh_member(
+    id: &str,
+    source_chunk_ordinal: Option<usize>,
+) -> PhaseThreePackageMember {
+    PhaseThreePackageMember {
+        id: id.to_owned(),
+        role: PackageRole::Model,
+        path: format!("{id}.json"),
+        unit_type: "model".to_owned(),
+        kind: "p3d-mesh".to_owned(),
+        source_chunk_kind: "mesh".to_owned(),
+        source_chunk_ordinal,
+    }
+}
+
+#[test]
+fn character_mesh_order_rejects_missing_source_ordinal() -> Result<(), String> {
+    let first = character_mesh_member("first", None);
+    let mut meshes = vec![&first];
+    let Err(error) = order_character_mesh_members(&mut meshes) else {
+        return Err(
+            "character mesh without source ordinal was accepted".to_owned(),
+        );
+    };
+    assert!(error.to_string().contains("has no source chunk ordinal"));
+    Ok(())
+}
+
+#[test]
+fn character_mesh_order_rejects_duplicate_source_ordinals(
+) -> Result<(), String> {
+    let first = character_mesh_member("first", Some(10));
+    let second = character_mesh_member("second", Some(10));
+    let mut meshes = vec![&first, &second];
+    let Err(error) = order_character_mesh_members(&mut meshes) else {
+        return Err(
+            "duplicate character mesh source ordinals were accepted".to_owned(),
+        );
+    };
+    assert!(
+        error
+            .to_string()
+            .contains("repeats source mesh ordinal 10")
     );
     Ok(())
 }
