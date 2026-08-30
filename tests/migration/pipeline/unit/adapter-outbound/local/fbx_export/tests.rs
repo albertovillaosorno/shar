@@ -31,7 +31,8 @@
 //! Tests unit tests.
 
 use crate::domain::package::{
-    PackageRole, PhaseThreePackageMember, PhaseThreePackageRow,
+    PackageRole, PhaseThreePackageIndex, PhaseThreePackageMember,
+    PhaseThreePackageRow,
 };
 
 use super::{
@@ -39,7 +40,7 @@ use super::{
     animation_subcategory_candidates, classify_members,
     deferred_material_identity, fbx_io_error,
     normalized_texture_png_file_name, order_character_mesh_members,
-    ordered_shader_names,
+    ordered_shader_names, shared_eye_frame_paths,
     single_package_staging_path,
 };
 
@@ -285,5 +286,56 @@ fn character_animation_paths_follow_source_chunk_ordinals(
             std::path::Path::new("normalized").join("a.json"),
         ]
     );
+    Ok(())
+}
+
+
+#[test]
+fn shared_eye_frames_reject_duplicate_frame_identity() -> Result<(), String> {
+    let row = concat!(
+        r#"{"package_id":"extracted-test-global","#,
+        r#""package_root":"extracted/test/global","#,
+        r#""package_category":"characters","#,
+        r#""package_subcategory":"characters/rig/common","unit_count":5,"#,
+        r#""text_key_count":0,"unit_ids":["eye-zero-a","eye-one","eye-two","#,
+        r#""eye-three","eye-zero-z"],"world_ids":[],"texture_ids":["#,
+        r#""eye-zero-a","eye-one","eye-two","eye-three","eye-zero-z"],"#,
+        r#""material_ids":[],"model_ids":[],"physics_ids":[],"#,
+        r#""animation_ids":[],"#,
+        r#""scene_ids":[],"locator_ids":[],"camera_ids":[],"light_ids":[],"#,
+        r#""particle_ids":[],"controller_ids":[],"audio_ids":[],"#,
+        r#""movie_ids":[],"#,
+        r#""script_ids":[],"text_ids":[],"ui_ids":[],"metadata_ids":[],"#,
+        r#""error_ids":[],"source_unit_ids":[],"text_key_ids":[],"members":["#,
+        r#"{"id":"eye-zero-a","role":"texture","path":"a/eyeball.bmp.0.png","#,
+        r#""type":"image","kind":"p3d-texture","source_chunk_kind":"texture","#,
+        r#""source_chunk_ordinal":"1"},{"id":"eye-one","role":"texture","#,
+        r#""path":"frames/eyeball.bmp.1.png","type":"image","#,
+        r#""kind":"p3d-texture","#,
+        r#""source_chunk_kind":"texture","source_chunk_ordinal":"2"},"#,
+        r#"{"id":"eye-two","#,
+        r#""role":"texture","path":"frames/eyeball.bmp.2.png","type":"image","#,
+        r#""kind":"p3d-texture","source_chunk_kind":"texture","#,
+        r#""source_chunk_ordinal":"3"},{"id":"eye-three","role":"texture","#,
+        r#""path":"frames/eyeball.bmp.3.png","type":"image","#,
+        r#""kind":"p3d-texture","#,
+        r#""source_chunk_kind":"texture","source_chunk_ordinal":"4"},"#,
+        r#"{"id":"eye-zero-z","#,
+        r#""role":"texture","path":"z/eyeball.bmp.0.png","type":"image","#,
+        r#""kind":"p3d-texture","source_chunk_kind":"texture","#,
+        r#""source_chunk_ordinal":"5"}],"text_keys":[]}"#,
+    );
+    let index = PhaseThreePackageIndex::from_jsonl(row)
+        .map_err(|error| error.to_string())?;
+    let result = shared_eye_frame_paths(
+        &index,
+        std::path::Path::new("normalized"),
+    );
+    let Err(error) = result else {
+        return Err(
+            "duplicate shared eye frame identity was accepted".to_owned(),
+        );
+    };
+    assert!(error.to_string().contains("shared eye frame is ambiguous"));
     Ok(())
 }
