@@ -3,7 +3,7 @@ schema: shar.todo.v1
 <!-- markdownlint-disable-next-line MD044 -->
 # jig-ignore-next-line: typed TODO identity is canonical
 id: preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in
-status: open
+status: completed
 priority: P0
 lane: conversion
 active: false
@@ -21,7 +21,7 @@ data in deterministic normalized forms.
 
 ## Acceptance criteria
 
-- [ ] Preserve original audio, cinematics, localization, UI, mission, and tuning
+- [x] Preserve original audio, cinematics, localization, UI, mission, and tuning
   data in deterministic normalized forms; keep English as canonical base input
   and preserve other official languages as deterministic language-mod sources.
 
@@ -111,13 +111,16 @@ all four regular non-linked siblings and verifies their exact size and digest
 before accepting the plans. Synthetic tests reject both a missing sidecar and a
 same-size byte mutation.
 
-Corpus-level v4 publication evidence remains pending until an exclusive
-`prepare-unreal` run completes with the corrected current producer and the local
-consumer accepts its exact semantic sidecars.
+Corpus-level v4 publication is now accepted with release revision
+`8d11ae9cf8601ad89987cdbf373ab2e7f3005691d733a82bc9df36d6c59a94b6`.
+The local consumer independently accepted all four exact semantic siblings and
+reported 957 semantic blockers plus 34,208 planned operations. A temporary copy
+with one changed mission-definition byte failed on semantic-artifact revision,
+while the accepted staging remained unchanged. Published semantic row counts
+remain 154 mission definitions, 173 mission-local tuning rows, 255 source-backed
+tuning cores, and 152 contextual tuning usages.
 
 These preservation artifacts intentionally do not map legacy setters to
 gameplay units, native Unreal fields, conversion rules, or runtime ranges.
 Native mission and tuning compilation is tracked separately by P1 Unreal
-tasks; it is not a preservation requirement of this P0. This task remains open
-only for the
-current v4 corpus publication and local-consumer evidence.
+tasks; it is not a preservation requirement of this completed P0.
