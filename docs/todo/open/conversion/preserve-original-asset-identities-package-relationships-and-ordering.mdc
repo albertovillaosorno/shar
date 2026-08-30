@@ -194,5 +194,13 @@ fail-closed identity check without sorting both lists. Focused regressions cover
 both boundaries; the full pipeline library now passes 1,005 tests with strict
 pipeline Clippy clean.
 
+Prop animation canonicalization now retains decoded helper-group identities that
+are intentionally unbound to deforming skeleton bones. The decoder already
+preserves those validated identities in source-group order; canonicalization no
+longer clears them before `PreparedGeometry` enters semantic signature hashing.
+A focused regression proves `Z_Helper` then `A_Helper` remains unchanged while
+exportable clip and bone identities are canonicalized; the full pipeline library
+now passes 1,006 tests.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
