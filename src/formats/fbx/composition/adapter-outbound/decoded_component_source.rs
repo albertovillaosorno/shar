@@ -39,6 +39,7 @@ use serde_json::Value;
 
 use crate::domain::mesh::{
     MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
+    triangulate_triangle_list,
 };
 use crate::domain::scene::identity::is_portable_path_segment;
 use crate::domain::texture::{
@@ -362,7 +363,7 @@ fn decode_primitive_group(
     let triangle_indices = decode_triangle_indices(
         index,
         group.prim_type,
-        group.indices,
+        &group.indices,
         decoded_name,
     )?;
     let base_group = PrimitiveGroup::new(
@@ -441,12 +442,14 @@ fn decode_primary_uvs(
 fn decode_triangle_indices(
     group_index: usize,
     primitive_type: u32,
-    indices: Vec<u32>,
+    indices: &[u32],
     decoded_name: &str,
 ) -> Result<Vec<u32>, DecodedComponentError> {
     match primitive_type {
-        0 => Ok(indices),
-        1 => triangulate_strip(&indices)
+        0 => triangulate_triangle_list(indices)
+            .map_err(DecodedComponentError::Mesh)
+            .map(|triangles| triangles.into_iter().flatten().collect()),
+        1 => triangulate_strip(indices)
             .map_err(DecodedComponentError::Mesh)
             .map(|triangles| triangles.into_iter().flatten().collect()),
         other => Err(DecodedComponentError::MeshEvidence(format!(

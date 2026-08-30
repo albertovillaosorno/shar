@@ -247,6 +247,31 @@ fn rejects_duplicate_decoded_uv_channels() {
 }
 
 #[test]
+fn rejects_four_index_triangle_list_as_malformed_source() {
+    let root = temp_root("four-index-triangle-list");
+    let mesh_dir = root.join("components").join("mesh");
+    let mesh_json = concat!(
+        r#"{"schema":"mesh","name":"mesh","prim_groups":[{"#,
+        r#""shader":"shader","prim_type":0,"#,
+        r#""positions":[[0,0,0],[1,0,0],[1,1,0],[0,1,0]],"#,
+        r#""indices":[0,1,2,3]}]}"#,
+    );
+    let setup_result = fs::create_dir_all(&mesh_dir)
+        .and_then(|()| fs::write(mesh_dir.join("mesh.json"), mesh_json));
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+    let result = source.load_mesh("mesh");
+    let _cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Err(DecodedComponentError::Mesh(
+            fbx::domain::mesh::MeshError::UnsupportedIndexCount(4)
+        ))
+    );
+}
+
+#[test]
 fn rejects_unknown_decoded_json_fields() {
     let root = temp_root("unknown-fields");
     let mesh_dir = root.join("components").join("mesh");

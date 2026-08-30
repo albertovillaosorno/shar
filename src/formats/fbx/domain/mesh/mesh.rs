@@ -53,7 +53,9 @@ pub use asset::MeshAsset;
 )]
 pub use error::MeshError;
 pub use primitive_group::PrimitiveGroup;
-pub use topology::{triangulate_indices, triangulate_strip};
+pub use topology::{
+    triangulate_indices, triangulate_strip, triangulate_triangle_list,
+};
 // Explicit facade names keep downstream imports unambiguous across domain
 // modules.
 #[expect(

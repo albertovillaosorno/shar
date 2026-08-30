@@ -30,7 +30,7 @@
 
 //! Tests unit tests.
 
-use super::triangulate_indices;
+use super::{triangulate_indices, triangulate_triangle_list};
 
 #[test]
 fn empty_index_stream_is_rejected() {
@@ -44,4 +44,11 @@ fn quad_triangles_preserve_winding() {
     let result = triangulate_indices(&[0, 1, 2, 3]);
 
     assert_eq!(result, Ok(vec![[0, 1, 2], [0, 2, 3]]));
+}
+
+#[test]
+fn triangle_list_rejects_partial_triangle() {
+    let result = triangulate_triangle_list(&[0, 1, 2, 3]);
+
+    assert_eq!(result, Err(super::MeshError::UnsupportedIndexCount(4)));
 }
