@@ -39,8 +39,8 @@ use shar_sha256::digest_hex;
 
 use super::super::run_registry::{RunMode, RunRegistry};
 use super::{
-    MISSION_DEFINITIONS_FILE, PLAN_INDEX_FILE, PUBLISHED_FILE_COUNT,
-    VEHICLE_TUNING_USAGE_FILE,
+    MISSION_DEFINITIONS_FILE, MISSION_TUNING_FILE, PLAN_INDEX_FILE,
+    PUBLISHED_FILE_COUNT, VEHICLE_TUNING_USAGE_FILE,
     PUBLISHED_FILES, SUMMARY_FILE, VEHICLE_TUNING_FILE, SourceEvidenceInput,
         ensure_generated_directory,
         open_stable_source,
@@ -49,7 +49,8 @@ use super::{
     publication_error, read_utf8, restore_previous_publication,
     retain_source_ids, source_worker_count_for, stream_source_digest,
     validate_audit, validate_generated_chain,
-    validate_mission_definition_bundle, validate_public_identifier,
+    validate_mission_definition_bundle, validate_mission_tuning_bundle,
+    validate_public_identifier,
     validate_vehicle_tuning_bundle,
     validate_publication_inventory, validate_relative_path,
     validate_rendered_output,
@@ -124,6 +125,73 @@ fn mission_source(id: &str) -> UnrealSourceEvidence {
     let mut value = source(id);
     value.kind = "mission-script".to_owned();
     value
+}
+
+fn mission_tuning_row(
+    source_id: &str,
+    source_ordinal: u64,
+    command: &str,
+    scope: &str,
+    vehicle_id: &str,
+    package_id: &str,
+    package_subcategory: &str,
+) -> Result<String, String> {
+    let arguments = match command {
+        "setcarattributes" => json!([vehicle_id, "1", "1.5", "2.50", "4"]),
+        "setvehicleaiparams" => json!([vehicle_id, "-10", "-9"]),
+        "setstageaitargetcatchupparams" => json!([vehicle_id, "20", "70"]),
+        "setstageairacecatchupparams" => {
+            json!([vehicle_id, "80", "0.5", "1.0", "1.50"])
+        },
+        _ => {
+            return Err(
+                "unsupported mission tuning fixture command".to_owned()
+            );
+        },
+    };
+    let (mission_id, stage_source, stage_sequence, objective_source) =
+        match scope {
+            "unscoped" => (
+                serde_json::Value::Null,
+                serde_json::Value::Null,
+                serde_json::Value::Null,
+                serde_json::Value::Null,
+            ),
+            "stage" => (
+                json!("m1"),
+                json!(3),
+                json!(0),
+                serde_json::Value::Null,
+            ),
+            "objective" => (json!("m1"), json!(3), json!(0), json!(5)),
+            _ => {
+                return Err(
+                    "unsupported mission tuning fixture scope".to_owned()
+                );
+            },
+        };
+    let value = json!({
+        "arguments": arguments,
+        "command": command,
+        "mission_source_id": source_id,
+        "owner_mission_id": mission_id,
+        "owner_objective_source_ordinal": objective_source,
+        "owner_stage_sequence_ordinal": stage_sequence,
+        "owner_stage_source_ordinal": stage_source,
+        "schema": "shar-schoenwald.mission-tuning.v1",
+        "scope": scope,
+        "source_ordinal": source_ordinal,
+        "vehicle": {
+            "package_id": package_id,
+            "package_subcategory": package_subcategory,
+            "source_id": vehicle_id,
+        },
+        "vehicle_id": vehicle_id,
+    });
+    let mut text = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    text.push('\n');
+    Ok(text)
 }
 
 fn mission_definition_row(source_id: &str, mission_id: &str) -> String {
@@ -941,6 +1009,7 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
         != [
             SUMMARY_FILE,
             MISSION_DEFINITIONS_FILE,
+            MISSION_TUNING_FILE,
             VEHICLE_TUNING_FILE,
             VEHICLE_TUNING_USAGE_FILE,
             PLAN_INDEX_FILE,
@@ -954,9 +1023,9 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
     {
         return Err("prepare-unreal publication inventory drifted".to_owned());
     }
-    if PUBLISHED_FILES.len() != 11 || PUBLISHED_FILE_COUNT != 12 {
+    if PUBLISHED_FILES.len() != 12 || PUBLISHED_FILE_COUNT != 13 {
         return Err(
-            "prepare-unreal must publish eleven cache files plus one manifest"
+            "prepare-unreal must publish twelve cache files plus one manifest"
                 .to_owned(),
         );
     }
@@ -2249,6 +2318,144 @@ fn mission_semantic_gate_rejects_missing_participant_package() -> Result<(), Str
             "unexpected participant reference failure: {rendered}"
         ));
     }
+    Ok(())
+}
+
+
+#[test]
+fn accepts_canonical_mission_tuning_bundle() -> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let rows = [
+        mission_tuning_row(
+            "script-one",
+            4,
+            "setvehicleaiparams",
+            "stage",
+            "car_a",
+            "vehicle-car-a",
+            "cars/traffic-vehicles/car-a",
+        )?,
+        mission_tuning_row(
+            "script-one",
+            6,
+            "setstageaitargetcatchupparams",
+            "objective",
+            "car_a",
+            "vehicle-car-a",
+            "cars/traffic-vehicles/car-a",
+        )?,
+    ];
+    let bundle = rows.concat();
+    let rendered = validate_mission_tuning_bundle(
+        &bundle,
+        &[mission_source("script-one")],
+        &references,
+    )
+    .map_err(|error| error.to_string())?;
+    assert_eq!(rendered, bundle);
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_tuning_owner_drift() -> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let row = mission_tuning_row(
+        "script-one",
+        6,
+        "setstageaitargetcatchupparams",
+        "objective",
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )?;
+    let mut value = serde_json::from_str::<serde_json::Value>(row.trim_end())
+        .map_err(|error| error.to_string())?;
+    *value
+        .get_mut("owner_objective_source_ordinal")
+        .ok_or("mission tuning owner fixture field disappeared")? =
+        serde_json::Value::Null;
+    let mut forged = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    forged.push('\n');
+    let error = validate_mission_tuning_bundle(
+        &forged,
+        &[mission_source("script-one")],
+        &references,
+    )
+    .rejection("mission tuning owner drift must fail")?;
+    assert!(error.to_string().contains("ownership drifted"));
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_tuning_physical_vehicle_drift() -> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let row = mission_tuning_row(
+        "script-one",
+        4,
+        "setvehicleaiparams",
+        "stage",
+        "car_a",
+        "vehicle-other",
+        "cars/traffic-vehicles/other",
+    )?;
+    let error = validate_mission_tuning_bundle(
+        &row,
+        &[mission_source("script-one")],
+        &references,
+    )
+    .rejection("mission tuning vehicle provenance drift must fail")?;
+    assert!(error.to_string().contains("provenance drifted"));
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_tuning_source_order_drift() -> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let bundle = [
+        mission_tuning_row(
+            "script-two",
+            4,
+            "setvehicleaiparams",
+            "stage",
+            "car_a",
+            "vehicle-car-a",
+            "cars/traffic-vehicles/car-a",
+        )?,
+        mission_tuning_row(
+            "script-one",
+            4,
+            "setvehicleaiparams",
+            "stage",
+            "car_a",
+            "vehicle-car-a",
+            "cars/traffic-vehicles/car-a",
+        )?,
+    ]
+    .concat();
+    let error = validate_mission_tuning_bundle(
+        &bundle,
+        &[mission_source("script-one"), mission_source("script-two")],
+        &references,
+    )
+    .rejection("mission tuning source order drift must fail")?;
+    assert!(error.to_string().contains("verified source order"));
     Ok(())
 }
 
