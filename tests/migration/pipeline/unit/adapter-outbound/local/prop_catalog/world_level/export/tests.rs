@@ -63,6 +63,22 @@ fn textured_mesh() -> Result<MeshAsset, String> {
         .map_err(|error| format!("interior fixture mesh failed: {error:?}"))
 }
 
+fn named_textured_mesh(name: &str, x: f32) -> Result<MeshAsset, String> {
+    let group = PrimitiveGroup::new(
+        0,
+        "interior-material",
+        vec![[x, 0., 0.], [x + 1., 0., 0.], [x, 1., 0.]],
+        vec![[0., 0.], [1., 0.], [0., 1.]],
+        &[0, 1, 2],
+    )
+    .and_then(|group| {
+        group.with_normals(vec![[0., 0., 1.], [0., 0., 1.], [0., 0., 1.]])
+    })
+    .map_err(|error| format!("ordered fixture group failed: {error:?}"))?;
+    MeshAsset::new(name, vec![group])
+        .map_err(|error| format!("ordered fixture mesh failed: {error:?}"))
+}
+
 fn textured_content() -> Result<MasterContent, String> {
     let material = MaterialBinding::new(
         "interior-material",
@@ -229,4 +245,43 @@ fn guide_append_preserves_interior_world_fbx_geometry_exactly()
 #[test]
 fn world_fbx_policy_reflects_x_once_and_preserves_authored_uvs() {
     assert_eq!(WORLD_ROOT_POLICY, ModelExportRootPolicy::ReflectX);
+}
+
+#[test]
+fn world_fbx_write_preserves_source_mesh_order() -> Result<(), String> {
+    let root = temporary_root().with_file_name(format!(
+        "shar-world-source-order-test-{}",
+        std::process::id()
+    ));
+    remove_if_present(&root)?;
+    fs::create_dir_all(&root).map_err(|error| {
+        format!("world order fixture root creation failed: {error}")
+    })?;
+    let result = (|| {
+        let mut content = textured_content()?;
+        content.meshes = vec![
+            named_textured_mesh("z-source", 10.)?,
+            named_textured_mesh("a-source", 1.)?,
+        ];
+        let _record = write_content_fbx(
+            "source-order",
+            "source-order.fbx",
+            &mut content,
+            &root,
+            ModelExportRootPolicy::ReflectX,
+        )
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "source-order fixture FBX was not written".to_owned())?;
+        let names = content
+            .meshes
+            .iter()
+            .map(|mesh| mesh.name.as_str())
+            .collect::<Vec<_>>();
+        if names != ["z-source", "a-source"] {
+            return Err(format!("world FBX mesh order changed: {names:?}"));
+        }
+        Ok(())
+    })();
+    let cleanup = remove_if_present(&root);
+    result.and(cleanup)
 }

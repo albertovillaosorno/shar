@@ -615,9 +615,6 @@ fn write_content_fbx(
         return Ok(None);
     }
     apply_registered_algorithm(relative_path, &mut content.meshes)?;
-    content
-        .meshes
-        .sort_by(|left, right| left.name.cmp(&right.name));
     ensure_unique_names(&content.meshes)?;
     retain_used_presentation(content);
     let surface_semantics =
