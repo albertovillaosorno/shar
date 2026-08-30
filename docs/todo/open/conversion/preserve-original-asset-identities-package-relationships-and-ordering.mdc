@@ -219,5 +219,22 @@ A focused regression proves `Z_Helper` then `A_Helper` remains unchanged while
 exportable clip and bone identities are canonicalized; the full pipeline library
 now passes 1,006 tests.
 
+Package-member mirrors now preserve the exact source chunk ordinal already
+carried by the normalized minor-unit manifest instead of dropping it between
+phase-two classification and phase-three intake. The current mirror accepts a
+positive decimal ordinal or explicit `none`; historical six-field mirrors remain
+readable as unavailable ordinal provenance, while malformed and zero current
+ordinals fail closed. The normalized corpus has 132,179 chunk-backed indexed
+members, and all 132,179 carry numeric source ordinals; 29,781 loose members
+carry `none`, with no missing or invalid manifest joins.
+
+This ordinal makes same-name package-local billboard occurrences independently
+addressable without promoting filenames or names to relationship authority. In
+`l5r3`, the duplicated light-pool and light-beam rows resolve exactly as source
+ordinals 5311/5315 under container 5299 and 5453/5457 under container 5441 when
+rejoined to the package component ledger. `container_ordinal` remains canonical
+component-ledger evidence and is not yet claimed as a direct package-member
+mirror.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
