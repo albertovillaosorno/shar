@@ -39,7 +39,9 @@ use shar_sha256::digest_hex;
 
 use super::{VEHICLE_CATEGORY, VEHICLE_COMMON_SUBCATEGORY};
 use crate::domain::PipelineError;
-use crate::domain::package::{PhaseThreePackageIndex, PhaseThreePackageRow};
+use crate::domain::package::{
+    PhaseThreePackageIndex, PhaseThreePackageMember, PhaseThreePackageRow,
+};
 
 /// One exact texture occurrence available across freshly extracted car
 /// packages.
@@ -189,7 +191,43 @@ pub(super) fn select_vehicle_composite(
     }
 }
 
-/// Preserve package-member order while rejecting projected path collisions.
+/// Project selected vehicle members back into exact source chunk order.
+fn source_ordered_vehicle_members<'row>(
+    package: &'row PhaseThreePackageRow,
+    kind: &str,
+    predicate: impl Fn(&PhaseThreePackageMember) -> bool,
+) -> Result<Vec<&'row PhaseThreePackageMember>, PipelineError> {
+    let mut ordered = package
+        .members()
+        .iter()
+        .filter(|member| predicate(member))
+        .map(|member| {
+            member
+                .source_chunk_ordinal
+                .map(|ordinal| (ordinal, member))
+                .ok_or_else(|| {
+                    PipelineError::new(format!(
+                        "vehicle {kind} member {} has no source chunk ordinal",
+                        member.id
+                    ))
+                })
+        })
+        .collect::<Result<Vec<_>, PipelineError>>()?;
+    ordered.sort_by_key(|(ordinal, _member)| *ordinal);
+    for pair in ordered.windows(2) {
+        let [(left_ordinal, _left), (right_ordinal, _right)] = pair else {
+            continue;
+        };
+        if left_ordinal == right_ordinal {
+            return Err(PipelineError::new(format!(
+                "vehicle package repeats source {kind} ordinal {left_ordinal}"
+            )));
+        }
+    }
+    Ok(ordered.into_iter().map(|(_ordinal, member)| member).collect())
+}
+
+/// Preserve supplied projection order while rejecting path collisions.
 pub(super) fn unique_vehicle_component_paths(
     paths: impl IntoIterator<Item = PathBuf>,
     kind: &str,
@@ -214,14 +252,11 @@ pub(super) fn vehicle_mesh_paths(
     package_root: &Path,
 ) -> Result<Vec<PathBuf>, PipelineError> {
     let paths = unique_vehicle_component_paths(
-        package
-            .members()
-            .iter()
-            .filter(|member| {
-                member.kind == "p3d-mesh"
-                    && member.source_chunk_kind == "mesh"
-            })
-            .map(|member| {
+        source_ordered_vehicle_members(package, "mesh", |member| {
+            member.kind == "p3d-mesh" && member.source_chunk_kind == "mesh"
+        })?
+        .into_iter()
+        .map(|member| {
                 let file_name =
                     Path::new(&member.path).file_name().ok_or_else(|| {
                         PipelineError::new(
@@ -257,11 +292,11 @@ pub(super) fn vehicle_quad_group_paths(
     package_root: &Path,
 ) -> Result<Vec<PathBuf>, PipelineError> {
     let paths = unique_vehicle_component_paths(
-        package
-            .members()
-            .iter()
-            .filter(|member| member.source_chunk_kind == "quad_group")
-            .map(|member| {
+        source_ordered_vehicle_members(package, "quad-group", |member| {
+            member.source_chunk_kind == "quad_group"
+        })?
+        .into_iter()
+        .map(|member| {
                 let file_name =
                     Path::new(&member.path).file_name().ok_or_else(|| {
                         PipelineError::new(
