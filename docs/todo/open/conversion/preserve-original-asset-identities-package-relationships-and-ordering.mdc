@@ -152,6 +152,17 @@ duplicate
 basenames fail closed instead of being silently deduplicated. Focused vehicle
 source tests prove both the retained order and collision rejection.
 
+Billboard quad-group decoding now preserves each authored child-quad identity
+through the typed primitive-group boundary and emits it as FBX user metadata
+without changing deterministic FBX object names. The normalized corpus contains
+3,139 quads across 2,378 groups; 837 child names differ from their group name,
+while only two groups repeat a child name internally, so the child name remains
+provenance rather than a unique object key. No audited group, shader, or child
+identity depends on surrounding-space trimming, and the decoder now rejects
+such padding while retaining only fixed-width trailing NUL removal. Billboard
+mode, depth, range, and other presentation semantics remain separate conversion
+evidence and are not claimed complete by this identity fix.
+
 Binary FBX material planning now preserves first-use order from the canonical
 primitive-group sequence when deduplicating exact semantic variants. Material
 object ids, object emission, and texture connections no longer inherit lexical
