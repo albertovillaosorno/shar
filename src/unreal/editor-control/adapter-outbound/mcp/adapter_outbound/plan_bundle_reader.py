@@ -21,7 +21,8 @@
 # - Summary:
 #   - Generated Unreal plan bundle filesystem reader.
 # - Description:
-#   - Reads exactly one index and six plan files without following links.
+#   - Reads one index, six plans, and four bound semantic siblings without
+#     following links.
 # - Usage:
 #   - Called by local plan preflight before any MCP session is opened.
 # - Defaults:
@@ -32,12 +33,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 from pathlib import Path
 import stat
 
 from mcp.domain.errors import fail_protocol
 from mcp.domain.plan_bundle import PlanBundleReport
+from mcp.domain.plan_bundle import SemanticArtifactSummary
 from mcp.domain.plan_bundle import ValidatedPlanBundle
 from mcp.domain.plan_bundle import parse_plan_bundle
 
@@ -54,6 +57,7 @@ _EXPECTED_FILES = _PLAN_FILES | {_INDEX_FILE}
 _MAX_INDEX_BYTES = 1024 * 1024
 _MAX_PLAN_BYTES = 512 * 1024 * 1024
 _MAX_BUNDLE_BYTES = 1024 * 1024 * 1024
+_MAX_SEMANTIC_ARTIFACT_BYTES = 512 * 1024 * 1024
 
 
 class FilesystemPlanBundleReader:
@@ -64,11 +68,11 @@ class FilesystemPlanBundleReader:
         self._root = root
 
     def read(self) -> PlanBundleReport:
-        """Read exactly seven regular files and return the public report."""
+        """Read the exact release bundle and return the public report."""
         return self.read_bundle().report
 
     def read_bundle(self) -> ValidatedPlanBundle:
-        """Read seven regular files into immutable validated evidence."""
+        """Read plans and bound semantic siblings into validated evidence."""
         root = self._root.absolute()
         _validate_existing_directory_chain(root)
         metadata = _metadata(root)
@@ -93,7 +97,32 @@ class FilesystemPlanBundleReader:
             if total_bytes > _MAX_BUNDLE_BYTES:
                 fail_protocol("generated plan bundle exceeds its size limit")
             plan_texts[filename] = text
-        return parse_plan_bundle(index_text, plan_texts)
+        bundle = parse_plan_bundle(index_text, plan_texts)
+        _verify_semantic_artifacts(
+            root.parent,
+            bundle.report.semantic_artifacts,
+        )
+        return bundle
+
+
+def _verify_semantic_artifacts(
+    root: Path,
+    artifacts: tuple[SemanticArtifactSummary, ...],
+) -> None:
+    for artifact in artifacts:
+        data = _read_bytes(
+            root / artifact.filename,
+            byte_limit=_MAX_SEMANTIC_ARTIFACT_BYTES,
+            label="semantic artifact",
+        )
+        if len(data) != artifact.byte_count:
+            fail_protocol(
+                "semantic artifact byte count does not match release index"
+            )
+        if hashlib.sha256(data).hexdigest() != artifact.revision:
+            fail_protocol(
+                "semantic artifact revision does not match release index"
+            )
 
 
 def _exact_inventory(root: Path) -> dict[str, Path]:
@@ -124,6 +153,22 @@ def _exact_inventory(root: Path) -> dict[str, Path]:
     if set(observed) != _EXPECTED_FILES:
         fail_protocol("generated plan bundle file inventory is not exact")
     return observed
+
+
+def _read_bytes(path: Path, *, byte_limit: int, label: str) -> bytes:
+    metadata = _metadata(path)
+    if metadata is None:
+        fail_protocol(f"{label} is missing")
+    _require_regular_file(path, metadata, label)
+    if metadata.st_size > byte_limit:
+        fail_protocol(f"{label} exceeds its size limit")
+    try:
+        data = path.read_bytes()
+    except OSError as error:
+        fail_protocol(f"failed to read {label}", cause=error)
+    if len(data) != metadata.st_size:
+        fail_protocol(f"{label} size changed during read")
+    return data
 
 
 def _read_utf8(path: Path, *, byte_limit: int, label: str) -> str:

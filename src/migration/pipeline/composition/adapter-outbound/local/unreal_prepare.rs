@@ -49,7 +49,7 @@ use schoenwald_filesystem::adapters::driving::local::{
 };
 use serde_json::{Map, Value, json};
 use shar_sha256::{Sha256, digest_hex};
-use shar_unreal_conversion::domain::PlanBundle;
+use shar_unreal_conversion::domain::{PlanBundle, UNREAL_PLAN_BUNDLE_SCHEMA};
 
 use super::mission_camera_catalog::load_mission_camera_catalog;
 use super::mission_completion_dialog_context as completion_dialog_context;
@@ -123,6 +123,9 @@ const VEHICLE_TUNING_FILE: &str = "vehicle-tuning.jsonl";
 const VEHICLE_TUNING_USAGE_FILE: &str = "vehicle-tuning-usage.jsonl";
 /// Canonical generated plan directory.
 const PLAN_ROOT: &str = "plans";
+/// Release index schema that binds semantic sidecars to the plan bundle.
+const RELEASE_PLAN_BUNDLE_SCHEMA: &str =
+    "shar-schoenwald.unreal-plan-bundle.v4";
 /// Canonical generated plan-bundle index filename.
 const PLAN_INDEX_FILE: &str = "plans/index.json";
 /// Complete set of files published by one prepare-unreal transaction.
@@ -144,6 +147,19 @@ const PUBLISHED_FILES: [&str; 12] = [
 const PUBLISHED_FILE_COUNT: usize = PUBLISHED_FILES.len().saturating_add(1);
 /// Expected successful minor-unit audit schema.
 const AUDIT_SCHEMA: &str = "shar-schoenwald.minor-unit-audit.v2";
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ReleasePlanIndex {
+    json: String,
+    revision: String,
+}
+
+#[derive(Clone, Copy)]
+struct SemanticArtifact<'a> {
+    artifact_id: &'static str,
+    filename: &'static str,
+    content: &'a str,
+}
 
 /// Generate and atomically publish Unreal staging evidence.
 // jig-ignore-next-line: long identifier
@@ -281,6 +297,13 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             let message = format!("Unreal plan generation failed: {error}");
             PipelineError::new(message)
         })?;
+    let release_plan_index = bind_release_plan_index(
+        &plan_bundle,
+        &mission_definitions_jsonl,
+        &mission_tuning_jsonl,
+        &vehicle_tuning_jsonl,
+        &vehicle_tuning_usage_jsonl,
+    )?;
     let unreal_manifest_path =
         config.game_root.join(UNREAL_MANIFEST_GAME_RELATIVE_PATH);
     check_cancellation()?;
@@ -291,6 +314,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &mission_tuning_jsonl,
         &vehicle_tuning_jsonl,
         &vehicle_tuning_usage_jsonl,
+        &release_plan_index,
         &plan_bundle,
         &unreal_manifest_path,
     )?;
@@ -304,6 +328,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &mission_tuning_jsonl,
             &vehicle_tuning_jsonl,
             &vehicle_tuning_usage_jsonl,
+            &release_plan_index,
             &plan_bundle,
         ),
         note: format!(
@@ -350,7 +375,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             vehicle_tuning_jsonl.lines().count(),
             vehicle_tuning_usage_jsonl.lines().count(),
             UNREAL_STAGING_WORKSPACE_ROOT,
-            plan_bundle.index_revision(),
+            release_plan_index.revision,
         ),
     })
 }
@@ -3942,6 +3967,162 @@ fn validate_rendered_derived_sources(
     Ok(())
 }
 
+fn bind_release_plan_index(
+    plans: &PlanBundle,
+    mission_definitions: &str,
+    mission_tuning: &str,
+    vehicle_tuning: &str,
+    vehicle_tuning_usage: &str,
+) -> PipelineOutcome<ReleasePlanIndex> {
+    let base = parse_object(
+        plans.index_json().trim_end_matches('\n'),
+        "generated plan bundle index",
+    )?;
+    let base_schema = required_string(
+        &base,
+        "schema",
+        "generated plan bundle index",
+    )?;
+    let base_revision = required_string(
+        &base,
+        "revision",
+        "generated plan bundle index",
+    )?;
+    if base_schema != UNREAL_PLAN_BUNDLE_SCHEMA
+        || base_revision != plans.index_revision()
+    {
+        return Err(PipelineError::new(
+            "generated plan bundle identity is not canonical",
+        ));
+    }
+    let artifacts = [
+        SemanticArtifact {
+            artifact_id: "mission-definitions",
+            filename: MISSION_DEFINITIONS_FILE,
+            content: mission_definitions,
+        },
+        SemanticArtifact {
+            artifact_id: "mission-tuning",
+            filename: MISSION_TUNING_FILE,
+            content: mission_tuning,
+        },
+        SemanticArtifact {
+            artifact_id: "vehicle-tuning",
+            filename: VEHICLE_TUNING_FILE,
+            content: vehicle_tuning,
+        },
+        SemanticArtifact {
+            artifact_id: "vehicle-tuning-usage",
+            filename: VEHICLE_TUNING_USAGE_FILE,
+            content: vehicle_tuning_usage,
+        },
+    ];
+    let preimage = render_release_plan_index(&base, "", &artifacts)?;
+    let revision = digest_hex(preimage.as_bytes());
+    let mut json = render_release_plan_index(&base, &revision, &artifacts)?;
+    json.push('\n');
+    Ok(ReleasePlanIndex { json, revision })
+}
+
+fn render_release_plan_index(
+    base: &Map<String, Value>,
+    revision: &str,
+    artifacts: &[SemanticArtifact<'_>],
+) -> PipelineOutcome<String> {
+    let source_manifest_revision = required_string(
+        base,
+        "source_manifest_revision",
+        "generated plan bundle index",
+    )?;
+    let engine_contract_revision = required_string(
+        base,
+        "engine_contract_revision",
+        "generated plan bundle index",
+    )?;
+    let target_engine_version = required_string(
+        base,
+        "target_engine_version",
+        "generated plan bundle index",
+    )?;
+    let target_platform = required_string(
+        base,
+        "target_platform",
+        "generated plan bundle index",
+    )?;
+    let semantic_blocker_count = required_u64(
+        base,
+        "semantic_blocker_count",
+        "generated plan bundle index",
+    )?;
+    let semantic_blockers = base.get("semantic_blockers").ok_or_else(|| {
+        PipelineError::new(
+            "generated plan bundle index is missing semantic blockers",
+        )
+    })?;
+    let plans = base.get("plans").ok_or_else(|| {
+        PipelineError::new("generated plan bundle index is missing plans")
+    })?;
+    let artifact_json = artifacts
+        .iter()
+        .map(render_semantic_artifact)
+        .collect::<PipelineOutcome<Vec<_>>>()?
+        .join(",");
+    let semantic_blockers = serde_json::to_string(semantic_blockers)
+        .map_err(|error| PipelineError::new(format!(
+            "serialize generated semantic blockers failed: {error}"
+        )))?;
+    let plans = serde_json::to_string(plans).map_err(|error| {
+        PipelineError::new(format!("serialize generated plans failed: {error}"))
+    })?;
+    Ok(format!(
+        concat!(
+            "{{\"schema\":{},\"revision\":{},",
+            "\"source_manifest_revision\":{},",
+            "\"engine_contract_revision\":{},",
+            "\"target_engine_version\":{},\"target_platform\":{},",
+            "\"semantic_blocker_count\":{},\"semantic_blockers\":{},",
+            "\"semantic_artifacts\":[{}],\"plans\":{}}}"
+        ),
+        json_string(RELEASE_PLAN_BUNDLE_SCHEMA)?,
+        json_string(revision)?,
+        json_string(&source_manifest_revision)?,
+        json_string(&engine_contract_revision)?,
+        json_string(&target_engine_version)?,
+        json_string(&target_platform)?,
+        semantic_blocker_count,
+        semantic_blockers,
+        artifact_json,
+        plans,
+    ))
+}
+
+fn render_semantic_artifact(
+    artifact: &SemanticArtifact<'_>,
+) -> PipelineOutcome<String> {
+    Ok(format!(
+        concat!(
+            "{{\"artifact_id\":{},\"filename\":{},",
+            "\"revision\":{},\"byte_count\":{}}}"
+        ),
+        json_string(artifact.artifact_id)?,
+        json_string(artifact.filename)?,
+        json_string(&digest_hex(artifact.content.as_bytes()))?,
+        artifact.content.len(),
+    ))
+}
+
+fn json_string(value: &str) -> PipelineOutcome<String> {
+    serde_json::to_string(value).map_err(|error| {
+        PipelineError::new(format!(
+            "serialize generated identity failed: {error}"
+        ))
+    })
+}
+
+#[expect(
+    clippy::too_many_arguments,
+    reason = "Explicit inputs keep publication byte accounting auditable."
+)]
 fn published_byte_count(
     manifest: &str,
     summary: &str,
@@ -3949,12 +4130,13 @@ fn published_byte_count(
     mission_tuning: &str,
     vehicle_tuning: &str,
     vehicle_tuning_usage: &str,
+    release_plan_index: &ReleasePlanIndex,
     plans: &PlanBundle,
 ) -> u64 {
     let plan_bytes = plans
         .artifacts()
         .iter()
-        .fold(plans.index_json().len(), |total, artifact| {
+        .fold(release_plan_index.json.len(), |total, artifact| {
             total.saturating_add(artifact.json.len())
         });
     u64::try_from(
@@ -3981,6 +4163,7 @@ fn publish_staging(
     mission_tuning: &str,
     vehicle_tuning: &str,
     vehicle_tuning_usage: &str,
+    release_plan_index: &ReleasePlanIndex,
     plans: &PlanBundle,
     manifest_destination: &Path,
 ) -> PipelineOutcome<()> {
@@ -4030,7 +4213,7 @@ fn publish_staging(
         (MISSION_TUNING_FILE, mission_tuning),
         (VEHICLE_TUNING_FILE, vehicle_tuning),
         (VEHICLE_TUNING_USAGE_FILE, vehicle_tuning_usage),
-        (PLAN_INDEX_FILE, plans.index_json()),
+        (PLAN_INDEX_FILE, release_plan_index.json.as_str()),
     ] {
         write_staged_file(&staging, relative_path, content)?;
         let _inserted = published_paths.insert(relative_path.to_owned());
