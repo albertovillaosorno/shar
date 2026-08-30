@@ -43,7 +43,8 @@ use super::{
     PUBLISHED_FILE_COUNT, VEHICLE_TUNING_USAGE_FILE,
     PUBLISHED_FILES, SUMMARY_FILE, VEHICLE_TUNING_FILE,
     MissionTuningReplayRecord, SourceEvidenceInput,
-    VehicleTuningReplayRecord, VehicleTuningUsageProvenance,
+    VehicleTuningCommandReplayRecord, VehicleTuningReplayRecord,
+    VehicleTuningUsageProvenance,
     VehicleTuningUsageReplayRecord,
         ensure_generated_directory,
         open_stable_source,
@@ -2855,6 +2856,53 @@ fn accepts_complete_vehicle_tuning_core_bundle() -> Result<(), String> {
     )
         .map_err(|error| error.to_string())?;
     assert_eq!(rendered, rows.concat());
+    Ok(())
+}
+
+#[test]
+fn accepts_vehicle_tuning_core_source_replay_fields() -> Result<(), String> {
+    let value = json!({
+        "commands": [{
+            "arguments": ["1.0", "car"],
+            "args_raw": "1.0, car",
+            "name": concat!("set", "mass"),
+            "ordinal": 2,
+            "semantic_role": "vehicle-physics",
+        }],
+        "physical_vehicle": null,
+        "route_class": "vehicle-config",
+        "schema": "shar-schoenwald.vehicle-tuning-core.v2",
+        "source_bytes": 37,
+        "source_id": "tuning-one",
+        "source_statements": ["opaque_token", "SetMass(1.0, car);"],
+    });
+    let mut row = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    row.push('\n');
+    let replay = VehicleTuningReplayRecord {
+        source_id: "tuning-one".to_owned(),
+        route_class: "vehicle-config".to_owned(),
+        source_bytes: 37,
+        source_statements: vec![
+            "opaque_token".to_owned(),
+            "SetMass(1.0, car);".to_owned(),
+        ],
+        commands: vec![VehicleTuningCommandReplayRecord {
+            ordinal: 2,
+            name: concat!("set", "mass").to_owned(),
+            args_raw: "1.0, car".to_owned(),
+            semantic_role: "vehicle-physics".to_owned(),
+            arguments: vec!["1.0".to_owned(), "car".to_owned()],
+        }],
+    };
+    let rendered = validate_vehicle_tuning_bundle(
+        &[row.clone()],
+        &[tuning_source("tuning-one")],
+        &MissionReferenceCatalog::empty_for_tests(),
+        &[replay],
+    )
+    .map_err(|error| error.to_string())?;
+    assert_eq!(rendered, row);
     Ok(())
 }
 
