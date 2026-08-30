@@ -50,8 +50,7 @@ pub(super) fn build(
     content: &MasterContent,
     atlas: &AtlasBuild,
 ) -> Result<(StructuralGuideMesh, GuideSourceCounts), PipelineError> {
-    let mut meshes = content.meshes.clone();
-    meshes.sort_by(|left, right| left.name.cmp(&right.name));
+    let meshes = &content.meshes;
     let groups_without_normals = meshes
         .iter()
         .flat_map(|mesh| mesh.groups.iter())
@@ -72,7 +71,7 @@ pub(super) fn build(
         atlas_offsets: Vec::new(),
         atlas_scales: Vec::new(),
     };
-    for mesh in &meshes {
+    for mesh in meshes {
         let normalized = mesh.name.to_ascii_lowercase();
         if normalized.contains("wasp") {
             counts.wasp_meshes = counts.wasp_meshes.saturating_add(1);
