@@ -46,10 +46,12 @@ Physical source reads, byte-count checks, mission semantic preflight, and
 SHA-256 generation may execute concurrently through a bounded worker pool. Each
 worker first requires a regular non-linked source through the shared filesystem
 boundary, binds the pathname to the opened physical file identity, and rejects
-identity, byte-length, or modification-time drift after the read. Mission JSON
-is retained only for its semantic preflight; other source payloads stream
-through
-the shared incremental SHA-256 boundary instead of being retained wholesale.
+identity, byte-length, or modification-time drift after the read. Normalized
+mission and vehicle-tuning JSON is retained only as typed evidence
+needed for semantic preflight and deterministic staging bundles. Other source
+payloads stream through the shared incremental SHA-256 boundary instead of
+being retained wholesale.
+
 Manifest rows are parsed and validated before worker dispatch, completed results
 are restored to manifest order before planning, and therefore worker scheduling
 cannot alter published ordering or which earlier row owns an error.
@@ -141,8 +143,8 @@ catalog entries. A partial catalog never produces a mixed ready/pending bundle.
 
 ## Published files
 
-One successful transaction publishes exactly ten files across two accepted
-identities: one canonical manifest plus nine cache artifacts.
+One successful transaction publishes exactly thirteen files across two
+accepted identities: one canonical manifest plus twelve cache artifacts.
 
 ```text
 game/manifest/
@@ -150,6 +152,9 @@ game/manifest/
 
 .cache/pipeline/unreal-staging/
 ├── mission-definitions.jsonl
+├── mission-tuning.jsonl
+├── vehicle-tuning.jsonl
+├── vehicle-tuning-usage.jsonl
 ├── summary.json
 └── plans/
     ├── index.json
@@ -161,13 +166,24 @@ game/manifest/
     └── package-plan.json
 ```
 
+The three tuning artifacts are preservation evidence rather than native asset
+claims. `mission-tuning.jsonl` preserves reviewed mission-local tuning tuples
+with exact source ordinals, scope ownership, arguments, and physical vehicle
+provenance. `vehicle-tuning.jsonl` preserves each verified normalized tuning
+source, authored statement and command order, raw arguments, route provenance,
+and an exact physical vehicle binding only when that relation resolves
+unambiguously.
+
+`vehicle-tuning-usage.jsonl` preserves reviewed mission commands
+that select a tuning profile, including an explicit `null` when source-backed
+profile resolution is unavailable. These artifacts do not assign gameplay
+units, native Unreal fields, conversion rules, or runtime ranges.
+
 The index records the six plan identities, revisions, filenames, and operation
 counts. Each plan repeats the source-manifest revision, engine-contract
-revision,
-target engine version, target platform, direct plan dependencies with
-their exact
-prerequisite revisions, expected outputs, ordered operations, and required
-validation gates.
+revision, target engine version, target platform, direct plan dependencies with
+their exact prerequisite revisions, expected outputs, ordered operations, and
+required validation gates.
 
 ## Consumer preflight
 

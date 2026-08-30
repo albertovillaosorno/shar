@@ -60,8 +60,26 @@ gaps.
 
 The shared normalized SHAR mod-package contract now backs canonical language
 publication directly, and the language domain is separated from filesystem,
-serialization, hashing, and package-publication composition. This parent task
-remains open because broader mission/tuning preservation and final release
-integration still require their own end-to-end evidence. Language mods are not
-inserted as a tenth faithful-base extraction stage and do not alter base-game
-identity.
+serialization, hashing, and package-publication composition. Language mods are
+not inserted as a tenth faithful-base extraction stage and do not alter
+base-game identity.
+
+Mission and tuning preservation now also reaches the atomic `prepare-unreal`
+staging boundary. The current normalized corpus carries 255 `vehicle-tuning`
+sources, and each verified source produces one canonical versioned tuning core
+that preserves source statements, command order, raw argument lexemes, route
+provenance, and exact physical-vehicle provenance when it resolves
+unambiguously. Mission-local `SetCarAttributes` and reviewed stage AI/catch-up
+tuples publish separately with exact arguments, source ordinals, mission/stage/
+objective ownership, and physical vehicle provenance.
+
+Contextual mission commands that select `.con` tuning profiles publish as a
+third versioned bundle;
+an unavailable source-backed profile remains explicit `null` rather than being
+repaired or guessed. Bundle validators replay source order, command arguments,
+ownership, physical bindings, and contextual usage evidence before publication.
+
+These preservation artifacts intentionally do not map legacy setters to
+gameplay units, native Unreal fields, conversion rules, or runtime ranges. This
+parent therefore remains open for reviewed native tuning/mission compilation and
+final release integration evidence.
