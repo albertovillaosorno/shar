@@ -205,6 +205,53 @@ fn layout_rejects_duplicate_component_ordinals() -> TestResult {
 }
 
 #[test]
+fn layout_rejects_malformed_parent_ordinal() -> TestResult {
+    let root = case_dir("malformed-parent")?;
+    let project = write_component(
+        &root,
+        1,
+        0,
+        "scrooby_project",
+        "project",
+        concat!(
+            r#"{"schema":"scrooby_project","version":10,"#,
+            r#""resolution":[640,480]}"#,
+        ),
+    )?;
+    let page = write_component(
+        &root,
+        2,
+        1,
+        "scrooby_page",
+        "page",
+        r#"{"schema":"scrooby_page","version":11,"resolution":[640,480]}"#,
+    )?;
+    let page = page.replace("\"parent_ordinal\":1", "\"parent_ordinal\":\"1\"");
+    let ledger = format!(
+        concat!(
+            "{{\"schema\":\"p3d.package.v1\",",
+            "\"component_count\":2}}\n{}\n{}\n",
+        ),
+        project,
+        page,
+    );
+    fs::write(root.join("components.jsonl"), ledger)
+        .map_err(|error| error.to_string())?;
+    let result = collect_package_layout(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("malformed Scrooby parent ordinal was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("Scrooby parent_ordinal is not an integer")
+    {
+        return Err(format!("unexpected malformed parent error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
     let root = case_dir("runtime-indices")?;
     let rows = [
