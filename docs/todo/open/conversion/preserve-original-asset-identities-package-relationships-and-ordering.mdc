@@ -169,5 +169,14 @@ alongside keyed lookup. Unbound helper identities no longer inherit lexical map
 order; the compact-channel fixture proves `Z_Helper` remains before
 `A_Helper` when that is the source sequence.
 
+Prop canonicalization now preserves the supplied source mesh and rigid-part
+sequence while assigning anonymous `part-####` publication names. Content-based
+sorting previously changed `z`-then-`a` source parts into `a`-then-`z` before
+FBX publication and made those distinct authored sequences semantically
+equivalent.
+Static and rigid-animated regressions now prove canonical naming leaves the
+source part sequence unchanged; all 86 focused prop-catalog tests and the 1,002
+pipeline library tests pass with strict pipeline Clippy clean.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
