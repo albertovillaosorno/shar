@@ -203,6 +203,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &source_report.vehicle_tuning_cores,
         &source_report.evidence,
         &mission_references,
+        &source_report.vehicle_tuning_replay,
     )?;
     let vehicle_tuning_usage_jsonl = validate_vehicle_tuning_usage_bundle(
         &source_report.vehicle_tuning_usages,
@@ -479,8 +480,35 @@ struct SourceEvidenceReport {
     mission_tuning: String,
     mission_tuning_replay: Vec<MissionTuningReplayRecord>,
     vehicle_tuning_cores: Vec<String>,
+    vehicle_tuning_replay: Vec<VehicleTuningReplayRecord>,
     vehicle_tuning_usages: String,
     vehicle_tuning_usage_replay: Vec<VehicleTuningUsageReplayRecord>,
+}
+
+/// Exact typed vehicle-tuning core retained for output replay validation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct VehicleTuningReplayRecord {
+    source_id: String,
+    route_class: String,
+    source_bytes: u64,
+    source_statements: Vec<String>,
+    commands: Vec<VehicleTuningCommandReplayRecord>,
+}
+
+/// Exact typed command retained from one normalized tuning source.
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct VehicleTuningCommandReplayRecord {
+    ordinal: usize,
+    name: String,
+    args_raw: String,
+    semantic_role: String,
+    arguments: Vec<String>,
+}
+
+/// One rendered tuning core plus its independent typed replay.
+struct VehicleTuningCoreOutput {
+    jsonl: String,
+    replay: VehicleTuningReplayRecord,
 }
 
 /// Exact typed vehicle-tuning usage retained for output replay validation.
@@ -532,7 +560,7 @@ struct VerifiedSourceOutput {
     mission_definition: Option<String>,
     mission_tuning: String,
     mission_tuning_replay: Vec<MissionTuningReplayRecord>,
-    vehicle_tuning_core: Option<String>,
+    vehicle_tuning_core: Option<VehicleTuningCoreOutput>,
 }
 
 /// One parsed manifest row awaiting physical source verification.
@@ -568,6 +596,7 @@ fn parallel_source_evidence(
             mission_tuning: String::new(),
             mission_tuning_replay: Vec::new(),
             vehicle_tuning_cores: Vec::new(),
+            vehicle_tuning_replay: Vec::new(),
             vehicle_tuning_usages: String::new(),
             vehicle_tuning_usage_replay: Vec::new(),
         });
@@ -635,6 +664,7 @@ fn parallel_source_evidence(
     let mut mission_tuning = String::new();
     let mut mission_tuning_replay = Vec::new();
     let mut vehicle_tuning_cores = Vec::new();
+    let mut vehicle_tuning_replay = Vec::new();
     for (_position, result) in collected {
         let output = result?;
         evidence.push(output.evidence);
@@ -644,7 +674,8 @@ fn parallel_source_evidence(
         mission_tuning.push_str(&output.mission_tuning);
         mission_tuning_replay.extend(output.mission_tuning_replay);
         if let Some(core) = output.vehicle_tuning_core {
-            vehicle_tuning_cores.push(core);
+            vehicle_tuning_cores.push(core.jsonl);
+            vehicle_tuning_replay.push(core.replay);
         }
     }
     progress.finish();
@@ -654,6 +685,7 @@ fn parallel_source_evidence(
         mission_tuning,
         mission_tuning_replay,
         vehicle_tuning_cores,
+        vehicle_tuning_replay,
         vehicle_tuning_usages: String::new(),
         vehicle_tuning_usage_replay: Vec::new(),
     })
@@ -1314,7 +1346,7 @@ fn validate_normalized_vehicle_tuning_source(
     origin: &str,
     bytes: &[u8],
     mission_references: &MissionReferenceCatalog,
-) -> PipelineOutcome<Option<String>> {
+) -> PipelineOutcome<Option<VehicleTuningCoreOutput>> {
     if kind != "vehicle-tuning" {
         return Ok(None);
     }
@@ -1338,14 +1370,31 @@ fn validate_normalized_vehicle_tuning_source(
             "vehicle tuning semantic preflight failed: {error}"
         ))
     })?;
+    let replay = VehicleTuningReplayRecord {
+        source_id: source_id.to_owned(),
+        route_class: evidence.route_class().to_owned(),
+        source_bytes: evidence.source_bytes(),
+        source_statements: evidence.source_statements().to_vec(),
+        commands: evidence
+            .invocations()
+            .iter()
+            .map(|command| VehicleTuningCommandReplayRecord {
+                ordinal: command.ordinal(),
+                name: command.name().to_owned(),
+                args_raw: command.args_raw().to_owned(),
+                semantic_role: command.semantic_role().to_owned(),
+                arguments: command.arguments().to_vec(),
+            })
+            .collect(),
+    };
     let physical_vehicle =
         vehicle_tuning_physical_vehicle(source_path, mission_references)?;
-    super::vehicle_tuning_context::render_vehicle_tuning_core(
+    let jsonl = super::vehicle_tuning_context::render_vehicle_tuning_core(
         source_id,
         &evidence,
         physical_vehicle.as_ref(),
-    )
-    .map(Some)
+    )?;
+    Ok(Some(VehicleTuningCoreOutput { jsonl, replay }))
 }
 
 fn vehicle_tuning_physical_vehicle(
@@ -2282,10 +2331,27 @@ fn validate_vehicle_tuning_physical_vehicle(
     Ok(())
 }
 
+fn vehicle_tuning_replay_json(record: &VehicleTuningReplayRecord) -> Value {
+    json!({
+        "commands": record.commands.iter().map(|command| json!({
+            "arguments": command.arguments,
+            "args_raw": command.args_raw,
+            "name": command.name,
+            "ordinal": command.ordinal,
+            "semantic_role": command.semantic_role,
+        })).collect::<Vec<_>>(),
+        "route_class": record.route_class,
+        "source_bytes": record.source_bytes,
+        "source_id": record.source_id,
+        "source_statements": record.source_statements,
+    })
+}
+
 fn validate_vehicle_tuning_bundle(
     rows: &[String],
     verified: &[UnrealSourceEvidence],
     mission_references: &MissionReferenceCatalog,
+    replay: &[VehicleTuningReplayRecord],
 ) -> PipelineOutcome<String> {
     let verified_tuning_sources = verified
         .iter()
@@ -2293,6 +2359,23 @@ fn validate_vehicle_tuning_bundle(
         .filter(|(_index, source)| source.kind == "vehicle-tuning")
         .map(|(index, source)| (source.id.as_str(), (index, source)))
         .collect::<BTreeMap<_, _>>();
+    let mut expected_replay = BTreeMap::new();
+    for record in replay {
+        if !verified_tuning_sources.contains_key(record.source_id.as_str()) {
+            return Err(PipelineError::new(concat!(
+                "vehicle tuning source replay is not verified tuning ",
+                "evidence",
+            )));
+        }
+        if expected_replay
+            .insert(record.source_id.clone(), record)
+            .is_some()
+        {
+            return Err(PipelineError::new(
+                "vehicle tuning source replay is duplicated",
+            ));
+        }
+    }
     let mut source_ids = BTreeSet::new();
     let mut previous_source_position = None;
     let mut output = String::new();
@@ -2354,6 +2437,23 @@ fn validate_vehicle_tuning_bundle(
             physical_vehicle.as_ref(),
             &label,
         )?;
+        let replay = expected_replay.remove(&source_id).ok_or_else(|| {
+            PipelineError::new(
+                "vehicle tuning core lacks normalized source replay",
+            )
+        })?;
+        let source_projection = json!({
+            "commands": object.get("commands"),
+            "route_class": object.get("route_class"),
+            "source_bytes": object.get("source_bytes"),
+            "source_id": object.get("source_id"),
+            "source_statements": object.get("source_statements"),
+        });
+        if source_projection != vehicle_tuning_replay_json(replay) {
+            return Err(PipelineError::new(
+                "vehicle tuning core disagrees with normalized source replay",
+            ));
+        }
         if !matches!(
             required_string(&object, "route_class", &label)?.as_str(),
             "vehicle-config" | "mission"
@@ -2425,6 +2525,11 @@ fn validate_vehicle_tuning_bundle(
             ));
         }
         output.push_str(row);
+    }
+    if !expected_replay.is_empty() {
+        return Err(PipelineError::new(
+            "vehicle tuning core bundle omits normalized source replay",
+        ));
     }
     if source_ids.len() != verified_tuning_sources.len() {
         return Err(PipelineError::new(
