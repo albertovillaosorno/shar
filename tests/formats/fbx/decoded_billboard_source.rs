@@ -157,7 +157,9 @@ fn rejects_space_padded_authored_quad_identity() -> Result<(), String> {
     let result = read_billboard_quad_group(&path, "groupShape");
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     if result.is_ok() {
-        return Err("space-padded authored quad identity was repaired".to_owned());
+        return Err(
+            "space-padded authored quad identity was repaired".to_owned()
+        );
     }
     Ok(())
 }
