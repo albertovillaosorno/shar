@@ -226,6 +226,8 @@ pub struct PhaseThreePackageMember {
     pub kind: String,
     /// Source chunk kind published by the generated index.
     pub source_chunk_kind: String,
+    /// Exact source chunk ordinal when the member came from a package chunk.
+    pub source_chunk_ordinal: Option<usize>,
 }
 
 /// One derived text-key mirror with canonical localization evidence.
@@ -392,9 +394,20 @@ fn parse_string_object_fields(
     ))
 }
 
-/// Canonical ordered fields for one physical package member mirror.
+/// Historical ordered fields for one physical package member mirror.
 const MEMBER_MIRROR_FIELDS: [&str; 6] =
     ["id", "role", "path", "type", "kind", "source_chunk_kind"];
+
+/// Current ordered fields with exact source chunk ordinal provenance.
+const MEMBER_MIRROR_FIELDS_WITH_SOURCE_ORDINAL: [&str; 7] = [
+    "id",
+    "role",
+    "path",
+    "type",
+    "kind",
+    "source_chunk_kind",
+    "source_chunk_ordinal",
+];
 
 /// Return whether a path segment uses a host-reserved filename.
 fn is_reserved_portable_path_segment(segment: &str) -> bool {
@@ -473,6 +486,34 @@ fn validate_required_member_field(
     Ok(())
 }
 
+/// Parse one optional source chunk ordinal from the package-index mirror.
+fn parse_source_chunk_ordinal(
+    value: Option<String>,
+) -> Result<Option<usize>, PackageIntakeError> {
+    let Some(value) = value else {
+        return Ok(None);
+    };
+    if value == "none" {
+        return Ok(None);
+    }
+    if value.is_empty() || !value.bytes().all(|byte| byte.is_ascii_digit()) {
+        return Err(PackageIntakeError::new(
+            "member mirror has an invalid source chunk ordinal",
+        ));
+    }
+    let ordinal = value.parse::<usize>().map_err(|_error| {
+        PackageIntakeError::new(
+            "member mirror source chunk ordinal exceeds platform limits",
+        )
+    })?;
+    if ordinal == 0 {
+        return Err(PackageIntakeError::new(
+            "member mirror source chunk ordinal must be positive",
+        ));
+    }
+    Ok(Some(ordinal))
+}
+
 /// Convert one ordered member mirror field list into the intake record.
 fn member_from_values(
     parsed_values: Vec<String>,
@@ -508,6 +549,7 @@ fn member_from_values(
         PackageIntakeError::new("member mirror has no source chunk kind")
     })?;
     validate_required_member_field("source chunk kind", &source_chunk_kind)?;
+    let source_chunk_ordinal = parse_source_chunk_ordinal(values.next())?;
     Ok(PhaseThreePackageMember {
         id,
         role,
@@ -515,6 +557,7 @@ fn member_from_values(
         unit_type,
         kind,
         source_chunk_kind,
+        source_chunk_ordinal,
     })
 }
 
@@ -530,8 +573,24 @@ fn parse_member_mirrors(
     }
     let mut members = Vec::new();
     loop {
-        let (parsed_values, object_end) =
-            parse_string_object_fields(line, cursor, &MEMBER_MIRROR_FIELDS)?;
+        let parsed = parse_string_object_fields(
+            line,
+            cursor,
+            &MEMBER_MIRROR_FIELDS_WITH_SOURCE_ORDINAL,
+        );
+        let (parsed_values, object_end) = match parsed {
+            Ok(current) => current,
+            Err(current_error) => {
+                match parse_string_object_fields(
+                    line,
+                    cursor,
+                    &MEMBER_MIRROR_FIELDS,
+                ) {
+                    Ok(historical) => historical,
+                    Err(_historical_error) => return Err(current_error),
+                }
+            },
+        };
         members.push(member_from_values(parsed_values)?);
         cursor = skip_json_ws(line, object_end);
         match bytes.get(cursor) {
