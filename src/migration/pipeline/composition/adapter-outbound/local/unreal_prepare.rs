@@ -1721,6 +1721,11 @@ fn validate_vehicle_tuning_usage_bundle(
         .filter(|(_index, source)| source.kind == "mission-script")
         .map(|(index, source)| (source.id.as_str(), index))
         .collect::<BTreeMap<_, _>>();
+    let verified_tuning_sources = verified
+        .iter()
+        .filter(|source| source.kind == "vehicle-tuning")
+        .map(|source| source.id.as_str())
+        .collect::<BTreeSet<_>>();
     let mut expected = BTreeMap::new();
     for record in replay {
         if !verified_mission_sources
@@ -1729,6 +1734,14 @@ fn validate_vehicle_tuning_usage_bundle(
             return Err(PipelineError::new(concat!(
                 "vehicle tuning usage replay source is not verified ",
                 "mission evidence",
+            )));
+        }
+        if record.tuning_source.as_ref().is_some_and(|source| {
+            !verified_tuning_sources.contains(source.source_id.as_str())
+        }) {
+            return Err(PipelineError::new(concat!(
+                "vehicle tuning usage replay source is not verified ",
+                "tuning evidence",
             )));
         }
         let ordinal = u64::try_from(record.source_ordinal).map_err(|_error| {
