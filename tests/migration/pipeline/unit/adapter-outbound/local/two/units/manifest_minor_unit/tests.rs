@@ -37,8 +37,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::{
     is_pipeline_run_report, obfuscated_route, parse_component_line,
-    read_number_field, should_skip_local_game_file, source_object_key,
-    write_manifest_minor_units,
+    read_number_field, read_package_ledger, should_skip_local_game_file,
+    source_object_key, write_manifest_minor_units,
 };
 
 /// Distinguishes concurrent synthetic manifest cases within one process.
@@ -402,6 +402,39 @@ fn parse_component_line_maps_provenance() {
         assert_eq!(provenance.chunk_ordinal, "7");
         assert_eq!(provenance.recovery_status, "fully-decoded");
     }
+}
+
+#[test]
+fn rejects_duplicate_component_provenance_paths() -> Result<(), String> {
+    let root = case_root("duplicate-provenance-path");
+    let package = root.join("sample");
+    fs::create_dir_all(&package).map_err(|error| error.to_string())?;
+    fs::write(
+        package.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":2}"#,
+            "\n",
+            r#"{"ordinal":7,"kind":"mesh","path":"mesh/a.json"}"#,
+            "\n",
+            r#"{"ordinal":9,"kind":"mesh","path":"mesh/a.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let result = read_package_ledger(&root, "extracted/sample");
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err(
+            "duplicate component provenance path was accepted".to_owned(),
+        );
+    };
+    if !error
+        .to_string()
+        .contains("duplicate component provenance path")
+    {
+        return Err(format!("unexpected duplicate provenance error: {error}"));
+    }
+    Ok(())
 }
 
 #[test]

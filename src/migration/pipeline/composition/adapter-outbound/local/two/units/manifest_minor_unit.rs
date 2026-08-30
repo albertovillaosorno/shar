@@ -690,8 +690,12 @@ fn read_package_ledger(
     let text = local_read_utf8(&ledger_path).map_err(io_error(&ledger_path))?;
     let mut ledger = PackageLedger::new();
     for line in text.lines() {
-        if let Some((component_rel, provenance)) = parse_component_line(line) {
-            drop(ledger.insert(component_rel, provenance));
+        if let Some((component_rel, provenance)) = parse_component_line(line)
+            && ledger.insert(component_rel, provenance).is_some()
+        {
+            return Err(PipelineError::new(
+                "duplicate component provenance path in package ledger",
+            ));
         }
     }
     Ok(Some(ledger))
