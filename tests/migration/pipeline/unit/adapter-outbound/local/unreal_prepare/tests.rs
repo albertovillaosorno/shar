@@ -43,7 +43,8 @@ use super::{
     PUBLISHED_FILE_COUNT, VEHICLE_TUNING_USAGE_FILE,
     PUBLISHED_FILES, SUMMARY_FILE, VEHICLE_TUNING_FILE,
     MissionTuningReplayRecord, SourceEvidenceInput,
-    VehicleTuningUsageProvenance, VehicleTuningUsageReplayRecord,
+    VehicleTuningReplayRecord, VehicleTuningUsageProvenance,
+    VehicleTuningUsageReplayRecord,
         ensure_generated_directory,
         open_stable_source,
         parallel_source_evidence,
@@ -108,6 +109,16 @@ fn tuning_core_row(source_id: &str) -> Result<String, String> {
         .map_err(|error| error.to_string())?;
     text.push('\n');
     Ok(text)
+}
+
+fn tuning_core_replay(source_id: &str) -> VehicleTuningReplayRecord {
+    VehicleTuningReplayRecord {
+        source_id: source_id.to_owned(),
+        route_class: "vehicle-config".to_owned(),
+        source_bytes: 0,
+        source_statements: Vec::new(),
+        commands: Vec::new(),
+    }
 }
 
 trait RejectionResult<T, E> {
@@ -2837,9 +2848,36 @@ fn accepts_complete_vehicle_tuning_core_bundle() -> Result<(), String> {
         &rows,
         &verified,
         &MissionReferenceCatalog::empty_for_tests(),
+        &[
+            tuning_core_replay("tuning-one"),
+            tuning_core_replay("tuning-two"),
+        ],
     )
         .map_err(|error| error.to_string())?;
     assert_eq!(rendered, rows.concat());
+    Ok(())
+}
+
+#[test]
+fn rejects_vehicle_tuning_core_source_replay_drift() -> Result<(), String> {
+    let mut value = serde_json::from_str::<serde_json::Value>(
+        tuning_core_row("tuning-one")?.trim_end(),
+    )
+    .map_err(|error| error.to_string())?;
+    *value
+        .get_mut("source_bytes")
+        .ok_or("tuning core source-bytes field disappeared")? = json!(1);
+    let mut row = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    row.push('\n');
+    let error = validate_vehicle_tuning_bundle(
+        &[row],
+        &[tuning_source("tuning-one")],
+        &MissionReferenceCatalog::empty_for_tests(),
+        &[tuning_core_replay("tuning-one")],
+    )
+    .rejection("vehicle tuning source replay drift must fail")?;
+    assert!(error.to_string().contains("source replay"));
     Ok(())
 }
 
@@ -2874,6 +2912,7 @@ fn accepts_exact_vehicle_tuning_physical_binding() -> Result<(), String> {
         &[row.clone()],
         &verified,
         &references,
+        &[tuning_core_replay("car-a")],
     )
         .map_err(|error| error.to_string())?;
     assert_eq!(rendered, row);
@@ -2907,8 +2946,13 @@ fn rejects_forged_vehicle_tuning_physical_binding() -> Result<(), String> {
     let mut row = serde_json::to_string(&value)
         .map_err(|error| error.to_string())?;
     row.push('\n');
-    let error = validate_vehicle_tuning_bundle(&[row], &verified, &references)
-        .rejection("forged physical tuning binding must fail")?;
+    let error = validate_vehicle_tuning_bundle(
+        &[row],
+        &verified,
+        &references,
+        &[tuning_core_replay("car-a")],
+    )
+    .rejection("forged physical tuning binding must fail")?;
     assert!(error.to_string().contains("binding drifted"));
     Ok(())
 }
@@ -2924,6 +2968,7 @@ fn rejects_incomplete_vehicle_tuning_core_bundle() -> Result<(), String> {
         &rows,
         &verified,
         &MissionReferenceCatalog::empty_for_tests(),
+        &[tuning_core_replay("tuning-one")],
     )
         .rejection("missing tuning core must fail")?;
     assert!(error.to_string().contains("incomplete"));
@@ -2939,6 +2984,7 @@ fn rejects_duplicate_vehicle_tuning_core_source() -> Result<(), String> {
         &rows,
         &verified,
         &MissionReferenceCatalog::empty_for_tests(),
+        &[tuning_core_replay("tuning-one")],
     )
         .rejection("duplicate tuning core source must fail")?;
     assert!(error.to_string().contains("duplicates a source id"));
@@ -2953,6 +2999,7 @@ fn rejects_unverified_vehicle_tuning_core_source() -> Result<(), String> {
         &rows,
         &verified,
         &MissionReferenceCatalog::empty_for_tests(),
+        &[tuning_core_replay("tuning-one")],
     )
         .rejection("non-tuning verified source must fail")?;
     assert!(error.to_string().contains("not verified tuning evidence"));
@@ -2974,6 +3021,10 @@ fn rejects_vehicle_tuning_cores_out_of_verified_source_order()
         &rows,
         &verified,
         &MissionReferenceCatalog::empty_for_tests(),
+        &[
+            tuning_core_replay("tuning-one"),
+            tuning_core_replay("tuning-two"),
+        ],
     )
         .rejection("out-of-order tuning cores must fail")?;
     assert!(error.to_string().contains("verified source order"));
