@@ -135,7 +135,7 @@ fn rejects_indices_outside_position_range() {
 }
 
 #[test]
-fn reverses_winding_that_opposes_authored_normals() {
+fn preserves_winding_that_opposes_authored_normals() {
     let result = PrimitiveGroup::new(
         0,
         "shader",
@@ -154,5 +154,5 @@ fn reverses_winding_that_opposes_authored_normals() {
         return;
     };
 
-    assert_eq!(group.triangles, vec![[0, 2, 1,],]);
+    assert_eq!(group.triangles, vec![[0, 1, 2]]);
 }

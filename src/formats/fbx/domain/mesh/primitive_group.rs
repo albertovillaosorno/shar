@@ -37,7 +37,7 @@
 )]
 
 use super::error::MeshError;
-use super::topology::{align_triangle_winding, triangulate_indices};
+use super::topology::triangulate_indices;
 
 /// Primitive group with positions, UVs, indices, and shader binding.
 #[derive(Clone, Debug, PartialEq)]
@@ -168,11 +168,6 @@ impl PrimitiveGroup {
             }
         }
         self.normals = normals;
-        align_triangle_winding(
-            &self.positions,
-            &self.normals,
-            &mut self.triangles,
-        );
         Ok(self)
     }
 
