@@ -263,5 +263,13 @@ differ from ascending source chunk ordinal. Consumers that require authored
 ordering must therefore project the preserved ordinal explicitly at a reviewed
 boundary instead of treating canonical index position as source order.
 
+Scrooby layout publication now validates source component relationships before
+constructing parent and sibling maps. Duplicate component ordinals, malformed
+`parent_ordinal` values, and non-root parents that do not resolve to a published
+component all fail closed instead of becoming last-write-wins or null runtime
+ownership. The current normalized corpus has 26 Scrooby ledgers with 13,309
+Scrooby rows: all ordinals are unique, all 13,283 non-root parents resolve, and
+all parent fields are numeric while the 26 root rows retain parent ordinal 0.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
