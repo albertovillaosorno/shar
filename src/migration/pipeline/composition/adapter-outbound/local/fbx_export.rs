@@ -1193,6 +1193,43 @@ fn validate_character_package(
     Ok(())
 }
 
+/// Restore exact source chunk order for character rigid prop meshes.
+fn order_character_mesh_members(
+    meshes: &mut Vec<&PhaseThreePackageMember>,
+) -> Result<(), PipelineError> {
+    let mut ordered = meshes
+        .iter()
+        .copied()
+        .map(|member| {
+            member
+                .source_chunk_ordinal
+                .map(|ordinal| (ordinal, member))
+                .ok_or_else(|| {
+                    PipelineError::new(format!(
+                        "character mesh member {} has no source chunk ordinal",
+                        member.id
+                    ))
+                })
+        })
+        .collect::<Result<Vec<_>, PipelineError>>()?;
+    ordered.sort_by_key(|(ordinal, _member)| *ordinal);
+    for pair in ordered.windows(2) {
+        let [(left_ordinal, _left), (right_ordinal, _right)] = pair else {
+            continue;
+        };
+        if left_ordinal == right_ordinal {
+            return Err(PipelineError::new(format!(
+                "character package repeats source mesh ordinal {left_ordinal}"
+            )));
+        }
+    }
+    *meshes = ordered
+        .into_iter()
+        .map(|(_ordinal, member)| member)
+        .collect();
+    Ok(())
+}
+
 /// Classify package members into character export families.
 fn classify_members(
     package: &PhaseThreePackageRow,
@@ -1212,6 +1249,7 @@ fn classify_members(
             _ => classified.unsupported.push(member),
         }
     }
+    order_character_mesh_members(&mut classified.meshes)?;
     if classified.skins.is_empty() {
         return Err(PipelineError::new(format!(
             "package {} has no skin members; animation-set and effect \
