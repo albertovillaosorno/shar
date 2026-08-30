@@ -200,6 +200,7 @@ fn mission_tuning_replay_record(
     source_id: &str,
     source_ordinal: usize,
     command: &str,
+    scope: &str,
     vehicle_id: &str,
 ) -> Result<MissionTuningReplayRecord, String> {
     let arguments = match command {
@@ -215,11 +216,33 @@ fn mission_tuning_replay_record(
             );
         },
     };
+    let (owner_mission_id, owner_stage_source_ordinal,
+        owner_stage_sequence_ordinal, owner_objective_source_ordinal) =
+        match scope {
+            "unscoped" => (None, None, None, None),
+            "stage" => (Some("m1".to_owned()), Some(3), Some(0), None),
+            "objective" => (
+                Some("m1".to_owned()),
+                Some(3),
+                Some(0),
+                Some(5),
+            ),
+            _ => {
+                return Err(
+                    "unsupported mission tuning replay scope".to_owned()
+                );
+            },
+        };
     Ok(MissionTuningReplayRecord {
         mission_source_id: source_id.to_owned(),
         source_ordinal,
         command: command.to_owned(),
         arguments: arguments.into_iter().map(str::to_owned).collect(),
+        scope: scope.to_owned(),
+        owner_mission_id,
+        owner_stage_source_ordinal,
+        owner_stage_sequence_ordinal,
+        owner_objective_source_ordinal,
     })
 }
 
@@ -2507,12 +2530,14 @@ fn accepts_canonical_mission_tuning_bundle() -> Result<(), String> {
             "script-one",
             4,
             "setvehicleaiparams",
+            "stage",
             "car_a",
         )?,
         mission_tuning_replay_record(
             "script-one",
             6,
             "setstageaitargetcatchupparams",
+            "objective",
             "car_a",
         )?,
     ];
@@ -2560,6 +2585,7 @@ fn rejects_mission_tuning_argument_replay_drift() -> Result<(), String> {
         "script-one",
         4,
         "setvehicleaiparams",
+        "stage",
         "car_a",
     )?];
     let error = validate_mission_tuning_bundle(
@@ -2584,6 +2610,7 @@ fn rejects_mission_tuning_missing_replay_row() -> Result<(), String> {
         "script-one",
         4,
         "setvehicleaiparams",
+        "stage",
         "car_a",
     )?];
     let error = validate_mission_tuning_bundle(
@@ -2626,6 +2653,7 @@ fn rejects_mission_tuning_owner_drift() -> Result<(), String> {
         "script-one",
         6,
         "setstageaitargetcatchupparams",
+        "objective",
         "car_a",
     )?];
     let error = validate_mission_tuning_bundle(
@@ -2636,6 +2664,48 @@ fn rejects_mission_tuning_owner_drift() -> Result<(), String> {
     )
     .rejection("mission tuning owner drift must fail")?;
     assert!(error.to_string().contains("ownership drifted"));
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_tuning_plausible_owner_replay_drift() -> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let row = mission_tuning_row(
+        "script-one",
+        4,
+        "setvehicleaiparams",
+        "stage",
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )?;
+    let mut value = serde_json::from_str::<serde_json::Value>(row.trim_end())
+        .map_err(|error| error.to_string())?;
+    *value
+        .get_mut("owner_stage_sequence_ordinal")
+        .ok_or("mission tuning stage owner fixture disappeared")? = json!(1);
+    let mut forged = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    forged.push('\n');
+    let replay = [mission_tuning_replay_record(
+        "script-one",
+        4,
+        "setvehicleaiparams",
+        "stage",
+        "car_a",
+    )?];
+    let error = validate_mission_tuning_bundle(
+        &forged,
+        &[mission_source("script-one")],
+        &references,
+        &replay,
+    )
+    .rejection("plausible mission tuning owner replay drift must fail")?;
+    assert!(error.to_string().contains("ownership replay"));
     Ok(())
 }
 
@@ -2659,6 +2729,7 @@ fn rejects_mission_tuning_physical_vehicle_drift() -> Result<(), String> {
         "script-one",
         4,
         "setvehicleaiparams",
+        "stage",
         "car_a",
     )?];
     let error = validate_mission_tuning_bundle(
@@ -2705,12 +2776,14 @@ fn rejects_mission_tuning_source_order_drift() -> Result<(), String> {
             "script-one",
             4,
             "setvehicleaiparams",
+            "stage",
             "car_a",
         )?,
         mission_tuning_replay_record(
             "script-two",
             4,
             "setvehicleaiparams",
+            "stage",
             "car_a",
         )?,
     ];

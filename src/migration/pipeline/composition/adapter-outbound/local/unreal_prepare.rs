@@ -67,7 +67,7 @@ use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
     MISSION_SCRIPT_SCHEMA, VEHICLE_TUNING_SCHEMA, MissionCameraCatalog,
-    MissionInitializationBinding, MissionScriptEvidence,
+    MissionInitializationBinding,
     MissionLocatorCatalog, MissionP3dReferenceCatalog, MissionReferenceCatalog,
     MissionVehicleCatalogReference, PhaseThreePackageIndex,
     VehicleTuningSourceCatalog, VehicleTuningUsageReport,
@@ -519,6 +519,11 @@ struct MissionTuningReplayRecord {
     source_ordinal: usize,
     command: String,
     arguments: Vec<String>,
+    scope: String,
+    owner_mission_id: Option<String>,
+    owner_stage_source_ordinal: Option<usize>,
+    owner_stage_sequence_ordinal: Option<usize>,
+    owner_objective_source_ordinal: Option<usize>,
 }
 
 /// One verified physical source and its optional selected mission definition.
@@ -1427,8 +1432,6 @@ fn validate_normalized_mission_source(
         // jig-ignore-next-line: literal
         PipelineError::new(format!("mission semantic preflight failed: {error}"))
     })?;
-    let mission_tuning_replay =
-        mission_tuning_replay_records(source_id, &evidence);
     drop(
         preflight_mission_vehicle_selects(
             &evidence,
@@ -1476,6 +1479,8 @@ fn validate_normalized_mission_source(
     let scopes = compile_mission_scope_graphs(&evidence)
         // jig-ignore-next-line: literal
         .map_err(|error| PipelineError::new(format!("mission scope preflight failed: {error}")))?;
+    let mission_tuning_replay =
+        mission_tuning_replay_records(source_id, &scopes);
         // jig-ignore-next-line: expression
         let objective_semantics = preflight_mission_objective_semantics(&scopes).map_err(|error| {
         PipelineError::new(format!(
@@ -1619,19 +1624,76 @@ fn validate_normalized_mission_source(
 
 fn mission_tuning_replay_records(
     source_id: &str,
-    evidence: &MissionScriptEvidence,
+    scopes: &crate::domain::MissionScopeReport,
 ) -> Vec<MissionTuningReplayRecord> {
-    evidence
-        .invocations()
+    let mut records = Vec::new();
+    for command in scopes
+        .unscoped_commands()
         .iter()
-        .filter(|invocation| is_mission_tuning_command(invocation.name()))
-        .map(|invocation| MissionTuningReplayRecord {
+        .filter(|command| command.name() == "setcarattributes")
+    {
+        records.push(MissionTuningReplayRecord {
             mission_source_id: source_id.to_owned(),
-            source_ordinal: invocation.ordinal(),
-            command: invocation.name().to_owned(),
-            arguments: invocation.arguments().to_vec(),
-        })
-        .collect()
+            source_ordinal: command.source_ordinal(),
+            command: command.name().to_owned(),
+            arguments: command.arguments().to_vec(),
+            scope: "unscoped".to_owned(),
+            owner_mission_id: None,
+            owner_stage_source_ordinal: None,
+            owner_stage_sequence_ordinal: None,
+            owner_objective_source_ordinal: None,
+        });
+    }
+    for mission in scopes.missions() {
+        for stage in mission.stages() {
+            for command in stage.commands().iter().filter(|command| {
+                command.name() != "setcarattributes"
+                    && is_mission_tuning_command(command.name())
+            }) {
+                records.push(MissionTuningReplayRecord {
+                    mission_source_id: source_id.to_owned(),
+                    source_ordinal: command.source_ordinal(),
+                    command: command.name().to_owned(),
+                    arguments: command.arguments().to_vec(),
+                    scope: "stage".to_owned(),
+                    owner_mission_id: Some(
+                        mission.source_mission_id().to_owned(),
+                    ),
+                    owner_stage_source_ordinal: Some(stage.source_ordinal()),
+                    owner_stage_sequence_ordinal: Some(
+                        stage.sequence_ordinal(),
+                    ),
+                    owner_objective_source_ordinal: None,
+                });
+            }
+            for command in stage.objective().commands().iter().filter(
+                |command| {
+                    command.command() != "setcarattributes"
+                        && is_mission_tuning_command(command.command())
+                },
+            ) {
+                records.push(MissionTuningReplayRecord {
+                    mission_source_id: source_id.to_owned(),
+                    source_ordinal: command.ordinal(),
+                    command: command.command().to_owned(),
+                    arguments: command.arguments().to_vec(),
+                    scope: "objective".to_owned(),
+                    owner_mission_id: Some(
+                        mission.source_mission_id().to_owned(),
+                    ),
+                    owner_stage_source_ordinal: Some(stage.source_ordinal()),
+                    owner_stage_sequence_ordinal: Some(
+                        stage.sequence_ordinal(),
+                    ),
+                    owner_objective_source_ordinal: Some(
+                        stage.objective().binding().ordinal(),
+                    ),
+                });
+            }
+        }
+    }
+    records.sort_by_key(|record| record.source_ordinal);
+    records
 }
 
 fn is_mission_tuning_command(command: &str) -> bool {
@@ -1948,6 +2010,12 @@ fn validate_mission_tuning_bundle(
             ));
         }
         validate_mission_tuning_owner(&object, &command, &scope, &label)?;
+        validate_mission_tuning_owner_replay(
+            &object,
+            &scope,
+            replay_record,
+            &label,
+        )?;
         validate_mission_tuning_vehicle(
             &object,
             &vehicle_id,
@@ -2033,6 +2101,62 @@ fn validate_mission_tuning_owner(
         ));
     }
     Ok(())
+}
+
+fn validate_mission_tuning_owner_replay(
+    object: &Map<String, Value>,
+    scope: &str,
+    replay: &MissionTuningReplayRecord,
+    label: &str,
+) -> PipelineOutcome<()> {
+    let mission = optional_string(object, "owner_mission_id", label)?;
+    let stage_source = optional_u64(
+        object,
+        "owner_stage_source_ordinal",
+        label,
+    )?;
+    let stage_sequence = optional_u64(
+        object,
+        "owner_stage_sequence_ordinal",
+        label,
+    )?;
+    let objective = optional_u64(
+        object,
+        "owner_objective_source_ordinal",
+        label,
+    )?;
+    let expected_stage_source = replay_optional_u64(
+        replay.owner_stage_source_ordinal,
+    )?;
+    let expected_stage_sequence = replay_optional_u64(
+        replay.owner_stage_sequence_ordinal,
+    )?;
+    let expected_objective = replay_optional_u64(
+        replay.owner_objective_source_ordinal,
+    )?;
+    if replay.scope != scope
+        || replay.owner_mission_id.as_deref() != mission.as_deref()
+        || expected_stage_source != stage_source
+        || expected_stage_sequence != stage_sequence
+        || expected_objective != objective
+    {
+        return Err(PipelineError::new(
+            "mission tuning ownership replay drifted",
+        ));
+    }
+    Ok(())
+}
+
+fn replay_optional_u64(value: Option<usize>) -> PipelineOutcome<Option<u64>> {
+    value
+        .map(|value| {
+            u64::try_from(value).map_err(|_error| {
+                PipelineError::new(
+                    "mission tuning replay owner ordinal overflowed",
+                )
+            })
+        })
+        .transpose()
 }
 
 fn validate_mission_tuning_vehicle(
