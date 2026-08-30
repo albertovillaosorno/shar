@@ -41,7 +41,9 @@ use super::super::run_registry::{RunMode, RunRegistry};
 use super::{
     MISSION_DEFINITIONS_FILE, MISSION_TUNING_FILE, PLAN_INDEX_FILE,
     PUBLISHED_FILE_COUNT, VEHICLE_TUNING_USAGE_FILE,
-    PUBLISHED_FILES, SUMMARY_FILE, VEHICLE_TUNING_FILE, SourceEvidenceInput,
+    PUBLISHED_FILES, SUMMARY_FILE, VEHICLE_TUNING_FILE,
+    MissionTuningReplayRecord, SourceEvidenceInput,
+    VehicleTuningUsageProvenance, VehicleTuningUsageReplayRecord,
         ensure_generated_directory,
         open_stable_source,
         parallel_source_evidence,
@@ -51,7 +53,7 @@ use super::{
     validate_audit, validate_generated_chain,
     validate_mission_definition_bundle, validate_mission_tuning_bundle,
     validate_public_identifier,
-    validate_vehicle_tuning_bundle,
+    validate_vehicle_tuning_bundle, validate_vehicle_tuning_usage_bundle,
     validate_publication_inventory, validate_relative_path,
     validate_rendered_output,
     verify_stable_source,
@@ -192,6 +194,86 @@ fn mission_tuning_row(
         .map_err(|error| error.to_string())?;
     text.push('\n');
     Ok(text)
+}
+
+fn mission_tuning_replay_record(
+    source_id: &str,
+    source_ordinal: usize,
+    command: &str,
+    vehicle_id: &str,
+) -> Result<MissionTuningReplayRecord, String> {
+    let arguments = match command {
+        "setcarattributes" => vec![vehicle_id, "1", "1.5", "2.50", "4"],
+        "setvehicleaiparams" => vec![vehicle_id, "-10", "-9"],
+        "setstageaitargetcatchupparams" => vec![vehicle_id, "20", "70"],
+        "setstageairacecatchupparams" => {
+            vec![vehicle_id, "80", "0.5", "1.0", "1.50"]
+        },
+        _ => {
+            return Err(
+                "unsupported mission tuning replay command".to_owned()
+            );
+        },
+    };
+    Ok(MissionTuningReplayRecord {
+        mission_source_id: source_id.to_owned(),
+        source_ordinal,
+        command: command.to_owned(),
+        arguments: arguments.into_iter().map(str::to_owned).collect(),
+    })
+}
+
+fn vehicle_tuning_usage_row(con_file: &str) -> Result<String, String> {
+    let value = json!({
+        "command": "addstagevehicle",
+        "con_file": con_file,
+        "mission_source_id": "script-one",
+        "owner_mission_id": "m1",
+        "owner_objective_source_ordinal": 3,
+        "owner_stage_sequence_ordinal": 0,
+        "schema": "shar-schoenwald.vehicle-tuning-usage.v1",
+        "scope": "objective",
+        "source_ordinal": 4,
+        "tuning_source": {
+            "package_id": "tuning-package-a",
+            "package_subcategory": "vehicle-tuning/mission/level-01",
+            "source_id": "tuning-source-a",
+        },
+        "vehicle": {
+            "package_id": "vehicle-car-a",
+            "package_subcategory": "cars/traffic-vehicles/car-a",
+            "source_id": "car_a",
+        },
+    });
+    let mut text = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    text.push('\n');
+    Ok(text)
+}
+
+fn vehicle_tuning_usage_replay(
+    con_file: &str,
+) -> VehicleTuningUsageReplayRecord {
+    VehicleTuningUsageReplayRecord {
+        mission_source_id: "script-one".to_owned(),
+        source_ordinal: 4,
+        command: "addstagevehicle".to_owned(),
+        scope: "objective".to_owned(),
+        owner_mission_id: Some("m1".to_owned()),
+        owner_stage_sequence_ordinal: Some(0),
+        owner_objective_source_ordinal: Some(3),
+        con_file: con_file.to_owned(),
+        vehicle: VehicleTuningUsageProvenance {
+            source_id: "car_a".to_owned(),
+            package_id: "vehicle-car-a".to_owned(),
+            package_subcategory: "cars/traffic-vehicles/car-a".to_owned(),
+        },
+        tuning_source: Some(VehicleTuningUsageProvenance {
+            source_id: "tuning-source-a".to_owned(),
+            package_id: "tuning-package-a".to_owned(),
+            package_subcategory: "vehicle-tuning/mission/level-01".to_owned(),
+        }),
+    }
 }
 
 fn mission_definition_row(source_id: &str, mission_id: &str) -> String {
@@ -2323,6 +2405,76 @@ fn mission_semantic_gate_rejects_missing_participant_package() -> Result<(), Str
 
 
 #[test]
+fn accepts_canonical_vehicle_tuning_usage_bundle() -> Result<(), String> {
+    let con_file = r"Missions\level01\M1race.con";
+    let row = vehicle_tuning_usage_row(con_file)?;
+    let replay = [vehicle_tuning_usage_replay(con_file)];
+    let rendered = validate_vehicle_tuning_usage_bundle(
+        &row,
+        &[mission_source("script-one")],
+        &replay,
+    )
+    .map_err(|error| error.to_string())?;
+    assert_eq!(rendered, row);
+    Ok(())
+}
+
+#[test]
+fn accepts_unresolved_vehicle_tuning_usage_replay() -> Result<(), String> {
+    let con_file = r"level05\M4chase.con";
+    let row = vehicle_tuning_usage_row(con_file)?;
+    let mut value = serde_json::from_str::<serde_json::Value>(row.trim_end())
+        .map_err(|error| error.to_string())?;
+    *value
+        .get_mut("tuning_source")
+        .ok_or("vehicle tuning usage source fixture disappeared")? =
+        serde_json::Value::Null;
+    let mut unresolved = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    unresolved.push('\n');
+    let mut replay = vehicle_tuning_usage_replay(con_file);
+    replay.tuning_source = None;
+    let rendered = validate_vehicle_tuning_usage_bundle(
+        &unresolved,
+        &[mission_source("script-one")],
+        &[replay],
+    )
+    .map_err(|error| error.to_string())?;
+    assert_eq!(rendered, unresolved);
+    Ok(())
+}
+
+#[test]
+fn rejects_vehicle_tuning_usage_wire_replay_drift() -> Result<(), String> {
+    let con_file = r"Missions\level01\M1race.con";
+    let row = vehicle_tuning_usage_row(con_file)?;
+    let forged = row.replace("M1race.con", "M2race.con");
+    let replay = [vehicle_tuning_usage_replay(con_file)];
+    let error = validate_vehicle_tuning_usage_bundle(
+        &forged,
+        &[mission_source("script-one")],
+        &replay,
+    )
+    .rejection("vehicle tuning usage wire drift must fail")?;
+    assert!(error.to_string().contains("normalized mission replay"));
+    Ok(())
+}
+
+#[test]
+fn rejects_vehicle_tuning_usage_missing_replay_row() -> Result<(), String> {
+    let con_file = r"Missions\level01\M1race.con";
+    let replay = [vehicle_tuning_usage_replay(con_file)];
+    let error = validate_vehicle_tuning_usage_bundle(
+        "",
+        &[mission_source("script-one")],
+        &replay,
+    )
+    .rejection("missing vehicle tuning usage replay must fail")?;
+    assert!(error.to_string().contains("omits normalized mission replay"));
+    Ok(())
+}
+
+#[test]
 fn accepts_canonical_mission_tuning_bundle() -> Result<(), String> {
     let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
         "car_a",
@@ -2350,13 +2502,98 @@ fn accepts_canonical_mission_tuning_bundle() -> Result<(), String> {
         )?,
     ];
     let bundle = rows.concat();
+    let replay = [
+        mission_tuning_replay_record(
+            "script-one",
+            4,
+            "setvehicleaiparams",
+            "car_a",
+        )?,
+        mission_tuning_replay_record(
+            "script-one",
+            6,
+            "setstageaitargetcatchupparams",
+            "car_a",
+        )?,
+    ];
     let rendered = validate_mission_tuning_bundle(
         &bundle,
         &[mission_source("script-one")],
         &references,
+        &replay,
     )
     .map_err(|error| error.to_string())?;
     assert_eq!(rendered, bundle);
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_tuning_argument_replay_drift() -> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let row = mission_tuning_row(
+        "script-one",
+        4,
+        "setvehicleaiparams",
+        "stage",
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )?;
+    let mut value = serde_json::from_str::<serde_json::Value>(row.trim_end())
+        .map_err(|error| error.to_string())?;
+    let arguments = value
+        .get_mut("arguments")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or("mission tuning argument fixture disappeared")?;
+    *arguments
+        .get_mut(1)
+        .ok_or("mission tuning replay fixture argument disappeared")? =
+        json!("-11");
+    let mut forged = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    forged.push('\n');
+    let replay = [mission_tuning_replay_record(
+        "script-one",
+        4,
+        "setvehicleaiparams",
+        "car_a",
+    )?];
+    let error = validate_mission_tuning_bundle(
+        &forged,
+        &[mission_source("script-one")],
+        &references,
+        &replay,
+    )
+    .rejection("mission tuning argument replay drift must fail")?;
+    assert!(error.to_string().contains("normalized mission replay"));
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_tuning_missing_replay_row() -> Result<(), String> {
+    let references = MissionReferenceCatalog::from_vehicle_entries_for_tests(&[(
+        "car_a",
+        "vehicle-car-a",
+        "cars/traffic-vehicles/car-a",
+    )]);
+    let replay = [mission_tuning_replay_record(
+        "script-one",
+        4,
+        "setvehicleaiparams",
+        "car_a",
+    )?];
+    let error = validate_mission_tuning_bundle(
+        "",
+        &[mission_source("script-one")],
+        &references,
+        &replay,
+    )
+    .rejection("missing normalized mission tuning replay must fail")?;
+    assert!(error.to_string().contains("omits normalized mission replay"));
     Ok(())
 }
 
@@ -2385,10 +2622,17 @@ fn rejects_mission_tuning_owner_drift() -> Result<(), String> {
     let mut forged = serde_json::to_string(&value)
         .map_err(|error| error.to_string())?;
     forged.push('\n');
+    let replay = [mission_tuning_replay_record(
+        "script-one",
+        6,
+        "setstageaitargetcatchupparams",
+        "car_a",
+    )?];
     let error = validate_mission_tuning_bundle(
         &forged,
         &[mission_source("script-one")],
         &references,
+        &replay,
     )
     .rejection("mission tuning owner drift must fail")?;
     assert!(error.to_string().contains("ownership drifted"));
@@ -2411,10 +2655,17 @@ fn rejects_mission_tuning_physical_vehicle_drift() -> Result<(), String> {
         "vehicle-other",
         "cars/traffic-vehicles/other",
     )?;
+    let replay = [mission_tuning_replay_record(
+        "script-one",
+        4,
+        "setvehicleaiparams",
+        "car_a",
+    )?];
     let error = validate_mission_tuning_bundle(
         &row,
         &[mission_source("script-one")],
         &references,
+        &replay,
     )
     .rejection("mission tuning vehicle provenance drift must fail")?;
     assert!(error.to_string().contains("provenance drifted"));
@@ -2449,10 +2700,25 @@ fn rejects_mission_tuning_source_order_drift() -> Result<(), String> {
         )?,
     ]
     .concat();
+    let replay = [
+        mission_tuning_replay_record(
+            "script-one",
+            4,
+            "setvehicleaiparams",
+            "car_a",
+        )?,
+        mission_tuning_replay_record(
+            "script-two",
+            4,
+            "setvehicleaiparams",
+            "car_a",
+        )?,
+    ];
     let error = validate_mission_tuning_bundle(
         &bundle,
         &[mission_source("script-one"), mission_source("script-two")],
         &references,
+        &replay,
     )
     .rejection("mission tuning source order drift must fail")?;
     assert!(error.to_string().contains("verified source order"));
