@@ -758,6 +758,18 @@ fn read_components(root: &Path) -> PipelineOutcome<Vec<Component>> {
             "Scrooby layout component ordinal is duplicated",
         ));
     }
+    if components.iter().any(|component| {
+        component.parent_ordinal.is_some_and(|parent| {
+            parent != 0
+                && components
+                    .binary_search_by_key(&parent, |candidate| candidate.ordinal)
+                    .is_err()
+        })
+    }) {
+        return Err(PipelineError::new(
+            "Scrooby layout parent ordinal is missing",
+        ));
+    }
     Ok(components)
 }
 
