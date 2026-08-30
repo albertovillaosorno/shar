@@ -4017,15 +4017,17 @@ fn bind_release_plan_index(
             content: vehicle_tuning_usage,
         },
     ];
-    let preimage = render_release_plan_index(&base, "", &artifacts)?;
+    let preimage = render_release_plan_index(&base, plans, "", &artifacts)?;
     let revision = digest_hex(preimage.as_bytes());
-    let mut json = render_release_plan_index(&base, &revision, &artifacts)?;
+    let mut json =
+        render_release_plan_index(&base, plans, &revision, &artifacts)?;
     json.push('\n');
     Ok(ReleasePlanIndex { json, revision })
 }
 
 fn render_release_plan_index(
     base: &Map<String, Value>,
+    plan_bundle: &PlanBundle,
     revision: &str,
     artifacts: &[SemanticArtifact<'_>],
 ) -> PipelineOutcome<String> {
@@ -4054,26 +4056,13 @@ fn render_release_plan_index(
         "semantic_blocker_count",
         "generated plan bundle index",
     )?;
-    let semantic_blockers = base.get("semantic_blockers").ok_or_else(|| {
-        PipelineError::new(
-            "generated plan bundle index is missing semantic blockers",
-        )
-    })?;
-    let plans = base.get("plans").ok_or_else(|| {
-        PipelineError::new("generated plan bundle index is missing plans")
-    })?;
     let artifact_json = artifacts
         .iter()
         .map(render_semantic_artifact)
         .collect::<PipelineOutcome<Vec<_>>>()?
         .join(",");
-    let semantic_blockers = serde_json::to_string(semantic_blockers)
-        .map_err(|error| PipelineError::new(format!(
-            "serialize generated semantic blockers failed: {error}"
-        )))?;
-    let plans = serde_json::to_string(plans).map_err(|error| {
-        PipelineError::new(format!("serialize generated plans failed: {error}"))
-    })?;
+    let semantic_blockers = render_release_semantic_blockers(plan_bundle)?;
+    let plans = render_release_plan_entries(plan_bundle)?;
     Ok(format!(
         concat!(
             "{{\"schema\":{},\"revision\":{},",
@@ -4094,6 +4083,50 @@ fn render_release_plan_index(
         artifact_json,
         plans,
     ))
+}
+
+fn render_release_semantic_blockers(
+    plan_bundle: &PlanBundle,
+) -> PipelineOutcome<String> {
+    plan_bundle
+        .semantic_blockers()
+        .iter()
+        .map(|blocker| {
+            Ok(format!(
+                concat!(
+                    "{{\"category\":{},\"target_kind\":{},",
+                    "\"import_profile\":{},\"count\":{}}}"
+                ),
+                json_string(&blocker.category)?,
+                json_string(&blocker.target_kind)?,
+                json_string(&blocker.import_profile)?,
+                blocker.count,
+            ))
+        })
+        .collect::<PipelineOutcome<Vec<_>>>()
+        .map(|rows| format!("[{}]", rows.join(",")))
+}
+
+fn render_release_plan_entries(
+    plan_bundle: &PlanBundle,
+) -> PipelineOutcome<String> {
+    plan_bundle
+        .artifacts()
+        .iter()
+        .map(|artifact| {
+            Ok(format!(
+                concat!(
+                    "{{\"plan_id\":{},\"revision\":{},",
+                    "\"filename\":{},\"operation_count\":{}}}"
+                ),
+                json_string(artifact.family.plan_id())?,
+                json_string(&artifact.revision)?,
+                json_string(&artifact.filename)?,
+                artifact.operation_count,
+            ))
+        })
+        .collect::<PipelineOutcome<Vec<_>>>()
+        .map(|rows| format!("[{}]", rows.join(",")))
 }
 
 fn render_semantic_artifact(

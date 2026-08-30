@@ -36,7 +36,9 @@ use std::path::PathBuf;
 
 use serde_json::json;
 use shar_sha256::digest_hex;
-use shar_unreal_conversion::domain::{PlanBundle, PlanContext};
+use shar_unreal_conversion::domain::{
+    PlanBundle, PlanContext, SemanticBlockerClass,
+};
 
 use super::super::run_registry::{RunMode, RunRegistry};
 use super::{
@@ -1321,7 +1323,7 @@ fn clean_audit(manifest: &str, rows: usize) -> String {
 
 #[test]
 fn release_plan_index_binds_exact_semantic_sidecars() -> Result<(), String> {
-    let plans = PlanBundle::build(
+    let plans = PlanBundle::build_with_semantic_blockers(
         &PlanContext {
             source_manifest_revision: "a".repeat(64),
             engine_contract_revision:
@@ -1330,6 +1332,12 @@ fn release_plan_index_binds_exact_semantic_sidecars() -> Result<(), String> {
             target_platform: "editor".to_owned(),
         },
         Vec::new(),
+        vec![SemanticBlockerClass {
+            category: "missions".to_owned(),
+            target_kind: "SemanticSource".to_owned(),
+            import_profile: "shar-semantic-source-v1".to_owned(),
+            count: 3,
+        }],
     )?;
     let contents = ["definitions\n", "mission-tuning\n", "cores\n", "usages\n"];
     let release = bind_release_plan_index(
@@ -1346,6 +1354,24 @@ fn release_plan_index_binds_exact_semantic_sidecars() -> Result<(), String> {
         != Some(RELEASE_PLAN_BUNDLE_SCHEMA)
     {
         return Err("release plan index schema drifted".to_owned());
+    }
+    for expected in [
+        concat!(
+            r#""semantic_blockers":[{"category":"missions","#,
+            r#""target_kind":"SemanticSource","#,
+            r#""import_profile":"shar-semantic-source-v1","#,
+            r#""count":3}]"#,
+        ),
+        concat!(
+            r#""plans":[{"plan_id":"asset-import-plan","#,
+            r#""revision":""#,
+        ),
+    ] {
+        if !release.json.contains(expected) {
+            return Err(format!(
+                "release plan index lost canonical nested order: {expected}"
+            ));
+        }
     }
     let artifacts = value
         .get("semantic_artifacts")
