@@ -320,7 +320,7 @@ fn validate_mission_definition_bundle(
         .filter(|source| source.kind == "mission-script")
         .map(|source| source.id.clone())
         .collect::<Vec<_>>();
-    super::validate_mission_definition_bundle(
+    super::validate_mission_definition_structure(
         rows,
         verified,
         &selected_source_ids,
@@ -901,7 +901,7 @@ fn rejects_mission_definition_identity_drift_from_typed_replay()
     let mut drifted = serde_json::to_string(&value)
         .map_err(|error| error.to_string())?;
     drifted.push(char::from(10));
-    let error = super::validate_mission_definition_replay(
+    let error = super::validate_mission_definition_bundle(
         &[drifted],
         &[mission_source("script-test-source")],
         std::slice::from_ref(&definition.replay),
@@ -932,7 +932,7 @@ fn rejects_mission_definition_nested_drift_from_typed_replay()
     let mut drifted = serde_json::to_string(&value)
         .map_err(|error| error.to_string())?;
     drifted.push(char::from(10));
-    let error = super::validate_mission_definition_replay(
+    let error = super::validate_mission_definition_bundle(
         &[drifted],
         &[mission_source("script-test-source")],
         std::slice::from_ref(&definition.replay),
@@ -953,11 +953,12 @@ fn accepts_source_distinct_mission_definition_typed_replay()
         mission_source("script-one"),
         mission_source("script-two"),
     ];
-    super::validate_mission_definition_replay(
+    super::validate_mission_definition_bundle(
         &rows,
         &verified,
         &replay,
     )
+    .map(drop)
     .map_err(|error| error.to_string())?;
     Ok(())
 }
@@ -3283,7 +3284,7 @@ fn rejects_missing_selected_mission_definition() -> Result<(), String> {
         mission_source("script-two"),
     ];
     let selected = vec!["script-one".to_owned(), "script-two".to_owned()];
-    let error = super::validate_mission_definition_bundle(
+    let error = super::validate_mission_definition_structure(
         &rows,
         &verified,
         &selected,
@@ -3305,7 +3306,7 @@ fn rejects_definition_for_unselected_mission_utility_source()
         mission_source("script-two"),
     ];
     let selected = vec!["script-one".to_owned()];
-    let error = super::validate_mission_definition_bundle(
+    let error = super::validate_mission_definition_structure(
         &rows,
         &verified,
         &selected,
@@ -3327,7 +3328,7 @@ fn rejects_selected_mission_definition_replay_order_drift()
         mission_source("script-two"),
     ];
     let selected = vec!["script-two".to_owned(), "script-one".to_owned()];
-    let error = super::validate_mission_definition_bundle(
+    let error = super::validate_mission_definition_structure(
         &rows,
         &verified,
         &selected,
@@ -3343,7 +3344,7 @@ fn rejects_unverified_selected_mission_definition_replay()
     let rows = vec![mission_definition_row("script-one", "m1")];
     let verified = vec![mission_source("script-one")];
     let selected = vec!["script-one".to_owned(), "script-two".to_owned()];
-    let error = super::validate_mission_definition_bundle(
+    let error = super::validate_mission_definition_structure(
         &rows,
         &verified,
         &selected,
@@ -3359,7 +3360,7 @@ fn rejects_duplicate_selected_mission_definition_replay()
     let rows = vec![mission_definition_row("script-one", "m1")];
     let verified = vec![mission_source("script-one")];
     let selected = vec!["script-one".to_owned(), "script-one".to_owned()];
-    let error = super::validate_mission_definition_bundle(
+    let error = super::validate_mission_definition_structure(
         &rows,
         &verified,
         &selected,
