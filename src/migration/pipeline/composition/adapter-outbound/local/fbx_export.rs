@@ -664,9 +664,11 @@ fn shared_eye_frame_paths(
             "eyeball.bmp.3.png",
         ]
         .contains(&file_name)
+            && paths
+                .insert(file_name.to_owned(), base_root.join(&member.path))
+                .is_some()
         {
-            let _previous = paths
-                .insert(file_name.to_owned(), base_root.join(&member.path));
+            return Err(PipelineError::new("shared eye frame is ambiguous"));
         }
     }
     [
