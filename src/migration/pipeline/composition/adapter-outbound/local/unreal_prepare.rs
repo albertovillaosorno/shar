@@ -194,6 +194,11 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &source_report.evidence,
         &source_report.mission_definition_sources,
     )?;
+    validate_mission_definition_replay(
+        &source_report.mission_definitions,
+        &source_report.evidence,
+        &source_report.mission_definition_replay,
+    )?;
     let mission_tuning_jsonl = validate_mission_tuning_bundle(
         &source_report.mission_tuning,
         &source_report.evidence,
@@ -479,12 +484,26 @@ struct SourceEvidenceReport {
     evidence: Vec<UnrealSourceEvidence>,
     mission_definitions: Vec<String>,
     mission_definition_sources: Vec<String>,
+    mission_definition_replay: Vec<MissionDefinitionReplayRecord>,
     mission_tuning: String,
     mission_tuning_replay: Vec<MissionTuningReplayRecord>,
     vehicle_tuning_cores: Vec<String>,
     vehicle_tuning_replay: Vec<VehicleTuningReplayRecord>,
     vehicle_tuning_usages: String,
     vehicle_tuning_usage_replay: Vec<VehicleTuningUsageReplayRecord>,
+}
+
+/// Exact typed mission definition retained for output replay validation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct MissionDefinitionReplayRecord {
+    source_id: String,
+    report: mission_definition_context::MissionDefinitionCoreReport,
+}
+
+/// One rendered mission definition plus its independent typed replay.
+struct MissionDefinitionOutput {
+    jsonl: String,
+    replay: MissionDefinitionReplayRecord,
 }
 
 /// Exact typed vehicle-tuning core retained for output replay validation.
@@ -544,8 +563,7 @@ struct VehicleTuningUsageOutput {
 
 /// Validated source-local mission publication evidence.
 struct MissionSourceOutput {
-    definition: Option<String>,
-    definition_source_id: Option<String>,
+    definition: Option<MissionDefinitionOutput>,
     tuning: String,
     tuning_replay: Vec<MissionTuningReplayRecord>,
 }
@@ -567,8 +585,7 @@ struct MissionTuningReplayRecord {
 /// One verified physical source and its optional selected mission definition.
 struct VerifiedSourceOutput {
     evidence: UnrealSourceEvidence,
-    mission_definition: Option<String>,
-    mission_definition_source_id: Option<String>,
+    mission_definition: Option<MissionDefinitionOutput>,
     mission_tuning: String,
     mission_tuning_replay: Vec<MissionTuningReplayRecord>,
     vehicle_tuning_core: Option<VehicleTuningCoreOutput>,
@@ -605,6 +622,7 @@ fn parallel_source_evidence(
             evidence: Vec::new(),
             mission_definitions: Vec::new(),
             mission_definition_sources: Vec::new(),
+            mission_definition_replay: Vec::new(),
             mission_tuning: String::new(),
             mission_tuning_replay: Vec::new(),
             vehicle_tuning_cores: Vec::new(),
@@ -674,6 +692,7 @@ fn parallel_source_evidence(
     let mut evidence = Vec::with_capacity(collected.len());
     let mut mission_definitions = Vec::new();
     let mut mission_definition_sources = Vec::new();
+    let mut mission_definition_replay = Vec::new();
     let mut mission_tuning = String::new();
     let mut mission_tuning_replay = Vec::new();
     let mut vehicle_tuning_cores = Vec::new();
@@ -681,11 +700,11 @@ fn parallel_source_evidence(
     for (_position, result) in collected {
         let output = result?;
         evidence.push(output.evidence);
-        if let Some(source_id) = output.mission_definition_source_id {
-            mission_definition_sources.push(source_id);
-        }
         if let Some(definition) = output.mission_definition {
-            mission_definitions.push(definition);
+            mission_definition_sources
+                .push(definition.replay.source_id.clone());
+            mission_definitions.push(definition.jsonl);
+            mission_definition_replay.push(definition.replay);
         }
         mission_tuning.push_str(&output.mission_tuning);
         mission_tuning_replay.extend(output.mission_tuning_replay);
@@ -699,6 +718,7 @@ fn parallel_source_evidence(
         evidence,
         mission_definitions,
         mission_definition_sources,
+        mission_definition_replay,
         mission_tuning,
         mission_tuning_replay,
         vehicle_tuning_cores,
@@ -1112,7 +1132,6 @@ fn read_source_evidence(
         actual_size,
         sha256,
         mission_definition,
-        mission_definition_source_id,
         mission_tuning,
         mission_tuning_replay,
         vehicle_tuning_core,
@@ -1134,7 +1153,6 @@ fn read_source_evidence(
                 actual_size,
                 digest_hex(&bytes),
                 mission.definition,
-                mission.definition_source_id,
                 mission.tuning,
                 mission.tuning_replay,
                 None,
@@ -1157,7 +1175,6 @@ fn read_source_evidence(
                 actual_size,
                 digest_hex(&bytes),
                 None,
-                None,
                 String::new(),
                 Vec::new(),
                 vehicle_tuning_core,
@@ -1168,7 +1185,6 @@ fn read_source_evidence(
             (
                 actual_size,
                 sha256,
-                None,
                 None,
                 String::new(),
                 Vec::new(),
@@ -1201,7 +1217,6 @@ fn read_source_evidence(
             future_normalization: input.future_normalization.clone(),
         },
         mission_definition,
-        mission_definition_source_id,
         mission_tuning,
         mission_tuning_replay,
         vehicle_tuning_core,
@@ -1485,7 +1500,6 @@ fn validate_normalized_mission_source(
     if kind != "mission-script" {
         return Ok(MissionSourceOutput {
             definition: None,
-            definition_source_id: None,
             tuning: String::new(),
             tuning_replay: Vec::new(),
         });
@@ -1594,14 +1608,19 @@ fn validate_normalized_mission_source(
             &condition_semantics,
             &topology,
         )?;
-    let mission_definition_source_id =
-        mission_definition.as_ref().map(|_definition| source_id.to_owned());
     let mission_definition = mission_definition
-        .map(|definition| {
-            mission_definition_context::render_definition_core(
+        .map(|report| {
+            let jsonl = mission_definition_context::render_definition_core(
                 source_id,
-                &definition,
-            )
+                &report,
+            )?;
+            Ok(MissionDefinitionOutput {
+                jsonl,
+                replay: MissionDefinitionReplayRecord {
+                    source_id: source_id.to_owned(),
+                    report,
+                },
+            })
         })
         .transpose()?;
     drop(
@@ -1699,7 +1718,6 @@ fn validate_normalized_mission_source(
     )?;
     Ok(MissionSourceOutput {
         definition: mission_definition,
-        definition_source_id: mission_definition_source_id,
         tuning: mission_tuning,
         tuning_replay: mission_tuning_replay,
     })
@@ -2701,6 +2719,81 @@ fn validate_mission_definition_bundle(
         ));
     }
     Ok(output)
+}
+
+fn validate_mission_definition_replay(
+    rows: &[String],
+    verified: &[UnrealSourceEvidence],
+    replay: &[MissionDefinitionReplayRecord],
+) -> PipelineOutcome<()> {
+    let verified_mission_sources = verified
+        .iter()
+        .enumerate()
+        .filter(|(_index, source)| source.kind == "mission-script")
+        .map(|(index, source)| (source.id.as_str(), index))
+        .collect::<BTreeMap<_, _>>();
+    let mut expected = BTreeMap::new();
+    let mut previous_replay_position = None;
+    for record in replay {
+        validate_public_identifier(
+            &record.source_id,
+            "mission definition typed replay source id",
+        )?;
+        let source_position = verified_mission_sources
+            .get(record.source_id.as_str())
+            .copied()
+            .ok_or_else(|| {
+                PipelineError::new(concat!(
+                    "mission definition typed replay source is not verified ",
+                    "mission evidence",
+                ))
+            })?;
+        if expected.insert(record.source_id.as_str(), record).is_some() {
+            return Err(PipelineError::new(
+                "mission definition typed source replay is duplicated",
+            ));
+        }
+        if previous_replay_position
+            .is_some_and(|previous| source_position <= previous)
+        {
+            return Err(PipelineError::new(concat!(
+                "mission definition typed source replay is not in verified ",
+                "source order",
+            )));
+        }
+        previous_replay_position = Some(source_position);
+    }
+    for (index, row) in rows.iter().enumerate() {
+        let label = format!(
+            "mission definition replay row {}",
+            display_position(index),
+        );
+        let object = parse_object(
+            row.trim_end_matches(char::from(10)),
+            &label,
+        )?;
+        let source_id = required_string(&object, "source_id", &label)?;
+        let record = expected.remove(source_id.as_str()).ok_or_else(|| {
+            PipelineError::new(
+                "mission definition row lacks typed source replay",
+            )
+        })?;
+        let expected_row = mission_definition_context::render_definition_core(
+            &record.source_id,
+            &record.report,
+        )?;
+        if expected_row != *row {
+            return Err(PipelineError::new(
+                "mission definition row disagrees with typed source replay",
+            ));
+        }
+    }
+    if !expected.is_empty() {
+        return Err(PipelineError::new(
+            "mission definition bundle omits typed source replay",
+        ));
+    }
+    Ok(())
 }
 
 fn validate_mission_definition_stages(

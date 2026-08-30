@@ -816,6 +816,27 @@ fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
     .map_err(|error| error.to_string())
 }
 
+fn mission_definition_output(
+    source_id: &str,
+) -> Result<super::MissionDefinitionOutput, String> {
+    let clean = clean_mission_json(false)?;
+    super::validate_normalized_mission_source(
+        source_id,
+        "mission-script",
+        MISSION_SCRIPT_SCHEMA,
+        "json",
+        "game-straggler-normalize",
+        &clean,
+        &MissionReferenceCatalog::empty_for_tests(),
+        &MissionP3dReferenceCatalog::empty_for_tests(),
+    )
+    .map_err(|error| error.to_string())?
+    .definition
+    .ok_or_else(|| {
+        "selected mission fixture did not publish a definition".to_owned()
+    })
+}
+
 #[test]
 // jig-ignore-next-line: long identifier
 fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds() -> Result<(), String> {
@@ -831,9 +852,11 @@ fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds() -> Result<(
         &MissionP3dReferenceCatalog::empty_for_tests(),
     )
     .map_err(|error| error.to_string())?;
-    if mission.definition.is_none()
-        || mission.definition_source_id.as_deref()
-            != Some("script-test-source")
+    if mission
+        .definition
+        .as_ref()
+        .map(|definition| definition.replay.source_id.as_str())
+        != Some("script-test-source")
     {
         return Err(
             "selected mission source lost definition publication identity"
@@ -851,11 +874,142 @@ fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds() -> Result<(
         &MissionP3dReferenceCatalog::empty_for_tests(),
     )
     .map_err(|error| error.to_string())?;
-    if bypass.definition.is_some() || bypass.definition_source_id.is_some() {
+    if bypass.definition.is_some() {
         return Err(
             "non-mission source invented definition selection".to_owned(),
         );
     }
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_definition_identity_drift_from_typed_replay()
+-> Result<(), String> {
+    let definition = mission_definition_output("script-test-source")?;
+    let mut value: serde_json::Value = serde_json::from_str(
+        definition.jsonl.trim_end_matches(char::from(10)),
+    )
+    .map_err(|error| error.to_string())?;
+    drop(
+        value
+            .as_object_mut()
+            .ok_or_else(|| {
+                "mission definition fixture is not an object".to_owned()
+            })?
+            .insert("mission_id".to_owned(), json!("m2")),
+    );
+    let mut drifted = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    drifted.push(char::from(10));
+    let error = super::validate_mission_definition_replay(
+        &[drifted],
+        &[mission_source("script-test-source")],
+        std::slice::from_ref(&definition.replay),
+    )
+    .rejection("mission identity drift must fail typed replay")?;
+    assert!(error.to_string().contains("typed source replay"));
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_definition_nested_drift_from_typed_replay()
+-> Result<(), String> {
+    let definition = mission_definition_output("script-test-source")?;
+    let mut value: serde_json::Value = serde_json::from_str(
+        definition.jsonl.trim_end_matches(char::from(10)),
+    )
+    .map_err(|error| error.to_string())?;
+    let stage = first_array_object_mut(&mut value, "stages")?;
+    drop(
+        stage
+            .get_mut("kind")
+            .and_then(serde_json::Value::as_object_mut)
+            .ok_or_else(|| {
+                "mission stage fixture lacks kind object".to_owned()
+            })?
+            .insert("legacy_flags".to_owned(), json!(1)),
+    );
+    let mut drifted = serde_json::to_string(&value)
+        .map_err(|error| error.to_string())?;
+    drifted.push(char::from(10));
+    let error = super::validate_mission_definition_replay(
+        &[drifted],
+        &[mission_source("script-test-source")],
+        std::slice::from_ref(&definition.replay),
+    )
+    .rejection("nested mission definition drift must fail typed replay")?;
+    assert!(error.to_string().contains("typed source replay"));
+    Ok(())
+}
+
+#[test]
+fn accepts_source_distinct_mission_definition_typed_replay()
+-> Result<(), String> {
+    let first = mission_definition_output("script-one")?;
+    let second = mission_definition_output("script-two")?;
+    let rows = vec![first.jsonl.clone(), second.jsonl.clone()];
+    let replay = vec![first.replay, second.replay];
+    let verified = vec![
+        mission_source("script-one"),
+        mission_source("script-two"),
+    ];
+    super::validate_mission_definition_replay(
+        &rows,
+        &verified,
+        &replay,
+    )
+    .map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn rejects_unverified_mission_definition_typed_replay() -> Result<(), String> {
+    let definition = mission_definition_output("script-one")?;
+    let error = super::validate_mission_definition_replay(
+        std::slice::from_ref(&definition.jsonl),
+        &[mission_source("script-two")],
+        std::slice::from_ref(&definition.replay),
+    )
+    .rejection("unverified typed mission definition replay must fail")?;
+    assert!(error.to_string().contains("not verified mission evidence"));
+    Ok(())
+}
+
+#[test]
+fn rejects_duplicate_mission_definition_typed_replay() -> Result<(), String> {
+    let definition = mission_definition_output("script-one")?;
+    let replay = vec![
+        definition.replay.clone(),
+        definition.replay.clone(),
+    ];
+    let error = super::validate_mission_definition_replay(
+        std::slice::from_ref(&definition.jsonl),
+        &[mission_source("script-one")],
+        &replay,
+    )
+    .rejection("duplicate typed mission definition replay must fail")?;
+    assert!(error.to_string().contains("duplicated"));
+    Ok(())
+}
+
+#[test]
+fn rejects_mission_definition_typed_replay_order_drift()
+-> Result<(), String> {
+    let first = mission_definition_output("script-one")?;
+    let second = mission_definition_output("script-two")?;
+    let rows = vec![first.jsonl.clone(), second.jsonl.clone()];
+    let replay = vec![second.replay, first.replay];
+    let verified = vec![
+        mission_source("script-one"),
+        mission_source("script-two"),
+    ];
+    let error = super::validate_mission_definition_replay(
+        &rows,
+        &verified,
+        &replay,
+    )
+    .rejection("typed mission definition replay order drift must fail")?;
+    assert!(error.to_string().contains("verified source order"));
     Ok(())
 }
 
