@@ -44,6 +44,8 @@ use super::topology::triangulate_indices;
 pub struct PrimitiveGroup {
     /// Deterministic group index inside the mesh.
     pub index: usize,
+    /// Optional authored source identity for this exact primitive group.
+    pub source_identity: Option<String>,
     /// Shader name from the decoded mesh primitive group.
     pub shader: String,
     /// Vertex positions.
@@ -134,6 +136,7 @@ impl PrimitiveGroup {
         }
         Ok(Self {
             index,
+            source_identity: None,
             shader: shader_name,
             positions,
             normals: Vec::new(),
@@ -141,6 +144,29 @@ impl PrimitiveGroup {
             uvs,
             triangles,
         })
+    }
+
+    /// Attach one canonical authored identity to this source group.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the identity is empty, padded, or contains control
+    /// characters.
+    pub fn with_source_identity(
+        mut self,
+        source_identity: impl Into<String>,
+    ) -> Result<Self, MeshError> {
+        let identity = source_identity.into();
+        if identity.trim().is_empty()
+            || identity != identity.trim()
+            || identity.chars().any(char::is_control)
+        {
+            return Err(MeshError::NonCanonicalPrimitiveGroupIdentity {
+                index: self.index,
+            });
+        }
+        self.source_identity = Some(identity);
+        Ok(self)
     }
 
     /// Attach per-vertex normals validated against the position count.
