@@ -64,6 +64,15 @@ serialization, hashing, and package-publication composition. Language mods are
 not inserted as a tenth faithful-base extraction stage and do not alter
 base-game identity.
 
+UI preservation is independently versioned and deterministic. The accepted
+Scrooby evidence currently contains 605 joined-raster rows, 18,156
+package-scoped binding rows, 12,016 runtime-layout rows, and 2,691
+page-resource lifecycle rows under joined-raster v1, binding v8, layout v14,
+and resource-lifecycle v5
+schemas. Seventy-five focused Scrooby regressions cover canonical ordering,
+resource ownership, layout boundaries, binding identity, and transactional
+publication without reintroducing invalid page-local resource ownership.
+
 Mission and tuning preservation now also reaches the atomic `prepare-unreal`
 staging boundary. The current normalized corpus carries 255 `vehicle-tuning`
 sources, and each verified source produces one canonical versioned tuning core
@@ -102,10 +111,13 @@ all four regular non-linked siblings and verifies their exact size and digest
 before accepting the plans. Synthetic tests reject both a missing sidecar and a
 same-size byte mutation.
 
-Corpus-level v4 publication evidence remains pending
-until an exclusive `prepare-unreal` run completes with the current producer.
+Corpus-level v4 publication evidence remains pending until an exclusive
+`prepare-unreal` run completes with the corrected current producer and the local
+consumer accepts its exact semantic sidecars.
 
 These preservation artifacts intentionally do not map legacy setters to
-gameplay units, native Unreal fields, conversion rules, or runtime ranges. This
-parent therefore remains open for reviewed native tuning/mission compilation and
-final release integration evidence.
+gameplay units, native Unreal fields, conversion rules, or runtime ranges.
+Native mission and tuning compilation is tracked separately by P1 Unreal
+tasks; it is not a preservation requirement of this P0. This task remains open
+only for the
+current v4 corpus publication and local-consumer evidence.
