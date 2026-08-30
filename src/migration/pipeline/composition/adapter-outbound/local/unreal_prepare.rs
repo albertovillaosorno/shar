@@ -47,7 +47,7 @@ use schoenwald_filesystem::adapters::driving::local::{
         read_bytes as local_read_bytes,
         read_utf8 as local_read_utf8,
 };
-use serde_json::{Map, Value};
+use serde_json::{Map, Value, json};
 use shar_sha256::{Sha256, digest_hex};
 use shar_unreal_conversion::domain::PlanBundle;
 
@@ -67,10 +67,11 @@ use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
     MISSION_SCRIPT_SCHEMA, VEHICLE_TUNING_SCHEMA, MissionCameraCatalog,
-    MissionInitializationBinding,
+    MissionInitializationBinding, MissionScriptEvidence,
     MissionLocatorCatalog, MissionP3dReferenceCatalog, MissionReferenceCatalog,
     MissionVehicleCatalogReference, PhaseThreePackageIndex,
-    VehicleTuningSourceCatalog, preflight_vehicle_tuning_usages,
+    VehicleTuningSourceCatalog, VehicleTuningUsageReport,
+    preflight_vehicle_tuning_usages,
         PipelineConfig,
         PipelineError,
         PipelineOutcome,
@@ -196,13 +197,18 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &source_report.mission_tuning,
         &source_report.evidence,
         &mission_references,
+        &source_report.mission_tuning_replay,
     )?;
     let vehicle_tuning_jsonl = validate_vehicle_tuning_bundle(
         &source_report.vehicle_tuning_cores,
         &source_report.evidence,
         &mission_references,
     )?;
-    let vehicle_tuning_usage_jsonl = source_report.vehicle_tuning_usages;
+    let vehicle_tuning_usage_jsonl = validate_vehicle_tuning_usage_bundle(
+        &source_report.vehicle_tuning_usages,
+        &source_report.evidence,
+        &source_report.vehicle_tuning_usage_replay,
+    )?;
     let evidence = retain_importable_evidence(&index, source_report.evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
         // jig-ignore-next-line: literal
@@ -451,7 +457,7 @@ fn source_evidence(
         mission_p3d_references,
     )?;
     check_cancellation()?;
-    report.vehicle_tuning_usages = preflight_cross_source_mission_locators(
+    let tuning_usage = preflight_cross_source_mission_locators(
         &inputs,
         &report.evidence,
         mission_references,
@@ -461,6 +467,8 @@ fn source_evidence(
         index,
         &config.extracted_root,
     )?;
+    report.vehicle_tuning_usages = tuning_usage.jsonl;
+    report.vehicle_tuning_usage_replay = tuning_usage.replay;
     Ok(report)
 }
 
@@ -469,8 +477,48 @@ struct SourceEvidenceReport {
     evidence: Vec<UnrealSourceEvidence>,
     mission_definitions: Vec<String>,
     mission_tuning: String,
+    mission_tuning_replay: Vec<MissionTuningReplayRecord>,
     vehicle_tuning_cores: Vec<String>,
     vehicle_tuning_usages: String,
+    vehicle_tuning_usage_replay: Vec<VehicleTuningUsageReplayRecord>,
+}
+
+/// Exact typed vehicle-tuning usage retained for output replay validation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct VehicleTuningUsageReplayRecord {
+    mission_source_id: String,
+    source_ordinal: usize,
+    command: String,
+    scope: String,
+    owner_mission_id: Option<String>,
+    owner_stage_sequence_ordinal: Option<usize>,
+    owner_objective_source_ordinal: Option<usize>,
+    con_file: String,
+    vehicle: VehicleTuningUsageProvenance,
+    tuning_source: Option<VehicleTuningUsageProvenance>,
+}
+
+/// Exact package provenance carried by one contextual tuning usage.
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct VehicleTuningUsageProvenance {
+    source_id: String,
+    package_id: String,
+    package_subcategory: String,
+}
+
+/// Cross-source contextual tuning publication evidence.
+struct VehicleTuningUsageOutput {
+    jsonl: String,
+    replay: Vec<VehicleTuningUsageReplayRecord>,
+}
+
+/// Exact normalized mission invocation retained for output replay validation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct MissionTuningReplayRecord {
+    mission_source_id: String,
+    source_ordinal: usize,
+    command: String,
+    arguments: Vec<String>,
 }
 
 /// One verified physical source and its optional selected mission definition.
@@ -478,6 +526,7 @@ struct VerifiedSourceOutput {
     evidence: UnrealSourceEvidence,
     mission_definition: Option<String>,
     mission_tuning: String,
+    mission_tuning_replay: Vec<MissionTuningReplayRecord>,
     vehicle_tuning_core: Option<String>,
 }
 
@@ -512,8 +561,10 @@ fn parallel_source_evidence(
             evidence: Vec::new(),
             mission_definitions: Vec::new(),
             mission_tuning: String::new(),
+            mission_tuning_replay: Vec::new(),
             vehicle_tuning_cores: Vec::new(),
             vehicle_tuning_usages: String::new(),
+            vehicle_tuning_usage_replay: Vec::new(),
         });
     }
     check_cancellation()?;
@@ -577,6 +628,7 @@ fn parallel_source_evidence(
     let mut evidence = Vec::with_capacity(collected.len());
     let mut mission_definitions = Vec::new();
     let mut mission_tuning = String::new();
+    let mut mission_tuning_replay = Vec::new();
     let mut vehicle_tuning_cores = Vec::new();
     for (_position, result) in collected {
         let output = result?;
@@ -585,6 +637,7 @@ fn parallel_source_evidence(
             mission_definitions.push(definition);
         }
         mission_tuning.push_str(&output.mission_tuning);
+        mission_tuning_replay.extend(output.mission_tuning_replay);
         if let Some(core) = output.vehicle_tuning_core {
             vehicle_tuning_cores.push(core);
         }
@@ -594,8 +647,10 @@ fn parallel_source_evidence(
         evidence,
         mission_definitions,
         mission_tuning,
+        mission_tuning_replay,
         vehicle_tuning_cores,
         vehicle_tuning_usages: String::new(),
+        vehicle_tuning_usage_replay: Vec::new(),
     })
 }
 
@@ -614,7 +669,7 @@ fn preflight_cross_source_mission_locators(
     mission_p3d_references: &MissionP3dReferenceCatalog,
     index: &PhaseThreePackageIndex,
     extracted_root: &Path,
-) -> PipelineOutcome<String> {
+) -> PipelineOutcome<VehicleTuningUsageOutput> {
     let mut verified_by_id = BTreeMap::new();
     for source in verified {
         if verified_by_id.insert(source.id.as_str(), source).is_some() {
@@ -702,6 +757,7 @@ fn preflight_cross_source_mission_locators(
 
     check_cancellation()?;
     let mut vehicle_tuning_usages = String::new();
+    let mut vehicle_tuning_usage_replay = Vec::new();
     for snapshot in &snapshots {
         let source_id = mission_source_ids
             .get(snapshot.source_path())
@@ -727,6 +783,9 @@ fn preflight_cross_source_mission_locators(
                 "vehicle tuning usage binding failed: {error}"
             ))
         })?;
+        vehicle_tuning_usage_replay.extend(
+            vehicle_tuning_usage_replay_records(&report),
+        );
         vehicle_tuning_usages.push_str(
             &super::vehicle_tuning_usage_context::
                 render_vehicle_tuning_usage_report(&report)?,
@@ -948,7 +1007,45 @@ fn preflight_cross_source_mission_locators(
             })?,
         );
     }
-    Ok(vehicle_tuning_usages)
+    Ok(VehicleTuningUsageOutput {
+        jsonl: vehicle_tuning_usages,
+        replay: vehicle_tuning_usage_replay,
+    })
+}
+
+fn vehicle_tuning_usage_replay_records(
+    report: &VehicleTuningUsageReport,
+) -> Vec<VehicleTuningUsageReplayRecord> {
+    report
+        .bindings()
+        .iter()
+        .map(|binding| VehicleTuningUsageReplayRecord {
+            mission_source_id: binding.mission_source_id().to_owned(),
+            source_ordinal: binding.source_ordinal(),
+            command: binding.command().to_owned(),
+            scope: binding.scope().as_str().to_owned(),
+            owner_mission_id: binding.owner_mission_id().map(str::to_owned),
+            owner_stage_sequence_ordinal:
+                binding.owner_stage_sequence_ordinal(),
+            owner_objective_source_ordinal:
+                binding.owner_objective_source_ordinal(),
+            con_file: binding.con_file().to_owned(),
+            vehicle: VehicleTuningUsageProvenance {
+                source_id: binding.vehicle().source_id().to_owned(),
+                package_id: binding.vehicle().package_id().to_owned(),
+                package_subcategory:
+                    binding.vehicle().package_subcategory().to_owned(),
+            },
+            tuning_source: binding.tuning_source().map(|source| {
+                VehicleTuningUsageProvenance {
+                    source_id: source.source_id().to_owned(),
+                    package_id: source.package_id().to_owned(),
+                    package_subcategory:
+                        source.package_subcategory().to_owned(),
+                }
+            }),
+        })
+        .collect()
 }
 
 /// Read, validate, and hash one physical source row.
@@ -962,13 +1059,17 @@ fn read_source_evidence(
         sha256,
         mission_definition,
         mission_tuning,
+        mission_tuning_replay,
         vehicle_tuning_core,
     ) = match input.kind.as_str() {
         "mission-script" => {
             let bytes = read_stable_source_bytes(&input.resolved)?;
             let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
-            let (mission_definition, mission_tuning) =
-                validate_normalized_mission_source(
+            let (
+                mission_definition,
+                mission_tuning,
+                mission_tuning_replay,
+            ) = validate_normalized_mission_source(
                 &input.id,
                 &input.kind,
                 &input.schema,
@@ -983,6 +1084,7 @@ fn read_source_evidence(
                 digest_hex(&bytes),
                 mission_definition,
                 mission_tuning,
+                mission_tuning_replay,
                 None,
             )
         },
@@ -1004,12 +1106,13 @@ fn read_source_evidence(
                 digest_hex(&bytes),
                 None,
                 String::new(),
+                Vec::new(),
                 vehicle_tuning_core,
             )
         },
         _ => {
             let (actual_size, sha256) = stream_source_digest(&input.resolved)?;
-            (actual_size, sha256, None, String::new(), None)
+            (actual_size, sha256, None, String::new(), Vec::new(), None)
         },
     };
     if actual_size != input.expected_size {
@@ -1038,6 +1141,7 @@ fn read_source_evidence(
         },
         mission_definition,
         mission_tuning,
+        mission_tuning_replay,
         vehicle_tuning_core,
     })
 }
@@ -1298,9 +1402,13 @@ fn validate_normalized_mission_source(
     bytes: &[u8],
     mission_references: &MissionReferenceCatalog,
     mission_p3d_references: &MissionP3dReferenceCatalog,
-) -> PipelineOutcome<(Option<String>, String)> {
+) -> PipelineOutcome<(
+    Option<String>,
+    String,
+    Vec<MissionTuningReplayRecord>,
+)> {
     if kind != "mission-script" {
-        return Ok((None, String::new()));
+        return Ok((None, String::new(), Vec::new()));
     }
     if schema != MISSION_SCRIPT_SCHEMA {
         return Err(PipelineError::new(
@@ -1319,6 +1427,8 @@ fn validate_normalized_mission_source(
         // jig-ignore-next-line: literal
         PipelineError::new(format!("mission semantic preflight failed: {error}"))
     })?;
+    let mission_tuning_replay =
+        mission_tuning_replay_records(source_id, &evidence);
     drop(
         preflight_mission_vehicle_selects(
             &evidence,
@@ -1504,17 +1614,44 @@ fn validate_normalized_mission_source(
         &references,
         &vehicle_attributes,
     )?;
-    Ok((mission_definition, mission_tuning))
+    Ok((mission_definition, mission_tuning, mission_tuning_replay))
+}
+
+fn mission_tuning_replay_records(
+    source_id: &str,
+    evidence: &MissionScriptEvidence,
+) -> Vec<MissionTuningReplayRecord> {
+    evidence
+        .invocations()
+        .iter()
+        .filter(|invocation| is_mission_tuning_command(invocation.name()))
+        .map(|invocation| MissionTuningReplayRecord {
+            mission_source_id: source_id.to_owned(),
+            source_ordinal: invocation.ordinal(),
+            command: invocation.name().to_owned(),
+            arguments: invocation.arguments().to_vec(),
+        })
+        .collect()
+}
+
+fn is_mission_tuning_command(command: &str) -> bool {
+    matches!(
+        command,
+        "setcarattributes"
+            | "setvehicleaiparams"
+            | "setstageaitargetcatchupparams"
+            | "setstageairacecatchupparams"
+    )
 }
 
 const fn display_position(index: usize) -> usize {
     index.saturating_add(1)
 }
 
-fn validate_mission_tuning_bundle(
+fn validate_vehicle_tuning_usage_bundle(
     rows: &str,
     verified: &[UnrealSourceEvidence],
-    mission_references: &MissionReferenceCatalog,
+    replay: &[VehicleTuningUsageReplayRecord],
 ) -> PipelineOutcome<String> {
     let verified_mission_sources = verified
         .iter()
@@ -1522,6 +1659,197 @@ fn validate_mission_tuning_bundle(
         .filter(|(_index, source)| source.kind == "mission-script")
         .map(|(index, source)| (source.id.as_str(), index))
         .collect::<BTreeMap<_, _>>();
+    let mut expected = BTreeMap::new();
+    for record in replay {
+        if !verified_mission_sources
+            .contains_key(record.mission_source_id.as_str())
+        {
+            return Err(PipelineError::new(concat!(
+                "vehicle tuning usage replay source is not verified ",
+                "mission evidence",
+            )));
+        }
+        let ordinal = u64::try_from(record.source_ordinal).map_err(|_error| {
+            PipelineError::new("vehicle tuning usage replay ordinal overflowed")
+        })?;
+        if expected
+            .insert((record.mission_source_id.clone(), ordinal), record)
+            .is_some()
+        {
+            return Err(PipelineError::new(
+                "vehicle tuning usage normalized replay is duplicated",
+            ));
+        }
+    }
+
+    let mut previous_source_position = None;
+    let mut previous_source_id = None::<String>;
+    let mut previous_ordinal = 0_u64;
+    for (index, row) in rows.lines().enumerate() {
+        let label = format!(
+            "vehicle tuning usage row {}",
+            display_position(index)
+        );
+        let object = parse_object(row, &label)?;
+        if object.len() != 11
+            || required_string(&object, "schema", &label)?
+                != super::vehicle_tuning_usage_context::
+                    VEHICLE_TUNING_USAGE_SCHEMA
+        {
+            return Err(PipelineError::new(concat!(
+                "vehicle tuning usage row has noncanonical fields or ",
+                "schema",
+            )));
+        }
+        let source_id = required_string(
+            &object,
+            "mission_source_id",
+            &label,
+        )?;
+        validate_public_identifier(
+            &source_id,
+            "vehicle tuning usage mission source id",
+        )?;
+        let source_position = verified_mission_sources
+            .get(source_id.as_str())
+            .copied()
+            .ok_or_else(|| {
+                PipelineError::new(concat!(
+                    "vehicle tuning usage source is not verified mission ",
+                    "evidence",
+                ))
+            })?;
+        if previous_source_id.as_deref() != Some(source_id.as_str()) {
+            if previous_source_position
+                .is_some_and(|previous| source_position <= previous)
+            {
+                return Err(PipelineError::new(concat!(
+                    "vehicle tuning usage bundle is not in verified ",
+                    "source order",
+                )));
+            }
+            previous_source_position = Some(source_position);
+            previous_source_id = Some(source_id.clone());
+            previous_ordinal = 0;
+        }
+        let source_ordinal = required_u64(
+            &object,
+            "source_ordinal",
+            &label,
+        )?;
+        if source_ordinal == 0 || source_ordinal <= previous_ordinal {
+            return Err(PipelineError::new(concat!(
+                "vehicle tuning usage source ordinals are not strictly ",
+                "increasing",
+            )));
+        }
+        previous_ordinal = source_ordinal;
+        let record = expected
+            .remove(&(source_id, source_ordinal))
+            .ok_or_else(|| {
+                PipelineError::new(concat!(
+                    "vehicle tuning usage row lacks normalized mission ",
+                    "replay",
+                ))
+            })?;
+        if Value::Object(object.clone())
+            != vehicle_tuning_usage_replay_json(record)
+        {
+            return Err(PipelineError::new(concat!(
+                "vehicle tuning usage row disagrees with normalized ",
+                "mission replay",
+            )));
+        }
+        let canonical = serde_json::to_string(&Value::Object(object))
+            .map_err(|_error| {
+                PipelineError::new(
+                    "vehicle tuning usage canonical serialization failed",
+                )
+            })?;
+        if canonical != row {
+            return Err(PipelineError::new(
+                "vehicle tuning usage row is not canonical JSON",
+            ));
+        }
+    }
+    if !expected.is_empty() {
+        return Err(PipelineError::new(
+            "vehicle tuning usage bundle omits normalized mission replay",
+        ));
+    }
+    if !rows.is_empty() && !rows.ends_with(char::from(10)) {
+        return Err(PipelineError::new(
+            "vehicle tuning usage bundle lacks canonical final newline",
+        ));
+    }
+    Ok(rows.to_owned())
+}
+
+fn vehicle_tuning_usage_replay_json(
+    record: &VehicleTuningUsageReplayRecord,
+) -> Value {
+    let tuning_source = record.tuning_source.as_ref().map_or(
+        Value::Null,
+        |source| json!({
+            "package_id": source.package_id,
+            "package_subcategory": source.package_subcategory,
+            "source_id": source.source_id,
+        }),
+    );
+    json!({
+        "command": record.command,
+        "con_file": record.con_file,
+        "mission_source_id": record.mission_source_id,
+        "owner_mission_id": record.owner_mission_id,
+        "owner_objective_source_ordinal":
+            record.owner_objective_source_ordinal,
+        "owner_stage_sequence_ordinal": record.owner_stage_sequence_ordinal,
+        "schema": super::vehicle_tuning_usage_context::
+            VEHICLE_TUNING_USAGE_SCHEMA,
+        "scope": record.scope,
+        "source_ordinal": record.source_ordinal,
+        "tuning_source": tuning_source,
+        "vehicle": {
+            "package_id": record.vehicle.package_id,
+            "package_subcategory": record.vehicle.package_subcategory,
+            "source_id": record.vehicle.source_id,
+        },
+    })
+}
+
+fn validate_mission_tuning_bundle(
+    rows: &str,
+    verified: &[UnrealSourceEvidence],
+    mission_references: &MissionReferenceCatalog,
+    replay: &[MissionTuningReplayRecord],
+) -> PipelineOutcome<String> {
+    let verified_mission_sources = verified
+        .iter()
+        .enumerate()
+        .filter(|(_index, source)| source.kind == "mission-script")
+        .map(|(index, source)| (source.id.as_str(), index))
+        .collect::<BTreeMap<_, _>>();
+    let mut expected_replay = BTreeMap::new();
+    for record in replay {
+        if !verified_mission_sources
+            .contains_key(record.mission_source_id.as_str())
+        {
+            return Err(PipelineError::new(
+                "mission tuning replay source is not verified mission evidence",
+            ));
+        }
+        let ordinal = u64::try_from(record.source_ordinal).map_err(|_error| {
+            PipelineError::new("mission tuning replay ordinal overflowed")
+        })?;
+        if expected_replay
+            .insert((record.mission_source_id.clone(), ordinal), record)
+            .is_some()
+        {
+            return Err(PipelineError::new(
+                "mission tuning normalized replay is duplicated",
+            ));
+        }
+    }
     let mut seen = BTreeSet::new();
     let mut previous_source_position = None;
     let mut previous_source_id = None::<String>;
@@ -1569,7 +1897,7 @@ fn validate_mission_tuning_bundle(
             ));
         }
         previous_ordinal = source_ordinal;
-        if !seen.insert((source_id, source_ordinal)) {
+        if !seen.insert((source_id.clone(), source_ordinal)) {
             return Err(PipelineError::new(
                 "mission tuning bundle duplicates source evidence",
             ));
@@ -1605,6 +1933,20 @@ fn validate_mission_tuning_bundle(
                 "mission tuning command arity drifted",
             ));
         }
+        let replay_record = expected_replay
+            .remove(&(source_id.clone(), source_ordinal))
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "mission tuning row lacks normalized mission replay",
+                )
+            })?;
+        if replay_record.command != command
+            || replay_record.arguments != arguments
+        {
+            return Err(PipelineError::new(
+                "mission tuning row disagrees with normalized mission replay",
+            ));
+        }
         validate_mission_tuning_owner(&object, &command, &scope, &label)?;
         validate_mission_tuning_vehicle(
             &object,
@@ -1623,6 +1965,11 @@ fn validate_mission_tuning_bundle(
                 "mission tuning row is not canonical JSON",
             ));
         }
+    }
+    if !expected_replay.is_empty() {
+        return Err(PipelineError::new(
+            "mission tuning bundle omits normalized mission replay",
+        ));
     }
     if !rows.is_empty() && !rows.ends_with(char::from(10)) {
         return Err(PipelineError::new(
