@@ -163,13 +163,6 @@ enum PackageCounter {
 fn take_aligned_interior_meshes(
     package: &mut PendingInterior,
 ) -> Result<Vec<(MeshAsset, MeshAsset)>, PipelineError> {
-    package
-        .content
-        .meshes
-        .sort_by(|left, right| left.name.cmp(&right.name));
-    package
-        .ownership_meshes
-        .sort_by(|left, right| left.name.cmp(&right.name));
     if package.content.meshes.len() != package.ownership_meshes.len() {
         return Err(PipelineError::new(
             "interior final and ownership mesh counts changed",
