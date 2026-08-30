@@ -194,6 +194,12 @@ fail-closed identity check without sorting both lists. Focused regressions cover
 both boundaries; the full pipeline library now passes 1,005 tests with strict
 pipeline Clippy clean.
 
+The exact world-level input selector currently finds 129 extracted packages
+with component ledgers. Of 123 multi-mesh packages, 120 have source-ordinal mesh
+order that differs from lexical mesh-name order, covering 9,765 source meshes
+across those multi-mesh packages. This is input-order evidence only; downstream
+filtering and reviewed algorithms retain their separate contracts.
+
 Prop animation canonicalization now retains decoded helper-group identities that
 are intentionally unbound to deforming skeleton bones. The decoder already
 preserves those validated identities in source-group order; canonicalization no
