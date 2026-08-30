@@ -726,10 +726,7 @@ fn read_components(root: &Path) -> PipelineOutcome<Vec<Component>> {
             continue;
         }
         let ordinal = required_usize(&value, "ordinal")?;
-        let parent_ordinal = value
-            .get("parent_ordinal")
-            .and_then(Value::as_u64)
-            .and_then(|value| usize::try_from(value).ok());
+        let parent_ordinal = Some(required_usize(&value, "parent_ordinal")?);
         let relative = required_string(&value, "path")?;
         let path = resolve_under(&components_root, Path::new(relative))
             .map_err(|_error| {
