@@ -36,7 +36,7 @@
     reason = "Minor-unit evidence includes regular files only and intentionally excludes special entries."
 )]
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Component, Path, PathBuf};
 
@@ -689,13 +689,21 @@ fn read_package_ledger(
     }
     let text = local_read_utf8(&ledger_path).map_err(io_error(&ledger_path))?;
     let mut ledger = PackageLedger::new();
+    let mut portable_paths = BTreeSet::new();
     for line in text.lines() {
-        if let Some((component_rel, provenance)) = parse_component_line(line)
-            && ledger.insert(component_rel, provenance).is_some()
-        {
-            return Err(PipelineError::new(
-                "duplicate component provenance path in package ledger",
-            ));
+        if let Some((component_rel, provenance)) = parse_component_line(line) {
+            let portable_path = component_rel.to_ascii_lowercase();
+            if ledger.insert(component_rel, provenance).is_some() {
+                return Err(PipelineError::new(
+                    "duplicate component provenance path in package ledger",
+                ));
+            }
+            if !portable_paths.insert(portable_path) {
+                return Err(PipelineError::new(concat!(
+                    "case-insensitive component provenance path collision ",
+                    "in package ledger",
+                )));
+            }
         }
     }
     Ok(Some(ledger))
