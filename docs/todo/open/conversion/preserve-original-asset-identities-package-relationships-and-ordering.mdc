@@ -146,11 +146,19 @@ identities before material resolution. Duplicate shader identities fail
 closed, and focused FBX-export tests prove `zebra`, `alpha`, `middle` remains
 in authored order.
 
-Vehicle mesh, billboard, and animation source projection now preserves
-canonical package-member order instead of sorting projected component paths, and
-duplicate
-basenames fail closed instead of being silently deduplicated. Focused vehicle
-source tests prove both the retained order and collision rejection.
+Vehicle mesh, billboard, and animation source projection now reconstructs exact
+source chunk order from preserved member ordinals instead of treating canonical
+role/path/id index position as authored order. Missing or duplicate selected
+ordinals and duplicate projected paths fail closed at the vehicle source
+boundary.
+
+The current car corpus has 535 mesh, 716 quad-group, and 105 animation members
+with numeric source ordinals and no duplicate ordinals inside a package. Among
+multi-member packages, 85 of 88 mesh sequences and all 84 quad-group
+sequences
+differ from source-ordinal order, while all 22 animation sequences currently
+coincide. Animation projection still uses the explicit ordinal because clip order
+feeds FBX animation order and its first clip becomes the active stack.
 
 Billboard quad-group decoding now preserves each authored child-quad identity
 through the typed primitive-group boundary and emits it as FBX user metadata
