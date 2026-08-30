@@ -762,7 +762,10 @@ fn read_components(root: &Path) -> PipelineOutcome<Vec<Component>> {
         component.parent_ordinal.is_some_and(|parent| {
             parent != 0
                 && components
-                    .binary_search_by_key(&parent, |candidate| candidate.ordinal)
+                    .binary_search_by_key(
+                        &parent,
+                        |candidate| candidate.ordinal,
+                    )
                     .is_err()
         })
     }) {
