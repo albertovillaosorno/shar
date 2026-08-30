@@ -320,6 +320,41 @@ pub(super) fn vehicle_quad_group_paths(
     Ok(paths)
 }
 
+/// Resolve every package-local animation path in exact source chunk order.
+pub(super) fn vehicle_animation_paths(
+    package: &PhaseThreePackageRow,
+    package_root: &Path,
+) -> Result<Vec<PathBuf>, PipelineError> {
+    let paths = unique_vehicle_component_paths(
+        source_ordered_vehicle_members(package, "animation", |member| {
+            member.kind == "p3d-animation"
+                && member.source_chunk_kind == "animation"
+        })?
+        .into_iter()
+        .map(|member| {
+                let file_name =
+                    Path::new(&member.path).file_name().ok_or_else(|| {
+                        PipelineError::new(
+                            "vehicle animation has no file name",
+                        )
+                    })?;
+                Ok(package_root
+                    .join("components")
+                    .join("animation")
+                    .join(file_name))
+            })
+            .collect::<Result<Vec<_>, PipelineError>>()?,
+        "animation",
+    )?;
+    if let Some(path) = paths.iter().find(|path| !path.is_file()) {
+        return Err(PipelineError::new(format!(
+            "vehicle animation source is missing: {}",
+            path.display()
+        )));
+    }
+    Ok(paths)
+}
+
 /// Return the three original runtime headlight groups from the common package.
 pub(super) fn common_headlight_quad_groups(
     normalized_root: &Path,

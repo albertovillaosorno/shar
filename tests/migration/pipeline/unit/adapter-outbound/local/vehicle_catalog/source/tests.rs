@@ -36,8 +36,8 @@ use std::path::{Path, PathBuf};
 use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
-    texture_key, unique_vehicle_component_paths, vehicle_mesh_paths,
-    vehicle_quad_group_paths,
+    texture_key, unique_vehicle_component_paths, vehicle_animation_paths,
+    vehicle_mesh_paths, vehicle_quad_group_paths,
 };
 
 struct TestDirectory(PathBuf);
@@ -125,6 +125,47 @@ fn texture_key_removes_extension_case_and_fixed_width_padding() {
 }
 
 #[test]
+fn animation_paths_follow_source_chunk_ordinals() -> Result<(), String> {
+    let root = TestDirectory::new("animation-order")?;
+    create_component_files(root.path(), "animation")?;
+    let json = concat!(
+        r#"{"package_id":"pkg-car","package_root":"pkg-car","#,
+        r#""package_category":"cars","#,
+        r#""package_subcategory":"cars/test/car","#,
+        r#""unit_count":2,"text_key_count":0,"#,
+        r#""unit_ids":["animation-a","animation-z"],"#,
+        r#""world_ids":[],"texture_ids":[],"material_ids":[],"#,
+        r#""model_ids":[],"physics_ids":[],"#,
+        r#""animation_ids":["animation-a","animation-z"],"#,
+        r#""scene_ids":[],"locator_ids":[],"camera_ids":[],"#,
+        r#""light_ids":[],"particle_ids":[],"controller_ids":[],"#,
+        r#""audio_ids":[],"movie_ids":[],"script_ids":[],"#,
+        r#""text_ids":[],"ui_ids":[],"metadata_ids":[],"#,
+        r#""error_ids":[],"source_unit_ids":[],"text_key_ids":[],"#,
+        r#""members":[{"id":"animation-a","role":"animation","#,
+        r#""path":"extracted/a.json","type":"animation","#,
+        r#""kind":"p3d-animation","source_chunk_kind":"animation","#,
+        r#""source_chunk_ordinal":"20"},{"id":"animation-z","#,
+        r#""role":"animation","path":"extracted/z.json","#,
+        r#""type":"animation","kind":"p3d-animation","#,
+        r#""source_chunk_kind":"animation","#,
+        r#""source_chunk_ordinal":"10"}],"text_keys":[]}"#
+    );
+    let package = PhaseThreePackageRow::from_json_line(json)
+        .map_err(|error| error.to_string())?;
+    let paths = vehicle_animation_paths(&package, root.path())
+        .map_err(|error| error.to_string())?;
+    assert_eq!(
+        paths,
+        [
+            root.path().join("components/animation/z.json"),
+            root.path().join("components/animation/a.json"),
+        ]
+    );
+    Ok(())
+}
+
+#[test]
 fn mesh_paths_follow_source_chunk_ordinals() -> Result<(), String> {
     let root = TestDirectory::new("mesh-order")?;
     create_component_files(root.path(), "mesh")?;
@@ -188,8 +229,11 @@ fn source_order_projection_rejects_missing_ordinals() -> Result<(), String> {
     );
     let package = PhaseThreePackageRow::from_json_line(json)
         .map_err(|error| error.to_string())?;
-    let error = vehicle_mesh_paths(&package, root.path())
-        .expect_err("historical mirror without source ordinal was accepted");
+    let Err(error) = vehicle_mesh_paths(&package, root.path()) else {
+        return Err(
+            "historical mirror without source ordinal was accepted".to_owned(),
+        );
+    };
     if !error.to_string().contains("has no source chunk ordinal") {
         return Err(format!("unexpected missing-ordinal error: {error}"));
     }
@@ -233,8 +277,9 @@ fn source_order_projection_rejects_duplicate_ordinals() -> Result<(), String> {
     );
     let package = PhaseThreePackageRow::from_json_line(json)
         .map_err(|error| error.to_string())?;
-    let error = vehicle_mesh_paths(&package, root.path())
-        .expect_err("duplicate source ordinals were accepted");
+    let Err(error) = vehicle_mesh_paths(&package, root.path()) else {
+        return Err("duplicate source ordinals were accepted".to_owned());
+    };
     if !error.to_string().contains("repeats source mesh ordinal 10") {
         return Err(format!("unexpected duplicate-ordinal error: {error}"));
     }
