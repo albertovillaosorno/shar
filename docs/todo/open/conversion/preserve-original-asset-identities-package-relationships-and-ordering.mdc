@@ -185,5 +185,14 @@ distinct source positions and proves the first published triangle still comes
 from `z`; the full pipeline library now passes 1,003 tests with strict pipeline
 Clippy clean.
 
+World FBX publication now preserves the accumulated source mesh sequence through
+the binary writer instead of sorting by mesh name immediately before export. A
+focused `z` then `a` regression proves `write_content_fbx` leaves that sequence
+unchanged. Interior fusion now also keeps the exact positional pairing captured
+between render meshes and their cloned ownership geometry, retaining the
+fail-closed identity check without sorting both lists. Focused regressions cover
+both boundaries; the full pipeline library now passes 1,005 tests with strict
+pipeline Clippy clean.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
