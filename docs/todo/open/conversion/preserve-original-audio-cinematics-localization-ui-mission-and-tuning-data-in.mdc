@@ -79,6 +79,15 @@ an unavailable source-backed profile remains explicit `null` rather than being
 repaired or guessed. Bundle validators replay source order, command arguments,
 ownership, physical bindings, and contextual usage evidence before publication.
 
+The accepted staging snapshot contains 154 mission-definition rows, 173
+mission-local tuning rows, 255 source-backed tuning cores, and 152 contextual
+tuning usages. Of those contextual usages, 151 resolve one exact tuning source
+and one preserves its authored unresolved path as `null`; the tuning cores bind
+88 exact physical vehicles and retain 167 explicit unbound cores. Mission-local
+and contextual occurrence identities are unique by source plus authored ordinal,
+and the vehicle-tuning core validator now independently replays route, original
+byte count, statements, and every normalized command field before publication.
+
 These preservation artifacts intentionally do not map legacy setters to
 gameplay units, native Unreal fields, conversion rules, or runtime ranges. This
 parent therefore remains open for reviewed native tuning/mission compilation and
