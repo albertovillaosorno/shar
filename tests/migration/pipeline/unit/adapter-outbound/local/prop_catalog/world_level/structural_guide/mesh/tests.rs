@@ -30,8 +30,15 @@
 
 //! Tests unit tests.
 
-use super::super::model::AtlasAssignment;
-use super::{atlas_uv, validate_world_fbx_bounds};
+use std::collections::BTreeMap;
+
+use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
+
+use super::super::model::{
+    AtlasAssignment, AtlasBuild, AtlasLayout, SurfaceKey,
+};
+use super::super::super::export::MasterContent;
+use super::{atlas_uv, build, validate_world_fbx_bounds};
 
 fn assignment(repeat: f32) -> AtlasAssignment {
     AtlasAssignment {
@@ -78,5 +85,78 @@ fn source_world_bounds_are_validated_without_extent_or_height_policy()
         ]];
     validate_world_fbx_bounds(&positions).map_err(|error| error.to_string())?;
     assert_eq!(positions[0], [-20_000., -500., 30_000.]);
+    Ok(())
+}
+
+fn ordered_mesh(
+    name: &str,
+    shader: &str,
+    x: f32,
+) -> Result<MeshAsset, String> {
+    let group = PrimitiveGroup::new(
+        0,
+        shader,
+        vec![[x, 0., 0.], [x + 0.5, 0., 0.], [x, 0.5, 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("ordered group failed: {error:?}"))?;
+    MeshAsset::new(name, vec![group])
+        .map_err(|error| format!("ordered mesh failed: {error:?}"))
+}
+
+fn ordered_atlas() -> AtlasBuild {
+    let assignment = AtlasAssignment {
+        offset: [0., 0.],
+        scale: [1., 1.],
+        repeat: 0.,
+        approximated_vertex_color: false,
+    };
+    AtlasBuild {
+        png_bytes: Vec::new(),
+        layout: AtlasLayout {
+            schema_version: 1,
+            atlas_width: 1,
+            atlas_height: 1,
+            padding_pixels: 0,
+            rotation_allowed: false,
+            entries: Vec::new(),
+        },
+        assignments: BTreeMap::from([
+            (
+                SurfaceKey {
+                    material: "z-source".to_owned(),
+                    repeat: false,
+                },
+                assignment,
+            ),
+            (
+                SurfaceKey {
+                    material: "a-source".to_owned(),
+                    repeat: false,
+                },
+                assignment,
+            ),
+        ]),
+    }
+}
+
+#[test]
+fn structural_guide_preserves_master_mesh_order() -> Result<(), String> {
+    let mut content = MasterContent::default();
+    content.meshes = vec![
+        ordered_mesh("z-mesh", "z-source", 10.)?,
+        ordered_mesh("a-mesh", "a-source", 1.)?,
+    ];
+    let (guide, _counts) =
+        build(&content, &ordered_atlas()).map_err(|error| error.to_string())?;
+    let first = guide
+        .positions
+        .first()
+        .copied()
+        .ok_or_else(|| "structural guide lost source positions".to_owned())?;
+    if first != [10., 0., 0.] {
+        return Err(format!("structural guide mesh order changed: {first:?}"));
+    }
     Ok(())
 }
