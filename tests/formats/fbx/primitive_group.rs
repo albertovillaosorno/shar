@@ -156,3 +156,30 @@ fn preserves_winding_that_opposes_authored_normals() {
 
     assert_eq!(group.triangles, vec![[0, 1, 2]]);
 }
+
+#[test]
+fn validates_authored_source_identity() {
+    let result = PrimitiveGroup::new(
+        3,
+        "shader",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    );
+    assert!(result.is_ok(), "base primitive group changed: {result:?}");
+    let Some(group) = result.ok() else {
+        return;
+    };
+
+    assert_eq!(
+        group
+            .clone()
+            .with_source_identity("leafShape")
+            .map(|value| value.source_identity),
+        Ok(Some("leafShape".to_owned()))
+    );
+    assert_eq!(
+        group.with_source_identity(" leafShape"),
+        Err(MeshError::NonCanonicalPrimitiveGroupIdentity { index: 3 })
+    );
+}

@@ -1065,7 +1065,11 @@ fn objects(
     let mut children = vec![export_root_node(&root_transform)?];
     for group in groups {
         children.push(geometry_node(group)?);
-        children.push(mesh_model_node(group.ids.model, &group.object_name)?);
+        children.push(mesh_model_node(
+            group.ids.model,
+            &group.object_name,
+            group.group,
+        )?);
         if scene_kind.is_skinned() {
             children.push(skin_deformer_node(
                 group.ids.deformer,
@@ -1414,12 +1418,20 @@ fn export_root_node(
 fn mesh_model_node(
     id: u64,
     name: &str,
+    group: &PrimitiveGroup,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
+    let mut custom_properties = Vec::new();
+    if let Some(source_identity) = &group.source_identity {
+        custom_properties.push(user_string_property(
+            "SHAR_P3D_SourcePrimitiveIdentity",
+            source_identity,
+        ));
+    }
     model_node(id, name, "Mesh", &TrsParts {
         translation: [0., 0., 0.],
         rotation_degrees: [0., 0., 0.],
         scale: [1., 1., 1.],
-    }, Vec::new())
+    }, custom_properties)
 }
 
 /// Build one skeleton limb-node model.

@@ -69,6 +69,12 @@ pub enum MeshError {
     MissingShader,
     /// Primitive-group shader identity carried surrounding whitespace.
     NonCanonicalShader,
+    /// Primitive-group source identity was blank, padded, or contained control
+    /// characters.
+    NonCanonicalPrimitiveGroupIdentity {
+        /// Primitive-group index carrying the invalid source identity.
+        index: usize,
+    },
     /// One position component was not finite.
     NonFinitePosition {
         /// Vertex containing the invalid component.

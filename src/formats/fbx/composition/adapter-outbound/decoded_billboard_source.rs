@@ -124,7 +124,9 @@ fn quad_group(
         .to_vec();
     let normal = rotate([0., 0., 1.], rotation);
     let color = decode_argb(quad.colour);
+    let source_identity = clean_identity(&quad.name)?;
     PrimitiveGroup::new(index, shader, positions, uvs, &[0, 1, 2, 0, 2, 3])
+        .and_then(|group| group.with_source_identity(source_identity))
         .and_then(|group| group.with_normals(vec![normal; 4]))
         .and_then(|group| group.with_colors(vec![color; 4]))
         .map_err(|error| DecodedBillboardError::Mesh(format!("{error:?}")))

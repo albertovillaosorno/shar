@@ -42,6 +42,7 @@ use shar_sha256 as _;
 fn primitive_group(index: usize) -> PrimitiveGroup {
     PrimitiveGroup {
         index,
+        source_identity: None,
         shader: format!("shader-{index}"),
         positions: vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
         normals: Vec::new(),
