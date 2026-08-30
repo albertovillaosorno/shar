@@ -2434,11 +2434,30 @@ fn accepts_canonical_vehicle_tuning_usage_bundle() -> Result<(), String> {
     let replay = [vehicle_tuning_usage_replay(con_file)];
     let rendered = validate_vehicle_tuning_usage_bundle(
         &row,
-        &[mission_source("script-one")],
+        &[
+            mission_source("script-one"),
+            tuning_source("tuning-source-a"),
+        ],
         &replay,
     )
     .map_err(|error| error.to_string())?;
     assert_eq!(rendered, row);
+    Ok(())
+}
+
+#[test]
+fn rejects_vehicle_tuning_usage_unverified_tuning_source()
+-> Result<(), String> {
+    let con_file = r"Missions\level01\M1race.con";
+    let row = vehicle_tuning_usage_row(con_file)?;
+    let replay = [vehicle_tuning_usage_replay(con_file)];
+    let error = validate_vehicle_tuning_usage_bundle(
+        &row,
+        &[mission_source("script-one")],
+        &replay,
+    )
+    .rejection("unverified contextual tuning source must fail")?;
+    assert!(error.to_string().contains("verified tuning evidence"));
     Ok(())
 }
 
@@ -2475,7 +2494,10 @@ fn rejects_vehicle_tuning_usage_wire_replay_drift() -> Result<(), String> {
     let replay = [vehicle_tuning_usage_replay(con_file)];
     let error = validate_vehicle_tuning_usage_bundle(
         &forged,
-        &[mission_source("script-one")],
+        &[
+            mission_source("script-one"),
+            tuning_source("tuning-source-a"),
+        ],
         &replay,
     )
     .rejection("vehicle tuning usage wire drift must fail")?;
@@ -2489,7 +2511,10 @@ fn rejects_vehicle_tuning_usage_missing_replay_row() -> Result<(), String> {
     let replay = [vehicle_tuning_usage_replay(con_file)];
     let error = validate_vehicle_tuning_usage_bundle(
         "",
-        &[mission_source("script-one")],
+        &[
+            mission_source("script-one"),
+            tuning_source("tuning-source-a"),
+        ],
         &replay,
     )
     .rejection("missing vehicle tuning usage replay must fail")?;
