@@ -35,8 +35,9 @@ use crate::domain::package::{
 };
 
 use super::{
-    GENERAL_CHARACTER_ANIMATION_SUBCATEGORY, animation_subcategory_candidates,
-    classify_members, deferred_material_identity, fbx_io_error,
+    GENERAL_CHARACTER_ANIMATION_SUBCATEGORY, animation_member_paths,
+    animation_subcategory_candidates, classify_members,
+    deferred_material_identity, fbx_io_error,
     normalized_texture_png_file_name, order_character_mesh_members,
     ordered_shader_names,
     single_package_staging_path,
@@ -241,6 +242,48 @@ fn character_mesh_order_rejects_duplicate_source_ordinals(
         error
             .to_string()
             .contains("repeats source mesh ordinal 10")
+    );
+    Ok(())
+}
+
+
+#[test]
+fn character_animation_paths_follow_source_chunk_ordinals(
+) -> Result<(), String> {
+    let json = concat!(
+        r#"{"package_id":"animation-order","package_root":"animation-order","#,
+        r#""package_category":"characters","#,
+        r#""package_subcategory":"characters/test/animation-set","#,
+        r#""unit_count":2,"text_key_count":0,"#,
+        r#""unit_ids":["animation-a","animation-z"],"#,
+        r#""world_ids":[],"texture_ids":[],"material_ids":[],"model_ids":[],"#,
+        r#""physics_ids":[],"animation_ids":["animation-a","animation-z"],"#,
+        r#""scene_ids":[],"locator_ids":[],"camera_ids":[],"light_ids":[],"#,
+        r#""particle_ids":[],"controller_ids":[],"audio_ids":[],"#,
+        r#""movie_ids":[],"script_ids":[],"text_ids":[],"ui_ids":[],"#,
+        r#""metadata_ids":[],"error_ids":[],"source_unit_ids":[],"#,
+        r#""text_key_ids":[],"members":["#,
+        r#"{"id":"animation-a","role":"animation","path":"a.json","#,
+        r#""type":"animation","kind":"p3d-animation","#,
+        r#""source_chunk_kind":"animation","source_chunk_ordinal":"20"},"#,
+        r#"{"id":"animation-z","role":"animation","path":"z.json","#,
+        r#""type":"animation","kind":"p3d-animation","#,
+        r#""source_chunk_kind":"animation","source_chunk_ordinal":"10"}],"#,
+        r#""text_keys":[]}"#,
+    );
+    let package = PhaseThreePackageRow::from_json_line(json)
+        .map_err(|error| error.to_string())?;
+    let paths = animation_member_paths(
+        Some(&package),
+        std::path::Path::new("normalized"),
+    )
+    .map_err(|error| error.to_string())?;
+    assert_eq!(
+        paths,
+        [
+            std::path::Path::new("normalized").join("z.json"),
+            std::path::Path::new("normalized").join("a.json"),
+        ]
     );
     Ok(())
 }
