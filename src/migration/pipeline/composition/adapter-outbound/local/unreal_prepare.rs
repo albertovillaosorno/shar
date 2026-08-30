@@ -192,11 +192,6 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     let mission_definitions_jsonl = validate_mission_definition_bundle(
         &source_report.mission_definitions,
         &source_report.evidence,
-        &source_report.mission_definition_sources,
-    )?;
-    validate_mission_definition_replay(
-        &source_report.mission_definitions,
-        &source_report.evidence,
         &source_report.mission_definition_replay,
     )?;
     let mission_tuning_jsonl = validate_mission_tuning_bundle(
@@ -483,7 +478,6 @@ fn source_evidence(
 struct SourceEvidenceReport {
     evidence: Vec<UnrealSourceEvidence>,
     mission_definitions: Vec<String>,
-    mission_definition_sources: Vec<String>,
     mission_definition_replay: Vec<MissionDefinitionReplayRecord>,
     mission_tuning: String,
     mission_tuning_replay: Vec<MissionTuningReplayRecord>,
@@ -621,7 +615,6 @@ fn parallel_source_evidence(
         return Ok(SourceEvidenceReport {
             evidence: Vec::new(),
             mission_definitions: Vec::new(),
-            mission_definition_sources: Vec::new(),
             mission_definition_replay: Vec::new(),
             mission_tuning: String::new(),
             mission_tuning_replay: Vec::new(),
@@ -691,7 +684,6 @@ fn parallel_source_evidence(
     collected.sort_by_key(|(position, _result)| *position);
     let mut evidence = Vec::with_capacity(collected.len());
     let mut mission_definitions = Vec::new();
-    let mut mission_definition_sources = Vec::new();
     let mut mission_definition_replay = Vec::new();
     let mut mission_tuning = String::new();
     let mut mission_tuning_replay = Vec::new();
@@ -701,8 +693,6 @@ fn parallel_source_evidence(
         let output = result?;
         evidence.push(output.evidence);
         if let Some(definition) = output.mission_definition {
-            mission_definition_sources
-                .push(definition.replay.source_id.clone());
             mission_definitions.push(definition.jsonl);
             mission_definition_replay.push(definition.replay);
         }
@@ -717,7 +707,6 @@ fn parallel_source_evidence(
     Ok(SourceEvidenceReport {
         evidence,
         mission_definitions,
-        mission_definition_sources,
         mission_definition_replay,
         mission_tuning,
         mission_tuning_replay,
@@ -2592,6 +2581,24 @@ fn validate_vehicle_tuning_bundle(
 }
 
 fn validate_mission_definition_bundle(
+    rows: &[String],
+    verified: &[UnrealSourceEvidence],
+    replay: &[MissionDefinitionReplayRecord],
+) -> PipelineOutcome<String> {
+    let selected_source_ids = replay
+        .iter()
+        .map(|record| record.source_id.clone())
+        .collect::<Vec<_>>();
+    let output = validate_mission_definition_structure(
+        rows,
+        verified,
+        &selected_source_ids,
+    )?;
+    validate_mission_definition_replay(rows, verified, replay)?;
+    Ok(output)
+}
+
+fn validate_mission_definition_structure(
     rows: &[String],
     verified: &[UnrealSourceEvidence],
     selected_source_ids: &[String],
