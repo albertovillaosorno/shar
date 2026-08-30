@@ -53,7 +53,7 @@ use super::{
     publication_error, read_utf8, restore_previous_publication,
     retain_source_ids, source_worker_count_for, stream_source_digest,
     validate_audit, validate_generated_chain,
-    validate_mission_definition_bundle, validate_mission_tuning_bundle,
+    validate_mission_tuning_bundle,
     validate_public_identifier,
     validate_vehicle_tuning_bundle, validate_vehicle_tuning_usage_bundle,
     validate_publication_inventory, validate_relative_path,
@@ -309,6 +309,22 @@ fn vehicle_tuning_usage_replay(
             package_subcategory: "vehicle-tuning/mission/level-01".to_owned(),
         }),
     }
+}
+
+fn validate_mission_definition_bundle(
+    rows: &[String],
+    verified: &[UnrealSourceEvidence],
+) -> PipelineOutcome<String> {
+    let selected_source_ids = verified
+        .iter()
+        .filter(|source| source.kind == "mission-script")
+        .map(|source| source.id.clone())
+        .collect::<Vec<_>>();
+    super::validate_mission_definition_bundle(
+        rows,
+        verified,
+        &selected_source_ids,
+    )
 }
 
 fn mission_definition_row(source_id: &str, mission_id: &str) -> String {
@@ -804,17 +820,43 @@ fn clean_mission_json(with_finding: bool) -> Result<Vec<u8>, String> {
 // jig-ignore-next-line: long identifier
 fn mission_semantic_gate_accepts_clean_v3_and_bypasses_other_kinds() -> Result<(), String> {
     let clean = clean_mission_json(false)?;
-    validate_test_mission_source(
+    let mission = super::validate_normalized_mission_source(
+        "script-test-source",
         "mission-script",
         MISSION_SCRIPT_SCHEMA,
         "json",
         "game-straggler-normalize",
         &clean,
+        &MissionReferenceCatalog::empty_for_tests(),
+        &MissionP3dReferenceCatalog::empty_for_tests(),
     )
     .map_err(|error| error.to_string())?;
-    // jig-ignore-next-line: literal
-    validate_test_mission_source("texture", "unrelated-schema", "bin", "test", b"not-json")
-        .map_err(|error| error.to_string())
+    if mission.definition.is_none()
+        || mission.definition_source_id.as_deref()
+            != Some("script-test-source")
+    {
+        return Err(
+            "selected mission source lost definition publication identity"
+                .to_owned(),
+        );
+    }
+    let bypass = super::validate_normalized_mission_source(
+        "script-test-source",
+        "texture",
+        "unrelated-schema",
+        "bin",
+        "test",
+        b"not-json",
+        &MissionReferenceCatalog::empty_for_tests(),
+        &MissionP3dReferenceCatalog::empty_for_tests(),
+    )
+    .map_err(|error| error.to_string())?;
+    if bypass.definition.is_some() || bypass.definition_source_id.is_some() {
+        return Err(
+            "non-mission source invented definition selection".to_owned(),
+        );
+    }
+    Ok(())
 }
 
 #[test]
@@ -3076,6 +3118,100 @@ fn rejects_vehicle_tuning_cores_out_of_verified_source_order()
     )
         .rejection("out-of-order tuning cores must fail")?;
     assert!(error.to_string().contains("verified source order"));
+    Ok(())
+}
+
+#[test]
+fn rejects_missing_selected_mission_definition() -> Result<(), String> {
+    let rows = vec![mission_definition_row("script-one", "m1")];
+    let verified = vec![
+        mission_source("script-one"),
+        mission_source("script-two"),
+    ];
+    let selected = vec!["script-one".to_owned(), "script-two".to_owned()];
+    let error = super::validate_mission_definition_bundle(
+        &rows,
+        &verified,
+        &selected,
+    )
+    .rejection("missing selected mission definition must fail")?;
+    assert!(error.to_string().contains("omits selected source replay"));
+    Ok(())
+}
+
+#[test]
+fn rejects_definition_for_unselected_mission_utility_source()
+-> Result<(), String> {
+    let rows = vec![
+        mission_definition_row("script-one", "m1"),
+        mission_definition_row("script-two", "m2"),
+    ];
+    let verified = vec![
+        mission_source("script-one"),
+        mission_source("script-two"),
+    ];
+    let selected = vec!["script-one".to_owned()];
+    let error = super::validate_mission_definition_bundle(
+        &rows,
+        &verified,
+        &selected,
+    )
+    .rejection("unselected utility mission definition must fail")?;
+    assert!(error.to_string().contains("lacks selected source replay"));
+    Ok(())
+}
+
+#[test]
+fn rejects_selected_mission_definition_replay_order_drift()
+-> Result<(), String> {
+    let rows = vec![
+        mission_definition_row("script-one", "m1"),
+        mission_definition_row("script-two", "m2"),
+    ];
+    let verified = vec![
+        mission_source("script-one"),
+        mission_source("script-two"),
+    ];
+    let selected = vec!["script-two".to_owned(), "script-one".to_owned()];
+    let error = super::validate_mission_definition_bundle(
+        &rows,
+        &verified,
+        &selected,
+    )
+    .rejection("selected mission definition replay order drift must fail")?;
+    assert!(error.to_string().contains("verified source order"));
+    Ok(())
+}
+
+#[test]
+fn rejects_unverified_selected_mission_definition_replay()
+-> Result<(), String> {
+    let rows = vec![mission_definition_row("script-one", "m1")];
+    let verified = vec![mission_source("script-one")];
+    let selected = vec!["script-one".to_owned(), "script-two".to_owned()];
+    let error = super::validate_mission_definition_bundle(
+        &rows,
+        &verified,
+        &selected,
+    )
+    .rejection("unverified selected mission definition replay must fail")?;
+    assert!(error.to_string().contains("not verified mission evidence"));
+    Ok(())
+}
+
+#[test]
+fn rejects_duplicate_selected_mission_definition_replay()
+-> Result<(), String> {
+    let rows = vec![mission_definition_row("script-one", "m1")];
+    let verified = vec![mission_source("script-one")];
+    let selected = vec!["script-one".to_owned(), "script-one".to_owned()];
+    let error = super::validate_mission_definition_bundle(
+        &rows,
+        &verified,
+        &selected,
+    )
+    .rejection("duplicate selected mission definition replay must fail")?;
+    assert!(error.to_string().contains("duplicated"));
     Ok(())
 }
 

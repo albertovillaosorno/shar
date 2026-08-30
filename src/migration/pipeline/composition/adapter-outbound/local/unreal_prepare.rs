@@ -192,6 +192,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     let mission_definitions_jsonl = validate_mission_definition_bundle(
         &source_report.mission_definitions,
         &source_report.evidence,
+        &source_report.mission_definition_sources,
     )?;
     let mission_tuning_jsonl = validate_mission_tuning_bundle(
         &source_report.mission_tuning,
@@ -477,6 +478,7 @@ fn source_evidence(
 struct SourceEvidenceReport {
     evidence: Vec<UnrealSourceEvidence>,
     mission_definitions: Vec<String>,
+    mission_definition_sources: Vec<String>,
     mission_tuning: String,
     mission_tuning_replay: Vec<MissionTuningReplayRecord>,
     vehicle_tuning_cores: Vec<String>,
@@ -540,6 +542,14 @@ struct VehicleTuningUsageOutput {
     replay: Vec<VehicleTuningUsageReplayRecord>,
 }
 
+/// Validated source-local mission publication evidence.
+struct MissionSourceOutput {
+    definition: Option<String>,
+    definition_source_id: Option<String>,
+    tuning: String,
+    tuning_replay: Vec<MissionTuningReplayRecord>,
+}
+
 /// Exact normalized mission invocation retained for output replay validation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct MissionTuningReplayRecord {
@@ -558,6 +568,7 @@ struct MissionTuningReplayRecord {
 struct VerifiedSourceOutput {
     evidence: UnrealSourceEvidence,
     mission_definition: Option<String>,
+    mission_definition_source_id: Option<String>,
     mission_tuning: String,
     mission_tuning_replay: Vec<MissionTuningReplayRecord>,
     vehicle_tuning_core: Option<VehicleTuningCoreOutput>,
@@ -593,6 +604,7 @@ fn parallel_source_evidence(
         return Ok(SourceEvidenceReport {
             evidence: Vec::new(),
             mission_definitions: Vec::new(),
+            mission_definition_sources: Vec::new(),
             mission_tuning: String::new(),
             mission_tuning_replay: Vec::new(),
             vehicle_tuning_cores: Vec::new(),
@@ -661,6 +673,7 @@ fn parallel_source_evidence(
     collected.sort_by_key(|(position, _result)| *position);
     let mut evidence = Vec::with_capacity(collected.len());
     let mut mission_definitions = Vec::new();
+    let mut mission_definition_sources = Vec::new();
     let mut mission_tuning = String::new();
     let mut mission_tuning_replay = Vec::new();
     let mut vehicle_tuning_cores = Vec::new();
@@ -668,6 +681,9 @@ fn parallel_source_evidence(
     for (_position, result) in collected {
         let output = result?;
         evidence.push(output.evidence);
+        if let Some(source_id) = output.mission_definition_source_id {
+            mission_definition_sources.push(source_id);
+        }
         if let Some(definition) = output.mission_definition {
             mission_definitions.push(definition);
         }
@@ -682,6 +698,7 @@ fn parallel_source_evidence(
     Ok(SourceEvidenceReport {
         evidence,
         mission_definitions,
+        mission_definition_sources,
         mission_tuning,
         mission_tuning_replay,
         vehicle_tuning_cores,
@@ -1095,6 +1112,7 @@ fn read_source_evidence(
         actual_size,
         sha256,
         mission_definition,
+        mission_definition_source_id,
         mission_tuning,
         mission_tuning_replay,
         vehicle_tuning_core,
@@ -1102,11 +1120,7 @@ fn read_source_evidence(
         "mission-script" => {
             let bytes = read_stable_source_bytes(&input.resolved)?;
             let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
-            let (
-                mission_definition,
-                mission_tuning,
-                mission_tuning_replay,
-            ) = validate_normalized_mission_source(
+            let mission = validate_normalized_mission_source(
                 &input.id,
                 &input.kind,
                 &input.schema,
@@ -1119,9 +1133,10 @@ fn read_source_evidence(
             (
                 actual_size,
                 digest_hex(&bytes),
-                mission_definition,
-                mission_tuning,
-                mission_tuning_replay,
+                mission.definition,
+                mission.definition_source_id,
+                mission.tuning,
+                mission.tuning_replay,
                 None,
             )
         },
@@ -1142,6 +1157,7 @@ fn read_source_evidence(
                 actual_size,
                 digest_hex(&bytes),
                 None,
+                None,
                 String::new(),
                 Vec::new(),
                 vehicle_tuning_core,
@@ -1149,7 +1165,15 @@ fn read_source_evidence(
         },
         _ => {
             let (actual_size, sha256) = stream_source_digest(&input.resolved)?;
-            (actual_size, sha256, None, String::new(), Vec::new(), None)
+            (
+                actual_size,
+                sha256,
+                None,
+                None,
+                String::new(),
+                Vec::new(),
+                None,
+            )
         },
     };
     if actual_size != input.expected_size {
@@ -1177,6 +1201,7 @@ fn read_source_evidence(
             future_normalization: input.future_normalization.clone(),
         },
         mission_definition,
+        mission_definition_source_id,
         mission_tuning,
         mission_tuning_replay,
         vehicle_tuning_core,
@@ -1456,13 +1481,14 @@ fn validate_normalized_mission_source(
     bytes: &[u8],
     mission_references: &MissionReferenceCatalog,
     mission_p3d_references: &MissionP3dReferenceCatalog,
-) -> PipelineOutcome<(
-    Option<String>,
-    String,
-    Vec<MissionTuningReplayRecord>,
-)> {
+) -> PipelineOutcome<MissionSourceOutput> {
     if kind != "mission-script" {
-        return Ok((None, String::new(), Vec::new()));
+        return Ok(MissionSourceOutput {
+            definition: None,
+            definition_source_id: None,
+            tuning: String::new(),
+            tuning_replay: Vec::new(),
+        });
     }
     if schema != MISSION_SCRIPT_SCHEMA {
         return Err(PipelineError::new(
@@ -1567,7 +1593,10 @@ fn validate_normalized_mission_source(
             &objective_semantics,
             &condition_semantics,
             &topology,
-        )?
+        )?;
+    let mission_definition_source_id =
+        mission_definition.as_ref().map(|_definition| source_id.to_owned());
+    let mission_definition = mission_definition
         .map(|definition| {
             mission_definition_context::render_definition_core(
                 source_id,
@@ -1668,7 +1697,12 @@ fn validate_normalized_mission_source(
         &references,
         &vehicle_attributes,
     )?;
-    Ok((mission_definition, mission_tuning, mission_tuning_replay))
+    Ok(MissionSourceOutput {
+        definition: mission_definition,
+        definition_source_id: mission_definition_source_id,
+        tuning: mission_tuning,
+        tuning_replay: mission_tuning_replay,
+    })
 }
 
 fn mission_tuning_replay_records(
@@ -2542,6 +2576,7 @@ fn validate_vehicle_tuning_bundle(
 fn validate_mission_definition_bundle(
     rows: &[String],
     verified: &[UnrealSourceEvidence],
+    selected_source_ids: &[String],
 ) -> PipelineOutcome<String> {
     let verified_mission_sources = verified
         .iter()
@@ -2549,6 +2584,37 @@ fn validate_mission_definition_bundle(
         .filter(|(_index, source)| source.kind == "mission-script")
         .map(|(index, source)| (source.id.as_str(), index))
         .collect::<BTreeMap<_, _>>();
+    let mut selected_sources = BTreeSet::new();
+    let mut previous_selected_position = None;
+    for source_id in selected_source_ids {
+        validate_public_identifier(
+            source_id,
+            "selected mission definition source id",
+        )?;
+        let source_position = verified_mission_sources
+            .get(source_id.as_str())
+            .copied()
+            .ok_or_else(|| {
+                PipelineError::new(concat!(
+                    "selected mission definition source is not verified ",
+                    "mission evidence",
+                ))
+            })?;
+        if !selected_sources.insert(source_id.clone()) {
+            return Err(PipelineError::new(
+                "selected mission definition source is duplicated",
+            ));
+        }
+        if previous_selected_position
+            .is_some_and(|previous| source_position <= previous)
+        {
+            return Err(PipelineError::new(concat!(
+                "selected mission definition sources are not in verified ",
+                "source order",
+            )));
+        }
+        previous_selected_position = Some(source_position);
+    }
     let mut source_ids = BTreeSet::new();
     let mut previous_source_position = None;
     let mut output = String::new();
@@ -2600,6 +2666,11 @@ fn validate_mission_definition_bundle(
             ));
         }
         previous_source_position = Some(source_position);
+        if !selected_sources.remove(&source_id) {
+            return Err(PipelineError::new(
+                "mission definition row lacks selected source replay",
+            ));
+        }
         let mission_id = required_string(&object, "mission_id", &label)?;
         validate_mission_id(&mission_id)?;
         let stages = object
@@ -2623,6 +2694,11 @@ fn validate_mission_definition_bundle(
             ));
         }
         output.push_str(row);
+    }
+    if !selected_sources.is_empty() {
+        return Err(PipelineError::new(
+            "mission definition bundle omits selected source replay",
+        ));
     }
     Ok(output)
 }
