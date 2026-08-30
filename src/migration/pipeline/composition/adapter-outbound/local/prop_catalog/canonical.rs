@@ -38,11 +38,8 @@ use fbx::domain::mesh::MeshAsset;
 
 use crate::domain::PipelineError;
 
-/// Canonicalize static mesh names after material normalization.
+/// Canonicalize static mesh names in source mesh order.
 pub(super) fn canonicalize_static_meshes(meshes: &mut [MeshAsset]) {
-    meshes.sort_by(|left, right| {
-        format!("{:?}", left.groups).cmp(&format!("{:?}", right.groups))
-    });
     for (ordinal, mesh) in meshes.iter_mut().enumerate() {
         mesh.name = format!("part-{ordinal:04}");
     }
@@ -72,10 +69,6 @@ pub(super) fn canonicalize_animated_asset(
             .map(|parent| mapped_bone(&bone_names, parent))
             .transpose()?;
     }
-    asset.parts.sort_by(|left, right| {
-        format!("{:?}", left.mesh.groups)
-            .cmp(&format!("{:?}", right.mesh.groups))
-    });
     for (ordinal, part) in asset.parts.iter_mut().enumerate() {
         part.mesh.name = format!("part-{ordinal:04}");
         for influence in part.group_influences.iter_mut().flatten() {
@@ -106,3 +99,8 @@ fn mapped_bone(
         ))
     })
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/prop_catalog/canonical/tests.rs"]
+mod tests;
