@@ -236,5 +236,12 @@ rejoined to the package component ledger. `container_ordinal` remains canonical
 component-ledger evidence and is not yet claimed as a direct package-member
 mirror.
 
+The package-member vector itself remains the canonical phase-two role/path/id
+order rather than claiming authored chunk order. A corpus audit finds 1,956
+packages with at least two chunk-backed members, and 1,919 of those sequences
+differ from ascending source chunk ordinal. Consumers that require authored
+ordering must therefore project the preserved ordinal explicitly at a reviewed
+boundary instead of treating canonical index position as source order.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
