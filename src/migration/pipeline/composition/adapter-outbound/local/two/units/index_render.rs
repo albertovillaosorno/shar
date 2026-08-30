@@ -184,7 +184,8 @@ fn members_json(package: &MinorUnitPackage) -> String {
             concat!(
                 "{{\"id\":\"{}\",\"role\":\"{}\",",
                 "\"path\":\"{}\",\"type\":\"{}\",",
-                "\"kind\":\"{}\",\"source_chunk_kind\":\"{}\"}}"
+                "\"kind\":\"{}\",\"source_chunk_kind\":\"{}\",",
+                "\"source_chunk_ordinal\":\"{}\"}}"
             ),
             json_escape(member.id.as_str()),
             effective_role(package, member.role).as_str(),
@@ -192,6 +193,7 @@ fn members_json(package: &MinorUnitPackage) -> String {
             json_escape(&member.type_),
             json_escape(&member.kind),
             json_escape(&member.source_chunk_kind),
+            json_escape(&member.source_chunk_ordinal),
         );
         output.push_str(&member_json);
     }

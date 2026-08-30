@@ -1141,6 +1141,53 @@ fn rejects_inconsistent_structured_member_mirrors() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_invalid_source_chunk_ordinal() -> Result<(), String> {
+    for invalid in ["0", "01x", " padded"] {
+        let row_text = sample_row().replacen(
+            r#""source_chunk_kind":"texture""#,
+            &format!(
+                concat!(
+                    r#""source_chunk_kind":"texture","#,
+                    r#""source_chunk_ordinal":"{}""#,
+                ),
+                invalid,
+            ),
+            1,
+        );
+        if PhaseThreePackageRow::from_json_line(&row_text).is_ok() {
+            return Err(format!(
+                "invalid source chunk ordinal was accepted: {invalid:?}"
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn accepts_source_chunk_ordinal_member_provenance() -> Result<(), String> {
+    let row_text = sample_row().replacen(
+        r#""source_chunk_kind":"texture""#,
+        concat!(
+            r#""source_chunk_kind":"texture","#,
+            r#""source_chunk_ordinal":"5311""#,
+        ),
+        1,
+    );
+    let row = PhaseThreePackageRow::from_json_line(&row_text)
+        .map_err(|error| error.to_string())?;
+    let member = row
+        .members()
+        .first()
+        .ok_or_else(|| "source ordinal fixture member is missing".to_owned())?;
+    if member.source_chunk_ordinal != Some(5311) {
+        return Err(
+            "source chunk ordinal provenance was not preserved".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn accepts_canonical_structured_mirror_json() -> Result<(), String> {
     let row_text = sample_row().replace(
         SAMPLE_MEMBERS_FIELD,

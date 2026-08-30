@@ -213,6 +213,8 @@ pub(super) struct PackageMember {
     pub kind: String,
     /// Manifest source chunk kind.
     pub source_chunk_kind: String,
+    /// Manifest source chunk ordinal, or `none` for loose sources.
+    pub source_chunk_ordinal: String,
 }
 
 /// One exact package made of typed minor-unit ids.
@@ -403,6 +405,8 @@ struct MinorUnitRow {
     /// Stores `source_chunk_kind` evidence required by this deterministic
     /// record.
     source_chunk_kind: String,
+    /// Stores exact source chunk ordinal provenance, or `none` for loose files.
+    source_chunk_ordinal: String,
 }
 
 impl MinorUnitRow {
@@ -448,6 +452,12 @@ impl MinorUnitRow {
                 line_number,
                 manifest_path,
             )?,
+            source_chunk_ordinal: required_field(
+                line,
+                "source_chunk_ordinal",
+                line_number,
+                manifest_path,
+            )?,
         })
     }
 
@@ -471,6 +481,7 @@ impl MinorUnitRow {
             type_: self.type_,
             kind: self.kind,
             source_chunk_kind: self.source_chunk_kind,
+            source_chunk_ordinal: self.source_chunk_ordinal,
         })
     }
 }

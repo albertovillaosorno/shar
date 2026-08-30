@@ -35,10 +35,55 @@ use std::collections::BTreeSet;
 use super::super::index_render::render_index_jsonl;
 use super::{
     decoded_mesh_has_no_primitive_groups,
-    MinorUnitId, MinorUnitPackage, MinorUnitRole, PackageCategory, PackageId,
+    MinorUnitId, MinorUnitPackage, MinorUnitRole, MinorUnitRow, PackageCategory,
+    PackageId,
     PackageMember, category_from_root, package_root, role_from_fields,
     subcategory_from_root, validate_package_coverage,
 };
+
+#[test]
+fn manifest_member_preserves_chunk_ordinal() -> Result<(), String> {
+    let row = MinorUnitRow::from_line(
+        concat!(
+            r#"{"id":"metadata-a","path":"extracted/a.json","#,
+            r#""type":"metadata","kind":"test","#,
+            r#""source_chunk_kind":"quad_group","#,
+            r#""source_chunk_ordinal":"5311","#,
+            r#""recovery_status":"fully-decoded"}"#,
+        ),
+        1,
+        "minor-unit/manifest.jsonl",
+    )
+    .map_err(|error| error.to_string())?;
+    let member = row
+        .into_member(std::path::Path::new("."))
+        .map_err(|error| error.to_string())?;
+    if member.source_chunk_ordinal != "5311" {
+        return Err(
+            "manifest source chunk ordinal changed before indexing".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn member_mirror_publishes_source_chunk_ordinal() -> Result<(), String> {
+    let package = package_from_id(
+        "billboard-source-ordinal",
+        vec![member_with_fields(
+            "mesh-a",
+            MinorUnitRole::Model,
+            "model",
+            "p3d-mesh",
+            "mesh",
+        )?],
+    );
+    let rendered = render_index_jsonl(&[package]);
+    if !rendered.contains(r#""source_chunk_ordinal":"none""#) {
+        return Err("member mirror dropped source chunk ordinal".to_owned());
+    }
+    Ok(())
+}
 
 #[test]
 fn error_packages_publish_only_the_error_role() -> Result<(), String> {
@@ -891,6 +936,7 @@ fn member_with_fields(
         type_: type_.to_owned(),
         kind: kind.to_owned(),
         source_chunk_kind: source_chunk_kind.to_owned(),
+        source_chunk_ordinal: "none".to_owned(),
     })
 }
 
