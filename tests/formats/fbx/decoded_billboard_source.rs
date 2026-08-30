@@ -134,3 +134,30 @@ fn writes_authored_quad_identity_as_fbx_metadata() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn rejects_space_padded_authored_quad_identity() -> Result<(), String> {
+    let path = fixture_path("padded-identity");
+    fs::write(
+        &path,
+        concat!(
+            r#"{"schema":"quad_group","version":0,"name":"groupShape","#,
+            r#""shader":"material","z_test":1,"z_write":0,"fog":0,"#,
+            r#""num_quads":1,"quads":[{"name":" leafShape","#,
+            r#""version":2,"billboard_mode":"LYAX","#,
+            r#""translation":[0,0,0],"colour":4294967295,"#,
+            r#""uvs":[[0,0],[1,0],[1,1],[0,1]],"#,
+            r#""width":1,"height":1,"distance":0,"uv_offset":[0,0],"#,
+            r#""rotation_wxyz":[1,0,0,0],"cutoff_mode":"N0NE","#,
+            r#""uv_offset_range":[0,0],"source_range":0,"#,
+            r#""edge_range":0,"perspective":true}]}"#
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let result = read_billboard_quad_group(&path, "groupShape");
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+    if result.is_ok() {
+        return Err("space-padded authored quad identity was repaired".to_owned());
+    }
+    Ok(())
+}

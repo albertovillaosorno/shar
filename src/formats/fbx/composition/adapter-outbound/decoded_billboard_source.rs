@@ -187,8 +187,11 @@ fn decode_argb(value: u32) -> [f32; 4] {
 
 /// Remove fixed-width source padding while preserving the authored identity.
 fn clean_identity(value: &str) -> Result<String, DecodedBillboardError> {
-    let clean = value.trim_end_matches('\0').trim();
-    if clean.is_empty() || clean.chars().any(char::is_control) {
+    let clean = value.trim_end_matches('\0');
+    if clean.is_empty()
+        || clean != clean.trim()
+        || clean.chars().any(char::is_control)
+    {
         return Err(DecodedBillboardError::InvalidIdentity(value.to_owned()));
     }
     Ok(clean.to_owned())
