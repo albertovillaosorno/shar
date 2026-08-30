@@ -157,7 +157,8 @@ with numeric source ordinals and no duplicate ordinals inside a package. Among
 multi-member packages, 85 of 88 mesh sequences and all 84 quad-group
 sequences
 differ from source-ordinal order, while all 22 animation sequences currently
-coincide. Animation projection still uses the explicit ordinal because clip order
+coincide. Animation projection still uses the explicit ordinal because clip
+order
 feeds FBX animation order and its first clip becomes the active stack.
 
 Billboard quad-group decoding now preserves each authored child-quad identity
