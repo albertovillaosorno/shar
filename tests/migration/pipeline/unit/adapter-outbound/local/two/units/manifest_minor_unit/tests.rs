@@ -438,6 +438,37 @@ fn rejects_duplicate_component_provenance_paths() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_case_aliased_component_provenance_paths() -> Result<(), String> {
+    let root = case_root("case-aliased-provenance-path");
+    let package = root.join("sample");
+    fs::create_dir_all(&package).map_err(|error| error.to_string())?;
+    fs::write(
+        package.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":2}"#,
+            "\n",
+            r#"{"ordinal":7,"kind":"mesh","path":"mesh/a.json"}"#,
+            "\n",
+            r#"{"ordinal":9,"kind":"mesh","path":"MESH/A.JSON"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let result = read_package_ledger(&root, "extracted/sample");
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("case-aliased component provenance was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("case-insensitive component provenance path")
+    {
+        return Err(format!("unexpected provenance alias error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn parse_component_line_skips_header() {
     assert!(
         parse_component_line(
