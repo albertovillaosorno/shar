@@ -685,13 +685,37 @@ fn stage_texture_binding(
         .to_owned();
     let target = output_texture_dir.join(&file_name);
     if source != target {
-        let _bytes_copied = fs::copy(source, &target).map_err(|error| {
-            DecodedComponentError::CopyTexture {
-                from: source.display().to_string(),
-                to: target.display().to_string(),
-                source: error.to_string(),
-            }
-        })?;
+        match fs::read(&target) {
+            Ok(existing) => {
+                let incoming = fs::read(source).map_err(|error| {
+                    DecodedComponentError::Read {
+                        path: source.display().to_string(),
+                        source: error.to_string(),
+                    }
+                })?;
+                if existing != incoming {
+                    return Err(DecodedComponentError::TextureStagingCollision {
+                        file_name,
+                    });
+                }
+            },
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                let _bytes_copied =
+                    fs::copy(source, &target).map_err(|error| {
+                        DecodedComponentError::CopyTexture {
+                            from: source.display().to_string(),
+                            to: target.display().to_string(),
+                            source: error.to_string(),
+                        }
+                    })?;
+            },
+            Err(error) => {
+                return Err(DecodedComponentError::Read {
+                    path: target.display().to_string(),
+                    source: error.to_string(),
+                });
+            },
+        }
     }
     MaterialBinding::new(shader_name, Some(file_name))
         .map(|binding| {
@@ -1060,6 +1084,11 @@ pub enum DecodedComponentError {
     InvalidTextureReference(String),
     /// Texture file name was not valid UTF-8.
     InvalidTextureName(String),
+    /// Two source textures claimed one staging file with different bytes.
+    TextureStagingCollision {
+        /// Portable staging file identity claimed by both sources.
+        file_name: String,
+    },
     /// Texture staging failed.
     CopyTexture {
         /// Source texture path.
