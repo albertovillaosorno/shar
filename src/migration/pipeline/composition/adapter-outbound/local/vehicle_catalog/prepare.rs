@@ -114,8 +114,6 @@ pub(super) fn export_vehicle(
         }
     }
     retained_billboard_paths.extend(common_headlights);
-    retained_billboard_paths.sort();
-    retained_billboard_paths.dedup();
     let billboard_refs = retained_billboard_paths
         .iter()
         .map(PathBuf::as_path)
@@ -341,7 +339,6 @@ fn partition_vehicle_billboards(
             },
         }
     }
-    retained.sort();
     deferred.sort();
     Ok((retained, deferred))
 }
