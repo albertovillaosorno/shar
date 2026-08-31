@@ -572,5 +572,11 @@ target a globally ambiguous shader name; none has a same-container shader row.
 The remaining binding work therefore needs stronger decoded relationship
 evidence rather than a proximity or container heuristic.
 
+The same audit classifies the 1,312 ambiguous mesh-to-shader references by
+candidate payload. 1,226 reference shader candidate sets whose normalized JSON
+payloads differ, while 86 reference byte-identical candidate sets. The remaining
+relationship work therefore cannot treat repeated shader names as harmless
+duplicate publication in the general case.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
