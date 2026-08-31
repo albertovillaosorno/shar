@@ -181,3 +181,10 @@ fn level_player_vehicle_uses_exact_car_start_lookup() -> Result<(), String> {
     assert_eq!(resolved.entry().package_id(), "level-b");
     Ok(())
 }
+#[test]
+fn level_locator_source_token_rejects_padding() -> Result<(), String> {
+    if source_token(" padded ", "level player vehicle locator").is_ok() {
+        return Err("padded mission source token was accepted".to_owned());
+    }
+    Ok(())
+}

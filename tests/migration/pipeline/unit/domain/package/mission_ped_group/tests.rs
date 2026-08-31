@@ -205,3 +205,10 @@ fn binds_ped_group_selection_to_declared_index() -> Result<(), String> {
     }
     Ok(())
 }
+#[test]
+fn ped_source_token_rejects_padding() -> Result<(), String> {
+    if source_token(" padded ", "ped model").is_ok() {
+        return Err("padded mission source token was accepted".to_owned());
+    }
+    Ok(())
+}
