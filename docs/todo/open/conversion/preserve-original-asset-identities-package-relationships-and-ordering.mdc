@@ -247,6 +247,12 @@ identities, zero non-NUL controls, and 168,657 fields with accepted trailing NUL
 padding. A focused composite regression proves a leading-space `shared`
 identity is rejected rather than silently becoming `shared`.
 
+Vehicle decoded component-name intake now removes only trailing NUL padding and
+fails closed on empty, surrounding-whitespace, or control-character source
+identities instead of repairing them with `trim`. The current car-family ledgers
+contain 6,135 component names with zero surrounding-space or control cases; a
+focused regression proves a leading-space vehicle name is rejected.
+
 World structural-guide assembly now concatenates the accumulated
 `MasterContent` mesh vector directly instead of sorting it by mesh name before
 flattening geometry. A focused regression supplies `z` then `a` meshes with
