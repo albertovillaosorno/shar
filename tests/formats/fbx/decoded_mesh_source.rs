@@ -158,6 +158,32 @@ fn rejects_decoded_group_shader_with_surrounding_whitespace() {
 }
 
 #[test]
+fn rejects_unsupported_decoded_uv_channels() {
+    let root = temp_root("unsupported-uv-channel");
+    let mesh_dir = root.join("components").join("mesh");
+    let mesh_json = concat!(
+        r#"{"schema":"mesh","name":"mesh","prim_groups":[{"#,
+        r#""shader":"shader","positions":[[0,0,0],[1,0,0],[0,1,0]],"#,
+        r#""indices":[0,1,2],"uvs":[{"channel":1,"coords":["#,
+        r#"[0,0],[1,0],[0,1]]}]}]}"#,
+    );
+    let setup_result = fs::create_dir_all(&mesh_dir)
+        .and_then(|()| fs::write(mesh_dir.join("mesh.json"), mesh_json));
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+    let result = source.load_mesh("mesh");
+    let _cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Err(DecodedComponentError::UnsupportedUvChannel {
+            group: 0,
+            channel: 1,
+        })
+    );
+}
+
+#[test]
 fn rejects_declared_uv_channels_without_coordinates() {
     let root = temp_root("empty-uv-channel");
     let mesh_dir = root.join("components").join("mesh");
