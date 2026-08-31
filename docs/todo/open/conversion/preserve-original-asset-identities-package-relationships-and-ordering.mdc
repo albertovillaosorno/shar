@@ -540,5 +540,18 @@ case-folded portable comparison. Differently-cased extra names that alias to one
 portable output also fail before artifact reads. Exact repeated extra names stay
 valid when package assembly verifies the normalized PNG artifact is identical.
 
+FBX local texture resolution now treats the normalized component ledger as
+relationship authority before accepting a canonical direct PNG path. Duplicate
+matching rows no longer collapse to one candidate, and multiple published paths
+for one logical texture identity fail closed even when the direct PNG exists.
+Two regressions cover exact duplicate rows and direct-path ambiguity.
+
+A cached normalized-corpus audit covers 1,965 component ledgers and 10,064
+texture rows. It finds 118 packages with 539 logical texture names mapped to
+multiple published paths; 515 of those identities also have the canonical
+direct PNG that previously bypassed ledger ambiguity checking. These counts are
+relationship evidence only and do not claim every repeated identity is consumed
+by an FBX material.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
