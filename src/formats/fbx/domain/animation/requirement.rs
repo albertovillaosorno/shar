@@ -54,7 +54,7 @@ pub enum AnimationRequirementError {
 /// Animation requirement for one export package.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AnimationRequirement {
-    /// Animation member ids referenced by package evidence.
+    /// Animation member ids retained in supplied package-evidence order.
     pub member_ids: Vec<String>,
     /// Capability state selected by the planner.
     pub capability: AnimationCapability,
@@ -67,7 +67,7 @@ impl AnimationRequirement {
     ///
     /// Returns an error when member identities are blank or duplicated.
     pub fn new(
-        mut member_ids: Vec<String>,
+        member_ids: Vec<String>,
         capability: AnimationCapability,
     ) -> Result<Self, AnimationRequirementError> {
         if member_ids
@@ -88,7 +88,6 @@ impl AnimationRequirement {
         }) {
             return Err(AnimationRequirementError::DuplicateMemberId);
         }
-        member_ids.sort();
         Ok(Self { member_ids, capability })
     }
 
