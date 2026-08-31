@@ -289,6 +289,21 @@ Among 1,317 car shader texture parameters, 1,135 use trailing NUL padding, one
 is empty, and no nonempty reference has surrounding whitespace or controls;
 case, extension, and fixed-width padding normalization remain intact.
 
+Vehicle animation publication now requires the decoded source `name` instead of
+inventing `animation` for a missing identity or trimming surrounding whitespace.
+The current car corpus has 116 animation names, including 76 with trailing NUL
+padding, 46 skeletal `PTRN` clips, and 70 effect sidecars; none are empty or
+contain surrounding whitespace or controls after padding removal. Focused tests
+cover missing, blank, padded, and leading-space identities while retaining
+effect-sidecar source order.
+
+FBX generated-package evidence now preserves each role's member sequence from
+the generated index instead of sorting member ids lexically in both the adapter
+and `ModelPackageEvidence` constructor. The current index has 419 FBX-eligible
+rows. Lexical order differs from index order in 307 multi-model rows, 343
+multi-material rows, 310 multi-texture rows, and 218 multi-animation rows;
+`build_scene` consumes model member ids in this preserved sequence.
+
 World structural-guide assembly now concatenates the accumulated
 `MasterContent` mesh vector directly instead of sorting it by mesh name before
 flattening geometry. A focused regression supplies `z` then `a` meshes with
