@@ -325,6 +325,35 @@ fn rejects_four_index_skin_triangle_list_as_malformed_source()
 }
 
 #[test]
+fn rejects_unsupported_skin_uv_channels() -> Result<(), String> {
+    let path = temp_path("skin-unsupported-uv-channel");
+    let fixture = concat!(
+        r#"{"schema":"skin","name":"skin","version":3,"#,
+        r#""skeleton_name":"skeleton","num_prim_groups":1,"#,
+        r#""prim_groups":[{"shader":"shader","vertex_shader":"","#,
+        r#""prim_type":0,"vertex_format":0,"vertex_count":3,"#,
+        r#""index_count":3,"matrix_count":0,"#,
+        r#""positions":[[0,0,0],[1,0,0],[0,1,0]],"normals":[],"#,
+        r#""matrices":[],"matrix_palette":[],"indices":[0,1,2],"#,
+        r#""uvs":[{"channel":1,"coords":[[0,0],[1,0],[0,1]]}]}]}"#,
+    );
+    fs::write(&path, fixture).map_err(|error| error.to_string())?;
+    let error = load_skin_part(&path, &[]).err();
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+
+    match error {
+        Some(SkinSourceError::UnsupportedUvChannel {
+            group: 0,
+            channel: 1,
+            ..
+        }) => Ok(()),
+        other => Err(format!(
+            "unsupported skin UV channel was accepted: {other:?}"
+        )),
+    }
+}
+
+#[test]
 fn rejects_declared_matrix_palette_count_mismatch() -> Result<(), String> {
     let path = temp_path("skin-matrix-count");
     let fixture = concat!(
