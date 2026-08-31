@@ -874,13 +874,7 @@ fn recover_scrooby_resource_json(
     )?;
     let mut fields = String::new();
     for (field, value) in string_fields.iter().zip(&decoded.values) {
-        write!(
-            fields,
-            ",\"{}\":\"{}\"",
-            field,
-            escape_json(value),
-        )
-        .ok()?;
+        write!(fields, ",\"{}\":\"{}\"", field, escape_json(value),).ok()?;
     }
     let name = decoded.name;
     let version = decoded.version;
