@@ -172,6 +172,14 @@ differ from source-ordinal order, while all 22 animation sequences currently
 coincide. Animation projection still uses the explicit ordinal because clip
 order feeds FBX animation order and its first clip becomes the active stack.
 
+Vehicle effect-animation sidecars now retain that projected source-chunk order
+instead of sorting their published paths lexically after emission. The current
+car corpus has 14 packages with at least two non-skeletal effect animations; 10
+of those source sequences differ from lexical sidecar order. For example,
+`cCellC` preserves its ordinal 333 effect row before its ordinal 445 effect row.
+A focused regression proves a source `z` then `a` sequence remains `z` then `a`
+in the returned sidecar catalog.
+
 Billboard quad-group decoding now preserves each authored child-quad identity
 through the typed primitive-group boundary and emits it as FBX user metadata
 without changing deterministic FBX object names. The normalized corpus contains
