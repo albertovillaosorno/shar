@@ -81,7 +81,6 @@ fn parses_minimal_root() -> Result<(), String> {
     Ok(())
 }
 
-
 #[test]
 fn classifies_pure3d_image_container() -> Result<(), String> {
     let mut bytes = Vec::new();

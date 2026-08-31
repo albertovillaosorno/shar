@@ -228,7 +228,7 @@ fn recovers_multi_text_and_nested_bible_reference() -> Result<(), String> {
         || !json.contains(r#""id_hex":"0x0001800b""#)
     {
         return Err(
-            "multi-text recovery lost style or child inventory".to_owned(),
+            "multi-text recovery lost style or child inventory".to_owned()
         );
     }
 
@@ -255,7 +255,7 @@ fn recovers_polygon_points_and_colours() -> Result<(), String> {
     source.extend_from_slice(&1_u32.to_le_bytes());
     source.extend_from_slice(&2_u32.to_le_bytes());
     source.extend_from_slice(&2_u32.to_le_bytes());
-    for point in [[1.0_f32, 2.0, 3.0], [4.0, 5.0, 6.0]] {
+    for point in [[1f32, 2., 3.], [4., 5., 6.]] {
         for value in point {
             source.extend_from_slice(&value.to_le_bytes());
         }
@@ -308,9 +308,7 @@ fn identical_nested_widgets_keep_distinct_occurrences() -> Result<(), String> {
         return Err("Scrooby widget occurrence was deduplicated".to_owned());
     }
     if second.relative_path
-        != Path::new(
-            "scrooby_multi_text/Caption__ordinal_0020.json",
-        )
+        != Path::new("scrooby_multi_text/Caption__ordinal_0020.json")
     {
         return Err("Scrooby widget duplicate lacked ordinal alias".to_owned());
     }
