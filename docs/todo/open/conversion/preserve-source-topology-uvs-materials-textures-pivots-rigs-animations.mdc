@@ -113,5 +113,21 @@ primitive groups and 1,462 skin primitive groups. All 19,610 groups carry
 exactly one non-empty channel zero, with no nonzero or duplicate channel
 identity observed.
 
+Decoded P3D mesh `RENDERSTATUS` is now interpreted according to the schema's
+`CastShadow` field instead of being discarded. `MeshAsset` retains the optional
+boolean source flag, binary FBX mesh nodes publish declared values as
+`SHAR_P3D_CastShadow` source metadata. Values outside `0` or `1` fail
+closed.
+The normalized corpus contains 14,297 decoded meshes: 14,283 declare `1`, 12
+declare `0`, and two omit the chunk. A focused binary regression verifies the
+disabled value is encoded as `0`, not merely that the property name exists.
+
+Packed-normal evidence is redundant rather than exclusive in the current
+normalized corpus. All 3,642 mesh groups and 1,462 skin groups carrying packed
+normals also carry same-length decoded ordinary-normal arrays; no packed-only
+group was observed. Across the same 19,610 primitive groups, no decoded tangent,
+binormal, or multi-colour field is present. The adapters' strict JSON shape
+continues to reject unsupported fields rather than dropping them silently.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
