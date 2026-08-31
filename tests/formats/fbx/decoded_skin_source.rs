@@ -106,13 +106,8 @@ fn rejects_composite_skeleton_reference_with_surrounding_whitespace()
         .and_then(|()| fs::write(&composite_path, composite_fixture))
         .map_err(|error| error.to_string())?;
     let composite_paths = [composite_path.as_path()];
-    let result = load_character(
-        "character",
-        &skeleton_path,
-        &[],
-        &[],
-        &composite_paths,
-    );
+    let result =
+        load_character("character", &skeleton_path, &[], &[], &composite_paths);
     fs::remove_file(&skeleton_path).map_err(|error| error.to_string())?;
     fs::remove_file(&composite_path).map_err(|error| error.to_string())?;
     match result {
