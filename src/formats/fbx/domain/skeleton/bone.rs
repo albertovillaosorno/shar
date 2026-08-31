@@ -63,7 +63,8 @@ pub struct BoneMirrorMap {
 pub struct Bone {
     /// Stable publication bone id.
     pub id: String,
-    /// Optional authored source bone identity retained across canonical naming.
+    /// Optional authored source bone identity retained across canonical
+    /// naming.
     pub source_identity: Option<String>,
     /// Optional parent bone id.
     pub parent_id: Option<String>,

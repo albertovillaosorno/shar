@@ -47,7 +47,7 @@ fn rejects_control_characters_in_character_identities() {
                 rest_matrix: [0f32; 16],
                 source_identity: None,
                 source_rig: None,
-                },],
+            },],
             Vec::new(),
         ),
         Err(CharacterError::NonCanonicalBoneId {
@@ -58,14 +58,11 @@ fn rejects_control_characters_in_character_identities() {
 
 #[test]
 fn source_provenance_preserves_composite_order_and_duplicates() {
-    let result = CharacterSourceProvenance::new(
-        "skeleton",
-        vec![
-            "z-composite".to_owned(),
-            "a-composite".to_owned(),
-            "z-composite".to_owned(),
-        ],
-    );
+    let result = CharacterSourceProvenance::new("skeleton", vec![
+        "z-composite".to_owned(),
+        "a-composite".to_owned(),
+        "z-composite".to_owned(),
+    ]);
     assert_eq!(
         result,
         Ok(CharacterSourceProvenance {
@@ -88,10 +85,9 @@ fn rejects_noncanonical_character_source_provenance() {
         })
     );
     assert_eq!(
-        CharacterSourceProvenance::new(
-            "skeleton",
-            vec!["composite\nalias".to_owned()],
-        ),
+        CharacterSourceProvenance::new("skeleton", vec![
+            "composite\nalias".to_owned()
+        ],),
         Err(CharacterError::NonCanonicalSourceCompositeIdentity {
             identity: "composite\nalias".to_owned(),
         })

@@ -46,7 +46,8 @@ use super::primitive_group::PrimitiveGroup;
 pub struct MeshAsset {
     /// Stable publication mesh name.
     pub name: String,
-    /// Optional authored source mesh identity retained across canonical naming.
+    /// Optional authored source mesh identity retained across canonical
+    /// naming.
     pub source_identity: Option<String>,
     /// Optional source `CastShadow` flag from the decoded P3D mesh.
     pub cast_shadow: Option<bool>,

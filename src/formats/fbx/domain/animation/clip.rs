@@ -66,7 +66,8 @@ pub const fn frame_rates_match(left: f64, right: f64) -> bool {
 pub struct AnimationClip {
     /// Stable publication clip identity.
     pub name: String,
-    /// Optional authored source clip identity retained across canonical naming.
+    /// Optional authored source clip identity retained across canonical
+    /// naming.
     pub source_identity: Option<String>,
     /// Source frames per second.
     pub frame_rate: f64,
