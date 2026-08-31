@@ -624,5 +624,18 @@ evidence.
 A synthetic regression covers both ordinary package loading and
 world-analysis loading through the ledger relationship.
 
+Exact-path FBX mesh assembly now follows the same physical-versus-authored
+identity boundary. Character companion meshes and selected/instanced rigid-prop
+meshes use the caller-supplied physical path to select the occurrence while the
+decoded mesh document retains its authored identity. They no longer compare a
+deterministic `__ordinal_` collision suffix against that authored name. Across
+the current corpus, all 21 collision-renamed mesh rows are unique by authored
+identity within their owning container, and 16 participate in same-container
+composite prop relationships. The seven current model containers containing
+those 16 occurrences route through static prop preparation and were already
+protected by ledger-aware member loading; focused character and rigid-prop
+regressions close the equivalent exact-path boundary without claiming a current
+animated-world occurrence.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

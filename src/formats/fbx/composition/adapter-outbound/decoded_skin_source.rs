@@ -36,7 +36,7 @@ use std::path::Path;
 use schoenwald_filesystem::adapters::driving::local;
 use serde::Deserialize;
 
-use super::decoded_component_source::read_mesh;
+use super::decoded_component_source::read_indexed_mesh;
 use crate::domain::character::{
     CharacterAsset, CharacterError, CharacterSourceProvenance, SkinnedPart,
 };
@@ -116,16 +116,7 @@ pub fn load_character(
         }
     }
     for mesh_path in mesh_paths {
-        let requested_id = mesh_path
-            .file_stem()
-            .and_then(|value| value.to_str())
-            .ok_or_else(|| {
-                SkinSourceError::Prop(format!(
-                    "prop mesh path has no UTF-8 file stem: {}",
-                    mesh_path.display()
-                ))
-            })?;
-        let mut mesh = read_mesh(mesh_path, requested_id).map_err(|error| {
+        let mut mesh = read_indexed_mesh(mesh_path).map_err(|error| {
             SkinSourceError::Prop(format!(
                 "prop mesh decode failed for {}: {error:?}",
                 mesh_path.display()
