@@ -37,19 +37,97 @@ use fbx::domain::character::{CharacterAsset, SkinnedPart};
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
 use fbx::domain::skin::SkinInfluence;
-use fbx::domain::texture::MaterialSemantics;
+use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 
 use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
-    is_wheel_identity, load_vehicle_animations, texture_state_role,
-    vehicle_animation_name, vehicle_part_role, vehicle_part_semantics,
+    is_wheel_identity, load_vehicle_animations, separate_vehicle_parts,
+    texture_state_role, vehicle_animation_name, vehicle_part_role,
+    vehicle_part_semantics,
 };
 
 fn role(mesh: &str, shader: &str) -> &'static str {
     let semantics =
         vehicle_part_semantics(mesh, shader, MaterialSemantics::default());
     vehicle_part_role(mesh, shader, semantics)
+}
+
+fn ordered_vehicle_part(
+    name: &str,
+    shader: &str,
+) -> Result<SkinnedPart, String> {
+    let group = PrimitiveGroup::new(
+        0,
+        shader,
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("vehicle part group failed: {error:?}"))?;
+    let mesh = MeshAsset::new(name, vec![group])
+        .map_err(|error| format!("vehicle part mesh failed: {error:?}"))?;
+    let influences = (0_u32..3)
+        .map(|vertex_index| SkinInfluence {
+            vertex_index,
+            bone_id: "root".to_owned(),
+            weight: 1.,
+        })
+        .collect();
+    Ok(SkinnedPart {
+        mesh,
+        group_influences: vec![influences],
+    })
+}
+
+#[test]
+fn semantic_part_records_preserve_fbx_part_order() -> Result<(), String> {
+    let root = Bone {
+        id: "root".to_owned(),
+        parent_id: None,
+        rest_matrix: [
+            1., 0., 0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 0., 0., 1.,
+        ],
+        source_rig: None,
+    };
+    let asset = CharacterAsset::new(
+        "vehicle",
+        vec![root],
+        vec![
+            ordered_vehicle_part("zShape", "z_m")?,
+            ordered_vehicle_part("aShape", "a_m")?,
+        ],
+    )
+    .map_err(|error| format!("vehicle fixture failed: {error:?}"))?;
+    let materials = ["z_m", "a_m"]
+        .into_iter()
+        .map(|name| {
+            MaterialBinding::new(name, None)
+                .map_err(|error| format!("material failed: {error:?}"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let (separated, records) = separate_vehicle_parts(asset, &materials)
+        .map_err(|error| error.to_string())?;
+    let part_names = separated
+        .parts
+        .iter()
+        .map(|part| part.mesh.name.as_str())
+        .collect::<Vec<_>>();
+    let record_names = records
+        .iter()
+        .map(|record| record.name.as_str())
+        .collect::<Vec<_>>();
+    if record_names != part_names {
+        return Err(format!(
+            concat!(
+                "vehicle catalog part order diverged from FBX parts: ",
+                "records={:?} fbx={:?}"
+            ),
+            record_names,
+            part_names
+        ));
+    }
+    Ok(())
 }
 
 #[test]

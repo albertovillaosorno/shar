@@ -824,7 +824,6 @@ fn separate_vehicle_parts(
                 "vehicle semantic asset failed: {error:?}"
             ))
         })?;
-    records.sort_by(|left, right| left.name.cmp(&right.name));
     Ok((separated, records))
 }
 
