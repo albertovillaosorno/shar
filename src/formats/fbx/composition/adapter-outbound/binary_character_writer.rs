@@ -65,8 +65,7 @@ use property::{
     color_property, count_i32, double_property, enum_property, i32_node,
     id_property, integer_property, name_class, name_class_node, string,
     string_node, string_property, time_property, user_string_property,
-    vector_property,
-    visibility_property, xref_string_property,
+    vector_property, visibility_property, xref_string_property,
 };
 
 /// Deterministic parent rotating the completed character around the FBX up
@@ -1468,14 +1467,24 @@ fn mesh_model_node(
     if let Some(cast_shadow) = cast_shadow {
         custom_properties.push(user_string_property(
             "SHAR_P3D_CastShadow",
-            if cast_shadow { "1" } else { "0" },
+            if cast_shadow {
+                "1"
+            } else {
+                "0"
+            },
         ));
     }
-    model_node(id, name, "Mesh", &TrsParts {
-        translation: [0., 0., 0.],
-        rotation_degrees: [0., 0., 0.],
-        scale: [1., 1., 1.],
-    }, custom_properties)
+    model_node(
+        id,
+        name,
+        "Mesh",
+        &TrsParts {
+            translation: [0., 0., 0.],
+            rotation_degrees: [0., 0., 0.],
+            scale: [1., 1., 1.],
+        },
+        custom_properties,
+    )
 }
 
 /// Build one skeleton limb-node model.
@@ -1497,13 +1506,7 @@ fn limb_model_node(
             &source_rig_json(source_rig),
         ));
     }
-    model_node(
-        id,
-        &bone.id,
-        "LimbNode",
-        parts,
-        custom_properties,
-    )
+    model_node(id, &bone.id, "LimbNode", parts, custom_properties)
 }
 
 /// Render one source-rig record in a stable field order.
@@ -1514,9 +1517,7 @@ fn source_rig_json(
         || "null".to_owned(),
         |map| {
             format!(
-                concat!(
-                    "{{\"index\":{},\"scale\":[{},{},{}]}}"
-                ),
+                concat!("{{\"index\":{},\"scale\":[{},{},{}]}}"),
                 map.index, map.scale[0], map.scale[1], map.scale[2]
             )
         },

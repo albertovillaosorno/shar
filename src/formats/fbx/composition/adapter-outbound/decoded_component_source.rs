@@ -718,9 +718,11 @@ fn stage_texture_binding(
                     }
                 })?;
                 if existing != incoming {
-                    return Err(DecodedComponentError::TextureStagingCollision {
-                        file_name,
-                    });
+                    return Err(
+                        DecodedComponentError::TextureStagingCollision {
+                            file_name,
+                        },
+                    );
                 }
             },
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
