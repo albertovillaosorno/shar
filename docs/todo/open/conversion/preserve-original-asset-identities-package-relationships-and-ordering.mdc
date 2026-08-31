@@ -240,13 +240,12 @@ source sequence while composite-backed routes continue to use authored composite
 prop order.
 
 Prop and world identity cleanup now removes only fixed-width trailing NUL
-padding
-and fails closed on empty, surrounding-whitespace, or control-character source
-identities instead of repairing them with `trim`. An audit of 246,082 normalized
-`name` and `skeleton_name` fields found zero surrounding-whitespace identities,
-zero non-NUL controls, and 176,439 fields using only accepted NUL padding. A
-focused composite regression proves a leading-space `shared` identity is
-rejected rather than silently becoming `shared`.
+padding and fails closed on empty, surrounding-whitespace, or control-character
+source identities instead of repairing them with `trim`. An audit of 246,082
+normalized `name` and `skeleton_name` fields found zero surrounding-whitespace
+identities, zero non-NUL controls, and 168,657 fields with accepted trailing NUL
+padding. A focused composite regression proves a leading-space `shared`
+identity is rejected rather than silently becoming `shared`.
 
 World structural-guide assembly now concatenates the accumulated
 `MasterContent` mesh vector directly instead of sorting it by mesh name before
