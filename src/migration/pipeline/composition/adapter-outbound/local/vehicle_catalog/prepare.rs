@@ -1030,6 +1030,26 @@ fn shader_material_root(
     )))
 }
 
+/// Return one decoded vehicle animation identity without repairing source text.
+fn vehicle_animation_name(value: &Value) -> Result<&str, PipelineError> {
+    let name = value
+        .get("name")
+        .and_then(Value::as_str)
+        .ok_or_else(|| {
+            PipelineError::new("vehicle animation has no source name")
+        })?;
+    let clean = name.trim_end_matches('\u{0}');
+    if clean.is_empty()
+        || clean != clean.trim()
+        || clean.chars().any(char::is_control)
+    {
+        return Err(PipelineError::new(
+            "vehicle animation identity is non-canonical",
+        ));
+    }
+    Ok(clean)
+}
+
 /// Export skeletal clips and preserve texture/effect animations as sidecars.
 fn load_vehicle_animations(
     package: &PhaseThreePackageRow,
@@ -1046,12 +1066,7 @@ fn load_vehicle_animations(
             .map_err(|error| PipelineError::new(error.to_string()))?;
         let value: Value = serde_json::from_slice(&bytes)
             .map_err(|error| PipelineError::new(error.to_string()))?;
-        let name = value
-            .get("name")
-            .and_then(Value::as_str)
-            .unwrap_or("animation")
-            .trim_end_matches('\u{0}')
-            .trim();
+        let name = vehicle_animation_name(&value)?;
         let kind = value
             .get("type")
             .and_then(Value::as_str)
