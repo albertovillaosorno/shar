@@ -1002,6 +1002,7 @@ fn read_ledger(root: &Path) -> PipelineOutcome<Vec<LedgerRow>> {
         .map_err(|error| io_error("read Scrooby component ledger", &error))?;
     let mut rows = Vec::new();
     let mut ordinals = BTreeSet::new();
+    let mut paths = BTreeSet::new();
     for line in text.lines().skip(1) {
         let value = serde_json::from_str::<Value>(line).map_err(|error| {
             PipelineError::new(format!("Scrooby ledger JSON failed: {error}"))
@@ -1018,6 +1019,15 @@ fn read_ledger(root: &Path) -> PipelineOutcome<Vec<LedgerRow>> {
             .and_then(|value| usize::try_from(value).ok());
         let kind = required_string(&value, "kind")?.to_owned();
         let path = required_string(&value, "path")?.to_owned();
+        let path_identity = path
+            .chars()
+            .flat_map(char::to_uppercase)
+            .collect::<String>();
+        if !paths.insert(path_identity) {
+            return Err(PipelineError::new(
+                "Scrooby component path identity is duplicated",
+            ));
+        }
         rows.push(LedgerRow {
             ordinal,
             parent_ordinal,
