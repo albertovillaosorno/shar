@@ -256,6 +256,7 @@ fn take_clips(prepared: &mut PreparedProp) -> Vec<AnimationClip> {
 fn animation_key(clip: &AnimationClip) -> String {
     let mut value = clip.clone();
     value.name.clear();
+    value.source_identity = None;
     digest_hex(format!("{value:?}").as_bytes())
 }
 

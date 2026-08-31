@@ -88,6 +88,7 @@ fn semantic_part_records_preserve_fbx_part_order() -> Result<(), String> {
         rest_matrix: [
             1., 0., 0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 0., 0., 1.,
         ],
+        source_identity: None,
         source_rig: None,
     };
     let asset = CharacterAsset::new(
@@ -138,6 +139,7 @@ fn semantic_part_split_preserves_source_cast_shadow() -> Result<(), String> {
         rest_matrix: [
             1., 0., 0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 0., 0., 1.,
         ],
+        source_identity: None,
         source_rig: None,
     };
     let mut source_part = ordered_vehicle_part("bodyShape", "body_m")?;
@@ -268,6 +270,7 @@ fn effect_test_asset() -> Result<CharacterAsset, String> {
             rest_matrix: [
                 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
             ],
+            source_identity: None,
             source_rig: None,
         }],
         vec![SkinnedPart {

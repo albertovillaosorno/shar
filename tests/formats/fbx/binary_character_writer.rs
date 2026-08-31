@@ -101,6 +101,7 @@ fn synthetic_character() -> Result<CharacterAsset, String> {
             rest_matrix: [
                 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 2., 3., 4., 1.,
             ],
+            source_identity: Some("SourceRoot".to_owned()),
             source_rig: None,
         }],
         vec![SkinnedPart {
@@ -389,6 +390,8 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
             .any(|window| window == b"root\0\x01Model")
     );
     for token in [
+        b"SHAR_P3D_SourceBoneIdentity".as_slice(),
+        b"SourceRoot".as_slice(),
         b"LayerElementColor".as_slice(),
         b"LayerElementSmoothing".as_slice(),
         b"Smoothing".as_slice(),

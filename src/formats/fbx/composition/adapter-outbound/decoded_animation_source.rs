@@ -314,14 +314,16 @@ fn load_clip(
             .ok_or(DecodedAnimationError::InvalidKeySeries)?;
         tracks.push(sample_track(bone, group, rest, frame_count)?);
     }
+    let clip_name = trim_identity(&decoded.name)?;
     AnimationClip::new(
-        trim_identity(&decoded.name)?,
+        clip_name.clone(),
         decoded.frame_rate,
         decoded.cyclic != 0,
         frame_count,
         tracks,
         ignored_group_ids,
     )
+    .and_then(|clip| clip.with_source_identity(clip_name))
     .map_err(DecodedAnimationError::Clip)
 }
 

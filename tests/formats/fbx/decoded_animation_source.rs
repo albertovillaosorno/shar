@@ -216,12 +216,14 @@ fn reconstructs_compact_channels_and_preserves_helper_evidence() {
             id: "Root".to_owned(),
             parent_id: None,
             rest_matrix: rest_matrix([1f32, 2f32, 3f32]),
+            source_identity: None,
             source_rig: None,
         },
         Bone {
             id: "Child".to_owned(),
             parent_id: Some("Root".to_owned()),
             rest_matrix: rest_matrix([4f32, 5f32, 6f32]),
+            source_identity: None,
             source_rig: None,
         },
     ];
@@ -243,6 +245,7 @@ fn reconstructs_compact_channels_and_preserves_helper_evidence() {
         return;
     };
     assert_eq!(clip.name, "walk");
+    assert_eq!(clip.source_identity.as_deref(), Some("walk"));
     assert!((clip.frame_rate - 30f64).abs() <= TOLERANCE);
     assert!(clip.cyclic);
     assert_eq!(clip.frame_count, 3);
@@ -298,6 +301,7 @@ fn rejects_unbound_top_level_animation_data() {
             id: "Root".to_owned(),
             parent_id: None,
             rest_matrix: rest_matrix([1., 2., 3.]),
+            source_identity: None,
             source_rig: None,
         }];
         let result = load_animation_clips(&[path.as_path()], &bones);

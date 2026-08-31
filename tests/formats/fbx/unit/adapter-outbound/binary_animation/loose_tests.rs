@@ -37,6 +37,7 @@ fn build_animation_plan_rejects_duplicate_clip_names() {
     let clips = [
         AnimationClip {
             name: "walk".to_owned(),
+            source_identity: None,
             frame_rate: 30f64,
             cyclic: false,
             frame_count: 1,
@@ -45,6 +46,7 @@ fn build_animation_plan_rejects_duplicate_clip_names() {
         },
         AnimationClip {
             name: "walk".to_owned(),
+            source_identity: None,
             frame_rate: 30f64,
             cyclic: false,
             frame_count: 1,
@@ -71,6 +73,7 @@ fn shared_frame_rate_rejects_distinct_exact_values() {
     let clips = [
         AnimationClip {
             name: "first".to_owned(),
+            source_identity: None,
             frame_rate: 30f64,
             cyclic: false,
             frame_count: 1,
@@ -79,6 +82,7 @@ fn shared_frame_rate_rejects_distinct_exact_values() {
         },
         AnimationClip {
             name: "second".to_owned(),
+            source_identity: None,
             frame_rate: 30.000_000_000_5_f64,
             cyclic: false,
             frame_count: 1,

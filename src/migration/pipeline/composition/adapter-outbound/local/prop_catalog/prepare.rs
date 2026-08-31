@@ -282,7 +282,7 @@ pub(super) fn prepared_signature(
     textures: &[super::prepared::PreparedTexture],
 ) -> String {
     let mut semantic_geometry = geometry.clone();
-    clear_source_mesh_identities(&mut semantic_geometry);
+    clear_source_provenance(&mut semantic_geometry);
     let evidence = format!(
         "{route:?}\n{semantic_geometry:?}\n{materials:?}\n{:?}",
         textures
@@ -293,17 +293,23 @@ pub(super) fn prepared_signature(
     digest_hex(evidence.as_bytes())
 }
 
-/// Remove provenance-only mesh identities before semantic deduplication.
-fn clear_source_mesh_identities(geometry: &mut PreparedGeometry) {
+/// Remove provenance-only identities before semantic deduplication.
+fn clear_source_provenance(geometry: &mut PreparedGeometry) {
     match geometry {
         PreparedGeometry::Static(meshes) => {
             for mesh in meshes {
                 mesh.source_identity = None;
             }
         },
-        PreparedGeometry::RigidAnimated { asset, .. } => {
+        PreparedGeometry::RigidAnimated { asset, animations } => {
+            for bone in &mut asset.bones {
+                bone.source_identity = None;
+            }
             for part in &mut asset.parts {
                 part.mesh.source_identity = None;
+            }
+            for clip in animations {
+                clip.source_identity = None;
             }
         },
     }
@@ -353,8 +359,12 @@ pub(super) fn rig_signature(prepared: &PreparedProp) -> Option<String> {
     match &prepared.geometry {
         PreparedGeometry::Static(_) => None,
         PreparedGeometry::RigidAnimated { asset, .. } => {
+            let mut bones = asset.bones.clone();
+            for bone in &mut bones {
+                bone.source_identity = None;
+            }
             let evidence = (
-                &asset.bones,
+                bones,
                 asset
                     .parts
                     .iter()

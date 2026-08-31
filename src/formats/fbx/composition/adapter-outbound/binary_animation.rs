@@ -461,6 +461,18 @@ fn animation_stack_node(
     clip: &AnimationClip,
     stop_time: i64,
 ) -> Result<BinaryNode, BinaryAnimationError> {
+    let mut properties = vec![
+        time_property("LocalStart", 0),
+        time_property("LocalStop", stop_time),
+        time_property("ReferenceStart", 0),
+        time_property("ReferenceStop", stop_time),
+    ];
+    if let Some(source_identity) = &clip.source_identity {
+        properties.push(user_string_property(
+            "SHAR_P3D_SourceAnimationIdentity",
+            source_identity,
+        ));
+    }
     Ok(BinaryNode::new(
         "AnimationStack",
         vec![
@@ -468,12 +480,7 @@ fn animation_stack_node(
             name_class(&clip.name, "AnimStack"),
             string(""),
         ],
-        vec![BinaryNode::branch("Properties70", vec![
-            time_property("LocalStart", 0),
-            time_property("LocalStop", stop_time),
-            time_property("ReferenceStart", 0),
-            time_property("ReferenceStop", stop_time),
-        ])],
+        vec![BinaryNode::branch("Properties70", properties)],
     ))
 }
 
@@ -603,6 +610,17 @@ fn number_property(name: &str, value: f64) -> BinaryNode {
         string(""),
         string("A"),
         BinaryProperty::F64(value),
+    ])
+}
+
+/// Build one user-defined string property.
+fn user_string_property(name: &str, value: &str) -> BinaryNode {
+    BinaryNode::leaf("P", vec![
+        string(name),
+        string("KString"),
+        string(""),
+        string("U"),
+        string(value),
     ])
 }
 

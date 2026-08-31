@@ -116,6 +116,16 @@ fn validate_bones(bones: &[Bone]) -> Result<BTreeSet<String>, CharacterError> {
                 bone: bone.id.clone(),
             });
         }
+        if let Some(source_identity) = &bone.source_identity
+            && (source_identity.trim().is_empty()
+                || source_identity != source_identity.trim()
+                || source_identity.chars().any(char::is_control))
+        {
+            return Err(CharacterError::NonCanonicalBoneSourceIdentity {
+                bone: bone.id.clone(),
+                source_identity: source_identity.clone(),
+            });
+        }
         if let Some(parent) = &bone.parent_id {
             if parent.trim().is_empty()
                 || parent != parent.trim()
@@ -251,6 +261,13 @@ pub enum CharacterError {
     NonCanonicalBoneId {
         /// Non-canonical bone identity.
         bone: String,
+    },
+    /// One authored bone source identity was empty or non-canonical.
+    NonCanonicalBoneSourceIdentity {
+        /// Publication bone carrying malformed provenance.
+        bone: String,
+        /// Malformed authored identity.
+        source_identity: String,
     },
     /// One bone identity appeared more than once.
     DuplicateBoneId {

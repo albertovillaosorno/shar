@@ -1463,6 +1463,12 @@ fn limb_model_node(
     parts: &TrsParts,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let mut custom_properties = Vec::new();
+    if let Some(source_identity) = &bone.source_identity {
+        custom_properties.push(user_string_property(
+            "SHAR_P3D_SourceBoneIdentity",
+            source_identity,
+        ));
+    }
     if let Some(source_rig) = &bone.source_rig {
         custom_properties.push(user_string_property(
             "SHAR_P3D_RigMetadata",

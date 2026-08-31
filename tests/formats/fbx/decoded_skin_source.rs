@@ -171,9 +171,14 @@ fn preserves_typed_source_joint_rig_semantics() -> Result<(), String> {
     let (_name, bones) =
         load_skeleton(&path).map_err(|error| format!("{error:?}"))?;
     fs::remove_file(&path).map_err(|error| error.to_string())?;
-    let rig = bones
+    let bone = bones
         .first()
-        .and_then(|bone| bone.source_rig)
+        .ok_or_else(|| "decoded source joint was dropped".to_owned())?;
+    if bone.source_identity.as_deref() != Some("root") {
+        return Err(format!("source joint identity changed: {bone:?}"));
+    }
+    let rig = bone
+        .source_rig
         .ok_or_else(|| "source rig metadata was dropped".to_owned())?;
     if rig.dof != u32::MAX
         || rig.free_axes != u32::MAX

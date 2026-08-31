@@ -58,6 +58,9 @@ use fbx::domain::skin::SkinInfluence;
 
 use super::{WorldVariant, animation_key, merge_compatible};
 use crate::adapters::driven::local::prop_catalog::model::PropRoute;
+use crate::adapters::driven::local::prop_catalog::prepare::{
+    prepared_signature, rig_signature,
+};
 use crate::adapters::driven::local::prop_catalog::prepared::{
     PreparedGeometry, PreparedProp,
 };
@@ -88,6 +91,7 @@ fn rigid_asset() -> Result<CharacterAsset, String> {
             rest_matrix: [
                 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
             ],
+            source_identity: None,
             source_rig: None,
         }],
         vec![SkinnedPart {
@@ -123,6 +127,85 @@ fn clip_x(clip: &AnimationClip) -> Result<f64, String> {
         .and_then(|track| track.samples.first())
         .map(|sample| sample.translation[0])
         .ok_or_else(|| "world variant clip lost its first sample".to_owned())
+}
+
+#[test]
+fn prop_hashes_ignore_source_bone_and_clip_identity() -> Result<(), String> {
+    let mut left_asset = rigid_asset()?;
+    let mut right_asset = left_asset.clone();
+    left_asset
+        .bones
+        .first_mut()
+        .ok_or_else(|| "left hash fixture lost its root bone".to_owned())?
+        .source_identity = Some("source-root-a".to_owned());
+    right_asset
+        .bones
+        .first_mut()
+        .ok_or_else(|| "right hash fixture lost its root bone".to_owned())?
+        .source_identity = Some("source-root-b".to_owned());
+    let left_clip = clip("animation-0000", 1.)?
+        .with_source_identity("source-clip-a")
+        .map_err(|error| format!("left source clip failed: {error:?}"))?;
+    let right_clip = clip("animation-0000", 1.)?
+        .with_source_identity("source-clip-b")
+        .map_err(|error| format!("right source clip failed: {error:?}"))?;
+    let left_geometry = PreparedGeometry::RigidAnimated {
+        asset: left_asset,
+        animations: vec![left_clip],
+    };
+    let right_geometry = PreparedGeometry::RigidAnimated {
+        asset: right_asset,
+        animations: vec![right_clip],
+    };
+    let left_signature = prepared_signature(
+        PropRoute::RigidAnimated,
+        &left_geometry,
+        &[],
+        &[],
+    );
+    let right_signature = prepared_signature(
+        PropRoute::RigidAnimated,
+        &right_geometry,
+        &[],
+        &[],
+    );
+    if left_signature != right_signature {
+        return Err("source provenance changed prop semantic dedupe".to_owned());
+    }
+    let left = PreparedProp {
+        route: PropRoute::RigidAnimated,
+        signature: left_signature,
+        geometry: left_geometry,
+        materials: Vec::new(),
+        textures: Vec::new(),
+    };
+    let right = PreparedProp {
+        route: PropRoute::RigidAnimated,
+        signature: right_signature,
+        geometry: right_geometry,
+        materials: Vec::new(),
+        textures: Vec::new(),
+    };
+    if rig_signature(&left) == rig_signature(&right) {
+        Ok(())
+    } else {
+        Err("source bone provenance changed prop rig dedupe".to_owned())
+    }
+}
+
+#[test]
+fn animation_key_ignores_source_clip_identity() -> Result<(), String> {
+    let left = clip("first-name", 1.)?
+        .with_source_identity("source-a")
+        .map_err(|error| format!("left source identity failed: {error:?}"))?;
+    let right = clip("second-name", 1.)?
+        .with_source_identity("source-b")
+        .map_err(|error| format!("right source identity failed: {error:?}"))?;
+    if animation_key(&left) == animation_key(&right) {
+        Ok(())
+    } else {
+        Err("source clip provenance changed world animation dedupe".to_owned())
+    }
 }
 
 #[test]
