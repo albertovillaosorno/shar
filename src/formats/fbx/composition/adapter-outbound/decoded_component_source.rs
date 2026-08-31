@@ -193,6 +193,18 @@ fn shader_component_path(
     package_root: &Path,
     shader_name: &str,
 ) -> Result<PathBuf, DecodedComponentError> {
+    let ledger_candidates =
+        shader_ledger_candidates(package_root, shader_name)?;
+    match ledger_candidates.as_slice() {
+        [candidate] => return Ok(candidate.clone()),
+        [] => {},
+        _ => {
+            return Err(DecodedComponentError::AmbiguousShaderMember {
+                shader: shader_name.to_owned(),
+                candidates: component_file_names(&ledger_candidates),
+            });
+        },
+    }
     let direct = component_path(package_root, "shader", shader_name, "json")?;
     if direct.is_file() {
         return Ok(direct);
@@ -233,17 +245,78 @@ fn shader_component_path(
         [] => Ok(direct),
         _ => Err(DecodedComponentError::AmbiguousShaderMember {
             shader: shader_name.to_owned(),
-            candidates: candidates
-                .iter()
-                .map(|path| {
-                    path.file_name()
-                        .and_then(|value| value.to_str())
-                        .unwrap_or_default()
-                        .to_owned()
-                })
-                .collect(),
+            candidates: component_file_names(&candidates),
         }),
     }
+}
+
+/// Resolve shader members declared by the normalized component ledger.
+fn shader_ledger_candidates(
+    package_root: &Path,
+    shader_name: &str,
+) -> Result<Vec<PathBuf>, DecodedComponentError> {
+    let manifest = package_root.join("components.jsonl");
+    if !manifest.is_file() {
+        return Ok(Vec::new());
+    }
+    let text = local::read_utf8(&manifest).map_err(|source| {
+        DecodedComponentError::Read {
+            path: manifest.display().to_string(),
+            source: source.to_string(),
+        }
+    })?;
+    let mut candidates = Vec::new();
+    for line in text.lines() {
+        let value: Value = serde_json::from_str(line).map_err(|source| {
+            DecodedComponentError::Parse {
+                path: manifest.display().to_string(),
+                source: source.to_string(),
+            }
+        })?;
+        if value.get("kind").and_then(Value::as_str) != Some("shader") {
+            continue;
+        }
+        let Some(name) = value.get("name").and_then(Value::as_str) else {
+            continue;
+        };
+        if !name
+            .trim_end_matches('\u{0}')
+            .eq_ignore_ascii_case(shader_name)
+        {
+            continue;
+        }
+        let path =
+            value.get("path").and_then(Value::as_str).ok_or_else(|| {
+                DecodedComponentError::InvalidMemberId(name.to_owned())
+            })?;
+        let file_name = path
+            .strip_prefix("shader/")
+            .filter(|member| is_single_path_segment(member))
+            .ok_or_else(|| {
+                DecodedComponentError::InvalidMemberId(path.to_owned())
+            })?;
+        candidates.push(
+            package_root
+                .join("components")
+                .join("shader")
+                .join(file_name),
+        );
+    }
+    candidates.sort();
+    Ok(candidates)
+}
+
+/// Return stable file-name diagnostics for candidate component paths.
+fn component_file_names(candidates: &[PathBuf]) -> Vec<String> {
+    candidates
+        .iter()
+        .map(|path| {
+            path.file_name()
+                .and_then(|value| value.to_str())
+                .unwrap_or_default()
+                .to_owned()
+        })
+        .collect()
 }
 
 /// Match one fixed-width padded shader stem without changing name case.
