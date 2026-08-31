@@ -826,16 +826,18 @@ fn frame_count(value: f64) -> Result<usize, DecodedAnimationError> {
     Ok(value as usize)
 }
 
-/// Trim fixed-width decoded identity padding and surrounding whitespace.
+/// Remove fixed-width decoded identity padding without repairing source text.
 fn trim_identity(value: &str) -> Result<String, DecodedAnimationError> {
     let without_padding = value.trim_end_matches('\0');
     if without_padding.contains('\0') {
         return Err(DecodedAnimationError::InvalidIdentityPadding);
     }
-    if without_padding.chars().any(char::is_control) {
+    if without_padding != without_padding.trim()
+        || without_padding.chars().any(char::is_control)
+    {
         return Err(DecodedAnimationError::InvalidIdentityCharacter);
     }
-    Ok(without_padding.trim().to_owned())
+    Ok(without_padding.to_owned())
 }
 
 /// Read one strict decoded JSON component.

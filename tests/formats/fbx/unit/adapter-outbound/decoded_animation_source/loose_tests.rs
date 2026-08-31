@@ -139,6 +139,18 @@ fn rejects_identity_control_characters() {
 }
 
 #[test]
+fn rejects_identity_surrounding_whitespace() {
+    assert_eq!(
+        trim_identity(" Root"),
+        Err(DecodedAnimationError::InvalidIdentityCharacter)
+    );
+    assert_eq!(
+        trim_identity("Root "),
+        Err(DecodedAnimationError::InvalidIdentityCharacter)
+    );
+}
+
+#[test]
 fn rejects_unsupported_bound_channel_parameter() {
     let bone = Bone {
         id: "Root".to_owned(),
