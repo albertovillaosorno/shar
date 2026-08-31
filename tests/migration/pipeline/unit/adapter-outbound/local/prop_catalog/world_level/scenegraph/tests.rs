@@ -83,6 +83,16 @@ fn write_scenegraph_fixture(
         .map_err(|error| error.to_string())?;
     fs::write(directory.join("000.json"), document)
         .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components.jsonl"),
+        concat!(
+            r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"#,
+            r#""container_ordinal":1,"name":"Scene","#,
+            r#""path":"scenegraph/000.json","kind":"scenegraph"}"#,
+            "\n"
+        ),
+    )
+    .map_err(|error| error.to_string())?;
     Ok(root)
 }
 
@@ -160,6 +170,55 @@ fn placement_map_preserves_authored_placement_order() -> Result<(), String> {
     if translations != [9., 1.] {
         return Err(format!(
             "authored placement order changed: {translations:?}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn placement_map_orders_documents_by_source_ordinal() -> Result<(), String> {
+    let root = fixture_root("document-order");
+    let scenegraph_dir = root.join("components/scenegraph");
+    let instance_dir = root.join("components/srr_insta_static_phys_dsg");
+    fs::create_dir_all(&scenegraph_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&instance_dir).map_err(|error| error.to_string())?;
+    let later = serde_json::to_vec(&scenegraph_with_translations(&[20]))
+        .map_err(|error| error.to_string())?;
+    let earlier = serde_json::to_vec(&scenegraph_with_translations(&[10]))
+        .map_err(|error| error.to_string())?;
+    fs::write(scenegraph_dir.join("later.json"), later)
+        .map_err(|error| error.to_string())?;
+    fs::write(instance_dir.join("earlier.json"), earlier)
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components.jsonl"),
+        concat!(
+            r#"{"ordinal":10,"depth":1,"parent_ordinal":0,"#,
+            r#""container_ordinal":10,"name":"Earlier","#,
+            r#""path":"srr_insta_static_phys_dsg/earlier.json","#,
+            r#""kind":"srr_insta_static_phys_dsg"}"#,
+            "\n",
+            r#"{"ordinal":20,"depth":1,"parent_ordinal":0,"#,
+            r#""container_ordinal":20,"name":"Later","#,
+            r#""path":"scenegraph/later.json","kind":"scenegraph"}"#,
+            "\n"
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let result = placement_map(&root).map_err(|error| error.to_string());
+    cleanup(&root);
+    let placements = result?;
+    let translations = placements
+        .get("house")
+        .ok_or_else(|| {
+            "cross-document house placements are missing".to_owned()
+        })?
+        .iter()
+        .map(|matrix| matrix[12])
+        .collect::<Vec<_>>();
+    if translations != [10., 20.] {
+        return Err(format!(
+            "scenegraph document source order changed: {translations:?}"
         ));
     }
     Ok(())

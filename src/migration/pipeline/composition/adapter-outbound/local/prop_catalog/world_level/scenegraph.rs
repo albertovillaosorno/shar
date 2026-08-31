@@ -32,11 +32,12 @@
 
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use serde_json::Value;
 
 use super::super::inventory_common::clean_identity;
+use super::super::world_ledger::read_world_ledger;
 use super::transform::{Matrix, identity, multiply};
 use crate::domain::PipelineError;
 
@@ -50,56 +51,45 @@ pub(super) fn placement_map(
     package_root: &Path,
 ) -> Result<BTreeMap<String, Vec<Matrix>>, PipelineError> {
     let components = package_root.join("components");
+    let ledger = read_world_ledger(package_root)?;
+    let mut documents = ledger
+        .groups
+        .values()
+        .flatten()
+        .filter(|row| is_placement_document_family(&row.kind))
+        .collect::<Vec<_>>();
+    documents.sort_by_key(|row| row.ordinal);
     let mut placements = BTreeMap::<String, Vec<Matrix>>::new();
-    for family in [
-        "scenegraph",
-        "srr_insta_entity_dsg",
-        "srr_insta_static_phys_dsg",
-        "srr_dyna_phys_dsg",
-        "srr_insta_anim_dyna_phys_dsg",
-        "srr_static_phys_dsg",
-    ] {
-        let directory = components.join(family);
-        if !directory.is_dir() {
-            continue;
-        }
-        for path in json_files(&directory)? {
-            let bytes = fs::read(&path).map_err(|error| {
-                PipelineError::new(format!(
-                    "world level scenegraph read failed for {}: \
-                             {error}",
-                    path.display()
-                ))
-            })?;
-            let value: Value =
-                serde_json::from_slice(&bytes).map_err(|error| {
-                    PipelineError::new(format!(
-                        "world level scenegraph JSON failed for {}: \
-                             {error}",
-                        path.display()
-                    ))
-                })?;
-            collect_scenegraphs(&value, &mut placements)?;
-        }
+    for document in documents {
+        let path = components.join(&document.path);
+        let bytes = fs::read(&path).map_err(|error| {
+            PipelineError::new(format!(
+                "world level scenegraph read failed for {}: {error}",
+                path.display()
+            ))
+        })?;
+        let value: Value = serde_json::from_slice(&bytes).map_err(|error| {
+            PipelineError::new(format!(
+                "world level scenegraph JSON failed for {}: {error}",
+                path.display()
+            ))
+        })?;
+        collect_scenegraphs(&value, &mut placements)?;
     }
     Ok(placements)
 }
 
-/// List canonical JSON files in one normalized component family.
-fn json_files(directory: &Path) -> Result<Vec<PathBuf>, PipelineError> {
-    let mut files = fs::read_dir(directory)
-        .map_err(|error| PipelineError::new(error.to_string()))?
-        .map(|entry| {
-            entry
-                .map(|value| value.path())
-                .map_err(|error| PipelineError::new(error.to_string()))
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    files.retain(|path| {
-        path.extension().and_then(|value| value.to_str()) == Some("json")
-    });
-    files.sort();
-    Ok(files)
+/// Return whether one ledger family can carry placement scenegraphs.
+fn is_placement_document_family(kind: &str) -> bool {
+    matches!(
+        kind,
+        "scenegraph"
+            | "srr_insta_entity_dsg"
+            | "srr_insta_static_phys_dsg"
+            | "srr_dyna_phys_dsg"
+            | "srr_insta_anim_dyna_phys_dsg"
+            | "srr_static_phys_dsg"
+    )
 }
 
 /// Recursively discover every embedded scenegraph value.
