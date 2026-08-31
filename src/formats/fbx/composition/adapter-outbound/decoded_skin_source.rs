@@ -37,7 +37,9 @@ use schoenwald_filesystem::adapters::driving::local;
 use serde::Deserialize;
 
 use super::decoded_component_source::read_mesh;
-use crate::domain::character::{CharacterAsset, CharacterError, SkinnedPart};
+use crate::domain::character::{
+    CharacterAsset, CharacterError, CharacterSourceProvenance, SkinnedPart,
+};
 use crate::domain::mesh::{
     MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
     triangulate_triangle_list,
@@ -83,6 +85,7 @@ pub fn load_character(
     }
     let mut prop_bindings = BTreeMap::new();
     let mut translucent_skins = BTreeSet::new();
+    let mut composite_identities = Vec::with_capacity(composite_paths.len());
     for composite_path in composite_paths {
         let bindings = composite_bindings(
             composite_path,
@@ -90,6 +93,7 @@ pub fn load_character(
             &part_names,
             bones.len(),
         )?;
+        composite_identities.push(bindings.source_identity.clone());
         if bindings.effect_count != 0 {
             return Err(SkinSourceError::UnsupportedCompositeEffects {
                 path: path_text(composite_path),
@@ -155,7 +159,12 @@ pub fn load_character(
             "composite prop has no decoded mesh: {prop_name}"
         )));
     }
-    CharacterAsset::new(name, bones, parts).map_err(SkinSourceError::Character)
+    let source_provenance =
+        CharacterSourceProvenance::new(skeleton_name, composite_identities)
+            .map_err(SkinSourceError::Character)?;
+    CharacterAsset::new(name, bones, parts)
+        .map(|asset| asset.with_source_provenance(source_provenance))
+        .map_err(SkinSourceError::Character)
 }
 
 /// Load one decoded skeleton into its name and ordered validated bones.
@@ -656,6 +665,8 @@ pub(super) struct CompositePropBinding {
 
 /// Validated skin and rigid-prop semantics from one composite.
 pub(super) struct CompositeBindings {
+    /// Validated authored composite identity.
+    pub(super) source_identity: String,
     /// Rigid prop bindings.
     pub(super) props: Vec<CompositePropBinding>,
     /// Skin identities explicitly marked translucent.
@@ -796,6 +807,7 @@ pub(super) fn composite_bindings(
         });
     }
     Ok(CompositeBindings {
+        source_identity: composite_name,
         props: bindings,
         translucent_skins,
         effect_count: actual_effect_count,

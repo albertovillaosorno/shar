@@ -129,6 +129,74 @@ fn rejects_composite_skeleton_reference_with_surrounding_whitespace()
 }
 
 #[test]
+fn preserves_skeleton_to_composite_source_relationship_order()
+-> Result<(), String> {
+    let root = std::env::temp_dir()
+        .join(format!("fbx-decoded-relationship-{}", std::process::id()));
+    let skeleton_path = root.join("skeleton.json");
+    let first_composite_path = root.join("first.json");
+    let second_composite_path = root.join("second.json");
+    let mesh_path = root.join("BodyShape.json");
+    let skeleton_fixture = concat!(
+        r#"{"schema":"skeleton","name":"rig","version":0,"#,
+        r#""num_joints":1,"joints":[{"name":"root","parent":0,"#,
+        r#""dof":0,"free_axes":0,"primary_axis":0,"secondary_axis":0,"#,
+        r#""twist_axis":0,"rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}]}"#,
+    );
+    let first_composite_fixture = concat!(
+        r#"{"schema":"composite_drawable","name":"composite-z","#,
+        r#""skeleton_name":"rig","num_skins":0,"skins":[],"#,
+        r#""num_props":0,"props":[],"num_effects":0,"effects":[]}"#,
+    );
+    let second_composite_fixture = concat!(
+        r#"{"schema":"composite_drawable","name":"composite-a","#,
+        r#""skeleton_name":"rig","num_skins":0,"skins":[],"#,
+        r#""num_props":1,"props":[{"kind":"prop","name":"BodyShape","#,
+        r#""is_translucent":0,"skeleton_joint_id":0,"sort_order":0.5}],"#,
+        r#""num_effects":0,"effects":[]}"#,
+    );
+    let mesh_fixture = concat!(
+        r#"{"schema":"mesh","name":"BodyShape","prim_groups":[{"#,
+        r#""shader":"body_m","positions":[[0,0,0],[1,0,0],[0,1,0]],"#,
+        r#""indices":[0,1,2]}]}"#,
+    );
+    fs::create_dir_all(&root)
+        .and_then(|()| fs::write(&skeleton_path, skeleton_fixture))
+        .and_then(|()| {
+            fs::write(&first_composite_path, first_composite_fixture)
+        })
+        .and_then(|()| {
+            fs::write(&second_composite_path, second_composite_fixture)
+        })
+        .and_then(|()| fs::write(&mesh_path, mesh_fixture))
+        .map_err(|error| error.to_string())?;
+    let composites = [
+        first_composite_path.as_path(),
+        second_composite_path.as_path(),
+    ];
+    let meshes = [mesh_path.as_path()];
+    let result = load_character(
+        "publication-name",
+        &skeleton_path,
+        &[],
+        &meshes,
+        &composites,
+    );
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let asset = result
+        .map_err(|error| format!("relationship decode failed: {error:?}"))?;
+    let provenance = asset.source_provenance.ok_or_else(|| {
+        "decoded character lost source relationships".to_owned()
+    })?;
+    if provenance.skeleton_identity() != "rig"
+        || provenance.composite_identities() != ["composite-z", "composite-a"]
+    {
+        return Err(format!("source relationships changed: {provenance:?}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_declared_joint_count_mismatch() -> Result<(), String> {
     let path = temp_path("skeleton-count");
     let fixture = concat!(

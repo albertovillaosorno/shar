@@ -50,7 +50,9 @@ use super::binary_identity::{
     BinaryIdentityError, GeometryIds, bone_ids, cluster_id, geometry_ids,
 };
 use crate::domain::animation::AnimationClip;
-use crate::domain::character::{CharacterAsset, SkinnedPart};
+use crate::domain::character::{
+    CharacterAsset, CharacterSourceProvenance, SkinnedPart,
+};
 use crate::domain::mesh::{MeshAsset, PrimitiveGroup};
 use crate::domain::texture::MaterialBinding;
 use crate::domain::transform::affine_inverse::{InverseError, invert_affine};
@@ -506,6 +508,7 @@ fn write_binary_model_fbx_with_storage(
         .collect();
     let model = CharacterAsset {
         name: asset_name.to_owned(),
+        source_provenance: None,
         bones: Vec::new(),
         parts,
     };
@@ -1068,7 +1071,10 @@ fn objects(
     } else {
         root_policy.transform()
     };
-    let mut children = vec![export_root_node(&root_transform)?];
+    let mut children = vec![export_root_node(
+        &root_transform,
+        character.source_provenance.as_ref(),
+    )?];
     for group in groups {
         children.push(geometry_node(group)?);
         children.push(mesh_model_node(
@@ -1412,13 +1418,29 @@ fn layer_element(element_type: &str) -> BinaryNode {
 /// Build the export-space parent that reverses the authored forward direction.
 fn export_root_node(
     transform: &TrsParts,
+    source_provenance: Option<&CharacterSourceProvenance>,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
+    let mut custom_properties = Vec::new();
+    if let Some(provenance) = source_provenance {
+        custom_properties.push(user_string_property(
+            "SHAR_P3D_SourceSkeletonIdentity",
+            provenance.skeleton_identity(),
+        ));
+        for (ordinal, identity) in
+            provenance.composite_identities().iter().enumerate()
+        {
+            custom_properties.push(user_string_property(
+                &format!("SHAR_P3D_SourceCompositeIdentity_{ordinal:04}"),
+                identity,
+            ));
+        }
+    }
     model_node(
         EXPORT_ROOT_ID,
         "SHAR_Export_Root",
         "Null",
         transform,
-        Vec::new(),
+        custom_properties,
     )
 }
 

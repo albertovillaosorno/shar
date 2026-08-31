@@ -48,6 +48,58 @@ pub struct SkinnedPart {
     pub group_influences: Vec<Vec<SkinInfluence>>,
 }
 
+/// Authored source relationships retained independently of publication naming.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CharacterSourceProvenance {
+    /// Decoded skeleton identity shared by the assembled character.
+    skeleton_identity: String,
+    /// Decoded composite identities in supplied source order.
+    composite_identities: Vec<String>,
+}
+
+impl CharacterSourceProvenance {
+    /// Create one validated source-relationship record.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a skeleton or composite identity is blank, padded,
+    /// or contains control characters.
+    pub fn new(
+        skeleton_identity: impl Into<String>,
+        composite_identities: Vec<String>,
+    ) -> Result<Self, CharacterError> {
+        let skeleton_identity = skeleton_identity.into();
+        if !canonical_source_identity(&skeleton_identity) {
+            return Err(CharacterError::NonCanonicalSourceSkeletonIdentity {
+                identity: skeleton_identity,
+            });
+        }
+        for identity in &composite_identities {
+            if !canonical_source_identity(identity) {
+                return Err(CharacterError::NonCanonicalSourceCompositeIdentity {
+                    identity: identity.clone(),
+                });
+            }
+        }
+        Ok(Self {
+            skeleton_identity,
+            composite_identities,
+        })
+    }
+
+    /// Return the validated authored skeleton identity.
+    #[must_use]
+    pub fn skeleton_identity(&self) -> &str {
+        &self.skeleton_identity
+    }
+
+    /// Return composite identities in exact retained source order.
+    #[must_use]
+    pub fn composite_identities(&self) -> &[String] {
+        &self.composite_identities
+    }
+}
+
 /// Skinned character aggregate with skeleton and bound mesh parts.
 // The explicit aggregate name distinguishes the character root from mesh parts.
 #[expect(
@@ -57,8 +109,10 @@ pub struct SkinnedPart {
 )]
 #[derive(Clone, Debug, PartialEq)]
 pub struct CharacterAsset {
-    /// Stable character name.
+    /// Stable publication character name.
     pub name: String,
+    /// Optional authored skeleton-to-composite source relationship evidence.
+    pub source_provenance: Option<CharacterSourceProvenance>,
     /// Skeleton bones ordered so parents precede children.
     pub bones: Vec<Bone>,
     /// Skinned mesh parts bound to the shared skeleton.
@@ -95,10 +149,28 @@ impl CharacterAsset {
         }
         Ok(Self {
             name: character_name,
+            source_provenance: None,
             bones,
             parts,
         })
     }
+
+    /// Attach validated authored skeleton-to-composite relationship evidence.
+    #[must_use]
+    pub fn with_source_provenance(
+        mut self,
+        source_provenance: CharacterSourceProvenance,
+    ) -> Self {
+        self.source_provenance = Some(source_provenance);
+        self
+    }
+}
+
+/// Return whether one source identity is already canonical.
+fn canonical_source_identity(identity: &str) -> bool {
+    !identity.trim().is_empty()
+        && identity == identity.trim()
+        && !identity.chars().any(char::is_control)
 }
 
 /// Validate skeleton ordering, identity, and matrix quality.
@@ -253,6 +325,16 @@ pub enum CharacterError {
     MissingCharacterName,
     /// Character identity carried surrounding whitespace.
     NonCanonicalCharacterName,
+    /// Authored source skeleton identity was empty or non-canonical.
+    NonCanonicalSourceSkeletonIdentity {
+        /// Malformed authored skeleton identity.
+        identity: String,
+    },
+    /// Authored source composite identity was empty or non-canonical.
+    NonCanonicalSourceCompositeIdentity {
+        /// Malformed authored composite identity.
+        identity: String,
+    },
     /// Character skeleton contained no bones.
     MissingBones,
     /// One bone identity was empty or whitespace-only.
