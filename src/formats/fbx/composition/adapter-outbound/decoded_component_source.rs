@@ -72,16 +72,6 @@ impl DecodedComponentSource {
         }
     }
 
-    /// Internal helper for the adapter implementation.
-    fn component_path(
-        &self,
-        family: &str,
-        member_id: &str,
-        extension: &str,
-    ) -> Result<PathBuf, DecodedComponentError> {
-        component_path(&self.package_root, family, member_id, extension)
-    }
-
     /// Resolve one shader using an exact index-published external PNG source.
     ///
     /// # Errors
@@ -153,8 +143,7 @@ impl ComponentSource for DecodedComponentSource {
         &self,
         mesh_member_id: &str,
     ) -> Result<MeshAsset, Self::Error> {
-        let path = self.component_path("mesh", mesh_member_id, "json")?;
-        read_mesh(&path, mesh_member_id)
+        read_member_mesh(&self.package_root, mesh_member_id)
     }
 
     /// Internal helper for the adapter implementation.
@@ -352,8 +341,77 @@ pub fn read_mesh_for_analysis(
     package_root: &Path,
     mesh_member_id: &str,
 ) -> Result<(MeshAsset, usize), DecodedComponentError> {
+    read_member_mesh(package_root, mesh_member_id).map(|mesh| (mesh, 0))
+}
+
+/// Read one package mesh member through its normalized ledger relationship.
+fn read_member_mesh(
+    package_root: &Path,
+    mesh_member_id: &str,
+) -> Result<MeshAsset, DecodedComponentError> {
     let path = component_path(package_root, "mesh", mesh_member_id, "json")?;
-    decode_mesh_document(&path, Some(mesh_member_id)).map(|mesh| (mesh, 0))
+    let authored_identity =
+        mesh_member_authored_identity(package_root, mesh_member_id)?;
+    decode_mesh_document(&path, Some(&authored_identity))
+}
+
+/// Resolve the authored mesh identity for one physical normalized member.
+fn mesh_member_authored_identity(
+    package_root: &Path,
+    mesh_member_id: &str,
+) -> Result<String, DecodedComponentError> {
+    let manifest = package_root.join("components.jsonl");
+    if !manifest.is_file() {
+        return Ok(mesh_member_id.to_owned());
+    }
+    let text = local::read_utf8(&manifest).map_err(|source| {
+        DecodedComponentError::Read {
+            path: manifest.display().to_string(),
+            source: source.to_string(),
+        }
+    })?;
+    let expected_path = format!("mesh/{mesh_member_id}.json");
+    let mut identities = Vec::new();
+    for line in text.lines() {
+        let value: Value = serde_json::from_str(line).map_err(|source| {
+            DecodedComponentError::Parse {
+                path: manifest.display().to_string(),
+                source: source.to_string(),
+            }
+        })?;
+        if value.get("kind").and_then(Value::as_str) != Some("mesh")
+            || value.get("path").and_then(Value::as_str)
+                != Some(expected_path.as_str())
+        {
+            continue;
+        }
+        let name =
+            value.get("name").and_then(Value::as_str).ok_or_else(|| {
+                DecodedComponentError::MeshEvidence(
+                    "mesh ledger row has no authored identity".to_owned(),
+                )
+            })?;
+        let identity = decoded_mesh_identity(name);
+        if identity.is_empty()
+            || identity != identity.trim()
+            || identity.chars().any(char::is_control)
+        {
+            return Err(DecodedComponentError::MeshEvidence(
+                "mesh ledger row has a non-canonical authored identity"
+                    .to_owned(),
+            ));
+        }
+        identities.push(identity);
+    }
+    match identities.as_slice() {
+        [identity] => Ok(identity.clone()),
+        [] => Err(DecodedComponentError::MeshEvidence(format!(
+            "mesh member {mesh_member_id} is missing its ledger relationship"
+        ))),
+        _ => Err(DecodedComponentError::MeshEvidence(format!(
+            "mesh member {mesh_member_id} has ambiguous ledger relationships"
+        ))),
+    }
 }
 
 /// Read one decoded mesh from an exact package-index path.

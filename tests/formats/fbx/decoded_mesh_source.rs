@@ -258,6 +258,56 @@ fn rejects_declared_uv_channels_without_coordinates() {
 }
 
 #[test]
+fn loads_collision_renamed_mesh_through_ledger() -> Result<(), String> {
+    let root = temp_root("collision-renamed-member");
+    let mesh_dir = root.join("components").join("mesh");
+    let member = "shared__ordinal_2";
+    let mesh_json = concat!(
+        r#"{"schema":"mesh","name":"shared","prim_groups":[{"#,
+        r#""shader":"shader","positions":[[0,0,0],[1,0,0],[0,1,0]],"#,
+        r#""indices":[0,1,2]}]}"#,
+    );
+    fs::create_dir_all(&mesh_dir)
+        .and_then(|()| {
+            fs::write(mesh_dir.join(format!("{member}.json")), mesh_json)
+        })
+        .and_then(|()| {
+            fs::write(
+                root.join("components.jsonl"),
+                concat!(
+                    r#"{"schema":"p3d.package.v1"}"#,
+                    "\n",
+                    r#"{"ordinal":2,"depth":2,"parent_ordinal":1,"#,
+                    r#""container_ordinal":1,"name":"shared","#,
+                    r#""path":"mesh/shared__ordinal_2.json","kind":"mesh"}"#,
+                    "\n",
+                ),
+            )
+        })
+        .map_err(|error| error.to_string())?;
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+    let mesh = source
+        .load_mesh(member)
+        .map_err(|error| format!("member load failed: {error:?}"));
+    let analysis = read_mesh_for_analysis(&root, member)
+        .map_err(|error| format!("analysis load failed: {error:?}"));
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let mesh = mesh?;
+    let (analysis, discarded) = analysis?;
+    if mesh.name != "shared"
+        || mesh.source_identity.as_deref() != Some("shared")
+        || analysis.name != "shared"
+        || discarded != 0
+    {
+        return Err(format!(
+            "ledger member relationship changed authored identity: \
+             {mesh:?} {analysis:?}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_mesh_identity_mismatches() {
     let root = temp_root("identity-mismatch");
     let mesh_dir = root.join("components").join("mesh");
