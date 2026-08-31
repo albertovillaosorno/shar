@@ -750,12 +750,15 @@ fn scrooby_page_children_json(
         }
         let name = match id {
             LAYER => None,
-            IMAGE => Some(decode_scrooby_resource_fields(
-                chunk.get(cursor..next)?,
-                header_size,
-                total_size,
-                1,
-            )?.name),
+            IMAGE => Some(
+                decode_scrooby_resource_fields(
+                    chunk.get(cursor..next)?,
+                    header_size,
+                    total_size,
+                    1,
+                )?
+                .name,
+            ),
             PURE3D => Some(
                 decode_scrooby_resource_fields(
                     chunk.get(cursor..next)?,
