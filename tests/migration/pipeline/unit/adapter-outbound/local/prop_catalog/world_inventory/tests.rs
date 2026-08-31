@@ -30,11 +30,18 @@
 
 //! World inventory unit tests.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use super::{LedgerRow, decoded_mesh_names, source_ordered_mesh_ids};
+use super::{
+    LedgerRow, decoded_mesh_names, deferred_render_bindings,
+    source_ordered_mesh_ids,
+};
+use crate::adapters::driven::local::prop_catalog::inventory_common::{
+    CompositeEvidence, CompositePropEvidence,
+};
 
 static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
@@ -95,5 +102,82 @@ fn source_mesh_ids_follow_component_ordinals() -> Result<(), String> {
     let actual = source_ordered_mesh_ids(&rows)
         .map_err(|error| error.to_string())?;
     assert_eq!(actual, ["z", "a"]);
+    Ok(())
+}
+
+#[test]
+fn deferred_bindings_preserve_order_and_exact_quad_group_occurrence()
+-> Result<(), String> {
+    let composite = CompositeEvidence {
+        member_id: "composite".to_owned(),
+        name: "owner".to_owned(),
+        skeleton_name: "rig".to_owned(),
+        prop_names: vec![
+            "body".to_owned(),
+            "beam".to_owned(),
+            "logical-only".to_owned(),
+        ],
+        prop_bindings: vec![
+            CompositePropEvidence {
+                name: "body".to_owned(),
+                skeleton_joint_id: 0,
+                is_translucent: false,
+            },
+            CompositePropEvidence {
+                name: "beam".to_owned(),
+                skeleton_joint_id: 3,
+                is_translucent: true,
+            },
+            CompositePropEvidence {
+                name: "logical-only".to_owned(),
+                skeleton_joint_id: 4,
+                is_translucent: false,
+            },
+        ],
+    };
+    let rows = vec![LedgerRow {
+        ordinal: 22,
+        depth: 2,
+        container_ordinal: 1,
+        name: "beam\x00".to_owned(),
+        path: "quad_group/beam__ordinal_22.json".to_owned(),
+        kind: "quad_group".to_owned(),
+    }];
+    let meshes = BTreeMap::from([(
+        "body".to_owned(),
+        "body__ordinal_10".to_owned(),
+    )]);
+
+    let actual = deferred_render_bindings(&rows, &composite, &meshes)
+        .map_err(|error| error.to_string())?;
+    if actual.len() != 2 {
+        return Err(format!("unexpected deferred binding count: {actual:?}"));
+    }
+    let beam = actual
+        .first()
+        .ok_or_else(|| "resolved deferred binding is missing".to_owned())?;
+    if beam.composite_prop_index != 1
+        || beam.source_identity != "beam"
+        || beam.skeleton_joint_id != 3
+        || !beam.is_translucent
+        || beam.component_kind.as_deref() != Some("quad_group")
+        || beam.component_member_id.as_deref() != Some("beam__ordinal_22")
+        || beam.source_ordinal != Some(22)
+    {
+        return Err(format!("resolved deferred binding changed: {beam:?}"));
+    }
+    let logical = actual
+        .get(1)
+        .ok_or_else(|| "logical deferred binding is missing".to_owned())?;
+    if logical.composite_prop_index != 2
+        || logical.source_identity != "logical-only"
+        || logical.skeleton_joint_id != 4
+        || logical.is_translucent
+        || logical.component_kind.is_some()
+        || logical.component_member_id.is_some()
+        || logical.source_ordinal.is_some()
+    {
+        return Err(format!("logical deferred binding changed: {logical:?}"));
+    }
     Ok(())
 }

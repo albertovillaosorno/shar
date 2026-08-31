@@ -38,6 +38,17 @@ use serde_json::Value;
 
 use crate::domain::PipelineError;
 
+/// One authored composite prop relationship.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct CompositePropEvidence {
+    /// Cleaned referenced render identity.
+    pub(super) name: String,
+    /// Authored skeleton joint index.
+    pub(super) skeleton_joint_id: usize,
+    /// Authored translucency flag.
+    pub(super) is_translucent: bool,
+}
+
 /// Composite identity, skeleton, and rigid prop references.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct CompositeEvidence {
@@ -49,6 +60,8 @@ pub(super) struct CompositeEvidence {
     pub(super) skeleton_name: String,
     /// Cleaned rigid prop identities in authored composite order.
     pub(super) prop_names: Vec<String>,
+    /// Authored prop relationships in the same composite order.
+    pub(super) prop_bindings: Vec<CompositePropEvidence>,
 }
 
 /// Return all JSON component paths in stable file-name order.
@@ -125,6 +138,7 @@ pub(super) fn read_composite(
             })?;
     let mut seen = BTreeSet::new();
     let mut prop_names = Vec::with_capacity(props.len());
+    let mut prop_bindings = Vec::with_capacity(props.len());
     for prop in props {
         let raw_name = prop
             .get("name")
@@ -143,7 +157,20 @@ pub(super) fn read_composite(
                 path.display()
             )));
         }
-        prop_names.push(name);
+        let skeleton_joint_id = required_usize(prop, "skeleton_joint_id")?;
+        let translucent = required_usize(prop, "is_translucent")?;
+        if translucent > 1 {
+            return Err(PipelineError::new(format!(
+                "prop composite translucency is not a boolean: {}",
+                path.display()
+            )));
+        }
+        prop_names.push(name.clone());
+        prop_bindings.push(CompositePropEvidence {
+            name,
+            skeleton_joint_id,
+            is_translucent: translucent == 1,
+        });
     }
     Ok(CompositeEvidence {
         member_id: component_member_id(path)?,
@@ -153,6 +180,7 @@ pub(super) fn read_composite(
             "skeleton_name",
         )?)?,
         prop_names,
+        prop_bindings,
     })
 }
 

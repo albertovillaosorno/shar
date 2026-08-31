@@ -69,12 +69,28 @@ fn decoded_identity_padding_is_removed() {
 fn composite_prop_order_is_preserved() -> Result<(), String> {
     let path = composite_fixture(
         "source-order",
-        r#"[{"name":"zebra"},{"name":"alpha"},{"name":"middle"}]"#,
+        concat!(
+            r#"[{"name":"zebra","skeleton_joint_id":3,"is_translucent":0},"#,
+            r#"{"name":"alpha","skeleton_joint_id":1,"is_translucent":1},"#,
+            r#"{"name":"middle","skeleton_joint_id":2,"is_translucent":0}]"#,
+        ),
     )?;
     let result = read_composite(&path).map_err(|error| error.to_string());
     drop(fs::remove_dir_all(path.parent().ok_or("fixture has no parent")?));
     let composite = result?;
     assert_eq!(composite.prop_names, ["zebra", "alpha", "middle"]);
+    let first = composite
+        .prop_bindings
+        .first()
+        .ok_or_else(|| "composite lost first prop binding".to_owned())?;
+    let second = composite
+        .prop_bindings
+        .get(1)
+        .ok_or_else(|| "composite lost second prop binding".to_owned())?;
+    assert_eq!(first.skeleton_joint_id, 3);
+    assert!(!first.is_translucent);
+    assert_eq!(second.skeleton_joint_id, 1);
+    assert!(second.is_translucent);
     Ok(())
 }
 
@@ -82,7 +98,7 @@ fn composite_prop_order_is_preserved() -> Result<(), String> {
 fn composite_space_padded_prop_identity_fails_closed() -> Result<(), String> {
     let path = composite_fixture(
         "space-padded-prop",
-        r#"[{"name":" shared"}]"#,
+        r#"[{"name":" shared","skeleton_joint_id":0,"is_translucent":0}]"#,
     )?;
     let result = read_composite(&path);
     let parent = path.parent().ok_or("fixture has no parent")?;
@@ -99,7 +115,11 @@ fn composite_space_padded_prop_identity_fails_closed() -> Result<(), String> {
 fn composite_duplicate_prop_identity_fails_closed() -> Result<(), String> {
     let path = composite_fixture(
         "duplicate-prop",
-        r#"[{"name":"shared"},{"name":"shared\u0000"}]"#,
+        concat!(
+            r#"[{"name":"shared","skeleton_joint_id":0,"is_translucent":0},"#,
+            r#"{"name":"shared\u0000","skeleton_joint_id":1,"#,
+            r#""is_translucent":1}]"#,
+        ),
     )?;
     let result = read_composite(&path);
     drop(fs::remove_dir_all(path.parent().ok_or("fixture has no parent")?));
