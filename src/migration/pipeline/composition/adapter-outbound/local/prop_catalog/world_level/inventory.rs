@@ -162,8 +162,8 @@ pub(super) fn package_meshes(
             meshes.push(LevelMeshSource {
                 ordinal: row.ordinal,
                 member_id,
-                mesh_name: clean_identity(&row.name),
-                owner_name: clean_identity(&owner.name),
+                mesh_name: clean_identity(&row.name)?,
+                owner_name: clean_identity(&owner.name)?,
                 owner_kind: owner.kind.clone(),
             });
         }

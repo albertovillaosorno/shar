@@ -58,8 +58,11 @@ fn composite_fixture(label: &str, props: &str) -> Result<PathBuf, String> {
 
 #[test]
 fn decoded_identity_padding_is_removed() {
-    assert_eq!(clean_identity("PTRN_flag\x00\x00"), "PTRN_flag");
-    assert_eq!(clean_identity("flag\0\0"), "flag");
+    assert_eq!(
+        clean_identity("PTRN_flag\x00\x00").ok().as_deref(),
+        Some("PTRN_flag")
+    );
+    assert_eq!(clean_identity("flag\0\0").ok().as_deref(), Some("flag"));
 }
 
 #[test]
@@ -72,6 +75,23 @@ fn composite_prop_order_is_preserved() -> Result<(), String> {
     drop(fs::remove_dir_all(path.parent().ok_or("fixture has no parent")?));
     let composite = result?;
     assert_eq!(composite.prop_names, ["zebra", "alpha", "middle"]);
+    Ok(())
+}
+
+#[test]
+fn composite_space_padded_prop_identity_fails_closed() -> Result<(), String> {
+    let path = composite_fixture(
+        "space-padded-prop",
+        r#"[{"name":" shared"}]"#,
+    )?;
+    let result = read_composite(&path);
+    let parent = path.parent().ok_or("fixture has no parent")?;
+    drop(fs::remove_dir_all(parent));
+    if result.is_ok() {
+        return Err(
+            "space-padded composite prop identity was repaired".to_owned(),
+        );
+    }
     Ok(())
 }
 

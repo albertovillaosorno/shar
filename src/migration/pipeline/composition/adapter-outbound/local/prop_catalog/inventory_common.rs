@@ -105,7 +105,7 @@ pub(super) fn read_component_name(
     path: &Path,
 ) -> Result<String, PipelineError> {
     let value = read_json(path)?;
-    Ok(clean_identity(&required_string(&value, "name")?))
+    clean_identity(&required_string(&value, "name")?)
 }
 
 /// Read one composite and its rigid mesh references.
@@ -126,10 +126,9 @@ pub(super) fn read_composite(
     let mut seen = BTreeSet::new();
     let mut prop_names = Vec::with_capacity(props.len());
     for prop in props {
-        let name = prop
+        let raw_name = prop
             .get("name")
             .and_then(Value::as_str)
-            .map(clean_identity)
             .ok_or_else(|| {
                 PipelineError::new(format!(
                     "prop composite has malformed prop name: \
@@ -137,6 +136,7 @@ pub(super) fn read_composite(
                     path.display()
                 ))
             })?;
+        let name = clean_identity(raw_name)?;
         if !seen.insert(name.clone()) {
             return Err(PipelineError::new(format!(
                 "prop composite repeats prop identity {name}: {}",
@@ -147,11 +147,11 @@ pub(super) fn read_composite(
     }
     Ok(CompositeEvidence {
         member_id: component_member_id(path)?,
-        name: clean_identity(&required_string(&value, "name")?),
+        name: clean_identity(&required_string(&value, "name")?)?,
         skeleton_name: clean_identity(&required_string(
             &value,
             "skeleton_name",
-        )?),
+        )?)?,
         prop_names,
     })
 }
@@ -282,21 +282,34 @@ pub(super) fn component_member_id(
         })
 }
 
-/// Remove fixed-width decoded identity padding without changing inner text.
-pub(super) fn clean_identity(value: &str) -> String {
-    let mut cleaned = value.trim().to_owned();
+/// Remove fixed-width decoded NUL padding without repairing source identity.
+///
+/// # Errors
+///
+/// Returns an error when the unpadded identity is empty, space-padded, or
+/// contains a control character.
+pub(super) fn clean_identity(value: &str) -> Result<String, PipelineError> {
+    let mut cleaned = value.to_owned();
     loop {
         let next = cleaned
             .trim_end_matches(r"\x00")
             .trim_end_matches(r"\u0000")
             .trim_end_matches('\0')
-            .trim_end()
             .to_owned();
         if next == cleaned {
-            return cleaned;
+            break;
         }
         cleaned = next;
     }
+    if cleaned.is_empty()
+        || cleaned != cleaned.trim()
+        || cleaned.chars().any(char::is_control)
+    {
+        return Err(PipelineError::new(
+            "prop source identity is non-canonical",
+        ));
+    }
+    Ok(cleaned)
 }
 
 #[cfg(test)]

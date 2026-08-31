@@ -115,7 +115,7 @@ fn texture_source_from_line(
     if value.get("kind").and_then(Value::as_str) != Some("texture") {
         return Ok(None);
     }
-    let logical = clean_identity(&required_string(&value, "name")?);
+    let logical = clean_identity(&required_string(&value, "name")?)?;
     let relative_path = required_string(&value, "path")?;
     let file_name = relative_path
         .strip_prefix("texture/")
@@ -182,7 +182,7 @@ impl SharedTextureAuthority {
         texture_reference: &str,
         source_subcategory: &str,
     ) -> Result<Option<&Path>, PipelineError> {
-        let logical = clean_identity(texture_reference);
+        let logical = clean_identity(texture_reference)?;
         let Some(all) = self.sources.get(&logical) else {
             return Ok(None);
         };
