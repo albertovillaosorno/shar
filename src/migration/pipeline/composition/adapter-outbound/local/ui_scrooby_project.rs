@@ -1001,11 +1001,17 @@ fn read_ledger(root: &Path) -> PipelineOutcome<Vec<LedgerRow>> {
     let text = fs::read_to_string(&path)
         .map_err(|error| io_error("read Scrooby component ledger", &error))?;
     let mut rows = Vec::new();
+    let mut ordinals = BTreeSet::new();
     for line in text.lines().skip(1) {
         let value = serde_json::from_str::<Value>(line).map_err(|error| {
             PipelineError::new(format!("Scrooby ledger JSON failed: {error}"))
         })?;
         let ordinal = required_usize(&value, "ordinal")?;
+        if !ordinals.insert(ordinal) {
+            return Err(PipelineError::new(
+                "Scrooby component ordinal is duplicated",
+            ));
+        }
         let parent_ordinal = value
             .get("parent_ordinal")
             .and_then(Value::as_u64)
