@@ -224,6 +224,57 @@ fn rejects_selected_mesh_without_composite_binding() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_duplicate_selected_prop_binding() -> Result<(), String> {
+    let root = temp_root("duplicate-binding");
+    let (skeleton_path, composite_path, mesh_path) =
+        write_fixture(&root, "BodyShape")?;
+    let mut composite = serde_json::from_str::<serde_json::Value>(
+        composite_json(),
+    )
+    .map_err(|error| error.to_string())?;
+    let object = composite
+        .as_object_mut()
+        .ok_or_else(|| "composite fixture is not an object".to_owned())?;
+    let count = object
+        .get_mut("num_props")
+        .ok_or_else(|| "composite fixture has no prop count".to_owned())?;
+    *count = serde_json::json!(3);
+    object
+        .get_mut("props")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or_else(|| "composite fixture has no prop array".to_owned())?
+        .push(serde_json::json!({
+            "kind": "prop",
+            "name": "BodyShape",
+            "is_translucent": 0,
+            "skeleton_joint_id": 2,
+            "sort_order": 0,
+        }));
+    fs::write(
+        &composite_path,
+        serde_json::to_vec(&composite).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+
+    let result = decoded_rigid_prop_source::load_selected_rigid_prop_asset(
+        "selected",
+        &skeleton_path,
+        &[mesh_path.as_path()],
+        &composite_path,
+    );
+    remove_fixture(&root)?;
+
+    match result {
+        Err(SkinSourceError::Prop(reason))
+            if reason.contains("duplicate selected rigid prop binding") =>
+        {
+            Ok(())
+        },
+        other => Err(format!("duplicate prop binding was accepted: {other:?}")),
+    }
+}
+
+#[test]
 fn bakes_normals_with_inverse_transpose_under_nonuniform_scale()
 -> Result<(), String> {
     let root = temp_root("normal-scale");
