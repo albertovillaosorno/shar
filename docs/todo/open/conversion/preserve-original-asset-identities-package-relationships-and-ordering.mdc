@@ -264,8 +264,29 @@ Prop canonicalization continues to assign anonymous `part-####` publication
 names, but its semantic and visual deduplication hashes explicitly exclude the
 provenance-only source mesh identity. Focused decoded-mesh, binary artifact,
 canonicalization, and vehicle regressions cover retention while leaving sharing
-behavior unchanged. Bone and animation publication-name provenance remains a
-separate identity boundary and is not claimed complete by this evidence.
+behavior unchanged.
+
+Decoded skeleton joints and supported PTRN clips now retain their validated
+source identities independently of anonymous prop publication names. The
+normalized corpus contains 22,223 named joints across 1,574 skeleton documents;
+16,906 joint names carry fixed-width trailing NUL padding and none require
+surrounding-whitespace repair after that padding is removed. Binary FBX limb
+models publish the retained identity as `SHAR_P3D_SourceBoneIdentity`.
+
+The same normalized corpus contains 6,002 animation documents, of which 1,605
+are the PTRN skeletal family consumed by the typed FBX animation adapter. Across
+all animation families, 4,703 names carry only trailing-NUL padding and none
+require surrounding-whitespace repair after that padding is removed. PTRN clips
+retain the validated source name and publish it on their FBX animation stack as
+`SHAR_P3D_SourceAnimationIdentity`; the other 4,397 animation documents retain
+their separate conversion contracts and are not claimed by this typed clip
+boundary.
+
+Prop canonicalization may still publish those joints and clips as `bone-####`
+and `animation-####`, but semantic, rig, and world-animation deduplication
+explicitly excludes the provenance-only identities. Focused canonicalization,
+binary artifact, domain-validation, and hash-invariance regressions prove source
+provenance survives publication naming without changing canonical sharing.
 
 Static world-prop fallback selection now projects mesh members through exact
 source component ordinals instead of sorting member ids lexically before
