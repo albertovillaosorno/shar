@@ -186,5 +186,19 @@ There is therefore no decoded parent/container edge supporting an occurrence
 choice. Texture publication for those deferred billboard semantics remains open
 until stronger source or native evidence can disambiguate the relationship.
 
+Deferred billboard provenance now retains the physical texture side of that
+open relationship as well as the logical shader token. The same existing scope
+preference used for material staging contributes every preferred package/member
+occurrence, its source ordinal, and normalized PNG digest to
+`shar.world-model-props.v6`; no preferred occurrence is promoted to an authored
+relationship by this step.
+
+The 260 current logical billboard texture references retain 300 physical
+occurrences. Twenty-two references have multiple preferred occurrences whose
+payloads are byte-identical, while the 12 level-03 `glow2.bmp` references retain
+their two differing payloads as explicit ambiguity. Runtime texture selection,
+material recreation, and native billboard presentation remain deferred rather
+than being inferred from this provenance inventory.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

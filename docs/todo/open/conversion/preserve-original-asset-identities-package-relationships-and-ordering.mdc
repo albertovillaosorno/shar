@@ -728,5 +728,24 @@ either payload and source proximity would be an invented relationship. The 12
 affected deferred billboards therefore remain unresolved rather than inheriting
 first-path or nearest-ordinal behavior.
 
+World-prop deferred billboard texture provenance now projects each canonical
+shader `TEX` token through the same scoped `SharedTextureAuthority` preference
+used by material staging, while retaining every preferred physical occurrence
+instead of selecting one. Each occurrence keeps its owning package id and
+subcategory, exact normalized texture member id, source component ordinal, and
+normalized PNG SHA-256. Material resolution remains unchanged and fail-closed
+when preferred payloads disagree; the world-prop catalog advances to
+`shar.world-model-props.v6` only to preserve that source evidence.
+
+Across the current 260 logical billboard texture references, v6 retains 300
+preferred physical occurrences and no reference lacks preferred evidence. Two
+hundred twenty-six references have one occurrence; 34 have more than one.
+
+Of those multi-occurrence references, 22 contain only byte-identical payloads
+and
+12 contain differing payloads. The latter are exactly the already-audited
+level-03 `glow2.bmp` conflicts. Physical duplication is therefore retained
+without being mislabeled as payload ambiguity.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

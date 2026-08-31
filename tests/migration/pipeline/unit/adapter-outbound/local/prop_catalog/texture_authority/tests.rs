@@ -40,16 +40,22 @@ fn same_level_terrain_mesh_is_preferred() {
     let authority = SharedTextureAuthority {
         sources: BTreeMap::from([("tree.bmp".to_owned(), vec![
             TextureSource {
+                package_id: "level-one".to_owned(),
                 subcategory: "terrain-world/level-01/\
                                           terrain-mesh"
                     .to_owned(),
+                member_id: "tree".to_owned(),
+                source_ordinal: 1,
                 path: PathBuf::from("level-one.png"),
                 sha256: "one".to_owned(),
             },
             TextureSource {
+                package_id: "level-five".to_owned(),
                 subcategory: "terrain-world/level-05/\
                                           terrain-mesh"
                     .to_owned(),
+                member_id: "tree".to_owned(),
+                source_ordinal: 5,
                 path: PathBuf::from("level-five.png"),
                 sha256: "five".to_owned(),
             },
@@ -67,12 +73,18 @@ fn conflicting_same_level_payloads_are_rejected() {
     let authority = SharedTextureAuthority {
         sources: BTreeMap::from([("tree.bmp".to_owned(), vec![
             TextureSource {
+                package_id: "region-a".to_owned(),
                 subcategory: "terrain-world/level-01/regions/a".to_owned(),
+                member_id: "tree-a".to_owned(),
+                source_ordinal: 10,
                 path: PathBuf::from("a.png"),
                 sha256: "a".to_owned(),
             },
             TextureSource {
+                package_id: "region-b".to_owned(),
                 subcategory: "terrain-world/level-01/regions/b".to_owned(),
+                member_id: "tree-b".to_owned(),
+                source_ordinal: 20,
                 path: PathBuf::from("b.png"),
                 sha256: "b".to_owned(),
             },
@@ -84,4 +96,54 @@ fn conflicting_same_level_payloads_are_rejected() {
             .resolve("tree.bmp", "terrain-world/level-01/regions/c",)
             .is_err()
     );
+}
+
+
+#[test]
+fn conflicting_preferred_occurrences_remain_available_as_evidence(
+) -> Result<(), String> {
+    let authority = SharedTextureAuthority {
+        sources: BTreeMap::from([("glow.bmp".to_owned(), vec![
+            TextureSource {
+                package_id: "level-three-terrain".to_owned(),
+                subcategory: "terrain-world/level-03/terrain-mesh".to_owned(),
+                member_id: "glow-a".to_owned(),
+                source_ordinal: 182,
+                path: PathBuf::from("glow-a.png"),
+                sha256: "one".to_owned(),
+            },
+            TextureSource {
+                package_id: "level-three-terrain".to_owned(),
+                subcategory: "terrain-world/level-03/terrain-mesh".to_owned(),
+                member_id: "glow-b".to_owned(),
+                source_ordinal: 10591,
+                path: PathBuf::from("glow-b.png"),
+                sha256: "two".to_owned(),
+            },
+        ])]),
+    };
+
+    let occurrences = authority
+        .preferred_occurrences(
+            "glow.bmp",
+            "terrain-world/level-03/regions/l3r1",
+        )
+        .map_err(|error| error.to_string())?;
+
+    assert_eq!(occurrences.len(), 2);
+    assert_eq!(
+        occurrences.first().map(|occurrence| occurrence.sha256.as_str()),
+        Some("one")
+    );
+    assert_eq!(
+        occurrences.get(1).map(|occurrence| occurrence.sha256.as_str()),
+        Some("two")
+    );
+    assert!(
+        authority
+            .resolve("glow.bmp", "terrain-world/level-03/regions/l3r1")
+            .is_err(),
+        "evidence access must not weaken fail-closed resolution"
+    );
+    Ok(())
 }
