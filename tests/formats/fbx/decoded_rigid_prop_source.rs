@@ -143,6 +143,52 @@ fn remove_fixture(root: &Path) -> Result<(), String> {
 }
 
 #[test]
+fn loads_selected_prop_from_collision_renamed_physical_path()
+-> Result<(), String> {
+    let root = temp_root("collision-renamed-selection");
+    let skeleton_path = root.join("skeleton.json");
+    let composite_path = root.join("composite.json");
+    let mesh_path = root.join("BodyShape__ordinal_7.json");
+    fs::create_dir_all(&root)
+        .and_then(|()| fs::write(&skeleton_path, skeleton_json()))
+        .and_then(|()| fs::write(&composite_path, composite_json()))
+        .and_then(|()| fs::write(&mesh_path, mesh_json("BodyShape")))
+        .map_err(|error| error.to_string())?;
+
+    let selected = decoded_rigid_prop_source::load_selected_rigid_prop_asset(
+        "selected",
+        &skeleton_path,
+        &[mesh_path.as_path()],
+        &composite_path,
+    );
+    let instanced = decoded_rigid_prop_source::load_instanced_rigid_prop_asset(
+        "instanced",
+        &skeleton_path,
+        &[mesh_path.as_path()],
+        &composite_path,
+    );
+    remove_fixture(&root)?;
+    for (label, result) in [("selected", selected), ("instanced", instanced)] {
+        let asset = result.map_err(|error| {
+            format!("collision-renamed {label} load failed: {error:?}")
+        })?;
+        let part = asset.parts.first().ok_or_else(|| {
+            format!("collision-renamed {label} load produced no part")
+        })?;
+        if part.mesh.source_identity.as_deref() != Some("BodyShape") {
+            return Err(format!(
+                concat!(
+                    "collision-renamed {} load changed authored ",
+                    "identity: {:?}"
+                ),
+                label, part.mesh.source_identity
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
     let root = temp_root("selection");
     let (skeleton_path, composite_path, mesh_path) =

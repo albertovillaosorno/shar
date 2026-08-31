@@ -136,7 +136,7 @@ fn preserves_skeleton_to_composite_source_relationship_order()
     let skeleton_path = root.join("skeleton.json");
     let first_composite_path = root.join("first.json");
     let second_composite_path = root.join("second.json");
-    let mesh_path = root.join("BodyShape.json");
+    let mesh_path = root.join("BodyShape__ordinal_7.json");
     let skeleton_fixture = concat!(
         r#"{"schema":"skeleton","name":"rig","version":0,"#,
         r#""num_joints":1,"joints":[{"name":"root","parent":0,"#,

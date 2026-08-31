@@ -431,14 +431,6 @@ pub fn read_indexed_mesh(
     decode_mesh_document(path, None)
 }
 
-/// Read one decoded mesh from an explicit component path and authored identity.
-pub(super) fn read_mesh(
-    path: &Path,
-    requested_id: &str,
-) -> Result<MeshAsset, DecodedComponentError> {
-    decode_mesh_document(path, Some(requested_id))
-}
-
 /// Decode one mesh document under the strict authored-topology contract.
 fn decode_mesh_document(
     path: &Path,

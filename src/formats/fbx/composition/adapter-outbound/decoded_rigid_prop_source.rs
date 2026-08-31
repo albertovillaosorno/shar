@@ -40,7 +40,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use super::decoded_billboard_source::read_billboard_quad_group;
-use super::decoded_component_source::read_mesh;
+use super::decoded_component_source::read_indexed_mesh;
 use super::decoded_skin_source::{
     CompositePropBinding, SkinSourceError, composite_bindings, load_skeleton,
     mark_transparent_mesh, rigid_group_influences,
@@ -316,8 +316,7 @@ fn load_rigid_mesh_map(
 ) -> Result<BTreeMap<String, MeshAsset>, SkinSourceError> {
     let mut meshes = BTreeMap::new();
     for mesh_path in mesh_paths {
-        let requested_id = mesh_member_id(mesh_path)?;
-        let mesh = read_mesh(mesh_path, requested_id).map_err(|error| {
+        let mesh = read_indexed_mesh(mesh_path).map_err(|error| {
             SkinSourceError::Prop(format!(
                 "instanced rigid prop mesh decode failed for {}: \
                          {error:?}",
@@ -565,8 +564,7 @@ fn mesh_member_id(path: &Path) -> Result<&str, SkinSourceError> {
 
 /// Decode one selected rigid mesh with source-path diagnostics.
 fn read_selected_rigid_mesh(path: &Path) -> Result<MeshAsset, SkinSourceError> {
-    let requested_id = mesh_member_id(path)?;
-    read_mesh(path, requested_id).map_err(|error| {
+    read_indexed_mesh(path).map_err(|error| {
         SkinSourceError::Prop(format!(
             "rigid prop mesh decode failed for {}: {error:?}",
             path.display()
