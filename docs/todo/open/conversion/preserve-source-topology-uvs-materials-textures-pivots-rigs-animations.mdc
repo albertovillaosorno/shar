@@ -200,5 +200,20 @@ their two differing payloads as explicit ambiguity. Runtime texture selection,
 material recreation, and native billboard presentation remain deferred rather
 than being inferred from this provenance inventory.
 
+The 138 controller-linked BQG clips were rechecked at the decoded channel
+boundary. All declared group, channel, and keyed-frame counts agree with their
+payloads; keyed frames are strictly increasing and within the declared clip,
+and all 934 observed interpolation records use mode 1. Every one of the 138
+animation group sequences exactly matches its linked billboard child sequence.
+
+Across those 162 linked animation-group/child pairs, every frame-zero width,
+height, distance, UV offset, translation, colour, edge-range, source-range, and
+offset-range channel value matches the corresponding decoded static child field
+when a frame-zero key exists. However, 49 width/height channels and 38 colour
+channels have no frame-zero key, and rotation differs from the static rotation
+in 75 of 119 frame-zero cases. That mixed evidence rules out flattening BQG
+channel data into static billboard defaults without a reviewed runtime
+interpretation.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

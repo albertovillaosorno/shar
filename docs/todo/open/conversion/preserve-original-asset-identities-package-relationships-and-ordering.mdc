@@ -747,5 +747,11 @@ and
 level-03 `glow2.bmp` conflicts. Physical duplication is therefore retained
 without being mislabeled as payload ambiguity.
 
+The 138 exact deferred billboard controller links also carry a stronger child
+relationship than controller identity alone: all linked BQG animation groups
+match the linked billboard child identities in exactly the same authored order.
+There are 130 one-child relationships and eight four-child relationships, with
+no duplicate child or animation-group identity in the linked set.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
