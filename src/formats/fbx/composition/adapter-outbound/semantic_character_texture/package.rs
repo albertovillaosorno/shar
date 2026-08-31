@@ -56,6 +56,9 @@ pub(super) fn build(
     request: &SemanticTextureRequest,
     character: &CharacterAsset,
 ) -> Result<PackageBindings, SemanticTextureArtifactError> {
+    request.validate_extra_texture_outputs().map_err(|error| {
+        SemanticTextureArtifactError::Request(format!("{error:?}"))
+    })?;
     let body_groups = request
         .body_groups
         .iter()
@@ -113,6 +116,7 @@ fn assemble_extra_materials(
         .map_err(|error| {
             package_error(format!("invalid extra material: {error:?}"))
         })?;
+        let output_identity = extra.output_file_name.to_ascii_lowercase();
         let bytes = read_bytes(&extra.texture_path).map_err(|error| {
             package_error(format!(
                 "extra texture read failed for {}: {error}",
@@ -135,7 +139,7 @@ fn assemble_extra_materials(
             file_name: extra.output_file_name.clone(),
             png,
         };
-        if let Some(existing) = textures.get(&extra.output_file_name) {
+        if let Some(existing) = textures.get(&output_identity) {
             if existing != &artifact {
                 return Err(package_error(format!(
                     "conflicting extra texture output: {}",
@@ -143,8 +147,7 @@ fn assemble_extra_materials(
                 )));
             }
         } else {
-            let _previous =
-                textures.insert(extra.output_file_name.clone(), artifact);
+            let _previous = textures.insert(output_identity, artifact);
         }
         let _previous = bindings.insert(
             binding.material_name,
