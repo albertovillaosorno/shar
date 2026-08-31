@@ -46,6 +46,8 @@ use super::primitive_group::PrimitiveGroup;
 pub struct MeshAsset {
     /// Stable mesh name.
     pub name: String,
+    /// Optional source `CastShadow` flag from the decoded P3D mesh.
+    pub cast_shadow: Option<bool>,
     /// Primitive groups exported as scene geometry parts.
     pub groups: Vec<PrimitiveGroup>,
 }
@@ -81,6 +83,17 @@ impl MeshAsset {
             }
         }
         groups.sort_unstable_by_key(|group| group.index);
-        Ok(Self { name: mesh_name, groups })
+        Ok(Self {
+            name: mesh_name,
+            cast_shadow: None,
+            groups,
+        })
+    }
+
+    /// Attach the optional source `CastShadow` flag retained by decoded P3D.
+    #[must_use]
+    pub const fn with_cast_shadow(mut self, cast_shadow: Option<bool>) -> Self {
+        self.cast_shadow = cast_shadow;
+        self
     }
 }

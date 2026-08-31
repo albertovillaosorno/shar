@@ -158,6 +158,56 @@ fn rejects_decoded_group_shader_with_surrounding_whitespace() {
 }
 
 #[test]
+fn rejects_non_boolean_cast_shadow_status() {
+    let root = temp_root("invalid-cast-shadow");
+    let mesh_dir = root.join("components").join("mesh");
+    let mesh_json = concat!(
+        r#"{"schema":"mesh","name":"mesh","render_status":2,"#,
+        r#""prim_groups":[{"shader":"shader","#,
+        r#""positions":[[0,0,0],[1,0,0],[0,1,0]],"indices":[0,1,2]}]}"#,
+    );
+    let setup_result = fs::create_dir_all(&mesh_dir)
+        .and_then(|()| fs::write(mesh_dir.join("mesh.json"), mesh_json));
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+    let result = source.load_mesh("mesh");
+    let _cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Err(DecodedComponentError::InvalidCastShadow {
+            mesh: "mesh".to_owned(),
+            value: 2,
+        })
+    );
+}
+
+#[test]
+fn preserves_disabled_cast_shadow_status() -> Result<(), String> {
+    let root = temp_root("disabled-cast-shadow");
+    let mesh_dir = root.join("components").join("mesh");
+    let mesh_json = concat!(
+        r#"{"schema":"mesh","name":"mesh","render_status":0,"#,
+        r#""prim_groups":[{"shader":"shader","#,
+        r#""positions":[[0,0,0],[1,0,0],[0,1,0]],"indices":[0,1,2]}]}"#,
+    );
+    fs::create_dir_all(&mesh_dir)
+        .and_then(|()| fs::write(mesh_dir.join("mesh.json"), mesh_json))
+        .map_err(|error| error.to_string())?;
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+    let mesh = source
+        .load_mesh("mesh")
+        .map_err(|error| format!("CastShadow decode failed: {error:?}"))?;
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+
+    if mesh.cast_shadow == Some(false) {
+        Ok(())
+    } else {
+        Err(format!("CastShadow source flag changed: {mesh:?}"))
+    }
+}
+
+#[test]
 fn rejects_unsupported_decoded_uv_channels() {
     let root = temp_root("unsupported-uv-channel");
     let mesh_dir = root.join("components").join("mesh");

@@ -314,19 +314,22 @@ fn decode_mesh_document(
     requested_id: Option<&str>,
 ) -> Result<MeshAsset, DecodedComponentError> {
     let decoded: DecodedMesh = read_json(path)?;
-    let decoded_name = validate_decoded_mesh(&decoded, requested_id)?;
+    let (decoded_name, cast_shadow) =
+        validate_decoded_mesh(&decoded, requested_id)?;
     let mut groups = Vec::with_capacity(decoded.prim_groups.len());
     for (index, group) in decoded.prim_groups.into_iter().enumerate() {
         groups.push(decode_primitive_group(index, group, &decoded_name)?);
     }
-    MeshAsset::new(decoded_name, groups).map_err(DecodedComponentError::Mesh)
+    MeshAsset::new(decoded_name, groups)
+        .map(|mesh| mesh.with_cast_shadow(cast_shadow))
+        .map_err(DecodedComponentError::Mesh)
 }
 
 /// Validate mesh schema, identity, and declared primitive-group count.
 fn validate_decoded_mesh(
     decoded: &DecodedMesh,
     requested_id: Option<&str>,
-) -> Result<String, DecodedComponentError> {
+) -> Result<(String, Option<bool>), DecodedComponentError> {
     if decoded.schema != "mesh" {
         return Err(DecodedComponentError::Mesh(MeshError::UnsupportedSchema(
             decoded.schema.clone(),
@@ -349,7 +352,18 @@ fn validate_decoded_mesh(
                      decoded groups"
         )));
     }
-    Ok(decoded_name)
+    let cast_shadow = match decoded.render_status {
+        None => None,
+        Some(0) => Some(false),
+        Some(1) => Some(true),
+        Some(value) => {
+            return Err(DecodedComponentError::InvalidCastShadow {
+                mesh: decoded_name,
+                value,
+            });
+        },
+    };
+    Ok((decoded_name, cast_shadow))
 }
 
 /// Decode one primitive group under the strict authored-topology contract.
@@ -981,6 +995,13 @@ pub enum DecodedComponentError {
     },
     /// Decoded mesh count or topology evidence was internally inconsistent.
     MeshEvidence(String),
+    /// Decoded P3D `CastShadow` carried a value outside its boolean domain.
+    InvalidCastShadow {
+        /// Decoded mesh identity containing the invalid flag.
+        mesh: String,
+        /// Raw source flag value.
+        value: u32,
+    },
     /// One primitive group declared a UV channel without coordinates.
     EmptyUvChannel {
         /// Primitive-group position in the decoded mesh.
@@ -1131,9 +1152,9 @@ struct DecodedMesh {
     primitive_group_count: Option<u32>,
     /// Primitive groups carried by the decoded mesh.
     prim_groups: Vec<DecodedPrimitiveGroup>,
-    /// Render status retained for schema compatibility.
+    /// Optional P3D `CastShadow` source flag.
     #[serde(default, rename = "render_status")]
-    _render_status: Value,
+    render_status: Option<u32>,
     /// Bounding box retained for source evidence.
     #[serde(default, rename = "bounding_box")]
     _bounding_box: Value,
