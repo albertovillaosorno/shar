@@ -82,6 +82,60 @@ fn dialog_row(
 }
 
 #[test]
+fn package_binding_preserves_audio_id_path_alignment() -> Result<(), String> {
+    let row_text = dialog_row(
+        "order-homer",
+        "homer",
+        "noboxconv",
+        "l7m3-order",
+        "audio-z",
+    )
+    .replace("\"unit_count\":1", "\"unit_count\":2")
+    .replace(
+        "\"unit_ids\":[\"audio-z\"]",
+        "\"unit_ids\":[\"audio-z\",\"audio-a\"]",
+    )
+    .replace(
+        "\"audio_ids\":[\"audio-z\"]",
+        "\"audio_ids\":[\"audio-z\",\"audio-a\"]",
+    )
+    .replace(
+        concat!(
+            "{\"id\":\"audio-z\",\"role\":\"audio\",",
+            "\"path\":\"extracted/dialog/order-homer/audio-z.wav\",",
+            "\"type\":\"audio\",\"kind\":\"runtime-asset\",",
+            "\"source_chunk_kind\":\"none\"}"
+        ),
+        concat!(
+            "{\"id\":\"audio-z\",\"role\":\"audio\",",
+            "\"path\":\"extracted/dialog/order-homer/z.wav\",",
+            "\"type\":\"audio\",\"kind\":\"runtime-asset\",",
+            "\"source_chunk_kind\":\"none\"},",
+            "{\"id\":\"audio-a\",\"role\":\"audio\",",
+            "\"path\":\"extracted/dialog/order-homer/a.wav\",",
+            "\"type\":\"audio\",\"kind\":\"runtime-asset\",",
+            "\"source_chunk_kind\":\"none\"}"
+        ),
+    );
+    let row = PhaseThreePackageRow::from_json_line(&row_text)
+        .map_err(|error| error.to_string())?;
+    let binding = compile_package_binding(&row, "homer")
+        .map_err(|error| error.to_string())?;
+    if binding.audio_ids() != ["audio-z", "audio-a"]
+        || binding.audio_paths()
+            != [
+                "extracted/dialog/order-homer/z.wav",
+                "extracted/dialog/order-homer/a.wav",
+            ]
+    {
+        return Err(
+            "completion dialogue detached audio ids from paths".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn groups_participant_packages_for_one_conversation() -> Result<(), String> {
     let homer = dialog_row(
         "toxic-homer",
