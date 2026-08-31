@@ -84,6 +84,54 @@ fn resolves_already_normalized_png_texture_extensions() {
 }
 
 #[test]
+fn rejects_decoded_shader_identity_with_surrounding_whitespace() {
+    let root = temp_root("shader-name-whitespace");
+    let shader_dir = root.join("components").join("shader");
+    let shader_json = r#"{"name":" shader","params":[]}"#;
+    let setup_result = fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::write(shader_dir.join("shader.json"), shader_json));
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+    let result = source.resolve_material("shader");
+    let _cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Err(DecodedComponentError::ShaderIdentityMismatch {
+            requested: "shader".to_owned(),
+            decoded: " shader".to_owned(),
+        })
+    );
+}
+
+#[test]
+fn rejects_texture_references_with_surrounding_whitespace() {
+    let root = temp_root("texture-reference-whitespace");
+    let shader_dir = root.join("components").join("shader");
+    let texture_dir = root.join("components").join("texture");
+    let shader_json = concat!(
+        r#"{"name":"shader","params":[{"#,
+        r#""kind":"texture","param":"TEX","#,
+        r#""value":" ready.bmp "}]}"#,
+    );
+    let setup_result = fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::create_dir_all(&texture_dir))
+        .and_then(|()| fs::write(shader_dir.join("shader.json"), shader_json))
+        .and_then(|()| fs::write(texture_dir.join("ready.png"), b"png"));
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+    let result = source.resolve_material("shader");
+    let _cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Err(DecodedComponentError::InvalidTextureReference(
+            " ready.bmp ".to_owned()
+        ))
+    );
+}
+
+#[test]
 fn rejects_texture_references_without_a_file_stem() {
     let root = temp_root("missing-texture-stem");
     let shader_dir = root.join("components").join("shader");

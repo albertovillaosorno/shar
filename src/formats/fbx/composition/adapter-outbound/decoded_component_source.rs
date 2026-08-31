@@ -602,7 +602,7 @@ fn local_texture_source(
             source: source.to_string(),
         }
     })?;
-    let expected = texture_reference.trim_end_matches('\u{0}').trim();
+    let expected = texture_reference.trim_end_matches('\u{0}');
     let mut candidates = Vec::new();
     for line in text.lines() {
         let value: Value = serde_json::from_str(line).map_err(|source| {
@@ -617,7 +617,16 @@ fn local_texture_source(
         let Some(name) = value.get("name").and_then(Value::as_str) else {
             continue;
         };
-        if name.trim_end_matches('\u{0}').trim() != expected {
+        let clean_name = name.trim_end_matches('\u{0}');
+        if clean_name.is_empty()
+            || clean_name != clean_name.trim()
+            || clean_name.chars().any(char::is_control)
+        {
+            return Err(DecodedComponentError::InvalidTextureReference(
+                name.to_owned(),
+            ));
+        }
+        if clean_name != expected {
             continue;
         }
         let path =
@@ -728,7 +737,7 @@ fn stage_texture_binding(
 
 /// Normalize one decoded texture reference into its staged PNG stem.
 fn texture_stem(reference: &str) -> Result<&str, DecodedComponentError> {
-    let normalized_reference = reference.trim_end_matches('\u{0}').trim();
+    let normalized_reference = reference.trim_end_matches('\u{0}');
     if !is_single_path_segment(normalized_reference) {
         return Err(DecodedComponentError::InvalidTextureReference(
             reference.to_owned(),
@@ -762,12 +771,12 @@ fn shader_member_identity(value: &str) -> String {
 
 /// Normalize one fixed-width mesh identity for FBX domain use.
 fn decoded_mesh_identity(value: &str) -> String {
-    value.trim_end_matches('\u{0}').trim().to_owned()
+    value.trim_end_matches('\u{0}').to_owned()
 }
 
 /// Normalize one fixed-width shader identity for FBX domain use.
 fn decoded_material_identity(value: &str) -> String {
-    value.trim_end_matches('\u{0}').trim().to_owned()
+    value.trim_end_matches('\u{0}').to_owned()
 }
 
 /// Decode one PDDI `0xAARRGGBB` color into normalized FBX RGBA order.
@@ -910,12 +919,18 @@ fn texture_name(
             shader: shader.name.clone(),
         }
     })?;
-    let normalized = value.trim_end_matches('\u{0}').trim();
+    let normalized = value.trim_end_matches('\u{0}');
     if normalized.is_empty() {
-        Ok(None)
-    } else {
-        Ok(Some(normalized.to_owned()))
+        return Ok(None);
     }
+    if normalized != normalized.trim()
+        || normalized.chars().any(char::is_control)
+    {
+        return Err(DecodedComponentError::InvalidTextureReference(
+            value.to_owned(),
+        ));
+    }
+    Ok(Some(normalized.to_owned()))
 }
 
 /// Internal helper for the adapter implementation.
