@@ -180,6 +180,13 @@ of those source sequences differ from lexical sidecar order. For example,
 A focused regression proves a source `z` then `a` sequence remains `z` then `a`
 in the returned sidecar catalog.
 
+Hidden wheel-proxy evidence now retains assembled composite part order instead
+of sorting complete JSON objects before sidecar publication. One audited vehicle
+binds its four source-backed wheel proxies to `w3`, `w2`, `w1`, then `w0`; the
+old serialized-value sort reversed that sequence to `w0` through `w3`. A focused
+regression proves the sidecar preserves the supplied part sequence while the FBX
+continues to retain the same hidden proxy geometry.
+
 Billboard quad-group decoding now preserves each authored child-quad identity
 through the typed primitive-group boundary and emits it as FBX user metadata
 without changing deterministic FBX object names. The normalized corpus contains
