@@ -34,6 +34,15 @@ prove equal source transforms remain two placements and a source order of 9 then
 1 remains 9 then 1. The full pipeline library suite passes with 802 tests and
 strict pipeline Clippy is clean.
 
+World placement document discovery now also projects the six supported component
+families through canonical component-ledger ordinals instead of family and file
+name order. The exact world-level selector has 95 packages carrying 973 such
+documents; 89 package traversals differ from the previous order. Only one
+cross-document drawable identity is reordered in the current corpus, where
+source ordinal 465 must precede ordinal 516 in a level-04 race-prop package. A
+focused regression proves an earlier document in a later-scanned family remains
+before a later standalone scenegraph document.
+
 World component-ledger intake now rejects duplicate component ordinals instead
 of silently accepting or deduplicating malformed rows. Mesh sources are ordered
 only by their explicit source component ordinal; owner kind/name no longer
