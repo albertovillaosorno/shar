@@ -64,12 +64,18 @@ pub fn load_selected_rigid_prop_asset(
     composite_path: &Path,
 ) -> Result<CharacterAsset, SkinSourceError> {
     let (skeleton_name, bones) = load_skeleton(skeleton_path)?;
-    let bindings =
+    let mut bindings = BTreeMap::new();
+    for binding in
         composite_bindings(composite_path, &skeleton_name, &[], bones.len())?
             .props
-            .into_iter()
-            .map(|binding| (binding.name.clone(), binding))
-            .collect::<BTreeMap<_, _>>();
+    {
+        let name = binding.name.clone();
+        if bindings.insert(name.clone(), binding).is_some() {
+            return Err(SkinSourceError::Prop(format!(
+                "duplicate selected rigid prop binding: {name}"
+            )));
+        }
+    }
     let (parts, selected_joints) =
         load_selected_parts(&bones, mesh_paths, &bindings)?;
     let retained_indices = retained_bone_indices(&bones, &selected_joints)?;
