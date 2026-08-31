@@ -166,12 +166,12 @@ pub(super) fn recover_auxiliary_schema_json(
         "scrooby_screen" => auxiliary::recover_scrooby_screen_json(
             component, source, kind_index,
         ),
-        "scrooby_page" => auxiliary::recover_scrooby_page_json(
-            component, source, kind_index,
-        ),
-        "scrooby_layer" => auxiliary::recover_scrooby_layer_json(
-            component, source, kind_index,
-        ),
+        "scrooby_page" => {
+            auxiliary::recover_scrooby_page_json(component, source, kind_index)
+        },
+        "scrooby_layer" => {
+            auxiliary::recover_scrooby_layer_json(component, source, kind_index)
+        },
         "scrooby_group" => super::scrooby_widget::recover_group_json(
             component, source, kind_index,
         ),
