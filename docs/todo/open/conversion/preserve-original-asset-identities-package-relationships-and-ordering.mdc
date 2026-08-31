@@ -565,5 +565,12 @@ payloads, 119 include an exact direct JSON member, and 103 combine both a direct
 member and differing payloads. These counts are source-relationship evidence and
 do not claim every repeated shader identity is referenced by an exported mesh.
 
+A follow-up source-relationship audit does not support using container ordinal
+as an automatic tie-breaker for repeated shader names. Across 10,745 mesh shader
+references in packages containing repeated shader identities, 1,312 references
+target a globally ambiguous shader name; none has a same-container shader row.
+The remaining binding work therefore needs stronger decoded relationship
+evidence rather than a proximity or container heuristic.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
