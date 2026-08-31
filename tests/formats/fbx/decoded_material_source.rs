@@ -261,6 +261,124 @@ fn resolves_sanitized_local_texture_through_package_ledger() {
 }
 
 #[test]
+fn rejects_duplicate_texture_ledger_relationships() {
+    let root = temp_root("duplicate-ledger-texture-identity");
+    let package = root.join("package");
+    let shader_dir = package.join("components").join("shader");
+    let texture_dir = package.join("components").join("texture");
+    let output_dir = root.join("output");
+    let texture_row = concat!(
+        r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"#,
+        r#""container_ordinal":1,"name":"shared.bmp","#,
+        r#""path":"texture/shared_.png","kind":"texture","#,
+        r#""payload_format":"image/png","schema_ref":"texture","#,
+        r#""recovery_status":"recovered_embedded_image_payload"}"#,
+    );
+    let setup_result = fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::create_dir_all(&texture_dir))
+        .and_then(|()| {
+            fs::write(
+                shader_dir.join("glass.json"),
+                concat!(
+                    r#"{"name":"glass","params":[{"kind":"texture","#,
+                    r#""param":"TEX","value":"shared.bmp"}]}"#
+                ),
+            )
+        })
+        .and_then(|()| {
+            fs::write(texture_dir.join("shared_.png"), b"synthetic-png")
+        })
+        .and_then(|()| {
+            fs::write(
+                package.join("components.jsonl"),
+                format!(
+                    "{}\n{}\n{}\n",
+                    r#"{"schema":"p3d.package.v1"}"#, texture_row, texture_row,
+                ),
+            )
+        });
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&package, &output_dir);
+    let result = source.resolve_material("glass");
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Err(DecodedComponentError::AmbiguousTextureMember {
+            texture: "shared.bmp".to_owned(),
+            candidates: vec![
+                "shared_.png".to_owned(),
+                "shared_.png".to_owned(),
+            ],
+        })
+    );
+    assert!(cleanup_result.is_ok());
+}
+
+#[test]
+fn rejects_ambiguous_texture_ledger_even_when_direct_member_exists() {
+    let root = temp_root("ambiguous-ledger-direct-texture");
+    let package = root.join("package");
+    let shader_dir = package.join("components").join("shader");
+    let texture_dir = package.join("components").join("texture");
+    let output_dir = root.join("output");
+    let setup_result = fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::create_dir_all(&texture_dir))
+        .and_then(|()| {
+            fs::write(
+                shader_dir.join("glass.json"),
+                concat!(
+                    r#"{"name":"glass","params":[{"kind":"texture","#,
+                    r#""param":"TEX","value":"shared.bmp"}]}"#
+                ),
+            )
+        })
+        .and_then(|()| {
+            fs::write(texture_dir.join("shared.png"), b"first-payload")
+        })
+        .and_then(|()| {
+            fs::write(
+                texture_dir.join("shared__ordinal_2.png"),
+                b"second-payload",
+            )
+        })
+        .and_then(|()| {
+            fs::write(
+                package.join("components.jsonl"),
+                concat!(
+                    r#"{"schema":"p3d.package.v1"}"#,
+                    "\n",
+                    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"#,
+                    r#""container_ordinal":1,"name":"shared.bmp","#,
+                    r#""path":"texture/shared.png","kind":"texture"}"#,
+                    "\n",
+                    r#"{"ordinal":2,"depth":1,"parent_ordinal":0,"#,
+                    r#""container_ordinal":2,"name":"shared.bmp","#,
+                    r#""path":"texture/shared__ordinal_2.png","#,
+                    r#""kind":"texture"}"#,
+                    "\n",
+                ),
+            )
+        });
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&package, &output_dir);
+    let result = source.resolve_material("glass");
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Err(DecodedComponentError::AmbiguousTextureMember {
+            texture: "shared.bmp".to_owned(),
+            candidates: vec![
+                "shared.png".to_owned(),
+                "shared__ordinal_2.png".to_owned(),
+            ],
+        })
+    );
+    assert!(cleanup_result.is_ok());
+}
+
+#[test]
 fn rejects_space_padded_texture_ledger_identity() {
     let root = temp_root("ledger-texture-space-padding");
     let package = root.join("package");

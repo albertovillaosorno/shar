@@ -604,12 +604,11 @@ fn local_texture_source(
     texture_reference: &str,
     direct_source: &Path,
 ) -> Result<Option<PathBuf>, DecodedComponentError> {
-    if direct_source.is_file() {
-        return Ok(Some(direct_source.to_path_buf()));
-    }
     let manifest = package_root.join("components.jsonl");
     if !manifest.is_file() {
-        return Ok(None);
+        return Ok(direct_source
+            .is_file()
+            .then(|| direct_source.to_path_buf()));
     }
     let text = local::read_utf8(&manifest).map_err(|source| {
         DecodedComponentError::Read {
@@ -662,9 +661,8 @@ fn local_texture_source(
         );
     }
     candidates.sort();
-    candidates.dedup();
     match candidates.as_slice() {
-        [] => Ok(None),
+        [] => Ok(direct_source.is_file().then(|| direct_source.to_path_buf())),
         [candidate] if candidate.is_file() => Ok(Some(candidate.clone())),
         [..] if candidates.len() > 1 => {
             Err(DecodedComponentError::AmbiguousTextureMember {
