@@ -553,5 +553,17 @@ direct PNG that previously bypassed ledger ambiguity checking. These counts are
 relationship evidence only and do not claim every repeated identity is consumed
 by an FBX material.
 
+FBX local shader resolution now consults normalized component-ledger
+relationships before accepting an exact or fixed-width-padded JSON member. One
+logical shader identity mapping to multiple published members therefore fails
+closed instead of silently selecting the direct file. A focused regression keeps
+legacy padded and case-insensitive single-member lookup green.
+
+The cached normalized corpus contains 358 case-folded logical shader identities
+that map to multiple published paths. Of those sets, 306 contain differing JSON
+payloads, 119 include an exact direct JSON member, and 103 combine both a direct
+member and differing payloads. These counts are source-relationship evidence and
+do not claim every repeated shader identity is referenced by an exported mesh.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

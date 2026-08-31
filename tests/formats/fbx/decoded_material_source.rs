@@ -195,6 +195,63 @@ fn accepts_trailing_nul_padding_in_numbered_texture_reference() {
 }
 
 #[test]
+fn rejects_ambiguous_shader_ledger_even_when_direct_member_exists() {
+    let root = temp_root("ambiguous-ledger-direct-shader");
+    let package = root.join("package");
+    let shader_dir = package.join("components").join("shader");
+    let setup_result = fs::create_dir_all(&shader_dir)
+        .and_then(|()| {
+            fs::write(
+                shader_dir.join("shared.json"),
+                r#"{"schema":"shader","name":"shared","params":[]}"#,
+            )
+        })
+        .and_then(|()| {
+            fs::write(
+                shader_dir.join("shared__ordinal_2.json"),
+                concat!(
+                    r#"{"schema":"shader","name":"shared","params":[],"#,
+                    r#""has_translucency":1}"#,
+                ),
+            )
+        })
+        .and_then(|()| {
+            fs::write(
+                package.join("components.jsonl"),
+                concat!(
+                    r#"{"schema":"p3d.package.v1"}"#,
+                    "\n",
+                    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"#,
+                    r#""container_ordinal":1,"name":"shared","#,
+                    r#""path":"shader/shared.json","kind":"shader"}"#,
+                    "\n",
+                    r#"{"ordinal":2,"depth":1,"parent_ordinal":0,"#,
+                    r#""container_ordinal":2,"name":"shared","#,
+                    r#""path":"shader/shared__ordinal_2.json","#,
+                    r#""kind":"shader"}"#,
+                    "\n",
+                ),
+            )
+        });
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&package, root.join("textures"));
+    let result = source.resolve_material("shared");
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Err(DecodedComponentError::AmbiguousShaderMember {
+            shader: "shared".to_owned(),
+            candidates: vec![
+                "shared.json".to_owned(),
+                "shared__ordinal_2.json".to_owned(),
+            ],
+        })
+    );
+    assert!(cleanup_result.is_ok());
+}
+
+#[test]
 fn resolves_sanitized_local_texture_through_package_ledger() {
     let root = temp_root("ledger-texture-identity");
     let package = root.join("package");
