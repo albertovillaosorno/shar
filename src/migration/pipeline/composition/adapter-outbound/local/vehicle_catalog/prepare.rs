@@ -764,6 +764,7 @@ fn separate_vehicle_parts(
     let mut records = Vec::new();
     let mut used_names = BTreeMap::<String, usize>::new();
     for part in asset.parts {
+        let cast_shadow = part.mesh.cast_shadow;
         for (group, influences) in
             part.mesh.groups.into_iter().zip(part.group_influences)
         {
@@ -799,11 +800,13 @@ fn separate_vehicle_parts(
                 .collect::<Vec<_>>();
             let shader = group.shader.clone();
             let source_mesh = part.mesh.name.clone();
-            let mesh = MeshAsset::new(&name, vec![group]).map_err(|error| {
-                PipelineError::new(format!(
-                    "vehicle semantic mesh {name} failed: {error:?}"
-                ))
-            })?;
+            let mesh = MeshAsset::new(&name, vec![group])
+                .map(|mesh| mesh.with_cast_shadow(cast_shadow))
+                .map_err(|error| {
+                    PipelineError::new(format!(
+                        "vehicle semantic mesh {name} failed: {error:?}"
+                    ))
+                })?;
             parts.push(SkinnedPart {
                 mesh,
                 group_influences: vec![influences],
