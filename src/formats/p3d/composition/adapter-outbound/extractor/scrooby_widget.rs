@@ -208,11 +208,7 @@ pub(super) fn recover_polygon_json(
     {
         return None;
     }
-    let points = points
-        .iter()
-        .map(float3_json)
-        .collect::<Vec<_>>()
-        .join(",");
+    let points = points.iter().map(float3_json).collect::<Vec<_>>().join(",");
     let colors = colors
         .iter()
         .map(u32::to_string)
