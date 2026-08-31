@@ -42,6 +42,7 @@ use super::{
 use crate::adapters::driven::local::prop_catalog::inventory_common::{
     CompositeEvidence, CompositePropEvidence,
 };
+use crate::adapters::driven::local::prop_catalog::texture_authority;
 
 static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
@@ -217,12 +218,35 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         ),
     )
     .map_err(|error| error.to_string())?;
+    let authority =
+        texture_authority::SharedTextureAuthority::from_occurrences_for_tests(&[
+        (
+            "glow.bmp",
+            "level-three-terrain",
+            "terrain-world/level-03/terrain-mesh",
+            "glow",
+            182,
+            "glow.png",
+            "one",
+        ),
+        (
+            "glow.bmp",
+            "level-three-terrain",
+            "terrain-world/level-03/terrain-mesh",
+            "glow__ordinal_10591",
+            10_591,
+            "glow__ordinal_10591.png",
+            "two",
+        ),
+    ]);
     let actual = deferred_render_bindings(
         &root,
         &rows,
         &package_relationships,
         &composite,
         &meshes,
+        &authority,
+        "terrain-world/level-03/regions/l3r1",
     )
         .map_err(|error| error.to_string())?;
     drop(fs::remove_dir_all(&root));
@@ -266,6 +290,25 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         .iter()
         .map(|shader| shader.texture_reference.as_deref())
         .collect::<Vec<_>>();
+    let texture_reference = billboard
+        .texture_references
+        .first()
+        .ok_or_else(|| "deferred texture reference is missing".to_owned())?;
+    let texture_members = texture_reference
+        .occurrences
+        .iter()
+        .map(|occurrence| occurrence.member_id.as_str())
+        .collect::<Vec<_>>();
+    let texture_ordinals = texture_reference
+        .occurrences
+        .iter()
+        .map(|occurrence| occurrence.source_ordinal)
+        .collect::<Vec<_>>();
+    let texture_digests = texture_reference
+        .occurrences
+        .iter()
+        .map(|occurrence| occurrence.sha256.as_str())
+        .collect::<Vec<_>>();
     let blend_modes = billboard
         .shader_occurrences
         .iter()
@@ -281,6 +324,11 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         || shader_ordinals != [3, 7]
         || shader_members != ["glow_m__ordinal_3", "glow_m__ordinal_7"]
         || shader_textures != [Some("glow.bmp"), Some("glow.bmp")]
+        || billboard.texture_references.len() != 1
+        || texture_reference.identity != "glow.bmp"
+        || texture_members != ["glow", "glow__ordinal_10591"]
+        || texture_ordinals != [182, 10_591]
+        || texture_digests != ["one", "two"]
         || blend_modes != [Some(2), Some(3)]
         || billboard.z_test != 1
         || billboard.z_write != 0

@@ -30,7 +30,7 @@
 
 //! World inventory outbound adapter.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use fbx::adapters::driven::decoded_billboard_source::{
@@ -47,9 +47,10 @@ use super::model::{
     DeferredBillboardBinding, DeferredBillboardQuadBinding,
     DeferredControllerBinding, DeferredRenderBinding,
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
-    PropCandidate,
-    PropFamily, PropRoute,
+    DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
+    PropCandidate, PropFamily, PropRoute,
 };
+use super::texture_authority::SharedTextureAuthority;
 use super::world_ledger::{LedgerRow, read_world_ledger};
 use crate::domain::PipelineError;
 use crate::domain::package::PhaseThreePackageIndex;
@@ -74,6 +75,7 @@ const MODEL_CONTAINERS: [&str; 7] = [
 pub(super) fn discover_world_candidates(
     index: &PhaseThreePackageIndex,
     normalized_root: &Path,
+    texture_authority: &SharedTextureAuthority,
 ) -> Result<Vec<PropCandidate>, PipelineError> {
     let mut candidates = Vec::new();
     for package in index
@@ -121,6 +123,8 @@ pub(super) fn discover_world_candidates(
                 &rows,
                 &package_relationship_rows,
                 &mesh_names,
+                texture_authority,
+                &package.subcategory,
             )?;
             let (
                 owner_name,
@@ -231,6 +235,8 @@ fn associate_composite(
     rows: &[LedgerRow],
     package_relationship_rows: &[LedgerRow],
     mesh_names: &BTreeMap<String, String>,
+    texture_authority: &SharedTextureAuthority,
+    source_subcategory: &str,
 ) -> Result<Option<Association>, PipelineError> {
     let mut matches = Vec::new();
     for row in rows.iter().filter(|row| row.kind == "composite_drawable") {
@@ -263,6 +269,8 @@ fn associate_composite(
         package_relationship_rows,
         &composite,
         mesh_names,
+        texture_authority,
+        source_subcategory,
     )?;
     let skeleton =
         named_member(root, rows, "skeleton", &composite.skeleton_name)?;
@@ -291,6 +299,8 @@ fn deferred_render_bindings(
     package_relationship_rows: &[LedgerRow],
     composite: &CompositeEvidence,
     mesh_names: &BTreeMap<String, String>,
+    texture_authority: &SharedTextureAuthority,
+    source_subcategory: &str,
 ) -> Result<Vec<DeferredRenderBinding>, PipelineError> {
     let mut bindings = Vec::new();
     for (composite_prop_index, binding) in
@@ -320,6 +330,8 @@ fn deferred_render_bindings(
                     package_relationship_rows,
                     row,
                     &binding.name,
+                    texture_authority,
+                    source_subcategory,
                 )
             })
             .transpose()?;
@@ -359,6 +371,8 @@ fn deferred_billboard_binding(
     package_relationship_rows: &[LedgerRow],
     row: &LedgerRow,
     expected_identity: &str,
+    texture_authority: &SharedTextureAuthority,
+    source_subcategory: &str,
 ) -> Result<DeferredBillboardBinding, PipelineError> {
     let path = root.join("components").join(&row.path);
     let evidence = read_billboard_source_evidence(&path, expected_identity)
@@ -372,6 +386,11 @@ fn deferred_billboard_binding(
         package_relationship_rows,
         &evidence.shader_identity,
     )?;
+    let texture_references = deferred_texture_references(
+        &shader_occurrences,
+        texture_authority,
+        source_subcategory,
+    )?;
     let quads = evidence
         .quads
         .iter()
@@ -381,6 +400,7 @@ fn deferred_billboard_binding(
         version: evidence.version,
         shader_identity: evidence.shader_identity,
         shader_occurrences,
+        texture_references,
         z_test: evidence.z_test,
         z_write: evidence.z_write,
         fog: evidence.fog,
@@ -435,6 +455,41 @@ fn deferred_shader_occurrences(
     }
     occurrences.sort_by_key(|occurrence| occurrence.source_ordinal);
     Ok(occurrences)
+}
+
+/// Retain every preferred physical source for each decoded shader texture
+/// token.
+fn deferred_texture_references(
+    shader_occurrences: &[DeferredShaderOccurrenceBinding],
+    texture_authority: &SharedTextureAuthority,
+    source_subcategory: &str,
+) -> Result<Vec<DeferredTextureReferenceBinding>, PipelineError> {
+    let mut seen = BTreeSet::new();
+    let mut references = Vec::new();
+    for texture_reference in shader_occurrences
+        .iter()
+        .filter_map(|shader| shader.texture_reference.as_deref())
+    {
+        if !seen.insert(texture_reference.to_owned()) {
+            continue;
+        }
+        let occurrences = texture_authority
+            .preferred_occurrences(texture_reference, source_subcategory)?
+            .into_iter()
+            .map(|occurrence| DeferredTextureOccurrenceBinding {
+                package_id: occurrence.package_id,
+                subcategory: occurrence.subcategory,
+                member_id: occurrence.member_id,
+                source_ordinal: occurrence.source_ordinal,
+                sha256: occurrence.sha256,
+            })
+            .collect();
+        references.push(DeferredTextureReferenceBinding {
+            identity: texture_reference.to_owned(),
+            occurrences,
+        });
+    }
+    Ok(references)
 }
 
 /// Retain exact floating-point bits for one authored billboard child.

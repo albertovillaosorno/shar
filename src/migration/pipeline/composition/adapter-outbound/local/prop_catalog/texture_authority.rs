@@ -38,19 +38,43 @@ use serde_json::Value;
 use shar_sha256::digest_hex;
 
 use super::extraction::{is_world_package, relative_art_root};
-use super::inventory_common::{clean_identity, required_string};
+use super::inventory_common::{
+    clean_identity, ledger_member_id, required_string, required_usize,
+};
 use crate::domain::PipelineError;
 use crate::domain::package::{PhaseThreePackageIndex, PhaseThreePackageRow};
 
 /// One published texture source with package scope and exact content identity.
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct TextureSource {
+    /// Generated owning package identity.
+    package_id: String,
     /// Generated package subcategory used for scope preference.
     subcategory: String,
+    /// Exact normalized texture member identity.
+    member_id: String,
+    /// Exact source texture component ordinal.
+    source_ordinal: usize,
     /// Normalized PNG payload path.
     path: PathBuf,
     /// Exact lowercase SHA-256 of the payload.
     sha256: String,
+}
+
+/// Public-safe physical texture occurrence retained as deferred source
+/// evidence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct SharedTextureOccurrenceEvidence {
+    /// Generated owning package identity.
+    pub(super) package_id: String,
+    /// Generated package subcategory used for scope preference.
+    pub(super) subcategory: String,
+    /// Exact normalized texture member identity.
+    pub(super) member_id: String,
+    /// Exact source texture component ordinal.
+    pub(super) source_ordinal: usize,
+    /// Exact lowercase SHA-256 of the normalized PNG payload.
+    pub(super) sha256: String,
 }
 
 /// Logical texture identities mapped to every selected package occurrence.
@@ -87,6 +111,7 @@ fn ingest_package(
             line,
             &manifest,
             &root,
+            &package.package_id,
             &package.subcategory,
         )? {
             sources.entry(logical).or_default().push(source);
@@ -104,6 +129,7 @@ fn texture_source_from_line(
     line: &str,
     manifest: &Path,
     root: &Path,
+    package_id: &str,
     subcategory: &str,
 ) -> Result<Option<(String, TextureSource)>, PipelineError> {
     let value: Value = serde_json::from_str(line).map_err(|error| {
@@ -117,6 +143,8 @@ fn texture_source_from_line(
     }
     let logical = clean_identity(&required_string(&value, "name")?)?;
     let relative_path = required_string(&value, "path")?;
+    let member_id = ledger_member_id(&relative_path, "texture")?;
+    let source_ordinal = required_usize(&value, "ordinal")?;
     let file_name = relative_path
         .strip_prefix("texture/")
         .filter(|member| {
@@ -137,7 +165,10 @@ fn texture_source_from_line(
         ))
     })?;
     Ok(Some((logical, TextureSource {
+        package_id: package_id.to_owned(),
         subcategory: subcategory.to_owned(),
+        member_id,
+        source_ordinal,
         path,
         sha256: digest_hex(&bytes),
     })))
@@ -172,6 +203,69 @@ impl SharedTextureAuthority {
         Ok(Self { sources })
     }
 
+    /// Return every physical occurrence in the same preferred scope used by
+    /// material resolution without selecting one payload.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the logical texture identity is malformed.
+    pub(super) fn preferred_occurrences(
+        &self,
+        texture_reference: &str,
+        source_subcategory: &str,
+    ) -> Result<Vec<SharedTextureOccurrenceEvidence>, PipelineError> {
+        let mut occurrences = self
+            .preferred_sources(texture_reference, source_subcategory)?
+            .into_iter()
+            .map(|source| SharedTextureOccurrenceEvidence {
+                package_id: source.package_id.clone(),
+                subcategory: source.subcategory.clone(),
+                member_id: source.member_id.clone(),
+                source_ordinal: source.source_ordinal,
+                sha256: source.sha256.clone(),
+            })
+            .collect::<Vec<_>>();
+        occurrences.sort_by(|left, right| {
+            (&left.subcategory, left.source_ordinal, &left.member_id).cmp(&(
+                &right.subcategory,
+                right.source_ordinal,
+                &right.member_id,
+            ))
+        });
+        Ok(occurrences)
+    }
+
+    /// Build a small authority from explicit physical occurrences for tests.
+    #[cfg(test)]
+    pub(super) fn from_occurrences_for_tests(
+        occurrences: &[(&str, &str, &str, &str, usize, &str, &str)],
+    ) -> Self {
+        let mut sources = BTreeMap::new();
+        for (
+            logical,
+            package_id,
+            subcategory,
+            member_id,
+            source_ordinal,
+            path,
+            sha256,
+        ) in occurrences
+        {
+            sources
+                .entry((*logical).to_owned())
+                .or_insert_with(Vec::new)
+                .push(TextureSource {
+                    package_id: (*package_id).to_owned(),
+                    subcategory: (*subcategory).to_owned(),
+                    member_id: (*member_id).to_owned(),
+                    source_ordinal: *source_ordinal,
+                    path: PathBuf::from(path),
+                    sha256: (*sha256).to_owned(),
+                });
+        }
+        Self { sources }
+    }
+
     /// Resolve one missing local texture using package-scope authority.
     ///
     /// # Errors
@@ -183,8 +277,20 @@ impl SharedTextureAuthority {
         source_subcategory: &str,
     ) -> Result<Option<&Path>, PipelineError> {
         let logical = clean_identity(texture_reference)?;
+        let preferred = self.preferred_sources(&logical, source_subcategory)?;
+        unique_payload(&logical, &preferred)
+    }
+
+    /// Select the deterministic preferred physical scope without interpreting
+    /// payload identity.
+    fn preferred_sources(
+        &self,
+        texture_reference: &str,
+        source_subcategory: &str,
+    ) -> Result<Vec<&TextureSource>, PipelineError> {
+        let logical = clean_identity(texture_reference)?;
         let Some(all) = self.sources.get(&logical) else {
-            return Ok(None);
+            return Ok(Vec::new());
         };
         let level = level_scope(source_subcategory);
         let same_level = level.map_or_else(Vec::new, |scope| {
@@ -207,7 +313,7 @@ impl SharedTextureAuthority {
                 })
                 .collect::<Vec<_>>()
         });
-        let preferred = if !terrain.is_empty() {
+        Ok(if !terrain.is_empty() {
             terrain
         } else if !same_level.is_empty() {
             same_level
@@ -215,8 +321,7 @@ impl SharedTextureAuthority {
             same_broader
         } else {
             all.iter().collect()
-        };
-        unique_payload(&logical, &preferred)
+        })
     }
 }
 

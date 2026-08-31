@@ -30,6 +30,7 @@
 
 //! World catalog outbound adapter.
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
 
@@ -38,7 +39,9 @@ use serde_json::{Value, json};
 use super::model::{
     DeferredBillboardBinding, DeferredBillboardQuadBinding,
     DeferredControllerBinding, DeferredRenderBinding,
-    DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding, PropRoute,
+    DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
+    DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
+    PropRoute,
 };
 use super::world_model::{ExportedWorldProp, WorldCatalogCounts};
 use crate::domain::PipelineError;
@@ -101,6 +104,29 @@ pub(super) fn world_counts(
             .filter_map(|binding| binding.billboard.as_ref())
             .filter(|billboard| billboard.shader_occurrences.len() > 1)
             .count(),
+        deferred_billboard_texture_references: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .flat_map(|alias| alias.deferred_render_bindings.iter())
+            .filter_map(|binding| binding.billboard.as_ref())
+            .map(|billboard| billboard.texture_references.len())
+            .sum(),
+        deferred_billboard_texture_occurrences: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .flat_map(|alias| alias.deferred_render_bindings.iter())
+            .filter_map(|binding| binding.billboard.as_ref())
+            .flat_map(|billboard| billboard.texture_references.iter())
+            .map(|reference| reference.occurrences.len())
+            .sum(),
+        deferred_billboard_texture_ambiguities: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .flat_map(|alias| alias.deferred_render_bindings.iter())
+            .filter_map(|binding| binding.billboard.as_ref())
+            .flat_map(|billboard| billboard.texture_references.iter())
+            .filter(|reference| texture_reference_is_ambiguous(reference))
+            .count(),
         deferred_controller_bindings: assets
             .iter()
             .flat_map(|asset| asset.aliases.iter())
@@ -121,7 +147,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v5",
+        "schema": "shar.world-model-props.v6",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -138,9 +164,9 @@ pub(super) fn write_world_catalog(
             "deferred_render_bindings": concat!(
                 "retain authored non-mesh composite prop relationships, exact ",
                 "billboard presentation, every same-name shader occurrence, ",
-                "and controller/animation links as source evidence without ",
-                "substituting static FBX geometry or selecting ambiguous ",
-                "shaders"
+                "preferred physical texture occurrences, and controller/",
+                "animation links as source evidence without substituting ",
+                "static FBX geometry or selecting ambiguous payloads"
             ),
             "unreal_assets": [
                 "placement and locators",
@@ -168,6 +194,12 @@ pub(super) fn write_world_catalog(
                 counts.deferred_billboard_shader_occurrences,
             "deferred_billboard_shader_ambiguities":
                 counts.deferred_billboard_shader_ambiguities,
+            "deferred_billboard_texture_references":
+                counts.deferred_billboard_texture_references,
+            "deferred_billboard_texture_occurrences":
+                counts.deferred_billboard_texture_occurrences,
+            "deferred_billboard_texture_ambiguities":
+                counts.deferred_billboard_texture_ambiguities,
             "deferred_controller_bindings":
                 counts.deferred_controller_bindings
         },
@@ -240,6 +272,45 @@ fn deferred_shader_occurrence_value(
     })
 }
 
+/// Render one preferred physical texture occurrence without selecting it.
+fn deferred_texture_occurrence_value(
+    binding: &DeferredTextureOccurrenceBinding,
+) -> Value {
+    json!({
+        "package_id": binding.package_id,
+        "subcategory": binding.subcategory,
+        "member_id": binding.member_id,
+        "source_ordinal": binding.source_ordinal,
+        "sha256": binding.sha256
+    })
+}
+
+/// Render one logical texture reference and every preferred physical source.
+fn deferred_texture_reference_value(
+    binding: &DeferredTextureReferenceBinding,
+) -> Value {
+    json!({
+        "identity": binding.identity,
+        "occurrences": binding.occurrences
+            .iter()
+            .map(deferred_texture_occurrence_value)
+            .collect::<Vec<_>>()
+    })
+}
+
+/// Return whether preferred physical occurrences disagree by payload digest.
+fn texture_reference_is_ambiguous(
+    binding: &DeferredTextureReferenceBinding,
+) -> bool {
+    binding
+        .occurrences
+        .iter()
+        .map(|occurrence| occurrence.sha256.as_str())
+        .collect::<BTreeSet<_>>()
+        .len()
+        > 1
+}
+
 /// Render one exact deferred billboard group without interpreting semantics.
 fn deferred_billboard_value(binding: &DeferredBillboardBinding) -> Value {
     json!({
@@ -248,6 +319,10 @@ fn deferred_billboard_value(binding: &DeferredBillboardBinding) -> Value {
         "shader_occurrences": binding.shader_occurrences
             .iter()
             .map(deferred_shader_occurrence_value)
+            .collect::<Vec<_>>(),
+        "texture_references": binding.texture_references
+            .iter()
+            .map(deferred_texture_reference_value)
             .collect::<Vec<_>>(),
         "z_test": binding.z_test,
         "z_write": binding.z_write,

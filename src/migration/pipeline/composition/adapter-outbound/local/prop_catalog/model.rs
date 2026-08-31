@@ -155,6 +155,30 @@ pub(super) struct DeferredShaderOccurrenceBinding {
     pub(super) params: Vec<DeferredShaderParameterBinding>,
 }
 
+/// One preferred physical texture occurrence retained without choosing it.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct DeferredTextureOccurrenceBinding {
+    /// Generated owning package identity.
+    pub(super) package_id: String,
+    /// Generated owning package subcategory.
+    pub(super) subcategory: String,
+    /// Exact normalized texture member identity.
+    pub(super) member_id: String,
+    /// Exact source texture component ordinal.
+    pub(super) source_ordinal: usize,
+    /// Exact lowercase SHA-256 of the normalized PNG payload.
+    pub(super) sha256: String,
+}
+
+/// One logical shader texture reference and every preferred physical source.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct DeferredTextureReferenceBinding {
+    /// Canonical decoded shader texture token.
+    pub(super) identity: String,
+    /// Every physical occurrence in the existing preferred authority scope.
+    pub(super) occurrences: Vec<DeferredTextureOccurrenceBinding>,
+}
+
 /// One exact source billboard group retained as deferred presentation evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct DeferredBillboardBinding {
@@ -164,6 +188,8 @@ pub(super) struct DeferredBillboardBinding {
     pub(super) shader_identity: String,
     /// Every same-name normalized shader occurrence in source-ordinal order.
     pub(super) shader_occurrences: Vec<DeferredShaderOccurrenceBinding>,
+    /// Logical texture references and preferred physical source occurrences.
+    pub(super) texture_references: Vec<DeferredTextureReferenceBinding>,
     /// Authored depth-test flag.
     pub(super) z_test: u32,
     /// Authored depth-write flag.

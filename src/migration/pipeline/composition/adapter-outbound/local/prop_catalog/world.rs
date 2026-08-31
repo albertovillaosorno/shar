@@ -116,8 +116,9 @@ fn build(
     })?;
     let source_packages =
         extract_world_packages(&index, game_root, &normalized)?;
-    let candidates = discover_world_candidates(&index, &normalized)?;
     let authority = SharedTextureAuthority::build(&index, &normalized)?;
+    let candidates =
+        discover_world_candidates(&index, &normalized, &authority)?;
     let assets = export_world_props(
         &candidates,
         &normalized,

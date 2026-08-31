@@ -35,6 +35,7 @@ use crate::adapters::driven::local::prop_catalog::model::{
     DeferredBillboardBinding, DeferredBillboardQuadBinding,
     DeferredControllerBinding, DeferredRenderBinding,
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
+    DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
 };
 
 #[test]
@@ -103,6 +104,27 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
                     ],
                 },
             ],
+            texture_references: vec![DeferredTextureReferenceBinding {
+                identity: "glow.bmp".to_owned(),
+                occurrences: vec![
+                    DeferredTextureOccurrenceBinding {
+                        package_id: "level-three-terrain".to_owned(),
+                        subcategory: "terrain-world/level-03/terrain-mesh"
+                            .to_owned(),
+                        member_id: "glow".to_owned(),
+                        source_ordinal: 182,
+                        sha256: "one".to_owned(),
+                    },
+                    DeferredTextureOccurrenceBinding {
+                        package_id: "level-three-terrain".to_owned(),
+                        subcategory: "terrain-world/level-03/terrain-mesh"
+                            .to_owned(),
+                        member_id: "glow__ordinal_10591".to_owned(),
+                        source_ordinal: 10_591,
+                        sha256: "two".to_owned(),
+                    },
+                ],
+            }],
             z_test: 1,
             z_write: 0,
             fog: 0,
@@ -198,6 +220,39 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
     assert_eq!(
         second_params.get(1).and_then(|value| value.get("value")),
         Some(&3.into())
+    );
+    let texture_references = billboard
+        .get("texture_references")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "deferred texture references are missing".to_owned())?;
+    assert_eq!(texture_references.len(), 1);
+    let texture_reference = texture_references
+        .first()
+        .and_then(serde_json::Value::as_object)
+        .ok_or_else(|| "deferred texture reference is missing".to_owned())?;
+    assert_eq!(texture_reference.get("identity"), Some(&"glow.bmp".into()));
+    let texture_occurrences = texture_reference
+        .get("occurrences")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "deferred texture occurrences are missing".to_owned())?;
+    assert_eq!(texture_occurrences.len(), 2);
+    assert_eq!(
+        texture_occurrences
+            .first()
+            .and_then(|value| value.get("source_ordinal")),
+        Some(&182.into())
+    );
+    assert_eq!(
+        texture_occurrences
+            .get(1)
+            .and_then(|value| value.get("member_id")),
+        Some(&"glow__ordinal_10591".into())
+    );
+    assert_eq!(
+        texture_occurrences
+            .get(1)
+            .and_then(|value| value.get("sha256")),
+        Some(&"two".into())
     );
     assert_eq!(billboard.get("z_test"), Some(&1.into()));
     let quads = billboard

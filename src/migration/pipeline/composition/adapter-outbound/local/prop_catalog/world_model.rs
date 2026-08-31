@@ -109,6 +109,13 @@ pub(super) struct WorldCatalogCounts {
     pub(super) deferred_billboard_shader_occurrences: usize,
     /// Deferred billboards with more than one same-name shader occurrence.
     pub(super) deferred_billboard_shader_ambiguities: usize,
+    /// Logical texture references retained for deferred billboards.
+    pub(super) deferred_billboard_texture_references: usize,
+    /// Preferred physical texture occurrences retained for deferred billboards.
+    pub(super) deferred_billboard_texture_occurrences: usize,
+    /// Deferred texture references whose preferred occurrences differ by
+    /// payload.
+    pub(super) deferred_billboard_texture_ambiguities: usize,
     /// Deferred render bindings with exact source controller relationships.
     pub(super) deferred_controller_bindings: usize,
 }
