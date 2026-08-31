@@ -221,7 +221,6 @@ fn merge_compatible(canonical: &mut WorldVariant, variants: Vec<WorldVariant>) {
             }
         }
     }
-    clips.sort_by_key(animation_key);
     for (ordinal, clip) in clips.iter_mut().enumerate() {
         clip.name = format!("animation-{ordinal:04}");
     }
