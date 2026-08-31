@@ -34,7 +34,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use fbx::adapters::driven::decoded_component_source::{
-    DecodedComponentError, DecodedComponentSource,
+    DecodedComponentError, DecodedComponentSource, read_shader_source_evidence,
 };
 use fbx::ports::component_source::ComponentSource;
 use png as _;
@@ -48,6 +48,67 @@ fn temp_root(label: &str) -> PathBuf {
         "fbx-decoded-material-{label}-{}",
         std::process::id()
     ))
+}
+
+#[test]
+fn retains_validated_shader_source_evidence_in_parameter_order()
+-> Result<(), String> {
+    let root = temp_root("shader-source-evidence");
+    let shader_dir = root.join("components").join("shader");
+    let path = shader_dir.join("glow_m.json");
+    let setup_result = fs::create_dir_all(&shader_dir).and_then(|()| {
+        fs::write(
+            &path,
+            concat!(
+                r#"{"schema":"shader","name":"glow_m\u0000","version":0,"#,
+                r#""pddi_shader_name":"simple\u0000","has_translucency":1,"#,
+                r#""vertex_needs":33,"vertex_mask":4294721505,"num_params":3,"#,
+                r#""params":[{"kind":"texture","param":"TEX","#,
+                r#""value":"glow.bmp\u0000"},{"kind":"int","#,
+                r#""param":"BLMD","value":3},{"kind":"float","#,
+                r#""param":"ACTH","value":0.5}]}"#,
+            ),
+        )
+    });
+    assert!(setup_result.is_ok());
+    let result = read_shader_source_evidence(&path, "glow_m");
+    let cleanup_result = fs::remove_dir_all(&root);
+    let evidence =
+        result.map_err(|error| format!("shader evidence failed: {error:?}"))?;
+    assert_eq!(evidence.schema.as_deref(), Some("shader"));
+    assert_eq!(evidence.identity, "glow_m");
+    assert_eq!(evidence.version, 0);
+    assert_eq!(evidence.platform_shader_name.as_deref(), Some("simple\0"));
+    assert_eq!(evidence.translucency, Some(1));
+    assert_eq!(evidence.vertex_needs, Some(33));
+    assert_eq!(evidence.vertex_mask, Some(4_294_721_505));
+    assert_eq!(evidence.parameter_count, Some(3));
+    assert_eq!(evidence.texture_reference.as_deref(), Some("glow.bmp"));
+    assert_eq!(
+        evidence
+            .params
+            .iter()
+            .map(|parameter| parameter.param.as_str())
+            .collect::<Vec<_>>(),
+        ["TEX", "BLMD", "ACTH"]
+    );
+    let texture = evidence
+        .params
+        .first()
+        .ok_or_else(|| "texture parameter is missing".to_owned())?;
+    let blend = evidence
+        .params
+        .get(1)
+        .ok_or_else(|| "blend parameter is missing".to_owned())?;
+    let threshold = evidence
+        .params
+        .get(2)
+        .ok_or_else(|| "threshold parameter is missing".to_owned())?;
+    assert_eq!(texture.value, "glow.bmp\0");
+    assert_eq!(blend.value, 3);
+    assert_eq!(threshold.value, 0.5);
+    assert!(cleanup_result.is_ok());
+    Ok(())
 }
 
 #[test]

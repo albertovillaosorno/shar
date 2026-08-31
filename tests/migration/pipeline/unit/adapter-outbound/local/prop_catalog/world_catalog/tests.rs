@@ -34,6 +34,7 @@ use super::deferred_binding_value;
 use crate::adapters::driven::local::prop_catalog::model::{
     DeferredBillboardBinding, DeferredBillboardQuadBinding,
     DeferredControllerBinding, DeferredRenderBinding,
+    DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
 };
 
 #[test]
@@ -50,6 +51,58 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
         billboard: Some(DeferredBillboardBinding {
             version: 0,
             shader_identity: "glow_m".to_owned(),
+            shader_occurrences: vec![
+                DeferredShaderOccurrenceBinding {
+                    member_id: "glow_m__ordinal_3".to_owned(),
+                    source_ordinal: 3,
+                    schema: Some("shader".to_owned()),
+                    identity: "glow_m".to_owned(),
+                    version: 0,
+                    platform_shader_name: Some("simple\0".to_owned()),
+                    translucency: Some(1),
+                    vertex_needs: Some(33),
+                    vertex_mask: Some(3),
+                    parameter_count: Some(2),
+                    texture_reference: Some("glow.bmp".to_owned()),
+                    params: vec![
+                        DeferredShaderParameterBinding {
+                            kind: "texture".to_owned(),
+                            param: "TEX".to_owned(),
+                            value: "glow.bmp\0".into(),
+                        },
+                        DeferredShaderParameterBinding {
+                            kind: "int".to_owned(),
+                            param: "BLMD".to_owned(),
+                            value: 2.into(),
+                        },
+                    ],
+                },
+                DeferredShaderOccurrenceBinding {
+                    member_id: "glow_m__ordinal_7".to_owned(),
+                    source_ordinal: 7,
+                    schema: Some("shader".to_owned()),
+                    identity: "glow_m".to_owned(),
+                    version: 0,
+                    platform_shader_name: Some("simple\0".to_owned()),
+                    translucency: Some(1),
+                    vertex_needs: Some(33),
+                    vertex_mask: Some(7),
+                    parameter_count: Some(2),
+                    texture_reference: Some("glow.bmp".to_owned()),
+                    params: vec![
+                        DeferredShaderParameterBinding {
+                            kind: "texture".to_owned(),
+                            param: "TEX".to_owned(),
+                            value: "glow.bmp\0".into(),
+                        },
+                        DeferredShaderParameterBinding {
+                            kind: "int".to_owned(),
+                            param: "BLMD".to_owned(),
+                            value: 3.into(),
+                        },
+                    ],
+                },
+            ],
             z_test: 1,
             z_write: 0,
             fog: 0,
@@ -105,6 +158,47 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
             "deferred billboard did not serialize as an object".to_owned()
         })?;
     assert_eq!(billboard.get("shader_identity"), Some(&"glow_m".into()));
+    let shader_occurrences = billboard
+        .get("shader_occurrences")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "deferred shader occurrences are missing".to_owned())?;
+    assert_eq!(shader_occurrences.len(), 2);
+    let first_shader = shader_occurrences
+        .first()
+        .and_then(serde_json::Value::as_object)
+        .ok_or_else(|| "first deferred shader is missing".to_owned())?;
+    let second_shader = shader_occurrences
+        .get(1)
+        .and_then(serde_json::Value::as_object)
+        .ok_or_else(|| "second deferred shader is missing".to_owned())?;
+    assert_eq!(
+        first_shader.get("source_ordinal"),
+        Some(&3.into())
+    );
+    assert_eq!(
+        first_shader.get("texture_reference"),
+        Some(&"glow.bmp".into())
+    );
+    let first_params = first_shader
+        .get("params")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "first shader params are missing".to_owned())?;
+    let second_params = second_shader
+        .get("params")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "second shader params are missing".to_owned())?;
+    assert_eq!(
+        first_params.get(1).and_then(|value| value.get("value")),
+        Some(&2.into())
+    );
+    assert_eq!(
+        second_shader.get("source_ordinal"),
+        Some(&7.into())
+    );
+    assert_eq!(
+        second_params.get(1).and_then(|value| value.get("value")),
+        Some(&3.into())
+    );
     assert_eq!(billboard.get("z_test"), Some(&1.into()));
     let quads = billboard
         .get("quads")

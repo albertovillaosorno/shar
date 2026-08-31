@@ -36,6 +36,7 @@ use std::path::Path;
 use fbx::adapters::driven::decoded_billboard_source::{
     BillboardQuadEvidence, read_billboard_source_evidence,
 };
+use fbx::adapters::driven::decoded_component_source;
 
 use super::extraction::relative_art_root;
 use super::inventory_common::{
@@ -44,8 +45,10 @@ use super::inventory_common::{
 };
 use super::model::{
     DeferredBillboardBinding, DeferredBillboardQuadBinding,
-    DeferredControllerBinding, DeferredRenderBinding, PropCandidate, PropFamily,
-    PropRoute,
+    DeferredControllerBinding, DeferredRenderBinding,
+    DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
+    PropCandidate,
+    PropFamily, PropRoute,
 };
 use super::world_ledger::{LedgerRow, read_world_ledger};
 use crate::domain::PipelineError;
@@ -96,6 +99,7 @@ pub(super) fn discover_world_candidates(
                         | "frame_controller_variant_a"
                         | "frame_controller_variant_b"
                         | "animation"
+                        | "shader"
                 )
             })
             .cloned()
@@ -310,7 +314,14 @@ fn deferred_render_bindings(
         }
         let resolved = matches.pop();
         let billboard = resolved
-            .map(|row| deferred_billboard_binding(root, row, &binding.name))
+            .map(|row| {
+                deferred_billboard_binding(
+                    root,
+                    package_relationship_rows,
+                    row,
+                    &binding.name,
+                )
+            })
             .transpose()?;
         let (component_kind, component_member_id, source_ordinal) =
             if let Some(row) = resolved {
@@ -345,6 +356,7 @@ fn deferred_render_bindings(
 /// Retain one exact source billboard group without interpreting presentation.
 fn deferred_billboard_binding(
     root: &Path,
+    package_relationship_rows: &[LedgerRow],
     row: &LedgerRow,
     expected_identity: &str,
 ) -> Result<DeferredBillboardBinding, PipelineError> {
@@ -355,6 +367,11 @@ fn deferred_billboard_binding(
                 "world prop billboard evidence failed: {error:?}"
             ))
         })?;
+    let shader_occurrences = deferred_shader_occurrences(
+        root,
+        package_relationship_rows,
+        &evidence.shader_identity,
+    )?;
     let quads = evidence
         .quads
         .iter()
@@ -363,11 +380,61 @@ fn deferred_billboard_binding(
     Ok(DeferredBillboardBinding {
         version: evidence.version,
         shader_identity: evidence.shader_identity,
+        shader_occurrences,
         z_test: evidence.z_test,
         z_write: evidence.z_write,
         fog: evidence.fog,
         quads,
     })
+}
+
+/// Retain every same-name shader occurrence without choosing one relationship.
+fn deferred_shader_occurrences(
+    root: &Path,
+    rows: &[LedgerRow],
+    shader_identity: &str,
+) -> Result<Vec<DeferredShaderOccurrenceBinding>, PipelineError> {
+    let mut occurrences = Vec::new();
+    for row in rows.iter().filter(|row| row.kind == "shader") {
+        let row_identity = clean_identity(&row.name)?;
+        if !row_identity.eq_ignore_ascii_case(shader_identity) {
+            continue;
+        }
+        let path = root.join("components").join(&row.path);
+        let evidence = decoded_component_source::read_shader_source_evidence(
+            &path,
+            shader_identity,
+        )
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "world prop billboard shader evidence failed: {error:?}"
+                ))
+            })?;
+        occurrences.push(DeferredShaderOccurrenceBinding {
+            member_id: ledger_member_id(&row.path, "shader")?,
+            source_ordinal: row.ordinal,
+            schema: evidence.schema,
+            identity: evidence.identity,
+            version: evidence.version,
+            platform_shader_name: evidence.platform_shader_name,
+            translucency: evidence.translucency,
+            vertex_needs: evidence.vertex_needs,
+            vertex_mask: evidence.vertex_mask,
+            parameter_count: evidence.parameter_count,
+            texture_reference: evidence.texture_reference,
+            params: evidence
+                .params
+                .into_iter()
+                .map(|parameter| DeferredShaderParameterBinding {
+                    kind: parameter.kind,
+                    param: parameter.param,
+                    value: parameter.value,
+                })
+                .collect(),
+        });
+    }
+    occurrences.sort_by_key(|occurrence| occurrence.source_ordinal);
+    Ok(occurrences)
 }
 
 /// Retain exact floating-point bits for one authored billboard child.

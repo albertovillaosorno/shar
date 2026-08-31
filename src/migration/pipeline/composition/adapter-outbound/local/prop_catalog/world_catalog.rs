@@ -37,7 +37,8 @@ use serde_json::{Value, json};
 
 use super::model::{
     DeferredBillboardBinding, DeferredBillboardQuadBinding,
-    DeferredControllerBinding, DeferredRenderBinding, PropRoute,
+    DeferredControllerBinding, DeferredRenderBinding,
+    DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding, PropRoute,
 };
 use super::world_model::{ExportedWorldProp, WorldCatalogCounts};
 use crate::domain::PipelineError;
@@ -86,6 +87,20 @@ pub(super) fn world_counts(
             .filter_map(|binding| binding.billboard.as_ref())
             .map(|billboard| billboard.quads.len())
             .sum(),
+        deferred_billboard_shader_occurrences: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .flat_map(|alias| alias.deferred_render_bindings.iter())
+            .filter_map(|binding| binding.billboard.as_ref())
+            .map(|billboard| billboard.shader_occurrences.len())
+            .sum(),
+        deferred_billboard_shader_ambiguities: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .flat_map(|alias| alias.deferred_render_bindings.iter())
+            .filter_map(|binding| binding.billboard.as_ref())
+            .filter(|billboard| billboard.shader_occurrences.len() > 1)
+            .count(),
         deferred_controller_bindings: assets
             .iter()
             .flat_map(|asset| asset.aliases.iter())
@@ -106,7 +121,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v4",
+        "schema": "shar.world-model-props.v5",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -122,8 +137,10 @@ pub(super) fn write_world_catalog(
             ),
             "deferred_render_bindings": concat!(
                 "retain authored non-mesh composite prop relationships, exact ",
-                "billboard presentation, and controller/animation links as ",
-                "source evidence without substituting static FBX geometry"
+                "billboard presentation, every same-name shader occurrence, ",
+                "and controller/animation links as source evidence without ",
+                "substituting static FBX geometry or selecting ambiguous ",
+                "shaders"
             ),
             "unreal_assets": [
                 "placement and locators",
@@ -147,6 +164,10 @@ pub(super) fn write_world_catalog(
             "deferred_render_bindings": counts.deferred_render_bindings,
             "deferred_billboard_bindings": counts.deferred_billboard_bindings,
             "deferred_billboard_quads": counts.deferred_billboard_quads,
+            "deferred_billboard_shader_occurrences":
+                counts.deferred_billboard_shader_occurrences,
+            "deferred_billboard_shader_ambiguities":
+                counts.deferred_billboard_shader_ambiguities,
             "deferred_controller_bindings":
                 counts.deferred_controller_bindings
         },
@@ -185,11 +206,49 @@ fn deferred_billboard_quad_value(
     })
 }
 
+/// Render one exact deferred shader parameter without interpreting semantics.
+fn deferred_shader_parameter_value(
+    binding: &DeferredShaderParameterBinding,
+) -> Value {
+    json!({
+        "kind": binding.kind,
+        "param": binding.param,
+        "value": binding.value
+    })
+}
+
+/// Render one same-name shader occurrence without choosing it as authoritative.
+fn deferred_shader_occurrence_value(
+    binding: &DeferredShaderOccurrenceBinding,
+) -> Value {
+    json!({
+        "member_id": binding.member_id,
+        "source_ordinal": binding.source_ordinal,
+        "schema": binding.schema,
+        "identity": binding.identity,
+        "version": binding.version,
+        "platform_shader_name": binding.platform_shader_name,
+        "translucency": binding.translucency,
+        "vertex_needs": binding.vertex_needs,
+        "vertex_mask": binding.vertex_mask,
+        "parameter_count": binding.parameter_count,
+        "texture_reference": binding.texture_reference,
+        "params": binding.params
+            .iter()
+            .map(deferred_shader_parameter_value)
+            .collect::<Vec<_>>()
+    })
+}
+
 /// Render one exact deferred billboard group without interpreting semantics.
 fn deferred_billboard_value(binding: &DeferredBillboardBinding) -> Value {
     json!({
         "version": binding.version,
         "shader_identity": binding.shader_identity,
+        "shader_occurrences": binding.shader_occurrences
+            .iter()
+            .map(deferred_shader_occurrence_value)
+            .collect::<Vec<_>>(),
         "z_test": binding.z_test,
         "z_write": binding.z_write,
         "fog": binding.fog,

@@ -34,6 +34,7 @@ use std::cmp::Ordering;
 use std::path::PathBuf;
 
 use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
+use serde_json::Value;
 
 /// Catalog family that owns one prop source occurrence.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -113,6 +114,47 @@ pub(super) struct DeferredBillboardQuadBinding {
     pub(super) perspective: bool,
 }
 
+/// One exact shader parameter retained for a deferred billboard occurrence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct DeferredShaderParameterBinding {
+    /// Authored parameter value kind.
+    pub(super) kind: String,
+    /// Authored parameter token.
+    pub(super) param: String,
+    /// Exact decoded JSON value.
+    pub(super) value: Value,
+}
+
+/// One same-name shader occurrence retained without selecting it as
+/// authoritative.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct DeferredShaderOccurrenceBinding {
+    /// Exact normalized shader member id.
+    pub(super) member_id: String,
+    /// Exact source component ordinal.
+    pub(super) source_ordinal: usize,
+    /// Optional decoded schema marker.
+    pub(super) schema: Option<String>,
+    /// Authored logical shader identity.
+    pub(super) identity: String,
+    /// Decoded source shader version.
+    pub(super) version: u32,
+    /// Optional platform shader identity exactly as decoded.
+    pub(super) platform_shader_name: Option<String>,
+    /// Optional authored binary translucency flag.
+    pub(super) translucency: Option<u32>,
+    /// Optional authored vertex-needs mask.
+    pub(super) vertex_needs: Option<u32>,
+    /// Optional authored vertex mask.
+    pub(super) vertex_mask: Option<u32>,
+    /// Optional validated source parameter count.
+    pub(super) parameter_count: Option<u32>,
+    /// Canonical source texture token when declared.
+    pub(super) texture_reference: Option<String>,
+    /// Shader parameters in authored source order.
+    pub(super) params: Vec<DeferredShaderParameterBinding>,
+}
+
 /// One exact source billboard group retained as deferred presentation evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct DeferredBillboardBinding {
@@ -120,6 +162,8 @@ pub(super) struct DeferredBillboardBinding {
     pub(super) version: u32,
     /// Authored shader identity.
     pub(super) shader_identity: String,
+    /// Every same-name normalized shader occurrence in source-ordinal order.
+    pub(super) shader_occurrences: Vec<DeferredShaderOccurrenceBinding>,
     /// Authored depth-test flag.
     pub(super) z_test: u32,
     /// Authored depth-write flag.

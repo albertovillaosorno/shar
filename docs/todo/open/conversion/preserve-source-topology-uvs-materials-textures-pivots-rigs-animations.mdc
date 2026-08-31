@@ -159,5 +159,19 @@ global default. Ten shader identities and 55 child identities occur across the
 cutoff, depth, and BQG animation execution remain deferred to a reviewed native
 presentation adapter instead of being flattened into static or skeletal FBX.
 
+Deferred billboard shader evidence now uses the same validated decoded-shader
+contract as FBX material resolution while preserving the full source parameter
+array. Schema/version, platform shader identity, translucency, vertex masks,
+declared parameter count, canonical `TEX`, and exact decoded parameter values
+remain available without translating them into runtime material semantics.
+
+Across the current 260 deferred groups, the retained relationships reference ten
+shader identities and nine canonical texture tokens. Their 271 shader
+occurrences carry 7,017 parameter rows through the catalog boundary; nine of the
+11 ambiguous relationship sets differ in non-texture shader payload while none
+disagree on `TEX`. Native blend, depth, camera-facing, cutoff, and animation
+execution therefore remain deferred instead of being inferred from one selected
+shader occurrence.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

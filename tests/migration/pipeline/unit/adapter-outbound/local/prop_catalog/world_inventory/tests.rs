@@ -51,7 +51,13 @@ fn fixture_root(label: &str) -> Result<PathBuf, String> {
         "shar-world-inventory-map-{label}-{}-{sequence}",
         std::process::id()
     ));
-    for family in ["mesh", "quad_group", "frame_controller", "animation"] {
+    for family in [
+        "mesh",
+        "quad_group",
+        "shader",
+        "frame_controller",
+        "animation",
+    ] {
         fs::create_dir_all(root.join("components").join(family))
             .map_err(|error| error.to_string())?;
     }
@@ -138,20 +144,62 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         ],
     };
     let rows = Vec::new();
-    let package_quad_groups = vec![LedgerRow {
-        ordinal: 22,
-        depth: 1,
-        container_ordinal: 22,
-        name: "beam\x00".to_owned(),
-        path: "quad_group/beam__ordinal_22.json".to_owned(),
-        kind: "quad_group".to_owned(),
-    }];
+    let package_relationships = vec![
+        LedgerRow {
+            ordinal: 7,
+            depth: 1,
+            container_ordinal: 7,
+            name: "glow_m\x00".to_owned(),
+            path: "shader/glow_m__ordinal_7.json".to_owned(),
+            kind: "shader".to_owned(),
+        },
+        LedgerRow {
+            ordinal: 22,
+            depth: 1,
+            container_ordinal: 22,
+            name: "beam\x00".to_owned(),
+            path: "quad_group/beam__ordinal_22.json".to_owned(),
+            kind: "quad_group".to_owned(),
+        },
+        LedgerRow {
+            ordinal: 3,
+            depth: 1,
+            container_ordinal: 3,
+            name: "glow_m\x00".to_owned(),
+            path: "shader/glow_m__ordinal_3.json".to_owned(),
+            kind: "shader".to_owned(),
+        },
+    ];
     let meshes = BTreeMap::from([(
         "body".to_owned(),
         "body__ordinal_10".to_owned(),
     )]);
 
     let root = fixture_root("deferred-package-quad")?;
+    fs::write(
+        root.join("components/shader/glow_m__ordinal_7.json"),
+        concat!(
+            r#"{"schema":"shader","name":"glow_m\u0000","version":0,"#,
+            r#""pddi_shader_name":"simple\u0000","has_translucency":1,"#,
+            r#""vertex_needs":33,"vertex_mask":7,"num_params":2,"#,
+            r#""params":[{"kind":"texture","param":"TEX","#,
+            r#""value":"glow.bmp\u0000"},{"kind":"int","#,
+            r#""param":"BLMD","value":3}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components/shader/glow_m__ordinal_3.json"),
+        concat!(
+            r#"{"schema":"shader","name":"glow_m\u0000","version":0,"#,
+            r#""pddi_shader_name":"simple\u0000","has_translucency":1,"#,
+            r#""vertex_needs":33,"vertex_mask":3,"num_params":2,"#,
+            r#""params":[{"kind":"texture","param":"TEX","#,
+            r#""value":"glow.bmp\u0000"},{"kind":"int","#,
+            r#""param":"BLMD","value":2}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
     fs::write(
         root.join("components/quad_group/beam__ordinal_22.json"),
         concat!(
@@ -172,7 +220,7 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
     let actual = deferred_render_bindings(
         &root,
         &rows,
-        &package_quad_groups,
+        &package_relationships,
         &composite,
         &meshes,
     )
@@ -203,8 +251,37 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         .quads
         .first()
         .ok_or_else(|| "resolved billboard child is missing".to_owned())?;
+    let shader_ordinals = billboard
+        .shader_occurrences
+        .iter()
+        .map(|shader| shader.source_ordinal)
+        .collect::<Vec<_>>();
+    let shader_members = billboard
+        .shader_occurrences
+        .iter()
+        .map(|shader| shader.member_id.as_str())
+        .collect::<Vec<_>>();
+    let shader_textures = billboard
+        .shader_occurrences
+        .iter()
+        .map(|shader| shader.texture_reference.as_deref())
+        .collect::<Vec<_>>();
+    let blend_modes = billboard
+        .shader_occurrences
+        .iter()
+        .map(|shader| {
+            shader
+                .params
+                .get(1)
+                .and_then(|parameter| parameter.value.as_u64())
+        })
+        .collect::<Vec<_>>();
     if billboard.version != 0
         || billboard.shader_identity != "glow_m"
+        || shader_ordinals != [3, 7]
+        || shader_members != ["glow_m__ordinal_3", "glow_m__ordinal_7"]
+        || shader_textures != [Some("glow.bmp"), Some("glow.bmp")]
+        || blend_modes != [Some(2), Some(3)]
         || billboard.z_test != 1
         || billboard.z_write != 0
         || billboard.fog != 0

@@ -59,6 +59,77 @@ pub struct DecodedComponentSource {
     texture_output_dir: PathBuf,
 }
 
+/// One validated decoded shader parameter retained as source evidence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ShaderParameterEvidence {
+    /// Authored parameter value kind.
+    pub kind: String,
+    /// Authored parameter token.
+    pub param: String,
+    /// Exact decoded JSON value.
+    pub value: Value,
+}
+
+/// One validated decoded shader document retained without choosing a consumer.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ShaderSourceEvidence {
+    /// Optional decoded schema marker exactly as published.
+    pub schema: Option<String>,
+    /// Authored logical shader identity after fixed-width NUL removal.
+    pub identity: String,
+    /// Supported decoded shader schema version.
+    pub version: u32,
+    /// Optional platform shader identity exactly as decoded.
+    pub platform_shader_name: Option<String>,
+    /// Optional authored binary translucency flag.
+    pub translucency: Option<u32>,
+    /// Optional authored vertex-needs mask.
+    pub vertex_needs: Option<u32>,
+    /// Optional authored vertex mask.
+    pub vertex_mask: Option<u32>,
+    /// Optional authored parameter count after consistency validation.
+    pub parameter_count: Option<u32>,
+    /// Canonical texture reference after fixed-width NUL removal.
+    pub texture_reference: Option<String>,
+    /// Shader parameters in authored source order.
+    pub params: Vec<ShaderParameterEvidence>,
+}
+
+/// Read one exact shader member as validated source evidence.
+///
+/// # Errors
+///
+/// Returns an error when JSON, identity, schema, version, parameter counts, or
+/// canonical texture-reference evidence is invalid.
+pub fn read_shader_source_evidence(
+    path: &Path,
+    requested_id: &str,
+) -> Result<ShaderSourceEvidence, DecodedComponentError> {
+    let shader: DecodedShader = read_json(path)?;
+    ensure_shader_evidence(&shader, requested_id)?;
+    let texture_reference = texture_name(&shader)?;
+    Ok(ShaderSourceEvidence {
+        schema: shader.schema.clone(),
+        identity: decoded_material_identity(&shader.name),
+        version: shader.version,
+        platform_shader_name: shader.platform_shader_name.clone(),
+        translucency: shader.translucency,
+        vertex_needs: shader.vertex_needs,
+        vertex_mask: shader.vertex_mask,
+        parameter_count: shader.parameter_count,
+        texture_reference,
+        params: shader
+            .params
+            .iter()
+            .map(|parameter| ShaderParameterEvidence {
+                kind: parameter.kind.clone(),
+                param: parameter.param.clone(),
+                value: parameter.value.clone(),
+            })
+            .collect(),
+    })
+}
+
 impl DecodedComponentSource {
     /// Create a component source from caller-provided package and output roots.
     #[must_use]
@@ -1359,10 +1430,10 @@ struct DecodedShader {
     translucency: Option<u32>,
     /// Optional vertex-needs mask retained for source evidence.
     #[serde(default, rename = "vertex_needs")]
-    _vertex_needs: Option<u32>,
+    vertex_needs: Option<u32>,
     /// Optional vertex mask retained for source evidence.
     #[serde(default, rename = "vertex_mask")]
-    _vertex_mask: Option<u32>,
+    vertex_mask: Option<u32>,
     /// Optional parameter count declared by the decoded source.
     #[serde(default, rename = "num_params")]
     parameter_count: Option<u32>,
