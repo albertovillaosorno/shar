@@ -471,13 +471,18 @@ fn identity_key(value: &str) -> String {
 }
 
 /// Normalize one texture reference for exact logical cross-package matching.
-fn texture_key(value: &str) -> String {
-    let clean = value.trim_end_matches('\0').trim();
+fn texture_key(value: &str) -> Result<String, PipelineError> {
+    let clean = value.trim_end_matches('\0');
+    if clean != clean.trim() || clean.chars().any(char::is_control) {
+        return Err(PipelineError::new(
+            "vehicle texture identity is non-canonical",
+        ));
+    }
     let stem = Path::new(clean)
         .file_stem()
         .and_then(|component| component.to_str())
         .unwrap_or(clean);
-    stem.trim_end_matches('_').to_ascii_lowercase()
+    Ok(stem.trim_end_matches('_').to_ascii_lowercase())
 }
 
 impl VehicleTextureAuthority {
@@ -502,7 +507,7 @@ impl VehicleTextureAuthority {
                     })?;
                 let bytes = fs::read(&path)
                     .map_err(|error| PipelineError::new(error.to_string()))?;
-                sources.entry(texture_key(file_name)).or_default().push(
+                sources.entry(texture_key(file_name)?).or_default().push(
                     VehicleTextureSource {
                         subcategory: package.subcategory.clone(),
                         path,
@@ -527,7 +532,8 @@ impl VehicleTextureAuthority {
         reference: &str,
         source_subcategory: &str,
     ) -> Result<Option<&Path>, PipelineError> {
-        let Some(entries) = self.sources.get(&texture_key(reference)) else {
+        let key = texture_key(reference)?;
+        let Some(entries) = self.sources.get(&key) else {
             return Ok(None);
         };
         let same_package = entries
