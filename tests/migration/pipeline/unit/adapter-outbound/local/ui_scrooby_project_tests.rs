@@ -236,6 +236,34 @@ fn rejects_duplicate_component_ordinal() -> TestResult {
 }
 
 #[test]
+fn rejects_duplicate_component_path_identity() -> TestResult {
+    let root = case_dir("duplicate-component-path")?;
+    write_valid_package(&root)?;
+    let ledger_path = root.join("components.jsonl");
+    let mut ledger = fs::read_to_string(&ledger_path)
+        .map_err(|error| error.to_string())?;
+    ledger = ledger.replace("\"component_count\":12", "\"component_count\":13");
+    ledger.push_str(concat!(
+        r#"{"ordinal":13,"parent_ordinal":2,"kind":"ignored","#,
+        r#""path":"scrooby_image_resource/image.json"}"#,
+    ));
+    ledger.push('\n');
+    fs::write(&ledger_path, ledger).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("duplicate Scrooby component path was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("Scrooby component path identity is duplicated")
+    {
+        return Err(format!("unexpected duplicate path error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_project_child_order_drift() -> TestResult {
     let root = case_dir("project-child-order")?;
     write_valid_package(&root)?;
