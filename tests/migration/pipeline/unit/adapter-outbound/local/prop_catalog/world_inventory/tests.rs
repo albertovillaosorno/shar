@@ -34,7 +34,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use super::decoded_mesh_names;
+use super::{LedgerRow, decoded_mesh_names, source_ordered_mesh_ids};
 
 static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
@@ -69,5 +69,31 @@ fn decoded_mesh_names_reject_duplicate_source_identity() -> Result<(), String> {
         // jig-ignore-next-line: literal
         return Err(format!("unexpected duplicate mesh identity error: {error}"));
     }
+    Ok(())
+}
+
+#[test]
+fn source_mesh_ids_follow_component_ordinals() -> Result<(), String> {
+    let rows = vec![
+        LedgerRow {
+            ordinal: 20,
+            depth: 2,
+            container_ordinal: 1,
+            name: "lexically-first".to_owned(),
+            path: "mesh/a.json".to_owned(),
+            kind: "mesh".to_owned(),
+        },
+        LedgerRow {
+            ordinal: 10,
+            depth: 2,
+            container_ordinal: 1,
+            name: "source-first".to_owned(),
+            path: "mesh/z.json".to_owned(),
+            kind: "mesh".to_owned(),
+        },
+    ];
+    let actual = source_ordered_mesh_ids(&rows)
+        .map_err(|error| error.to_string())?;
+    assert_eq!(actual, ["z", "a"]);
     Ok(())
 }
