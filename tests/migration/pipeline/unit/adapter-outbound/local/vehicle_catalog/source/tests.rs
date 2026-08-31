@@ -132,8 +132,20 @@ fn decoded_name_rejects_surrounding_space() -> Result<(), String> {
 
 #[test]
 fn texture_key_removes_extension_case_and_fixed_width_padding() {
-    assert_eq!(texture_key("WindsheildT.bmp\0\0"), "windsheildt");
-    assert_eq!(texture_key("homer_vWheel.PNG"), "homer_vwheel");
+    assert_eq!(
+        texture_key("WindsheildT.bmp\0\0").ok().as_deref(),
+        Some("windsheildt")
+    );
+    assert_eq!(
+        texture_key("homer_vWheel.PNG").ok().as_deref(),
+        Some("homer_vwheel")
+    );
+}
+
+#[test]
+fn texture_key_rejects_surrounding_space() {
+    assert!(texture_key(" WindsheildT.bmp").is_err());
+    assert!(texture_key("WindsheildT.bmp ").is_err());
 }
 
 #[test]
