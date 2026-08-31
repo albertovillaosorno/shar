@@ -73,6 +73,7 @@ World component-ledger intake now also requires each normalized component path
 to be unique in addition to its source ordinal. Two rows cannot claim one
 component/member identity under different ordinals; a focused regression proves
 duplicate `mesh/shared.json` ownership fails before mesh association.
+
 Every grouped component must also resolve its declared root-owner ordinal after
 the complete ledger is parsed. Orphan mesh rows no longer disappear through a
 silent downstream skip; a focused regression proves missing owner ordinal 99
@@ -81,10 +82,12 @@ additionally
 must self-own: their `container_ordinal` must equal their own source ordinal,
 matching the P3D extractor's deterministic top-level-ancestor contract. A
 focused regression rejects a root ordinal 1 that attempts to claim container 2.
+
 World-level mesh discovery also validates the extractor's exact relative path
 contract: a row labeled `mesh` must resolve as `mesh/<member>.json` before that
 member can be loaded from the mesh component directory. A focused regression
 rejects `kind: mesh` provenance that instead names `shader/shared.json`.
+
 Ledger intake now consumes the extractor's `parent_ordinal` ancestry evidence as
 well: direct root owners must declare parent 0, while nested published
 components
@@ -94,6 +97,7 @@ published child also has its immediate parent present in the ledger, intake now
 requires exactly one depth step and the same top-level container. Focused
 regressions reject both a depth-3 child of a depth-1 parent and a child whose
 published parent belongs to container 1 while the child claims container 2.
+
 P3D normalized-package cache validation now also treats recovered component
 paths by portable case-insensitive identity. A manifest cannot declare both
 `components/mesh.json` and `COMPONENTS/MESH.json` as distinct complete
@@ -102,6 +106,7 @@ extraction now applies the same identity before filesystem publication: only a
 byte-identical nested repeat of the exact same path may reuse an already
 published artifact. Different nested payloads, duplicate direct-root paths, and
 case-equivalent paths fail closed instead of dropping or overwriting evidence.
+
 World prop inventory now also rejects two distinct mesh members that decode to
 the same source mesh identity instead of letting `BTreeMap` insertion silently
 choose one member before composite association. This matches the existing
@@ -109,11 +114,14 @@ non-world component-map fail-closed identity rule. World component-ledger
 intake now applies the same portable case-insensitive path identity used by P3D
 publication and cache validation, while retaining a distinct diagnostic for an
 exact duplicate path. A focused regression rejects `mesh/Shared.json` alongside
-`mesh/shared.json` before either member can reach world assembly. P3D cache
+`mesh/shared.json` before either member can reach world assembly.
+
+P3D cache
 admission now requires the ancestry fields emitted by `component_line` and
 validates the same root/nested relationship invariants before reusing normalized
 artifacts. When an immediate published parent is present, depth and top-level
 container continuity must also agree; omitted intermediate chunks remain valid.
+
 Normalized P3D cache reuse is now bound to the current exact raw source bytes:
 new package headers record `source_sha256`, and the batch exporter skips a
 complete cache only when that local digest matches the current input. Replacing
@@ -123,7 +131,9 @@ also binds the exact normalized `source.p3d` artifact separately through
 `normalized_sha256`, computed from the prepared bytes actually written by the
 extractor. Missing or corrupted normalized source evidence forces regeneration
 even when the raw input and component files still match; a filesystem regression
-proves both corruption and deletion are rejected. The same normalized-artifact
+proves both corruption and deletion are rejected.
+
+The same normalized-artifact
 check now replays the manifest's declared `byte_len` against the exact verified
 `source.p3d` length, so a cache cannot remain current after editing that header
 fact independently of the artifact digest. Each published primary component row
@@ -131,6 +141,7 @@ now also records the SHA-256 of the exact JSON/image bytes written beneath
 `components/`. Source-aware cache reuse requires those digests to match in
 addition to payload validity, so replacing one component with different valid
 JSON or image bytes forces regeneration instead of silently accepting the edit.
+
 Normalized-source verification now parses the exact verified `source.p3d` as a
 P3D document and replays both parser-derived byte length and chunk count against
 the manifest header. An edited `chunk_count` therefore cannot remain current
