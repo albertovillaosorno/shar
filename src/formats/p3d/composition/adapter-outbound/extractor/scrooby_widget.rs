@@ -62,11 +62,8 @@ pub(super) fn recover_group_json(
     if cursor != component.header_size {
         return None;
     }
-    let children = child_chunks_json(
-        chunk,
-        component.header_size,
-        component.total_size,
-    );
+    let children =
+        child_chunks_json(chunk, component.header_size, component.total_size);
     Some(render_named(
         component,
         kind_index,
@@ -133,11 +130,8 @@ pub(super) fn recover_multi_text_json(
     if cursor != component.header_size {
         return None;
     }
-    let children = child_chunks_json(
-        chunk,
-        component.header_size,
-        component.total_size,
-    );
+    let children =
+        child_chunks_json(chunk, component.header_size, component.total_size);
     Some(render_frame(
         component,
         kind_index,
