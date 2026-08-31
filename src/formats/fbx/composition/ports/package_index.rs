@@ -60,13 +60,13 @@ pub struct ModelPackageEvidence {
     pub package_id: String,
     /// Family selected only from generated package evidence.
     pub family: PackageModelFamily,
-    /// Model member ids required to build scene geometry.
+    /// Model member ids in generated-index source order.
     pub model_member_ids: Vec<String>,
-    /// Material member ids required to bind surfaces.
+    /// Material member ids in generated-index source order.
     pub material_member_ids: Vec<String>,
-    /// Texture member ids required to bind material maps.
+    /// Texture member ids in generated-index source order.
     pub texture_member_ids: Vec<String>,
-    /// Animation member ids preserved for clip export when present.
+    /// Animation member ids in generated-index source order.
     pub animation_member_ids: Vec<String>,
 }
 
@@ -79,10 +79,10 @@ impl ModelPackageEvidence {
     pub fn new(
         package_id: impl Into<String>,
         family: PackageModelFamily,
-        mut model_member_ids: Vec<String>,
-        mut material_member_ids: Vec<String>,
-        mut texture_member_ids: Vec<String>,
-        mut animation_member_ids: Vec<String>,
+        model_member_ids: Vec<String>,
+        material_member_ids: Vec<String>,
+        texture_member_ids: Vec<String>,
+        animation_member_ids: Vec<String>,
     ) -> Result<Self, PackageIndexError> {
         let stable_package_id = package_id.into();
         if stable_package_id.trim().is_empty() {
@@ -122,10 +122,6 @@ impl ModelPackageEvidence {
                 return Err(PackageIndexError::DuplicateMemberId);
             }
         }
-        model_member_ids.sort();
-        material_member_ids.sort();
-        texture_member_ids.sort();
-        animation_member_ids.sort();
         Ok(Self {
             package_id: stable_package_id,
             family,

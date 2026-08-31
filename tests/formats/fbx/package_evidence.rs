@@ -40,25 +40,33 @@ use serde_json as _;
 use shar_sha256 as _;
 
 #[test]
-fn canonicalizes_package_evidence_member_order() {
-    let first = ModelPackageEvidence::new(
+fn preserves_package_evidence_member_order() {
+    let result = ModelPackageEvidence::new(
         "package",
         PackageModelFamily::Prop,
         vec!["model-b".to_owned(), "model-a".to_owned()],
         vec!["material-b".to_owned(), "material-a".to_owned()],
         vec!["texture-b".to_owned(), "texture-a".to_owned()],
         vec!["animation-b".to_owned(), "animation-a".to_owned()],
-    );
-    let second = ModelPackageEvidence::new(
-        "package",
-        PackageModelFamily::Prop,
-        vec!["model-a".to_owned(), "model-b".to_owned()],
-        vec!["material-a".to_owned(), "material-b".to_owned()],
-        vec!["texture-a".to_owned(), "texture-b".to_owned()],
-        vec!["animation-a".to_owned(), "animation-b".to_owned()],
-    );
+    )
+    .map(|evidence| {
+        (
+            evidence.model_member_ids,
+            evidence.material_member_ids,
+            evidence.texture_member_ids,
+            evidence.animation_member_ids,
+        )
+    });
 
-    assert_eq!(first, second);
+    assert_eq!(
+        result,
+        Ok((
+            vec!["model-b".to_owned(), "model-a".to_owned()],
+            vec!["material-b".to_owned(), "material-a".to_owned()],
+            vec!["texture-b".to_owned(), "texture-a".to_owned()],
+            vec!["animation-b".to_owned(), "animation-a".to_owned()],
+        ))
+    );
 }
 
 #[test]

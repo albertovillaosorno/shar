@@ -288,10 +288,6 @@ fn classify_members(row: &IndexedPackageRow) -> MemberBuckets {
             _ => {},
         }
     }
-    buckets.models.sort();
-    buckets.materials.sort();
-    buckets.textures.sort();
-    buckets.animations.sort();
     buckets
 }
 
