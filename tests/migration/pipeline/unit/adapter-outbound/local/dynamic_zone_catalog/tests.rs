@@ -56,6 +56,20 @@ fn parses_type_five_dynamic_zone_without_runtime_order_claim()
 }
 
 #[test]
+fn dynamic_zone_rejects_surrounding_name_whitespace() -> Result<(), String> {
+    let json = dynamic_zone_json("l1z1.p3d;").replace(
+        r#""name":"loader11""#,
+        r#""name":" loader11 ""#,
+    );
+    if parse_dynamic_zone(&json).is_ok() {
+        return Err(
+            "surrounding DynamicZone whitespace was accepted".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn ignores_ordinary_srr_locator_types() -> Result<(), String> {
     let json = concat!(
         r#"{"schema":"locator","name":"carstart","locator_type":3,"#,

@@ -126,9 +126,15 @@ fn parse_decoded_locator(json: &str) -> PipelineOutcome<DecodedLocatorIdentity> 
     let name = raw_name.trim_end_matches(char::from(0)).to_owned();
     let locator_type = required_u32(object, "locator_type")?;
     let locator_type_name = required_string(object, "locator_type_name")?;
-    if name.is_empty() || name.chars().any(char::is_control) {
+    if name.is_empty()
+        || name != name.trim()
+        || name.chars().any(char::is_control)
+    {
         return Err(PipelineError::new(
-            "decoded locator name is empty or contains interior control data",
+            concat!(
+                "decoded locator name is empty, padded, or contains ",
+                "interior control data"
+            ),
         ));
     }
     Ok(DecodedLocatorIdentity {
