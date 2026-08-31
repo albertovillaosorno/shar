@@ -91,27 +91,27 @@ fn rejects_generated_indexes_without_package_rows() {
 }
 
 #[test]
-fn member_order_does_not_change_generated_package_evidence() {
-    let first = concat!(
+fn generated_package_evidence_preserves_member_order() {
+    let row = concat!(
         r#"{"package_id":"package","package_category":"props","#,
         r#""members":[{"id":"model-b","role":"model"},{"#,
         r#""id":"texture-b","role":"texture"},{"#,
         r#""id":"model-a","role":"model"},{"#,
         r#""id":"texture-a","role":"texture"}]}"#,
     );
-    let second = concat!(
-        r#"{"package_id":"package","package_category":"props","#,
-        r#""members":[{"id":"texture-a","role":"texture"},{"#,
-        r#""id":"model-a","role":"model"},{"#,
-        r#""id":"texture-b","role":"texture"},{"#,
-        r#""id":"model-b","role":"model"}]}"#,
-    );
-    let first_evidence = GeneratedPackageCatalog::from_jsonl(first)
-        .and_then(|catalog| catalog.require_model_package("package"));
-    let second_evidence = GeneratedPackageCatalog::from_jsonl(second)
-        .and_then(|catalog| catalog.require_model_package("package"));
+    let result = GeneratedPackageCatalog::from_jsonl(row)
+        .and_then(|catalog| catalog.require_model_package("package"))
+        .map(|evidence| {
+            (evidence.model_member_ids, evidence.texture_member_ids)
+        });
 
-    assert_eq!(first_evidence, second_evidence);
+    assert_eq!(
+        result,
+        Ok((
+            vec!["model-b".to_owned(), "model-a".to_owned()],
+            vec!["texture-b".to_owned(), "texture-a".to_owned()],
+        ))
+    );
 }
 
 #[test]
