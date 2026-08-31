@@ -76,6 +76,60 @@ impl PropRoute {
     }
 }
 
+/// One exact source billboard child retained as deferred presentation evidence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct DeferredBillboardQuadBinding {
+    /// Authored child identity.
+    pub(super) identity: String,
+    /// Decoded source child schema version.
+    pub(super) version: u32,
+    /// Authored billboard orientation mode.
+    pub(super) billboard_mode: String,
+    /// Exact authored source-space translation bits.
+    pub(super) translation_bits: [u32; 3],
+    /// Packed authored AARRGGBB colour.
+    pub(super) colour: u32,
+    /// Exact authored UV-corner bits in source order.
+    pub(super) uv_bits: [[u32; 2]; 4],
+    /// Exact authored width bits.
+    pub(super) width_bits: u32,
+    /// Exact authored height bits.
+    pub(super) height_bits: u32,
+    /// Exact authored camera-distance bits.
+    pub(super) distance_bits: u32,
+    /// Exact authored UV-offset bits.
+    pub(super) uv_offset_bits: [u32; 2],
+    /// Exact authored display-rotation bits in WXYZ order.
+    pub(super) rotation_wxyz_bits: [u32; 4],
+    /// Authored display cutoff mode.
+    pub(super) cutoff_mode: String,
+    /// Exact authored UV-offset-range bits.
+    pub(super) uv_offset_range_bits: [u32; 2],
+    /// Exact authored source-range bits.
+    pub(super) source_range_bits: u32,
+    /// Exact authored edge-range bits.
+    pub(super) edge_range_bits: u32,
+    /// Authored perspective-scaling flag.
+    pub(super) perspective: bool,
+}
+
+/// One exact source billboard group retained as deferred presentation evidence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct DeferredBillboardBinding {
+    /// Decoded source group schema version.
+    pub(super) version: u32,
+    /// Authored shader identity.
+    pub(super) shader_identity: String,
+    /// Authored depth-test flag.
+    pub(super) z_test: u32,
+    /// Authored depth-write flag.
+    pub(super) z_write: u32,
+    /// Authored fog flag.
+    pub(super) fog: u32,
+    /// Child quads in authored source order.
+    pub(super) quads: Vec<DeferredBillboardQuadBinding>,
+}
+
 /// One exact source controller binding for deferred render evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct DeferredControllerBinding {
@@ -123,6 +177,8 @@ pub(super) struct DeferredRenderBinding {
     pub(super) component_member_id: Option<String>,
     /// Exact source component ordinal when available.
     pub(super) source_ordinal: Option<usize>,
+    /// Exact source billboard presentation evidence when available.
+    pub(super) billboard: Option<DeferredBillboardBinding>,
     /// Exact source controller and animation relationship when available.
     pub(super) controller: Option<DeferredControllerBinding>,
 }

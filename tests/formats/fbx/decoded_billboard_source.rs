@@ -34,7 +34,9 @@ use std::fs;
 use std::path::PathBuf;
 
 use fbx::adapters::driven::binary_character_writer::write_binary_model_fbx;
-use fbx::adapters::driven::decoded_billboard_source::read_billboard_quad_group;
+use fbx::adapters::driven::decoded_billboard_source::{
+    read_billboard_quad_group, read_billboard_source_evidence,
+};
 use fbx::domain::texture::MaterialBinding;
 use png as _;
 use schoenwald_filesystem as _;
@@ -47,6 +49,65 @@ fn fixture_path(label: &str) -> PathBuf {
         "fbx-decoded-billboard-{label}-{}.json",
         std::process::id()
     ))
+}
+
+#[test]
+fn retains_exact_billboard_presentation_evidence() -> Result<(), String> {
+    let path = fixture_path("source-evidence");
+    fs::write(
+        &path,
+        concat!(
+            r#"{"schema":"quad_group","version":0,"name":"groupShape\u0000","#,
+            r#""shader":"glow_m\u0000","z_test":1,"z_write":0,"fog":0,"#,
+            r#""num_quads":1,"quads":[{"name":"leafShape\u0000","#,
+            r#""version":2,"billboard_mode":"YAX","#,
+            r#""translation":[2.5,-3,4],"colour":305419896,"#,
+            r#""uvs":[[0.1,0.2],[0.9,0.2],[0.9,0.8],[0.1,0.8]],"#,
+            r#""width":2.25,"height":4.5,"distance":-0.35,"#,
+            r#""uv_offset":[0.25,-0.5],"rotation_wxyz":[1,0,0,0],"#,
+            r#""cutoff_mode":"DBL","uv_offset_range":[0.5,0.75],"#,
+            r#""source_range":1.25,"edge_range":0.625,"#,
+            r#""perspective":false}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let evidence = read_billboard_source_evidence(&path, "groupShape")
+        .map_err(|error| format!("billboard evidence failed: {error:?}"))?;
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+    if evidence.group_identity != "groupShape"
+        || evidence.version != 0
+        || evidence.shader_identity != "glow_m"
+        || evidence.z_test != 1
+        || evidence.z_write != 0
+        || evidence.fog != 0
+        || evidence.quads.len() != 1
+    {
+        return Err(format!("billboard group evidence changed: {evidence:?}"));
+    }
+    let quad = evidence
+        .quads
+        .first()
+        .ok_or_else(|| "billboard child evidence is missing".to_owned())?;
+    if quad.identity != "leafShape"
+        || quad.version != 2
+        || quad.billboard_mode != "YAX"
+        || quad.translation != [2.5, -3., 4.]
+        || quad.colour != 305_419_896
+        || quad.uvs != [[0.1, 0.2], [0.9, 0.2], [0.9, 0.8], [0.1, 0.8]]
+        || quad.width != 2.25
+        || quad.height != 4.5
+        || quad.distance != -0.35
+        || quad.uv_offset != [0.25, -0.5]
+        || quad.rotation_wxyz != [1., 0., 0., 0.]
+        || quad.cutoff_mode != "DBL"
+        || quad.uv_offset_range != [0.5, 0.75]
+        || quad.source_range != 1.25
+        || quad.edge_range != 0.625
+        || quad.perspective
+    {
+        return Err(format!("billboard child evidence changed: {quad:?}"));
+    }
+    Ok(())
 }
 
 #[test]

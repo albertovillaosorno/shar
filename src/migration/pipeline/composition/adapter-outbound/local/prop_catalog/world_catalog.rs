@@ -36,6 +36,7 @@ use std::path::Path;
 use serde_json::{Value, json};
 
 use super::model::{
+    DeferredBillboardBinding, DeferredBillboardQuadBinding,
     DeferredControllerBinding, DeferredRenderBinding, PropRoute,
 };
 use super::world_model::{ExportedWorldProp, WorldCatalogCounts};
@@ -72,6 +73,19 @@ pub(super) fn world_counts(
             .flat_map(|asset| asset.aliases.iter())
             .map(|alias| alias.deferred_render_bindings.len())
             .sum(),
+        deferred_billboard_bindings: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .flat_map(|alias| alias.deferred_render_bindings.iter())
+            .filter(|binding| binding.billboard.is_some())
+            .count(),
+        deferred_billboard_quads: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .flat_map(|alias| alias.deferred_render_bindings.iter())
+            .filter_map(|binding| binding.billboard.as_ref())
+            .map(|billboard| billboard.quads.len())
+            .sum(),
         deferred_controller_bindings: assets
             .iter()
             .flat_map(|asset| asset.aliases.iter())
@@ -92,7 +106,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v3",
+        "schema": "shar.world-model-props.v4",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -107,9 +121,9 @@ pub(super) fn write_world_catalog(
                 "evidence in this catalog"
             ),
             "deferred_render_bindings": concat!(
-                "retain authored non-mesh composite prop relationships and ",
-                "exact controller/animation links as source evidence without ",
-                "substituting static FBX geometry"
+                "retain authored non-mesh composite prop relationships, exact ",
+                "billboard presentation, and controller/animation links as ",
+                "source evidence without substituting static FBX geometry"
             ),
             "unreal_assets": [
                 "placement and locators",
@@ -131,6 +145,8 @@ pub(super) fn write_world_catalog(
             "merged_compatible_variants": counts.merged_variants,
             "omitted_visual_variants": counts.omitted_variants,
             "deferred_render_bindings": counts.deferred_render_bindings,
+            "deferred_billboard_bindings": counts.deferred_billboard_bindings,
+            "deferred_billboard_quads": counts.deferred_billboard_quads,
             "deferred_controller_bindings":
                 counts.deferred_controller_bindings
         },
@@ -142,6 +158,45 @@ pub(super) fn write_world_catalog(
     bytes.push(b'\n');
     fs::write(root.join("world-props.catalog.json"), bytes).map_err(|error| {
         PipelineError::new(format!("world prop catalog write failed: {error}"))
+    })
+}
+
+/// Render one exact deferred billboard child without interpreting semantics.
+fn deferred_billboard_quad_value(
+    binding: &DeferredBillboardQuadBinding,
+) -> Value {
+    json!({
+        "identity": binding.identity,
+        "version": binding.version,
+        "billboard_mode": binding.billboard_mode,
+        "translation": binding.translation_bits.map(f32::from_bits),
+        "colour": binding.colour,
+        "uvs": binding.uv_bits.map(|uv| uv.map(f32::from_bits)),
+        "width": f32::from_bits(binding.width_bits),
+        "height": f32::from_bits(binding.height_bits),
+        "distance": f32::from_bits(binding.distance_bits),
+        "uv_offset": binding.uv_offset_bits.map(f32::from_bits),
+        "rotation_wxyz": binding.rotation_wxyz_bits.map(f32::from_bits),
+        "cutoff_mode": binding.cutoff_mode,
+        "uv_offset_range": binding.uv_offset_range_bits.map(f32::from_bits),
+        "source_range": f32::from_bits(binding.source_range_bits),
+        "edge_range": f32::from_bits(binding.edge_range_bits),
+        "perspective": binding.perspective
+    })
+}
+
+/// Render one exact deferred billboard group without interpreting semantics.
+fn deferred_billboard_value(binding: &DeferredBillboardBinding) -> Value {
+    json!({
+        "version": binding.version,
+        "shader_identity": binding.shader_identity,
+        "z_test": binding.z_test,
+        "z_write": binding.z_write,
+        "fog": binding.fog,
+        "quads": binding.quads
+            .iter()
+            .map(deferred_billboard_quad_value)
+            .collect::<Vec<_>>()
     })
 }
 
@@ -173,6 +228,7 @@ fn deferred_binding_value(binding: &DeferredRenderBinding) -> Value {
         "component_kind": binding.component_kind,
         "component_member_id": binding.component_member_id,
         "source_ordinal": binding.source_ordinal,
+        "billboard": binding.billboard.as_ref().map(deferred_billboard_value),
         "controller": binding.controller.as_ref().map(deferred_controller_value)
     })
 }

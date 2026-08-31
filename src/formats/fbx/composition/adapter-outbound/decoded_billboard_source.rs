@@ -37,16 +37,72 @@ use serde::Deserialize;
 
 use crate::domain::mesh::{MeshAsset, PrimitiveGroup};
 
-/// Decode one extracted billboard quad group as static inspection geometry.
+/// Exact decoded source evidence for one billboard quad group.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BillboardSourceEvidence {
+    /// Authored group identity after fixed-width NUL removal.
+    pub group_identity: String,
+    /// Supported source group schema version.
+    pub version: u32,
+    /// Authored shader identity after fixed-width NUL removal.
+    pub shader_identity: String,
+    /// Authored depth-test flag.
+    pub z_test: u32,
+    /// Authored depth-write flag.
+    pub z_write: u32,
+    /// Authored fog flag.
+    pub fog: u32,
+    /// Child quads in authored source order.
+    pub quads: Vec<BillboardQuadEvidence>,
+}
+
+/// Exact decoded source evidence for one billboard child quad.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BillboardQuadEvidence {
+    /// Authored child identity after fixed-width NUL removal.
+    pub identity: String,
+    /// Supported source child schema version.
+    pub version: u32,
+    /// Authored billboard orientation mode.
+    pub billboard_mode: String,
+    /// Authored source-space translation.
+    pub translation: [f32; 3],
+    /// Packed authored AARRGGBB colour.
+    pub colour: u32,
+    /// Four authored UV corners in source order.
+    pub uvs: [[f32; 2]; 4],
+    /// Authored quad width.
+    pub width: f32,
+    /// Authored quad height.
+    pub height: f32,
+    /// Authored camera-distance parameter.
+    pub distance: f32,
+    /// Authored UV offset.
+    pub uv_offset: [f32; 2],
+    /// Authored display rotation in WXYZ order.
+    pub rotation_wxyz: [f32; 4],
+    /// Authored display cutoff mode.
+    pub cutoff_mode: String,
+    /// Authored animated UV offset range.
+    pub uv_offset_range: [f32; 2],
+    /// Authored source-side display range.
+    pub source_range: f32,
+    /// Authored edge-fade display range.
+    pub edge_range: f32,
+    /// Whether authored perspective scaling is enabled.
+    pub perspective: bool,
+}
+
+/// Decode one extracted billboard quad group as exact source evidence.
 ///
 /// # Errors
 ///
 /// Returns an error when source JSON, identity, geometry, or quaternion
 /// evidence is missing or inconsistent.
-pub fn read_billboard_quad_group(
+pub fn read_billboard_source_evidence(
     path: &Path,
     requested_id: &str,
-) -> Result<MeshAsset, DecodedBillboardError> {
+) -> Result<BillboardSourceEvidence, DecodedBillboardError> {
     let bytes =
         fs::read(path).map_err(|error| DecodedBillboardError::Read {
             path: path.display().to_string(),
@@ -62,27 +118,53 @@ pub fn read_billboard_quad_group(
     if document.schema != "quad_group" || document.version != 0 {
         return Err(DecodedBillboardError::UnsupportedDocument);
     }
-    let name = clean_identity(&document.name)?;
-    if !name.eq_ignore_ascii_case(requested_id) {
+    let group_identity = clean_identity(&document.name)?;
+    if !group_identity.eq_ignore_ascii_case(requested_id) {
         return Err(DecodedBillboardError::IdentityMismatch {
             requested: requested_id.to_owned(),
-            decoded: name,
+            decoded: group_identity,
         });
     }
-    let shader = clean_identity(&document.shader)?;
     if document.quads.len() != document.num_quads {
         return Err(DecodedBillboardError::QuadCountMismatch {
             declared: document.num_quads,
             actual: document.quads.len(),
         });
     }
-    let groups = document
+    let quads = document
+        .quads
+        .iter()
+        .map(billboard_quad_evidence)
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(BillboardSourceEvidence {
+        group_identity,
+        version: document.version,
+        shader_identity: clean_identity(&document.shader)?,
+        z_test: document.z_test,
+        z_write: document.z_write,
+        fog: document.fog,
+        quads,
+    })
+}
+
+/// Decode one extracted billboard quad group as static inspection geometry.
+///
+/// # Errors
+///
+/// Returns an error when source JSON, identity, geometry, or quaternion
+/// evidence is missing or inconsistent.
+pub fn read_billboard_quad_group(
+    path: &Path,
+    requested_id: &str,
+) -> Result<MeshAsset, DecodedBillboardError> {
+    let evidence = read_billboard_source_evidence(path, requested_id)?;
+    let groups = evidence
         .quads
         .iter()
         .enumerate()
-        .map(|(index, quad)| quad_group(index, &shader, quad))
+        .map(|(index, quad)| quad_group(index, &evidence.shader_identity, quad))
         .collect::<Result<Vec<_>, _>>()?;
-    MeshAsset::new(name, groups)
+    MeshAsset::new(evidence.group_identity, groups)
         .map_err(|error| DecodedBillboardError::Mesh(format!("{error:?}")))
 }
 
@@ -90,23 +172,9 @@ pub fn read_billboard_quad_group(
 fn quad_group(
     index: usize,
     shader: &str,
-    quad: &QuadDocument,
+    quad: &BillboardQuadEvidence,
 ) -> Result<PrimitiveGroup, DecodedBillboardError> {
-    if quad.version != 2
-        || !quad.width.is_finite()
-        || !quad.height.is_finite()
-        || quad.width <= 0.
-        || quad.height <= 0.
-        || quad.translation.iter().any(|value| !value.is_finite())
-        || quad.uvs.iter().flatten().any(|value| !value.is_finite())
-        || quad.uv_offset.iter().any(|value| !value.is_finite())
-    {
-        return Err(DecodedBillboardError::InvalidQuad {
-            name: clean_identity(&quad.name)
-                .unwrap_or_else(|_| "quad".to_owned()),
-        });
-    }
-    let rotation = normalized_quaternion(quad.rotation_wxyz, &quad.name)?;
+    let rotation = normalized_quaternion(quad.rotation_wxyz, &quad.identity)?;
     let half_width = quad.width * 0.5;
     let half_height = quad.height * 0.5;
     let local = [
@@ -124,12 +192,51 @@ fn quad_group(
         .to_vec();
     let normal = rotate([0., 0., 1.], rotation);
     let color = decode_argb(quad.colour);
-    let source_identity = clean_identity(&quad.name)?;
+    let source_identity = quad.identity.clone();
     PrimitiveGroup::new(index, shader, positions, uvs, &[0, 1, 2, 0, 2, 3])
         .and_then(|group| group.with_source_identity(source_identity))
         .and_then(|group| group.with_normals(vec![normal; 4]))
         .and_then(|group| group.with_colors(vec![color; 4]))
         .map_err(|error| DecodedBillboardError::Mesh(format!("{error:?}")))
+}
+
+/// Validate and retain one exact billboard child record.
+fn billboard_quad_evidence(
+    quad: &QuadDocument,
+) -> Result<BillboardQuadEvidence, DecodedBillboardError> {
+    let identity = clean_identity(&quad.name)?;
+    let finite = quad.width.is_finite()
+        && quad.height.is_finite()
+        && quad.distance.is_finite()
+        && quad.source_range.is_finite()
+        && quad.edge_range.is_finite()
+        && quad.translation.iter().all(|value| value.is_finite())
+        && quad.uvs.iter().flatten().all(|value| value.is_finite())
+        && quad.uv_offset.iter().all(|value| value.is_finite())
+        && quad.uv_offset_range.iter().all(|value| value.is_finite());
+    if quad.version != 2 || !finite || quad.width <= 0. || quad.height <= 0. {
+        return Err(DecodedBillboardError::InvalidQuad { name: identity });
+    }
+    let _normalized_rotation =
+        normalized_quaternion(quad.rotation_wxyz, &quad.name)?;
+    Ok(BillboardQuadEvidence {
+        identity,
+        version: quad.version,
+        billboard_mode: quad.billboard_mode.clone(),
+        translation: quad.translation,
+        colour: quad.colour,
+        uvs: quad.uvs,
+        width: quad.width,
+        height: quad.height,
+        distance: quad.distance,
+        uv_offset: quad.uv_offset,
+        rotation_wxyz: quad.rotation_wxyz,
+        cutoff_mode: quad.cutoff_mode.clone(),
+        uv_offset_range: quad.uv_offset_range,
+        source_range: quad.source_range,
+        edge_range: quad.edge_range,
+        perspective: quad.perspective,
+    })
 }
 
 /// Normalize one source WXYZ quaternion or reject unsupported evidence.
@@ -209,15 +316,12 @@ struct QuadGroupDocument {
     name: String,
     /// Authored shader identity shared by the group.
     shader: String,
-    /// Source depth-test flag retained for schema validation.
-    #[serde(rename = "z_test")]
-    _z_test: u32,
-    /// Source depth-write flag retained for schema validation.
-    #[serde(rename = "z_write")]
-    _z_write: u32,
-    /// Source fog flag retained for schema validation.
-    #[serde(rename = "fog")]
-    _fog: u32,
+    /// Authored source depth-test flag.
+    z_test: u32,
+    /// Authored source depth-write flag.
+    z_write: u32,
+    /// Authored source fog flag.
+    fog: u32,
     /// Declared number of child quads.
     num_quads: usize,
     /// Decoded child quad records.
@@ -232,9 +336,8 @@ struct QuadDocument {
     name: String,
     /// Supported quad schema version.
     version: u32,
-    /// Source billboard mode retained for schema validation.
-    #[serde(rename = "billboard_mode")]
-    _billboard_mode: String,
+    /// Authored source billboard orientation mode.
+    billboard_mode: String,
     /// Authored translation in source coordinates.
     translation: [f32; 3],
     /// Packed source AARRGGBB color.
@@ -245,28 +348,22 @@ struct QuadDocument {
     width: f32,
     /// Authored quad height.
     height: f32,
-    /// Source distance retained for schema validation.
-    #[serde(rename = "distance")]
-    _distance: f32,
+    /// Authored source camera-distance parameter.
+    distance: f32,
     /// Authored UV translation.
     uv_offset: [f32; 2],
     /// Authored display rotation in WXYZ order.
     rotation_wxyz: [f32; 4],
-    /// Source cutoff mode retained for schema validation.
-    #[serde(rename = "cutoff_mode")]
-    _cutoff_mode: String,
-    /// Source UV range retained for schema validation.
-    #[serde(rename = "uv_offset_range")]
-    _uv_offset_range: [f32; 2],
-    /// Source display range retained for schema validation.
-    #[serde(rename = "source_range")]
-    _source_range: f32,
-    /// Source edge range retained for schema validation.
-    #[serde(rename = "edge_range")]
-    _edge_range: f32,
-    /// Source perspective flag retained for schema validation.
-    #[serde(rename = "perspective")]
-    _perspective: bool,
+    /// Authored source display cutoff mode.
+    cutoff_mode: String,
+    /// Authored source UV-offset range.
+    uv_offset_range: [f32; 2],
+    /// Authored source display range.
+    source_range: f32,
+    /// Authored source edge-fade range.
+    edge_range: f32,
+    /// Authored source perspective-scaling flag.
+    perspective: bool,
 }
 
 /// Decoded billboard source failure.

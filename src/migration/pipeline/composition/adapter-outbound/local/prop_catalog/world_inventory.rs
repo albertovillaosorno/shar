@@ -33,12 +33,17 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
+use fbx::adapters::driven::decoded_billboard_source::{
+    BillboardQuadEvidence, read_billboard_source_evidence,
+};
+
 use super::extraction::relative_art_root;
 use super::inventory_common::{
     CompositeEvidence, clean_identity, ledger_member_id, read_component_name,
     read_composite, read_json, required_string, required_usize,
 };
 use super::model::{
+    DeferredBillboardBinding, DeferredBillboardQuadBinding,
     DeferredControllerBinding, DeferredRenderBinding, PropCandidate, PropFamily,
     PropRoute,
 };
@@ -304,6 +309,9 @@ fn deferred_render_bindings(
             )));
         }
         let resolved = matches.pop();
+        let billboard = resolved
+            .map(|row| deferred_billboard_binding(root, row, &binding.name))
+            .transpose()?;
         let (component_kind, component_member_id, source_ordinal) =
             if let Some(row) = resolved {
                 (
@@ -327,10 +335,63 @@ fn deferred_render_bindings(
             component_kind,
             component_member_id,
             source_ordinal,
+            billboard,
             controller,
         });
     }
     Ok(bindings)
+}
+
+/// Retain one exact source billboard group without interpreting presentation.
+fn deferred_billboard_binding(
+    root: &Path,
+    row: &LedgerRow,
+    expected_identity: &str,
+) -> Result<DeferredBillboardBinding, PipelineError> {
+    let path = root.join("components").join(&row.path);
+    let evidence = read_billboard_source_evidence(&path, expected_identity)
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "world prop billboard evidence failed: {error:?}"
+            ))
+        })?;
+    let quads = evidence
+        .quads
+        .iter()
+        .map(deferred_billboard_quad_binding)
+        .collect();
+    Ok(DeferredBillboardBinding {
+        version: evidence.version,
+        shader_identity: evidence.shader_identity,
+        z_test: evidence.z_test,
+        z_write: evidence.z_write,
+        fog: evidence.fog,
+        quads,
+    })
+}
+
+/// Retain exact floating-point bits for one authored billboard child.
+fn deferred_billboard_quad_binding(
+    quad: &BillboardQuadEvidence,
+) -> DeferredBillboardQuadBinding {
+    DeferredBillboardQuadBinding {
+        identity: quad.identity.clone(),
+        version: quad.version,
+        billboard_mode: quad.billboard_mode.clone(),
+        translation_bits: quad.translation.map(f32::to_bits),
+        colour: quad.colour,
+        uv_bits: quad.uvs.map(|uv| uv.map(f32::to_bits)),
+        width_bits: quad.width.to_bits(),
+        height_bits: quad.height.to_bits(),
+        distance_bits: quad.distance.to_bits(),
+        uv_offset_bits: quad.uv_offset.map(f32::to_bits),
+        rotation_wxyz_bits: quad.rotation_wxyz.map(f32::to_bits),
+        cutoff_mode: quad.cutoff_mode.clone(),
+        uv_offset_range_bits: quad.uv_offset_range.map(f32::to_bits),
+        source_range_bits: quad.source_range.to_bits(),
+        edge_range_bits: quad.edge_range.to_bits(),
+        perspective: quad.perspective,
+    }
 }
 
 /// Resolve one exact source controller and its declared animation relationship.
