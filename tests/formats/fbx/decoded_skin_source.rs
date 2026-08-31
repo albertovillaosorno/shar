@@ -117,10 +117,13 @@ fn rejects_composite_skeleton_reference_with_surrounding_whitespace()
     fs::remove_file(&composite_path).map_err(|error| error.to_string())?;
     match result {
         Err(SkinSourceError::NonCanonicalIdentity { field, .. })
-            if field == "composite skeleton name" => Ok(()),
-        other => Err(format!(
-            "unexpected composite identity result: {other:?}"
-        )),
+            if field == "composite skeleton name" =>
+        {
+            Ok(())
+        },
+        other => {
+            Err(format!("unexpected composite identity result: {other:?}"))
+        },
     }
 }
 
