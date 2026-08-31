@@ -758,8 +758,8 @@ fn sanitize(value: &str) -> String {
 mod auxiliary;
 mod render;
 mod schema;
-mod scrooby_widget;
 mod schema_recovery;
+mod scrooby_widget;
 
 #[cfg(test)]
 // jig-ignore-next-line: exact syntax is indivisible
