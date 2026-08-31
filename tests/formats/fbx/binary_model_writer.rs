@@ -208,6 +208,38 @@ fn static_model_is_deterministic_and_has_no_rig_objects() -> Result<(), String>
 }
 
 #[test]
+fn static_model_retains_p3d_cast_shadow_metadata() -> Result<(), String> {
+    let path = output_path("cast-shadow");
+    remove_if_present(&path)?;
+    let mesh = model_mesh()?.with_cast_shadow(Some(false));
+    let material = material()?;
+    let _summary =
+        write_binary_model_fbx("cast-shadow", &[mesh], &[material], &path)
+            .map_err(|error| {
+                format!("CastShadow FBX write failed: {error:?}")
+            })?;
+    let bytes = fs::read(&path)
+        .map_err(|error| format!("CastShadow FBX read failed: {error}"))?;
+    remove_if_present(&path)?;
+
+    let property_name = "SHAR_P3D_CastShadow";
+    let property = find_token(&bytes, property_name)
+        .ok_or_else(|| "P3D CastShadow metadata was dropped".to_owned())?;
+    let tail = bytes
+        .get(property + property_name.len()..)
+        .ok_or_else(|| "P3D CastShadow metadata tail is missing".to_owned())?;
+    let encoded_false = [b'S', 1, 0, 0, 0, b'0'];
+    if !tail
+        .windows(encoded_false.len())
+        .take(32)
+        .any(|window| window == encoded_false)
+    {
+        return Err("P3D CastShadow false value changed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn static_model_embeds_exact_png_payload() -> Result<(), String> {
     const PNG: &[u8] = b"\x89PNG\r\n\x1a\nembedded-test";
     let path = output_path("embedded");
