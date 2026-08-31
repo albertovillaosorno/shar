@@ -248,3 +248,48 @@ fn classifies_vehicle_shader_automation_roles() {
     assert_eq!(role("chromeShape", "vehicle_chrome_m"), "reflective");
     assert_ne!(role("steeringwheelShape", "interior_m"), "wheel");
 }
+
+#[test]
+fn hidden_proxy_sidecar_preserves_part_order() -> Result<(), String> {
+    let mut asset = grounded_fixture()?;
+    asset.parts.reverse();
+    let proxies = hidden_wheel_proxy_indices(&asset, "hbike-v");
+    let root = std::env::temp_dir().join(format!(
+        "shar-hidden-proxy-order-{}",
+        std::process::id()
+    ));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let result = mark_hidden_wheel_proxies(asset, &root, &proxies)
+        .map_err(|error| format!("proxy sidecar failed: {error:?}"));
+    let (_asset, _sidecars, count) = result?;
+    if count != 4 {
+        return Err(format!("unexpected hidden proxy count: {count}"));
+    }
+    let path = root.join("geometry/hidden-wheel-proxies.json");
+    let value: Value = serde_json::from_slice(
+        &fs::read(&path).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    let bones = value
+        .get("proxies")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "proxy sidecar has no proxy array".to_owned())?
+        .iter()
+        .map(|proxy| {
+            proxy
+                .get("bones")
+                .and_then(Value::as_array)
+                .and_then(|bones| bones.first())
+                .and_then(Value::as_str)
+                .ok_or_else(|| "proxy sidecar has no bone identity".to_owned())
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let cleanup = fs::remove_dir_all(&root);
+    cleanup.map_err(|error| error.to_string())?;
+    if bones != ["w3", "w2", "w1", "w0"] {
+        return Err(format!("hidden proxy source order changed: {bones:?}"));
+    }
+    Ok(())
+}

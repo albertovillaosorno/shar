@@ -587,7 +587,6 @@ fn mark_hidden_wheel_proxies(
             part.mesh.name.push_str("__hidden-wheel-proxy");
         }
     }
-    proxies.sort_by_key(ToString::to_string);
     let directory = vehicle_dir.join("geometry");
     fs::create_dir_all(&directory)
         .map_err(|error| PipelineError::new(error.to_string()))?;
