@@ -252,6 +252,21 @@ Static and rigid-animated regressions now prove canonical naming leaves the
 source part sequence unchanged; all 86 focused prop-catalog tests and the 1,002
 pipeline library tests pass with strict pipeline Clippy clean.
 
+Decoded P3D mesh and skin intake now retains each authored mesh identity
+separately from its publication name. The normalized corpus contains 14,297 mesh
+documents and 633 skin documents; 11,217 mesh names and 550 skin names use only
+fixed-width trailing NUL padding before the validated identity is retained.
+Binary FBX mesh models publish that provenance as
+`SHAR_P3D_SourceMeshIdentity`, and vehicle semantic part splitting carries the
+same identity through its generated part names.
+
+Prop canonicalization continues to assign anonymous `part-####` publication
+names, but its semantic and visual deduplication hashes explicitly exclude the
+provenance-only source mesh identity. Focused decoded-mesh, binary artifact,
+canonicalization, and vehicle regressions cover retention while leaving sharing
+behavior unchanged. Bone and animation publication-name provenance remains a
+separate identity boundary and is not claimed complete by this evidence.
+
 Static world-prop fallback selection now projects mesh members through exact
 source component ordinals instead of sorting member ids lexically before
 association. A focused `z` then `a` regression proves the fallback receives that
