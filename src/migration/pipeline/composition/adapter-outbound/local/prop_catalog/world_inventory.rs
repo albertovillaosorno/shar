@@ -82,13 +82,7 @@ pub(super) fn discover_world_candidates(
             if !MODEL_CONTAINERS.contains(&owner.kind.as_str()) {
                 continue;
             }
-            let mut mesh_ids = rows
-                .iter()
-                .filter(|row| row.kind == "mesh")
-                .map(|row| ledger_member_id(&row.path, "mesh"))
-                .collect::<Result<Vec<_>, _>>()?;
-            mesh_ids.sort();
-            mesh_ids.dedup();
+            let mesh_ids = source_ordered_mesh_ids(&rows)?;
             if mesh_ids.is_empty() {
                 continue;
             }
@@ -121,6 +115,19 @@ pub(super) fn discover_world_candidates(
     }
     candidates.sort();
     Ok(candidates)
+}
+
+/// Project one owner's mesh members through exact source component ordinals.
+fn source_ordered_mesh_ids(rows: &[LedgerRow]) -> Result<Vec<String>, PipelineError> {
+    let mut meshes = rows
+        .iter()
+        .filter(|row| row.kind == "mesh")
+        .collect::<Vec<_>>();
+    meshes.sort_by_key(|row| row.ordinal);
+    meshes
+        .into_iter()
+        .map(|row| ledger_member_id(&row.path, "mesh"))
+        .collect()
 }
 
 /// Decode selected mesh names into member ids for composite matching.
