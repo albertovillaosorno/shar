@@ -324,7 +324,9 @@ fn allows_duplicate_unselected_prop_binding() -> Result<(), String> {
     if asset.parts.len() != 1
         || part.mesh.name != "BodyShape__transparent-source"
     {
-        return Err("selected binding changed by unrelated duplicate".to_owned());
+        return Err(
+            "selected binding changed by unrelated duplicate".to_owned()
+        );
     }
     Ok(())
 }
