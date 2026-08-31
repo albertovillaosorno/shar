@@ -390,8 +390,8 @@ fn decode_dxt5_alpha(block: &[u8]) -> Result<[u8; 16], P3dError> {
             .ok_or_else(|| {
                 P3dError::invalid_source("DXT5 alpha shift overflowed")
             })?;
-        let palette_index = usize::try_from((indices >> shift) & 0x7)
-            .map_err(|error| {
+        let palette_index =
+            usize::try_from((indices >> shift) & 0x7).map_err(|error| {
                 P3dError::invalid_source(format!(
                     "DXT5 alpha index exceeds usize: {error}"
                 ))
