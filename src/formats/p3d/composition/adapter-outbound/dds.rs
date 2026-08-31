@@ -263,8 +263,8 @@ fn decode_color_block(
             .ok_or_else(|| {
                 P3dError::invalid_source("DXT color shift overflowed")
             })?;
-        let palette_index = usize::try_from((indices >> shift) & 0x3)
-            .map_err(|error| {
+        let palette_index =
+            usize::try_from((indices >> shift) & 0x3).map_err(|error| {
                 P3dError::invalid_source(format!(
                     "DXT color index exceeds usize: {error}"
                 ))
