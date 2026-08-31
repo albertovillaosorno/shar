@@ -188,7 +188,7 @@ pub fn load_skeleton(
             actual: actual_joint_count,
         });
     }
-    let skeleton_name = trim_decoded_identity(&decoded.name);
+    let skeleton_name = decoded_identity(path, "skeleton name", &decoded.name)?;
     if skeleton_name.is_empty() {
         return Err(SkinSourceError::BlankComponentName {
             path: path_text(path),
@@ -200,7 +200,7 @@ pub fn load_skeleton(
     let mut bones = Vec::with_capacity(decoded.joints.len());
     let mut names = Vec::with_capacity(decoded.joints.len());
     for (index, joint) in decoded.joints.iter().enumerate() {
-        let joint_name = trim_decoded_identity(&joint.name);
+        let joint_name = decoded_identity(path, "joint name", &joint.name)?;
         if joint_name.is_empty() {
             return Err(SkinSourceError::BlankJointName {
                 path: path_text(path),
@@ -337,7 +337,7 @@ pub fn load_skin_part(
             actual: actual_group_count,
         });
     }
-    let skin_name = trim_decoded_identity(&decoded.name);
+    let skin_name = decoded_identity(path, "skin name", &decoded.name)?;
     if skin_name.is_empty() {
         return Err(SkinSourceError::BlankComponentName {
             path: path_text(path),
@@ -359,7 +359,7 @@ pub fn load_skin_part(
     })?;
     Ok((
         SkinnedPart { mesh, group_influences },
-        trim_decoded_identity(&decoded.skeleton_name),
+        decoded_identity(path, "skin skeleton name", &decoded.skeleton_name)?,
     ))
 }
 
@@ -425,7 +425,7 @@ fn load_group(
     };
     let group = PrimitiveGroup::new(
         index,
-        trim_decoded_identity(&decoded.shader),
+        decoded_identity(path, "skin shader name", &decoded.shader)?,
         decoded.positions.clone(),
         uvs,
         &triangles,
@@ -733,17 +733,24 @@ pub(super) fn composite_bindings(
             actual: actual_effect_count,
         });
     }
-    let referenced_skeleton = trim_decoded_identity(&decoded.skeleton_name);
+    let composite_name =
+        decoded_identity(path, "composite name", &decoded.name)?;
+    let referenced_skeleton = decoded_identity(
+        path,
+        "composite skeleton name",
+        &decoded.skeleton_name,
+    )?;
     if referenced_skeleton != skeleton_name {
         return Err(SkinSourceError::SkeletonReferenceMismatch {
-            skin: trim_decoded_identity(&decoded.name),
+            skin: composite_name,
             expected: skeleton_name.to_owned(),
             found: referenced_skeleton,
         });
     }
     let mut translucent_skins = BTreeSet::new();
     for skin in &decoded.skins {
-        let skin_name = trim_decoded_identity(&skin.name);
+        let skin_name =
+            decoded_identity(path, "composite skin name", &skin.name)?;
         if !part_names.contains(&skin_name) {
             return Err(SkinSourceError::CompositeSkinMissing {
                 path: path_text(path),
@@ -763,7 +770,8 @@ pub(super) fn composite_bindings(
                 prop.kind
             )));
         }
-        let prop_name = trim_decoded_identity(&prop.name);
+        let prop_name =
+            decoded_identity(path, "composite prop name", &prop.name)?;
         if prop_name.is_empty() {
             return Err(SkinSourceError::Prop(format!(
                 "composite {} contains a blank prop name",
@@ -793,9 +801,20 @@ pub(super) fn composite_bindings(
     })
 }
 
-/// Trim decoded fixed-width identity padding without touching inner text.
-fn trim_decoded_identity(value: &str) -> String {
-    value.trim_end_matches('\u{0}').trim().to_owned()
+/// Remove fixed-width NUL padding without repairing decoded source identity.
+fn decoded_identity(
+    path: &Path,
+    field: &str,
+    value: &str,
+) -> Result<String, SkinSourceError> {
+    let clean = value.trim_end_matches('\u{0}');
+    if clean != clean.trim() || clean.chars().any(char::is_control) {
+        return Err(SkinSourceError::NonCanonicalIdentity {
+            path: path_text(path),
+            field: field.to_owned(),
+        });
+    }
+    Ok(clean.to_owned())
 }
 
 /// Internal helper for the adapter implementation.
@@ -848,6 +867,13 @@ pub enum SkinSourceError {
     BlankComponentName {
         /// Component path.
         path: String,
+    },
+    /// Decoded identity contained surrounding whitespace or control characters.
+    NonCanonicalIdentity {
+        /// Component path.
+        path: String,
+        /// Logical source field carrying the invalid identity.
+        field: String,
     },
     /// Skeleton contained no joints.
     EmptySkeleton {
@@ -1112,6 +1138,7 @@ impl SkinSourceError {
             Self::Parse { .. } => "parse",
             Self::UnsupportedSchema { .. } => "unsupported-schema",
             Self::BlankComponentName { .. } => "blank-component-name",
+            Self::NonCanonicalIdentity { .. } => "non-canonical-identity",
             Self::EmptySkeleton { .. } => "empty-skeleton",
             Self::UnsupportedSkeletonVersion { .. } => {
                 "unsupported-skeleton-version"

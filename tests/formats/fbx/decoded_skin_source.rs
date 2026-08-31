@@ -48,6 +48,83 @@ fn temp_path(label: &str) -> PathBuf {
 }
 
 #[test]
+fn rejects_skeleton_identity_with_surrounding_whitespace()
+-> Result<(), String> {
+    let path = temp_path("skeleton-name-whitespace");
+    let fixture = concat!(
+        r#"{"schema":"skeleton","name":" skeleton","version":0,"#,
+        r#""num_joints":1,"joints":[{"name":"root","parent":0,"#,
+        r#""dof":0,"free_axes":0,"primary_axis":0,"secondary_axis":0,"#,
+        r#""twist_axis":0,"rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}]}"#,
+    );
+    fs::write(&path, fixture).map_err(|error| error.to_string())?;
+    let result = load_skeleton(&path);
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+    match result {
+        Err(SkinSourceError::NonCanonicalIdentity { field, .. })
+            if field == "skeleton name" => Ok(()),
+        other => Err(format!("unexpected skeleton identity result: {other:?}")),
+    }
+}
+
+#[test]
+fn rejects_joint_identity_with_surrounding_whitespace() -> Result<(), String> {
+    let path = temp_path("joint-name-whitespace");
+    let fixture = concat!(
+        r#"{"schema":"skeleton","name":"skeleton","version":0,"#,
+        r#""num_joints":1,"joints":[{"name":" root","parent":0,"#,
+        r#""dof":0,"free_axes":0,"primary_axis":0,"secondary_axis":0,"#,
+        r#""twist_axis":0,"rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}]}"#,
+    );
+    fs::write(&path, fixture).map_err(|error| error.to_string())?;
+    let result = load_skeleton(&path);
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+    match result {
+        Err(SkinSourceError::NonCanonicalIdentity { field, .. })
+            if field == "joint name" => Ok(()),
+        other => Err(format!("unexpected joint identity result: {other:?}")),
+    }
+}
+
+#[test]
+fn rejects_composite_skeleton_reference_with_surrounding_whitespace()
+-> Result<(), String> {
+    let skeleton_path = temp_path("composite-space-skeleton");
+    let composite_path = temp_path("composite-space-reference");
+    let skeleton_fixture = concat!(
+        r#"{"schema":"skeleton","name":"skeleton","version":0,"#,
+        r#""num_joints":1,"joints":[{"name":"root","parent":0,"#,
+        r#""dof":0,"free_axes":0,"primary_axis":0,"secondary_axis":0,"#,
+        r#""twist_axis":0,"rest_pose":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]}]}"#,
+    );
+    let composite_fixture = concat!(
+        r#"{"schema":"composite_drawable","name":"character","#,
+        r#""skeleton_name":" skeleton","num_skins":0,"skins":[],"#,
+        r#""num_props":0,"props":[],"num_effects":0,"effects":[]}"#,
+    );
+    fs::write(&skeleton_path, skeleton_fixture)
+        .and_then(|()| fs::write(&composite_path, composite_fixture))
+        .map_err(|error| error.to_string())?;
+    let composite_paths = [composite_path.as_path()];
+    let result = load_character(
+        "character",
+        &skeleton_path,
+        &[],
+        &[],
+        &composite_paths,
+    );
+    fs::remove_file(&skeleton_path).map_err(|error| error.to_string())?;
+    fs::remove_file(&composite_path).map_err(|error| error.to_string())?;
+    match result {
+        Err(SkinSourceError::NonCanonicalIdentity { field, .. })
+            if field == "composite skeleton name" => Ok(()),
+        other => Err(format!(
+            "unexpected composite identity result: {other:?}"
+        )),
+    }
+}
+
+#[test]
 fn rejects_declared_joint_count_mismatch() -> Result<(), String> {
     let path = temp_path("skeleton-count");
     let fixture = concat!(
