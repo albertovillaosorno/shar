@@ -182,10 +182,11 @@ pub(super) fn recover_auxiliary_schema_json(
         "scrooby_multi_text" => super::scrooby_widget::recover_multi_text_json(
             component, source, kind_index,
         ),
-        "scrooby_pure3d_object" =>
+        "scrooby_pure3d_object" => {
             super::scrooby_widget::recover_pure3d_object_json(
                 component, source, kind_index,
-            ),
+            )
+        },
         "scrooby_polygon" => super::scrooby_widget::recover_polygon_json(
             component, source, kind_index,
         ),
