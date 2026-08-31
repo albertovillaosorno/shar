@@ -78,6 +78,13 @@ pub(super) fn discover_world_candidates(
             continue;
         }
         let ledger = read_world_ledger(&root)?;
+        let package_quad_groups = ledger
+            .groups
+            .values()
+            .flatten()
+            .filter(|row| row.kind == "quad_group")
+            .cloned()
+            .collect::<Vec<_>>();
         for (container, rows) in ledger.groups {
             let Some(owner) = ledger.owners.get(&container) else {
                 continue;
@@ -90,7 +97,12 @@ pub(super) fn discover_world_candidates(
                 continue;
             }
             let mesh_names = decoded_mesh_names(&root, &mesh_ids)?;
-            let association = associate_composite(&root, &rows, &mesh_names)?;
+            let association = associate_composite(
+                &root,
+                &rows,
+                &package_quad_groups,
+                &mesh_names,
+            )?;
             let (
                 owner_name,
                 selected,
@@ -198,6 +210,7 @@ fn static_association(
 fn associate_composite(
     root: &Path,
     rows: &[LedgerRow],
+    package_quad_groups: &[LedgerRow],
     mesh_names: &BTreeMap<String, String>,
 ) -> Result<Option<Association>, PipelineError> {
     let mut matches = Vec::new();
@@ -225,8 +238,12 @@ fn associate_composite(
     let Some((composite, selected)) = matches.pop() else {
         return Ok(None);
     };
-    let deferred_render_bindings =
-        deferred_render_bindings(rows, &composite, mesh_names)?;
+    let deferred_render_bindings = deferred_render_bindings(
+        rows,
+        package_quad_groups,
+        &composite,
+        mesh_names,
+    )?;
     let skeleton =
         named_member(root, rows, "skeleton", &composite.skeleton_name)?;
     let clip_name = format!("PTRN_{}", composite.skeleton_name);
@@ -250,6 +267,7 @@ fn associate_composite(
 /// Retain authored non-mesh composite bindings without inventing FBX semantics.
 fn deferred_render_bindings(
     rows: &[LedgerRow],
+    package_quad_groups: &[LedgerRow],
     composite: &CompositeEvidence,
     mesh_names: &BTreeMap<String, String>,
 ) -> Result<Vec<DeferredRenderBinding>, PipelineError> {
@@ -260,11 +278,12 @@ fn deferred_render_bindings(
         if mesh_names.contains_key(&binding.name) {
             continue;
         }
-        let mut matches = Vec::new();
-        for row in rows.iter().filter(|row| row.kind == "quad_group") {
-            if clean_identity(&row.name)? == binding.name {
-                matches.push(row);
-            }
+        let mut matches = matching_quad_groups(rows, &binding.name)?;
+        if matches.is_empty() {
+            matches = matching_quad_groups(
+                package_quad_groups,
+                &binding.name,
+            )?;
         }
         if matches.len() > 1 {
             return Err(PipelineError::new(format!(
@@ -294,6 +313,21 @@ fn deferred_render_bindings(
         });
     }
     Ok(bindings)
+}
+
+/// Find every quad group matching one authored identity in one row scope.
+fn matching_quad_groups<'rows>(
+    rows: &'rows [LedgerRow],
+    expected: &str,
+) -> Result<Vec<&'rows LedgerRow>, PipelineError> {
+    rows.iter()
+        .filter(|row| row.kind == "quad_group")
+        .filter_map(|row| match clean_identity(&row.name) {
+            Ok(name) if name == expected => Some(Ok(row)),
+            Ok(_) => None,
+            Err(error) => Some(Err(error)),
+        })
+        .collect()
 }
 
 /// Find one same-container component by decoded identity.

@@ -106,7 +106,7 @@ fn source_mesh_ids_follow_component_ordinals() -> Result<(), String> {
 }
 
 #[test]
-fn deferred_bindings_preserve_order_and_exact_quad_group_occurrence()
+fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
 -> Result<(), String> {
     let composite = CompositeEvidence {
         member_id: "composite".to_owned(),
@@ -135,10 +135,11 @@ fn deferred_bindings_preserve_order_and_exact_quad_group_occurrence()
             },
         ],
     };
-    let rows = vec![LedgerRow {
+    let rows = Vec::new();
+    let package_quad_groups = vec![LedgerRow {
         ordinal: 22,
-        depth: 2,
-        container_ordinal: 1,
+        depth: 1,
+        container_ordinal: 22,
         name: "beam\x00".to_owned(),
         path: "quad_group/beam__ordinal_22.json".to_owned(),
         kind: "quad_group".to_owned(),
@@ -148,7 +149,12 @@ fn deferred_bindings_preserve_order_and_exact_quad_group_occurrence()
         "body__ordinal_10".to_owned(),
     )]);
 
-    let actual = deferred_render_bindings(&rows, &composite, &meshes)
+    let actual = deferred_render_bindings(
+        &rows,
+        &package_quad_groups,
+        &composite,
+        &meshes,
+    )
         .map_err(|error| error.to_string())?;
     if actual.len() != 2 {
         return Err(format!("unexpected deferred binding count: {actual:?}"));
