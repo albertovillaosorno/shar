@@ -46,6 +46,18 @@ fn decoded_locator_trims_only_trailing_nul_padding() -> Result<(), String> {
 }
 
 #[test]
+fn decoded_locator_rejects_surrounding_whitespace() -> Result<(), String> {
+    let result = parse_decoded_locator(
+        // jig-ignore-next-line: literal
+        r#"{"schema":"locator","name":" check1 ","locator_type":0,"locator_type_name":"event"}"#,
+    );
+    if result.is_ok() {
+        return Err("surrounding locator whitespace was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn decoded_locator_rejects_interior_nul() -> Result<(), String> {
     let Err(error) = parse_decoded_locator(
         // jig-ignore-next-line: literal

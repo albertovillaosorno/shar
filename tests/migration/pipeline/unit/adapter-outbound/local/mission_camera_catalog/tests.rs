@@ -55,6 +55,18 @@ fn multicontroller_trims_only_trailing_nul_padding() -> Result<(), String> {
 }
 
 #[test]
+fn camera_name_rejects_surrounding_whitespace() -> Result<(), String> {
+    let result = parse_component_name(
+        r#"{"schema":"camera","name":" mission2camShape "}"#,
+        MissionCameraComponentKind::Camera,
+    );
+    if result.is_ok() {
+        return Err("surrounding camera whitespace was accepted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn component_schema_must_match_indexed_kind() -> Result<(), String> {
     let Err(error) = parse_component_name(
         r#"{"schema":"camera","name":"mission2cam"}"#,

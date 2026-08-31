@@ -132,9 +132,12 @@ fn parse_dynamic_zone(
     }
     let raw_name = required_string(object, "name")?;
     let name = raw_name.trim_end_matches(char::from(0)).to_owned();
-    if name.is_empty() || name.chars().any(char::is_control) {
+    if name.is_empty()
+        || name != name.trim()
+        || name.chars().any(char::is_control)
+    {
         return Err(PipelineError::new(concat!(
-            "decoded DynamicZone name is empty or contains ",
+            "decoded DynamicZone name is empty, padded, or contains ",
             "interior control data"
         )));
     }
