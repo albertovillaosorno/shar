@@ -50,6 +50,7 @@ fn mesh(name: &str, shader: &str) -> Result<MeshAsset, String> {
     )
     .map_err(|error| format!("primitive group failed: {error:?}"))?;
     MeshAsset::new(name, vec![group])
+        .and_then(|mesh| mesh.with_source_identity(name))
         .map_err(|error| format!("mesh failed: {error:?}"))
 }
 
@@ -112,7 +113,13 @@ fn static_canonical_names_preserve_source_mesh_order() -> Result<(), String> {
         .map(|mesh| {
             mesh.groups
                 .first()
-                .map(|group| (mesh.name.as_str(), group.shader.as_str()))
+                .map(|group| {
+                    (
+                        mesh.name.as_str(),
+                        mesh.source_identity.as_deref(),
+                        group.shader.as_str(),
+                    )
+                })
                 .ok_or_else(|| {
                     "canonical static mesh lost its group".to_owned()
                 })
@@ -120,7 +127,10 @@ fn static_canonical_names_preserve_source_mesh_order() -> Result<(), String> {
         .collect::<Result<Vec<_>, _>>()?;
     assert_eq!(
         actual,
-        [("part-0000", "z-source"), ("part-0001", "a-source")]
+        [
+            ("part-0000", Some("z-mesh"), "z-source"),
+            ("part-0001", Some("a-mesh"), "a-source"),
+        ]
     );
     Ok(())
 }
@@ -142,7 +152,13 @@ fn animated_canonical_names_preserve_source_part_order() -> Result<(), String> {
             part.mesh
                 .groups
                 .first()
-                .map(|group| (part.mesh.name.as_str(), group.shader.as_str()))
+                .map(|group| {
+                    (
+                        part.mesh.name.as_str(),
+                        part.mesh.source_identity.as_deref(),
+                        group.shader.as_str(),
+                    )
+                })
                 .ok_or_else(|| {
                     "canonical animated part lost its group".to_owned()
                 })
@@ -150,7 +166,10 @@ fn animated_canonical_names_preserve_source_part_order() -> Result<(), String> {
         .collect::<Result<Vec<_>, _>>()?;
     assert_eq!(
         actual,
-        [("part-0000", "z-source"), ("part-0001", "a-source")]
+        [
+            ("part-0000", Some("z-part"), "z-source"),
+            ("part-0001", Some("a-part"), "a-source"),
+        ]
     );
     Ok(())
 }

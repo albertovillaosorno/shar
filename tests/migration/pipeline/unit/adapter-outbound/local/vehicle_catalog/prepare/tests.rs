@@ -141,24 +141,29 @@ fn semantic_part_split_preserves_source_cast_shadow() -> Result<(), String> {
         source_rig: None,
     };
     let mut source_part = ordered_vehicle_part("bodyShape", "body_m")?;
-    source_part.mesh = source_part.mesh.with_cast_shadow(Some(false));
+    source_part.mesh = source_part
+        .mesh
+        .with_source_identity("bodyShape")
+        .map_err(|error| format!("source identity failed: {error:?}"))?
+        .with_cast_shadow(Some(false));
     let asset = CharacterAsset::new("vehicle", vec![root], vec![source_part])
         .map_err(|error| format!("vehicle fixture failed: {error:?}"))?;
     let material = MaterialBinding::new("body_m", None)
         .map_err(|error| format!("material failed: {error:?}"))?;
     let (separated, _records) = separate_vehicle_parts(asset, &[material])
         .map_err(|error| error.to_string())?;
-    let cast_shadow = separated
+    let mesh = separated
         .parts
         .first()
-        .and_then(|part| part.mesh.cast_shadow);
-    if cast_shadow == Some(false) {
-        Ok(())
-    } else {
-        Err(format!(
-            "vehicle semantic split changed CastShadow to {cast_shadow:?}"
-        ))
+        .map(|part| &part.mesh)
+        .ok_or_else(|| "vehicle semantic split lost its mesh".to_owned())?;
+    if mesh.source_identity.as_deref() != Some("bodyShape") {
+        return Err(format!("vehicle source mesh identity changed: {mesh:?}"));
     }
+    if mesh.cast_shadow != Some(false) {
+        return Err(format!("vehicle CastShadow changed: {mesh:?}"));
+    }
+    Ok(())
 }
 
 #[test]
