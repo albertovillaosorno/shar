@@ -290,7 +290,6 @@ impl UnrealImportManifest {
                 &mut object_paths,
                 &mut summary,
             )?;
-            package_sources.sort_by(|left, right| left.id.cmp(&right.id));
             sources.extend(package_sources);
             packages.push(UnrealPackageRecord {
                 package_id: package.package_id.clone(),
@@ -319,11 +318,7 @@ impl UnrealImportManifest {
             ));
         }
         packages.sort_by(|left, right| left.package_id.cmp(&right.package_id));
-        sources.sort_by(|left, right| {
-            left.package_id
-                .cmp(&right.package_id)
-                .then_with(|| left.id.cmp(&right.id))
-        });
+        sources.sort_by(|left, right| left.package_id.cmp(&right.package_id));
         summary.packages = packages.len();
         summary.sources = sources.len();
         Ok(Self {
