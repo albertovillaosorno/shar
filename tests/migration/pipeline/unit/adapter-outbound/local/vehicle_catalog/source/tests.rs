@@ -36,8 +36,9 @@ use std::path::{Path, PathBuf};
 use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
-    decoded_name, texture_key, unique_vehicle_component_paths,
-    vehicle_animation_paths, vehicle_mesh_paths, vehicle_quad_group_paths,
+    common_headlight_quad_groups, decoded_name, texture_key,
+    unique_vehicle_component_paths, vehicle_animation_paths, vehicle_mesh_paths,
+    vehicle_quad_group_paths,
 };
 
 struct TestDirectory(PathBuf);
@@ -115,6 +116,48 @@ fn create_component_files(
         fs::write(directory.join(name), b"{}")
             .map_err(|error| error.to_string())?;
     }
+    Ok(())
+}
+
+#[test]
+fn common_headlights_follow_source_chunk_ordinals() -> Result<(), String> {
+    let root = TestDirectory::new("common-headlight-order")?;
+    let common = root.path().join("cars/common");
+    let directory = common.join("components/quad_group");
+    fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
+    for (file, name) in [
+        ("headlightShape8.json", "headlightShape8"),
+        ("headlight2Shape.json", "headlight2Shape"),
+        ("glowGroupShape2.json", "glowGroupShape2"),
+    ] {
+        fs::write(directory.join(file), format!(r#"{{"name":"{name}"}}"#))
+            .map_err(|error| error.to_string())?;
+    }
+    fs::write(
+        common.join("components.jsonl"),
+        concat!(
+            r#"{"ordinal":100,"name":"glowGroupShape2","#,
+            r#""path":"quad_group/glowGroupShape2.json","kind":"quad_group"}"#,
+            "\n",
+            r#"{"ordinal":92,"name":"headlight2Shape","#,
+            r#""path":"quad_group/headlight2Shape.json","kind":"quad_group"}"#,
+            "\n",
+            r#"{"ordinal":96,"name":"headlightShape8","#,
+            r#""path":"quad_group/headlightShape8.json","kind":"quad_group"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let (_common_root, paths) = common_headlight_quad_groups(root.path())
+        .map_err(|error| error.to_string())?;
+    assert_eq!(
+        paths,
+        [
+            directory.join("headlight2Shape.json"),
+            directory.join("headlightShape8.json"),
+            directory.join("glowGroupShape2.json"),
+        ]
+    );
     Ok(())
 }
 
