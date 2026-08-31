@@ -76,9 +76,11 @@ impl CharacterSourceProvenance {
         }
         for identity in &composite_identities {
             if !canonical_source_identity(identity) {
-                return Err(CharacterError::NonCanonicalSourceCompositeIdentity {
-                    identity: identity.clone(),
-                });
+                return Err(
+                    CharacterError::NonCanonicalSourceCompositeIdentity {
+                        identity: identity.clone(),
+                    },
+                );
             }
         }
         Ok(Self {

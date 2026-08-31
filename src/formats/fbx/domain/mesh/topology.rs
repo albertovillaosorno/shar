@@ -102,7 +102,6 @@ pub fn triangulate_strip(indices: &[u32]) -> Result<Vec<[u32; 3]>, MeshError> {
     Ok(triangles)
 }
 
-
 #[cfg(test)]
 #[path = "../../../../../tests/formats/fbx/unit/domain/mesh/topology/tests.rs"]
 mod tests;
