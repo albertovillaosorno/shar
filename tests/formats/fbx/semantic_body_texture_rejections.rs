@@ -33,6 +33,12 @@
 #[path = "common/semantic_body.rs"]
 mod semantic_body;
 
+use std::path::PathBuf;
+
+use fbx::adapters::driven::semantic_character_texture::SemanticTextureRequest;
+use fbx::adapters::driven::semantic_character_texture::request::{
+    ExtraMaterialRequest, GroupAddressRequest, RequestError,
+};
 use fbx::domain::skin::SkinInfluence;
 use fbx::domain::texture::semantic::{
     BodyRegion, SemanticTextureError, plan_body_texture,
@@ -43,6 +49,80 @@ use semantic_body::{BODY_COLORS, body_fixture};
 use serde as _;
 use serde_json as _;
 use shar_sha256 as _;
+
+fn texture_request(
+    extra_materials: Vec<ExtraMaterialRequest>,
+) -> SemanticTextureRequest {
+    SemanticTextureRequest {
+        character_name: "fixture".to_owned(),
+        skeleton_path: PathBuf::new(),
+        skin_paths: Vec::new(),
+        mesh_paths: Vec::new(),
+        composite_paths: Vec::new(),
+        general_animation_paths: Vec::new(),
+        character_animation_paths: Vec::new(),
+        body_texture_path: PathBuf::new(),
+        body_texture_mode: "preserve-source".to_owned(),
+        body_texture_address_mode: "clamp".to_owned(),
+        eye_frame_paths: None,
+        body_groups: Vec::<GroupAddressRequest>::new(),
+        eye_group: None,
+        color_overrides: Vec::new(),
+        hair_luminance_ratio: 0.2,
+        body_atlas_width: 1,
+        body_atlas_height: 1,
+        body_atlas_padding: 0,
+        body_atlas_background: [0, 0, 0, 255],
+        eye_output_size: 1,
+        extra_materials,
+        untextured_materials: Vec::new(),
+    }
+}
+
+fn extra(material: &str, output: &str) -> ExtraMaterialRequest {
+    ExtraMaterialRequest {
+        material_name: material.to_owned(),
+        texture_path: PathBuf::from("unused.png"),
+        output_file_name: output.to_owned(),
+    }
+}
+
+#[test]
+fn rejects_reserved_extra_texture_identity() {
+    let request = texture_request(vec![extra("extra", "BODY-ATLAS.PNG")]);
+    assert_eq!(
+        request.validate_extra_texture_outputs(),
+        Err(RequestError::ReservedExtraTextureOutput(
+            "BODY-ATLAS.PNG".to_owned()
+        ))
+    );
+}
+
+#[test]
+fn rejects_case_folded_extra_texture_alias() {
+    let request = texture_request(vec![
+        extra("first", "shared.png"),
+        extra("second", "SHARED.PNG"),
+    ]);
+    assert_eq!(
+        request.validate_extra_texture_outputs(),
+        Err(RequestError::CaseAliasedExtraTextureOutput {
+            first: "shared.png".to_owned(),
+            second: "SHARED.PNG".to_owned(),
+        })
+    );
+}
+
+#[test]
+fn accepts_exact_shared_extra_texture_identity() -> Result<(), String> {
+    let request = texture_request(vec![
+        extra("first", "shared.png"),
+        extra("second", "shared.png"),
+    ]);
+    request
+        .validate_extra_texture_outputs()
+        .map_err(|error| format!("exact shared output failed: {error:?}"))
+}
 
 #[test]
 #[expect(
