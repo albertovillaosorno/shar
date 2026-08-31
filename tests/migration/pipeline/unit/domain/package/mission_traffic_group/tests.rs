@@ -185,3 +185,10 @@ fn rejects_malformed_traffic_groups() -> Result<(), String> {
     }
     Ok(())
 }
+#[test]
+fn traffic_source_token_rejects_padding() -> Result<(), String> {
+    if source_token(" padded ", "traffic model").is_ok() {
+        return Err("padded mission source token was accepted".to_owned());
+    }
+    Ok(())
+}

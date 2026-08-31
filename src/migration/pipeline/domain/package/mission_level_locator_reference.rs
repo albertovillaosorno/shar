@@ -278,11 +278,13 @@ fn push_level_vehicle_references(
 }
 
 fn source_token(value: &str, label: &str) -> Result<String, String> {
-    let token = value.trim();
-    if token.is_empty() || token.chars().any(char::is_control) {
+    if value.is_empty()
+        || value != value.trim()
+        || value.chars().any(char::is_control)
+    {
         return Err(format!("{label} is malformed"));
     }
-    Ok(token.to_owned())
+    Ok(value.to_owned())
 }
 
 fn push_reference(
