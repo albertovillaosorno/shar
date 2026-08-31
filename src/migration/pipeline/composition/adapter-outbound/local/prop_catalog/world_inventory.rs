@@ -36,10 +36,11 @@ use std::path::Path;
 use super::extraction::relative_art_root;
 use super::inventory_common::{
     CompositeEvidence, clean_identity, ledger_member_id, read_component_name,
-    read_composite,
+    read_composite, read_json, required_string, required_usize,
 };
 use super::model::{
-    DeferredRenderBinding, PropCandidate, PropFamily, PropRoute,
+    DeferredControllerBinding, DeferredRenderBinding, PropCandidate, PropFamily,
+    PropRoute,
 };
 use super::world_ledger::{LedgerRow, read_world_ledger};
 use crate::domain::PipelineError;
@@ -78,11 +79,20 @@ pub(super) fn discover_world_candidates(
             continue;
         }
         let ledger = read_world_ledger(&root)?;
-        let package_quad_groups = ledger
+        let package_relationship_rows = ledger
             .groups
             .values()
             .flatten()
-            .filter(|row| row.kind == "quad_group")
+            .filter(|row| {
+                matches!(
+                    row.kind.as_str(),
+                    "quad_group"
+                        | "frame_controller"
+                        | "frame_controller_variant_a"
+                        | "frame_controller_variant_b"
+                        | "animation"
+                )
+            })
             .cloned()
             .collect::<Vec<_>>();
         for (container, rows) in ledger.groups {
@@ -100,7 +110,7 @@ pub(super) fn discover_world_candidates(
             let association = associate_composite(
                 &root,
                 &rows,
-                &package_quad_groups,
+                &package_relationship_rows,
                 &mesh_names,
             )?;
             let (
@@ -210,7 +220,7 @@ fn static_association(
 fn associate_composite(
     root: &Path,
     rows: &[LedgerRow],
-    package_quad_groups: &[LedgerRow],
+    package_relationship_rows: &[LedgerRow],
     mesh_names: &BTreeMap<String, String>,
 ) -> Result<Option<Association>, PipelineError> {
     let mut matches = Vec::new();
@@ -239,8 +249,9 @@ fn associate_composite(
         return Ok(None);
     };
     let deferred_render_bindings = deferred_render_bindings(
+        root,
         rows,
-        package_quad_groups,
+        package_relationship_rows,
         &composite,
         mesh_names,
     )?;
@@ -266,8 +277,9 @@ fn associate_composite(
 
 /// Retain authored non-mesh composite bindings without inventing FBX semantics.
 fn deferred_render_bindings(
+    root: &Path,
     rows: &[LedgerRow],
-    package_quad_groups: &[LedgerRow],
+    package_relationship_rows: &[LedgerRow],
     composite: &CompositeEvidence,
     mesh_names: &BTreeMap<String, String>,
 ) -> Result<Vec<DeferredRenderBinding>, PipelineError> {
@@ -281,7 +293,7 @@ fn deferred_render_bindings(
         let mut matches = matching_quad_groups(rows, &binding.name)?;
         if matches.is_empty() {
             matches = matching_quad_groups(
-                package_quad_groups,
+                package_relationship_rows,
                 &binding.name,
             )?;
         }
@@ -302,6 +314,11 @@ fn deferred_render_bindings(
             } else {
                 (None, None, None)
             };
+        let controller = deferred_controller_binding(
+            root,
+            package_relationship_rows,
+            &binding.name,
+        )?;
         bindings.push(DeferredRenderBinding {
             composite_prop_index,
             source_identity: binding.name.clone(),
@@ -310,9 +327,108 @@ fn deferred_render_bindings(
             component_kind,
             component_member_id,
             source_ordinal,
+            controller,
         });
     }
     Ok(bindings)
+}
+
+/// Resolve one exact source controller and its declared animation relationship.
+fn deferred_controller_binding(
+    root: &Path,
+    rows: &[LedgerRow],
+    expected_hierarchy: &str,
+) -> Result<Option<DeferredControllerBinding>, PipelineError> {
+    let mut controllers = Vec::new();
+    for row in rows.iter().filter(|row| {
+        matches!(
+            row.kind.as_str(),
+            "frame_controller"
+                | "frame_controller_variant_a"
+                | "frame_controller_variant_b"
+        )
+    }) {
+        let value = read_json(&root.join("components").join(&row.path))?;
+        let hierarchy =
+            clean_identity(&required_string(&value, "hierarchy_name")?)?;
+        if hierarchy == expected_hierarchy {
+            controllers.push((row, value));
+        }
+    }
+    if controllers.len() > 1 {
+        return Err(PipelineError::new(format!(
+            "world prop repeats frame-controller hierarchy {expected_hierarchy}"
+        )));
+    }
+    let Some((row, value)) = controllers.pop() else {
+        return Ok(None);
+    };
+    if required_string(&value, "schema")? != "frame_controller" {
+        return Err(PipelineError::new(
+            "world prop controller schema is not frame_controller",
+        ));
+    }
+    let controller_identity =
+        clean_identity(&required_string(&value, "name")?)?;
+    let controller_type = clean_identity(&required_string(&value, "type")?)?;
+    let animation_identity =
+        clean_identity(&required_string(&value, "animation_name")?)?;
+    let frame_offset_value = value
+        .get("frame_offset")
+        .cloned()
+        .ok_or_else(|| {
+            PipelineError::new("world prop controller has no frame offset")
+        })?;
+    let frame_offset: f32 = serde_json::from_value(frame_offset_value)
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "world prop controller frame offset is invalid: {error}"
+            ))
+        })?;
+    if !frame_offset.is_finite() {
+        return Err(PipelineError::new(
+            "world prop controller frame offset is not finite",
+        ));
+    }
+    let mut animations = Vec::new();
+    for animation_row in rows.iter().filter(|row| row.kind == "animation") {
+        let path = root.join("components").join(&animation_row.path);
+        if read_component_name(&path)? == animation_identity {
+            animations.push(animation_row);
+        }
+    }
+    if animations.len() > 1 {
+        return Err(PipelineError::new(format!(
+            "world prop repeats controller animation {animation_identity}"
+        )));
+    }
+    let (animation_member_id, animation_source_ordinal, animation_version,
+        animation_type) = if let Some(animation_row) = animations.pop() {
+        let animation_value =
+            read_json(&root.join("components").join(&animation_row.path))?;
+        (
+            Some(ledger_member_id(&animation_row.path, "animation")?),
+            Some(animation_row.ordinal),
+            Some(required_usize(&animation_value, "version")?),
+            Some(clean_identity(&required_string(&animation_value, "type")?)?),
+        )
+    } else {
+        (None, None, None, None)
+    };
+    Ok(Some(DeferredControllerBinding {
+        controller_identity,
+        controller_kind: row.kind.clone(),
+        controller_member_id: ledger_member_id(&row.path, &row.kind)?,
+        controller_source_ordinal: row.ordinal,
+        controller_version: required_usize(&value, "version")?,
+        controller_type,
+        frame_offset_bits: frame_offset.to_bits(),
+        animation_identity,
+        animation_member_id,
+        animation_source_ordinal,
+        animation_version,
+        animation_type,
+    }))
 }
 
 /// Find every quad group matching one authored identity in one row scope.

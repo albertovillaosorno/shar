@@ -76,6 +76,35 @@ impl PropRoute {
     }
 }
 
+/// One exact source controller binding for deferred render evidence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct DeferredControllerBinding {
+    /// Authored controller identity.
+    pub(super) controller_identity: String,
+    /// Normalized controller component family.
+    pub(super) controller_kind: String,
+    /// Exact normalized controller member id.
+    pub(super) controller_member_id: String,
+    /// Exact source controller component ordinal.
+    pub(super) controller_source_ordinal: usize,
+    /// Decoded source controller schema version.
+    pub(super) controller_version: usize,
+    /// Decoded source controller type.
+    pub(super) controller_type: String,
+    /// Exact finite source frame-offset bits.
+    pub(super) frame_offset_bits: u32,
+    /// Authored animation identity declared by the controller.
+    pub(super) animation_identity: String,
+    /// Exact normalized animation member id when resolvable.
+    pub(super) animation_member_id: Option<String>,
+    /// Exact source animation component ordinal when resolvable.
+    pub(super) animation_source_ordinal: Option<usize>,
+    /// Decoded source animation schema version when resolvable.
+    pub(super) animation_version: Option<usize>,
+    /// Decoded source animation type when resolvable.
+    pub(super) animation_type: Option<String>,
+}
+
 /// One composite render binding retained when the current FBX route cannot
 /// faithfully represent the referenced non-mesh component.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -94,6 +123,8 @@ pub(super) struct DeferredRenderBinding {
     pub(super) component_member_id: Option<String>,
     /// Exact source component ordinal when available.
     pub(super) source_ordinal: Option<usize>,
+    /// Exact source controller and animation relationship when available.
+    pub(super) controller: Option<DeferredControllerBinding>,
 }
 
 /// One normalized source occurrence before semantic deduplication.

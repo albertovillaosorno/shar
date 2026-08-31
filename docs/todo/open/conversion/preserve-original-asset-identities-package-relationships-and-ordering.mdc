@@ -665,5 +665,21 @@ quad-group member retains its exact physical member and source ordinal even from
 a shared package scope, and the world catalog serializes those fields without
 inference.
 
+World-prop deferred render bindings now also preserve exact source controller
+relationships when one frame controller names the quad-group hierarchy. The
+catalog records controller identity, physical member, source ordinal, version,
+type, and frame offset plus the controller-declared animation identity. When
+that animation resolves uniquely, its physical member, ordinal, version, and
+type are retained as well; no animation channels are converted by this step.
+
+The current 260 deferred world render bindings contain 138 exact controller
+relationships and 122 with no matching frame controller. All 138 resolve one
+controller and one animation with zero ambiguity: every controller is version 0,
+type `BQG`, and frame offset 0, while every animation is version 0 and type
+`BQG_`. Of the controllers, 133 share the resolved quad group's container and
+five are package-shared; all 138 animations share their controller's container.
+The world-prop catalog contract therefore advances to
+`shar.world-model-props.v3` without claiming runtime billboard animation.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

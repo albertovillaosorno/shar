@@ -1616,3 +1616,7 @@ VWJ
 vwj
 p3djoin
 gouraud
+BQG
+ERNG
+ORNG
+SRNG

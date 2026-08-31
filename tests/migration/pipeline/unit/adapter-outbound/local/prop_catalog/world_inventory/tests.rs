@@ -36,8 +36,8 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::{
-    LedgerRow, decoded_mesh_names, deferred_render_bindings,
-    source_ordered_mesh_ids,
+    LedgerRow, decoded_mesh_names, deferred_controller_binding,
+    deferred_render_bindings, source_ordered_mesh_ids,
 };
 use crate::adapters::driven::local::prop_catalog::inventory_common::{
     CompositeEvidence, CompositePropEvidence,
@@ -51,8 +51,10 @@ fn fixture_root(label: &str) -> Result<PathBuf, String> {
         "shar-world-inventory-map-{label}-{}-{sequence}",
         std::process::id()
     ));
-    fs::create_dir_all(root.join("components/mesh"))
-        .map_err(|error| error.to_string())?;
+    for family in ["mesh", "frame_controller", "animation"] {
+        fs::create_dir_all(root.join("components").join(family))
+            .map_err(|error| error.to_string())?;
+    }
     Ok(root)
 }
 
@@ -149,13 +151,16 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         "body__ordinal_10".to_owned(),
     )]);
 
+    let root = fixture_root("deferred-package-quad")?;
     let actual = deferred_render_bindings(
+        &root,
         &rows,
         &package_quad_groups,
         &composite,
         &meshes,
     )
         .map_err(|error| error.to_string())?;
+    drop(fs::remove_dir_all(&root));
     if actual.len() != 2 {
         return Err(format!("unexpected deferred binding count: {actual:?}"));
     }
@@ -169,6 +174,7 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         || beam.component_kind.as_deref() != Some("quad_group")
         || beam.component_member_id.as_deref() != Some("beam__ordinal_22")
         || beam.source_ordinal != Some(22)
+        || beam.controller.is_some()
     {
         return Err(format!("resolved deferred binding changed: {beam:?}"));
     }
@@ -184,6 +190,68 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         || logical.source_ordinal.is_some()
     {
         return Err(format!("logical deferred binding changed: {logical:?}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn deferred_controller_retains_exact_animation_relationship()
+-> Result<(), String> {
+    let root = fixture_root("controller-animation")?;
+    fs::write(
+        root.join("components/frame_controller/BQG_beam.json"),
+        concat!(
+            r#"{"schema":"frame_controller","name":"BQG_beam","#,
+            r#""version":0,"type":"BQG","frame_offset":1.25,"#,
+            r#""hierarchy_name":"beam","animation_name":"BQG_beam"}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components/animation/animation_0001.json"),
+        concat!(
+            r#"{"schema":"animation","name":"BQG_beam","#,
+            r#""version":0,"type":"BQG_"}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let rows = vec![
+        LedgerRow {
+            ordinal: 43,
+            depth: 2,
+            container_ordinal: 1,
+            name: "BQG_beam".to_owned(),
+            path: "frame_controller/BQG_beam.json".to_owned(),
+            kind: "frame_controller".to_owned(),
+        },
+        LedgerRow {
+            ordinal: 41,
+            depth: 2,
+            container_ordinal: 1,
+            name: "BQG_beam".to_owned(),
+            path: "animation/animation_0001.json".to_owned(),
+            kind: "animation".to_owned(),
+        },
+    ];
+    let result = deferred_controller_binding(&root, &rows, "beam")
+        .map_err(|error| error.to_string());
+    drop(fs::remove_dir_all(&root));
+    let binding = result?
+        .ok_or_else(|| "controller relationship was not retained".to_owned())?;
+    if binding.controller_identity != "BQG_beam"
+        || binding.controller_kind != "frame_controller"
+        || binding.controller_member_id != "BQG_beam"
+        || binding.controller_source_ordinal != 43
+        || binding.controller_version != 0
+        || binding.controller_type != "BQG"
+        || f32::from_bits(binding.frame_offset_bits) != 1.25
+        || binding.animation_identity != "BQG_beam"
+        || binding.animation_member_id.as_deref() != Some("animation_0001")
+        || binding.animation_source_ordinal != Some(41)
+        || binding.animation_version != Some(0)
+        || binding.animation_type.as_deref() != Some("BQG_")
+    {
+        return Err(format!("controller relationship changed: {binding:?}"));
     }
     Ok(())
 }
