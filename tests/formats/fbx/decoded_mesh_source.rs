@@ -200,11 +200,13 @@ fn preserves_disabled_cast_shadow_status() -> Result<(), String> {
         .map_err(|error| format!("CastShadow decode failed: {error:?}"))?;
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
 
-    if mesh.cast_shadow == Some(false) {
-        Ok(())
-    } else {
-        Err(format!("CastShadow source flag changed: {mesh:?}"))
+    if mesh.cast_shadow != Some(false) {
+        return Err(format!("CastShadow source flag changed: {mesh:?}"));
     }
+    if mesh.source_identity.as_deref() != Some("mesh") {
+        return Err(format!("mesh source identity changed: {mesh:?}"));
+    }
+    Ok(())
 }
 
 #[test]

@@ -208,6 +208,33 @@ fn static_model_is_deterministic_and_has_no_rig_objects() -> Result<(), String>
 }
 
 #[test]
+fn static_model_retains_p3d_source_mesh_identity() -> Result<(), String> {
+    let path = output_path("source-mesh-identity");
+    remove_if_present(&path)?;
+    let mesh = model_mesh()?
+        .with_source_identity("AuthoredMeshShape")
+        .map_err(|error| format!("source identity failed: {error:?}"))?;
+    let material = material()?;
+    let _summary = write_binary_model_fbx(
+        "source-mesh-identity",
+        &[mesh],
+        &[material],
+        &path,
+    )
+    .map_err(|error| format!("source identity FBX write failed: {error:?}"))?;
+    let bytes = fs::read(&path)
+        .map_err(|error| format!("source identity FBX read failed: {error}"))?;
+    remove_if_present(&path)?;
+
+    for token in ["SHAR_P3D_SourceMeshIdentity", "AuthoredMeshShape"] {
+        if !contains_token(&bytes, token) {
+            return Err(format!("static FBX dropped {token}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn static_model_retains_p3d_cast_shadow_metadata() -> Result<(), String> {
     let path = output_path("cast-shadow");
     remove_if_present(&path)?;

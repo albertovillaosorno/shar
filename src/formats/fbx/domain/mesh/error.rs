@@ -61,6 +61,9 @@ pub enum MeshError {
     MissingMeshName,
     /// Mesh identity carried surrounding whitespace.
     NonCanonicalMeshName,
+    /// Authored mesh source identity was blank, padded, or contained control
+    /// characters.
+    NonCanonicalMeshSourceIdentity,
     /// Primitive group did not provide any face indices.
     MissingIndices,
     /// Primitive group did not provide any vertex positions.

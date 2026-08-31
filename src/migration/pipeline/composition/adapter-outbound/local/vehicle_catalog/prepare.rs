@@ -764,6 +764,7 @@ fn separate_vehicle_parts(
     let mut records = Vec::new();
     let mut used_names = BTreeMap::<String, usize>::new();
     for part in asset.parts {
+        let source_identity = part.mesh.source_identity.clone();
         let cast_shadow = part.mesh.cast_shadow;
         for (group, influences) in
             part.mesh.groups.into_iter().zip(part.group_influences)
@@ -801,6 +802,10 @@ fn separate_vehicle_parts(
             let shader = group.shader.clone();
             let source_mesh = part.mesh.name.clone();
             let mesh = MeshAsset::new(&name, vec![group])
+                .and_then(|mesh| match source_identity.clone() {
+                    Some(identity) => mesh.with_source_identity(identity),
+                    None => Ok(mesh),
+                })
                 .map(|mesh| mesh.with_cast_shadow(cast_shadow))
                 .map_err(|error| {
                     PipelineError::new(format!(

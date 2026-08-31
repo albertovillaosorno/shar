@@ -351,12 +351,12 @@ pub fn load_skin_part(
         groups.push(group);
         group_influences.push(influences);
     }
-    let mesh = MeshAsset::new(skin_name, groups).map_err(|error| {
-        SkinSourceError::Mesh {
+    let mesh = MeshAsset::new(skin_name.clone(), groups)
+        .and_then(|mesh| mesh.with_source_identity(skin_name))
+        .map_err(|error| SkinSourceError::Mesh {
             path: path_text(path),
             error,
-        }
-    })?;
+        })?;
     Ok((
         SkinnedPart { mesh, group_influences },
         decoded_identity(path, "skin skeleton name", &decoded.skeleton_name)?,

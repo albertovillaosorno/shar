@@ -209,6 +209,16 @@ fn rejects_padded_mesh_asset_names() {
 }
 
 #[test]
+fn rejects_padded_mesh_source_identities() {
+    let result =
+        PrimitiveGroup::new(0, "shader", positions(), Vec::new(), &[0, 1, 2])
+            .and_then(|group| MeshAsset::new("mesh", vec![group]))
+            .and_then(|mesh| mesh.with_source_identity(" source-mesh"));
+
+    assert_eq!(result, Err(MeshError::NonCanonicalMeshSourceIdentity));
+}
+
+#[test]
 fn rejects_control_characters_in_mesh_identities() {
     let invalid_mesh =
         PrimitiveGroup::new(0, "shader", positions(), Vec::new(), &[0, 1, 2])

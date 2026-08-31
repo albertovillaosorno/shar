@@ -44,8 +44,10 @@ use super::primitive_group::PrimitiveGroup;
 /// Normalized mesh asset ready for scene construction.
 #[derive(Clone, Debug, PartialEq)]
 pub struct MeshAsset {
-    /// Stable mesh name.
+    /// Stable publication mesh name.
     pub name: String,
+    /// Optional authored source mesh identity retained across canonical naming.
+    pub source_identity: Option<String>,
     /// Optional source `CastShadow` flag from the decoded P3D mesh.
     pub cast_shadow: Option<bool>,
     /// Primitive groups exported as scene geometry parts.
@@ -85,9 +87,31 @@ impl MeshAsset {
         groups.sort_unstable_by_key(|group| group.index);
         Ok(Self {
             name: mesh_name,
+            source_identity: None,
             cast_shadow: None,
             groups,
         })
+    }
+
+    /// Attach one canonical authored source identity.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the source identity is blank, padded, or contains
+    /// control characters.
+    pub fn with_source_identity(
+        mut self,
+        source_identity: impl Into<String>,
+    ) -> Result<Self, MeshError> {
+        let identity = source_identity.into();
+        if identity.trim().is_empty()
+            || identity != identity.trim()
+            || identity.chars().any(char::is_control)
+        {
+            return Err(MeshError::NonCanonicalMeshSourceIdentity);
+        }
+        self.source_identity = Some(identity);
+        Ok(self)
     }
 
     /// Attach the optional source `CastShadow` flag retained by decoded P3D.

@@ -320,7 +320,8 @@ fn decode_mesh_document(
     for (index, group) in decoded.prim_groups.into_iter().enumerate() {
         groups.push(decode_primitive_group(index, group, &decoded_name)?);
     }
-    MeshAsset::new(decoded_name, groups)
+    MeshAsset::new(decoded_name.clone(), groups)
+        .and_then(|mesh| mesh.with_source_identity(decoded_name))
         .map(|mesh| mesh.with_cast_shadow(cast_shadow))
         .map_err(DecodedComponentError::Mesh)
 }

@@ -209,6 +209,8 @@ struct BinaryGroup<'character> {
     object_name: String,
     /// Validated primitive group borrowed from the aggregate.
     group: &'character PrimitiveGroup,
+    /// Optional authored source mesh identity.
+    source_mesh_identity: Option<&'character str>,
     /// Optional source mesh `CastShadow` flag.
     cast_shadow: Option<bool>,
     /// Influences borrowed from the aggregate for this group.
@@ -265,6 +267,7 @@ fn binary_groups<'character>(
                     material.semantics,
                 ),
                 group,
+                source_mesh_identity: part.mesh.source_identity.as_deref(),
                 cast_shadow: part.mesh.cast_shadow,
                 influences,
                 used_bones,
@@ -1072,6 +1075,7 @@ fn objects(
             group.ids.model,
             &group.object_name,
             group.group,
+            group.source_mesh_identity,
             group.cast_shadow,
         )?);
         if scene_kind.is_skinned() {
@@ -1423,9 +1427,16 @@ fn mesh_model_node(
     id: u64,
     name: &str,
     group: &PrimitiveGroup,
+    source_mesh_identity: Option<&str>,
     cast_shadow: Option<bool>,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let mut custom_properties = Vec::new();
+    if let Some(source_identity) = source_mesh_identity {
+        custom_properties.push(user_string_property(
+            "SHAR_P3D_SourceMeshIdentity",
+            source_identity,
+        ));
+    }
     if let Some(source_identity) = &group.source_identity {
         custom_properties.push(user_string_property(
             "SHAR_P3D_SourcePrimitiveIdentity",

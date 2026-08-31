@@ -281,14 +281,32 @@ pub(super) fn prepared_signature(
     materials: &[fbx::domain::texture::MaterialBinding],
     textures: &[super::prepared::PreparedTexture],
 ) -> String {
+    let mut semantic_geometry = geometry.clone();
+    clear_source_mesh_identities(&mut semantic_geometry);
     let evidence = format!(
-        "{route:?}\n{geometry:?}\n{materials:?}\n{:?}",
+        "{route:?}\n{semantic_geometry:?}\n{materials:?}\n{:?}",
         textures
             .iter()
             .map(|texture| (&texture.file_name, &texture.sha256))
             .collect::<Vec<_>>()
     );
     digest_hex(evidence.as_bytes())
+}
+
+/// Remove provenance-only mesh identities before semantic deduplication.
+fn clear_source_mesh_identities(geometry: &mut PreparedGeometry) {
+    match geometry {
+        PreparedGeometry::Static(meshes) => {
+            for mesh in meshes {
+                mesh.source_identity = None;
+            }
+        },
+        PreparedGeometry::RigidAnimated { asset, .. } => {
+            for part in &mut asset.parts {
+                part.mesh.source_identity = None;
+            }
+        },
+    }
 }
 
 /// Hash model geometry independently of textures, rig, and animation.
@@ -299,8 +317,11 @@ pub(super) fn visual_signature(prepared: &PreparedProp) -> String {
             asset.parts.iter().map(|part| part.mesh.clone()).collect()
         },
     };
-    for group in meshes.iter_mut().flat_map(|mesh| mesh.groups.iter_mut()) {
-        "material".clone_into(&mut group.shader);
+    for mesh in &mut meshes {
+        mesh.source_identity = None;
+        for group in &mut mesh.groups {
+            "material".clone_into(&mut group.shader);
+        }
     }
     digest_hex(format!("{meshes:?}").as_bytes())
 }
