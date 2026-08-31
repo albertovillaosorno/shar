@@ -193,10 +193,11 @@ pub(super) fn recover_auxiliary_schema_json(
             super::scrooby_widget::recover_string_text_bible_json(
                 component, source, kind_index,
             ),
-        "scrooby_string_hardcoded" =>
+        "scrooby_string_hardcoded" => {
             super::scrooby_widget::recover_string_hardcoded_json(
                 component, source, kind_index,
-            ),
+            )
+        },
         "scrooby_image_resource" => {
             auxiliary::recover_scrooby_image_resource_json(
                 component, source, kind_index,
