@@ -48,8 +48,8 @@ fn temp_path(label: &str) -> PathBuf {
 }
 
 #[test]
-fn rejects_skeleton_identity_with_surrounding_whitespace()
--> Result<(), String> {
+fn rejects_skeleton_identity_with_surrounding_whitespace() -> Result<(), String>
+{
     let path = temp_path("skeleton-name-whitespace");
     let fixture = concat!(
         r#"{"schema":"skeleton","name":" skeleton","version":0,"#,
