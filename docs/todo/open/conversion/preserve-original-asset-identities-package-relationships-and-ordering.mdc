@@ -278,10 +278,23 @@ and joined-sprite relationships are resolved. The current normalized corpus has
 paths, or portable path aliases.
 
 Selected non-instanced rigid-prop assembly now rejects repeated composite prop
-identities instead of allowing map insertion to replace the authored joint
-binding. The audited Wrench and Wasp-camera selected composites contain no such
-repeats; general instanced composite routes retain their authored multiplicity
-and are not subject to this uniqueness rule.
+bindings only when the repeated identity belongs to a mesh selected into that
+asset. A later unrelated duplicate remains valid, so the selected path no longer
+uses last-write-wins while general authored prop multiplicity remains available
+to the instanced route. The audited Wrench and Wasp-camera selected composites
+contain no repeated selected identities.
+
+FBX texture staging now treats the portable output file name as one physical
+identity. When a staged name already exists, a byte-identical source may reuse
+it, but a different payload fails closed without replacing the first texture. A
+focused regression proves two independent `shared.png` sources cannot silently
+turn the later payload into the material source for both bindings.
+
+Semantic-character extra textures now reserve the generated `body-atlas.png`,
+`eye.png`, `eye-pupil.png`, and `eye-lids.png` identities using the same ASCII
+case-folded portable comparison. Differently-cased extra names that alias to one
+portable output also fail before artifact reads. Exact repeated extra names stay
+valid when package assembly verifies the normalized PNG artifact is identical.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
