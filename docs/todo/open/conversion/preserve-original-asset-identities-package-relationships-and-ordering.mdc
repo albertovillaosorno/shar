@@ -304,6 +304,26 @@ rows. Lexical order differs from index order in 307 multi-model rows, 343
 multi-material rows, 310 multi-texture rows, and 218 multi-animation rows;
 `build_scene` consumes model member ids in this preserved sequence.
 
+Minor-unit manifest publication now orders decoded components within each
+source object by numeric `source_chunk_ordinal`, then places derived companions
+without source positions after those chunks with deterministic fallback order.
+The current manifest has 161,960 rows: 132,179 numeric source-chunk rows and
+29,781 rows without source positions. Under the previous kind/path ordering,
+1,920 source-object groups emitted numeric ordinals out of order. Package-index
+construction now retains manifest member sequence instead of re-sorting by role,
+path, and id.
+
+Projecting the current 419 FBX-eligible index rows through their recorded source
+ordinals changes 388 of 392 multi-model groups, 341 of 387 multi-material
+groups, all 325 multi-texture groups, and 125 of 294 multi-animation groups
+relative to the cached role/path/id order. This projection is audit evidence for
+the ordering boundary; regenerated package outputs retain their own validation.
+
+`AnimationRequirement` now preserves the member sequence supplied by package
+evidence instead of sorting preserved animation ids lexically. A focused
+regression proves `walk` then `idle` remains in that order while blank,
+noncanonical, and duplicate-member validation remains unchanged.
+
 World structural-guide assembly now concatenates the accumulated
 `MasterContent` mesh vector directly instead of sorting it by mesh name before
 flattening geometry. A focused regression supplies `z` then `a` meshes with
