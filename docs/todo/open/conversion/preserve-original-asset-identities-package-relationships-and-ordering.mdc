@@ -280,6 +280,16 @@ rejoined to the package component ledger. `container_ordinal` remains canonical
 component-ledger evidence and is not yet claimed as a direct package-member
 mirror.
 
+A full current-index join confirms that omission does not create a demonstrated
+preservation gap: all 132,179 chunk-backed package members resolve by package
+root plus source chunk ordinal to exactly one canonical component-ledger row,
+with zero lookup failures. The corpus includes 1,506 packages spanning multiple
+container ordinals, so ownership remains material evidence rather than a
+package-wide constant. Reviewed consumers that need source sequence project the
+member ordinal explicitly, while world and Scrooby consumers that need ancestry
+read the authoritative component ledger; no current relationship consumer was
+found that depends on a duplicated `container_ordinal` member-mirror field.
+
 The package-member vector itself remains the canonical phase-two role/path/id
 order rather than claiming authored chunk order. A corpus audit finds 1,956
 packages with at least two chunk-backed members, and 1,919 of those sequences
