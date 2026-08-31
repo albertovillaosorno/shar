@@ -233,6 +233,21 @@ Static and rigid-animated regressions now prove canonical naming leaves the
 source part sequence unchanged; all 86 focused prop-catalog tests and the 1,002
 pipeline library tests pass with strict pipeline Clippy clean.
 
+Static world-prop fallback selection now projects mesh members through exact
+source component ordinals instead of sorting member ids lexically before
+association. A focused `z` then `a` regression proves the fallback receives that
+source sequence while composite-backed routes continue to use authored composite
+prop order.
+
+Prop and world identity cleanup now removes only fixed-width trailing NUL
+padding
+and fails closed on empty, surrounding-whitespace, or control-character source
+identities instead of repairing them with `trim`. An audit of 246,082 normalized
+`name` and `skeleton_name` fields found zero surrounding-whitespace identities,
+zero non-NUL controls, and 176,439 fields using only accepted NUL padding. A
+focused composite regression proves a leading-space `shared` identity is
+rejected rather than silently becoming `shared`.
+
 World structural-guide assembly now concatenates the accumulated
 `MasterContent` mesh vector directly instead of sorting it by mesh name before
 flattening geometry. A focused regression supplies `z` then `a` meshes with
