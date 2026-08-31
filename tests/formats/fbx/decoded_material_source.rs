@@ -261,6 +261,56 @@ fn resolves_sanitized_local_texture_through_package_ledger() {
 }
 
 #[test]
+fn rejects_space_padded_texture_ledger_identity() {
+    let root = temp_root("ledger-texture-space-padding");
+    let package = root.join("package");
+    let shader_dir = package.join("components").join("shader");
+    let texture_dir = package.join("components").join("texture");
+    let output_dir = root.join("output");
+    let setup_result = fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::create_dir_all(&texture_dir))
+        .and_then(|()| {
+            fs::write(
+                shader_dir.join("glass.json"),
+                concat!(
+                    r#"{"name":"glass","params":[{"kind":"texture","#,
+                    r#""param":"TEX","value":"shared.bmp"}]}"#
+                ),
+            )
+        })
+        .and_then(|()| {
+            fs::write(texture_dir.join("shared_.png"), b"synthetic-png")
+        })
+        .and_then(|()| {
+            fs::write(
+                package.join("components.jsonl"),
+                concat!(
+                    r#"{"schema":"p3d.package.v1"}"#,
+                    "\n",
+                    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"#,
+                    r#""container_ordinal":1,"name":" shared.bmp","#,
+                    r#""path":"texture/shared_.png","kind":"texture","#,
+                    r#""payload_format":"image/png","schema_ref":"texture","#,
+                    r#""recovery_status":"recovered_embedded_image_payload"}"#,
+                    "\n"
+                ),
+            )
+        });
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&package, &output_dir);
+    let result = source.resolve_material("glass");
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Err(DecodedComponentError::InvalidTextureReference(
+            " shared.bmp".to_owned()
+        ))
+    );
+    assert!(cleanup_result.is_ok());
+}
+
+#[test]
 fn stages_exact_index_published_external_texture() {
     let root = temp_root("external-texture");
     let shader_dir = root.join("package").join("components").join("shader");
