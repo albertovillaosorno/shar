@@ -62,7 +62,10 @@ fn rejects_skeleton_identity_with_surrounding_whitespace()
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     match result {
         Err(SkinSourceError::NonCanonicalIdentity { field, .. })
-            if field == "skeleton name" => Ok(()),
+            if field == "skeleton name" =>
+        {
+            Ok(())
+        },
         other => Err(format!("unexpected skeleton identity result: {other:?}")),
     }
 }
@@ -81,7 +84,10 @@ fn rejects_joint_identity_with_surrounding_whitespace() -> Result<(), String> {
     fs::remove_file(&path).map_err(|error| error.to_string())?;
     match result {
         Err(SkinSourceError::NonCanonicalIdentity { field, .. })
-            if field == "joint name" => Ok(()),
+            if field == "joint name" =>
+        {
+            Ok(())
+        },
         other => Err(format!("unexpected joint identity result: {other:?}")),
     }
 }
