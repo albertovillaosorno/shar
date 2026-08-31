@@ -324,6 +324,34 @@ evidence instead of sorting preserved animation ids lexically. A focused
 regression proves `walk` then `idle` remains in that order while blank,
 noncanonical, and duplicate-member validation remains unchanged.
 
+Phase-three package intake now accepts that source-ordered member mirror instead
+of requiring the retired phase-two role/path/id lexical order. Intake still
+requires the complete member id sequence to match `unit_ids` and each role's
+member sequence to match its role-specific id mirror, so source-order retention
+does not weaken relationship validation.
+
+Completion-dialog participant bindings now project audio ids and paths from the
+same source-ordered package-member sequence instead of sorting paths
+independently. A focused two-member regression preserves `audio-z`/`z.wav`
+before `audio-a`/`a.wav`; the current cached dialog corpus has 799 audio-bearing
+packages and 14,981 audio members, including 424 multi-audio packages, so this
+parallel relationship remains explicit even where the cached paths happen to be
+lexically ordered already.
+
+Decoded mission locator, DynamicZone, camera, and multi-controller names now
+remove only trailing fixed-width NUL padding and reject surrounding whitespace
+rather than admitting a repaired semantic identity. The current corpus covers
+9,654 names across those families; 6,756 carry trailing NUL padding, while zero
+are empty, surrounding-whitespace padded, or control-bearing after padding
+removal.
+
+Parsed mission traffic-model, pedestrian-model, and level-player-vehicle
+locator tokens now reject surrounding whitespace rather than trimming semantic
+arguments a second time after mission-script parsing. The current extracted
+mission command corpus contains 64 traffic model tokens, 437 pedestrian model
+tokens, and 32 level-player locator tokens; all 533 are non-empty and have zero
+surrounding-whitespace or control-bearing cases.
+
 World structural-guide assembly now concatenates the accumulated
 `MasterContent` mesh vector directly instead of sorting it by mesh name before
 flattening geometry. A focused regression supplies `z` then `a` meshes with
