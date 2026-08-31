@@ -1077,7 +1077,6 @@ fn load_vehicle_animations(
         write_new(&output_dir.join(&file_name), &payload)?;
         sidecars.push(format!("animations/effects/{file_name}"));
     }
-    sidecars.sort();
     if skeletal_paths.is_empty() {
         return Ok((Vec::new(), sidecars));
     }
