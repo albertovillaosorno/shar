@@ -263,6 +263,13 @@ A focused regression proves `Z_Helper` then `A_Helper` remains unchanged while
 exportable clip and bone identities are canonicalized; the full pipeline library
 now passes 1,006 tests.
 
+Compatible world-prop variant merging now uses animation hashes only to detect
+exact duplicate clips. It retains the canonical clip vector in supplied order
+and appends distinct later clips in deterministic variant order instead of
+sorting the complete result by hash before publication. A focused regression
+constructs a canonical two-clip sequence whose hash order is reversed and proves
+an empty merge leaves that sequence unchanged.
+
 Package-member mirrors now preserve the exact source chunk ordinal already
 carried by the normalized minor-unit manifest instead of dropping it between
 phase-two classification and phase-three intake. The current mirror accepts a
