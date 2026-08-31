@@ -99,4 +99,6 @@ pub(super) struct WorldCatalogCounts {
     pub(super) merged_variants: usize,
     /// Structurally incompatible same-name variants retained in the catalog.
     pub(super) omitted_variants: usize,
+    /// Non-mesh composite render bindings retained as deferred source evidence.
+    pub(super) deferred_render_bindings: usize,
 }

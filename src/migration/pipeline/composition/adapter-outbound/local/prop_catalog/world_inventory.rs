@@ -35,9 +35,12 @@ use std::path::Path;
 
 use super::extraction::relative_art_root;
 use super::inventory_common::{
-    clean_identity, ledger_member_id, read_component_name, read_composite,
+    CompositeEvidence, clean_identity, ledger_member_id, read_component_name,
+    read_composite,
 };
-use super::model::{PropCandidate, PropFamily, PropRoute};
+use super::model::{
+    DeferredRenderBinding, PropCandidate, PropFamily, PropRoute,
+};
 use super::world_ledger::{LedgerRow, read_world_ledger};
 use crate::domain::PipelineError;
 use crate::domain::package::PhaseThreePackageIndex;
@@ -88,11 +91,18 @@ pub(super) fn discover_world_candidates(
             }
             let mesh_names = decoded_mesh_names(&root, &mesh_ids)?;
             let association = associate_composite(&root, &rows, &mesh_names)?;
-            let (owner_name, selected, composite, skeleton, animation, route) =
-                match association {
-                    Some(association) => association,
-                    None => static_association(owner, mesh_ids)?,
-                };
+            let (
+                owner_name,
+                selected,
+                deferred_render_bindings,
+                composite,
+                skeleton,
+                animation,
+                route,
+            ) = match association {
+                Some(association) => association,
+                None => static_association(owner, mesh_ids)?,
+            };
             if selected.is_empty() {
                 return Err(PipelineError::new(format!(
                     "world prop retained no model meshes: {} {}",
@@ -108,6 +118,7 @@ pub(super) fn discover_world_candidates(
                 owner_name,
                 container_key: container.to_string(),
                 mesh_ids: selected,
+                deferred_render_bindings,
                 composite_id: composite,
                 skeleton_id: skeleton,
                 animation_id: animation,
@@ -156,6 +167,7 @@ fn decoded_mesh_names(
 type Association = (
     String,
     Vec<String>,
+    Vec<DeferredRenderBinding>,
     Option<String>,
     Option<String>,
     Option<String>,
@@ -170,6 +182,7 @@ fn static_association(
     Ok((
         clean_identity(&owner.name)?,
         mesh_ids,
+        Vec::new(),
         None,
         None,
         None,
@@ -212,6 +225,8 @@ fn associate_composite(
     let Some((composite, selected)) = matches.pop() else {
         return Ok(None);
     };
+    let deferred_render_bindings =
+        deferred_render_bindings(rows, &composite, mesh_names)?;
     let skeleton =
         named_member(root, rows, "skeleton", &composite.skeleton_name)?;
     let clip_name = format!("PTRN_{}", composite.skeleton_name);
@@ -220,6 +235,7 @@ fn associate_composite(
     Ok(Some((
         composite.name,
         selected,
+        deferred_render_bindings,
         animated.then_some(composite.member_id),
         animated.then_some(skeleton).flatten(),
         animated.then_some(animation).flatten(),
@@ -229,6 +245,55 @@ fn associate_composite(
             PropRoute::Static
         },
     )))
+}
+
+/// Retain authored non-mesh composite bindings without inventing FBX semantics.
+fn deferred_render_bindings(
+    rows: &[LedgerRow],
+    composite: &CompositeEvidence,
+    mesh_names: &BTreeMap<String, String>,
+) -> Result<Vec<DeferredRenderBinding>, PipelineError> {
+    let mut bindings = Vec::new();
+    for (composite_prop_index, binding) in
+        composite.prop_bindings.iter().enumerate()
+    {
+        if mesh_names.contains_key(&binding.name) {
+            continue;
+        }
+        let mut matches = Vec::new();
+        for row in rows.iter().filter(|row| row.kind == "quad_group") {
+            if clean_identity(&row.name)? == binding.name {
+                matches.push(row);
+            }
+        }
+        if matches.len() > 1 {
+            return Err(PipelineError::new(format!(
+                "world prop repeats quad-group identity {}",
+                binding.name
+            )));
+        }
+        let resolved = matches.pop();
+        let (component_kind, component_member_id, source_ordinal) =
+            if let Some(row) = resolved {
+                (
+                    Some(row.kind.clone()),
+                    Some(ledger_member_id(&row.path, "quad_group")?),
+                    Some(row.ordinal),
+                )
+            } else {
+                (None, None, None)
+            };
+        bindings.push(DeferredRenderBinding {
+            composite_prop_index,
+            source_identity: binding.name.clone(),
+            skeleton_joint_id: binding.skeleton_joint_id,
+            is_translucent: binding.is_translucent,
+            component_kind,
+            component_member_id,
+            source_ordinal,
+        });
+    }
+    Ok(bindings)
 }
 
 /// Find one same-container component by decoded identity.

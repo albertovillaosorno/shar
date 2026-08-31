@@ -76,6 +76,26 @@ impl PropRoute {
     }
 }
 
+/// One composite render binding retained when the current FBX route cannot
+/// faithfully represent the referenced non-mesh component.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct DeferredRenderBinding {
+    /// Zero-based authored position in the composite prop array.
+    pub(super) composite_prop_index: usize,
+    /// Authored referenced render identity.
+    pub(super) source_identity: String,
+    /// Authored skeleton joint index for the render member.
+    pub(super) skeleton_joint_id: usize,
+    /// Authored translucency flag.
+    pub(super) is_translucent: bool,
+    /// Exact resolved normalized component family when available.
+    pub(super) component_kind: Option<String>,
+    /// Exact resolved normalized component member id when available.
+    pub(super) component_member_id: Option<String>,
+    /// Exact source component ordinal when available.
+    pub(super) source_ordinal: Option<usize>,
+}
+
 /// One normalized source occurrence before semantic deduplication.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct PropCandidate {
@@ -95,6 +115,8 @@ pub(super) struct PropCandidate {
     pub(super) container_key: String,
     /// Selected decoded mesh member ids without family or extension.
     pub(super) mesh_ids: Vec<String>,
+    /// Source-backed non-mesh composite render bindings deferred from FBX.
+    pub(super) deferred_render_bindings: Vec<DeferredRenderBinding>,
     /// Composite member id for one rigid animated route.
     pub(super) composite_id: Option<String>,
     /// Skeleton member id for one rigid animated route.
@@ -141,6 +163,8 @@ pub(super) struct PropAlias {
     pub(super) owner_name: String,
     /// Stable source container key.
     pub(super) container_key: String,
+    /// Source-backed non-mesh composite render bindings deferred from FBX.
+    pub(super) deferred_render_bindings: Vec<DeferredRenderBinding>,
 }
 
 impl From<&PropCandidate> for PropAlias {
@@ -151,6 +175,8 @@ impl From<&PropCandidate> for PropAlias {
             owner_kind: candidate.owner_kind.clone(),
             owner_name: candidate.owner_name.clone(),
             container_key: candidate.container_key.clone(),
+            deferred_render_bindings:
+                candidate.deferred_render_bindings.clone(),
         }
     }
 }

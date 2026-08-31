@@ -631,11 +631,34 @@ decoded mesh document retains its authored identity. They no longer compare a
 deterministic `__ordinal_` collision suffix against that authored name. Across
 the current corpus, all 21 collision-renamed mesh rows are unique by authored
 identity within their owning container, and 16 participate in same-container
-composite prop relationships. The seven current model containers containing
+composite prop relationships.
+
+The seven current model containers containing
 those 16 occurrences route through static prop preparation and were already
 protected by ledger-aware member loading; focused character and rigid-prop
 regressions close the equivalent exact-path boundary without claiming a current
 animated-world occurrence.
+
+World-prop composite intake now retains authored non-mesh render relationships
+in the world-prop catalog instead of silently dropping them when the selected
+FBX route contains only mesh geometry. Each deferred binding preserves its
+composite prop index, authored render identity, skeleton joint index, and
+translucency. When one same-container quad-group row resolves that identity, the
+catalog also records the exact normalized member id and source component
+ordinal; otherwise the logical composite relationship remains explicit without
+inventing a component. The catalog contract advances to
+`shar.world-model-props.v2` and reports an aggregate deferred-binding count.
+
+A current normalized-corpus audit finds 425 mesh-associated world composites
+across 85 packages with 260 such non-mesh bindings. Of those, 253 resolve to one
+same-container quad-group occurrence and seven remain logical-only references.
+The existing billboard decoder is intentionally static inspection geometry and
+does not represent billboard mode, depth/range, cutoff, or perspective
+semantics, so these relationships are retained as deferred evidence rather than
+flattened into an unfaithful static FBX. Focused regressions prove authored
+composite order and joint/translucency survive intake, a collision-style
+quad-group member retains its exact physical member and source ordinal, and the
+world catalog serializes those fields without inference.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

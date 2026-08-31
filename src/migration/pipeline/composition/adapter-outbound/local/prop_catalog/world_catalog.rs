@@ -35,7 +35,7 @@ use std::path::Path;
 
 use serde_json::{Value, json};
 
-use super::model::PropRoute;
+use super::model::{DeferredRenderBinding, PropRoute};
 use super::world_model::{ExportedWorldProp, WorldCatalogCounts};
 use crate::domain::PipelineError;
 
@@ -65,6 +65,11 @@ pub(super) fn world_counts(
             .iter()
             .map(|asset| asset.omitted_visual_variants.len())
             .sum(),
+        deferred_render_bindings: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .map(|alias| alias.deferred_render_bindings.len())
+            .sum(),
     }
 }
 
@@ -79,7 +84,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v1",
+        "schema": "shar.world-model-props.v2",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -92,6 +97,10 @@ pub(super) fn write_world_catalog(
             "incompatible_variants": concat!(
                 "select the richest canonical model and retain omitted ",
                 "evidence in this catalog"
+            ),
+            "deferred_render_bindings": concat!(
+                "retain authored non-mesh composite prop relationships as ",
+                "source evidence without substituting static FBX geometry"
             ),
             "unreal_assets": [
                 "placement and locators",
@@ -111,7 +120,8 @@ pub(super) fn write_world_catalog(
             "static_assets": counts.static_assets,
             "rigid_animated_assets": counts.animated_assets,
             "merged_compatible_variants": counts.merged_variants,
-            "omitted_visual_variants": counts.omitted_variants
+            "omitted_visual_variants": counts.omitted_variants,
+            "deferred_render_bindings": counts.deferred_render_bindings
         },
         "assets": assets.iter().map(asset_value).collect::<Vec<_>>()
     });
@@ -121,6 +131,19 @@ pub(super) fn write_world_catalog(
     bytes.push(b'\n');
     fs::write(root.join("world-props.catalog.json"), bytes).map_err(|error| {
         PipelineError::new(format!("world prop catalog write failed: {error}"))
+    })
+}
+
+/// Render one deferred non-mesh composite relationship without inference.
+fn deferred_binding_value(binding: &DeferredRenderBinding) -> Value {
+    json!({
+        "composite_prop_index": binding.composite_prop_index,
+        "source_identity": binding.source_identity,
+        "skeleton_joint_id": binding.skeleton_joint_id,
+        "is_translucent": binding.is_translucent,
+        "component_kind": binding.component_kind,
+        "component_member_id": binding.component_member_id,
+        "source_ordinal": binding.source_ordinal
     })
 }
 
@@ -155,7 +178,11 @@ fn asset_value(asset: &ExportedWorldProp) -> Value {
             "subcategory": alias.subcategory,
             "owner_kind": alias.owner_kind,
             "owner_name": alias.owner_name,
-            "container_key": alias.container_key
+            "container_key": alias.container_key,
+            "deferred_render_bindings": alias.deferred_render_bindings
+                .iter()
+                .map(deferred_binding_value)
+                .collect::<Vec<_>>()
         })).collect::<Vec<_>>(),
         "omitted_visual_variants": asset.omitted_visual_variants.iter()
             .map(|variant| json!({
@@ -168,3 +195,8 @@ fn asset_value(asset: &ExportedWorldProp) -> Value {
             .collect::<Vec<_>>()
     })
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact syntax is indivisible
+#[path = "../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/prop_catalog/world_catalog/tests.rs"]
+mod tests;
