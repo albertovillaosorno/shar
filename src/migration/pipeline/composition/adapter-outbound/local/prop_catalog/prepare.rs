@@ -302,6 +302,7 @@ fn clear_source_provenance(geometry: &mut PreparedGeometry) {
             }
         },
         PreparedGeometry::RigidAnimated { asset, animations } => {
+            asset.source_provenance = None;
             for bone in &mut asset.bones {
                 bone.source_identity = None;
             }

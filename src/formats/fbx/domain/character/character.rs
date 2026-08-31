@@ -39,4 +39,6 @@ pub mod asset;
     reason = "Tests verify these explicit facade names preserve stable domain \
               imports."
 )]
-pub use asset::{CharacterAsset, CharacterError, SkinnedPart};
+pub use asset::{
+    CharacterAsset, CharacterError, CharacterSourceProvenance, SkinnedPart,
+};

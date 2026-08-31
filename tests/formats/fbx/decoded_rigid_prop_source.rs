@@ -158,6 +158,14 @@ fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
     let asset =
         result.map_err(|error| format!("selection failed: {error:?}"))?;
 
+    let provenance = asset.source_provenance.as_ref().ok_or_else(|| {
+        "selected rigid prop lost source relationships".to_owned()
+    })?;
+    if provenance.skeleton_identity() != "rig"
+        || provenance.composite_identities() != ["rig"]
+    {
+        return Err(format!("unexpected source relationships: {provenance:?}"));
+    }
     let bone_ids = asset
         .bones
         .iter()

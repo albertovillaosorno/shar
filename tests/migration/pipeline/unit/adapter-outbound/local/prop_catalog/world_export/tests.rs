@@ -51,7 +51,9 @@ fn phone_stops_publish_as_readable_phone_booths() {
 use fbx::domain::animation::{
     AnimationClip, BoneAnimationTrack, LocalTransformSample,
 };
-use fbx::domain::character::{CharacterAsset, SkinnedPart};
+use fbx::domain::character::{
+    CharacterAsset, CharacterSourceProvenance, SkinnedPart,
+};
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
 use fbx::domain::skin::SkinInfluence;
@@ -143,6 +145,24 @@ fn prop_hashes_ignore_source_bone_and_clip_identity() -> Result<(), String> {
         .first_mut()
         .ok_or_else(|| "right hash fixture lost its root bone".to_owned())?
         .source_identity = Some("source-root-b".to_owned());
+    left_asset.source_provenance = Some(
+        CharacterSourceProvenance::new(
+            "source-skeleton-a",
+            vec!["source-composite-a".to_owned()],
+        )
+        .map_err(|error| {
+            format!("left aggregate provenance failed: {error:?}")
+        })?,
+    );
+    right_asset.source_provenance = Some(
+        CharacterSourceProvenance::new(
+            "source-skeleton-b",
+            vec!["source-composite-b".to_owned()],
+        )
+        .map_err(|error| {
+            format!("right aggregate provenance failed: {error:?}")
+        })?,
+    );
     let left_clip = clip("animation-0000", 1.)?
         .with_source_identity("source-clip-a")
         .map_err(|error| format!("left source clip failed: {error:?}"))?;

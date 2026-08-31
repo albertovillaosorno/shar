@@ -826,7 +826,12 @@ fn separate_vehicle_parts(
             });
         }
     }
+    let source_provenance = asset.source_provenance;
     let separated = CharacterAsset::new(asset.name, asset.bones, parts)
+        .map(|asset| match source_provenance {
+            Some(provenance) => asset.with_source_provenance(provenance),
+            None => asset,
+        })
         .map_err(|error| {
             PipelineError::new(format!(
                 "vehicle semantic asset failed: {error:?}"

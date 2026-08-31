@@ -33,7 +33,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use fbx::domain::character::{CharacterAsset, SkinnedPart};
+use fbx::domain::character::{
+    CharacterAsset, CharacterSourceProvenance, SkinnedPart,
+};
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
 use fbx::domain::skin::SkinInfluence;
@@ -148,12 +150,24 @@ fn semantic_part_split_preserves_source_cast_shadow() -> Result<(), String> {
         .with_source_identity("bodyShape")
         .map_err(|error| format!("source identity failed: {error:?}"))?
         .with_cast_shadow(Some(false));
+    let provenance = CharacterSourceProvenance::new(
+        "vehicle-skeleton",
+        vec!["vehicle-composite".to_owned()],
+    )
+    .map_err(|error| format!("vehicle provenance failed: {error:?}"))?;
     let asset = CharacterAsset::new("vehicle", vec![root], vec![source_part])
+        .map(|asset| asset.with_source_provenance(provenance.clone()))
         .map_err(|error| format!("vehicle fixture failed: {error:?}"))?;
     let material = MaterialBinding::new("body_m", None)
         .map_err(|error| format!("material failed: {error:?}"))?;
     let (separated, _records) = separate_vehicle_parts(asset, &[material])
         .map_err(|error| error.to_string())?;
+    if separated.source_provenance.as_ref() != Some(&provenance) {
+        return Err(format!(
+            "vehicle source relationships changed: {:?}",
+            separated.source_provenance
+        ));
+    }
     let mesh = separated
         .parts
         .first()

@@ -41,7 +41,9 @@ use fbx::adapters::driven::binary_character_writer::{
     CharacterBinaryFbxSummary, EmbeddedTexture, write_binary_character_fbx,
     write_binary_character_fbx_embedded,
 };
-use fbx::domain::character::{CharacterAsset, SkinnedPart};
+use fbx::domain::character::{
+    CharacterAsset, CharacterSourceProvenance, SkinnedPart,
+};
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
 use fbx::domain::skin::SkinInfluence;
@@ -93,6 +95,11 @@ fn synthetic_character() -> Result<CharacterAsset, String> {
             weight: 1.,
         })
         .collect();
+    let provenance = CharacterSourceProvenance::new("SourceSkeleton", vec![
+        "CompositeZ".to_owned(),
+        "CompositeA".to_owned(),
+    ])
+    .map_err(|error| format!("source provenance failed: {error:?}"))?;
     CharacterAsset::new(
         "synthetic",
         vec![Bone {
@@ -109,6 +116,7 @@ fn synthetic_character() -> Result<CharacterAsset, String> {
             group_influences: vec![influences],
         }],
     )
+    .map(|asset| asset.with_source_provenance(provenance))
     .map_err(|error| format!("synthetic character failed: {error:?}"))
 }
 
@@ -390,6 +398,12 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
             .any(|window| window == b"root\0\x01Model")
     );
     for token in [
+        b"SHAR_P3D_SourceSkeletonIdentity".as_slice(),
+        b"SourceSkeleton".as_slice(),
+        b"SHAR_P3D_SourceCompositeIdentity_0000".as_slice(),
+        b"CompositeZ".as_slice(),
+        b"SHAR_P3D_SourceCompositeIdentity_0001".as_slice(),
+        b"CompositeA".as_slice(),
         b"SHAR_P3D_SourceBoneIdentity".as_slice(),
         b"SourceRoot".as_slice(),
         b"LayerElementColor".as_slice(),

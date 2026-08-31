@@ -57,6 +57,48 @@ fn rejects_control_characters_in_character_identities() {
 }
 
 #[test]
+fn source_provenance_preserves_composite_order_and_duplicates() {
+    let result = CharacterSourceProvenance::new(
+        "skeleton",
+        vec![
+            "z-composite".to_owned(),
+            "a-composite".to_owned(),
+            "z-composite".to_owned(),
+        ],
+    );
+    assert_eq!(
+        result,
+        Ok(CharacterSourceProvenance {
+            skeleton_identity: "skeleton".to_owned(),
+            composite_identities: vec![
+                "z-composite".to_owned(),
+                "a-composite".to_owned(),
+                "z-composite".to_owned(),
+            ],
+        })
+    );
+}
+
+#[test]
+fn rejects_noncanonical_character_source_provenance() {
+    assert_eq!(
+        CharacterSourceProvenance::new(" skeleton", Vec::new()),
+        Err(CharacterError::NonCanonicalSourceSkeletonIdentity {
+            identity: " skeleton".to_owned(),
+        })
+    );
+    assert_eq!(
+        CharacterSourceProvenance::new(
+            "skeleton",
+            vec!["composite\nalias".to_owned()],
+        ),
+        Err(CharacterError::NonCanonicalSourceCompositeIdentity {
+            identity: "composite\nalias".to_owned(),
+        })
+    );
+}
+
+#[test]
 fn rejects_noncanonical_source_bone_identity() {
     let result = CharacterAsset::new(
         "character",
