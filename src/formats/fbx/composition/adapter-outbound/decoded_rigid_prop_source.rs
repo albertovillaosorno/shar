@@ -64,17 +64,12 @@ pub fn load_selected_rigid_prop_asset(
     composite_path: &Path,
 ) -> Result<CharacterAsset, SkinSourceError> {
     let (skeleton_name, bones) = load_skeleton(skeleton_path)?;
-    let mut bindings = BTreeMap::new();
+    let mut bindings = BTreeMap::<String, Vec<CompositePropBinding>>::new();
     for binding in
         composite_bindings(composite_path, &skeleton_name, &[], bones.len())?
             .props
     {
-        let name = binding.name.clone();
-        if bindings.insert(name.clone(), binding).is_some() {
-            return Err(SkinSourceError::Prop(format!(
-                "duplicate selected rigid prop binding: {name}"
-            )));
-        }
+        bindings.entry(binding.name.clone()).or_default().push(binding);
     }
     let (parts, selected_joints) =
         load_selected_parts(&bones, mesh_paths, &bindings)?;
@@ -328,7 +323,7 @@ fn load_rigid_mesh_map(
 fn load_selected_parts(
     bones: &[Bone],
     mesh_paths: &[&Path],
-    bindings: &BTreeMap<String, CompositePropBinding>,
+    bindings: &BTreeMap<String, Vec<CompositePropBinding>>,
 ) -> Result<(Vec<SkinnedPart>, BTreeSet<usize>), SkinSourceError> {
     let global_rest = global_rest_matrices(bones)?;
     let mut selected_names = BTreeSet::new();
@@ -342,12 +337,21 @@ fn load_selected_parts(
                 mesh.name
             )));
         }
-        let binding = bindings.get(&mesh.name).ok_or_else(|| {
-            SkinSourceError::Prop(format!(
-                "selected rigid prop {} has no composite binding",
-                mesh.name
-            ))
-        })?;
+        let binding = match bindings.get(&mesh.name).map(Vec::as_slice) {
+            Some([binding]) => binding,
+            None | Some([]) => {
+                return Err(SkinSourceError::Prop(format!(
+                    "selected rigid prop {} has no composite binding",
+                    mesh.name
+                )));
+            },
+            Some(_) => {
+                return Err(SkinSourceError::Prop(format!(
+                    "duplicate selected rigid prop binding: {}",
+                    mesh.name
+                )));
+            },
+        };
         if binding.translucent {
             mark_transparent_mesh(&mut mesh);
         }

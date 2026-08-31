@@ -275,6 +275,61 @@ fn rejects_duplicate_selected_prop_binding() -> Result<(), String> {
 }
 
 #[test]
+fn allows_duplicate_unselected_prop_binding() -> Result<(), String> {
+    let root = temp_root("duplicate-unselected-binding");
+    let (skeleton_path, composite_path, mesh_path) =
+        write_fixture(&root, "BodyShape")?;
+    let mut composite = serde_json::from_str::<serde_json::Value>(
+        composite_json(),
+    )
+    .map_err(|error| error.to_string())?;
+    let object = composite
+        .as_object_mut()
+        .ok_or_else(|| "composite fixture is not an object".to_owned())?;
+    let count = object
+        .get_mut("num_props")
+        .ok_or_else(|| "composite fixture has no prop count".to_owned())?;
+    *count = serde_json::json!(3);
+    object
+        .get_mut("props")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or_else(|| "composite fixture has no prop array".to_owned())?
+        .push(serde_json::json!({
+            "kind": "prop",
+            "name": "GlowShape",
+            "is_translucent": 0,
+            "skeleton_joint_id": 2,
+            "sort_order": 0,
+        }));
+    fs::write(
+        &composite_path,
+        serde_json::to_vec(&composite).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+
+    let result = decoded_rigid_prop_source::load_selected_rigid_prop_asset(
+        "selected",
+        &skeleton_path,
+        &[mesh_path.as_path()],
+        &composite_path,
+    );
+    remove_fixture(&root)?;
+    let asset = result.map_err(|error| {
+        format!("unselected duplicate binding was rejected: {error:?}")
+    })?;
+    let part = asset
+        .parts
+        .first()
+        .ok_or_else(|| "selected binding produced no part".to_owned())?;
+    if asset.parts.len() != 1
+        || part.mesh.name != "BodyShape__transparent-source"
+    {
+        return Err("selected binding changed by unrelated duplicate".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn bakes_normals_with_inverse_transpose_under_nonuniform_scale()
 -> Result<(), String> {
     let root = temp_root("normal-scale");
