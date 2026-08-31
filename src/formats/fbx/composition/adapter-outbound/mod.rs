@@ -45,6 +45,8 @@ mod binary_identity;
 pub mod binary_structural_guide_writer;
 /// Decoded skeletal animation source adapter.
 pub mod decoded_animation_source;
+/// Decoded billboard animation source-evidence adapter.
+pub mod decoded_billboard_animation_source;
 /// Decoded billboard quad-group source adapter.
 pub mod decoded_billboard_source;
 /// Decoded component source adapter.

@@ -133,6 +133,13 @@ pub(super) fn world_counts(
             .flat_map(|alias| alias.deferred_render_bindings.iter())
             .filter(|binding| binding.controller.is_some())
             .count(),
+        deferred_controller_animation_payloads: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .flat_map(|alias| alias.deferred_render_bindings.iter())
+            .filter_map(|binding| binding.controller.as_ref())
+            .filter(|controller| controller.animation_source.is_some())
+            .count(),
     }
 }
 
@@ -147,7 +154,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v6",
+        "schema": "shar.world-model-props.v7",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -164,9 +171,10 @@ pub(super) fn write_world_catalog(
             "deferred_render_bindings": concat!(
                 "retain authored non-mesh composite prop relationships, exact ",
                 "billboard presentation, every same-name shader occurrence, ",
-                "preferred physical texture occurrences, and controller/",
-                "animation links as source evidence without substituting ",
-                "static FBX geometry or selecting ambiguous payloads"
+                "preferred physical texture occurrences, controller links, ",
+                "and strict BQG channel payloads as source evidence without ",
+                "substituting static FBX geometry or interpreting runtime ",
+                "presentation semantics"
             ),
             "unreal_assets": [
                 "placement and locators",
@@ -201,7 +209,9 @@ pub(super) fn write_world_catalog(
             "deferred_billboard_texture_ambiguities":
                 counts.deferred_billboard_texture_ambiguities,
             "deferred_controller_bindings":
-                counts.deferred_controller_bindings
+                counts.deferred_controller_bindings,
+            "deferred_controller_animation_payloads":
+                counts.deferred_controller_animation_payloads
         },
         "assets": assets.iter().map(asset_value).collect::<Vec<_>>()
     });
@@ -348,7 +358,8 @@ fn deferred_controller_value(binding: &DeferredControllerBinding) -> Value {
         "animation_member_id": binding.animation_member_id,
         "animation_source_ordinal": binding.animation_source_ordinal,
         "animation_version": binding.animation_version,
-        "animation_type": binding.animation_type
+        "animation_type": binding.animation_type,
+        "animation_source": binding.animation_source
     })
 }
 

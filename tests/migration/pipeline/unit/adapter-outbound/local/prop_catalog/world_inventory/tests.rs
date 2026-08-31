@@ -379,12 +379,54 @@ fn deferred_controller_retains_exact_animation_relationship()
         ),
     )
     .map_err(|error| error.to_string())?;
+    let animation = serde_json::json!({
+        "schema": "animation",
+        "name": "BQG_beam",
+        "version": 0,
+        "type": "BQG_",
+        "frames": 25,
+        "frame_rate": 30,
+        "cyclic": 0,
+        "sizes": [{
+            "version": 1,
+            "pc": 152,
+            "ps2": 160,
+            "xbox": 152,
+            "gc": 152
+        }],
+        "group_lists": [{
+            "version": 0,
+            "num_groups": 1,
+            "groups": [{
+                "version": 0,
+                "name": "beam",
+                "group_id": 0,
+                "num_channels": 2,
+                "channels": [{
+                    "kind": "float1",
+                    "version": 0,
+                    "param": "\x57\x44\x54\x5f",
+                    "num_frames": 1,
+                    "frames": [0],
+                    "values": [[2.25]],
+                    "channel_metadata": []
+                }, {
+                    "kind": "float1",
+                    "version": 0,
+                    "param": "HGT_",
+                    "num_frames": 1,
+                    "frames": [0],
+                    "values": [[4.5]],
+                    "channel_metadata": []
+                }]
+            }]
+        }],
+        "loose_channels": [],
+        "legacy_animation_extras": []
+    });
     fs::write(
         root.join("components/animation/animation_0001.json"),
-        concat!(
-            r#"{"schema":"animation","name":"BQG_beam","#,
-            r#""version":0,"type":"BQG_"}"#,
-        ),
+        animation.to_string(),
     )
     .map_err(|error| error.to_string())?;
     let rows = vec![
@@ -422,6 +464,18 @@ fn deferred_controller_retains_exact_animation_relationship()
         || binding.animation_source_ordinal != Some(41)
         || binding.animation_version != Some(0)
         || binding.animation_type.as_deref() != Some("BQG_")
+        || binding
+            .animation_source
+            .as_ref()
+            .and_then(|source| source.get("frame_count"))
+            != Some(&25.0.into())
+        || binding
+            .animation_source
+            .as_ref()
+            .and_then(|source| source.get("group_lists"))
+            .and_then(serde_json::Value::as_array)
+            .map(Vec::len)
+            != Some(1)
     {
         return Err(format!("controller relationship changed: {binding:?}"));
     }

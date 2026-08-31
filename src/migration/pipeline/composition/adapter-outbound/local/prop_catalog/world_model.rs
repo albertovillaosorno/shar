@@ -118,4 +118,6 @@ pub(super) struct WorldCatalogCounts {
     pub(super) deferred_billboard_texture_ambiguities: usize,
     /// Deferred render bindings with exact source controller relationships.
     pub(super) deferred_controller_bindings: usize,
+    /// Deferred controllers with strict validated BQG source payloads.
+    pub(super) deferred_controller_animation_payloads: usize,
 }
