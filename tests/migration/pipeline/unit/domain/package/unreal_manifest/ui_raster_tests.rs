@@ -218,6 +218,21 @@ fn verified_ui_raster() -> UnrealUiRasterArtifactEvidence {
 }
 
 #[test]
+fn manifest_sources_preserve_package_member_order() -> Result<(), String> {
+    let manifest =
+        UnrealImportManifest::build(&ui_sprite_index()?, ui_sprite_evidence())?;
+    let ids = manifest
+        .sources
+        .iter()
+        .map(|source| source.id.as_str())
+        .collect::<Vec<_>>();
+    if ids != ["image-a", "sprite-a", "manifest-a"] {
+        return Err(format!("Unreal source order changed: {ids:?}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn complete_ui_raster_catalog_promotes_sprite_and_clears_blocker()
 -> Result<(), String> {
     let manifest =
