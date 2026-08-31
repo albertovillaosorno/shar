@@ -44,9 +44,9 @@ use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
-    is_wheel_identity, load_vehicle_animations, separate_vehicle_parts,
-    texture_state_role, vehicle_animation_name, vehicle_part_role,
-    vehicle_part_semantics,
+    is_wheel_identity, load_vehicle_animations, partition_vehicle_billboards,
+    separate_vehicle_parts, texture_state_role, vehicle_animation_name,
+    vehicle_part_role, vehicle_part_semantics,
 };
 
 fn role(mesh: &str, shader: &str) -> &'static str {
@@ -293,6 +293,45 @@ fn effect_test_asset() -> Result<CharacterAsset, String> {
         }],
     )
     .map_err(|error| format!("effect fixture asset failed: {error:?}"))
+}
+
+fn billboard_json(name: &str) -> String {
+    format!(
+        concat!(
+            r#"{{"schema":"quad_group","version":0,"name":"{name}","#,
+            r#""shader":"material","z_test":1,"z_write":1,"fog":0,"#,
+            r#""num_quads":1,"quads":[{{"name":"quad","version":2,"#,
+            r#""billboard_mode":"none","translation":[0,0,0],"#,
+            r#""colour":4294967295,"uvs":[[0,0],[1,0],[1,1],[0,1]],"#,
+            r#""width":1,"height":1,"distance":0,"uv_offset":[0,0],"#,
+            r#""rotation_wxyz":[1,0,0,0],"cutoff_mode":"none","#,
+            r#""uv_offset_range":[0,0],"source_range":0,"edge_range":0,"#,
+            r#""perspective":false}}]}}"#
+        ),
+        name = name
+    )
+}
+
+#[test]
+fn partitioned_billboards_preserve_source_order() -> Result<(), String> {
+    let root = EffectTestDirectory::new("billboard-order")?;
+    let source = root.path().join("billboards");
+    fs::create_dir_all(&source).map_err(|error| error.to_string())?;
+    let z = source.join("z.json");
+    let a = source.join("a.json");
+    fs::write(&z, billboard_json("Zed")).map_err(|error| error.to_string())?;
+    fs::write(&a, billboard_json("Alpha")).map_err(|error| error.to_string())?;
+    let paths = [z.clone(), a.clone()];
+    let output = root.path().join("output");
+    let (retained, deferred) = partition_vehicle_billboards(&paths, &output)
+        .map_err(|error| error.to_string())?;
+    if !deferred.is_empty() {
+        return Err(format!("valid billboards were deferred: {deferred:?}"));
+    }
+    if retained != [z, a] {
+        return Err(format!("billboard source order changed: {retained:?}"));
+    }
+    Ok(())
 }
 
 #[test]

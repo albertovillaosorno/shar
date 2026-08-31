@@ -192,6 +192,14 @@ differ from source-ordinal order, while all 22 animation sequences currently
 coincide. Animation projection still uses the explicit ordinal because clip
 order feeds FBX animation order and its first clip becomes the active stack.
 
+Vehicle billboard partitioning now retains that projected source-chunk sequence
+after validating each quad group instead of sorting the surviving paths
+lexically. Appending the three explicitly selected shared-headlight groups also
+keeps the local source sequence intact. All 84 multi-billboard car packages in
+the current index differ between source-ordinal and lexical path order, so the
+removed sort materially changed every such projected sequence. A synthetic
+`z`-then-`a` regression covers the partition boundary.
+
 Vehicle effect-animation sidecars now retain that projected source-chunk order
 instead of sorting their published paths lexically after emission. The current
 car corpus has 14 packages with at least two non-skeletal effect animations; 10
