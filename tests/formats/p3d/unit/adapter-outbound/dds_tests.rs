@@ -37,7 +37,10 @@ use super::{DecodedRgbaImage, decode_legacy_dds};
 fn put(bytes: &mut [u8], offset: usize, value: &[u8]) {
     let end = offset.saturating_add(value.len());
     let target = bytes.get_mut(offset..end);
-    assert!(target.is_some(), "synthetic DDS field must fit its fixed header");
+    assert!(
+        target.is_some(),
+        "synthetic DDS field must fit its fixed header"
+    );
     if let Some(target) = target {
         target.copy_from_slice(value);
     }

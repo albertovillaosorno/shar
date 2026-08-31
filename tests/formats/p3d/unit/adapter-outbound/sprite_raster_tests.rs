@@ -57,12 +57,9 @@ fn pixel(image: &DecodedRgbaImage, x: usize, y: usize) -> Option<&[u8]> {
 
 #[test]
 fn assembles_grid_with_flip_and_overlap() -> Result<(), String> {
-    let top_left = tile([
-        [10, 0, 0, 255],
-        [20, 0, 0, 255],
-        [30, 0, 0, 255],
-        [40, 0, 0, 255],
-    ]);
+    let top_left = tile([[10, 0, 0, 255], [20, 0, 0, 255], [30, 0, 0, 255], [
+        40, 0, 0, 255,
+    ]]);
     let tiles = [
         top_left,
         solid([0, 50, 0, 255]),
@@ -132,12 +129,9 @@ fn preserves_source_rows_without_vertical_flip() -> Result<(), String> {
             blit_border: 0,
             flip_vertical: false,
         },
-        &[tile([
-            [10, 0, 0, 255],
-            [20, 0, 0, 255],
-            [30, 0, 0, 255],
-            [40, 0, 0, 255],
-        ])],
+        &[tile([[10, 0, 0, 255], [20, 0, 0, 255], [30, 0, 0, 255], [
+            40, 0, 0, 255,
+        ]])],
     )
     .map_err(|error| error.to_string())?;
     assert_eq!(pixel(&image, 0, 0), Some([10, 0, 0, 255].as_slice()));

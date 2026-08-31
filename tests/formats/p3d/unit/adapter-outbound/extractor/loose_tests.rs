@@ -351,14 +351,14 @@ fn image_fixture(
     let image_header = u32::try_from(image_header).map_err(|error| {
         format!("fixture image header exceeds u32: {error}")
     })?;
-    let image_total = u32::try_from(image_total).map_err(|error| {
-        format!("fixture image total exceeds u32: {error}")
-    })?;
-    let data_total = u32::try_from(data_total).map_err(|error| {
-        format!("fixture image data exceeds u32: {error}")
-    })?;
-    let declared_payload_size = u32::try_from(declared_payload_size)
-        .map_err(|error| format!("fixture payload size exceeds u32: {error}"))?;
+    let image_total = u32::try_from(image_total)
+        .map_err(|error| format!("fixture image total exceeds u32: {error}"))?;
+    let data_total = u32::try_from(data_total)
+        .map_err(|error| format!("fixture image data exceeds u32: {error}"))?;
+    let declared_payload_size =
+        u32::try_from(declared_payload_size).map_err(|error| {
+            format!("fixture payload size exceeds u32: {error}")
+        })?;
 
     let mut bytes = Vec::new();
     push_u32(&mut bytes, IMAGE);
@@ -377,7 +377,7 @@ fn image_record(source: &[u8]) -> Result<ChunkRecord, String> {
     let header = read_u32(source, 4)
         .ok_or_else(|| String::from("image header missing"))?;
     let header_size = usize::try_from(header)
-    .map_err(|error| format!("image header exceeds usize: {error}"))?;
+        .map_err(|error| format!("image header exceeds usize: {error}"))?;
     Ok(ChunkRecord {
         ordinal: 2,
         depth: 2,
@@ -407,7 +407,7 @@ fn embedded_sprite_image_recovery_preserves_exact_dds_payload()
         || recovered.bytes != payload
     {
         return Err(
-            "embedded sprite DDS recovery changed exact evidence".to_owned(),
+            "embedded sprite DDS recovery changed exact evidence".to_owned()
         );
     }
     Ok(())
@@ -425,7 +425,7 @@ fn embedded_sprite_image_recovery_rejects_oversized_data_claim()
     let component = image_record(&source)?;
     if recover_component(&component, &source, 1).is_ok() {
         return Err(
-            "oversized IMAGE_DATA payload claim was accepted".to_owned(),
+            "oversized IMAGE_DATA payload claim was accepted".to_owned()
         );
     }
     Ok(())
@@ -586,7 +586,7 @@ fn publication_registry_disambiguates_identical_case_aliases()
     }
     if paths.len() != 2 {
         return Err(
-            "case aliases did not retain two provenance rows".to_owned(),
+            "case aliases did not retain two provenance rows".to_owned()
         );
     }
     Ok(())
