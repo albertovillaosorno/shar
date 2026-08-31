@@ -82,9 +82,7 @@ impl BlockFormat {
 ///
 /// Returns an error for malformed headers, unsupported formats, mip data,
 /// non-four-pixel-aligned dimensions, or a payload length mismatch.
-pub fn decode_legacy_dds(
-    payload: &[u8],
-) -> Result<DecodedRgbaImage, P3dError> {
+pub fn decode_legacy_dds(payload: &[u8]) -> Result<DecodedRgbaImage, P3dError> {
     if payload.len() < DDS_HEADER_BYTES || payload.get(..4) != Some(b"DDS ") {
         return Err(P3dError::invalid_source("invalid legacy DDS signature"));
     }
@@ -121,23 +119,17 @@ pub fn decode_legacy_dds(
             ));
         },
     };
-    let width_usize = usize::try_from(width)
-        .map_err(|error| {
-            P3dError::invalid_source(format!(
-                "DDS width exceeds usize: {error}"
-            ))
-        })?;
-    let height_usize = usize::try_from(height)
-        .map_err(|error| {
-            P3dError::invalid_source(format!(
-                "DDS height exceeds usize: {error}"
-            ))
-        })?;
+    let width_usize = usize::try_from(width).map_err(|error| {
+        P3dError::invalid_source(format!("DDS width exceeds usize: {error}"))
+    })?;
+    let height_usize = usize::try_from(height).map_err(|error| {
+        P3dError::invalid_source(format!("DDS height exceeds usize: {error}"))
+    })?;
     let blocks_x = width_usize / 4;
     let blocks_y = height_usize / 4;
-    let block_count = blocks_x
-        .checked_mul(blocks_y)
-        .ok_or_else(|| P3dError::invalid_source("DDS block count overflowed"))?;
+    let block_count = blocks_x.checked_mul(blocks_y).ok_or_else(|| {
+        P3dError::invalid_source("DDS block count overflowed")
+    })?;
     let encoded_bytes = block_count
         .checked_mul(format.bytes_per_block())
         .ok_or_else(|| {
@@ -151,12 +143,11 @@ pub fn decode_legacy_dds(
             "DDS payload length does not match the top-level block image",
         ));
     }
-    let encoded_u32 = u32::try_from(encoded_bytes)
-        .map_err(|error| {
-            P3dError::invalid_source(format!(
-                "DDS encoded size exceeds u32: {error}"
-            ))
-        })?;
+    let encoded_u32 = u32::try_from(encoded_bytes).map_err(|error| {
+        P3dError::invalid_source(format!(
+            "DDS encoded size exceeds u32: {error}"
+        ))
+    })?;
     if read_u32(payload, 20) != Some(encoded_u32) {
         return Err(P3dError::invalid_source(
             "DDS linear size does not match the block payload",
@@ -168,21 +159,15 @@ pub fn decode_legacy_dds(
         .ok_or_else(|| P3dError::invalid_source("DDS RGBA size overflowed"))?;
     let mut rgba = vec![0_u8; pixel_bytes];
     decode_blocks(
-        payload
-            .get(DDS_HEADER_BYTES..)
-            .ok_or_else(|| {
-                P3dError::invalid_source("DDS block payload is missing")
-            })?,
+        payload.get(DDS_HEADER_BYTES..).ok_or_else(|| {
+            P3dError::invalid_source("DDS block payload is missing")
+        })?,
         format,
         width_usize,
         height_usize,
         &mut rgba,
     )?;
-    Ok(DecodedRgbaImage {
-        width,
-        height,
-        rgba,
-    })
+    Ok(DecodedRgbaImage { width, height, rgba })
 }
 
 fn decode_blocks(
@@ -203,14 +188,12 @@ fn decode_blocks(
                 .ok_or_else(|| {
                     P3dError::invalid_source("DDS block ordinal overflowed")
                 })?;
-            let block_start = block_ordinal
-                .checked_mul(block_size)
-                .ok_or_else(|| {
+            let block_start =
+                block_ordinal.checked_mul(block_size).ok_or_else(|| {
                     P3dError::invalid_source("DDS block offset overflowed")
                 })?;
-            let block_end = block_start
-                .checked_add(block_size)
-                .ok_or_else(|| {
+            let block_end =
+                block_start.checked_add(block_size).ok_or_else(|| {
                     P3dError::invalid_source("DDS block end overflowed")
                 })?;
             let block =
