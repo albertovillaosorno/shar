@@ -65,15 +65,12 @@ fn canonicalizes_mesh_asset_group_order() -> Result<(), String> {
 }
 
 #[test]
-fn canonicalizes_animation_requirement_member_order() {
-    let first = AnimationRequirement::new(
+fn preserves_animation_requirement_member_order() {
+    let result = AnimationRequirement::new(
         vec!["walk".to_owned(), "idle".to_owned()],
         AnimationCapability::PreservedOnly,
-    );
-    let second = AnimationRequirement::new(
-        vec!["idle".to_owned(), "walk".to_owned()],
-        AnimationCapability::PreservedOnly,
-    );
+    )
+    .map(|requirement| requirement.member_ids);
 
-    assert_eq!(first, second);
+    assert_eq!(result, Ok(vec!["walk".to_owned(), "idle".to_owned()]));
 }
