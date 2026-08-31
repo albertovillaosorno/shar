@@ -173,5 +173,18 @@ disagree on `TEX`. Native blend, depth, camera-facing, cutoff, and animation
 execution therefore remain deferred instead of being inferred from one selected
 shader occurrence.
 
+Replaying the existing cross-package texture authority against the phase-three
+index resolves 248 of the 260 deferred billboard texture references without
+conflict. The remaining 12 are all level-03 `glow2.bmp` uses: their preferred
+terrain scope contains two distinct normalized PNG payloads for the same source
+identity. No local billboard shader candidate disagrees about the `TEX` token,
+but that agreement does not identify one of the two physical texture payloads.
+
+Both conflicting level-03 textures are independent top-level chunks, and the
+terrain shader that names `glow2.bmp` is also an independent top-level chunk.
+There is therefore no decoded parent/container edge supporting an occurrence
+choice. Texture publication for those deferred billboard semantics remains open
+until stronger source or native evidence can disambiguate the relationship.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
