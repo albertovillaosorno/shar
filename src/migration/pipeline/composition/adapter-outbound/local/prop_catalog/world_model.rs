@@ -105,6 +105,10 @@ pub(super) struct WorldCatalogCounts {
     pub(super) deferred_billboard_bindings: usize,
     /// Source billboard child quads retained in authored order.
     pub(super) deferred_billboard_quads: usize,
+    /// Same-name source shader occurrences retained for deferred billboards.
+    pub(super) deferred_billboard_shader_occurrences: usize,
+    /// Deferred billboards with more than one same-name shader occurrence.
+    pub(super) deferred_billboard_shader_ambiguities: usize,
     /// Deferred render bindings with exact source controller relationships.
     pub(super) deferred_controller_bindings: usize,
 }

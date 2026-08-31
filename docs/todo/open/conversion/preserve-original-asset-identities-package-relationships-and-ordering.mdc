@@ -696,5 +696,23 @@ version 2. The catalog contract therefore advances to
 `shar.world-model-props.v4` without treating presentation provenance as runtime
 billboard behavior.
 
+World-prop deferred billboards now retain every same-name normalized shader
+occurrence rather than selecting one member by path, container, or first match.
+Each occurrence keeps its physical member id, source ordinal, validated shader
+fields, canonical texture token, and authored parameter order. The catalog
+contract therefore advances to `shar.world-model-props.v5` while leaving the
+relationship explicitly ambiguous when more than one occurrence exists.
+
+The current 260 resolved billboards retain 271 shader occurrences. Eleven
+billboards have two same-name candidates: nine candidate sets contain differing
+normalized shader payloads and two are byte-equivalent. All 11 ambiguous sets
+agree on their canonical `TEX` token, so texture identity does not justify
+choosing between materially different shader occurrences.
+
+The existing FBX material resolver remains fail-closed on multiple ledger
+shader members for one logical identity. Deferred world provenance is different:
+it records all source candidates so later native presentation work can make a
+source-backed decision without losing the ambiguity itself.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
