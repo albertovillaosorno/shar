@@ -675,11 +675,8 @@ pub(super) fn recover_scrooby_layer_json(
     if cursor != component.header_size {
         return None;
     }
-    let children = child_chunks_json(
-        chunk,
-        component.header_size,
-        component.total_size,
-    );
+    let children =
+        child_chunks_json(chunk, component.header_size, component.total_size);
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
