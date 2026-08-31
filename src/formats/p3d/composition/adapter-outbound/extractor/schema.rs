@@ -189,10 +189,11 @@ pub(super) fn recover_auxiliary_schema_json(
         "scrooby_polygon" => super::scrooby_widget::recover_polygon_json(
             component, source, kind_index,
         ),
-        "scrooby_string_text_bible" =>
+        "scrooby_string_text_bible" => {
             super::scrooby_widget::recover_string_text_bible_json(
                 component, source, kind_index,
-            ),
+            )
+        },
         "scrooby_string_hardcoded" => {
             super::scrooby_widget::recover_string_hardcoded_json(
                 component, source, kind_index,
