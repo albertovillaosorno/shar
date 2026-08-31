@@ -209,10 +209,11 @@ pub(super) fn recover_auxiliary_schema_json(
             auxiliary::recover_scrooby_text_style_resource_json(
                 component, source, kind_index,
             ),
-        "scrooby_text_bible_resource" =>
+        "scrooby_text_bible_resource" => {
             auxiliary::recover_scrooby_text_bible_resource_json(
                 component, source, kind_index,
-            ),
+            )
+        },
         "srr_inst_particle_system" => {
             auxiliary::recover_inst_particle_system_json(
                 component, source, kind_index,
