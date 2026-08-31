@@ -762,12 +762,15 @@ fn scrooby_page_children_json(
                 total_size,
                 4,
             )?.name),
-            TEXT_STYLE | TEXT_BIBLE => Some(decode_scrooby_resource_fields(
-                chunk.get(cursor..next)?,
-                header_size,
-                total_size,
-                2,
-            )?.name),
+            TEXT_STYLE | TEXT_BIBLE => Some(
+                decode_scrooby_resource_fields(
+                    chunk.get(cursor..next)?,
+                    header_size,
+                    total_size,
+                    2,
+                )?
+                .name,
+            ),
             _ => return None,
         };
         let payload_size = total_size.checked_sub(header_size)?;
