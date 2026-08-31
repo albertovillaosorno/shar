@@ -36,8 +36,8 @@ use std::path::{Path, PathBuf};
 use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
-    texture_key, unique_vehicle_component_paths, vehicle_animation_paths,
-    vehicle_mesh_paths, vehicle_quad_group_paths,
+    decoded_name, texture_key, unique_vehicle_component_paths,
+    vehicle_animation_paths, vehicle_mesh_paths, vehicle_quad_group_paths,
 };
 
 struct TestDirectory(PathBuf);
@@ -114,6 +114,18 @@ fn create_component_files(
     for name in ["a.json", "z.json"] {
         fs::write(directory.join(name), b"{}")
             .map_err(|error| error.to_string())?;
+    }
+    Ok(())
+}
+
+#[test]
+fn decoded_name_rejects_surrounding_space() -> Result<(), String> {
+    let root = TestDirectory::new("space-padded-name")?;
+    let path = root.path().join("component.json");
+    fs::write(&path, br#"{"name":" shared"}"#)
+        .map_err(|error| error.to_string())?;
+    if decoded_name(&path).is_ok() {
+        return Err("space-padded vehicle identity was repaired".to_owned());
     }
     Ok(())
 }

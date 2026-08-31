@@ -441,7 +441,16 @@ pub(super) fn decoded_name(path: &Path) -> Result<String, PipelineError> {
     let name = value.get("name").and_then(Value::as_str).ok_or_else(|| {
         PipelineError::new(format!("component has no name: {}", path.display()))
     })?;
-    Ok(name.trim_end_matches('\0').trim().to_owned())
+    let clean = name.trim_end_matches('\0');
+    if clean.is_empty()
+        || clean != clean.trim()
+        || clean.chars().any(char::is_control)
+    {
+        return Err(PipelineError::new(
+            "vehicle component identity is non-canonical",
+        ));
+    }
+    Ok(clean.to_owned())
 }
 
 /// Return whether one skeleton identity belongs only to collision-volume data.
