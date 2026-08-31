@@ -330,6 +330,20 @@ requires the complete member id sequence to match `unit_ids` and each role's
 member sequence to match its role-specific id mirror, so source-order retention
 does not weaken relationship validation.
 
+Unreal import-manifest source publication now preserves that phase-three member
+sequence within each package instead of sorting source rows by member id. Stable
+package-id grouping remains deterministic. In the current index, 2,380 of 2,474
+multi-member packages differ from lexical member-id order, so the former sort
+materially changed most preserved package sequences before Unreal planning.
+
+Pending FBX aggregate revisions now hash source identities and digests in that
+preserved package-member order instead of sorting the source set by id first.
+The current index has 715 FBX-planned packages containing 113,822 source
+members; all 715 are multi-member and all 715 differ from lexical member-id
+order. A
+focused regression proves reversing the same source identities changes the
+pending FBX plan revision.
+
 Completion-dialog participant bindings now project audio ids and paths from the
 same source-ordered package-member sequence instead of sorting paths
 independently. A focused two-member regression preserves `audio-z`/`z.wav`
