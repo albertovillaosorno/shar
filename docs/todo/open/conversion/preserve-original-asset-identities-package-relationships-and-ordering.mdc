@@ -200,6 +200,14 @@ of those source sequences differ from lexical sidecar order. For example,
 A focused regression proves a source `z` then `a` sequence remains `z` then `a`
 in the returned sidecar catalog.
 
+Vehicle semantic part catalogs now retain the same part sequence used by the FBX
+character writer instead of sorting their generated object names lexically after
+the source groups have been separated. A conservative audit of source-ordinal
+ordered rigid mesh groups covers 88 car packages and 1,284 primitive groups; 86
+packages contain a distinct portable mesh-prefix inversion that guarantees the
+former name sort changed catalog order. This lower bound excludes role-only and
+non-rigid ordering differences.
+
 Hidden wheel-proxy evidence now retains assembled composite part order instead
 of sorting complete JSON objects before sidecar publication. One audited vehicle
 binds its four source-backed wheel proxies to `w3`, `w2`, `w1`, then `w0`; the
