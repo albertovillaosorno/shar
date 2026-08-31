@@ -389,7 +389,105 @@ pub(super) fn common_headlight_quad_groups(
             },
         }
     }
+    let selected = source_ordered_common_quad_groups(&common_root, selected)?;
     Ok((common_root, selected))
+}
+
+/// Restore source-chunk order for selected common-package quad groups.
+fn source_ordered_common_quad_groups(
+    common_root: &Path,
+    selected: Vec<PathBuf>,
+) -> Result<Vec<PathBuf>, PipelineError> {
+    let manifest = common_root.join("components.jsonl");
+    let text = fs::read_to_string(&manifest).map_err(|error| {
+        PipelineError::new(format!(
+            "common vehicle component ledger read failed: {error}"
+        ))
+    })?;
+    let selected_paths = selected
+        .iter()
+        .map(|path| {
+            path.file_name()
+                .and_then(|value| value.to_str())
+                .map(|file_name| format!("quad_group/{file_name}"))
+                .ok_or_else(|| {
+                    PipelineError::new(format!(
+                        concat!(
+                            "common vehicle headlight path has no UTF-8 ",
+                            "file name: {}"
+                        ),
+                        path.display()
+                    ))
+                })
+        })
+        .collect::<Result<BTreeSet<_>, PipelineError>>()?;
+    let mut ordinals = BTreeMap::<String, u64>::new();
+    for line in text.lines().filter(|line| !line.trim().is_empty()) {
+        let value: Value = serde_json::from_str(line).map_err(|error| {
+            PipelineError::new(format!(
+                "common vehicle component ledger parse failed: {error}"
+            ))
+        })?;
+        if value.get("kind").and_then(Value::as_str) != Some("quad_group") {
+            continue;
+        }
+        let Some(path) = value.get("path").and_then(Value::as_str) else {
+            continue;
+        };
+        if !selected_paths.contains(path) {
+            continue;
+        }
+        let ordinal = value
+            .get("ordinal")
+            .and_then(Value::as_u64)
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "common vehicle headlight {path} has no source ordinal"
+                ))
+            })?;
+        if ordinals.insert(path.to_owned(), ordinal).is_some() {
+            return Err(PipelineError::new(format!(
+                "common vehicle headlight ledger path repeats: {path}"
+            )));
+        }
+    }
+    let mut ordered = selected
+        .into_iter()
+        .map(|path| {
+            let file_name = path
+                .file_name()
+                .and_then(|value| value.to_str())
+                .ok_or_else(|| {
+                    PipelineError::new(format!(
+                        concat!(
+                            "common vehicle headlight path has no UTF-8 ",
+                            "file name: {}"
+                        ),
+                        path.display()
+                    ))
+                })?;
+            let relative = format!("quad_group/{file_name}");
+            let ordinal = ordinals.get(&relative).copied().ok_or_else(|| {
+                PipelineError::new(format!(
+                    "common vehicle headlight has no ledger relationship: \
+                     {relative}"
+                ))
+            })?;
+            Ok((ordinal, path))
+        })
+        .collect::<Result<Vec<_>, PipelineError>>()?;
+    ordered.sort_by_key(|(ordinal, _path)| *ordinal);
+    for pair in ordered.windows(2) {
+        let [(left, _), (right, _)] = pair else {
+            continue;
+        };
+        if left == right {
+            return Err(PipelineError::new(format!(
+                "common vehicle headlight source ordinal repeats: {left}"
+            )));
+        }
+    }
+    Ok(ordered.into_iter().map(|(_ordinal, path)| path).collect())
 }
 
 /// Return sorted JSON files from one optional component directory.

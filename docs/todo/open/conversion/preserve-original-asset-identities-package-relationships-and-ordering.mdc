@@ -200,6 +200,15 @@ the current index differ between source-ordinal and lexical path order, so the
 removed sort materially changed every such projected sequence. A synthetic
 `z`-then-`a` regression covers the partition boundary.
 
+The three selected common-package headlight quad groups now use their exact
+`components.jsonl` source ordinals after identity selection. The current common
+package publishes those selected groups at ordinals 92, 96, and 100, while the
+former hardcoded selector returned them as 96, 92, 100. Supplemental rigid
+bindings preserve their supplied order, so restoring the ledger sequence keeps
+shared render evidence aligned with the same source-order contract as local
+vehicle quad groups. A synthetic common-package regression proves the ordinal
+projection independently of file-name order.
+
 Vehicle effect-animation sidecars now retain that projected source-chunk order
 instead of sorting their published paths lexically after emission. The current
 car corpus has 14 packages with at least two non-skeletal effect animations; 10
