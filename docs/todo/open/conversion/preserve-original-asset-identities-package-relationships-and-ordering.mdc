@@ -271,5 +271,17 @@ ownership. The current normalized corpus has 26 Scrooby ledgers with 13,309
 Scrooby rows: all ordinals are unique, all 13,283 non-root parents resolve, and
 all parent fields are numeric while the 26 root rows retain parent ordinal 0.
 
+Scrooby binding preflight now independently requires unique source ordinals and
+portable case-insensitive component-path identities before project, resource,
+and joined-sprite relationships are resolved. The current normalized corpus has
+26 Scrooby ledgers with 13,309 Scrooby rows, with no duplicate ordinals, exact
+paths, or portable path aliases.
+
+Selected non-instanced rigid-prop assembly now rejects repeated composite prop
+identities instead of allowing map insertion to replace the authored joint
+binding. The audited Wrench and Wasp-camera selected composites contain no such
+repeats; general instanced composite routes retain their authored multiplicity
+and are not subject to this uniqueness rule.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
