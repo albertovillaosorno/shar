@@ -714,5 +714,19 @@ shader members for one logical identity. Deferred world provenance is different:
 it records all source candidates so later native presentation work can make a
 source-backed decision without losing the ambiguity itself.
 
+The phase-three world package index and the exact `SharedTextureAuthority` scope
+rules were also replayed for all 260 deferred billboard texture references.
+Two hundred forty-eight resolve to one payload in the preferred scope; 12
+level-03 `glow2.bmp` references remain fail-closed because the preferred
+`terrain-world/level-03/terrain-mesh` package publishes two different payloads
+under that logical identity.
+
+Those conflicting texture rows are top-level source siblings at ordinals 182
+and 10591. The level-03 terrain shader that references `glow2.bmp` is another
+top-level row at ordinal 10648, so parent/container ownership does not select
+either payload and source proximity would be an invented relationship. The 12
+affected deferred billboards therefore remain unresolved rather than inheriting
+first-path or nearest-ordinal behavior.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
