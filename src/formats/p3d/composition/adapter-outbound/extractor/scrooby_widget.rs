@@ -32,11 +32,11 @@
 
 //! Scrooby layer-widget schema recovery.
 
-use super::{
-    ChunkRecord, RecoveredComponent, escape_json, raw_component_bytes, read_u32,
-    render, render_f32, schema,
-};
 use super::auxiliary::child_chunks_json;
+use super::{
+    ChunkRecord, RecoveredComponent, escape_json, raw_component_bytes,
+    read_u32, render, render_f32, schema,
+};
 
 struct WidgetFrame {
     name: String,
