@@ -713,7 +713,7 @@ fn local_texture_source(
                 name.to_owned(),
             ));
         }
-        if clean_name != expected {
+        if !clean_name.eq_ignore_ascii_case(expected) {
             continue;
         }
         let path =

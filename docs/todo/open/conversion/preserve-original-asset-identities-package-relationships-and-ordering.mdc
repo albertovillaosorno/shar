@@ -578,5 +578,18 @@ payloads differ, while 86 reference byte-identical candidate sets. The remaining
 relationship work therefore cannot treat repeated shader names as harmless
 duplicate publication in the general case.
 
+FBX local texture lookup now compares normalized ledger names using ASCII
+case-insensitive identity while retaining every matching published path for
+ambiguity checks. This preserves a source reference whose extension casing
+differs from its published texture evidence on case-sensitive hosts without
+turning a case collision into a selected winner. A synthetic regression covers
+the case-only match.
+
+A cached corpus audit covers 14,007 decoded shader texture references. 7,954
+have exact same-package ledger-name matches, two additional references have one
+unambiguous case-only match, and no reference has multiple case-only matches.
+The remaining 6,051 references have no same-package logical-name match and keep
+their separate missing/shared-texture authority behavior.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

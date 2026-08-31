@@ -318,6 +318,60 @@ fn resolves_sanitized_local_texture_through_package_ledger() {
 }
 
 #[test]
+fn resolves_case_only_texture_ledger_identity() {
+    let root = temp_root("ledger-texture-case-identity");
+    let package = root.join("package");
+    let shader_dir = package.join("components").join("shader");
+    let texture_dir = package.join("components").join("texture");
+    let output_dir = root.join("output");
+    let setup_result = fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::create_dir_all(&texture_dir))
+        .and_then(|()| {
+            fs::write(
+                shader_dir.join("tree.json"),
+                concat!(
+                    r#"{"name":"tree","params":[{"kind":"texture","#,
+                    r#""param":"TEX","value":"tree.bmp"}]}"#,
+                ),
+            )
+        })
+        .and_then(|()| {
+            fs::write(texture_dir.join("tree.BMP.png"), b"synthetic-png")
+        })
+        .and_then(|()| {
+            fs::write(
+                package.join("components.jsonl"),
+                concat!(
+                    r#"{"schema":"p3d.package.v1"}"#,
+                    "\n",
+                    r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"#,
+                    r#""container_ordinal":1,"name":"tree.BMP","#,
+                    r#""path":"texture/tree.BMP.png","#,
+                    r#""kind":"texture"}"#,
+                    "\n",
+                ),
+            )
+        });
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(&package, &output_dir);
+    let result = source.resolve_material("tree");
+    let staged = fs::read(output_dir.join("tree.BMP.png"));
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Ok(fbx::domain::texture::MaterialBinding {
+            material_name: "tree".to_owned(),
+            texture_file_name: Some("tree.BMP.png".to_owned()),
+            semantics: fbx::domain::texture::MaterialSemantics::default(),
+            base_color_rgba8: [u8::MAX; 4],
+        })
+    );
+    assert!(staged.is_ok_and(|bytes| bytes == b"synthetic-png"));
+    assert!(cleanup_result.is_ok());
+}
+
+#[test]
 fn rejects_duplicate_texture_ledger_relationships() {
     let root = temp_root("duplicate-ledger-texture-identity");
     let package = root.join("package");
