@@ -175,10 +175,11 @@ pub(super) fn recover_auxiliary_schema_json(
         "scrooby_group" => super::scrooby_widget::recover_group_json(
             component, source, kind_index,
         ),
-        "scrooby_multi_sprite" =>
+        "scrooby_multi_sprite" => {
             super::scrooby_widget::recover_multi_sprite_json(
                 component, source, kind_index,
-            ),
+            )
+        },
         "scrooby_multi_text" => super::scrooby_widget::recover_multi_text_json(
             component, source, kind_index,
         ),
