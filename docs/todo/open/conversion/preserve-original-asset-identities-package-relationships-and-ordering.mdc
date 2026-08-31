@@ -253,6 +253,31 @@ identities instead of repairing them with `trim`. The current car-family ledgers
 contain 6,135 component names with zero surrounding-space or control cases; a
 focused regression proves a leading-space vehicle name is rejected.
 
+FBX decoded component intake now removes only trailing NUL padding from mesh,
+shader, and texture identities before validation. Audits of 14,297 mesh names,
+18,148 primitive-group shader references, 13,916 shader names, and 14,073
+texture references found zero nonempty surrounding-space or control cases.
+Focused regressions cover mesh names, group shaders, shader names, texture
+references, and package-ledger texture identities.
+
+Decoded animation identity cleanup now rejects surrounding whitespace instead
+of trimming it from clip or group names while retaining fixed-width trailing NUL
+support. The corpus has 6,002 clip names and 36,164 group names with zero
+nonempty surrounding-space or control cases; 811 empty groups remain separate
+source evidence and are not reclassified by this gate.
+
+Decoded skin intake now validates skeleton, joint, skin, shader, and composite
+relationship identities before returning or matching them. The audited skin and
+composite fields contain 37,650 identities, including 28,773 with trailing NUL
+padding, and zero surrounding-space or control cases after padding removal.
+Regressions cover skeleton names, joint names, and composite skeleton
+references.
+
+Vehicle shared-texture matching now makes source-key normalization fallible.
+Among 1,317 car shader texture parameters, 1,135 use trailing NUL padding, one
+is empty, and no nonempty reference has surrounding whitespace or controls;
+case, extension, and fixed-width padding normalization remain intact.
+
 World structural-guide assembly now concatenates the accumulated
 `MasterContent` mesh vector directly instead of sorting it by mesh name before
 flattening geometry. A focused regression supplies `z` then `a` meshes with
