@@ -161,6 +161,39 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
             animation_source_ordinal: Some(41),
             animation_version: Some(0),
             animation_type: Some("BQG_".to_owned()),
+            animation_source: Some(serde_json::json!({
+                "identity": "BQG_light-beam",
+                "version": 0,
+                "frame_count": 25.0,
+                "frame_rate": 30.0,
+                "cyclic": false,
+                "sizes": [{
+                    "version": 1,
+                    "pc": 152,
+                    "ps2": 160,
+                    "xbox": 152,
+                    "gc": 152
+                }],
+                "group_lists": [{
+                    "version": 0,
+                    "declared_group_count": 1,
+                    "groups": [{
+                        "version": 0,
+                        "identity": "light-beam-child",
+                        "group_id": 0,
+                        "declared_channel_count": 1,
+                        "channels": [{
+                            "kind": "float1",
+                            "version": 0,
+                            "param": "\x57\x44\x54\x5f",
+                            "declared_key_count": 1,
+                            "frames": [0],
+                            "values": [[2.25]],
+                            "metadata": []
+                        }]
+                    }]
+                }]
+            })),
         }),
     });
     assert_eq!(value.get("composite_prop_index"), Some(&2.into()));
@@ -282,5 +315,23 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
     assert_eq!(controller.get("frame_offset"), Some(&0.0.into()));
     assert_eq!(controller.get("animation_source_ordinal"), Some(&41.into()));
     assert_eq!(controller.get("animation_type"), Some(&"BQG_".into()));
+    let animation_source = controller
+        .get("animation_source")
+        .and_then(serde_json::Value::as_object)
+        .ok_or_else(|| "validated BQG source payload is missing".to_owned())?;
+    assert_eq!(animation_source.get("frame_count"), Some(&25.0.into()));
+    let animation_groups = animation_source
+        .get("group_lists")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|lists| lists.first())
+        .and_then(|list| list.get("groups"))
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| "validated BQG groups are missing".to_owned())?;
+    assert_eq!(
+        animation_groups
+            .first()
+            .and_then(|group| group.get("identity")),
+        Some(&"light-beam-child".into())
+    );
     Ok(())
 }

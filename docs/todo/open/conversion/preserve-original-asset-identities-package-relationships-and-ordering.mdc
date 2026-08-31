@@ -742,8 +742,7 @@ preferred physical occurrences and no reference lacks preferred evidence. Two
 hundred twenty-six references have one occurrence; 34 have more than one.
 
 Of those multi-occurrence references, 22 contain only byte-identical payloads
-and
-12 contain differing payloads. The latter are exactly the already-audited
+and 12 contain differing payloads. The latter are exactly the already-audited
 level-03 `glow2.bmp` conflicts. Physical duplication is therefore retained
 without being mislabeled as payload ambiguity.
 
@@ -752,6 +751,18 @@ relationship than controller identity alone: all linked BQG animation groups
 match the linked billboard child identities in exactly the same authored order.
 There are 130 one-child relationships and eight four-child relationships, with
 no duplicate child or animation-group identity in the linked set.
+
+Those exact animation members are now decoded through a strict BQG evidence
+adapter before entering world provenance. All 138 linked members pass the
+adapter, retaining 162 authored groups and 1,053 authored channels while
+rejecting unsupported or contradictory decoded structures instead of repairing
+them.
+
+The world catalog therefore advances to `shar.world-model-props.v7`. Controller
+provenance keeps the existing physical animation member and source ordinal plus
+the complete validated timing, group, channel, key, value, and interpolation
+evidence; no channel is promoted to a static default or runtime relationship by
+this preservation step.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

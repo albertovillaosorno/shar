@@ -215,5 +215,20 @@ in 75 of 119 frame-zero cases. That mixed evidence rules out flattening BQG
 channel data into static billboard defaults without a reviewed runtime
 interpretation.
 
+A dedicated decoded billboard-animation evidence adapter now validates BQG
+source payloads independently from skeletal FBX animation. It preserves source
+frame span and rate, cyclic state, platform-size records, authored group order,
+group ids, declared counts, six observed channel representation families, key
+frames, values, and interpolation metadata without sampling or flattening them.
+Unsupported top-level payloads, channel semantics, contradictory
+counts,
+out-of-range or unordered keys, and non-finite floating values fail closed.
+
+The exact deferred-controller relationship set was replayed through that reader:
+all 138 linked animations pass, retaining 162 groups and 1,053 channels. Their
+validated payloads now travel with controller provenance in
+`shar.world-model-props.v7`. This remains source evidence only and does not
+claim native camera-facing, cutoff, material, or BQG runtime execution.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

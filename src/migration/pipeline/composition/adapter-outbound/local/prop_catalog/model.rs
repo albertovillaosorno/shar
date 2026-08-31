@@ -227,6 +227,8 @@ pub(super) struct DeferredControllerBinding {
     pub(super) animation_version: Option<usize>,
     /// Decoded source animation type when resolvable.
     pub(super) animation_type: Option<String>,
+    /// Strict validated BQG source payload without runtime interpretation.
+    pub(super) animation_source: Option<Value>,
 }
 
 /// One composite render binding retained when the current FBX route cannot

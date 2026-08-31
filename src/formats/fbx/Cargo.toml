@@ -69,6 +69,11 @@ name = "decoded_billboard_source"
 path = "../../../tests/formats/fbx/decoded_billboard_source.rs"
 
 [[test]]
+name = "decoded_billboard_animation_source"
+path = "../../../tests/formats/fbx/decoded_billboard_animation_source.rs"
+
+
+[[test]]
 name = "decoded_component_source"
 path = "../../../tests/formats/fbx/decoded_component_source.rs"
 

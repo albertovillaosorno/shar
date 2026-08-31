@@ -33,6 +33,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
+use fbx::adapters::driven::decoded_billboard_animation_source::
+    read_billboard_animation_source_evidence;
 use fbx::adapters::driven::decoded_billboard_source::{
     BillboardQuadEvidence, read_billboard_source_evidence,
 };
@@ -585,18 +587,38 @@ fn deferred_controller_binding(
             "world prop repeats controller animation {animation_identity}"
         )));
     }
-    let (animation_member_id, animation_source_ordinal, animation_version,
-        animation_type) = if let Some(animation_row) = animations.pop() {
-        let animation_value =
-            read_json(&root.join("components").join(&animation_row.path))?;
+    let (
+        animation_member_id,
+        animation_source_ordinal,
+        animation_version,
+        animation_type,
+        animation_source,
+    ) = if let Some(animation_row) = animations.pop() {
+        let animation_path = root.join("components").join(&animation_row.path);
+        let animation_value = read_json(&animation_path)?;
+        let evidence = read_billboard_animation_source_evidence(
+            &animation_path,
+            &animation_identity,
+        )
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "world prop BQG animation evidence failed: {error:?}"
+            ))
+        })?;
+        let source_value = serde_json::to_value(evidence).map_err(|error| {
+            PipelineError::new(format!(
+                "world prop BQG animation evidence JSON failed: {error}"
+            ))
+        })?;
         (
             Some(ledger_member_id(&animation_row.path, "animation")?),
             Some(animation_row.ordinal),
             Some(required_usize(&animation_value, "version")?),
             Some(clean_identity(&required_string(&animation_value, "type")?)?),
+            Some(source_value),
         )
     } else {
-        (None, None, None, None)
+        (None, None, None, None, None)
     };
     Ok(Some(DeferredControllerBinding {
         controller_identity,
@@ -611,6 +633,7 @@ fn deferred_controller_binding(
         animation_source_ordinal,
         animation_version,
         animation_type,
+        animation_source,
     }))
 }
 
