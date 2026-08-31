@@ -288,6 +288,32 @@ explicitly excludes the provenance-only identities. Focused canonicalization,
 binary artifact, domain-validation, and hash-invariance regressions prove source
 provenance survives publication naming without changing canonical sharing.
 
+Decoded character and rigid-prop assembly now retains the authored skeleton to
+composite relationship separately from the publication character name. The
+normalized corpus contains 1,574 skeleton documents and 1,518 composite-drawable
+documents, forming 727 distinct skeleton/composite identity pairs across 686
+referenced skeleton identities. Five skeleton identities participate in more
+than one composite identity, with `collectable_shadow` referenced by 38 distinct
+composites, so flattening the aggregate to one source name would be lossy.
+
+`CharacterSourceProvenance` therefore retains one validated skeleton identity
+plus composite identities in supplied source order without sorting or
+deduplicating them. Binary FBX publishes the skeleton identity on the export
+root as `SHAR_P3D_SourceSkeletonIdentity` and emits each composite identity as
+an ordinal `SHAR_P3D_SourceCompositeIdentity_####` property. Prop semantic
+hashing
+explicitly excludes this aggregate provenance, while vehicle semantic splitting
+retains it across generated part names.
+
+Composite binding `sort_order` remains a separate unresolved presentation
+boundary and must not be used to reorder decoded arrays. The current corpus has
+7,456 prop-binding and 633 skin-binding sort values; every value is finite and
+numeric. Among 913 multi-prop composites, 144 would change sequence if sorted by
+that value, while 886 contain duplicate sort values. The existing source array
+order is therefore retained, and a future typed binding-metadata change must
+preserve `sort_order` independently rather than reinterpret it as a total-order
+key.
+
 Static world-prop fallback selection now projects mesh members through exact
 source component ordinals instead of sorting member ids lexically before
 association. A focused `z` then `a` regression proves the fallback receives that
