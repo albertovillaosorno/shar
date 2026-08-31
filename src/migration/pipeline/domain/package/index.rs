@@ -612,32 +612,12 @@ fn parse_member_mirrors(
     }
 }
 
-/// Require the exact member ordering emitted by phase two.
-fn validate_member_order(
-    members: &[PhaseThreePackageMember],
-) -> Result<(), PackageIntakeError> {
-    for (left, right) in members.iter().zip(members.iter().skip(1)) {
-        let ordering = left
-            .role
-            .cmp(&right.role)
-            .then_with(|| left.path.cmp(&right.path))
-            .then_with(|| left.id.cmp(&right.id));
-        if ordering.is_gt() {
-            return Err(PackageIntakeError::new(
-                "members mirror is not in canonical phase-two order",
-            ));
-        }
-    }
-    Ok(())
-}
-
 /// Validate non-empty physical member mirrors against canonical id buckets.
 fn validate_member_mirrors(
     line: &str,
     row: &PhaseThreePackageRow,
 ) -> Result<Vec<PhaseThreePackageMember>, PackageIntakeError> {
     let members = parse_member_mirrors(line)?;
-    validate_member_order(&members)?;
     if members.is_empty() {
         if row.unit_ids.is_empty() {
             return Ok(members);

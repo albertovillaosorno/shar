@@ -53,7 +53,7 @@ const SAMPLE_MEMBERS_FIELD: &str = concat!(
     "\"type\":\"model\",\"kind\":\"mesh\",",
     "\"source_chunk_kind\":\"mesh\"}]",
 );
-const NONCANONICAL_MEMBERS_FIELD: &str = concat!(
+const SOURCE_ORDERED_MEMBERS_FIELD: &str = concat!(
     "\"members\":[",
     "{\"id\":\"model-a\",\"role\":\"model\",",
     "\"path\":\"extracted/model.p3d\",",
@@ -568,15 +568,22 @@ fn rejects_empty_package_indexes() -> Result<(), String> {
 }
 
 #[test]
-fn rejects_noncanonical_member_order() -> Result<(), String> {
+fn accepts_source_ordered_member_mirrors() -> Result<(), String> {
     let row_text = sample_row()
         .replace(
             "\"unit_ids\":[\"texture-a\",\"model-a\"]",
             "\"unit_ids\":[\"model-a\",\"texture-a\"]",
         )
-        .replace(SAMPLE_MEMBERS_FIELD, NONCANONICAL_MEMBERS_FIELD);
-    if PhaseThreePackageRow::from_json_line(&row_text).is_ok() {
-        return Err("noncanonical member order was accepted".to_owned());
+        .replace(SAMPLE_MEMBERS_FIELD, SOURCE_ORDERED_MEMBERS_FIELD);
+    let row = PhaseThreePackageRow::from_json_line(&row_text)
+        .map_err(|error| error.to_string())?;
+    let ids = row
+        .members()
+        .iter()
+        .map(|member| member.id.as_str())
+        .collect::<Vec<_>>();
+    if ids != ["model-a", "texture-a"] {
+        return Err("phase-three intake changed source member order".to_owned());
     }
     Ok(())
 }
