@@ -28,5 +28,18 @@ No explicit task dependency was recorded in the legacy TODO.
 
 ## Evidence
 
-Open work migrated from the canonical TODO. Add implementation and
-validation evidence here as the task advances.
+The conversion boundary is implemented and tested. `fbx-export-world` emits
+non-empty world and interior package scenes through the first-principles binary
+FBX writer, applies the single `ReflectX` world-root policy, and preserves
+source
+mesh order plus position, normal, UV, and triangle evidence in the structural
+guide. Four focused `world_fbx` tests cover exterior and interior guide
+geometry,
+root-policy and UV preservation, and source mesh ordering; all four pass.
+
+The task remains open because native Unreal ingestion is still planned Phase 6
+work. Current technical authority defines a staged FBX import, native read-back,
+and World Partition publication transaction, but the repository does not yet
+have validated execution evidence for that transaction. Current evidence
+therefore proves the source-authored FBX boundary without claiming the final
+Unreal import is complete.
