@@ -89,8 +89,10 @@ pub(super) fn discover_world_candidates(
             let mesh_names = decoded_mesh_names(&root, &mesh_ids)?;
             let association = associate_composite(&root, &rows, &mesh_names)?;
             let (owner_name, selected, composite, skeleton, animation, route) =
-                association
-                    .unwrap_or_else(|| static_association(owner, mesh_ids));
+                match association {
+                    Some(association) => association,
+                    None => static_association(owner, mesh_ids)?,
+                };
             if selected.is_empty() {
                 return Err(PipelineError::new(format!(
                     "world prop retained no model meshes: {} {}",
@@ -161,15 +163,18 @@ type Association = (
 );
 
 /// Build the static fallback when no exact composite association exists.
-fn static_association(owner: &LedgerRow, mesh_ids: Vec<String>) -> Association {
-    (
-        clean_identity(&owner.name),
+fn static_association(
+    owner: &LedgerRow,
+    mesh_ids: Vec<String>,
+) -> Result<Association, PipelineError> {
+    Ok((
+        clean_identity(&owner.name)?,
         mesh_ids,
         None,
         None,
         None,
         PropRoute::Static,
-    )
+    ))
 }
 
 /// Associate one world owner with its composite, skeleton, and model clip.

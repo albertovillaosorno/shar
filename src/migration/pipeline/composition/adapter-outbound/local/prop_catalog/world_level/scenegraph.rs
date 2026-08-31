@@ -156,7 +156,7 @@ fn walk_node(
                 PipelineError::new("world drawable has no identity")
             })?;
         placements
-            .entry(clean_identity(drawable))
+            .entry(clean_identity(drawable)?)
             .or_default()
             .push(current);
     }
