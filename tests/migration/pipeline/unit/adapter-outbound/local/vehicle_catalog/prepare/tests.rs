@@ -43,7 +43,7 @@ use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
     is_wheel_identity, load_vehicle_animations, texture_state_role,
-    vehicle_part_role, vehicle_part_semantics,
+    vehicle_animation_name, vehicle_part_role, vehicle_part_semantics,
 };
 
 fn role(mesh: &str, shader: &str) -> &'static str {
@@ -76,9 +76,9 @@ fn damage_textures_receive_a_distinct_sidecar_role() {
 struct EffectTestDirectory(PathBuf);
 
 impl EffectTestDirectory {
-    fn new() -> Result<Self, String> {
+    fn new(label: &str) -> Result<Self, String> {
         let path = std::env::temp_dir().join(format!(
-            "shar-vehicle-effect-order-{}",
+            "shar-vehicle-effect-{label}-{}",
             std::process::id()
         ));
         if path.exists() {
@@ -165,8 +165,61 @@ fn effect_test_asset() -> Result<CharacterAsset, String> {
 }
 
 #[test]
+fn vehicle_animation_identity_requires_source_name() {
+    assert!(
+        vehicle_animation_name(&serde_json::json!({"type": "effect"})).is_err()
+    );
+    assert!(
+        vehicle_animation_name(&serde_json::json!({
+            "name": "\0\0",
+            "type": "effect"
+        }))
+        .is_err()
+    );
+}
+
+#[test]
+fn vehicle_animation_identity_accepts_fixed_width_padding() {
+    let value = serde_json::json!({
+        "name": "Zebra\0\0",
+        "type": "effect"
+    });
+    assert_eq!(vehicle_animation_name(&value).ok(), Some("Zebra"));
+}
+
+#[test]
+fn effect_sidecars_reject_repaired_source_identity() -> Result<(), String> {
+    let root = EffectTestDirectory::new("identity")?;
+    fs::write(
+        root.path().join("components/animation/z.json"),
+        r#"{"name":" Zebra","type":"effect"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/animation/a.json"),
+        r#"{"name":"Alpha","type":"effect"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    let package = effect_animation_package()?;
+    let vehicle_dir = root.path().join("output");
+    let asset = effect_test_asset()?;
+    let result = load_vehicle_animations(
+        &package,
+        root.path(),
+        &vehicle_dir,
+        &asset,
+    );
+    if result.is_ok() {
+        return Err(
+            "space-padded vehicle animation identity was repaired".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn effect_sidecars_preserve_source_chunk_order() -> Result<(), String> {
-    let root = EffectTestDirectory::new()?;
+    let root = EffectTestDirectory::new("order")?;
     fs::write(
         root.path().join("components/animation/z.json"),
         r#"{"name":"Zebra","type":"effect"}"#,
