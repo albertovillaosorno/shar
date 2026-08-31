@@ -51,7 +51,7 @@ fn fixture_root(label: &str) -> Result<PathBuf, String> {
         "shar-world-inventory-map-{label}-{}-{sequence}",
         std::process::id()
     ));
-    for family in ["mesh", "frame_controller", "animation"] {
+    for family in ["mesh", "quad_group", "frame_controller", "animation"] {
         fs::create_dir_all(root.join("components").join(family))
             .map_err(|error| error.to_string())?;
     }
@@ -152,6 +152,23 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
     )]);
 
     let root = fixture_root("deferred-package-quad")?;
+    fs::write(
+        root.join("components/quad_group/beam__ordinal_22.json"),
+        concat!(
+            r#"{"schema":"quad_group","version":0,"name":"beam","#,
+            r#""shader":"glow_m","z_test":1,"z_write":0,"fog":0,"#,
+            r#""num_quads":1,"quads":[{"name":"beam-child","#,
+            r#""version":2,"billboard_mode":"YAX","#,
+            r#""translation":[2.5,-3,4],"colour":305419896,"#,
+            r#""uvs":[[0.1,0.2],[0.9,0.2],[0.9,0.8],[0.1,0.8]],"#,
+            r#""width":2.25,"height":4.5,"distance":-0.35,"#,
+            r#""uv_offset":[0.25,-0.5],"rotation_wxyz":[1,0,0,0],"#,
+            r#""cutoff_mode":"DBL","uv_offset_range":[0.5,0.75],"#,
+            r#""source_range":1.25,"edge_range":0.625,"#,
+            r#""perspective":false}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
     let actual = deferred_render_bindings(
         &root,
         &rows,
@@ -178,6 +195,35 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
     {
         return Err(format!("resolved deferred binding changed: {beam:?}"));
     }
+    let billboard = beam
+        .billboard
+        .as_ref()
+        .ok_or_else(|| "resolved billboard evidence is missing".to_owned())?;
+    let quad = billboard
+        .quads
+        .first()
+        .ok_or_else(|| "resolved billboard child is missing".to_owned())?;
+    if billboard.version != 0
+        || billboard.shader_identity != "glow_m"
+        || billboard.z_test != 1
+        || billboard.z_write != 0
+        || billboard.fog != 0
+        || billboard.quads.len() != 1
+        || quad.identity != "beam-child"
+        || quad.version != 2
+        || quad.billboard_mode != "YAX"
+        || quad.translation_bits != [2.5_f32, -3., 4.].map(f32::to_bits)
+        || quad.colour != 305_419_896
+        || quad.width_bits != 2.25_f32.to_bits()
+        || quad.height_bits != 4.5_f32.to_bits()
+        || quad.distance_bits != (-0.35_f32).to_bits()
+        || quad.cutoff_mode != "DBL"
+        || quad.source_range_bits != 1.25_f32.to_bits()
+        || quad.edge_range_bits != 0.625_f32.to_bits()
+        || quad.perspective
+    {
+        return Err(format!("billboard evidence changed: {billboard:?}"));
+    }
     let logical = actual
         .get(1)
         .ok_or_else(|| "logical deferred binding is missing".to_owned())?;
@@ -188,6 +234,7 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         || logical.component_kind.is_some()
         || logical.component_member_id.is_some()
         || logical.source_ordinal.is_some()
+        || logical.billboard.is_some()
     {
         return Err(format!("logical deferred binding changed: {logical:?}"));
     }

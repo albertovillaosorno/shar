@@ -145,5 +145,19 @@ and five extended records that also carry `ERNG`, `SRNG`, and `ORNG`. Those
 source differences remain explicitly deferred for a later faithful billboard
 animation representation rather than normalized away.
 
+Deferred world billboards now preserve their source presentation payload
+separately from the static inspection planes used by FBX review. Across the 284
+current child quads, authored orientation modes are 254 `NOAX`, 19 `YAX`, eight
+`AAX`, and three `LYAX`; cutoff modes are 279 `N0NE` and five `DBL`. All current
+children enable perspective, while authored distance is zero for 276 children,
+`0.65` for seven, and `-0.35` for one.
+
+The current UV-offset range, source range, and edge range are zero for all 284
+children, but the v4 catalog still retains those fields rather than inferring a
+global default. Ten shader identities and 55 child identities occur across the
+260 groups, and no audited presentation float is non-finite. Camera-facing,
+cutoff, depth, and BQG animation execution remain deferred to a reviewed native
+presentation adapter instead of being flattened into static or skeletal FBX.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

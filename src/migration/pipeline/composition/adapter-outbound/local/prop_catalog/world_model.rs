@@ -101,6 +101,10 @@ pub(super) struct WorldCatalogCounts {
     pub(super) omitted_variants: usize,
     /// Non-mesh composite render bindings retained as deferred source evidence.
     pub(super) deferred_render_bindings: usize,
+    /// Deferred render bindings with exact source billboard presentation.
+    pub(super) deferred_billboard_bindings: usize,
+    /// Source billboard child quads retained in authored order.
+    pub(super) deferred_billboard_quads: usize,
     /// Deferred render bindings with exact source controller relationships.
     pub(super) deferred_controller_bindings: usize,
 }

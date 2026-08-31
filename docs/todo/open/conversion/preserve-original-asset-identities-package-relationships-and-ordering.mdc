@@ -681,5 +681,20 @@ five are package-shared; all 138 animations share their controller's container.
 The world-prop catalog contract therefore advances to
 `shar.world-model-props.v3` without claiming runtime billboard animation.
 
+World-prop deferred billboard relationships now retain the full decoded source
+presentation record in authored child order. Each resolved group preserves its
+version, shader identity, depth-test/write and fog flags, while each child keeps
+identity, version, billboard mode, translation, colour, UV corners, dimensions,
+distance, UV offset, rotation, cutoff, range fields, and perspective flag.
+Floating-point values are retained through exact `f32` bits before catalog
+serialization, and unresolved logical-only relationships remain explicit.
+
+The current 260 resolved deferred groups contain 284 authored child quads: 252
+groups contain one child and eight contain four. All groups are version 0 with
+depth test enabled, depth write disabled, and fog disabled; all children are
+version 2. The catalog contract therefore advances to
+`shar.world-model-props.v4` without treating presentation provenance as runtime
+billboard behavior.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
