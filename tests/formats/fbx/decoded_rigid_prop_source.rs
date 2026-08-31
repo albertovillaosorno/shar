@@ -228,10 +228,9 @@ fn rejects_duplicate_selected_prop_binding() -> Result<(), String> {
     let root = temp_root("duplicate-binding");
     let (skeleton_path, composite_path, mesh_path) =
         write_fixture(&root, "BodyShape")?;
-    let mut composite = serde_json::from_str::<serde_json::Value>(
-        composite_json(),
-    )
-    .map_err(|error| error.to_string())?;
+    let mut composite =
+        serde_json::from_str::<serde_json::Value>(composite_json())
+            .map_err(|error| error.to_string())?;
     let object = composite
         .as_object_mut()
         .ok_or_else(|| "composite fixture is not an object".to_owned())?;
@@ -279,10 +278,9 @@ fn allows_duplicate_unselected_prop_binding() -> Result<(), String> {
     let root = temp_root("duplicate-unselected-binding");
     let (skeleton_path, composite_path, mesh_path) =
         write_fixture(&root, "BodyShape")?;
-    let mut composite = serde_json::from_str::<serde_json::Value>(
-        composite_json(),
-    )
-    .map_err(|error| error.to_string())?;
+    let mut composite =
+        serde_json::from_str::<serde_json::Value>(composite_json())
+            .map_err(|error| error.to_string())?;
     let object = composite
         .as_object_mut()
         .ok_or_else(|| "composite fixture is not an object".to_owned())?;
