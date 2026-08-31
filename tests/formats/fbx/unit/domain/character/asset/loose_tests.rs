@@ -45,6 +45,7 @@ fn rejects_control_characters_in_character_identities() {
                 id: "root\nalias".to_owned(),
                 parent_id: None,
                 rest_matrix: [0f32; 16],
+                source_identity: None,
                 source_rig: None,
                 },],
             Vec::new(),
@@ -56,18 +57,43 @@ fn rejects_control_characters_in_character_identities() {
 }
 
 #[test]
+fn rejects_noncanonical_source_bone_identity() {
+    let result = CharacterAsset::new(
+        "character",
+        vec![Bone {
+            id: "root".to_owned(),
+            source_identity: Some(" root".to_owned()),
+            parent_id: None,
+            rest_matrix: [0f32; 16],
+            source_rig: None,
+        }],
+        Vec::new(),
+    );
+
+    assert_eq!(
+        result,
+        Err(CharacterError::NonCanonicalBoneSourceIdentity {
+            bone: "root".to_owned(),
+            source_identity: " root".to_owned(),
+        })
+    );
+}
+
+#[test]
 fn rejects_noncanonical_parent_identities() {
     let bones = vec![
         Bone {
             id: "root".to_owned(),
             parent_id: None,
             rest_matrix: [0f32; 16],
+            source_identity: None,
             source_rig: None,
         },
         Bone {
             id: "child".to_owned(),
             parent_id: Some("root\nalias".to_owned()),
             rest_matrix: [0f32; 16],
+            source_identity: None,
             source_rig: None,
         },
     ];

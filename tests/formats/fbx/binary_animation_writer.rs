@@ -54,12 +54,14 @@ use serde as _;
 use serde_json as _;
 use shar_sha256 as _;
 
-const ANIMATION_TOKENS: [&[u8]; 14] = [
+const ANIMATION_TOKENS: [&[u8]; 16] = [
     b"AnimationStack",
     b"AnimationLayer",
     b"AnimationCurveNode",
     b"AnimationCurve",
     b"walk\0\x01AnimStack",
+    b"SHAR_P3D_SourceAnimationIdentity",
+    b"PTRN_walk",
     b"KeyTime",
     b"KeyValueFloat",
     b"Lcl Translation",
@@ -100,6 +102,7 @@ fn character() -> Result<CharacterAsset, String> {
             rest_matrix: [
                 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
             ],
+            source_identity: None,
             source_rig: None,
         }],
         vec![SkinnedPart {
@@ -136,6 +139,7 @@ fn animation() -> Result<AnimationClip, String> {
         }],
         vec!["IK_Helper".to_owned()],
     )
+    .and_then(|clip| clip.with_source_identity("PTRN_walk"))
     .map_err(|error| format!("synthetic animation clip failed: {error:?}"))
 }
 

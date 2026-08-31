@@ -147,6 +147,21 @@ fn rejects_control_characters_in_animation_clip_identities() {
 }
 
 #[test]
+fn rejects_padded_animation_source_identity() {
+    let result = AnimationClip::new(
+        "walk",
+        30f64,
+        false,
+        1,
+        vec![animation_track("root")],
+        Vec::new(),
+    )
+    .and_then(|clip| clip.with_source_identity(" walk"));
+
+    assert_eq!(result, Err(AnimationClipError::InvalidSourceClipName));
+}
+
+#[test]
 fn rejects_padded_animation_member_ids() {
     let result = AnimationRequirement::new(
         vec![" animation".to_owned()],

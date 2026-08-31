@@ -158,6 +158,7 @@ fn rejects_unsupported_bound_channel_parameter() {
         rest_matrix: [
             1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
         ],
+        source_identity: None,
         source_rig: None,
     };
     let group = DecodedGroup {
@@ -197,6 +198,7 @@ fn rest_rotation_ignores_nonuniform_scale() -> Result<(), String> {
         rest_matrix: [
             0., 2., 0., 0., -1., 0., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
         ],
+        source_identity: None,
         source_rig: None,
     };
     let transforms = rest_transforms(&[bone])
@@ -227,6 +229,7 @@ fn rejects_bound_keys_outside_clip_frame_count() {
         rest_matrix: [
             1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
         ],
+        source_identity: None,
         source_rig: None,
     };
     let group = DecodedGroup {

@@ -79,6 +79,7 @@ fn root_bone() -> Bone {
             0., 0., 1., 0.,
             0., 0., 0., 1.,
         ],
+        source_identity: Some("root".to_owned()),
         source_rig: None,
     }
 }
@@ -98,6 +99,7 @@ fn animation_with_helpers() -> Result<AnimationClip, String> {
         }],
         vec!["Z_Helper".to_owned(), "A_Helper".to_owned()],
     )
+    .and_then(|clip| clip.with_source_identity("source-animation"))
     .map_err(|error| format!("animation failed: {error:?}"))
 }
 
@@ -145,6 +147,14 @@ fn animated_canonical_names_preserve_source_part_order() -> Result<(), String> {
     .map_err(|error| format!("character failed: {error:?}"))?;
     canonicalize_animated_asset(&mut asset, &mut [])
         .map_err(|error| error.to_string())?;
+    let bone = asset
+        .bones
+        .first()
+        .ok_or_else(|| {
+            "canonical animated asset lost its root bone".to_owned()
+        })?;
+    assert_eq!(bone.id, "bone-0000");
+    assert_eq!(bone.source_identity.as_deref(), Some("root"));
     let actual = asset
         .parts
         .iter()
@@ -189,6 +199,8 @@ fn animated_canonicalization_preserves_ignored_group_evidence()
     let clip = animations
         .first()
         .ok_or_else(|| "canonical animation was lost".to_owned())?;
+    assert_eq!(clip.name, "animation-0000");
+    assert_eq!(clip.source_identity.as_deref(), Some("source-animation"));
     assert_eq!(clip.ignored_group_ids, ["Z_Helper", "A_Helper"]);
     Ok(())
 }

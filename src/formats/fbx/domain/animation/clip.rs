@@ -64,8 +64,10 @@ pub const fn frame_rates_match(left: f64, right: f64) -> bool {
 )]
 #[derive(Clone, Debug, PartialEq)]
 pub struct AnimationClip {
-    /// Stable clip identity.
+    /// Stable publication clip identity.
     pub name: String,
+    /// Optional authored source clip identity retained across canonical naming.
+    pub source_identity: Option<String>,
     /// Source frames per second.
     pub frame_rate: f64,
     /// Whether the source declares cyclic playback.
@@ -83,6 +85,8 @@ pub struct AnimationClip {
 pub enum AnimationClipError {
     /// Clip identity was empty or carried surrounding whitespace.
     InvalidClipName,
+    /// Authored source clip identity was empty or non-canonical.
+    InvalidSourceClipName,
     /// Frame rate was non-finite or not positive.
     InvalidFrameRate,
     /// Clip declared no integer source frames.
@@ -157,12 +161,34 @@ impl AnimationClip {
         validate_ignored_groups(&ignored_group_ids)?;
         Ok(Self {
             name: clip_name,
+            source_identity: None,
             frame_rate,
             cyclic,
             frame_count,
             tracks,
             ignored_group_ids,
         })
+    }
+
+    /// Attach one canonical authored source clip identity.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the identity is blank, padded, or contains control
+    /// characters.
+    pub fn with_source_identity(
+        mut self,
+        source_identity: impl Into<String>,
+    ) -> Result<Self, AnimationClipError> {
+        let identity = source_identity.into();
+        if identity.trim().is_empty()
+            || identity != identity.trim()
+            || identity.chars().any(char::is_control)
+        {
+            return Err(AnimationClipError::InvalidSourceClipName);
+        }
+        self.source_identity = Some(identity);
+        Ok(self)
     }
 }
 

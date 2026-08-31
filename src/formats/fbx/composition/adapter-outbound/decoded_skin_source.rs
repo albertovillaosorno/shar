@@ -211,7 +211,8 @@ pub fn load_skeleton(
         let parent_id = joint_parent_id(path, index, joint, &names)?;
         names.push(joint_name.clone());
         bones.push(Bone {
-            id: joint_name,
+            id: joint_name.clone(),
+            source_identity: Some(joint_name),
             parent_id,
             rest_matrix: joint.rest_pose,
             source_rig,

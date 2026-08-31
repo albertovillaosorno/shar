@@ -61,8 +61,10 @@ pub struct BoneMirrorMap {
 /// One canonical skeleton bone and its bind-pose relationship.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Bone {
-    /// Stable bone id.
+    /// Stable publication bone id.
     pub id: String,
+    /// Optional authored source bone identity retained across canonical naming.
+    pub source_identity: Option<String>,
     /// Optional parent bone id.
     pub parent_id: Option<String>,
     /// Rest transform matrix in row-major order.
