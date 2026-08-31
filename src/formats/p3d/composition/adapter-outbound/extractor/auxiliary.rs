@@ -822,12 +822,12 @@ pub(super) fn recover_scrooby_pure3d_resource_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
-    recover_scrooby_resource_json(
-        component,
-        source,
-        kind_index,
-        &["filename", "inventory_name", "camera_name", "animation_name"],
-    )
+    recover_scrooby_resource_json(component, source, kind_index, &[
+        "filename",
+        "inventory_name",
+        "camera_name",
+        "animation_name",
+    ])
 }
 
 /// Recover one Scrooby text-style resource declaration.
