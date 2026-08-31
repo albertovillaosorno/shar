@@ -750,7 +750,9 @@ The 138 exact deferred billboard controller links also carry a stronger child
 relationship than controller identity alone: all linked BQG animation groups
 match the linked billboard child identities in exactly the same authored order.
 There are 130 one-child relationships and eight four-child relationships, with
-no duplicate child or animation-group identity in the linked set.
+no duplicate child or animation-group identity in the linked set. World intake
+now validates that exact sequence and fails closed when a controller animation
+group does not match its resolved billboard child.
 
 Those exact animation members are now decoded through a strict BQG evidence
 adapter before entering world provenance. All 138 linked members pass the

@@ -347,10 +347,18 @@ fn deferred_render_bindings(
             } else {
                 (None, None, None)
             };
+        let expected_animation_groups = billboard.as_ref().map(|billboard| {
+            billboard
+                .quads
+                .iter()
+                .map(|quad| quad.identity.as_str())
+                .collect::<Vec<_>>()
+        });
         let controller = deferred_controller_binding(
             root,
             package_relationship_rows,
             &binding.name,
+            expected_animation_groups.as_deref(),
         )?;
         bindings.push(DeferredRenderBinding {
             composite_prop_index,
@@ -523,6 +531,7 @@ fn deferred_controller_binding(
     root: &Path,
     rows: &[LedgerRow],
     expected_hierarchy: &str,
+    expected_animation_groups: Option<&[&str]>,
 ) -> Result<Option<DeferredControllerBinding>, PipelineError> {
     let mut controllers = Vec::new();
     for row in rows.iter().filter(|row| {
@@ -605,6 +614,20 @@ fn deferred_controller_binding(
                 "world prop BQG animation evidence failed: {error:?}"
             ))
         })?;
+        if let Some(expected_groups) = expected_animation_groups {
+            let actual_groups = evidence
+                .group_lists
+                .iter()
+                .flat_map(|list| list.groups.iter())
+                .map(|group| group.identity.as_str())
+                .collect::<Vec<_>>();
+            if actual_groups != expected_groups {
+                return Err(PipelineError::new(format!(
+                    "world prop BQG animation groups do not match billboard \
+                     children: {animation_identity}"
+                )));
+            }
+        }
         let source_value = serde_json::to_value(evidence).map_err(|error| {
             PipelineError::new(format!(
                 "world prop BQG animation evidence JSON failed: {error}"

@@ -447,9 +447,23 @@ fn deferred_controller_retains_exact_animation_relationship()
             kind: "animation".to_owned(),
         },
     ];
-    let result = deferred_controller_binding(&root, &rows, "beam")
-        .map_err(|error| error.to_string());
+    let result = deferred_controller_binding(
+        &root,
+        &rows,
+        "beam",
+        Some(&["beam"]),
+    )
+    .map_err(|error| error.to_string());
+    let mismatch = deferred_controller_binding(
+        &root,
+        &rows,
+        "beam",
+        Some(&["other-child"]),
+    );
     drop(fs::remove_dir_all(&root));
+    if mismatch.is_ok() {
+        return Err("mismatched BQG child relationship was accepted".to_owned());
+    }
     let binding = result?
         .ok_or_else(|| "controller relationship was not retained".to_owned())?;
     if binding.controller_identity != "BQG_beam"
