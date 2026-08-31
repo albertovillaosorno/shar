@@ -467,11 +467,9 @@ fn copy_block(
                 .ok_or_else(|| {
                     P3dError::invalid_source("DDS RGBA offset overflowed")
                 })?;
-            let end = destination
-                .checked_add(4)
-                .ok_or_else(|| {
-                    P3dError::invalid_source("DDS RGBA end overflowed")
-                })?;
+            let end = destination.checked_add(4).ok_or_else(|| {
+                P3dError::invalid_source("DDS RGBA end overflowed")
+            })?;
             let target = rgba.get_mut(destination..end).ok_or_else(|| {
                 P3dError::invalid_source(
                     "DDS RGBA destination is out of bounds",
