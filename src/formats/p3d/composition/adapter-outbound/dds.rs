@@ -213,9 +213,10 @@ fn decode_blocks(
                 .ok_or_else(|| {
                     P3dError::invalid_source("DDS block end overflowed")
                 })?;
-            let block = encoded.get(block_start..block_end).ok_or_else(|| {
-                P3dError::invalid_source("DDS block payload is truncated")
-            })?;
+            let block =
+                encoded.get(block_start..block_end).ok_or_else(|| {
+                    P3dError::invalid_source("DDS block payload is truncated")
+                })?;
             let pixels = decode_block(block, format)?;
             copy_block(&pixels, block_x, block_y, width, rgba)?;
         }
