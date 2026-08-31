@@ -131,6 +131,37 @@ fn semantic_part_records_preserve_fbx_part_order() -> Result<(), String> {
 }
 
 #[test]
+fn semantic_part_split_preserves_source_cast_shadow() -> Result<(), String> {
+    let root = Bone {
+        id: "root".to_owned(),
+        parent_id: None,
+        rest_matrix: [
+            1., 0., 0., 0., 0., 1., 0., 0., 0., 1., 0., 0., 0., 0., 0., 1.,
+        ],
+        source_rig: None,
+    };
+    let mut source_part = ordered_vehicle_part("bodyShape", "body_m")?;
+    source_part.mesh = source_part.mesh.with_cast_shadow(Some(false));
+    let asset = CharacterAsset::new("vehicle", vec![root], vec![source_part])
+        .map_err(|error| format!("vehicle fixture failed: {error:?}"))?;
+    let material = MaterialBinding::new("body_m", None)
+        .map_err(|error| format!("material failed: {error:?}"))?;
+    let (separated, _records) = separate_vehicle_parts(asset, &[material])
+        .map_err(|error| error.to_string())?;
+    let cast_shadow = separated
+        .parts
+        .first()
+        .and_then(|part| part.mesh.cast_shadow);
+    if cast_shadow == Some(false) {
+        Ok(())
+    } else {
+        Err(format!(
+            "vehicle semantic split changed CastShadow to {cast_shadow:?}"
+        ))
+    }
+}
+
+#[test]
 fn semantic_roles_keep_moving_and_glass_parts_separate() {
     assert_eq!(role("TrunkRotShape", "trunk_m"), "trunk");
     assert_eq!(role("DoorDRotShape", "door_m"), "driver-door");
