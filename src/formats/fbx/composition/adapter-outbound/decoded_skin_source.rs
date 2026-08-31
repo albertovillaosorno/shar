@@ -249,7 +249,10 @@ fn source_rig_metadata(
     let mut fix_flags = None;
     for metadata in &joint.joint_metadata {
         match metadata {
-            DecodedJointMetadata::MirrorMap { scale, index: mirror_index } => {
+            DecodedJointMetadata::MirrorMap {
+                scale,
+                index: mirror_index,
+            } => {
                 if mirror_map
                     .replace(BoneMirrorMap {
                         index: *mirror_index,
@@ -257,18 +260,22 @@ fn source_rig_metadata(
                     })
                     .is_some()
                 {
-                    return Err(SkinSourceError::UnsupportedJointRigSemantics {
-                        path: path_text(path),
-                        joint: index,
-                    });
+                    return Err(
+                        SkinSourceError::UnsupportedJointRigSemantics {
+                            path: path_text(path),
+                            joint: index,
+                        },
+                    );
                 }
             },
             DecodedJointMetadata::FixFlag { flags } => {
                 if fix_flags.replace(*flags).is_some() {
-                    return Err(SkinSourceError::UnsupportedJointRigSemantics {
-                        path: path_text(path),
-                        joint: index,
-                    });
+                    return Err(
+                        SkinSourceError::UnsupportedJointRigSemantics {
+                            path: path_text(path),
+                            joint: index,
+                        },
+                    );
                 }
             },
         }
@@ -1194,9 +1201,7 @@ impl SkinSourceError {
             Self::WeightCountMismatch { .. } => "weight-count-mismatch",
             Self::InvalidStoredWeight { .. } => "invalid-stored-weight",
             Self::PaletteSlotOutOfRange { .. } => "palette-slot-out-of-range",
-            Self::PaletteJointOutOfRange { .. } => {
-                "palette-joint-out-of-range"
-            },
+            Self::PaletteJointOutOfRange { .. } => "palette-joint-out-of-range",
             Self::VertexIndexOverflow { .. } => "vertex-index-overflow",
             Self::EmptyMatrixPalette { .. } => "empty-matrix-palette",
             Self::Mesh { .. } => "mesh",

@@ -68,14 +68,17 @@ pub fn load_selected_rigid_prop_asset(
     let (skeleton_name, bones) = load_skeleton(skeleton_path)?;
     let composite =
         composite_bindings(composite_path, &skeleton_name, &[], bones.len())?;
-    let source_provenance = CharacterSourceProvenance::new(
-        skeleton_name,
-        vec![composite.source_identity.clone()],
-    )
-    .map_err(SkinSourceError::Character)?;
+    let source_provenance =
+        CharacterSourceProvenance::new(skeleton_name, vec![
+            composite.source_identity.clone(),
+        ])
+        .map_err(SkinSourceError::Character)?;
     let mut bindings = BTreeMap::<String, Vec<CompositePropBinding>>::new();
     for binding in composite.props {
-        bindings.entry(binding.name.clone()).or_default().push(binding);
+        bindings
+            .entry(binding.name.clone())
+            .or_default()
+            .push(binding);
     }
     let (parts, selected_joints) =
         load_selected_parts(&bones, mesh_paths, &bindings)?;
@@ -154,11 +157,11 @@ pub fn load_instanced_rigid_prop_asset_with_billboards(
     let (skeleton_name, bones) = load_skeleton(skeleton_path)?;
     let composite =
         composite_bindings(composite_path, &skeleton_name, &[], bones.len())?;
-    let source_provenance = CharacterSourceProvenance::new(
-        skeleton_name,
-        vec![composite.source_identity.clone()],
-    )
-    .map_err(SkinSourceError::Character)?;
+    let source_provenance =
+        CharacterSourceProvenance::new(skeleton_name, vec![
+            composite.source_identity.clone(),
+        ])
+        .map_err(SkinSourceError::Character)?;
     let mut bindings = composite.props;
     append_supplemental_bindings(&mut bindings, supplemental, &bones);
     let (meshes, required_meshes) =
