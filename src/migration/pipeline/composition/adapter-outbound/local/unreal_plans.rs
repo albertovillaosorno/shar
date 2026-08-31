@@ -596,14 +596,13 @@ fn aggregate_package_revision(
     package_id: &str,
     sources: &[UnrealSourceRecord],
 ) -> Result<String, String> {
-    let mut members = sources
+    let members = sources
         .iter()
         .filter(|source| source.package_id == package_id)
         .collect::<Vec<_>>();
     if members.is_empty() {
         return Err(format!("package {package_id} has no source evidence"));
     }
-    members.sort_by(|left, right| left.id.cmp(&right.id));
     let mut preimage = String::new();
     for source in members {
         preimage.push_str(&source.id);

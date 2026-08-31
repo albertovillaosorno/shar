@@ -397,6 +397,37 @@ fn composite_geometry_reserves_no_false_static_mesh() -> Result<(), String> {
 }
 
 #[test]
+fn pending_fbx_revision_binds_package_source_order() -> Result<(), String> {
+    let manifest = UnrealImportManifest::build(
+        &skeletal_model_index()?,
+        skeletal_model_evidence(),
+    )?;
+    let revision = digest_hex(manifest.to_jsonl().as_bytes());
+    let ordered = manifest.plan_bundle(&revision)?;
+    let mut reordered = manifest;
+    reordered.sources.reverse();
+    let reversed = reordered.plan_bundle(&revision)?;
+    let asset_import_json =
+        |bundle: &shar_unreal_conversion::domain::PlanBundle| {
+        bundle
+            .artifacts()
+            .iter()
+            .find(|artifact| artifact.family == PlanFamily::AssetImport)
+            .map(|artifact| artifact.json.clone())
+    };
+    let ordered_json = asset_import_json(&ordered)
+        .ok_or_else(|| "ordered FBX import plan is missing".to_owned())?;
+    let reversed_json = asset_import_json(&reversed)
+        .ok_or_else(|| "reordered FBX import plan is missing".to_owned())?;
+    if ordered_json == reversed_json {
+        return Err(
+            "FBX source revision ignored package source order".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn complete_fbx_catalog_promotes_model_import_to_ready() -> Result<(), String> {
     let manifest =
         UnrealImportManifest::build(&model_index()?, vec![model_evidence()])?;
