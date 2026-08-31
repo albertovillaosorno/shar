@@ -107,10 +107,10 @@ fn generated_package_evidence_preserves_member_order() {
 
     assert_eq!(
         result,
-        Ok((
-            vec!["model-b".to_owned(), "model-a".to_owned()],
-            vec!["texture-b".to_owned(), "texture-a".to_owned()],
-        ))
+        Ok((vec!["model-b".to_owned(), "model-a".to_owned()], vec![
+            "texture-b".to_owned(),
+            "texture-a".to_owned()
+        ],))
     );
 }
 
