@@ -30,8 +30,8 @@
 
 //! Adapter outbound outbound adapter.
 
-pub mod decoders;
 mod dds;
+pub mod decoders;
 pub mod expression;
 /// Item.
 pub mod extractor;
