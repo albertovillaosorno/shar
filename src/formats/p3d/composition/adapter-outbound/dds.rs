@@ -348,8 +348,8 @@ fn decode_dxt3_alpha(block: &[u8]) -> Result<[u8; 16], P3dError> {
             .ok_or_else(|| {
                 P3dError::invalid_source("DXT3 alpha shift overflowed")
             })?;
-        let nibble = u8::try_from((encoded >> shift) & 0xf)
-            .map_err(|error| {
+        let nibble =
+            u8::try_from((encoded >> shift) & 0xf).map_err(|error| {
                 P3dError::invalid_source(format!(
                     "DXT3 alpha nibble exceeds u8: {error}"
                 ))
