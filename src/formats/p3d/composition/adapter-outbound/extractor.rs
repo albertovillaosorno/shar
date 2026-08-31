@@ -195,7 +195,6 @@ fn register_recovered_path(
     Ok(true)
 }
 
-
 /// Return whether repeated nested evidence has parent-local occurrence meaning.
 fn requires_distinct_nested_occurrence(kind: &str) -> bool {
     matches!(
