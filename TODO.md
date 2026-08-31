@@ -84,14 +84,6 @@ Recheck those conversion audits in-game after deterministic fixes land.
 <!-- MarkdownLint-disable-next-line MD013 MD044 -->
 [docs/todo/open/conversion/recheck-those-conversion-audits-in-game-after-deterministic-fixes-land.mdc](docs/todo/open/conversion/recheck-those-conversion-audits-in-game-after-deterministic-fixes-land.mdc)
 
-### TODO - Preserve original audio, cinematics, localization, UI, mission, and…
-
-Preserve original audio, cinematics, localization, UI, mission, and tuning
-data in deterministic normalized forms.
-
-<!-- MarkdownLint-disable-next-line MD013 MD044 -->
-[docs/todo/open/conversion/preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in.mdc](docs/todo/open/conversion/preserve-original-audio-cinematics-localization-ui-mission-and-tuning-data-in.mdc)
-
 ## P1 — Unreal asset and mission compilation
 
 ### TODO - Generate a public-safe deterministic Unreal import manifest
