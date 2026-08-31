@@ -360,21 +360,15 @@ fn decode_dxt3_alpha(block: &[u8]) -> Result<[u8; 16], P3dError> {
 }
 
 fn decode_dxt5_alpha(block: &[u8]) -> Result<[u8; 16], P3dError> {
-    let alpha0 = *block
-        .first()
-        .ok_or_else(|| {
-            P3dError::invalid_source("DXT5 alpha endpoint 0 is missing")
-        })?;
-    let alpha1 = *block
-        .get(1)
-        .ok_or_else(|| {
-            P3dError::invalid_source("DXT5 alpha endpoint 1 is missing")
-        })?;
-    let index_bytes = block
-        .get(2..8)
-        .ok_or_else(|| {
-            P3dError::invalid_source("DXT5 alpha indices are missing")
-        })?;
+    let alpha0 = *block.first().ok_or_else(|| {
+        P3dError::invalid_source("DXT5 alpha endpoint 0 is missing")
+    })?;
+    let alpha1 = *block.get(1).ok_or_else(|| {
+        P3dError::invalid_source("DXT5 alpha endpoint 1 is missing")
+    })?;
+    let index_bytes = block.get(2..8).ok_or_else(|| {
+        P3dError::invalid_source("DXT5 alpha indices are missing")
+    })?;
     let mut packed = [0_u8; 8];
     packed
         .get_mut(..6)
