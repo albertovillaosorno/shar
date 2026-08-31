@@ -808,12 +808,7 @@ pub(super) fn recover_scrooby_image_resource_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
-    recover_scrooby_resource_json(
-        component,
-        source,
-        kind_index,
-        &["filename"],
-    )
+    recover_scrooby_resource_json(component, source, kind_index, &["filename"])
 }
 
 /// Recover one Scrooby Pure3D-resource declaration.
