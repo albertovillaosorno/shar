@@ -146,6 +146,102 @@ fn indexed_material_accepts_exact_external_texture() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_conflicting_texture_staging_identity() -> Result<(), String> {
+    let root = temp_root("texture-staging-collision");
+    let first_shader = root.join("first-shader.json");
+    let second_shader = root.join("second-shader.json");
+    let first_texture = root.join("first").join("shared.png");
+    let second_texture = root.join("second").join("shared.png");
+    fs::create_dir_all(root.join("first"))
+        .and_then(|()| fs::create_dir_all(root.join("second")))
+        .map_err(|error| error.to_string())?;
+    let shader = |name: &str| {
+        format!(
+            concat!(
+                r#"{{"schema":"shader","name":"{}","#,
+                r#""params":[{{"kind":"texture","param":"TEX","#,
+                r#""value":"shared.bmp"}}]}}"#,
+            ),
+            name
+        )
+    };
+    fs::write(&first_shader, shader("firstShader"))
+        .and_then(|()| fs::write(&second_shader, shader("secondShader")))
+        .and_then(|()| fs::write(&first_texture, b"first-payload"))
+        .and_then(|()| fs::write(&second_texture, b"second-payload"))
+        .map_err(|error| error.to_string())?;
+    let output_dir = root.join("staged");
+    let source = DecodedComponentSource::new(&root, &output_dir);
+    let _first = source
+        .resolve_indexed_material_with_external_texture(
+            &first_shader,
+            &first_texture,
+        )
+        .map_err(|error| format!("first staging failed: {error:?}"))?;
+    let second = source.resolve_indexed_material_with_external_texture(
+        &second_shader,
+        &second_texture,
+    );
+    let staged = fs::read(output_dir.join("shared.png"))
+        .map_err(|error| error.to_string())?;
+    let _cleanup_result = fs::remove_dir_all(&root);
+    if second
+        != Err(DecodedComponentError::TextureStagingCollision {
+            file_name: "shared.png".to_owned(),
+        })
+    {
+        return Err(format!("unexpected texture collision result: {second:?}"));
+    }
+    if staged != b"first-payload" {
+        return Err("conflicting texture replaced prior staging".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn accepts_identical_texture_staging_identity() -> Result<(), String> {
+    let root = temp_root("texture-staging-identical");
+    let shader_path = root.join("shader.json");
+    let first_texture = root.join("first").join("shared.png");
+    let second_texture = root.join("second").join("shared.png");
+    fs::create_dir_all(root.join("first"))
+        .and_then(|()| fs::create_dir_all(root.join("second")))
+        .and_then(|()| {
+            fs::write(
+                &shader_path,
+                // jig-ignore-next-line: literal
+                r#"{"schema":"shader","name":"sharedShader","params":[{"kind":"texture","param":"TEX","value":"shared.bmp"}]}"#,
+            )
+        })
+        .and_then(|()| fs::write(&first_texture, b"same-payload"))
+        .and_then(|()| fs::write(&second_texture, b"same-payload"))
+        .map_err(|error| error.to_string())?;
+    let output_dir = root.join("staged");
+    let source = DecodedComponentSource::new(&root, &output_dir);
+    let first = source
+        .resolve_indexed_material_with_external_texture(
+            &shader_path,
+            &first_texture,
+        )
+        .map_err(|error| format!("first staging failed: {error:?}"))?;
+    let second = source
+        .resolve_indexed_material_with_external_texture(
+            &shader_path,
+            &second_texture,
+        )
+        .map_err(|error| format!("identical staging failed: {error:?}"))?;
+    let staged = fs::read(output_dir.join("shared.png"))
+        .map_err(|error| error.to_string())?;
+    let _cleanup_result = fs::remove_dir_all(&root);
+    if first != second || staged != b"same-payload" {
+        return Err(
+            "identical texture staging changed binding evidence".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_duplicate_texture_parameters() {
     let root = temp_root("duplicate-texture-parameter");
     let shader_dir = root.join("components").join("shader");
