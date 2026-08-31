@@ -118,7 +118,9 @@ pub(super) fn discover_world_candidates(
 }
 
 /// Project one owner's mesh members through exact source component ordinals.
-fn source_ordered_mesh_ids(rows: &[LedgerRow]) -> Result<Vec<String>, PipelineError> {
+fn source_ordered_mesh_ids(
+    rows: &[LedgerRow],
+) -> Result<Vec<String>, PipelineError> {
     let mut meshes = rows
         .iter()
         .filter(|row| row.kind == "mesh")
