@@ -36,9 +36,9 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::{
-    is_pipeline_run_report, obfuscated_route, parse_component_line,
-    read_number_field, read_package_ledger, should_skip_local_game_file,
-    source_object_key, write_manifest_minor_units,
+    compare_source_chunk_ordinals, is_pipeline_run_report, obfuscated_route,
+    parse_component_line, read_number_field, read_package_ledger,
+    should_skip_local_game_file, source_object_key, write_manifest_minor_units,
 };
 
 /// Distinguishes concurrent synthetic manifest cases within one process.
@@ -329,6 +329,15 @@ fn run_creation_order_case() -> Result<(), String> {
         return Err(String::from("manifest changed with file creation order"));
     }
     Ok(())
+}
+
+#[test]
+fn source_chunk_ordinals_precede_derived_companions() {
+    assert!(compare_source_chunk_ordinals("10", "20").is_lt());
+    assert!(compare_source_chunk_ordinals("20", "10").is_gt());
+    assert!(compare_source_chunk_ordinals("10", "none").is_lt());
+    assert!(compare_source_chunk_ordinals("none", "10").is_gt());
+    assert!(compare_source_chunk_ordinals("none", "none").is_eq());
 }
 
 #[test]

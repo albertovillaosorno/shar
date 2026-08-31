@@ -371,12 +371,6 @@ pub(super) fn read_minor_unit_packages(
     }
     let mut output = packages.into_values().collect::<Vec<_>>();
     for package in &mut output {
-        package.members.sort_by(|left, right| {
-            left.role
-                .cmp(&right.role)
-                .then_with(|| left.path.cmp(&right.path))
-                .then_with(|| left.id.cmp(&right.id))
-        });
         package.refresh_classification_from_members();
     }
     let mut derived = derived_text_packages(extracted_root, &output)?;

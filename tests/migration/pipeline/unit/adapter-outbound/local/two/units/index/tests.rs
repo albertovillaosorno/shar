@@ -31,15 +31,66 @@
 //! Tests unit tests.
 
 use std::collections::BTreeSet;
+use std::fs;
+use std::path::PathBuf;
 
 use super::super::index_render::render_index_jsonl;
 use super::{
     decoded_mesh_has_no_primitive_groups,
     MinorUnitId, MinorUnitPackage, MinorUnitRole, MinorUnitRow, PackageCategory,
     PackageId,
-    PackageMember, category_from_root, package_root, role_from_fields,
-    subcategory_from_root, validate_package_coverage,
+    PackageMember, category_from_root, package_root, read_minor_unit_packages,
+    role_from_fields, subcategory_from_root, validate_package_coverage,
 };
+
+#[test]
+fn package_index_preserves_manifest_member_order() -> Result<(), String> {
+    let root = index_order_case_root();
+    let manifest_dir = root.join("minor-unit");
+    fs::create_dir_all(&manifest_dir).map_err(|error| error.to_string())?;
+    let manifest = concat!(
+        r#"{"id":"z-member","#,
+        r#""path":"extracted/art/test/components/metadata/z.json","#,
+        r#""type":"metadata","kind":"test","#,
+        r#""source_chunk_kind":"metadata","#,
+        r#""source_chunk_ordinal":"10","#,
+        r#""recovery_status":"fully-decoded"}"#,
+        "\n",
+        r#"{"id":"a-member","#,
+        r#""path":"extracted/art/test/components/metadata/a.json","#,
+        r#""type":"metadata","kind":"test","#,
+        r#""source_chunk_kind":"metadata","#,
+        r#""source_chunk_ordinal":"20","#,
+        r#""recovery_status":"fully-decoded"}"#,
+        "\n",
+    );
+    fs::write(manifest_dir.join("manifest.jsonl"), manifest)
+        .map_err(|error| error.to_string())?;
+    let result = read_minor_unit_packages(&root).map(|packages| {
+        packages
+            .into_iter()
+            .flat_map(|package| package.members.into_iter())
+            .map(|member| member.id.0)
+            .collect::<Vec<_>>()
+    });
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+
+    if result.map_err(|error| error.to_string())? != ["z-member", "a-member"] {
+        return Err("package index reordered manifest members".to_owned());
+    }
+    Ok(())
+}
+
+fn index_order_case_root() -> PathBuf {
+    let mut repository = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    while !repository.join("TODO.md").is_file() {
+        assert!(repository.pop(), "repository root must exist");
+    }
+    repository.join(".temp/tests").join(format!(
+        "pipeline-index-order-{}",
+        std::process::id()
+    ))
+}
 
 #[test]
 fn manifest_member_preserves_chunk_ordinal() -> Result<(), String> {

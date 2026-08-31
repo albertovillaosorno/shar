@@ -505,15 +505,42 @@ fn enrich_units(
         });
     }
     progress.finish();
-    // Group by source object, then order by source chunk kind and path so the
-    // ledger is stable and a package's components stay together across kinds.
-    enriched.sort_by(|left, right| {
-        left.source_object
-            .cmp(&right.source_object)
-            .then_with(|| left.source_chunk_kind.cmp(&right.source_chunk_kind))
-            .then_with(|| left.path.cmp(&right.path))
-    });
+    // Group by source object and preserve source chunk order. Derived companion
+    // rows without source ordinals follow decoded chunks deterministically.
+    enriched.sort_by(compare_enriched_units);
     Ok(enriched)
+}
+
+/// Order one source object's decoded chunks before deterministic companions.
+fn compare_enriched_units(
+    left: &EnrichedUnit,
+    right: &EnrichedUnit,
+) -> std::cmp::Ordering {
+    left.source_object
+        .cmp(&right.source_object)
+        .then_with(|| {
+            compare_source_chunk_ordinals(
+                &left.source_chunk_ordinal,
+                &right.source_chunk_ordinal,
+            )
+        })
+        .then_with(|| left.source_chunk_kind.cmp(&right.source_chunk_kind))
+        .then_with(|| left.path.cmp(&right.path))
+}
+
+/// Sort numeric source ordinals before derived rows without source positions.
+fn compare_source_chunk_ordinals(
+    left: &str,
+    right: &str,
+) -> std::cmp::Ordering {
+    match (left.parse::<u64>(), right.parse::<u64>()) {
+        (Ok(left_ordinal), Ok(right_ordinal)) => {
+            left_ordinal.cmp(&right_ordinal)
+        },
+        (Ok(_), Err(_)) => std::cmp::Ordering::Less,
+        (Err(_), Ok(_)) => std::cmp::Ordering::Greater,
+        (Err(_), Err(_)) => std::cmp::Ordering::Equal,
+    }
 }
 
 /// Render one manifest row with real provenance columns and `error`
