@@ -591,5 +591,21 @@ unambiguous case-only match, and no reference has multiple case-only matches.
 The remaining 6,051 references have no same-package logical-name match and keep
 their separate missing/shared-texture authority behavior.
 
+FBX package-member mesh loading now resolves a physical normalized member path
+through `components.jsonl` before validating the decoded authored mesh identity.
+Collision-renamed members therefore remain independently addressable without
+pretending their generated file stem is the source mesh name. Package roots
+without a ledger retain the existing strict member-name fixture behavior, while
+a present ledger must contain exactly one matching mesh relationship.
+
+The cached normalized corpus contains 14,297 mesh rows. 14,276 physical member
+stems equal their authored mesh identity directly, while 21 rows across 10
+packages use deterministic `__ordinal_` collision suffixes. Those 21 occurrences
+belong to repeated logical mesh identities with differing payloads, so
+silently rejecting or coalescing the collision-renamed members would lose source
+evidence.
+A synthetic regression covers both ordinary package loading and
+world-analysis loading through the ledger relationship.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
