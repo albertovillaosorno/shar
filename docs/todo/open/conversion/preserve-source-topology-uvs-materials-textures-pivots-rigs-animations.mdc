@@ -130,5 +130,20 @@ group was observed. Across the same 19,610 primitive groups, no decoded tangent,
 binormal, or multi-colour field is present. The adapters' strict JSON shape
 continues to reject unsupported fields rather than dropping them silently.
 
+Deferred world billboard controller relationships now retain their exact BQG
+animation member identity and source ordinal instead of losing the animation
+edge when model FBX publication omits billboard runtime semantics. This is
+relationship preservation only: the decoded BQG channel payload remains the
+source authority and is not flattened into skeletal or static FBX animation.
+
+A focused audit of the 138 linked BQG animations finds 134 at 30 fps and four at
+24 fps; all are non-cyclic and have no loose channels or legacy animation
+extras. Eight animations contain four named groups, while the other 130 contain
+one group. Channel sequences split into 82 standard eight-channel records, 43
+width/height-only records, eight four-group repetitions of the standard set,
+and five extended records that also carry `ERNG`, `SRNG`, and `ORNG`. Those
+source differences remain explicitly deferred for a later faithful billboard
+animation representation rather than normalized away.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

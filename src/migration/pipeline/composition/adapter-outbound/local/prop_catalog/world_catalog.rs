@@ -35,7 +35,9 @@ use std::path::Path;
 
 use serde_json::{Value, json};
 
-use super::model::{DeferredRenderBinding, PropRoute};
+use super::model::{
+    DeferredControllerBinding, DeferredRenderBinding, PropRoute,
+};
 use super::world_model::{ExportedWorldProp, WorldCatalogCounts};
 use crate::domain::PipelineError;
 
@@ -70,6 +72,12 @@ pub(super) fn world_counts(
             .flat_map(|asset| asset.aliases.iter())
             .map(|alias| alias.deferred_render_bindings.len())
             .sum(),
+        deferred_controller_bindings: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .flat_map(|alias| alias.deferred_render_bindings.iter())
+            .filter(|binding| binding.controller.is_some())
+            .count(),
     }
 }
 
@@ -84,7 +92,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v2",
+        "schema": "shar.world-model-props.v3",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -99,8 +107,9 @@ pub(super) fn write_world_catalog(
                 "evidence in this catalog"
             ),
             "deferred_render_bindings": concat!(
-                "retain authored non-mesh composite prop relationships as ",
-                "source evidence without substituting static FBX geometry"
+                "retain authored non-mesh composite prop relationships and ",
+                "exact controller/animation links as source evidence without ",
+                "substituting static FBX geometry"
             ),
             "unreal_assets": [
                 "placement and locators",
@@ -121,7 +130,9 @@ pub(super) fn write_world_catalog(
             "rigid_animated_assets": counts.animated_assets,
             "merged_compatible_variants": counts.merged_variants,
             "omitted_visual_variants": counts.omitted_variants,
-            "deferred_render_bindings": counts.deferred_render_bindings
+            "deferred_render_bindings": counts.deferred_render_bindings,
+            "deferred_controller_bindings":
+                counts.deferred_controller_bindings
         },
         "assets": assets.iter().map(asset_value).collect::<Vec<_>>()
     });
@@ -134,6 +145,24 @@ pub(super) fn write_world_catalog(
     })
 }
 
+/// Render one exact deferred controller and animation relationship.
+fn deferred_controller_value(binding: &DeferredControllerBinding) -> Value {
+    json!({
+        "controller_identity": binding.controller_identity,
+        "controller_kind": binding.controller_kind,
+        "controller_member_id": binding.controller_member_id,
+        "controller_source_ordinal": binding.controller_source_ordinal,
+        "controller_version": binding.controller_version,
+        "controller_type": binding.controller_type,
+        "frame_offset": f32::from_bits(binding.frame_offset_bits),
+        "animation_identity": binding.animation_identity,
+        "animation_member_id": binding.animation_member_id,
+        "animation_source_ordinal": binding.animation_source_ordinal,
+        "animation_version": binding.animation_version,
+        "animation_type": binding.animation_type
+    })
+}
+
 /// Render one deferred non-mesh composite relationship without inference.
 fn deferred_binding_value(binding: &DeferredRenderBinding) -> Value {
     json!({
@@ -143,7 +172,8 @@ fn deferred_binding_value(binding: &DeferredRenderBinding) -> Value {
         "is_translucent": binding.is_translucent,
         "component_kind": binding.component_kind,
         "component_member_id": binding.component_member_id,
-        "source_ordinal": binding.source_ordinal
+        "source_ordinal": binding.source_ordinal,
+        "controller": binding.controller.as_ref().map(deferred_controller_value)
     })
 }
 
