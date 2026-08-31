@@ -363,7 +363,7 @@ fn compile_package_binding(
         ));
     }
     let id_set = audio_ids.iter().map(String::as_str).collect::<BTreeSet<_>>();
-    let mut audio_paths = package
+    let audio_paths = package
         .members()
         .iter()
         .filter(|member| {
@@ -377,7 +377,6 @@ fn compile_package_binding(
             "completion dialogue audio ids do not match physical members",
         ));
     }
-    audio_paths.sort();
     Ok(MissionCompletionDialogPackageBinding {
         participant_id: participant.to_owned(),
         package_id: package.package_id.clone(),
