@@ -111,6 +111,7 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
                         package_id: "level-three-terrain".to_owned(),
                         subcategory: "terrain-world/level-03/terrain-mesh"
                             .to_owned(),
+                        package_member_id: "texture-member-182".to_owned(),
                         member_id: "glow".to_owned(),
                         source_ordinal: 182,
                         sha256: "one".to_owned(),
@@ -119,6 +120,7 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
                         package_id: "level-three-terrain".to_owned(),
                         subcategory: "terrain-world/level-03/terrain-mesh"
                             .to_owned(),
+                        package_member_id: "texture-member-10591".to_owned(),
                         member_id: "glow__ordinal_10591".to_owned(),
                         source_ordinal: 10_591,
                         sha256: "two".to_owned(),
@@ -277,6 +279,12 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
         .and_then(serde_json::Value::as_array)
         .ok_or_else(|| "deferred texture occurrences are missing".to_owned())?;
     assert_eq!(texture_occurrences.len(), 2);
+    assert_eq!(
+        texture_occurrences
+            .first()
+            .and_then(|value| value.get("package_member_id")),
+        Some(&"texture-member-182".into())
+    );
     assert_eq!(
         texture_occurrences
             .first()
