@@ -453,5 +453,22 @@ controller, or animation relationships. Their current normalized member ids and
 source ordinals remain truthful, so this is a stable-identity provenance gap,
 not permission to infer new controller, animation, or presentation semantics.
 
+Phase-three physical coordinates are now an intake invariant rather than an
+adapter convention. A whole generated-index audit covers 161,960 current
+physical members: member paths are unique within every package, and all 132,179
+members that carry a source chunk ordinal also have a package-unique ordinal.
+Across the 12 package categories with normalized component ledgers, all 132,179
+path-bearing ledger rows map one-to-one to those same phase-three members by
+exact published path plus source ordinal, with zero missing or ambiguous rows.
+
+`PhaseThreePackageRow` now rejects duplicate physical member paths and duplicate
+non-null source ordinals before any conversion adapter can observe the package.
+It also exposes one exact path-and-ordinal lookup. Vehicle and world texture
+occurrence joins use that shared boundary, while the world shader coordinate map
+can rely on intake uniqueness instead of maintaining a second ambiguity guard.
+This centralizes physical occurrence identity only; it does not turn source
+ordinal into logical shader, texture, controller, or render relationship
+authority.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

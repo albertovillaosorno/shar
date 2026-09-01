@@ -236,16 +236,6 @@ fn source_ordered_vehicle_members<'row>(
         })
         .collect::<Result<Vec<_>, PipelineError>>()?;
     ordered.sort_by_key(|(ordinal, _member)| *ordinal);
-    for pair in ordered.windows(2) {
-        let [(left_ordinal, _left), (right_ordinal, _right)] = pair else {
-            continue;
-        };
-        if left_ordinal == right_ordinal {
-            return Err(PipelineError::new(format!(
-                "vehicle package repeats source {kind} ordinal {left_ordinal}"
-            )));
-        }
-    }
     Ok(ordered.into_iter().map(|(_ordinal, member)| member).collect())
 }
 

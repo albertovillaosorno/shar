@@ -1323,27 +1323,23 @@ fn vehicle_texture_occurrence(
     let source_ordinal = vehicle_ledger_ordinal(row)?;
     let expected_path =
         format!("{}/components/{relative}", package.package_root);
-    let matching_members = package
-        .members()
-        .iter()
+    let package_member = package
+        .find_member_by_source_coordinate(&expected_path, source_ordinal)
         .filter(|member| {
             member.role == crate::domain::package::PackageRole::Texture
                 && member.source_chunk_kind == "texture"
                 && member.kind == "p3d-texture"
-                && member.source_chunk_ordinal == Some(source_ordinal)
-                && member.path == expected_path
         })
-        .collect::<Vec<_>>();
-    let [package_member] = matching_members.as_slice() else {
-        return Err(PipelineError::new(format!(
-            concat!(
-                "vehicle texture occurrence has no unique phase-three member: ",
-                "{}@{}"
-            ),
-            relative,
-            source_ordinal
-        )));
-    };
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                concat!(
+                    "vehicle texture occurrence has no phase-three member: ",
+                    "{}@{}"
+                ),
+                relative,
+                source_ordinal
+            ))
+        })?;
     let bytes = fs::read(package_root.join("components").join(relative))
         .map_err(|error| PipelineError::new(error.to_string()))?;
     Ok(EffectTextureOccurrenceRecord {
