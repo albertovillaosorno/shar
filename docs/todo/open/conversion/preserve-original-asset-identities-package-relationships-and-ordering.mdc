@@ -1019,5 +1019,21 @@ This centralizes physical occurrence identity only; it does not turn source
 ordinal into logical shader, texture, controller, or render relationship
 authority.
 
+`shar.world-model-props.v11` closes that deferred world provenance gap using
+the centralized phase-three coordinate invariant. Terrain-world intake now
+builds one classified source-member table for every source-ordinal package
+member. Deferred composite quad groups must resolve as `p3d-mesh` model members,
+frame-controller-family relationships as `p3d-controller` controller members,
+and retained BQG animations as `p3d-animation` animation members at the exact
+ledger path and source ordinal.
+
+The catalog now serializes those stable phase-three ids beside the existing
+normalized member ids and source ordinals. This covers the previously audited
+1,091 quad groups, 2,802 frame-controller-family rows, and 4,032 animations
+without changing composite selection, controller-to-animation matching, BQG
+validation, or presentation semantics. A classification mismatch fails closed;
+phase-three identity still records a physical occurrence rather than inventing
+a logical relationship.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

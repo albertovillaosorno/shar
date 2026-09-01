@@ -154,7 +154,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v10",
+        "schema": "shar.world-model-props.v11",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -352,12 +352,14 @@ fn deferred_controller_value(binding: &DeferredControllerBinding) -> Value {
     json!({
         "controller_identity": binding.controller_identity,
         "controller_kind": binding.controller_kind,
+        "controller_package_member_id": binding.controller_package_member_id,
         "controller_member_id": binding.controller_member_id,
         "controller_source_ordinal": binding.controller_source_ordinal,
         "controller_version": binding.controller_version,
         "controller_type": binding.controller_type,
         "frame_offset": f32::from_bits(binding.frame_offset_bits),
         "animation_identity": binding.animation_identity,
+        "animation_package_member_id": binding.animation_package_member_id,
         "animation_member_id": binding.animation_member_id,
         "animation_source_ordinal": binding.animation_source_ordinal,
         "animation_version": binding.animation_version,
@@ -374,6 +376,7 @@ fn deferred_binding_value(binding: &DeferredRenderBinding) -> Value {
         "skeleton_joint_id": binding.skeleton_joint_id,
         "is_translucent": binding.is_translucent,
         "component_kind": binding.component_kind,
+        "component_package_member_id": binding.component_package_member_id,
         "component_member_id": binding.component_member_id,
         "source_ordinal": binding.source_ordinal,
         "billboard": binding.billboard.as_ref().map(deferred_billboard_value),

@@ -47,6 +47,7 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
         skeleton_joint_id: 7,
         is_translucent: true,
         component_kind: Some("quad_group".to_owned()),
+        component_package_member_id: Some("quad-member-42".to_owned()),
         component_member_id: Some("light-beam__ordinal_42".to_owned()),
         source_ordinal: Some(42),
         billboard: Some(DeferredBillboardBinding {
@@ -155,12 +156,14 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
         controller: Some(DeferredControllerBinding {
             controller_identity: "BQG_light-beam".to_owned(),
             controller_kind: "frame_controller".to_owned(),
+            controller_package_member_id: "controller-member-43".to_owned(),
             controller_member_id: "BQG_light-beam".to_owned(),
             controller_source_ordinal: 43,
             controller_version: 0,
             controller_type: "BQG".to_owned(),
             frame_offset_bits: 0_f32.to_bits(),
             animation_identity: "BQG_light-beam".to_owned(),
+            animation_package_member_id: Some("animation-member-41".to_owned()),
             animation_member_id: Some("animation_0001".to_owned()),
             animation_source_ordinal: Some(41),
             animation_version: Some(0),
@@ -213,6 +216,10 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
     assert_eq!(value.get("skeleton_joint_id"), Some(&7.into()));
     assert_eq!(value.get("is_translucent"), Some(&true.into()));
     assert_eq!(value.get("component_kind"), Some(&"quad_group".into()));
+    assert_eq!(
+        value.get("component_package_member_id"),
+        Some(&"quad-member-42".into())
+    );
     assert_eq!(
         value.get("component_member_id"),
         Some(&"light-beam__ordinal_42".into())
@@ -332,9 +339,17 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
         .ok_or_else(|| {
             "deferred controller did not serialize as an object".to_owned()
         })?;
+    assert_eq!(
+        controller.get("controller_package_member_id"),
+        Some(&"controller-member-43".into())
+    );
     assert_eq!(controller.get("controller_source_ordinal"), Some(&43.into()));
     assert_eq!(controller.get("controller_type"), Some(&"BQG".into()));
     assert_eq!(controller.get("frame_offset"), Some(&0.0.into()));
+    assert_eq!(
+        controller.get("animation_package_member_id"),
+        Some(&"animation-member-41".into())
+    );
     assert_eq!(controller.get("animation_source_ordinal"), Some(&41.into()));
     assert_eq!(controller.get("animation_type"), Some(&"BQG_".into()));
     let animation_source = controller
