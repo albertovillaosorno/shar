@@ -645,5 +645,26 @@ unchanged, and semantic deduplication still clears `asset.source_provenance`
 before hashing. The preserved 0.1/0.5 values therefore gain no inferred runtime
 ordering meaning.
 
+The next unresolved composite relationship family is authored effects. The
+normalized corpus contains 804 effect rows across 212 packages; all are kind
+`effect`, all carry a skeleton joint and finite sort value, and no composite
+repeats an effect identity. Current sort values are 777 occurrences of 0.5, 22
+of 0.4, two of 0.499, two of 0.1, and one of 0.3. Exactly 803 rows are authored
+translucent and one is opaque.
+
+A logical effect name is not physical occurrence authority. For 537 rows, the
+same package contains both a same-name `particle_system_factory` and a same-name
+`particle_system`; the remaining 267 rows have no exact same-package component
+identity match. Therefore neither first-match nor kind guessing can safely turn
+an effect row into one physical particle occurrence.
+
+The direct character loader currently rejects any composite with effects via
+`UnsupportedCompositeEffects`. Rigid-prop loaders decode the composite but do
+not reject or preserve the effect rows, so source relationships such as the
+three authored Wasp Camera effects remain outside direct FBX provenance. A
+future repair must retain effect index, identity, joint, translucency, and
+optional source-width sort evidence separately from resolving particle-system
+factory/instance ownership.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
