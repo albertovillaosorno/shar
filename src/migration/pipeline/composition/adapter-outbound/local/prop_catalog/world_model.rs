@@ -107,6 +107,8 @@ pub(super) struct WorldCatalogCounts {
     pub(super) primary_composite_mesh_bindings: usize,
     /// Authored effect rows retained from matched primary composites.
     pub(super) primary_composite_effect_bindings: usize,
+    /// Effects with one exact same-package particle factory/system pair.
+    pub(super) primary_composite_effect_particle_pairs: usize,
     /// Retained primary and deferred composite prop sort-order values.
     pub(super) composite_prop_sort_orders: usize,
     /// Primary source aliases with a matching composite occurrence.

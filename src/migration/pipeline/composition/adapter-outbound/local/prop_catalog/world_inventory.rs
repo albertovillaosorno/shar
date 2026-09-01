@@ -52,7 +52,8 @@ use super::model::{
     DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
     PropCandidate, PropFamily, PropRoute, WorldPrimaryEffectBinding,
     WorldPrimaryMemberBinding, WorldPrimaryMeshOrder,
-    WorldPrimarySelectedMeshBinding, WorldPrimarySourceBinding,
+    WorldPrimaryParticlePairBinding, WorldPrimarySelectedMeshBinding,
+    WorldPrimarySourceBinding,
 };
 use super::texture_authority::SharedTextureAuthority;
 use super::world_ledger::{LedgerRow, read_world_ledger};
@@ -110,6 +111,8 @@ pub(super) fn discover_world_candidates(
                         | "frame_controller_variant_b"
                         | "animation"
                         | "shader"
+                        | "particle_system_factory"
+                        | "particle_system"
                 )
             })
             .cloned()
@@ -274,6 +277,92 @@ fn primary_world_member_binding(
     })
 }
 
+/// Retain one exact same-package factory/system candidate pair for one
+/// effect.
+fn effect_particle_pair(
+    root: &Path,
+    rows: &[LedgerRow],
+    source_members: &BTreeMap<(String, usize), PhaseThreePackageMember>,
+    effect_identity: &str,
+) -> Result<Option<WorldPrimaryParticlePairBinding>, PipelineError> {
+    let mut factories = Vec::new();
+    let mut systems = Vec::new();
+    for row in rows.iter().filter(|row| {
+        matches!(
+            row.kind.as_str(),
+            "particle_system_factory" | "particle_system"
+        )
+    }) {
+        if clean_identity(&row.name)? != effect_identity {
+            continue;
+        }
+        match row.kind.as_str() {
+            "particle_system_factory" => factories.push(row),
+            "particle_system" => systems.push(row),
+            _ => {},
+        }
+    }
+    let ([factory], [system]) = (
+        factories.as_slice(),
+        systems.as_slice(),
+    ) else {
+        return Ok(None);
+    };
+    let factory_value = read_json(
+        &root.join("components").join(&factory.path),
+    )?;
+    let system_value = read_json(&root.join("components").join(&system.path))?;
+    if required_string(&factory_value, "schema")? != "particle_system_factory"
+        || required_string(&system_value, "schema")? != "particle_system"
+    {
+        return Err(PipelineError::new(
+            "world effect particle pair has an unsupported schema",
+        ));
+    }
+    let factory_identity =
+        clean_identity(&required_string(
+            &factory_value,
+            "name",
+        )?)?;
+    let system_identity =
+        clean_identity(&required_string(
+            &system_value,
+            "name",
+        )?)?;
+    let system_factory = clean_identity(&required_string(
+        &system_value,
+        "factory_name",
+    )?)?;
+    if factory_identity != effect_identity
+        || system_identity != effect_identity
+        || system_factory != effect_identity
+    {
+        return Err(PipelineError::new(format!(
+            concat!(
+                "world effect particle pair disagrees with identity ",
+                "{}"
+            ),
+            effect_identity
+        )));
+    }
+    Ok(Some(WorldPrimaryParticlePairBinding {
+        factory: primary_world_member_binding(
+            factory,
+            "particle_system_factory",
+            PackageRole::Particle,
+            "p3d-particle",
+            source_members,
+        )?,
+        system: primary_world_member_binding(
+            system,
+            "particle_system",
+            PackageRole::Particle,
+            "p3d-particle",
+            source_members,
+        )?,
+    }))
+}
+
 /// Resolve one selected normalized member id back to its exact ledger row.
 fn selected_world_member_row<'rows>(
     rows: &'rows [LedgerRow],
@@ -299,6 +388,8 @@ struct WorldPrimaryRelationships<'rows> {
     mesh_names: Option<&'rows BTreeMap<String, String>>,
     referenced_skeleton: Option<&'rows LedgerRow>,
     exported_ptrn_animation: Option<&'rows LedgerRow>,
+    particle_root: Option<&'rows Path>,
+    particle_rows: Option<&'rows [LedgerRow]>,
 }
 
 /// Build exact primary world provenance without changing route semantics.
@@ -378,14 +469,34 @@ fn primary_world_source_binding(
         .into_iter()
         .flat_map(|composite| composite.effect_bindings.iter())
         .enumerate()
-        .map(|(composite_effect_index, effect)| WorldPrimaryEffectBinding {
-            composite_effect_index,
-            source_identity: effect.name.clone(),
-            skeleton_joint_id: effect.skeleton_joint_id,
-            is_translucent: effect.is_translucent,
-            sort_order_bits: effect.sort_order_bits,
+        .map(|(composite_effect_index, effect)| {
+            let package_particle_pair = match (
+                relationships.particle_root,
+                relationships.particle_rows,
+            ) {
+                (Some(root), Some(particle_rows)) => effect_particle_pair(
+                    root,
+                    particle_rows,
+                    source_members,
+                    &effect.name,
+                )?,
+                (None, None) => None,
+                _ => {
+                    return Err(PipelineError::new(
+                        "world primary particle evidence is incomplete",
+                    ));
+                },
+            };
+            Ok(WorldPrimaryEffectBinding {
+                composite_effect_index,
+                source_identity: effect.name.clone(),
+                skeleton_joint_id: effect.skeleton_joint_id,
+                is_translucent: effect.is_translucent,
+                sort_order_bits: effect.sort_order_bits,
+                package_particle_pair,
+            })
         })
-        .collect::<Vec<_>>();
+        .collect::<Result<Vec<_>, PipelineError>>()?;
     let matched_composite = relationships.matched_composite
         .map(|row| {
             primary_world_member_binding(
@@ -500,6 +611,8 @@ fn static_association(
             mesh_names: None,
             referenced_skeleton: None,
             exported_ptrn_animation: None,
+            particle_root: None,
+            particle_rows: None,
         },
         source_members,
     )?;
@@ -581,6 +694,8 @@ fn associate_composite(
             exported_ptrn_animation: animated
                 .then(|| animation.as_ref().map(|(row, _member)| *row))
                 .flatten(),
+            particle_root: Some(root),
+            particle_rows: Some(package_relationship_rows),
         },
         authority.source_members,
     )?;

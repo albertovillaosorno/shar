@@ -42,7 +42,8 @@ use super::model::{
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
     DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
     PropRoute, WorldPrimaryEffectBinding, WorldPrimaryMemberBinding,
-    WorldPrimarySelectedMeshBinding, WorldPrimarySourceBinding,
+    WorldPrimaryParticlePairBinding, WorldPrimarySelectedMeshBinding,
+    WorldPrimarySourceBinding,
 };
 use super::world_model::{ExportedWorldProp, WorldCatalogCounts};
 use crate::domain::PipelineError;
@@ -97,6 +98,13 @@ pub(super) fn world_counts(
             .filter_map(|alias| alias.world_primary_source.as_ref())
             .map(|source| source.composite_effects.len())
             .sum(),
+        primary_composite_effect_particle_pairs: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .filter_map(|alias| alias.world_primary_source.as_ref())
+            .flat_map(|source| source.composite_effects.iter())
+            .filter(|effect| effect.package_particle_pair.is_some())
+            .count(),
         composite_prop_sort_orders: assets
             .iter()
             .flat_map(|asset| asset.aliases.iter())
@@ -215,7 +223,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v14",
+        "schema": "shar.world-model-props.v15",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -237,8 +245,9 @@ pub(super) fn write_world_catalog(
                 "matched composite and referenced skeleton separately from ",
                 "the exact PTRN animation consumed only by rigid-animated ",
                 "FBX; ",
-                "retain authored composite effects without particle ",
-                "resolution"
+                "retain authored composite effects and exact unique local ",
+                "particle factory/system candidate pairs without choosing ",
+                "which resource the effect designates"
             ),
             "deferred_render_bindings": concat!(
                 "retain authored non-mesh composite relationships including ",
@@ -276,6 +285,8 @@ pub(super) fn write_world_catalog(
                 counts.primary_composite_mesh_bindings,
             "primary_composite_effect_bindings":
                 counts.primary_composite_effect_bindings,
+            "primary_composite_effect_particle_pairs":
+                counts.primary_composite_effect_particle_pairs,
             "composite_prop_sort_orders": counts.composite_prop_sort_orders,
             "primary_matched_composites": counts.primary_matched_composites,
             "primary_referenced_skeletons": counts.primary_referenced_skeletons,
@@ -494,6 +505,16 @@ fn world_primary_selected_mesh_value(
     })
 }
 
+/// Render one exact same-package particle resource candidate pair.
+fn world_primary_particle_pair_value(
+    binding: &WorldPrimaryParticlePairBinding,
+) -> Value {
+    json!({
+        "factory": world_primary_member_value(&binding.factory),
+        "system": world_primary_member_value(&binding.system)
+    })
+}
+
 /// Render one authored composite effect without particle interpretation.
 fn world_primary_effect_value(binding: &WorldPrimaryEffectBinding) -> Value {
     json!({
@@ -501,7 +522,10 @@ fn world_primary_effect_value(binding: &WorldPrimaryEffectBinding) -> Value {
         "source_identity": binding.source_identity,
         "skeleton_joint_id": binding.skeleton_joint_id,
         "is_translucent": binding.is_translucent,
-        "sort_order": binding.sort_order_bits.map(f32::from_bits)
+        "sort_order": binding.sort_order_bits.map(f32::from_bits),
+        "package_particle_pair": binding.package_particle_pair
+            .as_ref()
+            .map(world_primary_particle_pair_value)
     })
 }
 

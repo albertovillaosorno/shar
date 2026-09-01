@@ -313,6 +313,15 @@ pub(super) struct WorldPrimarySelectedMeshBinding {
     pub(super) sort_order_bits: Option<u32>,
 }
 
+/// Exact same-package particle resources that share one effect identity.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct WorldPrimaryParticlePairBinding {
+    /// Exact particle-system factory occurrence.
+    pub(super) factory: WorldPrimaryMemberBinding,
+    /// Exact particle-system occurrence whose factory name matches the effect.
+    pub(super) system: WorldPrimaryMemberBinding,
+}
+
 /// One authored composite effect retained without particle interpretation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct WorldPrimaryEffectBinding {
@@ -326,6 +335,8 @@ pub(super) struct WorldPrimaryEffectBinding {
     pub(super) is_translucent: bool,
     /// Exact authored optional sort order at source f32 width.
     pub(super) sort_order_bits: Option<u32>,
+    /// Exact same-package factory/system pair when uniquely source-backed.
+    pub(super) package_particle_pair: Option<WorldPrimaryParticlePairBinding>,
 }
 
 /// Exact physical provenance for the primary world-model route.
