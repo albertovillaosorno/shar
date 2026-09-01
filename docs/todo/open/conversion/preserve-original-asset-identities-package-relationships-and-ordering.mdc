@@ -898,5 +898,12 @@ byte-equivalent payloads, while 116 contain different payloads. Ambiguous
 material diagnostics now report exact retained occurrence and distinct-payload
 counts rather than choosing one member.
 
+A route replay bounds the immediate effect: zero currently used vehicle shader
+bindings reach the `MissingTexture` cross-package fallback because each owning
+material package has at least one logical texture occurrence. The active corpus
+failure remains the 402 local duplicate bindings; ledger-keyed cross-package
+authority hardens future/missing-texture lookup rather than claiming those local
+relationships are resolved.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
