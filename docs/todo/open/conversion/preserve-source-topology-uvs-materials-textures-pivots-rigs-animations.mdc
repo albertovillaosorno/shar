@@ -292,5 +292,17 @@ select a physical texture occurrence, and ordinal proximity would be an invented
 relationship. The entity channel remains logical source evidence until stronger
 source or native semantics can disambiguate those nine differing-payload cases.
 
+The target shader does establish the logical frame-zero state. Each of the five
+current target shaders has exactly one canonical `TEX` parameter, and every one
+matches the `TEX_` entity-channel key at frame zero. Vehicle intake validates
+that equality against the exact target shader source ordinal before preserving
+the sidecar, so shader defaults and animation evidence cannot silently disagree.
+
+This still does not assign runtime texture-frame semantics or choose a
+duplicated PNG. Three frame-zero logical identities have duplicate physical
+occurrences; one pair is byte-identical and two pairs differ in payload. Logical
+initial-state agreement is therefore stronger provenance, not physical
+occurrence authority.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
