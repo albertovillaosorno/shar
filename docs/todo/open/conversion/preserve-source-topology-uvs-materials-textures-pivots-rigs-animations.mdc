@@ -271,5 +271,14 @@ its exact source ordinals, but the effect JSON remains verbatim. Texture-frame
 selection and shader runtime animation remain deferred because this step does
 not interpret the entity-channel payload or recreate native material behavior.
 
+Vehicle intake now validates that limited source envelope before publishing a
+`TEX_` sidecar. Across all five clips, declared entity-key counts equal
+frame and value counts, frames are strictly increasing and inside the clip
+span, group identity exactly matches `TEX_` plus the controller-target shader,
+and all five
+interpolation metadata records are version 0/mode 1. The 48 entity values are
+validated only as fixed-width source identities; their runtime texture meaning
+remains deliberately uninterpreted.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

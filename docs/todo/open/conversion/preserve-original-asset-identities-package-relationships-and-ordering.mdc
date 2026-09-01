@@ -803,5 +803,18 @@ the unique target component kind, identity, and source ordinal. Only the
 audited `BQG_` to quad-group and `TEX_` to shader relationships are admitted;
 other effect sidecars retain no invented controller relationship.
 
+The five `TEX_` payloads now fail closed at vehicle intake when their decoded
+source structure contradicts that controller-to-shader relationship. Every
+current clip contains one version-0 group with id 0 and one version-0 entity
+channel whose `TEX_` key count matches both frame and value counts. Key frames
+are strictly increasing and in range, and all five interpolation records are
+version 0, mode 1.
+
+All five animation group identities are exactly `TEX_` plus the controller
+hierarchy shader identity after fixed-width trailing-NUL removal. All 48 entity
+values likewise require canonical identities after removing only trailing NUL
+padding. A focused mismatch regression proves the sidecar is rejected instead
+of preserving contradictory target provenance.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

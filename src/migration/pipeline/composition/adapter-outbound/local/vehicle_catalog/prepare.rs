@@ -1098,15 +1098,26 @@ fn load_vehicle_animations(
             format!("{base}__{:02}.json", *ordinal)
         };
         *ordinal = ordinal.saturating_add(1);
-        let payload = serde_json::to_vec_pretty(&value)
-            .map_err(|error| PipelineError::new(error.to_string()))?;
-        write_new(&output_dir.join(&file_name), &payload)?;
         let source_ordinal = vehicle_animation_source_ordinal(package, &path)?;
         let controller = vehicle_effect_controller_relationship(
             package_root,
             name,
             kind,
         )?;
+        if kind.eq_ignore_ascii_case("TEX_") {
+            let target = controller
+                .as_ref()
+                .map(|relationship| relationship.target_identity.as_str())
+                .ok_or_else(|| {
+                    PipelineError::new(
+                        "vehicle texture animation has no controller target",
+                    )
+                })?;
+            validate_vehicle_texture_animation(&value, target)?;
+        }
+        let payload = serde_json::to_vec_pretty(&value)
+            .map_err(|error| PipelineError::new(error.to_string()))?;
+        write_new(&output_dir.join(&file_name), &payload)?;
         sidecars.push(EffectAnimationRecord {
             path: format!("animations/effects/{file_name}"),
             identity: name.to_owned(),
@@ -1129,6 +1140,208 @@ fn load_vehicle_animations(
         ))
     })?;
     Ok((clips, sidecars))
+}
+
+/// Validate the supported vehicle texture-animation evidence envelope.
+fn validate_vehicle_texture_animation(
+    value: &Value,
+    target_identity: &str,
+) -> Result<(), PipelineError> {
+    if value.get("schema").and_then(Value::as_str) != Some("animation")
+        || value.get("version").and_then(Value::as_u64) != Some(0)
+        || value.get("type").and_then(Value::as_str) != Some("TEX_")
+    {
+        return Err(PipelineError::new(
+            "vehicle texture animation document is unsupported",
+        ));
+    }
+    let frame_count = value
+        .get("frames")
+        .and_then(Value::as_f64)
+        .filter(|frames| frames.is_finite() && *frames > 0.)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "vehicle texture animation frame span is invalid",
+            )
+        })?;
+    let _frame_rate = value
+        .get("frame_rate")
+        .and_then(Value::as_f64)
+        .filter(|rate| rate.is_finite() && *rate > 0.)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "vehicle texture animation frame rate is invalid",
+            )
+        })?;
+    if value.get("cyclic").and_then(Value::as_u64).is_none_or(|flag| flag > 1)
+        || !empty_array(value, "loose_channels")
+        || !empty_array(value, "legacy_animation_extras")
+    {
+        return Err(PipelineError::new(
+            "vehicle texture animation top-level evidence is unsupported",
+        ));
+    }
+    let sizes = required_array(value, "sizes", "texture animation sizes")?;
+    let [size] = sizes.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle texture animation must have one size record",
+        ));
+    };
+    if size.get("version").and_then(Value::as_u64) != Some(1)
+        || ["pc", "ps2", "xbox", "gc"]
+            .iter()
+            .any(|field| size.get(*field).and_then(Value::as_u64).is_none())
+    {
+        return Err(PipelineError::new(
+            "vehicle texture animation size evidence is unsupported",
+        ));
+    }
+    let lists = required_array(
+        value,
+        "group_lists",
+        "texture animation group lists",
+    )?;
+    let [list] = lists.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle texture animation must have one group list",
+        ));
+    };
+    let groups = required_array(list, "groups", "texture animation groups")?;
+    if list.get("version").and_then(Value::as_u64) != Some(0)
+        || list.get("num_groups").and_then(Value::as_u64) != Some(1)
+    {
+        return Err(PipelineError::new(
+            "vehicle texture animation group list is unsupported",
+        ));
+    }
+    let [group] = groups.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle texture animation must have one target group",
+        ));
+    };
+    let expected_group = format!("TEX_{target_identity}");
+    let group_identity = vehicle_component_identity(
+        group,
+        "name",
+        "texture animation group",
+    )?;
+    let channels = required_array(
+        group,
+        "channels",
+        "texture animation channels",
+    )?;
+    if group.get("version").and_then(Value::as_u64) != Some(0)
+        || group.get("group_id").and_then(Value::as_u64) != Some(0)
+        || group.get("num_channels").and_then(Value::as_u64) != Some(1)
+        || group_identity != expected_group
+    {
+        return Err(PipelineError::new(
+            "vehicle texture animation target group is unsupported",
+        ));
+    }
+    let [channel] = channels.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle texture animation must have one entity channel",
+        ));
+    };
+    validate_vehicle_texture_channel(channel, frame_count)
+}
+
+/// Validate one exact entity channel without assigning runtime texture meaning.
+fn validate_vehicle_texture_channel(
+    channel: &Value,
+    frame_count: f64,
+) -> Result<(), PipelineError> {
+    if channel.get("kind").and_then(Value::as_str) != Some("entity")
+        || channel.get("version").and_then(Value::as_u64) != Some(0)
+        || channel.get("param").and_then(Value::as_str) != Some("TEX_")
+    {
+        return Err(PipelineError::new(
+            "vehicle texture animation channel is unsupported",
+        ));
+    }
+    let declared = channel
+        .get("num_frames")
+        .and_then(Value::as_u64)
+        .and_then(|count| usize::try_from(count).ok())
+        .filter(|count| *count > 0)
+        .ok_or_else(|| {
+            PipelineError::new("vehicle texture animation key count is invalid")
+        })?;
+    let frames = required_array(channel, "frames", "texture animation frames")?;
+    let values = required_array(channel, "values", "texture animation values")?;
+    if frames.len() != declared || values.len() != declared {
+        return Err(PipelineError::new(
+            "vehicle texture animation key counts disagree",
+        ));
+    }
+    let mut previous = None;
+    for frame in frames {
+        let raw_frame = frame.as_u64().ok_or_else(|| {
+            PipelineError::new("vehicle texture animation frame is invalid")
+        })?;
+        let frame = u16::try_from(raw_frame).map_err(|error| {
+            PipelineError::new(format!(
+                "vehicle texture animation frame is invalid: {error}"
+            ))
+        })?;
+        if f64::from(frame) >= frame_count
+            || previous.is_some_and(|prior| prior >= frame)
+        {
+            return Err(PipelineError::new(
+                concat!(
+                    "vehicle texture animation frames are unordered or out ",
+                    "of range"
+                ),
+            ));
+        }
+        previous = Some(frame);
+    }
+    for value in values {
+        let raw = value.as_str().ok_or_else(|| {
+            PipelineError::new(
+                "vehicle texture animation value is not an identity",
+            )
+        })?;
+        let _identity =
+            vehicle_source_identity(raw, "texture animation value")?;
+    }
+    let metadata = required_array(
+        channel,
+        "channel_metadata",
+        "texture animation metadata",
+    )?;
+    let [entry] = metadata.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle texture animation interpolation metadata is unsupported",
+        ));
+    };
+    if entry.get("kind").and_then(Value::as_str)
+        != Some("interpolation_mode")
+        || entry.get("version").and_then(Value::as_u64) != Some(0)
+        || entry.get("mode").and_then(Value::as_u64) != Some(1)
+    {
+        return Err(PipelineError::new(
+            "vehicle texture animation interpolation metadata is unsupported",
+        ));
+    }
+    Ok(())
+}
+
+/// Read one required JSON array from decoded source evidence.
+fn required_array<'value>(
+    value: &'value Value,
+    field: &str,
+    label: &str,
+) -> Result<&'value Vec<Value>, PipelineError> {
+    value.get(field).and_then(Value::as_array).ok_or_else(|| {
+        PipelineError::new(format!("vehicle {label} are missing or invalid"))
+    })
+}
+
+/// Return whether one required decoded source field is an empty array.
+fn empty_array(value: &Value, field: &str) -> bool {
+    value.get(field).and_then(Value::as_array).is_some_and(Vec::is_empty)
 }
 
 /// Resolve the exact source ordinal for one projected animation path.
