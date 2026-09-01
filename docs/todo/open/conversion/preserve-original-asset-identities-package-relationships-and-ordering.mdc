@@ -947,8 +947,8 @@ is
 serialized alongside the physical member id, component ordinal, and PNG digest.
 
 This is still non-selecting provenance. Multiple same-name occurrences remain
-separate v5 records, and neither the phase-three id nor its ordinal is treated as
-a shader-to-texture relationship. The new exact-occurrence FBX boundary can use
+separate v5 records. Neither the phase-three id nor its ordinal is treated as a
+shader-to-texture relationship. The new exact-occurrence FBX boundary can use
 one physical member only after another source-backed consumer establishes that
 relationship authority.
 
