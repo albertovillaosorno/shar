@@ -612,6 +612,29 @@ fn parse_member_mirrors(
     }
 }
 
+/// Reject physical coordinates that could make member lookup ambiguous.
+fn validate_member_coordinates(
+    members: &[PhaseThreePackageMember],
+) -> Result<(), PackageIntakeError> {
+    let mut paths = std::collections::BTreeSet::new();
+    let mut source_ordinals = std::collections::BTreeSet::new();
+    for member in members {
+        if !paths.insert(member.path.as_str()) {
+            return Err(PackageIntakeError::new(
+                "members mirror repeats a physical member path",
+            ));
+        }
+        if let Some(source_ordinal) = member.source_chunk_ordinal
+            && !source_ordinals.insert(source_ordinal)
+        {
+            return Err(PackageIntakeError::new(
+                "members mirror repeats a source chunk ordinal",
+            ));
+        }
+    }
+    Ok(())
+}
+
 /// Validate non-empty physical member mirrors against canonical id buckets.
 fn validate_member_mirrors(
     line: &str,
@@ -626,6 +649,7 @@ fn validate_member_mirrors(
             "members mirror is empty for physical unit_ids",
         ));
     }
+    validate_member_coordinates(&members)?;
     let member_ids: Vec<_> =
         members.iter().map(|member| member.id.clone()).collect();
     if member_ids != row.unit_ids {
@@ -1121,6 +1145,19 @@ impl PhaseThreePackageRow {
     #[must_use]
     pub fn members(&self) -> &[PhaseThreePackageMember] {
         &self.members
+    }
+
+    /// Find one physical member by exact published path and source ordinal.
+    #[must_use]
+    pub fn find_member_by_source_coordinate(
+        &self,
+        path: &str,
+        source_ordinal: usize,
+    ) -> Option<&PhaseThreePackageMember> {
+        self.members.iter().find(|member| {
+            member.path == path
+                && member.source_chunk_ordinal == Some(source_ordinal)
+        })
     }
 
     /// Return role-annotated member ids for all non-empty role buckets.

@@ -193,27 +193,23 @@ fn phase_three_texture_member_id(
 ) -> Result<String, PipelineError> {
     let expected_path =
         format!("{}/components/{relative_path}", package.package_root);
-    let matches = package
-        .members()
-        .iter()
+    let member = package
+        .find_member_by_source_coordinate(&expected_path, source_ordinal)
         .filter(|member| {
             member.role == PackageRole::Texture
                 && member.kind == "p3d-texture"
                 && member.source_chunk_kind == "texture"
-                && member.source_chunk_ordinal == Some(source_ordinal)
-                && member.path == expected_path
         })
-        .collect::<Vec<_>>();
-    let [member] = matches.as_slice() else {
-        return Err(PipelineError::new(format!(
-            concat!(
-                "world texture occurrence has no unique phase-three member: ",
-                "{}@{}"
-            ),
-            relative_path,
-            source_ordinal
-        )));
-    };
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                concat!(
+                    "world texture occurrence has no phase-three member: ",
+                    "{}@{}"
+                ),
+                relative_path,
+                source_ordinal
+            ))
+        })?;
     Ok(member.id.clone())
 }
 

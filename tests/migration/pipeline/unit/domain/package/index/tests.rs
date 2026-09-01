@@ -1148,6 +1148,48 @@ fn rejects_inconsistent_structured_member_mirrors() -> Result<(), String> {
 }
 
 #[test]
+fn rejects_duplicate_physical_member_paths() -> Result<(), String> {
+    let row_text = sample_row().replacen(
+        "extracted/model.p3d",
+        "extracted/texture.p3d",
+        1,
+    );
+    if PhaseThreePackageRow::from_json_line(&row_text).is_ok() {
+        return Err(
+            "duplicate physical member paths must fail intake".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_duplicate_source_chunk_ordinals() -> Result<(), String> {
+    let row_text = sample_row()
+        .replacen(
+            r#""source_chunk_kind":"texture""#,
+            concat!(
+                r#""source_chunk_kind":"texture","#,
+                r#""source_chunk_ordinal":"5311""#,
+            ),
+            1,
+        )
+        .replacen(
+            r#""source_chunk_kind":"mesh""#,
+            concat!(
+                r#""source_chunk_kind":"mesh","#,
+                r#""source_chunk_ordinal":"5311""#,
+            ),
+            1,
+        );
+    if PhaseThreePackageRow::from_json_line(&row_text).is_ok() {
+        return Err(
+            "duplicate source chunk ordinals must fail intake".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_invalid_source_chunk_ordinal() -> Result<(), String> {
     for invalid in ["0", "01x", " padded"] {
         let row_text = sample_row().replacen(
@@ -1166,6 +1208,36 @@ fn rejects_invalid_source_chunk_ordinal() -> Result<(), String> {
                 "invalid source chunk ordinal was accepted: {invalid:?}"
             ));
         }
+    }
+    Ok(())
+}
+
+#[test]
+fn finds_member_by_exact_source_coordinate() -> Result<(), String> {
+    let row_text = sample_row().replacen(
+        r#""source_chunk_kind":"texture""#,
+        concat!(
+            r#""source_chunk_kind":"texture","#,
+            r#""source_chunk_ordinal":"5311""#,
+        ),
+        1,
+    );
+    let row = PhaseThreePackageRow::from_json_line(&row_text)
+        .map_err(|error| error.to_string())?;
+    let member = row
+        .find_member_by_source_coordinate("extracted/texture.p3d", 5311)
+        .ok_or_else(|| "exact source coordinate did not resolve".to_owned())?;
+    if member.id != "texture-a"
+        || row
+            .find_member_by_source_coordinate("extracted/model.p3d", 5311)
+            .is_some()
+        || row
+            .find_member_by_source_coordinate("extracted/texture.p3d", 5312)
+            .is_some()
+    {
+        return Err(
+            "source coordinate lookup did not require both fields".to_owned(),
+        );
     }
     Ok(())
 }

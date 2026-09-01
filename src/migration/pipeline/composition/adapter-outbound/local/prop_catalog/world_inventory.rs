@@ -192,14 +192,7 @@ fn phase_three_shader_member_ids(
                 "world shader package member has no source ordinal",
             )
         })?;
-        if ids
-            .insert((relative.to_owned(), ordinal), member.id.clone())
-            .is_some()
-        {
-            return Err(PipelineError::new(
-                "world shader package repeats exact path/ordinal coordinate",
-            ));
-        }
+        ids.extend([((relative.to_owned(), ordinal), member.id.clone())]);
     }
     Ok(ids)
 }

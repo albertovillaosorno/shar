@@ -390,9 +390,8 @@ fn source_order_projection_rejects_missing_ordinals() -> Result<(), String> {
 }
 
 #[test]
-fn source_order_projection_rejects_duplicate_ordinals() -> Result<(), String> {
-    let root = TestDirectory::new("duplicate-order")?;
-    create_component_files(root.path(), "mesh")?;
+fn package_intake_rejects_duplicate_ordinals_before_projection()
+-> Result<(), String> {
     let json = concat!(
             "{\"package_id\":\"pkg-car\",",
             "\"package_root\":\"pkg-car\",",
@@ -424,12 +423,12 @@ fn source_order_projection_rejects_duplicate_ordinals() -> Result<(), String> {
             "\"source_chunk_ordinal\":\"10\"}],",
             "\"text_keys\":[]}"
     );
-    let package = PhaseThreePackageRow::from_json_line(json)
-        .map_err(|error| error.to_string())?;
-    let Err(error) = vehicle_mesh_paths(&package, root.path()) else {
-        return Err("duplicate source ordinals were accepted".to_owned());
+    let Err(error) = PhaseThreePackageRow::from_json_line(json) else {
+        return Err(
+            "duplicate source ordinals passed package intake".to_owned(),
+        );
     };
-    if !error.to_string().contains("repeats source mesh ordinal 10") {
+    if !error.to_string().contains("repeats a source chunk ordinal") {
         return Err(format!("unexpected duplicate-ordinal error: {error}"));
     }
     Ok(())
