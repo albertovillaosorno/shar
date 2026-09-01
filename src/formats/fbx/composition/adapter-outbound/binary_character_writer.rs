@@ -51,8 +51,8 @@ use super::binary_identity::{
 };
 use crate::domain::animation::AnimationClip;
 use crate::domain::character::{
-    CharacterAsset, CharacterSourceProvenance, CompositePropSourceBinding,
-    CompositeSkinSourceBinding, SkinnedPart,
+    CharacterAsset, CharacterSourceProvenance, CompositeEffectSourceBinding,
+    CompositePropSourceBinding, CompositeSkinSourceBinding, SkinnedPart,
 };
 use crate::domain::mesh::{MeshAsset, PrimitiveGroup};
 use crate::domain::texture::MaterialBinding;
@@ -1446,6 +1446,41 @@ fn append_composite_skin_source_properties(
     ));
 }
 
+/// Append one authored composite effect record as source-only FBX metadata.
+fn append_composite_effect_source_properties(
+    properties: &mut Vec<BinaryNode>,
+    binding: &CompositeEffectSourceBinding,
+) {
+    let suffix = format!(
+        "_{:04}_{:04}",
+        binding.composite_ordinal(),
+        binding.effect_index()
+    );
+    properties.push(user_string_property(
+        &format!("SHAR_P3D_SourceCompositeEffectIdentity{suffix}"),
+        binding.effect_identity(),
+    ));
+    properties.push(user_string_property(
+        &format!("SHAR_P3D_SourceCompositeEffectJoint{suffix}"),
+        &binding.skeleton_joint_id().to_string(),
+    ));
+    properties.push(user_string_property(
+        &format!("SHAR_P3D_SourceCompositeEffectTranslucent{suffix}"),
+        if binding.translucent() {
+            "1"
+        } else {
+            "0"
+        },
+    ));
+    let sort_order = binding
+        .sort_order_bits()
+        .map_or_else(|| "absent".to_owned(), |bits| bits.to_string());
+    properties.push(user_string_property(
+        &format!("SHAR_P3D_SourceCompositeEffectSortBits{suffix}"),
+        &sort_order,
+    ));
+}
+
 /// Append one authored composite prop record as source-only FBX metadata.
 fn append_composite_prop_source_properties(
     properties: &mut Vec<BinaryNode>,
@@ -1502,6 +1537,12 @@ fn export_root_node(
         }
         for binding in provenance.composite_skin_bindings() {
             append_composite_skin_source_properties(
+                &mut custom_properties,
+                binding,
+            );
+        }
+        for binding in provenance.composite_effect_bindings() {
+            append_composite_effect_source_properties(
                 &mut custom_properties,
                 binding,
             );
