@@ -43,7 +43,7 @@ use fbx::adapters::driven::binary_character_writer::{
 };
 use fbx::domain::character::{
     CharacterAsset, CharacterSourceProvenance, CompositePropSourceBinding,
-    SkinnedPart,
+    CompositeSkinSourceBinding, SkinnedPart,
 };
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
@@ -100,6 +100,16 @@ fn synthetic_character() -> Result<CharacterAsset, String> {
         "CompositeZ".to_owned(),
         "CompositeA".to_owned(),
     ])
+    .and_then(|provenance| {
+        let skin = CompositeSkinSourceBinding::new(
+            0,
+            1,
+            "SourceSkin",
+            true,
+            Some(0.1),
+        )?;
+        provenance.with_composite_skin_bindings(vec![skin])
+    })
     .and_then(|provenance| {
         let first = CompositePropSourceBinding::new(
             0,
@@ -424,6 +434,11 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         b"CompositeZ".as_slice(),
         b"SHAR_P3D_SourceCompositeIdentity_0001".as_slice(),
         b"CompositeA".as_slice(),
+        b"SHAR_P3D_SourceCompositeSkinIdentity_0000_0001".as_slice(),
+        b"SourceSkin".as_slice(),
+        b"SHAR_P3D_SourceCompositeSkinTranslucent_0000_0001".as_slice(),
+        b"SHAR_P3D_SourceCompositeSkinSortBits_0000_0001".as_slice(),
+        0.1_f32.to_bits().to_string().as_bytes(),
         b"SHAR_P3D_SourceCompositePropIdentity_0000_0002".as_slice(),
         b"SourceProp".as_slice(),
         b"SHAR_P3D_SourceCompositePropJoint_0000_0002".as_slice(),

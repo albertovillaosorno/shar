@@ -1171,5 +1171,28 @@ writer therefore preserves evidence such as vehicle 0.1157/0.4/0.45/0.48/0.49
 values, Wrench's selected 0.4, and Wasp Camera's selected 0.5 without treating
 them as depth, priority, or draw-order semantics.
 
+Composite skin relationship provenance is now preserved alongside prop
+provenance in the direct FBX path. Across the normalized corpus, 1,518
+composites contain 633 authored skin rows in 208 packages.
+
+Every current row is kind `skin`, resolves to a same-package skin component,
+has an explicit binary translucency flag, and carries a finite sort-order
+child. The current sort values are 625 occurrences of 0.5 and eight occurrences
+of 0.1; 15 rows are authored translucent. No current composite repeats a skin
+identity.
+
+`CharacterSourceProvenance` now retains each authored skin row by retained
+composite ordinal plus authored skin index, with exact skin identity,
+translucency, and optional source-width `f32` sort bits. The binary character
+writer publishes those values as indexed export-root source properties. A
+missing optional sort child remains `absent`, while present `null`, non-finite,
+or non-`f32` values fail closed. The decoder also requires the normalized
+binding kind to be exactly `skin`; all 633 current rows satisfy that contract.
+
+These records remain source-only. Existing skin translucency projection is
+unchanged, and semantic deduplication still clears `asset.source_provenance`
+before hashing. The preserved 0.1/0.5 values therefore gain no inferred runtime
+ordering meaning.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

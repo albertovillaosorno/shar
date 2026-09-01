@@ -41,5 +41,5 @@ pub mod asset;
 )]
 pub use asset::{
     CharacterAsset, CharacterError, CharacterSourceProvenance,
-    CompositePropSourceBinding, SkinnedPart,
+    CompositePropSourceBinding, CompositeSkinSourceBinding, SkinnedPart,
 };

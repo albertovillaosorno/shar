@@ -39,7 +39,7 @@ use serde::{Deserialize, Deserializer};
 use super::decoded_component_source::read_indexed_mesh;
 use crate::domain::character::{
     CharacterAsset, CharacterError, CharacterSourceProvenance,
-    CompositePropSourceBinding, SkinnedPart,
+    CompositePropSourceBinding, CompositeSkinSourceBinding, SkinnedPart,
 };
 use crate::domain::mesh::{
     MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
@@ -87,6 +87,7 @@ pub fn load_character(
     let mut prop_bindings = BTreeMap::new();
     let mut translucent_skins = BTreeSet::new();
     let mut composite_identities = Vec::with_capacity(composite_paths.len());
+    let mut composite_skin_bindings = Vec::new();
     let mut composite_prop_bindings = Vec::new();
     for (composite_ordinal, composite_path) in
         composite_paths.iter().enumerate()
@@ -98,6 +99,8 @@ pub fn load_character(
             bones.len(),
         )?;
         composite_identities.push(bindings.source_identity.clone());
+        composite_skin_bindings
+            .extend(source_skin_bindings(composite_ordinal, &bindings.skins)?);
         composite_prop_bindings
             .extend(source_prop_bindings(composite_ordinal, &bindings.props)?);
         if bindings.effect_count != 0 {
@@ -158,6 +161,9 @@ pub fn load_character(
     }
     let source_provenance =
         CharacterSourceProvenance::new(skeleton_name, composite_identities)
+            .and_then(|provenance| {
+                provenance.with_composite_skin_bindings(composite_skin_bindings)
+            })
             .and_then(|provenance| {
                 provenance.with_composite_prop_bindings(composite_prop_bindings)
             })
@@ -674,10 +680,24 @@ pub(super) struct CompositePropBinding {
     pub(super) sort_order: Option<f32>,
 }
 
+/// One validated authored skin relationship from a decoded composite.
+pub(super) struct CompositeSkinBinding {
+    /// Referenced skin identity.
+    pub(super) name: String,
+    /// Source composite marks the skin as translucent.
+    pub(super) translucent: bool,
+    /// Zero-based authored skin position.
+    pub(super) source_index: usize,
+    /// Exact decoded source-width sort order when the optional field exists.
+    pub(super) sort_order: Option<f32>,
+}
+
 /// Validated skin and rigid-prop semantics from one composite.
 pub(super) struct CompositeBindings {
     /// Validated authored composite identity.
     pub(super) source_identity: String,
+    /// Authored skin bindings.
+    pub(super) skins: Vec<CompositeSkinBinding>,
     /// Rigid prop bindings.
     pub(super) props: Vec<CompositePropBinding>,
     /// Skin identities explicitly marked translucent.
@@ -685,6 +705,26 @@ pub(super) struct CompositeBindings {
     /// Decoded effect bindings retained as unsupported whole-character
     /// evidence.
     pub(super) effect_count: usize,
+}
+
+/// Project authored skin rows into source-only character provenance.
+pub(super) fn source_skin_bindings(
+    composite_ordinal: usize,
+    bindings: &[CompositeSkinBinding],
+) -> Result<Vec<CompositeSkinSourceBinding>, SkinSourceError> {
+    bindings
+        .iter()
+        .map(|binding| {
+            CompositeSkinSourceBinding::new(
+                composite_ordinal,
+                binding.source_index,
+                binding.name.clone(),
+                binding.translucent,
+                binding.sort_order,
+            )
+            .map_err(SkinSourceError::Character)
+        })
+        .collect()
 }
 
 /// Project authored composite rows into source-only character provenance.
@@ -794,7 +834,15 @@ pub(super) fn composite_bindings(
         });
     }
     let mut translucent_skins = BTreeSet::new();
-    for skin in &decoded.skins {
+    let mut skin_bindings = Vec::with_capacity(decoded.skins.len());
+    for (skin_index, skin) in decoded.skins.into_iter().enumerate() {
+        if skin.kind != "skin" {
+            return Err(SkinSourceError::Prop(format!(
+                "composite {} contains unsupported skin kind {}",
+                path.display(),
+                skin.kind
+            )));
+        }
         let skin_name =
             decoded_identity(path, "composite skin name", &skin.name)?;
         if !part_names.contains(&skin_name) {
@@ -803,9 +851,18 @@ pub(super) fn composite_bindings(
                 skin: skin_name,
             });
         }
-        if binary_flag(&skin.is_translucent, "composite skin translucency")? {
-            let _inserted = translucent_skins.insert(skin_name);
+        let translucent =
+            binary_flag(&skin.is_translucent, "composite skin translucency")?;
+        if translucent {
+            let _inserted = translucent_skins.insert(skin_name.clone());
         }
+        let sort_order = decoded_prop_sort_order(&skin.sort_order, &skin_name)?;
+        skin_bindings.push(CompositeSkinBinding {
+            name: skin_name,
+            translucent,
+            source_index: skin_index,
+            sort_order,
+        });
     }
     let mut bindings = Vec::with_capacity(decoded.props.len());
     for (prop_index, prop) in decoded.props.into_iter().enumerate() {
@@ -844,6 +901,7 @@ pub(super) fn composite_bindings(
     }
     Ok(CompositeBindings {
         source_identity: composite_name,
+        skins: skin_bindings,
         props: bindings,
         translucent_skins,
         effect_count: actual_effect_count,
@@ -1486,17 +1544,20 @@ fn decoded_prop_sort_order(
 #[serde(deny_unknown_fields)]
 /// Internal data shape for the adapter implementation.
 struct DecodedCompositeSkin {
-    /// Binding kind retained for schema compatibility.
-    #[serde(default, rename = "kind")]
-    _kind: String,
+    /// Binding kind, required to be `skin`.
+    kind: String,
     /// Referenced skin name with fixed-width padding.
     name: String,
-    /// Translucency flag retained for schema compatibility.
-    #[serde(default, rename = "is_translucent")]
+    /// Authored binary translucency flag.
+    #[serde(rename = "is_translucent")]
     is_translucent: serde_json::Value,
-    /// Sort order retained for schema compatibility.
-    #[serde(default, rename = "sort_order")]
-    _sort_order: serde_json::Value,
+    /// Optional source sort-order field, preserving presence separately.
+    #[serde(
+        default,
+        rename = "sort_order",
+        deserialize_with = "deserialize_optional_sort_order"
+    )]
+    sort_order: DecodedOptionalSortOrder,
 }
 
 #[cfg(test)]
