@@ -44,6 +44,26 @@ use crate::adapters::driven::local::prop_catalog::inventory_common::{
     CompositeEvidence, CompositePropEvidence,
 };
 use crate::adapters::driven::local::prop_catalog::texture_authority;
+use crate::domain::package::{PackageRole, PhaseThreePackageMember};
+
+fn source_member(
+    id: &str,
+    role: PackageRole,
+    path: &str,
+    kind: &str,
+    source_kind: &str,
+    ordinal: usize,
+) -> PhaseThreePackageMember {
+    PhaseThreePackageMember {
+        id: id.to_owned(),
+        role,
+        path: path.to_owned(),
+        unit_type: "source".to_owned(),
+        kind: kind.to_owned(),
+        source_chunk_kind: source_kind.to_owned(),
+        source_chunk_ordinal: Some(ordinal),
+    }
+}
 
 static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
@@ -242,18 +262,43 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
                 sha256: "two",
             },
         ]);
-    let shader_member_ids = BTreeMap::from([
+    let source_members = BTreeMap::from([
         (
             ("shader/glow_m__ordinal_3.json".to_owned(), 3),
-            "shader-member-3".to_owned(),
+            source_member(
+                "shader-member-3",
+                PackageRole::Material,
+                "shader/glow_m__ordinal_3.json",
+                "p3d-shader",
+                "shader",
+                3,
+            ),
         ),
         (
             ("shader/glow_m__ordinal_7.json".to_owned(), 7),
-            "shader-member-7".to_owned(),
+            source_member(
+                "shader-member-7",
+                PackageRole::Material,
+                "shader/glow_m__ordinal_7.json",
+                "p3d-shader",
+                "shader",
+                7,
+            ),
+        ),
+        (
+            ("quad_group/beam__ordinal_22.json".to_owned(), 22),
+            source_member(
+                "quad-member-22",
+                PackageRole::Model,
+                "quad_group/beam__ordinal_22.json",
+                "p3d-mesh",
+                "quad_group",
+                22,
+            ),
         ),
     ]);
     let deferred_authority = DeferredRenderAuthority {
-        shader_member_ids: &shader_member_ids,
+        source_members: &source_members,
         texture_authority: &authority,
         source_subcategory: "terrain-world/level-03/regions/l3r1",
     };
@@ -278,6 +323,7 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         || beam.skeleton_joint_id != 3
         || !beam.is_translucent
         || beam.component_kind.as_deref() != Some("quad_group")
+        || beam.component_package_member_id.as_deref() != Some("quad-member-22")
         || beam.component_member_id.as_deref() != Some("beam__ordinal_22")
         || beam.source_ordinal != Some(22)
         || beam.controller.is_some()
@@ -387,6 +433,7 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         || logical.skeleton_joint_id != 4
         || logical.is_translucent
         || logical.component_kind.is_some()
+        || logical.component_package_member_id.is_some()
         || logical.component_member_id.is_some()
         || logical.source_ordinal.is_some()
         || logical.billboard.is_some()
@@ -493,11 +540,36 @@ fn deferred_controller_retains_exact_animation_relationship()
             kind: "animation".to_owned(),
         },
     ];
+    let source_members = BTreeMap::from([
+        (
+            ("frame_controller/BQG_beam.json".to_owned(), 43),
+            source_member(
+                "controller-member-43",
+                PackageRole::Controller,
+                "frame_controller/BQG_beam.json",
+                "p3d-controller",
+                "frame_controller",
+                43,
+            ),
+        ),
+        (
+            ("animation/animation_0001.json".to_owned(), 41),
+            source_member(
+                "animation-member-41",
+                PackageRole::Animation,
+                "animation/animation_0001.json",
+                "p3d-animation",
+                "animation",
+                41,
+            ),
+        ),
+    ]);
     let result = deferred_controller_binding(
         &root,
         &rows,
         "beam",
         Some(&["beam"]),
+        &source_members,
     )
     .map_err(|error| error.to_string());
     let mismatch = deferred_controller_binding(
@@ -505,6 +577,7 @@ fn deferred_controller_retains_exact_animation_relationship()
         &rows,
         "beam",
         Some(&["other-child"]),
+        &source_members,
     );
     drop(fs::remove_dir_all(&root));
     if mismatch.is_ok() {
@@ -514,12 +587,15 @@ fn deferred_controller_retains_exact_animation_relationship()
         .ok_or_else(|| "controller relationship was not retained".to_owned())?;
     if binding.controller_identity != "BQG_beam"
         || binding.controller_kind != "frame_controller"
+        || binding.controller_package_member_id != "controller-member-43"
         || binding.controller_member_id != "BQG_beam"
         || binding.controller_source_ordinal != 43
         || binding.controller_version != 0
         || binding.controller_type != "BQG"
         || f32::from_bits(binding.frame_offset_bits) != 1.25
         || binding.animation_identity != "BQG_beam"
+        || binding.animation_package_member_id.as_deref()
+            != Some("animation-member-41")
         || binding.animation_member_id.as_deref() != Some("animation_0001")
         || binding.animation_source_ordinal != Some(41)
         || binding.animation_version != Some(0)

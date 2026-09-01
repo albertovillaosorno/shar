@@ -56,7 +56,8 @@ use super::texture_authority::SharedTextureAuthority;
 use super::world_ledger::{LedgerRow, read_world_ledger};
 use crate::domain::PipelineError;
 use crate::domain::package::{
-    PackageRole, PhaseThreePackageIndex, PhaseThreePackageRow,
+    PackageRole, PhaseThreePackageIndex, PhaseThreePackageMember,
+    PhaseThreePackageRow,
 };
 
 /// World containers whose nested mesh evidence belongs in the model catalog.
@@ -93,7 +94,7 @@ pub(super) fn discover_world_candidates(
             continue;
         }
         let ledger = read_world_ledger(&root)?;
-        let shader_member_ids = phase_three_shader_member_ids(package)?;
+        let source_members = phase_three_source_members(package)?;
         let package_relationship_rows = ledger
             .groups
             .values()
@@ -128,7 +129,7 @@ pub(super) fn discover_world_candidates(
                 &rows,
                 &package_relationship_rows,
                 &mesh_names,
-                &shader_member_ids,
+                &source_members,
                 texture_authority,
                 &package.subcategory,
             )?;
@@ -171,30 +172,53 @@ pub(super) fn discover_world_candidates(
     Ok(candidates)
 }
 
-/// Map exact normalized shader path/ordinal coordinates to phase-three ids.
-fn phase_three_shader_member_ids(
+/// Map exact normalized source coordinates to validated phase-three members.
+fn phase_three_source_members(
     package: &PhaseThreePackageRow,
-) -> Result<BTreeMap<(String, usize), String>, PipelineError> {
+) -> Result<BTreeMap<(String, usize), PhaseThreePackageMember>, PipelineError> {
     let prefix = format!("{}/components/", package.package_root);
-    let mut ids = BTreeMap::new();
-    for member in package.members().iter().filter(|member| {
-        member.role == PackageRole::Material
-            && member.kind == "p3d-shader"
-            && member.source_chunk_kind == "shader"
-    }) {
+    let mut members = BTreeMap::new();
+    for member in package
+        .members()
+        .iter()
+        .filter(|member| member.source_chunk_ordinal.is_some())
+    {
         let relative = member.path.strip_prefix(&prefix).ok_or_else(|| {
             PipelineError::new(
-                "world shader package member left its component root",
+                "world source package member left its component root",
             )
         })?;
         let ordinal = member.source_chunk_ordinal.ok_or_else(|| {
             PipelineError::new(
-                "world shader package member has no source ordinal",
+                "world source package member has no source ordinal",
             )
         })?;
-        ids.extend([((relative.to_owned(), ordinal), member.id.clone())]);
+        members.extend([((relative.to_owned(), ordinal), member.clone())]);
     }
-    Ok(ids)
+    Ok(members)
+}
+
+/// Resolve one ledger row to its exact classified phase-three member.
+fn phase_three_source_member_id(
+    members: &BTreeMap<(String, usize), PhaseThreePackageMember>,
+    row: &LedgerRow,
+    role: PackageRole,
+    kind: &str,
+) -> Result<String, PipelineError> {
+    members
+        .get(&(row.path.clone(), row.ordinal))
+        .filter(|member| {
+            member.role == role
+                && member.kind == kind
+                && member.source_chunk_kind == row.kind
+        })
+        .map(|member| member.id.clone())
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "world source occurrence has no phase-three member: {}@{}",
+                row.path, row.ordinal
+            ))
+        })
 }
 
 /// Project one owner's mesh members through exact source component ordinals.
@@ -232,7 +256,7 @@ fn decoded_mesh_names(
 
 /// Source-backed authorities needed while retaining deferred render evidence.
 struct DeferredRenderAuthority<'a> {
-    shader_member_ids: &'a BTreeMap<(String, usize), String>,
+    source_members: &'a BTreeMap<(String, usize), PhaseThreePackageMember>,
     texture_authority: &'a SharedTextureAuthority,
     source_subcategory: &'a str,
 }
@@ -274,7 +298,7 @@ fn associate_composite(
     rows: &[LedgerRow],
     package_relationship_rows: &[LedgerRow],
     mesh_names: &BTreeMap<String, String>,
-    shader_member_ids: &BTreeMap<(String, usize), String>,
+    source_members: &BTreeMap<(String, usize), PhaseThreePackageMember>,
     texture_authority: &SharedTextureAuthority,
     source_subcategory: &str,
 ) -> Result<Option<Association>, PipelineError> {
@@ -304,7 +328,7 @@ fn associate_composite(
         return Ok(None);
     };
     let deferred_authority = DeferredRenderAuthority {
-        shader_member_ids,
+        source_members,
         texture_authority,
         source_subcategory,
     };
@@ -377,16 +401,26 @@ fn deferred_render_bindings(
                 )
             })
             .transpose()?;
-        let (component_kind, component_member_id, source_ordinal) =
-            if let Some(row) = resolved {
-                (
-                    Some(row.kind.clone()),
-                    Some(ledger_member_id(&row.path, "quad_group")?),
-                    Some(row.ordinal),
-                )
-            } else {
-                (None, None, None)
-            };
+        let (
+            component_kind,
+            component_package_member_id,
+            component_member_id,
+            source_ordinal,
+        ) = if let Some(row) = resolved {
+            (
+                Some(row.kind.clone()),
+                Some(phase_three_source_member_id(
+                    authority.source_members,
+                    row,
+                    PackageRole::Model,
+                    "p3d-mesh",
+                )?),
+                Some(ledger_member_id(&row.path, "quad_group")?),
+                Some(row.ordinal),
+            )
+        } else {
+            (None, None, None, None)
+        };
         let expected_animation_groups = billboard.as_ref().map(|billboard| {
             billboard
                 .quads
@@ -399,6 +433,7 @@ fn deferred_render_bindings(
             package_relationship_rows,
             &binding.name,
             expected_animation_groups.as_deref(),
+            authority.source_members,
         )?;
         bindings.push(DeferredRenderBinding {
             composite_prop_index,
@@ -406,6 +441,7 @@ fn deferred_render_bindings(
             skeleton_joint_id: binding.skeleton_joint_id,
             is_translucent: binding.is_translucent,
             component_kind,
+            component_package_member_id,
             component_member_id,
             source_ordinal,
             billboard,
@@ -433,7 +469,7 @@ fn deferred_billboard_binding(
     let shader_occurrences = deferred_shader_occurrences(
         root,
         package_relationship_rows,
-        authority.shader_member_ids,
+        authority.source_members,
         &evidence.shader_identity,
     )?;
     let texture_references = deferred_texture_references(
@@ -462,7 +498,7 @@ fn deferred_billboard_binding(
 fn deferred_shader_occurrences(
     root: &Path,
     rows: &[LedgerRow],
-    shader_member_ids: &BTreeMap<(String, usize), String>,
+    source_members: &BTreeMap<(String, usize), PhaseThreePackageMember>,
     shader_identity: &str,
 ) -> Result<Vec<DeferredShaderOccurrenceBinding>, PipelineError> {
     let mut occurrences = Vec::new();
@@ -481,15 +517,12 @@ fn deferred_shader_occurrences(
                     "world prop billboard shader evidence failed: {error:?}"
                 ))
             })?;
-        let package_member_id = shader_member_ids
-            .get(&(row.path.clone(), row.ordinal))
-            .cloned()
-            .ok_or_else(|| {
-                PipelineError::new(format!(
-                    "world shader occurrence has no phase-three member: {}@{}",
-                    row.path, row.ordinal
-                ))
-            })?;
+        let package_member_id = phase_three_source_member_id(
+            source_members,
+            row,
+            PackageRole::Material,
+            "p3d-shader",
+        )?;
         occurrences.push(DeferredShaderOccurrenceBinding {
             package_member_id,
             member_id: ledger_member_id(&row.path, "shader")?,
@@ -584,6 +617,7 @@ fn deferred_controller_binding(
     rows: &[LedgerRow],
     expected_hierarchy: &str,
     expected_animation_groups: Option<&[&str]>,
+    source_members: &BTreeMap<(String, usize), PhaseThreePackageMember>,
 ) -> Result<Option<DeferredControllerBinding>, PipelineError> {
     let mut controllers = Vec::new();
     for row in rows.iter().filter(|row| {
@@ -649,6 +683,7 @@ fn deferred_controller_binding(
         )));
     }
     let (
+        animation_package_member_id,
         animation_member_id,
         animation_source_ordinal,
         animation_version,
@@ -686,6 +721,12 @@ fn deferred_controller_binding(
             ))
         })?;
         (
+            Some(phase_three_source_member_id(
+                source_members,
+                animation_row,
+                PackageRole::Animation,
+                "p3d-animation",
+            )?),
             Some(ledger_member_id(&animation_row.path, "animation")?),
             Some(animation_row.ordinal),
             Some(required_usize(&animation_value, "version")?),
@@ -693,17 +734,24 @@ fn deferred_controller_binding(
             Some(source_value),
         )
     } else {
-        (None, None, None, None, None)
+        (None, None, None, None, None, None)
     };
     Ok(Some(DeferredControllerBinding {
         controller_identity,
         controller_kind: row.kind.clone(),
+        controller_package_member_id: phase_three_source_member_id(
+            source_members,
+            row,
+            PackageRole::Controller,
+            "p3d-controller",
+        )?,
         controller_member_id: ledger_member_id(&row.path, &row.kind)?,
         controller_source_ordinal: row.ordinal,
         controller_version: required_usize(&value, "version")?,
         controller_type,
         frame_offset_bits: frame_offset.to_bits(),
         animation_identity,
+        animation_package_member_id,
         animation_member_id,
         animation_source_ordinal,
         animation_version,

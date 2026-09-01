@@ -211,6 +211,8 @@ pub(super) struct DeferredControllerBinding {
     pub(super) controller_identity: String,
     /// Normalized controller component family.
     pub(super) controller_kind: String,
+    /// Stable phase-three package-member identity for the controller.
+    pub(super) controller_package_member_id: String,
     /// Exact normalized controller member id.
     pub(super) controller_member_id: String,
     /// Exact source controller component ordinal.
@@ -223,6 +225,8 @@ pub(super) struct DeferredControllerBinding {
     pub(super) frame_offset_bits: u32,
     /// Authored animation identity declared by the controller.
     pub(super) animation_identity: String,
+    /// Stable phase-three package-member identity for the animation.
+    pub(super) animation_package_member_id: Option<String>,
     /// Exact normalized animation member id when resolvable.
     pub(super) animation_member_id: Option<String>,
     /// Exact source animation component ordinal when resolvable.
@@ -249,6 +253,8 @@ pub(super) struct DeferredRenderBinding {
     pub(super) is_translucent: bool,
     /// Exact resolved normalized component family when available.
     pub(super) component_kind: Option<String>,
+    /// Stable phase-three package-member identity when available.
+    pub(super) component_package_member_id: Option<String>,
     /// Exact resolved normalized component member id when available.
     pub(super) component_member_id: Option<String>,
     /// Exact source component ordinal when available.
