@@ -37,8 +37,8 @@ use crate::adapters::driven::local::prop_catalog::model::{
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
     DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
     WorldPrimaryEffectBinding, WorldPrimaryMemberBinding,
-    WorldPrimaryMeshOrder, WorldPrimarySelectedMeshBinding,
-    WorldPrimarySourceBinding,
+    WorldPrimaryMeshOrder, WorldPrimaryParticlePairBinding,
+    WorldPrimarySelectedMeshBinding, WorldPrimarySourceBinding,
 };
 
 #[test]
@@ -80,6 +80,18 @@ fn primary_world_source_serialization_preserves_authored_selection_order() {
             skeleton_joint_id: 7,
             is_translucent: true,
             sort_order_bits: Some(0.1_f32.to_bits()),
+            package_particle_pair: Some(WorldPrimaryParticlePairBinding {
+                factory: WorldPrimaryMemberBinding {
+                    package_member_id: "particle-factory-50".to_owned(),
+                    member_id: "spark".to_owned(),
+                    source_ordinal: 50,
+                },
+                system: WorldPrimaryMemberBinding {
+                    package_member_id: "particle-system-60".to_owned(),
+                    member_id: "spark".to_owned(),
+                    source_ordinal: 60,
+                },
+            }),
         }],
         matched_composite: Some(WorldPrimaryMemberBinding {
             package_member_id: "composite-member-30".to_owned(),
@@ -144,6 +156,21 @@ fn primary_world_source_serialization_preserves_authored_selection_order() {
             .pointer("/composite_effects/0/sort_order")
             .and_then(serde_json::Value::as_f64),
         Some(f64::from(0.1_f32))
+    );
+    assert_eq!(
+        value.pointer(
+            concat!(
+                "/composite_effects/0/package_particle_pair/factory/",
+                "package_member_id"
+            )
+        ),
+        Some(&"particle-factory-50".into())
+    );
+    assert_eq!(
+        value.pointer(
+            "/composite_effects/0/package_particle_pair/system/source_ordinal"
+        ),
+        Some(&60.into())
     );
     assert_eq!(
         value.pointer("/matched_composite/package_member_id"),

@@ -37,7 +37,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::{
     DeferredRenderAuthority, LedgerRow, decoded_mesh_names,
-    deferred_controller_binding, deferred_render_bindings,
+    deferred_controller_binding, deferred_render_bindings, effect_particle_pair,
     WorldPrimaryRelationships, primary_world_owner_classification,
     primary_world_source_binding, source_ordered_mesh_ids,
 };
@@ -81,6 +81,8 @@ fn fixture_root(label: &str) -> Result<PathBuf, String> {
         "shader",
         "frame_controller",
         "animation",
+        "particle_system_factory",
+        "particle_system",
     ] {
         fs::create_dir_all(root.join("components").join(family))
             .map_err(|error| error.to_string())?;
@@ -172,6 +174,7 @@ fn primary_world_owner_classification_matches_package_taxonomy()
 #[test]
 fn primary_world_source_keeps_composite_order_and_static_skeleton()
 -> Result<(), String> {
+    let root = fixture_root("primary-particle-pair")?;
     let owner = LedgerRow {
         ordinal: 5,
         depth: 1,
@@ -212,6 +215,36 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
         path: "skeleton/owner-skeleton.json".to_owned(),
         kind: "skeleton".to_owned(),
     };
+    let particle_factory = LedgerRow {
+        ordinal: 50,
+        depth: 1,
+        container_ordinal: 50,
+        name: "spark".to_owned(),
+        path: "particle_system_factory/spark.json".to_owned(),
+        kind: "particle_system_factory".to_owned(),
+    };
+    let particle_system = LedgerRow {
+        ordinal: 60,
+        depth: 1,
+        container_ordinal: 60,
+        name: "spark".to_owned(),
+        path: "particle_system/spark.json".to_owned(),
+        kind: "particle_system".to_owned(),
+    };
+    fs::write(
+        root.join("components/particle_system_factory/spark.json"),
+        r#"{"schema":"particle_system_factory","name":"spark"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components/particle_system/spark.json"),
+        r#"{"schema":"particle_system","name":"spark","factory_name":"spark"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    let package_particle_rows = vec![
+        particle_factory.clone(),
+        particle_system.clone(),
+    ];
     let rows = vec![
         mesh_a.clone(),
         mesh_b.clone(),
@@ -274,6 +307,28 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
                 skeleton.ordinal,
             ),
         ),
+        (
+            (particle_factory.path.clone(), particle_factory.ordinal),
+            source_member(
+                "particle-factory-member-50",
+                PackageRole::Particle,
+                &particle_factory.path,
+                "p3d-particle",
+                "particle_system_factory",
+                particle_factory.ordinal,
+            ),
+        ),
+        (
+            (particle_system.path.clone(), particle_system.ordinal),
+            source_member(
+                "particle-system-member-60",
+                PackageRole::Particle,
+                &particle_system.path,
+                "p3d-particle",
+                "particle_system",
+                particle_system.ordinal,
+            ),
+        ),
     ]);
     let selected = ["mesh-b".to_owned(), "mesh-a".to_owned()];
     let composite_source = CompositeEvidence {
@@ -317,6 +372,8 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
             mesh_names: Some(&mesh_names),
             referenced_skeleton: Some(&skeleton),
             exported_ptrn_animation: None,
+            particle_root: Some(&root),
+            particle_rows: Some(&package_particle_rows),
         },
         &source_members,
     )
@@ -335,6 +392,17 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
     assert_eq!(effect.skeleton_joint_id, 7);
     assert!(effect.is_translucent);
     assert_eq!(effect.sort_order_bits, Some(0.1_f32.to_bits()));
+    let pair = effect
+        .package_particle_pair
+        .as_ref()
+        .ok_or_else(|| "primary effect lost exact particle pair".to_owned())?;
+    assert_eq!(
+        pair.factory.package_member_id,
+        "particle-factory-member-50"
+    );
+    assert_eq!(pair.factory.source_ordinal, 50);
+    assert_eq!(pair.system.package_member_id, "particle-system-member-60");
+    assert_eq!(pair.system.source_ordinal, 60);
     assert_eq!(selected_ids, ["mesh-member-20", "mesh-member-10"]);
     let first_selected = binding
         .selected_meshes
@@ -359,6 +427,89 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
         Some("skeleton-member-40")
     );
     assert!(binding.exported_ptrn_animation.is_none());
+    drop(fs::remove_dir_all(&root));
+    Ok(())
+}
+
+#[test]
+fn effect_particle_pair_stays_unresolved_when_factory_repeats()
+-> Result<(), String> {
+    let rows = vec![
+        LedgerRow {
+            ordinal: 1,
+            depth: 1,
+            container_ordinal: 1,
+            name: "spark".to_owned(),
+            path: "particle_system_factory/spark-a.json".to_owned(),
+            kind: "particle_system_factory".to_owned(),
+        },
+        LedgerRow {
+            ordinal: 2,
+            depth: 1,
+            container_ordinal: 2,
+            name: "spark".to_owned(),
+            path: "particle_system_factory/spark-b.json".to_owned(),
+            kind: "particle_system_factory".to_owned(),
+        },
+        LedgerRow {
+            ordinal: 3,
+            depth: 1,
+            container_ordinal: 3,
+            name: "spark".to_owned(),
+            path: "particle_system/spark.json".to_owned(),
+            kind: "particle_system".to_owned(),
+        },
+    ];
+    let root = fixture_root("duplicate-particle-factory")?;
+    let result = effect_particle_pair(&root, &rows, &BTreeMap::new(), "spark")
+        .map_err(|error| error.to_string())?;
+    drop(fs::remove_dir_all(&root));
+    assert!(result.is_none());
+    Ok(())
+}
+
+#[test]
+fn effect_particle_pair_rejects_factory_name_mismatch() -> Result<(), String> {
+    let root = fixture_root("particle-factory-name-mismatch")?;
+    fs::write(
+        root.join("components/particle_system_factory/spark.json"),
+        r#"{"schema":"particle_system_factory","name":"spark"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components/particle_system/spark.json"),
+        r#"{"schema":"particle_system","name":"spark","factory_name":"smoke"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    let rows = vec![
+        LedgerRow {
+            ordinal: 1,
+            depth: 1,
+            container_ordinal: 1,
+            name: "spark".to_owned(),
+            path: "particle_system_factory/spark.json".to_owned(),
+            kind: "particle_system_factory".to_owned(),
+        },
+        LedgerRow {
+            ordinal: 2,
+            depth: 1,
+            container_ordinal: 2,
+            name: "spark".to_owned(),
+            path: "particle_system/spark.json".to_owned(),
+            kind: "particle_system".to_owned(),
+        },
+    ];
+    let result = effect_particle_pair(&root, &rows, &BTreeMap::new(), "spark");
+    drop(fs::remove_dir_all(&root));
+    let Err(error) = result else {
+        return Err("mismatched particle factory name was accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("particle pair disagrees with identity spark")
+    {
+        return Err(format!("unexpected particle mismatch error: {error}"));
+    }
     Ok(())
 }
 

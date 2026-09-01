@@ -711,5 +711,18 @@ chunk summaries but no authored identity that can be joined to a composite
 effect row. The catalog therefore does not choose package-shared or duplicate
 particle resources from those records.
 
+`shar.world-model-props.v15` now retains the exact package-local physical
+candidate pair when an authored effect has one unique same-name factory and one
+unique same-name particle system. The system must identify that same logical
+effect through `factory_name`, and both normalized rows must resolve to exact
+phase-three `particle` / `p3d-particle` members by path and source ordinal.
+
+Current matched-world evidence yields 248 such effect pairs, retaining 496
+classified physical member references across 480 unique phase-three member IDs.
+The catalog records both factory and system occurrences as candidate provenance;
+it does not claim that the composite effect semantically designates either one.
+The other 220 matched-world effects retain no physical candidate pair, including
+all package-shared, duplicate, and absent cases described above.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
