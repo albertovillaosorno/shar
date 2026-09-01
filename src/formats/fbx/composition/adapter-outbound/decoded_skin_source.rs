@@ -34,11 +34,12 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
 use schoenwald_filesystem::adapters::driving::local;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 
 use super::decoded_component_source::read_indexed_mesh;
 use crate::domain::character::{
-    CharacterAsset, CharacterError, CharacterSourceProvenance, SkinnedPart,
+    CharacterAsset, CharacterError, CharacterSourceProvenance,
+    CompositePropSourceBinding, SkinnedPart,
 };
 use crate::domain::mesh::{
     MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
@@ -86,7 +87,10 @@ pub fn load_character(
     let mut prop_bindings = BTreeMap::new();
     let mut translucent_skins = BTreeSet::new();
     let mut composite_identities = Vec::with_capacity(composite_paths.len());
-    for composite_path in composite_paths {
+    let mut composite_prop_bindings = Vec::new();
+    for (composite_ordinal, composite_path) in
+        composite_paths.iter().enumerate()
+    {
         let bindings = composite_bindings(
             composite_path,
             &skeleton_name,
@@ -94,6 +98,8 @@ pub fn load_character(
             bones.len(),
         )?;
         composite_identities.push(bindings.source_identity.clone());
+        composite_prop_bindings
+            .extend(source_prop_bindings(composite_ordinal, &bindings.props)?);
         if bindings.effect_count != 0 {
             return Err(SkinSourceError::UnsupportedCompositeEffects {
                 path: path_text(composite_path),
@@ -152,6 +158,9 @@ pub fn load_character(
     }
     let source_provenance =
         CharacterSourceProvenance::new(skeleton_name, composite_identities)
+            .and_then(|provenance| {
+                provenance.with_composite_prop_bindings(composite_prop_bindings)
+            })
             .map_err(SkinSourceError::Character)?;
     CharacterAsset::new(name, bones, parts)
         .map(|asset| asset.with_source_provenance(source_provenance))
@@ -659,6 +668,10 @@ pub(super) struct CompositePropBinding {
     pub(super) joint: usize,
     /// Source composite marks the prop as translucent.
     pub(super) translucent: bool,
+    /// Authored prop position, absent only for supplemental runtime bindings.
+    pub(super) source_index: Option<usize>,
+    /// Exact decoded source-width sort order when the optional field exists.
+    pub(super) sort_order: Option<f32>,
 }
 
 /// Validated skin and rigid-prop semantics from one composite.
@@ -672,6 +685,29 @@ pub(super) struct CompositeBindings {
     /// Decoded effect bindings retained as unsupported whole-character
     /// evidence.
     pub(super) effect_count: usize,
+}
+
+/// Project authored composite rows into source-only character provenance.
+pub(super) fn source_prop_bindings(
+    composite_ordinal: usize,
+    bindings: &[CompositePropBinding],
+) -> Result<Vec<CompositePropSourceBinding>, SkinSourceError> {
+    bindings
+        .iter()
+        .filter_map(|binding| {
+            binding.source_index.map(|prop_index| {
+                CompositePropSourceBinding::new(
+                    composite_ordinal,
+                    prop_index,
+                    binding.name.clone(),
+                    binding.joint,
+                    binding.translucent,
+                    binding.sort_order,
+                )
+                .map_err(SkinSourceError::Character)
+            })
+        })
+        .collect()
 }
 
 /// Read one strict legacy zero-or-one flag.
@@ -772,7 +808,7 @@ pub(super) fn composite_bindings(
         }
     }
     let mut bindings = Vec::with_capacity(decoded.props.len());
-    for prop in decoded.props {
+    for (prop_index, prop) in decoded.props.into_iter().enumerate() {
         if prop.kind != "prop" {
             return Err(SkinSourceError::Prop(format!(
                 "composite {} contains unsupported prop kind {}",
@@ -795,13 +831,15 @@ pub(super) fn composite_bindings(
                 prop.skeleton_joint_id, bone_count
             )));
         }
+        let translucent =
+            binary_flag(&prop.is_translucent, "composite prop translucency")?;
+        let sort_order = decoded_prop_sort_order(&prop.sort_order, &prop_name)?;
         bindings.push(CompositePropBinding {
             name: prop_name,
             joint: prop.skeleton_joint_id,
-            translucent: binary_flag(
-                &prop.is_translucent,
-                "composite prop translucency",
-            )?,
+            translucent,
+            source_index: Some(prop_index),
+            sort_order,
         });
     }
     Ok(CompositeBindings {
@@ -1392,9 +1430,56 @@ struct DecodedCompositeProp {
     is_translucent: serde_json::Value,
     /// Zero-based skeleton joint position owning the rigid prop.
     skeleton_joint_id: usize,
-    /// Sort order retained for schema compatibility.
-    #[serde(rename = "sort_order")]
-    _sort_order: serde_json::Value,
+    /// Optional source sort-order field, preserving presence separately.
+    #[serde(
+        default,
+        rename = "sort_order",
+        deserialize_with = "deserialize_optional_sort_order"
+    )]
+    sort_order: DecodedOptionalSortOrder,
+}
+
+/// Optional decoded sort-order token that distinguishes absence from null.
+#[derive(Default)]
+enum DecodedOptionalSortOrder {
+    /// No sort-order child was published by the source decoder.
+    #[default]
+    Missing,
+    /// A source decoder field was present and must be validated as finite f32.
+    Present(serde_json::Value),
+}
+
+/// Retain whether the normalized JSON contained a sort-order field.
+fn deserialize_optional_sort_order<'de, D>(
+    deserializer: D,
+) -> Result<DecodedOptionalSortOrder, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    serde_json::Value::deserialize(deserializer)
+        .map(DecodedOptionalSortOrder::Present)
+}
+
+/// Convert one present normalized sort value back to source-width f32 evidence.
+fn decoded_prop_sort_order(
+    value: &DecodedOptionalSortOrder,
+    prop_name: &str,
+) -> Result<Option<f32>, SkinSourceError> {
+    let DecodedOptionalSortOrder::Present(value) = value else {
+        return Ok(None);
+    };
+    let decoded =
+        serde_json::from_value::<f32>(value.clone()).map_err(|_error| {
+            SkinSourceError::Prop(format!(
+                "composite prop {prop_name} sort order is not a finite f32"
+            ))
+        })?;
+    if !decoded.is_finite() {
+        return Err(SkinSourceError::Prop(format!(
+            "composite prop {prop_name} sort order is not a finite f32"
+        )));
+    }
+    Ok(Some(decoded))
 }
 
 #[derive(Deserialize)]

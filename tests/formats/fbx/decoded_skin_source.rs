@@ -193,6 +193,20 @@ fn preserves_skeleton_to_composite_source_relationship_order()
     {
         return Err(format!("source relationships changed: {provenance:?}"));
     }
+    let [binding] = provenance.composite_prop_bindings() else {
+        return Err(format!(
+            "source prop relationships changed: {provenance:?}"
+        ));
+    };
+    if binding.composite_ordinal() != 1
+        || binding.prop_index() != 0
+        || binding.prop_identity() != "BodyShape"
+        || binding.skeleton_joint_id() != 0
+        || binding.translucent()
+        || binding.sort_order_bits() != Some(0.5_f32.to_bits())
+    {
+        return Err(format!("source prop relationship changed: {binding:?}"));
+    }
     Ok(())
 }
 
