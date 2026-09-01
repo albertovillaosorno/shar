@@ -84,6 +84,7 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
             texture_references: vec![EffectTextureReferenceRecord {
                 identity: "light-frame".to_owned(),
                 occurrences: vec![EffectTextureOccurrenceRecord {
+                    package_member_id: "image-occurrence-50".to_owned(),
                     member_id: "light-frame__ordinal_50".to_owned(),
                     source_ordinal: 50,
                     sha256: "1".repeat(64),
@@ -143,6 +144,15 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
             .and_then(|occurrences| occurrences.first())
             .and_then(|occurrence| occurrence.get("source_ordinal"))
             != Some(&50.into())
+        || effect
+            .get("texture_references")
+            .and_then(serde_json::Value::as_array)
+            .and_then(|references| references.first())
+            .and_then(|reference| reference.get("occurrences"))
+            .and_then(serde_json::Value::as_array)
+            .and_then(|occurrences| occurrences.first())
+            .and_then(|occurrence| occurrence.get("package_member_id"))
+            != Some(&"image-occurrence-50".into())
     {
         return Err("vehicle effect relationship is incomplete".to_owned());
     }

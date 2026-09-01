@@ -1148,7 +1148,7 @@ fn load_vehicle_animations(
                 &relationship.target_identity,
                 &initial_texture,
             )?;
-            vehicle_texture_animation_references(package_root, &value)?
+            vehicle_texture_animation_references(package, package_root, &value)?
         } else {
             Vec::new()
         };
@@ -1182,6 +1182,7 @@ fn load_vehicle_animations(
 
 /// Retain every same-package physical occurrence behind TEX entity identities.
 fn vehicle_texture_animation_references(
+    package: &PhaseThreePackageRow,
     package_root: &Path,
     value: &Value,
 ) -> Result<Vec<EffectTextureReferenceRecord>, PipelineError> {
@@ -1252,6 +1253,7 @@ fn vehicle_texture_animation_references(
                     continue;
                 }
                 occurrences.push(vehicle_texture_occurrence(
+                    package,
                     package_root,
                     row,
                 )?);
@@ -1288,6 +1290,7 @@ fn vehicle_texture_animation_references(
 
 /// Read one exact normalized texture occurrence without choosing among peers.
 fn vehicle_texture_occurrence(
+    package: &PhaseThreePackageRow,
     package_root: &Path,
     row: &Value,
 ) -> Result<EffectTextureOccurrenceRecord, PipelineError> {
@@ -1317,11 +1320,34 @@ fn vehicle_texture_occurrence(
             PipelineError::new("vehicle texture member has no safe identity")
         })?
         .to_owned();
+    let source_ordinal = vehicle_ledger_ordinal(row)?;
+    let expected_path =
+        format!("{}/components/{relative}", package.package_root);
+    let matching_members = package
+        .members()
+        .iter()
+        .filter(|member| {
+            member.role == crate::domain::package::PackageRole::Texture
+                && member.source_chunk_kind == "texture"
+                && member.kind == "p3d-texture"
+                && member.source_chunk_ordinal == Some(source_ordinal)
+                && member.path == expected_path
+        })
+        .collect::<Vec<_>>();
+    let [package_member] = matching_members.as_slice() else {
+        return Err(PipelineError::new(format!(
+            concat!(
+                "vehicle texture occurrence has no unique phase-three member: ",
+                "{relative}@{source_ordinal}"
+            )
+        )));
+    };
     let bytes = fs::read(package_root.join("components").join(relative))
         .map_err(|error| PipelineError::new(error.to_string()))?;
     Ok(EffectTextureOccurrenceRecord {
+        package_member_id: package_member.id.clone(),
         member_id,
-        source_ordinal: vehicle_ledger_ordinal(row)?,
+        source_ordinal,
         sha256: digest_hex(&bytes),
     })
 }

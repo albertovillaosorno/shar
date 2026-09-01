@@ -100,6 +100,8 @@ pub(super) struct EffectControllerRecord {
 /// One physical same-package texture occurrence retained without selection.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct EffectTextureOccurrenceRecord {
+    /// Stable phase-three package-member identity for this physical occurrence.
+    pub(super) package_member_id: String,
     /// Exact normalized physical texture member identity.
     pub(super) member_id: String,
     /// Exact source texture component ordinal.

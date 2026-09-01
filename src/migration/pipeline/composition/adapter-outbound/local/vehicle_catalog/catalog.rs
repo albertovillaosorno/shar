@@ -56,7 +56,7 @@ pub(super) fn write_root_catalog(
     extracted_packages: usize,
 ) -> Result<(), PipelineError> {
     let value = json!({
-        "schema": "shar.vehicle-catalog.v4",
+        "schema": "shar.vehicle-catalog.v5",
         "boundary": {
             "source": concat!(
                 "original game P3D packages selected by the generated package ",
@@ -259,6 +259,7 @@ fn effect_animation_value(record: &EffectAnimationRecord) -> Value {
             .map(|reference| json!({
             "identity": reference.identity,
             "occurrences": reference.occurrences.iter().map(|occurrence| json!({
+                "package_member_id": occurrence.package_member_id,
                 "member_id": occurrence.member_id,
                 "source_ordinal": occurrence.source_ordinal,
                 "sha256": occurrence.sha256
