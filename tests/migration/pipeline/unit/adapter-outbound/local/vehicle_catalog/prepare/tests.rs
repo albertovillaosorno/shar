@@ -437,6 +437,96 @@ fn effect_sidecars_preserve_source_chunk_order() -> Result<(), String> {
 }
 
 #[test]
+fn texture_sidecar_retains_shader_controller() -> Result<(), String> {
+    let root = EffectTestDirectory::new("texture-relationship")?;
+    fs::create_dir_all(root.path().join("components/frame_controller"))
+        .map_err(|error| error.to_string())?;
+    fs::create_dir_all(root.path().join("components/shader"))
+        .map_err(|error| error.to_string())?;
+    fs::create_dir_all(root.path().join("components/texture"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/animation/z.json"),
+        r#"{"name":"Zebra","type":"TEX_"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/animation/a.json"),
+        r#"{"name":"Alpha","type":"effect"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/frame_controller/controller.json"),
+        concat!(
+            r#"{"schema":"frame_controller","name":"TEX_Zebra","#,
+            r#""version":0,"type":"TEX","frame_offset":0,"#,
+            r#""animation_name":"Zebra","hierarchy_name":"flame_m"}"#
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/shader/flame.json"),
+        r#"{"schema":"shader","name":"flame_m"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/texture/noise.png"),
+        [0_u8, 1, 2, 3],
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components.jsonl"),
+        concat!(
+            r#"{"ordinal":30,"name":"TEX_Zebra","#,
+            r#""path":"frame_controller/controller.json","#,
+            r#""kind":"frame_controller"}"#,
+            "\n",
+            r#"{"ordinal":40,"name":"flame_m","#,
+            r#""path":"shader/flame.json","kind":"shader"}"#,
+            "\n",
+            r#"{"ordinal":50,"name":"noise","#,
+            r#""path":"texture/noise.png","kind":"texture"}"#,
+            "\n",
+            r#"{"ordinal":60,"container_ordinal":60}"#,
+            "\n"
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let package = effect_animation_package()?;
+    let vehicle_dir = root.path().join("output");
+    let asset = effect_test_asset()?;
+    let (_clips, sidecars) = load_vehicle_animations(
+        &package,
+        root.path(),
+        &vehicle_dir,
+        &asset,
+    )
+    .map_err(|error| error.to_string())?;
+    let zebra = sidecars
+        .first()
+        .ok_or_else(|| "texture effect sidecar is missing".to_owned())?;
+    let controller = zebra
+        .controller
+        .as_ref()
+        .ok_or_else(|| {
+            "texture controller relationship is missing".to_owned()
+        })?;
+    if controller.controller_identity != "TEX_Zebra"
+        || controller.controller_kind != "frame_controller"
+        || controller.controller_source_ordinal != 30
+        || controller.controller_version != 0
+        || controller.controller_type != "TEX"
+        || controller.frame_offset_bits != 0_f32.to_bits()
+        || controller.target_kind != "shader"
+        || controller.target_identity != "flame_m"
+        || controller.target_source_ordinal != 40
+    {
+        return Err(format!("texture relationship changed: {zebra:?}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn billboard_sidecar_retains_controller_relationship() -> Result<(), String> {
     let root = EffectTestDirectory::new("billboard-relationship")?;
     fs::create_dir_all(root.path().join("components/frame_controller"))
@@ -456,8 +546,9 @@ fn billboard_sidecar_retains_controller_relationship() -> Result<(), String> {
     fs::write(
         root.path().join("components/frame_controller/controller.json"),
         concat!(
-            r#"{"name":"BQG_Zebra","animation_name":"Zebra","#,
-            r#""hierarchy_name":"beam"}"#
+            r#"{"schema":"frame_controller","name":"BQG_Zebra","#,
+            r#""version":0,"type":"BQG","frame_offset":0,"#,
+            r#""animation_name":"Zebra","hierarchy_name":"beam"}"#
         ),
     )
     .map_err(|error| error.to_string())?;
@@ -500,9 +591,14 @@ fn billboard_sidecar_retains_controller_relationship() -> Result<(), String> {
         || zebra.animation_type != "BQG_"
         || zebra.source_ordinal != 10
         || controller.controller_identity != "BQG_Zebra"
+        || controller.controller_kind != "frame_controller"
         || controller.controller_source_ordinal != 30
-        || controller.billboard_identity != "beam"
-        || controller.billboard_source_ordinal != 40
+        || controller.controller_version != 0
+        || controller.controller_type != "BQG"
+        || controller.frame_offset_bits != 0_f32.to_bits()
+        || controller.target_kind != "quad_group"
+        || controller.target_identity != "beam"
+        || controller.target_source_ordinal != 40
     {
         return Err(format!("BQG relationship changed: {zebra:?}"));
     }

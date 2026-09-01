@@ -74,17 +74,27 @@ pub(super) struct GroundingRecord {
     pub(super) root_bone: String,
 }
 
-/// One exact BQG controller-to-billboard relationship for an effect sidecar.
+/// One exact source controller-to-target relationship for an effect sidecar.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct EffectControllerRecord {
     /// Authored frame-controller identity.
     pub(super) controller_identity: String,
+    /// Exact normalized frame-controller component kind.
+    pub(super) controller_kind: String,
     /// Exact source frame-controller chunk ordinal.
     pub(super) controller_source_ordinal: usize,
+    /// Decoded source frame-controller version.
+    pub(super) controller_version: usize,
+    /// Decoded source frame-controller type.
+    pub(super) controller_type: String,
+    /// Exact finite source frame-offset bits.
+    pub(super) frame_offset_bits: u32,
+    /// Exact normalized target component kind.
+    pub(super) target_kind: String,
     /// Authored hierarchy identity targeted by the controller.
-    pub(super) billboard_identity: String,
-    /// Exact source billboard quad-group chunk ordinal.
-    pub(super) billboard_source_ordinal: usize,
+    pub(super) target_identity: String,
+    /// Exact source target component chunk ordinal.
+    pub(super) target_source_ordinal: usize,
 }
 
 /// One non-skeletal vehicle animation preserved as a source sidecar.
@@ -98,7 +108,7 @@ pub(super) struct EffectAnimationRecord {
     pub(super) animation_type: String,
     /// Exact source animation chunk ordinal.
     pub(super) source_ordinal: usize,
-    /// Exact BQG controller relationship when the source declares one.
+    /// Exact supported controller relationship when the source declares one.
     pub(super) controller: Option<EffectControllerRecord>,
 }
 

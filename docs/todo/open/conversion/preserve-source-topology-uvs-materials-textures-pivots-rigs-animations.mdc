@@ -260,5 +260,16 @@ skeletal animation reader or repaired by the new relationship metadata. Native
 billboard animation semantics therefore remain open rather than being inferred
 from the sidecar relationship.
 
+Vehicle texture-effect provenance is now separated from billboard animation
+rather than falling through as an untyped sidecar. The five current `TEX_`
+animations each have one `TEX` frame controller whose hierarchy resolves
+uniquely to a shader; all five decoded animation payloads contain one entity
+channel with parameter `TEX_` and no non-finite JSON values.
+
+The vehicle catalog retains that controller-to-shader source relationship and
+its exact source ordinals, but the effect JSON remains verbatim. Texture-frame
+selection and shader runtime animation remain deferred because this step does
+not interpret the entity-channel payload or recreate native material behavior.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
