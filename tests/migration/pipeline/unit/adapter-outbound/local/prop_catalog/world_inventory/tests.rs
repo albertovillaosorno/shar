@@ -401,7 +401,7 @@ fn deferred_controller_retains_exact_animation_relationship()
                 "version": 0,
                 "name": "beam",
                 "group_id": 0,
-                "num_channels": 2,
+                "num_channels": 3,
                 "channels": [{
                     "kind": "float1",
                     "version": 0,
@@ -409,7 +409,11 @@ fn deferred_controller_retains_exact_animation_relationship()
                     "num_frames": 1,
                     "frames": [0],
                     "values": [[2.25]],
-                    "channel_metadata": []
+                    "channel_metadata": [{
+                        "kind": "interpolation_mode",
+                        "version": 0,
+                        "mode": 1
+                    }]
                 }, {
                     "kind": "float1",
                     "version": 0,
@@ -417,6 +421,18 @@ fn deferred_controller_retains_exact_animation_relationship()
                     "num_frames": 1,
                     "frames": [0],
                     "values": [[4.5]],
+                    "channel_metadata": [{
+                        "kind": "interpolation_mode",
+                        "version": 0,
+                        "mode": 1
+                    }]
+                }, {
+                    "kind": "bool",
+                    "version": 0,
+                    "param": "VIS_",
+                    "start_state": 1,
+                    "num_frames": 2,
+                    "values": [3, 8],
                     "channel_metadata": []
                 }]
             }]
@@ -490,6 +506,17 @@ fn deferred_controller_retains_exact_animation_relationship()
             .and_then(serde_json::Value::as_array)
             .map(Vec::len)
             != Some(1)
+        || binding
+            .animation_source
+            .as_ref()
+            .and_then(|source| source.get("group_lists"))
+            .and_then(|lists| lists.get(0))
+            .and_then(|list| list.get("groups"))
+            .and_then(|groups| groups.get(0))
+            .and_then(|group| group.get("channels"))
+            .and_then(|channels| channels.get(2))
+            .and_then(|channel| channel.get("raw_values"))
+            != Some(&serde_json::json!([3, 8]))
     {
         return Err(format!("controller relationship changed: {binding:?}"));
     }

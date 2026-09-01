@@ -179,7 +179,23 @@ pub enum BillboardAnimationChannelEvidence {
         /// Authored channel metadata.
         metadata: Vec<BillboardAnimationMetadataEvidence>,
     },
-    /// Boolean state channel without explicit frame indices.
+    /// Packed four-component quaternion channel.
+    #[serde(rename = "compressed_quaternion")]
+    CompressedQuaternion {
+        /// Supported channel version.
+        version: u32,
+        /// Authored `FourCC` parameter.
+        param: String,
+        /// Declared key count.
+        declared_key_count: usize,
+        /// Authored key-frame indices.
+        frames: Vec<u16>,
+        /// Authored packed quaternion values without decompression.
+        compressed_values: Vec<[u16; 4]>,
+        /// Authored channel metadata.
+        metadata: Vec<BillboardAnimationMetadataEvidence>,
+    },
+    /// Visibility state channel with raw source values.
     #[serde(rename = "bool")]
     Bool {
         /// Supported channel version.
@@ -187,11 +203,11 @@ pub enum BillboardAnimationChannelEvidence {
         /// Authored `FourCC` parameter.
         param: String,
         /// Authored initial state.
-        start_state: u32,
-        /// Declared state count.
+        start_state: u16,
+        /// Declared raw value count.
         declared_key_count: usize,
-        /// Authored state values.
-        values: Vec<u32>,
+        /// Ordered raw `u16` values from the source channel.
+        raw_values: Vec<u16>,
         /// Authored channel metadata.
         metadata: Vec<BillboardAnimationMetadataEvidence>,
     },
@@ -270,7 +286,10 @@ fn validate_document(
     {
         return Err(DecodedBillboardAnimationError::UnsupportedTopLevelPayload);
     }
-    if document.sizes.iter().any(|size| size.version != 1) {
+    if document.sizes.len() != 1
+        || document.sizes.iter().any(|size| size.version != 1)
+        || document.group_lists.len() != 1
+    {
         return Err(DecodedBillboardAnimationError::UnsupportedDocument);
     }
     let group_lists = document
@@ -372,7 +391,7 @@ fn validate_channel(
                 group,
                 &param,
             )?;
-            validate_metadata(&channel_metadata, group, &param)?;
+            validate_metadata(&channel_metadata, group, &param, true)?;
             Ok(BillboardAnimationChannelEvidence::Float1 {
                 version,
                 param,
@@ -399,7 +418,7 @@ fn validate_channel(
                 group,
                 &param,
             )?;
-            validate_metadata(&channel_metadata, group, &param)?;
+            validate_metadata(&channel_metadata, group, &param, true)?;
             Ok(BillboardAnimationChannelEvidence::Float2 {
                 version,
                 param,
@@ -426,7 +445,7 @@ fn validate_channel(
                 group,
                 &param,
             )?;
-            validate_metadata(&channel_metadata, group, &param)?;
+            validate_metadata(&channel_metadata, group, &param, true)?;
             Ok(BillboardAnimationChannelEvidence::Vector3 {
                 version,
                 param,
@@ -453,13 +472,40 @@ fn validate_channel(
                 group,
                 &param,
             )?;
-            validate_metadata(&channel_metadata, group, &param)?;
+            validate_metadata(&channel_metadata, group, &param, true)?;
             Ok(BillboardAnimationChannelEvidence::Quaternion {
                 version,
                 param,
                 declared_key_count: num_frames,
                 frames,
                 values,
+                metadata: channel_metadata,
+            })
+        },
+        ChannelDocument::CompressedQuaternion {
+            version,
+            param,
+            num_frames,
+            frames,
+            compressed_values,
+            channel_metadata,
+        } => {
+            validate_channel_header(version, &param, group, &["ROT_"])?;
+            validate_key_series(
+                num_frames,
+                &frames,
+                compressed_values.len(),
+                clip_frames,
+                group,
+                &param,
+            )?;
+            validate_metadata(&channel_metadata, group, &param, true)?;
+            Ok(BillboardAnimationChannelEvidence::CompressedQuaternion {
+                version,
+                param,
+                declared_key_count: num_frames,
+                frames,
+                compressed_values,
                 metadata: channel_metadata,
             })
         },
@@ -475,17 +521,21 @@ fn validate_channel(
             if num_frames == 0
                 || num_frames != values.len()
                 || start_state > 1
-                || values.iter().any(|value| *value > 1)
+                || values.windows(2).any(|pair| match pair {
+                    [left, right] => left >= right,
+                    _ => false,
+                })
+                || values.iter().any(|value| f32::from(*value) >= clip_frames)
             {
                 return invalid_channel(group, &param);
             }
-            validate_metadata(&channel_metadata, group, &param)?;
+            validate_metadata(&channel_metadata, group, &param, false)?;
             Ok(BillboardAnimationChannelEvidence::Bool {
                 version,
                 param,
                 start_state,
                 declared_key_count: num_frames,
-                values,
+                raw_values: values,
                 metadata: channel_metadata,
             })
         },
@@ -508,7 +558,7 @@ fn validate_channel(
                 group,
                 &param,
             )?;
-            validate_metadata(&channel_metadata, group, &param)?;
+            validate_metadata(&channel_metadata, group, &param, true)?;
             Ok(BillboardAnimationChannelEvidence::Colour {
                 version,
                 param,
@@ -585,12 +635,16 @@ fn validate_metadata(
     metadata: &[BillboardAnimationMetadataEvidence],
     group: &str,
     param: &str,
+    required: bool,
 ) -> Result<(), DecodedBillboardAnimationError> {
-    if metadata.iter().any(|entry| {
-        entry.kind != "interpolation_mode"
-            || entry.version != 0
-            || entry.mode > 1
-    }) {
+    if (required && metadata.len() != 1)
+        || (!required && !metadata.is_empty())
+        || metadata.iter().any(|entry| {
+            entry.kind != "interpolation_mode"
+                || entry.version != 0
+                || entry.mode != 1
+        })
+    {
         return invalid_channel(group, param);
     }
     Ok(())
@@ -621,6 +675,10 @@ fn channel_param(channel: &BillboardAnimationChannelEvidence) -> &str {
         | BillboardAnimationChannelEvidence::Float2 { param, .. }
         | BillboardAnimationChannelEvidence::Vector3 { param, .. }
         | BillboardAnimationChannelEvidence::Quaternion { param, .. }
+        | BillboardAnimationChannelEvidence::CompressedQuaternion {
+            param,
+            ..
+        }
         | BillboardAnimationChannelEvidence::Bool { param, .. }
         | BillboardAnimationChannelEvidence::Colour { param, .. } => param,
     }
@@ -755,14 +813,24 @@ enum ChannelDocument {
         values: Vec<[f32; 4]>,
         channel_metadata: Vec<BillboardAnimationMetadataEvidence>,
     },
-    /// Boolean state channel.
+    /// Packed quaternion channel.
+    #[serde(rename = "compressed_quaternion")]
+    CompressedQuaternion {
+        version: u32,
+        param: String,
+        num_frames: usize,
+        frames: Vec<u16>,
+        compressed_values: Vec<[u16; 4]>,
+        channel_metadata: Vec<BillboardAnimationMetadataEvidence>,
+    },
+    /// Visibility channel with raw source values.
     #[serde(rename = "bool")]
     Bool {
         version: u32,
         param: String,
-        start_state: u32,
+        start_state: u16,
         num_frames: usize,
-        values: Vec<u32>,
+        values: Vec<u16>,
         channel_metadata: Vec<BillboardAnimationMetadataEvidence>,
     },
     /// Packed colour channel.

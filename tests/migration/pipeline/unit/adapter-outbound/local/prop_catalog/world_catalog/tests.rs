@@ -181,7 +181,7 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
                         "version": 0,
                         "identity": "light-beam-child",
                         "group_id": 0,
-                        "declared_channel_count": 1,
+                        "declared_channel_count": 2,
                         "channels": [{
                             "kind": "float1",
                             "version": 0,
@@ -189,6 +189,14 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
                             "declared_key_count": 1,
                             "frames": [0],
                             "values": [[2.25]],
+                            "metadata": []
+                        }, {
+                            "kind": "bool",
+                            "version": 0,
+                            "param": "VIS_",
+                            "start_state": 1,
+                            "declared_key_count": 2,
+                            "raw_values": [3, 8],
                             "metadata": []
                         }]
                     }]
@@ -332,6 +340,14 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
             .first()
             .and_then(|group| group.get("identity")),
         Some(&"light-beam-child".into())
+    );
+    assert_eq!(
+        animation_groups
+            .first()
+            .and_then(|group| group.get("channels"))
+            .and_then(|channels| channels.get(1))
+            .and_then(|channel| channel.get("raw_values")),
+        Some(&serde_json::json!([3, 8]))
     );
     Ok(())
 }

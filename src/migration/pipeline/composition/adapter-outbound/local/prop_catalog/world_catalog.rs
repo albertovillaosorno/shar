@@ -154,7 +154,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v7",
+        "schema": "shar.world-model-props.v8",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -172,7 +172,8 @@ pub(super) fn write_world_catalog(
                 "retain authored non-mesh composite prop relationships, exact ",
                 "billboard presentation, every same-name shader occurrence, ",
                 "preferred physical texture occurrences, controller links, ",
-                "and strict BQG channel payloads as source evidence without ",
+                "and strict BQG channel payloads, including packed rotation ",
+                "and raw visibility values, as source evidence without ",
                 "substituting static FBX geometry or interpreting runtime ",
                 "presentation semantics"
             ),

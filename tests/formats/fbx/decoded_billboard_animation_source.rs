@@ -92,7 +92,11 @@ fn animation_fixture(group_count: usize) -> String {
                     "num_frames": 1,
                     "frames": [0],
                     "values": [[0.25, -0.5]],
-                    "channel_metadata": []
+                    "channel_metadata": [{
+                        "kind": "interpolation_mode",
+                        "version": 0,
+                        "mode": 1
+                    }]
                 }, {
                     "kind": "vector3",
                     "version": 0,
@@ -100,7 +104,11 @@ fn animation_fixture(group_count: usize) -> String {
                     "num_frames": 1,
                     "frames": [0],
                     "values": [[1, 2, 3]],
-                    "channel_metadata": []
+                    "channel_metadata": [{
+                        "kind": "interpolation_mode",
+                        "version": 0,
+                        "mode": 1
+                    }]
                 }, {
                     "kind": "quaternion",
                     "version": 0,
@@ -108,7 +116,11 @@ fn animation_fixture(group_count: usize) -> String {
                     "num_frames": 1,
                     "frames": [0],
                     "values": [[1, 0, 0, 0]],
-                    "channel_metadata": []
+                    "channel_metadata": [{
+                        "kind": "interpolation_mode",
+                        "version": 0,
+                        "mode": 1
+                    }]
                 }, {
                     "kind": "bool",
                     "version": 0,
@@ -124,7 +136,11 @@ fn animation_fixture(group_count: usize) -> String {
                     "num_frames": 2,
                     "frames": [0, 9],
                     "values": [305_419_896_u32, u32::MAX],
-                    "channel_metadata": []
+                    "channel_metadata": [{
+                        "kind": "interpolation_mode",
+                        "version": 0,
+                        "mode": 1
+                    }]
                 }]
             }]
         }],
@@ -174,6 +190,81 @@ fn retains_exact_billboard_group_animation_evidence() -> Result<(), String> {
         Some(BillboardAnimationChannelEvidence::Colour { .. })
     ) {
         return Err(format!("BQG channel order changed: {:?}", group.channels));
+    }
+    Ok(())
+}
+
+#[test]
+fn retains_packed_rotation_and_raw_visibility_values() -> Result<(), String> {
+    let path = fixture_path("packed-source-evidence");
+    let mut document: serde_json::Value =
+        serde_json::from_str(&animation_fixture(1))
+            .map_err(|error| error.to_string())?;
+    let channels = document
+        .get_mut("group_lists")
+        .and_then(serde_json::Value::as_array_mut)
+        .and_then(|lists| lists.first_mut())
+        .and_then(|list| list.get_mut("groups"))
+        .and_then(serde_json::Value::as_array_mut)
+        .and_then(|groups| groups.first_mut())
+        .and_then(|group| group.get_mut("channels"))
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or_else(|| "BQG fixture channels are missing".to_owned())?;
+    let rotation = channels
+        .get_mut(3)
+        .ok_or_else(|| "BQG fixture rotation is missing".to_owned())?;
+    *rotation = serde_json::json!({
+        "kind": "compressed_quaternion",
+        "version": 0,
+        "param": "ROT_",
+        "num_frames": 1,
+        "frames": [0],
+        "compressed_values": [[32767, 0, 0, 0]],
+        "channel_metadata": [{
+            "kind": "interpolation_mode",
+            "version": 0,
+            "mode": 1
+        }]
+    });
+    let visibility = channels
+        .get_mut(4)
+        .ok_or_else(|| "BQG fixture visibility is missing".to_owned())?;
+    *visibility = serde_json::json!({
+        "kind": "bool",
+        "version": 0,
+        "param": "VIS_",
+        "start_state": 1,
+        "num_frames": 2,
+        "values": [3, 8],
+        "channel_metadata": []
+    });
+    fs::write(&path, document.to_string())
+        .map_err(|error| error.to_string())?;
+    let result = read_billboard_animation_source_evidence(&path, "BQG_beam");
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+    let evidence =
+        result.map_err(|error| format!("BQG evidence failed: {error:?}"))?;
+    let channels = evidence
+        .group_lists
+        .first()
+        .and_then(|list| list.groups.first())
+        .map(|group| group.channels.as_slice())
+        .ok_or_else(|| "BQG evidence channels are missing".to_owned())?;
+    if !matches!(
+        channels.get(3),
+        Some(BillboardAnimationChannelEvidence::CompressedQuaternion {
+            compressed_values,
+            ..
+        }) if compressed_values == &[[32767, 0, 0, 0]]
+    ) || !matches!(
+        channels.get(4),
+        Some(BillboardAnimationChannelEvidence::Bool {
+            start_state: 1,
+            raw_values,
+            ..
+        }) if raw_values == &[3, 8]
+    ) {
+        return Err(format!("packed BQG evidence changed: {channels:?}"));
     }
     Ok(())
 }
