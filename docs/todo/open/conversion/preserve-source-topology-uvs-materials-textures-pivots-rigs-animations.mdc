@@ -697,5 +697,19 @@ semantic deduplication, or runtime rendering behavior. The broader terrain-world
 corpus contains 650 effect rows across 496 composites, but only the 468 rows on
 matched model composites belong to the current world-model catalog boundary.
 
+A follow-up matched-world resource audit keeps particle ownership fail-closed.
+Of the 468 retained effect rows, 248 have exactly one same-package
+`particle_system_factory` and one same-package `particle_system`; every such
+system names the same effect identity through `factory_name`. Of the remaining
+220 rows, 216 have no same-name factory/system anywhere in the normalized
+terrain-world corpus, two have one same-level pair, and two face seven
+same-level duplicate pairs.
+
+The separate 63 `srr_inst_particle_system` rows do not resolve that gap. Their
+normalized payloads expose particle type, maximum instances, and opaque child
+chunk summaries but no authored identity that can be joined to a composite
+effect row. The catalog therefore does not choose package-shared or duplicate
+particle resources from those records.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
