@@ -317,5 +317,17 @@ SHA-256 are retained together. The separate phase-three source-unit index uses a
 different texture ordinal domain and is not joined by ordinal proximity or file
 name.
 
+The ambiguity is active on the current vehicle render path rather than only
+sidecar debt. All 11 quad groups using the five `TEX_` target shaders pass the
+strict billboard-source contract and are composite-reachable, so their shaders
+participate in retained material resolution. Three frame-zero logical texture
+identities have duplicate local ledger occurrences; the material adapter rejects
+all three instead of selecting one, including the byte-identical duplicate pair.
+
+Two of those duplicate pairs contain different PNG payloads, so weakening that
+fail-closed behavior would invent source semantics. End-to-end publication for
+those three target materials therefore remains blocked pending stronger source
+or native occurrence authority even though v4 can represent every candidate.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
