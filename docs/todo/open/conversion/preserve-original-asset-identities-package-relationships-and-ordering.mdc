@@ -1054,11 +1054,19 @@ skeleton.
 
 The world catalog source alias currently publishes none of those primary
 phase-three member ids; it retains only package/container identity plus deferred
-render evidence. A future catalog revision can add source-order selected mesh
-member ids and separately labelled composite/skeleton/PTRN provenance without
+render evidence. A future catalog revision can add selected mesh member ids in
+the existing authored selection order plus separately labelled
+composite/skeleton/PTRN provenance without
 changing semantic deduplication or implying that the 55 static skeletons were
 exported. This is a physical-provenance gap only; current mesh selection and
 animation routing remain source-backed.
+
+That selected-mesh ordering must not be relabelled as numeric source-ordinal
+order. Among the 425 composite-backed candidates, 233 project mesh occurrences
+in an authored composite-prop order that differs from sorting those same meshes
+by ledger ordinal. The remaining 415 non-composite static candidates continue to
+use ledger source-ordinal order. Primary provenance must preserve whichever
+source-backed ordering the existing route actually uses.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
