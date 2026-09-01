@@ -129,6 +129,8 @@ pub(super) struct DeferredShaderParameterBinding {
 /// authoritative.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct DeferredShaderOccurrenceBinding {
+    /// Stable phase-three package-member identity for this occurrence.
+    pub(super) package_member_id: String,
     /// Exact normalized shader member id.
     pub(super) member_id: String,
     /// Exact source component ordinal.
