@@ -987,5 +987,20 @@ shader payload. The existing same-name occurrence list remains
 source-ordinal ordered and non-selecting; this adds provenance without choosing
 a shader winner.
 
+The same audit method identifies the next bounded world provenance gap without
+changing v10 behavior. Across the 149 terrain-world packages, all 1,091
+`quad_group` rows match `p3d-mesh` phase-three members by exact path and
+ordinal,
+all 4,032 `animation` rows match `p3d-animation` members, and all 2,802
+frame-controller-family rows match `p3d-controller` members. The controller set
+contains 2,796 `frame_controller`, four `frame_controller_variant_a`, and two
+`frame_controller_variant_b` rows; every family has zero missing,
+duplicate-path, ordinal-mismatch, or unrepresented rows.
+
+Those coordinates are not yet published by v10 for deferred quad-group,
+controller, or animation relationships. Their current normalized member ids and
+source ordinals remain truthful, so this is a stable-identity provenance gap,
+not permission to infer new controller, animation, or presentation semantics.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
