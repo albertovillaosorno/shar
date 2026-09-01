@@ -361,9 +361,10 @@ is considered.
 
 All 402 duplicate used bindings share the same top-level layout: two self-owned
 texture chunks with parent ordinal 0 precede a self-owned shader chunk with
-parent ordinal 0, and exactly one texture path receives the extractor's generated
-ordinal collision suffix. The later texture is always nearer the shader, but the
-source shader texture-parameter schema stores only `Param` plus a string `Value`.
+parent ordinal 0, and exactly one texture path receives the extractor's
+generated ordinal collision suffix. The later texture is always nearer the
+shader, but the source shader texture-parameter schema stores only `Param` plus
+a string `Value`.
 It has no occurrence ordinal or handle, so proximity cannot safely select one
 physical payload.
 
