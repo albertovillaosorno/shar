@@ -251,6 +251,8 @@ pub(super) struct DeferredRenderBinding {
     pub(super) skeleton_joint_id: usize,
     /// Authored translucency flag.
     pub(super) is_translucent: bool,
+    /// Exact authored optional sort order at source f32 width.
+    pub(super) sort_order_bits: Option<u32>,
     /// Exact resolved normalized component family when available.
     pub(super) component_kind: Option<String>,
     /// Stable phase-three package-member identity when available.
@@ -296,6 +298,21 @@ pub(super) struct WorldPrimaryMemberBinding {
     pub(super) source_ordinal: usize,
 }
 
+/// One selected primary mesh plus its authored composite relationship.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct WorldPrimarySelectedMeshBinding {
+    /// Exact physical selected mesh occurrence.
+    pub(super) member: WorldPrimaryMemberBinding,
+    /// Authored composite prop position when selected through a composite.
+    pub(super) composite_prop_index: Option<usize>,
+    /// Authored skeleton joint when selected through a composite.
+    pub(super) skeleton_joint_id: Option<usize>,
+    /// Authored translucency when selected through a composite.
+    pub(super) is_translucent: Option<bool>,
+    /// Exact authored optional sort order at source f32 width.
+    pub(super) sort_order_bits: Option<u32>,
+}
+
 /// Exact physical provenance for the primary world-model route.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct WorldPrimarySourceBinding {
@@ -303,8 +320,8 @@ pub(super) struct WorldPrimarySourceBinding {
     pub(super) owner: WorldPrimaryMemberBinding,
     /// Authored ordering rule used for selected meshes.
     pub(super) mesh_order: WorldPrimaryMeshOrder,
-    /// Selected mesh occurrences in the order consumed by the FBX route.
-    pub(super) selected_meshes: Vec<WorldPrimaryMemberBinding>,
+    /// Selected mesh occurrences and authored composite bindings, if any.
+    pub(super) selected_meshes: Vec<WorldPrimarySelectedMeshBinding>,
     /// Composite occurrence that authored mesh selection when present.
     pub(super) matched_composite: Option<WorldPrimaryMemberBinding>,
     /// Authored skeleton relationship when present, even on a static route.

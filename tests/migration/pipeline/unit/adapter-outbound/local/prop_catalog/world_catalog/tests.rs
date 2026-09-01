@@ -37,7 +37,7 @@ use crate::adapters::driven::local::prop_catalog::model::{
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
     DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
     WorldPrimaryMemberBinding, WorldPrimaryMeshOrder,
-    WorldPrimarySourceBinding,
+    WorldPrimarySelectedMeshBinding, WorldPrimarySourceBinding,
 };
 
 #[test]
@@ -50,15 +50,27 @@ fn primary_world_source_serialization_preserves_authored_selection_order() {
         },
         mesh_order: WorldPrimaryMeshOrder::CompositeProp,
         selected_meshes: vec![
-            WorldPrimaryMemberBinding {
-                package_member_id: "mesh-member-20".to_owned(),
-                member_id: "mesh-b".to_owned(),
-                source_ordinal: 20,
+            WorldPrimarySelectedMeshBinding {
+                member: WorldPrimaryMemberBinding {
+                    package_member_id: "mesh-member-20".to_owned(),
+                    member_id: "mesh-b".to_owned(),
+                    source_ordinal: 20,
+                },
+                composite_prop_index: Some(4),
+                skeleton_joint_id: Some(9),
+                is_translucent: Some(true),
+                sort_order_bits: Some(0.4_f32.to_bits()),
             },
-            WorldPrimaryMemberBinding {
-                package_member_id: "mesh-member-10".to_owned(),
-                member_id: "mesh-a".to_owned(),
-                source_ordinal: 10,
+            WorldPrimarySelectedMeshBinding {
+                member: WorldPrimaryMemberBinding {
+                    package_member_id: "mesh-member-10".to_owned(),
+                    member_id: "mesh-a".to_owned(),
+                    source_ordinal: 10,
+                },
+                composite_prop_index: Some(7),
+                skeleton_joint_id: Some(3),
+                is_translucent: Some(false),
+                sort_order_bits: Some(0.5_f32.to_bits()),
             },
         ],
         matched_composite: Some(WorldPrimaryMemberBinding {
@@ -81,6 +93,23 @@ fn primary_world_source_serialization_preserves_authored_selection_order() {
     assert_eq!(
         value.pointer("/selected_meshes/0/package_member_id"),
         Some(&"mesh-member-20".into())
+    );
+    assert_eq!(
+        value.pointer("/selected_meshes/0/composite_prop_index"),
+        Some(&4.into())
+    );
+    assert_eq!(
+        value.pointer("/selected_meshes/0/skeleton_joint_id"),
+        Some(&9.into())
+    );
+    assert_eq!(
+        value.pointer("/selected_meshes/0/is_translucent"),
+        Some(&true.into())
+    );
+    assert_eq!(
+        value.pointer("/selected_meshes/0/sort_order")
+            .and_then(serde_json::Value::as_f64),
+        Some(f64::from(0.4_f32))
     );
     assert_eq!(
         value.pointer("/selected_meshes/1/source_ordinal"),
@@ -108,6 +137,7 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
         source_identity: "light-beam".to_owned(),
         skeleton_joint_id: 7,
         is_translucent: true,
+        sort_order_bits: Some(0.49_f32.to_bits()),
         component_kind: Some("quad_group".to_owned()),
         component_package_member_id: Some("quad-member-42".to_owned()),
         component_member_id: Some("light-beam__ordinal_42".to_owned()),
@@ -277,6 +307,10 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
     assert_eq!(value.get("source_identity"), Some(&"light-beam".into()));
     assert_eq!(value.get("skeleton_joint_id"), Some(&7.into()));
     assert_eq!(value.get("is_translucent"), Some(&true.into()));
+    assert_eq!(
+        value.get("sort_order").and_then(serde_json::Value::as_f64),
+        Some(f64::from(0.49_f32))
+    );
     assert_eq!(value.get("component_kind"), Some(&"quad_group".into()));
     assert_eq!(
         value.get("component_package_member_id"),

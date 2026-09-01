@@ -570,5 +570,28 @@ mesh joint/translucency bindings. Preserve those exact source values before any
 future rendering-order interpretation; this audit does not establish what
 `sort_order` means at runtime.
 
+`shar.world-model-props.v13` now preserves the audited composite prop
+relationship evidence without interpreting rendering order. Each of the 1,953
+selected composite-backed mesh occurrences retains its authored composite prop
+index, skeleton joint id, translucency flag, and optional `sort_order` at exact
+source `f32` width beside the v12 physical member identity. The 415
+non-composite static selections retain null composite-binding fields rather than
+inventing relationships.
+
+Deferred non-mesh render relationships retain the same optional source-width
+`sort_order` beside their already-published prop index, joint, and translucency.
+On the current 425 matched world composites, all 2,213 selected and deferred
+prop rows carry a sort-order child. The expected v13 aggregate counts are
+1,953 primary composite mesh bindings and 2,213 retained composite sort-order
+values.
+The source decoder permits the sort-order child to be absent, and v13 preserves
+that absence as null instead of substituting a default.
+
+Current values remain evidence only. In the audited selected mesh set, 1,887
+sort values are 0.5 and 66 are 0.4; the deferred set additionally contains 0.49
+and 0.0 cases. The catalog does not treat those numbers as depth, priority, draw
+order, or any other runtime semantic until source-backed behavior establishes
+such a mapping.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

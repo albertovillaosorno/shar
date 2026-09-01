@@ -51,7 +51,8 @@ use super::model::{
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
     DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
     PropCandidate, PropFamily, PropRoute, WorldPrimaryMemberBinding,
-    WorldPrimaryMeshOrder, WorldPrimarySourceBinding,
+    WorldPrimaryMeshOrder, WorldPrimarySelectedMeshBinding,
+    WorldPrimarySourceBinding,
 };
 use super::texture_authority::SharedTextureAuthority;
 use super::world_ledger::{LedgerRow, read_world_ledger};
@@ -294,6 +295,8 @@ fn selected_world_member_row<'rows>(
 struct WorldPrimaryRelationships<'rows> {
     mesh_order: WorldPrimaryMeshOrder,
     matched_composite: Option<&'rows LedgerRow>,
+    composite_evidence: Option<&'rows CompositeEvidence>,
+    mesh_names: Option<&'rows BTreeMap<String, String>>,
     referenced_skeleton: Option<&'rows LedgerRow>,
     exported_ptrn_animation: Option<&'rows LedgerRow>,
 }
@@ -319,13 +322,55 @@ fn primary_world_source_binding(
         .iter()
         .map(|member_id| {
             let row = selected_world_member_row(rows, "mesh", member_id)?;
-            primary_world_member_binding(
+            let member = primary_world_member_binding(
                 row,
                 "mesh",
                 PackageRole::Model,
                 "p3d-mesh",
                 source_members,
-            )
+            )?;
+            let composite_binding = match (
+                relationships.composite_evidence,
+                relationships.mesh_names,
+            ) {
+                (Some(composite), Some(mesh_names)) => composite
+                    .prop_bindings
+                    .iter()
+                    .enumerate()
+                    .find(|(_index, binding)| {
+                        mesh_names.get(&binding.name) == Some(member_id)
+                    })
+                    .map(|(index, binding)| {
+                        (
+                            Some(index),
+                            Some(binding.skeleton_joint_id),
+                            Some(binding.is_translucent),
+                            binding.sort_order_bits,
+                        )
+                    })
+                    .ok_or_else(|| {
+                        PipelineError::new(format!(
+                            concat!(
+                                "world selected mesh has no composite ",
+                                "binding: {}"
+                            ),
+                            member_id
+                        ))
+                    })?,
+                (None, None) => (None, None, None, None),
+                _ => {
+                    return Err(PipelineError::new(
+                        "world primary composite evidence is incomplete",
+                    ));
+                },
+            };
+            Ok(WorldPrimarySelectedMeshBinding {
+                member,
+                composite_prop_index: composite_binding.0,
+                skeleton_joint_id: composite_binding.1,
+                is_translucent: composite_binding.2,
+                sort_order_bits: composite_binding.3,
+            })
         })
         .collect::<Result<Vec<_>, PipelineError>>()?;
     let matched_composite = relationships.matched_composite
@@ -437,6 +482,8 @@ fn static_association(
         WorldPrimaryRelationships {
             mesh_order: WorldPrimaryMeshOrder::SourceOrdinal,
             matched_composite: None,
+            composite_evidence: None,
+            mesh_names: None,
             referenced_skeleton: None,
             exported_ptrn_animation: None,
         },
@@ -512,6 +559,8 @@ fn associate_composite(
         WorldPrimaryRelationships {
             mesh_order: WorldPrimaryMeshOrder::CompositeProp,
             matched_composite: Some(composite_row),
+            composite_evidence: Some(&composite),
+            mesh_names: Some(mesh_names),
             referenced_skeleton: skeleton
                 .as_ref()
                 .map(|(row, _member)| *row),
@@ -619,6 +668,7 @@ fn deferred_render_bindings(
             source_identity: binding.name.clone(),
             skeleton_joint_id: binding.skeleton_joint_id,
             is_translucent: binding.is_translucent,
+            sort_order_bits: binding.sort_order_bits,
             component_kind,
             component_package_member_id,
             component_member_id,
