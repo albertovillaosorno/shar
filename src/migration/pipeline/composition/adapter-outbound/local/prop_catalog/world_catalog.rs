@@ -41,7 +41,7 @@ use super::model::{
     DeferredControllerBinding, DeferredRenderBinding,
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
     DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
-    PropRoute,
+    PropRoute, WorldPrimaryMemberBinding, WorldPrimarySourceBinding,
 };
 use super::world_model::{ExportedWorldProp, WorldCatalogCounts};
 use crate::domain::PipelineError;
@@ -72,6 +72,35 @@ pub(super) fn world_counts(
             .iter()
             .map(|asset| asset.omitted_visual_variants.len())
             .sum(),
+        primary_source_bindings: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .filter(|alias| alias.world_primary_source.is_some())
+            .count(),
+        primary_selected_meshes: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .filter_map(|alias| alias.world_primary_source.as_ref())
+            .map(|source| source.selected_meshes.len())
+            .sum(),
+        primary_matched_composites: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .filter_map(|alias| alias.world_primary_source.as_ref())
+            .filter(|source| source.matched_composite.is_some())
+            .count(),
+        primary_referenced_skeletons: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .filter_map(|alias| alias.world_primary_source.as_ref())
+            .filter(|source| source.referenced_skeleton.is_some())
+            .count(),
+        primary_exported_ptrn_animations: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .filter_map(|alias| alias.world_primary_source.as_ref())
+            .filter(|source| source.exported_ptrn_animation.is_some())
+            .count(),
         deferred_render_bindings: assets
             .iter()
             .flat_map(|asset| asset.aliases.iter())
@@ -154,7 +183,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v11",
+        "schema": "shar.world-model-props.v12",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -167,6 +196,12 @@ pub(super) fn write_world_catalog(
             "incompatible_variants": concat!(
                 "select the richest canonical model and retain omitted ",
                 "evidence in this catalog"
+            ),
+            "primary_source": concat!(
+                "retain exact phase-three owner and selected mesh occurrences ",
+                "in the authored order consumed by the route; retain matched ",
+                "composite and referenced skeleton separately from the exact ",
+                "PTRN animation consumed only by rigid-animated FBX"
             ),
             "deferred_render_bindings": concat!(
                 "retain authored non-mesh composite prop relationships, exact ",
@@ -196,6 +231,12 @@ pub(super) fn write_world_catalog(
             "rigid_animated_assets": counts.animated_assets,
             "merged_compatible_variants": counts.merged_variants,
             "omitted_visual_variants": counts.omitted_variants,
+            "primary_source_bindings": counts.primary_source_bindings,
+            "primary_selected_meshes": counts.primary_selected_meshes,
+            "primary_matched_composites": counts.primary_matched_composites,
+            "primary_referenced_skeletons": counts.primary_referenced_skeletons,
+            "primary_exported_ptrn_animations":
+                counts.primary_exported_ptrn_animations,
             "deferred_render_bindings": counts.deferred_render_bindings,
             "deferred_billboard_bindings": counts.deferred_billboard_bindings,
             "deferred_billboard_quads": counts.deferred_billboard_quads,
@@ -384,6 +425,36 @@ fn deferred_binding_value(binding: &DeferredRenderBinding) -> Value {
     })
 }
 
+/// Render one exact primary world component occurrence.
+fn world_primary_member_value(binding: &WorldPrimaryMemberBinding) -> Value {
+    json!({
+        "package_member_id": binding.package_member_id,
+        "member_id": binding.member_id,
+        "source_ordinal": binding.source_ordinal
+    })
+}
+
+/// Render primary world-model provenance without changing route semantics.
+fn world_primary_source_value(binding: &WorldPrimarySourceBinding) -> Value {
+    json!({
+        "owner": world_primary_member_value(&binding.owner),
+        "mesh_order": binding.mesh_order.as_str(),
+        "selected_meshes": binding.selected_meshes
+            .iter()
+            .map(world_primary_member_value)
+            .collect::<Vec<_>>(),
+        "matched_composite": binding.matched_composite
+            .as_ref()
+            .map(world_primary_member_value),
+        "referenced_skeleton": binding.referenced_skeleton
+            .as_ref()
+            .map(world_primary_member_value),
+        "exported_ptrn_animation": binding.exported_ptrn_animation
+            .as_ref()
+            .map(world_primary_member_value)
+    })
+}
+
 /// Render one published world prop and its retained provenance.
 fn asset_value(asset: &ExportedWorldProp) -> Value {
     json!({
@@ -416,6 +487,9 @@ fn asset_value(asset: &ExportedWorldProp) -> Value {
             "owner_kind": alias.owner_kind,
             "owner_name": alias.owner_name,
             "container_key": alias.container_key,
+            "primary_source": alias.world_primary_source
+                .as_ref()
+                .map(world_primary_source_value),
             "deferred_render_bindings": alias.deferred_render_bindings
                 .iter()
                 .map(deferred_binding_value)

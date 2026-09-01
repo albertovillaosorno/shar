@@ -99,6 +99,17 @@ pub(super) struct WorldCatalogCounts {
     pub(super) merged_variants: usize,
     /// Structurally incompatible same-name variants retained in the catalog.
     pub(super) omitted_variants: usize,
+    /// Source aliases with exact primary world-model provenance.
+    pub(super) primary_source_bindings: usize,
+    /// Primary selected mesh occurrences retained in authored route order.
+    pub(super) primary_selected_meshes: usize,
+    /// Primary source aliases with a matching composite occurrence.
+    pub(super) primary_matched_composites: usize,
+    /// Primary source aliases with an authored skeleton relationship.
+    pub(super) primary_referenced_skeletons: usize,
+    /// Primary source aliases whose PTRN animation is consumed by the FBX
+    /// route.
+    pub(super) primary_exported_ptrn_animations: usize,
     /// Non-mesh composite render bindings retained as deferred source evidence.
     pub(super) deferred_render_bindings: usize,
     /// Deferred render bindings with exact source billboard presentation.

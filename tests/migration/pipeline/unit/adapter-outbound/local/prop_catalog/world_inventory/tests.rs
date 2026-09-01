@@ -37,12 +37,14 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::{
     DeferredRenderAuthority, LedgerRow, decoded_mesh_names,
-    deferred_controller_binding,
-    deferred_render_bindings, source_ordered_mesh_ids,
+    deferred_controller_binding, deferred_render_bindings,
+    WorldPrimaryRelationships, primary_world_owner_classification,
+    primary_world_source_binding, source_ordered_mesh_ids,
 };
 use crate::adapters::driven::local::prop_catalog::inventory_common::{
     CompositeEvidence, CompositePropEvidence,
 };
+use crate::adapters::driven::local::prop_catalog::model::WorldPrimaryMeshOrder;
 use crate::adapters::driven::local::prop_catalog::texture_authority;
 use crate::domain::package::{PackageRole, PhaseThreePackageMember};
 
@@ -132,6 +134,183 @@ fn source_mesh_ids_follow_component_ordinals() -> Result<(), String> {
     let actual = source_ordered_mesh_ids(&rows)
         .map_err(|error| error.to_string())?;
     assert_eq!(actual, ["z", "a"]);
+    Ok(())
+}
+
+#[test]
+fn primary_world_owner_classification_matches_package_taxonomy()
+-> Result<(), String> {
+    for (source_kind, expected_role, expected_kind) in [
+        ("srr_dyna_phys_dsg", PackageRole::Physics, "p3d-physics"),
+        (
+            "srr_insta_anim_dyna_phys_dsg",
+            PackageRole::Physics,
+            "p3d-physics",
+        ),
+        (
+            "srr_breakable_object",
+            PackageRole::World,
+            "p3d-world-dsg",
+        ),
+        ("srr_anim_dsg", PackageRole::World, "p3d-world-dsg"),
+        ("srr_anim_coll_dsg", PackageRole::World, "p3d-world-dsg"),
+        ("state_prop", PackageRole::World, "p3d-animated-prop"),
+        (
+            "animated_object_factory",
+            PackageRole::World,
+            "p3d-animated-prop",
+        ),
+    ] {
+        let actual = primary_world_owner_classification(source_kind)
+            .map_err(|error| error.to_string())?;
+        assert_eq!(actual, (expected_role, expected_kind));
+    }
+    assert!(primary_world_owner_classification("mesh").is_err());
+    Ok(())
+}
+
+#[test]
+fn primary_world_source_keeps_composite_order_and_static_skeleton()
+-> Result<(), String> {
+    let owner = LedgerRow {
+        ordinal: 5,
+        depth: 1,
+        container_ordinal: 5,
+        name: "owner".to_owned(),
+        path: "srr_insta_anim_dyna_phys_dsg/owner.json".to_owned(),
+        kind: "srr_insta_anim_dyna_phys_dsg".to_owned(),
+    };
+    let mesh_a = LedgerRow {
+        ordinal: 10,
+        depth: 2,
+        container_ordinal: 5,
+        name: "mesh-a".to_owned(),
+        path: "mesh/mesh-a.json".to_owned(),
+        kind: "mesh".to_owned(),
+    };
+    let mesh_b = LedgerRow {
+        ordinal: 20,
+        depth: 2,
+        container_ordinal: 5,
+        name: "mesh-b".to_owned(),
+        path: "mesh/mesh-b.json".to_owned(),
+        kind: "mesh".to_owned(),
+    };
+    let composite = LedgerRow {
+        ordinal: 30,
+        depth: 2,
+        container_ordinal: 5,
+        name: "owner".to_owned(),
+        path: "composite_drawable/owner-composite.json".to_owned(),
+        kind: "composite_drawable".to_owned(),
+    };
+    let skeleton = LedgerRow {
+        ordinal: 40,
+        depth: 2,
+        container_ordinal: 5,
+        name: "owner-rig".to_owned(),
+        path: "skeleton/owner-skeleton.json".to_owned(),
+        kind: "skeleton".to_owned(),
+    };
+    let rows = vec![
+        mesh_a.clone(),
+        mesh_b.clone(),
+        composite.clone(),
+        skeleton.clone(),
+    ];
+    let source_members = BTreeMap::from([
+        (
+            (owner.path.clone(), owner.ordinal),
+            source_member(
+                "owner-member-5",
+                PackageRole::Physics,
+                &owner.path,
+                "p3d-physics",
+                &owner.kind,
+                owner.ordinal,
+            ),
+        ),
+        (
+            (mesh_a.path.clone(), mesh_a.ordinal),
+            source_member(
+                "mesh-member-10",
+                PackageRole::Model,
+                &mesh_a.path,
+                "p3d-mesh",
+                "mesh",
+                mesh_a.ordinal,
+            ),
+        ),
+        (
+            (mesh_b.path.clone(), mesh_b.ordinal),
+            source_member(
+                "mesh-member-20",
+                PackageRole::Model,
+                &mesh_b.path,
+                "p3d-mesh",
+                "mesh",
+                mesh_b.ordinal,
+            ),
+        ),
+        (
+            (composite.path.clone(), composite.ordinal),
+            source_member(
+                "composite-member-30",
+                PackageRole::Model,
+                &composite.path,
+                "p3d-composite-drawable",
+                "composite_drawable",
+                composite.ordinal,
+            ),
+        ),
+        (
+            (skeleton.path.clone(), skeleton.ordinal),
+            source_member(
+                "skeleton-member-40",
+                PackageRole::Animation,
+                &skeleton.path,
+                "p3d-skeleton",
+                "skeleton",
+                skeleton.ordinal,
+            ),
+        ),
+    ]);
+    let selected = ["mesh-b".to_owned(), "mesh-a".to_owned()];
+    let binding = primary_world_source_binding(
+        &owner,
+        &rows,
+        &selected,
+        WorldPrimaryRelationships {
+            mesh_order: WorldPrimaryMeshOrder::CompositeProp,
+            matched_composite: Some(&composite),
+            referenced_skeleton: Some(&skeleton),
+            exported_ptrn_animation: None,
+        },
+        &source_members,
+    )
+    .map_err(|error| error.to_string())?;
+    let selected_ids = binding
+        .selected_meshes
+        .iter()
+        .map(|member| member.package_member_id.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(binding.owner.package_member_id, "owner-member-5");
+    assert_eq!(selected_ids, ["mesh-member-20", "mesh-member-10"]);
+    assert_eq!(
+        binding
+            .matched_composite
+            .as_ref()
+            .map(|member| member.package_member_id.as_str()),
+        Some("composite-member-30")
+    );
+    assert_eq!(
+        binding
+            .referenced_skeleton
+            .as_ref()
+            .map(|member| member.package_member_id.as_str()),
+        Some("skeleton-member-40")
+    );
+    assert!(binding.exported_ptrn_animation.is_none());
     Ok(())
 }
 
