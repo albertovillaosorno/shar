@@ -816,5 +816,13 @@ values likewise require canonical identities after removing only trailing NUL
 padding. A focused mismatch regression proves the sidecar is rejected instead
 of preserving contradictory target provenance.
 
+Physical texture occurrence selection remains intentionally unresolved for those
+entity values. Of 48 current `TEX_` references, 16 have one exact package-local
+texture occurrence and 32 have two exact same-name occurrences. Twenty-three of
+the ambiguous pairs are byte-identical, while nine contain differing PNG
+payloads. None of those 32 pairs shares the animation, controller, or target
+shader container, so neither container ownership nor source proximity currently
+provides relationship authority.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
