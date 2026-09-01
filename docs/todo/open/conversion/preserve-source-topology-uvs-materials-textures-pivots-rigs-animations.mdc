@@ -313,9 +313,15 @@ candidates remain visible rather than being collapsed to one texture frame.
 
 Occurrence provenance comes from the normalized component ledger that directly
 addresses each hashed PNG: physical member id, source component ordinal, and
-SHA-256 are retained together. The separate phase-three source-unit index uses a
-different texture ordinal domain and is not joined by ordinal proximity or file
-name.
+SHA-256 are retained together. The phase-three package index preserves the same
+physical coordinate rather than introducing another ordinal domain. All 1,479
+current car texture members match one ledger PNG by exact path and carry the
+same component ordinal.
+
+That one-to-one mirror is occurrence identity, not relationship authority. A
+shader still exposes only its logical texture string, so the phase-three member
+cannot select between two same-name physical occurrences without another source
+edge.
 
 The ambiguity is active on the current vehicle render path rather than only
 sidecar debt. All 11 quad groups using the five `TEX_` target shaders pass the
