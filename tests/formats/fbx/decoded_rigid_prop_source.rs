@@ -71,9 +71,9 @@ const fn composite_json() -> &'static str {
         r#""skeleton_name":"rig","num_skins":0,"skins":[],"#,
         r#""num_props":2,"props":["#,
         r#"{"kind":"prop","name":"BodyShape","is_translucent":1,"#,
-        r#""skeleton_joint_id":1,"sort_order":0},"#,
+        r#""skeleton_joint_id":1,"sort_order":0.4},"#,
         r#"{"kind":"prop","name":"GlowShape","is_translucent":1,"#,
-        r#""skeleton_joint_id":3,"sort_order":0}],"#,
+        r#""skeleton_joint_id":3,"sort_order":0.5}],"#,
         r#""num_effects":1,"effects":["#,
         r#"{"kind":"effect","name":"ParticleShape","is_translucent":1,"#,
         r#""skeleton_joint_id":3,"sort_order":0}]}"#,
@@ -140,6 +140,17 @@ fn write_fixture(
 
 fn remove_fixture(root: &Path) -> Result<(), String> {
     fs::remove_dir_all(root).map_err(|error| error.to_string())
+}
+
+fn first_prop_object(
+    composite: &mut serde_json::Value,
+) -> Result<&mut serde_json::Map<String, serde_json::Value>, String> {
+    composite
+        .get_mut("props")
+        .and_then(serde_json::Value::as_array_mut)
+        .and_then(|props| props.first_mut())
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or_else(|| "composite fixture has no first prop object".to_owned())
 }
 
 #[test]
@@ -212,6 +223,25 @@ fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
     {
         return Err(format!("unexpected source relationships: {provenance:?}"));
     }
+    let bindings = provenance.composite_prop_bindings();
+    let [body, glow] = bindings else {
+        return Err(format!(
+            "unexpected composite prop provenance: {bindings:?}"
+        ));
+    };
+    if body.composite_ordinal() != 0
+        || body.prop_index() != 0
+        || body.prop_identity() != "BodyShape"
+        || body.skeleton_joint_id() != 1
+        || !body.translucent()
+        || body.sort_order_bits() != Some(0.4_f32.to_bits())
+        || glow.prop_identity() != "GlowShape"
+        || glow.sort_order_bits() != Some(0.5_f32.to_bits())
+    {
+        return Err(format!(
+            "unexpected composite prop provenance: {bindings:?}"
+        ));
+    }
     let bone_ids = asset
         .bones
         .iter()
@@ -251,6 +281,77 @@ fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
         );
     }
     Ok(())
+}
+
+#[test]
+fn preserves_missing_sort_order_as_absent_provenance() -> Result<(), String> {
+    let root = temp_root("missing-sort-order");
+    let (skeleton_path, composite_path, mesh_path) =
+        write_fixture(&root, "BodyShape")?;
+    let mut composite =
+        serde_json::from_str::<serde_json::Value>(composite_json())
+            .map_err(|error| error.to_string())?;
+    let _removed_sort_order =
+        first_prop_object(&mut composite)?.remove("sort_order");
+    fs::write(
+        &composite_path,
+        serde_json::to_vec(&composite).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+
+    let result = decoded_rigid_prop_source::load_selected_rigid_prop_asset(
+        "selected",
+        &skeleton_path,
+        &[mesh_path.as_path()],
+        &composite_path,
+    );
+    remove_fixture(&root)?;
+    let asset =
+        result.map_err(|error| format!("missing sort failed: {error:?}"))?;
+    let provenance = asset
+        .source_provenance
+        .ok_or_else(|| "missing sort lost source provenance".to_owned())?;
+    let binding = provenance
+        .composite_prop_bindings()
+        .first()
+        .ok_or_else(|| "missing sort produced no prop provenance".to_owned())?;
+    if binding.sort_order_bits().is_some() {
+        return Err(
+            "missing sort was converted into authored evidence".to_owned()
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn rejects_null_composite_prop_sort_order() -> Result<(), String> {
+    let root = temp_root("null-sort-order");
+    let (skeleton_path, composite_path, mesh_path) =
+        write_fixture(&root, "BodyShape")?;
+    let mut composite =
+        serde_json::from_str::<serde_json::Value>(composite_json())
+            .map_err(|error| error.to_string())?;
+    let _previous_sort_order = first_prop_object(&mut composite)?
+        .insert("sort_order".to_owned(), serde_json::Value::Null);
+    fs::write(
+        &composite_path,
+        serde_json::to_vec(&composite).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+
+    let result = decoded_rigid_prop_source::load_selected_rigid_prop_asset(
+        "selected",
+        &skeleton_path,
+        &[mesh_path.as_path()],
+        &composite_path,
+    );
+    remove_fixture(&root)?;
+    match result {
+        Err(SkinSourceError::Prop(reason)) if reason.contains("sort order") => {
+            Ok(())
+        },
+        other => Err(format!("null sort order was accepted: {other:?}")),
+    }
 }
 
 #[test]

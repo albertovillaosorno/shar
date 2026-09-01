@@ -42,7 +42,8 @@ use fbx::adapters::driven::binary_character_writer::{
     write_binary_character_fbx_embedded,
 };
 use fbx::domain::character::{
-    CharacterAsset, CharacterSourceProvenance, SkinnedPart,
+    CharacterAsset, CharacterSourceProvenance, CompositePropSourceBinding,
+    SkinnedPart,
 };
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
@@ -99,6 +100,25 @@ fn synthetic_character() -> Result<CharacterAsset, String> {
         "CompositeZ".to_owned(),
         "CompositeA".to_owned(),
     ])
+    .and_then(|provenance| {
+        let first = CompositePropSourceBinding::new(
+            0,
+            2,
+            "SourceProp",
+            4,
+            true,
+            Some(0.49),
+        )?;
+        let second = CompositePropSourceBinding::new(
+            1,
+            0,
+            "SourcePropNoSort",
+            5,
+            false,
+            None,
+        )?;
+        provenance.with_composite_prop_bindings(vec![first, second])
+    })
     .map_err(|error| format!("source provenance failed: {error:?}"))?;
     CharacterAsset::new(
         "synthetic",
@@ -404,6 +424,15 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         b"CompositeZ".as_slice(),
         b"SHAR_P3D_SourceCompositeIdentity_0001".as_slice(),
         b"CompositeA".as_slice(),
+        b"SHAR_P3D_SourceCompositePropIdentity_0000_0002".as_slice(),
+        b"SourceProp".as_slice(),
+        b"SHAR_P3D_SourceCompositePropJoint_0000_0002".as_slice(),
+        b"SHAR_P3D_SourceCompositePropTranslucent_0000_0002".as_slice(),
+        b"SHAR_P3D_SourceCompositePropSortBits_0000_0002".as_slice(),
+        0.49_f32.to_bits().to_string().as_bytes(),
+        b"SHAR_P3D_SourceCompositePropIdentity_0001_0000".as_slice(),
+        b"SourcePropNoSort".as_slice(),
+        b"absent".as_slice(),
         b"SHAR_P3D_SourceBoneIdentity".as_slice(),
         b"SourceRoot".as_slice(),
         b"LayerElementColor".as_slice(),

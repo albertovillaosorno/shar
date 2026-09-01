@@ -62,7 +62,18 @@ fn source_provenance_preserves_composite_order_and_duplicates() {
         "z-composite".to_owned(),
         "a-composite".to_owned(),
         "z-composite".to_owned(),
-    ]);
+    ])
+    .and_then(|provenance| {
+        let binding = CompositePropSourceBinding::new(
+            2,
+            7,
+            "prop-shape",
+            3,
+            true,
+            Some(0.49),
+        )?;
+        provenance.with_composite_prop_bindings(vec![binding])
+    });
     assert_eq!(
         result,
         Ok(CharacterSourceProvenance {
@@ -72,6 +83,66 @@ fn source_provenance_preserves_composite_order_and_duplicates() {
                 "a-composite".to_owned(),
                 "z-composite".to_owned(),
             ],
+            composite_prop_bindings: vec![CompositePropSourceBinding {
+                composite_ordinal: 2,
+                prop_index: 7,
+                prop_identity: "prop-shape".to_owned(),
+                skeleton_joint_id: 3,
+                translucent: true,
+                sort_order_bits: Some(0.49_f32.to_bits()),
+            }],
+        })
+    );
+}
+
+#[test]
+fn rejects_invalid_composite_prop_source_provenance() {
+    assert_eq!(
+        CompositePropSourceBinding::new(
+            0,
+            0,
+            "prop",
+            1,
+            false,
+            Some(f32::INFINITY),
+        ),
+        Err(CharacterError::NonFiniteSourcePropSortOrder {
+            composite_ordinal: 0,
+            prop_index: 0,
+        })
+    );
+
+    let out_of_bounds = CharacterSourceProvenance::new("skeleton", vec![
+        "composite".to_owned(),
+    ])
+    .and_then(|provenance| {
+        let binding =
+            CompositePropSourceBinding::new(1, 0, "prop", 1, false, None)?;
+        provenance.with_composite_prop_bindings(vec![binding])
+    });
+    assert_eq!(
+        out_of_bounds,
+        Err(CharacterError::SourcePropCompositeOutOfBounds {
+            composite_ordinal: 1,
+            composites: 1,
+        })
+    );
+
+    let duplicate = CharacterSourceProvenance::new("skeleton", vec![
+        "composite".to_owned(),
+    ])
+    .and_then(|provenance| {
+        let first =
+            CompositePropSourceBinding::new(0, 3, "left", 1, false, None)?;
+        let second =
+            CompositePropSourceBinding::new(0, 3, "right", 2, true, Some(0.5))?;
+        provenance.with_composite_prop_bindings(vec![first, second])
+    });
+    assert_eq!(
+        duplicate,
+        Err(CharacterError::DuplicateSourceCompositePropIndex {
+            composite_ordinal: 0,
+            prop_index: 3,
         })
     );
 }

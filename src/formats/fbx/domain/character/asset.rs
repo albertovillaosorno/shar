@@ -48,6 +48,101 @@ pub struct SkinnedPart {
     pub group_influences: Vec<Vec<SkinInfluence>>,
 }
 
+/// One authored composite prop relationship retained as source provenance.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CompositePropSourceBinding {
+    /// Zero-based composite occurrence in retained source order.
+    composite_ordinal: usize,
+    /// Zero-based prop position within the authored composite.
+    prop_index: usize,
+    /// Authored prop/component identity.
+    prop_identity: String,
+    /// Zero-based skeleton joint position referenced by the composite.
+    skeleton_joint_id: usize,
+    /// Authored binary translucency flag.
+    translucent: bool,
+    /// Exact source-width sort-order bits when the optional field was present.
+    sort_order_bits: Option<u32>,
+}
+
+impl CompositePropSourceBinding {
+    /// Create one validated source-only composite prop record.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the prop identity is non-canonical or a supplied
+    /// sort-order value is non-finite.
+    pub fn new(
+        composite_ordinal: usize,
+        prop_index: usize,
+        prop_identity: impl Into<String>,
+        skeleton_joint_id: usize,
+        translucent: bool,
+        sort_order: Option<f32>,
+    ) -> Result<Self, CharacterError> {
+        let prop_identity = prop_identity.into();
+        if !canonical_source_identity(&prop_identity) {
+            return Err(CharacterError::NonCanonicalSourcePropIdentity {
+                identity: prop_identity,
+            });
+        }
+        let sort_order_bits = match sort_order {
+            Some(value) if value.is_finite() => Some(value.to_bits()),
+            Some(_value) => {
+                return Err(CharacterError::NonFiniteSourcePropSortOrder {
+                    composite_ordinal,
+                    prop_index,
+                });
+            },
+            None => None,
+        };
+        Ok(Self {
+            composite_ordinal,
+            prop_index,
+            prop_identity,
+            skeleton_joint_id,
+            translucent,
+            sort_order_bits,
+        })
+    }
+
+    /// Return the zero-based retained composite occurrence.
+    #[must_use]
+    pub const fn composite_ordinal(&self) -> usize {
+        self.composite_ordinal
+    }
+
+    /// Return the zero-based authored prop position.
+    #[must_use]
+    pub const fn prop_index(&self) -> usize {
+        self.prop_index
+    }
+
+    /// Return the authored prop/component identity.
+    #[must_use]
+    pub fn prop_identity(&self) -> &str {
+        &self.prop_identity
+    }
+
+    /// Return the zero-based authored skeleton joint position.
+    #[must_use]
+    pub const fn skeleton_joint_id(&self) -> usize {
+        self.skeleton_joint_id
+    }
+
+    /// Return the authored binary translucency flag.
+    #[must_use]
+    pub const fn translucent(&self) -> bool {
+        self.translucent
+    }
+
+    /// Return exact source-width sort-order bits when authored.
+    #[must_use]
+    pub const fn sort_order_bits(&self) -> Option<u32> {
+        self.sort_order_bits
+    }
+}
+
 /// Authored source relationships retained independently of publication naming.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CharacterSourceProvenance {
@@ -55,6 +150,8 @@ pub struct CharacterSourceProvenance {
     skeleton_identity: String,
     /// Decoded composite identities in supplied source order.
     composite_identities: Vec<String>,
+    /// Authored composite prop rows in exact retained source order.
+    composite_prop_bindings: Vec<CompositePropSourceBinding>,
 }
 
 impl CharacterSourceProvenance {
@@ -86,6 +183,7 @@ impl CharacterSourceProvenance {
         Ok(Self {
             skeleton_identity,
             composite_identities,
+            composite_prop_bindings: Vec::new(),
         })
     }
 
@@ -99,6 +197,43 @@ impl CharacterSourceProvenance {
     #[must_use]
     pub fn composite_identities(&self) -> &[String] {
         &self.composite_identities
+    }
+
+    /// Attach exact authored composite prop rows as source-only provenance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a row references a composite occurrence outside
+    /// the retained identity vector or repeats one authored prop position.
+    pub fn with_composite_prop_bindings(
+        mut self,
+        bindings: Vec<CompositePropSourceBinding>,
+    ) -> Result<Self, CharacterError> {
+        let mut seen = BTreeSet::new();
+        for binding in &bindings {
+            if binding.composite_ordinal >= self.composite_identities.len() {
+                return Err(CharacterError::SourcePropCompositeOutOfBounds {
+                    composite_ordinal: binding.composite_ordinal,
+                    composites: self.composite_identities.len(),
+                });
+            }
+            if !seen.insert((binding.composite_ordinal, binding.prop_index)) {
+                return Err(
+                    CharacterError::DuplicateSourceCompositePropIndex {
+                        composite_ordinal: binding.composite_ordinal,
+                        prop_index: binding.prop_index,
+                    },
+                );
+            }
+        }
+        self.composite_prop_bindings = bindings;
+        Ok(self)
+    }
+
+    /// Return authored composite prop rows in exact retained source order.
+    #[must_use]
+    pub fn composite_prop_bindings(&self) -> &[CompositePropSourceBinding] {
+        &self.composite_prop_bindings
     }
 }
 
@@ -336,6 +471,33 @@ pub enum CharacterError {
     NonCanonicalSourceCompositeIdentity {
         /// Malformed authored composite identity.
         identity: String,
+    },
+    /// Authored composite prop identity was empty or non-canonical.
+    NonCanonicalSourcePropIdentity {
+        /// Malformed authored prop identity.
+        identity: String,
+    },
+    /// Authored prop sort order was present but non-finite.
+    NonFiniteSourcePropSortOrder {
+        /// Retained composite occurrence containing the prop.
+        composite_ordinal: usize,
+        /// Authored prop position inside the composite.
+        prop_index: usize,
+    },
+    /// Source prop provenance referenced a composite occurrence outside
+    /// retained source.
+    SourcePropCompositeOutOfBounds {
+        /// Invalid retained composite occurrence.
+        composite_ordinal: usize,
+        /// Number of retained composite occurrences.
+        composites: usize,
+    },
+    /// Source prop provenance repeated one authored composite prop position.
+    DuplicateSourceCompositePropIndex {
+        /// Retained composite occurrence containing the duplicate.
+        composite_ordinal: usize,
+        /// Repeated authored prop position.
+        prop_index: usize,
     },
     /// Character skeleton contained no bones.
     MissingBones,

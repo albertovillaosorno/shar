@@ -593,38 +593,34 @@ and 0.0 cases. The catalog does not treat those numbers as depth, priority, draw
 order, or any other runtime semantic until source-backed behavior establishes
 such a mapping.
 
-The direct rigid-animated FBX route still has a separate prop-level provenance
-gap after v13. The current 370 world rigid-animated composites contain 2,055
-authored prop rows: 1,868 select meshes passed to
-`load_selected_rigid_prop_asset`, while 187 are other authored composite prop
-relationships. Their sort-order distribution is 1,954 values of 0.5, 92 of
-0.4, eight of 0.49, and one of 0.0.
+The direct rigid-animated FBX prop-level provenance gap is now closed.
+`decoded_skin_source::composite_bindings` retains every authored prop position,
+skeleton joint, binary translucency flag, and optional source-width sort value.
+`CharacterSourceProvenance` carries validated `CompositePropSourceBinding`
+records keyed by retained composite ordinal plus authored prop index, so
+repeated composite identities and repeated prop names remain unambiguous.
 
-`decoded_skin_source::composite_bindings` currently validates every prop name,
-skeleton joint, and binary translucency flag, but `CompositePropBinding` retains
-only those three values and deserializes `sort_order` into an ignored
-compatibility field. `CharacterSourceProvenance` then retains only the skeleton
-identity and ordered composite identities. The binary FBX writer publishes
-those identities as `SHAR_P3D_SourceSkeletonIdentity` and indexed
-`SHAR_P3D_SourceCompositeIdentity_*` export-root properties, so prop index,
-joint, translucency, and sort evidence do not survive in the FBX itself.
+The binary character writer publishes those rows as indexed export-root source
+properties for prop identity, skeleton joint, translucency, and exact `f32`
+sort-order bits. A genuinely absent optional sort field is represented as
+`absent`; a present JSON `null` or other non-finite/non-`f32` value fails closed
+instead of collapsing into absence. Current normalized corpus evidence remains
+1,518 composites and 7,456 authored prop rows, all with finite sort values.
 
-This can remain provenance-only when repaired: `prepared_signature` explicitly
-clears `asset.source_provenance` before semantic deduplication, so extending the
-provenance record does not need to change variant identity. The source-backed
-key must include composite identity plus authored prop index; prop name alone is
-not sufficient across multiple composites. Supplemental vehicle bindings must
-remain excluded because they are assembly inputs rather than authored composite
-rows.
+The relationship key is necessary in current source. Eighty-two composites
+repeat prop names, including 80 of 88 selected vehicle composites, where wheel
+shape identities deliberately repeat on different joints. The direct world
+rigid-animated route covers 370 composites and 2,055 authored prop rows: 1,868
+selected mesh relationships plus 187 other authored relationships. Supplemental
+vehicle bindings remain excluded because they are assembly inputs rather than
+authored composite rows.
 
-The decoder boundary also needs to preserve optionality precisely. The P3D
-composite decoder emits `sort_order` only when the optional sort-order child is
-present and renders non-finite source floats as JSON `null`. The current direct
-FBX `DecodedCompositeProp` requires a `sort_order` JSON field and ignores its
-value. All 2,055 current world animated-route prop rows have a finite sort
-child, so this does not block today's corpus, but a future typed adapter must
-not treat
-an absent child and a present invalid/null value as the same evidence.
+This remains provenance-only. `prepared_signature` clears
+`asset.source_provenance` before semantic deduplication, so these source records
+do not change variant identity or assign runtime meaning to sort values. The
+writer therefore preserves evidence such as vehicle 0.1157/0.4/0.45/0.48/0.49
+values, Wrench's selected 0.4, and Wasp Camera's selected 0.5 without treating
+them as depth, priority, or draw-order semantics.
 
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
