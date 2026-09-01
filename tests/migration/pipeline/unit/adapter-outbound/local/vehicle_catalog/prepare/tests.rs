@@ -413,15 +413,98 @@ fn effect_sidecars_preserve_source_chunk_order() -> Result<(), String> {
     if !clips.is_empty() {
         return Err("effect-only fixture produced skeletal clips".to_owned());
     }
-    if sidecars
+    let paths = sidecars
+        .iter()
+        .map(|sidecar| sidecar.path.as_str())
+        .collect::<Vec<_>>();
+    if paths
         != [
             "animations/effects/zebra.json",
             "animations/effects/alpha.json",
         ]
+        || sidecars.iter().any(|sidecar| sidecar.controller.is_some())
+        || sidecars
+            .iter()
+            .map(|sidecar| sidecar.source_ordinal)
+            .collect::<Vec<_>>()
+            != [10, 20]
     {
         return Err(format!(
             "effect sidecar source order changed: {sidecars:?}"
         ));
+    }
+    Ok(())
+}
+
+#[test]
+fn billboard_sidecar_retains_controller_relationship() -> Result<(), String> {
+    let root = EffectTestDirectory::new("billboard-relationship")?;
+    fs::create_dir_all(root.path().join("components/frame_controller"))
+        .map_err(|error| error.to_string())?;
+    fs::create_dir_all(root.path().join("components/quad_group"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/animation/z.json"),
+        r#"{"name":"Zebra","type":"BQG_"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/animation/a.json"),
+        r#"{"name":"Alpha","type":"effect"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/frame_controller/controller.json"),
+        concat!(
+            r#"{"name":"BQG_Zebra","animation_name":"Zebra","#,
+            r#""hierarchy_name":"beam"}"#
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/quad_group/beam.json"),
+        r#"{"name":"beam"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components.jsonl"),
+        concat!(
+            r#"{"ordinal":30,"name":"BQG_Zebra","#,
+            r#""path":"frame_controller/controller.json","#,
+            r#""kind":"frame_controller"}"#,
+            "\n",
+            r#"{"ordinal":40,"name":"beam","#,
+            r#""path":"quad_group/beam.json","kind":"quad_group"}"#,
+            "\n"
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let package = effect_animation_package()?;
+    let vehicle_dir = root.path().join("output");
+    let asset = effect_test_asset()?;
+    let (_clips, sidecars) = load_vehicle_animations(
+        &package,
+        root.path(),
+        &vehicle_dir,
+        &asset,
+    )
+    .map_err(|error| error.to_string())?;
+    let zebra = sidecars
+        .first()
+        .ok_or_else(|| "BQG effect sidecar is missing".to_owned())?;
+    let controller = zebra
+        .controller
+        .as_ref()
+        .ok_or_else(|| "BQG controller relationship is missing".to_owned())?;
+    if zebra.identity != "Zebra"
+        || zebra.animation_type != "BQG_"
+        || zebra.source_ordinal != 10
+        || controller.controller_identity != "BQG_Zebra"
+        || controller.controller_source_ordinal != 30
+        || controller.billboard_identity != "beam"
+        || controller.billboard_source_ordinal != 40
+    {
+        return Err(format!("BQG relationship changed: {zebra:?}"));
     }
     Ok(())
 }

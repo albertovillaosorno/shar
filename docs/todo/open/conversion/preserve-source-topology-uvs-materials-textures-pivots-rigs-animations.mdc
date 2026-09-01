@@ -247,5 +247,18 @@ advances to
 `shar.world-model-props.v8` so visibility is serialized as `raw_values` and
 packed rotations remain distinct compressed source evidence.
 
+Vehicle BQG evidence has the same source relationship structure even though its
+runtime presentation remains deferred. The current vehicle corpus contains 65
+BQG clips across 21 packages; every clip has one controller, one matching quad
+group, a composite reference, and exact animation-group-to-billboard-child
+ordering. The vehicle catalog now retains those source identities and ordinals
+alongside the verbatim effect-animation sidecar.
+
+One vehicle BQG sidecar contains the already-audited non-finite width sequence.
+It remains preserved as decoded JSON with `null` values and is not passed to the
+skeletal animation reader or repaired by the new relationship metadata. Native
+billboard animation semantics therefore remain open rather than being inferred
+from the sidecar relationship.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

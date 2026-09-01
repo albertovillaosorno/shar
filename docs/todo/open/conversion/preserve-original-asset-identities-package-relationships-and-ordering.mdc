@@ -778,5 +778,18 @@ contract advances to `shar.world-model-props.v8` for the corrected raw
 visibility and packed-rotation representation; no null value is repaired or
 guessed.
 
+Vehicle effect-animation provenance now preserves more than sidecar filenames.
+Across 21 audited vehicle packages, all 65 decoded BQG animation clips have
+exactly one frame controller, one controller-targeted quad group, and at least
+one composite reference; all 65 animation-group sequences match the target
+billboard-child sequence in authored order.
+
+`shar.vehicle-catalog.v2` therefore records each non-skeletal animation
+identity, type, source ordinal, and sidecar path. BQG records additionally
+retain the exact controller identity/source ordinal and billboard
+identity/source ordinal. The
+raw effect JSON remains unchanged, so relationship preservation neither repairs
+nor interprets BQG channel values.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

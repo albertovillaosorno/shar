@@ -32,7 +32,10 @@
 
 use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
 
-use super::super::model::{GroundingRecord, VehicleRecord};
+use super::super::model::{
+    EffectAnimationRecord, EffectControllerRecord, GroundingRecord,
+    VehicleRecord,
+};
 use super::vehicle_json;
 
 #[test]
@@ -61,7 +64,18 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
         deferred_geometry: Vec::new(),
         hidden_wheel_proxies: 0,
         animations: Vec::new(),
-        effect_animation_sidecars: Vec::new(),
+        effect_animation_sidecars: vec![EffectAnimationRecord {
+            path: "animations/effects/light.json".to_owned(),
+            identity: "light-animation".to_owned(),
+            animation_type: "BQG_".to_owned(),
+            source_ordinal: 20,
+            controller: Some(EffectControllerRecord {
+                controller_identity: "light-controller".to_owned(),
+                controller_source_ordinal: 30,
+                billboard_identity: "light-billboard".to_owned(),
+                billboard_source_ordinal: 40,
+            }),
+        }],
         textures: Vec::new(),
         shaders: Vec::new(),
     };
@@ -79,6 +93,23 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
         || grounding.get("root_bone") != Some(&serde_json::json!("root"))
     {
         return Err(String::from("grounding evidence is incomplete"));
+    }
+    let effect = value
+        .get("effect_animation_sidecars")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|sidecars| sidecars.first())
+        .ok_or_else(|| "vehicle effect relationship is missing".to_owned())?;
+    if effect.get("source_ordinal") != Some(&20.into())
+        || effect
+            .get("controller")
+            .and_then(|controller| controller.get("source_ordinal"))
+            != Some(&30.into())
+        || effect
+            .get("controller")
+            .and_then(|controller| controller.get("billboard_source_ordinal"))
+            != Some(&40.into())
+    {
+        return Err("vehicle effect relationship is incomplete".to_owned());
     }
     Ok(())
 }

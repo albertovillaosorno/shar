@@ -53,7 +53,10 @@ use serde_json::Value;
 use shar_sha256::digest_hex;
 
 use super::catalog::{recursive_files, write_new};
-use super::model::{GroundingRecord, PartRecord, TextureRecord, VehicleRecord};
+use super::model::{
+    EffectAnimationRecord, EffectControllerRecord, GroundingRecord, PartRecord,
+    TextureRecord, VehicleRecord,
+};
 use super::source::{
     VehicleTextureAuthority, common_headlight_quad_groups, decoded_name,
     png_files, relative_art_root, select_vehicle_composite,
@@ -1065,7 +1068,7 @@ fn load_vehicle_animations(
     package_root: &Path,
     vehicle_dir: &Path,
     asset: &CharacterAsset,
-) -> Result<(Vec<AnimationClip>, Vec<String>), PipelineError> {
+) -> Result<(Vec<AnimationClip>, Vec<EffectAnimationRecord>), PipelineError> {
     let paths = vehicle_animation_paths(package, package_root)?;
     let mut skeletal_paths = Vec::new();
     let mut sidecars = Vec::new();
@@ -1098,7 +1101,22 @@ fn load_vehicle_animations(
         let payload = serde_json::to_vec_pretty(&value)
             .map_err(|error| PipelineError::new(error.to_string()))?;
         write_new(&output_dir.join(&file_name), &payload)?;
-        sidecars.push(format!("animations/effects/{file_name}"));
+        let source_ordinal = vehicle_animation_source_ordinal(package, &path)?;
+        let controller = if kind.eq_ignore_ascii_case("BQG_") {
+            Some(vehicle_billboard_controller_relationship(
+                package_root,
+                name,
+            )?)
+        } else {
+            None
+        };
+        sidecars.push(EffectAnimationRecord {
+            path: format!("animations/effects/{file_name}"),
+            identity: name.to_owned(),
+            animation_type: kind.to_owned(),
+            source_ordinal,
+            controller,
+        });
     }
     if skeletal_paths.is_empty() {
         return Ok((Vec::new(), sidecars));
@@ -1114,6 +1132,153 @@ fn load_vehicle_animations(
         ))
     })?;
     Ok((clips, sidecars))
+}
+
+/// Resolve the exact source ordinal for one projected animation path.
+fn vehicle_animation_source_ordinal(
+    package: &PhaseThreePackageRow,
+    path: &Path,
+) -> Result<usize, PipelineError> {
+    let file_name = path.file_name().ok_or_else(|| {
+        PipelineError::new("vehicle effect animation path has no file name")
+    })?;
+    let matches = package
+        .members()
+        .iter()
+        .filter(|member| {
+            member.kind == "p3d-animation"
+                && member.source_chunk_kind == "animation"
+                && Path::new(&member.path).file_name() == Some(file_name)
+        })
+        .collect::<Vec<_>>();
+    let [member] = matches.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle effect animation has ambiguous package membership",
+        ));
+    };
+    member.source_chunk_ordinal.ok_or_else(|| {
+        PipelineError::new("vehicle effect animation has no source ordinal")
+    })
+}
+
+/// Resolve one exact BQG animation-to-controller-to-billboard relationship.
+fn vehicle_billboard_controller_relationship(
+    package_root: &Path,
+    animation_identity: &str,
+) -> Result<EffectControllerRecord, PipelineError> {
+    let ledger_path = package_root.join("components.jsonl");
+    let ledger = fs::read_to_string(&ledger_path)
+        .map_err(|error| PipelineError::new(error.to_string()))?;
+    let rows = ledger
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            serde_json::from_str::<Value>(line)
+                .map_err(|error| PipelineError::new(error.to_string()))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut controllers = Vec::new();
+    for row in rows.iter().filter(|row| {
+        matches!(
+            row.get("kind").and_then(Value::as_str),
+            Some(
+                "frame_controller"
+                    | "frame_controller_variant_a"
+                    | "frame_controller_variant_b"
+            )
+        )
+    }) {
+        let controller = read_vehicle_ledger_member(package_root, row)?;
+        let declared_animation = vehicle_component_identity(
+            &controller,
+            "animation_name",
+            "controller animation",
+        )?;
+        if declared_animation == animation_identity {
+            controllers.push((row, controller));
+        }
+    }
+    let [(controller_row, controller)] = controllers.as_slice() else {
+        return Err(PipelineError::new(format!(
+            "vehicle BQG animation has ambiguous controller relationship: \
+             {animation_identity}"
+        )));
+    };
+    let controller_identity =
+        vehicle_component_identity(controller, "name", "controller")?;
+    let billboard_identity = vehicle_component_identity(
+        controller,
+        "hierarchy_name",
+        "controller hierarchy",
+    )?;
+    let controller_source_ordinal = vehicle_ledger_ordinal(controller_row)?;
+    let mut billboards = Vec::new();
+    for row in rows.iter().filter(|row| {
+        row.get("kind").and_then(Value::as_str) == Some("quad_group")
+    }) {
+        let billboard = read_vehicle_ledger_member(package_root, row)?;
+        let identity =
+            vehicle_component_identity(&billboard, "name", "billboard")?;
+        if identity == billboard_identity {
+            billboards.push(row);
+        }
+    }
+    let [billboard_row] = billboards.as_slice() else {
+        return Err(PipelineError::new(format!(
+            "vehicle BQG controller has ambiguous billboard relationship: \
+             {billboard_identity}"
+        )));
+    };
+    Ok(EffectControllerRecord {
+        controller_identity,
+        controller_source_ordinal,
+        billboard_identity,
+        billboard_source_ordinal: vehicle_ledger_ordinal(billboard_row)?,
+    })
+}
+
+/// Read one exact normalized component addressed by a ledger row.
+fn read_vehicle_ledger_member(
+    package_root: &Path,
+    row: &Value,
+) -> Result<Value, PipelineError> {
+    let relative = row.get("path").and_then(Value::as_str).ok_or_else(|| {
+        PipelineError::new("vehicle component ledger row has no path")
+    })?;
+    let bytes = fs::read(package_root.join("components").join(relative))
+        .map_err(|error| PipelineError::new(error.to_string()))?;
+    serde_json::from_slice(&bytes)
+        .map_err(|error| PipelineError::new(error.to_string()))
+}
+
+/// Read one canonical decoded component identity without repairing source text.
+fn vehicle_component_identity(
+    value: &Value,
+    field: &str,
+    label: &str,
+) -> Result<String, PipelineError> {
+    let raw = value.get(field).and_then(Value::as_str).ok_or_else(|| {
+        PipelineError::new(format!("vehicle {label} has no source identity"))
+    })?;
+    let clean = raw.trim_end_matches('\u{0}');
+    if clean.is_empty()
+        || clean != clean.trim()
+        || clean.chars().any(char::is_control)
+    {
+        return Err(PipelineError::new(format!(
+            "vehicle {label} identity is non-canonical"
+        )));
+    }
+    Ok(clean.to_owned())
+}
+
+/// Read one source ordinal from a normalized component ledger row.
+fn vehicle_ledger_ordinal(row: &Value) -> Result<usize, PipelineError> {
+    let ordinal = row.get("ordinal").and_then(Value::as_u64).ok_or_else(|| {
+        PipelineError::new("vehicle component ledger row has no source ordinal")
+    })?;
+    usize::try_from(ordinal)
+        .map_err(|error| PipelineError::new(error.to_string()))
 }
 
 /// Publish every unreferenced local PNG as damage or alternate appearance data.

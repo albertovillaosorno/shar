@@ -36,7 +36,7 @@ use std::path::{Path, PathBuf};
 
 use serde_json::{Value, json};
 
-use super::model::{PartRecord, VehicleRecord};
+use super::model::{EffectAnimationRecord, PartRecord, VehicleRecord};
 use crate::domain::PipelineError;
 
 /// Write one deterministic vehicle-local catalog.
@@ -56,7 +56,7 @@ pub(super) fn write_root_catalog(
     extracted_packages: usize,
 ) -> Result<(), PipelineError> {
     let value = json!({
-        "schema": "shar.vehicle-catalog.v1",
+        "schema": "shar.vehicle-catalog.v2",
         "boundary": {
             "source": concat!(
                 "original game P3D packages selected by the generated package ",
@@ -75,7 +75,8 @@ pub(super) fn write_root_catalog(
                 "damage textures",
                 "alternate appearance textures",
                 "semantic part roles and pivot bones",
-                "hidden non-visual wheel proxies retained as physics evidence"
+                "hidden non-visual wheel proxies retained as physics evidence",
+                "effect animation controller and billboard relationships"
             ],
             "excluded": [
                 "runtime collision and physics behavior",
@@ -219,7 +220,11 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
         })).collect::<Vec<_>>(),
         "deferred_geometry": record.deferred_geometry,
         "animations": record.animations,
-        "effect_animation_sidecars": record.effect_animation_sidecars,
+        "effect_animation_sidecars": record
+            .effect_animation_sidecars
+            .iter()
+            .map(effect_animation_value)
+            .collect::<Vec<_>>(),
         "textures": record.textures.iter().map(|texture| json!({
             "path": texture.path,
             "role": texture.role,
@@ -227,6 +232,22 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
             "sha256": texture.sha256
         })).collect::<Vec<_>>(),
         "shaders": record.shaders
+    })
+}
+
+/// Render one non-skeletal animation sidecar and its source relationship.
+fn effect_animation_value(record: &EffectAnimationRecord) -> Value {
+    json!({
+        "path": record.path,
+        "identity": record.identity,
+        "type": record.animation_type,
+        "source_ordinal": record.source_ordinal,
+        "controller": record.controller.as_ref().map(|controller| json!({
+            "identity": controller.controller_identity,
+            "source_ordinal": controller.controller_source_ordinal,
+            "billboard_identity": controller.billboard_identity,
+            "billboard_source_ordinal": controller.billboard_source_ordinal
+        }))
     })
 }
 
