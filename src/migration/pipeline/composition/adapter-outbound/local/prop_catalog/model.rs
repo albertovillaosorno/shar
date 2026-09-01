@@ -162,6 +162,8 @@ pub(super) struct DeferredTextureOccurrenceBinding {
     pub(super) package_id: String,
     /// Generated owning package subcategory.
     pub(super) subcategory: String,
+    /// Stable phase-three package-member identity for this occurrence.
+    pub(super) package_member_id: String,
     /// Exact normalized texture member identity.
     pub(super) member_id: String,
     /// Exact source texture component ordinal.

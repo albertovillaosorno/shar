@@ -42,7 +42,9 @@ use super::inventory_common::{
     clean_identity, ledger_member_id, required_string, required_usize,
 };
 use crate::domain::PipelineError;
-use crate::domain::package::{PhaseThreePackageIndex, PhaseThreePackageRow};
+use crate::domain::package::{
+    PackageRole, PhaseThreePackageIndex, PhaseThreePackageRow,
+};
 
 /// One published texture source with package scope and exact content identity.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -51,6 +53,8 @@ struct TextureSource {
     package_id: String,
     /// Generated package subcategory used for scope preference.
     subcategory: String,
+    /// Stable phase-three package-member identity for this occurrence.
+    package_member_id: String,
     /// Exact normalized texture member identity.
     member_id: String,
     /// Exact source texture component ordinal.
@@ -69,6 +73,8 @@ pub(super) struct SharedTextureOccurrenceEvidence {
     pub(super) package_id: String,
     /// Generated package subcategory used for scope preference.
     pub(super) subcategory: String,
+    /// Stable phase-three package-member identity for this occurrence.
+    pub(super) package_member_id: String,
     /// Exact normalized texture member identity.
     pub(super) member_id: String,
     /// Exact source texture component ordinal.
@@ -111,8 +117,7 @@ fn ingest_package(
             line,
             &manifest,
             &root,
-            &package.package_id,
-            &package.subcategory,
+            package,
         )? {
             sources.entry(logical).or_default().push(source);
         }
@@ -129,8 +134,7 @@ fn texture_source_from_line(
     line: &str,
     manifest: &Path,
     root: &Path,
-    package_id: &str,
-    subcategory: &str,
+    package: &PhaseThreePackageRow,
 ) -> Result<Option<(String, TextureSource)>, PipelineError> {
     let value: Value = serde_json::from_str(line).map_err(|error| {
         PipelineError::new(format!(
@@ -145,6 +149,11 @@ fn texture_source_from_line(
     let relative_path = required_string(&value, "path")?;
     let member_id = ledger_member_id(&relative_path, "texture")?;
     let source_ordinal = required_usize(&value, "ordinal")?;
+    let package_member_id = phase_three_texture_member_id(
+        package,
+        &relative_path,
+        source_ordinal,
+    )?;
     let file_name = relative_path
         .strip_prefix("texture/")
         .filter(|member| {
@@ -165,13 +174,59 @@ fn texture_source_from_line(
         ))
     })?;
     Ok(Some((logical, TextureSource {
-        package_id: package_id.to_owned(),
-        subcategory: subcategory.to_owned(),
+        package_id: package.package_id.clone(),
+        subcategory: package.subcategory.clone(),
+        package_member_id,
         member_id,
         source_ordinal,
         path,
         sha256: digest_hex(&bytes),
     })))
+}
+
+
+/// Resolve one ledger texture row to its exact phase-three member identity.
+fn phase_three_texture_member_id(
+    package: &PhaseThreePackageRow,
+    relative_path: &str,
+    source_ordinal: usize,
+) -> Result<String, PipelineError> {
+    let expected_path =
+        format!("{}/components/{relative_path}", package.package_root);
+    let matches = package
+        .members()
+        .iter()
+        .filter(|member| {
+            member.role == PackageRole::Texture
+                && member.kind == "p3d-texture"
+                && member.source_chunk_kind == "texture"
+                && member.source_chunk_ordinal == Some(source_ordinal)
+                && member.path == expected_path
+        })
+        .collect::<Vec<_>>();
+    let [member] = matches.as_slice() else {
+        return Err(PipelineError::new(format!(
+            concat!(
+                "world texture occurrence has no unique phase-three member: ",
+                "{}@{}"
+            ),
+            relative_path,
+            source_ordinal
+        )));
+    };
+    Ok(member.id.clone())
+}
+
+#[cfg(test)]
+pub(super) struct TextureOccurrenceFixture<'a> {
+    pub(super) logical: &'a str,
+    pub(super) package_id: &'a str,
+    pub(super) subcategory: &'a str,
+    pub(super) package_member_id: &'a str,
+    pub(super) member_id: &'a str,
+    pub(super) source_ordinal: usize,
+    pub(super) path: &'a str,
+    pub(super) sha256: &'a str,
 }
 
 impl SharedTextureAuthority {
@@ -220,6 +275,7 @@ impl SharedTextureAuthority {
             .map(|source| SharedTextureOccurrenceEvidence {
                 package_id: source.package_id.clone(),
                 subcategory: source.subcategory.clone(),
+                package_member_id: source.package_member_id.clone(),
                 member_id: source.member_id.clone(),
                 source_ordinal: source.source_ordinal,
                 sha256: source.sha256.clone(),
@@ -238,29 +294,21 @@ impl SharedTextureAuthority {
     /// Build a small authority from explicit physical occurrences for tests.
     #[cfg(test)]
     pub(super) fn from_occurrences_for_tests(
-        occurrences: &[(&str, &str, &str, &str, usize, &str, &str)],
+        occurrences: &[TextureOccurrenceFixture<'_>],
     ) -> Self {
         let mut sources = BTreeMap::new();
-        for (
-            logical,
-            package_id,
-            subcategory,
-            member_id,
-            source_ordinal,
-            path,
-            sha256,
-        ) in occurrences
-        {
+        for occurrence in occurrences {
             sources
-                .entry((*logical).to_owned())
+                .entry(occurrence.logical.to_owned())
                 .or_insert_with(Vec::new)
                 .push(TextureSource {
-                    package_id: (*package_id).to_owned(),
-                    subcategory: (*subcategory).to_owned(),
-                    member_id: (*member_id).to_owned(),
-                    source_ordinal: *source_ordinal,
-                    path: PathBuf::from(path),
-                    sha256: (*sha256).to_owned(),
+                    package_id: occurrence.package_id.to_owned(),
+                    subcategory: occurrence.subcategory.to_owned(),
+                    package_member_id: occurrence.package_member_id.to_owned(),
+                    member_id: occurrence.member_id.to_owned(),
+                    source_ordinal: occurrence.source_ordinal,
+                    path: PathBuf::from(occurrence.path),
+                    sha256: occurrence.sha256.to_owned(),
                 });
         }
         Self { sources }

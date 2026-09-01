@@ -220,25 +220,27 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
     .map_err(|error| error.to_string())?;
     let authority =
         texture_authority::SharedTextureAuthority::from_occurrences_for_tests(&[
-        (
-            "glow.bmp",
-            "level-three-terrain",
-            "terrain-world/level-03/terrain-mesh",
-            "glow",
-            182,
-            "glow.png",
-            "one",
-        ),
-        (
-            "glow.bmp",
-            "level-three-terrain",
-            "terrain-world/level-03/terrain-mesh",
-            "glow__ordinal_10591",
-            10_591,
-            "glow__ordinal_10591.png",
-            "two",
-        ),
-    ]);
+            texture_authority::TextureOccurrenceFixture {
+                logical: "glow.bmp",
+                package_id: "level-three-terrain",
+                subcategory: "terrain-world/level-03/terrain-mesh",
+                package_member_id: "texture-member-182",
+                member_id: "glow",
+                source_ordinal: 182,
+                path: "glow.png",
+                sha256: "one",
+            },
+            texture_authority::TextureOccurrenceFixture {
+                logical: "glow.bmp",
+                package_id: "level-three-terrain",
+                subcategory: "terrain-world/level-03/terrain-mesh",
+                package_member_id: "texture-member-10591",
+                member_id: "glow__ordinal_10591",
+                source_ordinal: 10_591,
+                path: "glow__ordinal_10591.png",
+                sha256: "two",
+            },
+        ]);
     let actual = deferred_render_bindings(
         &root,
         &rows,
@@ -294,6 +296,11 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         .texture_references
         .first()
         .ok_or_else(|| "deferred texture reference is missing".to_owned())?;
+    let texture_package_members = texture_reference
+        .occurrences
+        .iter()
+        .map(|occurrence| occurrence.package_member_id.as_str())
+        .collect::<Vec<_>>();
     let texture_members = texture_reference
         .occurrences
         .iter()
@@ -326,6 +333,8 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         || shader_textures != [Some("glow.bmp"), Some("glow.bmp")]
         || billboard.texture_references.len() != 1
         || texture_reference.identity != "glow.bmp"
+        || texture_package_members
+            != ["texture-member-182", "texture-member-10591"]
         || texture_members != ["glow", "glow__ordinal_10591"]
         || texture_ordinals != [182, 10_591]
         || texture_digests != ["one", "two"]

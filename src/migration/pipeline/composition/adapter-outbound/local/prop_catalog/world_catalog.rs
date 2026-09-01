@@ -154,7 +154,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v8",
+        "schema": "shar.world-model-props.v9",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -290,6 +290,7 @@ fn deferred_texture_occurrence_value(
     json!({
         "package_id": binding.package_id,
         "subcategory": binding.subcategory,
+        "package_member_id": binding.package_member_id,
         "member_id": binding.member_id,
         "source_ordinal": binding.source_ordinal,
         "sha256": binding.sha256

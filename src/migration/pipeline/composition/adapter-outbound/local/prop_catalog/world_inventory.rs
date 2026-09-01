@@ -489,6 +489,7 @@ fn deferred_texture_references(
             .map(|occurrence| DeferredTextureOccurrenceBinding {
                 package_id: occurrence.package_id,
                 subcategory: occurrence.subcategory,
+                package_member_id: occurrence.package_member_id,
                 member_id: occurrence.member_id,
                 source_ordinal: occurrence.source_ordinal,
                 sha256: occurrence.sha256,

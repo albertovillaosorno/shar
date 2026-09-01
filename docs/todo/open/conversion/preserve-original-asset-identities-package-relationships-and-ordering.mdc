@@ -952,5 +952,26 @@ shader-to-texture relationship. The new exact-occurrence FBX boundary can use
 one physical member only after another source-backed consumer establishes that
 relationship authority.
 
+`shar.world-model-props.v9` now gives every retained deferred billboard
+texture occurrence the same stable phase-three physical coordinate. A whole
+terrain-world audit covers 149 packages and 5,866 normalized texture ledger
+rows: every row
+matches exactly one phase-three `p3d-texture` member by exact component path,
+every member carries the same source chunk ordinal as its ledger row, and there
+are zero missing, duplicate-path, or unrepresented occurrences.
+
+World shared-texture authority now requires that exact path-and-ordinal join
+while it ingests a ledger occurrence, then retains the phase-three
+package-member id
+alongside the existing package id, subcategory, normalized member id, source
+ordinal, and PNG digest. A focused regression proves that a matching path with a
+wrong ordinal, or a matching ordinal with a wrong collision path, fails closed.
+
+This strengthens physical occurrence identity only. The existing scope
+preference and payload-equivalence rules are unchanged, so the 12 differing
+`glow2.bmp` preferred occurrence sets remain unresolved and all same-name
+physical peers stay visible rather than being promoted to an authored shader
+relationship.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
