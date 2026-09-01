@@ -872,5 +872,31 @@ publication. `shar.vehicle-catalog.v4` preserves the candidate relationship
 model and regression evidence; it does not claim that unresolved physical
 selection has become valid.
 
+Vehicle texture authority now uses that same normalized component ledger as its
+logical-to-physical source instead of reconstructing identity from PNG file
+names. The 89 current car ledgers contain 1,479 texture rows and exactly 1,479
+PNG members, with zero missing or orphan files, duplicate physical paths,
+missing component ordinals, or duplicate component ordinals.
+
+Filename reconstruction was observably lossy: 461 of those 1,479 rows produce a
+different normalized lookup key from the authored ledger name, including 420
+explicit collision-suffixed physical paths. Those occurrences are now grouped
+under the authored logical identity while retaining package id, subcategory,
+physical member id, component ordinal, physical path, and payload SHA-256.
+
+This closes a fail-open cross-package lookup edge without weakening ambiguity
+policy. A canonical PNG and a differing collision-renamed peer can no longer
+land under separate authority keys and let the canonical member resolve alone.
+The existing same-package, common-package, then global scope precedence remains
+unchanged, and a selected scope still resolves only when every candidate has the
+same payload digest.
+
+The broader vehicle material corpus shows why physical selection remains open.
+Of 786 currently used shader `TEX` bindings, 402 have two package-local texture
+occurrences across 54 packages. Two hundred eighty-six duplicated bindings have
+byte-equivalent payloads, while 116 contain different payloads. Ambiguous
+material diagnostics now report exact retained occurrence and distinct-payload
+counts rather than choosing one member.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
