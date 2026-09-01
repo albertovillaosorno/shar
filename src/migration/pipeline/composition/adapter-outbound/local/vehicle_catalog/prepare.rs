@@ -1338,8 +1338,10 @@ fn vehicle_texture_occurrence(
         return Err(PipelineError::new(format!(
             concat!(
                 "vehicle texture occurrence has no unique phase-three member: ",
-                "{relative}@{source_ordinal}"
-            )
+                "{}@{}"
+            ),
+            relative,
+            source_ordinal
         )));
     };
     let bytes = fs::read(package_root.join("components").join(relative))
