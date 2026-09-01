@@ -39,7 +39,8 @@ use serde::{Deserialize, Deserializer};
 use super::decoded_component_source::read_indexed_mesh;
 use crate::domain::character::{
     CharacterAsset, CharacterError, CharacterSourceProvenance,
-    CompositePropSourceBinding, CompositeSkinSourceBinding, SkinnedPart,
+    CompositeEffectSourceBinding, CompositePropSourceBinding,
+    CompositeSkinSourceBinding, SkinnedPart,
 };
 use crate::domain::mesh::{
     MeshAsset, MeshError, PrimitiveGroup, triangulate_strip,
@@ -666,6 +667,20 @@ pub(super) fn rigid_group_influences(
         .collect()
 }
 
+/// One validated authored effect relationship from a decoded composite.
+pub(super) struct CompositeEffectBinding {
+    /// Referenced effect identity.
+    pub(super) name: String,
+    /// Zero-based skeleton joint position owning the effect.
+    pub(super) joint: usize,
+    /// Source composite marks the effect as translucent.
+    pub(super) translucent: bool,
+    /// Zero-based authored effect position.
+    pub(super) source_index: usize,
+    /// Exact decoded source-width sort order when the optional field exists.
+    pub(super) sort_order: Option<f32>,
+}
+
 /// One validated rigid prop binding from a decoded composite.
 pub(super) struct CompositePropBinding {
     /// Referenced component identity.
@@ -698,6 +713,8 @@ pub(super) struct CompositeBindings {
     pub(super) source_identity: String,
     /// Authored skin bindings.
     pub(super) skins: Vec<CompositeSkinBinding>,
+    /// Authored effect bindings.
+    pub(super) effects: Vec<CompositeEffectBinding>,
     /// Rigid prop bindings.
     pub(super) props: Vec<CompositePropBinding>,
     /// Skin identities explicitly marked translucent.
@@ -719,6 +736,27 @@ pub(super) fn source_skin_bindings(
                 composite_ordinal,
                 binding.source_index,
                 binding.name.clone(),
+                binding.translucent,
+                binding.sort_order,
+            )
+            .map_err(SkinSourceError::Character)
+        })
+        .collect()
+}
+
+/// Project authored effect rows into source-only character provenance.
+pub(super) fn source_effect_bindings(
+    composite_ordinal: usize,
+    bindings: &[CompositeEffectBinding],
+) -> Result<Vec<CompositeEffectSourceBinding>, SkinSourceError> {
+    bindings
+        .iter()
+        .map(|binding| {
+            CompositeEffectSourceBinding::new(
+                composite_ordinal,
+                binding.source_index,
+                binding.name.clone(),
+                binding.joint,
                 binding.translucent,
                 binding.sort_order,
             )
@@ -899,9 +937,48 @@ pub(super) fn composite_bindings(
             sort_order,
         });
     }
+    let mut effect_bindings = Vec::with_capacity(decoded.effects.len());
+    for (effect_index, effect) in decoded.effects.into_iter().enumerate() {
+        if effect.kind != "effect" {
+            return Err(SkinSourceError::Prop(format!(
+                "composite {} contains unsupported effect kind {}",
+                path.display(),
+                effect.kind
+            )));
+        }
+        let effect_name =
+            decoded_identity(path, "composite effect name", &effect.name)?;
+        if effect_name.is_empty() {
+            return Err(SkinSourceError::Prop(format!(
+                "composite {} contains a blank effect name",
+                path.display()
+            )));
+        }
+        if effect.skeleton_joint_id >= bone_count {
+            return Err(SkinSourceError::Prop(format!(
+                "composite effect {effect_name} references joint {} \
+                 outside {} bones",
+                effect.skeleton_joint_id, bone_count
+            )));
+        }
+        let translucent = binary_flag(
+            &effect.is_translucent,
+            "composite effect translucency",
+        )?;
+        let sort_order =
+            decoded_prop_sort_order(&effect.sort_order, &effect_name)?;
+        effect_bindings.push(CompositeEffectBinding {
+            name: effect_name,
+            joint: effect.skeleton_joint_id,
+            translucent,
+            source_index: effect_index,
+            sort_order,
+        });
+    }
     Ok(CompositeBindings {
         source_identity: composite_name,
         skins: skin_bindings,
+        effects: effect_bindings,
         props: bindings,
         translucent_skins,
         effect_count: actual_effect_count,
@@ -1472,7 +1549,7 @@ struct DecodedComposite {
     effect_count: u32,
     /// Effect bindings listed by the composite.
     #[serde(default)]
-    effects: Vec<serde_json::Value>,
+    effects: Vec<DecodedCompositeEffect>,
 }
 
 #[derive(Deserialize)]
@@ -1487,6 +1564,28 @@ struct DecodedCompositeProp {
     #[serde(rename = "is_translucent")]
     is_translucent: serde_json::Value,
     /// Zero-based skeleton joint position owning the rigid prop.
+    skeleton_joint_id: usize,
+    /// Optional source sort-order field, preserving presence separately.
+    #[serde(
+        default,
+        rename = "sort_order",
+        deserialize_with = "deserialize_optional_sort_order"
+    )]
+    sort_order: DecodedOptionalSortOrder,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+/// One effect attached to a skeleton joint.
+struct DecodedCompositeEffect {
+    /// Binding kind, required to be `effect`.
+    kind: String,
+    /// Referenced effect identity with fixed-width padding.
+    name: String,
+    /// Authored binary translucency flag.
+    #[serde(rename = "is_translucent")]
+    is_translucent: serde_json::Value,
+    /// Zero-based skeleton joint position owning the effect.
     skeleton_joint_id: usize,
     /// Optional source sort-order field, preserving presence separately.
     #[serde(

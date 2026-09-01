@@ -43,7 +43,8 @@ use super::decoded_billboard_source::read_billboard_quad_group;
 use super::decoded_component_source::read_indexed_mesh;
 use super::decoded_skin_source::{
     CompositePropBinding, SkinSourceError, composite_bindings, load_skeleton,
-    mark_transparent_mesh, rigid_group_influences, source_prop_bindings,
+    mark_transparent_mesh, rigid_group_influences, source_effect_bindings,
+    source_prop_bindings,
 };
 use crate::domain::character::{
     CharacterAsset, CharacterSourceProvenance, SkinnedPart,
@@ -68,11 +69,16 @@ pub fn load_selected_rigid_prop_asset(
     let (skeleton_name, bones) = load_skeleton(skeleton_path)?;
     let composite =
         composite_bindings(composite_path, &skeleton_name, &[], bones.len())?;
+    let composite_effect_bindings =
+        source_effect_bindings(0, &composite.effects)?;
     let composite_prop_bindings = source_prop_bindings(0, &composite.props)?;
     let source_provenance =
         CharacterSourceProvenance::new(skeleton_name, vec![
             composite.source_identity.clone(),
         ])
+        .and_then(|provenance| {
+            provenance.with_composite_effect_bindings(composite_effect_bindings)
+        })
         .and_then(|provenance| {
             provenance.with_composite_prop_bindings(composite_prop_bindings)
         })
@@ -161,11 +167,16 @@ pub fn load_instanced_rigid_prop_asset_with_billboards(
     let (skeleton_name, bones) = load_skeleton(skeleton_path)?;
     let composite =
         composite_bindings(composite_path, &skeleton_name, &[], bones.len())?;
+    let composite_effect_bindings =
+        source_effect_bindings(0, &composite.effects)?;
     let composite_prop_bindings = source_prop_bindings(0, &composite.props)?;
     let source_provenance =
         CharacterSourceProvenance::new(skeleton_name, vec![
             composite.source_identity.clone(),
         ])
+        .and_then(|provenance| {
+            provenance.with_composite_effect_bindings(composite_effect_bindings)
+        })
         .and_then(|provenance| {
             provenance.with_composite_prop_bindings(composite_prop_bindings)
         })

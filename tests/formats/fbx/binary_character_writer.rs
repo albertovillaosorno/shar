@@ -42,8 +42,8 @@ use fbx::adapters::driven::binary_character_writer::{
     write_binary_character_fbx_embedded,
 };
 use fbx::domain::character::{
-    CharacterAsset, CharacterSourceProvenance, CompositePropSourceBinding,
-    CompositeSkinSourceBinding, SkinnedPart,
+    CharacterAsset, CharacterSourceProvenance, CompositeEffectSourceBinding,
+    CompositePropSourceBinding, CompositeSkinSourceBinding, SkinnedPart,
 };
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::skeleton::Bone;
@@ -109,6 +109,17 @@ fn synthetic_character() -> Result<CharacterAsset, String> {
             Some(0.1),
         )?;
         provenance.with_composite_skin_bindings(vec![skin])
+    })
+    .and_then(|provenance| {
+        let effect = CompositeEffectSourceBinding::new(
+            1,
+            3,
+            "SourceEffect",
+            6,
+            true,
+            Some(0.3),
+        )?;
+        provenance.with_composite_effect_bindings(vec![effect])
     })
     .and_then(|provenance| {
         let first = CompositePropSourceBinding::new(
@@ -439,6 +450,12 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         b"SHAR_P3D_SourceCompositeSkinTranslucent_0000_0001".as_slice(),
         b"SHAR_P3D_SourceCompositeSkinSortBits_0000_0001".as_slice(),
         0.1_f32.to_bits().to_string().as_bytes(),
+        b"SHAR_P3D_SourceCompositeEffectIdentity_0001_0003".as_slice(),
+        b"SourceEffect".as_slice(),
+        b"SHAR_P3D_SourceCompositeEffectJoint_0001_0003".as_slice(),
+        b"SHAR_P3D_SourceCompositeEffectTranslucent_0001_0003".as_slice(),
+        b"SHAR_P3D_SourceCompositeEffectSortBits_0001_0003".as_slice(),
+        0.3_f32.to_bits().to_string().as_bytes(),
         b"SHAR_P3D_SourceCompositePropIdentity_0000_0002".as_slice(),
         b"SourceProp".as_slice(),
         b"SHAR_P3D_SourceCompositePropJoint_0000_0002".as_slice(),

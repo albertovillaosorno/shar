@@ -223,6 +223,23 @@ fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
     {
         return Err(format!("unexpected source relationships: {provenance:?}"));
     }
+    let effect_bindings = provenance.composite_effect_bindings();
+    let [effect] = effect_bindings else {
+        return Err(format!(
+            "unexpected composite effect provenance: {effect_bindings:?}"
+        ));
+    };
+    if effect.composite_ordinal() != 0
+        || effect.effect_index() != 0
+        || effect.effect_identity() != "ParticleShape"
+        || effect.skeleton_joint_id() != 3
+        || !effect.translucent()
+        || effect.sort_order_bits() != Some(0_f32.to_bits())
+    {
+        return Err(format!(
+            "unexpected composite effect provenance: {effect_bindings:?}"
+        ));
+    }
     let bindings = provenance.composite_prop_bindings();
     let [body, glow] = bindings else {
         return Err(format!(

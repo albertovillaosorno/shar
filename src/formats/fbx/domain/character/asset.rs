@@ -133,6 +133,101 @@ impl CompositeSkinSourceBinding {
     }
 }
 
+/// One authored composite effect relationship retained as source provenance.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CompositeEffectSourceBinding {
+    /// Zero-based composite occurrence in retained source order.
+    composite_ordinal: usize,
+    /// Zero-based effect position within the authored composite.
+    effect_index: usize,
+    /// Authored effect identity.
+    effect_identity: String,
+    /// Zero-based skeleton joint position referenced by the composite.
+    skeleton_joint_id: usize,
+    /// Authored binary translucency flag.
+    translucent: bool,
+    /// Exact source-width sort-order bits when the optional field was present.
+    sort_order_bits: Option<u32>,
+}
+
+impl CompositeEffectSourceBinding {
+    /// Create one validated source-only composite effect record.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the effect identity is non-canonical or a supplied
+    /// sort-order value is non-finite.
+    pub fn new(
+        composite_ordinal: usize,
+        effect_index: usize,
+        effect_identity: impl Into<String>,
+        skeleton_joint_id: usize,
+        translucent: bool,
+        sort_order: Option<f32>,
+    ) -> Result<Self, CharacterError> {
+        let effect_identity = effect_identity.into();
+        if !canonical_source_identity(&effect_identity) {
+            return Err(CharacterError::NonCanonicalSourceEffectIdentity {
+                identity: effect_identity,
+            });
+        }
+        let sort_order_bits = match sort_order {
+            Some(value) if value.is_finite() => Some(value.to_bits()),
+            Some(_value) => {
+                return Err(CharacterError::NonFiniteSourceEffectSortOrder {
+                    composite_ordinal,
+                    effect_index,
+                });
+            },
+            None => None,
+        };
+        Ok(Self {
+            composite_ordinal,
+            effect_index,
+            effect_identity,
+            skeleton_joint_id,
+            translucent,
+            sort_order_bits,
+        })
+    }
+
+    /// Return the zero-based retained composite occurrence.
+    #[must_use]
+    pub const fn composite_ordinal(&self) -> usize {
+        self.composite_ordinal
+    }
+
+    /// Return the zero-based authored effect position.
+    #[must_use]
+    pub const fn effect_index(&self) -> usize {
+        self.effect_index
+    }
+
+    /// Return the authored effect identity.
+    #[must_use]
+    pub fn effect_identity(&self) -> &str {
+        &self.effect_identity
+    }
+
+    /// Return the zero-based authored skeleton joint position.
+    #[must_use]
+    pub const fn skeleton_joint_id(&self) -> usize {
+        self.skeleton_joint_id
+    }
+
+    /// Return the authored binary translucency flag.
+    #[must_use]
+    pub const fn translucent(&self) -> bool {
+        self.translucent
+    }
+
+    /// Return exact source-width sort-order bits when authored.
+    #[must_use]
+    pub const fn sort_order_bits(&self) -> Option<u32> {
+        self.sort_order_bits
+    }
+}
+
 /// One authored composite prop relationship retained as source provenance.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CompositePropSourceBinding {
@@ -237,6 +332,8 @@ pub struct CharacterSourceProvenance {
     composite_identities: Vec<String>,
     /// Authored composite skin rows in exact retained source order.
     composite_skin_bindings: Vec<CompositeSkinSourceBinding>,
+    /// Authored composite effect rows in exact retained source order.
+    composite_effect_bindings: Vec<CompositeEffectSourceBinding>,
     /// Authored composite prop rows in exact retained source order.
     composite_prop_bindings: Vec<CompositePropSourceBinding>,
 }
@@ -271,6 +368,7 @@ impl CharacterSourceProvenance {
             skeleton_identity,
             composite_identities,
             composite_skin_bindings: Vec::new(),
+            composite_effect_bindings: Vec::new(),
             composite_prop_bindings: Vec::new(),
         })
     }
@@ -322,6 +420,43 @@ impl CharacterSourceProvenance {
     #[must_use]
     pub fn composite_skin_bindings(&self) -> &[CompositeSkinSourceBinding] {
         &self.composite_skin_bindings
+    }
+
+    /// Attach exact authored composite effect rows as source-only provenance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a row references a composite occurrence outside
+    /// the retained identity vector or repeats one authored effect position.
+    pub fn with_composite_effect_bindings(
+        mut self,
+        bindings: Vec<CompositeEffectSourceBinding>,
+    ) -> Result<Self, CharacterError> {
+        let mut seen = BTreeSet::new();
+        for binding in &bindings {
+            if binding.composite_ordinal >= self.composite_identities.len() {
+                return Err(CharacterError::SourceEffectCompositeOutOfBounds {
+                    composite_ordinal: binding.composite_ordinal,
+                    composites: self.composite_identities.len(),
+                });
+            }
+            if !seen.insert((binding.composite_ordinal, binding.effect_index)) {
+                return Err(
+                    CharacterError::DuplicateSourceCompositeEffectIndex {
+                        composite_ordinal: binding.composite_ordinal,
+                        effect_index: binding.effect_index,
+                    },
+                );
+            }
+        }
+        self.composite_effect_bindings = bindings;
+        Ok(self)
+    }
+
+    /// Return authored composite effect rows in exact retained source order.
+    #[must_use]
+    pub fn composite_effect_bindings(&self) -> &[CompositeEffectSourceBinding] {
+        &self.composite_effect_bindings
     }
 
     /// Attach exact authored composite prop rows as source-only provenance.
@@ -623,6 +758,33 @@ pub enum CharacterError {
         composite_ordinal: usize,
         /// Repeated authored skin position.
         skin_index: usize,
+    },
+    /// Authored composite effect identity was empty or non-canonical.
+    NonCanonicalSourceEffectIdentity {
+        /// Malformed authored effect identity.
+        identity: String,
+    },
+    /// Authored effect sort order was present but non-finite.
+    NonFiniteSourceEffectSortOrder {
+        /// Retained composite occurrence containing the effect.
+        composite_ordinal: usize,
+        /// Authored effect position inside the composite.
+        effect_index: usize,
+    },
+    /// Source effect provenance referenced a composite outside retained source.
+    SourceEffectCompositeOutOfBounds {
+        /// Invalid retained composite occurrence.
+        composite_ordinal: usize,
+        /// Number of retained composite occurrences.
+        composites: usize,
+    },
+    /// Source effect provenance repeated one authored composite effect
+    /// position.
+    DuplicateSourceCompositeEffectIndex {
+        /// Retained composite occurrence containing the duplicate.
+        composite_ordinal: usize,
+        /// Repeated authored effect position.
+        effect_index: usize,
     },
     /// Authored composite prop identity was empty or non-canonical.
     NonCanonicalSourcePropIdentity {

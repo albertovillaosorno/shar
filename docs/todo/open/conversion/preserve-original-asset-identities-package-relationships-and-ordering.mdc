@@ -1207,13 +1207,31 @@ same package contains both a same-name `particle_system_factory` and a same-name
 identity match. Therefore neither first-match nor kind guessing can safely turn
 an effect row into one physical particle occurrence.
 
-The direct character loader currently rejects any composite with effects via
-`UnsupportedCompositeEffects`. Rigid-prop loaders decode the composite but do
-not reject or preserve the effect rows, so source relationships such as the
-three authored Wasp Camera effects remain outside direct FBX provenance. A
-future repair must retain effect index, identity, joint, translucency, and
-optional source-width sort evidence separately from resolving particle-system
-factory/instance ownership.
+Direct rigid-prop FBX provenance now retains those authored effect rows without
+resolving particle ownership. `CompositeEffectSourceBinding` preserves retained
+composite ordinal, authored effect index, exact effect identity, skeleton joint,
+binary translucency, and optional source-width `f32` sort bits. The binary
+character writer publishes the same fields as indexed export-root source
+properties. Missing optional sort remains `absent`; present `null`, non-finite,
+wrong-kind, out-of-range-joint, or non-binary-translucency evidence fails
+closed.
+
+This does not broaden full-character behavior: `load_character` still rejects
+any composite with effects through `UnsupportedCompositeEffects`. Rigid-prop
+loaders preserve effect evidence because those routes already accepted such
+composites; supplemental runtime bindings remain separate from authored rows.
+Semantic deduplication still clears the aggregate source provenance before
+hashing.
+
+The remaining particle relationship is intentionally unresolved. For all 537
+same-name factory/system pairs, the particle-system payload explicitly names the
+same-name factory through `factory_name`, establishing that those two physical
+rows belong together.
+
+It still does not establish whether the composite effect row designates the
+factory, the system instance, or another runtime abstraction. The other 267
+effect identities have neither exact same-package row. No first-match, kind
+preference, or ordinal heuristic is introduced.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

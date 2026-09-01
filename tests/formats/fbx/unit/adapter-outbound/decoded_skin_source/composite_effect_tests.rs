@@ -33,7 +33,9 @@
 use std::fs;
 use std::path::PathBuf;
 
-use super::{SkinSourceError, composite_bindings, load_character};
+use super::{
+    SkinSourceError, composite_bindings, load_character, source_effect_bindings,
+};
 
 fn temp_path(label: &str) -> PathBuf {
     std::env::temp_dir().join(format!(
@@ -71,6 +73,20 @@ fn effect_evidence_blocks_whole_character_export() -> Result<(), String> {
             bindings.effect_count
         ));
     }
+    let source = source_effect_bindings(4, &bindings.effects)
+        .map_err(|error| format!("effect provenance failed: {error:?}"))?;
+    let [effect] = source.as_slice() else {
+        return Err(format!("unexpected effect provenance: {source:?}"));
+    };
+    if effect.composite_ordinal() != 4
+        || effect.effect_index() != 0
+        || effect.effect_identity() != "spark"
+        || effect.skeleton_joint_id() != 0
+        || effect.translucent()
+        || effect.sort_order_bits().is_some()
+    {
+        return Err(format!("effect provenance changed: {effect:?}"));
+    }
     let composite_paths = [composite_path.as_path()];
     let error =
         load_character("character", &skeleton_path, &[], &[], &composite_paths)
@@ -88,4 +104,77 @@ fn effect_evidence_blocks_whole_character_export() -> Result<(), String> {
     } else {
         Err(format!("whole-character effect result changed: {error:?}"))
     }
+}
+
+#[test]
+fn rejects_invalid_composite_effect_fields() -> Result<(), String> {
+    for (label, effect) in [
+        (
+            "null-sort",
+            serde_json::json!({
+                "kind": "effect",
+                "name": "spark",
+                "is_translucent": 1,
+                "skeleton_joint_id": 0,
+                "sort_order": null,
+            }),
+        ),
+        (
+            "wrong-kind",
+            serde_json::json!({
+                "kind": "prop",
+                "name": "spark",
+                "is_translucent": 1,
+                "skeleton_joint_id": 0,
+                "sort_order": 0.5,
+            }),
+        ),
+        (
+            "bad-joint",
+            serde_json::json!({
+                "kind": "effect",
+                "name": "spark",
+                "is_translucent": 1,
+                "skeleton_joint_id": 1,
+                "sort_order": 0.5,
+            }),
+        ),
+        (
+            "bad-translucency",
+            serde_json::json!({
+                "kind": "effect",
+                "name": "spark",
+                "is_translucent": 2,
+                "skeleton_joint_id": 0,
+                "sort_order": 0.5,
+            }),
+        ),
+    ] {
+        let path = temp_path(label);
+        let composite = serde_json::json!({
+            "schema": "composite_drawable",
+            "name": "character",
+            "skeleton_name": "skeleton",
+            "num_skins": 0,
+            "skins": [],
+            "num_props": 0,
+            "props": [],
+            "num_effects": 1,
+            "effects": [effect],
+        });
+        fs::write(
+            &path,
+            serde_json::to_vec(&composite)
+                .map_err(|error| error.to_string())?,
+        )
+        .map_err(|error| error.to_string())?;
+        let result = composite_bindings(&path, "skeleton", &[], 1);
+        fs::remove_file(&path).map_err(|error| error.to_string())?;
+        if result.is_ok() {
+            return Err(format!(
+                "invalid composite effect was accepted: {label}"
+            ));
+        }
+    }
+    Ok(())
 }

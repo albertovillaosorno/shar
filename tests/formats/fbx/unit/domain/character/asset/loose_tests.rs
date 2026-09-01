@@ -74,6 +74,17 @@ fn source_provenance_preserves_composite_order_and_duplicates() {
         provenance.with_composite_skin_bindings(vec![skin])
     })
     .and_then(|provenance| {
+        let effect = CompositeEffectSourceBinding::new(
+            0,
+            2,
+            "effect-shape",
+            5,
+            true,
+            Some(0.3),
+        )?;
+        provenance.with_composite_effect_bindings(vec![effect])
+    })
+    .and_then(|provenance| {
         let binding = CompositePropSourceBinding::new(
             2,
             7,
@@ -100,6 +111,14 @@ fn source_provenance_preserves_composite_order_and_duplicates() {
                 translucent: false,
                 sort_order_bits: Some(0.1_f32.to_bits()),
             }],
+            composite_effect_bindings: vec![CompositeEffectSourceBinding {
+                composite_ordinal: 0,
+                effect_index: 2,
+                effect_identity: "effect-shape".to_owned(),
+                skeleton_joint_id: 5,
+                translucent: true,
+                sort_order_bits: Some(0.3_f32.to_bits()),
+            }],
             composite_prop_bindings: vec![CompositePropSourceBinding {
                 composite_ordinal: 2,
                 prop_index: 7,
@@ -125,6 +144,21 @@ fn rejects_invalid_composite_prop_source_provenance() {
         Err(CharacterError::NonFiniteSourceSkinSortOrder {
             composite_ordinal: 0,
             skin_index: 0,
+        })
+    );
+
+    assert_eq!(
+        CompositeEffectSourceBinding::new(
+            0,
+            0,
+            "effect",
+            1,
+            false,
+            Some(f32::INFINITY),
+        ),
+        Err(CharacterError::NonFiniteSourceEffectSortOrder {
+            composite_ordinal: 0,
+            effect_index: 0,
         })
     );
 
