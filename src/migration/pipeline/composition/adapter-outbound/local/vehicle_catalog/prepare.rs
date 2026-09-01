@@ -1233,8 +1233,9 @@ fn vehicle_texture_animation_references(
                 return Err(PipelineError::new(format!(
                     concat!(
                         "vehicle texture animation has no package-local ",
-                        "occurrence: {identity}"
-                    )
+                        "occurrence: {}"
+                    ),
+                    identity
                 )));
             }
             occurrences.sort_by_key(|occurrence| occurrence.source_ordinal);
