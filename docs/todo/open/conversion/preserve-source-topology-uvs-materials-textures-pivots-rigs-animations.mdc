@@ -738,12 +738,27 @@ system name/version/`factory_name` from those chunk headers. The normalized
 pipeline cache does not retain the raw P3D package bytes, so those nested names
 cannot be reconstructed after extraction from current artifacts alone.
 
-The next source-backed step is therefore extractor recovery, not resource
-selection: decode the observed nested factory/system headers while the lawful
-source bytes are in scope, preserve their direct containment and authored order,
-and then re-audit the 216 effect identities currently absent from normalized
-top-level particle rows. Until that evidence is regenerated, v15 continues to
-leave those effects unresolved.
+The extractor now performs that source recovery while lawful package bytes are
+in scope. For each instanced-particle child stream it validates exact chunk
+bounds and authored order, preserves unrelated children as opaque size evidence,
+and decodes `0x00015800` factory headers into version, identity, frame rate,
+animation/overlap frame counts, cycle flag, sorting flag, and emitter count. It
+decodes each observed header-only `0x00015801` system into version, identity,
+and `factory_name`; malformed typed child headers fail closed.
+
+A complete synthetic P3D parser regression proves those factory/system chunks
+remain nested under the `srr_inst_particle_system` parent rather than becoming
+separate normalized components, while their typed identities survive inside the
+parent JSON in authored order. The generated schema16 mirror is intentionally
+left unchanged: it still omits the observed system child, because current corpus
+observation does not rewrite the upstream generated schema authority.
+
+The existing normalized terrain-world cache predates this recovery and retains
+neither the nested names nor raw `source.p3d` package bytes. It therefore cannot
+be upgraded in place. The next source-backed step is a lawful extraction rerun,
+followed by a fresh audit of the 216 effect identities currently absent from
+normalized top-level particle rows. Until that evidence is regenerated, v15
+continues to leave those effects unresolved.
 
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
