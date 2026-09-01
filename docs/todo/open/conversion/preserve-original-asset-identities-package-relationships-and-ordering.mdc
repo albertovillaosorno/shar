@@ -766,5 +766,17 @@ the complete validated timing, group, channel, key, value, and interpolation
 evidence; no channel is promoted to a static default or runtime relationship by
 this preservation step.
 
+A whole-corpus BQG replay also corrected the evidence shape beyond the linked
+world subset. All 1,100 decoded BQG clips use one size record and one group
+list; 437 rotation channels retain packed quaternion values, and visibility
+retains its authored `u16` start state plus ordered raw `u16` values instead of
+being misrepresented as boolean states.
+
+The strict reader accepts 1,098 of those clips and rejects the two whose decoded
+floating payload contains JSON `null` for non-finite source values. The catalog
+contract advances to `shar.world-model-props.v8` for the corrected raw
+visibility and packed-rotation representation; no null value is repaired or
+guessed.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

@@ -232,5 +232,20 @@ travel with controller provenance in `shar.world-model-props.v7`; this remains
 source evidence only and does not claim native camera-facing, cutoff, material,
 or BQG runtime execution.
 
+The reader was then replayed against all 1,100 normalized BQG animations. The
+corpus contains one platform-size record and one group list per clip; all 8,158
+non-visibility channel metadata records use interpolation mode 1. Rotation uses
+636 ordinary quaternion channels and 437 packed-quaternion channels, while all
+1,108 visibility channels carry a `u16` start state plus ordered raw `u16`
+values rather than a decoded boolean-value vector.
+
+The corrected reader accepts 1,098 clips, retaining 1,212 groups and 9,247
+channels. Two clips remain rejected because the P3D decoder deliberately renders
+non-finite source floats as JSON `null`: one rotation key and one width
+sequence. No numeric value is synthesized for those cases. World provenance
+advances to
+`shar.world-model-props.v8` so visibility is serialized as `raw_values` and
+packed rotations remain distinct compressed source evidence.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
