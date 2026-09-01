@@ -939,5 +939,18 @@ vehicle bindings already have both same-name texture occurrences above their
 shader. The public ordering evidence therefore cannot distinguish the base path
 from the ordinal-qualified collision path.
 
+`shar.vehicle-catalog.v5` now carries that verified occurrence coordinate into
+TEX sidecar evidence. Every retained physical texture occurrence requires one
+unique phase-three `p3d-texture` member whose exact package path and source
+chunk ordinal both match the normalized ledger row. The stable package-member id
+is
+serialized alongside the physical member id, component ordinal, and PNG digest.
+
+This is still non-selecting provenance. Multiple same-name occurrences remain
+separate v5 records, and neither the phase-three id nor its ordinal is treated as
+a shader-to-texture relationship. The new exact-occurrence FBX boundary can use
+one physical member only after another source-backed consumer establishes that
+relationship authority.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

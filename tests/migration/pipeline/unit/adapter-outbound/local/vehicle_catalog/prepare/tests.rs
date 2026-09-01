@@ -235,9 +235,11 @@ fn effect_animation_package() -> Result<PhaseThreePackageRow, String> {
         r#"{"package_id":"pkg-car","package_root":"pkg-car","#,
         r#""package_category":"cars","#,
         r#""package_subcategory":"cars/test/car","#,
-        r#""unit_count":2,"text_key_count":0,"#,
-        r#""unit_ids":["animation-a","animation-z"],"#,
-        r#""world_ids":[],"texture_ids":[],"material_ids":[],"#,
+        r#""unit_count":6,"text_key_count":0,"#,
+        r#""unit_ids":["animation-a","animation-z","texture-50","#,
+        r#""texture-60","texture-70","texture-80"],"#,
+        r#""world_ids":[],"texture_ids":["texture-50","texture-60","#,
+        r#""texture-70","texture-80"],"material_ids":[],"#,
         r#""model_ids":[],"physics_ids":[],"#,
         r#""animation_ids":["animation-a","animation-z"],"#,
         r#""scene_ids":[],"locator_ids":[],"camera_ids":[],"#,
@@ -252,7 +254,23 @@ fn effect_animation_package() -> Result<PhaseThreePackageRow, String> {
         r#""role":"animation","path":"extracted/z.json","#,
         r#""type":"animation","kind":"p3d-animation","#,
         r#""source_chunk_kind":"animation","#,
-        r#""source_chunk_ordinal":"10"}],"text_keys":[]}"#
+        r#""source_chunk_ordinal":"10"},{"id":"texture-50","#,
+        r#""role":"texture","path":"pkg-car/components/texture/frame0_a.png","#,
+        r#""type":"image","kind":"p3d-texture","#,
+        r#""source_chunk_kind":"texture","source_chunk_ordinal":"50"},{"#,
+        r#""id":"texture-60","role":"texture","#,
+        r#""path":"pkg-car/components/texture/frame0_b.png","#,
+        r#""type":"image","kind":"p3d-texture","#,
+        r#""source_chunk_kind":"texture","source_chunk_ordinal":"60"},{"#,
+        r#""id":"texture-70","role":"texture","#,
+        r#""path":"pkg-car/components/texture/frame1.png","#,
+        r#""type":"image","kind":"p3d-texture","#,
+        r#""source_chunk_kind":"texture","source_chunk_ordinal":"70"},{"#,
+        r#""id":"texture-80","role":"texture","#,
+        r#""path":"pkg-car/components/texture/noise.png","#,
+        r#""type":"image","kind":"p3d-texture","#,
+        r#""source_chunk_kind":"texture","source_chunk_ordinal":"80"}],"#,
+        r#""text_keys":[]}"#
     );
     PhaseThreePackageRow::from_json_line(json)
         .map_err(|error| error.to_string())
@@ -581,10 +599,16 @@ fn texture_sidecar_retains_shader_controller() -> Result<(), String> {
         .iter()
         .map(|occurrence| occurrence.member_id.as_str())
         .collect::<Vec<_>>();
+    let frame_zero_package_members = frame_zero
+        .occurrences
+        .iter()
+        .map(|occurrence| occurrence.package_member_id.as_str())
+        .collect::<Vec<_>>();
     if references.len() != 2
         || frame_zero.identity != "frame0"
         || frame_zero_ordinals != [50, 60]
         || frame_zero_members != ["frame0_a", "frame0_b"]
+        || frame_zero_package_members != ["texture-50", "texture-60"]
         || frame_zero
             .occurrences
             .first()
@@ -595,7 +619,10 @@ fn texture_sidecar_retains_shader_controller() -> Result<(), String> {
         || frame_one
             .occurrences
             .first()
-            .is_none_or(|occurrence| occurrence.source_ordinal != 70)
+            .is_none_or(|occurrence| {
+                occurrence.source_ordinal != 70
+                    || occurrence.package_member_id != "texture-70"
+            })
     {
         return Err(format!("texture occurrence evidence changed: {zebra:?}"));
     }
