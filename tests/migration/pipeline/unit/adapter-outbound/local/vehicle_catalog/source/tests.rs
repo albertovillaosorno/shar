@@ -30,14 +30,16 @@
 
 //! Tests unit tests.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
-    common_headlight_quad_groups, decoded_name, texture_key,
-    unique_vehicle_component_paths, vehicle_animation_paths, vehicle_mesh_paths,
+    VehicleTextureAuthority, common_headlight_quad_groups, decoded_name,
+    texture_key, unique_vehicle_component_paths, vehicle_animation_paths,
+    vehicle_mesh_paths, vehicle_package_texture_sources,
     vehicle_quad_group_paths,
 };
 
@@ -189,6 +191,86 @@ fn texture_key_removes_extension_case_and_fixed_width_padding() {
 fn texture_key_rejects_surrounding_space() {
     assert!(texture_key(" WindsheildT.bmp").is_err());
     assert!(texture_key("WindsheildT.bmp ").is_err());
+}
+
+#[test]
+fn texture_authority_groups_collision_by_ledger_name() -> Result<(), String> {
+    let root = TestDirectory::new("texture-ledger-collision")?;
+    let texture_dir = root.path().join("components/texture");
+    fs::create_dir_all(&texture_dir).map_err(|error| error.to_string())?;
+    fs::write(texture_dir.join("shared.png"), b"canonical-payload")
+        .and_then(|()| {
+            fs::write(
+                texture_dir.join("shared__ordinal_10.png"),
+                b"collision-payload",
+            )
+        })
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components.jsonl"),
+        concat!(
+            r#"{"ordinal":20,"name":"shared","#,
+            r#""path":"texture/shared.png","kind":"texture"}"#,
+            "\n",
+            r#"{"ordinal":10,"name":"shared","#,
+            r#""path":"texture/shared__ordinal_10.png","kind":"texture"}"#,
+            "\n"
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let package = vehicle_row("mesh")?;
+    let sources = vehicle_package_texture_sources(&package, root.path())
+        .map_err(|error| error.to_string())?;
+    let mut grouped = BTreeMap::new();
+    for (key, source) in sources {
+        grouped.entry(key).or_insert_with(Vec::new).push(source);
+    }
+    for entries in grouped.values_mut() {
+        entries.sort_by(|left, right| {
+            (&left.subcategory, &left.path)
+                .cmp(&(&right.subcategory, &right.path))
+        });
+    }
+    if grouped.keys().map(String::as_str).collect::<Vec<_>>() != ["shared"]
+        || grouped.get("shared").map(Vec::len) != Some(2)
+    {
+        return Err(
+            "ledger identity did not group physical texture peers".to_owned(),
+        );
+    }
+    let authority = VehicleTextureAuthority { sources: grouped };
+    let occurrences = authority
+        .preferred_occurrences("shared.bmp", &package.subcategory)
+        .map_err(|error| error.to_string())?;
+    let ordinals = occurrences
+        .iter()
+        .map(|occurrence| occurrence.source_ordinal)
+        .collect::<Vec<_>>();
+    let members = occurrences
+        .iter()
+        .map(|occurrence| occurrence.member_id.as_str())
+        .collect::<Vec<_>>();
+    if ordinals != [10, 20]
+        || members != ["shared__ordinal_10", "shared"]
+        || occurrences
+            .iter()
+            .any(|occurrence| occurrence.package_id != package.package_id)
+        || occurrences
+            .iter()
+            .any(|occurrence| occurrence.subcategory != package.subcategory)
+        || occurrences
+            .first()
+            .zip(occurrences.get(1))
+            .is_none_or(|(left, right)| left.sha256 == right.sha256)
+    {
+        return Err(format!(
+            "texture occurrence provenance changed: {occurrences:?}"
+        ));
+    }
+    if authority.resolve("shared.bmp", &package.subcategory).is_ok() {
+        return Err("differing collision payloads were selected".to_owned());
+    }
+    Ok(())
 }
 
 #[test]

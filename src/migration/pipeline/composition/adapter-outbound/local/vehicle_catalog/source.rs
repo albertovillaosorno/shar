@@ -47,12 +47,34 @@ use crate::domain::package::{
 /// packages.
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct VehicleTextureSource {
+    /// Generated package identity owning this texture occurrence.
+    package_id: String,
     /// Extracted package subcategory owning this texture occurrence.
     subcategory: String,
+    /// Exact normalized physical texture member identity.
+    member_id: String,
+    /// Exact normalized source component ordinal.
+    source_ordinal: usize,
     /// Freshly extracted texture path.
     path: PathBuf,
     /// Exact source texture digest.
     sha256: String,
+}
+
+/// One preferred physical vehicle texture occurrence retained without
+/// selection.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct VehicleTextureOccurrenceEvidence {
+    /// Generated package identity owning this texture occurrence.
+    pub(super) package_id: String,
+    /// Generated package subcategory owning this texture occurrence.
+    pub(super) subcategory: String,
+    /// Exact normalized physical texture member identity.
+    pub(super) member_id: String,
+    /// Exact normalized source component ordinal.
+    pub(super) source_ordinal: usize,
+    /// Exact lowercase SHA-256 of the normalized PNG payload.
+    pub(super) sha256: String,
 }
 
 /// Cross-package texture lookup restricted to the generated car package family.
@@ -596,22 +618,10 @@ impl VehicleTextureAuthority {
             .filter(|package| package.category == VEHICLE_CATEGORY)
         {
             let root = normalized_root.join(relative_art_root(package)?);
-            for path in png_files(&root.join("components").join("texture"))? {
-                let file_name = path
-                    .file_name()
-                    .and_then(|value| value.to_str())
-                    .ok_or_else(|| {
-                        PipelineError::new("vehicle texture has no file name")
-                    })?;
-                let bytes = fs::read(&path)
-                    .map_err(|error| PipelineError::new(error.to_string()))?;
-                sources.entry(texture_key(file_name)?).or_default().push(
-                    VehicleTextureSource {
-                        subcategory: package.subcategory.clone(),
-                        path,
-                        sha256: digest_hex(&bytes),
-                    },
-                );
+            for (key, source) in
+                vehicle_package_texture_sources(package, &root)?
+            {
+                sources.entry(key).or_default().push(source);
             }
         }
         for entries in sources.values_mut() {
@@ -630,26 +640,157 @@ impl VehicleTextureAuthority {
         reference: &str,
         source_subcategory: &str,
     ) -> Result<Option<&Path>, PipelineError> {
+        let preferred = self.preferred_sources(reference, source_subcategory)?;
+        unique_texture_path(&preferred)
+    }
+
+    /// Retain every preferred physical occurrence without choosing one member.
+    pub(super) fn preferred_occurrences(
+        &self,
+        reference: &str,
+        source_subcategory: &str,
+    ) -> Result<Vec<VehicleTextureOccurrenceEvidence>, PipelineError> {
+        let mut occurrences = self
+            .preferred_sources(reference, source_subcategory)?
+            .into_iter()
+            .map(|source| VehicleTextureOccurrenceEvidence {
+                package_id: source.package_id.clone(),
+                subcategory: source.subcategory.clone(),
+                member_id: source.member_id.clone(),
+                source_ordinal: source.source_ordinal,
+                sha256: source.sha256.clone(),
+            })
+            .collect::<Vec<_>>();
+        occurrences.sort_by(|left, right| {
+            (
+                &left.package_id,
+                &left.subcategory,
+                left.source_ordinal,
+                &left.member_id,
+            )
+                .cmp(&(
+                    &right.package_id,
+                    &right.subcategory,
+                    right.source_ordinal,
+                    &right.member_id,
+                ))
+        });
+        Ok(occurrences)
+    }
+
+    /// Select the same-package, common, or global candidate scope.
+    fn preferred_sources(
+        &self,
+        reference: &str,
+        source_subcategory: &str,
+    ) -> Result<Vec<&VehicleTextureSource>, PipelineError> {
         let key = texture_key(reference)?;
         let Some(entries) = self.sources.get(&key) else {
-            return Ok(None);
+            return Ok(Vec::new());
         };
         let same_package = entries
             .iter()
             .filter(|entry| entry.subcategory == source_subcategory)
             .collect::<Vec<_>>();
-        if let Some(path) = unique_texture_path(&same_package)? {
-            return Ok(Some(path));
+        if !same_package.is_empty() {
+            return Ok(same_package);
         }
         let common = entries
             .iter()
             .filter(|entry| entry.subcategory == VEHICLE_COMMON_SUBCATEGORY)
             .collect::<Vec<_>>();
-        if let Some(path) = unique_texture_path(&common)? {
-            return Ok(Some(path));
+        if !common.is_empty() {
+            return Ok(common);
         }
-        unique_texture_path(&entries.iter().collect::<Vec<_>>())
+        Ok(entries.iter().collect())
     }
+}
+
+/// Read exact normalized texture occurrence authority from one package ledger.
+fn vehicle_package_texture_sources(
+    package: &PhaseThreePackageRow,
+    root: &Path,
+) -> Result<Vec<(String, VehicleTextureSource)>, PipelineError> {
+    let ledger_path = root.join("components.jsonl");
+    let text = fs::read_to_string(&ledger_path)
+        .map_err(|error| PipelineError::new(error.to_string()))?;
+    let text = text.strip_prefix('\u{feff}').unwrap_or(&text);
+    let mut paths = BTreeSet::new();
+    let mut ordinals = BTreeSet::new();
+    let mut sources = Vec::new();
+    for line in text.lines().filter(|line| !line.trim().is_empty()) {
+        let row: Value = serde_json::from_str(line)
+            .map_err(|error| PipelineError::new(error.to_string()))?;
+        if row.get("kind").and_then(Value::as_str) != Some("texture") {
+            continue;
+        }
+        let name = row.get("name").and_then(Value::as_str).ok_or_else(|| {
+            PipelineError::new("vehicle texture ledger row has no identity")
+        })?;
+        let relative = row.get("path").and_then(Value::as_str).ok_or_else(|| {
+            PipelineError::new("vehicle texture ledger row has no path")
+        })?;
+        let member = relative.strip_prefix("texture/").ok_or_else(|| {
+            PipelineError::new("vehicle texture ledger path is outside texture")
+        })?;
+        let member_path = Path::new(member);
+        if member_path.is_absolute()
+            || member_path.components().count() != 1
+            || member_path.file_name().and_then(|value| value.to_str())
+                != Some(member)
+            || member_path
+                .extension()
+                .and_then(|value| value.to_str())
+                .is_none_or(|extension| !extension.eq_ignore_ascii_case("png"))
+        {
+            return Err(PipelineError::new(
+                "vehicle texture ledger path is not one PNG member",
+            ));
+        }
+        let source_ordinal = row
+            .get("ordinal")
+            .and_then(Value::as_u64)
+            .and_then(|value| usize::try_from(value).ok())
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "vehicle texture ledger row has no source ordinal",
+                )
+            })?;
+        if !ordinals.insert(source_ordinal) {
+            return Err(PipelineError::new(format!(
+                "vehicle texture ledger repeats source ordinal {source_ordinal}"
+            )));
+        }
+        let path = root.join("components").join(relative);
+        if !paths.insert(path.clone()) {
+            return Err(PipelineError::new(format!(
+                "vehicle texture ledger repeats physical path: {}",
+                path.display()
+            )));
+        }
+        let member_id = member_path
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| {
+                PipelineError::new("vehicle texture member has no identity")
+            })?
+            .to_owned();
+        let bytes = fs::read(&path)
+            .map_err(|error| PipelineError::new(error.to_string()))?;
+        sources.push((
+            texture_key(name)?,
+            VehicleTextureSource {
+                package_id: package.package_id.clone(),
+                subcategory: package.subcategory.clone(),
+                member_id,
+                source_ordinal,
+                path,
+                sha256: digest_hex(&bytes),
+            },
+        ));
+    }
+    Ok(sources)
 }
 
 /// Select one texture path only when all candidates have identical bytes.

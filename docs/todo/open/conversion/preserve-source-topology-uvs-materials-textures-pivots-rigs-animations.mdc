@@ -329,5 +329,29 @@ fail-closed behavior would invent source semantics. End-to-end publication for
 those three target materials therefore remains blocked pending stronger source
 or native occurrence authority even though v4 can represent every candidate.
 
+The vehicle-wide texture audit is larger than the five `TEX_` effects. Across
+786 shader texture bindings that are actually referenced by retained mesh or
+billboard geometry, 402 bindings have two same-package normalized texture
+occurrences. Those duplicates span 54 car packages; 286 pairs are
+byte-equivalent and 116 pairs contain different PNG payloads.
+
+Vehicle texture authority therefore now derives logical identity from each
+normalized texture ledger row while retaining its exact physical PNG path,
+member id, source component ordinal, owning package evidence, and SHA-256. The
+current 89 car ledgers provide complete one-to-one coverage for all 1,479
+normalized PNGs, with no path or source-ordinal gaps.
+
+This matters for collision-renamed payloads: 461 texture rows have physical file
+names whose normalized lookup key differs from the authored ledger identity,
+and 420 of those paths carry an explicit collision suffix. Authority lookup now
+groups those physical occurrences by authored identity before applying the same
+payload-equivalence rule; it does not infer which differing occurrence a shader
+meant.
+
+The remaining 116 differing-payload used bindings therefore stay fail-closed.
+The new occurrence evidence improves diagnostics and future sidecar authority,
+but does not turn source ordinal, filename, or byte equivalence into unsupported
+runtime texture-selection semantics.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

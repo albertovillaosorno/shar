@@ -986,6 +986,33 @@ fn resolve_vehicle_materials(
                         ))
                     })?
             },
+            Err(DecodedComponentError::AmbiguousTextureMember {
+                texture,
+                ..
+            }) => {
+                let material_subcategory = if material_root == package_root {
+                    package.subcategory.as_str()
+                } else {
+                    super::VEHICLE_COMMON_SUBCATEGORY
+                };
+                let occurrences = authority
+                    .preferred_occurrences(&texture, material_subcategory)?;
+                let payloads = occurrences
+                    .iter()
+                    .map(|occurrence| occurrence.sha256.as_str())
+                    .collect::<BTreeSet<_>>()
+                    .len();
+                return Err(PipelineError::new(format!(
+                    concat!(
+                        "vehicle material {} has ambiguous texture {}: ",
+                        "{} source occurrences across {} payloads"
+                    ),
+                    shader,
+                    texture,
+                    occurrences.len(),
+                    payloads
+                )));
+            },
             Err(error) => {
                 return Err(PipelineError::new(format!(
                     "vehicle material {shader} failed: {error:?}"
