@@ -304,5 +304,18 @@ occurrences; one pair is byte-identical and two pairs differ in payload. Logical
 initial-state agreement is therefore stronger provenance, not physical
 occurrence authority.
 
+Vehicle catalog v4 now preserves every package-local physical occurrence behind
+those logical `TEX_` entity values without assigning runtime meaning. Across the
+five clips, 32 first-use logical reference records retain 48 normalized PNG
+occurrences; half the reference records have one occurrence and half have two.
+Nine duplicated reference records contain differing payload digests, so all
+candidates remain visible rather than being collapsed to one texture frame.
+
+Occurrence provenance comes from the normalized component ledger that directly
+addresses each hashed PNG: physical member id, source component ordinal, and
+SHA-256 are retained together. The separate phase-three source-unit index uses a
+different texture ordinal domain and is not joined by ordinal proximity or file
+name.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

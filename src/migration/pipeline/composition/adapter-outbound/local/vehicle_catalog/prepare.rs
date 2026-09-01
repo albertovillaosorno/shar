@@ -54,8 +54,10 @@ use shar_sha256::digest_hex;
 
 use super::catalog::{recursive_files, write_new};
 use super::model::{
-    EffectAnimationRecord, EffectControllerRecord, GroundingRecord, PartRecord,
-    TextureRecord, VehicleRecord,
+    EffectAnimationRecord, EffectControllerRecord,
+    EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
+    GroundingRecord, PartRecord, TextureRecord,
+    VehicleRecord,
 };
 use super::source::{
     VehicleTextureAuthority, common_headlight_quad_groups, decoded_name,
@@ -1104,7 +1106,7 @@ fn load_vehicle_animations(
             name,
             kind,
         )?;
-        if kind.eq_ignore_ascii_case("TEX_") {
+        let texture_references = if kind.eq_ignore_ascii_case("TEX_") {
             let relationship = controller.as_ref().ok_or_else(|| {
                 PipelineError::new(
                     "vehicle texture animation has no controller target",
@@ -1119,7 +1121,10 @@ fn load_vehicle_animations(
                 &relationship.target_identity,
                 &initial_texture,
             )?;
-        }
+            vehicle_texture_animation_references(package_root, &value)?
+        } else {
+            Vec::new()
+        };
         let payload = serde_json::to_vec_pretty(&value)
             .map_err(|error| PipelineError::new(error.to_string()))?;
         write_new(&output_dir.join(&file_name), &payload)?;
@@ -1129,6 +1134,7 @@ fn load_vehicle_animations(
             animation_type: kind.to_owned(),
             source_ordinal,
             controller,
+            texture_references,
         });
     }
     if skeletal_paths.is_empty() {
@@ -1145,6 +1151,151 @@ fn load_vehicle_animations(
         ))
     })?;
     Ok((clips, sidecars))
+}
+
+/// Retain every same-package physical occurrence behind TEX entity identities.
+fn vehicle_texture_animation_references(
+    package_root: &Path,
+    value: &Value,
+) -> Result<Vec<EffectTextureReferenceRecord>, PipelineError> {
+    let lists = required_array(
+        value,
+        "group_lists",
+        "texture animation group lists",
+    )?;
+    let [list] = lists.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle texture animation reference list is unsupported",
+        ));
+    };
+    let groups = required_array(list, "groups", "texture animation groups")?;
+    let [group] = groups.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle texture animation reference group is unsupported",
+        ));
+    };
+    let channels = required_array(
+        group,
+        "channels",
+        "texture animation channels",
+    )?;
+    let [channel] = channels.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle texture animation reference channel is unsupported",
+        ));
+    };
+    let values = required_array(channel, "values", "texture animation values")?;
+    let mut seen = BTreeSet::new();
+    let mut identities = Vec::new();
+    for value in values {
+        let raw = value.as_str().ok_or_else(|| {
+            PipelineError::new(
+                "vehicle texture animation value is not an identity",
+            )
+        })?;
+        let identity = vehicle_source_identity(raw, "texture animation value")?;
+        if seen.insert(identity.clone()) {
+            identities.push(identity);
+        }
+    }
+    let ledger_path = package_root.join("components.jsonl");
+    let ledger = fs::read_to_string(&ledger_path)
+        .map_err(|error| PipelineError::new(error.to_string()))?;
+    let rows = ledger
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            serde_json::from_str::<Value>(line)
+                .map_err(|error| PipelineError::new(error.to_string()))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    identities
+        .into_iter()
+        .map(|identity| {
+            let mut occurrences = Vec::new();
+            for row in rows.iter().filter(|row| {
+                row.get("kind").and_then(Value::as_str) == Some("texture")
+            }) {
+                let Some(name) = row.get("name").and_then(Value::as_str) else {
+                    continue;
+                };
+                let ledger_identity =
+                    vehicle_source_identity(name, "texture ledger")?;
+                if ledger_identity != identity {
+                    continue;
+                }
+                occurrences.push(vehicle_texture_occurrence(
+                    package_root,
+                    row,
+                )?);
+            }
+            if occurrences.is_empty() {
+                return Err(PipelineError::new(format!(
+                    concat!(
+                        "vehicle texture animation has no package-local ",
+                        "occurrence: {identity}"
+                    )
+                )));
+            }
+            occurrences.sort_by_key(|occurrence| occurrence.source_ordinal);
+            if occurrences.windows(2).any(|pair| {
+                matches!(
+                    pair,
+                    [left, right]
+                        if left.source_ordinal == right.source_ordinal
+                )
+            }) {
+                return Err(PipelineError::new(format!(
+                    "vehicle texture animation repeats texture source ordinal: \
+                     {identity}"
+                )));
+            }
+            Ok(EffectTextureReferenceRecord {
+                identity,
+                occurrences,
+            })
+        })
+        .collect()
+}
+
+/// Read one exact normalized texture occurrence without choosing among peers.
+fn vehicle_texture_occurrence(
+    package_root: &Path,
+    row: &Value,
+) -> Result<EffectTextureOccurrenceRecord, PipelineError> {
+    let relative = row.get("path").and_then(Value::as_str).ok_or_else(|| {
+        PipelineError::new("vehicle texture ledger row has no path")
+    })?;
+    let member = relative.strip_prefix("texture/").ok_or_else(|| {
+        PipelineError::new("vehicle texture ledger path is outside texture")
+    })?;
+    let member_path = Path::new(member);
+    if member_path.is_absolute()
+        || member_path.components().count() != 1
+        || member_path
+            .file_name()
+            .and_then(|name| name.to_str())
+            != Some(member)
+    {
+        return Err(PipelineError::new(
+            "vehicle texture ledger path is not a single member",
+        ));
+    }
+    let member_id = member_path
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .filter(|stem| !stem.is_empty())
+        .ok_or_else(|| {
+            PipelineError::new("vehicle texture member has no safe identity")
+        })?
+        .to_owned();
+    let bytes = fs::read(package_root.join("components").join(relative))
+        .map_err(|error| PipelineError::new(error.to_string()))?;
+    Ok(EffectTextureOccurrenceRecord {
+        member_id,
+        source_ordinal: vehicle_ledger_ordinal(row)?,
+        sha256: digest_hex(&bytes),
+    })
 }
 
 /// Read the canonical texture identity from the exact target shader occurrence.
