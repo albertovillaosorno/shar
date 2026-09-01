@@ -487,6 +487,21 @@ fn texture_sidecar_retains_shader_controller() -> Result<(), String> {
     )
     .map_err(|error| error.to_string())?;
     fs::write(
+        root.path().join("components/texture/frame0_a.png"),
+        b"frame-zero-a",
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/texture/frame0_b.png"),
+        b"frame-zero-b",
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/texture/frame1.png"),
+        b"frame-one",
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
         root.path().join("components/texture/noise.png"),
         [0_u8, 1, 2, 3],
     )
@@ -501,10 +516,19 @@ fn texture_sidecar_retains_shader_controller() -> Result<(), String> {
             r#"{"ordinal":40,"name":"flame_m","#,
             r#""path":"shader/flame.json","kind":"shader"}"#,
             "\n",
-            r#"{"ordinal":50,"name":"noise","#,
+            r#"{"ordinal":50,"name":"frame0","#,
+            r#""path":"texture/frame0_a.png","kind":"texture"}"#,
+            "\n",
+            r#"{"ordinal":60,"name":"frame0","#,
+            r#""path":"texture/frame0_b.png","kind":"texture"}"#,
+            "\n",
+            r#"{"ordinal":70,"name":"frame1","#,
+            r#""path":"texture/frame1.png","kind":"texture"}"#,
+            "\n",
+            r#"{"ordinal":80,"name":"noise","#,
             r#""path":"texture/noise.png","kind":"texture"}"#,
             "\n",
-            r#"{"ordinal":60,"container_ordinal":60}"#,
+            r#"{"ordinal":90,"container_ordinal":90}"#,
             "\n"
         ),
     )
@@ -539,6 +563,41 @@ fn texture_sidecar_retains_shader_controller() -> Result<(), String> {
         || controller.target_source_ordinal != 40
     {
         return Err(format!("texture relationship changed: {zebra:?}"));
+    }
+    let references = &zebra.texture_references;
+    let frame_zero = references
+        .first()
+        .ok_or_else(|| "frame-zero texture reference is missing".to_owned())?;
+    let frame_one = references
+        .get(1)
+        .ok_or_else(|| "frame-one texture reference is missing".to_owned())?;
+    let frame_zero_ordinals = frame_zero
+        .occurrences
+        .iter()
+        .map(|occurrence| occurrence.source_ordinal)
+        .collect::<Vec<_>>();
+    let frame_zero_members = frame_zero
+        .occurrences
+        .iter()
+        .map(|occurrence| occurrence.member_id.as_str())
+        .collect::<Vec<_>>();
+    if references.len() != 2
+        || frame_zero.identity != "frame0"
+        || frame_zero_ordinals != [50, 60]
+        || frame_zero_members != ["frame0_a", "frame0_b"]
+        || frame_zero
+            .occurrences
+            .first()
+            .zip(frame_zero.occurrences.get(1))
+            .is_none_or(|(left, right)| left.sha256 == right.sha256)
+        || frame_one.identity != "frame1"
+        || frame_one.occurrences.len() != 1
+        || frame_one
+            .occurrences
+            .first()
+            .is_none_or(|occurrence| occurrence.source_ordinal != 70)
+    {
+        return Err(format!("texture occurrence evidence changed: {zebra:?}"));
     }
     Ok(())
 }

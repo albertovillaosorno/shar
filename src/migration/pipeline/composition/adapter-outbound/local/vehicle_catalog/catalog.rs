@@ -56,7 +56,7 @@ pub(super) fn write_root_catalog(
     extracted_packages: usize,
 ) -> Result<(), PipelineError> {
     let value = json!({
-        "schema": "shar.vehicle-catalog.v3",
+        "schema": "shar.vehicle-catalog.v4",
         "boundary": {
             "source": concat!(
                 "original game P3D packages selected by the generated package ",
@@ -76,7 +76,7 @@ pub(super) fn write_root_catalog(
                 "alternate appearance textures",
                 "semantic part roles and pivot bones",
                 "hidden non-visual wheel proxies retained as physics evidence",
-                "effect animation controller and target relationships"
+                "effect animation controller, target, and texture occurrences"
             ],
             "excluded": [
                 "runtime collision and physics behavior",
@@ -252,7 +252,19 @@ fn effect_animation_value(record: &EffectAnimationRecord) -> Value {
             "target_kind": controller.target_kind,
             "target_identity": controller.target_identity,
             "target_source_ordinal": controller.target_source_ordinal
-        }))
+        })),
+        "texture_references": record
+            .texture_references
+            .iter()
+            .map(|reference| json!({
+            "identity": reference.identity,
+            "occurrences": reference.occurrences.iter().map(|occurrence| json!({
+                "member_id": occurrence.member_id,
+                "source_ordinal": occurrence.source_ordinal,
+                "sha256": occurrence.sha256
+                }))
+            .collect::<Vec<_>>()
+        })).collect::<Vec<_>>()
     })
 }
 

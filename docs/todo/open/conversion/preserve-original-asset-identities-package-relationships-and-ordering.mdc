@@ -838,5 +838,25 @@ pair is byte-identical and two pairs contain differing PNG payloads. The shader
 and animation therefore agree on logical initial state while physical occurrence
 selection remains unresolved.
 
+`shar.vehicle-catalog.v4` now retains that unresolved physical evidence instead
+of choosing a candidate. For each `TEX_` clip, logical entity identities are
+recorded in authored first-use order; every exact same-package `texture` ledger
+row is retained beneath the identity with its normalized physical member id,
+source component ordinal, and normalized PNG SHA-256.
+
+The five current clips produce 32 logical reference records and 48 physical
+occurrence records. Sixteen references have one occurrence and 16 have two;
+nine of the duplicated reference records contain differing payload digests. The
+catalog therefore exposes the ambiguity without deduplicating byte-identical
+peers or selecting conflicting ones.
+
+The generated phase-three car index also contains 1,479 `p3d-texture` members
+with source kind `texture`, but those source-unit ordinals are a different
+domain
+from the 1,479 normalized component-ledger texture ordinals. The v4 occurrence
+surface therefore uses the exact `components.jsonl` component ordinal attached
+to the physical PNG it hashes rather than joining the domains by number or file
+name.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.

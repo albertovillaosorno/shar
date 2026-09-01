@@ -97,6 +97,26 @@ pub(super) struct EffectControllerRecord {
     pub(super) target_source_ordinal: usize,
 }
 
+/// One physical same-package texture occurrence retained without selection.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct EffectTextureOccurrenceRecord {
+    /// Exact normalized physical texture member identity.
+    pub(super) member_id: String,
+    /// Exact source texture component ordinal.
+    pub(super) source_ordinal: usize,
+    /// Exact lowercase SHA-256 of the normalized PNG payload.
+    pub(super) sha256: String,
+}
+
+/// One logical TEX entity identity and every matching package-local occurrence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct EffectTextureReferenceRecord {
+    /// Canonical logical texture identity from the entity channel.
+    pub(super) identity: String,
+    /// Physical package-local occurrences in source ordinal order.
+    pub(super) occurrences: Vec<EffectTextureOccurrenceRecord>,
+}
+
 /// One non-skeletal vehicle animation preserved as a source sidecar.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct EffectAnimationRecord {
@@ -110,6 +130,8 @@ pub(super) struct EffectAnimationRecord {
     pub(super) source_ordinal: usize,
     /// Exact supported controller relationship when the source declares one.
     pub(super) controller: Option<EffectControllerRecord>,
+    /// Logical TEX references with every package-local physical occurrence.
+    pub(super) texture_references: Vec<EffectTextureReferenceRecord>,
 }
 
 /// One completed vehicle artifact and catalog record.
