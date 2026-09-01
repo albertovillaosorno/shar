@@ -907,8 +907,8 @@ relationships are resolved.
 
 The 402 local duplicate bindings also do not gain an occurrence edge from chunk
 hierarchy or ordering. In every case the shader and both texture rows are
-top-level (`parent_ordinal = 0`) self-owned containers; each pair has one
-unsuffixed and one ordinal-qualified normalized path, both textures precede the
+top-level (`parent_ordinal = 0`) self-owned containers; each pair has one base path and one ordinal-qualified
+normalized path, both textures precede the
 shader, and the later texture is closer to it in source order.
 
 That ordering is descriptive only. The extractor creates `__ordinal_####`
