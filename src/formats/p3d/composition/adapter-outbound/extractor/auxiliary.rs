@@ -905,8 +905,14 @@ pub(super) fn recover_inst_particle_system_json(
     let chunk = raw_component_bytes(component, source).ok()?;
     let particle_type = read_u32(chunk, 12)?;
     let max_instances = read_u32(chunk, 16)?;
-    let children =
-        child_chunks_json(chunk, component.header_size, component.total_size);
+    if component.header_size != 20 {
+        return None;
+    }
+    let children = inst_particle_children_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+    )?;
     let kind = component.kind.label();
     let name = format!("{kind}_{kind_index:04}");
     let json = format!(
@@ -924,6 +930,131 @@ pub(super) fn recover_inst_particle_system_json(
         name.clone(),
         json,
         "decoded_schema_payload",
+    ))
+}
+
+fn inst_particle_children_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+) -> Option<String> {
+    const SYSTEM_FACTORY: u32 = 0x0001_5800;
+    const SYSTEM: u32 = 0x0001_5801;
+    let mut children = Vec::new();
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if header_size < 12 || total_size < header_size || next > end {
+            return None;
+        }
+        let child = chunk.get(cursor..next)?;
+        children.push(match id {
+            SYSTEM_FACTORY => {
+                particle_factory_child_json(child, header_size, total_size)?
+            },
+            SYSTEM => {
+                particle_system_child_json(child, header_size, total_size)?
+            },
+            _ => child_chunk_summary_json(id, header_size, total_size)?,
+        });
+        cursor = next;
+    }
+    (cursor == end).then(|| children.join(","))
+}
+
+fn particle_factory_child_json(
+    chunk: &[u8],
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    let mut cursor = 12_usize;
+    let version = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let frame_rate = schema::read_f32(chunk, cursor)?;
+    if !frame_rate.is_finite() {
+        return None;
+    }
+    cursor = cursor.checked_add(4)?;
+    let num_anim_frames = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let num_ol_frames = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let cycle_anim = read_u16(chunk, cursor)?;
+    cursor = cursor.checked_add(2)?;
+    let enable_sorting = read_u16(chunk, cursor)?;
+    cursor = cursor.checked_add(2)?;
+    let num_emitters = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != header_size || total_size != chunk.len() {
+        return None;
+    }
+    Some(format!(
+        concat!(
+            r#"{{"id_hex":"0x00015800","kind":"particle_system_factory","#,
+            r#""header_size":{},"total_size":{},"payload_size":{},"#,
+            r#""name":"{}","version":{},"frame_rate":{},"#,
+            r#""num_anim_frames":{},"num_ol_frames":{},"#,
+            r#""cycle_anim":{},"enable_sorting":{},"num_emitters":{}}}"#,
+        ),
+        header_size,
+        total_size,
+        total_size.checked_sub(header_size)?,
+        escape_json(&name),
+        version,
+        frame_rate,
+        num_anim_frames,
+        num_ol_frames,
+        cycle_anim,
+        enable_sorting,
+        num_emitters,
+    ))
+}
+
+fn particle_system_child_json(
+    chunk: &[u8],
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    let mut cursor = 12_usize;
+    let version = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let factory_name = schema::read_pascal_at(chunk, &mut cursor)?;
+    if cursor != header_size
+        || header_size != total_size
+        || total_size != chunk.len()
+    {
+        return None;
+    }
+    Some(format!(
+        concat!(
+            r#"{{"id_hex":"0x00015801","kind":"particle_system","#,
+            r#""header_size":{},"total_size":{},"payload_size":0,"#,
+            r#""name":"{}","version":{},"factory_name":"{}"}}"#,
+        ),
+        header_size,
+        total_size,
+        escape_json(&name),
+        version,
+        escape_json(&factory_name),
+    ))
+}
+
+fn child_chunk_summary_json(
+    id: u32,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    Some(format!(
+        concat!(
+            r#"{{"id_hex":"0x{:08x}","header_size":{},"#,
+            r#""total_size":{},"payload_size":{}}}"#,
+        ),
+        id,
+        header_size,
+        total_size,
+        total_size.checked_sub(header_size)?,
     ))
 }
 
