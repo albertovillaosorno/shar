@@ -54,6 +54,7 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
             shader_identity: "glow_m".to_owned(),
             shader_occurrences: vec![
                 DeferredShaderOccurrenceBinding {
+                    package_member_id: "shader-member-3".to_owned(),
                     member_id: "glow_m__ordinal_3".to_owned(),
                     source_ordinal: 3,
                     schema: Some("shader".to_owned()),
@@ -79,6 +80,7 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
                     ],
                 },
                 DeferredShaderOccurrenceBinding {
+                    package_member_id: "shader-member-7".to_owned(),
                     member_id: "glow_m__ordinal_7".to_owned(),
                     source_ordinal: 7,
                     schema: Some("shader".to_owned()),
@@ -236,6 +238,10 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
         .get(1)
         .and_then(serde_json::Value::as_object)
         .ok_or_else(|| "second deferred shader is missing".to_owned())?;
+    assert_eq!(
+        first_shader.get("package_member_id"),
+        Some(&"shader-member-3".into())
+    );
     assert_eq!(
         first_shader.get("source_ordinal"),
         Some(&3.into())

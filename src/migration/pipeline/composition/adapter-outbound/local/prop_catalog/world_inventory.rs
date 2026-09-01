@@ -55,7 +55,9 @@ use super::model::{
 use super::texture_authority::SharedTextureAuthority;
 use super::world_ledger::{LedgerRow, read_world_ledger};
 use crate::domain::PipelineError;
-use crate::domain::package::PhaseThreePackageIndex;
+use crate::domain::package::{
+    PackageRole, PhaseThreePackageIndex, PhaseThreePackageRow,
+};
 
 /// World containers whose nested mesh evidence belongs in the model catalog.
 const MODEL_CONTAINERS: [&str; 7] = [
@@ -91,6 +93,7 @@ pub(super) fn discover_world_candidates(
             continue;
         }
         let ledger = read_world_ledger(&root)?;
+        let shader_member_ids = phase_three_shader_member_ids(package)?;
         let package_relationship_rows = ledger
             .groups
             .values()
@@ -125,6 +128,7 @@ pub(super) fn discover_world_candidates(
                 &rows,
                 &package_relationship_rows,
                 &mesh_names,
+                &shader_member_ids,
                 texture_authority,
                 &package.subcategory,
             )?;
@@ -167,6 +171,39 @@ pub(super) fn discover_world_candidates(
     Ok(candidates)
 }
 
+/// Map exact normalized shader path/ordinal coordinates to phase-three ids.
+fn phase_three_shader_member_ids(
+    package: &PhaseThreePackageRow,
+) -> Result<BTreeMap<(String, usize), String>, PipelineError> {
+    let prefix = format!("{}/components/", package.package_root);
+    let mut ids = BTreeMap::new();
+    for member in package.members().iter().filter(|member| {
+        member.role == PackageRole::Material
+            && member.kind == "p3d-shader"
+            && member.source_chunk_kind == "shader"
+    }) {
+        let relative = member.path.strip_prefix(&prefix).ok_or_else(|| {
+            PipelineError::new(
+                "world shader package member left its component root",
+            )
+        })?;
+        let ordinal = member.source_chunk_ordinal.ok_or_else(|| {
+            PipelineError::new(
+                "world shader package member has no source ordinal",
+            )
+        })?;
+        if ids
+            .insert((relative.to_owned(), ordinal), member.id.clone())
+            .is_some()
+        {
+            return Err(PipelineError::new(
+                "world shader package repeats exact path/ordinal coordinate",
+            ));
+        }
+    }
+    Ok(ids)
+}
+
 /// Project one owner's mesh members through exact source component ordinals.
 fn source_ordered_mesh_ids(
     rows: &[LedgerRow],
@@ -198,6 +235,13 @@ fn decoded_mesh_names(
         }
     }
     Ok(names)
+}
+
+/// Source-backed authorities needed while retaining deferred render evidence.
+struct DeferredRenderAuthority<'a> {
+    shader_member_ids: &'a BTreeMap<(String, usize), String>,
+    texture_authority: &'a SharedTextureAuthority,
+    source_subcategory: &'a str,
 }
 
 /// Associate one container with its exact composite, skeleton, and PTRN clip.
@@ -237,6 +281,7 @@ fn associate_composite(
     rows: &[LedgerRow],
     package_relationship_rows: &[LedgerRow],
     mesh_names: &BTreeMap<String, String>,
+    shader_member_ids: &BTreeMap<(String, usize), String>,
     texture_authority: &SharedTextureAuthority,
     source_subcategory: &str,
 ) -> Result<Option<Association>, PipelineError> {
@@ -265,14 +310,18 @@ fn associate_composite(
     let Some((composite, selected)) = matches.pop() else {
         return Ok(None);
     };
+    let deferred_authority = DeferredRenderAuthority {
+        shader_member_ids,
+        texture_authority,
+        source_subcategory,
+    };
     let deferred_render_bindings = deferred_render_bindings(
         root,
         rows,
         package_relationship_rows,
         &composite,
         mesh_names,
-        texture_authority,
-        source_subcategory,
+        &deferred_authority,
     )?;
     let skeleton =
         named_member(root, rows, "skeleton", &composite.skeleton_name)?;
@@ -301,8 +350,7 @@ fn deferred_render_bindings(
     package_relationship_rows: &[LedgerRow],
     composite: &CompositeEvidence,
     mesh_names: &BTreeMap<String, String>,
-    texture_authority: &SharedTextureAuthority,
-    source_subcategory: &str,
+    authority: &DeferredRenderAuthority<'_>,
 ) -> Result<Vec<DeferredRenderBinding>, PipelineError> {
     let mut bindings = Vec::new();
     for (composite_prop_index, binding) in
@@ -332,8 +380,7 @@ fn deferred_render_bindings(
                     package_relationship_rows,
                     row,
                     &binding.name,
-                    texture_authority,
-                    source_subcategory,
+                    authority,
                 )
             })
             .transpose()?;
@@ -381,8 +428,7 @@ fn deferred_billboard_binding(
     package_relationship_rows: &[LedgerRow],
     row: &LedgerRow,
     expected_identity: &str,
-    texture_authority: &SharedTextureAuthority,
-    source_subcategory: &str,
+    authority: &DeferredRenderAuthority<'_>,
 ) -> Result<DeferredBillboardBinding, PipelineError> {
     let path = root.join("components").join(&row.path);
     let evidence = read_billboard_source_evidence(&path, expected_identity)
@@ -394,12 +440,13 @@ fn deferred_billboard_binding(
     let shader_occurrences = deferred_shader_occurrences(
         root,
         package_relationship_rows,
+        authority.shader_member_ids,
         &evidence.shader_identity,
     )?;
     let texture_references = deferred_texture_references(
         &shader_occurrences,
-        texture_authority,
-        source_subcategory,
+        authority.texture_authority,
+        authority.source_subcategory,
     )?;
     let quads = evidence
         .quads
@@ -422,6 +469,7 @@ fn deferred_billboard_binding(
 fn deferred_shader_occurrences(
     root: &Path,
     rows: &[LedgerRow],
+    shader_member_ids: &BTreeMap<(String, usize), String>,
     shader_identity: &str,
 ) -> Result<Vec<DeferredShaderOccurrenceBinding>, PipelineError> {
     let mut occurrences = Vec::new();
@@ -440,7 +488,17 @@ fn deferred_shader_occurrences(
                     "world prop billboard shader evidence failed: {error:?}"
                 ))
             })?;
+        let package_member_id = shader_member_ids
+            .get(&(row.path.clone(), row.ordinal))
+            .cloned()
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "world shader occurrence has no phase-three member: {}@{}",
+                    row.path, row.ordinal
+                ))
+            })?;
         occurrences.push(DeferredShaderOccurrenceBinding {
+            package_member_id,
             member_id: ledger_member_id(&row.path, "shader")?,
             source_ordinal: row.ordinal,
             schema: evidence.schema,

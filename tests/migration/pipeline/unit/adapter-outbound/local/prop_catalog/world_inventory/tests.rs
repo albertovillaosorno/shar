@@ -36,7 +36,8 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::{
-    LedgerRow, decoded_mesh_names, deferred_controller_binding,
+    DeferredRenderAuthority, LedgerRow, decoded_mesh_names,
+    deferred_controller_binding,
     deferred_render_bindings, source_ordered_mesh_ids,
 };
 use crate::adapters::driven::local::prop_catalog::inventory_common::{
@@ -241,14 +242,28 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
                 sha256: "two",
             },
         ]);
+    let shader_member_ids = BTreeMap::from([
+        (
+            ("shader/glow_m__ordinal_3.json".to_owned(), 3),
+            "shader-member-3".to_owned(),
+        ),
+        (
+            ("shader/glow_m__ordinal_7.json".to_owned(), 7),
+            "shader-member-7".to_owned(),
+        ),
+    ]);
+    let deferred_authority = DeferredRenderAuthority {
+        shader_member_ids: &shader_member_ids,
+        texture_authority: &authority,
+        source_subcategory: "terrain-world/level-03/regions/l3r1",
+    };
     let actual = deferred_render_bindings(
         &root,
         &rows,
         &package_relationships,
         &composite,
         &meshes,
-        &authority,
-        "terrain-world/level-03/regions/l3r1",
+        &deferred_authority,
     )
         .map_err(|error| error.to_string())?;
     drop(fs::remove_dir_all(&root));
@@ -281,6 +296,11 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         .shader_occurrences
         .iter()
         .map(|shader| shader.source_ordinal)
+        .collect::<Vec<_>>();
+    let shader_package_members = billboard
+        .shader_occurrences
+        .iter()
+        .map(|shader| shader.package_member_id.as_str())
         .collect::<Vec<_>>();
     let shader_members = billboard
         .shader_occurrences
@@ -329,6 +349,7 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
     if billboard.version != 0
         || billboard.shader_identity != "glow_m"
         || shader_ordinals != [3, 7]
+        || shader_package_members != ["shader-member-3", "shader-member-7"]
         || shader_members != ["glow_m__ordinal_3", "glow_m__ordinal_7"]
         || shader_textures != [Some("glow.bmp"), Some("glow.bmp")]
         || billboard.texture_references.len() != 1

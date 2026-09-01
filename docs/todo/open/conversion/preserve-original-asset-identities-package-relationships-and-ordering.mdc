@@ -973,5 +973,19 @@ preference and payload-equivalence rules are unchanged, so the 12 differing
 physical peers stay visible rather than being promoted to an authored shader
 relationship.
 
+`shar.world-model-props.v10` extends the same exact physical coordinate to
+deferred billboard shader occurrences. A separate whole terrain-world audit
+covers 9,991 normalized shader ledger rows across the same 149 packages: every
+row matches exactly one phase-three `p3d-shader` member by component path and
+source ordinal, with zero missing, duplicate-path, or unrepresented rows.
+
+World inventory now builds a package-local phase-three shader map keyed only by
+that exact path-and-ordinal pair. Every same-name shader occurrence retained for
+a deferred billboard must resolve through the map, and v10 serializes the stable
+package-member id beside the normalized shader member id and decoded authored
+shader payload. The existing same-name occurrence list remains
+source-ordinal ordered and non-selecting; this adds provenance without choosing
+a shader winner.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
