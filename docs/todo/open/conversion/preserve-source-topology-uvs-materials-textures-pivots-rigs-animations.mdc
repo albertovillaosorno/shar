@@ -353,5 +353,11 @@ The new occurrence evidence improves diagnostics and future sidecar authority,
 but does not turn source ordinal, filename, or byte equivalence into unsupported
 runtime texture-selection semantics.
 
+A current-route replay found zero used shader bindings whose selected material
+package lacks the logical texture and therefore needs cross-package fallback.
+The ledger-key correction is still required for that authority boundary, but it
+does not bypass the 402 local duplicate relationships that fail before fallback
+is considered.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
