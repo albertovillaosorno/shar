@@ -618,3 +618,131 @@ fn publication_registry_disambiguates_case_alias_payload_conflict()
     }
     Ok(())
 }
+
+fn inst_particle_system_fixture() -> Result<Vec<u8>, String> {
+    const INST_PARTICLE_SYSTEM: u32 = 0x0300_1001;
+    const SYSTEM_FACTORY: u32 = 0x0001_5800;
+    const SYSTEM: u32 = 0x0001_5801;
+
+    let mut factory_header = Vec::new();
+    push_u32(&mut factory_header, 0);
+    push_pascal(&mut factory_header, "spark")?;
+    push_f32(&mut factory_header, 30.);
+    push_u32(&mut factory_header, 60);
+    push_u32(&mut factory_header, 10);
+    factory_header.extend_from_slice(&1_u16.to_le_bytes());
+    factory_header.extend_from_slice(&0_u16.to_le_bytes());
+    push_u32(&mut factory_header, 0);
+    let factory_size = 12_usize
+        .checked_add(factory_header.len())
+        .ok_or_else(|| String::from("factory fixture size overflowed"))?;
+    let factory_size = u32::try_from(factory_size)
+        .map_err(|error| format!("factory fixture exceeds u32: {error}"))?;
+
+    let mut system_header = Vec::new();
+    push_u32(&mut system_header, 0);
+    push_pascal(&mut system_header, "spark")?;
+    push_pascal(&mut system_header, "spark")?;
+    let system_size = 12_usize
+        .checked_add(system_header.len())
+        .ok_or_else(|| String::from("system fixture size overflowed"))?;
+    let system_size = u32::try_from(system_size)
+        .map_err(|error| format!("system fixture exceeds u32: {error}"))?;
+
+    let inst_header_size = 20_u32;
+    let inst_total_size = inst_header_size
+        .checked_add(factory_size)
+        .and_then(|value| value.checked_add(system_size))
+        .ok_or_else(|| String::from("inst particle fixture size overflowed"))?;
+    let mut bytes = Vec::new();
+    push_u32(&mut bytes, INST_PARTICLE_SYSTEM);
+    push_u32(&mut bytes, inst_header_size);
+    push_u32(&mut bytes, inst_total_size);
+    push_u32(&mut bytes, 3);
+    push_u32(&mut bytes, 12);
+    push_u32(&mut bytes, SYSTEM_FACTORY);
+    push_u32(&mut bytes, factory_size);
+    push_u32(&mut bytes, factory_size);
+    bytes.extend_from_slice(&factory_header);
+    push_u32(&mut bytes, SYSTEM);
+    push_u32(&mut bytes, system_size);
+    push_u32(&mut bytes, system_size);
+    bytes.extend_from_slice(&system_header);
+    Ok(bytes)
+}
+
+fn inst_particle_system_record(source: &[u8]) -> ChunkRecord {
+    ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_1001,
+        kind: crate::ChunkKind::SrrInstParticleSystem,
+        offset: 0,
+        header_size: 20,
+        total_size: source.len(),
+        payload_offset: 20,
+        payload_size: source.len().saturating_sub(20),
+        child_count: 2,
+    }
+}
+
+#[test]
+fn inst_particle_decodes_nested_factory_and_system() -> Result<(), String> {
+    let source = inst_particle_system_fixture()?;
+    let component = inst_particle_system_record(&source);
+    let recovered = recover_component(&component, &source, 1)
+        .map_err(|error| error.to_string())?;
+    let json: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    let children = json["children"].as_array().ok_or_else(|| {
+        String::from("inst particle children must be an array")
+    })?;
+    if children.len() != 2
+        || children[0]["kind"] != "particle_system_factory"
+        || children[0]["name"] != "spark"
+        || children[0]["version"] != 0
+        || children[0]["frame_rate"] != 30.
+        || children[0]["num_anim_frames"] != 60
+        || children[0]["num_ol_frames"] != 10
+        || children[0]["cycle_anim"] != 1
+        || children[0]["enable_sorting"] != 0
+        || children[0]["num_emitters"] != 0
+        || children[1]["kind"] != "particle_system"
+        || children[1]["name"] != "spark"
+        || children[1]["version"] != 0
+        || children[1]["factory_name"] != "spark"
+    {
+        return Err(format!(
+            "nested particle identities were not recovered: {json}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn inst_particle_rejects_malformed_nested_system() -> Result<(), String> {
+    let mut source = inst_particle_system_fixture()?;
+    let factory_size =
+        usize::try_from(read_u32(&source, 24).ok_or_else(|| {
+            String::from("factory fixture total size is missing")
+        })?)
+        .map_err(|error| format!("factory size exceeds usize: {error}"))?;
+    let system_header = 20_usize
+        .checked_add(factory_size)
+        .ok_or_else(|| String::from("system fixture offset overflowed"))?;
+    let system_name_length = system_header
+        .checked_add(16)
+        .ok_or_else(|| String::from("system name offset overflowed"))?;
+    let system_name_length = source
+        .get_mut(system_name_length)
+        .ok_or_else(|| String::from("system name length byte is missing"))?;
+    *system_name_length = 120;
+    let component = inst_particle_system_record(&source);
+    if recover_component(&component, &source, 1).is_ok() {
+        return Err(String::from(
+            "malformed nested particle system header was accepted",
+        ));
+    }
+    Ok(())
+}
