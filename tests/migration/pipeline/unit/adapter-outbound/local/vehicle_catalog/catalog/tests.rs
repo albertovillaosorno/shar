@@ -71,9 +71,14 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
             source_ordinal: 20,
             controller: Some(EffectControllerRecord {
                 controller_identity: "light-controller".to_owned(),
+                controller_kind: "frame_controller".to_owned(),
                 controller_source_ordinal: 30,
-                billboard_identity: "light-billboard".to_owned(),
-                billboard_source_ordinal: 40,
+                controller_version: 0,
+                controller_type: "BQG".to_owned(),
+                frame_offset_bits: 0_f32.to_bits(),
+                target_kind: "quad_group".to_owned(),
+                target_identity: "light-billboard".to_owned(),
+                target_source_ordinal: 40,
             }),
         }],
         textures: Vec::new(),
@@ -106,7 +111,19 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
             != Some(&30.into())
         || effect
             .get("controller")
-            .and_then(|controller| controller.get("billboard_source_ordinal"))
+            .and_then(|controller| controller.get("type"))
+            != Some(&"BQG".into())
+        || effect
+            .get("controller")
+            .and_then(|controller| controller.get("frame_offset"))
+            != Some(&0.0.into())
+        || effect
+            .get("controller")
+            .and_then(|controller| controller.get("target_kind"))
+            != Some(&"quad_group".into())
+        || effect
+            .get("controller")
+            .and_then(|controller| controller.get("target_source_ordinal"))
             != Some(&40.into())
     {
         return Err("vehicle effect relationship is incomplete".to_owned());

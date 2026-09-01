@@ -1102,14 +1102,11 @@ fn load_vehicle_animations(
             .map_err(|error| PipelineError::new(error.to_string()))?;
         write_new(&output_dir.join(&file_name), &payload)?;
         let source_ordinal = vehicle_animation_source_ordinal(package, &path)?;
-        let controller = if kind.eq_ignore_ascii_case("BQG_") {
-            Some(vehicle_billboard_controller_relationship(
-                package_root,
-                name,
-            )?)
-        } else {
-            None
-        };
+        let controller = vehicle_effect_controller_relationship(
+            package_root,
+            name,
+            kind,
+        )?;
         sidecars.push(EffectAnimationRecord {
             path: format!("animations/effects/{file_name}"),
             identity: name.to_owned(),
@@ -1161,11 +1158,22 @@ fn vehicle_animation_source_ordinal(
     })
 }
 
-/// Resolve one exact BQG animation-to-controller-to-billboard relationship.
-fn vehicle_billboard_controller_relationship(
+/// Resolve one supported effect animation-to-controller-to-target relationship.
+fn vehicle_effect_controller_relationship(
     package_root: &Path,
     animation_identity: &str,
-) -> Result<EffectControllerRecord, PipelineError> {
+    animation_type: &str,
+) -> Result<Option<EffectControllerRecord>, PipelineError> {
+    let spec = if animation_type.eq_ignore_ascii_case("BQG_") {
+        Some(("BQG", "quad_group"))
+    } else if animation_type.eq_ignore_ascii_case("TEX_") {
+        Some(("TEX", "shader"))
+    } else {
+        None
+    };
+    let Some((expected_controller_type, expected_target_kind)) = spec else {
+        return Ok(None);
+    };
     let ledger_path = package_root.join("components.jsonl");
     let ledger = fs::read_to_string(&ledger_path)
         .map_err(|error| PipelineError::new(error.to_string()))?;
@@ -1200,41 +1208,107 @@ fn vehicle_billboard_controller_relationship(
     }
     let [(controller_row, controller)] = controllers.as_slice() else {
         return Err(PipelineError::new(format!(
-            "vehicle BQG animation has ambiguous controller relationship: \
-             {animation_identity}"
+            "vehicle {animation_type} animation has ambiguous controller \
+             relationship: {animation_identity}"
         )));
     };
+    if controller.get("schema").and_then(Value::as_str)
+        != Some("frame_controller")
+    {
+        return Err(PipelineError::new(
+            "vehicle effect controller schema is not frame_controller",
+        ));
+    }
     let controller_identity =
         vehicle_component_identity(controller, "name", "controller")?;
-    let billboard_identity = vehicle_component_identity(
+    let controller_type =
+        vehicle_component_identity(controller, "type", "controller type")?;
+    if controller_type != expected_controller_type {
+        return Err(PipelineError::new(format!(
+            "vehicle {animation_type} animation uses unexpected controller \
+             type: {controller_type}"
+        )));
+    }
+    let controller_version = vehicle_component_usize(
+        controller,
+        "version",
+        "effect controller version",
+    )?;
+    let frame_offset_value = controller
+        .get("frame_offset")
+        .cloned()
+        .ok_or_else(|| {
+            PipelineError::new("vehicle effect controller has no frame offset")
+        })?;
+    let frame_offset: f32 = serde_json::from_value(frame_offset_value)
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "vehicle effect controller frame offset is invalid: {error}"
+            ))
+        })?;
+    if !frame_offset.is_finite() {
+        return Err(PipelineError::new(
+            "vehicle effect controller frame offset is not finite",
+        ));
+    }
+    let target_identity = vehicle_component_identity(
         controller,
         "hierarchy_name",
         "controller hierarchy",
     )?;
     let controller_source_ordinal = vehicle_ledger_ordinal(controller_row)?;
-    let mut billboards = Vec::new();
+    let mut targets = Vec::new();
     for row in rows.iter().filter(|row| {
-        row.get("kind").and_then(Value::as_str) == Some("quad_group")
+        row.get("kind").and_then(Value::as_str) == Some(expected_target_kind)
     }) {
-        let billboard = read_vehicle_ledger_member(package_root, row)?;
+        let target = read_vehicle_ledger_member(package_root, row)?;
+        let Some(raw_identity) = target.get("name").and_then(Value::as_str)
+        else {
+            continue;
+        };
         let identity =
-            vehicle_component_identity(&billboard, "name", "billboard")?;
-        if identity == billboard_identity {
-            billboards.push(row);
+            vehicle_source_identity(raw_identity, "controller target")?;
+        if identity == target_identity {
+            targets.push(row);
         }
     }
-    let [billboard_row] = billboards.as_slice() else {
+    let [target_row] = targets.as_slice() else {
         return Err(PipelineError::new(format!(
-            "vehicle BQG controller has ambiguous billboard relationship: \
-             {billboard_identity}"
+            "vehicle {animation_type} controller has ambiguous target \
+             relationship: {target_identity}"
         )));
     };
-    Ok(EffectControllerRecord {
+    let target_kind = target_row
+        .get("kind")
+        .and_then(Value::as_str)
+        .ok_or_else(|| {
+            PipelineError::new("vehicle effect target ledger row has no kind")
+        })?;
+    if target_kind != expected_target_kind {
+        return Err(PipelineError::new(format!(
+            "vehicle {animation_type} controller target kind is {target_kind}, \
+             expected {expected_target_kind}"
+        )));
+    }
+    Ok(Some(EffectControllerRecord {
         controller_identity,
+        controller_kind: controller_row
+            .get("kind")
+            .and_then(Value::as_str)
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "vehicle effect controller ledger row has no kind",
+                )
+            })?
+            .to_owned(),
         controller_source_ordinal,
-        billboard_identity,
-        billboard_source_ordinal: vehicle_ledger_ordinal(billboard_row)?,
-    })
+        controller_version,
+        controller_type,
+        frame_offset_bits: frame_offset.to_bits(),
+        target_kind: target_kind.to_owned(),
+        target_identity,
+        target_source_ordinal: vehicle_ledger_ordinal(target_row)?,
+    }))
 }
 
 /// Read one exact normalized component addressed by a ledger row.
@@ -1260,6 +1334,15 @@ fn vehicle_component_identity(
     let raw = value.get(field).and_then(Value::as_str).ok_or_else(|| {
         PipelineError::new(format!("vehicle {label} has no source identity"))
     })?;
+    vehicle_source_identity(raw, label)
+}
+
+/// Validate one decoded source identity while removing only trailing NUL
+/// padding.
+fn vehicle_source_identity(
+    raw: &str,
+    label: &str,
+) -> Result<String, PipelineError> {
     let clean = raw.trim_end_matches('\u{0}');
     if clean.is_empty()
         || clean != clean.trim()
@@ -1270,6 +1353,18 @@ fn vehicle_component_identity(
         )));
     }
     Ok(clean.to_owned())
+}
+
+/// Read one unsigned source field without narrowing silently.
+fn vehicle_component_usize(
+    value: &Value,
+    field: &str,
+    label: &str,
+) -> Result<usize, PipelineError> {
+    let raw = value.get(field).and_then(Value::as_u64).ok_or_else(|| {
+        PipelineError::new(format!("vehicle {label} is missing or invalid"))
+    })?;
+    usize::try_from(raw).map_err(|error| PipelineError::new(error.to_string()))
 }
 
 /// Read one source ordinal from a normalized component ledger row.
