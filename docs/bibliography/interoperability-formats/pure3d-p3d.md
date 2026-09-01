@@ -74,10 +74,29 @@ require separate fact-specific analysis in docs/legal.
 - Keep decoded semantic models distinct from copied historical structure
   definitions.
 
+## Community Ordering Evidence
+
+Public Donut Team guidance for Lucas' Pure3D Editor reports that a texture
+needed by a shader must be placed above that shader in the P3D chunk sequence.
+Separate guidance describes shared level or character textures as resources
+found by the same logical name referenced by the shader.
+
+This supports a bounded prerequisite-order observation: the texture must already
+be available when the shader relationship is interpreted. It does not establish
+which physical occurrence wins when more than one same-name texture already
+precedes the shader, and SHAR must not convert that guidance into a duplicate
+selection rule without stronger evidence.
+
 ## Source References
 
 - [Radical Entertainment historical toolchain provenance
   record](radical-entertainment-toolchain-and-formats.md).
+- Donut Team Forum (2025), *how can i make characters texture's pop up in P3D
+  Editor?* Available at: <https://forum.donutteam.com/topic/6562/1>
+  (Accessed: 31 August 2026).
+- Donut Team Forum (2018), *Finding textures associated with shaders.*
+  Available at: <https://forum.donutteam.com/topic/1399>
+  (Accessed: 31 August 2026).
 - Historical Radical source notices reviewed locally; source material not
   distributed.
 - SHAR repository (2026) p3d, fbx, and P3D architecture records.
