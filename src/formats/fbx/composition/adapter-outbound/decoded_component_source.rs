@@ -204,6 +204,61 @@ impl DecodedComponentSource {
             Some(texture_source),
         )
     }
+
+    /// Resolve one indexed shader with an exact package-ledger texture
+    /// occurrence.
+    ///
+    /// The caller-supplied physical path selects the occurrence while the
+    /// shader's authored texture reference owns the staged PNG identity.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the shader, ledger relationship, texture payload,
+    /// or staging operation violates the decoded material contract.
+    pub fn resolve_indexed_material_with_texture_occurrence(
+        &self,
+        shader_path: &Path,
+        texture_source: &Path,
+    ) -> Result<MaterialBinding, DecodedComponentError> {
+        let shader: DecodedShader = read_json(shader_path)?;
+        let material_name = decoded_material_identity(&shader.name);
+        ensure_shader_evidence(&shader, &material_name)?;
+        let semantics = decoded_shader_semantics(&shader);
+        let base_color = decoded_shader_base_color(&shader);
+        let texture_reference = texture_name(&shader)?.ok_or_else(|| {
+            DecodedComponentError::UnexpectedTextureOccurrence {
+                shader: material_name.clone(),
+                member: texture_member_name(texture_source),
+            }
+        })?;
+        let candidates =
+            texture_ledger_candidates(&self.package_root, &texture_reference)?;
+        if !candidates
+            .iter()
+            .any(|candidate| candidate == texture_source)
+        {
+            return Err(DecodedComponentError::TextureOccurrenceMismatch {
+                texture: texture_reference,
+                member: texture_member_name(texture_source),
+            });
+        }
+        if !texture_source.is_file() {
+            return Err(DecodedComponentError::MissingTexture {
+                shader: material_name,
+                texture: texture_reference,
+                searched: texture_source.display().to_string(),
+            });
+        }
+        let staged_name = format!("{}.png", texture_stem(&texture_reference)?);
+        stage_texture_binding_as(
+            &self.texture_output_dir,
+            &material_name,
+            texture_source,
+            &staged_name,
+            semantics,
+            base_color,
+        )
+    }
 }
 
 impl ComponentSource for DecodedComponentSource {
@@ -798,11 +853,29 @@ fn local_texture_source(
     texture_reference: &str,
     direct_source: &Path,
 ) -> Result<Option<PathBuf>, DecodedComponentError> {
+    let candidates =
+        texture_ledger_candidates(package_root, texture_reference)?;
+    match candidates.as_slice() {
+        [] => Ok(direct_source.is_file().then(|| direct_source.to_path_buf())),
+        [candidate] if candidate.is_file() => Ok(Some(candidate.clone())),
+        [..] if candidates.len() > 1 => {
+            Err(DecodedComponentError::AmbiguousTextureMember {
+                texture: texture_reference.trim_end_matches('\u{0}').to_owned(),
+                candidates: component_file_names(&candidates),
+            })
+        },
+        _ => Ok(None),
+    }
+}
+
+/// Return every exact package-ledger texture path for one logical identity.
+fn texture_ledger_candidates(
+    package_root: &Path,
+    texture_reference: &str,
+) -> Result<Vec<PathBuf>, DecodedComponentError> {
     let manifest = package_root.join("components.jsonl");
     if !manifest.is_file() {
-        return Ok(direct_source
-            .is_file()
-            .then(|| direct_source.to_path_buf()));
+        return Ok(Vec::new());
     }
     let text = local::read_utf8(&manifest).map_err(|source| {
         DecodedComponentError::Read {
@@ -855,25 +928,15 @@ fn local_texture_source(
         );
     }
     candidates.sort();
-    match candidates.as_slice() {
-        [] => Ok(direct_source.is_file().then(|| direct_source.to_path_buf())),
-        [candidate] if candidate.is_file() => Ok(Some(candidate.clone())),
-        [..] if candidates.len() > 1 => {
-            Err(DecodedComponentError::AmbiguousTextureMember {
-                texture: expected.to_owned(),
-                candidates: candidates
-                    .iter()
-                    .map(|path| {
-                        path.file_name()
-                            .and_then(|value| value.to_str())
-                            .unwrap_or_default()
-                            .to_owned()
-                    })
-                    .collect(),
-            })
-        },
-        _ => Ok(None),
-    }
+    Ok(candidates)
+}
+
+/// Return one portable diagnostic identity for a supplied texture path.
+fn texture_member_name(path: &Path) -> String {
+    path.file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default()
+        .to_owned()
 }
 
 /// Copy one validated PNG into the FBX texture staging directory.
@@ -884,12 +947,6 @@ fn stage_texture_binding(
     semantics: MaterialSemantics,
     base_color: [u8; 4],
 ) -> Result<MaterialBinding, DecodedComponentError> {
-    local::create_dir_all(output_texture_dir).map_err(|error| {
-        DecodedComponentError::CreateDir {
-            path: output_texture_dir.display().to_string(),
-            source: error.to_string(),
-        }
-    })?;
     let file_name = source
         .file_name()
         .and_then(|value| value.to_str())
@@ -897,8 +954,38 @@ fn stage_texture_binding(
             DecodedComponentError::InvalidTextureName(
                 source.display().to_string(),
             )
-        })?
-        .to_owned();
+        })?;
+    stage_texture_binding_as(
+        output_texture_dir,
+        shader_name,
+        source,
+        file_name,
+        semantics,
+        base_color,
+    )
+}
+
+/// Copy one validated PNG under one caller-established logical file identity.
+fn stage_texture_binding_as(
+    output_texture_dir: &Path,
+    shader_name: &str,
+    source: &Path,
+    file_name: &str,
+    semantics: MaterialSemantics,
+    base_color: [u8; 4],
+) -> Result<MaterialBinding, DecodedComponentError> {
+    local::create_dir_all(output_texture_dir).map_err(|error| {
+        DecodedComponentError::CreateDir {
+            path: output_texture_dir.display().to_string(),
+            source: error.to_string(),
+        }
+    })?;
+    if !is_single_path_segment(file_name) {
+        return Err(DecodedComponentError::InvalidTextureName(
+            file_name.to_owned(),
+        ));
+    }
+    let file_name = file_name.to_owned();
     let target = output_texture_dir.join(&file_name);
     if source != target {
         match fs::read(&target) {
@@ -1310,6 +1397,20 @@ pub enum DecodedComponentError {
         texture: String,
         /// Matching published PNG member file names.
         candidates: Vec<String>,
+    },
+    /// Shader without a texture parameter received a physical occurrence.
+    UnexpectedTextureOccurrence {
+        /// Authored shader identity.
+        shader: String,
+        /// Supplied physical texture member file name.
+        member: String,
+    },
+    /// Supplied physical texture was not a matching package-ledger occurrence.
+    TextureOccurrenceMismatch {
+        /// Logical texture identity requested by shader evidence.
+        texture: String,
+        /// Supplied physical texture member file name.
+        member: String,
     },
     /// Texture reference was not a single safe file identity.
     InvalidTextureReference(String),

@@ -146,6 +146,149 @@ fn indexed_material_accepts_exact_external_texture() -> Result<(), String> {
 }
 
 #[test]
+fn indexed_material_accepts_exact_texture_occurrence() -> Result<(), String> {
+    let root = temp_root("indexed-material-ledger-occurrence");
+    let shader_dir = root.join("components/shader");
+    let texture_dir = root.join("components/texture");
+    fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::create_dir_all(&texture_dir))
+        .map_err(|error| error.to_string())?;
+    let shader_path = shader_dir.join("sharedShader.json");
+    let canonical_texture = texture_dir.join("shared.png");
+    let selected_texture = texture_dir.join("shared__ordinal_20.png");
+    fs::write(
+        &shader_path,
+        concat!(
+            r#"{"schema":"shader","name":"sharedShader","params":[{"#,
+            r#""kind":"texture","param":"TEX","value":"shared.bmp"}]}"#
+        ),
+    )
+    .and_then(|()| fs::write(&canonical_texture, b"first-payload"))
+    .and_then(|()| fs::write(&selected_texture, b"selected-payload"))
+    .and_then(|()| {
+        fs::write(
+            root.join("components.jsonl"),
+            concat!(
+                r#"{"schema":"p3d.package.v1"}"#,
+                "\n",
+                r#"{"ordinal":10,"name":"shared.bmp","#,
+                r#""path":"texture/shared.png","kind":"texture"}"#,
+                "\n",
+                r#"{"ordinal":20,"name":"shared.bmp","#,
+                r#""path":"texture/shared__ordinal_20.png","#,
+                r#""kind":"texture"}"#,
+                "\n"
+            ),
+        )
+    })
+    .map_err(|error| error.to_string())?;
+    let output_dir = root.join("staged");
+    let source = DecodedComponentSource::new(&root, &output_dir);
+    let result = source
+        .resolve_indexed_material_with_texture_occurrence(
+            &shader_path,
+            &selected_texture,
+        )
+        .map_err(|error| format!("ledger occurrence failed: {error:?}"))?;
+    let staged = output_dir.join("shared.png");
+    if result.material_name != "sharedShader"
+        || result.texture_file_name.as_deref() != Some("shared.png")
+        || fs::read(&staged).map_err(|error| error.to_string())?
+            != b"selected-payload"
+    {
+        let _cleanup_result = fs::remove_dir_all(&root);
+        return Err(
+            "exact ledger occurrence lost logical texture identity".to_owned()
+        );
+    }
+    let _cleanup_result = fs::remove_dir_all(&root);
+    Ok(())
+}
+
+#[test]
+fn indexed_material_rejects_unpublished_occurrence() -> Result<(), String> {
+    let root = temp_root("indexed-material-unpublished-occurrence");
+    let shader_dir = root.join("components/shader");
+    let texture_dir = root.join("components/texture");
+    fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::create_dir_all(&texture_dir))
+        .map_err(|error| error.to_string())?;
+    let shader_path = shader_dir.join("sharedShader.json");
+    let published_texture = texture_dir.join("shared.png");
+    let unpublished_texture = texture_dir.join("shared__ordinal_20.png");
+    fs::write(
+        &shader_path,
+        concat!(
+            r#"{"schema":"shader","name":"sharedShader","params":[{"#,
+            r#""kind":"texture","param":"TEX","value":"shared.bmp"}]}"#
+        ),
+    )
+    .and_then(|()| fs::write(&published_texture, b"published-payload"))
+    .and_then(|()| fs::write(&unpublished_texture, b"unpublished-payload"))
+    .and_then(|()| {
+        fs::write(
+            root.join("components.jsonl"),
+            concat!(
+                r#"{"schema":"p3d.package.v1"}"#,
+                "\n",
+                r#"{"ordinal":10,"name":"shared.bmp","#,
+                r#""path":"texture/shared.png","kind":"texture"}"#,
+                "\n"
+            ),
+        )
+    })
+    .map_err(|error| error.to_string())?;
+    let output_dir = root.join("staged");
+    let source = DecodedComponentSource::new(&root, &output_dir);
+    let result = source.resolve_indexed_material_with_texture_occurrence(
+        &shader_path,
+        &unpublished_texture,
+    );
+    let expected = Err(DecodedComponentError::TextureOccurrenceMismatch {
+        texture: "shared.bmp".to_owned(),
+        member: "shared__ordinal_20.png".to_owned(),
+    });
+    let staged = output_dir.join("shared.png");
+    let _cleanup_result = fs::remove_dir_all(&root);
+    if result != expected || staged.exists() {
+        return Err(format!(
+            "unpublished texture occurrence was accepted: {result:?}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn indexed_material_rejects_unexpected_occurrence() -> Result<(), String> {
+    let root = temp_root("indexed-material-unexpected-occurrence");
+    let shader_path = root.join("shader.json");
+    let texture_path = root.join("texture.png");
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    fs::write(
+        &shader_path,
+        r#"{"schema":"shader","name":"plainShader","params":[]}"#,
+    )
+    .and_then(|()| fs::write(&texture_path, b"payload"))
+    .map_err(|error| error.to_string())?;
+    let source = DecodedComponentSource::new(&root, root.join("staged"));
+    let result = source.resolve_indexed_material_with_texture_occurrence(
+        &shader_path,
+        &texture_path,
+    );
+    let expected = Err(DecodedComponentError::UnexpectedTextureOccurrence {
+        shader: "plainShader".to_owned(),
+        member: "texture.png".to_owned(),
+    });
+    let _cleanup_result = fs::remove_dir_all(&root);
+    if result != expected {
+        return Err(format!(
+            "unexpected texture occurrence result: {result:?}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn rejects_conflicting_texture_staging_identity() -> Result<(), String> {
     let root = temp_root("texture-staging-collision");
     let first_shader = root.join("first-shader.json");
