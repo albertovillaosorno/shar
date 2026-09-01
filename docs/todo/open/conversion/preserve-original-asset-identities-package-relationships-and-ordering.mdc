@@ -1096,5 +1096,28 @@ owners are `physics/p3d-physics`, animated/state-prop factories are
 `world/p3d-animated-prop`, and the remaining supported SRR model owners are
 `world/p3d-world-dsg`. Classification mismatches fail closed.
 
+The next bounded composite relationship gap is authored prop presentation rather
+than physical member identity. Across the 425 matched world composites, 2,213
+prop rows participate in the current source relationship surface: 1,953 select
+mesh members and 260 reference non-selected render identities. All 1,953
+selected rows are authored `prop` records with valid binary translucency and
+joint ids from 0 through 58; 755 are translucent and 1,198 are opaque.
+
+`sort_order` is not a corpus-wide constant. Selected mesh bindings contain
+1,887 values of 0.5 and 66 values of 0.4; the 66 non-default selected rows are
+translucent monkey-gag parts. The 260 non-selected prop rows contain 225 values
+of 0.5, 26 of 0.4, eight of 0.49, and one of 0.0. The 0.4 non-selected cases
+include chevron and power-box billboard relationships, the 0.49 cases are
+`donotenter` billboard relationships, and the 0.0 case is the power-box flash
+billboard relationship.
+
+Current rigid FBX assembly consumes selected prop joint and translucency
+bindings, while the pipeline's compact composite evidence retains those same
+fields for deferred relationships. Both paths currently discard authored
+`sort_order`, and v12 primary member provenance does not yet serialize selected
+mesh joint/translucency bindings. Preserve those exact source values before any
+future rendering-order interpretation; this audit does not establish what
+`sort_order` means at runtime.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
