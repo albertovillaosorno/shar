@@ -47,6 +47,8 @@ pub(super) struct CompositePropEvidence {
     pub(super) skeleton_joint_id: usize,
     /// Authored translucency flag.
     pub(super) is_translucent: bool,
+    /// Exact authored optional sort order at source f32 width.
+    pub(super) sort_order_bits: Option<u32>,
 }
 
 /// Composite identity, skeleton, and rigid prop references.
@@ -159,6 +161,7 @@ pub(super) fn read_composite(
         }
         let skeleton_joint_id = required_usize(prop, "skeleton_joint_id")?;
         let translucent = required_usize(prop, "is_translucent")?;
+        let sort_order_bits = optional_f32_bits(prop, "sort_order")?;
         if translucent > 1 {
             return Err(PipelineError::new(format!(
                 "prop composite translucency is not a boolean: {}",
@@ -170,6 +173,7 @@ pub(super) fn read_composite(
             name,
             skeleton_joint_id,
             is_translucent: translucent == 1,
+            sort_order_bits,
         });
     }
     Ok(CompositeEvidence {
@@ -270,6 +274,30 @@ pub(super) fn required_usize(
                 "prop JSON field is not a usize: {field}"
             ))
         })
+}
+
+/// Read one optional finite JSON number at exact source f32 width.
+fn optional_f32_bits(
+    value: &Value,
+    field: &str,
+) -> Result<Option<u32>, PipelineError> {
+    let Some(raw) = value.get(field) else {
+        return Ok(None);
+    };
+    let parsed = raw
+        .to_string()
+        .parse::<f32>()
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "prop JSON field is not an f32: {field}: {error}"
+            ))
+        })?;
+    if !parsed.is_finite() {
+        return Err(PipelineError::new(format!(
+            "prop JSON field is not finite: {field}"
+        )));
+    }
+    Ok(Some(parsed.to_bits()))
 }
 
 /// Convert one ledger path into a member id for the required family.

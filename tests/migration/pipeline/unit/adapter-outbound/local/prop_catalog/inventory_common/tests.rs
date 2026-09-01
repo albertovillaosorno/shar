@@ -70,9 +70,10 @@ fn composite_prop_order_is_preserved() -> Result<(), String> {
     let path = composite_fixture(
         "source-order",
         concat!(
-            r#"[{"name":"zebra","skeleton_joint_id":3,"is_translucent":0},"#,
-            r#"{"name":"alpha","skeleton_joint_id":1,"is_translucent":1},"#,
-            r#"{"name":"middle","skeleton_joint_id":2,"is_translucent":0}]"#,
+            r#"[{"name":"zebra","skeleton_joint_id":3,"is_translucent":0,"#,
+            r#""sort_order":0.4},{"name":"alpha","skeleton_joint_id":1,"#,
+            r#""is_translucent":1,"sort_order":0.49},{"name":"middle","#,
+            r#""skeleton_joint_id":2,"is_translucent":0}]"#,
         ),
     )?;
     let result = read_composite(&path).map_err(|error| error.to_string());
@@ -89,8 +90,17 @@ fn composite_prop_order_is_preserved() -> Result<(), String> {
         .ok_or_else(|| "composite lost second prop binding".to_owned())?;
     assert_eq!(first.skeleton_joint_id, 3);
     assert!(!first.is_translucent);
+    assert_eq!(first.sort_order_bits, Some(0.4_f32.to_bits()));
     assert_eq!(second.skeleton_joint_id, 1);
     assert!(second.is_translucent);
+    assert_eq!(second.sort_order_bits, Some(0.49_f32.to_bits()));
+    assert_eq!(
+        composite
+            .prop_bindings
+            .get(2)
+            .and_then(|binding| binding.sort_order_bits),
+        None
+    );
     Ok(())
 }
 

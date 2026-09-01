@@ -41,7 +41,8 @@ use super::model::{
     DeferredControllerBinding, DeferredRenderBinding,
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
     DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
-    PropRoute, WorldPrimaryMemberBinding, WorldPrimarySourceBinding,
+    PropRoute, WorldPrimaryMemberBinding, WorldPrimarySelectedMeshBinding,
+    WorldPrimarySourceBinding,
 };
 use super::world_model::{ExportedWorldProp, WorldCatalogCounts};
 use crate::domain::PipelineError;
@@ -83,6 +84,31 @@ pub(super) fn world_counts(
             .filter_map(|alias| alias.world_primary_source.as_ref())
             .map(|source| source.selected_meshes.len())
             .sum(),
+        primary_composite_mesh_bindings: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .filter_map(|alias| alias.world_primary_source.as_ref())
+            .flat_map(|source| source.selected_meshes.iter())
+            .filter(|mesh| mesh.composite_prop_index.is_some())
+            .count(),
+        composite_prop_sort_orders: assets
+            .iter()
+            .flat_map(|asset| asset.aliases.iter())
+            .flat_map(|alias| {
+                let primary = alias
+                    .world_primary_source
+                    .as_ref()
+                    .into_iter()
+                    .flat_map(|source| source.selected_meshes.iter())
+                    .map(|mesh| mesh.sort_order_bits);
+                let deferred = alias
+                    .deferred_render_bindings
+                    .iter()
+                    .map(|binding| binding.sort_order_bits);
+                primary.chain(deferred)
+            })
+            .flatten()
+            .count(),
         primary_matched_composites: assets
             .iter()
             .flat_map(|asset| asset.aliases.iter())
@@ -183,7 +209,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v12",
+        "schema": "shar.world-model-props.v13",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -199,12 +225,16 @@ pub(super) fn write_world_catalog(
             ),
             "primary_source": concat!(
                 "retain exact phase-three owner and selected mesh occurrences ",
-                "in the authored order consumed by the route; retain matched ",
-                "composite and referenced skeleton separately from the exact ",
-                "PTRN animation consumed only by rigid-animated FBX"
+                "in authored route order; composite-backed selected meshes ",
+                "also retain exact prop index, joint, ",
+                "translucency, and optional source-width sort order; retain ",
+                "matched composite and referenced skeleton separately from ",
+                "the exact PTRN animation consumed only by rigid-animated FBX"
             ),
             "deferred_render_bindings": concat!(
-                "retain authored non-mesh composite prop relationships, exact ",
+                "retain authored non-mesh composite relationships including ",
+                "exact prop index, joint, translucency, optional source-width ",
+                "sort order, exact ",
                 "billboard presentation, every same-name shader occurrence, ",
                 "preferred physical texture occurrences, controller links, ",
                 "and strict BQG channel payloads, including packed rotation ",
@@ -233,6 +263,9 @@ pub(super) fn write_world_catalog(
             "omitted_visual_variants": counts.omitted_variants,
             "primary_source_bindings": counts.primary_source_bindings,
             "primary_selected_meshes": counts.primary_selected_meshes,
+            "primary_composite_mesh_bindings":
+                counts.primary_composite_mesh_bindings,
+            "composite_prop_sort_orders": counts.composite_prop_sort_orders,
             "primary_matched_composites": counts.primary_matched_composites,
             "primary_referenced_skeletons": counts.primary_referenced_skeletons,
             "primary_exported_ptrn_animations":
@@ -416,6 +449,7 @@ fn deferred_binding_value(binding: &DeferredRenderBinding) -> Value {
         "source_identity": binding.source_identity,
         "skeleton_joint_id": binding.skeleton_joint_id,
         "is_translucent": binding.is_translucent,
+        "sort_order": binding.sort_order_bits.map(f32::from_bits),
         "component_kind": binding.component_kind,
         "component_package_member_id": binding.component_package_member_id,
         "component_member_id": binding.component_member_id,
@@ -434,6 +468,21 @@ fn world_primary_member_value(binding: &WorldPrimaryMemberBinding) -> Value {
     })
 }
 
+/// Render one selected primary mesh and optional composite relationship.
+fn world_primary_selected_mesh_value(
+    binding: &WorldPrimarySelectedMeshBinding,
+) -> Value {
+    json!({
+        "package_member_id": binding.member.package_member_id,
+        "member_id": binding.member.member_id,
+        "source_ordinal": binding.member.source_ordinal,
+        "composite_prop_index": binding.composite_prop_index,
+        "skeleton_joint_id": binding.skeleton_joint_id,
+        "is_translucent": binding.is_translucent,
+        "sort_order": binding.sort_order_bits.map(f32::from_bits)
+    })
+}
+
 /// Render primary world-model provenance without changing route semantics.
 fn world_primary_source_value(binding: &WorldPrimarySourceBinding) -> Value {
     json!({
@@ -441,7 +490,7 @@ fn world_primary_source_value(binding: &WorldPrimarySourceBinding) -> Value {
         "mesh_order": binding.mesh_order.as_str(),
         "selected_meshes": binding.selected_meshes
             .iter()
-            .map(world_primary_member_value)
+            .map(world_primary_selected_mesh_value)
             .collect::<Vec<_>>(),
         "matched_composite": binding.matched_composite
             .as_ref()

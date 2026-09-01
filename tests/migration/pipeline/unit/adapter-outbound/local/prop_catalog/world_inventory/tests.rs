@@ -276,6 +276,30 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
         ),
     ]);
     let selected = ["mesh-b".to_owned(), "mesh-a".to_owned()];
+    let composite_source = CompositeEvidence {
+        member_id: "owner-composite".to_owned(),
+        name: "owner".to_owned(),
+        skeleton_name: "owner-rig".to_owned(),
+        prop_names: selected.to_vec(),
+        prop_bindings: vec![
+            CompositePropEvidence {
+                name: "mesh-b".to_owned(),
+                skeleton_joint_id: 9,
+                is_translucent: true,
+                sort_order_bits: Some(0.4_f32.to_bits()),
+            },
+            CompositePropEvidence {
+                name: "mesh-a".to_owned(),
+                skeleton_joint_id: 3,
+                is_translucent: false,
+                sort_order_bits: Some(0.5_f32.to_bits()),
+            },
+        ],
+    };
+    let mesh_names = BTreeMap::from([
+        ("mesh-a".to_owned(), "mesh-a".to_owned()),
+        ("mesh-b".to_owned(), "mesh-b".to_owned()),
+    ]);
     let binding = primary_world_source_binding(
         &owner,
         &rows,
@@ -283,6 +307,8 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
         WorldPrimaryRelationships {
             mesh_order: WorldPrimaryMeshOrder::CompositeProp,
             matched_composite: Some(&composite),
+            composite_evidence: Some(&composite_source),
+            mesh_names: Some(&mesh_names),
             referenced_skeleton: Some(&skeleton),
             exported_ptrn_animation: None,
         },
@@ -292,10 +318,18 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
     let selected_ids = binding
         .selected_meshes
         .iter()
-        .map(|member| member.package_member_id.as_str())
+        .map(|selected| selected.member.package_member_id.as_str())
         .collect::<Vec<_>>();
     assert_eq!(binding.owner.package_member_id, "owner-member-5");
     assert_eq!(selected_ids, ["mesh-member-20", "mesh-member-10"]);
+    let first_selected = binding
+        .selected_meshes
+        .first()
+        .ok_or_else(|| "primary binding lost first selected mesh".to_owned())?;
+    assert_eq!(first_selected.composite_prop_index, Some(0));
+    assert_eq!(first_selected.skeleton_joint_id, Some(9));
+    assert_eq!(first_selected.is_translucent, Some(true));
+    assert_eq!(first_selected.sort_order_bits, Some(0.4_f32.to_bits()));
     assert_eq!(
         binding
             .matched_composite
@@ -331,16 +365,19 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
                 name: "body".to_owned(),
                 skeleton_joint_id: 0,
                 is_translucent: false,
+                sort_order_bits: Some(0.5_f32.to_bits()),
             },
             CompositePropEvidence {
                 name: "beam".to_owned(),
                 skeleton_joint_id: 3,
                 is_translucent: true,
+                sort_order_bits: Some(0.49_f32.to_bits()),
             },
             CompositePropEvidence {
                 name: "logical-only".to_owned(),
                 skeleton_joint_id: 4,
                 is_translucent: false,
+                sort_order_bits: None,
             },
         ],
     };
@@ -501,6 +538,7 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         || beam.source_identity != "beam"
         || beam.skeleton_joint_id != 3
         || !beam.is_translucent
+        || beam.sort_order_bits != Some(0.49_f32.to_bits())
         || beam.component_kind.as_deref() != Some("quad_group")
         || beam.component_package_member_id.as_deref() != Some("quad-member-22")
         || beam.component_member_id.as_deref() != Some("beam__ordinal_22")
@@ -611,6 +649,7 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
         || logical.source_identity != "logical-only"
         || logical.skeleton_joint_id != 4
         || logical.is_translucent
+        || logical.sort_order_bits.is_some()
         || logical.component_kind.is_some()
         || logical.component_package_member_id.is_some()
         || logical.component_member_id.is_some()
