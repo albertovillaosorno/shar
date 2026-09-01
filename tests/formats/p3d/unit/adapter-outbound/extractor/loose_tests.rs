@@ -746,3 +746,60 @@ fn inst_particle_rejects_malformed_nested_system() -> Result<(), String> {
     }
     Ok(())
 }
+
+fn inst_particle_package_fixture() -> Result<Vec<u8>, String> {
+    let inst = inst_particle_system_fixture()?;
+    let total_size = 12_usize
+        .checked_add(inst.len())
+        .ok_or_else(|| String::from("root fixture size overflowed"))?;
+    let total_size = u32::try_from(total_size)
+        .map_err(|error| format!("root fixture exceeds u32: {error}"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, 0xff44_3350);
+    push_u32(&mut source, 12);
+    push_u32(&mut source, total_size);
+    source.extend_from_slice(&inst);
+    Ok(source)
+}
+
+#[test]
+fn inst_particle_parser_keeps_nested_resources_parent_local()
+-> Result<(), String> {
+    let source = inst_particle_package_fixture()?;
+    let document = analyze_p3d(&source).map_err(|error| error.to_string())?;
+    let inst = document
+        .chunks
+        .iter()
+        .find(|chunk| chunk.kind == crate::ChunkKind::SrrInstParticleSystem)
+        .ok_or_else(|| String::from("parsed inst particle chunk is missing"))?;
+    let factory = document
+        .chunks
+        .iter()
+        .find(|chunk| chunk.kind == crate::ChunkKind::ParticleSystemFactory)
+        .ok_or_else(|| String::from("parsed particle factory is missing"))?;
+    let system = document
+        .chunks
+        .iter()
+        .find(|chunk| chunk.kind == crate::ChunkKind::ParticleSystem)
+        .ok_or_else(|| String::from("parsed particle system is missing"))?;
+    if !should_publish_component(inst, &document.chunks)
+        || should_publish_component(factory, &document.chunks)
+        || should_publish_component(system, &document.chunks)
+    {
+        return Err(String::from(
+            "nested particle publication escaped the instanced container",
+        ));
+    }
+    let recovered = recover_component(inst, &source, 1)
+        .map_err(|error| error.to_string())?;
+    let json: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if json["children"][0]["kind"] != "particle_system_factory"
+        || json["children"][1]["kind"] != "particle_system"
+    {
+        return Err(String::from(
+            "parent-local particle identities were not retained",
+        ));
+    }
+    Ok(())
+}
