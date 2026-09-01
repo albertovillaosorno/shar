@@ -105,6 +105,8 @@ pub(super) struct WorldCatalogCounts {
     pub(super) primary_selected_meshes: usize,
     /// Selected primary meshes with exact authored composite prop bindings.
     pub(super) primary_composite_mesh_bindings: usize,
+    /// Authored effect rows retained from matched primary composites.
+    pub(super) primary_composite_effect_bindings: usize,
     /// Retained primary and deferred composite prop sort-order values.
     pub(super) composite_prop_sort_orders: usize,
     /// Primary source aliases with a matching composite occurrence.

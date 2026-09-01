@@ -684,5 +684,18 @@ factory, the system instance, or another runtime abstraction. The other 267
 effect identities have neither exact same-package row. No first-match, kind
 preference, or ordinal heuristic is introduced.
 
+`shar.world-model-props.v14` now preserves authored effect relationships on the
+matched primary world composite without resolving particle resources. Across
+the 425 matched model composites, 340 composites carry 468 effect rows: 466
+sort values are 0.5 and two are 0.1. Each row retains its authored effect index,
+identity, skeleton joint, binary translucency, and optional source-width `f32`
+sort value in exact composite effect order.
+
+This v14 evidence is provenance-only. It does not select a particle-system
+factory or particle-system instance, and it does not change model routing,
+semantic deduplication, or runtime rendering behavior. The broader terrain-world
+corpus contains 650 effect rows across 496 composites, but only the 468 rows on
+matched model composites belong to the current world-model catalog boundary.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

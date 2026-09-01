@@ -313,6 +313,21 @@ pub(super) struct WorldPrimarySelectedMeshBinding {
     pub(super) sort_order_bits: Option<u32>,
 }
 
+/// One authored composite effect retained without particle interpretation.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct WorldPrimaryEffectBinding {
+    /// Zero-based authored effect position.
+    pub(super) composite_effect_index: usize,
+    /// Exact authored effect identity.
+    pub(super) source_identity: String,
+    /// Authored skeleton joint index.
+    pub(super) skeleton_joint_id: usize,
+    /// Authored translucency flag.
+    pub(super) is_translucent: bool,
+    /// Exact authored optional sort order at source f32 width.
+    pub(super) sort_order_bits: Option<u32>,
+}
+
 /// Exact physical provenance for the primary world-model route.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct WorldPrimarySourceBinding {
@@ -322,6 +337,8 @@ pub(super) struct WorldPrimarySourceBinding {
     pub(super) mesh_order: WorldPrimaryMeshOrder,
     /// Selected mesh occurrences and authored composite bindings, if any.
     pub(super) selected_meshes: Vec<WorldPrimarySelectedMeshBinding>,
+    /// Authored effect relationships on the matched composite.
+    pub(super) composite_effects: Vec<WorldPrimaryEffectBinding>,
     /// Composite occurrence that authored mesh selection when present.
     pub(super) matched_composite: Option<WorldPrimaryMemberBinding>,
     /// Authored skeleton relationship when present, even on a static route.

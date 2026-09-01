@@ -51,7 +51,20 @@ pub(super) struct CompositePropEvidence {
     pub(super) sort_order_bits: Option<u32>,
 }
 
-/// Composite identity, skeleton, and rigid prop references.
+/// One authored composite effect relationship.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct CompositeEffectEvidence {
+    /// Cleaned effect identity.
+    pub(super) name: String,
+    /// Authored skeleton joint index.
+    pub(super) skeleton_joint_id: usize,
+    /// Authored translucency flag.
+    pub(super) is_translucent: bool,
+    /// Exact authored optional sort order at source f32 width.
+    pub(super) sort_order_bits: Option<u32>,
+}
+
+/// Composite identity, skeleton, and rigid prop/effect references.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct CompositeEvidence {
     /// Normalized composite member id without family or extension.
@@ -64,6 +77,8 @@ pub(super) struct CompositeEvidence {
     pub(super) prop_names: Vec<String>,
     /// Authored prop relationships in the same composite order.
     pub(super) prop_bindings: Vec<CompositePropEvidence>,
+    /// Authored effect relationships in exact composite effect order.
+    pub(super) effect_bindings: Vec<CompositeEffectEvidence>,
 }
 
 /// Return all JSON component paths in stable file-name order.
@@ -176,6 +191,39 @@ pub(super) fn read_composite(
             sort_order_bits,
         });
     }
+    let effects = value
+        .get("effects")
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "prop composite has no effects array: {}",
+                path.display()
+            ))
+        })?;
+    let mut effect_bindings = Vec::with_capacity(effects.len());
+    for effect in effects {
+        if required_string(effect, "kind")? != "effect" {
+            return Err(PipelineError::new(format!(
+                "prop composite has unsupported effect kind: {}",
+                path.display()
+            )));
+        }
+        let name = clean_identity(&required_string(effect, "name")?)?;
+        let skeleton_joint_id = required_usize(effect, "skeleton_joint_id")?;
+        let translucent = required_usize(effect, "is_translucent")?;
+        if translucent > 1 {
+            return Err(PipelineError::new(format!(
+                "prop composite effect translucency is not a boolean: {}",
+                path.display()
+            )));
+        }
+        effect_bindings.push(CompositeEffectEvidence {
+            name,
+            skeleton_joint_id,
+            is_translucent: translucent == 1,
+            sort_order_bits: optional_f32_bits(effect, "sort_order")?,
+        });
+    }
     Ok(CompositeEvidence {
         member_id: component_member_id(path)?,
         name: clean_identity(&required_string(&value, "name")?)?,
@@ -185,6 +233,7 @@ pub(super) fn read_composite(
         )?)?,
         prop_names,
         prop_bindings,
+        effect_bindings,
     })
 }
 

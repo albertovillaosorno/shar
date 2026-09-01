@@ -36,8 +36,9 @@ use crate::adapters::driven::local::prop_catalog::model::{
     DeferredControllerBinding, DeferredRenderBinding,
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
     DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
-    WorldPrimaryMemberBinding, WorldPrimaryMeshOrder,
-    WorldPrimarySelectedMeshBinding, WorldPrimarySourceBinding,
+    WorldPrimaryEffectBinding, WorldPrimaryMemberBinding,
+    WorldPrimaryMeshOrder, WorldPrimarySelectedMeshBinding,
+    WorldPrimarySourceBinding,
 };
 
 #[test]
@@ -73,6 +74,13 @@ fn primary_world_source_serialization_preserves_authored_selection_order() {
                 sort_order_bits: Some(0.5_f32.to_bits()),
             },
         ],
+        composite_effects: vec![WorldPrimaryEffectBinding {
+            composite_effect_index: 2,
+            source_identity: "spark".to_owned(),
+            skeleton_joint_id: 7,
+            is_translucent: true,
+            sort_order_bits: Some(0.1_f32.to_bits()),
+        }],
         matched_composite: Some(WorldPrimaryMemberBinding {
             package_member_id: "composite-member-30".to_owned(),
             member_id: "owner-composite".to_owned(),
@@ -114,6 +122,28 @@ fn primary_world_source_serialization_preserves_authored_selection_order() {
     assert_eq!(
         value.pointer("/selected_meshes/1/source_ordinal"),
         Some(&10.into())
+    );
+    assert_eq!(
+        value.pointer("/composite_effects/0/composite_effect_index"),
+        Some(&2.into())
+    );
+    assert_eq!(
+        value.pointer("/composite_effects/0/source_identity"),
+        Some(&"spark".into())
+    );
+    assert_eq!(
+        value.pointer("/composite_effects/0/skeleton_joint_id"),
+        Some(&7.into())
+    );
+    assert_eq!(
+        value.pointer("/composite_effects/0/is_translucent"),
+        Some(&true.into())
+    );
+    assert_eq!(
+        value
+            .pointer("/composite_effects/0/sort_order")
+            .and_then(serde_json::Value::as_f64),
+        Some(f64::from(0.1_f32))
     );
     assert_eq!(
         value.pointer("/matched_composite/package_member_id"),
