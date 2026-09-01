@@ -38,7 +38,7 @@ use fbx::adapters::driven::binary_character_writer::write_binary_character_fbx;
 use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
 use fbx::adapters::driven::decoded_billboard_source::read_billboard_quad_group;
 use fbx::adapters::driven::decoded_component_source::{
-    DecodedComponentError, DecodedComponentSource,
+    DecodedComponentError, DecodedComponentSource, read_shader_source_evidence,
 };
 use fbx::adapters::driven::decoded_rigid_prop_source::{
     SupplementalRigidPropBinding,
@@ -1105,15 +1105,20 @@ fn load_vehicle_animations(
             kind,
         )?;
         if kind.eq_ignore_ascii_case("TEX_") {
-            let target = controller
-                .as_ref()
-                .map(|relationship| relationship.target_identity.as_str())
-                .ok_or_else(|| {
-                    PipelineError::new(
-                        "vehicle texture animation has no controller target",
-                    )
-                })?;
-            validate_vehicle_texture_animation(&value, target)?;
+            let relationship = controller.as_ref().ok_or_else(|| {
+                PipelineError::new(
+                    "vehicle texture animation has no controller target",
+                )
+            })?;
+            let initial_texture = vehicle_target_shader_texture_identity(
+                package_root,
+                relationship,
+            )?;
+            validate_vehicle_texture_animation(
+                &value,
+                &relationship.target_identity,
+                &initial_texture,
+            )?;
         }
         let payload = serde_json::to_vec_pretty(&value)
             .map_err(|error| PipelineError::new(error.to_string()))?;
@@ -1142,10 +1147,67 @@ fn load_vehicle_animations(
     Ok((clips, sidecars))
 }
 
+/// Read the canonical texture identity from the exact target shader occurrence.
+fn vehicle_target_shader_texture_identity(
+    package_root: &Path,
+    relationship: &EffectControllerRecord,
+) -> Result<String, PipelineError> {
+    if relationship.target_kind != "shader" {
+        return Err(PipelineError::new(
+            "vehicle texture animation target is not a shader",
+        ));
+    }
+    let ledger_path = package_root.join("components.jsonl");
+    let ledger = fs::read_to_string(&ledger_path)
+        .map_err(|error| PipelineError::new(error.to_string()))?;
+    let target_ordinal = u64::try_from(relationship.target_source_ordinal)
+        .map_err(|error| PipelineError::new(error.to_string()))?;
+    let rows = ledger
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| {
+            serde_json::from_str::<Value>(line)
+                .map_err(|error| PipelineError::new(error.to_string()))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let matches = rows
+        .iter()
+        .filter(|row| {
+            row.get("kind").and_then(Value::as_str) == Some("shader")
+                && row.get("ordinal").and_then(Value::as_u64)
+                    == Some(target_ordinal)
+        })
+        .collect::<Vec<_>>();
+    let [row] = matches.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle texture animation target shader ordinal is ambiguous",
+        ));
+    };
+    let relative = row.get("path").and_then(Value::as_str).ok_or_else(|| {
+        PipelineError::new("vehicle target shader ledger row has no path")
+    })?;
+    let shader_path = package_root.join("components").join(relative);
+    let evidence = read_shader_source_evidence(
+        &shader_path,
+        &relationship.target_identity,
+    )
+    .map_err(|error| {
+        PipelineError::new(format!(
+            "vehicle texture animation target shader is invalid: {error:?}"
+        ))
+    })?;
+    evidence.texture_reference.ok_or_else(|| {
+        PipelineError::new(
+            "vehicle texture animation target shader has no TEX identity",
+        )
+    })
+}
+
 /// Validate the supported vehicle texture-animation evidence envelope.
 fn validate_vehicle_texture_animation(
     value: &Value,
     target_identity: &str,
+    initial_texture_identity: &str,
 ) -> Result<(), PipelineError> {
     if value.get("schema").and_then(Value::as_str) != Some("animation")
         || value.get("version").and_then(Value::as_u64) != Some(0)
@@ -1244,13 +1306,18 @@ fn validate_vehicle_texture_animation(
             "vehicle texture animation must have one entity channel",
         ));
     };
-    validate_vehicle_texture_channel(channel, frame_count)
+    validate_vehicle_texture_channel(
+        channel,
+        frame_count,
+        initial_texture_identity,
+    )
 }
 
 /// Validate one exact entity channel without assigning runtime texture meaning.
 fn validate_vehicle_texture_channel(
     channel: &Value,
     frame_count: f64,
+    initial_texture_identity: &str,
 ) -> Result<(), PipelineError> {
     if channel.get("kind").and_then(Value::as_str) != Some("entity")
         || channel.get("version").and_then(Value::as_u64) != Some(0)
@@ -1297,14 +1364,32 @@ fn validate_vehicle_texture_channel(
         }
         previous = Some(frame);
     }
-    for value in values {
-        let raw = value.as_str().ok_or_else(|| {
+    let canonical_values = values
+        .iter()
+        .map(|value| {
+            let raw = value.as_str().ok_or_else(|| {
+                PipelineError::new(
+                    "vehicle texture animation value is not an identity",
+                )
+            })?;
+            vehicle_source_identity(raw, "texture animation value")
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let frame_zero_texture = frames
+        .iter()
+        .zip(canonical_values.iter())
+        .find_map(|(frame, identity)| {
+            (frame.as_u64() == Some(0)).then_some(identity.as_str())
+        })
+        .ok_or_else(|| {
             PipelineError::new(
-                "vehicle texture animation value is not an identity",
+                "vehicle texture animation has no frame-zero texture key",
             )
         })?;
-        let _identity =
-            vehicle_source_identity(raw, "texture animation value")?;
+    if frame_zero_texture != initial_texture_identity {
+        return Err(PipelineError::new(
+            "vehicle texture animation frame zero contradicts target shader",
+        ));
     }
     let metadata = required_array(
         channel,

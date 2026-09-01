@@ -479,7 +479,11 @@ fn texture_sidecar_retains_shader_controller() -> Result<(), String> {
     .map_err(|error| error.to_string())?;
     fs::write(
         root.path().join("components/shader/flame.json"),
-        r#"{"schema":"shader","name":"flame_m"}"#,
+        concat!(
+            r#"{"schema":"shader","name":"flame_m","version":0,"#,
+            r#""num_params":1,"params":[{"kind":"texture","#,
+            r#""param":"TEX","value":"frame0\u0000"}]}"#
+        ),
     )
     .map_err(|error| error.to_string())?;
     fs::write(
@@ -580,7 +584,11 @@ fn texture_sidecar_rejects_mismatched_target_group() -> Result<(), String> {
     .map_err(|error| error.to_string())?;
     fs::write(
         root.path().join("components/shader/flame.json"),
-        r#"{"schema":"shader","name":"flame_m"}"#,
+        concat!(
+            r#"{"schema":"shader","name":"flame_m","version":0,"#,
+            r#""num_params":1,"params":[{"kind":"texture","#,
+            r#""param":"TEX","value":"frame0\u0000"}]}"#
+        ),
     )
     .map_err(|error| error.to_string())?;
     fs::write(
@@ -605,6 +613,82 @@ fn texture_sidecar_rejects_mismatched_target_group() -> Result<(), String> {
     if result.is_ok() {
         return Err(
             "mismatched texture animation group was accepted".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn texture_sidecar_rejects_shader_frame_zero_mismatch() -> Result<(), String> {
+    let root = EffectTestDirectory::new("texture-frame-zero-mismatch")?;
+    fs::create_dir_all(root.path().join("components/frame_controller"))
+        .map_err(|error| error.to_string())?;
+    fs::create_dir_all(root.path().join("components/shader"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/animation/z.json"),
+        concat!(
+            r#"{"schema":"animation","name":"Zebra","version":0,"#,
+            r#""type":"TEX_","frames":2.0,"frame_rate":30.0,"#,
+            r#""cyclic":0,"sizes":[{"version":1,"pc":4,"ps2":4,"#,
+            r#""xbox":4,"gc":4}],"group_lists":[{"version":0,"#,
+            r#""num_groups":1,"groups":[{"version":0,"#,
+            r#""name":"TEX_flame_m","group_id":0,"num_channels":1,"#,
+            r#""channels":[{"kind":"entity","version":0,"#,
+            r#""param":"TEX_","num_frames":2,"frames":[0,1],"#,
+            r#""values":["frame0\u0000","frame1\u0000"],"#,
+            r#""channel_metadata":[{"kind":"interpolation_mode","#,
+            r#""version":0,"mode":1}]}]}]}],"loose_channels":[],"#,
+            r#""legacy_animation_extras":[]}"#
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/animation/a.json"),
+        r#"{"name":"Alpha","type":"effect"}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/frame_controller/controller.json"),
+        concat!(
+            r#"{"schema":"frame_controller","name":"TEX_Zebra","#,
+            r#""version":0,"type":"TEX","frame_offset":0,"#,
+            r#""animation_name":"Zebra","hierarchy_name":"flame_m"}"#
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components/shader/flame.json"),
+        concat!(
+            r#"{"schema":"shader","name":"flame_m","version":0,"#,
+            r#""num_params":1,"params":[{"kind":"texture","#,
+            r#""param":"TEX","value":"other\u0000"}]}"#
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.path().join("components.jsonl"),
+        concat!(
+            r#"{"ordinal":30,"name":"TEX_Zebra","#,
+            r#""path":"frame_controller/controller.json","#,
+            r#""kind":"frame_controller"}"#,
+            "\n",
+            r#"{"ordinal":40,"name":"flame_m","#,
+            r#""path":"shader/flame.json","kind":"shader"}"#,
+            "\n"
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let result = load_vehicle_animations(
+        &effect_animation_package()?,
+        root.path(),
+        &root.path().join("output"),
+        &effect_test_asset()?,
+    );
+    if result.is_ok() {
+        return Err(
+            "texture animation disagreed with shader frame zero but passed"
+                .to_owned(),
         );
     }
     Ok(())

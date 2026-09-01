@@ -824,5 +824,19 @@ payloads. None of those 32 pairs shares the animation, controller, or target
 shader container, so neither container ownership nor source proximity currently
 provides relationship authority.
 
+The target shader supplies one additional logical relationship without solving
+that physical ambiguity. All five current `TEX_` target shaders declare exactly
+one canonical `TEX` parameter, and each shader texture identity exactly equals
+the entity-channel value keyed at source frame zero. Vehicle
+intake now reads the exact target shader occurrence selected by source ordinal
+through the validated shader reader and rejects a contradictory frame-zero
+identity.
+
+That check does not promote a physical texture candidate. Three of the five
+frame-zero logical identities have two same-name package-local occurrences; one
+pair is byte-identical and two pairs contain differing PNG payloads. The shader
+and animation therefore agree on logical initial state while physical occurrence
+selection remains unresolved.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
