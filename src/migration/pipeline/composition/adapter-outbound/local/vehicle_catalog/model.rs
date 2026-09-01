@@ -74,6 +74,34 @@ pub(super) struct GroundingRecord {
     pub(super) root_bone: String,
 }
 
+/// One exact BQG controller-to-billboard relationship for an effect sidecar.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct EffectControllerRecord {
+    /// Authored frame-controller identity.
+    pub(super) controller_identity: String,
+    /// Exact source frame-controller chunk ordinal.
+    pub(super) controller_source_ordinal: usize,
+    /// Authored hierarchy identity targeted by the controller.
+    pub(super) billboard_identity: String,
+    /// Exact source billboard quad-group chunk ordinal.
+    pub(super) billboard_source_ordinal: usize,
+}
+
+/// One non-skeletal vehicle animation preserved as a source sidecar.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct EffectAnimationRecord {
+    /// Published repository-relative sidecar path.
+    pub(super) path: String,
+    /// Authored animation identity.
+    pub(super) identity: String,
+    /// Authored animation family.
+    pub(super) animation_type: String,
+    /// Exact source animation chunk ordinal.
+    pub(super) source_ordinal: usize,
+    /// Exact BQG controller relationship when the source declares one.
+    pub(super) controller: Option<EffectControllerRecord>,
+}
+
 /// One completed vehicle artifact and catalog record.
 #[derive(Clone, Debug)]
 pub(super) struct VehicleRecord {
@@ -101,8 +129,8 @@ pub(super) struct VehicleRecord {
     pub(super) hidden_wheel_proxies: usize,
     /// Published skeletal animation artifact paths.
     pub(super) animations: Vec<String>,
-    /// Published effect-animation sidecar paths.
-    pub(super) effect_animation_sidecars: Vec<String>,
+    /// Published effect-animation sidecars with exact source relationships.
+    pub(super) effect_animation_sidecars: Vec<EffectAnimationRecord>,
     /// Published texture artifact records.
     pub(super) textures: Vec<TextureRecord>,
     /// Published shader evidence paths.
