@@ -1142,5 +1142,38 @@ and 0.0 cases. The catalog does not treat those numbers as depth, priority, draw
 order, or any other runtime semantic until source-backed behavior establishes
 such a mapping.
 
+The direct rigid-animated FBX route still has a separate prop-level provenance
+gap after v13. The current 370 world rigid-animated composites contain 2,055
+authored prop rows: 1,868 select meshes passed to
+`load_selected_rigid_prop_asset`, while 187 are other authored composite prop
+relationships. Their sort-order distribution is 1,954 values of 0.5, 92 of
+0.4, eight of 0.49, and one of 0.0.
+
+`decoded_skin_source::composite_bindings` currently validates every prop name,
+skeleton joint, and binary translucency flag, but `CompositePropBinding` retains
+only those three values and deserializes `sort_order` into an ignored
+compatibility field. `CharacterSourceProvenance` then retains only the skeleton
+identity and ordered composite identities. The binary FBX writer publishes
+those identities as `SHAR_P3D_SourceSkeletonIdentity` and indexed
+`SHAR_P3D_SourceCompositeIdentity_*` export-root properties, so prop index,
+joint, translucency, and sort evidence do not survive in the FBX itself.
+
+This can remain provenance-only when repaired: `prepared_signature` explicitly
+clears `asset.source_provenance` before semantic deduplication, so extending the
+provenance record does not need to change variant identity. The source-backed
+key must include composite identity plus authored prop index; prop name alone is
+not sufficient across multiple composites. Supplemental vehicle bindings must
+remain excluded because they are assembly inputs rather than authored composite
+rows.
+
+The decoder boundary also needs to preserve optionality precisely. The P3D
+composite decoder emits `sort_order` only when the optional sort-order child is
+present and renders non-finite source floats as JSON `null`. The current direct
+FBX `DecodedCompositeProp` requires a `sort_order` JSON field and ignores its
+value. All 2,055 current world animated-route prop rows have a finite sort
+child, so this does not block today's corpus, but a future typed adapter must
+not treat
+an absent child and a present invalid/null value as the same evidence.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
