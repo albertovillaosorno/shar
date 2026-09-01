@@ -1035,5 +1035,30 @@ validation, or presentation semantics. A classification mismatch fails closed;
 phase-three identity still records a physical occurrence rather than inventing
 a logical relationship.
 
+The next bounded world provenance gap is the primary model route rather than the
+deferred render path. A route-level audit mirrors the current world inventory
+across 840 model-bearing terrain-world candidates. It finds 370 rigid-animated
+candidates, 55 composite-backed static candidates, and 415 static candidates
+without a matching composite. Composite selection retains 2,368 mesh
+occurrences in total; every selected mesh resolves to an exact phase-three
+`p3d-mesh` model member at its ledger path and source ordinal.
+
+All 425 matching composite occurrences likewise resolve as phase-three
+`p3d-composite-drawable` model members. Their authored skeleton relationships
+resolve to 425 exact `p3d-skeleton` animation members. Of those candidates, 370
+also have the exact same-container `PTRN_<skeleton>` relationship used by the
+rigid-animated route, and all 370 clips resolve as `p3d-animation` animation
+members. The remaining 55 composites have the authored skeleton but no exact
+PTRN clip, so the current route remains static and does not consume that
+skeleton.
+
+The world catalog source alias currently publishes none of those primary
+phase-three member ids; it retains only package/container identity plus deferred
+render evidence. A future catalog revision can add source-order selected mesh
+member ids and separately labelled composite/skeleton/PTRN provenance without
+changing semantic deduplication or implying that the 55 static skeletons were
+exported. This is a physical-provenance gap only; current mesh selection and
+animation routing remain source-backed.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
