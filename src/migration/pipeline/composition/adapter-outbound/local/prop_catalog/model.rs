@@ -265,6 +265,54 @@ pub(super) struct DeferredRenderBinding {
     pub(super) controller: Option<DeferredControllerBinding>,
 }
 
+/// Source-backed ordering used for selected primary world meshes.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) enum WorldPrimaryMeshOrder {
+    /// Non-composite static meshes follow ledger source ordinals.
+    SourceOrdinal,
+    /// Composite-backed meshes follow authored composite prop order.
+    CompositeProp,
+}
+
+impl WorldPrimaryMeshOrder {
+    /// Stable catalog label for the authored ordering rule.
+    #[must_use]
+    pub(super) const fn as_str(self) -> &'static str {
+        match self {
+            Self::SourceOrdinal => "source_ordinal",
+            Self::CompositeProp => "composite_prop",
+        }
+    }
+}
+
+/// One exact primary world component occurrence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct WorldPrimaryMemberBinding {
+    /// Stable phase-three package-member identity.
+    pub(super) package_member_id: String,
+    /// Exact normalized component member id.
+    pub(super) member_id: String,
+    /// Exact source component ordinal.
+    pub(super) source_ordinal: usize,
+}
+
+/// Exact physical provenance for the primary world-model route.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct WorldPrimarySourceBinding {
+    /// Owning world or physics source occurrence.
+    pub(super) owner: WorldPrimaryMemberBinding,
+    /// Authored ordering rule used for selected meshes.
+    pub(super) mesh_order: WorldPrimaryMeshOrder,
+    /// Selected mesh occurrences in the order consumed by the FBX route.
+    pub(super) selected_meshes: Vec<WorldPrimaryMemberBinding>,
+    /// Composite occurrence that authored mesh selection when present.
+    pub(super) matched_composite: Option<WorldPrimaryMemberBinding>,
+    /// Authored skeleton relationship when present, even on a static route.
+    pub(super) referenced_skeleton: Option<WorldPrimaryMemberBinding>,
+    /// Exact PTRN animation occurrence consumed by the animated route.
+    pub(super) exported_ptrn_animation: Option<WorldPrimaryMemberBinding>,
+}
+
 /// One normalized source occurrence before semantic deduplication.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct PropCandidate {
@@ -284,6 +332,8 @@ pub(super) struct PropCandidate {
     pub(super) container_key: String,
     /// Selected decoded mesh member ids without family or extension.
     pub(super) mesh_ids: Vec<String>,
+    /// Exact primary world source provenance when this is a world candidate.
+    pub(super) world_primary_source: Option<WorldPrimarySourceBinding>,
     /// Source-backed non-mesh composite render bindings deferred from FBX.
     pub(super) deferred_render_bindings: Vec<DeferredRenderBinding>,
     /// Composite member id for one rigid animated route.
@@ -332,6 +382,8 @@ pub(super) struct PropAlias {
     pub(super) owner_name: String,
     /// Stable source container key.
     pub(super) container_key: String,
+    /// Exact primary world source provenance when this is a world occurrence.
+    pub(super) world_primary_source: Option<WorldPrimarySourceBinding>,
     /// Source-backed non-mesh composite render bindings deferred from FBX.
     pub(super) deferred_render_bindings: Vec<DeferredRenderBinding>,
 }
@@ -344,6 +396,7 @@ impl From<&PropCandidate> for PropAlias {
             owner_kind: candidate.owner_kind.clone(),
             owner_name: candidate.owner_name.clone(),
             container_key: candidate.container_key.clone(),
+            world_primary_source: candidate.world_primary_source.clone(),
             deferred_render_bindings:
                 candidate.deferred_render_bindings.clone(),
         }

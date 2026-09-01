@@ -519,5 +519,33 @@ by ledger ordinal. The remaining 415 non-composite static candidates continue to
 use ledger source-ordinal order. Primary provenance must preserve whichever
 source-backed ordering the existing route actually uses.
 
+`shar.world-model-props.v12` closes the audited primary world
+physical-provenance
+gap without changing route selection or semantic deduplication. Every world
+source alias now retains the exact phase-three package-member id, normalized
+member id, and source ordinal for its owning container plus every selected mesh
+occurrence. The mesh records stay in the order actually consumed by the current
+route: `source_ordinal` for the 415 non-composite static candidates and
+`composite_prop` for all 425 composite-backed candidates, including the 233
+whose composite order differs from numeric ledger order.
+
+Matched composite, referenced skeleton, and exported PTRN animation provenance
+are represented as separate optional records. This preserves all 425 matched
+composites and all 425 authored skeleton relationships, while only the 370
+rigid-animated candidates carry an `exported_ptrn_animation`. The 55 static
+composite-backed cases therefore retain their real skeleton provenance without
+claiming that the skeleton or a nonexistent PTRN payload was exported. All 55
+have a frame controller naming `PTRN_<skeleton>`, but a package-wide audit finds
+no matching decoded PTRN animation payload in the same or another container, so
+controller naming remains non-authoritative for route promotion.
+
+The expected full-corpus v12 primary counts are 840 source bindings, 2,368
+selected meshes, 425 matched composites, 425 referenced skeletons, and 370
+exported PTRN animations. Owner occurrences are classified through the same
+phase-three taxonomy as package generation: dynamic and instanced-dynamic DSG
+owners are `physics/p3d-physics`, animated/state-prop factories are
+`world/p3d-animated-prop`, and the remaining supported SRR model owners are
+`world/p3d-world-dsg`. Classification mismatches fail closed.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.

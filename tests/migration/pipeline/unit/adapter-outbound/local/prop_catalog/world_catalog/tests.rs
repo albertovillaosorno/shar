@@ -30,13 +30,75 @@
 
 //! World catalog unit tests.
 
-use super::deferred_binding_value;
+use super::{deferred_binding_value, world_primary_source_value};
 use crate::adapters::driven::local::prop_catalog::model::{
     DeferredBillboardBinding, DeferredBillboardQuadBinding,
     DeferredControllerBinding, DeferredRenderBinding,
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
     DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
+    WorldPrimaryMemberBinding, WorldPrimaryMeshOrder,
+    WorldPrimarySourceBinding,
 };
+
+#[test]
+fn primary_world_source_serialization_preserves_authored_selection_order() {
+    let value = world_primary_source_value(&WorldPrimarySourceBinding {
+        owner: WorldPrimaryMemberBinding {
+            package_member_id: "owner-member-5".to_owned(),
+            member_id: "owner".to_owned(),
+            source_ordinal: 5,
+        },
+        mesh_order: WorldPrimaryMeshOrder::CompositeProp,
+        selected_meshes: vec![
+            WorldPrimaryMemberBinding {
+                package_member_id: "mesh-member-20".to_owned(),
+                member_id: "mesh-b".to_owned(),
+                source_ordinal: 20,
+            },
+            WorldPrimaryMemberBinding {
+                package_member_id: "mesh-member-10".to_owned(),
+                member_id: "mesh-a".to_owned(),
+                source_ordinal: 10,
+            },
+        ],
+        matched_composite: Some(WorldPrimaryMemberBinding {
+            package_member_id: "composite-member-30".to_owned(),
+            member_id: "owner-composite".to_owned(),
+            source_ordinal: 30,
+        }),
+        referenced_skeleton: Some(WorldPrimaryMemberBinding {
+            package_member_id: "skeleton-member-40".to_owned(),
+            member_id: "owner-skeleton".to_owned(),
+            source_ordinal: 40,
+        }),
+        exported_ptrn_animation: None,
+    });
+    assert_eq!(value.get("mesh_order"), Some(&"composite_prop".into()));
+    assert_eq!(
+        value.pointer("/owner/package_member_id"),
+        Some(&"owner-member-5".into())
+    );
+    assert_eq!(
+        value.pointer("/selected_meshes/0/package_member_id"),
+        Some(&"mesh-member-20".into())
+    );
+    assert_eq!(
+        value.pointer("/selected_meshes/1/source_ordinal"),
+        Some(&10.into())
+    );
+    assert_eq!(
+        value.pointer("/matched_composite/package_member_id"),
+        Some(&"composite-member-30".into())
+    );
+    assert_eq!(
+        value.pointer("/referenced_skeleton/package_member_id"),
+        Some(&"skeleton-member-40".into())
+    );
+    assert_eq!(
+        value.get("exported_ptrn_animation"),
+        Some(&serde_json::Value::Null)
+    );
+}
 
 #[test]
 fn deferred_binding_serialization_keeps_exact_source_relationship(
