@@ -48,6 +48,91 @@ pub struct SkinnedPart {
     pub group_influences: Vec<Vec<SkinInfluence>>,
 }
 
+/// One authored composite skin relationship retained as source provenance.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct CompositeSkinSourceBinding {
+    /// Zero-based composite occurrence in retained source order.
+    composite_ordinal: usize,
+    /// Zero-based skin position within the authored composite.
+    skin_index: usize,
+    /// Authored skin/component identity.
+    skin_identity: String,
+    /// Authored binary translucency flag.
+    translucent: bool,
+    /// Exact source-width sort-order bits when the optional field was present.
+    sort_order_bits: Option<u32>,
+}
+
+impl CompositeSkinSourceBinding {
+    /// Create one validated source-only composite skin record.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the skin identity is non-canonical or a supplied
+    /// sort-order value is non-finite.
+    pub fn new(
+        composite_ordinal: usize,
+        skin_index: usize,
+        skin_identity: impl Into<String>,
+        translucent: bool,
+        sort_order: Option<f32>,
+    ) -> Result<Self, CharacterError> {
+        let skin_identity = skin_identity.into();
+        if !canonical_source_identity(&skin_identity) {
+            return Err(CharacterError::NonCanonicalSourceSkinIdentity {
+                identity: skin_identity,
+            });
+        }
+        let sort_order_bits = match sort_order {
+            Some(value) if value.is_finite() => Some(value.to_bits()),
+            Some(_value) => {
+                return Err(CharacterError::NonFiniteSourceSkinSortOrder {
+                    composite_ordinal,
+                    skin_index,
+                });
+            },
+            None => None,
+        };
+        Ok(Self {
+            composite_ordinal,
+            skin_index,
+            skin_identity,
+            translucent,
+            sort_order_bits,
+        })
+    }
+
+    /// Return the zero-based retained composite occurrence.
+    #[must_use]
+    pub const fn composite_ordinal(&self) -> usize {
+        self.composite_ordinal
+    }
+
+    /// Return the zero-based authored skin position.
+    #[must_use]
+    pub const fn skin_index(&self) -> usize {
+        self.skin_index
+    }
+
+    /// Return the authored skin/component identity.
+    #[must_use]
+    pub fn skin_identity(&self) -> &str {
+        &self.skin_identity
+    }
+
+    /// Return the authored binary translucency flag.
+    #[must_use]
+    pub const fn translucent(&self) -> bool {
+        self.translucent
+    }
+
+    /// Return exact source-width sort-order bits when authored.
+    #[must_use]
+    pub const fn sort_order_bits(&self) -> Option<u32> {
+        self.sort_order_bits
+    }
+}
+
 /// One authored composite prop relationship retained as source provenance.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CompositePropSourceBinding {
@@ -150,6 +235,8 @@ pub struct CharacterSourceProvenance {
     skeleton_identity: String,
     /// Decoded composite identities in supplied source order.
     composite_identities: Vec<String>,
+    /// Authored composite skin rows in exact retained source order.
+    composite_skin_bindings: Vec<CompositeSkinSourceBinding>,
     /// Authored composite prop rows in exact retained source order.
     composite_prop_bindings: Vec<CompositePropSourceBinding>,
 }
@@ -183,6 +270,7 @@ impl CharacterSourceProvenance {
         Ok(Self {
             skeleton_identity,
             composite_identities,
+            composite_skin_bindings: Vec::new(),
             composite_prop_bindings: Vec::new(),
         })
     }
@@ -197,6 +285,43 @@ impl CharacterSourceProvenance {
     #[must_use]
     pub fn composite_identities(&self) -> &[String] {
         &self.composite_identities
+    }
+
+    /// Attach exact authored composite skin rows as source-only provenance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a row references a composite occurrence outside
+    /// the retained identity vector or repeats one authored skin position.
+    pub fn with_composite_skin_bindings(
+        mut self,
+        bindings: Vec<CompositeSkinSourceBinding>,
+    ) -> Result<Self, CharacterError> {
+        let mut seen = BTreeSet::new();
+        for binding in &bindings {
+            if binding.composite_ordinal >= self.composite_identities.len() {
+                return Err(CharacterError::SourceSkinCompositeOutOfBounds {
+                    composite_ordinal: binding.composite_ordinal,
+                    composites: self.composite_identities.len(),
+                });
+            }
+            if !seen.insert((binding.composite_ordinal, binding.skin_index)) {
+                return Err(
+                    CharacterError::DuplicateSourceCompositeSkinIndex {
+                        composite_ordinal: binding.composite_ordinal,
+                        skin_index: binding.skin_index,
+                    },
+                );
+            }
+        }
+        self.composite_skin_bindings = bindings;
+        Ok(self)
+    }
+
+    /// Return authored composite skin rows in exact retained source order.
+    #[must_use]
+    pub fn composite_skin_bindings(&self) -> &[CompositeSkinSourceBinding] {
+        &self.composite_skin_bindings
     }
 
     /// Attach exact authored composite prop rows as source-only provenance.
@@ -471,6 +596,33 @@ pub enum CharacterError {
     NonCanonicalSourceCompositeIdentity {
         /// Malformed authored composite identity.
         identity: String,
+    },
+    /// Authored composite skin identity was empty or non-canonical.
+    NonCanonicalSourceSkinIdentity {
+        /// Malformed authored skin identity.
+        identity: String,
+    },
+    /// Authored skin sort order was present but non-finite.
+    NonFiniteSourceSkinSortOrder {
+        /// Retained composite occurrence containing the skin.
+        composite_ordinal: usize,
+        /// Authored skin position inside the composite.
+        skin_index: usize,
+    },
+    /// Source skin provenance referenced a composite occurrence outside
+    /// retained source.
+    SourceSkinCompositeOutOfBounds {
+        /// Invalid retained composite occurrence.
+        composite_ordinal: usize,
+        /// Number of retained composite occurrences.
+        composites: usize,
+    },
+    /// Source skin provenance repeated one authored composite skin position.
+    DuplicateSourceCompositeSkinIndex {
+        /// Retained composite occurrence containing the duplicate.
+        composite_ordinal: usize,
+        /// Repeated authored skin position.
+        skin_index: usize,
     },
     /// Authored composite prop identity was empty or non-canonical.
     NonCanonicalSourcePropIdentity {

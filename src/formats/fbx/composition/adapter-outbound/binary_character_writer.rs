@@ -52,7 +52,7 @@ use super::binary_identity::{
 use crate::domain::animation::AnimationClip;
 use crate::domain::character::{
     CharacterAsset, CharacterSourceProvenance, CompositePropSourceBinding,
-    SkinnedPart,
+    CompositeSkinSourceBinding, SkinnedPart,
 };
 use crate::domain::mesh::{MeshAsset, PrimitiveGroup};
 use crate::domain::texture::MaterialBinding;
@@ -1415,6 +1415,37 @@ fn layer_element(element_type: &str) -> BinaryNode {
     ])
 }
 
+/// Append one authored composite skin record as source-only FBX metadata.
+fn append_composite_skin_source_properties(
+    properties: &mut Vec<BinaryNode>,
+    binding: &CompositeSkinSourceBinding,
+) {
+    let suffix = format!(
+        "_{:04}_{:04}",
+        binding.composite_ordinal(),
+        binding.skin_index()
+    );
+    properties.push(user_string_property(
+        &format!("SHAR_P3D_SourceCompositeSkinIdentity{suffix}"),
+        binding.skin_identity(),
+    ));
+    properties.push(user_string_property(
+        &format!("SHAR_P3D_SourceCompositeSkinTranslucent{suffix}"),
+        if binding.translucent() {
+            "1"
+        } else {
+            "0"
+        },
+    ));
+    let sort_order = binding
+        .sort_order_bits()
+        .map_or_else(|| "absent".to_owned(), |bits| bits.to_string());
+    properties.push(user_string_property(
+        &format!("SHAR_P3D_SourceCompositeSkinSortBits{suffix}"),
+        &sort_order,
+    ));
+}
+
 /// Append one authored composite prop record as source-only FBX metadata.
 fn append_composite_prop_source_properties(
     properties: &mut Vec<BinaryNode>,
@@ -1468,6 +1499,12 @@ fn export_root_node(
                 &format!("SHAR_P3D_SourceCompositeIdentity_{ordinal:04}"),
                 identity,
             ));
+        }
+        for binding in provenance.composite_skin_bindings() {
+            append_composite_skin_source_properties(
+                &mut custom_properties,
+                binding,
+            );
         }
         for binding in provenance.composite_prop_bindings() {
             append_composite_prop_source_properties(

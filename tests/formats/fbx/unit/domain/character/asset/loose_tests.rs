@@ -64,6 +64,16 @@ fn source_provenance_preserves_composite_order_and_duplicates() {
         "z-composite".to_owned(),
     ])
     .and_then(|provenance| {
+        let skin = CompositeSkinSourceBinding::new(
+            1,
+            4,
+            "skin-shape",
+            false,
+            Some(0.1),
+        )?;
+        provenance.with_composite_skin_bindings(vec![skin])
+    })
+    .and_then(|provenance| {
         let binding = CompositePropSourceBinding::new(
             2,
             7,
@@ -83,6 +93,13 @@ fn source_provenance_preserves_composite_order_and_duplicates() {
                 "a-composite".to_owned(),
                 "z-composite".to_owned(),
             ],
+            composite_skin_bindings: vec![CompositeSkinSourceBinding {
+                composite_ordinal: 1,
+                skin_index: 4,
+                skin_identity: "skin-shape".to_owned(),
+                translucent: false,
+                sort_order_bits: Some(0.1_f32.to_bits()),
+            }],
             composite_prop_bindings: vec![CompositePropSourceBinding {
                 composite_ordinal: 2,
                 prop_index: 7,
@@ -97,6 +114,20 @@ fn source_provenance_preserves_composite_order_and_duplicates() {
 
 #[test]
 fn rejects_invalid_composite_prop_source_provenance() {
+    assert_eq!(
+        CompositeSkinSourceBinding::new(
+            0,
+            0,
+            "skin",
+            false,
+            Some(f32::INFINITY),
+        ),
+        Err(CharacterError::NonFiniteSourceSkinSortOrder {
+            composite_ordinal: 0,
+            skin_index: 0,
+        })
+    );
+
     assert_eq!(
         CompositePropSourceBinding::new(
             0,
