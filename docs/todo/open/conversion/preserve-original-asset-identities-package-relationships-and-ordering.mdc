@@ -858,5 +858,19 @@ surface therefore uses the exact `components.jsonl` component ordinal attached
 to the physical PNG it hashes rather than joining the domains by number or file
 name.
 
+That retained occurrence evidence does not make the ambiguous material binding
+exportable. All 11 quad groups that use the five `TEX_` target shaders satisfy
+the strict billboard reader and are referenced by their vehicle composites, so
+they enter retained material assembly. The material reader intentionally rejects
+more than one package-ledger texture occurrence for one logical shader `TEX`
+identity rather than choosing a member.
+
+Three of the five frame-zero logical identities have two such occurrences. One
+candidate pair is byte-identical and two pairs contain differing PNG payloads,
+so those three target materials remain fail-closed before full vehicle catalog
+publication. `shar.vehicle-catalog.v4` preserves the candidate relationship
+model and regression evidence; it does not claim that unresolved physical
+selection has become valid.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
