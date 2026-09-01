@@ -851,12 +851,18 @@ catalog therefore exposes the ambiguity without deduplicating byte-identical
 peers or selecting conflicting ones.
 
 The generated phase-three car index also contains 1,479 `p3d-texture` members
-with source kind `texture`, but those source-unit ordinals are a different
-domain
-from the 1,479 normalized component-ledger texture ordinals. The v4 occurrence
-surface therefore uses the exact `components.jsonl` component ordinal attached
-to the physical PNG it hashes rather than joining the domains by number or file
-name.
+with source kind `texture`. A corrected whole-corpus audit proves these are an
+exact physical mirror of the 1,479 normalized component-ledger texture rows:
+every phase-three member path addresses exactly one ledger PNG, every ledger PNG
+is represented once, and all 1,479 `source_chunk_ordinal` values equal the
+matched ledger component ordinal.
+
+This is expected from the generator rather than a filename heuristic.
+Minor-unit provenance is read from the owning `components.jsonl` by exact
+component path, then carries that same path and chunk ordinal into phase three.
+The package member therefore provides a valid physical-occurrence coordinate.
+It still does not establish which same-name occurrence a shader string reference
+selects.
 
 That retained occurrence evidence does not make the ambiguous material binding
 exportable. All 11 quad groups that use the five `TEX_` target shaders satisfy
