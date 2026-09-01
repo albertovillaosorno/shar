@@ -1273,5 +1273,26 @@ it does not claim that the composite effect semantically designates either one.
 The other 220 matched-world effects retain no physical candidate pair, including
 all package-shared, duplicate, and absent cases described above.
 
+A raw-schema follow-up identifies a recovery gap inside the 63 normalized
+`srr_inst_particle_system` rows. Every current row reports exactly one direct
+`0x00015800` `SYSTEM_FACTORY` child followed later by one direct `0x00015801`
+`SYSTEM` child, with valid summarized chunk bounds. The repository P3D domain
+already classifies those IDs as `particle_system_factory` and `particle_system`.
+
+The `tlInstParticleSystemChunk` schema currently lists the factory among its
+allowed subchunks but does not list the observed `SYSTEM` child. Its extractor
+also reduces every nested child to ID and size metadata, even though the
+existing top-level particle decoders can recover factory name/version/timing and
+system name/version/`factory_name` from those chunk headers. The normalized
+pipeline cache does not retain the raw P3D package bytes, so those nested names
+cannot be reconstructed after extraction from current artifacts alone.
+
+The next source-backed step is therefore extractor recovery, not resource
+selection: decode the observed nested factory/system headers while the lawful
+source bytes are in scope, preserve their direct containment and authored order,
+and then re-audit the 216 effect identities currently absent from normalized
+top-level particle rows. Until that evidence is regenerated, v15 continues to
+leave those effects unresolved.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
