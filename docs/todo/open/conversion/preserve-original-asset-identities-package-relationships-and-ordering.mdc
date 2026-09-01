@@ -905,5 +905,17 @@ failure remains the 402 local duplicate bindings; ledger-keyed cross-package
 authority hardens future/missing-texture lookup rather than claiming those local
 relationships are resolved.
 
+The 402 local duplicate bindings also do not gain an occurrence edge from chunk
+hierarchy or ordering. In every case the shader and both texture rows are
+top-level (`parent_ordinal = 0`) self-owned containers; each pair has one
+unsuffixed and one ordinal-qualified normalized path, both textures precede the
+shader, and the later texture is closer to it in source order.
+
+That ordering is descriptive only. The extractor creates `__ordinal_####`
+strictly as a generated path-collision alias, while the canonical
+`tlShaderTextureParamChunk` schema contains only a `FOURCC` parameter and string
+value. It carries no texture ordinal, component handle, or parent relationship,
+so choosing the nearest/later duplicate would still invent source semantics.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
