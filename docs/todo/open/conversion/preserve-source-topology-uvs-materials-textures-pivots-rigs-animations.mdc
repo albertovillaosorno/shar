@@ -368,5 +368,21 @@ a string `Value`.
 It has no occurrence ordinal or handle, so proximity cannot safely select one
 physical payload.
 
+The FBX material adapter now exposes a separate exact texture-occurrence
+boundary for consumers that later obtain real relationship authority. A caller
+may supply one exact package-ledger PNG occurrence together with an exact shader
+path; the physical path selects the occurrence, while the shader's authored
+`TEX` identity controls the staged PNG name. Unpublished files and shaders with
+no texture parameter are rejected. Ordinary material resolution is unchanged
+and still rejects ambiguous same-name ledger candidates.
+
+Community tooling evidence narrows ordering semantics without resolving that
+ambiguity. Donut Team guidance for Lucas' Pure3D Editor requires a texture chunk
+to appear above the shader that references it and describes shared textures as
+resources found by the shader's logical texture name. All 402 current duplicate
+vehicle bindings already have both same-name texture occurrences above their
+shader. The public ordering evidence therefore cannot distinguish the base path
+from the ordinal-qualified collision path.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
