@@ -42,7 +42,7 @@ use super::{
     primary_world_source_binding, source_ordered_mesh_ids,
 };
 use crate::adapters::driven::local::prop_catalog::inventory_common::{
-    CompositeEvidence, CompositePropEvidence,
+    CompositeEffectEvidence, CompositeEvidence, CompositePropEvidence,
 };
 use crate::adapters::driven::local::prop_catalog::model::WorldPrimaryMeshOrder;
 use crate::adapters::driven::local::prop_catalog::texture_authority;
@@ -295,6 +295,12 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
                 sort_order_bits: Some(0.5_f32.to_bits()),
             },
         ],
+        effect_bindings: vec![CompositeEffectEvidence {
+            name: "spark".to_owned(),
+            skeleton_joint_id: 7,
+            is_translucent: true,
+            sort_order_bits: Some(0.1_f32.to_bits()),
+        }],
     };
     let mesh_names = BTreeMap::from([
         ("mesh-a".to_owned(), "mesh-a".to_owned()),
@@ -321,6 +327,14 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
         .map(|selected| selected.member.package_member_id.as_str())
         .collect::<Vec<_>>();
     assert_eq!(binding.owner.package_member_id, "owner-member-5");
+    let [effect] = binding.composite_effects.as_slice() else {
+        return Err("primary binding lost composite effect evidence".to_owned());
+    };
+    assert_eq!(effect.composite_effect_index, 0);
+    assert_eq!(effect.source_identity, "spark");
+    assert_eq!(effect.skeleton_joint_id, 7);
+    assert!(effect.is_translucent);
+    assert_eq!(effect.sort_order_bits, Some(0.1_f32.to_bits()));
     assert_eq!(selected_ids, ["mesh-member-20", "mesh-member-10"]);
     let first_selected = binding
         .selected_meshes
@@ -380,6 +394,7 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
                 sort_order_bits: None,
             },
         ],
+        effect_bindings: Vec::new(),
     };
     let rows = Vec::new();
     let package_relationships = vec![

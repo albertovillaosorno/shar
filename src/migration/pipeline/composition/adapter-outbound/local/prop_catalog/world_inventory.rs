@@ -50,9 +50,9 @@ use super::model::{
     DeferredControllerBinding, DeferredRenderBinding,
     DeferredShaderOccurrenceBinding, DeferredShaderParameterBinding,
     DeferredTextureOccurrenceBinding, DeferredTextureReferenceBinding,
-    PropCandidate, PropFamily, PropRoute, WorldPrimaryMemberBinding,
-    WorldPrimaryMeshOrder, WorldPrimarySelectedMeshBinding,
-    WorldPrimarySourceBinding,
+    PropCandidate, PropFamily, PropRoute, WorldPrimaryEffectBinding,
+    WorldPrimaryMemberBinding, WorldPrimaryMeshOrder,
+    WorldPrimarySelectedMeshBinding, WorldPrimarySourceBinding,
 };
 use super::texture_authority::SharedTextureAuthority;
 use super::world_ledger::{LedgerRow, read_world_ledger};
@@ -373,6 +373,19 @@ fn primary_world_source_binding(
             })
         })
         .collect::<Result<Vec<_>, PipelineError>>()?;
+    let composite_effects = relationships
+        .composite_evidence
+        .into_iter()
+        .flat_map(|composite| composite.effect_bindings.iter())
+        .enumerate()
+        .map(|(composite_effect_index, effect)| WorldPrimaryEffectBinding {
+            composite_effect_index,
+            source_identity: effect.name.clone(),
+            skeleton_joint_id: effect.skeleton_joint_id,
+            is_translucent: effect.is_translucent,
+            sort_order_bits: effect.sort_order_bits,
+        })
+        .collect::<Vec<_>>();
     let matched_composite = relationships.matched_composite
         .map(|row| {
             primary_world_member_binding(
@@ -410,6 +423,7 @@ fn primary_world_source_binding(
         owner: owner_binding,
         mesh_order: relationships.mesh_order,
         selected_meshes,
+        composite_effects,
         matched_composite,
         referenced_skeleton,
         exported_ptrn_animation,
