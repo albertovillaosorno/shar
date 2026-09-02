@@ -842,11 +842,10 @@ fn primitive_group_rejects_trailing_header_bytes() -> Result<(), String> {
     let group_header_offset = mesh_header.saturating_add(4);
     let group_total_offset = mesh_header.saturating_add(8);
     for offset in [group_header_offset, group_total_offset] {
-        let old = u32::from_le_bytes(
-            source[offset..offset + 4]
-                .try_into()
-                .map_err(|error| format!("group size slice failed: {error}"))?,
-        );
+        let old =
+            u32::from_le_bytes(source[offset..offset + 4].try_into().map_err(
+                |error| format!("group size slice failed: {error}"),
+            )?);
         source[offset..offset + 4]
             .copy_from_slice(&old.saturating_add(4).to_le_bytes());
     }
