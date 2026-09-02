@@ -340,7 +340,9 @@ fn collision_object_rejects_unobserved_version() -> Result<(), String> {
     if object_json(&fixture).is_none() {
         Ok(())
     } else {
-        Err(String::from("unobserved collision version should fail closed"))
+        Err(String::from(
+            "unobserved collision version should fail closed",
+        ))
     }
 }
 
@@ -353,7 +355,9 @@ fn collision_object_rejects_missing_top_volume() -> Result<(), String> {
     if object_json(&fixture).is_none() {
         Ok(())
     } else {
-        Err(String::from("missing top collision volume should fail closed"))
+        Err(String::from(
+            "missing top collision volume should fail closed",
+        ))
     }
 }
 
