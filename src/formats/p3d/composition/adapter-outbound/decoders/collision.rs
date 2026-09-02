@@ -357,6 +357,9 @@ pub fn chunk_set_json(chunk: &[u8]) -> Option<String> {
     let mut reader = Reader::new(chunk, 12);
     let name = reader.pstring()?;
     let version = reader.u32()?;
+    if version != 0 {
+        return None;
+    }
     let child_count = usize::from(read_u8(chunk, reader.pos())?);
     if reader.pos().checked_add(1)? != header_size {
         return None;
@@ -382,11 +385,10 @@ pub fn chunk_set_json(chunk: &[u8]) -> Option<String> {
 
 /// Decode chunk-set children so membership is not stored as id-only summaries.
 fn decode_chunk_set_child(chunk: &[u8], child: &SubChunk) -> Option<String> {
-    match child.id {
-        TEXTURE => decode_chunk_set_texture(chunk, child),
-        MESH | SKIN => decode_named_ref(chunk, child),
-        _ => None,
+    if child.id != TEXTURE {
+        return None;
     }
+    decode_chunk_set_texture(chunk, child)
 }
 
 /// Decode texture child headers embedded in SRR chunk-set payloads.

@@ -575,6 +575,55 @@ fn chunk_set_decodes_texture_membership() -> Result<(), String> {
 }
 
 #[test]
+fn chunk_set_rejects_unobserved_version() -> Result<(), String> {
+    let mut fixture =
+        require(chunk_set_fixture(), "chunk-set fixture should build")?;
+    let name_length = usize::from(*fixture.get(12).ok_or_else(|| {
+        String::from("chunk-set name length should exist")
+    })?);
+    let version_offset = 13_usize
+        .checked_add(name_length)
+        .ok_or_else(|| String::from("chunk-set version offset overflowed"))?;
+    fixture
+        .get_mut(version_offset..version_offset + 4)
+        .ok_or_else(|| String::from("chunk-set version bytes should exist"))?
+        .copy_from_slice(&1_u32.to_le_bytes());
+    if chunk_set_json(&fixture).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("unobserved chunk-set version should fail closed"))
+    }
+}
+
+#[test]
+fn chunk_set_rejects_non_texture_member() -> Result<(), String> {
+    let name = require(pstring("set_mesh"), "chunk-set name should encode")?;
+    let mesh = require(
+        chunk(
+            MESH,
+            fields(vec![require(pstring("mesh"), "mesh name should encode")?]),
+            Vec::new(),
+        ),
+        "mesh child should build",
+    )?;
+    let fixture = require(
+        chunk(
+            CHUNK_SET,
+            fields(vec![name, u32_field(0), vec![1_u8]]),
+            vec![mesh],
+        ),
+        "chunk-set fixture should build",
+    )?;
+    if chunk_set_json(&fixture).is_none() {
+        Ok(())
+    } else {
+        Err(String::from(
+            "non-texture chunk-set member should fail closed",
+        ))
+    }
+}
+
+#[test]
 fn empty_chunk_set_decodes_header() -> Result<(), String> {
     let name =
         require(pstring("set_empty"), "empty chunk-set name should encode")?;
