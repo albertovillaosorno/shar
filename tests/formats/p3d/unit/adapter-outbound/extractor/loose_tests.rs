@@ -187,6 +187,53 @@ fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn billboard_group_fixture(declared_quads: u32) -> Result<Vec<u8>, String> {
+    const QUAD_GROUP: u32 = 0x0001_7002;
+    let mut fields = Vec::new();
+    push_u32(&mut fields, 0);
+    push_pascal(&mut fields, "group")?;
+    push_pascal(&mut fields, "shader")?;
+    for value in [1, 0, 0, declared_quads] {
+        push_u32(&mut fields, value);
+    }
+    let total = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("billboard-group fixture overflowed"))?;
+    let total = u32::try_from(total).map_err(|error| {
+        format!("billboard-group fixture exceeds u32: {error}")
+    })?;
+    let mut source = Vec::new();
+    push_u32(&mut source, QUAD_GROUP);
+    push_u32(&mut source, total);
+    push_u32(&mut source, total);
+    source.extend_from_slice(&fields);
+    Ok(source)
+}
+
+#[test]
+fn billboard_group_rejects_declared_quad_count_drift() -> Result<(), String> {
+    let source = billboard_group_fixture(1)?;
+    let component = ChunkRecord {
+        ordinal: 7,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0001_7002,
+        kind: crate::ChunkKind::QuadGroup,
+        offset: 0,
+        header_size: source.len(),
+        total_size: source.len(),
+        payload_offset: source.len(),
+        payload_size: 0,
+        child_count: 0,
+    };
+    if auxiliary::recover_quad_group_json(&component, &source, 1).is_some() {
+        return Err(String::from(
+            "billboard recovery replaced the authored quad count",
+        ));
+    }
+    Ok(())
+}
+
 fn primitive_group_mesh_fixture() -> Result<(Vec<u8>, usize, usize), String> {
     primitive_group_mesh_fixture_with_contract(0, 1, 0)
 }
