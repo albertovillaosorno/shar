@@ -988,7 +988,7 @@ fn deferred_billboard_quad_binding(
     }
 }
 
-/// Resolve one exact source controller and its declared animation relationship.
+/// Resolve one exact BQG controller and its declared animation relationship.
 fn deferred_controller_binding(
     root: &Path,
     rows: &[LedgerRow],
@@ -1006,6 +1006,14 @@ fn deferred_controller_binding(
         )
     }) {
         let value = read_json(&root.join("components").join(&row.path))?;
+        let controller_type = clean_row_identity(
+            &required_string(&value, "type")?,
+            row,
+            "controller type",
+        )?;
+        if controller_type != "BQG" {
+            continue;
+        }
         let hierarchy = clean_row_identity(
             &required_string(&value, "hierarchy_name")?,
             row,
