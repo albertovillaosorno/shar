@@ -828,6 +828,68 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
 }
 
 #[test]
+fn deferred_controller_ignores_non_billboard_sentinel_targets()
+-> Result<(), String> {
+    let root = fixture_root("controller-sentinel-targets")?;
+    for (family, member, kind, controller_type, hierarchy) in [
+        (
+            "frame_controller_variant_a",
+            "TEX_sign.json",
+            "frame_controller_variant_a",
+            "TEX",
+            "",
+        ),
+        (
+            "frame_controller_variant_b",
+            "MasterController.json",
+            "frame_controller_variant_b",
+            "ANIM",
+            r"\x00",
+        ),
+    ] {
+        fs::create_dir_all(root.join("components").join(family))
+            .map_err(|error| error.to_string())?;
+        fs::write(
+            root.join("components").join(family).join(member),
+            serde_json::json!({
+                "schema": "frame_controller",
+                "name": member.trim_end_matches(".json"),
+                "version": 0,
+                "type": controller_type,
+                "frame_offset": 0.0,
+                "hierarchy_name": hierarchy,
+                "animation_name": ""
+            })
+            .to_string(),
+        )
+        .map_err(|error| error.to_string())?;
+        let row = LedgerRow {
+            ordinal: if controller_type == "TEX" { 9500 } else { 9714 },
+            depth: 2,
+            container_ordinal: 1,
+            name: member.trim_end_matches(".json").to_owned(),
+            path: format!("{family}/{member}"),
+            kind: kind.to_owned(),
+        };
+        let result = deferred_controller_binding(
+            &root,
+            &[row],
+            "beam",
+            None,
+            &BTreeMap::new(),
+        )
+        .map_err(|error| error.to_string())?;
+        if result.is_some() {
+            return Err(format!(
+                "non-billboard sentinel controller was retained: {family}"
+            ));
+        }
+    }
+    drop(fs::remove_dir_all(&root));
+    Ok(())
+}
+
+#[test]
 fn deferred_controller_reports_noncanonical_animation_coordinate()
 -> Result<(), String> {
     let root = fixture_root("controller-empty-animation")?;
