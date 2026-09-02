@@ -828,6 +828,50 @@ fn deferred_bindings_resolve_unique_package_quad_group_occurrence()
 }
 
 #[test]
+fn deferred_controller_reports_noncanonical_animation_coordinate()
+-> Result<(), String> {
+    let root = fixture_root("controller-empty-animation")?;
+    fs::write(
+        root.join("components/frame_controller/BQG_beam.json"),
+        concat!(
+            r#"{"schema":"frame_controller","name":"BQG_beam","#,
+            r#""version":0,"type":"BQG","frame_offset":0.0,"#,
+            r#""hierarchy_name":"beam","animation_name":""}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let rows = vec![LedgerRow {
+        ordinal: 43,
+        depth: 2,
+        container_ordinal: 1,
+        name: "BQG_beam".to_owned(),
+        path: "frame_controller/BQG_beam.json".to_owned(),
+        kind: "frame_controller".to_owned(),
+    }];
+    let result = deferred_controller_binding(
+        &root,
+        &rows,
+        "beam",
+        None,
+        &BTreeMap::new(),
+    );
+    drop(fs::remove_dir_all(&root));
+    let Err(error) = result else {
+        return Err(
+            "empty controller animation identity was accepted".to_owned(),
+        );
+    };
+    let message = error.to_string();
+    if !message.contains("controller animation identity")
+        || !message.contains("frame_controller/BQG_beam.json@43")
+        || !message.contains("prop source identity is non-canonical")
+    {
+        return Err(format!("unexpected contextual identity error: {message}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn deferred_controller_retains_exact_animation_relationship()
 -> Result<(), String> {
     let root = fixture_root("controller-animation")?;

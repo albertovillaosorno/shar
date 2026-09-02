@@ -214,6 +214,21 @@ fn phase_three_source_members(
     Ok(members)
 }
 
+/// Clean one source identity while retaining its exact normalized coordinate in
+/// any diagnostic.
+fn clean_row_identity(
+    value: &str,
+    row: &LedgerRow,
+    field: &str,
+) -> Result<String, PipelineError> {
+    clean_identity(value).map_err(|error| {
+        PipelineError::new(format!(
+            "world source {field} is invalid for {}@{}: {error}",
+            row.path, row.ordinal
+        ))
+    })
+}
+
 /// Resolve one ledger row to its exact classified phase-three member.
 fn phase_three_source_member_id(
     members: &BTreeMap<(String, usize), PhaseThreePackageMember>,
@@ -293,7 +308,9 @@ fn effect_particle_pair(
             "particle_system_factory" | "particle_system"
         )
     }) {
-        if clean_identity(&row.name)? != effect_identity {
+        if clean_row_identity(&row.name, row, "particle ledger identity")?
+            != effect_identity
+        {
             continue;
         }
         match row.kind.as_str() {
@@ -319,20 +336,21 @@ fn effect_particle_pair(
             "world effect particle pair has an unsupported schema",
         ));
     }
-    let factory_identity =
-        clean_identity(&required_string(
-            &factory_value,
-            "name",
-        )?)?;
-    let system_identity =
-        clean_identity(&required_string(
-            &system_value,
-            "name",
-        )?)?;
-    let system_factory = clean_identity(&required_string(
-        &system_value,
-        "factory_name",
-    )?)?;
+    let factory_identity = clean_row_identity(
+        &required_string(&factory_value, "name")?,
+        factory,
+        "particle factory identity",
+    )?;
+    let system_identity = clean_row_identity(
+        &required_string(&system_value, "name")?,
+        system,
+        "particle system identity",
+    )?;
+    let system_factory = clean_row_identity(
+        &required_string(&system_value, "factory_name")?,
+        system,
+        "particle system factory identity",
+    )?;
     if factory_identity != effect_identity
         || system_identity != effect_identity
         || system_factory != effect_identity
@@ -617,7 +635,7 @@ fn static_association(
         source_members,
     )?;
     Ok((
-        clean_identity(&owner.name)?,
+        clean_row_identity(&owner.name, owner, "owner identity")?,
         mesh_ids,
         Vec::new(),
         None,
@@ -861,7 +879,8 @@ fn deferred_shader_occurrences(
 ) -> Result<Vec<DeferredShaderOccurrenceBinding>, PipelineError> {
     let mut occurrences = Vec::new();
     for row in rows.iter().filter(|row| row.kind == "shader") {
-        let row_identity = clean_identity(&row.name)?;
+        let row_identity =
+            clean_row_identity(&row.name, row, "shader ledger identity")?;
         if !row_identity.eq_ignore_ascii_case(shader_identity) {
             continue;
         }
@@ -987,8 +1006,11 @@ fn deferred_controller_binding(
         )
     }) {
         let value = read_json(&root.join("components").join(&row.path))?;
-        let hierarchy =
-            clean_identity(&required_string(&value, "hierarchy_name")?)?;
+        let hierarchy = clean_row_identity(
+            &required_string(&value, "hierarchy_name")?,
+            row,
+            "controller hierarchy identity",
+        )?;
         if hierarchy == expected_hierarchy {
             controllers.push((row, value));
         }
@@ -1006,11 +1028,21 @@ fn deferred_controller_binding(
             "world prop controller schema is not frame_controller",
         ));
     }
-    let controller_identity =
-        clean_identity(&required_string(&value, "name")?)?;
-    let controller_type = clean_identity(&required_string(&value, "type")?)?;
-    let animation_identity =
-        clean_identity(&required_string(&value, "animation_name")?)?;
+    let controller_identity = clean_row_identity(
+        &required_string(&value, "name")?,
+        row,
+        "controller identity",
+    )?;
+    let controller_type = clean_row_identity(
+        &required_string(&value, "type")?,
+        row,
+        "controller type",
+    )?;
+    let animation_identity = clean_row_identity(
+        &required_string(&value, "animation_name")?,
+        row,
+        "controller animation identity",
+    )?;
     let frame_offset_value = value
         .get("frame_offset")
         .cloned()
@@ -1088,7 +1120,11 @@ fn deferred_controller_binding(
             Some(ledger_member_id(&animation_row.path, "animation")?),
             Some(animation_row.ordinal),
             Some(required_usize(&animation_value, "version")?),
-            Some(clean_identity(&required_string(&animation_value, "type")?)?),
+            Some(clean_row_identity(
+                &required_string(&animation_value, "type")?,
+                animation_row,
+                "animation type",
+            )?),
             Some(source_value),
         )
     } else {
@@ -1125,7 +1161,11 @@ fn matching_quad_groups<'rows>(
 ) -> Result<Vec<&'rows LedgerRow>, PipelineError> {
     rows.iter()
         .filter(|row| row.kind == "quad_group")
-        .filter_map(|row| match clean_identity(&row.name) {
+        .filter_map(|row| match clean_row_identity(
+            &row.name,
+            row,
+            "quad-group ledger identity",
+        ) {
             Ok(name) if name == expected => Some(Ok(row)),
             Ok(_) => None,
             Err(error) => Some(Err(error)),
