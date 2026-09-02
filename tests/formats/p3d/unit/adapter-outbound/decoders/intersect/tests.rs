@@ -141,7 +141,8 @@ fn intersect_dsg_decodes_arrays_and_children() -> Result<(), String> {
 
 #[test]
 fn intersect_dsg_rejects_missing_required_sphere() -> Result<(), String> {
-    let fixture = require(intersect_fixture(), "intersect fixture should build")?;
+    let fixture =
+        require(intersect_fixture(), "intersect fixture should build")?;
     let (_, header_size, total_size) = require(
         chunk_bounds(&fixture),
         "intersect fixture bounds should decode",
@@ -156,7 +157,8 @@ fn intersect_dsg_rejects_missing_required_sphere() -> Result<(), String> {
         .ok_or_else(|| String::from("fixture sphere should exist"))?;
     let mut malformed = fixture;
     let _removed = malformed.drain(sphere.offset..sphere.end()).count();
-    let total = u32::try_from(malformed.len()).map_err(|error| error.to_string())?;
+    let total = u32::try_from(malformed.len())
+        .map_err(|error| error.to_string())?;
     require(
         malformed.get_mut(8..12),
         "fixture total-size field should exist",
@@ -165,9 +167,7 @@ fn intersect_dsg_rejects_missing_required_sphere() -> Result<(), String> {
     if dsg_json(&malformed).is_none() {
         Ok(())
     } else {
-        Err(String::from(
-            "missing intersect sphere should fail closed",
-        ))
+        Err(String::from("missing intersect sphere should fail closed"))
     }
 }
 
