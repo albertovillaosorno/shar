@@ -44,7 +44,9 @@ use shar_sha256::digest_hex;
 
 use super::super::extraction::relative_art_root;
 use super::super::inventory_common::portable_asset_name;
-use super::super::material::canonicalize_world_static_materials;
+use super::super::material::{
+    WorldMeshSourceCoordinate, canonicalize_world_static_materials,
+};
 use super::super::model::TextureRecord;
 use super::super::prepared::PreparedTexture;
 use super::super::texture_authority::SharedTextureAuthority;
@@ -744,12 +746,20 @@ fn append_package(
     package_record.coordinate_reference = coordinates.uses_reference;
     package_record.discarded_degenerate_triangles =
         discarded_degenerate_triangles;
+    let mesh_source_coordinates = sources
+        .iter()
+        .map(|source| WorldMeshSourceCoordinate {
+            member_id: &source.member_id,
+            source_ordinal: source.ordinal,
+        })
+        .collect::<Vec<_>>();
     let (materials, textures) = canonicalize_world_static_materials(
         &mut meshes,
         &package_root,
         &package_scratch,
         append_context.authority,
         Some(package),
+        Some(&mesh_source_coordinates),
         &package.subcategory,
     )?;
     merge_materials(&mut package_content.materials, materials)?;
