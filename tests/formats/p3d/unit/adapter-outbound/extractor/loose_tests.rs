@@ -908,6 +908,108 @@ fn attribute_table_rejects_unobserved_source_shapes() -> Result<(), String> {
     Ok(())
 }
 
+fn empty_chunk(id: u32) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    push_u32(&mut bytes, id);
+    push_u32(&mut bytes, 12);
+    push_u32(&mut bytes, 12);
+    bytes
+}
+
+fn lens_flare_fixture(
+    version: u32,
+    declared_quads: u32,
+    quad_groups: usize,
+) -> Result<(Vec<u8>, usize), String> {
+    const LENS_FLARE: u32 = 0x03f0_000d;
+    const QUAD_GROUP: u32 = 0x0001_7002;
+    const MESH: u32 = 0x0001_0000;
+    const COMPOSITE_DRAWABLE: u32 = 0x0000_4512;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "flare")?;
+    push_u32(&mut fields, version);
+    push_u32(&mut fields, declared_quads);
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("lens flare header overflowed"))?;
+    let mut children = Vec::new();
+    for _ in 0..quad_groups {
+        children.extend_from_slice(&empty_chunk(QUAD_GROUP));
+    }
+    children.extend_from_slice(&empty_chunk(MESH));
+    children.extend_from_slice(&empty_chunk(COMPOSITE_DRAWABLE));
+    let total_size = header_size
+        .checked_add(children.len())
+        .ok_or_else(|| String::from("lens flare total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, LENS_FLARE);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    source.extend_from_slice(&children);
+    Ok((source, header_size))
+}
+
+fn lens_flare_component(header_size: usize, total_size: usize) -> ChunkRecord {
+    ChunkRecord {
+        ordinal: 7,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x03f0_000d,
+        kind: crate::ChunkKind::SrrLensFlareDsg,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: total_size.saturating_sub(header_size),
+        child_count: 5,
+    }
+}
+
+#[test]
+fn lens_flare_validates_declared_quad_groups() -> Result<(), String> {
+    let (source, header_size) = lens_flare_fixture(0, 3, 3)?;
+    let recovered = auxiliary::recover_lens_flare_json(
+        &lens_flare_component(header_size, source.len()),
+        &source,
+        1,
+    )
+    .ok_or_else(|| String::from("lens flare fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["version"] == 0 && value["num_billboard_quads"] == 3 {
+        Ok(())
+    } else {
+        Err(String::from("lens flare source counts were discarded"))
+    }
+}
+
+#[test]
+fn lens_flare_rejects_unobserved_source_shapes() -> Result<(), String> {
+    for (version, declared, physical) in [(1, 3, 3), (0, 4, 3)] {
+        let (source, header_size) =
+            lens_flare_fixture(version, declared, physical)?;
+        if auxiliary::recover_lens_flare_json(
+            &lens_flare_component(header_size, source.len()),
+            &source,
+            1,
+        )
+        .is_some()
+        {
+            return Err(String::from(
+                "unobserved lens flare source shape should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn billboard_quad_fixture(
     display_version: u32,
 ) -> Result<(Vec<u8>, usize), String> {
