@@ -187,6 +187,55 @@ fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn srr_locator_fixture(
+    declared_triggers: u32,
+) -> Result<(Vec<u8>, usize), String> {
+    const LOCATOR: u32 = 0x0300_0005;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "locator")?;
+    push_u32(&mut fields, 2);
+    push_u32(&mut fields, 0);
+    for value in [0_f32, 0., 0.] {
+        push_f32(&mut fields, value);
+    }
+    push_u32(&mut fields, declared_triggers);
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("locator fixture overflowed"))?;
+    let header_u32 =
+        u32::try_from(header_size).map_err(|error| error.to_string())?;
+    let mut source = Vec::new();
+    push_u32(&mut source, LOCATOR);
+    push_u32(&mut source, header_u32);
+    push_u32(&mut source, header_u32);
+    source.extend_from_slice(&fields);
+    Ok((source, header_size))
+}
+
+#[test]
+fn srr_locator_rejects_declared_trigger_count_drift() -> Result<(), String> {
+    let (source, header_size) = srr_locator_fixture(1)?;
+    let component = ChunkRecord {
+        ordinal: 7,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_0005,
+        kind: crate::ChunkKind::SrrLocator,
+        offset: 0,
+        header_size,
+        total_size: source.len(),
+        payload_offset: header_size,
+        payload_size: 0,
+        child_count: 0,
+    };
+    if render::recover_srr_locator_json(&component, &source, 1).is_some() {
+        return Err(String::from(
+            "locator recovery replaced the authored trigger count",
+        ));
+    }
+    Ok(())
+}
+
 fn billboard_quad_fixture(
     display_version: u32,
 ) -> Result<(Vec<u8>, usize), String> {

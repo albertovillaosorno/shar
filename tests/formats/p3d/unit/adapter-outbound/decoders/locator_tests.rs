@@ -236,6 +236,8 @@ fn interior_and_static_camera_payloads_preserve_structured_fields()
 
 #[test]
 fn invalid_or_undeclared_locator_payloads_fail_closed() {
+    assert!(data_interpretation_json(6, &[], 2).is_none());
+    assert!(data_interpretation_json(6, &[0, 1], 2).is_none());
     assert!(data_interpretation_json(8, &[0; 8], 0,).is_none());
     assert!(data_interpretation_json(9, &[0; 4], 0,).is_none());
     assert!(data_interpretation_json(16, &[], 0,).is_none());
