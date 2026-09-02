@@ -95,9 +95,12 @@ pub(crate) fn mesh_json_with_source_ordinals(
     chunk: &[u8],
     source_ordinals: Option<&[usize]>,
 ) -> Option<String> {
-    let (name, version, prim_start, prim_end) =
+    let (name, version, declared_groups, prim_start, prim_end) =
         read_container_header(chunk, false)?;
     let body = decode_children(chunk, prim_start, prim_end, source_ordinals)?;
+    if body.groups.len() != usize::try_from(declared_groups).ok()? {
+        return None;
+    }
     Some(format!(
         "{{\"schema\":\"mesh\",\"name\":\"{}\",\"version\":{},\"\
              num_prim_groups\":{},\"prim_groups\":[{}]{}}}\n",
@@ -119,9 +122,12 @@ pub(crate) fn skin_json_with_source_ordinals(
     chunk: &[u8],
     source_ordinals: Option<&[usize]>,
 ) -> Option<String> {
-    let (name, version, skeleton, prim_start, prim_end) =
+    let (name, version, skeleton, declared_groups, prim_start, prim_end) =
         read_skin_header(chunk)?;
     let body = decode_children(chunk, prim_start, prim_end, source_ordinals)?;
+    if body.groups.len() != usize::try_from(declared_groups).ok()? {
+        return None;
+    }
     Some(format!(
         "{{\"schema\":\"skin\",\"name\":\"{}\",\"version\":{},\"\
              skeleton_name\":\"{}\",\"num_prim_groups\":{},\"prim_groups\":\
@@ -135,12 +141,12 @@ pub(crate) fn skin_json_with_source_ordinals(
     ))
 }
 
-/// Parse a mesh container header, returning `(name, version, child_start,
-/// child_end)` where the child region holds the primitive groups.
+/// Parse a mesh container header, returning its declared source contract and
+/// child region.
 fn read_container_header(
     chunk: &[u8],
     _skin: bool,
-) -> Option<(String, u32, usize, usize)> {
+) -> Option<(String, u32, u32, usize, usize)> {
     let header_size = super::reader::read_u32(chunk, 4)? as usize;
     let total_size = super::reader::read_u32(chunk, 8)? as usize;
     if header_size < 12 || total_size < header_size || total_size > chunk.len()
@@ -150,15 +156,14 @@ fn read_container_header(
     let mut reader = Reader::new(chunk, 12);
     let name = reader.pstring()?;
     let version = reader.u32()?;
-    // The remaining header field (num_prim_groups) is redundant with the
-    // actual child count, which we enumerate directly.
-    Some((name, version, header_size, total_size))
+    let declared_groups = reader.u32()?;
+    Some((name, version, declared_groups, header_size, total_size))
 }
 
 /// Read skin header.
 fn read_skin_header(
     chunk: &[u8],
-) -> Option<(String, u32, String, usize, usize)> {
+) -> Option<(String, u32, String, u32, usize, usize)> {
     let header_size = super::reader::read_u32(chunk, 4)? as usize;
     let total_size = super::reader::read_u32(chunk, 8)? as usize;
     if header_size < 12 || total_size < header_size || total_size > chunk.len()
@@ -169,7 +174,15 @@ fn read_skin_header(
     let name = reader.pstring()?;
     let version = reader.u32()?;
     let skeleton = reader.pstring()?;
-    Some((name, version, skeleton, header_size, total_size))
+    let declared_groups = reader.u32()?;
+    Some((
+        name,
+        version,
+        skeleton,
+        declared_groups,
+        header_size,
+        total_size,
+    ))
 }
 
 /// The decoded content of a mesh/skin child region: the primitive groups plus
