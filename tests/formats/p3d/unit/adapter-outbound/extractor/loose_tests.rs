@@ -258,7 +258,8 @@ fn locator_spline_preserves_control_points_and_rail() -> Result<(), String> {
     );
     source.extend_from_slice(&spline_fields);
     push_u32(&mut source, RAIL);
-    let rail_u32 = u32::try_from(rail_size).map_err(|error| error.to_string())?;
+    let rail_u32 =
+        u32::try_from(rail_size).map_err(|error| error.to_string())?;
     push_u32(&mut source, rail_u32);
     push_u32(&mut source, rail_u32);
     source.extend_from_slice(&rail_fields);
