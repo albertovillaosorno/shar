@@ -160,7 +160,8 @@ hierarchy matrix, and scale matrix in source order.
 
 Package-local reference evidence has an important asymmetry. All 6,768 authored
 road-segment-data references resolve to exactly one physical segment-data record
-in the same package. Road endpoint intersection tokens are not occurrence-unique:
+in the same package. Road endpoint intersection tokens are not
+occurrence-unique:
 1,080 endpoint references match one physical intersection, 427 match two, and 9
 match three. No first, nearest, or ordinal-based intersection occurrence is
 selected from those duplicate logical names.
