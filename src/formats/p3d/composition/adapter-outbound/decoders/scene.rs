@@ -108,41 +108,53 @@ pub fn composite_drawable_json(chunk: &[u8]) -> Option<String> {
     let mut reader = Reader::new(chunk, 12);
     let name = reader.pstring()?;
     let skeleton_name = reader.pstring()?;
-    if reader.pos() > header_size {
+    if reader.pos() != header_size {
         return None;
     }
-    let mut skins = Vec::new();
-    let mut props = Vec::new();
-    let mut effects = Vec::new();
+    let mut skins = None;
+    let mut props = None;
+    let mut effects = None;
     for child in subchunks(chunk, header_size, total_size)? {
         match child.id {
             COMPOSITE_SKIN_LIST => {
-                skins = decode_composite_list(
+                if skins.is_some() {
+                    return None;
+                }
+                skins = Some(decode_composite_list(
                     chunk,
                     &child,
                     COMPOSITE_SKIN,
                     CompositeElementKind::Skin,
-                )?;
+                )?);
             },
             COMPOSITE_PROP_LIST => {
-                props = decode_composite_list(
+                if props.is_some() {
+                    return None;
+                }
+                props = Some(decode_composite_list(
                     chunk,
                     &child,
                     COMPOSITE_PROP,
                     CompositeElementKind::Prop,
-                )?;
+                )?);
             },
             COMPOSITE_EFFECT_LIST => {
-                effects = decode_composite_list(
+                if effects.is_some() {
+                    return None;
+                }
+                effects = Some(decode_composite_list(
                     chunk,
                     &child,
                     COMPOSITE_EFFECT,
                     CompositeElementKind::Effect,
-                )?;
+                )?);
             },
             _ => return None,
         }
     }
+    let skins = skins?;
+    let props = props?;
+    let effects = effects?;
     Some(format!(
         "{{\"schema\":\"composite_drawable\",\"name\":\"{}\",\"\
              skeleton_name\":\"{}\",\"num_skins\":{},\"skins\":[{}],\"\
@@ -456,9 +468,11 @@ fn decode_composite_list(
     expected_child_id: u32,
     kind: CompositeElementKind,
 ) -> Option<Vec<String>> {
-    let count = Reader::new(chunk, list.data_offset())
-        .u32()
-        .and_then(|value| usize::try_from(value).ok())?;
+    let mut reader = Reader::new(chunk, list.data_offset());
+    let count = usize::try_from(reader.u32()?).ok()?;
+    if reader.pos() != list.header_end() {
+        return None;
+    }
     let children = subchunks(chunk, list.header_end(), list.end())?;
     if children.len() != count {
         return None;
@@ -488,7 +502,7 @@ fn decode_composite_element(
             Some(reader.u32()?)
         },
     };
-    if reader.pos() > element.header_end() {
+    if reader.pos() != element.header_end() {
         return None;
     }
     let sort_order = decode_optional_sort_order(
@@ -526,9 +540,6 @@ fn decode_optional_sort_order(
     expected_id: u32,
 ) -> Option<String> {
     let children = subchunks(chunk, start, end)?;
-    if children.is_empty() {
-        return Some(String::new());
-    }
     if children.len() != 1 {
         return None;
     }
