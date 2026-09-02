@@ -883,6 +883,30 @@ The same audit covers 14,518 mesh chunks and 633 skin chunks with zero
 children. Mesh and skin recovery now validate that authored count before
 publication rather than replacing inconsistent source evidence with a recount.
 
+Primitive geometry-list declarations are exact across the same 19,875 raw
+groups. Every group carries exactly one position list whose count matches
+`NumVertices`. The 17,671 groups with nonzero `NumIndices` carry exactly one
+matching index list, while all 2,204 zero-index groups omit that list. No
+position- or index-list duplicates were observed, and fresh extraction now
+rejects missing, duplicate, or contradictory geometry-list evidence.
+
+Every observed per-vertex child list also agrees with `NumVertices`: all 19,875
+UV lists, 14,771 colour lists, 5,104 ordinary-normal lists, 5,104 packed-normal
+lists, 1,462 matrix-index lists, and 764 weight lists. No singleton list family
+is duplicated. All raw UV lists use channel zero; tangent, binormal, and
+multi-colour lists are absent from the current game corpus. Count validation
+keeps schema-defined channel representation separate from downstream target
+policy rather than inferring a broader runtime meaning.
+
+The packed-normal audit also exposed a decoder defect. All 5,104 physical chunks
+use the schema-declared one-byte layout: four bytes for the count followed by
+exactly one byte per normal. The previous decoder widened each entry to `u32`
+and could read through the end of the packed-normal child into a following
+sibling. Primitive-list readers are now bounded to their own child headers and
+packed normals remain exact source bytes; current FBX publication continues to
+use the redundant ordinary-normal evidence rather than assigning semantics to
+the packed representation.
+
 Primitive matrix declarations are equally consistent across those 19,875 raw
 primitive groups: 18,413 declare zero matrices and omit a matrix palette, while
 1,462 declare a nonzero count and carry exactly one palette of that same length.
