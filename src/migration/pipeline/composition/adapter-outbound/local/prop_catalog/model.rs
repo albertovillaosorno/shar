@@ -100,6 +100,8 @@ pub(super) struct DeferredBillboardQuadBinding {
     pub(super) distance_bits: u32,
     /// Exact authored UV-offset bits.
     pub(super) uv_offset_bits: [u32; 2],
+    /// Source schema version of the optional display-info child.
+    pub(super) display_info_version: Option<u32>,
     /// Exact authored display-rotation bits in WXYZ order.
     pub(super) rotation_wxyz_bits: [u32; 4],
     /// Authored display cutoff mode.
@@ -110,6 +112,8 @@ pub(super) struct DeferredBillboardQuadBinding {
     pub(super) source_range_bits: u32,
     /// Exact authored edge-range bits.
     pub(super) edge_range_bits: u32,
+    /// Source schema version of the optional perspective-info child.
+    pub(super) perspective_info_version: Option<u32>,
     /// Authored perspective-scaling flag.
     pub(super) perspective: bool,
 }

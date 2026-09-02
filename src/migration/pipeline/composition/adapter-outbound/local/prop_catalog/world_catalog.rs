@@ -336,11 +336,13 @@ fn deferred_billboard_quad_value(
         "height": f32::from_bits(binding.height_bits),
         "distance": f32::from_bits(binding.distance_bits),
         "uv_offset": binding.uv_offset_bits.map(f32::from_bits),
+        "display_info_version": binding.display_info_version,
         "rotation_wxyz": binding.rotation_wxyz_bits.map(f32::from_bits),
         "cutoff_mode": binding.cutoff_mode,
         "uv_offset_range": binding.uv_offset_range_bits.map(f32::from_bits),
         "source_range": f32::from_bits(binding.source_range_bits),
         "edge_range": f32::from_bits(binding.edge_range_bits),
+        "perspective_info_version": binding.perspective_info_version,
         "perspective": binding.perspective
     })
 }

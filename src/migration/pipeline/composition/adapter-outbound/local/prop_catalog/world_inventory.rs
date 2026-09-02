@@ -979,11 +979,13 @@ fn deferred_billboard_quad_binding(
         height_bits: quad.height.to_bits(),
         distance_bits: quad.distance.to_bits(),
         uv_offset_bits: quad.uv_offset.map(f32::to_bits),
+        display_info_version: quad.display_info_version,
         rotation_wxyz_bits: quad.rotation_wxyz.map(f32::to_bits),
         cutoff_mode: quad.cutoff_mode.clone(),
         uv_offset_range_bits: quad.uv_offset_range.map(f32::to_bits),
         source_range_bits: quad.source_range.to_bits(),
         edge_range_bits: quad.edge_range.to_bits(),
+        perspective_info_version: quad.perspective_info_version,
         perspective: quad.perspective,
     }
 }

@@ -79,6 +79,8 @@ pub struct BillboardQuadEvidence {
     pub distance: f32,
     /// Authored UV offset.
     pub uv_offset: [f32; 2],
+    /// Source schema version of the optional display-info child.
+    pub display_info_version: Option<u32>,
     /// Authored display rotation in WXYZ order.
     pub rotation_wxyz: [f32; 4],
     /// Authored display cutoff mode.
@@ -89,6 +91,8 @@ pub struct BillboardQuadEvidence {
     pub source_range: f32,
     /// Authored edge-fade display range.
     pub edge_range: f32,
+    /// Source schema version of the optional perspective-info child.
+    pub perspective_info_version: Option<u32>,
     /// Whether authored perspective scaling is enabled.
     pub perspective: bool,
 }
@@ -230,11 +234,13 @@ fn billboard_quad_evidence(
         height: quad.height,
         distance: quad.distance,
         uv_offset: quad.uv_offset,
+        display_info_version: quad.display_info_version,
         rotation_wxyz: quad.rotation_wxyz,
         cutoff_mode: quad.cutoff_mode.clone(),
         uv_offset_range: quad.uv_offset_range,
         source_range: quad.source_range,
         edge_range: quad.edge_range,
+        perspective_info_version: quad.perspective_info_version,
         perspective: quad.perspective,
     })
 }
@@ -352,6 +358,8 @@ struct QuadDocument {
     distance: f32,
     /// Authored UV translation.
     uv_offset: [f32; 2],
+    /// Source schema version of the optional display-info child.
+    display_info_version: Option<u32>,
     /// Authored display rotation in WXYZ order.
     rotation_wxyz: [f32; 4],
     /// Authored source display cutoff mode.
@@ -362,6 +370,8 @@ struct QuadDocument {
     source_range: f32,
     /// Authored source edge-fade range.
     edge_range: f32,
+    /// Source schema version of the optional perspective-info child.
+    perspective_info_version: Option<u32>,
     /// Authored source perspective-scaling flag.
     perspective: bool,
 }

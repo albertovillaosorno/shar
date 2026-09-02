@@ -187,6 +187,109 @@ fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn billboard_quad_fixture(
+    display_version: u32,
+) -> Result<(Vec<u8>, usize), String> {
+    const QUAD: u32 = 0x0001_7001;
+    const DISPLAY_INFO: u32 = 0x0001_7003;
+    const PERSPECTIVE_INFO: u32 = 0x0001_7004;
+
+    let mut fields = Vec::new();
+    push_u32(&mut fields, 2);
+    push_pascal(&mut fields, "quad")?;
+    fields.extend_from_slice(b"NOAX");
+    for value in [0_f32, 0., 0.] {
+        push_f32(&mut fields, value);
+    }
+    push_u32(&mut fields, u32::MAX);
+    for value in [0_f32, 0., 1., 0., 1., 1., 0., 1.] {
+        push_f32(&mut fields, value);
+    }
+    for value in [1_f32, 1., 0., 0., 0.] {
+        push_f32(&mut fields, value);
+    }
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("billboard-quad header overflowed"))?;
+
+    let mut display = Vec::new();
+    push_u32(&mut display, display_version);
+    for value in [1_f32, 0., 0., 0.] {
+        push_f32(&mut display, value);
+    }
+    display.extend_from_slice(b"N0NE");
+    for value in [0_f32, 0., 0., 0.] {
+        push_f32(&mut display, value);
+    }
+    let display_size = 12_usize
+        .checked_add(display.len())
+        .ok_or_else(|| String::from("billboard-display fixture overflowed"))?;
+
+    let mut perspective = Vec::new();
+    push_u32(&mut perspective, 0);
+    push_u32(&mut perspective, 1);
+    let perspective_size = 12_usize
+        .checked_add(perspective.len())
+        .ok_or_else(|| String::from("billboard perspective overflow"))?;
+
+    let total_size = header_size
+        .checked_add(display_size)
+        .and_then(|value| value.checked_add(perspective_size))
+        .ok_or_else(|| String::from("billboard-quad fixture overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, QUAD);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    push_u32(&mut source, DISPLAY_INFO);
+    push_u32(
+        &mut source,
+        u32::try_from(display_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(display_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&display);
+    push_u32(&mut source, PERSPECTIVE_INFO);
+    push_u32(
+        &mut source,
+        u32::try_from(perspective_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(perspective_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&perspective);
+    Ok((source, header_size))
+}
+
+#[test]
+fn billboard_quad_preserves_child_schema_versions() -> Result<(), String> {
+    let (source, header_size) = billboard_quad_fixture(1)?;
+    let json =
+        auxiliary::billboard_quad_json(&source, header_size, source.len())
+            .ok_or_else(|| {
+                String::from("billboard quad fixture should decode")
+            })?;
+    let value: serde_json::Value =
+        serde_json::from_str(&json).map_err(|error| error.to_string())?;
+    if value.get("display_info_version") != Some(&serde_json::json!(1))
+        || value.get("perspective_info_version") != Some(&serde_json::json!(0))
+    {
+        return Err(String::from(
+            "billboard child schema versions were not preserved",
+        ));
+    }
+    Ok(())
+}
+
 fn billboard_group_fixture(declared_quads: u32) -> Result<Vec<u8>, String> {
     const QUAD_GROUP: u32 = 0x0001_7002;
     let mut fields = Vec::new();

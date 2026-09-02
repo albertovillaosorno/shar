@@ -294,11 +294,13 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
                 height_bits: 4.5_f32.to_bits(),
                 distance_bits: (-0.35_f32).to_bits(),
                 uv_offset_bits: [0.25_f32, -0.5].map(f32::to_bits),
+                display_info_version: Some(1),
                 rotation_wxyz_bits: [1_f32, 0., 0., 0.].map(f32::to_bits),
                 cutoff_mode: "DBL".to_owned(),
                 uv_offset_range_bits: [0.5_f32, 0.75].map(f32::to_bits),
                 source_range_bits: 1.25_f32.to_bits(),
                 edge_range_bits: 0.625_f32.to_bits(),
+                perspective_info_version: Some(0),
                 perspective: false,
             }],
         }),
@@ -484,7 +486,9 @@ fn deferred_binding_serialization_keeps_exact_source_relationship(
         quad.get("distance").and_then(serde_json::Value::as_f64),
         Some(f64::from(-0.35_f32))
     );
+    assert_eq!(quad.get("display_info_version"), Some(&1.into()));
     assert_eq!(quad.get("cutoff_mode"), Some(&"DBL".into()));
+    assert_eq!(quad.get("perspective_info_version"), Some(&0.into()));
     assert_eq!(quad.get("perspective"), Some(&false.into()));
     let controller = value
         .get("controller")
