@@ -240,7 +240,6 @@ fn resolve_source_material(
     source: &DecodedComponentSource,
     shader: &str,
     consumer_provenance: Option<&ShaderConsumerProvenance>,
-    scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
     package: Option<&PhaseThreePackageRow>,
     source_subcategory: &str,
@@ -248,9 +247,7 @@ fn resolve_source_material(
     match source.resolve_material(shader) {
         Ok(binding) => Ok(binding),
         Err(DecodedComponentError::MissingTexture {
-            shader: material_name,
-            texture,
-            searched,
+            texture, searched, ..
         }) if authority.is_some() => {
             let external = authority
                 .ok_or_else(|| {
@@ -266,32 +263,13 @@ fn resolve_source_material(
                         shader, texture, searched
                     ))
                 })?;
-            let file_name = external
-                .file_name()
-                .and_then(|value| value.to_str())
-                .ok_or_else(|| {
-                    PipelineError::new(format!(
-                        "shared prop texture has no UTF-8 file name: \
-                                 {}",
-                        external.display()
-                    ))
-                })?
-                .to_owned();
-            let _copied_bytes = fs::copy(external, scratch.join(&file_name))
+            source
+                .resolve_material_with_external_texture(shader, external)
                 .map_err(|error| {
-                    PipelineError::new(format!(
-                        "shared prop texture staging failed for {}: \
-                             {error}",
-                        external.display()
-                    ))
-                })?;
-            MaterialBinding::new(material_name, Some(file_name)).map_err(
-                |error| {
                     PipelineError::new(format!(
                         "shared prop material failed: {error:?}"
                     ))
-                },
-            )
+                })
         },
         Err(error) => Err(material_resolution_error(
             shader,
@@ -474,7 +452,6 @@ fn resolve_materials(
             &source,
             &shader,
             shader_sources.get(&shader),
-            scratch,
             authority,
             package,
             source_subcategory,
