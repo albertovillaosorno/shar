@@ -166,6 +166,26 @@ occurrence-unique:
 match three. No first, nearest, or ordinal-based intersection occurrence is
 selected from those duplicate logical names.
 
+Adjacent world-network evidence is equally bounded. The corpus contains 605
+pedestrian paths with five through 23 finite authored points; every path is
+childless and exact-header, and no `PED_PATH_SEGMENT` chunk is observed. It also
+contains 175 exact 40-byte follow-camera records with finite camera values; their
+widely varying IDs remain verbatim source data rather than an inferred enum.
+
+The one attribute table has 63 exact childless rows and 189 finite physical
+property floats. Values reach 9999, so recovery preserves those authored
+magnitudes rather than imposing guessed physics ranges. All nine lens flares are
+version 0: seven declare and contain three billboard quad groups and two declare
+and contain four, followed in every case by exactly one mesh and one composite
+drawable.
+
+All 207 breakable objects have exact 20-byte headers and only schema-declared
+direct child families. `BreakableType` and `MaxInstances` remain uninterpreted
+because no child-count equation is source-proven. The 16 chunk sets are all
+version 0; their declared counts exactly cover 257 direct children, every one a
+texture. The decoder therefore no longer widens chunk-set membership to mesh or
+skin children that are absent from both schema and current source.
+
 Deferred world billboard controller relationships now retain their exact BQG
 animation member identity and source ordinal instead of losing the animation
 edge when model FBX publication omits billboard runtime semantics. This is
