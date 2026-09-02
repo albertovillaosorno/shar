@@ -578,9 +578,10 @@ fn chunk_set_decodes_texture_membership() -> Result<(), String> {
 fn chunk_set_rejects_unobserved_version() -> Result<(), String> {
     let mut fixture =
         require(chunk_set_fixture(), "chunk-set fixture should build")?;
-    let name_length = usize::from(*fixture.get(12).ok_or_else(|| {
-        String::from("chunk-set name length should exist")
-    })?);
+    let name_length =
+        usize::from(*fixture.get(12).ok_or_else(|| {
+            String::from("chunk-set name length should exist")
+        })?);
     let version_offset = 13_usize
         .checked_add(name_length)
         .ok_or_else(|| String::from("chunk-set version offset overflowed"))?;
