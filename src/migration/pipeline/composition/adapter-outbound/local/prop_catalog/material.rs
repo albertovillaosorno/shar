@@ -45,6 +45,7 @@ use shar_sha256::digest_hex;
 
 use super::prepared::PreparedTexture;
 use super::texture_authority::SharedTextureAuthority;
+use crate::domain::package::{PackageRole, PhaseThreePackageRow};
 use crate::domain::PipelineError;
 
 /// Canonicalize static mesh shaders and return deduplicated bindings/payloads.
@@ -57,6 +58,7 @@ pub(super) fn canonicalize_static_materials(
         meshes,
         package_root,
         scratch,
+        None,
         None,
         "",
     )
@@ -72,6 +74,7 @@ pub(super) fn canonicalize_world_static_materials(
     package_root: &Path,
     scratch: &Path,
     authority: &SharedTextureAuthority,
+    package: Option<&PhaseThreePackageRow>,
     source_subcategory: &str,
 ) -> Result<(Vec<MaterialBinding>, Vec<PreparedTexture>), PipelineError> {
     canonicalize_static_materials_with_authority(
@@ -79,6 +82,7 @@ pub(super) fn canonicalize_world_static_materials(
         package_root,
         scratch,
         Some(authority),
+        package,
         source_subcategory,
     )
 }
@@ -93,6 +97,7 @@ fn canonicalize_static_materials_with_authority(
     package_root: &Path,
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
+    package: Option<&PhaseThreePackageRow>,
     source_subcategory: &str,
 ) -> Result<(Vec<MaterialBinding>, Vec<PreparedTexture>), PipelineError> {
     let shader_sources = shader_source_ordinals(
@@ -105,6 +110,7 @@ fn canonicalize_static_materials_with_authority(
         package_root,
         scratch,
         authority,
+        package,
         source_subcategory,
     )?;
     for group in meshes.iter_mut().flat_map(|mesh| mesh.groups.iter_mut()) {
@@ -179,6 +185,7 @@ fn canonicalize_animated_materials_with_authority(
         package_root,
         scratch,
         authority,
+        None,
         source_subcategory,
     )?;
     for group in asset
@@ -210,6 +217,7 @@ fn resolve_source_material(
     source_ordinals: Option<&BTreeSet<usize>>,
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
+    package: Option<&PhaseThreePackageRow>,
     source_subcategory: &str,
 ) -> Result<MaterialBinding, PipelineError> {
     match source.resolve_material(shader) {
@@ -275,6 +283,7 @@ fn resolve_source_material(
             shader,
             source_ordinals,
             &error,
+            package,
         )),
     }
 }
@@ -298,17 +307,58 @@ fn material_resolution_error(
     shader: &str,
     source_ordinals: Option<&BTreeSet<usize>>,
     error: &DecodedComponentError,
+    package: Option<&PhaseThreePackageRow>,
 ) -> PipelineError {
     if matches!(error, DecodedComponentError::AmbiguousShaderMember { .. })
         && let Some(ordinals) = source_ordinals
         && !ordinals.is_empty()
     {
+        if let Some(member_ids) = package.and_then(|package| {
+            ambiguous_shader_package_member_ids(package, error)
+        }) {
+            return PipelineError::new(format!(
+                concat!(
+                    "prop material {} used by primitive-group source ",
+                    "ordinals {:?} failed: {:?}; phase-three material ",
+                    "members {:?}"
+                ),
+                shader, ordinals, error, member_ids
+            ));
+        }
         return PipelineError::new(format!(
             "prop material {shader} used by primitive-group source ordinals \
              {ordinals:?} failed: {error:?}"
         ));
     }
     PipelineError::new(format!("prop material {shader} failed: {error:?}"))
+}
+
+/// Resolve every ambiguous shader occurrence to a stable phase-three member.
+fn ambiguous_shader_package_member_ids(
+    package: &PhaseThreePackageRow,
+    error: &DecodedComponentError,
+) -> Option<Vec<String>> {
+    let DecodedComponentError::AmbiguousShaderMember { occurrences, .. } = error
+    else {
+        return None;
+    };
+    let mut member_ids = Vec::with_capacity(occurrences.len());
+    for occurrence in occurrences {
+        let source_ordinal = occurrence.source_ordinal?;
+        let path = format!(
+            "{}/components/shader/{}",
+            package.package_root, occurrence.member
+        );
+        let member = package
+            .find_member_by_source_coordinate(&path, source_ordinal)
+            .filter(|member| {
+                member.role == PackageRole::Material
+                    && member.kind == "p3d-shader"
+                    && member.source_chunk_kind == "shader"
+            })?;
+        member_ids.push(member.id.clone());
+    }
+    Some(member_ids)
 }
 
 /// Return whether one missing shader has proven neutral analysis evidence.
@@ -337,6 +387,7 @@ fn resolve_materials(
     package_root: &Path,
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
+    package: Option<&PhaseThreePackageRow>,
     source_subcategory: &str,
 ) -> Result<MaterialPlan, PipelineError> {
     fs::create_dir_all(scratch).map_err(|error| {
@@ -355,6 +406,7 @@ fn resolve_materials(
             shader_sources.get(&shader),
             scratch,
             authority,
+            package,
             source_subcategory,
         )?;
         let source_semantics = binding.semantics;
