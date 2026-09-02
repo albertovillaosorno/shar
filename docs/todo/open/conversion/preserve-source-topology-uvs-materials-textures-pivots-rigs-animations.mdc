@@ -144,6 +144,27 @@ nested rail record. Fresh extraction retains those spline and rail fields as
 source evidence rather than dropping the child structure or interpreting camera
 behavior.
 
+Trigger-volume authority is also complete for the current raw corpus. All 3,947
+trigger-volume chunks are childless exact-header records; 1,213 use type 0 and
+2,734 use type 1, with no other type values. Every authored scale and matrix
+float is finite. Fresh extraction now rejects unobserved types, non-finite
+values, trailing header bytes, and child payloads rather than normalizing them.
+
+Road topology recovery now retains the physical road-segment layer that was
+previously discarded. The corpus contains 758 roads with 6,768 direct
+road-segment children, 6,507 road-segment-data records, and 443 intersections.
+Every header is exact, every road child is a road segment, every road segment is
+childless, and all segment matrices plus segment-data and intersection geometry
+are finite. Recovered roads preserve each segment name, segment-data reference,
+hierarchy matrix, and scale matrix in source order.
+
+Package-local reference evidence has an important asymmetry. All 6,768 authored
+road-segment-data references resolve to exactly one physical segment-data record
+in the same package. Road endpoint intersection tokens are not occurrence-unique:
+1,080 endpoint references match one physical intersection, 427 match two, and 9
+match three. No first, nearest, or ordinal-based intersection occurrence is
+selected from those duplicate logical names.
+
 Deferred world billboard controller relationships now retain their exact BQG
 animation member identity and source ordinal instead of losing the animation
 edge when model FBX publication omits billboard runtime semantics. This is
