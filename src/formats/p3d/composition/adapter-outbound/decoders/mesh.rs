@@ -376,7 +376,9 @@ impl PrimitiveLists {
         let field = match id {
             POSITIONLIST => {
                 let (json, count) = float3_list(chunk, base)?;
-                self.positions = Some(count);
+                if self.positions.replace(count).is_some() {
+                    return None;
+                }
                 Some(format!("\"positions\":{json}"))
             },
             NORMALLIST => {
@@ -422,7 +424,9 @@ impl PrimitiveLists {
             },
             INDEXLIST => {
                 let (json, count) = u32_list(chunk, base)?;
-                self.indices = Some(count);
+                if self.indices.replace(count).is_some() {
+                    return None;
+                }
                 Some(format!("\"indices\":{json}"))
             },
             MATRIXLIST => {
@@ -468,8 +472,10 @@ impl PrimitiveLists {
                 Some(count) == matrix_count
             });
         self.positions
-            .is_none_or(|count| Some(count) == vertex_count)
-            && self.indices.is_none_or(|count| Some(count) == index_count)
+            .is_some_and(|count| Some(count) == vertex_count)
+            && self.indices.map_or(header.index_count == 0, |count| {
+                header.index_count != 0 && Some(count) == index_count
+            })
             && matrix_count_matches
     }
 

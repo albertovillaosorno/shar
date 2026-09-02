@@ -608,20 +608,78 @@ fn primitive_group_mesh_fixture_with_contract(
     declared_groups: u32,
     matrix_count: u32,
 ) -> Result<(Vec<u8>, usize, usize), String> {
+    primitive_group_mesh_fixture_with_lists(
+        primitive_version,
+        declared_groups,
+        matrix_count,
+        1,
+        0,
+        0,
+    )
+}
+
+fn primitive_group_mesh_fixture_with_lists(
+    primitive_version: u32,
+    declared_groups: u32,
+    matrix_count: u32,
+    position_copies: usize,
+    index_count: u32,
+    index_copies: usize,
+) -> Result<(Vec<u8>, usize, usize), String> {
     const MESH: u32 = 0x0001_0000;
     const PRIMITIVE_GROUP: u32 = 0x0001_0002;
+    const POSITION_LIST: u32 = 0x0001_0005;
+    const INDEX_LIST: u32 = 0x0001_000a;
 
     let mut group_fields = Vec::new();
     push_u32(&mut group_fields, primitive_version);
     push_pascal(&mut group_fields, "shader")?;
-    for value in [0, 0, 0, 0, matrix_count] {
+    for value in [0, 0, 1, index_count, matrix_count] {
         push_u32(&mut group_fields, value);
     }
-    let group_size = 12_usize
+    let group_header = 12_usize
         .checked_add(group_fields.len())
         .ok_or_else(|| String::from("primitive-group fixture overflowed"))?;
-    let group_size_u32 = u32::try_from(group_size).map_err(|error| {
-        format!("primitive-group size exceeds u32: {error}")
+
+    let mut group_children = Vec::new();
+    for _ in 0..position_copies {
+        let mut payload = Vec::new();
+        push_u32(&mut payload, 1);
+        for value in [0_f32, 0., 0.] {
+            push_f32(&mut payload, value);
+        }
+        let size = 12_usize
+            .checked_add(payload.len())
+            .ok_or_else(|| String::from("position-list fixture overflowed"))?;
+        let size = u32::try_from(size).map_err(|error| error.to_string())?;
+        push_u32(&mut group_children, POSITION_LIST);
+        push_u32(&mut group_children, size);
+        push_u32(&mut group_children, size);
+        group_children.extend_from_slice(&payload);
+    }
+    for _ in 0..index_copies {
+        let mut payload = Vec::new();
+        push_u32(&mut payload, index_count);
+        for _ in 0..index_count {
+            push_u32(&mut payload, 0);
+        }
+        let size = 12_usize
+            .checked_add(payload.len())
+            .ok_or_else(|| String::from("index-list fixture overflowed"))?;
+        let size = u32::try_from(size).map_err(|error| error.to_string())?;
+        push_u32(&mut group_children, INDEX_LIST);
+        push_u32(&mut group_children, size);
+        push_u32(&mut group_children, size);
+        group_children.extend_from_slice(&payload);
+    }
+    let group_total = group_header
+        .checked_add(group_children.len())
+        .ok_or_else(|| String::from("primitive-group total overflowed"))?;
+    let group_header_u32 = u32::try_from(group_header).map_err(|error| {
+        format!("primitive-group header exceeds u32: {error}")
+    })?;
+    let group_total_u32 = u32::try_from(group_total).map_err(|error| {
+        format!("primitive-group total exceeds u32: {error}")
     })?;
 
     let mut mesh_fields = Vec::new();
@@ -632,7 +690,7 @@ fn primitive_group_mesh_fixture_with_contract(
         .checked_add(mesh_fields.len())
         .ok_or_else(|| String::from("mesh fixture header overflowed"))?;
     let mesh_total = mesh_header
-        .checked_add(group_size)
+        .checked_add(group_total)
         .ok_or_else(|| String::from("mesh fixture total overflowed"))?;
     let mesh_header_u32 = u32::try_from(mesh_header)
         .map_err(|error| format!("mesh header exceeds u32: {error}"))?;
@@ -645,10 +703,11 @@ fn primitive_group_mesh_fixture_with_contract(
     push_u32(&mut source, mesh_total_u32);
     source.extend_from_slice(&mesh_fields);
     push_u32(&mut source, PRIMITIVE_GROUP);
-    push_u32(&mut source, group_size_u32);
-    push_u32(&mut source, group_size_u32);
+    push_u32(&mut source, group_header_u32);
+    push_u32(&mut source, group_total_u32);
     source.extend_from_slice(&group_fields);
-    Ok((source, mesh_header, group_size))
+    source.extend_from_slice(&group_children);
+    Ok((source, mesh_header, group_header))
 }
 
 fn primitive_group_mesh_record(
@@ -683,10 +742,13 @@ fn mesh_recovery_retains_primitive_group_source_ordinal() -> Result<(), String>
         kind: crate::ChunkKind::Unknown,
         offset: mesh_header,
         header_size: group_size,
-        total_size: group_size,
+        total_size: source.len().saturating_sub(mesh_header),
         payload_offset: mesh_header.saturating_add(group_size),
-        payload_size: 0,
-        child_count: 0,
+        payload_size: source
+            .len()
+            .saturating_sub(mesh_header)
+            .saturating_sub(group_size),
+        child_count: 1,
     };
     let chunks = [component, group];
     let recovered = recover_component_with_chunk_table(
@@ -715,6 +777,72 @@ fn mesh_recovery_rejects_declared_primitive_group_count_drift()
     if render::recover_mesh_json(&component, &source, 1, None).is_some() {
         return Err(String::from(
             "mesh recovery replaced the authored primitive-group count",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_missing_declared_position_list() -> Result<(), String>
+{
+    let (source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture_with_lists(0, 1, 0, 0, 0, 0)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted a missing declared position list",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_duplicate_position_lists() -> Result<(), String> {
+    let (source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture_with_lists(0, 1, 0, 2, 0, 0)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted duplicate position lists",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_missing_declared_index_list() -> Result<(), String> {
+    let (source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture_with_lists(0, 1, 0, 1, 3, 0)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted a missing declared index list",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_duplicate_index_lists() -> Result<(), String> {
+    let (source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture_with_lists(0, 1, 0, 1, 3, 2)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted duplicate index lists",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_zero_count_index_list() -> Result<(), String> {
+    let (source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture_with_lists(0, 1, 0, 1, 0, 1)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted an unobserved zero-count index list",
         ));
     }
     Ok(())
