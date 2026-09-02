@@ -558,6 +558,42 @@ fn rejects_ambiguous_texture_ledger_even_when_direct_member_exists() {
 }
 
 #[test]
+fn rejects_cross_identity_external_texture_alias() {
+    let root = temp_root("external-texture-identity");
+    let shader_dir = root.join("package").join("components").join("shader");
+    let shared_dir = root.join("shared");
+    let output_dir = root.join("output");
+    let external_texture = shared_dir.join("char_swatches_lit.png");
+    let setup_result = fs::create_dir_all(&shader_dir)
+        .and_then(|()| fs::create_dir_all(&shared_dir))
+        .and_then(|()| {
+            fs::write(
+                shader_dir.join("swatch.json"),
+                concat!(
+                    r#"{"name":"swatch","params":[{"kind":"texture","#,
+                    r#""param":"TEX","value":"char_swatches.bmp"}]}"#
+                ),
+            )
+        })
+        .and_then(|()| fs::write(&external_texture, b"synthetic-png"));
+    assert!(setup_result.is_ok());
+    let source = DecodedComponentSource::new(root.join("package"), &output_dir);
+
+    let result = source
+        .resolve_material_with_external_texture("swatch", &external_texture);
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    assert_eq!(
+        result,
+        Err(DecodedComponentError::ExternalTextureMismatch {
+            expected: "char_swatches.png".to_owned(),
+            found: "char_swatches_lit.png".to_owned(),
+        })
+    );
+    assert!(cleanup_result.is_ok());
+}
+
+#[test]
 fn rejects_space_padded_texture_ledger_identity() {
     let root = temp_root("ledger-texture-space-padding");
     let package = root.join("package");

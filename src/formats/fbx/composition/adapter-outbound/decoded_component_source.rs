@@ -862,9 +862,7 @@ fn resolve_material_document(
                     external_source.display().to_string(),
                 )
             })?;
-        let accepted_alias = expected_file_name == "char_swatches.png"
-            && external_file_name == "char_swatches_lit.png";
-        if external_file_name != expected_file_name && !accepted_alias {
+        if external_file_name != expected_file_name {
             return Err(DecodedComponentError::ExternalTextureMismatch {
                 expected: expected_file_name,
                 found: external_file_name.to_owned(),

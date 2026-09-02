@@ -40,7 +40,7 @@ use super::{
     animation_subcategory_candidates, classify_members,
     deferred_material_identity, fbx_io_error,
     normalized_texture_png_file_name, order_character_mesh_members,
-    ordered_shader_names, shared_eye_frame_paths,
+    ordered_shader_names, resolve_shared_texture_member, shared_eye_frame_paths,
     single_package_staging_path,
 };
 
@@ -66,6 +66,53 @@ fn normalizes_trailing_nul_padded_texture_reference() {
         "fixed-width texture padding should normalize: {result:?}"
     );
     assert_eq!(result.ok().as_deref(), Some("char_swatches_lit.png"));
+}
+
+#[test]
+fn shared_texture_member_requires_exact_source_identity()
+-> Result<(), String> {
+    let row = concat!(
+        r#"{"package_id":"extracted-art-chars-global","#,
+        r#""package_root":"extracted/art/chars/global","#,
+        r#""package_category":"characters","#,
+        r#""package_subcategory":"characters/rig/common","unit_count":1,"#,
+        r#""text_key_count":0,"unit_ids":["swatch-lit"],"world_ids":[],"#,
+        r#""texture_ids":["swatch-lit"],"material_ids":[],"model_ids":[],"#,
+        r#""physics_ids":[],"animation_ids":[],"scene_ids":[],"#,
+        r#""locator_ids":[],"camera_ids":[],"light_ids":[],"#,
+        r#""particle_ids":[],"controller_ids":[],"audio_ids":[],"#,
+        r#""movie_ids":[],"script_ids":[],"text_ids":[],"ui_ids":[],"#,
+        r#""metadata_ids":[],"error_ids":[],"source_unit_ids":[],"#,
+        r#""text_key_ids":[],"members":[{"id":"swatch-lit","#,
+        r#""role":"texture","#,
+        r#""path":"components/texture/char_swatches_lit.png","#,
+        r#""type":"image","kind":"p3d-texture","#,
+        r#""source_chunk_kind":"texture","source_chunk_ordinal":"1"}],"#,
+        r#""text_keys":[]}"#,
+    );
+    let index = PhaseThreePackageIndex::from_jsonl(row)
+        .map_err(|error| error.to_string())?;
+    if resolve_shared_texture_member(&index, "char_swatches.bmp")
+        .map_err(|error| error.to_string())?
+        .is_some()
+    {
+        return Err(String::from(
+            "plain swatch reference resolved the distinct lit source",
+        ));
+    }
+    let resolved =
+        resolve_shared_texture_member(&index, "char_swatches_lit.bmp")
+            .map_err(|error| error.to_string())?
+            .ok_or_else(|| {
+                "exact lit swatch identity was not resolved".to_owned()
+            })?;
+    assert_eq!(
+        std::path::Path::new(&resolved.1.path)
+            .file_name()
+            .and_then(|value| value.to_str()),
+        Some("char_swatches_lit.png")
+    );
+    Ok(())
 }
 
 #[test]
