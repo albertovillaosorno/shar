@@ -1373,6 +1373,15 @@ occurrences to unique physical package members. The remaining gap is therefore
 the missing primitive-group-to-physical-shader edge, not missing physical member
 identity.
 
+A whole current 149-package terrain-world audit finds 358 package-local
+logical shader sets with duplicate physical occurrences. Of those, 338 sets are
+referenced by mesh primitive groups and contain 716 physical shader occurrences:
+43 sets are byte-equal and 295 sets contain differing payloads. Every one of the
+716 occurrences has an exact phase-three package member at the same path and
+source ordinal. Physical member indexing is therefore complete for this
+ambiguity surface; the missing authored consumer-to-occurrence relationship
+remains the blocking evidence.
+
 That exact consumer coordinate does not identify either physical shader
 occurrence. The primitive-group payload still stores only the logical
 `char_swatches_m` token, while the two differing shader candidates remain
