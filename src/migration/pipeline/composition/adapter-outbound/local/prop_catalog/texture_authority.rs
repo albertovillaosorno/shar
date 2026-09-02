@@ -38,9 +38,7 @@ use serde_json::Value;
 use shar_sha256::digest_hex;
 
 use super::extraction::{is_world_package, relative_art_root};
-use super::inventory_common::{
-    clean_identity, ledger_member_id, required_string, required_usize,
-};
+use super::inventory_common::{clean_identity, required_string, required_usize};
 use crate::domain::PipelineError;
 use crate::domain::package::{
     PackageRole, PhaseThreePackageIndex, PhaseThreePackageRow,
@@ -147,7 +145,7 @@ fn texture_source_from_line(
     }
     let logical = clean_identity(&required_string(&value, "name")?)?;
     let relative_path = required_string(&value, "path")?;
-    let member_id = ledger_member_id(&relative_path, "texture")?;
+    let member_id = texture_member_id(&relative_path)?;
     let source_ordinal = required_usize(&value, "ordinal")?;
     let package_member_id = phase_three_texture_member_id(
         package,
@@ -184,6 +182,32 @@ fn texture_source_from_line(
     })))
 }
 
+
+/// Return one normalized physical texture member id from its payload path.
+fn texture_member_id(path: &str) -> Result<String, PipelineError> {
+    let file_name = path
+        .strip_prefix("texture/")
+        .filter(|member| {
+            !member.is_empty()
+                && !member.contains('/')
+                && !member.contains('\\')
+        })
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "shared texture path is not portable: {path}"
+            ))
+        })?;
+    let member = Path::new(file_name)
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .filter(|value| !value.is_empty() && *value != file_name)
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "shared texture path has no payload extension: {path}"
+            ))
+        })?;
+    Ok(member.to_owned())
+}
 
 /// Resolve one ledger texture row to its exact phase-three member identity.
 fn phase_three_texture_member_id(

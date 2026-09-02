@@ -35,6 +35,7 @@ use std::path::PathBuf;
 
 use super::{
     SharedTextureAuthority, TextureSource, phase_three_texture_member_id,
+    texture_member_id,
 };
 use crate::domain::package::PhaseThreePackageRow;
 
@@ -163,6 +164,19 @@ fn conflicting_preferred_occurrences_remain_available_as_evidence(
     Ok(())
 }
 
+
+
+#[test]
+fn physical_texture_member_id_uses_payload_stem() {
+    assert_eq!(texture_member_id("texture/flag.png").as_deref(), Ok("flag"));
+    assert_eq!(
+        texture_member_id("texture/glow__ordinal_10591.png").as_deref(),
+        Ok("glow__ordinal_10591")
+    );
+    assert!(texture_member_id("shader/flag.png").is_err());
+    assert!(texture_member_id("texture/nested/flag.png").is_err());
+    assert!(texture_member_id("texture/flag").is_err());
+}
 
 #[test]
 fn phase_three_texture_member_requires_exact_path_and_ordinal(
