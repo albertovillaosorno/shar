@@ -603,8 +603,8 @@ fn empty_chunk_set_decodes_header() -> Result<(), String> {
     Ok(())
 }
 #[test]
-fn legacy_instances_do_not_invent_extended_header_fields()
--> Result<(), String> {
+fn legacy_instances_do_not_invent_extended_header_fields() -> Result<(), String>
+{
     let root = require(
         chunk(0x0012_0101, Vec::new(), Vec::new()),
         "scenegraph root should build",
