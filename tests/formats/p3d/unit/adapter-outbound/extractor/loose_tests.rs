@@ -1193,7 +1193,9 @@ fn mesh_recovery_preserves_nonfinite_position_bits() -> Result<(), String> {
         .copy_from_slice(&4_290_772_992_u32.to_le_bytes());
     let component = primitive_group_mesh_record(&source, mesh_header);
     let recovered = render::recover_mesh_json(&component, &source, 1, None)
-        .ok_or_else(|| String::from("non-finite position mesh should decode"))?;
+        .ok_or_else(|| {
+            String::from("non-finite position mesh should decode")
+        })?;
     let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
         .map_err(|error| error.to_string())?;
     if !value["prim_groups"][0]["positions"][0][0].is_null()
