@@ -528,6 +528,16 @@ pub(super) fn recover_road_segment_json(
     let direction = read_point(chunk, &mut cursor)?;
     let top = read_point(chunk, &mut cursor)?;
     let bottom = read_point(chunk, &mut cursor)?;
+    if cursor != component.header_size
+        || component.header_size != component.total_size
+        || direction
+            .iter()
+            .chain(&top)
+            .chain(&bottom)
+            .any(|value| !value.is_finite())
+    {
+        return None;
+    }
     let kind = component.kind.label();
     let file_name = fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -557,6 +567,66 @@ pub(super) fn recover_road_segment_json(
     ))
 }
 
+/// Decode direct road-segment children without assigning runtime semantics.
+fn road_segments_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+) -> Option<Vec<String>> {
+    const ROAD_SEGMENT: u32 = 0x0300_0002;
+    let mut segments = Vec::new();
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        if id != ROAD_SEGMENT || header_size != total_size {
+            return None;
+        }
+        let next = cursor.checked_add(total_size)?;
+        if next > end {
+            return None;
+        }
+        let mut field_cursor = cursor.checked_add(12)?;
+        let name = read_pascal_at(chunk, &mut field_cursor)?;
+        let data_name = read_pascal_at(chunk, &mut field_cursor)?;
+        let hierarchy = read_finite_matrix(chunk, &mut field_cursor)?;
+        let scale = read_finite_matrix(chunk, &mut field_cursor)?;
+        if field_cursor != cursor.checked_add(header_size)? {
+            return None;
+        }
+        segments.push(format!(
+            concat!(
+                "{{\"name\":\"{}\",",
+                "\"road_segment_data\":\"{}\",",
+                "\"hierarchy_matrix\":{},",
+                "\"scale_matrix\":{}}}"
+            ),
+            escape_json(&name),
+            escape_json(&data_name),
+            render::matrix_json(&hierarchy),
+            render::matrix_json(&scale)
+        ));
+        cursor = next;
+    }
+    (cursor == end).then_some(segments)
+}
+
+/// Read one finite source matrix for road-segment evidence.
+fn read_finite_matrix(
+    chunk: &[u8],
+    cursor: &mut usize,
+) -> Option<[[f32; 4]; 4]> {
+    let mut matrix = [[0_f32; 4]; 4];
+    for row in &mut matrix {
+        for value in row {
+            *value = read_f32(chunk, *cursor)?;
+            if !value.is_finite() {
+                return None;
+            }
+            *cursor = (*cursor).checked_add(4)?;
+        }
+    }
+    Some(matrix)
+}
+
 /// Recover road json.
 pub(super) fn recover_road_json(
     component: &ChunkRecord,
@@ -573,18 +643,31 @@ pub(super) fn recover_road_json(
     let density = read_u32(chunk, cursor)?;
     cursor += 4;
     let speed = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != component.header_size {
+        return None;
+    }
+    let segments =
+        road_segments_json(chunk, component.header_size, component.total_size)?;
     let kind = component.kind.label();
     let file_name = fallback_name(kind, kind_index, &name);
     let json = format!(
-        "{{\"schema\":\"road\",\"name\":\"{}\",\"type\":{},\"\
-         start_intersection\":\"{}\",\"end_intersection\":\"{}\",\"density\":\
-         {},\"speed\":{}}}\n",
+        concat!(
+            "{{\"schema\":\"road\",\"name\":\"{}\",",
+            "\"type\":{},",
+            "\"start_intersection\":\"{}\",",
+            "\"end_intersection\":\"{}\",",
+            "\"density\":{},\"speed\":{},",
+            "\"num_segments\":{},\"segments\":[{}]}}\n"
+        ),
         escape_json(&name),
         road_type,
         escape_json(&start),
         escape_json(&end),
         density,
-        speed
+        speed,
+        segments.len(),
+        segments.join(",")
     );
     Some(render::json_component(
         kind,
@@ -608,6 +691,14 @@ pub(super) fn recover_intersection_json(
     let radius = read_f32(chunk, cursor)?;
     cursor += 4;
     let intersection_type = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != component.header_size
+        || component.header_size != component.total_size
+        || centre.iter().any(|value| !value.is_finite())
+        || !radius.is_finite()
+    {
+        return None;
+    }
     let kind = component.kind.label();
     let file_name = fallback_name(kind, kind_index, &name);
     let json = format!(

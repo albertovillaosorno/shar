@@ -508,6 +508,131 @@ fn srr_locator_rejects_declared_trigger_count_drift() -> Result<(), String> {
     Ok(())
 }
 
+fn road_with_segment_fixture() -> Result<(Vec<u8>, usize), String> {
+    const ROAD: u32 = 0x0300_0003;
+    const ROAD_SEGMENT: u32 = 0x0300_0002;
+    let mut segment_fields = Vec::new();
+    push_pascal(&mut segment_fields, "segment")?;
+    push_pascal(&mut segment_fields, "segment_data")?;
+    for index in 0_usize..16_usize {
+        let value = if matches!(index, 0 | 5 | 10 | 15) {
+            1_f32
+        } else if index == 12 {
+            5_f32
+        } else {
+            0_f32
+        };
+        push_f32(&mut segment_fields, value);
+    }
+    for index in 0_usize..16_usize {
+        let value = match index {
+            0 => 2_f32,
+            5 => 3_f32,
+            10 => 4_f32,
+            15 => 1_f32,
+            _ => 0_f32,
+        };
+        push_f32(&mut segment_fields, value);
+    }
+    let segment_size = 12_usize
+        .checked_add(segment_fields.len())
+        .ok_or_else(|| String::from("road segment fixture overflowed"))?;
+    let segment_u32 =
+        u32::try_from(segment_size).map_err(|error| error.to_string())?;
+    let mut segment = Vec::new();
+    push_u32(&mut segment, ROAD_SEGMENT);
+    push_u32(&mut segment, segment_u32);
+    push_u32(&mut segment, segment_u32);
+    segment.extend_from_slice(&segment_fields);
+
+    let mut road_fields = Vec::new();
+    push_pascal(&mut road_fields, "road")?;
+    push_u32(&mut road_fields, 0);
+    push_pascal(&mut road_fields, "start")?;
+    push_pascal(&mut road_fields, "end")?;
+    push_u32(&mut road_fields, 7);
+    push_u32(&mut road_fields, 40);
+    let road_header = 12_usize
+        .checked_add(road_fields.len())
+        .ok_or_else(|| String::from("road fixture header overflowed"))?;
+    let road_total = road_header
+        .checked_add(segment.len())
+        .ok_or_else(|| String::from("road fixture total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, ROAD);
+    push_u32(
+        &mut source,
+        u32::try_from(road_header).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(road_total).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&road_fields);
+    source.extend_from_slice(&segment);
+    Ok((source, road_header))
+}
+
+fn road_component(header_size: usize, total_size: usize) -> ChunkRecord {
+    ChunkRecord {
+        ordinal: 3,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_0003,
+        kind: crate::ChunkKind::SrrRoad,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: total_size.saturating_sub(header_size),
+        child_count: 1,
+    }
+}
+
+#[test]
+fn road_preserves_segment_source_evidence() -> Result<(), String> {
+    let (source, header_size) = road_with_segment_fixture()?;
+    let component = road_component(header_size, source.len());
+    let recovered = schema::recover_road_json(&component, &source, 1)
+        .ok_or_else(|| String::from("road fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["num_segments"] == 1
+        && value["segments"][0]["road_segment_data"] == "segment_data"
+        && value["segments"][0]["hierarchy_matrix"][3][0] == 5
+        && value["segments"][0]["scale_matrix"][0][0] == 2
+    {
+        Ok(())
+    } else {
+        Err(String::from("road segment source evidence was discarded"))
+    }
+}
+
+#[test]
+fn road_rejects_malformed_segment_evidence() -> Result<(), String> {
+    let (mut source, header_size) = road_with_segment_fixture()?;
+    let child_offset = header_size;
+    let old_size = read_u32(&source, child_offset + 4)
+        .ok_or_else(|| String::from("road segment header should exist"))?;
+    let new_size = old_size
+        .checked_add(4)
+        .ok_or_else(|| String::from("road segment size overflowed"))?;
+    source[child_offset + 4..child_offset + 8]
+        .copy_from_slice(&new_size.to_le_bytes());
+    source[child_offset + 8..child_offset + 12]
+        .copy_from_slice(&new_size.to_le_bytes());
+    push_u32(&mut source, 99);
+    let total_u32 =
+        u32::try_from(source.len()).map_err(|error| error.to_string())?;
+    source[8..12].copy_from_slice(&total_u32.to_le_bytes());
+    let component = road_component(header_size, source.len());
+    if schema::recover_road_json(&component, &source, 1).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("trailing road segment data should fail closed"))
+    }
+}
+
 fn billboard_quad_fixture(
     display_version: u32,
 ) -> Result<(Vec<u8>, usize), String> {
