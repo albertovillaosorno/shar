@@ -297,9 +297,15 @@ struct PrimitiveHeader {
 }
 
 impl PrimitiveHeader {
+    /// Only version observed in the complete source game corpus.
+    const SUPPORTED_VERSION: u32 = 0;
+
     /// Reads the fixed header before any child list can affect decoder state.
     fn read(reader: &mut Reader<'_>) -> Option<Self> {
-        let _version = reader.u32()?;
+        let version = reader.u32()?;
+        if version != Self::SUPPORTED_VERSION {
+            return None;
+        }
         Some(Self {
             shader: reader.pstring()?,
             prim_type: reader.u32()?,
