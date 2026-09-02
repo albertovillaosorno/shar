@@ -30,6 +30,10 @@
 
 //! Tests unit tests.
 
+use std::collections::BTreeMap;
+
+use fbx::domain::texture::MaterialBinding;
+
 use crate::domain::package::{
     PackageRole, PhaseThreePackageIndex, PhaseThreePackageMember,
     PhaseThreePackageRow,
@@ -37,12 +41,36 @@ use crate::domain::package::{
 
 use super::{
     GENERAL_CHARACTER_ANIMATION_SUBCATEGORY, animation_member_paths,
-    animation_subcategory_candidates, classify_members,
+    animation_subcategory_candidates, body_texture_file_name, classify_members,
     deferred_material_identity, fbx_io_error,
     normalized_texture_png_file_name, order_character_mesh_members,
     ordered_shader_names, resolve_shared_texture_member, shared_eye_frame_paths,
     single_package_staging_path,
 };
+
+#[test]
+fn body_texture_requires_each_shader_to_resolve_its_own_texture()
+-> Result<(), String> {
+    let unresolved = MaterialBinding::new("char_swatches_m", None)
+        .map_err(|error| format!("unresolved binding failed: {error:?}"))?;
+    let bindings = BTreeMap::from([(
+        unresolved.material_name.as_str(),
+        &unresolved,
+    )]);
+    let result = body_texture_file_name("char_swatches_m", &bindings);
+    let Err(error) = result else {
+        return Err(
+            "unresolved body shader borrowed another texture".to_owned(),
+        );
+    };
+    if !error
+        .to_string()
+        .contains("has no resolved source texture")
+    {
+        return Err(format!("body texture failure changed: {error}"));
+    }
+    Ok(())
+}
 
 #[test]
 fn deferred_material_preserves_decoded_shader_identity() {

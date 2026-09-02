@@ -541,6 +541,23 @@ fn semantic_group_ownership(
     Ok((body_groups, eye_group, extra_materials))
 }
 
+/// Require one body shader to retain its own resolved source texture.
+fn body_texture_file_name<'binding>(
+    shader: &str,
+    bindings: &BTreeMap<&str, &'binding MaterialBinding>,
+) -> Result<&'binding str, PipelineError> {
+    let binding = bindings.get(shader).ok_or_else(|| {
+        PipelineError::new(format!(
+            "body shader {shader} has no material binding"
+        ))
+    })?;
+    binding.texture_file_name.as_deref().ok_or_else(|| {
+        PipelineError::new(format!(
+            "body shader {shader} has no resolved source texture"
+        ))
+    })
+}
+
 /// Require every selected body shader to resolve to identical source pixels.
 fn body_texture_path(
     character: &CharacterAsset,
@@ -555,16 +572,11 @@ fn body_texture_path(
             .get(address.part_index)
             .and_then(|part| part.mesh.groups.get(address.group_index))
             .ok_or_else(|| PipelineError::new("body group disappeared"))?;
-        let binding = bindings.get(group.shader.as_str()).ok_or_else(|| {
-            PipelineError::new(format!(
-                "body shader {} has no material binding",
-                group.shader
-            ))
-        })?;
-        if let Some(file_name) = binding.texture_file_name.as_ref() {
-            let _previous =
-                candidates.insert(file_name.clone(), input_dir.join(file_name));
-        }
+        let file_name = body_texture_file_name(&group.shader, bindings)?;
+        let _previous = candidates.insert(
+            file_name.to_owned(),
+            input_dir.join(file_name),
+        );
     }
     let mut selected = None;
     let mut selected_hash = None;
