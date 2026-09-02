@@ -795,7 +795,9 @@ fn follow_cam_rejects_unobserved_source_shapes() -> Result<(), String> {
     )
     .is_some()
     {
-        return Err(String::from("trailing follow cam data should fail closed"));
+        return Err(String::from(
+            "trailing follow cam data should fail closed",
+        ));
     }
     let (nonfinite, size) = follow_cam_fixture(f32::NAN, false)?;
     if auxiliary::recover_follow_cam_json(
