@@ -30,9 +30,7 @@
 
 //! Scene outbound adapter.
 
-use super::reader::{
-    Reader, SubChunk, read_instances_header, read_u32, subchunks,
-};
+use super::reader::{Reader, SubChunk, read_u32, subchunks};
 use crate::adapters::driven::json::{escape_json as escape, render_f32};
 
 /// Mesh chunk id used to recognize embedded render geometry.
@@ -75,6 +73,10 @@ const SCENE_CAMERA: u32 = 0x0012_0108;
 const SCENE_LIGHT_GROUP: u32 = 0x0012_0109;
 /// Scene sort-order chunk id used by drawable nodes.
 const SCENE_SORT_ORDER: u32 = 0x0012_010a;
+/// Entity DSG chunk id.
+const ENTITY_DSG: u32 = 0x03f0_0000;
+/// Instanced entity DSG chunk id.
+const INSTA_ENTITY_DSG: u32 = 0x03f0_0009;
 /// Instances chunk id used by insta-entity placement payloads.
 const INSTANCES: u32 = 0x0300_0008;
 
@@ -174,13 +176,13 @@ pub fn composite_drawable_json(chunk: &[u8]) -> Option<String> {
 /// Decode an `srr_entity_dsg` chunk and its contained drawable reference.
 #[must_use]
 pub fn entity_dsg_json(chunk: &[u8]) -> Option<String> {
-    entity_json(chunk, "srr_entity_dsg", false)
+    entity_json(chunk, "srr_entity_dsg", ENTITY_DSG, false)
 }
 
 /// Decode an `srr_insta_entity_dsg` chunk and instance transform hierarchy.
 #[must_use]
 pub fn insta_entity_dsg_json(chunk: &[u8]) -> Option<String> {
-    entity_json(chunk, "srr_insta_entity_dsg", true)
+    entity_json(chunk, "srr_insta_entity_dsg", INSTA_ENTITY_DSG, true)
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -198,32 +200,39 @@ enum CompositeElementKind {
 fn entity_json(
     chunk: &[u8],
     schema: &str,
+    expected_id: u32,
     allow_instances: bool,
 ) -> Option<String> {
-    let (_, header_size, total_size) = chunk_bounds(chunk)?;
+    let (id, header_size, total_size) = chunk_bounds(chunk)?;
+    if id != expected_id {
+        return None;
+    }
     let mut reader = Reader::new(chunk, 12);
     let name = reader.pstring()?;
     let version = reader.u32()?;
     let has_alpha = reader.u32()?;
-    if reader.pos() > header_size {
+    if version != 0 || reader.pos() != header_size {
         return None;
     }
-    let mut render_refs = Vec::new();
-    let mut instances = Vec::new();
-    for child in subchunks(chunk, header_size, total_size)? {
-        match child.id {
-            MESH | SKIN => {
-                render_refs.push(decode_drawable_ref(chunk, &child)?)
-            },
-            INSTANCES if allow_instances => {
-                instances.push(decode_instances(chunk, &child)?)
-            },
-            _ => return None,
-        }
-    }
-    if allow_instances && instances.is_empty() {
+    let children = subchunks(chunk, header_size, total_size)?;
+    let expected_children = if allow_instances {
+        &[MESH, INSTANCES][..]
+    } else {
+        &[MESH][..]
+    };
+    if children
+        .iter()
+        .map(|child| child.id)
+        .ne(expected_children.iter().copied())
+    {
         return None;
     }
+    let render_refs = [decode_drawable_ref(chunk, children.first()?)?];
+    let instances = if allow_instances {
+        vec![decode_instances(chunk, children.get(1)?)?]
+    } else {
+        Vec::new()
+    };
     let instance_field = if allow_instances {
         format!(",\"instances\":[{}]", instances.join(","))
     } else {
@@ -574,23 +583,22 @@ fn decode_drawable_ref(chunk: &[u8], child: &SubChunk) -> Option<String> {
 
 /// Decodes instance payloads so nested scenegraph transforms are emitted once.
 fn decode_instances(chunk: &[u8], child: &SubChunk) -> Option<String> {
-    let (version, flags, name) = read_instances_header(chunk, child)?;
-    let mut scenegraphs = Vec::new();
-    for graph in subchunks(chunk, child.header_end(), child.end())? {
-        if graph.id != SCENEGRAPH {
-            return None;
-        }
-        let bytes = chunk.get(graph.offset..graph.end())?;
-        let json = scenegraph_json(bytes)?;
-        scenegraphs.push(json.trim().to_owned());
+    let mut reader = Reader::new(chunk, child.data_offset());
+    let name = reader.pstring()?;
+    if reader.pos() != child.header_end() {
+        return None;
     }
+    let graphs = subchunks(chunk, child.header_end(), child.end())?;
+    if graphs.len() != 1 || graphs.first()?.id != SCENEGRAPH {
+        return None;
+    }
+    let graph = graphs.first()?;
+    let bytes = chunk.get(graph.offset..graph.end())?;
+    let json = scenegraph_json(bytes)?;
     Some(format!(
-        "{{\"version\":{},\"flags\":{},\"name\":\"{}\",\"scenegraphs\":\
-             [{}]}}",
-        version,
-        flags,
+        "{{\"name\":\"{}\",\"scenegraphs\":[{}]}}",
         escape(&name),
-        scenegraphs.join(",")
+        json.trim()
     ))
 }
 
