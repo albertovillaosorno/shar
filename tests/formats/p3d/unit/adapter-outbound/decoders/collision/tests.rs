@@ -602,3 +602,80 @@ fn empty_chunk_set_decodes_header() -> Result<(), String> {
     )?;
     Ok(())
 }
+#[test]
+fn legacy_instances_do_not_invent_extended_header_fields()
+-> Result<(), String> {
+    let root = require(
+        chunk(0x0012_0101, Vec::new(), Vec::new()),
+        "scenegraph root should build",
+    )?;
+    let graph = require(
+        chunk(
+            SCENEGRAPH,
+            fields(vec![
+                require(pstring("graph"), "graph name should encode")?,
+                u32_field(0),
+            ]),
+            vec![root],
+        ),
+        "scenegraph should build",
+    )?;
+    let instances = require(
+        chunk(
+            LEGACY_INSTANCES,
+            require(pstring("legacy"), "legacy name should encode")?,
+            vec![graph],
+        ),
+        "legacy instances should build",
+    )?;
+    let child = require(
+        subchunks(&instances, 0, instances.len()),
+        "legacy instance framing should decode",
+    )?
+    .into_iter()
+    .next()
+    .ok_or_else(|| String::from("legacy instance chunk should exist"))?;
+    let json = require(
+        decode_instances(&instances, &child),
+        "legacy instances should decode",
+    )?;
+    if json.starts_with("{\"name\":\"legacy\",\"scenegraphs\":")
+        && !json.contains("\"flags\"")
+    {
+        Ok(())
+    } else {
+        Err(String::from(
+            "legacy instances invented extended header fields",
+        ))
+    }
+}
+
+#[test]
+fn physics_instances_preserve_extended_header_fields() -> Result<(), String> {
+    let instances = require(
+        chunk(
+            INSTANCES,
+            fields(vec![
+                u32_field(7),
+                u32_field(0),
+                require(pstring("physics"), "physics name should encode")?,
+            ]),
+            Vec::new(),
+        ),
+        "physics instances should build",
+    )?;
+    let child = require(
+        subchunks(&instances, 0, instances.len()),
+        "physics instance framing should decode",
+    )?
+    .into_iter()
+    .next()
+    .ok_or_else(|| String::from("physics instance chunk should exist"))?;
+    let json = require(
+        decode_instances(&instances, &child),
+        "physics instances should decode",
+    )?;
+    require_json(&json, "\"version\":7", "version should be preserved")?;
+    require_json(&json, "\"flags\":0", "flags should be preserved")?;
+    Ok(())
+}

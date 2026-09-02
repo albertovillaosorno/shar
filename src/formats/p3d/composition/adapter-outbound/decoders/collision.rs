@@ -32,9 +32,7 @@
 
 use std::collections::BTreeSet;
 
-use super::reader::{
-    Reader, SubChunk, read_instances_header, read_u32, subchunks,
-};
+use super::reader::{Reader, SubChunk, read_u32, subchunks};
 use crate::adapters::driven::json::{escape_json as escape, render_f32};
 
 /// Texture chunk id used by chunk-set payloads.
@@ -862,25 +860,49 @@ fn decode_named_ref(chunk: &[u8], child: &SubChunk) -> Option<String> {
 
 /// Decode instance scenegraphs carried by instanced physics wrappers.
 fn decode_instances(chunk: &[u8], child: &SubChunk) -> Option<String> {
-    let (version, flags, name) = read_instances_header(chunk, child)?;
-    let children = subchunks(chunk, child.header_end(), child.end())?;
-    let mut scenegraphs = Vec::new();
-    for graph in children {
-        if graph.id != SCENEGRAPH {
-            return None;
-        }
-        let bytes = child_bytes(chunk, &graph)?;
-        scenegraphs
-            .push(super::scene::scenegraph_json(bytes)?.trim().to_owned());
+    let mut reader = Reader::new(chunk, child.data_offset());
+    match child.id {
+        LEGACY_INSTANCES => {
+            let name = reader.pstring()?;
+            if reader.pos() != child.header_end() {
+                return None;
+            }
+            let children = subchunks(chunk, child.header_end(), child.end())?;
+            if children.len() != 1 || children.first()?.id != SCENEGRAPH {
+                return None;
+            }
+            let graph = children.first()?;
+            let bytes = child_bytes(chunk, graph)?;
+            let scenegraph =
+                super::scene::scenegraph_json(bytes)?.trim().to_owned();
+            Some(format!(
+                "{{\"name\":\"{}\",\"scenegraphs\":[{}]}}",
+                escape(&name),
+                scenegraph
+            ))
+        },
+        INSTANCES => {
+            let version = reader.u32()?;
+            let flags = reader.u32()?;
+            let name = reader.pstring()?;
+            if reader.pos() != child.header_end()
+                || !subchunks(chunk, child.header_end(), child.end())?
+                    .is_empty()
+            {
+                return None;
+            }
+            Some(format!(
+                concat!(
+                    "{{\"version\":{},\"flags\":{},",
+                    "\"name\":\"{}\",\"scenegraphs\":[]}}"
+                ),
+                version,
+                flags,
+                escape(&name)
+            ))
+        },
+        _ => None,
     }
-    Some(format!(
-        "{{\"version\":{},\"flags\":{},\"name\":\"{}\",\"scenegraphs\":\
-             [{}]}}",
-        version,
-        flags,
-        escape(&name),
-        scenegraphs.join(",")
-    ))
 }
 
 /// Read and validate the chunk header, requiring the expected id.
