@@ -532,7 +532,9 @@ fn decode_optional_sort_order(
     }
     let mut reader = Reader::new(chunk, child.data_offset());
     let sort_order = reader.f32()?;
-    if reader.pos() > child.header_end() {
+    let position_mismatch = reader.pos() != child.header_end();
+    let child_size_mismatch = child.header_end() != child.end();
+    if position_mismatch || child_size_mismatch {
         return None;
     }
     Some(format!(",\"sort_order\":{}", fmt_f32(sort_order)))
