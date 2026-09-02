@@ -151,13 +151,17 @@ fn composite_skin_list_fixture() -> Result<Vec<u8>, String> {
 
 /// Builds a composite prop-list fixture with one joint-bound prop.
 fn composite_prop_list_fixture() -> Result<Vec<u8>, String> {
+    let sort = require(
+        chunk(COMPOSITE_SORT_ORDER, f32_field(0.5_f32), Vec::new()),
+        "prop sort-order fixture should build",
+    )?;
     let prop_fields = fields(vec![
         require(pstring("hat_mesh"), "prop name should encode")?,
         u32_field(0),
         u32_field(7),
     ]);
     let prop = require(
-        chunk(COMPOSITE_PROP, prop_fields, Vec::new()),
+        chunk(COMPOSITE_PROP, prop_fields, vec![sort]),
         "prop fixture should build",
     )?;
     require(
@@ -442,6 +446,82 @@ fn scenegraph_rejects_trailing_transform_header_bytes() -> Result<(), String> {
     } else {
         Err(String::from(
             "trailing transform header bytes should fail closed",
+        ))
+    }
+}
+#[test]
+fn composite_drawable_rejects_missing_binding_list() -> Result<(), String> {
+    let composite_fields = fields(vec![
+        require(pstring("hero_comp"), "composite name should encode")?,
+        require(pstring("hero_skel"), "skeleton name should encode")?,
+    ]);
+    let comp = require(
+        chunk(0x0000_4512, composite_fields, vec![
+            composite_skin_list_fixture()?,
+            composite_prop_list_fixture()?,
+        ]),
+        "missing-list composite fixture should build",
+    )?;
+    if composite_drawable_json(&comp).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("missing composite list should fail closed"))
+    }
+}
+
+#[test]
+fn composite_drawable_rejects_duplicate_binding_list() -> Result<(), String> {
+    let composite_fields = fields(vec![
+        require(pstring("hero_comp"), "composite name should encode")?,
+        require(pstring("hero_skel"), "skeleton name should encode")?,
+    ]);
+    let comp = require(
+        chunk(0x0000_4512, composite_fields, vec![
+            composite_skin_list_fixture()?,
+            composite_prop_list_fixture()?,
+            composite_prop_list_fixture()?,
+            composite_effect_list_fixture()?,
+        ]),
+        "duplicate-list composite fixture should build",
+    )?;
+    if composite_drawable_json(&comp).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("duplicate composite list should fail closed"))
+    }
+}
+
+#[test]
+fn composite_binding_rejects_missing_sort_order() -> Result<(), String> {
+    let skin_fields = fields(vec![
+        require(pstring("hero_skin"), "skin name should encode")?,
+        u32_field(0),
+    ]);
+    let skin = require(
+        chunk(COMPOSITE_SKIN, skin_fields, Vec::new()),
+        "missing-sort skin fixture should build",
+    )?;
+    let list = require(
+        chunk(COMPOSITE_SKIN_LIST, u32_field(1), vec![skin]),
+        "skin-list fixture should build",
+    )?;
+    let composite_fields = fields(vec![
+        require(pstring("hero_comp"), "composite name should encode")?,
+        require(pstring("hero_skel"), "skeleton name should encode")?,
+    ]);
+    let comp = require(
+        chunk(0x0000_4512, composite_fields, vec![
+            list,
+            composite_prop_list_fixture()?,
+            composite_effect_list_fixture()?,
+        ]),
+        "missing-sort composite fixture should build",
+    )?;
+    if composite_drawable_json(&comp).is_none() {
+        Ok(())
+    } else {
+        Err(String::from(
+            "missing composite sort order should fail closed",
         ))
     }
 }
