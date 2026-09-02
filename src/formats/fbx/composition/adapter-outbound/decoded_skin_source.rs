@@ -1494,6 +1494,9 @@ struct DecodedSkinGroup {
     /// Vertex shader reference retained for schema compatibility.
     #[serde(rename = "vertex_shader")]
     _vertex_shader: String,
+    /// Whether the source carried an explicit vertex-shader child.
+    #[serde(default, rename = "vertex_shader_present")]
+    _vertex_shader_present: bool,
     /// Primitive topology selector.
     prim_type: u32,
     /// Vertex format mask retained for schema compatibility.

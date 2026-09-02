@@ -1182,6 +1182,47 @@ fn mesh_recovery_rejects_duplicate_matrix_palettes() -> Result<(), String> {
 }
 
 #[test]
+fn mesh_recovery_distinguishes_vertex_shader_child_presence()
+-> Result<(), String> {
+    const VERTEX_SHADER: u32 = 0x0001_0011;
+    let (source, mesh_header, _group_header) = primitive_group_mesh_fixture()?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    let absent = render::recover_mesh_json(&component, &source, 1, None)
+        .ok_or_else(|| {
+            String::from("mesh without vertex shader should decode")
+        })?;
+    let absent: serde_json::Value = serde_json::from_slice(&absent.bytes)
+        .map_err(|error| error.to_string())?;
+    if absent["prim_groups"][0]["vertex_shader_present"] != false {
+        return Err(String::from("missing vertex-shader child was invented"));
+    }
+
+    let mut present_source = source;
+    append_primitive_group_child(
+        &mut present_source,
+        mesh_header,
+        VERTEX_SHADER,
+        &[0],
+    )?;
+    let component = primitive_group_mesh_record(&present_source, mesh_header);
+    let present =
+        render::recover_mesh_json(&component, &present_source, 1, None)
+            .ok_or_else(|| {
+                String::from("empty vertex-shader child should decode")
+            })?;
+    let present: serde_json::Value = serde_json::from_slice(&present.bytes)
+        .map_err(|error| error.to_string())?;
+    if present["prim_groups"][0]["vertex_shader_present"] != true
+        || present["prim_groups"][0]["vertex_shader"] != ""
+    {
+        return Err(String::from(
+            "authored empty vertex-shader child was collapsed into absence",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn mesh_recovery_preserves_packed_normal_bytes() -> Result<(), String> {
     const PACKED_NORMAL_LIST: u32 = 0x0001_0010;
     let (mut source, mesh_header, group_header) =
