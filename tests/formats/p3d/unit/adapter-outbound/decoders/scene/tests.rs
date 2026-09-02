@@ -302,7 +302,7 @@ fn entity_dsg_escapes_trailing_nul_name_padding() -> Result<(), String> {
         u32_field(0),
     ]);
     let entity = require(
-        chunk(0x03f0_0008, entity_fields, vec![mesh]),
+        chunk(ENTITY_DSG, entity_fields, vec![mesh]),
         "entity fixture should build",
     )?;
     let json =
@@ -312,6 +312,30 @@ fn entity_dsg_escapes_trailing_nul_name_padding() -> Result<(), String> {
         .map_err(|error| {
             format!("entity JSON must escape NUL padding: {error}")
         })
+}
+
+#[test]
+fn entity_dsg_rejects_wrong_chunk_id() -> Result<(), String> {
+    let mesh_fields = fields(vec![
+        require(pstring("mesh"), "mesh name should encode")?,
+        u32_field(0),
+    ]);
+    let mesh =
+        require(chunk(MESH, mesh_fields, Vec::new()), "mesh should build")?;
+    let entity_fields = fields(vec![
+        require(pstring("entity"), "entity name should encode")?,
+        u32_field(0),
+        u32_field(0),
+    ]);
+    let wrong = require(
+        chunk(0x03f0_0008, entity_fields, vec![mesh]),
+        "wrong-id entity should build",
+    )?;
+    if entity_dsg_json(&wrong).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("wrong entity chunk id should fail closed"))
+    }
 }
 
 #[test]
@@ -342,7 +366,7 @@ fn insta_entity_decodes_render_refs_and_instance_scenegraphs()
         u32_field(0),
     ]);
     let entity = require(
-        chunk(0x03f0_0009, entity_fields, vec![mesh, instances]),
+        chunk(INSTA_ENTITY_DSG, entity_fields, vec![mesh, instances]),
         "entity fixture should build",
     )?;
     let json = require(
@@ -365,6 +389,11 @@ fn insta_entity_decodes_render_refs_and_instance_scenegraphs()
         "\"scenegraphs\"",
         "instance scenegraph should be emitted",
     )?;
+    if json.contains("\"flags\"") {
+        return Err(String::from(
+            "name-only instances must not invent header fields",
+        ));
+    }
     Ok(())
 }
 #[test]
