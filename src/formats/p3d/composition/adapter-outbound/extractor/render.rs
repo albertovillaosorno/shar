@@ -454,7 +454,14 @@ pub(super) fn recover_srr_locator_json(
         cursor += 4;
     }
     let position = schema::read_point(chunk, &mut cursor)?;
+    if position.iter().any(|value| !value.is_finite()) {
+        return None;
+    }
     let num_triggers = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != component.header_size {
+        return None;
+    }
     let locator_type_name =
         crate::adapters::driven::decoders::locator::type_name(locator_type)?;
     let data_interpretation =
