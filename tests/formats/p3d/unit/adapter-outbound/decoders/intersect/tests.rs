@@ -157,8 +157,8 @@ fn intersect_dsg_rejects_missing_required_sphere() -> Result<(), String> {
         .ok_or_else(|| String::from("fixture sphere should exist"))?;
     let mut malformed = fixture;
     let _removed = malformed.drain(sphere.offset..sphere.end()).count();
-    let total = u32::try_from(malformed.len())
-        .map_err(|error| error.to_string())?;
+    let total =
+        u32::try_from(malformed.len()).map_err(|error| error.to_string())?;
     require(
         malformed.get_mut(8..12),
         "fixture total-size field should exist",
