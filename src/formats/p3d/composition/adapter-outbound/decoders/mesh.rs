@@ -157,6 +157,9 @@ fn read_container_header(
     let name = reader.pstring()?;
     let version = reader.u32()?;
     let declared_groups = reader.u32()?;
+    if reader.pos() != header_size {
+        return None;
+    }
     Some((name, version, declared_groups, header_size, total_size))
 }
 
@@ -175,6 +178,9 @@ fn read_skin_header(
     let version = reader.u32()?;
     let skeleton = reader.pstring()?;
     let declared_groups = reader.u32()?;
+    if reader.pos() != header_size {
+        return None;
+    }
     Some((
         name,
         version,
@@ -574,6 +580,9 @@ fn decode_prim_group(
 ) -> Option<String> {
     let mut reader = Reader::new(chunk, group.data_offset());
     let header = PrimitiveHeader::read(&mut reader)?;
+    if reader.pos() != group.header_end() {
+        return None;
+    }
     let lists = PrimitiveLists::decode(chunk, group)?;
     if !lists.counts_match(&header) {
         return None;

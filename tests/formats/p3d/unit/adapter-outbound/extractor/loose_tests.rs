@@ -805,6 +805,88 @@ fn mesh_recovery_retains_primitive_group_source_ordinal() -> Result<(), String>
 }
 
 #[test]
+fn mesh_decoder_rejects_trailing_header_bytes() -> Result<(), String> {
+    const MESH: u32 = 0x0001_0000;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "mesh")?;
+    push_u32(&mut fields, 3);
+    push_u32(&mut fields, 0);
+    push_u32(&mut fields, 0xfeed_face);
+    let total = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("mesh header fixture overflowed"))?;
+    let total = u32::try_from(total).map_err(|error| error.to_string())?;
+    let mut source = Vec::new();
+    push_u32(&mut source, MESH);
+    push_u32(&mut source, total);
+    push_u32(&mut source, total);
+    source.extend_from_slice(&fields);
+    if crate::adapters::driven::decoders::mesh::mesh_json(&source).is_some() {
+        return Err(String::from(
+            "mesh decoder ignored trailing header bytes",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn primitive_group_rejects_trailing_header_bytes() -> Result<(), String> {
+    let (mut source, mesh_header, group_header) =
+        primitive_group_mesh_fixture()?;
+    let insert_at = mesh_header
+        .checked_add(group_header)
+        .ok_or_else(|| String::from("primitive header offset overflowed"))?;
+    let _inserted = source
+        .splice(insert_at..insert_at, [0xde, 0xad, 0xbe, 0xef])
+        .count();
+    let group_header_offset = mesh_header.saturating_add(4);
+    let group_total_offset = mesh_header.saturating_add(8);
+    for offset in [group_header_offset, group_total_offset] {
+        let old = u32::from_le_bytes(
+            source[offset..offset + 4]
+                .try_into()
+                .map_err(|error| format!("group size slice failed: {error}"))?,
+        );
+        source[offset..offset + 4]
+            .copy_from_slice(&old.saturating_add(4).to_le_bytes());
+    }
+    let mesh_total =
+        u32::try_from(source.len()).map_err(|error| error.to_string())?;
+    source[8..12].copy_from_slice(&mesh_total.to_le_bytes());
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "primitive decoder ignored trailing header bytes",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn skin_decoder_rejects_trailing_header_bytes() -> Result<(), String> {
+    const SKIN: u32 = 0x0001_0001;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "skin")?;
+    push_u32(&mut fields, 3);
+    push_pascal(&mut fields, "skeleton")?;
+    push_u32(&mut fields, 0);
+    push_u32(&mut fields, 0xfeed_face);
+    let total = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("skin header fixture overflowed"))?;
+    let total = u32::try_from(total).map_err(|error| error.to_string())?;
+    let mut source = Vec::new();
+    push_u32(&mut source, SKIN);
+    push_u32(&mut source, total);
+    push_u32(&mut source, total);
+    source.extend_from_slice(&fields);
+    if crate::adapters::driven::decoders::mesh::skin_json(&source).is_some() {
+        return Err(String::from("skin decoder ignored trailing header bytes"));
+    }
+    Ok(())
+}
+
+#[test]
 fn mesh_recovery_rejects_declared_primitive_group_count_drift()
 -> Result<(), String> {
     let (source, mesh_header, _group_size) =
