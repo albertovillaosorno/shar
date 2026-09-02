@@ -56,6 +56,10 @@ const BBOX: u32 = 0x0001_0003;
 const BSPHERE: u32 = 0x0001_0004;
 /// Renderstatus.
 const RENDERSTATUS: u32 = 0x0001_0017;
+/// Expression offsets.
+const EXPRESSIONOFFSETS: u32 = 0x0001_0018;
+/// Offset list.
+const OFFSETLIST: u32 = 0x0001_000e;
 
 /// Positionlist.
 const POSITIONLIST: u32 = 0x0001_0005;
@@ -207,6 +211,8 @@ struct MeshBody {
     bounding_sphere_seen: bool,
     /// Render-status source evidence is singleton in the complete corpus.
     render_status_seen: bool,
+    /// Expression-offset source evidence is singleton in the complete corpus.
+    expression_offsets_seen: bool,
 }
 
 impl MeshBody {
@@ -246,6 +252,7 @@ fn decode_children(
         bounding_box_seen: false,
         bounding_sphere_seen: false,
         render_status_seen: false,
+        expression_offsets_seen: false,
     };
     let mut primitive_group_index = 0_usize;
     for child in subchunks(chunk, start, end)? {
@@ -332,6 +339,16 @@ fn decode_children(
                 body.extras.push(format!("\"render_status\":{status}"));
                 body.render_status_seen = true;
             },
+            EXPRESSIONOFFSETS => {
+                if body.expression_offsets_seen {
+                    return None;
+                }
+                body.extras.push(format!(
+                    "\"expression_offsets\":{}",
+                    expression_offsets_json(chunk, &child)?
+                ));
+                body.expression_offsets_seen = true;
+            },
             other => body.unhandled.push((other, child.total_size)),
         }
     }
@@ -341,6 +358,86 @@ fn decode_children(
         return None;
     }
     Some(body)
+}
+
+/// Decode one expression-offset container as source evidence.
+fn expression_offsets_json(
+    chunk: &[u8],
+    expression: &super::reader::SubChunk,
+) -> Option<String> {
+    let bounded = chunk.get(..expression.header_end())?;
+    let mut reader = Reader::new(bounded, expression.data_offset());
+    let primitive_group_count = usize::try_from(reader.u32()?).ok()?;
+    let offset_list_count = usize::try_from(reader.u32()?).ok()?;
+    let mut primitive_groups = Vec::with_capacity(primitive_group_count);
+    for _ in 0..primitive_group_count {
+        primitive_groups.push(reader.u32()?);
+    }
+    if reader.pos() != bounded.len() {
+        return None;
+    }
+    let children = subchunks(chunk, expression.header_end(), expression.end())?;
+    if children.len() != offset_list_count {
+        return None;
+    }
+    let mut lists = Vec::with_capacity(children.len());
+    for child in children {
+        if child.id != OFFSETLIST || child.header_size != child.total_size {
+            return None;
+        }
+        lists.push(offset_list_json(chunk, &child)?);
+    }
+    Some(format!(
+        concat!(
+            "{{\"num_prim_groups\":{},\"num_offset_lists\":{},",
+            "\"prim_group_indices\":[{}],\"offset_lists\":[{}]}}"
+        ),
+        primitive_group_count,
+        offset_list_count,
+        primitive_groups
+            .iter()
+            .map(u32::to_string)
+            .collect::<Vec<_>>()
+            .join(","),
+        lists.join(",")
+    ))
+}
+
+/// Decode one expression offset list without assigning morph semantics.
+fn offset_list_json(
+    chunk: &[u8],
+    list: &super::reader::SubChunk,
+) -> Option<String> {
+    let bounded = chunk.get(..list.header_end())?;
+    let mut reader = Reader::new(bounded, list.data_offset());
+    let offset_count = usize::try_from(reader.u32()?).ok()?;
+    let key_index = reader.u32()?;
+    let mut offsets = Vec::with_capacity(offset_count);
+    for _ in 0..offset_count {
+        let vertex_index = reader.u32()?;
+        let offset = read_vec3_with_bits(&mut reader)?;
+        offsets.push(format!(
+            concat!(
+                "{{\"vertex_index\":{},\"offset\":{},",
+                "\"offset_f32_bits\":{}}}"
+            ),
+            vertex_index, offset.0, offset.1
+        ));
+    }
+    let primitive_group_index = reader.u32()?;
+    if reader.pos() != bounded.len() {
+        return None;
+    }
+    Some(format!(
+        concat!(
+            "{{\"num_offsets\":{},\"key_index\":{},",
+            "\"offsets\":[{}],\"prim_group_index\":{}}}"
+        ),
+        offset_count,
+        key_index,
+        offsets.join(","),
+        primitive_group_index
+    ))
 }
 
 /// Read a vec3 while retaining each authored IEEE-754 bit pattern.
