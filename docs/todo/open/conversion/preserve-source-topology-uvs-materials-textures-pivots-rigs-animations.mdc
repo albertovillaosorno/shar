@@ -760,5 +760,37 @@ followed by a fresh audit of the 216 effect identities currently absent from
 normalized top-level particle rows. Until that evidence is regenerated, v15
 continues to leave those effects unresolved.
 
+A lawful isolated `fbx-export-world-props` regeneration after nested recovery
+provided stronger evidence without replacing the accepted extraction tree. The
+source re-extraction reached all 149 terrain-world packages. All 63 recovered
+instanced-particle parents map one-to-one to existing phase-three `world` /
+`p3d-world-dsg` members, and every recovered factory is immediately followed by
+its matching system at varying authored child positions.
+
+Those 63 parents collapse to 12 logical nested factory/system identities. Every
+factory identity equals its sibling system identity and `factory_name`, but none
+of the 12 identities matches any authored composite effect identity in the
+current terrain-world corpus. None also appears as a top-level normalized
+factory or system. Nested recovery therefore closes a real extraction loss but
+does not reduce the 216 matched-world effect identities that lack top-level
+particle evidence.
+
+The same regeneration exposed and fixed a separate world-texture blocker.
+`SharedTextureAuthority` had incorrectly parsed physical `texture/*.png` ledger
+paths through the JSON-component member helper. All 10,064 current normalized
+texture rows use one-segment PNG payload paths, so texture occurrence ids now
+come from the validated payload stem while schema-JSON member validation stays
+unchanged.
+
+A post-fix regeneration again completed extraction of all 149 terrain-world
+packages, then failed during world candidate discovery with `prop source
+identity is non-canonical`. The accepted normalized corpus audit does not yet
+identify that exact field: component and ledger identities are canonical, and
+the only broad secondary-field exception is 1,135 frame controllers with an
+authored empty `animation_name`; none of those forms a same-package
+composite-prop/hierarchy match in the static audit. The next step is therefore
+a contextual discovery diagnostic or equivalent bounded audit, not weakening
+`clean_identity` or treating empty values as identities.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
