@@ -166,6 +166,7 @@ fn prepare_static(
             scratch,
             value,
             package,
+            None,
             &candidate.subcategory,
         ),
         None => {

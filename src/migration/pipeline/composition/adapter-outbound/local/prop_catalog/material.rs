@@ -48,6 +48,24 @@ use super::texture_authority::SharedTextureAuthority;
 use crate::domain::package::{PackageRole, PhaseThreePackageRow};
 use crate::domain::PipelineError;
 
+/// Exact normalized mesh occurrence aligned with one loaded world mesh.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) struct WorldMeshSourceCoordinate<'source> {
+    /// Normalized mesh member id without family or extension.
+    pub(super) member_id: &'source str,
+    /// Exact package-level mesh source chunk ordinal.
+    pub(super) source_ordinal: usize,
+}
+
+/// Non-selecting provenance for every primitive-group consumer of one shader.
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+struct ShaderConsumerProvenance {
+    /// Exact package-level primitive-group source chunk ordinals.
+    source_ordinals: BTreeSet<usize>,
+    /// Stable phase-three model members owning those primitive groups.
+    model_member_ids: BTreeSet<String>,
+}
+
 /// Canonicalize static mesh shaders and return deduplicated bindings/payloads.
 pub(super) fn canonicalize_static_materials(
     meshes: &mut [MeshAsset],
@@ -58,6 +76,7 @@ pub(super) fn canonicalize_static_materials(
         meshes,
         package_root,
         scratch,
+        None,
         None,
         None,
         "",
@@ -75,6 +94,7 @@ pub(super) fn canonicalize_world_static_materials(
     scratch: &Path,
     authority: &SharedTextureAuthority,
     package: Option<&PhaseThreePackageRow>,
+    mesh_sources: Option<&[WorldMeshSourceCoordinate<'_>]>,
     source_subcategory: &str,
 ) -> Result<(Vec<MaterialBinding>, Vec<PreparedTexture>), PipelineError> {
     canonicalize_static_materials_with_authority(
@@ -83,6 +103,7 @@ pub(super) fn canonicalize_world_static_materials(
         scratch,
         Some(authority),
         package,
+        mesh_sources,
         source_subcategory,
     )
 }
@@ -98,11 +119,11 @@ fn canonicalize_static_materials_with_authority(
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
     package: Option<&PhaseThreePackageRow>,
+    mesh_sources: Option<&[WorldMeshSourceCoordinate<'_>]>,
     source_subcategory: &str,
 ) -> Result<(Vec<MaterialBinding>, Vec<PreparedTexture>), PipelineError> {
-    let shader_sources = shader_source_ordinals(
-        meshes.iter().flat_map(|mesh| mesh.groups.iter()),
-    );
+    let shader_sources =
+        shader_consumer_provenance(meshes, mesh_sources, package);
     let shaders = shader_sources.keys().cloned().collect::<BTreeSet<_>>();
     let (renames, materials, textures) = resolve_materials(
         shaders,
@@ -179,7 +200,7 @@ fn canonicalize_animated_materials_with_authority(
     package: Option<&PhaseThreePackageRow>,
     source_subcategory: &str,
 ) -> Result<(Vec<MaterialBinding>, Vec<PreparedTexture>), PipelineError> {
-    let shader_sources = shader_source_ordinals(
+    let shader_sources = shader_consumer_provenance_from_groups(
         asset.parts.iter().flat_map(|part| part.mesh.groups.iter()),
     );
     let shaders = shader_sources.keys().cloned().collect::<BTreeSet<_>>();
@@ -218,7 +239,7 @@ fn canonicalize_animated_materials_with_authority(
 fn resolve_source_material(
     source: &DecodedComponentSource,
     shader: &str,
-    source_ordinals: Option<&BTreeSet<usize>>,
+    consumer_provenance: Option<&ShaderConsumerProvenance>,
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
     package: Option<&PhaseThreePackageRow>,
@@ -285,41 +306,105 @@ fn resolve_source_material(
         },
         Err(error) => Err(material_resolution_error(
             shader,
-            source_ordinals,
+            consumer_provenance,
             &error,
             package,
         )),
     }
 }
 
-/// Collect exact physical primitive-group coordinates by logical shader.
-fn shader_source_ordinals<'group>(
+/// Collect exact primitive-group provenance without an owning-mesh coordinate.
+fn shader_consumer_provenance_from_groups<'group>(
     groups: impl Iterator<Item = &'group PrimitiveGroup>,
-) -> BTreeMap<String, BTreeSet<usize>> {
-    let mut sources = BTreeMap::<String, BTreeSet<usize>>::new();
+) -> BTreeMap<String, ShaderConsumerProvenance> {
+    let mut sources = BTreeMap::<String, ShaderConsumerProvenance>::new();
     for group in groups {
-        let ordinals = sources.entry(group.shader.clone()).or_default();
+        let provenance = sources.entry(group.shader.clone()).or_default();
         if let Some(source_ordinal) = group.source_ordinal {
-            let _inserted = ordinals.insert(source_ordinal);
+            let _inserted = provenance.source_ordinals.insert(source_ordinal);
         }
     }
     sources
 }
 
+/// Collect exact primitive-group and owning-mesh provenance by logical shader.
+fn shader_consumer_provenance(
+    meshes: &[MeshAsset],
+    mesh_sources: Option<&[WorldMeshSourceCoordinate<'_>]>,
+    package: Option<&PhaseThreePackageRow>,
+) -> BTreeMap<String, ShaderConsumerProvenance> {
+    let mut sources = BTreeMap::<String, ShaderConsumerProvenance>::new();
+    for (mesh_index, mesh) in meshes.iter().enumerate() {
+        let model_member_id = mesh_sources
+            .and_then(|coordinates| coordinates.get(mesh_index))
+            .and_then(|coordinate| {
+                package.and_then(|package| {
+                    model_package_member_id(package, *coordinate)
+                })
+            });
+        for group in &mesh.groups {
+            let provenance = sources.entry(group.shader.clone()).or_default();
+            if let Some(source_ordinal) = group.source_ordinal {
+                let _inserted =
+                    provenance.source_ordinals.insert(source_ordinal);
+            }
+            if let Some(model_member_id) = &model_member_id {
+                let _inserted =
+                    provenance.model_member_ids.insert(model_member_id.clone());
+            }
+        }
+    }
+    sources
+}
+
+/// Resolve one exact world mesh coordinate to its stable phase-three model id.
+fn model_package_member_id(
+    package: &PhaseThreePackageRow,
+    coordinate: WorldMeshSourceCoordinate<'_>,
+) -> Option<String> {
+    let path = format!(
+        "{}/components/mesh/{}.json",
+        package.package_root, coordinate.member_id
+    );
+    package
+        .find_member_by_source_coordinate(&path, coordinate.source_ordinal)
+        .filter(|member| {
+            member.role == PackageRole::Model
+                && member.kind == "p3d-mesh"
+                && member.source_chunk_kind == "mesh"
+        })
+        .map(|member| member.id.clone())
+}
+
 /// Preserve exact consumer coordinates when a logical shader is ambiguous.
 fn material_resolution_error(
     shader: &str,
-    source_ordinals: Option<&BTreeSet<usize>>,
+    consumer_provenance: Option<&ShaderConsumerProvenance>,
     error: &DecodedComponentError,
     package: Option<&PhaseThreePackageRow>,
 ) -> PipelineError {
     if matches!(error, DecodedComponentError::AmbiguousShaderMember { .. })
-        && let Some(ordinals) = source_ordinals
-        && !ordinals.is_empty()
+        && let Some(provenance) = consumer_provenance
+        && !provenance.source_ordinals.is_empty()
     {
+        let ordinals = &provenance.source_ordinals;
         if let Some(member_ids) = package.and_then(|package| {
             ambiguous_shader_package_member_ids(package, error)
         }) {
+            if !provenance.model_member_ids.is_empty() {
+                return PipelineError::new(format!(
+                    concat!(
+                        "prop material {} used by primitive-group source ",
+                        "ordinals {:?} in phase-three model members {:?} ",
+                        "failed: {:?}; phase-three material members {:?}"
+                    ),
+                    shader,
+                    ordinals,
+                    provenance.model_member_ids,
+                    error,
+                    member_ids
+                ));
+            }
             return PipelineError::new(format!(
                 concat!(
                     "prop material {} used by primitive-group source ",
@@ -387,7 +472,7 @@ type MaterialPlan = (
 /// Returns an error when material, texture, hashing, or staging work fails.
 fn resolve_materials(
     shaders: BTreeSet<String>,
-    shader_sources: &BTreeMap<String, BTreeSet<usize>>,
+    shader_sources: &BTreeMap<String, ShaderConsumerProvenance>,
     package_root: &Path,
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,

@@ -41,8 +41,10 @@ use fbx::domain::texture::MaterialSemantics;
 use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
+    ShaderConsumerProvenance, WorldMeshSourceCoordinate,
     canonical_material_identity, is_world_analysis_default_shader,
-    material_resolution_error, prepare_source_texture, shader_source_ordinals,
+    material_resolution_error, model_package_member_id, prepare_source_texture,
+    shader_consumer_provenance,
 };
 
 fn phase_three_shader_package() -> Result<PhaseThreePackageRow, String> {
@@ -51,11 +53,12 @@ fn phase_three_shader_package() -> Result<PhaseThreePackageRow, String> {
         r#""package_root":"extracted/art/L1_TERRA","#,
         r#""package_category":"terrain-world","#,
         r#""package_subcategory":"terrain-world/level-01/terrain-mesh","#,
-        r#""unit_count":2,"text_key_count":0,"#,
-        r#""unit_ids":["material-three","material-nine"],"world_ids":[],"#,
+        r#""unit_count":3,"text_key_count":0,"#,
+        r#""unit_ids":["material-three","material-nine","model-forty"],"#,
+        r#""world_ids":[],"#,
         r#""texture_ids":[],"#,
         r#""material_ids":["material-three","material-nine"],"#,
-        r#""model_ids":[],"physics_ids":[],"animation_ids":[],"#,
+        r#""model_ids":["model-forty"],"physics_ids":[],"animation_ids":[],"#,
         r#""scene_ids":[],"locator_ids":[],"camera_ids":[],"#,
         r#""light_ids":[],"particle_ids":[],"controller_ids":[],"#,
         r#""audio_ids":[],"movie_ids":[],"script_ids":[],"#,
@@ -68,7 +71,11 @@ fn phase_three_shader_package() -> Result<PhaseThreePackageRow, String> {
         r#""id":"material-nine","role":"material","#,
         r#""path":"extracted/art/L1_TERRA/components/shader/second.json","#,
         r#""type":"material","kind":"p3d-shader","#,
-        r#""source_chunk_kind":"shader","source_chunk_ordinal":"9"}],"#,
+        r#""source_chunk_kind":"shader","source_chunk_ordinal":"9"},{"#,
+        r#""id":"model-forty","role":"model","#,
+        r#""path":"extracted/art/L1_TERRA/components/mesh/body.json","#,
+        r#""type":"model","kind":"p3d-mesh","#,
+        r#""source_chunk_kind":"mesh","source_chunk_ordinal":"40"}],"#,
         r#""text_keys":[]}"#
     ))
     .map_err(|error| error.to_string())
@@ -95,10 +102,13 @@ fn ambiguous_shader_error_retains_exact_consumer_ordinals()
     )
     .map(|group| group.with_source_ordinal(7))
     .map_err(|error| format!("right primitive group failed: {error:?}"))?;
-    let groups = [left, right];
-    let sources = shader_source_ordinals(groups.iter());
+    let meshes = [fbx::domain::mesh::MeshAsset::new("body", vec![left, right])
+        .map_err(|error| format!("fixture mesh failed: {error:?}"))?];
+    let sources = shader_consumer_provenance(&meshes, None, None);
     let expected = BTreeSet::from([7_usize, 42]);
-    if sources.get("shared") != Some(&expected) {
+    if sources.get("shared").map(|source| &source.source_ordinals)
+        != Some(&expected)
+    {
         return Err(format!("shader source coordinates changed: {sources:?}"));
     }
     let error = DecodedComponentError::AmbiguousShaderMember {
@@ -128,6 +138,73 @@ fn ambiguous_shader_error_retains_exact_consumer_ordinals()
 }
 
 #[test]
+fn ambiguous_shader_error_retains_phase_three_model_id()
+-> Result<(), String> {
+    let package = phase_three_shader_package()?;
+    let group = PrimitiveGroup::new(
+        0,
+        "shared",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    )
+    .map(|group| group.with_source_ordinal(42))
+    .map_err(|error| format!("primitive group failed: {error:?}"))?;
+    let meshes = [fbx::domain::mesh::MeshAsset::new("body", vec![group])
+        .map_err(|error| format!("fixture mesh failed: {error:?}"))?];
+    let coordinates = [WorldMeshSourceCoordinate {
+        member_id: "body",
+        source_ordinal: 40,
+    }];
+    let sources =
+        shader_consumer_provenance(&meshes, Some(&coordinates), Some(&package));
+    let error = DecodedComponentError::AmbiguousShaderMember {
+        shader: "shared".to_owned(),
+        occurrences: vec![
+            ShaderMemberOccurrence {
+                member: "first.json".to_owned(),
+                source_ordinal: Some(3),
+            },
+            ShaderMemberOccurrence {
+                member: "second.json".to_owned(),
+                source_ordinal: Some(9),
+            },
+        ],
+    };
+    let rendered = material_resolution_error(
+        "shared",
+        sources.get("shared"),
+        &error,
+        Some(&package),
+    )
+    .to_string();
+    if !rendered.contains(
+        r#"phase-three model members {"model-forty"}"#,
+    ) || !rendered.contains(
+        r#"phase-three material members ["material-three", "material-nine"]"#,
+    ) {
+        return Err(format!(
+            "ambiguous shader lost model provenance: {rendered}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn wrong_mesh_coordinate_does_not_invent_phase_three_model_id()
+-> Result<(), String> {
+    let package = phase_three_shader_package()?;
+    let coordinate = WorldMeshSourceCoordinate {
+        member_id: "body",
+        source_ordinal: 41,
+    };
+    if model_package_member_id(&package, coordinate).is_some() {
+        return Err("wrong mesh coordinate resolved a model member".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn ambiguous_shader_error_retains_phase_three_material_ids()
 -> Result<(), String> {
     let package = phase_three_shader_package()?;
@@ -144,10 +221,13 @@ fn ambiguous_shader_error_retains_phase_three_material_ids()
             },
         ],
     };
-    let ordinals = BTreeSet::from([42_usize]);
+    let provenance = ShaderConsumerProvenance {
+        source_ordinals: BTreeSet::from([42_usize]),
+        model_member_ids: BTreeSet::new(),
+    };
     let rendered = material_resolution_error(
         "shared",
-        Some(&ordinals),
+        Some(&provenance),
         &error,
         Some(&package),
     )
@@ -173,10 +253,13 @@ fn ambiguous_shader_member_mapping_falls_back_on_wrong_coordinate()
             source_ordinal: Some(8),
         }],
     };
-    let ordinals = BTreeSet::from([42_usize]);
+    let provenance = ShaderConsumerProvenance {
+        source_ordinals: BTreeSet::from([42_usize]),
+        model_member_ids: BTreeSet::new(),
+    };
     let rendered = material_resolution_error(
         "shared",
-        Some(&ordinals),
+        Some(&provenance),
         &error,
         Some(&package),
     )
@@ -194,10 +277,13 @@ fn ambiguous_shader_member_mapping_falls_back_on_wrong_coordinate()
 
 #[test]
 fn non_ambiguous_material_error_keeps_existing_shape() {
-    let ordinals = BTreeSet::from([42_usize]);
+    let provenance = ShaderConsumerProvenance {
+        source_ordinals: BTreeSet::from([42_usize]),
+        model_member_ids: BTreeSet::new(),
+    };
     let error = DecodedComponentError::InvalidMemberId("bad".to_owned());
     assert_eq!(
-        material_resolution_error("shared", Some(&ordinals), &error, None)
+        material_resolution_error("shared", Some(&provenance), &error, None)
             .to_string(),
         "prop material shared failed: InvalidMemberId(\"bad\")"
     );
