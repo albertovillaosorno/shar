@@ -366,7 +366,9 @@ fn collision_object_rejects_duplicate_attributes() -> Result<(), String> {
     if object_json(&fixture).is_none() {
         Ok(())
     } else {
-        Err(String::from("duplicate collision attributes should fail closed"))
+        Err(String::from(
+            "duplicate collision attributes should fail closed",
+        ))
     }
 }
 
