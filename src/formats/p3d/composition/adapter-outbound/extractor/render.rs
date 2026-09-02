@@ -476,6 +476,11 @@ pub(super) fn recover_srr_locator_json(
         component.header_size,
         component.total_size,
     )?;
+    let splines = locator_splines_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+    )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -484,7 +489,7 @@ pub(super) fn recover_srr_locator_json(
          num_data_elements\":{},\"data_elements_u32\":[{}],\"\
          data_elements_f32\":[{}],\"data_ascii_lossy\":\"{}\",\"\
          data_interpretation\":{},\"num_triggers\":{},\"trigger_volumes\":\
-         [{}],\"extra_matrices\":[{}]}}\n",
+         [{}],\"extra_matrices\":[{}],\"splines\":[{}]}}\n",
         escape_json(&name),
         locator_type,
         locator_type_name,
@@ -498,7 +503,8 @@ pub(super) fn recover_srr_locator_json(
         data_interpretation,
         num_triggers,
         triggers,
-        extra_matrices
+        extra_matrices,
+        splines
     );
     Some(json_component(
         kind,
@@ -568,6 +574,152 @@ pub(super) fn trigger_volumes_json(
     }
     let count = triggers.len();
     Some((triggers.join(","), count))
+}
+
+/// Preserve every direct locator spline child in source order.
+pub(super) fn locator_splines_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+) -> Option<String> {
+    const TRIGGER_VOLUME: u32 = 0x0300_0006;
+    const SPLINE: u32 = 0x0300_0007;
+    const EXTRA_MATRIX: u32 = 0x0300_000c;
+    let mut splines = Vec::new();
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if total_size < header_size || next > end {
+            return None;
+        }
+        match id {
+            SPLINE => splines.push(locator_spline_json(
+                chunk,
+                cursor,
+                header_size,
+                total_size,
+            )?),
+            TRIGGER_VOLUME | EXTRA_MATRIX => {},
+            _ => return None,
+        }
+        cursor = next;
+    }
+    Some(splines.join(","))
+}
+
+/// Decode one locator spline and its one observed nested rail record.
+fn locator_spline_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    const RAIL: u32 = 0x0300_000a;
+    let end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let num_control_points = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let mut control_points = Vec::with_capacity(num_control_points);
+    for _ in 0..num_control_points {
+        let point = schema::read_point(chunk, &mut cursor)?;
+        if point.iter().any(|value| !value.is_finite()) {
+            return None;
+        }
+        control_points
+            .push(format!("[{},{},{}]", point[0], point[1], point[2]));
+    }
+    if cursor != offset.checked_add(header_size)? {
+        return None;
+    }
+    let (rail_id, rail_header, rail_total) = read_chunk_header(chunk, cursor)?;
+    if rail_id != RAIL || cursor.checked_add(rail_total)? != end {
+        return None;
+    }
+    let rail = locator_rail_json(chunk, cursor, rail_header, rail_total)?;
+    Some(format!(
+        concat!(
+            r#"{{"name":"{}","num_control_points":{},"#,
+            r#""control_points":[{}],"rail":{}}}"#,
+        ),
+        escape_json(&name),
+        num_control_points,
+        control_points.join(","),
+        rail
+    ))
+}
+
+/// Decode one schema-declared rail record without assigning camera semantics.
+fn locator_rail_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    if header_size != total_size {
+        return None;
+    }
+    let mut cursor = offset.checked_add(12)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let behaviour = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let min_radius = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let max_radius = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let track_rail = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let track_dist = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let reverse_sense = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let fov = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let target_offset = schema::read_point(chunk, &mut cursor)?;
+    let axis_play = schema::read_point(chunk, &mut cursor)?;
+    let position_lag = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let target_lag = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let floats = [
+        min_radius,
+        max_radius,
+        track_dist,
+        fov,
+        position_lag,
+        target_lag,
+    ];
+    if cursor != offset.checked_add(header_size)?
+        || floats.iter().any(|value| !value.is_finite())
+        || target_offset.iter().any(|value| !value.is_finite())
+        || axis_play.iter().any(|value| !value.is_finite())
+    {
+        return None;
+    }
+    Some(format!(
+        concat!(
+            r#"{{"name":"{}","behaviour":{},"min_radius":{},"#,
+            r#""max_radius":{},"track_rail":{},"track_dist":{},"#,
+            r#""reverse_sense":{},"fov":{},"target_offset":[{},{},{}],"#,
+            r#""axis_play":[{},{},{}],"position_lag":{},"target_lag":{}}}"#,
+        ),
+        escape_json(&name),
+        behaviour,
+        min_radius,
+        max_radius,
+        track_rail,
+        track_dist,
+        reverse_sense,
+        fov,
+        target_offset[0],
+        target_offset[1],
+        target_offset[2],
+        axis_play[0],
+        axis_play[1],
+        axis_play[2],
+        position_lag,
+        target_lag
+    ))
 }
 
 /// Preserve every direct locator extra-matrix child in source order.
