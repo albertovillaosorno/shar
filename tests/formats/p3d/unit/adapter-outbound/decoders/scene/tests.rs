@@ -231,6 +231,34 @@ fn scenegraph_fails_closed_on_child_count_mismatch() -> Result<(), String> {
 }
 
 #[test]
+fn composite_sort_order_rejects_trailing_header_bytes() -> Result<(), String> {
+    let sort = require(
+        chunk(
+            COMPOSITE_SORT_ORDER,
+            fields(vec![f32_field(1.25_f32), u32_field(99)]),
+            Vec::new(),
+        ),
+        "malformed sort-order fixture should build",
+    )?;
+    let parent = require(
+        chunk(0xfeed_face, Vec::new(), vec![sort]),
+        "sort-order parent fixture should build",
+    )?;
+    if decode_optional_sort_order(
+        &parent,
+        12,
+        parent.len(),
+        COMPOSITE_SORT_ORDER,
+    )
+    .is_none()
+    {
+        Ok(())
+    } else {
+        Err(String::from("trailing sort-order bytes should fail closed"))
+    }
+}
+
+#[test]
 fn composite_drawable_decodes_binding_lists() -> Result<(), String> {
     let comp = composite_drawable_fixture()?;
     let json = require(
