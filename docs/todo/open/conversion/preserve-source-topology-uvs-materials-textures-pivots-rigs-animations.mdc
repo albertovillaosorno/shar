@@ -808,6 +808,7 @@ same-name shader ambiguity in `L1_TERRA`: `char_swatches_m_.json` at source
 ordinal 12679 and `char_swatches_m___ordinal_13756.json` at ordinal 13756. Both
 reference `char_swatches.bmp`, but their authored shader payloads differ: the
 first has `2SID=0` and `SHIN=10`, while the second has `2SID=1` and `SHIN=0`.
+
 The decoded mesh primitive group retains only the logical `char_swatches_m`
 shader token, not a physical shader occurrence coordinate. Selecting the first,
 nearest, or lowest-ordinal shader would therefore invent relationship authority.
