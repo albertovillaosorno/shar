@@ -565,7 +565,12 @@ pub(super) fn trigger_volumes_json(
         }
         match id {
             TRIGGER_VOLUME => {
-                triggers.push(trigger_volume_json(chunk, cursor, header_size)?);
+                triggers.push(trigger_volume_json(
+                    chunk,
+                    cursor,
+                    header_size,
+                    total_size,
+                )?);
             },
             SPLINE | EXTRA_MATRIX => {},
             _ => return None,
@@ -782,25 +787,38 @@ pub(super) fn trigger_volume_json(
     chunk: &[u8],
     offset: usize,
     header_size: usize,
+    total_size: usize,
 ) -> Option<String> {
-    let mut cursor = offset + 12;
+    if header_size != total_size {
+        return None;
+    }
+    let mut cursor = offset.checked_add(12)?;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let volume_type = read_u32(chunk, cursor)?;
-    cursor += 4;
+    if !matches!(volume_type, 0 | 1) {
+        return None;
+    }
+    cursor = cursor.checked_add(4)?;
     let scale = [
         schema::read_f32(chunk, cursor)?,
-        schema::read_f32(chunk, cursor + 4)?,
-        schema::read_f32(chunk, cursor + 8)?,
+        schema::read_f32(chunk, cursor.checked_add(4)?)?,
+        schema::read_f32(chunk, cursor.checked_add(8)?)?,
     ];
-    cursor += 12;
+    if scale.iter().any(|value| !value.is_finite()) {
+        return None;
+    }
+    cursor = cursor.checked_add(12)?;
     let mut matrix = [[0f32; 4]; 4];
     for row in &mut matrix {
         for value in row {
             *value = schema::read_f32(chunk, cursor)?;
-            cursor += 4;
+            if !value.is_finite() {
+                return None;
+            }
+            cursor = cursor.checked_add(4)?;
         }
     }
-    if cursor > offset + header_size {
+    if cursor != offset.checked_add(header_size)? {
         return None;
     }
     let position = [matrix[3][0], matrix[3][1], matrix[3][2]];
