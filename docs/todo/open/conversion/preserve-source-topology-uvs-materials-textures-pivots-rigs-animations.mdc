@@ -848,6 +848,16 @@ both consume that same primitive-group contract. The decoder therefore preserves
 all available material-reference identity when it retains the shader string and
 the package-level primitive-group source ordinal.
 
+A direct raw-source audit now covers all 1,965 game P3Ds, including the 28 P3DZ
+files through the repository decompressor. Its 19,875 `tlPrimGroupChunk` records
+all declare version 0, so the decoder now rejects unobserved versions instead of
+silently interpreting them through the version-0 field layout.
+
+The same audit covers 14,518 mesh chunks and 633 skin chunks with zero
+`NumPrimGroups` mismatches against their direct physical primitive-group
+children. Mesh and skin recovery now validate that authored count before
+publication rather than replacing inconsistent source evidence with a recount.
+
 A separate audit of the 338 mesh-used duplicate logical shader sets covers 1,312
 primitive-group consumers. Every consumer has `vertex_format=8225` and an empty
 optional vertex-shader reference. Within every duplicate set, all candidate
