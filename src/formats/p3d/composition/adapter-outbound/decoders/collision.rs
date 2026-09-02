@@ -183,6 +183,9 @@ pub fn physics_json(chunk: &[u8]) -> Option<String> {
     let mut reader = Reader::new(chunk, 12);
     let name = reader.pstring()?;
     let version = reader.u32()?;
+    if version != 1 {
+        return None;
+    }
     let string_data = reader.pstring()?;
     let joint_count = reader.u32()?;
     let volume = reader.f32()?;

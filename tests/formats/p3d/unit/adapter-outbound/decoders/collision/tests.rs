@@ -230,7 +230,7 @@ fn physics_fixture_with_joint_indices(
         PHYSICS_OBJECT,
         fields(vec![
             pstring("physics")?,
-            u32_field(0),
+            u32_field(1),
             pstring("heavy")?,
             u32_field(joint_count),
             f32_field(12.),
@@ -419,6 +419,29 @@ fn physics_object_decodes_mass_and_joint_parameters() -> Result<(), String> {
         "joint degree of freedom should be emitted",
     )?;
     Ok(())
+}
+
+#[test]
+fn physics_object_rejects_unobserved_version() -> Result<(), String> {
+    let mut fixture = require(physics_fixture(), "physics fixture should build")?;
+    let name_length = usize::from(*fixture.get(12).ok_or_else(|| {
+        String::from("physics fixture name length should exist")
+    })?);
+    let version_offset = 13_usize
+        .checked_add(name_length)
+        .ok_or_else(|| String::from("physics version offset overflowed"))?;
+    require(
+        fixture.get_mut(version_offset..version_offset + 4),
+        "physics version field should exist",
+    )?
+    .copy_from_slice(&0_u32.to_le_bytes());
+    if physics_json(&fixture).is_none() {
+        Ok(())
+    } else {
+        Err(String::from(
+            "unobserved physics version should fail closed",
+        ))
+    }
 }
 
 #[test]
