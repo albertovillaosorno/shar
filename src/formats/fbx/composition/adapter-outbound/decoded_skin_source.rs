@@ -1465,6 +1465,9 @@ struct DecodedSkin {
     primitive_group_count: u32,
     /// Decoded primitive groups.
     prim_groups: Vec<DecodedSkinGroup>,
+    /// Expression-offset payload retained for source evidence.
+    #[serde(default, rename = "expression_offsets")]
+    _expression_offsets: serde_json::Value,
     /// Bounding box retained for schema compatibility.
     #[serde(default, rename = "bounding_box")]
     _bounding_box: serde_json::Value,

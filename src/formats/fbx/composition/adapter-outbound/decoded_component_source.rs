@@ -1496,6 +1496,9 @@ struct DecodedMesh {
     /// Optional P3D `CastShadow` source flag.
     #[serde(default, rename = "render_status")]
     render_status: Option<u32>,
+    /// Expression-offset payload retained for source evidence.
+    #[serde(default, rename = "expression_offsets")]
+    _expression_offsets: Value,
     /// Bounding box retained for source evidence.
     #[serde(default, rename = "bounding_box")]
     _bounding_box: Value,

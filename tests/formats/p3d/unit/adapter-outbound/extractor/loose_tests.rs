@@ -766,6 +766,57 @@ fn append_mesh_child(
     Ok(())
 }
 
+fn append_expression_offsets_fixture(
+    source: &mut Vec<u8>,
+    declared_lists: u32,
+) -> Result<(), String> {
+    const EXPRESSION_OFFSETS: u32 = 0x0001_0018;
+    const OFFSET_LIST: u32 = 0x0001_000e;
+    let mut offset_fields = Vec::new();
+    push_u32(&mut offset_fields, 1);
+    push_u32(&mut offset_fields, 2);
+    push_u32(&mut offset_fields, 7);
+    for value in [1_f32, 2., 3.] {
+        push_f32(&mut offset_fields, value);
+    }
+    push_u32(&mut offset_fields, 0);
+    let offset_size = 12_usize
+        .checked_add(offset_fields.len())
+        .ok_or_else(|| String::from("offset-list fixture overflowed"))?;
+    let offset_size =
+        u32::try_from(offset_size).map_err(|error| error.to_string())?;
+    let mut expression_fields = Vec::new();
+    push_u32(&mut expression_fields, 1);
+    push_u32(&mut expression_fields, declared_lists);
+    push_u32(&mut expression_fields, 0);
+    let expression_header = 12_usize
+        .checked_add(expression_fields.len())
+        .ok_or_else(|| String::from("expression fixture overflowed"))?;
+    let expression_total = expression_header
+        .checked_add(
+            usize::try_from(offset_size).map_err(|error| error.to_string())?,
+        )
+        .ok_or_else(|| String::from("expression total overflowed"))?;
+    push_u32(source, EXPRESSION_OFFSETS);
+    push_u32(
+        source,
+        u32::try_from(expression_header).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        source,
+        u32::try_from(expression_total).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&expression_fields);
+    push_u32(source, OFFSET_LIST);
+    push_u32(source, offset_size);
+    push_u32(source, offset_size);
+    source.extend_from_slice(&offset_fields);
+    let mesh_total =
+        u32::try_from(source.len()).map_err(|error| error.to_string())?;
+    source[8..12].copy_from_slice(&mesh_total.to_le_bytes());
+    Ok(())
+}
+
 fn primitive_group_mesh_record(
     source: &[u8],
     mesh_header: usize,
@@ -819,6 +870,46 @@ fn mesh_recovery_retains_primitive_group_source_ordinal() -> Result<(), String>
     if value["prim_groups"][0]["source_ordinal"] != 42 {
         return Err(String::from(
             "mesh primitive group lost its package-level source ordinal",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_preserves_expression_offset_evidence() -> Result<(), String> {
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    append_expression_offsets_fixture(&mut source, 1)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    let recovered = render::recover_mesh_json(&component, &source, 1, None)
+        .ok_or_else(|| String::from("expression-offset mesh should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    let expression = &value["expression_offsets"];
+    if expression["num_prim_groups"] != 1
+        || expression["num_offset_lists"] != 1
+        || expression["prim_group_indices"] != serde_json::json!([0])
+        || expression["offset_lists"][0]["num_offsets"] != 1
+        || expression["offset_lists"][0]["key_index"] != 2
+        || expression["offset_lists"][0]["offsets"][0]["vertex_index"] != 7
+        || expression["offset_lists"][0]["offsets"][0]["offset"]
+            != serde_json::json!([1, 2, 3])
+        || expression["offset_lists"][0]["prim_group_index"] != 0
+    {
+        return Err(String::from("expression-offset evidence was discarded"));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_expression_offset_count_drift() -> Result<(), String> {
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    append_expression_offsets_fixture(&mut source, 2)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery replaced the authored expression-list count",
         ));
     }
     Ok(())
