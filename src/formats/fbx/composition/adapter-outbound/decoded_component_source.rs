@@ -1525,6 +1525,9 @@ struct DecodedPrimitiveGroup {
     /// Vertex-shader identity retained for source compatibility.
     #[serde(default, rename = "vertex_shader")]
     _vertex_shader: String,
+    /// Whether the source carried an explicit vertex-shader child.
+    #[serde(default, rename = "vertex_shader_present")]
+    _vertex_shader_present: bool,
     /// Primitive topology selector: triangle list or triangle strip.
     #[serde(default)]
     prim_type: u32,

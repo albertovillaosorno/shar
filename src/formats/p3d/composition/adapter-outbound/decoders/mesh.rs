@@ -692,11 +692,13 @@ impl PrimitiveLists {
         source_ordinal: Option<usize>,
     ) -> String {
         let mut output = format!(
-            "{{\"shader\":\"{}\",\"vertex_shader\":\"{}\",\"prim_type\":{},\"\
+            "{{\"shader\":\"{}\",\"vertex_shader\":\"{}\",\"\
+             vertex_shader_present\":{},\"prim_type\":{},\"\
              vertex_format\":{},\"vertex_count\":{},\"index_count\":{},\"\
              matrix_count\":{}",
             escape(&header.shader),
             escape(&self.vertex_shader),
+            self.vertex_shader_seen,
             header.prim_type,
             header.vertex_format,
             header.vertex_count,
