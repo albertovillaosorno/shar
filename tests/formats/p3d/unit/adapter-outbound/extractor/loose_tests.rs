@@ -1010,6 +1010,70 @@ fn lens_flare_rejects_unobserved_source_shapes() -> Result<(), String> {
     Ok(())
 }
 
+fn breakable_fixture(child_id: u32) -> Vec<u8> {
+    const BREAKABLE: u32 = 0x0300_1000;
+    let mut source = Vec::new();
+    let child = empty_chunk(child_id);
+    let total_size = 20_usize.saturating_add(child.len());
+    push_u32(&mut source, BREAKABLE);
+    push_u32(&mut source, 20);
+    push_u32(&mut source, u32::try_from(total_size).unwrap_or(u32::MAX));
+    push_u32(&mut source, 24);
+    push_u32(&mut source, 3);
+    source.extend_from_slice(&child);
+    source
+}
+
+fn breakable_component(total_size: usize) -> ChunkRecord {
+    ChunkRecord {
+        ordinal: 8,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_1000,
+        kind: crate::ChunkKind::SrrBreakableObject,
+        offset: 0,
+        header_size: 20,
+        total_size,
+        payload_offset: 20,
+        payload_size: total_size.saturating_sub(20),
+        child_count: 1,
+    }
+}
+
+#[test]
+fn breakable_object_accepts_schema_child() -> Result<(), String> {
+    let source = breakable_fixture(0x0001_0000);
+    let recovered = auxiliary::recover_breakable_object_json(
+        &breakable_component(source.len()),
+        &source,
+        1,
+    )
+    .ok_or_else(|| String::from("breakable fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["breakable_type"] == 24 && value["max_instances"] == 3 {
+        Ok(())
+    } else {
+        Err(String::from("breakable source values were discarded"))
+    }
+}
+
+#[test]
+fn breakable_object_rejects_unknown_child() -> Result<(), String> {
+    let source = breakable_fixture(0xdead_beef);
+    if auxiliary::recover_breakable_object_json(
+        &breakable_component(source.len()),
+        &source,
+        1,
+    )
+    .is_none()
+    {
+        Ok(())
+    } else {
+        Err(String::from("unknown breakable child should fail closed"))
+    }
+}
+
 fn billboard_quad_fixture(
     display_version: u32,
 ) -> Result<(Vec<u8>, usize), String> {
