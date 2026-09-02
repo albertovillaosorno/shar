@@ -30,12 +30,71 @@
 
 //! Tests unit tests.
 
+use std::collections::BTreeSet;
+
+use fbx::adapters::driven::decoded_component_source::DecodedComponentError;
+use fbx::domain::mesh::PrimitiveGroup;
 use fbx::domain::texture::MaterialSemantics;
 
 use super::{
     canonical_material_identity, is_world_analysis_default_shader,
-    prepare_source_texture,
+    material_resolution_error, prepare_source_texture, shader_source_ordinals,
 };
+
+#[test]
+fn ambiguous_shader_error_retains_exact_consumer_ordinals()
+-> Result<(), String> {
+    let left = PrimitiveGroup::new(
+        0,
+        "shared",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    )
+    .map(|group| group.with_source_ordinal(42))
+    .map_err(|error| format!("left primitive group failed: {error:?}"))?;
+    let right = PrimitiveGroup::new(
+        1,
+        "shared",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    )
+    .map(|group| group.with_source_ordinal(7))
+    .map_err(|error| format!("right primitive group failed: {error:?}"))?;
+    let groups = [left, right];
+    let sources = shader_source_ordinals(groups.iter());
+    let expected = BTreeSet::from([7_usize, 42]);
+    if sources.get("shared") != Some(&expected) {
+        return Err(format!("shader source coordinates changed: {sources:?}"));
+    }
+    let error = DecodedComponentError::AmbiguousShaderMember {
+        shader: "shared".to_owned(),
+        candidates: vec!["first.json".to_owned(), "second.json".to_owned()],
+    };
+    let rendered =
+        material_resolution_error("shared", sources.get("shared"), &error)
+            .to_string();
+    if !rendered.contains("primitive-group source ordinals {7, 42}")
+        || !rendered.contains("AmbiguousShaderMember")
+    {
+        return Err(format!(
+            "ambiguous shader lost consumer evidence: {rendered}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn non_ambiguous_material_error_keeps_existing_shape() {
+    let ordinals = BTreeSet::from([42_usize]);
+    let error = DecodedComponentError::InvalidMemberId("bad".to_owned());
+    assert_eq!(
+        material_resolution_error("shared", Some(&ordinals), &error)
+            .to_string(),
+        "prop material shared failed: InvalidMemberId(\"bad\")"
+    );
+}
 
 #[test]
 fn recognizes_only_evidence_backed_neutral_defaults() {
