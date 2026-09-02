@@ -457,6 +457,7 @@ fn resolve_materials(
             source_subcategory,
         )?;
         let source_semantics = binding.semantics;
+        let source_base_color = binding.base_color_rgba8;
         let (canonical_material, canonical_texture) = match binding
             .texture_file_name
         {
@@ -487,7 +488,11 @@ fn resolve_materials(
             renames.insert(shader, canonical_material.clone());
         let material =
             MaterialBinding::new(canonical_material.clone(), canonical_texture)
-                .map(|material| material.with_semantics(source_semantics))
+                .map(|material| {
+                    material
+                        .with_semantics(source_semantics)
+                        .with_base_color_rgba8(source_base_color)
+                })
                 .map_err(|error| {
                     PipelineError::new(format!(
                         "canonical prop material failed: {error:?}"
