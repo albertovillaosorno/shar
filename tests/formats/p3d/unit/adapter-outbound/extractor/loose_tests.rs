@@ -335,7 +335,9 @@ fn srr_locator_rejects_trailing_header_data() -> Result<(), String> {
     if render::recover_srr_locator_json(&component, &source, 1).is_none() {
         Ok(())
     } else {
-        Err(String::from("trailing locator header data should fail closed"))
+        Err(String::from(
+            "trailing locator header data should fail closed",
+        ))
     }
 }
 
