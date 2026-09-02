@@ -149,11 +149,10 @@ fn car_start_json(data: &[u32]) -> Option<String> {
 
 /// Decode the number of occluding triggers from one occlusion locator.
 fn occlusion_json(data: &[u32], num_triggers: u32) -> Option<String> {
-    let occlusion_triggers = data
-        .first()
-        .copied()
-        .unwrap_or_else(|| num_triggers.saturating_sub(1));
-    if occlusion_triggers > num_triggers {
+    let [occlusion_triggers] = data else {
+        return None;
+    };
+    if *occlusion_triggers > num_triggers {
         return None;
     }
     Some(format!(
@@ -165,7 +164,7 @@ fn occlusion_json(data: &[u32], num_triggers: u32) -> Option<String> {
         ),
         num_triggers,
         occlusion_triggers,
-        num_triggers.saturating_sub(occlusion_triggers)
+        num_triggers.saturating_sub(*occlusion_triggers)
     ))
 }
 

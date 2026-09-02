@@ -463,11 +463,14 @@ pub(super) fn recover_srr_locator_json(
             &data,
             num_triggers,
         )?;
-    let triggers = trigger_volumes_json(
+    let (triggers, decoded_trigger_count) = trigger_volumes_json(
         chunk,
         component.header_size,
         component.total_size,
-    );
+    )?;
+    if decoded_trigger_count != usize::try_from(num_triggers).ok()? {
+        return None;
+    }
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -537,27 +540,28 @@ pub(super) fn trigger_volumes_json(
     chunk: &[u8],
     mut cursor: usize,
     end: usize,
-) -> String {
+) -> Option<(String, usize)> {
+    const TRIGGER_VOLUME: u32 = 0x0300_0006;
+    const SPLINE: u32 = 0x0300_0007;
+    const EXTRA_MATRIX: u32 = 0x0300_000c;
     let mut triggers = Vec::new();
-    while cursor + 12 <= end {
-        let Some((id, header_size, total_size)) =
-            read_chunk_header(chunk, cursor)
-        else {
-            break;
-        };
-        let next = cursor.saturating_add(total_size);
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
         if total_size < header_size || next > end {
-            break;
+            return None;
         }
-        if id == 0x0300_0006
-            && let Some(trigger) =
-                trigger_volume_json(chunk, cursor, header_size)
-        {
-            triggers.push(trigger);
+        match id {
+            TRIGGER_VOLUME => {
+                triggers.push(trigger_volume_json(chunk, cursor, header_size)?);
+            },
+            SPLINE | EXTRA_MATRIX => {},
+            _ => return None,
         }
         cursor = next;
     }
-    triggers.join(",")
+    let count = triggers.len();
+    Some((triggers.join(","), count))
 }
 
 /// Trigger volume json.
