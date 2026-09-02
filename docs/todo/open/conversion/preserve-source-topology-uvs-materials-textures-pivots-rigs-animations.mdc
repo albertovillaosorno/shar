@@ -833,6 +833,13 @@ source ordinal. Physical member indexing is therefore complete for this
 ambiguity surface; the missing authored consumer-to-occurrence relationship
 remains the blocking evidence.
 
+The consumer side is now equally bounded. Across those 338 mesh-used duplicate
+shader sets, all 1,312 consuming mesh occurrences resolve by exact mesh path and
+source ordinal to classified phase-three `model` / `p3d-mesh` members, with zero
+missing or classification-drifted matches. These stable model ids strengthen
+non-selecting provenance only; they do not create a primitive-group-to-material
+edge or choose among any duplicate shader occurrences.
+
 The supported Pure3D primitive-group contract has no hidden physical material
 coordinate to recover. `tlPrimGroupChunk` stores a logical `Shader` string,
 primitive and vertex types, and declared geometry counts; its optional
