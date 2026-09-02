@@ -1543,6 +1543,9 @@ struct DecodedPrimitiveGroup {
     /// Matrix count retained for rigid-mesh compatibility.
     #[serde(default, rename = "matrix_count")]
     _matrix_count: u32,
+    /// Sparse exact bits for source positions containing non-finite floats.
+    #[serde(default, rename = "position_nonfinite_f32_bits")]
+    _position_nonfinite_f32_bits: Value,
     /// Vertex positions decoded for this group.
     positions: Vec<[f32; 3]>,
     /// Packed normals retained for source evidence.

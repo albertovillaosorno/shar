@@ -504,6 +504,8 @@ struct PrimitiveLists {
     vertex_shader: String,
     /// Decoded position count validates the declared vertex count.
     positions: Option<usize>,
+    /// Sparse exact bits for source positions containing non-finite floats.
+    position_nonfinite_bits: Option<String>,
     /// Decoded index count validates the declared index count.
     indices: Option<usize>,
     /// Matrix-palette length validates the primitive matrix declaration.
@@ -556,10 +558,11 @@ impl PrimitiveLists {
     ) -> Option<bool> {
         let field = match id {
             POSITIONLIST => {
-                let (json, count) = float3_list(chunk, base)?;
+                let (json, count, nonfinite_bits) = position_list(chunk, base)?;
                 if self.positions.replace(count).is_some() {
                     return None;
                 }
+                self.position_nonfinite_bits = nonfinite_bits;
                 Some(format!("\"positions\":{json}"))
             },
             NORMALLIST | TANGENTLIST | BINORMALLIST | WEIGHTLIST => {
@@ -713,6 +716,10 @@ impl PrimitiveLists {
             output.push(',');
             output.push_str(&field);
         }
+        if let Some(bits) = self.position_nonfinite_bits {
+            output.push_str(",\"position_nonfinite_f32_bits\":");
+            output.push_str(&bits);
+        }
         if !self.uv_channels.is_empty() {
             output.push_str(",\"uvs\":[");
             output.push_str(&self.uv_channels.join(","));
@@ -744,6 +751,48 @@ fn decode_prim_group(
         return None;
     }
     Some(lists.render(&header, source_ordinal))
+}
+
+/// Decode positions while retaining sparse raw bits for non-finite vertices.
+fn position_list(
+    chunk: &[u8],
+    base: usize,
+) -> Option<(String, usize, Option<String>)> {
+    let mut reader = Reader::new(chunk, base);
+    let count = reader.u32()? as usize;
+    let mut json = String::with_capacity(count * 24 + 2);
+    let mut nonfinite = Vec::new();
+    json.push('[');
+    for i in 0..count {
+        if i > 0 {
+            json.push(',');
+        }
+        let x = reader.f32()?;
+        let y = reader.f32()?;
+        let z = reader.f32()?;
+        json.push('[');
+        json.push_str(&fmt_f32(x));
+        json.push(',');
+        json.push_str(&fmt_f32(y));
+        json.push(',');
+        json.push_str(&fmt_f32(z));
+        json.push(']');
+        if !x.is_finite() || !y.is_finite() || !z.is_finite() {
+            nonfinite.push(format!(
+                "{{\"vertex_index\":{i},\"xyz\":[{},{},{}]}}",
+                x.to_bits(),
+                y.to_bits(),
+                z.to_bits()
+            ));
+        }
+    }
+    json.push(']');
+    if reader.pos() != chunk.len() {
+        return None;
+    }
+    let bits =
+        (!nonfinite.is_empty()).then(|| format!("[{}]", nonfinite.join(",")));
+    Some((json, count, bits))
 }
 
 /// `count:u32` then `count` * three `f32`. Returns `(json_array, count)`.

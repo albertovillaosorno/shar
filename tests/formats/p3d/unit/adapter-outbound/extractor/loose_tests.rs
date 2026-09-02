@@ -1182,6 +1182,32 @@ fn mesh_recovery_rejects_duplicate_matrix_palettes() -> Result<(), String> {
 }
 
 #[test]
+fn mesh_recovery_preserves_nonfinite_position_bits() -> Result<(), String> {
+    let (mut source, mesh_header, group_header) =
+        primitive_group_mesh_fixture()?;
+    let position_float = mesh_header
+        .checked_add(group_header)
+        .and_then(|offset| offset.checked_add(16))
+        .ok_or_else(|| String::from("position fixture offset overflowed"))?;
+    source[position_float..position_float + 4]
+        .copy_from_slice(&4_290_772_992_u32.to_le_bytes());
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    let recovered = render::recover_mesh_json(&component, &source, 1, None)
+        .ok_or_else(|| String::from("non-finite position mesh should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if !value["prim_groups"][0]["positions"][0][0].is_null()
+        || value["prim_groups"][0]["position_nonfinite_f32_bits"][0]["xyz"][0]
+            != serde_json::json!(4_290_772_992_u32)
+    {
+        return Err(String::from(
+            "non-finite position payload bits were discarded",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn mesh_recovery_distinguishes_vertex_shader_child_presence()
 -> Result<(), String> {
     const VERTEX_SHADER: u32 = 0x0001_0011;
