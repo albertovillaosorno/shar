@@ -822,9 +822,7 @@ fn mesh_decoder_rejects_trailing_header_bytes() -> Result<(), String> {
     push_u32(&mut source, total);
     source.extend_from_slice(&fields);
     if crate::adapters::driven::decoders::mesh::mesh_json(&source).is_some() {
-        return Err(String::from(
-            "mesh decoder ignored trailing header bytes",
-        ));
+        return Err(String::from("mesh decoder ignored trailing header bytes"));
     }
     Ok(())
 }
