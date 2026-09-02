@@ -629,7 +629,9 @@ fn road_rejects_malformed_segment_evidence() -> Result<(), String> {
     if schema::recover_road_json(&component, &source, 1).is_none() {
         Ok(())
     } else {
-        Err(String::from("trailing road segment data should fail closed"))
+        Err(String::from(
+            "trailing road segment data should fail closed",
+        ))
     }
 }
 
