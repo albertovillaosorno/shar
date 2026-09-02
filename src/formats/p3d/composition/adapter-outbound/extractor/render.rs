@@ -471,6 +471,11 @@ pub(super) fn recover_srr_locator_json(
     if decoded_trigger_count != usize::try_from(num_triggers).ok()? {
         return None;
     }
+    let extra_matrices = extra_matrices_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+    )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -479,7 +484,7 @@ pub(super) fn recover_srr_locator_json(
          num_data_elements\":{},\"data_elements_u32\":[{}],\"\
          data_elements_f32\":[{}],\"data_ascii_lossy\":\"{}\",\"\
          data_interpretation\":{},\"num_triggers\":{},\"trigger_volumes\":\
-         [{}]}}\n",
+         [{}],\"extra_matrices\":[{}]}}\n",
         escape_json(&name),
         locator_type,
         locator_type_name,
@@ -492,7 +497,8 @@ pub(super) fn recover_srr_locator_json(
         escape_json(&ascii_from_u32_words(&data)),
         data_interpretation,
         num_triggers,
-        triggers
+        triggers,
+        extra_matrices
     );
     Some(json_component(
         kind,
@@ -562,6 +568,61 @@ pub(super) fn trigger_volumes_json(
     }
     let count = triggers.len();
     Some((triggers.join(","), count))
+}
+
+/// Preserve every direct locator extra-matrix child in source order.
+pub(super) fn extra_matrices_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+) -> Option<String> {
+    const TRIGGER_VOLUME: u32 = 0x0300_0006;
+    const SPLINE: u32 = 0x0300_0007;
+    const EXTRA_MATRIX: u32 = 0x0300_000c;
+    let mut matrices = Vec::new();
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if total_size < header_size || next > end {
+            return None;
+        }
+        match id {
+            EXTRA_MATRIX => matrices.push(extra_matrix_json(
+                chunk,
+                cursor,
+                header_size,
+                total_size,
+            )?),
+            TRIGGER_VOLUME | SPLINE => {},
+            _ => return None,
+        }
+        cursor = next;
+    }
+    Some(matrices.join(","))
+}
+
+/// Decode one schema-declared 4-by-4 extra matrix without interpretation.
+fn extra_matrix_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    if header_size != total_size {
+        return None;
+    }
+    let mut cursor = offset.checked_add(12)?;
+    let mut matrix = [[0_f32; 4]; 4];
+    for row in &mut matrix {
+        for value in row {
+            *value = schema::read_f32(chunk, cursor)?;
+            if !value.is_finite() {
+                return None;
+            }
+            cursor = cursor.checked_add(4)?;
+        }
+    }
+    (cursor == offset.checked_add(header_size)?).then(|| matrix_json(&matrix))
 }
 
 /// Trigger volume json.

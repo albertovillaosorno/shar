@@ -213,6 +213,53 @@ fn srr_locator_fixture(
 }
 
 #[test]
+fn srr_locator_preserves_extra_matrix_children() -> Result<(), String> {
+    const EXTRA_MATRIX: u32 = 0x0300_000c;
+    let (mut source, header_size) = srr_locator_fixture(0)?;
+    let mut payload = Vec::new();
+    for value in [
+        1_f32, 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 2., 3., 4., 1.,
+    ] {
+        push_f32(&mut payload, value);
+    }
+    let child_size = 12_usize
+        .checked_add(payload.len())
+        .ok_or_else(|| String::from("extra-matrix fixture overflowed"))?;
+    let child_u32 =
+        u32::try_from(child_size).map_err(|error| error.to_string())?;
+    push_u32(&mut source, EXTRA_MATRIX);
+    push_u32(&mut source, child_u32);
+    push_u32(&mut source, child_u32);
+    source.extend_from_slice(&payload);
+    let total_u32 =
+        u32::try_from(source.len()).map_err(|error| error.to_string())?;
+    source[8..12].copy_from_slice(&total_u32.to_le_bytes());
+    let component = ChunkRecord {
+        ordinal: 7,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_0005,
+        kind: crate::ChunkKind::SrrLocator,
+        offset: 0,
+        header_size,
+        total_size: source.len(),
+        payload_offset: header_size,
+        payload_size: child_size,
+        child_count: 1,
+    };
+    let recovered = render::recover_srr_locator_json(&component, &source, 1)
+        .ok_or_else(|| {
+            String::from("locator with extra matrix should decode")
+        })?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["extra_matrices"][0][3] != serde_json::json!([2, 3, 4, 1]) {
+        return Err(String::from("locator extra matrix was discarded"));
+    }
+    Ok(())
+}
+
+#[test]
 fn srr_locator_rejects_declared_trigger_count_drift() -> Result<(), String> {
     let (source, header_size) = srr_locator_fixture(1)?;
     let component = ChunkRecord {
