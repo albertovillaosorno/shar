@@ -815,6 +815,15 @@ ordinal without treating it as material-selection authority. A fresh isolated
 primitive-group ordinal 16091 inside its four-group mesh; the sibling primitive
 groups are ordinals 16097, 16103, and 16109.
 
+A committed replay now carries the candidate coordinates through the failure
+boundary as well: the two physical shader occurrences are source ordinals 12679
+and 13756. Both shader rows are depth-one, root-parented, self-contained ledger
+occurrences, so container ancestry does not distinguish them. The phase-three
+index also resolves the consuming mesh at source ordinal 16090 and both shader
+occurrences to unique physical package members. The remaining gap is therefore
+the missing primitive-group-to-physical-shader edge, not missing physical member
+identity.
+
 That exact consumer coordinate does not identify either physical shader
 occurrence. The primitive-group payload still stores only the logical
 `char_swatches_m` token, while the two differing shader candidates remain
