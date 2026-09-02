@@ -1402,11 +1402,6 @@ fn resolve_shared_texture_member<'index>(
 > {
     let expected_file_name =
         normalized_texture_png_file_name(texture_reference)?;
-    let accepted_file_names = if expected_file_name == "char_swatches.png" {
-        vec![expected_file_name, "char_swatches_lit.png".to_owned()]
-    } else {
-        vec![expected_file_name]
-    };
     let matches = index
         .packages()
         .iter()
@@ -1424,9 +1419,7 @@ fn resolve_shared_texture_member<'index>(
                 && Path::new(&member.path)
                     .file_name()
                     .and_then(|value| value.to_str())
-                    .is_some_and(|name| {
-                        accepted_file_names.iter().any(|item| item == name)
-                    })
+                    .is_some_and(|name| name == expected_file_name)
         })
         .collect::<Vec<_>>();
     match matches.as_slice() {
