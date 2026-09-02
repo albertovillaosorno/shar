@@ -1382,6 +1382,16 @@ pub(super) fn recover_lens_flare_json(
     let version = read_u32(chunk, cursor)?;
     cursor += 4;
     let num_billboard_quads = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if version != 0 || cursor != component.header_size {
+        return None;
+    }
+    validate_lens_flare_children(
+        chunk,
+        component.header_size,
+        component.total_size,
+        usize::try_from(num_billboard_quads).ok()?,
+    )?;
     let children =
         child_chunks_json(chunk, component.header_size, component.total_size);
     let kind = component.kind.label();
@@ -1406,6 +1416,40 @@ pub(super) fn recover_lens_flare_json(
         json,
         "decoded_schema_payload",
     ))
+}
+
+/// Validate the complete authored child shape of one lens flare.
+fn validate_lens_flare_children(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+    declared_quads: usize,
+) -> Option<()> {
+    const QUAD_GROUP: u32 = 0x0001_7002;
+    const MESH: u32 = 0x0001_0000;
+    const COMPOSITE_DRAWABLE: u32 = 0x0000_4512;
+    let mut quad_groups = 0_usize;
+    let mut meshes = 0_usize;
+    let mut composites = 0_usize;
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if total_size < header_size || next > end {
+            return None;
+        }
+        match id {
+            QUAD_GROUP => quad_groups = quad_groups.checked_add(1)?,
+            MESH => meshes = meshes.checked_add(1)?,
+            COMPOSITE_DRAWABLE => composites = composites.checked_add(1)?,
+            _ => return None,
+        }
+        cursor = next;
+    }
+    (cursor == end
+        && quad_groups == declared_quads
+        && meshes == 1
+        && composites == 1)
+        .then_some(())
 }
 
 /// Recover attribute table json.
