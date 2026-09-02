@@ -291,6 +291,57 @@ fn billboard_quad_preserves_child_schema_versions() -> Result<(), String> {
 }
 
 #[test]
+fn billboard_quad_rejects_missing_presentation_children() -> Result<(), String>
+{
+    let (source, header_size) = billboard_quad_fixture(1)?;
+    let mut header_only = source[..header_size].to_vec();
+    header_only[8..12].copy_from_slice(
+        &u32::try_from(header_size)
+            .map_err(|error| error.to_string())?
+            .to_le_bytes(),
+    );
+    if auxiliary::billboard_quad_json(
+        &header_only,
+        header_size,
+        header_only.len(),
+    )
+    .is_some()
+    {
+        return Err(String::from(
+            "billboard quad synthesized both presentation children",
+        ));
+    }
+
+    let display_total = u32::from_le_bytes([
+        source[header_size + 8],
+        source[header_size + 9],
+        source[header_size + 10],
+        source[header_size + 11],
+    ]) as usize;
+    let display_end = header_size
+        .checked_add(display_total)
+        .ok_or_else(|| String::from("billboard display end overflow"))?;
+    let mut display_only = source[..display_end].to_vec();
+    display_only[8..12].copy_from_slice(
+        &u32::try_from(display_end)
+            .map_err(|error| error.to_string())?
+            .to_le_bytes(),
+    );
+    if auxiliary::billboard_quad_json(
+        &display_only,
+        header_size,
+        display_only.len(),
+    )
+    .is_some()
+    {
+        return Err(String::from(
+            "billboard quad synthesized a missing perspective child",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn billboard_quad_rejects_unobserved_child_versions() -> Result<(), String> {
     let (source, header_size) = billboard_quad_fixture(2)?;
     if auxiliary::billboard_quad_json(&source, header_size, source.len())
