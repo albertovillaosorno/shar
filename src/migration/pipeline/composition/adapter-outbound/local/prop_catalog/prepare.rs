@@ -50,6 +50,7 @@ use super::material::{
 use super::model::{PropCandidate, PropRoute};
 use super::prepared::{PreparedGeometry, PreparedProp};
 use super::texture_authority::SharedTextureAuthority;
+use crate::domain::package::PhaseThreePackageRow;
 use crate::domain::PipelineError;
 
 /// Load and canonicalize one model-bearing source occurrence.
@@ -69,6 +70,7 @@ pub(super) fn prepare_candidate(
         normalized_root,
         scratch_root,
         None,
+        None,
         ordinal,
     )
 }
@@ -83,6 +85,7 @@ pub(super) fn prepare_world_candidate(
     normalized_root: &Path,
     scratch_root: &Path,
     authority: &SharedTextureAuthority,
+    package: &PhaseThreePackageRow,
     ordinal: usize,
 ) -> Result<PreparedProp, PipelineError> {
     prepare_candidate_internal(
@@ -90,6 +93,7 @@ pub(super) fn prepare_world_candidate(
         normalized_root,
         scratch_root,
         Some(authority),
+        Some(package),
         ordinal,
     )
 }
@@ -104,6 +108,7 @@ fn prepare_candidate_internal(
     normalized_root: &Path,
     scratch_root: &Path,
     authority: Option<&SharedTextureAuthority>,
+    package: Option<&PhaseThreePackageRow>,
     ordinal: usize,
 ) -> Result<PreparedProp, PipelineError> {
     let package_root = normalized_root.join(&candidate.relative_root);
@@ -113,10 +118,22 @@ fn prepare_candidate_internal(
     })?;
     match candidate.route {
         PropRoute::Static => {
-            prepare_static(candidate, &package_root, &scratch, authority)
+            prepare_static(
+                candidate,
+                &package_root,
+                &scratch,
+                authority,
+                package,
+            )
         },
         PropRoute::RigidAnimated => {
-            prepare_animated(candidate, &package_root, &scratch, authority)
+            prepare_animated(
+                candidate,
+                &package_root,
+                &scratch,
+                authority,
+                package,
+            )
         },
     }
 }
@@ -127,6 +144,7 @@ fn prepare_static(
     package_root: &Path,
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
+    package: Option<&PhaseThreePackageRow>,
 ) -> Result<PreparedProp, PipelineError> {
     let source = DecodedComponentSource::new(package_root, scratch);
     let mut meshes = candidate
@@ -147,7 +165,7 @@ fn prepare_static(
             package_root,
             scratch,
             value,
-            None,
+            package,
             &candidate.subcategory,
         ),
         None => {
@@ -173,6 +191,7 @@ fn prepare_animated(
     package_root: &Path,
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
+    package: Option<&PhaseThreePackageRow>,
 ) -> Result<PreparedProp, PipelineError> {
     let skeleton = required_component(
         candidate.skeleton_id.as_deref(),
@@ -215,6 +234,7 @@ fn prepare_animated(
             package_root,
             scratch,
             value,
+            package,
             &candidate.subcategory,
         ),
         None => {
