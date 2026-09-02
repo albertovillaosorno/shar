@@ -34,7 +34,8 @@ use std::fs;
 use std::path::PathBuf;
 
 use fbx::adapters::driven::decoded_component_source::{
-    DecodedComponentError, DecodedComponentSource, read_shader_source_evidence,
+    DecodedComponentError, DecodedComponentSource, ShaderMemberOccurrence,
+    read_shader_source_evidence,
 };
 use fbx::ports::component_source::ComponentSource;
 use png as _;
@@ -303,9 +304,15 @@ fn rejects_ambiguous_shader_ledger_even_when_direct_member_exists() {
         result,
         Err(DecodedComponentError::AmbiguousShaderMember {
             shader: "shared".to_owned(),
-            candidates: vec![
-                "shared.json".to_owned(),
-                "shared__ordinal_2.json".to_owned(),
+            occurrences: vec![
+                ShaderMemberOccurrence {
+                    member: "shared.json".to_owned(),
+                    source_ordinal: Some(1),
+                },
+                ShaderMemberOccurrence {
+                    member: "shared__ordinal_2.json".to_owned(),
+                    source_ordinal: Some(2),
+                },
             ],
         })
     );

@@ -70,6 +70,15 @@ pub struct ShaderParameterEvidence {
     pub value: Value,
 }
 
+/// One physical shader candidate retained for fail-closed diagnostics.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ShaderMemberOccurrence {
+    /// Normalized shader member file name.
+    pub member: String,
+    /// Exact package-level source chunk ordinal when a ledger published it.
+    pub source_ordinal: Option<usize>,
+}
+
 /// One validated decoded shader document retained without choosing a consumer.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ShaderSourceEvidence {
@@ -303,6 +312,13 @@ fn component_path(
         .join(format!("{member_id}.{extension}")))
 }
 
+/// One internal shader candidate with optional normalized-ledger provenance.
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ShaderCandidate {
+    path: PathBuf,
+    source_ordinal: Option<usize>,
+}
+
 /// Resolve one shader JSON path, accepting deterministic fixed-width padding.
 fn shader_component_path(
     package_root: &Path,
@@ -311,12 +327,12 @@ fn shader_component_path(
     let ledger_candidates =
         shader_ledger_candidates(package_root, shader_name)?;
     match ledger_candidates.as_slice() {
-        [candidate] => return Ok(candidate.clone()),
+        [candidate] => return Ok(candidate.path.clone()),
         [] => {},
         _ => {
             return Err(DecodedComponentError::AmbiguousShaderMember {
                 shader: shader_name.to_owned(),
-                candidates: component_file_names(&ledger_candidates),
+                occurrences: shader_occurrences(&ledger_candidates),
             });
         },
     }
@@ -353,14 +369,18 @@ fn shader_component_path(
                     padded_shader_stem_matches(stem, shader_name)
                 })
         })
+        .map(|path| ShaderCandidate {
+            path,
+            source_ordinal: None,
+        })
         .collect::<Vec<_>>();
-    candidates.sort();
+    candidates.sort_by(|left, right| left.path.cmp(&right.path));
     match candidates.as_slice() {
-        [candidate] => Ok(candidate.clone()),
+        [candidate] => Ok(candidate.path.clone()),
         [] => Ok(direct),
         _ => Err(DecodedComponentError::AmbiguousShaderMember {
             shader: shader_name.to_owned(),
-            candidates: component_file_names(&candidates),
+            occurrences: shader_occurrences(&candidates),
         }),
     }
 }
@@ -369,7 +389,7 @@ fn shader_component_path(
 fn shader_ledger_candidates(
     package_root: &Path,
     shader_name: &str,
-) -> Result<Vec<PathBuf>, DecodedComponentError> {
+) -> Result<Vec<ShaderCandidate>, DecodedComponentError> {
     let manifest = package_root.join("components.jsonl");
     if !manifest.is_file() {
         return Ok(Vec::new());
@@ -410,18 +430,41 @@ fn shader_ledger_candidates(
             .ok_or_else(|| {
                 DecodedComponentError::InvalidMemberId(path.to_owned())
             })?;
-        candidates.push(
-            package_root
+        let source_ordinal = value
+            .get("ordinal")
+            .and_then(Value::as_u64)
+            .and_then(|ordinal| usize::try_from(ordinal).ok());
+        candidates.push(ShaderCandidate {
+            path: package_root
                 .join("components")
                 .join("shader")
                 .join(file_name),
-        );
+            source_ordinal,
+        });
     }
-    candidates.sort();
+    candidates.sort_by(|left, right| left.path.cmp(&right.path));
     Ok(candidates)
 }
 
-/// Return stable file-name diagnostics for candidate component paths.
+/// Return stable occurrence diagnostics for candidate component paths.
+fn shader_occurrences(
+    candidates: &[ShaderCandidate],
+) -> Vec<ShaderMemberOccurrence> {
+    candidates
+        .iter()
+        .map(|candidate| ShaderMemberOccurrence {
+            member: candidate
+                .path
+                .file_name()
+                .and_then(|value| value.to_str())
+                .unwrap_or_default()
+                .to_owned(),
+            source_ordinal: candidate.source_ordinal,
+        })
+        .collect()
+}
+
+/// Return stable file-name diagnostics for generic component paths.
 fn component_file_names(candidates: &[PathBuf]) -> Vec<String> {
     candidates
         .iter()
@@ -1324,8 +1367,8 @@ pub enum DecodedComponentError {
     AmbiguousShaderMember {
         /// Logical shader identity requested by the caller.
         shader: String,
-        /// Matching padded member file names.
-        candidates: Vec<String>,
+        /// Matching physical occurrences without selecting one.
+        occurrences: Vec<ShaderMemberOccurrence>,
     },
     /// Decoded shader identity did not match the requested member identity.
     ShaderIdentityMismatch {
