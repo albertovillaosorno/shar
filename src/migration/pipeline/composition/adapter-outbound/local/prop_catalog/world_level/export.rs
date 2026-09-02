@@ -749,6 +749,7 @@ fn append_package(
         &package_root,
         &package_scratch,
         append_context.authority,
+        Some(package),
         &package.subcategory,
     )?;
     merge_materials(&mut package_content.materials, materials)?;

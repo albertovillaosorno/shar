@@ -38,10 +38,41 @@ use fbx::adapters::driven::decoded_component_source::{
 use fbx::domain::mesh::PrimitiveGroup;
 use fbx::domain::texture::MaterialSemantics;
 
+use crate::domain::package::PhaseThreePackageRow;
+
 use super::{
     canonical_material_identity, is_world_analysis_default_shader,
     material_resolution_error, prepare_source_texture, shader_source_ordinals,
 };
+
+fn phase_three_shader_package() -> Result<PhaseThreePackageRow, String> {
+    PhaseThreePackageRow::from_json_line(concat!(
+        r#"{"package_id":"extracted-art-l1-terra","#,
+        r#""package_root":"extracted/art/L1_TERRA","#,
+        r#""package_category":"terrain-world","#,
+        r#""package_subcategory":"terrain-world/level-01/terrain-mesh","#,
+        r#""unit_count":2,"text_key_count":0,"#,
+        r#""unit_ids":["material-three","material-nine"],"world_ids":[],"#,
+        r#""texture_ids":[],"#,
+        r#""material_ids":["material-three","material-nine"],"#,
+        r#""model_ids":[],"physics_ids":[],"animation_ids":[],"#,
+        r#""scene_ids":[],"locator_ids":[],"camera_ids":[],"#,
+        r#""light_ids":[],"particle_ids":[],"controller_ids":[],"#,
+        r#""audio_ids":[],"movie_ids":[],"script_ids":[],"#,
+        r#""text_ids":[],"ui_ids":[],"metadata_ids":[],"error_ids":[],"#,
+        r#""source_unit_ids":[],"text_key_ids":[],"members":[{"#,
+        r#""id":"material-three","role":"material","#,
+        r#""path":"extracted/art/L1_TERRA/components/shader/first.json","#,
+        r#""type":"material","kind":"p3d-shader","#,
+        r#""source_chunk_kind":"shader","source_chunk_ordinal":"3"},{"#,
+        r#""id":"material-nine","role":"material","#,
+        r#""path":"extracted/art/L1_TERRA/components/shader/second.json","#,
+        r#""type":"material","kind":"p3d-shader","#,
+        r#""source_chunk_kind":"shader","source_chunk_ordinal":"9"}],"#,
+        r#""text_keys":[]}"#
+    ))
+    .map_err(|error| error.to_string())
+}
 
 #[test]
 fn ambiguous_shader_error_retains_exact_consumer_ordinals()
@@ -84,7 +115,7 @@ fn ambiguous_shader_error_retains_exact_consumer_ordinals()
         ],
     };
     let rendered =
-        material_resolution_error("shared", sources.get("shared"), &error)
+        material_resolution_error("shared", sources.get("shared"), &error, None)
             .to_string();
     if !rendered.contains("primitive-group source ordinals {7, 42}")
         || !rendered.contains("AmbiguousShaderMember")
@@ -97,11 +128,76 @@ fn ambiguous_shader_error_retains_exact_consumer_ordinals()
 }
 
 #[test]
+fn ambiguous_shader_error_retains_phase_three_material_ids()
+-> Result<(), String> {
+    let package = phase_three_shader_package()?;
+    let error = DecodedComponentError::AmbiguousShaderMember {
+        shader: "shared".to_owned(),
+        occurrences: vec![
+            ShaderMemberOccurrence {
+                member: "first.json".to_owned(),
+                source_ordinal: Some(3),
+            },
+            ShaderMemberOccurrence {
+                member: "second.json".to_owned(),
+                source_ordinal: Some(9),
+            },
+        ],
+    };
+    let ordinals = BTreeSet::from([42_usize]);
+    let rendered = material_resolution_error(
+        "shared",
+        Some(&ordinals),
+        &error,
+        Some(&package),
+    )
+    .to_string();
+    if !rendered.contains(
+        r#"phase-three material members ["material-three", "material-nine"]"#,
+    ) {
+        return Err(format!(
+            "ambiguous shader lost phase-three member evidence: {rendered}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn ambiguous_shader_member_mapping_falls_back_on_wrong_coordinate()
+-> Result<(), String> {
+    let package = phase_three_shader_package()?;
+    let error = DecodedComponentError::AmbiguousShaderMember {
+        shader: "shared".to_owned(),
+        occurrences: vec![ShaderMemberOccurrence {
+            member: "first.json".to_owned(),
+            source_ordinal: Some(8),
+        }],
+    };
+    let ordinals = BTreeSet::from([42_usize]);
+    let rendered = material_resolution_error(
+        "shared",
+        Some(&ordinals),
+        &error,
+        Some(&package),
+    )
+    .to_string();
+    if rendered.contains("phase-three material members")
+        || !rendered.contains("source_ordinal: Some(8)")
+    {
+        return Err(format!(
+            "wrong shader coordinate did not fail back to exact \
+             evidence: {rendered}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn non_ambiguous_material_error_keeps_existing_shape() {
     let ordinals = BTreeSet::from([42_usize]);
     let error = DecodedComponentError::InvalidMemberId("bad".to_owned());
     assert_eq!(
-        material_resolution_error("shared", Some(&ordinals), &error)
+        material_resolution_error("shared", Some(&ordinals), &error, None)
             .to_string(),
         "prop material shared failed: InvalidMemberId(\"bad\")"
     );
