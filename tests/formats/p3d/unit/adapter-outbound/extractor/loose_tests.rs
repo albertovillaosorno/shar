@@ -212,6 +212,98 @@ fn srr_locator_fixture(
     Ok((source, header_size))
 }
 
+fn trigger_volume_fixture(
+    volume_type: u32,
+    scale_x: f32,
+    trailing_header_word: bool,
+    child_word: bool,
+) -> Result<(Vec<u8>, usize, usize), String> {
+    const TRIGGER_VOLUME: u32 = 0x0300_0006;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "trigger")?;
+    push_u32(&mut fields, volume_type);
+    for value in [scale_x, 2_f32, 3_f32] {
+        push_f32(&mut fields, value);
+    }
+    for index in 0_usize..16_usize {
+        let value = if matches!(index, 0 | 5 | 10 | 15) {
+            1_f32
+        } else {
+            0_f32
+        };
+        push_f32(&mut fields, value);
+    }
+    if trailing_header_word {
+        push_u32(&mut fields, 99);
+    }
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("trigger header overflowed"))?;
+    let total_size = header_size
+        .checked_add(if child_word { 4 } else { 0 })
+        .ok_or_else(|| String::from("trigger total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, TRIGGER_VOLUME);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    if child_word {
+        push_u32(&mut source, 0);
+    }
+    Ok((source, header_size, total_size))
+}
+
+#[test]
+fn trigger_volume_preserves_schema_values() -> Result<(), String> {
+    let (source, header_size, total_size) =
+        trigger_volume_fixture(1, 4_f32, false, false)?;
+    let json = render::trigger_volume_json(&source, 0, header_size, total_size)
+        .ok_or_else(|| String::from("trigger volume should decode"))?;
+    if json.contains("\"type\":1") && json.contains("\"scale\":[4,2,3]") {
+        Ok(())
+    } else {
+        Err(String::from("trigger volume source values were discarded"))
+    }
+}
+
+#[test]
+fn trigger_volume_rejects_unobserved_source_shapes() -> Result<(), String> {
+    let (unknown_type, header_size, total_size) =
+        trigger_volume_fixture(2, 1_f32, false, false)?;
+    if render::trigger_volume_json(&unknown_type, 0, header_size, total_size)
+        .is_some()
+    {
+        return Err(String::from("unobserved trigger type should fail closed"));
+    }
+    let (trailing, header_size, total_size) =
+        trigger_volume_fixture(0, 1_f32, true, false)?;
+    if render::trigger_volume_json(&trailing, 0, header_size, total_size)
+        .is_some()
+    {
+        return Err(String::from("trailing trigger header should fail closed"));
+    }
+    let (child, header_size, total_size) =
+        trigger_volume_fixture(0, 1_f32, false, true)?;
+    if render::trigger_volume_json(&child, 0, header_size, total_size).is_some()
+    {
+        return Err(String::from("trigger child data should fail closed"));
+    }
+    let (nonfinite, header_size, total_size) =
+        trigger_volume_fixture(0, f32::NAN, false, false)?;
+    if render::trigger_volume_json(&nonfinite, 0, header_size, total_size)
+        .is_some()
+    {
+        return Err(String::from("nonfinite trigger data should fail closed"));
+    }
+    Ok(())
+}
+
 #[test]
 fn locator_spline_preserves_control_points_and_rail() -> Result<(), String> {
     const SPLINE: u32 = 0x0300_0007;
