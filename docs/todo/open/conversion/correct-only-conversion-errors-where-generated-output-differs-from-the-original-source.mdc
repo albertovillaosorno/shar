@@ -66,5 +66,23 @@ missing file only by name when world texture authority was active, without a
 decoded material source. A regression now requires that case to follow ordinary
 fail-closed material resolution.
 
+Shared world-texture fallback now retains the decoded shader document instead
+of rebuilding a new material binding from its names after local texture lookup
+fails. The previous branch discarded authored `DIFF` colour and decoded
+transparency, emission, and reflection evidence before canonicalization. The
+replacement reuses the exact external-texture resolver, which preserves those
+fields while retaining the shader's authored texture identity. A 149-package
+terrain-world replay found no currently used unique shader taking this fallback,
+so the change hardens a latent boundary without claiming a current output delta.
+
+Character body-atlas selection now also requires every selected body shader to
+have its own resolved source texture. Of the four current packages with an
+unresolved plain `char_swatches.bmp` reference, `h-fat-m` and `l-cool-m` also
+carry exact shared lit-swatch body shaders; the former selector could skip the
+unresolved plain binding and continue from those lit pixels. `male5-m` and
+`mobstr-m` already had no alternate body source and therefore failed empty. The
+new invariant keeps all four plain-swatch gaps explicit instead of allowing a
+different body shader to supply atlas pixels.
+
 This umbrella task remains open for other reported conversion differences that
 need direct source-backed evidence before any correction is admitted.
