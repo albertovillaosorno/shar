@@ -201,6 +201,12 @@ struct MeshBody {
     extras: Vec<String>,
     /// Unhandled.
     unhandled: Vec<(u32, usize)>,
+    /// Bounding-box source evidence is singleton in the complete corpus.
+    bounding_box_seen: bool,
+    /// Bounding-sphere source evidence is singleton in the complete corpus.
+    bounding_sphere_seen: bool,
+    /// Render-status source evidence is singleton in the complete corpus.
+    render_status_seen: bool,
 }
 
 impl MeshBody {
@@ -237,6 +243,9 @@ fn decode_children(
         groups: Vec::new(),
         extras: Vec::new(),
         unhandled: Vec::new(),
+        bounding_box_seen: false,
+        bounding_sphere_seen: false,
+        render_status_seen: false,
     };
     let mut primitive_group_index = 0_usize;
     for child in subchunks(chunk, start, end)? {
@@ -256,27 +265,72 @@ fn decode_children(
                 primitive_group_index = primitive_group_index.checked_add(1)?;
             },
             BBOX => {
-                let mut reader = Reader::new(chunk, child.data_offset());
-                let low = read_vec3(&mut reader)?;
-                let high = read_vec3(&mut reader)?;
+                if body.bounding_box_seen
+                    || child.header_size != 36
+                    || child.total_size != 36
+                {
+                    return None;
+                }
+                let bounded = chunk.get(..child.header_end())?;
+                let mut reader = Reader::new(bounded, child.data_offset());
+                let low = read_vec3_with_bits(&mut reader)?;
+                let high = read_vec3_with_bits(&mut reader)?;
+                if reader.pos() != bounded.len() {
+                    return None;
+                }
                 body.extras.push(format!(
-                    "\"bounding_box\":{{\"low\":{low},\"high\":\
-                             {high}}}"
+                    concat!(
+                        "\"bounding_box\":{{\"low\":{},\"high\":{}}}",
+                        ",\"bounding_box_f32_bits\":{{\"low\":{},",
+                        "\"high\":{}}}"
+                    ),
+                    low.0, high.0, low.1, high.1
                 ));
+                body.bounding_box_seen = true;
             },
             BSPHERE => {
-                let mut reader = Reader::new(chunk, child.data_offset());
-                let centre = read_vec3(&mut reader)?;
+                if body.bounding_sphere_seen
+                    || child.header_size != 28
+                    || child.total_size != 28
+                {
+                    return None;
+                }
+                let bounded = chunk.get(..child.header_end())?;
+                let mut reader = Reader::new(bounded, child.data_offset());
+                let centre = read_vec3_with_bits(&mut reader)?;
                 let radius = reader.f32()?;
+                if reader.pos() != bounded.len() {
+                    return None;
+                }
                 body.extras.push(format!(
-                    "\"bounding_sphere\":{{\"centre\":{centre},\"\
-                             radius\":{}}}",
-                    fmt_f32(radius)
+                    concat!(
+                        "\"bounding_sphere\":{{\"centre\":{},",
+                        "\"radius\":{}}},",
+                        "\"bounding_sphere_f32_bits\":{{\"centre\":{},",
+                        "\"radius\":{}}}"
+                    ),
+                    centre.0,
+                    fmt_f32(radius),
+                    centre.1,
+                    radius.to_bits()
                 ));
+                body.bounding_sphere_seen = true;
             },
             RENDERSTATUS => {
-                let status = Reader::new(chunk, child.data_offset()).u32()?;
+                if body.render_status_seen
+                    || child.header_size != 16
+                    || child.total_size != 16
+                {
+                    return None;
+                }
+                let bounded = chunk.get(..child.header_end())?;
+                let mut reader = Reader::new(bounded, child.data_offset());
+                let status = reader.u32()?;
+                if reader.pos() != bounded.len() {
+                    return None;
+                }
                 body.extras.push(format!("\"render_status\":{status}"));
+                body.render_status_seen = true;
             },
             other => body.unhandled.push((other, child.total_size)),
         }
@@ -289,12 +343,15 @@ fn decode_children(
     Some(body)
 }
 
-/// Read vec3.
-fn read_vec3(reader: &mut Reader<'_>) -> Option<String> {
+/// Read a vec3 while retaining each authored IEEE-754 bit pattern.
+fn read_vec3_with_bits(reader: &mut Reader<'_>) -> Option<(String, String)> {
     let x = reader.f32()?;
     let y = reader.f32()?;
     let z = reader.f32()?;
-    Some(format!("[{},{},{}]", fmt_f32(x), fmt_f32(y), fmt_f32(z)))
+    Some((
+        format!("[{},{},{}]", fmt_f32(x), fmt_f32(y), fmt_f32(z)),
+        format!("[{},{},{}]", x.to_bits(), y.to_bits(), z.to_bits()),
+    ))
 }
 
 /// Keeps primitive header values together because count validation and JSON

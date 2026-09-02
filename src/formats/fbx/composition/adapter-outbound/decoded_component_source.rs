@@ -1499,9 +1499,15 @@ struct DecodedMesh {
     /// Bounding box retained for source evidence.
     #[serde(default, rename = "bounding_box")]
     _bounding_box: Value,
+    /// Exact bounding-box IEEE-754 payload bits retained for provenance.
+    #[serde(default, rename = "bounding_box_f32_bits")]
+    _bounding_box_f32_bits: Value,
     /// Bounding sphere retained for source evidence.
     #[serde(default, rename = "bounding_sphere")]
     _bounding_sphere: Value,
+    /// Exact bounding-sphere IEEE-754 payload bits retained for provenance.
+    #[serde(default, rename = "bounding_sphere_f32_bits")]
+    _bounding_sphere_f32_bits: Value,
 }
 
 #[derive(Deserialize)]
