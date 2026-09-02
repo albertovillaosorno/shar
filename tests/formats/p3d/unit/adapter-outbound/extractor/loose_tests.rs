@@ -188,18 +188,19 @@ fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
 }
 
 fn primitive_group_mesh_fixture() -> Result<(Vec<u8>, usize, usize), String> {
-    primitive_group_mesh_fixture_with_contract(0, 1)
+    primitive_group_mesh_fixture_with_contract(0, 1, 0)
 }
 
 fn primitive_group_mesh_fixture_with_version(
     version: u32,
 ) -> Result<(Vec<u8>, usize, usize), String> {
-    primitive_group_mesh_fixture_with_contract(version, 1)
+    primitive_group_mesh_fixture_with_contract(version, 1, 0)
 }
 
 fn primitive_group_mesh_fixture_with_contract(
     primitive_version: u32,
     declared_groups: u32,
+    matrix_count: u32,
 ) -> Result<(Vec<u8>, usize, usize), String> {
     const MESH: u32 = 0x0001_0000;
     const PRIMITIVE_GROUP: u32 = 0x0001_0002;
@@ -207,7 +208,7 @@ fn primitive_group_mesh_fixture_with_contract(
     let mut group_fields = Vec::new();
     push_u32(&mut group_fields, primitive_version);
     push_pascal(&mut group_fields, "shader")?;
-    for value in [0, 0, 0, 0, 0] {
+    for value in [0, 0, 0, 0, matrix_count] {
         push_u32(&mut group_fields, value);
     }
     let group_size = 12_usize
@@ -303,11 +304,25 @@ fn mesh_recovery_retains_primitive_group_source_ordinal() -> Result<(), String>
 fn mesh_recovery_rejects_declared_primitive_group_count_drift()
 -> Result<(), String> {
     let (source, mesh_header, _group_size) =
-        primitive_group_mesh_fixture_with_contract(0, 2)?;
+        primitive_group_mesh_fixture_with_contract(0, 2, 0)?;
     let component = primitive_group_mesh_record(&source, mesh_header);
     if render::recover_mesh_json(&component, &source, 1, None).is_some() {
         return Err(String::from(
             "mesh recovery replaced the authored primitive-group count",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_missing_declared_matrix_palette() -> Result<(), String>
+{
+    let (source, mesh_header, _group_size) =
+        primitive_group_mesh_fixture_with_contract(0, 1, 1)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted a missing declared matrix palette",
         ));
     }
     Ok(())

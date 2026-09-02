@@ -346,6 +346,8 @@ struct PrimitiveLists {
     positions: Option<usize>,
     /// Decoded index count validates the declared index count.
     indices: Option<usize>,
+    /// Matrix-palette length validates the primitive matrix declaration.
+    matrix_palette: Option<usize>,
 }
 
 impl PrimitiveLists {
@@ -413,10 +415,11 @@ impl PrimitiveLists {
                 "\"packed_normals\":{}",
                 u32_list(chunk, base,)?.0
             )),
-            MATRIXPALETTE => Some(format!(
-                "\"matrix_palette\":{}",
-                u32_list(chunk, base,)?.0
-            )),
+            MATRIXPALETTE => {
+                let (json, count) = u32_list(chunk, base)?;
+                self.matrix_palette = Some(count);
+                Some(format!("\"matrix_palette\":{json}"))
+            },
             INDEXLIST => {
                 let (json, count) = u32_list(chunk, base)?;
                 self.indices = Some(count);
@@ -458,9 +461,16 @@ impl PrimitiveLists {
     fn counts_match(&self, header: &PrimitiveHeader) -> bool {
         let vertex_count = usize::try_from(header.vertex_count).ok();
         let index_count = usize::try_from(header.index_count).ok();
+        let matrix_count = usize::try_from(header.matrix_count).ok();
+        let matrix_count_matches = self
+            .matrix_palette
+            .map_or(header.matrix_count == 0, |count| {
+                Some(count) == matrix_count
+            });
         self.positions
             .is_none_or(|count| Some(count) == vertex_count)
             && self.indices.is_none_or(|count| Some(count) == index_count)
+            && matrix_count_matches
     }
 
     /// Renders one deterministic JSON object after count validation succeeds.
