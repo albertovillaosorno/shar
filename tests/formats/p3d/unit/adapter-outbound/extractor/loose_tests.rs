@@ -723,6 +723,95 @@ fn ped_path_rejects_unobserved_source_shapes() -> Result<(), String> {
     Ok(())
 }
 
+fn follow_cam_fixture(
+    elevation: f32,
+    trailing_word: bool,
+) -> Result<(Vec<u8>, usize), String> {
+    const FOLLOW_CAM: u32 = 0x0300_0100;
+    let mut fields = Vec::new();
+    push_u32(&mut fields, 81);
+    for value in [180_f32, elevation, 9_f32, 0_f32, 0.5_f32, 1.2_f32] {
+        push_f32(&mut fields, value);
+    }
+    if trailing_word {
+        push_u32(&mut fields, 99);
+    }
+    let size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("follow cam fixture overflowed"))?;
+    let size_u32 = u32::try_from(size).map_err(|error| error.to_string())?;
+    let mut source = Vec::new();
+    push_u32(&mut source, FOLLOW_CAM);
+    push_u32(&mut source, size_u32);
+    push_u32(&mut source, size_u32);
+    source.extend_from_slice(&fields);
+    Ok((source, size))
+}
+
+fn follow_cam_component(size: usize) -> ChunkRecord {
+    ChunkRecord {
+        ordinal: 5,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_0100,
+        kind: crate::ChunkKind::SrrFollowCam,
+        offset: 0,
+        header_size: size,
+        total_size: size,
+        payload_offset: size,
+        payload_size: 0,
+        child_count: 0,
+    }
+}
+
+#[test]
+fn follow_cam_preserves_source_values() -> Result<(), String> {
+    let (source, size) = follow_cam_fixture(12_f32, false)?;
+    let recovered = auxiliary::recover_follow_cam_json(
+        &follow_cam_component(size),
+        &source,
+        1,
+    )
+    .ok_or_else(|| String::from("follow cam fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["id"] == 81
+        && value["elevation"] == 12
+        && value["target_offset"] == serde_json::json!([0, 0.5, 1.2])
+    {
+        Ok(())
+    } else {
+        Err(String::from("follow cam source values were discarded"))
+    }
+}
+
+#[test]
+fn follow_cam_rejects_unobserved_source_shapes() -> Result<(), String> {
+    let (trailing, size) = follow_cam_fixture(12_f32, true)?;
+    if auxiliary::recover_follow_cam_json(
+        &follow_cam_component(size),
+        &trailing,
+        1,
+    )
+    .is_some()
+    {
+        return Err(String::from("trailing follow cam data should fail closed"));
+    }
+    let (nonfinite, size) = follow_cam_fixture(f32::NAN, false)?;
+    if auxiliary::recover_follow_cam_json(
+        &follow_cam_component(size),
+        &nonfinite,
+        1,
+    )
+    .is_some()
+    {
+        return Err(String::from(
+            "nonfinite follow cam data should fail closed",
+        ));
+    }
+    Ok(())
+}
+
 fn billboard_quad_fixture(
     display_version: u32,
 ) -> Result<(Vec<u8>, usize), String> {

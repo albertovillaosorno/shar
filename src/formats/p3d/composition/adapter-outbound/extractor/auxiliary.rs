@@ -1275,6 +1275,15 @@ pub(super) fn recover_follow_cam_json(
     let magnitude = schema::read_f32(chunk, cursor)?;
     cursor += 4;
     let target_offset = schema::read_point(chunk, &mut cursor)?;
+    if cursor != component.header_size
+        || component.header_size != component.total_size
+        || [rotation, elevation, magnitude]
+            .iter()
+            .chain(target_offset.iter())
+            .any(|value| !value.is_finite())
+    {
+        return None;
+    }
     let kind = component.kind.label();
     let name = format!("{kind}_{kind_index:04}");
     let json = format!(
