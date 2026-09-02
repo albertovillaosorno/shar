@@ -169,7 +169,8 @@ selected from those duplicate logical names.
 Adjacent world-network evidence is equally bounded. The corpus contains 605
 pedestrian paths with five through 23 finite authored points; every path is
 childless and exact-header, and no `PED_PATH_SEGMENT` chunk is observed. It also
-contains 175 exact 40-byte follow-camera records with finite camera values; their
+contains 175 exact 40-byte follow-camera records with finite camera values;
+their
 widely varying IDs remain verbatim source data rather than an inferred enum.
 
 The one attribute table has 63 exact childless rows and 189 finite physical
