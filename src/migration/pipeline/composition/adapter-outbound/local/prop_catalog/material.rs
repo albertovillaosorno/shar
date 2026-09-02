@@ -293,17 +293,6 @@ fn resolve_source_material(
                 },
             )
         },
-        Err(DecodedComponentError::Read { path, source: _source })
-            if authority.is_some()
-                && is_world_analysis_default_shader(shader)
-                && !Path::new(&path).is_file() =>
-        {
-            MaterialBinding::new(shader, None).map_err(|error| {
-                PipelineError::new(format!(
-                    "world default material fallback failed: {error:?}"
-                ))
-            })
-        },
         Err(error) => Err(material_resolution_error(
             shader,
             consumer_provenance,
@@ -448,14 +437,6 @@ fn ambiguous_shader_package_member_ids(
         member_ids.push(member.id.clone());
     }
     Some(member_ids)
-}
-
-/// Return whether one missing shader has proven neutral analysis evidence.
-fn is_world_analysis_default_shader(shader: &str) -> bool {
-    matches!(
-        shader.to_ascii_lowercase().as_str(),
-        "lambert1" | "pure3dsimpleshader15"
-    )
 }
 
 /// Resolve source shaders and replace source names with content-derived names.

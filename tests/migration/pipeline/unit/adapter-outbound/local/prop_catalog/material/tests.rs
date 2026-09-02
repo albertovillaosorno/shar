@@ -41,10 +41,10 @@ use fbx::domain::texture::MaterialSemantics;
 use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
-    ShaderConsumerProvenance, WorldMeshSourceCoordinate,
-    canonical_material_identity, is_world_analysis_default_shader,
+    DecodedComponentSource, ShaderConsumerProvenance, SharedTextureAuthority,
+    WorldMeshSourceCoordinate, canonical_material_identity,
     material_resolution_error, model_package_member_id, prepare_source_texture,
-    shader_consumer_provenance,
+    resolve_source_material, shader_consumer_provenance,
 };
 
 fn phase_three_shader_package() -> Result<PhaseThreePackageRow, String> {
@@ -290,12 +290,34 @@ fn non_ambiguous_material_error_keeps_existing_shape() {
 }
 
 #[test]
-fn recognizes_only_evidence_backed_neutral_defaults() {
-    assert!(is_world_analysis_default_shader("lambert1"));
-    assert!(is_world_analysis_default_shader("Pure3DSimpleShader15"));
-    assert!(!is_world_analysis_default_shader("lambert"));
-    assert!(!is_world_analysis_default_shader("pure3dSimpleShader14"));
-    assert!(!is_world_analysis_default_shader("world_button_m"));
+fn missing_analysis_default_shader_fails_closed() -> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-missing-analysis-default-{}",
+        std::process::id()
+    ));
+    let scratch = root.join("scratch");
+    let source = DecodedComponentSource::new(&root, &scratch);
+    let authority = SharedTextureAuthority::from_occurrences_for_tests(&[]);
+    let result = resolve_source_material(
+        &source,
+        "lambert1",
+        None,
+        &scratch,
+        Some(&authority),
+        None,
+        "terrain-world/level-01/terrain-mesh",
+    );
+    let Err(error) = result else {
+        return Err(String::from(
+            "missing analysis shader invented an untextured material",
+        ));
+    };
+    if !error.to_string().contains("prop material lambert1 failed: Read") {
+        return Err(format!(
+            "missing analysis shader changed failure boundary: {error}"
+        ));
+    }
+    Ok(())
 }
 
 #[test]
