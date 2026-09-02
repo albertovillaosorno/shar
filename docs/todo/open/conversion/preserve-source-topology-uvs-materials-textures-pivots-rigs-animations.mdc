@@ -152,6 +152,17 @@ current child quads, authored orientation modes are 254 `NOAX`, 19 `YAX`, eight
 children enable perspective, while authored distance is zero for 276 children,
 `0.65` for seven, and `-0.35` for one.
 
+A complete raw-game P3D audit now covers 2,432 billboard quad groups and 3,195
+quad children. Every group declares exactly its physical child count. Every
+group uses schema version 0, every quad uses version 2, and every quad carries
+one display-info child followed by one perspective-info child.
+
+Perspective-info is version 0 for all 3,195 children. Of the display-info
+children, 2,944 use version 0 and 251 use version 1, so discarding that version
+erased real source evidence. Fresh extraction now retains both optional child
+versions, and deferred world provenance carries them without assigning runtime
+meaning.
+
 The current UV-offset range, source range, and edge range are zero for all 284
 children, but the v4 catalog still retains those fields rather than inferring a
 global default. Ten shader identities and 55 child identities occur across the
