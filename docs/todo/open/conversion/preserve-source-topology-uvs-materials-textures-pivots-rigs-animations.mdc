@@ -966,6 +966,30 @@ the ordinary child region. Recovery therefore rejects unobserved physics
 versions while retaining sparse-joint and inline-child behavior without
 inventing count equality or placement semantics.
 
+Scene hierarchy recovery is now bounded by a complete raw-source audit of 1,152
+scenegraphs. Every scenegraph is version 0, has exactly one root, and every one
+of its 34,816 decoded node headers ends exactly at the schema fields; all 13,674
+drawable nodes also carry exactly one finite sort-order child. Recovery therefore
+rejects unobserved scenegraph versions, extra roots, and trailing node-header
+data rather than accepting schema drift.
+
+The composite-drawable audit covers 1,542 containers and 9,169 bindings. Every
+container has exactly one skin, prop, and effect list; every list declaration
+matches its physical children, every binding header is exact, and every binding
+has exactly one finite sort-order child. Missing lists, duplicate lists, missing
+sort-order children, and trailing list or binding fields now fail closed instead
+of becoming empty defaults or last-write-wins data.
+
+Entity evidence separates two physically different instance schemas. All 6,875
+ordinary entities and 85 instanced entities are version 0; ordinary entities
+contain one mesh, while instanced entities contain one mesh followed by one
+legacy instance chunk. All 944 legacy instance chunks are name-only and own one
+scenegraph, whereas all 3,407 physics instance chunks use the extended header
+and own no scenegraph children, so normalization no longer invents version or
+flags for the name-only form. Entity `HasAlpha` values include 0, 1, 8, and 9,
+so that authored field remains numeric rather than being reinterpreted as a
+boolean.
+
 A separate audit of the 338 mesh-used duplicate logical shader sets covers 1,312
 primitive-group consumers. Every consumer has `vertex_format=8225` and an empty
 optional vertex-shader reference. Within every duplicate set, all candidate
