@@ -746,6 +746,26 @@ fn append_primitive_group_child(
     Ok(())
 }
 
+fn append_mesh_child(
+    source: &mut Vec<u8>,
+    id: u32,
+    payload: &[u8],
+) -> Result<(), String> {
+    let child_size = 12_usize
+        .checked_add(payload.len())
+        .ok_or_else(|| String::from("mesh child fixture overflowed"))?;
+    let child_size =
+        u32::try_from(child_size).map_err(|error| error.to_string())?;
+    push_u32(source, id);
+    push_u32(source, child_size);
+    push_u32(source, child_size);
+    source.extend_from_slice(payload);
+    let mesh_total =
+        u32::try_from(source.len()).map_err(|error| error.to_string())?;
+    source[8..12].copy_from_slice(&mesh_total.to_le_bytes());
+    Ok(())
+}
+
 fn primitive_group_mesh_record(
     source: &[u8],
     mesh_header: usize,
@@ -799,6 +819,80 @@ fn mesh_recovery_retains_primitive_group_source_ordinal() -> Result<(), String>
     if value["prim_groups"][0]["source_ordinal"] != 42 {
         return Err(String::from(
             "mesh primitive group lost its package-level source ordinal",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_preserves_bounding_float_bits() -> Result<(), String> {
+    const BOUNDING_BOX: u32 = 0x0001_0003;
+    const BOUNDING_SPHERE: u32 = 0x0001_0004;
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    let nan = f32::from_bits(0xffc0_0000);
+    let mut box_payload = Vec::new();
+    for value in [nan, nan, nan, nan, nan, nan] {
+        push_f32(&mut box_payload, value);
+    }
+    append_mesh_child(&mut source, BOUNDING_BOX, &box_payload)?;
+    let mut sphere_payload = Vec::new();
+    for value in [nan, nan, nan, 0_f32] {
+        push_f32(&mut sphere_payload, value);
+    }
+    append_mesh_child(&mut source, BOUNDING_SPHERE, &sphere_payload)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    let recovered = render::recover_mesh_json(&component, &source, 1, None)
+        .ok_or_else(|| {
+            String::from("mesh with non-finite bounds should decode")
+        })?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    let nan_bits = serde_json::json!(4_290_772_992_u32);
+    if value["bounding_box_f32_bits"]["low"][0] != nan_bits
+        || value["bounding_sphere_f32_bits"]["centre"][0] != nan_bits
+    {
+        return Err(String::from("bounding float payload bits were discarded"));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_duplicate_bounding_box_children() -> Result<(), String>
+{
+    const BOUNDING_BOX: u32 = 0x0001_0003;
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    let mut payload = Vec::new();
+    for value in [0_f32, 0., 0., 1., 1., 1.] {
+        push_f32(&mut payload, value);
+    }
+    for _ in 0..2 {
+        append_mesh_child(&mut source, BOUNDING_BOX, &payload)?;
+    }
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted duplicate bounding boxes",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_malformed_bounding_box_size() -> Result<(), String> {
+    const BOUNDING_BOX: u32 = 0x0001_0003;
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    let mut payload = Vec::new();
+    for value in [0_f32, 0., 0., 1., 1., 1., 2.] {
+        push_f32(&mut payload, value);
+    }
+    append_mesh_child(&mut source, BOUNDING_BOX, &payload)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted a malformed bounding-box size",
         ));
     }
     Ok(())

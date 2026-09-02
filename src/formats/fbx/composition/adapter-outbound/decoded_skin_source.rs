@@ -1468,9 +1468,15 @@ struct DecodedSkin {
     /// Bounding box retained for schema compatibility.
     #[serde(default, rename = "bounding_box")]
     _bounding_box: serde_json::Value,
+    /// Exact bounding-box IEEE-754 payload bits retained for provenance.
+    #[serde(default, rename = "bounding_box_f32_bits")]
+    _bounding_box_f32_bits: serde_json::Value,
     /// Bounding sphere retained for schema compatibility.
     #[serde(default, rename = "bounding_sphere")]
     _bounding_sphere: serde_json::Value,
+    /// Exact bounding-sphere IEEE-754 payload bits retained for provenance.
+    #[serde(default, rename = "bounding_sphere_f32_bits")]
+    _bounding_sphere_f32_bits: serde_json::Value,
 }
 
 #[derive(Deserialize)]
