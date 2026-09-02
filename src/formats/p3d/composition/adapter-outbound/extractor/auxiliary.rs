@@ -1348,6 +1348,14 @@ pub(super) fn recover_breakable_object_json(
     let chunk = raw_component_bytes(component, source).ok()?;
     let breakable_type = read_u32(chunk, 12)?;
     let max_instances = read_u32(chunk, 16)?;
+    if component.header_size != 20 {
+        return None;
+    }
+    validate_breakable_children(
+        chunk,
+        component.header_size,
+        component.total_size,
+    )?;
     let children =
         child_chunks_json(chunk, component.header_size, component.total_size);
     let kind = component.kind.label();
@@ -1368,6 +1376,48 @@ pub(super) fn recover_breakable_object_json(
         json,
         "decoded_schema_payload",
     ))
+}
+
+/// Validate direct breakable-object children against the source schema.
+fn validate_breakable_children(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+) -> Option<()> {
+    const ANIMATION: u32 = 0x0012_1000;
+    const SKELETON: u32 = 0x0000_4500;
+    const PARTICLE_FACTORY: u32 = 0x0001_5800;
+    const PARTICLE_SYSTEM: u32 = 0x0001_5801;
+    const MESH: u32 = 0x0001_0000;
+    const COMPOSITE_DRAWABLE: u32 = 0x0000_4512;
+    const ANIMATED_OBJECT_FACTORY: u32 = 0x0002_0000;
+    const ANIMATED_OBJECT: u32 = 0x0002_0001;
+    const FRAME_CONTROLLER: u32 = 0x0012_1200;
+    const MULTI_CONTROLLER: u32 = 0x0000_48a0;
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if total_size < header_size
+            || next > end
+            || !matches!(
+                id,
+                ANIMATION
+                    | SKELETON
+                    | PARTICLE_FACTORY
+                    | PARTICLE_SYSTEM
+                    | MESH
+                    | COMPOSITE_DRAWABLE
+                    | ANIMATED_OBJECT_FACTORY
+                    | ANIMATED_OBJECT
+                    | FRAME_CONTROLLER
+                    | MULTI_CONTROLLER
+            )
+        {
+            return None;
+        }
+        cursor = next;
+    }
+    (cursor == end).then_some(())
 }
 
 /// Recover lens flare json.
