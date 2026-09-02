@@ -64,10 +64,11 @@ fn retains_exact_billboard_presentation_evidence() -> Result<(), String> {
             r#""translation":[2.5,-3,4],"colour":305419896,"#,
             r#""uvs":[[0.1,0.2],[0.9,0.2],[0.9,0.8],[0.1,0.8]],"#,
             r#""width":2.25,"height":4.5,"distance":-0.35,"#,
-            r#""uv_offset":[0.25,-0.5],"rotation_wxyz":[1,0,0,0],"#,
+            r#""uv_offset":[0.25,-0.5],"display_info_version":1,"#,
+            r#""rotation_wxyz":[1,0,0,0],"#,
             r#""cutoff_mode":"DBL","uv_offset_range":[0.5,0.75],"#,
             r#""source_range":1.25,"edge_range":0.625,"#,
-            r#""perspective":false}]}"#,
+            r#""perspective_info_version":0,"perspective":false}]}"#,
         ),
     )
     .map_err(|error| error.to_string())?;
@@ -98,11 +99,13 @@ fn retains_exact_billboard_presentation_evidence() -> Result<(), String> {
         || quad.height != 4.5
         || quad.distance != -0.35
         || quad.uv_offset != [0.25, -0.5]
+        || quad.display_info_version != Some(1)
         || quad.rotation_wxyz != [1., 0., 0., 0.]
         || quad.cutoff_mode != "DBL"
         || quad.uv_offset_range != [0.5, 0.75]
         || quad.source_range != 1.25
         || quad.edge_range != 0.625
+        || quad.perspective_info_version != Some(0)
         || quad.perspective
     {
         return Err(format!("billboard child evidence changed: {quad:?}"));

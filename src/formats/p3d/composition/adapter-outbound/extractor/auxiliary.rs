@@ -151,6 +151,10 @@ pub(super) struct BillboardQuadFields {
 
 /// Optional display and perspective values decoded from child chunks.
 pub(super) struct BillboardQuadDisplay {
+    /// Source schema version of the optional display-info child.
+    display_info_version: Option<u32>,
+    /// Source schema version of the optional perspective-info child.
+    perspective_info_version: Option<u32>,
     /// Authored display rotation quaternion in WXYZ order.
     rotation: [f32; 4],
     /// Authored display cutoff mode.
@@ -230,6 +234,8 @@ pub(super) fn billboard_quad_display(
     const DISPLAY_INFO: u32 = 0x0001_7003;
     const PERSPECTIVE_INFO: u32 = 0x0001_7004;
     let mut display = BillboardQuadDisplay {
+        display_info_version: None,
+        perspective_info_version: None,
         rotation: [0f32, 0., 0., 1.],
         cutoff_mode: String::new(),
         uv_offset_range: [0f32; 2],
@@ -279,7 +285,10 @@ pub(super) fn read_billboard_display_info(
     field: &mut usize,
     display: &mut BillboardQuadDisplay,
 ) -> Option<()> {
-    let _version = read_u32(quad, *field)?;
+    if display.display_info_version.is_some() {
+        return None;
+    }
+    display.display_info_version = Some(read_u32(quad, *field)?);
     *field += 4;
     display.rotation = read_f32_array::<4>(quad, field)?;
     display.cutoff_mode = render::read_fourcc(quad, *field)?;
@@ -300,7 +309,10 @@ pub(super) fn read_billboard_perspective_info(
     field: &mut usize,
     display: &mut BillboardQuadDisplay,
 ) -> Option<()> {
-    let _version = read_u32(quad, *field)?;
+    if display.perspective_info_version.is_some() {
+        return None;
+    }
+    display.perspective_info_version = Some(read_u32(quad, *field)?);
     *field += 4;
     display.perspective = read_u32(quad, *field)? != 0;
     *field += 4;
@@ -317,9 +329,10 @@ pub(super) fn render_billboard_quad_json(
             r#"{{"name":"{}","version":{},"billboard_mode":"{}","#,
             r#""translation":{},"colour":{},"uvs":[{},{},{},{}],"#,
             r#""width":{},"height":{},"distance":{},"uv_offset":{},"#,
-            r#""rotation_wxyz":{},"cutoff_mode":"{}","#,
-            r#""uv_offset_range":{},"source_range":{},"edge_range":{},"#,
-            r#""perspective":{}}}"#,
+            r#""display_info_version":{},"rotation_wxyz":{},"#,
+            r#""cutoff_mode":"{}","uv_offset_range":{},"#,
+            r#""source_range":{},"edge_range":{},"#,
+            r#""perspective_info_version":{},"perspective":{}}}"#,
         ),
         escape_json(&fields.name),
         fields.version,
@@ -334,13 +347,20 @@ pub(super) fn render_billboard_quad_json(
         render_f32(fields.height, fields.height.to_string()),
         render_f32(fields.distance, fields.distance.to_string()),
         f32_array_json(&fields.uv_offset),
+        optional_u32_json(display.display_info_version),
         f32_array_json(&display.rotation),
         escape_json(&display.cutoff_mode),
         f32_array_json(&display.uv_offset_range),
         render_f32(display.source_range, display.source_range.to_string()),
         render_f32(display.edge_range, display.edge_range.to_string()),
+        optional_u32_json(display.perspective_info_version),
         display.perspective,
     )
+}
+
+/// Render one optional source schema version without inventing presence.
+fn optional_u32_json(value: Option<u32>) -> String {
+    value.map_or_else(|| "null".to_owned(), |value| value.to_string())
 }
 
 /// Read a fixed-width finite float array while advancing one checked cursor.
