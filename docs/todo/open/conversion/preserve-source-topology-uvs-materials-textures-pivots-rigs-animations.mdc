@@ -969,8 +969,9 @@ inventing count equality or placement semantics.
 Scene hierarchy recovery is now bounded by a complete raw-source audit of 1,152
 scenegraphs. Every scenegraph is version 0, has exactly one root, and every one
 of its 34,816 decoded node headers ends exactly at the schema fields; all 13,674
-drawable nodes also carry exactly one finite sort-order child. Recovery therefore
-rejects unobserved scenegraph versions, extra roots, and trailing node-header
+drawable nodes also carry exactly one finite sort-order child. Recovery
+therefore rejects unobserved scenegraph versions, extra roots, and trailing
+node-header
 data rather than accepting schema drift.
 
 The composite-drawable audit covers 1,542 containers and 9,169 bindings. Every
