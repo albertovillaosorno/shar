@@ -32,7 +32,9 @@
 
 use std::collections::BTreeSet;
 
-use fbx::adapters::driven::decoded_component_source::DecodedComponentError;
+use fbx::adapters::driven::decoded_component_source::{
+    DecodedComponentError, ShaderMemberOccurrence,
+};
 use fbx::domain::mesh::PrimitiveGroup;
 use fbx::domain::texture::MaterialSemantics;
 
@@ -70,7 +72,16 @@ fn ambiguous_shader_error_retains_exact_consumer_ordinals()
     }
     let error = DecodedComponentError::AmbiguousShaderMember {
         shader: "shared".to_owned(),
-        candidates: vec!["first.json".to_owned(), "second.json".to_owned()],
+        occurrences: vec![
+            ShaderMemberOccurrence {
+                member: "first.json".to_owned(),
+                source_ordinal: Some(3),
+            },
+            ShaderMemberOccurrence {
+                member: "second.json".to_owned(),
+                source_ordinal: Some(9),
+            },
+        ],
     };
     let rendered =
         material_resolution_error("shared", sources.get("shared"), &error)
