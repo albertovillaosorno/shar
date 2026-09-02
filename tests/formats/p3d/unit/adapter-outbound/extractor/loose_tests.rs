@@ -240,7 +240,11 @@ fn trigger_volume_fixture(
         .checked_add(fields.len())
         .ok_or_else(|| String::from("trigger header overflowed"))?;
     let total_size = header_size
-        .checked_add(if child_word { 4 } else { 0 })
+        .checked_add(if child_word {
+            4
+        } else {
+            0
+        })
         .ok_or_else(|| String::from("trigger total overflowed"))?;
     let mut source = Vec::new();
     push_u32(&mut source, TRIGGER_VOLUME);
