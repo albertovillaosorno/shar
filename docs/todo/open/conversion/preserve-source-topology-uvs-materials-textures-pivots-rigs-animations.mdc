@@ -809,10 +809,18 @@ ordinal 12679 and `char_swatches_m___ordinal_13756.json` at ordinal 13756. Both
 reference `char_swatches.bmp`, but their authored shader payloads differ: the
 first has `2SID=0` and `SHIN=10`, while the second has `2SID=1` and `SHIN=0`.
 
-The decoded mesh primitive group retains only the logical `char_swatches_m`
-shader token, not a physical shader occurrence coordinate. Selecting the first,
-nearest, or lowest-ordinal shader would therefore invent relationship authority.
-World material export must remain fail-closed until an exact source-backed
+The package extractor now also retains the exact primitive-group source chunk
+ordinal without treating it as material-selection authority. A fresh isolated
+149-package terrain-world regeneration proves the `char_swatches_m` consumer is
+primitive-group ordinal 16091 inside its four-group mesh; the sibling primitive
+groups are ordinals 16097, 16103, and 16109.
+
+That exact consumer coordinate does not identify either physical shader
+occurrence. The primitive-group payload still stores only the logical
+`char_swatches_m` token, while the two differing shader candidates remain
+independent top-level chunks at ordinals 12679 and 13756. Selecting the first,
+nearest, or lowest-ordinal shader would therefore invent relationship authority;
+world material export remains fail-closed until an exact source-backed
 mesh-primitive-to-shader occurrence relationship is recovered or proven.
 
 This umbrella task remains open for broader topology, UV, material, texture,
