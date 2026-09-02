@@ -1,5 +1,3 @@
-# CSpell:ignore getuid getgid
-# CSpell:ignore nocompileuat ispc Ispc
 # Copyright:
 #   - Copyright © 2026 Alberto Villa Osorno.
 # SPDX-License-Identifier:
@@ -32,6 +30,8 @@
 
 """Tests for canonical build-runner project-state migration."""
 
+# CSpell:ignore getuid getgid
+# CSpell:ignore nocompileuat ispc Ispc
 # CSpell:ignore APPL BNDL FMWK PHDR RVA SHLIB dylinker linkedit symtab
 # CSpell:ignore DYSYMTAB dysymtab uba ubt userns lowerdir upperdir workdir
 # CSpell:ignore osabi phdr rva shlib rpath runpath
