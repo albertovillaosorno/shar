@@ -591,7 +591,9 @@ fn chunk_set_rejects_unobserved_version() -> Result<(), String> {
     if chunk_set_json(&fixture).is_none() {
         Ok(())
     } else {
-        Err(String::from("unobserved chunk-set version should fail closed"))
+        Err(String::from(
+            "unobserved chunk-set version should fail closed",
+        ))
     }
 }
 
