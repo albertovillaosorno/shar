@@ -43,5 +43,18 @@ marks alpha zero as an opaque sentinel, so FBX material conversion no longer
 rewrites `0x00112233` to alpha 255. A resolver-level regression requires
 `[0x11, 0x22, 0x33, 0x00]`. Strict FBX and pipeline Clippy are clean.
 
+Character material fallback now preserves authored texture identity instead of
+rewriting one missing `char_swatches.bmp` reference to the distinct shared
+`char_swatches_lit.bmp` source. The current 110-package skinned-character
+corpus contains four packages with a plain swatch reference and no local plain
+texture. The classified common-rig package publishes `char_swatches_lit.png`
+and numbered swatches, but no `char_swatches.png`; its extracted source chunk
+is itself named `char_swatches_lit.bmp`. No decoded relationship equates those
+two names. Both the generic FBX external-texture adapter and the package-index
+shared-texture lookup therefore require exact normalized file identity, with
+regressions rejecting the former cross-name substitution while retaining exact
+`char_swatches_lit.bmp` lookup. Missing plain swatch authority now remains
+unresolved instead of being repaired to a different authored texture.
+
 This umbrella task remains open for other reported conversion differences that
 need direct source-backed evidence before any correction is admitted.
