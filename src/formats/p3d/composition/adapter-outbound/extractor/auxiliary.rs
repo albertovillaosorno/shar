@@ -231,7 +231,7 @@ pub(super) fn billboard_quad_fields(
     })
 }
 
-/// Decode optional display and perspective child chunks.
+/// Decode the required display and perspective child chunks.
 pub(super) fn billboard_quad_display(
     quad: &[u8],
     header_size: usize,
@@ -280,7 +280,10 @@ pub(super) fn billboard_quad_display(
         }
         child = next;
     }
-    (child == total_size).then_some(display)
+    (child == total_size
+        && display.display_info_version.is_some()
+        && display.perspective_info_version.is_some())
+    .then_some(display)
 }
 
 /// Decode one display-info child into the accumulated billboard evidence.
