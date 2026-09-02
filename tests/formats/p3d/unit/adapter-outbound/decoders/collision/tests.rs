@@ -109,12 +109,22 @@ fn require_json(json: &str, needle: &str, context: &str) -> Result<(), String> {
 
 /// Builds a collision object with owner, volume, and attributes.
 fn collision_fixture() -> Option<Vec<u8>> {
-    collision_fixture_with_subvolume_count(1)
+    collision_fixture_with_contract(1, 1, 1, 1)
 }
 
 /// Builds a collision object with an explicit subvolume count.
 fn collision_fixture_with_subvolume_count(
     subvolume_count: u32,
+) -> Option<Vec<u8>> {
+    collision_fixture_with_contract(subvolume_count, 1, 1, 1)
+}
+
+/// Builds a collision object with explicit source-contract fields.
+fn collision_fixture_with_contract(
+    subvolume_count: u32,
+    version: u32,
+    volume_copies: usize,
+    attribute_copies: usize,
 ) -> Option<Vec<u8>> {
     let owner_name =
         chunk(COLLISION_OWNER_NAME, pstring("joint_a")?, Vec::new())?;
@@ -152,16 +162,23 @@ fn collision_fixture_with_subvolume_count(
         ]),
         Vec::new(),
     )?;
+    let mut children = vec![owner, self_collision];
+    for _ in 0..volume_copies {
+        children.push(volume.clone());
+    }
+    for _ in 0..attribute_copies {
+        children.push(attribute.clone());
+    }
     chunk(
         COLLISION_OBJECT,
         fields(vec![
             pstring("collider")?,
-            u32_field(0),
+            u32_field(version),
             pstring("material")?,
             u32_field(1),
             u32_field(1),
         ]),
-        vec![owner, self_collision, volume, attribute],
+        children,
     )
 }
 
@@ -312,6 +329,45 @@ fn collision_object_decodes_volume_owner_and_attributes() -> Result<(), String>
     require_json(&json, "\"radius\":5.0", "sphere radius should be emitted")?;
     require_json(&json, "\"can_spin\":1", "attribute flags should be emitted")?;
     Ok(())
+}
+
+#[test]
+fn collision_object_rejects_unobserved_version() -> Result<(), String> {
+    let fixture = require(
+        collision_fixture_with_contract(1, 0, 1, 1),
+        "unobserved-version collision fixture should build",
+    )?;
+    if object_json(&fixture).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("unobserved collision version should fail closed"))
+    }
+}
+
+#[test]
+fn collision_object_rejects_missing_top_volume() -> Result<(), String> {
+    let fixture = require(
+        collision_fixture_with_contract(1, 1, 0, 1),
+        "missing-volume collision fixture should build",
+    )?;
+    if object_json(&fixture).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("missing top collision volume should fail closed"))
+    }
+}
+
+#[test]
+fn collision_object_rejects_duplicate_attributes() -> Result<(), String> {
+    let fixture = require(
+        collision_fixture_with_contract(1, 1, 1, 2),
+        "duplicate-attribute collision fixture should build",
+    )?;
+    if object_json(&fixture).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("duplicate collision attributes should fail closed"))
+    }
 }
 
 #[test]

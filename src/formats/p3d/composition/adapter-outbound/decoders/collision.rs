@@ -123,6 +123,9 @@ pub fn object_json(chunk: &[u8]) -> Option<String> {
     let mut reader = Reader::new(chunk, 12);
     let name = reader.pstring()?;
     let version = reader.u32()?;
+    if version != 1 {
+        return None;
+    }
     let string_data = reader.pstring()?;
     let sub_object_count = u32_to_usize(reader.u32()?)?;
     let owner_count = u32_to_usize(reader.u32()?)?;
@@ -147,7 +150,10 @@ pub fn object_json(chunk: &[u8]) -> Option<String> {
             _ => return None,
         }
     }
-    if owners.len() != owner_count {
+    if owners.len() != owner_count
+        || volumes.len() != 1
+        || attributes.len() != 1
+    {
         return None;
     }
     Some(format!(
