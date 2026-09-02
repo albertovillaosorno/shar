@@ -38,7 +38,7 @@ use fbx::adapters::driven::decoded_component_source::{
     DecodedComponentError, DecodedComponentSource,
 };
 use fbx::domain::character::CharacterAsset;
-use fbx::domain::mesh::MeshAsset;
+use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 use fbx::ports::component_source::ComponentSource as _;
 use shar_sha256::digest_hex;
@@ -95,13 +95,13 @@ fn canonicalize_static_materials_with_authority(
     authority: Option<&SharedTextureAuthority>,
     source_subcategory: &str,
 ) -> Result<(Vec<MaterialBinding>, Vec<PreparedTexture>), PipelineError> {
-    let shaders = meshes
-        .iter()
-        .flat_map(|mesh| mesh.groups.iter())
-        .map(|group| group.shader.clone())
-        .collect::<BTreeSet<_>>();
+    let shader_sources = shader_source_ordinals(
+        meshes.iter().flat_map(|mesh| mesh.groups.iter()),
+    );
+    let shaders = shader_sources.keys().cloned().collect::<BTreeSet<_>>();
     let (renames, materials, textures) = resolve_materials(
         shaders,
+        &shader_sources,
         package_root,
         scratch,
         authority,
@@ -169,14 +169,13 @@ fn canonicalize_animated_materials_with_authority(
     authority: Option<&SharedTextureAuthority>,
     source_subcategory: &str,
 ) -> Result<(Vec<MaterialBinding>, Vec<PreparedTexture>), PipelineError> {
-    let shaders = asset
-        .parts
-        .iter()
-        .flat_map(|part| part.mesh.groups.iter())
-        .map(|group| group.shader.clone())
-        .collect::<BTreeSet<_>>();
+    let shader_sources = shader_source_ordinals(
+        asset.parts.iter().flat_map(|part| part.mesh.groups.iter()),
+    );
+    let shaders = shader_sources.keys().cloned().collect::<BTreeSet<_>>();
     let (renames, materials, textures) = resolve_materials(
         shaders,
+        &shader_sources,
         package_root,
         scratch,
         authority,
@@ -208,6 +207,7 @@ fn canonicalize_animated_materials_with_authority(
 fn resolve_source_material(
     source: &DecodedComponentSource,
     shader: &str,
+    source_ordinals: Option<&BTreeSet<usize>>,
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
     source_subcategory: &str,
@@ -271,10 +271,44 @@ fn resolve_source_material(
                 ))
             })
         },
-        Err(error) => Err(PipelineError::new(format!(
-            "prop material {shader} failed: {error:?}"
-        ))),
+        Err(error) => Err(material_resolution_error(
+            shader,
+            source_ordinals,
+            &error,
+        )),
     }
+}
+
+/// Collect exact physical primitive-group coordinates by logical shader.
+fn shader_source_ordinals<'group>(
+    groups: impl Iterator<Item = &'group PrimitiveGroup>,
+) -> BTreeMap<String, BTreeSet<usize>> {
+    let mut sources = BTreeMap::<String, BTreeSet<usize>>::new();
+    for group in groups {
+        let ordinals = sources.entry(group.shader.clone()).or_default();
+        if let Some(source_ordinal) = group.source_ordinal {
+            let _inserted = ordinals.insert(source_ordinal);
+        }
+    }
+    sources
+}
+
+/// Preserve exact consumer coordinates when a logical shader is ambiguous.
+fn material_resolution_error(
+    shader: &str,
+    source_ordinals: Option<&BTreeSet<usize>>,
+    error: &DecodedComponentError,
+) -> PipelineError {
+    if matches!(error, DecodedComponentError::AmbiguousShaderMember { .. })
+        && let Some(ordinals) = source_ordinals
+        && !ordinals.is_empty()
+    {
+        return PipelineError::new(format!(
+            "prop material {shader} used by primitive-group source ordinals \
+             {ordinals:?} failed: {error:?}"
+        ));
+    }
+    PipelineError::new(format!("prop material {shader} failed: {error:?}"))
 }
 
 /// Return whether one missing shader has proven neutral analysis evidence.
@@ -299,6 +333,7 @@ type MaterialPlan = (
 /// Returns an error when material, texture, hashing, or staging work fails.
 fn resolve_materials(
     shaders: BTreeSet<String>,
+    shader_sources: &BTreeMap<String, BTreeSet<usize>>,
     package_root: &Path,
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
@@ -317,6 +352,7 @@ fn resolve_materials(
         let binding = resolve_source_material(
             &source,
             &shader,
+            shader_sources.get(&shader),
             scratch,
             authority,
             source_subcategory,
