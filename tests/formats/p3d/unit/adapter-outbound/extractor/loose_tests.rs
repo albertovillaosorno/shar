@@ -213,6 +213,73 @@ fn srr_locator_fixture(
 }
 
 #[test]
+fn locator_spline_preserves_control_points_and_rail() -> Result<(), String> {
+    const SPLINE: u32 = 0x0300_0007;
+    const RAIL: u32 = 0x0300_000a;
+    let mut spline_fields = Vec::new();
+    push_pascal(&mut spline_fields, "path")?;
+    push_u32(&mut spline_fields, 2);
+    for value in [1_f32, 2., 3., 4., 5., 6.] {
+        push_f32(&mut spline_fields, value);
+    }
+    let spline_header = 12_usize
+        .checked_add(spline_fields.len())
+        .ok_or_else(|| String::from("spline fixture overflowed"))?;
+
+    let mut rail_fields = Vec::new();
+    push_pascal(&mut rail_fields, "rail")?;
+    push_u32(&mut rail_fields, 3);
+    for value in [1_f32, 5.] {
+        push_f32(&mut rail_fields, value);
+    }
+    push_u32(&mut rail_fields, 1);
+    push_f32(&mut rail_fields, 2.5);
+    push_u32(&mut rail_fields, 0);
+    push_f32(&mut rail_fields, 1.25);
+    for value in [7_f32, 8., 9., 0.1, 0.2, 0.3, 0.4, 0.5] {
+        push_f32(&mut rail_fields, value);
+    }
+    let rail_size = 12_usize
+        .checked_add(rail_fields.len())
+        .ok_or_else(|| String::from("rail fixture overflowed"))?;
+    let spline_total = spline_header
+        .checked_add(rail_size)
+        .ok_or_else(|| String::from("spline total overflowed"))?;
+
+    let mut source = Vec::new();
+    push_u32(&mut source, SPLINE);
+    push_u32(
+        &mut source,
+        u32::try_from(spline_header).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(spline_total).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&spline_fields);
+    push_u32(&mut source, RAIL);
+    let rail_u32 = u32::try_from(rail_size).map_err(|error| error.to_string())?;
+    push_u32(&mut source, rail_u32);
+    push_u32(&mut source, rail_u32);
+    source.extend_from_slice(&rail_fields);
+
+    let json = render::locator_splines_json(&source, 0, source.len())
+        .ok_or_else(|| String::from("spline fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_str(&format!("[{json}]"))
+        .map_err(|error| error.to_string())?;
+    if value[0]["num_control_points"] != 2
+        || value[0]["control_points"][1] != serde_json::json!([4, 5, 6])
+        || value[0]["rail"]["behaviour"] != 3
+        || value[0]["rail"]["target_offset"] != serde_json::json!([7, 8, 9])
+    {
+        return Err(String::from(
+            "locator spline or rail evidence was discarded",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn srr_locator_preserves_extra_matrix_children() -> Result<(), String> {
     const EXTRA_MATRIX: u32 = 0x0300_000c;
     let (mut source, header_size) = srr_locator_fixture(0)?;
