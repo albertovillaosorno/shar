@@ -783,6 +783,56 @@ fn mesh_recovery_rejects_declared_primitive_group_count_drift()
 }
 
 #[test]
+fn mesh_recovery_preserves_packed_normal_bytes() -> Result<(), String> {
+    const PACKED_NORMAL_LIST: u32 = 0x0001_0010;
+    let (mut source, mesh_header, group_header) =
+        primitive_group_mesh_fixture()?;
+    let group_total_offset = mesh_header.saturating_add(8);
+    let old_group_total = u32::from_le_bytes(
+        source[group_total_offset..group_total_offset + 4]
+            .try_into()
+            .map_err(|error| format!("group total slice failed: {error}"))?,
+    );
+    let mut payload = Vec::new();
+    push_u32(&mut payload, 1);
+    payload.push(0xa5);
+    let packed_size = 12_usize
+        .checked_add(payload.len())
+        .ok_or_else(|| String::from("packed-normal fixture overflowed"))?;
+    let packed_size_u32 =
+        u32::try_from(packed_size).map_err(|error| error.to_string())?;
+    push_u32(&mut source, PACKED_NORMAL_LIST);
+    push_u32(&mut source, packed_size_u32);
+    push_u32(&mut source, packed_size_u32);
+    source.extend_from_slice(&payload);
+    let group_total = old_group_total
+        .checked_add(packed_size_u32)
+        .ok_or_else(|| String::from("group total overflowed"))?;
+    source[group_total_offset..group_total_offset + 4]
+        .copy_from_slice(&group_total.to_le_bytes());
+    let mesh_total =
+        u32::try_from(source.len()).map_err(|error| error.to_string())?;
+    source[8..12].copy_from_slice(&mesh_total.to_le_bytes());
+
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    let recovered = render::recover_mesh_json(&component, &source, 1, None)
+        .ok_or_else(|| String::from("packed-normal mesh should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["prim_groups"][0]["packed_normals"] != serde_json::json!([165]) {
+        return Err(String::from(
+            "packed-normal bytes crossed their child boundary",
+        ));
+    }
+    if group_header
+        >= usize::try_from(group_total).map_err(|error| error.to_string())?
+    {
+        return Err(String::from("packed-normal child was not appended"));
+    }
+    Ok(())
+}
+
+#[test]
 fn mesh_recovery_rejects_missing_declared_position_list() -> Result<(), String>
 {
     let (source, mesh_header, _group_header) =
