@@ -348,6 +348,13 @@ struct PrimitiveLists {
     indices: Option<usize>,
     /// Matrix-palette length validates the primitive matrix declaration.
     matrix_palette: Option<usize>,
+    /// Every decoded per-vertex list must agree with `NumVertices`.
+    vertex_list_counts: Vec<usize>,
+    /// Non-channel list families occur at most once per primitive group.
+    singleton_vertex_lists: Vec<u32>,
+    /// Vertex-shader chunks are singleton even when their authored name is
+    /// empty.
+    vertex_shader_seen: bool,
 }
 
 impl PrimitiveLists {
@@ -370,6 +377,16 @@ impl PrimitiveLists {
         Some(decoded)
     }
 
+    /// Record one singleton per-vertex list and its authored element count.
+    fn record_vertex_list(&mut self, id: u32, count: usize) -> Option<()> {
+        if self.singleton_vertex_lists.contains(&id) {
+            return None;
+        }
+        self.singleton_vertex_lists.push(id);
+        self.vertex_list_counts.push(count);
+        Some(())
+    }
+
     /// Decodes vector list families that share floating-point payload widths.
     fn decode_float_list(
         &mut self,
@@ -385,17 +402,17 @@ impl PrimitiveLists {
                 }
                 Some(format!("\"positions\":{json}"))
             },
-            NORMALLIST => {
-                Some(format!("\"normals\":{}", float3_list(chunk, base,)?.0))
-            },
-            TANGENTLIST => {
-                Some(format!("\"tangents\":{}", float3_list(chunk, base,)?.0))
-            },
-            BINORMALLIST => {
-                Some(format!("\"binormals\":{}", float3_list(chunk, base,)?.0))
-            },
-            WEIGHTLIST => {
-                Some(format!("\"weights\":{}", float3_list(chunk, base,)?.0))
+            NORMALLIST | TANGENTLIST | BINORMALLIST | WEIGHTLIST => {
+                let (json, count) = float3_list(chunk, base)?;
+                self.record_vertex_list(id, count)?;
+                let name = match id {
+                    NORMALLIST => "normals",
+                    TANGENTLIST => "tangents",
+                    BINORMALLIST => "binormals",
+                    WEIGHTLIST => "weights",
+                    _ => return None,
+                };
+                Some(format!("\"{name}\":{json}"))
             },
             _ => None,
         };
@@ -415,15 +432,20 @@ impl PrimitiveLists {
     ) -> Option<bool> {
         let field = match id {
             COLOURLIST => {
-                Some(format!("\"colours\":{}", u32_list(chunk, base,)?.0))
+                let (json, count) = u32_list(chunk, base)?;
+                self.record_vertex_list(id, count)?;
+                Some(format!("\"colours\":{json}"))
             },
-            PACKEDNORMALLIST => Some(format!(
-                "\"packed_normals\":{}",
-                byte_list(chunk, base)?.0
-            )),
+            PACKEDNORMALLIST => {
+                let (json, count) = byte_list(chunk, base)?;
+                self.record_vertex_list(id, count)?;
+                Some(format!("\"packed_normals\":{json}"))
+            },
             MATRIXPALETTE => {
                 let (json, count) = u32_list(chunk, base)?;
-                self.matrix_palette = Some(count);
+                if self.matrix_palette.replace(count).is_some() {
+                    return None;
+                }
                 Some(format!("\"matrix_palette\":{json}"))
             },
             INDEXLIST => {
@@ -434,7 +456,9 @@ impl PrimitiveLists {
                 Some(format!("\"indices\":{json}"))
             },
             MATRIXLIST => {
-                Some(format!("\"matrices\":{}", byte4_list(chunk, base,)?))
+                let (json, count) = byte4_list(chunk, base)?;
+                self.record_vertex_list(id, count)?;
+                Some(format!("\"matrices\":{json}"))
             },
             _ => None,
         };
@@ -453,16 +477,26 @@ impl PrimitiveLists {
         base: usize,
     ) -> Option<bool> {
         match id {
-            UVLIST => self.uv_channels.push(uv_channel(chunk, base)?),
+            UVLIST => {
+                let (json, count) = uv_channel(chunk, base)?;
+                self.uv_channels.push(json);
+                self.vertex_list_counts.push(count);
+            },
             MULTICOLOURLIST => {
-                self.multi_colours.push(multicolour_channel(chunk, base)?)
+                let (json, count) = multicolour_channel(chunk, base)?;
+                self.multi_colours.push(json);
+                self.vertex_list_counts.push(count);
             },
             VERTEXSHADER => {
+                if self.vertex_shader_seen {
+                    return None;
+                }
                 let mut reader = Reader::new(chunk, base);
                 self.vertex_shader = reader.pstring()?;
                 if reader.pos() != chunk.len() {
                     return None;
                 }
+                self.vertex_shader_seen = true;
             },
             _ => return Some(false),
         }
@@ -477,13 +511,17 @@ impl PrimitiveLists {
         let matrix_count_matches = self
             .matrix_palette
             .map_or(header.matrix_count == 0, |count| {
-                Some(count) == matrix_count
+                header.matrix_count != 0 && Some(count) == matrix_count
             });
         self.positions
             .is_some_and(|count| Some(count) == vertex_count)
             && self.indices.map_or(header.index_count == 0, |count| {
                 header.index_count != 0 && Some(count) == index_count
             })
+            && self
+                .vertex_list_counts
+                .iter()
+                .all(|count| Some(*count) == vertex_count)
             && matrix_count_matches
     }
 
@@ -601,7 +639,7 @@ fn byte_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
 }
 
 /// `count:u32` then `count` * four `u8`.
-fn byte4_list(chunk: &[u8], base: usize) -> Option<String> {
+fn byte4_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
     let mut reader = Reader::new(chunk, base);
     let count = reader.u32()? as usize;
     let mut json = String::with_capacity(count * 12 + 2);
@@ -623,12 +661,12 @@ fn byte4_list(chunk: &[u8], base: usize) -> Option<String> {
         json.push(']');
     }
     json.push(']');
-    (reader.pos() == chunk.len()).then_some(json)
+    (reader.pos() == chunk.len()).then_some((json, count))
 }
 
 /// UV list: `count:u32, channel:u32`, then `count` * two `f32`. Tagged with a
 /// `"uv":` prefix so the caller can group channels.
-fn uv_channel(chunk: &[u8], base: usize) -> Option<String> {
+fn uv_channel(chunk: &[u8], base: usize) -> Option<(String, usize)> {
     let mut reader = Reader::new(chunk, base);
     let count = reader.u32()? as usize;
     let channel = reader.u32()?;
@@ -647,12 +685,14 @@ fn uv_channel(chunk: &[u8], base: usize) -> Option<String> {
         coords.push(']');
     }
     coords.push(']');
-    (reader.pos() == chunk.len())
-        .then_some(format!("{{\"channel\":{channel},\"coords\":{coords}}}"))
+    (reader.pos() == chunk.len()).then_some((
+        format!("{{\"channel\":{channel},\"coords\":{coords}}}"),
+        count,
+    ))
 }
 
 /// Multicolour list: `count:u32, channel:u32`, then `count` * one `u32`.
-fn multicolour_channel(chunk: &[u8], base: usize) -> Option<String> {
+fn multicolour_channel(chunk: &[u8], base: usize) -> Option<(String, usize)> {
     let mut reader = Reader::new(chunk, base);
     let count = reader.u32()? as usize;
     let channel = reader.u32()?;
@@ -665,8 +705,10 @@ fn multicolour_channel(chunk: &[u8], base: usize) -> Option<String> {
         values.push_str(&reader.u32()?.to_string());
     }
     values.push(']');
-    (reader.pos() == chunk.len())
-        .then_some(format!("{{\"channel\":{channel},\"values\":{values}}}"))
+    (reader.pos() == chunk.len()).then_some((
+        format!("{{\"channel\":{channel},\"values\":{values}}}"),
+        count,
+    ))
 }
 
 /// Format an `f32` as a round-trippable JSON number, or `null` if non-finite.

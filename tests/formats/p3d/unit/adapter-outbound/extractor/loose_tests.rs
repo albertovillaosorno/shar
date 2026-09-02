@@ -710,6 +710,42 @@ fn primitive_group_mesh_fixture_with_lists(
     Ok((source, mesh_header, group_header))
 }
 
+fn append_primitive_group_child(
+    source: &mut Vec<u8>,
+    mesh_header: usize,
+    id: u32,
+    payload: &[u8],
+) -> Result<(), String> {
+    let group_total_offset = mesh_header
+        .checked_add(8)
+        .ok_or_else(|| String::from("group total offset overflowed"))?;
+    let old_group_total = u32::from_le_bytes(
+        source
+            .get(group_total_offset..group_total_offset + 4)
+            .ok_or_else(|| String::from("group total field missing"))?
+            .try_into()
+            .map_err(|error| format!("group total slice failed: {error}"))?,
+    );
+    let child_size = 12_usize
+        .checked_add(payload.len())
+        .ok_or_else(|| String::from("primitive child fixture overflowed"))?;
+    let child_size =
+        u32::try_from(child_size).map_err(|error| error.to_string())?;
+    push_u32(source, id);
+    push_u32(source, child_size);
+    push_u32(source, child_size);
+    source.extend_from_slice(payload);
+    let group_total = old_group_total
+        .checked_add(child_size)
+        .ok_or_else(|| String::from("group total overflowed"))?;
+    source[group_total_offset..group_total_offset + 4]
+        .copy_from_slice(&group_total.to_le_bytes());
+    let mesh_total =
+        u32::try_from(source.len()).map_err(|error| error.to_string())?;
+    source[8..12].copy_from_slice(&mesh_total.to_le_bytes());
+    Ok(())
+}
+
 fn primitive_group_mesh_record(
     source: &[u8],
     mesh_header: usize,
@@ -777,6 +813,105 @@ fn mesh_recovery_rejects_declared_primitive_group_count_drift()
     if render::recover_mesh_json(&component, &source, 1, None).is_some() {
         return Err(String::from(
             "mesh recovery replaced the authored primitive-group count",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_per_vertex_list_count_drift() -> Result<(), String> {
+    const NORMAL_LIST: u32 = 0x0001_0006;
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    let mut payload = Vec::new();
+    push_u32(&mut payload, 2);
+    for value in [0_f32, 0., 1., 0., 1., 0.] {
+        push_f32(&mut payload, value);
+    }
+    append_primitive_group_child(
+        &mut source,
+        mesh_header,
+        NORMAL_LIST,
+        &payload,
+    )?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted per-vertex list count drift",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_duplicate_vertex_lists() -> Result<(), String> {
+    const NORMAL_LIST: u32 = 0x0001_0006;
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    let mut payload = Vec::new();
+    push_u32(&mut payload, 1);
+    for value in [0_f32, 0., 1.] {
+        push_f32(&mut payload, value);
+    }
+    for _ in 0..2 {
+        append_primitive_group_child(
+            &mut source,
+            mesh_header,
+            NORMAL_LIST,
+            &payload,
+        )?;
+    }
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted duplicate singleton vertex lists",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_zero_count_matrix_palette() -> Result<(), String> {
+    const MATRIX_PALETTE: u32 = 0x0001_000d;
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    let mut payload = Vec::new();
+    push_u32(&mut payload, 0);
+    append_primitive_group_child(
+        &mut source,
+        mesh_header,
+        MATRIX_PALETTE,
+        &payload,
+    )?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted an unobserved zero-count matrix palette",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_duplicate_matrix_palettes() -> Result<(), String> {
+    const MATRIX_PALETTE: u32 = 0x0001_000d;
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture_with_contract(0, 1, 1)?;
+    let mut payload = Vec::new();
+    push_u32(&mut payload, 1);
+    push_u32(&mut payload, 0);
+    for _ in 0..2 {
+        append_primitive_group_child(
+            &mut source,
+            mesh_header,
+            MATRIX_PALETTE,
+            &payload,
+        )?;
+    }
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted duplicate matrix palettes",
         ));
     }
     Ok(())
