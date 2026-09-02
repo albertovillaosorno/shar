@@ -188,17 +188,24 @@ fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
 }
 
 fn primitive_group_mesh_fixture() -> Result<(Vec<u8>, usize, usize), String> {
-    primitive_group_mesh_fixture_with_version(0)
+    primitive_group_mesh_fixture_with_contract(0, 1)
 }
 
 fn primitive_group_mesh_fixture_with_version(
     version: u32,
 ) -> Result<(Vec<u8>, usize, usize), String> {
+    primitive_group_mesh_fixture_with_contract(version, 1)
+}
+
+fn primitive_group_mesh_fixture_with_contract(
+    primitive_version: u32,
+    declared_groups: u32,
+) -> Result<(Vec<u8>, usize, usize), String> {
     const MESH: u32 = 0x0001_0000;
     const PRIMITIVE_GROUP: u32 = 0x0001_0002;
 
     let mut group_fields = Vec::new();
-    push_u32(&mut group_fields, version);
+    push_u32(&mut group_fields, primitive_version);
     push_pascal(&mut group_fields, "shader")?;
     for value in [0, 0, 0, 0, 0] {
         push_u32(&mut group_fields, value);
@@ -213,7 +220,7 @@ fn primitive_group_mesh_fixture_with_version(
     let mut mesh_fields = Vec::new();
     push_pascal(&mut mesh_fields, "mesh")?;
     push_u32(&mut mesh_fields, 3);
-    push_u32(&mut mesh_fields, 1);
+    push_u32(&mut mesh_fields, declared_groups);
     let mesh_header = 12_usize
         .checked_add(mesh_fields.len())
         .ok_or_else(|| String::from("mesh fixture header overflowed"))?;
@@ -287,6 +294,47 @@ fn mesh_recovery_retains_primitive_group_source_ordinal() -> Result<(), String>
     if value["prim_groups"][0]["source_ordinal"] != 42 {
         return Err(String::from(
             "mesh primitive group lost its package-level source ordinal",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_declared_primitive_group_count_drift()
+-> Result<(), String> {
+    let (source, mesh_header, _group_size) =
+        primitive_group_mesh_fixture_with_contract(0, 2)?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery replaced the authored primitive-group count",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn skin_decoder_rejects_declared_primitive_group_count_drift()
+-> Result<(), String> {
+    const SKIN: u32 = 0x0001_0001;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "skin")?;
+    push_u32(&mut fields, 3);
+    push_pascal(&mut fields, "skeleton")?;
+    push_u32(&mut fields, 1);
+    let total = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("skin fixture size overflowed"))?;
+    let total = u32::try_from(total)
+        .map_err(|error| format!("skin fixture exceeds u32: {error}"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, SKIN);
+    push_u32(&mut source, total);
+    push_u32(&mut source, total);
+    source.extend_from_slice(&fields);
+    if crate::adapters::driven::decoders::mesh::skin_json(&source).is_some() {
+        return Err(String::from(
+            "skin decoder replaced the authored primitive-group count",
         ));
     }
     Ok(())
