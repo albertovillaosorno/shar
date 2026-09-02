@@ -102,11 +102,15 @@ fn intersect_fixture() -> Option<Vec<u8>> {
     bbox.extend_from_slice(&vec3(9f32, 8f32, 7f32));
     let mut terrain = Vec::new();
     terrain.extend_from_slice(&u32_field(0));
-    terrain.extend_from_slice(&u32_field(3));
-    terrain.extend_from_slice(&[4_u8, 5_u8, 6_u8]);
+    terrain.extend_from_slice(&u32_field(1));
+    terrain.push(4_u8);
+    let mut sphere = Vec::new();
+    sphere.extend_from_slice(&vec3(4f32, 3f32, 2f32));
+    sphere.extend_from_slice(&f32_field(9f32));
     chunk(INTERSECT_DSG, fields, vec![
-        chunk(BBOX, bbox, Vec::new())?,
         chunk(TERRAIN_TYPE, terrain, Vec::new())?,
+        chunk(BSPHERE, sphere, Vec::new())?,
+        chunk(BBOX, bbox, Vec::new())?,
     ])
 }
 
@@ -129,10 +133,104 @@ fn intersect_dsg_decodes_arrays_and_children() -> Result<(), String> {
     require_json(&json, "\"kind\":\"bbox\"", "bbox child should be emitted")?;
     require_json(
         &json,
-        "\"types\":[4,5,6]",
+        "\"types\":[4]",
         "terrain bytes should be emitted",
     )?;
     Ok(())
+}
+
+#[test]
+fn intersect_dsg_rejects_missing_required_sphere() -> Result<(), String> {
+    let fixture = require(intersect_fixture(), "intersect fixture should build")?;
+    let (_, header_size, total_size) = require(
+        chunk_bounds(&fixture),
+        "intersect fixture bounds should decode",
+    )?;
+    let children = require(
+        subchunks(&fixture, header_size, total_size),
+        "intersect fixture children should decode",
+    )?;
+    let sphere = children
+        .iter()
+        .find(|child| child.id == BSPHERE)
+        .ok_or_else(|| String::from("fixture sphere should exist"))?;
+    let mut malformed = fixture;
+    let _removed = malformed.drain(sphere.offset..sphere.end()).count();
+    let total = u32::try_from(malformed.len()).map_err(|error| error.to_string())?;
+    require(
+        malformed.get_mut(8..12),
+        "fixture total-size field should exist",
+    )?
+    .copy_from_slice(&total.to_le_bytes());
+    if dsg_json(&malformed).is_none() {
+        Ok(())
+    } else {
+        Err(String::from(
+            "missing intersect sphere should fail closed",
+        ))
+    }
+}
+
+#[test]
+fn intersect_dsg_rejects_terrain_triangle_count_drift() -> Result<(), String> {
+    let mut fixture =
+        require(intersect_fixture(), "intersect fixture should build")?;
+    let (_, header_size, total_size) = require(
+        chunk_bounds(&fixture),
+        "intersect fixture bounds should decode",
+    )?;
+    let children = require(
+        subchunks(&fixture, header_size, total_size),
+        "intersect fixture children should decode",
+    )?;
+    let terrain = children
+        .iter()
+        .find(|child| child.id == TERRAIN_TYPE)
+        .ok_or_else(|| String::from("fixture terrain should exist"))?;
+    let count_offset = terrain.data_offset() + 4;
+    require(
+        fixture.get_mut(count_offset..count_offset + 4),
+        "fixture terrain count field should exist",
+    )?
+    .copy_from_slice(&2_u32.to_le_bytes());
+    if dsg_json(&fixture).is_none() {
+        Ok(())
+    } else {
+        Err(String::from(
+            "terrain triangle count drift should fail closed",
+        ))
+    }
+}
+
+#[test]
+fn intersect_dsg_rejects_unobserved_terrain_version() -> Result<(), String> {
+    let mut fixture =
+        require(intersect_fixture(), "intersect fixture should build")?;
+    let (_, header_size, total_size) = require(
+        chunk_bounds(&fixture),
+        "intersect fixture bounds should decode",
+    )?;
+    let children = require(
+        subchunks(&fixture, header_size, total_size),
+        "intersect fixture children should decode",
+    )?;
+    let terrain = children
+        .iter()
+        .find(|child| child.id == TERRAIN_TYPE)
+        .ok_or_else(|| String::from("fixture terrain should exist"))?;
+    let offset = terrain.data_offset();
+    require(
+        fixture.get_mut(offset..offset + 4),
+        "fixture terrain version field should exist",
+    )?
+    .copy_from_slice(&1_u32.to_le_bytes());
+    if dsg_json(&fixture).is_none() {
+        Ok(())
+    } else {
+        Err(String::from(
+            "unobserved terrain version should fail closed",
+        ))
+    }
 }
 
 #[test]

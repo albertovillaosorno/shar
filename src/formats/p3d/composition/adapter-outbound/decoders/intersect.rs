@@ -58,15 +58,41 @@ pub fn dsg_json(chunk: &[u8]) -> Option<String> {
     let children = subchunks(chunk, header_size, total_size)?;
     let mut bounds = Vec::new();
     let mut terrain_types = Vec::new();
+    let mut bbox_seen = false;
+    let mut bsphere_seen = false;
+    let mut terrain_seen = false;
     for child in children {
         match child.id {
-            BBOX => bounds.push(decode_bbox(chunk, &child)?),
-            BSPHERE => bounds.push(decode_bsphere(chunk, &child)?),
+            BBOX => {
+                if bbox_seen {
+                    return None;
+                }
+                bounds.push(decode_bbox(chunk, &child)?);
+                bbox_seen = true;
+            },
+            BSPHERE => {
+                if bsphere_seen {
+                    return None;
+                }
+                bounds.push(decode_bsphere(chunk, &child)?);
+                bsphere_seen = true;
+            },
             TERRAIN_TYPE => {
-                terrain_types.push(decode_terrain_type(chunk, &child)?)
+                if terrain_seen {
+                    return None;
+                }
+                let (json, count) = decode_terrain_type(chunk, &child)?;
+                if count.checked_mul(3)? != indices.len() {
+                    return None;
+                }
+                terrain_types.push(json);
+                terrain_seen = true;
             },
             _ => return None,
         }
+    }
+    if !bbox_seen || !bsphere_seen {
+        return None;
     }
     Some(format!(
         concat!(
@@ -150,9 +176,15 @@ fn decode_bsphere(chunk: &[u8], child: &SubChunk) -> Option<String> {
 }
 
 /// Decodes terrain-type bytes because they affect collision behavior.
-fn decode_terrain_type(chunk: &[u8], child: &SubChunk) -> Option<String> {
+fn decode_terrain_type(
+    chunk: &[u8],
+    child: &SubChunk,
+) -> Option<(String, usize)> {
     let mut reader = Reader::new(chunk, child.data_offset());
     let version = reader.u32()?;
+    if version != 0 {
+        return None;
+    }
     let count = usize::try_from(reader.u32()?).ok()?;
     let start = reader.pos();
     let end = start.checked_add(count)?;
@@ -160,15 +192,18 @@ fn decode_terrain_type(chunk: &[u8], child: &SubChunk) -> Option<String> {
     if end != child.header_end() || child.header_end() != child.end() {
         return None;
     }
-    Some(format!(
-        "{{\"version\":{},\"num_types\":{},\"types\":[{}]}}",
-        version,
+    Some((
+        format!(
+            "{{\"version\":{},\"num_types\":{},\"types\":[{}]}}",
+            version,
+            count,
+            types
+                .iter()
+                .map(u8::to_string)
+                .collect::<Vec<_>>()
+                .join(",")
+        ),
         count,
-        types
-            .iter()
-            .map(u8::to_string)
-            .collect::<Vec<_>>()
-            .join(",")
     ))
 }
 
