@@ -1382,6 +1382,22 @@ source ordinal. Physical member indexing is therefore complete for this
 ambiguity surface; the missing authored consumer-to-occurrence relationship
 remains the blocking evidence.
 
+The supported Pure3D primitive-group contract has no hidden physical material
+coordinate to recover. `tlPrimGroupChunk` stores a logical `Shader` string,
+primitive and vertex types, and declared geometry counts; its optional
+`tlVertexShaderChunk` stores only a `VertexShaderName`. Mesh and skin containers
+both consume that same primitive-group contract. The decoder therefore preserves
+all available material-reference identity when it retains the shader string and
+the package-level primitive-group source ordinal.
+
+A separate audit of the 338 mesh-used duplicate logical shader sets covers 1,312
+primitive-group consumers. Every consumer has `vertex_format=8225` and an empty
+optional vertex-shader reference. Within every duplicate set, all candidate
+shaders agree on `vertex_needs=33`; 66 sets differ in shader `vertex_mask`, but
+the primitive group publishes no shader-mask selector, and the two L1
+`char_swatches_m` candidates have the same mask. These fields therefore do not
+supply source-backed occurrence authority for the current ambiguity.
+
 That exact consumer coordinate does not identify either physical shader
 occurrence. The primitive-group payload still stores only the logical
 `char_swatches_m` token, while the two differing shader candidates remain
