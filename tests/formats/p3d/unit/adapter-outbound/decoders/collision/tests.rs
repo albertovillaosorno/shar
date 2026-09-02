@@ -423,7 +423,8 @@ fn physics_object_decodes_mass_and_joint_parameters() -> Result<(), String> {
 
 #[test]
 fn physics_object_rejects_unobserved_version() -> Result<(), String> {
-    let mut fixture = require(physics_fixture(), "physics fixture should build")?;
+    let mut fixture =
+        require(physics_fixture(), "physics fixture should build")?;
     let name_length = usize::from(*fixture.get(12).ok_or_else(|| {
         String::from("physics fixture name length should exist")
     })?);
