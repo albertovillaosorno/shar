@@ -290,6 +290,47 @@ fn billboard_quad_preserves_child_schema_versions() -> Result<(), String> {
     Ok(())
 }
 
+#[test]
+fn billboard_quad_rejects_unobserved_child_versions() -> Result<(), String> {
+    let (source, header_size) = billboard_quad_fixture(2)?;
+    if auxiliary::billboard_quad_json(&source, header_size, source.len())
+        .is_some()
+    {
+        return Err(String::from(
+            "billboard quad accepted an unobserved display-info version",
+        ));
+    }
+
+    let (mut source, header_size) = billboard_quad_fixture(1)?;
+    source[12..16].copy_from_slice(&3_u32.to_le_bytes());
+    if auxiliary::billboard_quad_json(&source, header_size, source.len())
+        .is_some()
+    {
+        return Err(String::from(
+            "billboard quad accepted an unobserved quad version",
+        ));
+    }
+
+    let (mut source, header_size) = billboard_quad_fixture(1)?;
+    let display_total = u32::from_le_bytes([
+        source[header_size + 8],
+        source[header_size + 9],
+        source[header_size + 10],
+        source[header_size + 11],
+    ]) as usize;
+    let perspective = header_size + display_total;
+    source[perspective + 12..perspective + 16]
+        .copy_from_slice(&1_u32.to_le_bytes());
+    if auxiliary::billboard_quad_json(&source, header_size, source.len())
+        .is_some()
+    {
+        return Err(String::from(
+            "billboard quad accepted an unobserved perspective-info version",
+        ));
+    }
+    Ok(())
+}
+
 fn billboard_group_fixture(declared_quads: u32) -> Result<Vec<u8>, String> {
     const QUAD_GROUP: u32 = 0x0001_7002;
     let mut fields = Vec::new();

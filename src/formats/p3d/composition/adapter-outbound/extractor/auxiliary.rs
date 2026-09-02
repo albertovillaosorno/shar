@@ -48,6 +48,9 @@ pub(super) fn recover_quad_group_json(
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let version = read_u32(chunk, cursor)?;
+    if version != 0 {
+        return None;
+    }
     cursor += 4;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let shader = schema::read_pascal_at(chunk, &mut cursor)?;
@@ -188,6 +191,9 @@ pub(super) fn billboard_quad_fields(
 ) -> Option<BillboardQuadFields> {
     let mut cursor = 12_usize;
     let version = read_u32(quad, cursor)?;
+    if version != 2 {
+        return None;
+    }
     cursor += 4;
     let name = schema::read_pascal_at(quad, &mut cursor)?;
     let billboard_mode = render::read_fourcc(quad, cursor)?;
@@ -288,7 +294,11 @@ pub(super) fn read_billboard_display_info(
     if display.display_info_version.is_some() {
         return None;
     }
-    display.display_info_version = Some(read_u32(quad, *field)?);
+    let version = read_u32(quad, *field)?;
+    if !matches!(version, 0 | 1) {
+        return None;
+    }
+    display.display_info_version = Some(version);
     *field += 4;
     display.rotation = read_f32_array::<4>(quad, field)?;
     display.cutoff_mode = render::read_fourcc(quad, *field)?;
@@ -312,7 +322,11 @@ pub(super) fn read_billboard_perspective_info(
     if display.perspective_info_version.is_some() {
         return None;
     }
-    display.perspective_info_version = Some(read_u32(quad, *field)?);
+    let version = read_u32(quad, *field)?;
+    if version != 0 {
+        return None;
+    }
+    display.perspective_info_version = Some(version);
     *field += 4;
     display.perspective = read_u32(quad, *field)? != 0;
     *field += 4;
