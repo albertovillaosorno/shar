@@ -355,10 +355,14 @@ impl PrimitiveLists {
     fn decode(chunk: &[u8], group: &super::reader::SubChunk) -> Option<Self> {
         let mut decoded = Self::default();
         for list in subchunks(chunk, group.header_end(), group.end())? {
+            if list.header_size != list.total_size {
+                return None;
+            }
+            let bounded = chunk.get(..list.header_end())?;
             let base = list.data_offset();
-            let handled = decoded.decode_float_list(chunk, list.id, base)?
-                || decoded.decode_integer_list(chunk, list.id, base)?
-                || decoded.decode_channel_list(chunk, list.id, base)?;
+            let handled = decoded.decode_float_list(bounded, list.id, base)?
+                || decoded.decode_integer_list(bounded, list.id, base)?
+                || decoded.decode_channel_list(bounded, list.id, base)?;
             if !handled {
                 return None;
             }
@@ -415,7 +419,7 @@ impl PrimitiveLists {
             },
             PACKEDNORMALLIST => Some(format!(
                 "\"packed_normals\":{}",
-                u32_list(chunk, base,)?.0
+                byte_list(chunk, base)?.0
             )),
             MATRIXPALETTE => {
                 let (json, count) = u32_list(chunk, base)?;
@@ -454,7 +458,11 @@ impl PrimitiveLists {
                 self.multi_colours.push(multicolour_channel(chunk, base)?)
             },
             VERTEXSHADER => {
-                self.vertex_shader = Reader::new(chunk, base).pstring()?;
+                let mut reader = Reader::new(chunk, base);
+                self.vertex_shader = reader.pstring()?;
+                if reader.pos() != chunk.len() {
+                    return None;
+                }
             },
             _ => return Some(false),
         }
@@ -557,7 +565,7 @@ fn float3_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
         json.push(']');
     }
     json.push(']');
-    Some((json, count))
+    (reader.pos() == chunk.len()).then_some((json, count))
 }
 
 /// `count:u32` then `count` * one `u32`. Returns `(json_array, count)`.
@@ -573,7 +581,23 @@ fn u32_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
         json.push_str(&reader.u32()?.to_string());
     }
     json.push(']');
-    Some((json, count))
+    (reader.pos() == chunk.len()).then_some((json, count))
+}
+
+/// `count:u32` then `count` packed-normal bytes.
+fn byte_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
+    let mut reader = Reader::new(chunk, base);
+    let count = reader.u32()? as usize;
+    let mut json = String::with_capacity(count * 4 + 2);
+    json.push('[');
+    for i in 0..count {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&reader.byte()?.to_string());
+    }
+    json.push(']');
+    (reader.pos() == chunk.len()).then_some((json, count))
 }
 
 /// `count:u32` then `count` * four `u8`.
@@ -599,7 +623,7 @@ fn byte4_list(chunk: &[u8], base: usize) -> Option<String> {
         json.push(']');
     }
     json.push(']');
-    Some(json)
+    (reader.pos() == chunk.len()).then_some(json)
 }
 
 /// UV list: `count:u32, channel:u32`, then `count` * two `f32`. Tagged with a
@@ -623,7 +647,8 @@ fn uv_channel(chunk: &[u8], base: usize) -> Option<String> {
         coords.push(']');
     }
     coords.push(']');
-    Some(format!("{{\"channel\":{channel},\"coords\":{coords}}}"))
+    (reader.pos() == chunk.len())
+        .then_some(format!("{{\"channel\":{channel},\"coords\":{coords}}}"))
 }
 
 /// Multicolour list: `count:u32, channel:u32`, then `count` * one `u32`.
@@ -640,7 +665,8 @@ fn multicolour_channel(chunk: &[u8], base: usize) -> Option<String> {
         values.push_str(&reader.u32()?.to_string());
     }
     values.push(']');
-    Some(format!("{{\"channel\":{channel},\"values\":{values}}}"))
+    (reader.pos() == chunk.len())
+        .then_some(format!("{{\"channel\":{channel},\"values\":{values}}}"))
 }
 
 /// Format an `f32` as a round-trippable JSON number, or `null` if non-finite.
