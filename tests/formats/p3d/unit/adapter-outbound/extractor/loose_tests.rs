@@ -309,6 +309,65 @@ fn trigger_volume_rejects_unobserved_source_shapes() -> Result<(), String> {
 }
 
 #[test]
+fn srr_locator_rejects_trailing_header_data() -> Result<(), String> {
+    let (mut source, header_size) = srr_locator_fixture(0)?;
+    push_u32(&mut source, 99);
+    let extended_header = header_size
+        .checked_add(4)
+        .ok_or_else(|| String::from("extended locator header overflowed"))?;
+    let size_u32 =
+        u32::try_from(extended_header).map_err(|error| error.to_string())?;
+    source[4..8].copy_from_slice(&size_u32.to_le_bytes());
+    source[8..12].copy_from_slice(&size_u32.to_le_bytes());
+    let component = ChunkRecord {
+        ordinal: 7,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_0005,
+        kind: crate::ChunkKind::SrrLocator,
+        offset: 0,
+        header_size: extended_header,
+        total_size: extended_header,
+        payload_offset: extended_header,
+        payload_size: 0,
+        child_count: 0,
+    };
+    if render::recover_srr_locator_json(&component, &source, 1).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("trailing locator header data should fail closed"))
+    }
+}
+
+#[test]
+fn srr_locator_rejects_nonfinite_position() -> Result<(), String> {
+    let (mut source, header_size) = srr_locator_fixture(0)?;
+    let position_offset = 28_usize;
+    source[position_offset..position_offset + 4]
+        .copy_from_slice(&f32::NAN.to_le_bytes());
+    let component = ChunkRecord {
+        ordinal: 7,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_0005,
+        kind: crate::ChunkKind::SrrLocator,
+        offset: 0,
+        header_size,
+        total_size: header_size,
+        payload_offset: header_size,
+        payload_size: 0,
+        child_count: 0,
+    };
+    if render::recover_srr_locator_json(&component, &source, 1).is_none() {
+        Ok(())
+    } else {
+        Err(String::from(
+            "nonfinite locator position should fail closed",
+        ))
+    }
+}
+
+#[test]
 fn locator_spline_preserves_control_points_and_rail() -> Result<(), String> {
     const SPLINE: u32 = 0x0300_0007;
     const RAIL: u32 = 0x0300_000a;
