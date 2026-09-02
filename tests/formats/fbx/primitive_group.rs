@@ -158,6 +158,20 @@ fn preserves_winding_that_opposes_authored_normals() {
 }
 
 #[test]
+fn retains_package_source_ordinal_as_provenance() {
+    let group = PrimitiveGroup::new(
+        0,
+        "shader",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 1, 2],
+    )
+    .map(|group| group.with_source_ordinal(42));
+
+    assert_eq!(group.map(|value| value.source_ordinal), Ok(Some(42)));
+}
+
+#[test]
 fn validates_authored_source_identity() {
     let result = PrimitiveGroup::new(
         3,

@@ -43,6 +43,7 @@ fn primitive_group(index: usize) -> PrimitiveGroup {
     PrimitiveGroup {
         index,
         source_identity: None,
+        source_ordinal: None,
         shader: format!("shader-{index}"),
         positions: vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
         normals: Vec::new(),

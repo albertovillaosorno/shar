@@ -79,7 +79,7 @@ fn indexed_mesh_preserves_authored_identity() -> Result<(), String> {
 }
 
 #[test]
-fn indexed_mesh_accepts_primitive_group_source_ordinal() -> Result<(), String> {
+fn indexed_mesh_retains_primitive_group_source_ordinal() -> Result<(), String> {
     let root = temp_root("indexed-mesh-group-source-ordinal");
     let mesh_path = root.join("mesh.json");
     fs::create_dir_all(&root).map_err(|error| error.to_string())?;
@@ -93,12 +93,15 @@ fn indexed_mesh_accepts_primitive_group_source_ordinal() -> Result<(), String> {
         .map_err(|error| format!("indexed mesh failed: {error:?}"));
     let _cleanup_result = fs::remove_dir_all(&root);
     let mesh = result?;
+    let Some(group) = mesh.groups.first() else {
+        return Err(String::from("decoded mesh lost its primitive group"));
+    };
     if mesh.groups.len() != 1
-        || mesh.groups.first().map(|group| group.shader.as_str())
-            != Some("shader")
+        || group.shader != "shader"
+        || group.source_ordinal != Some(42)
     {
         return Err(String::from(
-            "primitive-group provenance changed decoded mesh semantics",
+            "decoded mesh lost primitive-group source provenance",
         ));
     }
     Ok(())
