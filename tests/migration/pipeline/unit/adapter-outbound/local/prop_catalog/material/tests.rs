@@ -31,6 +31,7 @@
 //! Tests unit tests.
 
 use std::collections::BTreeSet;
+use std::fs;
 
 use fbx::adapters::driven::decoded_component_source::{
     DecodedComponentError, ShaderMemberOccurrence,
@@ -290,6 +291,69 @@ fn non_ambiguous_material_error_keeps_existing_shape() {
 }
 
 #[test]
+fn shared_texture_fallback_preserves_decoded_shader_evidence()
+-> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-shared-material-evidence-{}",
+        std::process::id()
+    ));
+    let package = root.join("package");
+    let shader_dir = package.join("components").join("shader");
+    let shared_dir = root.join("shared");
+    let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&shared_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&scratch).map_err(|error| error.to_string())?;
+    fs::write(
+        shader_dir.join("road_m.json"),
+        concat!(
+            r#"{"name":"road_m","has_translucency":1,"num_params":2,"#,
+            r#""params":[{"kind":"texture","param":"TEX","#,
+            r#""value":"shared.bmp"},{"kind":"colour","#,
+            r#""param":"DIFF","value":287454020}]}"#
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let external = shared_dir.join("shared.png");
+    fs::write(&external, b"source-png").map_err(|error| error.to_string())?;
+    let external_text = external
+        .to_str()
+        .ok_or_else(|| "external fixture path is not UTF-8".to_owned())?;
+    let authority = SharedTextureAuthority::from_occurrences_for_tests(&[
+        super::super::texture_authority::TextureOccurrenceFixture {
+            logical: "shared.bmp",
+            package_id: "level-one-terrain",
+            subcategory: "terrain-world/level-01/terrain-mesh",
+            package_member_id: "texture-member-1",
+            member_id: "shared",
+            source_ordinal: 1,
+            path: external_text,
+            sha256: "fixture-digest",
+        },
+    ]);
+    let source = DecodedComponentSource::new(&package, &scratch);
+    let result = resolve_source_material(
+        &source,
+        "road_m",
+        None,
+        Some(&authority),
+        None,
+        "terrain-world/level-01/terrain-mesh",
+    );
+    let cleanup = fs::remove_dir_all(&root);
+    let binding = result.map_err(|error| error.to_string())?;
+    if binding.base_color_rgba8 != [0x22, 0x33, 0x44, 0x11]
+        || !binding.semantics.is_transparent()
+    {
+        return Err(format!(
+            "shared fallback discarded decoded shader evidence: {binding:?}"
+        ));
+    }
+    cleanup.map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
 fn missing_analysis_default_shader_fails_closed() -> Result<(), String> {
     let root = std::env::temp_dir().join(format!(
         "pipeline-missing-analysis-default-{}",
@@ -302,7 +366,6 @@ fn missing_analysis_default_shader_fails_closed() -> Result<(), String> {
         &source,
         "lambert1",
         None,
-        &scratch,
         Some(&authority),
         None,
         "terrain-world/level-01/terrain-mesh",
