@@ -814,6 +814,100 @@ fn follow_cam_rejects_unobserved_source_shapes() -> Result<(), String> {
     Ok(())
 }
 
+fn attribute_table_fixture(
+    mass: f32,
+    trailing_word: bool,
+) -> Result<(Vec<u8>, usize), String> {
+    const ATTRIBUTE_TABLE: u32 = 0x0300_0602;
+    let mut fields = Vec::new();
+    push_u32(&mut fields, 1);
+    push_pascal(&mut fields, "sound")?;
+    push_pascal(&mut fields, "particle")?;
+    push_pascal(&mut fields, "animation")?;
+    for value in [0.5_f32, mass, 0.25_f32] {
+        push_f32(&mut fields, value);
+    }
+    if trailing_word {
+        push_u32(&mut fields, 99);
+    }
+    let size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("attribute table fixture overflowed"))?;
+    let size_u32 = u32::try_from(size).map_err(|error| error.to_string())?;
+    let mut source = Vec::new();
+    push_u32(&mut source, ATTRIBUTE_TABLE);
+    push_u32(&mut source, size_u32);
+    push_u32(&mut source, size_u32);
+    source.extend_from_slice(&fields);
+    Ok((source, size))
+}
+
+fn attribute_table_component(size: usize) -> ChunkRecord {
+    ChunkRecord {
+        ordinal: 6,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_0602,
+        kind: crate::ChunkKind::SrrAttributeTable,
+        offset: 0,
+        header_size: size,
+        total_size: size,
+        payload_offset: size,
+        payload_size: 0,
+        child_count: 0,
+    }
+}
+
+#[test]
+fn attribute_table_preserves_source_rows() -> Result<(), String> {
+    let (source, size) = attribute_table_fixture(9999_f32, false)?;
+    let recovered = auxiliary::recover_attribute_table_json(
+        &attribute_table_component(size),
+        &source,
+        1,
+    )
+    .ok_or_else(|| String::from("attribute table fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["num_rows"] == 1
+        && value["rows"][0]["sound"] == "sound"
+        && value["rows"][0]["mass"] == 9999
+    {
+        Ok(())
+    } else {
+        Err(String::from("attribute table source row was discarded"))
+    }
+}
+
+#[test]
+fn attribute_table_rejects_unobserved_source_shapes() -> Result<(), String> {
+    let (trailing, size) = attribute_table_fixture(1_f32, true)?;
+    if auxiliary::recover_attribute_table_json(
+        &attribute_table_component(size),
+        &trailing,
+        1,
+    )
+    .is_some()
+    {
+        return Err(String::from(
+            "trailing attribute table data should fail closed",
+        ));
+    }
+    let (nonfinite, size) = attribute_table_fixture(f32::NAN, false)?;
+    if auxiliary::recover_attribute_table_json(
+        &attribute_table_component(size),
+        &nonfinite,
+        1,
+    )
+    .is_some()
+    {
+        return Err(String::from(
+            "nonfinite attribute table data should fail closed",
+        ));
+    }
+    Ok(())
+}
+
 fn billboard_quad_fixture(
     display_version: u32,
 ) -> Result<(Vec<u8>, usize), String> {

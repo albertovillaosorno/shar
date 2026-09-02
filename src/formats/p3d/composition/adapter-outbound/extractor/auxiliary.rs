@@ -1429,6 +1429,12 @@ pub(super) fn recover_attribute_table_json(
         cursor += 4;
         let elasticity = schema::read_f32(chunk, cursor)?;
         cursor += 4;
+        if [friction, mass, elasticity]
+            .iter()
+            .any(|value| !value.is_finite())
+        {
+            return None;
+        }
         rows.push(format!(
             concat!(
                 r#"{{"sound":"{}","#,
@@ -1445,6 +1451,11 @@ pub(super) fn recover_attribute_table_json(
             mass,
             elasticity,
         ));
+    }
+    if cursor != component.header_size
+        || component.header_size != component.total_size
+    {
+        return None;
     }
     let kind = component.kind.label();
     let name = format!("{kind}_{kind_index:04}");
