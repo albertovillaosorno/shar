@@ -1341,5 +1341,27 @@ composite-prop/hierarchy match in the static audit. The next step is therefore
 a contextual discovery diagnostic or equivalent bounded audit, not weakening
 `clean_identity` or treating empty values as identities.
 
+The contextual world-inventory diagnostic isolated the previous regeneration
+failure to `frame_controller_variant_b/MasterController.json@9714`: a non-BQG
+`ANIM` sentinel with a NUL-only hierarchy target. The current terrain-world
+corpus contains two such variant-B `ANIM` rows and four variant-A `TEX` rows;
+all six have empty/sentinel hierarchy or animation targets, while every linked
+deferred billboard controller is BQG. Deferred billboard controller discovery
+now classifies authored controller type first and ignores non-BQG sentinels
+without repairing their targets. BQG hierarchy and animation validation remains
+strict.
+
+A post-fix isolated regeneration again extracted all 149 terrain-world packages
+and advanced past controller discovery. Its next fail-closed boundary is a
+same-name shader ambiguity in `L1_TERRA`: `char_swatches_m_.json` at source
+ordinal 12679 and `char_swatches_m___ordinal_13756.json` at ordinal 13756. Both
+reference `char_swatches.bmp`, but their authored shader payloads differ: the
+first has `2SID=0` and `SHIN=10`, while the second has `2SID=1` and `SHIN=0`.
+The decoded mesh primitive group retains only the logical `char_swatches_m`
+shader token, not a physical shader occurrence coordinate. Selecting the first,
+nearest, or lowest-ordinal shader would therefore invent relationship authority.
+World material export must remain fail-closed until an exact source-backed
+mesh-primitive-to-shader occurrence relationship is recovered or proven.
+
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
