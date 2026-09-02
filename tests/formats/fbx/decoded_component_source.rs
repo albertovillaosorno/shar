@@ -79,6 +79,32 @@ fn indexed_mesh_preserves_authored_identity() -> Result<(), String> {
 }
 
 #[test]
+fn indexed_mesh_accepts_primitive_group_source_ordinal() -> Result<(), String> {
+    let root = temp_root("indexed-mesh-group-source-ordinal");
+    let mesh_path = root.join("mesh.json");
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let json = valid_mesh_json().replace(
+        "\"shader\":\"shader\"",
+        "\"source_ordinal\":42,\"shader\":\"shader\"",
+    );
+    fs::write(&mesh_path, json).map_err(|error| error.to_string())?;
+
+    let result = read_indexed_mesh(&mesh_path)
+        .map_err(|error| format!("indexed mesh failed: {error:?}"));
+    let _cleanup_result = fs::remove_dir_all(&root);
+    let mesh = result?;
+    if mesh.groups.len() != 1
+        || mesh.groups.first().map(|group| group.shader.as_str())
+            != Some("shader")
+    {
+        return Err(String::from(
+            "primitive-group provenance changed decoded mesh semantics",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn indexed_material_uses_published_shader_path() -> Result<(), String> {
     let root = temp_root("indexed-material-path");
     let shader_path = root.join("material-logical-uuid.json");

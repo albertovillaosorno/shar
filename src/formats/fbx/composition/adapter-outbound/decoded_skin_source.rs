@@ -1473,6 +1473,9 @@ struct DecodedSkin {
 #[serde(deny_unknown_fields)]
 /// Internal data shape for the adapter implementation.
 struct DecodedSkinGroup {
+    /// Exact package-level source chunk ordinal retained as provenance.
+    #[serde(default, rename = "source_ordinal")]
+    _source_ordinal: Option<usize>,
     /// Shader reference with fixed-width padding.
     shader: String,
     /// Vertex shader reference retained for schema compatibility.

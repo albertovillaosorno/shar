@@ -111,8 +111,12 @@ impl LosslessPackageExporter {
             let kind = component.kind.label();
             let next_index = kind_counts.entry(kind).or_insert(0);
             *next_index += 1;
-            let mut recovered =
-                recover_component(component, &bytes, *next_index)?;
+            let mut recovered = recover_component_with_chunk_table(
+                component,
+                &bytes,
+                *next_index,
+                Some(&document.chunks),
+            )?;
             if !register_recovered_path(
                 &mut published_paths,
                 component,
@@ -473,10 +477,21 @@ impl crate::ports::PackageExporter for LosslessPackageExporter {
 }
 
 /// Recover component.
+#[cfg(test)]
 fn recover_component(
     component: &ChunkRecord,
     source: &[u8],
     kind_index: usize,
+) -> Result<RecoveredComponent, P3dError> {
+    recover_component_with_chunk_table(component, source, kind_index, None)
+}
+
+/// Recover one component with optional package-level child provenance.
+fn recover_component_with_chunk_table(
+    component: &ChunkRecord,
+    source: &[u8],
+    kind_index: usize,
+    chunks: Option<&[ChunkRecord]>,
 ) -> Result<RecoveredComponent, P3dError> {
     if component.kind.label() == "texture"
         && let Some(recovered) = recover_texture(component, source)?
@@ -489,7 +504,7 @@ fn recover_component(
         return Ok(recovered);
     }
     if let Some(recovered) =
-        schema::recover_schema_json(component, source, kind_index)
+        schema::recover_schema_json(component, source, kind_index, chunks)
     {
         return Ok(recovered);
     }

@@ -187,6 +187,120 @@ fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn primitive_group_mesh_fixture() -> Result<(Vec<u8>, usize, usize), String> {
+    const MESH: u32 = 0x0001_0000;
+    const PRIMITIVE_GROUP: u32 = 0x0001_0002;
+
+    let mut group_fields = Vec::new();
+    push_u32(&mut group_fields, 1);
+    push_pascal(&mut group_fields, "shader")?;
+    for value in [0, 0, 0, 0, 0] {
+        push_u32(&mut group_fields, value);
+    }
+    let group_size = 12_usize
+        .checked_add(group_fields.len())
+        .ok_or_else(|| String::from("primitive-group fixture overflowed"))?;
+    let group_size_u32 = u32::try_from(group_size).map_err(|error| {
+        format!("primitive-group size exceeds u32: {error}")
+    })?;
+
+    let mut mesh_fields = Vec::new();
+    push_pascal(&mut mesh_fields, "mesh")?;
+    push_u32(&mut mesh_fields, 3);
+    push_u32(&mut mesh_fields, 1);
+    let mesh_header = 12_usize
+        .checked_add(mesh_fields.len())
+        .ok_or_else(|| String::from("mesh fixture header overflowed"))?;
+    let mesh_total = mesh_header
+        .checked_add(group_size)
+        .ok_or_else(|| String::from("mesh fixture total overflowed"))?;
+    let mesh_header_u32 = u32::try_from(mesh_header)
+        .map_err(|error| format!("mesh header exceeds u32: {error}"))?;
+    let mesh_total_u32 = u32::try_from(mesh_total)
+        .map_err(|error| format!("mesh total exceeds u32: {error}"))?;
+
+    let mut source = Vec::new();
+    push_u32(&mut source, MESH);
+    push_u32(&mut source, mesh_header_u32);
+    push_u32(&mut source, mesh_total_u32);
+    source.extend_from_slice(&mesh_fields);
+    push_u32(&mut source, PRIMITIVE_GROUP);
+    push_u32(&mut source, group_size_u32);
+    push_u32(&mut source, group_size_u32);
+    source.extend_from_slice(&group_fields);
+    Ok((source, mesh_header, group_size))
+}
+
+fn primitive_group_mesh_record(
+    source: &[u8],
+    mesh_header: usize,
+) -> ChunkRecord {
+    ChunkRecord {
+        ordinal: 7,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0001_0000,
+        kind: crate::ChunkKind::Mesh,
+        offset: 0,
+        header_size: mesh_header,
+        total_size: source.len(),
+        payload_offset: mesh_header,
+        payload_size: source.len().saturating_sub(mesh_header),
+        child_count: 1,
+    }
+}
+
+#[test]
+fn mesh_recovery_retains_primitive_group_source_ordinal() -> Result<(), String>
+{
+    let (source, mesh_header, group_size) = primitive_group_mesh_fixture()?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    let group = ChunkRecord {
+        ordinal: 42,
+        depth: 2,
+        parent_ordinal: Some(component.ordinal),
+        id: 0x0001_0002,
+        kind: crate::ChunkKind::Unknown,
+        offset: mesh_header,
+        header_size: group_size,
+        total_size: group_size,
+        payload_offset: mesh_header.saturating_add(group_size),
+        payload_size: 0,
+        child_count: 0,
+    };
+    let chunks = [component, group];
+    let recovered = recover_component_with_chunk_table(
+        &component,
+        &source,
+        1,
+        Some(&chunks),
+    )
+    .map_err(|error| error.to_string())?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["prim_groups"][0]["source_ordinal"] != 42 {
+        return Err(String::from(
+            "mesh primitive group lost its package-level source ordinal",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_missing_primitive_group_provenance()
+-> Result<(), String> {
+    let (source, mesh_header, _group_size) = primitive_group_mesh_fixture()?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if recover_component_with_chunk_table(&component, &source, 1, Some(&[]))
+        .is_ok()
+    {
+        return Err(String::from(
+            "mesh recovery accepted incomplete primitive-group provenance",
+        ));
+    }
+    Ok(())
+}
+
 fn texture_font_fixture(
     declared_textures: u32,
     glyph_count: u32,
