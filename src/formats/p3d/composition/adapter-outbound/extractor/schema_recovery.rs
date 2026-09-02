@@ -34,14 +34,15 @@ pub(super) fn recover_render_schema_json(
     component: &crate::ChunkRecord,
     source: &[u8],
     kind_index: usize,
+    chunks: Option<&[crate::ChunkRecord]>,
 ) -> Option<super::RecoveredComponent> {
     match component.kind.label() {
-        "mesh" => {
-            super::render::recover_mesh_json(component, source, kind_index)
-        },
-        "skin" => {
-            super::render::recover_skin_json(component, source, kind_index)
-        },
+        "mesh" => super::render::recover_mesh_json(
+            component, source, kind_index, chunks,
+        ),
+        "skin" => super::render::recover_skin_json(
+            component, source, kind_index, chunks,
+        ),
         "skeleton" => {
             super::render::recover_skeleton_json(component, source, kind_index)
         },

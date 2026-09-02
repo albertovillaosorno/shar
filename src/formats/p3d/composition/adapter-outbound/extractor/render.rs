@@ -72,12 +72,15 @@ pub(super) fn recover_mesh_json(
     component: &ChunkRecord,
     source: &[u8],
     kind_index: usize,
+    chunks: Option<&[ChunkRecord]>,
 ) -> Option<RecoveredComponent> {
     let chunk = raw_component_bytes(component, source).ok()?;
     let name = read_pascal_name(component, source).unwrap_or_else(|| {
         format!("{}_{kind_index:04}", component.kind.label())
     });
-    let json = crate::adapters::driven::decoders::mesh::mesh_json(chunk)?;
+    let ordinals = primitive_group_source_ordinals(component, chunks);
+    let json = crate::adapters::driven::decoders::mesh::
+        mesh_json_with_source_ordinals(chunk, ordinals.as_deref())?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     Some(json_component(
@@ -94,12 +97,15 @@ pub(super) fn recover_skin_json(
     component: &ChunkRecord,
     source: &[u8],
     kind_index: usize,
+    chunks: Option<&[ChunkRecord]>,
 ) -> Option<RecoveredComponent> {
     let chunk = raw_component_bytes(component, source).ok()?;
     let name = read_pascal_name(component, source).unwrap_or_else(|| {
         format!("{}_{kind_index:04}", component.kind.label())
     });
-    let json = crate::adapters::driven::decoders::mesh::skin_json(chunk)?;
+    let ordinals = primitive_group_source_ordinals(component, chunks);
+    let json = crate::adapters::driven::decoders::mesh::
+        skin_json_with_source_ordinals(chunk, ordinals.as_deref())?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     Some(json_component(
@@ -109,6 +115,21 @@ pub(super) fn recover_skin_json(
         json,
         "decoded_schema_payload",
     ))
+}
+
+/// Return direct primitive-group source ordinals when package context exists.
+fn primitive_group_source_ordinals(
+    component: &ChunkRecord,
+    chunks: Option<&[ChunkRecord]>,
+) -> Option<Vec<usize>> {
+    let chunks = chunks?;
+    let ordinals = chunks
+        .iter()
+        .filter(|child| child.parent_ordinal == Some(component.ordinal))
+        .filter(|child| child.id == 0x0001_0002)
+        .map(|child| child.ordinal)
+        .collect::<Vec<_>>();
+    Some(ordinals)
 }
 
 /// Recover skeleton json.

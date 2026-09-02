@@ -87,9 +87,17 @@ const MULTICOLOURLIST: u32 = 0x0001_001c;
 /// Decode a `MESH` chunk (`chunk` is the whole chunk including its 12-byte
 /// header) into the lossless mesh JSON body, or `None` to fail closed.
 pub fn mesh_json(chunk: &[u8]) -> Option<String> {
+    mesh_json_with_source_ordinals(chunk, None)
+}
+
+/// Decode a `MESH` chunk with exact package-level primitive-group ordinals.
+pub(crate) fn mesh_json_with_source_ordinals(
+    chunk: &[u8],
+    source_ordinals: Option<&[usize]>,
+) -> Option<String> {
     let (name, version, prim_start, prim_end) =
         read_container_header(chunk, false)?;
-    let body = decode_children(chunk, prim_start, prim_end)?;
+    let body = decode_children(chunk, prim_start, prim_end, source_ordinals)?;
     Some(format!(
         "{{\"schema\":\"mesh\",\"name\":\"{}\",\"version\":{},\"\
              num_prim_groups\":{},\"prim_groups\":[{}]{}}}\n",
@@ -103,9 +111,17 @@ pub fn mesh_json(chunk: &[u8]) -> Option<String> {
 
 /// Decode a `SKIN` chunk into the lossless skin JSON body, or `None`.
 pub fn skin_json(chunk: &[u8]) -> Option<String> {
+    skin_json_with_source_ordinals(chunk, None)
+}
+
+/// Decode a `SKIN` chunk with exact package-level primitive-group ordinals.
+pub(crate) fn skin_json_with_source_ordinals(
+    chunk: &[u8],
+    source_ordinals: Option<&[usize]>,
+) -> Option<String> {
     let (name, version, skeleton, prim_start, prim_end) =
         read_skin_header(chunk)?;
-    let body = decode_children(chunk, prim_start, prim_end)?;
+    let body = decode_children(chunk, prim_start, prim_end, source_ordinals)?;
     Some(format!(
         "{{\"schema\":\"skin\",\"name\":\"{}\",\"version\":{},\"\
              skeleton_name\":\"{}\",\"num_prim_groups\":{},\"prim_groups\":\
@@ -192,15 +208,34 @@ impl MeshBody {
 }
 
 /// Decode children.
-fn decode_children(chunk: &[u8], start: usize, end: usize) -> Option<MeshBody> {
+fn decode_children(
+    chunk: &[u8],
+    start: usize,
+    end: usize,
+    source_ordinals: Option<&[usize]>,
+) -> Option<MeshBody> {
     let mut body = MeshBody {
         groups: Vec::new(),
         extras: Vec::new(),
         unhandled: Vec::new(),
     };
+    let mut primitive_group_index = 0_usize;
     for child in subchunks(chunk, start, end)? {
         match child.id {
-            PRIMGROUP => body.groups.push(decode_prim_group(chunk, &child)?),
+            PRIMGROUP => {
+                let source_ordinal = match source_ordinals {
+                    Some(ordinals) => {
+                        Some(*ordinals.get(primitive_group_index)?)
+                    },
+                    None => None,
+                };
+                body.groups.push(decode_prim_group(
+                    chunk,
+                    &child,
+                    source_ordinal,
+                )?);
+                primitive_group_index = primitive_group_index.checked_add(1)?;
+            },
             BBOX => {
                 let mut reader = Reader::new(chunk, child.data_offset());
                 let low = read_vec3(&mut reader)?;
@@ -226,6 +261,11 @@ fn decode_children(chunk: &[u8], start: usize, end: usize) -> Option<MeshBody> {
             },
             other => body.unhandled.push((other, child.total_size)),
         }
+    }
+    if source_ordinals
+        .is_some_and(|ordinals| ordinals.len() != primitive_group_index)
+    {
+        return None;
     }
     Some(body)
 }
@@ -405,7 +445,11 @@ impl PrimitiveLists {
     }
 
     /// Renders one deterministic JSON object after count validation succeeds.
-    fn render(self, header: &PrimitiveHeader) -> String {
+    fn render(
+        self,
+        header: &PrimitiveHeader,
+        source_ordinal: Option<usize>,
+    ) -> String {
         let mut output = format!(
             "{{\"shader\":\"{}\",\"vertex_shader\":\"{}\",\"prim_type\":{},\"\
              vertex_format\":{},\"vertex_count\":{},\"index_count\":{},\"\
@@ -418,6 +462,10 @@ impl PrimitiveLists {
             header.index_count,
             header.matrix_count
         );
+        if let Some(source_ordinal) = source_ordinal {
+            let _write_result =
+                write!(output, ",\"source_ordinal\":{source_ordinal}");
+        }
         for field in self.fields {
             output.push(',');
             output.push_str(&field);
@@ -441,6 +489,7 @@ impl PrimitiveLists {
 fn decode_prim_group(
     chunk: &[u8],
     group: &super::reader::SubChunk,
+    source_ordinal: Option<usize>,
 ) -> Option<String> {
     let mut reader = Reader::new(chunk, group.data_offset());
     let header = PrimitiveHeader::read(&mut reader)?;
@@ -448,7 +497,7 @@ fn decode_prim_group(
     if !lists.counts_match(&header) {
         return None;
     }
-    Some(lists.render(&header))
+    Some(lists.render(&header, source_ordinal))
 }
 
 /// `count:u32` then `count` * three `f32`. Returns `(json_array, count)`.

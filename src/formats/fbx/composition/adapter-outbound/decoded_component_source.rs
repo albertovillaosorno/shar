@@ -1463,6 +1463,9 @@ struct DecodedMesh {
 #[serde(deny_unknown_fields)]
 /// Internal data shape for the adapter implementation.
 struct DecodedPrimitiveGroup {
+    /// Exact package-level source chunk ordinal retained as provenance.
+    #[serde(default, rename = "source_ordinal")]
+    _source_ordinal: Option<usize>,
     /// Shader name referenced by this primitive group.
     shader: String,
     /// Vertex-shader identity retained for source compatibility.

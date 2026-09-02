@@ -42,11 +42,12 @@ pub(super) fn recover_schema_json(
     component: &ChunkRecord,
     source: &[u8],
     kind_index: usize,
+    chunks: Option<&[ChunkRecord]>,
 ) -> Option<RecoveredComponent> {
     recover_world_schema_json(component, source, kind_index)
         .or_else(|| {
             schema_recovery::recover_render_schema_json(
-                component, source, kind_index,
+                component, source, kind_index, chunks,
             )
         })
         .or_else(|| {
