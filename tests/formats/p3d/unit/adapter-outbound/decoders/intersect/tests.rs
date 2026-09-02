@@ -131,11 +131,7 @@ fn intersect_dsg_decodes_arrays_and_children() -> Result<(), String> {
         "normals should be emitted",
     )?;
     require_json(&json, "\"kind\":\"bbox\"", "bbox child should be emitted")?;
-    require_json(
-        &json,
-        "\"types\":[4]",
-        "terrain bytes should be emitted",
-    )?;
+    require_json(&json, "\"types\":[4]", "terrain bytes should be emitted")?;
     Ok(())
 }
 
