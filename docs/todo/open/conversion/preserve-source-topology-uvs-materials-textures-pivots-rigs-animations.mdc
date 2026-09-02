@@ -858,6 +858,12 @@ The same audit covers 14,518 mesh chunks and 633 skin chunks with zero
 children. Mesh and skin recovery now validate that authored count before
 publication rather than replacing inconsistent source evidence with a recount.
 
+Primitive matrix declarations are equally consistent across those 19,875 raw
+primitive groups: 18,413 declare zero matrices and omit a matrix palette, while
+1,462 declare a nonzero count and carry exactly one palette of that same length.
+Primitive recovery now validates this relationship instead of retaining an
+unchecked `NumMatrices` declaration beside contradictory palette evidence.
+
 A separate audit of the 338 mesh-used duplicate logical shader sets covers 1,312
 primitive-group consumers. Every consumer has `vertex_format=8225` and an empty
 optional vertex-shader reference. Within every duplicate set, all candidate
