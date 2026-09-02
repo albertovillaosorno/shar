@@ -28,5 +28,28 @@ No explicit task dependency was recorded in the legacy TODO.
 
 ## Evidence
 
-Open work migrated from the canonical TODO. Add implementation and
-validation evidence here as the task advances.
+The current world conversion has no map-wide overlap-removal pass. Normal
+world meshes use the strict authored-topology loader, and its retained
+`discarded_degenerate_triangles` compatibility count is always zero. Layout
+validation explicitly permits source overlap and rejects only malformed or
+non-finite bounds rather than deleting geometry by distance, extent, or LOD.
+
+The only production duplicate-triangle suppression is scoped to fused interior
+ownership. It compares exact source-authored face identity, including mesh and
+primitive-group identity, shader, topology, positions, UVs, normals, colors,
+and winding. Nearby surfaces, alternate triangulation, distinct material or UV
+presentation, reversed winding, uncovered planar spans, and the authored
+Halloween overlay remain distinct. All 19 classified interior source packages
+retain stable interior identities under the same policy.
+
+Fresh stable-Rust regressions passed all 12 interior ownership tests and both
+world-layout tests. The full 1,084-test pipeline suite also passed on the same
+committed implementation. This bounds any permissible geometry removal to exact
+source-backed duplicate faces; it does not justify deleting reported visual
+overlap merely because geometry is nearby or coincident in presentation.
+
+The acceptance criterion remains open because the current whole-world replay
+still fails closed before publication on an unresolved duplicate-shader
+physical-occurrence relationship. A complete map-wide output audit must be
+rerun after that independent material-identity blocker is resolved without
+inventing material occurrence authority.
