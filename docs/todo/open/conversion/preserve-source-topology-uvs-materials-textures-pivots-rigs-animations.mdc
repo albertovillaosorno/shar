@@ -913,6 +913,33 @@ primitive groups: 18,413 declare zero matrices and omit a matrix palette, while
 Primitive recovery now validates this relationship instead of retaining an
 unchecked `NumMatrices` declaration beside contradictory palette evidence.
 
+Primitive vertex-shader child presence is now retained independently from its
+string value. Of the 19,875 raw groups, 13,904 carry an explicit schema-sized
+vertex-shader child and every authored string is empty; the remaining 5,971 omit
+the child. Fresh extraction no longer collapses those two source states into the
+same empty string.
+
+The raw mesh/skin auxiliary audit finds 15,149 schema-sized bounding boxes and
+15,149 bounding spheres, plus 14,516 mesh render-status chunks with values only
+`0` or `1`; each observed family is singleton per parent. One `comic_v.p3d`
+mesh intentionally carries the same non-finite IEEE-754 payload in all box and
+sphere-centre coordinates, so extraction retains exact float bits beside the
+JSON-readable values rather than rejecting or erasing that source evidence.
+
+That same source contains the only non-finite primitive float payload found in
+the complete audit: one 72-vertex position list whose coordinates all use that
+same NaN bit pattern. The other 8,721,915 position floats, 2,288,700 normal
+floats, 5,814,754 UV floats, and 318,681 weight floats are finite. Sparse exact
+position bits now preserve the exceptional 72 vertices without duplicating the
+finite corpus.
+
+Twenty skins also carry expression-offset containers that were previously
+reduced to opaque child sizes. Each declares one primitive-group index and one
+offset list; together they contain 1,592 finite 16-byte records consisting of a
+vertex index and three authored float offsets. Fresh extraction retains the
+container counts, indices, records, and exact offset bits while leaving morph
+or runtime interpretation deferred.
+
 A separate audit of the 338 mesh-used duplicate logical shader sets covers 1,312
 primitive-group consumers. Every consumer has `vertex_format=8225` and an empty
 optional vertex-shader reference. Within every duplicate set, all candidate
