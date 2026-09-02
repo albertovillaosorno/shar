@@ -454,6 +454,10 @@ fn load_group(
         uvs,
         &triangles,
     )
+    .map(|group| match decoded.source_ordinal {
+        Some(source_ordinal) => group.with_source_ordinal(source_ordinal),
+        None => group,
+    })
     .and_then(|group| group.with_normals(decoded.normals.clone()))
     .map_err(|error| SkinSourceError::Mesh {
         path: path_text(path),
@@ -1474,8 +1478,8 @@ struct DecodedSkin {
 /// Internal data shape for the adapter implementation.
 struct DecodedSkinGroup {
     /// Exact package-level source chunk ordinal retained as provenance.
-    #[serde(default, rename = "source_ordinal")]
-    _source_ordinal: Option<usize>,
+    #[serde(default)]
+    source_ordinal: Option<usize>,
     /// Shader reference with fixed-width padding.
     shader: String,
     /// Vertex shader reference retained for schema compatibility.

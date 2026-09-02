@@ -637,6 +637,10 @@ fn decode_primitive_group(
         uvs,
         &triangle_indices,
     )
+    .map(|decoded| match group.source_ordinal {
+        Some(source_ordinal) => decoded.with_source_ordinal(source_ordinal),
+        None => decoded,
+    })
     .map_err(DecodedComponentError::Mesh)?;
     let colors = group
         .colours
@@ -1464,8 +1468,8 @@ struct DecodedMesh {
 /// Internal data shape for the adapter implementation.
 struct DecodedPrimitiveGroup {
     /// Exact package-level source chunk ordinal retained as provenance.
-    #[serde(default, rename = "source_ordinal")]
-    _source_ordinal: Option<usize>,
+    #[serde(default)]
+    source_ordinal: Option<usize>,
     /// Shader name referenced by this primitive group.
     shader: String,
     /// Vertex-shader identity retained for source compatibility.

@@ -46,6 +46,8 @@ pub struct PrimitiveGroup {
     pub index: usize,
     /// Optional authored source identity for this exact primitive group.
     pub source_identity: Option<String>,
+    /// Exact package-level source chunk ordinal retained as provenance.
+    pub source_ordinal: Option<usize>,
     /// Shader name from the decoded mesh primitive group.
     pub shader: String,
     /// Vertex positions.
@@ -137,6 +139,7 @@ impl PrimitiveGroup {
         Ok(Self {
             index,
             source_identity: None,
+            source_ordinal: None,
             shader: shader_name,
             positions,
             normals: Vec::new(),
@@ -167,6 +170,13 @@ impl PrimitiveGroup {
         }
         self.source_identity = Some(identity);
         Ok(self)
+    }
+
+    /// Attach the exact package-level source chunk ordinal as provenance.
+    #[must_use]
+    pub const fn with_source_ordinal(mut self, source_ordinal: usize) -> Self {
+        self.source_ordinal = Some(source_ordinal);
+        self
     }
 
     /// Attach per-vertex normals validated against the position count.

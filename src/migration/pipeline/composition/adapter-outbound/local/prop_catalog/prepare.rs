@@ -299,6 +299,9 @@ fn clear_source_provenance(geometry: &mut PreparedGeometry) {
         PreparedGeometry::Static(meshes) => {
             for mesh in meshes {
                 mesh.source_identity = None;
+                for group in &mut mesh.groups {
+                    group.source_ordinal = None;
+                }
             }
         },
         PreparedGeometry::RigidAnimated { asset, animations } => {
@@ -308,6 +311,9 @@ fn clear_source_provenance(geometry: &mut PreparedGeometry) {
             }
             for part in &mut asset.parts {
                 part.mesh.source_identity = None;
+                for group in &mut part.mesh.groups {
+                    group.source_ordinal = None;
+                }
             }
             for clip in animations {
                 clip.source_identity = None;
@@ -327,6 +333,7 @@ pub(super) fn visual_signature(prepared: &PreparedProp) -> String {
     for mesh in &mut meshes {
         mesh.source_identity = None;
         for group in &mut mesh.groups {
+            group.source_ordinal = None;
             "material".clone_into(&mut group.shader);
         }
     }

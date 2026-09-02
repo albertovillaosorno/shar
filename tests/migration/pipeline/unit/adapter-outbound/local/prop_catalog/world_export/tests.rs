@@ -61,7 +61,7 @@ use fbx::domain::skin::SkinInfluence;
 use super::{WorldVariant, animation_key, merge_compatible};
 use crate::adapters::driven::local::prop_catalog::model::PropRoute;
 use crate::adapters::driven::local::prop_catalog::prepare::{
-    prepared_signature, rig_signature,
+    prepared_signature, rig_signature, visual_signature,
 };
 use crate::adapters::driven::local::prop_catalog::prepared::{
     PreparedGeometry, PreparedProp,
@@ -132,9 +132,23 @@ fn clip_x(clip: &AnimationClip) -> Result<f64, String> {
 }
 
 #[test]
-fn prop_hashes_ignore_source_bone_and_clip_identity() -> Result<(), String> {
+fn prop_hashes_ignore_source_occurrence_provenance() -> Result<(), String> {
     let mut left_asset = rigid_asset()?;
     let mut right_asset = left_asset.clone();
+    left_asset
+        .parts
+        .first_mut()
+        .and_then(|part| part.mesh.groups.first_mut())
+        .ok_or_else(|| "left hash fixture lost its primitive group".to_owned())?
+        .source_ordinal = Some(41);
+    right_asset
+        .parts
+        .first_mut()
+        .and_then(|part| part.mesh.groups.first_mut())
+        .ok_or_else(|| {
+            "right hash fixture lost its primitive group".to_owned()
+        })?
+        .source_ordinal = Some(97);
     left_asset
         .bones
         .first_mut()
@@ -206,11 +220,13 @@ fn prop_hashes_ignore_source_bone_and_clip_identity() -> Result<(), String> {
         materials: Vec::new(),
         textures: Vec::new(),
     };
-    if rig_signature(&left) == rig_signature(&right) {
-        Ok(())
-    } else {
-        Err("source bone provenance changed prop rig dedupe".to_owned())
+    if visual_signature(&left) != visual_signature(&right) {
+        return Err("source ordinal changed prop visual dedupe".to_owned());
     }
+    if rig_signature(&left) != rig_signature(&right) {
+        return Err("source bone provenance changed prop rig dedupe".to_owned());
+    }
+    Ok(())
 }
 
 #[test]
