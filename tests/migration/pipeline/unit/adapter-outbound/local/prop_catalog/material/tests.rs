@@ -30,7 +30,7 @@
 
 //! Tests unit tests.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 
 use fbx::adapters::driven::decoded_component_source::{
@@ -45,7 +45,7 @@ use super::{
     DecodedComponentSource, ShaderConsumerProvenance, SharedTextureAuthority,
     WorldMeshSourceCoordinate, canonical_material_identity,
     material_resolution_error, model_package_member_id, prepare_source_texture,
-    resolve_source_material, shader_consumer_provenance,
+    resolve_materials, resolve_source_material, shader_consumer_provenance,
 };
 
 fn phase_three_shader_package() -> Result<PhaseThreePackageRow, String> {
@@ -404,6 +404,52 @@ fn canonical_material_identity_separates_surface_semantics() {
     assert_eq!(emitter, "material-abc123-transparent-light-emitter");
     assert_ne!(opaque, glass);
     assert_ne!(glass, emitter);
+}
+
+#[test]
+fn canonical_material_preserves_decoded_diffuse_color() -> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-canonical-material-color-{}",
+        std::process::id()
+    ));
+    let shader_dir = root.join("components").join("shader");
+    let texture_dir = root.join("components").join("texture");
+    let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&texture_dir).map_err(|error| error.to_string())?;
+    fs::write(
+        shader_dir.join("road_m.json"),
+        concat!(
+            r#"{"name":"road_m","num_params":2,"params":[{"#,
+            r#""kind":"texture","param":"TEX","value":"road.bmp"},{"#,
+            r#""kind":"colour","param":"DIFF","value":287454020}]}"#
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(texture_dir.join("road.png"), b"source-png")
+        .map_err(|error| error.to_string())?;
+    let result = resolve_materials(
+        BTreeSet::from(["road_m".to_owned()]),
+        &BTreeMap::new(),
+        &root,
+        &scratch,
+        None,
+        None,
+        "",
+    );
+    let cleanup = fs::remove_dir_all(&root);
+    let (_renames, materials, _textures) =
+        result.map_err(|error| error.to_string())?;
+    let material = materials
+        .first()
+        .ok_or_else(|| "canonical material is missing".to_owned())?;
+    if material.base_color_rgba8 != [0x22, 0x33, 0x44, 0x11] {
+        return Err(format!(
+            "canonical material discarded decoded DIFF: {material:?}"
+        ));
+    }
+    cleanup.map_err(|error| error.to_string())?;
+    Ok(())
 }
 
 #[test]
