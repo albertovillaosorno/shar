@@ -635,6 +635,94 @@ fn road_rejects_malformed_segment_evidence() -> Result<(), String> {
     }
 }
 
+fn ped_path_fixture(
+    points: &[[f32; 3]],
+    trailing_word: bool,
+) -> Result<(Vec<u8>, usize), String> {
+    const PED_PATH: u32 = 0x0300_000b;
+    let mut fields = Vec::new();
+    push_u32(
+        &mut fields,
+        u32::try_from(points.len()).map_err(|error| error.to_string())?,
+    );
+    for point in points {
+        for value in point {
+            push_f32(&mut fields, *value);
+        }
+    }
+    if trailing_word {
+        push_u32(&mut fields, 99);
+    }
+    let size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("ped path fixture overflowed"))?;
+    let size_u32 = u32::try_from(size).map_err(|error| error.to_string())?;
+    let mut source = Vec::new();
+    push_u32(&mut source, PED_PATH);
+    push_u32(&mut source, size_u32);
+    push_u32(&mut source, size_u32);
+    source.extend_from_slice(&fields);
+    Ok((source, size))
+}
+
+fn ped_path_component(size: usize) -> ChunkRecord {
+    ChunkRecord {
+        ordinal: 4,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_000b,
+        kind: crate::ChunkKind::SrrPedPath,
+        offset: 0,
+        header_size: size,
+        total_size: size,
+        payload_offset: size,
+        payload_size: 0,
+        child_count: 0,
+    }
+}
+
+#[test]
+fn ped_path_preserves_declared_points() -> Result<(), String> {
+    let (source, size) = ped_path_fixture(
+        &[[1_f32, 2_f32, 3_f32], [4_f32, 5_f32, 6_f32]],
+        false,
+    )?;
+    let recovered =
+        auxiliary::recover_ped_path_json(&ped_path_component(size), &source, 1)
+            .ok_or_else(|| String::from("ped path fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["num_points"] == 2
+        && value["points"][1] == serde_json::json!([4, 5, 6])
+    {
+        Ok(())
+    } else {
+        Err(String::from("ped path source points were discarded"))
+    }
+}
+
+#[test]
+fn ped_path_rejects_unobserved_source_shapes() -> Result<(), String> {
+    let (trailing, size) = ped_path_fixture(&[[1_f32, 2_f32, 3_f32]], true)?;
+    if auxiliary::recover_ped_path_json(&ped_path_component(size), &trailing, 1)
+        .is_some()
+    {
+        return Err(String::from("trailing ped path data should fail closed"));
+    }
+    let (nonfinite, size) =
+        ped_path_fixture(&[[f32::NAN, 2_f32, 3_f32]], false)?;
+    if auxiliary::recover_ped_path_json(
+        &ped_path_component(size),
+        &nonfinite,
+        1,
+    )
+    .is_some()
+    {
+        return Err(String::from("nonfinite ped path data should fail closed"));
+    }
+    Ok(())
+}
+
 fn billboard_quad_fixture(
     display_version: u32,
 ) -> Result<(Vec<u8>, usize), String> {

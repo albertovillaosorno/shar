@@ -1232,7 +1232,15 @@ pub(super) fn recover_ped_path_json(
     let mut points = Vec::new();
     for _ in 0..count {
         let p = schema::read_point(chunk, &mut cursor)?;
+        if p.iter().any(|value| !value.is_finite()) {
+            return None;
+        }
         points.push(format!("[{},{},{}]", p[0], p[1], p[2]));
+    }
+    if cursor != component.header_size
+        || component.header_size != component.total_size
+    {
+        return None;
     }
     let kind = component.kind.label();
     let name = format!("{kind}_{kind_index:04}");
