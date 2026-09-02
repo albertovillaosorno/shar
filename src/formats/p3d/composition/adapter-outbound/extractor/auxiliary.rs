@@ -58,11 +58,14 @@ pub(super) fn recover_quad_group_json(
     let fog = read_u32(chunk, cursor)?;
     cursor += 4;
     let num_quads = read_u32(chunk, cursor)?;
-    let quads = billboard_quads_json(
+    let (quads, decoded_quad_count) = billboard_quads_json(
         chunk,
         component.header_size,
         component.total_size,
     )?;
+    if decoded_quad_count != usize::try_from(num_quads).ok()? {
+        return None;
+    }
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -100,7 +103,7 @@ pub(super) fn billboard_quads_json(
     chunk: &[u8],
     mut cursor: usize,
     end: usize,
-) -> Option<String> {
+) -> Option<(String, usize)> {
     const QUAD: u32 = 0x0001_7001;
     let mut quads = Vec::new();
     while cursor + 12 <= end {
@@ -116,7 +119,10 @@ pub(super) fn billboard_quads_json(
         )?);
         cursor = next;
     }
-    (cursor == end).then(|| quads.join(","))
+    (cursor == end).then(|| {
+        let count = quads.len();
+        (quads.join(","), count)
+    })
 }
 
 /// Core billboard-quad values decoded from one chunk header.
