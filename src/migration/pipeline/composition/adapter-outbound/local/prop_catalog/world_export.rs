@@ -50,6 +50,7 @@ use super::prepare::{
 use super::prepared::{PreparedGeometry, PreparedProp, PreparedTexture};
 use super::texture_authority::SharedTextureAuthority;
 use super::world_model::{ExportedWorldProp, OmittedWorldVariant};
+use crate::domain::package::PhaseThreePackageIndex;
 use crate::domain::PipelineError;
 
 /// One prepared same-name world-prop variant before consolidation.
@@ -73,6 +74,7 @@ struct WorldVariant {
 ///
 /// Returns an error when preparation, consolidation, or publication fails.
 pub(super) fn export_world_props(
+    index: &PhaseThreePackageIndex,
     candidates: &[PropCandidate],
     normalized_root: &Path,
     scratch_root: &Path,
@@ -81,11 +83,18 @@ pub(super) fn export_world_props(
 ) -> Result<Vec<ExportedWorldProp>, PipelineError> {
     let mut groups: BTreeMap<String, Vec<WorldVariant>> = BTreeMap::new();
     for (ordinal, candidate) in candidates.iter().enumerate() {
+        let package = index.find_package(&candidate.package_id).ok_or_else(|| {
+            PipelineError::new(format!(
+                "world prop package is missing from phase-three index: {}",
+                candidate.package_id
+            ))
+        })?;
         let prepared = prepare_world_candidate(
             candidate,
             normalized_root,
             scratch_root,
             authority,
+            package,
             ordinal,
         )?;
         let name = portable_name(&candidate.owner_name)?;

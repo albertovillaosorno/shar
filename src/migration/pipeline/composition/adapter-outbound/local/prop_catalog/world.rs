@@ -120,6 +120,7 @@ fn build(
     let candidates =
         discover_world_candidates(&index, &normalized, &authority)?;
     let assets = export_world_props(
+        &index,
         &candidates,
         &normalized,
         &scratch,

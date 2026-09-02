@@ -138,6 +138,7 @@ pub(super) fn canonicalize_animated_materials(
         package_root,
         scratch,
         None,
+        None,
         "",
     )
 }
@@ -152,6 +153,7 @@ pub(super) fn canonicalize_world_animated_materials(
     package_root: &Path,
     scratch: &Path,
     authority: &SharedTextureAuthority,
+    package: Option<&PhaseThreePackageRow>,
     source_subcategory: &str,
 ) -> Result<(Vec<MaterialBinding>, Vec<PreparedTexture>), PipelineError> {
     canonicalize_animated_materials_with_authority(
@@ -159,6 +161,7 @@ pub(super) fn canonicalize_world_animated_materials(
         package_root,
         scratch,
         Some(authority),
+        package,
         source_subcategory,
     )
 }
@@ -173,6 +176,7 @@ fn canonicalize_animated_materials_with_authority(
     package_root: &Path,
     scratch: &Path,
     authority: Option<&SharedTextureAuthority>,
+    package: Option<&PhaseThreePackageRow>,
     source_subcategory: &str,
 ) -> Result<(Vec<MaterialBinding>, Vec<PreparedTexture>), PipelineError> {
     let shader_sources = shader_source_ordinals(
@@ -185,7 +189,7 @@ fn canonicalize_animated_materials_with_authority(
         package_root,
         scratch,
         authority,
-        None,
+        package,
         source_subcategory,
     )?;
     for group in asset
