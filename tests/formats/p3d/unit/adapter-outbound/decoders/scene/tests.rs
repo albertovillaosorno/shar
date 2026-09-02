@@ -392,9 +392,10 @@ fn scenegraph_rejects_multiple_roots() -> Result<(), String> {
 fn scenegraph_rejects_unobserved_version() -> Result<(), String> {
     let mut fixture =
         require(scenegraph_fixture(1), "scenegraph fixture should build")?;
-    let name_length = usize::from(*fixture.get(12).ok_or_else(|| {
-        String::from("scenegraph name length should exist")
-    })?);
+    let name_length =
+        usize::from(*fixture.get(12).ok_or_else(|| {
+            String::from("scenegraph name length should exist")
+        })?);
     let version_offset = 13_usize
         .checked_add(name_length)
         .ok_or_else(|| String::from("scenegraph version offset overflowed"))?;
