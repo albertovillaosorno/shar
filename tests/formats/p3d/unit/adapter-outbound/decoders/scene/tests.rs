@@ -363,3 +363,84 @@ fn insta_entity_decodes_render_refs_and_instance_scenegraphs()
     )?;
     Ok(())
 }
+#[test]
+fn scenegraph_rejects_multiple_roots() -> Result<(), String> {
+    let root_a = require(
+        chunk(SCENE_ROOT, Vec::new(), Vec::new()),
+        "first root fixture should build",
+    )?;
+    let root_b = require(
+        chunk(SCENE_ROOT, Vec::new(), Vec::new()),
+        "second root fixture should build",
+    )?;
+    let graph_fields = fields(vec![
+        require(pstring("graph"), "graph name should encode")?,
+        u32_field(0),
+    ]);
+    let graph = require(
+        chunk(SCENEGRAPH, graph_fields, vec![root_a, root_b]),
+        "multiple-root scenegraph should build",
+    )?;
+    if scenegraph_json(&graph).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("multiple scenegraph roots should fail closed"))
+    }
+}
+
+#[test]
+fn scenegraph_rejects_unobserved_version() -> Result<(), String> {
+    let mut fixture =
+        require(scenegraph_fixture(1), "scenegraph fixture should build")?;
+    let name_length = usize::from(*fixture.get(12).ok_or_else(|| {
+        String::from("scenegraph name length should exist")
+    })?);
+    let version_offset = 13_usize
+        .checked_add(name_length)
+        .ok_or_else(|| String::from("scenegraph version offset overflowed"))?;
+    require(
+        fixture.get_mut(version_offset..version_offset + 4),
+        "scenegraph version field should exist",
+    )?
+    .copy_from_slice(&1_u32.to_le_bytes());
+    if scenegraph_json(&fixture).is_none() {
+        Ok(())
+    } else {
+        Err(String::from(
+            "unobserved scenegraph version should fail closed",
+        ))
+    }
+}
+
+#[test]
+fn scenegraph_rejects_trailing_transform_header_bytes() -> Result<(), String> {
+    let transform_fields = fields(vec![
+        require(pstring("xform"), "transform name should encode")?,
+        u32_field(0),
+        identity_matrix(),
+        u32_field(99),
+    ]);
+    let transform = require(
+        chunk(SCENE_TRANSFORM, transform_fields, Vec::new()),
+        "malformed transform should build",
+    )?;
+    let root = require(
+        chunk(SCENE_ROOT, Vec::new(), vec![transform]),
+        "root fixture should build",
+    )?;
+    let graph_fields = fields(vec![
+        require(pstring("graph"), "graph name should encode")?,
+        u32_field(0),
+    ]);
+    let graph = require(
+        chunk(SCENEGRAPH, graph_fields, vec![root]),
+        "scenegraph fixture should build",
+    )?;
+    if scenegraph_json(&graph).is_none() {
+        Ok(())
+    } else {
+        Err(String::from(
+            "trailing transform header bytes should fail closed",
+        ))
+    }
+}

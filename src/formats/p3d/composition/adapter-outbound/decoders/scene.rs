@@ -85,10 +85,13 @@ pub fn scenegraph_json(chunk: &[u8]) -> Option<String> {
     let mut reader = Reader::new(chunk, 12);
     let name = reader.pstring()?;
     let version = reader.u32()?;
-    if reader.pos() > header_size {
+    if version != 0 || reader.pos() != header_size {
         return None;
     }
     let roots = decode_scene_children(chunk, header_size, total_size)?;
+    if roots.len() != 1 {
+        return None;
+    }
     Some(format!(
         "{{\"schema\":\"scenegraph\",\"name\":\"{}\",\"version\":{},\"\
              roots\":[{}]}}\n",
@@ -247,6 +250,9 @@ fn decode_scene_children(
 fn decode_scene_node(chunk: &[u8], node: &SubChunk) -> Option<String> {
     match node.id {
         SCENE_ROOT => {
+            if node.data_offset() != node.header_end() {
+                return None;
+            }
             let children =
                 decode_scene_children(chunk, node.header_end(), node.end())?;
             Some(format!(
@@ -282,7 +288,7 @@ fn decode_named_children_node(
     let mut reader = Reader::new(chunk, node.data_offset());
     let name = reader.pstring()?;
     let child_count = usize::try_from(reader.u32()?).ok()?;
-    if reader.pos() > node.header_end() {
+    if reader.pos() != node.header_end() {
         return None;
     }
     let children = decode_scene_children(chunk, node.header_end(), node.end())?;
@@ -305,7 +311,7 @@ fn decode_transform_node(chunk: &[u8], node: &SubChunk) -> Option<String> {
     let name = reader.pstring()?;
     let child_count = usize::try_from(reader.u32()?).ok()?;
     let matrix = read_matrix(&mut reader)?;
-    if reader.pos() > node.header_end() {
+    if reader.pos() != node.header_end() {
         return None;
     }
     let children = decode_scene_children(chunk, node.header_end(), node.end())?;
@@ -328,7 +334,7 @@ fn decode_visibility_node(chunk: &[u8], node: &SubChunk) -> Option<String> {
     let name = reader.pstring()?;
     let child_count = usize::try_from(reader.u32()?).ok()?;
     let is_visible = reader.u32()?;
-    if reader.pos() > node.header_end() {
+    if reader.pos() != node.header_end() {
         return None;
     }
     let children = decode_scene_children(chunk, node.header_end(), node.end())?;
@@ -351,7 +357,7 @@ fn decode_attachment_node(chunk: &[u8], node: &SubChunk) -> Option<String> {
     let name = reader.pstring()?;
     let drawable_pose_name = reader.pstring()?;
     let point_count = usize::try_from(reader.u32()?).ok()?;
-    if reader.pos() > node.header_end() {
+    if reader.pos() != node.header_end() {
         return None;
     }
     let mut points = Vec::new();
@@ -379,7 +385,7 @@ fn decode_attachment_node(chunk: &[u8], node: &SubChunk) -> Option<String> {
 fn decode_attachment_point(chunk: &[u8], node: &SubChunk) -> Option<String> {
     let mut reader = Reader::new(chunk, node.data_offset());
     let joint = reader.u32()?;
-    if reader.pos() > node.header_end() {
+    if reader.pos() != node.header_end() {
         return None;
     }
     let children = decode_scene_children(chunk, node.header_end(), node.end())?;
@@ -396,7 +402,7 @@ fn decode_drawable_node(chunk: &[u8], node: &SubChunk) -> Option<String> {
     let name = reader.pstring()?;
     let drawable_name = reader.pstring()?;
     let is_translucent = reader.u32()?;
-    if reader.pos() > node.header_end() {
+    if reader.pos() != node.header_end() {
         return None;
     }
     let sort_order = decode_optional_sort_order(
@@ -428,7 +434,7 @@ fn decode_named_ref_node(
     let mut reader = Reader::new(chunk, node.data_offset());
     let name = reader.pstring()?;
     let target = reader.pstring()?;
-    if reader.pos() > node.header_end() {
+    if reader.pos() != node.header_end() {
         return None;
     }
     if !subchunks(chunk, node.header_end(), node.end())?.is_empty() {
