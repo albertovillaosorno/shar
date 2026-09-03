@@ -996,10 +996,33 @@ pub(super) fn shader_params_json(
 /// Game attr params json.
 pub(super) fn game_attr_params_json(
     chunk: &[u8],
-    cursor: usize,
+    mut cursor: usize,
     end: usize,
-) -> String {
-    param_chunks_json(chunk, cursor, end, false)
+    expected: usize,
+) -> Option<String> {
+    let mut params = Vec::with_capacity(expected);
+    for _ in 0..expected {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let value_size = match id {
+            0x0001_2001..=0x0001_2003 => 4_usize,
+            0x0001_2004 => 12,
+            0x0001_2005 => 64,
+            _ => return None,
+        };
+        let next = cursor.checked_add(total_size)?;
+        if header_size != total_size || next > end {
+            return None;
+        }
+        let mut field_cursor = cursor.checked_add(12)?;
+        let _param_name = schema::read_pascal_at(chunk, &mut field_cursor)?;
+        let expected_end = field_cursor.checked_add(value_size)?;
+        if expected_end != cursor.checked_add(header_size)? {
+            return None;
+        }
+        params.push(game_attr_param_json(chunk, cursor, id)?);
+        cursor = next;
+    }
+    (cursor == end).then(|| params.join(","))
 }
 
 /// Param chunks json.
