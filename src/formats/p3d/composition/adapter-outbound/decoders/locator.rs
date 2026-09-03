@@ -93,17 +93,40 @@ fn event_json(data: &[u32]) -> Option<String> {
     let extra_data = (data.len() == 2).then(|| data.get(1).copied()).flatten();
     let extra_json = extra_data
         .map_or_else(|| String::from("null"), |value| value.to_string());
+    let extra_interpretation = extra_data.map_or_else(
+        || String::from("null"),
+        |value| event_extra_data_json(event, value),
+    );
     Some(format!(
         concat!(
             "{{\"kind\":\"event\",",
             "\"event_id\":{},",
             "\"event_name\":\"{}\",",
-            "\"extra_data\":{}}}"
+            "\"extra_data\":{},",
+            "\"extra_data_interpretation\":{}}}"
         ),
         event,
         event_name(event),
-        extra_json
+        extra_json,
+        extra_interpretation
     ))
+}
+
+/// Decode only event data with a direct runtime consumer.
+fn event_extra_data_json(event: u32, value: u32) -> String {
+    match event {
+        2 => format!("{{\"checkpoint_index\":{value}}}"),
+        49 => format!("{{\"draw_distance\":{value}}}"),
+        65 => format!(
+            "{{\"light_mod_rgba8\":[{},{},{},{}]}}",
+            (value >> 16) & 0xff,
+            (value >> 8) & 0xff,
+            value & 0xff,
+            (value >> 24) & 0xff
+        ),
+        66 => format!("{{\"trap_id\":{value}}}"),
+        _ => String::from("null"),
+    }
 }
 
 /// Decode one word-packed text payload.
