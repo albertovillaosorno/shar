@@ -588,7 +588,13 @@ fn texture_metadata_json(
     cursor += 4;
     let priority = read_u32(chunk, cursor)?;
     cursor = cursor.checked_add(4)?;
-    if cursor != component.header_size {
+    if !texture_header_is_runtime_valid(
+        version,
+        mip_count,
+        texture_type,
+        usage,
+    ) || cursor != component.header_size
+    {
         return None;
     }
     let children = auxiliary::child_chunks_json(
@@ -625,6 +631,21 @@ fn texture_metadata_json(
     ))
 }
 
+/// Return whether one serialized texture header is admitted by the runtime.
+fn texture_header_is_runtime_valid(
+    version: u32,
+    mip_count: u32,
+    texture_type: u32,
+    usage: u32,
+) -> bool {
+    version == 14_000 && mip_count <= 31 && texture_type <= 21 && usage <= 2
+}
+
+/// Return whether one serialized image header is admitted by the runtime.
+fn image_header_is_runtime_valid(version: u32, format: u32) -> bool {
+    version == 14_000 && format <= 19
+}
+
 /// Extract first image payload.
 fn extract_first_image_payload(texture_chunk: &[u8]) -> Option<&[u8]> {
     const TEXTURE: u32 = 0x0001_9000;
@@ -636,11 +657,23 @@ fn extract_first_image_payload(texture_chunk: &[u8]) -> Option<&[u8]> {
     }
     let mut cursor = 12;
     let _name = schema::read_pascal_at(texture_chunk, &mut cursor)?;
-    for _ in 0..9 {
+    let version = read_u32(texture_chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    for _ in 0..4 {
         let _field = read_u32(texture_chunk, cursor)?;
         cursor = cursor.checked_add(4)?;
     }
-    if cursor != texture_header {
+    let mip_count = read_u32(texture_chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let texture_type = read_u32(texture_chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let usage = read_u32(texture_chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let _priority = read_u32(texture_chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if !texture_header_is_runtime_valid(version, mip_count, texture_type, usage)
+        || cursor != texture_header
+    {
         return None;
     }
     let (child_id, _child_header, child_total) =
@@ -664,11 +697,16 @@ fn extract_image_payload(image_chunk: &[u8]) -> Option<&[u8]> {
     }
     let mut cursor = 12;
     let _name = schema::read_pascal_at(image_chunk, &mut cursor)?;
-    for _ in 0..7 {
+    let version = read_u32(image_chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    for _ in 0..5 {
         let _field = read_u32(image_chunk, cursor)?;
         cursor = cursor.checked_add(4)?;
     }
-    if cursor != image_header {
+    let format = read_u32(image_chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if !image_header_is_runtime_valid(version, format) || cursor != image_header
+    {
         return None;
     }
     let (child_id, child_header, child_total) =

@@ -4291,11 +4291,20 @@ fn image_fixture(
     payload: &[u8],
     declared_payload_size: usize,
 ) -> Result<Vec<u8>, String> {
+    image_fixture_with_header(payload, declared_payload_size, 14_000, 10)
+}
+
+fn image_fixture_with_header(
+    payload: &[u8],
+    declared_payload_size: usize,
+    version: u32,
+    format: u32,
+) -> Result<Vec<u8>, String> {
     const IMAGE: u32 = 0x0001_9001;
     const IMAGE_DATA: u32 = 0x0001_9002;
     let mut fields = Vec::new();
     push_pascal(&mut fields, "sprite.png")?;
-    for value in [14_000, 64, 32, 32, 0, 1, 10] {
+    for value in [version, 64, 32, 32, 0, 1, format] {
         push_u32(&mut fields, value);
     }
     let image_header = 12_usize
@@ -4356,10 +4365,28 @@ fn texture_fixture(
     children: &[Vec<u8>],
     trailing_header: bool,
 ) -> Result<Vec<u8>, String> {
+    texture_fixture_with_header(
+        children,
+        trailing_header,
+        14_000,
+        1,
+        1,
+        0,
+    )
+}
+
+fn texture_fixture_with_header(
+    children: &[Vec<u8>],
+    trailing_header: bool,
+    version: u32,
+    mip_count: u32,
+    texture_type: u32,
+    usage: u32,
+) -> Result<Vec<u8>, String> {
     const TEXTURE: u32 = 0x0001_9000;
     let mut fields = Vec::new();
     push_pascal(&mut fields, "texture.bmp")?;
-    for value in [14_000_u32, 4, 4, 32, 8, 1, 1, 0, 0] {
+    for value in [version, 4, 4, 32, 8, mip_count, texture_type, usage, 0] {
         push_u32(&mut fields, value);
     }
     if trailing_header {
@@ -4411,6 +4438,53 @@ fn texture_payload_requires_exact_single_image_child() -> Result<(), String> {
         if extract_first_image_payload(&invalid).is_some() {
             return Err(String::from(
                 "texture child or header drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn texture_payload_rejects_runtime_header_contract_drift()
+-> Result<(), String> {
+    let payload = dds_payload_fixture();
+    let image = image_fixture(&payload, payload.len())?;
+    for (version, mip_count, texture_type, usage) in [
+        (13_999, 1, 1, 0),
+        (14_000, 32, 1, 0),
+        (14_000, 1, 22, 0),
+        (14_000, 1, 1, 3),
+    ] {
+        let texture = texture_fixture_with_header(
+            std::slice::from_ref(&image),
+            false,
+            version,
+            mip_count,
+            texture_type,
+            usage,
+        )?;
+        if extract_first_image_payload(&texture).is_some() {
+            return Err(String::from(
+                "texture payload accepted runtime-invalid header evidence",
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn image_payload_rejects_runtime_header_contract_drift() -> Result<(), String> {
+    let payload = dds_payload_fixture();
+    for (version, format) in [(13_999, 10), (14_000, 20)] {
+        let image = image_fixture_with_header(
+            &payload,
+            payload.len(),
+            version,
+            format,
+        )?;
+        if extract_image_payload(&image).is_some() {
+            return Err(String::from(
+                "image payload accepted runtime-invalid header evidence",
             ));
         }
     }
