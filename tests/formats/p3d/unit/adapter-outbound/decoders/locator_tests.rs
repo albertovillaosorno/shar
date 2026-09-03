@@ -199,6 +199,27 @@ fn locator_types_eight_through_fifteen_have_typed_interpretations()
 }
 
 #[test]
+fn event_extra_data_exposes_only_direct_runtime_meanings() -> Result<(), String>
+{
+    for (event, extra, field) in [
+        (2_u32, 11_u32, "\"checkpoint_index\":11"),
+        (49, 450, "\"draw_distance\":450"),
+        (65, 0xbbff_9a3f, "\"light_mod_rgba8\":[255,154,63,187]"),
+        (66, 1, "\"trap_id\":1"),
+    ] {
+        let json = assert_known(0, &[event, extra], 1)?;
+        if !json.contains(field) {
+            return Err(format!("event {event} omitted runtime field {field}"));
+        }
+    }
+    let goo = assert_known(0, &[63, 20], 1)?;
+    if !goo.contains("\"extra_data_interpretation\":null") {
+        return Err(String::from("goo data acquired unsupported semantics"));
+    }
+    Ok(())
+}
+
+#[test]
 fn event_extra_data_requires_exactly_two_runtime_words() -> Result<(), String> {
     let two_words = assert_known(0, &[49, 450], 1)?;
     for field in [
