@@ -1072,6 +1072,19 @@ All tree bounds and spatial split-plane floats are finite. Plane-axis bytes are
 unsigned 32-bit value; recovery preserves those authored fields without
 assigning leaf, split, or ancestry semantics. Both node source ordinals survive.
 
+Light-group membership is an inline source list rather than a child relationship.
+All 81 light groups are childless and exact-header, declaring 368 light-name
+strings in total with counts from one through eight. Recovery now retains every
+ordered authored name, including declared trailing NUL data, and rejects list
+count or trailing-header drift.
+
+Animation-wrapper evidence remains intentionally less restrictive. All 267
+wrappers occur directly under instanced animated dynamic-physics DSGs: 257 are
+compact animated-object wrappers and 10 use the full wrapper header. Full
+wrappers are always version/alpha 0/0, while compact wrappers use 0/0, 1/0, or
+1/1; their child multiplicities vary across 23 observed compact shapes, so no
+single child sequence is imposed from this audit.
+
 Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
 span 0 through 62, while sounds include `nosound` and collision event names.
 Those fields now remain object attributes instead of being mislabeled as
