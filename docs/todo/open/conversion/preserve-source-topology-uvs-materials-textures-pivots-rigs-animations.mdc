@@ -144,6 +144,21 @@ nested rail record. Fresh extraction retains those spline and rail fields as
 source evidence rather than dropping the child structure or interpreting camera
 behavior.
 
+The complete rail audit finds all 129 records finite and structurally
+exact. Every authored behaviour is 1, every reverse-sense word is 0, and track
+rail is 1 in 46 records and 0 in 83. Runtime loading treats the two boolean
+words as `== 1`, assigns behaviour without rejecting other values, and casts
+`AxisPlay.Z` to an integer bit field rather than validating an enum.
+
+All 129 `AxisPlay.Z` values are integral in the current corpus: 0 occurs 6
+times, 3 occurs 23 times, 5 once, 7 five times, 8 92 times, and 12 twice. Those
+bits activate car-only 29 times, cut-in/out 28, reset 8, and on-foot-only 94.
+Every `AxisPlay.X` exceeds the loader's 0.001 transition-rate threshold, while
+29 records use `AxisPlay.Y == 1` to disable FOV lag. Authored maximum radius
+reaches 30.0, proving the debug watcher's 0-through-12 editing range is not a
+binary validity bound; extraction therefore preserves these rail values without
+promoting debug UI ranges into rejection policy.
+
 Trigger-volume authority is also complete for the current raw corpus. All 3,947
 trigger-volume chunks are childless exact-header records; 1,213 use type 0 and
 2,734 use type 1, with no other type values. Every authored scale and matrix
@@ -933,6 +948,11 @@ matching index list, while all 2,204 zero-index groups omit that list. No
 position- or index-list duplicates were observed, and fresh extraction now
 rejects missing, duplicate, or contradictory geometry-list evidence.
 
+The runtime also requires every serialized index to fit `u16` and remain below
+`NumVertices`. All 4,418,091 current indices satisfy both bounds; the maximum
+index is 15,576 in a 15,577-vertex group. Mesh and skin extraction now reject
+out-of-range index targets instead of validating only list cardinality.
+
 Every observed per-vertex child list also agrees with `NumVertices`: all 19,875
 UV lists, 14,771 colour lists, 5,104 ordinary-normal lists, 5,104 packed-normal
 lists, 1,462 matrix-index lists, and 764 weight lists. No singleton list family
@@ -940,6 +960,11 @@ is duplicated. All raw UV lists use channel zero; tangent, binormal, and
 multi-colour lists are absent from the current game corpus. Count validation
 keeps schema-defined channel representation separate from downstream target
 policy rather than inferring a broader runtime meaning.
+
+Exhaustive direct-child inventory finds no other primitive-list IDs: instance
+information, memory-image
+lists, strip lists, tangents, binormals, multicolour lists, topology, shadow
+chunks, and unknown IDs are absent from all 19,875 primitive groups.
 
 The packed-normal audit also exposed a decoder defect. All 5,104 physical chunks
 use the schema-declared one-byte layout: four bytes for the count followed by
@@ -954,12 +979,21 @@ Primitive matrix declarations are equally consistent across those 19,875 raw
 primitive groups: 18,413 declare zero matrices and omit a matrix palette, while
 1,462 declare a nonzero count and carry exactly one palette of that same length.
 Primitive recovery now validates this relationship instead of retaining an
-unchecked `NumMatrices` declaration beside contradictory palette evidence. The
-runtime skin loader also rejects every `MATRIXLIST` slot at or above
+unchecked `NumMatrices` declaration beside contradictory palette evidence.
+
+The runtime primitive header accepts types zero through four, vertex and index
+counts through signed `INT_MAX`, and at most 256 matrices. Current groups use
+only types zero and one (3,265 and 16,610 groups respectively), with maxima of
+15,577 vertices, 24,986 indices, and 25 matrices. Extraction now enforces these
+context-independent bounds. UV and colour-set limits remain outside this raw
+P3D gate because the runtime applies them only after a caller-controlled vertex
+format mask.
+
+The runtime skin loader also rejects every `MATRIXLIST` slot at or above
 `NumMatrices` and every matrix-palette bone index at or above 256. The raw
-corpus contains 925,292 matrix-list indices (maximum 24) and 10,586 palette bone
-indices
-(maximum 189) across all 1,462 skinned primitive groups with zero violations;
+corpus contains 925,292 matrix-list indices (maximum 24) and 10,586 palette
+bone indices (maximum 189) across all 1,462 skinned primitive groups with zero
+violations;
 skin extraction now enforces those two bounds without applying them to meshes.
 
 Primitive vertex-shader child presence is now retained independently from its
@@ -972,11 +1006,10 @@ The raw mesh/skin auxiliary audit finds 15,149 schema-sized bounding boxes and
 15,149 bounding spheres, plus 14,516 mesh render-status chunks with values only
 `0` or `1`; each observed family is singleton per parent. The runtime mesh
 loader interprets render status as zero versus nonzero rather than rejecting
-other
-`LONG` values, so the observed `0`/`1` range is not a P3D validity rule. One
-`comic_v.p3d`
-mesh intentionally carries the same non-finite IEEE-754 payload in all box and
-sphere-centre coordinates, so extraction retains exact float bits beside the
+other `LONG` values, so the observed `0`/`1` range is not a P3D validity rule.
+One `comic_v.p3d` mesh intentionally carries the same non-finite IEEE-754
+payload in every box and sphere-centre coordinate, so extraction retains exact
+float bits beside the
 JSON-readable values rather than rejecting or erasing that source evidence.
 
 That same source contains the only non-finite primitive float payload found in
