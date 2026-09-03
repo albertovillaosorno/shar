@@ -32,7 +32,7 @@
 
 //! Scrooby layer-widget schema recovery.
 
-use super::auxiliary::child_chunks_json;
+use super::auxiliary::scrooby_container_children_json;
 use super::{
     ChunkRecord, RecoveredComponent, escape_json, raw_component_bytes,
     read_u32, render, render_f32, schema,
@@ -62,8 +62,18 @@ pub(super) fn recover_group_json(
     if cursor != component.header_size {
         return None;
     }
-    let children =
-        child_chunks_json(chunk, component.header_size, component.total_size);
+    let children = scrooby_container_children_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+        &[
+            0x0001_8004,
+            0x0001_8006,
+            0x0001_8007,
+            0x0001_8008,
+            0x0001_8009,
+        ],
+    )?;
     Some(render_named(
         component,
         kind_index,
@@ -130,8 +140,12 @@ pub(super) fn recover_multi_text_json(
     if cursor != component.header_size {
         return None;
     }
-    let children =
-        child_chunks_json(chunk, component.header_size, component.total_size);
+    let children = scrooby_container_children_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+        &[0x0001_800b, 0x0001_800c],
+    )?;
     Some(render_frame(
         component,
         kind_index,

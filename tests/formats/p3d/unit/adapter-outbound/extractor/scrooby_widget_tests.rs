@@ -315,6 +315,176 @@ fn identical_nested_widgets_keep_distinct_occurrences() -> Result<(), String> {
     Ok(())
 }
 
+fn scrooby_group_fixture() -> Result<(Vec<u8>, usize), String> {
+    let mut source = vec![0_u8; 12];
+    push_pascal(&mut source, "Nested")?;
+    source.extend_from_slice(&1_u32.to_le_bytes());
+    source.extend_from_slice(&255_u32.to_le_bytes());
+    let header_size = source.len();
+    finish_chunk(&mut source, 0x0001_8004, header_size, header_size)?;
+    Ok((source, header_size))
+}
+
+fn scrooby_multi_text_fixture() -> Result<(Vec<u8>, usize), String> {
+    let mut source = vec![0_u8; 12];
+    push_widget_frame(&mut source, "Caption")?;
+    push_pascal(&mut source, "font0_16")?;
+    source.push(1);
+    for value in [0x1122_3344_u32, 3, 4, 0] {
+        source.extend_from_slice(&value.to_le_bytes());
+    }
+    let header_size = source.len();
+    finish_chunk(&mut source, 0x0001_8007, header_size, header_size)?;
+    Ok((source, header_size))
+}
+
+fn append_empty_child(source: &mut Vec<u8>, id: u32) {
+    source.extend_from_slice(&id.to_le_bytes());
+    source.extend_from_slice(&12_u32.to_le_bytes());
+    source.extend_from_slice(&12_u32.to_le_bytes());
+}
+
+#[test]
+fn group_rejects_scrooby_child_drift() -> Result<(), String> {
+    let (source, header_size) = scrooby_group_fixture()?;
+    for (label, child) in [
+        ("unknown", 0xdead_beef_u32),
+        ("unsupported movie", 0x0001_8005_u32),
+    ] {
+        let mut candidate = source.clone();
+        append_empty_child(&mut candidate, child);
+        let total_size = candidate.len();
+        finish_chunk(&mut candidate, 0x0001_8004, header_size, total_size)?;
+        let component = record(
+            ChunkKind::ScroobyGroup,
+            0x0001_8004,
+            header_size,
+            total_size,
+            1,
+        );
+        if scrooby_widget::recover_group_json(&component, &candidate, 1)
+            .is_some()
+        {
+            return Err(format!("group accepted {label} direct child"));
+        }
+    }
+
+    let mut truncated = source;
+    truncated.extend_from_slice(&0x0001_8006_u32.to_le_bytes());
+    let total_size = truncated.len();
+    finish_chunk(&mut truncated, 0x0001_8004, header_size, total_size)?;
+    let component = record(
+        ChunkKind::ScroobyGroup,
+        0x0001_8004,
+        header_size,
+        total_size,
+        1,
+    );
+    if scrooby_widget::recover_group_json(&component, &truncated, 1).is_some() {
+        return Err("group ignored a truncated direct child".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn group_preserves_scrooby_child_inventory() -> Result<(), String> {
+    let (mut source, header_size) = scrooby_group_fixture()?;
+    for id in [
+        0x0001_8004_u32,
+        0x0001_8006,
+        0x0001_8007,
+        0x0001_8008,
+        0x0001_8009,
+    ] {
+        append_empty_child(&mut source, id);
+    }
+    let total_size = source.len();
+    finish_chunk(&mut source, 0x0001_8004, header_size, total_size)?;
+    let component = record(
+        ChunkKind::ScroobyGroup,
+        0x0001_8004,
+        header_size,
+        total_size,
+        5,
+    );
+    let recovered = scrooby_widget::recover_group_json(&component, &source, 1)
+        .ok_or_else(|| "declared group children should decode".to_owned())?;
+    let json = String::from_utf8(recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    for id in ["00018004", "00018006", "00018007", "00018008", "00018009"] {
+        if !json.contains(&format!(r#""id_hex":"0x{id}""#)) {
+            return Err(format!("group lost declared child 0x{id}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn multi_text_rejects_scrooby_child_drift() -> Result<(), String> {
+    let (source, header_size) = scrooby_multi_text_fixture()?;
+    let mut unknown = source.clone();
+    append_empty_child(&mut unknown, 0xdead_beef);
+    let total_size = unknown.len();
+    finish_chunk(&mut unknown, 0x0001_8007, header_size, total_size)?;
+    let component = record(
+        ChunkKind::ScroobyMultiText,
+        0x0001_8007,
+        header_size,
+        total_size,
+        1,
+    );
+    if scrooby_widget::recover_multi_text_json(&component, &unknown, 1)
+        .is_some()
+    {
+        return Err("multi-text accepted an undeclared direct child".to_owned());
+    }
+
+    let mut truncated = source;
+    truncated.extend_from_slice(&0x0001_800b_u32.to_le_bytes());
+    let total_size = truncated.len();
+    finish_chunk(&mut truncated, 0x0001_8007, header_size, total_size)?;
+    let component = record(
+        ChunkKind::ScroobyMultiText,
+        0x0001_8007,
+        header_size,
+        total_size,
+        1,
+    );
+    if scrooby_widget::recover_multi_text_json(&component, &truncated, 1)
+        .is_some()
+    {
+        return Err("multi-text ignored a truncated direct child".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn multi_text_preserves_scrooby_child_inventory() -> Result<(), String> {
+    let (mut source, header_size) = scrooby_multi_text_fixture()?;
+    for id in [0x0001_800b_u32, 0x0001_800c] {
+        append_empty_child(&mut source, id);
+    }
+    let total_size = source.len();
+    finish_chunk(&mut source, 0x0001_8007, header_size, total_size)?;
+    let component = record(
+        ChunkKind::ScroobyMultiText,
+        0x0001_8007,
+        header_size,
+        total_size,
+        2,
+    );
+    let recovered =
+        scrooby_widget::recover_multi_text_json(&component, &source, 1)
+            .ok_or_else(|| "declared children should decode".to_owned())?;
+    let json = String::from_utf8(recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if !json.contains(r#""id_hex":"0x0001800b""#)
+        || !json.contains(r#""id_hex":"0x0001800c""#)
+    {
+        return Err("multi-text lost declared child inventory".to_owned());
+    }
+    Ok(())
+}
 
 fn scrooby_layer_fixture() -> Result<(Vec<u8>, usize), String> {
     let mut source = vec![0_u8; 12];
