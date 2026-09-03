@@ -845,6 +845,9 @@ fn primitive_index_targets_are_valid(
         let bounded = chunk.get(..list.header_end())?;
         let mut reader = Reader::new(bounded, list.data_offset());
         let count = usize::try_from(reader.u32()?).ok()?;
+        if !fixed_list_count_fits(&reader, bounded.len(), count, 4)? {
+            return Some(false);
+        }
         for _ in 0..count {
             let index = reader.u32()?;
             if index > u32::from(u16::MAX) || index >= header.vertex_count {
@@ -871,6 +874,9 @@ fn skin_matrix_targets_are_valid(
         let bounded = chunk.get(..list.header_end())?;
         let mut reader = Reader::new(bounded, list.data_offset());
         let count = usize::try_from(reader.u32()?).ok()?;
+        if !fixed_list_count_fits(&reader, bounded.len(), count, 4)? {
+            return Some(false);
+        }
         if list.id == MATRIXLIST {
             if header.matrix_count == 0 {
                 return Some(false);
@@ -896,14 +902,29 @@ fn skin_matrix_targets_are_valid(
     Some(true)
 }
 
+/// Validate one fixed-width count against the exact bounded list payload.
+fn fixed_list_count_fits(
+    reader: &Reader<'_>,
+    end: usize,
+    count: usize,
+    width: usize,
+) -> Option<bool> {
+    let expected = count.checked_mul(width)?;
+    Some(expected == end.checked_sub(reader.pos())?)
+}
+
 /// Decode positions while retaining sparse raw bits for non-finite vertices.
 fn position_list(
     chunk: &[u8],
     base: usize,
 ) -> Option<(String, usize, Option<String>)> {
     let mut reader = Reader::new(chunk, base);
-    let count = reader.u32()? as usize;
-    let mut json = String::with_capacity(count * 24 + 2);
+    let count = usize::try_from(reader.u32()?).ok()?;
+    if !fixed_list_count_fits(&reader, chunk.len(), count, 12)? {
+        return None;
+    }
+    let capacity = count.checked_mul(24)?.checked_add(2)?;
+    let mut json = String::with_capacity(capacity);
     let mut nonfinite = Vec::new();
     json.push('[');
     for i in 0..count {
@@ -941,8 +962,12 @@ fn position_list(
 /// `count:u32` then `count` * three `f32`. Returns `(json_array, count)`.
 fn float3_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
     let mut reader = Reader::new(chunk, base);
-    let count = reader.u32()? as usize;
-    let mut json = String::with_capacity(count * 24 + 2);
+    let count = usize::try_from(reader.u32()?).ok()?;
+    if !fixed_list_count_fits(&reader, chunk.len(), count, 12)? {
+        return None;
+    }
+    let capacity = count.checked_mul(24)?.checked_add(2)?;
+    let mut json = String::with_capacity(capacity);
     json.push('[');
     for i in 0..count {
         if i > 0 {
@@ -966,8 +991,12 @@ fn float3_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
 /// `count:u32` then `count` * one `u32`. Returns `(json_array, count)`.
 fn u32_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
     let mut reader = Reader::new(chunk, base);
-    let count = reader.u32()? as usize;
-    let mut json = String::with_capacity(count * 6 + 2);
+    let count = usize::try_from(reader.u32()?).ok()?;
+    if !fixed_list_count_fits(&reader, chunk.len(), count, 4)? {
+        return None;
+    }
+    let capacity = count.checked_mul(6)?.checked_add(2)?;
+    let mut json = String::with_capacity(capacity);
     json.push('[');
     for i in 0..count {
         if i > 0 {
@@ -982,8 +1011,12 @@ fn u32_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
 /// `count:u32` then `count` packed-normal bytes.
 fn byte_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
     let mut reader = Reader::new(chunk, base);
-    let count = reader.u32()? as usize;
-    let mut json = String::with_capacity(count * 4 + 2);
+    let count = usize::try_from(reader.u32()?).ok()?;
+    if !fixed_list_count_fits(&reader, chunk.len(), count, 1)? {
+        return None;
+    }
+    let capacity = count.checked_mul(4)?.checked_add(2)?;
+    let mut json = String::with_capacity(capacity);
     json.push('[');
     for i in 0..count {
         if i > 0 {
@@ -998,8 +1031,12 @@ fn byte_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
 /// `count:u32` then `count` * four `u8`.
 fn byte4_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
     let mut reader = Reader::new(chunk, base);
-    let count = reader.u32()? as usize;
-    let mut json = String::with_capacity(count * 12 + 2);
+    let count = usize::try_from(reader.u32()?).ok()?;
+    if !fixed_list_count_fits(&reader, chunk.len(), count, 4)? {
+        return None;
+    }
+    let capacity = count.checked_mul(12)?.checked_add(2)?;
+    let mut json = String::with_capacity(capacity);
     json.push('[');
     for i in 0..count {
         if i > 0 {
@@ -1025,9 +1062,13 @@ fn byte4_list(chunk: &[u8], base: usize) -> Option<(String, usize)> {
 /// `"uv":` prefix so the caller can group channels.
 fn uv_channel(chunk: &[u8], base: usize) -> Option<(String, usize)> {
     let mut reader = Reader::new(chunk, base);
-    let count = reader.u32()? as usize;
+    let count = usize::try_from(reader.u32()?).ok()?;
     let channel = reader.u32()?;
-    let mut coords = String::with_capacity(count * 16 + 2);
+    if !fixed_list_count_fits(&reader, chunk.len(), count, 8)? {
+        return None;
+    }
+    let capacity = count.checked_mul(16)?.checked_add(2)?;
+    let mut coords = String::with_capacity(capacity);
     coords.push('[');
     for i in 0..count {
         if i > 0 {
@@ -1051,9 +1092,13 @@ fn uv_channel(chunk: &[u8], base: usize) -> Option<(String, usize)> {
 /// Multicolour list: `count:u32, channel:u32`, then `count` * one `u32`.
 fn multicolour_channel(chunk: &[u8], base: usize) -> Option<(String, usize)> {
     let mut reader = Reader::new(chunk, base);
-    let count = reader.u32()? as usize;
+    let count = usize::try_from(reader.u32()?).ok()?;
     let channel = reader.u32()?;
-    let mut values = String::with_capacity(count * 6 + 2);
+    if !fixed_list_count_fits(&reader, chunk.len(), count, 4)? {
+        return None;
+    }
+    let capacity = count.checked_mul(6)?.checked_add(2)?;
+    let mut values = String::with_capacity(capacity);
     values.push('[');
     for i in 0..count {
         if i > 0 {

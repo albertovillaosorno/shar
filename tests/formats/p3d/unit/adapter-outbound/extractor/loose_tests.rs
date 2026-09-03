@@ -4140,6 +4140,44 @@ fn mesh_recovery_rejects_declared_primitive_group_count_drift()
 }
 
 #[test]
+fn mesh_recovery_rejects_impossible_primitive_list_counts()
+-> Result<(), String> {
+    let (mut position_source, mesh_header, group_header) =
+        primitive_group_mesh_fixture()?;
+    let position_count = mesh_header
+        .checked_add(group_header)
+        .and_then(|offset| offset.checked_add(12))
+        .ok_or_else(|| String::from("position count offset overflowed"))?;
+    position_source[position_count..position_count + 4]
+        .copy_from_slice(&u32::MAX.to_le_bytes());
+    let component = primitive_group_mesh_record(&position_source, mesh_header);
+    if render::recover_mesh_json(&component, &position_source, 1, None)
+        .is_some()
+    {
+        return Err(String::from(
+            "mesh accepted an impossible position-list count",
+        ));
+    }
+
+    let (mut index_source, mesh_header, group_header) =
+        primitive_group_mesh_fixture_with_lists(0, 1, 0, 1, 1, 1)?;
+    let index_count = mesh_header
+        .checked_add(group_header)
+        .and_then(|offset| offset.checked_add(28))
+        .and_then(|offset| offset.checked_add(12))
+        .ok_or_else(|| String::from("index count offset overflowed"))?;
+    index_source[index_count..index_count + 4]
+        .copy_from_slice(&u32::MAX.to_le_bytes());
+    let component = primitive_group_mesh_record(&index_source, mesh_header);
+    if render::recover_mesh_json(&component, &index_source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh accepted an impossible index-list count",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn mesh_recovery_rejects_per_vertex_list_count_drift() -> Result<(), String> {
     const NORMAL_LIST: u32 = 0x0001_0006;
     let (mut source, mesh_header, _group_header) =
