@@ -1088,10 +1088,12 @@ single child sequence is imposed from this audit.
 
 Game-attribute framing is exact across the current source. All 673 attributes
 are version 0 and declare exactly one parameter, matching 673 physical parameter
-chunks exactly; the current corpus uses the integer parameter kind for every one.
+chunks exactly; the current corpus uses the integer parameter kind for every
+one.
 Recovery now validates `NumParams`, rejects unknown or truncated parameter
 chunks, and requires each supported parameter kind to consume its complete
-childless schema fields while continuing to accept all five schema-defined kinds.
+childless schema fields while continuing to accept all five schema-defined
+kinds.
 
 Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
 span 0 through 62, while sounds include `nosound` and collision event names.
