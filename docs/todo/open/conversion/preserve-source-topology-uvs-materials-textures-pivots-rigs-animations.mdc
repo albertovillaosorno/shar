@@ -158,19 +158,28 @@ recovery retains any authored words as ignored evidence rather than inventing a
 matrix/FOV requirement.
 
 All 2,238 event locators use one or two data words: 1,019 use one and 1,219
-use two. Runtime loading assigns the first word as the event type and calls
-`SetData` only for exactly two words, so recovery does not label a trailing word
-as `extra_data` for larger synthetic payloads. Derived event labels follow the
-runtime enum ordinals while the authored numeric event ID remains authoritative.
+use two. The two-word records are exactly CheckPoint 1,196, FarPlane 4,
+GooDamage 3, LightChange 12, and Trap 4, matching the loader's asserted event
+set. Runtime loading assigns the first word as the event type and calls
+`SetData` only for exactly two words, so larger synthetic payloads retain raw
+words but do
+not acquire `extra_data` semantics.
+
+The runtime event enum is contiguous from 0 through 85, while its separate
+historical display-name table has 87 entries and cannot serve as ordinal
+authority. Recovery labels all declared enum ordinals from the enum itself while
+preserving the authored numeric event ID. Direct consumers further identify the
+second word as CheckPoint index, FarPlane draw distance, packed LightChange
+RGBA, or Trap ID; GooDamage remains raw because no direct data consumer was
+established.
 
 The same raw audit finds 1,866 finite `EXTRA_MATRIX` children with 1,571
 distinct payloads: 1,431 belong to event locators and 435 to action locators.
 No other locator type carries one, and every observed locator carries at most
-one. Runtime loading calls `SetMatrix`; only the event and action locator
-classes store it, and both initialize their matrix to identity when the child is
-absent.
-Recovery therefore publishes that effective `runtime_matrix` while retaining
-the complete `extra_matrices` source evidence.
+one. For those observed event/action parents, runtime loading calls `SetMatrix`,
+and the corresponding stored matrices initialize to identity when the child is
+absent. Recovery publishes that effective `runtime_matrix` while retaining the
+complete `extra_matrices` source evidence.
 
 The locator audit also finds 129 splines with four through 13 finite control
 points, and every spline carries exactly one nested rail record. Fresh
