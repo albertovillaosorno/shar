@@ -349,16 +349,19 @@ pub(super) fn recover_particle_factory_json(
     cursor = cursor.checked_add(4)?;
     if version != 0
         || !frame_rate.is_finite()
+        || frame_rate <= 0.
+        || num_emitters == 0
         || cursor != component.header_size
-        || !particle_factory_children_match(
+    {
+        return None;
+    }
+    let (instancing_version, max_instances) =
+        particle_factory_children_evidence(
             chunk,
             component.header_size,
             component.total_size,
             num_emitters,
-        )
-    {
-        return None;
-    }
+        )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -367,7 +370,8 @@ pub(super) fn recover_particle_factory_json(
             "\"name\":\"{}\",\"version\":{},\"frame_rate\":{},",
             "\"num_anim_frames\":{},\"num_ol_frames\":{},",
             "\"cycle_anim\":{},\"enable_sorting\":{},",
-            "\"num_emitters\":{}}}\n"
+            "\"num_emitters\":{},\"instancing_version\":{},",
+            "\"max_instances\":{}}}\n"
         ),
         escape_json(&name),
         version,
@@ -376,7 +380,9 @@ pub(super) fn recover_particle_factory_json(
         ol_frames,
         cycle_anim,
         enable_sorting,
-        num_emitters
+        num_emitters,
+        instancing_version,
+        max_instances
     );
     Some(json_component(
         kind,
@@ -387,13 +393,13 @@ pub(super) fn recover_particle_factory_json(
     ))
 }
 
-/// Validate exact particle-factory child framing and emitter cardinality.
-fn particle_factory_children_match(
+/// Recover exact particle-factory instancing evidence and emitter cardinality.
+fn particle_factory_children_evidence(
     chunk: &[u8],
     header_size: usize,
     total_size: usize,
     num_emitters: usize,
-) -> bool {
+) -> Option<(u32, u32)> {
     const INSTANCING_INFO: u32 = 0x0001_580b;
     const BASE_EMITTER: u32 = 0x0001_5805;
     const SPRITE_EMITTER: u32 = 0x0001_5806;
@@ -401,32 +407,39 @@ fn particle_factory_children_match(
     let mut cursor = header_size;
     let mut child_index = 0_usize;
     let mut emitter_count = 0_usize;
+    let mut instancing_evidence = None;
     while cursor < total_size {
-        let Some((id, _child_header, child_total)) =
-            read_chunk_header(chunk, cursor)
-        else {
-            return false;
-        };
-        let Some(next) = cursor.checked_add(child_total) else {
-            return false;
-        };
+        let (id, child_header, child_total) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(child_total)?;
         if next > total_size {
-            return false;
+            return None;
         }
         if child_index == 0 {
-            if id != INSTANCING_INFO {
-                return false;
+            if id != INSTANCING_INFO
+                || child_header != 20
+                || child_total != child_header
+            {
+                return None;
             }
+            let instancing_version = read_u32(chunk, cursor.checked_add(12)?)?;
+            let max_instances = read_u32(chunk, cursor.checked_add(16)?)?;
+            if max_instances == 0 {
+                return None;
+            }
+            instancing_evidence = Some((instancing_version, max_instances));
         } else if matches!(id, BASE_EMITTER | SPRITE_EMITTER | DRAWABLE_EMITTER)
         {
-            emitter_count = emitter_count.saturating_add(1);
+            emitter_count = emitter_count.checked_add(1)?;
         } else {
-            return false;
+            return None;
         }
-        child_index = child_index.saturating_add(1);
+        child_index = child_index.checked_add(1)?;
         cursor = next;
     }
-    cursor == total_size && child_index > 0 && emitter_count == num_emitters
+    if cursor != total_size || emitter_count != num_emitters {
+        return None;
+    }
+    instancing_evidence
 }
 
 /// Recover light group json.
