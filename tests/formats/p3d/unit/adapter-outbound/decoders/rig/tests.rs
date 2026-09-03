@@ -504,8 +504,7 @@ fn multi_controller_rejects_loader_root_contract_drift() -> Result<(), String> {
 }
 
 #[test]
-fn multi_controller_rejects_impossible_packed_track_count()
--> Result<(), String> {
+fn multi_controller_rejects_impossible_track_count() -> Result<(), String> {
     let packed = require(
         chunk(
             MULTI_CONTROLLER_TRACKS,
