@@ -787,7 +787,7 @@ pub(super) fn recover_scrooby_layer_json(
 }
 
 /// Validate one closed Scrooby container child inventory.
-fn scrooby_container_children_json(
+pub(super) fn scrooby_container_children_json(
     chunk: &[u8],
     mut cursor: usize,
     end: usize,
