@@ -1074,6 +1074,141 @@ fn breakable_object_rejects_unknown_child() -> Result<(), String> {
     }
 }
 
+fn world_sphere_fixture(
+    version: u32,
+    declared_meshes: u32,
+    declared_billboards: u32,
+) -> Result<(Vec<u8>, Vec<ChunkRecord>), String> {
+    const WORLD_SPHERE: u32 = 0x03f0_000b;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "world")?;
+    push_u32(&mut fields, version);
+    push_u32(&mut fields, declared_meshes);
+    push_u32(&mut fields, declared_billboards);
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("world sphere header overflowed"))?;
+    let children = [
+        (0x0001_0000_u32, crate::ChunkKind::Mesh, "mesh_child"),
+        (0x0001_7002_u32, crate::ChunkKind::QuadGroup, "billboard_child"),
+        (
+            0x0000_4512_u32,
+            crate::ChunkKind::CompositeDrawable,
+            "composite_child",
+        ),
+    ];
+    let mut source = Vec::new();
+    let mut child_bytes = Vec::new();
+    let mut records = Vec::new();
+    let mut offset = header_size;
+    for (index, (id, kind, name)) in children.into_iter().enumerate() {
+        let mut child_fields = Vec::new();
+        push_pascal(&mut child_fields, name)?;
+        let size = 12_usize
+            .checked_add(child_fields.len())
+            .ok_or_else(|| String::from("world sphere child overflowed"))?;
+        push_u32(&mut child_bytes, id);
+        push_u32(
+            &mut child_bytes,
+            u32::try_from(size).map_err(|error| error.to_string())?,
+        );
+        push_u32(
+            &mut child_bytes,
+            u32::try_from(size).map_err(|error| error.to_string())?,
+        );
+        child_bytes.extend_from_slice(&child_fields);
+        records.push(ChunkRecord {
+            ordinal: 2 + index,
+            depth: 2,
+            parent_ordinal: Some(1),
+            id,
+            kind,
+            offset,
+            header_size: size,
+            total_size: size,
+            payload_offset: offset + size,
+            payload_size: 0,
+            child_count: 0,
+        });
+        offset = offset
+            .checked_add(size)
+            .ok_or_else(|| String::from("world sphere offset overflowed"))?;
+    }
+    let total_size = header_size
+        .checked_add(child_bytes.len())
+        .ok_or_else(|| String::from("world sphere total overflowed"))?;
+    push_u32(&mut source, WORLD_SPHERE);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    source.extend_from_slice(&child_bytes);
+    records.insert(
+        0,
+        ChunkRecord {
+            ordinal: 1,
+            depth: 1,
+            parent_ordinal: Some(0),
+            id: WORLD_SPHERE,
+            kind: crate::ChunkKind::SrrWorldSphereDsg,
+            offset: 0,
+            header_size,
+            total_size,
+            payload_offset: header_size,
+            payload_size: total_size.saturating_sub(header_size),
+            child_count: 3,
+        },
+    );
+    Ok((source, records))
+}
+
+#[test]
+fn world_sphere_preserves_direct_child_relationships() -> Result<(), String> {
+    let (source, records) = world_sphere_fixture(0, 1, 1)?;
+    let parent = records
+        .first()
+        .ok_or_else(|| String::from("world sphere parent should exist"))?;
+    let recovered =
+        render::recover_world_sphere_json(parent, &source, 1, Some(&records))
+            .ok_or_else(|| String::from("world sphere fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["num_meshes"] == 1
+        && value["num_billboard_quads"] == 1
+        && value["children"][0]["source_ordinal"] == 2
+        && value["children"][0]["kind"] == "mesh"
+        && value["children"][1]["name"] == "billboard_child"
+    {
+        Ok(())
+    } else {
+        Err(String::from("world sphere child topology was discarded"))
+    }
+}
+
+#[test]
+fn world_sphere_rejects_source_contract_drift() -> Result<(), String> {
+    for (version, meshes, billboards) in [(1, 1, 1), (0, 2, 1), (0, 1, 2)] {
+        let (source, records) =
+            world_sphere_fixture(version, meshes, billboards)?;
+        let parent = records
+            .first()
+            .ok_or_else(|| String::from("world sphere parent should exist"))?;
+        if render::recover_world_sphere_json(parent, &source, 1, Some(&records))
+            .is_some()
+        {
+            return Err(String::from(
+                "world sphere contract drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn billboard_quad_fixture(
     display_version: u32,
 ) -> Result<(Vec<u8>, usize), String> {
