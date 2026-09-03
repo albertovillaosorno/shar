@@ -246,8 +246,7 @@ fn recovers_scrooby_page_header_and_child_inventory() -> Result<(), String> {
 }
 
 #[test]
-fn scrooby_project_rejects_header_and_child_framing_drift()
--> Result<(), String> {
+fn project_rejects_scrooby_framing_drift() -> Result<(), String> {
     let (source, header_size) = scrooby_project_fixture()?;
 
     let mut trailing_header = source.clone();
@@ -333,8 +332,7 @@ fn scrooby_project_rejects_header_and_child_framing_drift()
 }
 
 #[test]
-fn scrooby_project_preserves_declared_direct_child_inventory()
--> Result<(), String> {
+fn project_preserves_scrooby_child_inventory() -> Result<(), String> {
     let (mut source, header_size) = scrooby_project_fixture()?;
     for id in [0x0001_8001_u32, 0x0001_8002] {
         source.extend_from_slice(&id.to_le_bytes());
