@@ -400,6 +400,10 @@ fn expression_offsets_json(
     let mut reader = Reader::new(bounded, expression.data_offset());
     let primitive_group_count = usize::try_from(reader.u32()?).ok()?;
     let offset_list_count = usize::try_from(reader.u32()?).ok()?;
+    let group_bytes = primitive_group_count.checked_mul(4)?;
+    if group_bytes > bounded.len().checked_sub(reader.pos())? {
+        return None;
+    }
     let mut primitive_groups = Vec::with_capacity(primitive_group_count);
     for _ in 0..primitive_group_count {
         primitive_groups.push(reader.u32()?);
@@ -450,6 +454,11 @@ fn offset_list_json(
     let mut reader = Reader::new(bounded, list.data_offset());
     let offset_count = usize::try_from(reader.u32()?).ok()?;
     let key_index = reader.u32()?;
+    let offset_bytes = offset_count.checked_mul(16)?;
+    let minimum_bytes = offset_bytes.checked_add(4)?;
+    if minimum_bytes > bounded.len().checked_sub(reader.pos())? {
+        return None;
+    }
     let mut offsets = Vec::with_capacity(offset_count);
     let mut vertex_indices = Vec::with_capacity(offset_count);
     for _ in 0..offset_count {
