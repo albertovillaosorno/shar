@@ -791,6 +791,31 @@ fn srr_locator_preserves_extra_matrix_children() -> Result<(), String> {
     if value["extra_matrices"][0][3] != serde_json::json!([2, 3, 4, 1]) {
         return Err(String::from("locator extra matrix was discarded"));
     }
+    if !value["runtime_matrix"].is_null() {
+        return Err(String::from("generic locator assigned an extra matrix"));
+    }
+    let event_matrix = render::runtime_locator_matrix_json(
+        0,
+        &source,
+        header_size,
+        source.len(),
+    )
+    .ok_or_else(|| String::from("event runtime matrix should decode"))?;
+    let event_value: serde_json::Value = serde_json::from_str(&event_matrix)
+        .map_err(|error| error.to_string())?;
+    if event_value[3] != serde_json::json!([2, 3, 4, 1]) {
+        return Err(String::from("event runtime matrix was not assigned"));
+    }
+    let action_matrix = render::runtime_locator_matrix_json(
+        9,
+        &source,
+        header_size,
+        source.len(),
+    )
+    .ok_or_else(|| String::from("action runtime matrix should decode"))?;
+    if action_matrix != event_matrix {
+        return Err(String::from("action runtime matrix assignment drifted"));
+    }
     Ok(())
 }
 
