@@ -1440,6 +1440,24 @@ and primitive lists, vertex-animation offsets, and fixed-width animation keys.
 Every guard is derived from exact or minimum schema record width within the
 already bounded chunk; valid source records retain their existing decoded JSON.
 
+The same bounded-count audit now covers Intersect DSG index/position/normal
+arrays, History lines, PedPath points, ATC attribute rows, and vertex-expression
+stage/key arrays. The shipped expression loader additionally requires at least
+one key, nondecreasing key order for binary search, and expression-stage
+ordinals 0 through 2; recovery now fails closed on those runtime-invalid shapes.
+The unsupported legacy animation-extra record remains deliberately unchanged
+because neither the current schema nor shipped loader dispatch establishes its
+entry layout.
+
+P3DZ framing is now preflighted before decompression or declared-output-sized
+allocation. The shipped reader stores the wrapper's uncompressed size in a
+signed `int` and decompresses each block into a fixed 4096-byte
+`LZR_BLOCK_SIZE` cache. Recovery therefore rejects wrapper sizes above
+`i32::MAX`, blocks above 4096 output bytes, cumulative output drift, truncated
+compressed blocks, and trailing block-stream bytes before decoding. Output
+growth uses fallible per-block reservation instead of trusting the wrapper size
+for one up-front allocation.
+
 Packed multi-controller tracks follow the shipped loader's explicit lower bound:
 each record needs at least one Pascal-string length byte plus three floats, or
 13 bytes, before the authored count is iterated. Synthetic maximum-count
