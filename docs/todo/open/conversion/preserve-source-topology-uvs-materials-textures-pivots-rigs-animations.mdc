@@ -1199,6 +1199,19 @@ callback `OnFrame` values are finite. Recovery now retains this typed hierarchy
 in physical order while preserving authored flag-like fields numerically rather
 than coercing them to booleans.
 
+Animated-object hierarchy evidence is exact across 488 factories, 488 nested
+animation records, and 503 object instances. Every record is version 0; every
+factory declares exactly one animation and owns exactly one physical animation
+child. Every object instance is childless and consumes its complete object
+header.
+
+All nested animated-object animations run at an authored finite 30 fps and their
+declared controller counts match 1,454 physical controller children exactly,
+with counts from 1 through 17. Every one of those children uses the standard
+schema-backed frame-controller ID; the six legacy frame-controller variants do
+not occur in this ownership path. Recovery now preserves the typed animation and
+controller hierarchy without applying legacy-layout guesses.
+
 Standard frame-controller framing is exact across the full source. All 4,714
 `FRAME_CONTROLLER` records are version 0, childless, consume their complete
 schema-defined headers exactly, and carry finite frame offsets. Recovery now
