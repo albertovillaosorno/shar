@@ -3611,6 +3611,63 @@ fn embedded_sprite_image_recovery_preserves_exact_dds_payload()
 }
 
 #[test]
+fn image_payload_rejects_header_and_child_drift() -> Result<(), String> {
+    let payload = dds_payload_fixture();
+    let valid = image_fixture(&payload, payload.len())?;
+    let header_size = usize::try_from(u32::from_le_bytes(
+        valid
+            .get(4..8)
+            .ok_or_else(|| String::from("image fixture header is truncated"))?
+            .try_into()
+            .map_err(|error: std::array::TryFromSliceError| error.to_string())?,
+    ))
+    .map_err(|error| error.to_string())?;
+
+    let mut unknown = valid.clone();
+    unknown
+        .get_mut(header_size..header_size.saturating_add(4))
+        .ok_or_else(|| String::from("image child id is out of bounds"))?
+        .copy_from_slice(&0xdead_beef_u32.to_le_bytes());
+
+    let mut duplicate = valid.clone();
+    let child = valid
+        .get(header_size..)
+        .ok_or_else(|| String::from("image child is out of bounds"))?
+        .to_vec();
+    duplicate.extend_from_slice(&child);
+    let duplicate_total =
+        u32::try_from(duplicate.len()).map_err(|error| error.to_string())?;
+    duplicate
+        .get_mut(8..12)
+        .ok_or_else(|| String::from("image total field is out of bounds"))?
+        .copy_from_slice(&duplicate_total.to_le_bytes());
+
+    let mut trailing_header = valid;
+    drop(trailing_header.splice(header_size..header_size, [0_u8; 4]));
+    let new_header = u32::try_from(header_size.saturating_add(4))
+        .map_err(|error| error.to_string())?;
+    let new_total = u32::try_from(trailing_header.len())
+        .map_err(|error| error.to_string())?;
+    trailing_header
+        .get_mut(4..8)
+        .ok_or_else(|| String::from("image header field is out of bounds"))?
+        .copy_from_slice(&new_header.to_le_bytes());
+    trailing_header
+        .get_mut(8..12)
+        .ok_or_else(|| String::from("image total field is out of bounds"))?
+        .copy_from_slice(&new_total.to_le_bytes());
+
+    for invalid in [unknown, duplicate, trailing_header] {
+        if extract_image_payload(&invalid).is_some() {
+            return Err(String::from(
+                "image header or child drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn embedded_sprite_image_recovery_rejects_oversized_data_claim()
 -> Result<(), String> {
     let payload = dds_payload_fixture();
