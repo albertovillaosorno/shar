@@ -1132,7 +1132,9 @@ fn ped_path_rejects_unobserved_source_shapes() -> Result<(), String> {
     )
     .is_some()
     {
-        return Err(String::from("impossible ped path count should fail closed"));
+        return Err(String::from(
+            "impossible ped path count should fail closed",
+        ));
     }
     let (nonfinite, size) =
         ped_path_fixture(&[[f32::NAN, 2_f32, 3_f32]], false)?;
