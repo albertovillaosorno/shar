@@ -333,16 +333,39 @@ pub(super) fn recover_light_group_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const LIGHT_GROUP: u32 = 0x0000_2380;
+    if component.id != LIGHT_GROUP
+        || component.header_size != component.total_size
+    {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
-    let num_lights = read_u32(chunk, cursor)?;
+    let num_lights = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let mut lights = Vec::with_capacity(num_lights);
+    for _ in 0..num_lights {
+        lights.push(schema::read_pascal_at(chunk, &mut cursor)?);
+    }
+    if cursor != component.header_size {
+        return None;
+    }
+    let lights_json = lights
+        .iter()
+        .map(|light| format!("\"{}\"", escape_json(light)))
+        .collect::<Vec<_>>()
+        .join(",");
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
-        "{{\"schema\":\"light_group\",\"name\":\"{}\",\"num_lights\":{}}}\n",
+        concat!(
+            "{{\"schema\":\"light_group\",\"name\":\"{}\",",
+            "\"num_lights\":{},\"lights\":[{}]}}\n"
+        ),
         escape_json(&name),
-        num_lights
+        num_lights,
+        lights_json
     );
     Some(json_component(
         kind,
