@@ -468,18 +468,34 @@ fn decode_channel(chunk: &[u8], child: &SubChunk) -> Option<String> {
     let version = reader.u32()?;
     let param = read_fourcc(&mut reader)?;
     let body = match child.id {
-        CHANNEL_FLOAT1 => decode_key_values(&mut reader, 1)?,
-        CHANNEL_FLOAT2 => decode_key_values(&mut reader, 2)?,
-        CHANNEL_VECTOR1 => decode_vector_dof_keys(&mut reader, 1)?,
-        CHANNEL_VECTOR2 => decode_vector_dof_keys(&mut reader, 2)?,
-        CHANNEL_VECTOR3 => decode_key_values(&mut reader, 3)?,
-        CHANNEL_QUATERNION => decode_key_values(&mut reader, 4)?,
-        CHANNEL_COMPRESSED_QUATERNION => {
-            decode_compressed_quaternion_keys(&mut reader)?
+        CHANNEL_FLOAT1 => {
+            decode_key_values(&mut reader, child.header_end(), 1)?
         },
-        CHANNEL_INT | CHANNEL_COLOUR => decode_integer_keys(&mut reader)?,
-        CHANNEL_STRING | CHANNEL_ENTITY => decode_string_keys(&mut reader)?,
-        CHANNEL_BOOL => decode_bool_keys(&mut reader)?,
+        CHANNEL_FLOAT2 => {
+            decode_key_values(&mut reader, child.header_end(), 2)?
+        },
+        CHANNEL_VECTOR1 => {
+            decode_vector_dof_keys(&mut reader, child.header_end(), 1)?
+        },
+        CHANNEL_VECTOR2 => {
+            decode_vector_dof_keys(&mut reader, child.header_end(), 2)?
+        },
+        CHANNEL_VECTOR3 => {
+            decode_key_values(&mut reader, child.header_end(), 3)?
+        },
+        CHANNEL_QUATERNION => {
+            decode_key_values(&mut reader, child.header_end(), 4)?
+        },
+        CHANNEL_COMPRESSED_QUATERNION => {
+            decode_compressed_quaternion_keys(&mut reader, child.header_end())?
+        },
+        CHANNEL_INT | CHANNEL_COLOUR => {
+            decode_integer_keys(&mut reader, child.header_end())?
+        },
+        CHANNEL_STRING | CHANNEL_ENTITY => {
+            decode_string_keys(&mut reader, child.header_end())?
+        },
+        CHANNEL_BOOL => decode_bool_keys(&mut reader, child.header_end())?,
         _ => return None,
     };
     if reader.pos() != child.header_end() {
@@ -501,8 +517,12 @@ fn decode_channel(chunk: &[u8], child: &SubChunk) -> Option<String> {
 /// binary-layout invariant.
 fn decode_compressed_quaternion_keys(
     reader: &mut Reader<'_>,
+    end: usize,
 ) -> Option<String> {
     let count = u32_to_usize(reader.u32()?)?;
+    if !exact_count_bytes_fit(reader, end, count, 10)? {
+        return None;
+    }
     let frames = read_frames(reader, count)?;
     let mut values = Vec::new();
     for _ in 0..count {
@@ -524,11 +544,16 @@ fn decode_compressed_quaternion_keys(
 /// invariant.
 fn decode_vector_dof_keys(
     reader: &mut Reader<'_>,
+    end: usize,
     width: usize,
 ) -> Option<String> {
     let mapping = read_u16_from_reader(reader)?;
     let constants = read_vector_values(reader, 1, 3)?.into_iter().next()?;
     let count = u32_to_usize(reader.u32()?)?;
+    let value_bytes = width.checked_mul(4)?.checked_add(2)?;
+    if !exact_count_bytes_fit(reader, end, count, value_bytes)? {
+        return None;
+    }
     let frames = read_frames(reader, count)?;
     let values = read_vector_values(reader, count, width)?;
     Some(format!(
@@ -547,8 +572,16 @@ fn decode_vector_dof_keys(
 
 /// Keeps `decode_key_values` local because it shares the rig binary-layout
 /// invariant.
-fn decode_key_values(reader: &mut Reader<'_>, width: usize) -> Option<String> {
+fn decode_key_values(
+    reader: &mut Reader<'_>,
+    end: usize,
+    width: usize,
+) -> Option<String> {
     let count = u32_to_usize(reader.u32()?)?;
+    let value_bytes = width.checked_mul(4)?.checked_add(2)?;
+    if !exact_count_bytes_fit(reader, end, count, value_bytes)? {
+        return None;
+    }
     let frames = read_frames(reader, count)?;
     let mut values = Vec::new();
     for _ in 0..count {
@@ -568,8 +601,14 @@ fn decode_key_values(reader: &mut Reader<'_>, width: usize) -> Option<String> {
 
 /// Keeps `decode_integer_keys` local because it shares the rig binary-layout
 /// invariant.
-fn decode_integer_keys(reader: &mut Reader<'_>) -> Option<String> {
+fn decode_integer_keys(
+    reader: &mut Reader<'_>,
+    end: usize,
+) -> Option<String> {
     let count = u32_to_usize(reader.u32()?)?;
+    if !exact_count_bytes_fit(reader, end, count, 6)? {
+        return None;
+    }
     let frames = read_frames(reader, count)?;
     let mut values = Vec::new();
     for _ in 0..count {
@@ -585,8 +624,14 @@ fn decode_integer_keys(reader: &mut Reader<'_>) -> Option<String> {
 
 /// Keeps `decode_string_keys` local because it shares the rig binary-layout
 /// invariant.
-fn decode_string_keys(reader: &mut Reader<'_>) -> Option<String> {
+fn decode_string_keys(
+    reader: &mut Reader<'_>,
+    end: usize,
+) -> Option<String> {
     let count = u32_to_usize(reader.u32()?)?;
+    if !minimum_count_bytes_fit(reader, end, count, 3)? {
+        return None;
+    }
     let frames = read_frames(reader, count)?;
     let mut values = Vec::new();
     for _ in 0..count {
@@ -602,9 +647,12 @@ fn decode_string_keys(reader: &mut Reader<'_>) -> Option<String> {
 
 /// Keeps `decode_bool_keys` local because it shares the rig binary-layout
 /// invariant.
-fn decode_bool_keys(reader: &mut Reader<'_>) -> Option<String> {
+fn decode_bool_keys(reader: &mut Reader<'_>, end: usize) -> Option<String> {
     let start_state = read_u16_from_reader(reader)?;
     let count = u32_to_usize(reader.u32()?)?;
+    if !exact_count_bytes_fit(reader, end, count, 2)? {
+        return None;
+    }
     let mut values = Vec::new();
     for _ in 0..count {
         values.push(read_u16_from_reader(reader)?.to_string());
@@ -615,6 +663,26 @@ fn decode_bool_keys(reader: &mut Reader<'_>) -> Option<String> {
         count,
         values.join(",")
     ))
+}
+
+/// Validate an exact fixed-width count against the bounded channel header.
+fn exact_count_bytes_fit(
+    reader: &Reader<'_>,
+    end: usize,
+    count: usize,
+    width: usize,
+) -> Option<bool> {
+    Some(count.checked_mul(width)? == end.checked_sub(reader.pos())?)
+}
+
+/// Validate a variable-width count using its minimum encoded record width.
+fn minimum_count_bytes_fit(
+    reader: &Reader<'_>,
+    end: usize,
+    count: usize,
+    width: usize,
+) -> Option<bool> {
+    Some(count.checked_mul(width)? <= end.checked_sub(reader.pos())?)
 }
 
 /// Keeps `read_frames` local because it shares the rig binary-layout invariant.

@@ -411,6 +411,30 @@ fn animation_decodes_group_channels_and_keys() -> Result<(), String> {
 }
 
 #[test]
+fn animation_rejects_impossible_key_count() -> Result<(), String> {
+    let mut fixture = require(
+        animation_fixture(),
+        "animation fixture should build",
+    )?;
+    let channel_id = CHANNEL_FLOAT1.to_le_bytes();
+    let channel_start = fixture
+        .windows(channel_id.len())
+        .position(|window| window == channel_id)
+        .ok_or_else(|| String::from("animation channel fixture is missing"))?;
+    let count_offset = channel_start
+        .checked_add(20)
+        .ok_or_else(|| String::from("channel count offset overflowed"))?;
+    fixture[count_offset..count_offset + 4]
+        .copy_from_slice(&u32::MAX.to_le_bytes());
+    if animation_json(&fixture).is_some() {
+        return Err(String::from(
+            "animation accepted an impossible fixed-width key count",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn animation_renders_non_finite_keys_as_json_null() -> Result<(), String> {
     let fixture = require(
         animation_fixture_with_values(f32::NAN, f32::INFINITY),
