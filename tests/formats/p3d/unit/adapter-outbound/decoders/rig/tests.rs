@@ -500,6 +500,39 @@ fn multi_controller_rejects_loader_root_contract_drift() -> Result<(), String> {
 }
 
 #[test]
+fn multi_controller_rejects_impossible_packed_track_count()
+-> Result<(), String> {
+    let packed = require(
+        chunk(
+            MULTI_CONTROLLER_TRACKS,
+            fields(vec![u32_field(u32::MAX)]),
+            Vec::new(),
+        ),
+        "packed track fixture should build",
+    )?;
+    let fixture = require(
+        chunk(
+            MULTI_CONTROLLER,
+            fields(vec![
+                require(pstring("controller"), "controller name should build")?,
+                u32_field(0),
+                f32_field(10.),
+                f32_field(30.),
+                u32_field(1),
+            ]),
+            vec![packed],
+        ),
+        "multi-controller fixture should build",
+    )?;
+    if multi_controller_json(&fixture).is_some() {
+        return Err(String::from(
+            "multi-controller accepted an impossible packed track count",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn multi_controller_rejects_nonfinite_timing_evidence() -> Result<(), String> {
     for values in [
         (f32::NAN, 30., 0., 10., 1.),
