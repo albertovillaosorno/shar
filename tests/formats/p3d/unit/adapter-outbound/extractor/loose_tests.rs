@@ -1074,6 +1074,77 @@ fn breakable_object_rejects_unknown_child() -> Result<(), String> {
     }
 }
 
+fn light_group_fixture(
+    declared_lights: u32,
+    trailing_word: bool,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const LIGHT_GROUP: u32 = 0x0000_2380;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "lights")?;
+    push_u32(&mut fields, declared_lights);
+    push_pascal(&mut fields, "key_light")?;
+    push_pascal(&mut fields, "fill_light")?;
+    if trailing_word {
+        push_u32(&mut fields, 99);
+    }
+    let total_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("light group fixture overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, LIGHT_GROUP);
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    Ok((source, ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: LIGHT_GROUP,
+        kind: crate::ChunkKind::LightGroup,
+        offset: 0,
+        header_size: total_size,
+        total_size,
+        payload_offset: total_size,
+        payload_size: 0,
+        child_count: 0,
+    }))
+}
+
+#[test]
+fn light_group_preserves_inline_light_names() -> Result<(), String> {
+    let (source, component) = light_group_fixture(2, false)?;
+    let recovered = render::recover_light_group_json(&component, &source, 1)
+        .ok_or_else(|| String::from("light group fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["num_lights"] == 2
+        && value["lights"] == serde_json::json!(["key_light", "fill_light"])
+    {
+        Ok(())
+    } else {
+        Err(String::from("light group names were discarded"))
+    }
+}
+
+#[test]
+fn light_group_rejects_inline_list_drift() -> Result<(), String> {
+    for (declared, trailing) in [(1, false), (2, true)] {
+        let (source, component) = light_group_fixture(declared, trailing)?;
+        if render::recover_light_group_json(&component, &source, 1).is_some() {
+            return Err(String::from(
+                "light group inline list drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn animated_dsg_fixture(
     parent_id: u32,
     version: u32,
