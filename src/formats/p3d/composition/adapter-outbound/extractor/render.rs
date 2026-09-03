@@ -289,12 +289,19 @@ pub(super) fn recover_particle_system_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const SYSTEM: u32 = 0x0001_5801;
+    if component.id != SYSTEM || component.header_size != component.total_size {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let version = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let factory = schema::read_pascal_at(chunk, &mut cursor)?;
+    if version != 0 || cursor != component.header_size {
+        return None;
+    }
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -319,26 +326,57 @@ pub(super) fn recover_particle_factory_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const FACTORY: u32 = 0x0001_5800;
+    if component.id != FACTORY {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let version = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let frame_rate = schema::read_f32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let anim_frames = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let ol_frames = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let cycle_anim = auxiliary::read_u16(chunk, cursor)?;
+    cursor = cursor.checked_add(2)?;
+    let enable_sorting = auxiliary::read_u16(chunk, cursor)?;
+    cursor = cursor.checked_add(2)?;
+    let num_emitters = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    if version != 0
+        || !frame_rate.is_finite()
+        || cursor != component.header_size
+        || !particle_factory_children_match(
+            chunk,
+            component.header_size,
+            component.total_size,
+            num_emitters,
+        )
+    {
+        return None;
+    }
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
-        "{{\"schema\":\"particle_system_factory\",\"name\":\"{}\",\"version\":\
-         {},\"frame_rate\":{},\"num_anim_frames\":{},\"num_ol_frames\":{}}}\n",
+        concat!(
+            "{{\"schema\":\"particle_system_factory\",",
+            "\"name\":\"{}\",\"version\":{},\"frame_rate\":{},",
+            "\"num_anim_frames\":{},\"num_ol_frames\":{},",
+            "\"cycle_anim\":{},\"enable_sorting\":{},",
+            "\"num_emitters\":{}}}\n"
+        ),
         escape_json(&name),
         version,
         frame_rate,
         anim_frames,
-        ol_frames
+        ol_frames,
+        cycle_anim,
+        enable_sorting,
+        num_emitters
     );
     Some(json_component(
         kind,
@@ -347,6 +385,48 @@ pub(super) fn recover_particle_factory_json(
         json,
         "decoded_schema_payload",
     ))
+}
+
+/// Validate exact particle-factory child framing and emitter cardinality.
+fn particle_factory_children_match(
+    chunk: &[u8],
+    header_size: usize,
+    total_size: usize,
+    num_emitters: usize,
+) -> bool {
+    const INSTANCING_INFO: u32 = 0x0001_580b;
+    const BASE_EMITTER: u32 = 0x0001_5805;
+    const SPRITE_EMITTER: u32 = 0x0001_5806;
+    const DRAWABLE_EMITTER: u32 = 0x0001_5807;
+    let mut cursor = header_size;
+    let mut child_index = 0_usize;
+    let mut emitter_count = 0_usize;
+    while cursor < total_size {
+        let Some((id, _child_header, child_total)) =
+            read_chunk_header(chunk, cursor)
+        else {
+            return false;
+        };
+        let Some(next) = cursor.checked_add(child_total) else {
+            return false;
+        };
+        if next > total_size {
+            return false;
+        }
+        if child_index == 0 {
+            if id != INSTANCING_INFO {
+                return false;
+            }
+        } else if matches!(id, BASE_EMITTER | SPRITE_EMITTER | DRAWABLE_EMITTER)
+        {
+            emitter_count = emitter_count.saturating_add(1);
+        } else {
+            return false;
+        }
+        child_index = child_index.saturating_add(1);
+        cursor = next;
+    }
+    cursor == total_size && child_index > 0 && emitter_count == num_emitters
 }
 
 /// Recover light group json.
