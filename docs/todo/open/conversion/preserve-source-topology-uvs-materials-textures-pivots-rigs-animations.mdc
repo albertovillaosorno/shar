@@ -954,7 +954,12 @@ Primitive matrix declarations are equally consistent across those 19,875 raw
 primitive groups: 18,413 declare zero matrices and omit a matrix palette, while
 1,462 declare a nonzero count and carry exactly one palette of that same length.
 Primitive recovery now validates this relationship instead of retaining an
-unchecked `NumMatrices` declaration beside contradictory palette evidence.
+unchecked `NumMatrices` declaration beside contradictory palette evidence. The
+runtime skin loader also rejects every `MATRIXLIST` slot at or above
+`NumMatrices` and every matrix-palette bone index at or above 256. The raw corpus
+contains 925,292 matrix-list indices (maximum 24) and 10,586 palette bone indices
+(maximum 189) across all 1,462 skinned primitive groups with zero violations;
+skin extraction now enforces those two bounds without applying them to meshes.
 
 Primitive vertex-shader child presence is now retained independently from its
 string value. Of the 19,875 raw groups, 13,904 carry an explicit schema-sized
@@ -964,7 +969,10 @@ same empty string.
 
 The raw mesh/skin auxiliary audit finds 15,149 schema-sized bounding boxes and
 15,149 bounding spheres, plus 14,516 mesh render-status chunks with values only
-`0` or `1`; each observed family is singleton per parent. One `comic_v.p3d`
+`0` or `1`; each observed family is singleton per parent. The runtime mesh loader
+interprets render status as zero versus nonzero rather than rejecting other
+`LONG` values, so the observed `0`/`1` range is not a P3D validity rule. One
+`comic_v.p3d`
 mesh intentionally carries the same non-finite IEEE-754 payload in all box and
 sphere-centre coordinates, so extraction retains exact float bits beside the
 JSON-readable values rather than rejecting or erasing that source evidence.
@@ -974,7 +982,10 @@ the complete audit: one 72-vertex position list whose coordinates all use that
 same NaN bit pattern. The other 8,721,915 position floats, 2,288,700 normal
 floats, 5,814,754 UV floats, and 318,681 weight floats are finite. Sparse exact
 position bits now preserve the exceptional 72 vertices without duplicating the
-finite corpus.
+finite corpus. Although every current primitive UV list uses channel zero, the
+runtime loader accepts authored channels below the primitive's declared UV count
+and its implementation limit; raw P3D extraction therefore does not hardcode
+channel zero or infer channel uniqueness from the current corpus.
 
 Twenty skins also carry expression-offset containers that were previously
 reduced to opaque child sizes. Each declares one primitive-group index and one
