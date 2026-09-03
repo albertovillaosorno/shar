@@ -1046,6 +1046,12 @@ drawables, 15 multi-controllers, and three lens flares, all schema-declared.
 Fresh recovery retains each direct child's source ordinal, kind, and authored
 name in physical source order rather than reducing the container to two counts.
 
+Fence geometry is closed over the current raw corpus as well. All 10,262
+`FENCE_DSG` containers are 12-byte parents with no fields and exactly one SRR
+`WALL` child. Every wall is an exact childless 48-byte record containing start,
+end, and normal points, and all 92,358 authored geometry floats are finite.
+Recovery now rejects wrong child IDs, trailing wall data, and non-finite values.
+
 Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
 span 0 through 62, while sounds include `nosound` and collision event names.
 Those fields now remain object attributes instead of being mislabeled as
