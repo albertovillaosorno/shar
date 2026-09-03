@@ -1353,13 +1353,13 @@ fn light_preserves_schema_cone_and_decay_children() -> Result<(), String> {
     push_u32(&mut decay, 40);
     push_u32(&mut decay, 56);
     push_u32(&mut decay, 2);
-    for value in [1.0_f32, 2.0, 3.0, 4.0, 5.0, 6.0] {
+    for value in [1f32, 2., 3., 4., 5., 6.] {
         push_f32(&mut decay, value);
     }
     push_u32(&mut decay, ROTATION_Y);
     push_u32(&mut decay, 16);
     push_u32(&mut decay, 16);
-    push_f32(&mut decay, 7.0);
+    push_f32(&mut decay, 7.);
     let decay_json = render::light_child_json(&decay, 0, DECAY, 40, 56)
         .ok_or_else(|| String::from("schema decay child should decode"))?;
     let decay_value: serde_json::Value =
