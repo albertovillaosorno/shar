@@ -1236,11 +1236,7 @@ fn light_fixture(
     children.extend_from_slice(&direction);
     children.extend_from_slice(&shadow);
     if matches!(drift, LightFixtureDrift::DuplicatePosition) {
-        children.extend_from_slice(&point_child(
-            POSITION,
-            [4.0, 5.0, 6.0],
-            false,
-        ));
+        children.extend_from_slice(&point_child(POSITION, [4., 5., 6.], false));
     }
     if matches!(drift, LightFixtureDrift::UnknownChild) {
         children.extend_from_slice(&empty_chunk(0xdead_beef));
