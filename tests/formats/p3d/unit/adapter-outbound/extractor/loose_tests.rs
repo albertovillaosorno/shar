@@ -1337,7 +1337,7 @@ fn light_preserves_schema_cone_and_decay_children() -> Result<(), String> {
     push_u32(&mut cone, CONE);
     push_u32(&mut cone, 28);
     push_u32(&mut cone, 28);
-    for value in [1.0_f32, 2.0, 3.0, 4.0] {
+    for value in [1f32, 2., 3., 4.] {
         push_f32(&mut cone, value);
     }
     let cone_json = render::light_child_json(&cone, 0, CONE, 28, 28)
