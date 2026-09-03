@@ -983,6 +983,16 @@ vertex index and three authored float offsets. Fresh extraction retains the
 container counts, indices, records, and exact offset bits while leaving morph
 or runtime interpretation deferred.
 
+Vertex-expression framing is exact across 20 groups, 20 nested expression curves,
+and 20 mixers. Every record is version 0. Each group declares one expression,
+contains exactly one physical expression child, and preserves one authored stage;
+each curve declares one key, retains one index, and carries a finite key value.
+
+All current mixers retain authored type 3 together with their target and group
+names. Recovery now rejects unobserved versions and nonfinite curve keys while
+leaving mixer-type interpretation unchanged rather than turning the observed
+value into a universal enum rule.
+
 World intersection evidence is equally regular across the complete raw corpus.
 All 8,565 `INTERSECT_DSG` chunks carry exactly one bounding sphere and one
 bounding box with no duplicate or unexpected children. Of those, 4,956 also
