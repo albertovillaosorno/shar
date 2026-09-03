@@ -59,6 +59,9 @@ fn decode_expression_group_json(kind: &str, chunk: &[u8]) -> Option<String> {
     let name = read_pstring_advance(chunk, &mut cursor)?;
     let target_name = read_pstring_advance(chunk, &mut cursor)?;
     let count = usize::try_from(read_u32_advance(chunk, &mut cursor)?).ok()?;
+    if !fixed_count_bytes_fit(cursor, header_size, count, 4)? {
+        return None;
+    }
     let mut stages = Vec::new();
     for _ in 0..count {
         stages.push(read_u32_advance(chunk, &mut cursor)?.to_string());
@@ -108,6 +111,9 @@ fn decode_expression_json(chunk: &[u8]) -> Option<String> {
     }
     let name = read_pstring_advance(chunk, &mut cursor)?;
     let count = usize::try_from(read_u32_advance(chunk, &mut cursor)?).ok()?;
+    if !fixed_count_bytes_fit(cursor, header_size, count, 8)? {
+        return None;
+    }
     let mut keys = Vec::new();
     for _ in 0..count {
         let key = read_f32_advance(chunk, &mut cursor)?;
@@ -182,6 +188,16 @@ fn read_chunk_header(
         return None;
     }
     Some((id, header_size, total_size))
+}
+
+/// Validate fixed-width count arrays against the remaining chunk header.
+fn fixed_count_bytes_fit(
+    cursor: usize,
+    end: usize,
+    count: usize,
+    width: usize,
+) -> Option<bool> {
+    Some(count.checked_mul(width)? == end.checked_sub(cursor)?)
 }
 
 /// Format floating point key values deterministically for JSON output.
