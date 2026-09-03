@@ -64,7 +64,11 @@ fn decode_expression_group_json(kind: &str, chunk: &[u8]) -> Option<String> {
     }
     let mut stages = Vec::new();
     for _ in 0..count {
-        stages.push(read_u32_advance(chunk, &mut cursor)?.to_string());
+        let stage = read_u32_advance(chunk, &mut cursor)?;
+        if stage > 2 {
+            return None;
+        }
+        stages.push(stage.to_string());
     }
     if cursor != header_size {
         return None;
@@ -111,15 +115,17 @@ fn decode_expression_json(chunk: &[u8]) -> Option<String> {
     }
     let name = read_pstring_advance(chunk, &mut cursor)?;
     let count = usize::try_from(read_u32_advance(chunk, &mut cursor)?).ok()?;
-    if !fixed_count_bytes_fit(cursor, header_size, count, 8)? {
+    if count == 0 || !fixed_count_bytes_fit(cursor, header_size, count, 8)? {
         return None;
     }
     let mut keys = Vec::new();
+    let mut previous_key = None;
     for _ in 0..count {
         let key = read_f32_advance(chunk, &mut cursor)?;
-        if !key.is_finite() {
+        if !key.is_finite() || previous_key.is_some_and(|previous| key < previous) {
             return None;
         }
+        previous_key = Some(key);
         keys.push(format_f32(key));
     }
     let mut indices = Vec::new();
