@@ -152,29 +152,51 @@ pub(super) fn recover_camera_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const CAMERA: u32 = 0x0000_2200;
+    if component.id != CAMERA || component.header_size != component.total_size {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let version = read_u32(chunk, cursor)?;
-    cursor += 4;
-    let fov = schema::read_f32(chunk, cursor)?;
-    cursor += 4;
-    let aspect_ratio = schema::read_f32(chunk, cursor)?;
-    cursor += 4;
-    let near_clip = schema::read_f32(chunk, cursor)?;
-    cursor += 4;
-    let far_clip = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let mut values = [0_f32; 13];
+    for value in &mut values {
+        *value = schema::read_f32(chunk, cursor)?;
+        cursor = cursor.checked_add(4)?;
+    }
+    if version != 2
+        || cursor != component.header_size
+        || values.iter().any(|value| !value.is_finite())
+    {
+        return None;
+    }
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
-        "{{\"schema\":\"camera\",\"name\":\"{}\",\"version\":{},\"fov\":{},\"\
-         aspect_ratio\":{},\"near_clip\":{},\"far_clip\":{}}}\n",
+        concat!(
+            "{{\"schema\":\"camera\",\"name\":\"{}\",",
+            "\"version\":{},\"fov\":{},\"aspect_ratio\":{},",
+            "\"near_clip\":{},\"far_clip\":{},",
+            "\"position\":[{},{},{}],\"look\":[{},{},{}],",
+            "\"up\":[{},{},{}]}}\n"
+        ),
         escape_json(&name),
         version,
-        fov,
-        aspect_ratio,
-        near_clip,
-        far_clip
+        values[0],
+        values[1],
+        values[2],
+        values[3],
+        values[4],
+        values[5],
+        values[6],
+        values[7],
+        values[8],
+        values[9],
+        values[10],
+        values[11],
+        values[12]
     );
     Some(json_component(
         kind,

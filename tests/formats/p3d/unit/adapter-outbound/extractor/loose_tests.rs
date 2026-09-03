@@ -187,6 +187,121 @@ fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn camera_fixture(
+    version: u32,
+    position_x: f32,
+    trailing_header: bool,
+    child_word: bool,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const CAMERA: u32 = 0x0000_2200;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "camera")?;
+    push_u32(&mut fields, version);
+    for value in [
+        std::f32::consts::FRAC_PI_3,
+        1.333_333_4_f32,
+        0.1_f32,
+        1_000_f32,
+        position_x,
+        2_f32,
+        3_f32,
+        4_f32,
+        5_f32,
+        6_f32,
+        0_f32,
+        1_f32,
+        0_f32,
+    ] {
+        push_f32(&mut fields, value);
+    }
+    if trailing_header {
+        push_u32(&mut fields, 99);
+    }
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("camera fixture header overflowed"))?;
+    let total_size = header_size
+        .checked_add(if child_word {
+            4
+        } else {
+            0
+        })
+        .ok_or_else(|| String::from("camera fixture total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, CAMERA);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    if child_word {
+        push_u32(&mut source, 0);
+    }
+    let component = ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: CAMERA,
+        kind: crate::ChunkKind::Camera,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: total_size.saturating_sub(header_size),
+        child_count: usize::from(child_word),
+    };
+    Ok((source, component))
+}
+
+#[test]
+fn camera_recovery_preserves_complete_pose() -> Result<(), String> {
+    let (source, component) = camera_fixture(2, 1_f32, false, false)?;
+    let recovered = render::recover_camera_json(&component, &source, 1)
+        .ok_or_else(|| String::from("camera fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["version"] == 2
+        && value["position"][0].as_f64() == Some(1.)
+        && value["position"][1].as_f64() == Some(2.)
+        && value["position"][2].as_f64() == Some(3.)
+        && value["look"][0].as_f64() == Some(4.)
+        && value["look"][1].as_f64() == Some(5.)
+        && value["look"][2].as_f64() == Some(6.)
+        && value["up"][0].as_f64() == Some(0.)
+        && value["up"][1].as_f64() == Some(1.)
+        && value["up"][2].as_f64() == Some(0.)
+    {
+        Ok(())
+    } else {
+        Err(String::from(
+            "camera recovery discarded authored pose fields",
+        ))
+    }
+}
+
+#[test]
+fn camera_recovery_rejects_source_shape_drift() -> Result<(), String> {
+    for (version, position_x, trailing_header, child_word) in [
+        (1, 1_f32, false, false),
+        (2, f32::NAN, false, false),
+        (2, 1_f32, true, false),
+        (2, 1_f32, false, true),
+    ] {
+        let (source, component) =
+            camera_fixture(version, position_x, trailing_header, child_word)?;
+        if render::recover_camera_json(&component, &source, 1).is_some() {
+            return Err(String::from(
+                "camera source-shape drift must fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn srr_locator_fixture(
     declared_triggers: u32,
 ) -> Result<(Vec<u8>, usize), String> {
