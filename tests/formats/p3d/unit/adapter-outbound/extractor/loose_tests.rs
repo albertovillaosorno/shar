@@ -1811,6 +1811,126 @@ fn light_group_rejects_inline_list_drift() -> Result<(), String> {
     Ok(())
 }
 
+fn animated_object_factory_fixture(
+    declared_animations: u32,
+    frame_rate: f32,
+    declared_controllers: u32,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const FACTORY: u32 = 0x0002_0000;
+    const ANIMATION: u32 = 0x0002_0002;
+    fn nested_chunk(
+        id: u32,
+        fields: &[u8],
+        children: &[Vec<u8>],
+    ) -> Result<Vec<u8>, String> {
+        let header_size = 12_usize
+            .checked_add(fields.len())
+            .ok_or_else(|| String::from("animated-object header overflowed"))?;
+        let child_size = children.iter().try_fold(0_usize, |size, child| {
+            size.checked_add(child.len())
+                .ok_or_else(|| String::from("animated-object child overflowed"))
+        })?;
+        let total_size = header_size
+            .checked_add(child_size)
+            .ok_or_else(|| String::from("animated-object total overflowed"))?;
+        let mut bytes = Vec::new();
+        push_u32(&mut bytes, id);
+        push_u32(
+            &mut bytes,
+            u32::try_from(header_size).map_err(|error| error.to_string())?,
+        );
+        push_u32(
+            &mut bytes,
+            u32::try_from(total_size).map_err(|error| error.to_string())?,
+        );
+        bytes.extend_from_slice(fields);
+        for child in children {
+            bytes.extend_from_slice(child);
+        }
+        Ok(bytes)
+    }
+    let controller = frame_controller_fixture(0_f32, false, false)?.0;
+    let mut animation_fields = Vec::new();
+    push_u32(&mut animation_fields, 0);
+    push_pascal(&mut animation_fields, "idle")?;
+    push_f32(&mut animation_fields, frame_rate);
+    push_u32(&mut animation_fields, declared_controllers);
+    let animation = nested_chunk(ANIMATION, &animation_fields, &[controller])?;
+
+    let mut factory_fields = Vec::new();
+    push_u32(&mut factory_fields, 0);
+    push_pascal(&mut factory_fields, "factory")?;
+    push_pascal(&mut factory_fields, "base")?;
+    push_u32(&mut factory_fields, declared_animations);
+    let source = nested_chunk(FACTORY, &factory_fields, &[animation])?;
+    let header_size =
+        usize::try_from(read_u32(&source, 4).ok_or_else(|| {
+            String::from("animated-object factory header size is missing")
+        })?)
+        .map_err(|error| error.to_string())?;
+    let component = ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: FACTORY,
+        kind: crate::ChunkKind::AnimatedObjectFactory,
+        offset: 0,
+        header_size,
+        total_size: source.len(),
+        payload_offset: header_size,
+        payload_size: source.len().saturating_sub(header_size),
+        child_count: 1,
+    };
+    Ok((source, component))
+}
+
+#[test]
+fn animated_object_factory_preserves_typed_animation() -> Result<(), String> {
+    let (source, component) = animated_object_factory_fixture(1, 30_f32, 1)?;
+    let recovered = auxiliary::recover_animated_object_factory_json(
+        &component, &source, 1,
+    )
+    .ok_or_else(|| String::from("animated-object factory should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["version"] == 0
+        && value["num_animations"] == 1
+        && value["animations"][0]["frame_rate"] == 30.
+        && value["animations"][0]["num_controllers"] == 1
+        && value["animations"][0]["controllers"][0]["name"] == "controller"
+    {
+        Ok(())
+    } else {
+        Err(String::from(
+            "animated-object animation evidence was discarded",
+        ))
+    }
+}
+
+#[test]
+fn animated_object_factory_rejects_source_contract_drift() -> Result<(), String>
+{
+    for (animations, frame_rate, controllers) in
+        [(2, 30_f32, 1), (1, f32::NAN, 1), (1, 30_f32, 2)]
+    {
+        let (source, component) = animated_object_factory_fixture(
+            animations,
+            frame_rate,
+            controllers,
+        )?;
+        if auxiliary::recover_animated_object_factory_json(
+            &component, &source, 1,
+        )
+        .is_some()
+        {
+            return Err(String::from(
+                "animated-object source-contract drift must fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn state_prop_fixture(
     declared_states: u32,
     declared_drawables: u32,
