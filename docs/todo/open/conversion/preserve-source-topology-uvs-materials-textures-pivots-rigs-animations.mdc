@@ -1187,6 +1187,18 @@ schema-defined sprite-emitter family, with counts from 1 through 24, while the
 validator continues to admit the schema-defined base and drawable emitter kinds.
 Every particle-system record is an exact childless name-to-factory reference.
 
+State-prop hierarchy evidence is exact across 290 roots and 984 states. Every
+root is version 1 and its `NumStates` declaration matches only physical
+`STATEPROPSTATEDATA` children. Across those states, the declared drawable,
+frame-controller, event, and callback counts match 5,656 visibility, 3,422
+frame-controller, 1,019 event, and 1,344 callback records exactly.
+
+All state children are childless and consume their complete schema fields. The
+984 state `OutFrame` values, all frame-controller min/max/speed values, and all
+callback `OnFrame` values are finite. Recovery now retains this typed hierarchy
+in physical order while preserving authored flag-like fields numerically rather
+than coercing them to booleans.
+
 Standard frame-controller framing is exact across the full source. All 4,714
 `FRAME_CONTROLLER` records are version 0, childless, consume their complete
 schema-defined headers exactly, and carry finite frame offsets. Recovery now
