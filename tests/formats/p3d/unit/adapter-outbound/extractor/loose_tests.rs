@@ -3193,6 +3193,35 @@ fn billboard_quad_preserves_child_schema_versions() -> Result<(), String> {
 }
 
 #[test]
+fn billboard_quad_rejects_nonfinite_scalar_presentation_values()
+-> Result<(), String> {
+    let (source, header_size) = billboard_quad_fixture(1)?;
+    let scalar_offsets = [
+        (73_usize, "width"),
+        (77, "height"),
+        (81, "distance"),
+        (header_size + 44, "source range"),
+        (header_size + 48, "edge range"),
+    ];
+    for (offset, field) in scalar_offsets {
+        let mut malformed = source.clone();
+        malformed[offset..offset + 4].copy_from_slice(&f32::NAN.to_le_bytes());
+        if auxiliary::billboard_quad_json(
+            &malformed,
+            header_size,
+            malformed.len(),
+        )
+        .is_some()
+        {
+            return Err(format!(
+                "billboard quad accepted nonfinite {field}"
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn billboard_quad_rejects_missing_presentation_children() -> Result<(), String>
 {
     let (source, header_size) = billboard_quad_fixture(1)?;
