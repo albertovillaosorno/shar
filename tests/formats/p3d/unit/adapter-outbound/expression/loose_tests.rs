@@ -38,7 +38,7 @@ fn expression_mixer_rejects_invalid_utf8_names() {
     chunk.extend_from_slice(&0x0002_1002_u32.to_le_bytes());
     chunk.extend_from_slice(&26_u32.to_le_bytes());
     chunk.extend_from_slice(&26_u32.to_le_bytes());
-    chunk.extend_from_slice(&1_u32.to_le_bytes());
+    chunk.extend_from_slice(&0_u32.to_le_bytes());
     chunk.extend_from_slice(&[1, 0xff]);
     chunk.extend_from_slice(&0_u32.to_le_bytes());
     chunk.extend_from_slice(&[1, b't', 1, b'g']);
@@ -55,7 +55,7 @@ fn expression_mixer_preserves_declared_trailing_null_names()
     chunk.extend_from_slice(&0x0002_1002_u32.to_le_bytes());
     chunk.extend_from_slice(&27_u32.to_le_bytes());
     chunk.extend_from_slice(&27_u32.to_le_bytes());
-    chunk.extend_from_slice(&1_u32.to_le_bytes());
+    chunk.extend_from_slice(&0_u32.to_le_bytes());
     chunk.extend_from_slice(&[2, b'n', 0]);
     chunk.extend_from_slice(&0_u32.to_le_bytes());
     chunk.extend_from_slice(&[1, b't', 1, b'g']);
@@ -76,7 +76,7 @@ fn expression_group_rejects_missing_declared_children() {
     chunk.extend_from_slice(&0x0002_1001_u32.to_le_bytes());
     chunk.extend_from_slice(&28_u32.to_le_bytes());
     chunk.extend_from_slice(&28_u32.to_le_bytes());
-    chunk.extend_from_slice(&1_u32.to_le_bytes());
+    chunk.extend_from_slice(&0_u32.to_le_bytes());
     chunk.extend_from_slice(&[1, b'n', 1, b't']);
     chunk.extend_from_slice(&1_u32.to_le_bytes());
     chunk.extend_from_slice(&0_u32.to_le_bytes());
@@ -91,4 +91,24 @@ fn expression_key_format_preserves_f32_roundtrip() {
     let value = f32::from_bits(0x3f80_0001);
 
     assert_eq!(format_f32(value), value.to_string());
+}
+
+#[test]
+fn expression_curve_rejects_version_and_nonfinite_key_drift() {
+    fn curve(version: u32, key: f32) -> Vec<u8> {
+        let mut chunk = Vec::new();
+        chunk.extend_from_slice(&0x0002_1000_u32.to_le_bytes());
+        chunk.extend_from_slice(&30_u32.to_le_bytes());
+        chunk.extend_from_slice(&30_u32.to_le_bytes());
+        chunk.extend_from_slice(&version.to_le_bytes());
+        chunk.extend_from_slice(&[1, b'e']);
+        chunk.extend_from_slice(&1_u32.to_le_bytes());
+        chunk.extend_from_slice(&key.to_le_bytes());
+        chunk.extend_from_slice(&7_u32.to_le_bytes());
+        chunk
+    }
+
+    assert!(decode_expression_json(&curve(0, 0.5_f32)).is_some());
+    assert!(decode_expression_json(&curve(1, 0.5_f32)).is_none());
+    assert!(decode_expression_json(&curve(0, f32::NAN)).is_none());
 }

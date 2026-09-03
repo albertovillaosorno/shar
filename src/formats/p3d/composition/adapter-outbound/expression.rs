@@ -53,6 +53,9 @@ fn decode_expression_group_json(kind: &str, chunk: &[u8]) -> Option<String> {
     }
     let mut cursor = 12;
     let version = read_u32_advance(chunk, &mut cursor)?;
+    if version != 0 {
+        return None;
+    }
     let name = read_pstring_advance(chunk, &mut cursor)?;
     let target_name = read_pstring_advance(chunk, &mut cursor)?;
     let count = usize::try_from(read_u32_advance(chunk, &mut cursor)?).ok()?;
@@ -100,11 +103,18 @@ fn decode_expression_json(chunk: &[u8]) -> Option<String> {
     }
     let mut cursor = 12;
     let version = read_u32_advance(chunk, &mut cursor)?;
+    if version != 0 {
+        return None;
+    }
     let name = read_pstring_advance(chunk, &mut cursor)?;
     let count = usize::try_from(read_u32_advance(chunk, &mut cursor)?).ok()?;
     let mut keys = Vec::new();
     for _ in 0..count {
-        keys.push(format_f32(read_f32_advance(chunk, &mut cursor)?));
+        let key = read_f32_advance(chunk, &mut cursor)?;
+        if !key.is_finite() {
+            return None;
+        }
+        keys.push(format_f32(key));
     }
     let mut indices = Vec::new();
     for _ in 0..count {
@@ -132,6 +142,9 @@ fn decode_expression_mixer_json(kind: &str, chunk: &[u8]) -> Option<String> {
     }
     let mut cursor = 12;
     let version = read_u32_advance(chunk, &mut cursor)?;
+    if version != 0 {
+        return None;
+    }
     let name = read_pstring_advance(chunk, &mut cursor)?;
     let mixer_type = read_u32_advance(chunk, &mut cursor)?;
     let target_name = read_pstring_advance(chunk, &mut cursor)?;
