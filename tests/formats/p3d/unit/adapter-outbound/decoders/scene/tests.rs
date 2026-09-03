@@ -224,6 +224,43 @@ fn scenegraph_decodes_transform_and_drawable_refs() -> Result<(), String> {
 }
 
 #[test]
+fn scenegraph_rejects_nonfinite_transform_matrix() -> Result<(), String> {
+    let mut matrix = identity_matrix();
+    matrix
+        .get_mut(0..4)
+        .ok_or_else(|| String::from("matrix fixture is truncated"))?
+        .copy_from_slice(&f32::NAN.to_le_bytes());
+    let transform_fields = fields(vec![
+        require(pstring("body_xform"), "transform name should encode")?,
+        u32_field(0),
+        matrix,
+    ]);
+    let transform = require(
+        chunk(SCENE_TRANSFORM, transform_fields, Vec::new()),
+        "transform fixture should build",
+    )?;
+    let root = require(
+        chunk(SCENE_ROOT, Vec::new(), vec![transform]),
+        "root fixture should build",
+    )?;
+    let graph_fields = fields(vec![
+        require(pstring("graph"), "graph name should encode")?,
+        u32_field(0),
+    ]);
+    let graph = require(
+        chunk(SCENEGRAPH, graph_fields, vec![root]),
+        "scenegraph fixture should build",
+    )?;
+    if scenegraph_json(&graph).is_none() {
+        Ok(())
+    } else {
+        Err(String::from(
+            "non-finite scene transform matrix must fail closed",
+        ))
+    }
+}
+
+#[test]
 fn scenegraph_fails_closed_on_child_count_mismatch() -> Result<(), String> {
     let fixture =
         require(scenegraph_fixture(2), "mismatch fixture should build")?;

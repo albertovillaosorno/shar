@@ -631,7 +631,11 @@ fn chunk_bounds(chunk: &[u8]) -> Option<(u32, usize, usize)> {
 fn read_matrix(reader: &mut Reader<'_>) -> Option<Vec<String>> {
     let mut values = Vec::new();
     for _ in 0_usize..16_usize {
-        values.push(fmt_f32(reader.f32()?));
+        let value = reader.f32()?;
+        if !value.is_finite() {
+            return None;
+        }
+        values.push(fmt_f32(value));
     }
     Some(values)
 }
