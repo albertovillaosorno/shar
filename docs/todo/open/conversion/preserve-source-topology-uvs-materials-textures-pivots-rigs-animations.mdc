@@ -147,8 +147,7 @@ contract. The game loader copies script, zone, car-name, interior-name, and
 action strings as C bytes, while normalized JSON retains every original word in
 `data_elements_u32`. Text views therefore use lossy decoding when necessary.
 The action parser preserves an authored empty first string while skipping only
-the
-padding between subsequent strings.
+the padding between subsequent strings.
 
 Current source uses locator types 0 through 9 and 12 through 14; types 10, 11,
 15, and values above the declared enum are absent. Runtime dispatch nevertheless
@@ -158,13 +157,25 @@ breakable-camera branch is runtime-dormant and consumes no payload fields, so
 recovery retains any authored words as ignored evidence rather than inventing a
 matrix/FOV requirement.
 
-The same raw audit finds 1,866 schema-sized `EXTRA_MATRIX` children, all finite,
-with 1,571 distinct matrix payloads; fresh locator JSON now retains those
-matrices without assigning gameplay meaning. It also finds 129 locator splines
-with four through 13 finite control points, and every spline carries exactly one
-nested rail record. Fresh extraction retains those spline and rail fields as
-source evidence rather than dropping the child structure or interpreting camera
-behavior.
+All 2,238 event locators use one or two data words: 1,019 use one and 1,219
+use two. Runtime loading assigns the first word as the event type and calls
+`SetData` only for exactly two words, so recovery does not label a trailing word
+as `extra_data` for larger synthetic payloads. Derived event labels follow the
+runtime enum ordinals while the authored numeric event ID remains authoritative.
+
+The same raw audit finds 1,866 finite `EXTRA_MATRIX` children with 1,571
+distinct payloads: 1,431 belong to event locators and 435 to action locators.
+No other locator type carries one, and every observed locator carries at most
+one. Runtime loading calls `SetMatrix`; only the event and action locator
+classes store it, and both initialize their matrix to identity when the child is
+absent.
+Recovery therefore publishes that effective `runtime_matrix` while retaining
+the complete `extra_matrices` source evidence.
+
+The locator audit also finds 129 splines with four through 13 finite control
+points, and every spline carries exactly one nested rail record. Fresh
+extraction retains those spline and rail fields as source evidence rather than
+dropping the child structure or interpreting camera behavior.
 
 The complete rail audit finds all 129 records finite and structurally
 exact. Every authored behaviour is 1, every reverse-sense word is 0, and track
