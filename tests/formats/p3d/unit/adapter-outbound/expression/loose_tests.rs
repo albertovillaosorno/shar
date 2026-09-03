@@ -108,6 +108,47 @@ fn expression_counts_reject_impossible_arrays() {
 }
 
 #[test]
+fn expression_rejects_runtime_stage_and_key_drift() {
+    fn curve(keys: &[f32]) -> Vec<u8> {
+        let count = u32::try_from(keys.len()).unwrap_or(u32::MAX);
+        let size = 22_u32.saturating_add(count.saturating_mul(8));
+        let mut chunk = Vec::new();
+        chunk.extend_from_slice(&0x0002_1000_u32.to_le_bytes());
+        chunk.extend_from_slice(&size.to_le_bytes());
+        chunk.extend_from_slice(&size.to_le_bytes());
+        chunk.extend_from_slice(&0_u32.to_le_bytes());
+        chunk.extend_from_slice(&[1, b'e']);
+        chunk.extend_from_slice(&count.to_le_bytes());
+        for key in keys {
+            chunk.extend_from_slice(&key.to_le_bytes());
+        }
+        for index in 0..count {
+            chunk.extend_from_slice(&index.to_le_bytes());
+        }
+        chunk
+    }
+
+    assert!(decode_expression_json(&curve(&[])).is_none());
+    assert!(decode_expression_json(&curve(&[1_f32, 0_f32])).is_none());
+
+    let child = curve(&[0.5_f32]);
+    let header_size = 28_u32;
+    let total_size = header_size.saturating_add(
+        u32::try_from(child.len()).unwrap_or(u32::MAX),
+    );
+    let mut group = Vec::new();
+    group.extend_from_slice(&0x0002_1001_u32.to_le_bytes());
+    group.extend_from_slice(&header_size.to_le_bytes());
+    group.extend_from_slice(&total_size.to_le_bytes());
+    group.extend_from_slice(&0_u32.to_le_bytes());
+    group.extend_from_slice(&[1, b'n', 1, b't']);
+    group.extend_from_slice(&1_u32.to_le_bytes());
+    group.extend_from_slice(&3_u32.to_le_bytes());
+    group.extend_from_slice(&child);
+    assert!(vertex_expression_json("vertex_expression_group", &group).is_none());
+}
+
+#[test]
 fn expression_key_format_preserves_f32_roundtrip() {
     let value = f32::from_bits(0x3f80_0001);
 
