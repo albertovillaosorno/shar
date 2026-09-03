@@ -1229,7 +1229,6 @@ fn animated_dsg_rejects_source_contract_drift() -> Result<(), String> {
         let parent = records
             .first()
             .ok_or_else(|| String::from("animated DSG parent should exist"))?;
-        // jig-ignore-next-line: canonical Rust syntax is indivisible
         if schema::recover_anim_dsg_json(parent, &source, 1, &records).is_some()
         {
             return Err(String::from(
