@@ -1457,6 +1457,13 @@ pub(super) fn recover_frame_controller_json(
     cursor += 4;
     let hierarchy_name = schema::read_pascal_at(chunk, &mut cursor)?;
     let animation_name = schema::read_pascal_at(chunk, &mut cursor)?;
+    if component.id == 0x0012_1200
+        && (cursor != component.header_size
+            || component.total_size != component.header_size
+            || !frame_offset.is_finite())
+    {
+        return None;
+    }
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
