@@ -588,12 +588,8 @@ fn texture_metadata_json(
     cursor += 4;
     let priority = read_u32(chunk, cursor)?;
     cursor = cursor.checked_add(4)?;
-    if !texture_header_is_runtime_valid(
-        version,
-        mip_count,
-        texture_type,
-        usage,
-    ) || cursor != component.header_size
+    if !texture_header_is_runtime_valid(version, mip_count, texture_type, usage)
+        || cursor != component.header_size
     {
         return None;
     }

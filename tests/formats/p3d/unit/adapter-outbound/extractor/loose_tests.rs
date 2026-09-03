@@ -4445,8 +4445,9 @@ fn texture_payload_requires_exact_single_image_child() -> Result<(), String> {
 }
 
 #[test]
-fn texture_payload_rejects_runtime_header_contract_drift()
--> Result<(), String> {
+// jig-ignore-next-line: exact contract test name is indivisible.
+fn texture_payload_rejects_runtime_header_contract_drift() -> Result<(), String>
+{
     let payload = dds_payload_fixture();
     let image = image_fixture(&payload, payload.len())?;
     for (version, mip_count, texture_type, usage) in [
