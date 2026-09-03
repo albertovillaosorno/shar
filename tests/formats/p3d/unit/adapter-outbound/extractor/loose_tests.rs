@@ -1173,6 +1173,97 @@ fn game_attr_rejects_parameter_contract_drift() -> Result<(), String> {
     Ok(())
 }
 
+fn frame_controller_fixture(
+    frame_offset: f32,
+    trailing_word: bool,
+    child: bool,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const FRAME_CONTROLLER: u32 = 0x0012_1200;
+    let mut fields = Vec::new();
+    push_u32(&mut fields, 0);
+    push_pascal(&mut fields, "controller")?;
+    fields.extend_from_slice(b"BQG\0");
+    push_f32(&mut fields, frame_offset);
+    push_pascal(&mut fields, "hierarchy")?;
+    push_pascal(&mut fields, "animation")?;
+    if trailing_word {
+        push_u32(&mut fields, 99);
+    }
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("frame controller fixture overflowed"))?;
+    let child_bytes = if child {
+        empty_chunk(0xdead_beef)
+    } else {
+        Vec::new()
+    };
+    let total_size = header_size
+        .checked_add(child_bytes.len())
+        .ok_or_else(|| String::from("frame controller total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, FRAME_CONTROLLER);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    source.extend_from_slice(&child_bytes);
+    Ok((source, ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: FRAME_CONTROLLER,
+        kind: crate::ChunkKind::FrameController,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: child_bytes.len(),
+        child_count: usize::from(child),
+    }))
+}
+
+#[test]
+fn frame_controller_requires_exact_standard_header() -> Result<(), String> {
+    let (source, component) = frame_controller_fixture(0., false, false)?;
+    let recovered =
+        render::recover_frame_controller_json(&component, &source, 1)
+            .ok_or_else(|| String::from("frame controller should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["type"] == "BQG"
+        && value["hierarchy_name"] == "hierarchy"
+        && value["animation_name"] == "animation"
+    {
+        Ok(())
+    } else {
+        Err(String::from("frame controller fields were discarded"))
+    }
+}
+
+#[test]
+fn frame_controller_rejects_standard_contract_drift() -> Result<(), String> {
+    for fixture in [
+        frame_controller_fixture(f32::NAN, false, false),
+        frame_controller_fixture(0., true, false),
+        frame_controller_fixture(0., false, true),
+    ] {
+        let (source, component) = fixture?;
+        if render::recover_frame_controller_json(&component, &source, 1)
+            .is_some()
+        {
+            return Err(String::from(
+                "standard frame controller drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 #[derive(Clone, Copy)]
 enum LightFixtureDrift {
     Clean,
