@@ -1167,6 +1167,11 @@ pub(super) fn recover_history_json(
             escape_json(&schema::read_pascal_at(chunk, &mut cursor)?)
         ));
     }
+    if cursor != component.header_size
+        || component.header_size != component.total_size
+    {
+        return None;
+    }
     let kind = component.kind.label();
     let name = format!("{kind}_{kind_index:04}");
     let json = format!(
