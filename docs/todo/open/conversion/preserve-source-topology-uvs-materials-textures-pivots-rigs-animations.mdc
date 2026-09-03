@@ -994,6 +994,20 @@ names. Recovery now rejects unobserved versions and nonfinite curve keys while
 leaving mixer-type interpretation unchanged rather than turning the observed
 value into a universal enum rule.
 
+Vertex-animation key framing is exact across all 139 current keys. Every key
+and every current offset list is version 0; each current key owns one position
+vector list using the authored position parameter, with 176, 228, or 270 finite
+three-component offsets. Current source has no colour, normal, UV, or index-list
+children in this family.
+
+The source-backed loader contract is broader than the current corpus and is kept
+intact. A key may own at most one colour list, one position list, one normal
+list, and one list for each of UV channels zero through three. Colour offsets
+are four unsigned 16-bit channels per entry. An index list is optional, but when
+present it is unique, version 0, has the same count as its offset list, and its
+indices must fit the loader's signed integer range. Recovery validates those
+contracts without making an index list mandatory.
+
 Texture-font root framing is exact across all 39 current fonts. Every font is
 version 0, consumes its complete 50-byte header, and carries finite authored
 font size, width, height, and baseline values. Declared texture counts are one,
