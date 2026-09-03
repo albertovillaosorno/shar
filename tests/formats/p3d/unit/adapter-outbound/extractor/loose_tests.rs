@@ -1312,11 +1312,9 @@ fn sprite_preserves_exact_image_relationships() -> Result<(), String> {
 #[test]
 fn sprite_rejects_image_relationship_drift() -> Result<(), String> {
     const IMAGE: u32 = 0x0001_9001;
-    for (declared, child_id, trailing) in [
-        (1, IMAGE, false),
-        (2, 0xdead_beef, false),
-        (2, IMAGE, true),
-    ] {
+    for (declared, child_id, trailing) in
+        [(1, IMAGE, false), (2, 0xdead_beef, false), (2, IMAGE, true)]
+    {
         let (source, component, chunks) =
             sprite_fixture(declared, child_id, trailing)?;
         if render::recover_sprite_json(&component, &source, 1, Some(&chunks))
