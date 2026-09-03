@@ -213,6 +213,12 @@ pub(super) fn billboard_quad_fields(
     cursor += 4;
     let distance = schema::read_f32(quad, cursor)?;
     cursor += 4;
+    if [width, height, distance]
+        .iter()
+        .any(|value| !value.is_finite())
+    {
+        return None;
+    }
     let uv_offset = read_f32_array::<2>(quad, &mut cursor)?;
     if cursor != header_size || total_size != quad.len() {
         return None;
@@ -311,6 +317,9 @@ pub(super) fn read_billboard_display_info(
     *field += 4;
     display.edge_range = schema::read_f32(quad, *field)?;
     *field += 4;
+    if !display.source_range.is_finite() || !display.edge_range.is_finite() {
+        return None;
+    }
     (*field == child + child_header).then_some(())
 }
 
