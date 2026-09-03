@@ -3990,6 +3990,108 @@ fn publication_registry_disambiguates_case_alias_payload_conflict()
     Ok(())
 }
 
+fn particle_factory_fixture(
+    frame_rate: f32,
+    declared_emitters: u32,
+    emitter_id: u32,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const FACTORY: u32 = 0x0001_5800;
+    const INSTANCING_INFO: u32 = 0x0001_580b;
+    fn leaf(id: u32) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        push_u32(&mut bytes, id);
+        push_u32(&mut bytes, 12);
+        push_u32(&mut bytes, 12);
+        bytes
+    }
+    let mut fields = Vec::new();
+    push_u32(&mut fields, 0);
+    push_pascal(&mut fields, "spark")?;
+    push_f32(&mut fields, frame_rate);
+    push_u32(&mut fields, 60);
+    push_u32(&mut fields, 10);
+    fields.extend_from_slice(&1_u16.to_le_bytes());
+    fields.extend_from_slice(&0_u16.to_le_bytes());
+    push_u32(&mut fields, declared_emitters);
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("particle factory header overflowed"))?;
+    let instancing = leaf(INSTANCING_INFO);
+    let emitter = leaf(emitter_id);
+    let total_size = header_size
+        .checked_add(instancing.len())
+        .and_then(|size| size.checked_add(emitter.len()))
+        .ok_or_else(|| String::from("particle factory total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, FACTORY);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    source.extend_from_slice(&instancing);
+    source.extend_from_slice(&emitter);
+    let component = ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: FACTORY,
+        kind: crate::ChunkKind::ParticleSystemFactory,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: total_size.saturating_sub(header_size),
+        child_count: 2,
+    };
+    Ok((source, component))
+}
+
+#[test]
+fn particle_factory_preserves_complete_header() -> Result<(), String> {
+    const SPRITE_EMITTER: u32 = 0x0001_5806;
+    let (source, component) =
+        particle_factory_fixture(30_f32, 1, SPRITE_EMITTER)?;
+    let recovered =
+        render::recover_particle_factory_json(&component, &source, 1)
+            .ok_or_else(|| String::from("particle factory should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["cycle_anim"] == 1
+        && value["enable_sorting"] == 0
+        && value["num_emitters"] == 1
+    {
+        Ok(())
+    } else {
+        Err(String::from("particle factory header fields were discarded"))
+    }
+}
+
+#[test]
+fn particle_factory_rejects_source_shape_drift() -> Result<(), String> {
+    const SPRITE_EMITTER: u32 = 0x0001_5806;
+    for (frame_rate, declared, emitter_id) in [
+        (f32::NAN, 1, SPRITE_EMITTER),
+        (30_f32, 2, SPRITE_EMITTER),
+        (30_f32, 1, 0xdead_beef),
+    ] {
+        let (source, component) =
+            particle_factory_fixture(frame_rate, declared, emitter_id)?;
+        if render::recover_particle_factory_json(&component, &source, 1)
+            .is_some()
+        {
+            return Err(String::from(
+                "particle factory source-shape drift must fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn inst_particle_system_fixture() -> Result<Vec<u8>, String> {
     const INST_PARTICLE_SYSTEM: u32 = 0x0300_1001;
     const SYSTEM_FACTORY: u32 = 0x0001_5800;
