@@ -100,6 +100,10 @@ pub(super) fn recover_multi_sprite_json(
     let mut cursor = 12;
     let frame = read_widget_frame(chunk, &mut cursor)?;
     let image_count = usize::try_from(read_word(chunk, &mut cursor)?).ok()?;
+    let remaining_header = chunk.get(cursor..component.header_size)?.len();
+    if image_count > remaining_header {
+        return None;
+    }
     let mut images = Vec::with_capacity(image_count);
     for _ in 0..image_count {
         images.push(schema::read_pascal_at(chunk, &mut cursor)?);
@@ -206,6 +210,11 @@ pub(super) fn recover_polygon_json(
     let version = read_word(chunk, &mut cursor)?;
     let translucency = read_word(chunk, &mut cursor)?;
     let point_count = usize::try_from(read_word(chunk, &mut cursor)?).ok()?;
+    let remaining_header = chunk.get(cursor..component.header_size)?.len();
+    let minimum_bytes = point_count.checked_mul(16)?;
+    if minimum_bytes > remaining_header {
+        return None;
+    }
     let mut points = Vec::with_capacity(point_count);
     for _ in 0..point_count {
         points.push(schema::read_point(chunk, &mut cursor)?);
