@@ -1042,6 +1042,7 @@ mesh counts match 212 direct mesh children exactly, and their billboard counts
 match 23 direct billboard-quad-group children exactly. The remaining direct
 children are 30 frame controllers, 27 animations, 18 skeletons, 15 composite
 drawables, 15 multi-controllers, and three lens flares, all schema-declared.
+
 Fresh recovery retains each direct child's source ordinal, kind, and authored
 name in physical source order rather than reducing the container to two counts.
 
