@@ -3541,10 +3541,10 @@ fn texture_fixture(
     let header_size = 12_usize
         .checked_add(fields.len())
         .ok_or_else(|| String::from("texture fixture header overflowed"))?;
-    let children_size = children.iter().try_fold(0_usize, |total, child| {
-        total.checked_add(child.len())
-    })
-    .ok_or_else(|| String::from("texture fixture children overflowed"))?;
+    let children_size = children
+        .iter()
+        .try_fold(0_usize, |total, child| total.checked_add(child.len()))
+        .ok_or_else(|| String::from("texture fixture children overflowed"))?;
     let total_size = header_size
         .checked_add(children_size)
         .ok_or_else(|| String::from("texture fixture total overflowed"))?;
