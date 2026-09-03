@@ -1090,7 +1090,11 @@ fn world_sphere_fixture(
         .ok_or_else(|| String::from("world sphere header overflowed"))?;
     let children = [
         (0x0001_0000_u32, crate::ChunkKind::Mesh, "mesh_child"),
-        (0x0001_7002_u32, crate::ChunkKind::QuadGroup, "billboard_child"),
+        (
+            0x0001_7002_u32,
+            crate::ChunkKind::QuadGroup,
+            "billboard_child",
+        ),
         (
             0x0000_4512_u32,
             crate::ChunkKind::CompositeDrawable,
