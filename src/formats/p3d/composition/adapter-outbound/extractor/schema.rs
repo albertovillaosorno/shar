@@ -351,22 +351,34 @@ pub(super) fn recover_light_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const LIGHT: u32 = 0x0001_3000;
+    if component.id != LIGHT {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let name = read_pascal_at(chunk, &mut cursor)?;
     let version = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let light_type = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let colour = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let constant = read_f32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let linear = read_f32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let squared = read_f32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let enabled = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != component.header_size
+        || [constant, linear, squared]
+            .iter()
+            .any(|value| !value.is_finite())
+    {
+        return None;
+    }
     let fallback = format!("light_{kind_index:04}");
     let file_name = sanitize(if name.is_empty() {
         &fallback
@@ -377,7 +389,7 @@ pub(super) fn recover_light_json(
         chunk,
         component.header_size,
         component.total_size,
-    );
+    )?;
     let json = format!(
         concat!(
             r#"{{"schema":"light","#,

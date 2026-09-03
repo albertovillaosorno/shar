@@ -1173,6 +1173,227 @@ fn game_attr_rejects_parameter_contract_drift() -> Result<(), String> {
     Ok(())
 }
 
+#[derive(Clone, Copy)]
+enum LightFixtureDrift {
+    Clean,
+    NonfiniteHeader,
+    NonfinitePosition,
+    DuplicatePosition,
+    UnknownChild,
+    TrailingPosition,
+    TrailingHeader,
+}
+
+fn light_fixture(
+    drift: LightFixtureDrift,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const LIGHT: u32 = 0x0001_3000;
+    const DIRECTION: u32 = 0x0001_3001;
+    const POSITION: u32 = 0x0001_3002;
+    const SHADOW: u32 = 0x0001_3004;
+
+    let point_child = |id: u32, values: [f32; 3], trailing: bool| {
+        let mut fields = Vec::new();
+        for value in values {
+            push_f32(&mut fields, value);
+        }
+        if trailing {
+            push_u32(&mut fields, 99);
+        }
+        let size = 12_usize.saturating_add(fields.len());
+        let mut child = Vec::new();
+        push_u32(&mut child, id);
+        push_u32(
+            &mut child,
+            u32::try_from(size).unwrap_or(u32::MAX),
+        );
+        push_u32(
+            &mut child,
+            u32::try_from(size).unwrap_or(u32::MAX),
+        );
+        child.extend_from_slice(&fields);
+        child
+    };
+    let position_x = if matches!(drift, LightFixtureDrift::NonfinitePosition) {
+        f32::NAN
+    } else {
+        1.5
+    };
+    let position = point_child(
+        POSITION,
+        [position_x, 2.0, 3.0],
+        matches!(drift, LightFixtureDrift::TrailingPosition),
+    );
+    let direction = point_child(DIRECTION, [0.0, -1.0, 0.0], false);
+    let mut shadow = Vec::new();
+    push_u32(&mut shadow, SHADOW);
+    push_u32(&mut shadow, 16);
+    push_u32(&mut shadow, 16);
+    push_u32(&mut shadow, 1);
+
+    let mut children = Vec::new();
+    children.extend_from_slice(&position);
+    children.extend_from_slice(&direction);
+    children.extend_from_slice(&shadow);
+    if matches!(drift, LightFixtureDrift::DuplicatePosition) {
+        children.extend_from_slice(&point_child(
+            POSITION,
+            [4.0, 5.0, 6.0],
+            false,
+        ));
+    }
+    if matches!(drift, LightFixtureDrift::UnknownChild) {
+        children.extend_from_slice(&empty_chunk(0xdead_beef));
+    }
+
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "light")?;
+    push_u32(&mut fields, 257);
+    push_u32(&mut fields, 2);
+    push_u32(&mut fields, 0xff00_ff00);
+    let constant = if matches!(drift, LightFixtureDrift::NonfiniteHeader) {
+        f32::NAN
+    } else {
+        1.0
+    };
+    push_f32(&mut fields, constant);
+    push_f32(&mut fields, 0.0);
+    push_f32(&mut fields, 0.0);
+    push_u32(&mut fields, 1);
+    if matches!(drift, LightFixtureDrift::TrailingHeader) {
+        push_u32(&mut fields, 99);
+    }
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("light header fixture overflowed"))?;
+    let total_size = header_size
+        .checked_add(children.len())
+        .ok_or_else(|| String::from("light fixture overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, LIGHT);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    source.extend_from_slice(&children);
+    let child_count = 3_usize
+        .saturating_add(usize::from(matches!(
+            drift,
+            LightFixtureDrift::DuplicatePosition
+        )))
+        .saturating_add(usize::from(matches!(
+            drift,
+            LightFixtureDrift::UnknownChild
+        )));
+    Ok((source, ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: LIGHT,
+        kind: crate::ChunkKind::Light,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: children.len(),
+        child_count,
+    }))
+}
+
+#[test]
+fn light_preserves_exact_direct_children() -> Result<(), String> {
+    let (source, component) =
+        light_fixture(LightFixtureDrift::Clean)?;
+    let recovered = schema::recover_light_json(&component, &source, 1)
+        .ok_or_else(|| String::from("light fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["version"] == 257
+        && value["extras"][0]["kind"] == "position"
+        && value["extras"][0]["value"][0] == 1.5
+        && value["extras"][0]["value"][1] == 2
+        && value["extras"][0]["value"][2] == 3
+        && value["extras"][1]["kind"] == "direction"
+        && value["extras"][2]["kind"] == "shadow"
+    {
+        Ok(())
+    } else {
+        Err(String::from("light direct child evidence was discarded"))
+    }
+}
+
+#[test]
+fn light_preserves_schema_cone_and_decay_children() -> Result<(), String> {
+    const CONE: u32 = 0x0001_3003;
+    const DECAY: u32 = 0x0001_3006;
+    const ROTATION_Y: u32 = 0x0001_3007;
+
+    let mut cone = Vec::new();
+    push_u32(&mut cone, CONE);
+    push_u32(&mut cone, 28);
+    push_u32(&mut cone, 28);
+    for value in [1.0_f32, 2.0, 3.0, 4.0] {
+        push_f32(&mut cone, value);
+    }
+    let cone_json = render::light_child_json(&cone, 0, CONE, 28, 28)
+        .ok_or_else(|| String::from("schema cone child should decode"))?;
+    let cone_value: serde_json::Value =
+        serde_json::from_str(&cone_json).map_err(|error| error.to_string())?;
+    if cone_value["kind"] != "cone" || cone_value["range"] != 4 {
+        return Err(String::from("schema cone evidence was discarded"));
+    }
+
+    let mut decay = Vec::new();
+    push_u32(&mut decay, DECAY);
+    push_u32(&mut decay, 40);
+    push_u32(&mut decay, 56);
+    push_u32(&mut decay, 2);
+    for value in [1.0_f32, 2.0, 3.0, 4.0, 5.0, 6.0] {
+        push_f32(&mut decay, value);
+    }
+    push_u32(&mut decay, ROTATION_Y);
+    push_u32(&mut decay, 16);
+    push_u32(&mut decay, 16);
+    push_f32(&mut decay, 7.0);
+    let decay_json = render::light_child_json(&decay, 0, DECAY, 40, 56)
+        .ok_or_else(|| String::from("schema decay child should decode"))?;
+    let decay_value: serde_json::Value =
+        serde_json::from_str(&decay_json).map_err(|error| error.to_string())?;
+    if decay_value["kind"] == "decay_range"
+        && decay_value["type"] == 2
+        && decay_value["rotation_y"] == 7
+    {
+        Ok(())
+    } else {
+        Err(String::from("schema decay evidence was discarded"))
+    }
+}
+
+#[test]
+fn light_rejects_source_contract_drift() -> Result<(), String> {
+    for drift in [
+        LightFixtureDrift::NonfiniteHeader,
+        LightFixtureDrift::NonfinitePosition,
+        LightFixtureDrift::DuplicatePosition,
+        LightFixtureDrift::UnknownChild,
+        LightFixtureDrift::TrailingPosition,
+        LightFixtureDrift::TrailingHeader,
+    ] {
+        let (source, component) = light_fixture(drift)?;
+        if schema::recover_light_json(&component, &source, 1).is_some() {
+            return Err(String::from(
+                "light source-contract drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn light_group_fixture(
     declared_lights: u32,
     trailing_word: bool,

@@ -1270,58 +1270,82 @@ pub(super) fn light_type_name(value: u32) -> &'static str {
     }
 }
 
-/// Light children json.
+/// Decode every direct light child with exact schema framing.
 pub(super) fn light_children_json(
     chunk: &[u8],
     mut cursor: usize,
     end: usize,
-) -> String {
+) -> Option<String> {
     let mut extras = Vec::new();
-    while cursor + 12 <= end {
-        let Some((id, header_size, total_size)) =
-            read_chunk_header(chunk, cursor)
-        else {
-            break;
-        };
-        let next = cursor.saturating_add(total_size);
-        if total_size < header_size || next > end {
-            break;
+    let mut seen = Vec::new();
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if total_size < header_size || next > end || seen.contains(&id) {
+            return None;
         }
-        if let Some(extra) = light_child_json(chunk, cursor, id) {
-            extras.push(extra);
-        }
+        extras.push(light_child_json(
+            chunk,
+            cursor,
+            id,
+            header_size,
+            total_size,
+        )?);
+        seen.push(id);
         cursor = next;
     }
-    extras.join(",")
+    Some(extras.join(","))
 }
 
-/// Light child json.
+/// Decode one schema-declared direct light child.
 pub(super) fn light_child_json(
     chunk: &[u8],
     offset: usize,
     id: u32,
+    header_size: usize,
+    total_size: usize,
 ) -> Option<String> {
-    let mut cursor = offset + 12;
+    let mut cursor = offset.checked_add(12)?;
     match id {
-        0x0001_3001 => {
+        0x0001_3001 | 0x0001_3002 => {
+            if header_size != 24 || total_size != header_size {
+                return None;
+            }
             let p = schema::read_point(chunk, &mut cursor)?;
+            if cursor != offset.checked_add(header_size)?
+                || p.iter().any(|value| !value.is_finite())
+            {
+                return None;
+            }
+            let kind = if id == 0x0001_3001 {
+                "direction"
+            } else {
+                "position"
+            };
             Some(format!(
-                r#"{{"kind":"direction","value":[{},{},{}]}}"#,
-                p[0], p[1], p[2]
-            ))
-        },
-        0x0001_3002 => {
-            let p = schema::read_point(chunk, &mut cursor)?;
-            Some(format!(
-                r#"{{"kind":"position","value":[{},{},{}]}}"#,
-                p[0], p[1], p[2]
+                r#"{{"kind":"{}","value":[{},{},{}]}}"#,
+                kind, p[0], p[1], p[2]
             ))
         },
         0x0001_3003 => {
+            if header_size != 28 || total_size != header_size {
+                return None;
+            }
             let phi = schema::read_f32(chunk, cursor)?;
-            let theta = schema::read_f32(chunk, cursor + 4)?;
-            let falloff = schema::read_f32(chunk, cursor + 8)?;
-            let range = schema::read_f32(chunk, cursor + 12)?;
+            cursor = cursor.checked_add(4)?;
+            let theta = schema::read_f32(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            let falloff = schema::read_f32(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            let range = schema::read_f32(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            if cursor != offset.checked_add(header_size)?
+                || [phi, theta, falloff, range]
+                    .iter()
+                    .any(|value| !value.is_finite())
+            {
+                return None;
+            }
             Some(format!(
                 concat!(
                     r#"{{"kind":"cone","#,
@@ -1333,36 +1357,86 @@ pub(super) fn light_child_json(
                 phi, theta, falloff, range
             ))
         },
-        0x0001_3004 => {
+        0x0001_3004 | 0x0001_3008 => {
+            if header_size != 16 || total_size != header_size {
+                return None;
+            }
             let value = read_u32(chunk, cursor)?;
-            Some(format!(r#"{{"kind":"shadow","value":{value}}}"#))
+            cursor = cursor.checked_add(4)?;
+            if cursor != offset.checked_add(header_size)? {
+                return None;
+            }
+            let kind = if id == 0x0001_3004 {
+                "shadow"
+            } else {
+                "illumination_type"
+            };
+            Some(format!(r#"{{"kind":"{kind}","value":{value}}}"#))
         },
-        0x0001_3006 => light_decay_json(chunk, cursor),
-        0x0001_3008 => {
-            let value = read_u32(chunk, cursor)?;
-            Some(format!(r#"{{"kind":"illumination_type","value":{value}}}"#))
-        },
+        0x0001_3006 => light_decay_json(chunk, offset, header_size, total_size),
         _ => None,
     }
 }
 
-/// Light decay json.
+/// Decode one decay-range child and its optional authored Y rotation.
 pub(super) fn light_decay_json(
     chunk: &[u8],
-    mut cursor: usize,
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
 ) -> Option<String> {
+    const ROTATION_Y: u32 = 0x0001_3007;
+    if header_size != 40 || total_size < header_size {
+        return None;
+    }
+    let mut cursor = offset.checked_add(12)?;
     let decay_type = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let inner = schema::read_point(chunk, &mut cursor)?;
     let outer = schema::read_point(chunk, &mut cursor)?;
+    if cursor != offset.checked_add(header_size)?
+        || inner
+            .iter()
+            .chain(outer.iter())
+            .any(|value| !value.is_finite())
+    {
+        return None;
+    }
+    let end = offset.checked_add(total_size)?;
+    let rotation = if cursor == end {
+        None
+    } else {
+        let (id, child_header, child_total) = read_chunk_header(chunk, cursor)?;
+        if id != ROTATION_Y
+            || child_header != 16
+            || child_total != child_header
+            || cursor.checked_add(child_total)? != end
+        {
+            return None;
+        }
+        let value = schema::read_f32(chunk, cursor.checked_add(12)?)?;
+        if !value.is_finite() {
+            return None;
+        }
+        Some(value)
+    };
+    let rotation_json = rotation
+        .map_or_else(String::new, |value| format!(r#", "rotation_y":{value}"#));
     Some(format!(
         concat!(
             r#"{{"kind":"decay_range","#,
             r#""type":{},"#,
             r#""inner":[{},{},{}],"#,
-            r#""outer":[{},{},{}]}}"#,
+            r#""outer":[{},{},{}]{} }}"#,
         ),
-        decay_type, inner[0], inner[1], inner[2], outer[0], outer[1], outer[2]
+        decay_type,
+        inner[0],
+        inner[1],
+        inner[2],
+        outer[0],
+        outer[1],
+        outer[2],
+        rotation_json
     ))
 }
 
