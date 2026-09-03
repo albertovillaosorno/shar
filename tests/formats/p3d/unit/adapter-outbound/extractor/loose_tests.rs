@@ -941,7 +941,8 @@ fn export_info_fixture(
         let size = 12_usize
             .checked_add(fields.len())
             .ok_or_else(|| String::from("export-info leaf overflowed"))?;
-        let size_u32 = u32::try_from(size).map_err(|error| error.to_string())?;
+        let size_u32 =
+            u32::try_from(size).map_err(|error| error.to_string())?;
         let mut bytes = Vec::new();
         push_u32(&mut bytes, id);
         push_u32(&mut bytes, size_u32);
