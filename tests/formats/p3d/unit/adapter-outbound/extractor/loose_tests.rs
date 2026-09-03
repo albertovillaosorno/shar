@@ -4706,14 +4706,23 @@ fn particle_factory_fixture(
     frame_rate: f32,
     declared_emitters: u32,
     emitter_id: u32,
+    max_instances: u32,
 ) -> Result<(Vec<u8>, ChunkRecord), String> {
     const FACTORY: u32 = 0x0001_5800;
-    const INSTANCING_INFO: u32 = 0x0001_580b;
     fn leaf(id: u32) -> Vec<u8> {
         let mut bytes = Vec::new();
         push_u32(&mut bytes, id);
         push_u32(&mut bytes, 12);
         push_u32(&mut bytes, 12);
+        bytes
+    }
+    fn instancing(max_instances: u32) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        push_u32(&mut bytes, 0x0001_580b);
+        push_u32(&mut bytes, 20);
+        push_u32(&mut bytes, 20);
+        push_u32(&mut bytes, 7);
+        push_u32(&mut bytes, max_instances);
         bytes
     }
     let mut fields = Vec::new();
@@ -4728,7 +4737,7 @@ fn particle_factory_fixture(
     let header_size = 12_usize
         .checked_add(fields.len())
         .ok_or_else(|| String::from("particle factory header overflowed"))?;
-    let instancing = leaf(INSTANCING_INFO);
+    let instancing = instancing(max_instances);
     let emitter = leaf(emitter_id);
     let total_size = header_size
         .checked_add(instancing.len())
@@ -4767,7 +4776,7 @@ fn particle_factory_fixture(
 fn particle_factory_preserves_complete_header() -> Result<(), String> {
     const SPRITE_EMITTER: u32 = 0x0001_5806;
     let (source, component) =
-        particle_factory_fixture(30_f32, 1, SPRITE_EMITTER)?;
+        particle_factory_fixture(30_f32, 1, SPRITE_EMITTER, 3)?;
     let recovered =
         render::recover_particle_factory_json(&component, &source, 1)
             .ok_or_else(|| String::from("particle factory should decode"))?;
@@ -4776,6 +4785,8 @@ fn particle_factory_preserves_complete_header() -> Result<(), String> {
     if value["cycle_anim"] == 1
         && value["enable_sorting"] == 0
         && value["num_emitters"] == 1
+        && value["instancing_version"] == 7
+        && value["max_instances"] == 3
     {
         Ok(())
     } else {
@@ -4788,13 +4799,20 @@ fn particle_factory_preserves_complete_header() -> Result<(), String> {
 #[test]
 fn particle_factory_rejects_source_shape_drift() -> Result<(), String> {
     const SPRITE_EMITTER: u32 = 0x0001_5806;
-    for (frame_rate, declared, emitter_id) in [
-        (f32::NAN, 1, SPRITE_EMITTER),
-        (30_f32, 2, SPRITE_EMITTER),
-        (30_f32, 1, 0xdead_beef),
+    for (frame_rate, declared, emitter_id, max_instances) in [
+        (f32::NAN, 1, SPRITE_EMITTER, 1),
+        (0., 1, SPRITE_EMITTER, 1),
+        (30_f32, 0, SPRITE_EMITTER, 1),
+        (30_f32, 2, SPRITE_EMITTER, 1),
+        (30_f32, 1, 0xdead_beef, 1),
+        (30_f32, 1, SPRITE_EMITTER, 0),
     ] {
-        let (source, component) =
-            particle_factory_fixture(frame_rate, declared, emitter_id)?;
+        let (source, component) = particle_factory_fixture(
+            frame_rate,
+            declared,
+            emitter_id,
+            max_instances,
+        )?;
         if render::recover_particle_factory_json(&component, &source, 1)
             .is_some()
         {
