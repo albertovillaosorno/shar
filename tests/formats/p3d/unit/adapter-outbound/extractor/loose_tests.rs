@@ -1239,6 +1239,156 @@ fn animated_dsg_rejects_source_contract_drift() -> Result<(), String> {
     Ok(())
 }
 
+fn tree_fixture(
+    declared_nodes: u32,
+    plane_position: f32,
+    trailing_spatial_word: bool,
+) -> Result<(Vec<u8>, Vec<ChunkRecord>), String> {
+    const TREE: u32 = 0x03f0_0004;
+    const BIN: u32 = 0x03f0_0005;
+    const SPATIAL: u32 = 0x03f0_0006;
+    let mut spatial_fields = vec![2_u8];
+    push_f32(&mut spatial_fields, plane_position);
+    for value in [1_u32, 2, 3, 4, 5, 6, 7, 8] {
+        push_u32(&mut spatial_fields, value);
+    }
+    if trailing_spatial_word {
+        push_u32(&mut spatial_fields, 99);
+    }
+    let spatial_size = 12_usize
+        .checked_add(spatial_fields.len())
+        .ok_or_else(|| String::from("tree spatial fixture overflowed"))?;
+    let mut spatial = Vec::new();
+    push_u32(&mut spatial, SPATIAL);
+    push_u32(
+        &mut spatial,
+        u32::try_from(spatial_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut spatial,
+        u32::try_from(spatial_size).map_err(|error| error.to_string())?,
+    );
+    spatial.extend_from_slice(&spatial_fields);
+
+    let bin_size = 20_usize
+        .checked_add(spatial.len())
+        .ok_or_else(|| String::from("tree bin fixture overflowed"))?;
+    let mut bin = Vec::new();
+    push_u32(&mut bin, BIN);
+    push_u32(&mut bin, 20);
+    push_u32(
+        &mut bin,
+        u32::try_from(bin_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(&mut bin, 1);
+    push_u32(&mut bin, u32::MAX);
+    bin.extend_from_slice(&spatial);
+
+    let total_size = 40_usize
+        .checked_add(bin.len())
+        .ok_or_else(|| String::from("tree fixture overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, TREE);
+    push_u32(&mut source, 40);
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(&mut source, declared_nodes);
+    for value in [-1_f32, -2., -3., 4., 5., 6.] {
+        push_f32(&mut source, value);
+    }
+    source.extend_from_slice(&bin);
+
+    let spatial_offset = 60_usize;
+    let records = vec![
+        ChunkRecord {
+            ordinal: 1,
+            depth: 1,
+            parent_ordinal: Some(0),
+            id: TREE,
+            kind: crate::ChunkKind::SrrTreeDsg,
+            offset: 0,
+            header_size: 40,
+            total_size,
+            payload_offset: 40,
+            payload_size: total_size.saturating_sub(40),
+            child_count: 1,
+        },
+        ChunkRecord {
+            ordinal: 2,
+            depth: 2,
+            parent_ordinal: Some(1),
+            id: BIN,
+            kind: crate::ChunkKind::Unknown,
+            offset: 40,
+            header_size: 20,
+            total_size: bin_size,
+            payload_offset: 60,
+            payload_size: spatial.len(),
+            child_count: 1,
+        },
+        ChunkRecord {
+            ordinal: 3,
+            depth: 3,
+            parent_ordinal: Some(2),
+            id: SPATIAL,
+            kind: crate::ChunkKind::Unknown,
+            offset: spatial_offset,
+            header_size: spatial_size,
+            total_size: spatial_size,
+            payload_offset: spatial_offset + spatial_size,
+            payload_size: 0,
+            child_count: 0,
+        },
+    ];
+    Ok((source, records))
+}
+
+#[test]
+fn tree_preserves_exact_spatial_node_evidence() -> Result<(), String> {
+    let (source, records) = tree_fixture(1, 12.5, false)?;
+    let parent = records
+        .first()
+        .ok_or_else(|| String::from("tree parent should exist"))?;
+    let recovered = schema::recover_tree_json(parent, &source, 1, &records)
+        .ok_or_else(|| String::from("tree fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["num_nodes"] == 1
+        && value["nodes"][0]["source_ordinal"] == 2
+        && value["nodes"][0]["spatial_source_ordinal"] == 3
+        && value["nodes"][0]["plane_axis"] == 2
+        && value["nodes"][0]["counts"]
+            == serde_json::json!([1, 2, 3, 4, 5, 6, 7, 8])
+    {
+        Ok(())
+    } else {
+        Err(String::from("tree spatial node evidence was discarded"))
+    }
+}
+
+#[test]
+fn tree_rejects_source_contract_drift() -> Result<(), String> {
+    for (declared_nodes, plane_position, trailing) in [
+        (2, 12.5_f32, false),
+        (1, f32::NAN, false),
+        (1, 12.5_f32, true),
+    ] {
+        let (source, records) =
+            tree_fixture(declared_nodes, plane_position, trailing)?;
+        let parent = records
+            .first()
+            .ok_or_else(|| String::from("tree parent should exist"))?;
+        if schema::recover_tree_json(parent, &source, 1, &records).is_some() {
+            return Err(String::from(
+                "tree source-contract drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn fence_fixture(
     wall_id: u32,
     start_x: f32,

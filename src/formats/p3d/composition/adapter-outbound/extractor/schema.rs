@@ -47,6 +47,9 @@ pub(super) fn recover_schema_json(
     if matches!(component.kind.label(), "srr_anim_dsg" | "srr_anim_coll_dsg") {
         return recover_anim_dsg_json(component, source, kind_index, chunks?);
     }
+    if component.kind.label() == "srr_tree_dsg" {
+        return recover_tree_json(component, source, kind_index, chunks?);
+    }
     recover_world_schema_json(component, source, kind_index)
         .or_else(|| {
             schema_recovery::recover_render_schema_json(
@@ -94,7 +97,6 @@ pub(super) fn recover_world_schema_json(
         "srr_intersection" => {
             recover_intersection_json(component, source, kind_index)
         },
-        "srr_tree_dsg" => recover_tree_json(component, source, kind_index),
         "srr_intersect_dsg" => {
             recover_intersect_json(component, source, kind_index)
         },
@@ -820,31 +822,132 @@ pub(super) fn recover_intersection_json(
     ))
 }
 
-/// Recover tree json.
+/// Recover one spatial tree with exact physical node relationships.
 pub(super) fn recover_tree_json(
     component: &ChunkRecord,
     source: &[u8],
     kind_index: usize,
+    chunks: &[ChunkRecord],
 ) -> Option<RecoveredComponent> {
+    const TREE_DSG: u32 = 0x03f0_0004;
+    const CONTIGUOUS_BIN_NODE: u32 = 0x03f0_0005;
+    const SPATIAL_NODE: u32 = 0x03f0_0006;
+
+    if component.id != TREE_DSG || component.header_size != 40 {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
-    let nodes = read_u32(chunk, cursor)?;
-    cursor += 4;
+    let declared_nodes = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
     let bounds_min = read_point(chunk, &mut cursor)?;
     let bounds_max = read_point(chunk, &mut cursor)?;
+    if cursor != component.header_size
+        || bounds_min
+            .iter()
+            .chain(bounds_max.iter())
+            .any(|value| !value.is_finite())
+    {
+        return None;
+    }
+
+    let direct = chunks
+        .iter()
+        .filter(|child| child.parent_ordinal == Some(component.ordinal))
+        .collect::<Vec<_>>();
+    if direct.len() != declared_nodes {
+        return None;
+    }
+    let mut physical_cursor =
+        component.offset.checked_add(component.header_size)?;
+    let physical_end = component.offset.checked_add(component.total_size)?;
+    let mut nodes = Vec::with_capacity(direct.len());
+    for bin in direct {
+        if bin.id != CONTIGUOUS_BIN_NODE
+            || bin.offset != physical_cursor
+            || bin.header_size != 20
+        {
+            return None;
+        }
+        physical_cursor = physical_cursor.checked_add(bin.total_size)?;
+        let bin_chunk = raw_component_bytes(bin, source).ok()?;
+        let subtree_size = read_u32(bin_chunk, 12)?;
+        let parent_offset = read_u32(bin_chunk, 16)?;
+        let spatial_children = chunks
+            .iter()
+            .filter(|child| child.parent_ordinal == Some(bin.ordinal))
+            .collect::<Vec<_>>();
+        if spatial_children.len() != 1 {
+            return None;
+        }
+        let spatial = spatial_children.first()?;
+        if spatial.id != SPATIAL_NODE
+            || spatial.offset != bin.offset.checked_add(bin.header_size)?
+            || spatial.header_size != 49
+            || spatial.total_size != 49
+            || bin.total_size != 69
+        {
+            return None;
+        }
+        let spatial_chunk = raw_component_bytes(spatial, source).ok()?;
+        let plane_axis = *spatial_chunk.get(12)?;
+        let plane_position = read_f32(spatial_chunk, 13)?;
+        if !plane_position.is_finite() {
+            return None;
+        }
+        let mut count_cursor = 17_usize;
+        let mut counts = [0_u32; 8];
+        for count in &mut counts {
+            *count = read_u32(spatial_chunk, count_cursor)?;
+            count_cursor = count_cursor.checked_add(4)?;
+        }
+        if count_cursor != spatial.header_size {
+            return None;
+        }
+        nodes.push(format!(
+            concat!(
+                "{{\"source_ordinal\":{},\"spatial_source_ordinal\":{},",
+                "\"subtree_size\":{},\"parent_offset\":{},",
+                "\"plane_axis\":{},\"plane_position\":{},",
+                "\"counts\":[{},{},{},{},{},{},{},{}]}}"
+            ),
+            bin.ordinal,
+            spatial.ordinal,
+            subtree_size,
+            parent_offset,
+            plane_axis,
+            plane_position,
+            counts[0],
+            counts[1],
+            counts[2],
+            counts[3],
+            counts[4],
+            counts[5],
+            counts[6],
+            counts[7]
+        ));
+    }
+    if physical_cursor != physical_end {
+        return None;
+    }
+
     let kind = component.kind.label();
     let name = format!("{kind}_{kind_index:04}");
     let json = format!(
-        "{{\"schema\":\"tree_dsg\",\"name\":\"{}\",\"num_nodes\":{},\"\
-         bounds_min\":[{},{},{}],\"bounds_max\":[{},{},{}]}}\n",
+        concat!(
+            "{{\"schema\":\"tree_dsg\",\"name\":\"{}\",",
+            "\"num_nodes\":{},\"bounds_min\":[{},{},{}],",
+            "\"bounds_max\":[{},{},{}],\"nodes\":[{}]}}\n"
+        ),
         escape_json(&name),
-        nodes,
+        declared_nodes,
         bounds_min[0],
         bounds_min[1],
         bounds_min[2],
         bounds_max[0],
         bounds_max[1],
-        bounds_max[2]
+        bounds_max[2],
+        nodes.join(",")
     );
     Some(render::json_component(
         kind,
