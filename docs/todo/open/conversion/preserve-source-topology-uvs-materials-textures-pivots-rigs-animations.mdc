@@ -1169,6 +1169,12 @@ roots additionally preserve exact three-list structure across 1,542 roots, with
 633 skin, 7,729 prop, and 807 effect bindings whose declared list counts match
 physical elements. Shared sort-order recovery now rejects non-finite values.
 
+Scenegraph transform matrices are likewise exact. The corpus contains 18,597
+`SCENEGRAPH_TRANSFORM` nodes with 297,552 authored matrix floats. Every node
+consumes its full name/count/matrix header, every declared child count matches
+the physical child sequence, and every matrix float is finite. Matrix recovery
+now rejects non-finite transform evidence instead of rendering a JSON null.
+
 Standard frame-controller framing is exact across the full source. All 4,714
 `FRAME_CONTROLLER` records are version 0, childless, consume their complete
 schema-defined headers exactly, and carry finite frame offsets. Recovery now
