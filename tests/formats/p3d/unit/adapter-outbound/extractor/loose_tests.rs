@@ -1887,10 +1887,11 @@ fn animated_object_factory_fixture(
 #[test]
 fn animated_object_factory_preserves_typed_animation() -> Result<(), String> {
     let (source, component) = animated_object_factory_fixture(1, 30_f32, 1)?;
-    let recovered = auxiliary::recover_animated_object_factory_json(
-        &component, &source, 1,
-    )
-    .ok_or_else(|| String::from("animated-object factory should decode"))?;
+    let recovered =
+        auxiliary::recover_animated_object_factory_json(&component, &source, 1)
+            .ok_or_else(|| {
+                String::from("animated-object factory should decode")
+            })?;
     let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
         .map_err(|error| error.to_string())?;
     if value["version"] == 0
