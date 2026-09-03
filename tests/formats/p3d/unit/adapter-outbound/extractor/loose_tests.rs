@@ -4067,7 +4067,9 @@ fn particle_factory_preserves_complete_header() -> Result<(), String> {
     {
         Ok(())
     } else {
-        Err(String::from("particle factory header fields were discarded"))
+        Err(String::from(
+            "particle factory header fields were discarded",
+        ))
     }
 }
 
