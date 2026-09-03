@@ -1024,15 +1024,22 @@ has exactly one finite sort-order child. Missing lists, duplicate lists, missing
 sort-order children, and trailing list or binding fields now fail closed instead
 of becoming empty defaults or last-write-wins data.
 
-Entity evidence separates two physically different instance schemas. All 6,875
-ordinary entities and 85 instanced entities are version 0; ordinary entities
-contain one mesh, while instanced entities contain one mesh followed by one
-legacy instance chunk. All 944 legacy instance chunks are name-only and own one
-scenegraph, whereas all 3,407 physics instance chunks use the extended header
-and own no scenegraph children, so normalization no longer invents version or
-flags for the name-only form. Entity `HasAlpha` values include 0, 1, 8, and 9,
-so that authored field remains numeric rather than being reinterpreted as a
-boolean.
+Entity and physics evidence separates placement from object attributes. All
+6,875 ordinary entities and 85 instanced entities are version 0; ordinary
+entities contain one mesh, while instanced entities contain one mesh followed
+by one legacy instance chunk. Across entity and physics wrappers, all 944 legacy
+instance chunks are name-only and own exactly one scenegraph.
+
+The distinct `0x03000600` records are not instances: all 3,407 match the
+schema-defined object-attribute layout exactly, with a class type, physical
+property ID, and authored sound string and no children. They occur under static
+physics wrappers that have no placement instances as well as dynamic and
+instanced wrappers. Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
+span 0 through 62, while sounds include `nosound` and collision event names.
+Those fields now remain object attributes instead of being mislabeled as
+instance version, flags, and name metadata. Entity `HasAlpha` values include 0,
+1, 8, and 9, so that authored field remains numeric rather than being
+reinterpreted as a boolean.
 
 A separate audit of the 338 mesh-used duplicate logical shader sets covers 1,312
 primitive-group consumers. Every consumer has `vertex_format=8225` and an empty
