@@ -406,6 +406,7 @@ Backup/
 
 # Assets
 
+docs/reference
 **/assets/**
 
 # Icon tool local evidence, authored masters, and generated outputs.
