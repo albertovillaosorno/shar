@@ -1497,22 +1497,32 @@ pub(super) fn recover_sprite_json(
     component: &ChunkRecord,
     source: &[u8],
     kind_index: usize,
+    chunks: Option<&[ChunkRecord]>,
 ) -> Option<RecoveredComponent> {
+    const SPRITE: u32 = 0x0001_9005;
+    if component.id != SPRITE {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let native_x = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let native_y = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let shader = schema::read_pascal_at(chunk, &mut cursor)?;
     let image_width = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let image_height = read_u32(chunk, cursor)?;
-    cursor += 4;
-    let image_count = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
+    let image_count = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
     let blit_border = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != component.header_size {
+        return None;
+    }
+    let images = sprite_images_json(component, source, chunks?, image_count)?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -1523,7 +1533,8 @@ pub(super) fn recover_sprite_json(
             r#""shader":"{}","#,
             r#""image_size":[{},{}],"#,
             r#""image_count":{},"#,
-            r#""blit_border":{}}}"#,
+            r#""blit_border":{},"#,
+            r#""images":[{}]}}"#,
         ),
         escape_json(&name),
         native_x,
@@ -1532,7 +1543,8 @@ pub(super) fn recover_sprite_json(
         image_width,
         image_height,
         image_count,
-        blit_border
+        blit_border,
+        images
     );
     Some(json_component(
         kind,
@@ -1541,4 +1553,43 @@ pub(super) fn recover_sprite_json(
         json,
         "decoded_schema_payload",
     ))
+}
+
+/// Preserve exact direct image relationships for one sprite.
+fn sprite_images_json(
+    component: &ChunkRecord,
+    source: &[u8],
+    chunks: &[ChunkRecord],
+    declared_images: usize,
+) -> Option<String> {
+    const IMAGE: u32 = 0x0001_9001;
+    let direct = chunks
+        .iter()
+        .filter(|child| child.parent_ordinal == Some(component.ordinal))
+        .collect::<Vec<_>>();
+    if direct.len() != declared_images {
+        return None;
+    }
+    let mut physical_cursor =
+        component.offset.checked_add(component.header_size)?;
+    let physical_end = component.offset.checked_add(component.total_size)?;
+    let mut rendered = Vec::with_capacity(direct.len());
+    for child in direct {
+        if child.id != IMAGE || child.offset != physical_cursor {
+            return None;
+        }
+        physical_cursor = physical_cursor.checked_add(child.total_size)?;
+        let child_bytes = raw_component_bytes(child, source).ok()?;
+        let mut name_cursor = 12;
+        let child_name = schema::read_pascal_at(child_bytes, &mut name_cursor)?;
+        rendered.push(format!(
+            concat!("{{\"source_ordinal\":{},", "\"authored_name\":\"{}\"}}"),
+            child.ordinal,
+            escape_json(&child_name)
+        ));
+    }
+    if physical_cursor != physical_end {
+        return None;
+    }
+    Some(rendered.join(","))
 }
