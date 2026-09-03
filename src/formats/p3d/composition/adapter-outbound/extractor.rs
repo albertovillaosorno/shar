@@ -655,36 +655,41 @@ fn extract_first_image_payload(texture_chunk: &[u8]) -> Option<&[u8]> {
 
 /// Extract the exact payload from one `IMAGE` chunk's `IMAGE_DATA` child.
 fn extract_image_payload(image_chunk: &[u8]) -> Option<&[u8]> {
+    const IMAGE: u32 = 0x0001_9001;
+    const IMAGE_DATA: u32 = 0x0001_9002;
     let (image_id, image_header, image_total) =
         read_chunk_header(image_chunk, 0)?;
-    if image_id != 0x0001_9001 || image_total != image_chunk.len() {
+    if image_id != IMAGE || image_total != image_chunk.len() {
         return None;
     }
-    let mut cursor = image_header;
-    while cursor + 12 <= image_total {
-        let (child_id, child_header, child_total) =
-            read_chunk_header(image_chunk, cursor)?;
-        let child_end = cursor.checked_add(child_total)?;
-        if child_end > image_total {
-            return None;
-        }
-        if child_id == 0x0001_9002 {
-            if child_header != child_total || child_header < 16 {
-                return None;
-            }
-            let size_offset = cursor.checked_add(12)?;
-            let payload_size =
-                usize::try_from(read_u32(image_chunk, size_offset)?).ok()?;
-            let payload_start = size_offset.checked_add(4)?;
-            let payload_end = payload_start.checked_add(payload_size)?;
-            if payload_end != child_end {
-                return None;
-            }
-            return image_chunk.get(payload_start..payload_end);
-        }
-        cursor = child_end;
+    let mut cursor = 12;
+    let _name = schema::read_pascal_at(image_chunk, &mut cursor)?;
+    for _ in 0..7 {
+        let _field = read_u32(image_chunk, cursor)?;
+        cursor = cursor.checked_add(4)?;
     }
-    None
+    if cursor != image_header {
+        return None;
+    }
+    let (child_id, child_header, child_total) =
+        read_chunk_header(image_chunk, cursor)?;
+    let child_end = cursor.checked_add(child_total)?;
+    if child_id != IMAGE_DATA
+        || child_header != child_total
+        || child_header < 16
+        || child_end != image_total
+    {
+        return None;
+    }
+    let size_offset = cursor.checked_add(12)?;
+    let payload_size =
+        usize::try_from(read_u32(image_chunk, size_offset)?).ok()?;
+    let payload_start = size_offset.checked_add(4)?;
+    let payload_end = payload_start.checked_add(payload_size)?;
+    if payload_end != child_end {
+        return None;
+    }
+    image_chunk.get(payload_start..payload_end)
 }
 
 /// Raw component bytes.
