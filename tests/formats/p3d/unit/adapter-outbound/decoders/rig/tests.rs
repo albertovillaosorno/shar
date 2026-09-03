@@ -243,7 +243,7 @@ fn vertex_fixture() -> Option<Vec<u8>> {
         fields(vec![
             u32_field(0),
             u32_field(1),
-            fourcc("POSN")?,
+            u32_field(VERTEX_PARAM_POSITION),
             f32_field(1.),
             f32_field(2.),
             f32_field(3.),
@@ -254,6 +254,66 @@ fn vertex_fixture() -> Option<Vec<u8>> {
         VERTEX_KEY,
         fields(vec![u32_field(0), pstring("face")?]),
         vec![vectors],
+    )
+}
+
+/// Builds one schema-backed vertex vector offset list.
+fn vertex_vector_list(
+    version: u32,
+    param: u32,
+    indices: Vec<Vec<u8>>,
+) -> Option<Vec<u8>> {
+    chunk(
+        VERTEX_VECTOR_OFFSETS,
+        fields(vec![
+            u32_field(version),
+            u32_field(1),
+            u32_field(param),
+            f32_field(1.),
+            f32_field(2.),
+            f32_field(3.),
+        ]),
+        indices,
+    )
+}
+
+/// Builds a vertex-animation key around caller-provided offset lists.
+fn vertex_key_with_lists(version: u32, lists: Vec<Vec<u8>>) -> Option<Vec<u8>> {
+    chunk(
+        VERTEX_KEY,
+        fields(vec![u32_field(version), pstring("face")?]),
+        lists,
+    )
+}
+
+/// Builds one schema-backed vertex UV offset list.
+fn vertex_vector2_list(param: u32) -> Option<Vec<u8>> {
+    chunk(
+        VERTEX_VECTOR2_OFFSETS,
+        fields(vec![
+            u32_field(0),
+            u32_field(1),
+            u32_field(param),
+            f32_field(0.25),
+            f32_field(0.75),
+        ]),
+        Vec::new(),
+    )
+}
+
+/// Builds one schema-backed vertex colour offset list.
+fn vertex_colour_list() -> Option<Vec<u8>> {
+    chunk(
+        VERTEX_COLOUR_OFFSETS,
+        fields(vec![
+            u32_field(0),
+            u32_field(1),
+            u16_field(1),
+            u16_field(2),
+            u16_field(3),
+            u16_field(4),
+        ]),
+        Vec::new(),
     )
 }
 
@@ -386,7 +446,7 @@ fn vertex_key_decodes_offsets_and_indices() -> Result<(), String> {
     )?;
     require_json(
         &json,
-        "\"param\":\"POSN\"",
+        "\"param\":\"POS_\"",
         "offset param should be emitted",
     )?;
     require_json(
@@ -399,5 +459,133 @@ fn vertex_key_decodes_offsets_and_indices() -> Result<(), String> {
         "\"indices\":[42]",
         "offset indices should be emitted",
     )?;
+    Ok(())
+}
+
+#[test]
+fn vertex_key_accepts_reference_loader_offset_shapes() -> Result<(), String> {
+    let position = require(
+        vertex_vector_list(0, VERTEX_PARAM_POSITION, Vec::new()),
+        "position offset fixture should build",
+    )?;
+    let normal = require(
+        vertex_vector_list(0, VERTEX_PARAM_NORMAL, Vec::new()),
+        "normal offset fixture should build",
+    )?;
+    let uv0 = require(
+        vertex_vector2_list(VERTEX_PARAM_UV0),
+        "UV offset fixture should build",
+    )?;
+    let colour =
+        require(vertex_colour_list(), "colour offset fixture should build")?;
+    let fixture = require(
+        vertex_key_with_lists(0, vec![colour, position, normal, uv0]),
+        "vertex key fixture should build",
+    )?;
+    let json = require(
+        vertex_key_json(&fixture),
+        "reference-loader vertex offsets should decode",
+    )?;
+    require_json(
+        &json,
+        r#""offsets":[[1,2,3,4]]"#,
+        "colour UWORDs should decode",
+    )?;
+    require_json(
+        &json,
+        r#""param":"POS_""#,
+        "position parameter should decode",
+    )?;
+    require_json(&json, r#""param":"UV0_""#, "UV parameter should decode")?;
+    require_json(
+        &json,
+        r#""indices":[]"#,
+        "optional index list should remain absent",
+    )
+}
+
+#[test]
+fn vertex_key_rejects_reference_loader_contract_drift() -> Result<(), String> {
+    let mut bad_key_version =
+        require(vertex_fixture(), "vertex fixture should build")?;
+    bad_key_version
+        .get_mut(12..16)
+        .ok_or_else(|| String::from("vertex key version field is missing"))?
+        .copy_from_slice(&1_u32.to_le_bytes());
+    if vertex_key_json(&bad_key_version).is_some() {
+        return Err(String::from("vertex key accepted an unobserved version"));
+    }
+
+    let bad_list = require(
+        vertex_vector_list(1, VERTEX_PARAM_POSITION, Vec::new()),
+        "bad list fixture should build",
+    )?;
+    let bad_list_key = require(
+        vertex_key_with_lists(0, vec![bad_list]),
+        "bad-list key fixture should build",
+    )?;
+    if vertex_key_json(&bad_list_key).is_some() {
+        return Err(String::from(
+            "vertex key accepted an unobserved list version",
+        ));
+    }
+
+    let bad_param = require(
+        vertex_vector_list(0, u32::from_le_bytes(*b"BAD!"), Vec::new()),
+        "bad parameter fixture should build",
+    )?;
+    let bad_param_key = require(
+        vertex_key_with_lists(0, vec![bad_param]),
+        "bad-parameter key fixture should build",
+    )?;
+    if vertex_key_json(&bad_param_key).is_some() {
+        return Err(String::from(
+            "vertex key accepted an invalid vector parameter",
+        ));
+    }
+
+    let duplicate = require(
+        vertex_vector_list(0, VERTEX_PARAM_POSITION, Vec::new()),
+        "duplicate offset fixture should build",
+    )?;
+    let duplicate_key = require(
+        vertex_key_with_lists(0, vec![duplicate.clone(), duplicate]),
+        "duplicate key fixture should build",
+    )?;
+    if vertex_key_json(&duplicate_key).is_some() {
+        return Err(String::from(
+            "vertex key accepted duplicate position offsets",
+        ));
+    }
+
+    for (version, count, index) in
+        [(1_u32, 1_u32, 42_u32), (0, 2, 42), (0, 1, u32::MAX)]
+    {
+        let indices = require(
+            chunk(
+                VERTEX_INDEX_OFFSETS,
+                fields(vec![
+                    u32_field(version),
+                    u32_field(count),
+                    u32_field(index),
+                ]),
+                Vec::new(),
+            ),
+            "index drift fixture should build",
+        )?;
+        let vector = require(
+            vertex_vector_list(0, VERTEX_PARAM_POSITION, vec![indices]),
+            "indexed vector fixture should build",
+        )?;
+        let fixture = require(
+            vertex_key_with_lists(0, vec![vector]),
+            "indexed key fixture should build",
+        )?;
+        if vertex_key_json(&fixture).is_some() {
+            return Err(String::from(
+                "vertex key accepted invalid index evidence",
+            ));
+        }
+    }
     Ok(())
 }

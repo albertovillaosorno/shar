@@ -103,6 +103,18 @@ const VERTEX_VECTOR2_OFFSETS: u32 = 0x0012_1302;
 /// Pins `VERTEX_INDEX_OFFSETS` because exact identifiers govern binary
 /// dispatch.
 const VERTEX_INDEX_OFFSETS: u32 = 0x0012_1303;
+/// `Pure3D` vertex-animation position offset parameter (`POS\0`).
+const VERTEX_PARAM_POSITION: u32 = u32::from_le_bytes(*b"POS\0");
+/// `Pure3D` vertex-animation normal offset parameter.
+const VERTEX_PARAM_NORMAL: u32 = 0x4c4d_524e;
+/// `Pure3D` vertex-animation first UV offset parameter (`UV0\0`).
+const VERTEX_PARAM_UV0: u32 = u32::from_le_bytes(*b"UV0\0");
+/// `Pure3D` vertex-animation second UV offset parameter (`UV1\0`).
+const VERTEX_PARAM_UV1: u32 = u32::from_le_bytes(*b"UV1\0");
+/// `Pure3D` vertex-animation third UV offset parameter (`UV2\0`).
+const VERTEX_PARAM_UV2: u32 = u32::from_le_bytes(*b"UV2\0");
+/// `Pure3D` vertex-animation fourth UV offset parameter (`UV3\0`).
+const VERTEX_PARAM_UV3: u32 = u32::from_le_bytes(*b"UV3\0");
 
 /// Decode a skeleton and its joint hierarchy.
 #[must_use]
@@ -243,14 +255,24 @@ pub fn vertex_key_json(chunk: &[u8]) -> Option<String> {
     let (_, header_size, total_size) = require_id(chunk, VERTEX_KEY)?;
     let mut reader = Reader::new(chunk, 12);
     let version = reader.u32()?;
+    if version != 0 {
+        return None;
+    }
     let name = reader.pstring()?;
     if reader.pos() != header_size {
         return None;
     }
     let children = subchunks(chunk, header_size, total_size)?;
     let mut lists = Vec::new();
+    let mut seen_slots = 0_u8;
     for child in children {
-        lists.push(decode_vertex_offset_list(chunk, &child)?);
+        let (list, slot) = decode_vertex_offset_list(chunk, &child)?;
+        let bit = 1_u8.checked_shl(u32::from(slot))?;
+        if seen_slots & bit != 0 {
+            return None;
+        }
+        seen_slots |= bit;
+        lists.push(list);
     }
     let json = format!(
         "{{\"schema\":\"vertex_anim_key\",\"name\":\"{}\",\"version\":{},\"\
@@ -660,19 +682,43 @@ fn decode_track_fields(reader: &mut Reader<'_>) -> Option<String> {
 
 /// Keeps `decode_vertex_offset_list` local because it shares the rig
 /// binary-layout invariant.
-fn decode_vertex_offset_list(chunk: &[u8], child: &SubChunk) -> Option<String> {
+fn decode_vertex_offset_list(
+    chunk: &[u8],
+    child: &SubChunk,
+) -> Option<(String, u8)> {
     let kind = vertex_list_kind(child.id)?;
     let mut reader = Reader::new(chunk, child.data_offset());
     let version = reader.u32()?;
+    if version != 0 {
+        return None;
+    }
     let count = u32_to_usize(reader.u32()?)?;
-    let param =
-        if matches!(child.id, VERTEX_VECTOR_OFFSETS | VERTEX_VECTOR2_OFFSETS) {
-            Some(read_fourcc(&mut reader)?)
-        } else {
-            None
-        };
+    let (param, slot) = match child.id {
+        VERTEX_COLOUR_OFFSETS => (None, 0),
+        VERTEX_VECTOR_OFFSETS => {
+            let value = reader.u32()?;
+            let slot = match value {
+                VERTEX_PARAM_POSITION => 1,
+                VERTEX_PARAM_NORMAL => 2,
+                _ => return None,
+            };
+            (Some(fourcc_value(value)), slot)
+        },
+        VERTEX_VECTOR2_OFFSETS => {
+            let value = reader.u32()?;
+            let slot = match value {
+                VERTEX_PARAM_UV0 => 3,
+                VERTEX_PARAM_UV1 => 4,
+                VERTEX_PARAM_UV2 => 5,
+                VERTEX_PARAM_UV3 => 6,
+                _ => return None,
+            };
+            (Some(fourcc_value(value)), slot)
+        },
+        _ => return None,
+    };
     let values = match child.id {
-        VERTEX_COLOUR_OFFSETS => read_u32_values(&mut reader, count)?,
+        VERTEX_COLOUR_OFFSETS => read_colour_offset_values(&mut reader, count)?,
         VERTEX_VECTOR_OFFSETS => read_vector_values(&mut reader, count, 3)?,
         VERTEX_VECTOR2_OFFSETS => read_vector_values(&mut reader, count, 2)?,
         _ => return None,
@@ -680,49 +726,88 @@ fn decode_vertex_offset_list(chunk: &[u8], child: &SubChunk) -> Option<String> {
     if reader.pos() != child.header_end() {
         return None;
     }
-    let indices = decode_vertex_indices(chunk, child)?;
+    let indices = decode_vertex_indices(chunk, child, count)?;
     let param_json = param.map_or_else(String::new, |value| {
         format!(",\"param\":\"{}\"", escape(&value))
     });
-    Some(format!(
-        "{{\"kind\":\"{}\",\"version\":{}{},\"num_offsets\":{},\"offsets\"\
+    Some((
+        format!(
+            "{{\"kind\":\"{}\",\"version\":{}{},\"num_offsets\":{},\"offsets\"\
              :[{}],\"indices\":[{}]}}",
-        kind,
-        version,
-        param_json,
-        count,
-        values.join(","),
-        indices.join(",")
+            kind,
+            version,
+            param_json,
+            count,
+            values.join(","),
+            indices.join(",")
+        ),
+        slot,
     ))
 }
 
-/// Keeps `decode_vertex_indices` local because it shares the rig binary-layout
-/// invariant.
+/// Decode the optional single index list owned by a vertex-offset list.
 fn decode_vertex_indices(
     chunk: &[u8],
     child: &SubChunk,
+    expected_count: usize,
 ) -> Option<Vec<String>> {
     let children = subchunks(chunk, child.header_end(), child.end())?;
-    let mut lists = Vec::new();
-    for index_list in children {
-        if index_list.id != VERTEX_INDEX_OFFSETS {
+    if children.len() > 1 {
+        return None;
+    }
+    let Some(index_list) = children.first() else {
+        return Some(Vec::new());
+    };
+    if index_list.id != VERTEX_INDEX_OFFSETS {
+        return None;
+    }
+    let mut reader = Reader::new(chunk, index_list.data_offset());
+    let version = reader.u32()?;
+    if version != 0 {
+        return None;
+    }
+    let count = u32_to_usize(reader.u32()?)?;
+    if count != expected_count {
+        return None;
+    }
+    let mut values = Vec::with_capacity(count);
+    for _ in 0..count {
+        let value = reader.u32()?;
+        if i32::try_from(value).is_err() {
             return None;
         }
-        let mut reader = Reader::new(chunk, index_list.data_offset());
-        let version = reader.u32()?;
-        let count = u32_to_usize(reader.u32()?)?;
-        let values = read_u32_values(&mut reader, count)?;
-        if !is_leaf_at(reader.pos(), &index_list) {
-            return None;
-        }
-        lists.push(format!(
-            "{{\"version\":{},\"num_indices\":{},\"indices\":[{}]}}",
-            version,
-            count,
-            values.join(",")
+        values.push(value.to_string());
+    }
+    if !is_leaf_at(reader.pos(), index_list) {
+        return None;
+    }
+    Some(vec![format!(
+        "{{\"version\":{},\"num_indices\":{},\"indices\":[{}]}}",
+        version,
+        count,
+        values.join(",")
+    )])
+}
+
+/// Decode one colour offset as four schema-defined unsigned 16-bit channels.
+fn read_colour_offset_values(
+    reader: &mut Reader<'_>,
+    count: usize,
+) -> Option<Vec<String>> {
+    let mut values = Vec::with_capacity(count);
+    for _ in 0..count {
+        let channels = [
+            read_u16_from_reader(reader)?,
+            read_u16_from_reader(reader)?,
+            read_u16_from_reader(reader)?,
+            read_u16_from_reader(reader)?,
+        ];
+        values.push(format!(
+            "[{},{},{},{}]",
+            channels[0], channels[1], channels[2], channels[3]
         ));
     }
-    Some(lists)
+    Some(values)
 }
 
 /// Keeps `vertex_list_kind` local because it shares the rig binary-layout
@@ -734,19 +819,6 @@ const fn vertex_list_kind(id: u32) -> Option<&'static str> {
         VERTEX_VECTOR2_OFFSETS => Some("vector2"),
         _ => None,
     }
-}
-
-/// Keeps `read_u32_values` local because it shares the rig binary-layout
-/// invariant.
-fn read_u32_values(
-    reader: &mut Reader<'_>,
-    count: usize,
-) -> Option<Vec<String>> {
-    let mut values = Vec::new();
-    for _ in 0..count {
-        values.push(reader.u32()?.to_string());
-    }
-    Some(values)
 }
 
 /// Keeps `read_vector_values` local because it shares the rig binary-layout
@@ -881,7 +953,11 @@ fn chunk_bounds(chunk: &[u8]) -> Option<(u32, usize, usize)> {
 
 /// Keeps `read_fourcc` local because it shares the rig binary-layout invariant.
 fn read_fourcc(reader: &mut Reader<'_>) -> Option<String> {
-    let value = reader.u32()?;
+    Some(fourcc_value(reader.u32()?))
+}
+
+/// Render one raw FOURCC using the decoder's established printable form.
+fn fourcc_value(value: u32) -> String {
     let bytes = value.to_le_bytes();
     let mut output = String::new();
     for byte in bytes {
@@ -892,7 +968,7 @@ fn read_fourcc(reader: &mut Reader<'_>) -> Option<String> {
             output.push('_');
         }
     }
-    Some(output.trim_end_matches(char::from(0)).to_owned())
+    output.trim_end_matches(char::from(0)).to_owned()
 }
 
 /// Keeps `read_u16_from_reader` local because it shares the rig binary-layout
