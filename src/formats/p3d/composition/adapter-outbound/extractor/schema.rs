@@ -44,6 +44,9 @@ pub(super) fn recover_schema_json(
     kind_index: usize,
     chunks: Option<&[ChunkRecord]>,
 ) -> Option<RecoveredComponent> {
+    if matches!(component.kind.label(), "srr_anim_dsg" | "srr_anim_coll_dsg") {
+        return recover_anim_dsg_json(component, source, kind_index, chunks?);
+    }
     recover_world_schema_json(component, source, kind_index)
         .or_else(|| {
             schema_recovery::recover_render_schema_json(
@@ -83,9 +86,6 @@ pub(super) fn recover_world_schema_json(
         | "srr_static_phys_dsg"
         | "srr_insta_static_phys_dsg" => {
             recover_physics_dsg_json(component, source, kind_index)
-        },
-        "srr_anim_dsg" | "srr_anim_coll_dsg" => {
-            recover_name_version_alpha_json(component, source, kind_index)
         },
         "srr_road_segment_data" => {
             recover_road_segment_json(component, source, kind_index)
@@ -498,27 +498,103 @@ pub(super) fn read_f32(bytes: &[u8], offset: usize) -> Option<f32> {
     Some(f32::from_le_bytes([slice[0], slice[1], slice[2], slice[3]]))
 }
 
-/// Recover name version alpha json.
-pub(super) fn recover_name_version_alpha_json(
+/// Recover one animated DSG container with direct source relationships.
+pub(super) fn recover_anim_dsg_json(
     component: &ChunkRecord,
     source: &[u8],
     kind_index: usize,
+    chunks: &[ChunkRecord],
 ) -> Option<RecoveredComponent> {
+    const ANIM_DSG: u32 = 0x03f0_000c;
+    const ANIM_COLL_DSG: u32 = 0x03f0_0008;
+    const COMPOSITE_DRAWABLE: u32 = 0x0000_4512;
+    const MULTI_CONTROLLER: u32 = 0x0000_48a0;
+    const QUAD_GROUP: u32 = 0x0001_7002;
+    const FRAME_CONTROLLER: u32 = 0x0012_1200;
+    const COLLISION_OBJECT: u32 = 0x0701_0000;
+
+    if !matches!(component.id, ANIM_DSG | ANIM_COLL_DSG) {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let name = read_pascal_at(chunk, &mut cursor)?;
     let version = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let has_alpha = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if version != 0 || cursor != component.header_size {
+        return None;
+    }
+
+    let direct = chunks
+        .iter()
+        .filter(|child| child.parent_ordinal == Some(component.ordinal))
+        .collect::<Vec<_>>();
+    let mut physical_cursor =
+        component.offset.checked_add(component.header_size)?;
+    let physical_end = component.offset.checked_add(component.total_size)?;
+    let mut composites = 0_usize;
+    let mut controllers = 0_usize;
+    let mut frames = 0_usize;
+    let mut collisions = 0_usize;
+    let mut children = Vec::with_capacity(direct.len());
+    for child in direct {
+        if child.offset != physical_cursor
+            || !matches!(
+                child.id,
+                COMPOSITE_DRAWABLE
+                    | MULTI_CONTROLLER
+                    | QUAD_GROUP
+                    | FRAME_CONTROLLER
+                    | COLLISION_OBJECT
+            )
+        {
+            return None;
+        }
+        if child.id == COLLISION_OBJECT && component.id != ANIM_COLL_DSG {
+            return None;
+        }
+        physical_cursor = physical_cursor.checked_add(child.total_size)?;
+        composites += usize::from(child.id == COMPOSITE_DRAWABLE);
+        controllers += usize::from(child.id == MULTI_CONTROLLER);
+        frames += usize::from(child.id == FRAME_CONTROLLER);
+        collisions += usize::from(child.id == COLLISION_OBJECT);
+        let child_chunk = raw_component_bytes(child, source).ok()?;
+        let mut name_cursor = 12;
+        let child_name = read_pascal_at(child_chunk, &mut name_cursor)?;
+        children.push(format!(
+            concat!(
+                "{{\"source_ordinal\":{},\"kind\":\"{}\",",
+                "\"name\":\"{}\"}}"
+            ),
+            child.ordinal,
+            escape_json(child.kind.label()),
+            escape_json(&child_name)
+        ));
+    }
+    let expected_collisions = usize::from(component.id == ANIM_COLL_DSG);
+    if physical_cursor != physical_end
+        || composites != 1
+        || controllers != 1
+        || frames == 0
+        || collisions != expected_collisions
+    {
+        return None;
+    }
+
     let kind = component.kind.label();
     let file_name = fallback_name(kind, kind_index, &name);
     let json = format!(
-        "{{\"schema\":\"{}\",\"name\":\"{}\",\"version\":{},\"has_alpha\":\
-         {}}}\n",
+        concat!(
+            "{{\"schema\":\"{}\",\"name\":\"{}\",",
+            "\"version\":{},\"has_alpha\":{},\"children\":[{}]}}\n"
+        ),
         escape_json(kind_schema(kind)),
         escape_json(&name),
         version,
-        has_alpha
+        has_alpha,
+        children.join(",")
     );
     Some(render::json_component(
         kind,
