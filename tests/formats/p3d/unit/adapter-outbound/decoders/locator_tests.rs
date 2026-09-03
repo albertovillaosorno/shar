@@ -235,6 +235,54 @@ fn interior_and_static_camera_payloads_preserve_structured_fields()
 }
 
 #[test]
+fn byte_sized_locator_payloads_enforce_runtime_storage_bounds() {
+    assert!(data_interpretation_json(5, &[0; 63], 0).is_some());
+    assert!(data_interpretation_json(5, &[0; 64], 0).is_none());
+
+    let mut interior = words(b"a\0");
+    interior.extend_from_slice(&[
+        1_f32.to_bits(),
+        2_f32.to_bits(),
+        3_f32.to_bits(),
+        4_f32.to_bits(),
+        5_f32.to_bits(),
+        6_f32.to_bits(),
+        7_f32.to_bits(),
+        8_f32.to_bits(),
+        9_f32.to_bits(),
+    ]);
+    interior.resize(63, 0);
+    assert!(data_interpretation_json(7, &interior, 0).is_some());
+    interior.push(0);
+    assert!(data_interpretation_json(7, &interior, 0).is_none());
+
+    let mut action = words(b"a\0b\0c\0");
+    action.resize(63, 0);
+    action.extend_from_slice(&[4, 1]);
+    assert!(data_interpretation_json(9, &action, 0).is_some());
+    action.insert(63, 0);
+    assert!(data_interpretation_json(9, &action, 0).is_none());
+}
+
+#[test]
+fn action_payload_preserves_an_authored_empty_first_string()
+-> Result<(), String> {
+    let mut action_data = words(b"\0joint\0action\0");
+    action_data.extend_from_slice(&[4, 1]);
+    let action = assert_known(9, &action_data, 0)?;
+    for field in [
+        "\"object_name\":\"\"",
+        "\"joint_name\":\"joint\"",
+        "\"action_name\":\"action\"",
+    ] {
+        if !action.contains(field) {
+            return Err(format!("action output omitted {field}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn invalid_or_undeclared_locator_payloads_fail_closed() {
     assert!(data_interpretation_json(6, &[], 2).is_none());
     assert!(data_interpretation_json(6, &[0, 1], 2).is_none());
