@@ -101,7 +101,8 @@ pub(crate) fn mesh_json_with_source_ordinals(
 ) -> Option<String> {
     let (name, version, declared_groups, prim_start, prim_end) =
         read_container_header(chunk, false)?;
-    let body = decode_children(chunk, prim_start, prim_end, source_ordinals)?;
+    let body =
+        decode_children(chunk, prim_start, prim_end, source_ordinals, false)?;
     if body.groups.len() != usize::try_from(declared_groups).ok()? {
         return None;
     }
@@ -128,7 +129,8 @@ pub(crate) fn skin_json_with_source_ordinals(
 ) -> Option<String> {
     let (name, version, skeleton, declared_groups, prim_start, prim_end) =
         read_skin_header(chunk)?;
-    let body = decode_children(chunk, prim_start, prim_end, source_ordinals)?;
+    let body =
+        decode_children(chunk, prim_start, prim_end, source_ordinals, true)?;
     if body.groups.len() != usize::try_from(declared_groups).ok()? {
         return None;
     }
@@ -244,7 +246,20 @@ fn decode_children(
     start: usize,
     end: usize,
     source_ordinals: Option<&[usize]>,
+    validate_expression_targets: bool,
 ) -> Option<MeshBody> {
+    let children = subchunks(chunk, start, end)?;
+    let expression_target_vertex_counts = if validate_expression_targets {
+        Some(
+            children
+                .iter()
+                .filter(|child| child.id == PRIMGROUP)
+                .map(|child| primitive_group_vertex_count(chunk, child))
+                .collect::<Option<Vec<_>>>()?,
+        )
+    } else {
+        None
+    };
     let mut body = MeshBody {
         groups: Vec::new(),
         extras: Vec::new(),
@@ -255,7 +270,7 @@ fn decode_children(
         expression_offsets_seen: false,
     };
     let mut primitive_group_index = 0_usize;
-    for child in subchunks(chunk, start, end)? {
+    for child in children {
         match child.id {
             PRIMGROUP => {
                 let source_ordinal = match source_ordinals {
@@ -345,7 +360,11 @@ fn decode_children(
                 }
                 body.extras.push(format!(
                     "\"expression_offsets\":{}",
-                    expression_offsets_json(chunk, &child)?
+                    expression_offsets_json(
+                        chunk,
+                        &child,
+                        expression_target_vertex_counts.as_deref(),
+                    )?
                 ));
                 body.expression_offsets_seen = true;
             },
@@ -360,10 +379,21 @@ fn decode_children(
     Some(body)
 }
 
+/// Return the declared vertex count for one validated primitive group header.
+fn primitive_group_vertex_count(
+    chunk: &[u8],
+    group: &super::reader::SubChunk,
+) -> Option<u32> {
+    let mut reader = Reader::new(chunk, group.data_offset());
+    let header = PrimitiveHeader::read(&mut reader)?;
+    (reader.pos() == group.header_end()).then_some(header.vertex_count)
+}
+
 /// Decode one expression-offset container as source evidence.
 fn expression_offsets_json(
     chunk: &[u8],
     expression: &super::reader::SubChunk,
+    target_vertex_counts: Option<&[u32]>,
 ) -> Option<String> {
     let bounded = chunk.get(..expression.header_end())?;
     let mut reader = Reader::new(bounded, expression.data_offset());
@@ -385,7 +415,12 @@ fn expression_offsets_json(
         if child.id != OFFSETLIST || child.header_size != child.total_size {
             return None;
         }
-        lists.push(offset_list_json(chunk, &child)?);
+        lists.push(offset_list_json(
+            chunk,
+            &child,
+            &primitive_groups,
+            target_vertex_counts,
+        )?);
     }
     Some(format!(
         concat!(
@@ -407,14 +442,18 @@ fn expression_offsets_json(
 fn offset_list_json(
     chunk: &[u8],
     list: &super::reader::SubChunk,
+    expression_primitive_groups: &[u32],
+    target_vertex_counts: Option<&[u32]>,
 ) -> Option<String> {
     let bounded = chunk.get(..list.header_end())?;
     let mut reader = Reader::new(bounded, list.data_offset());
     let offset_count = usize::try_from(reader.u32()?).ok()?;
     let key_index = reader.u32()?;
     let mut offsets = Vec::with_capacity(offset_count);
+    let mut vertex_indices = Vec::with_capacity(offset_count);
     for _ in 0..offset_count {
         let vertex_index = reader.u32()?;
+        vertex_indices.push(vertex_index);
         let offset = read_vec3_with_bits(&mut reader)?;
         offsets.push(format!(
             concat!(
@@ -427,6 +466,17 @@ fn offset_list_json(
     let primitive_group_index = reader.u32()?;
     if reader.pos() != bounded.len() {
         return None;
+    }
+    if let Some(vertex_counts) = target_vertex_counts {
+        let group_index = usize::try_from(primitive_group_index).ok()?;
+        let vertex_count = *vertex_counts.get(group_index)?;
+        if !expression_primitive_groups.contains(&primitive_group_index)
+            || vertex_indices
+                .iter()
+                .any(|vertex_index| *vertex_index >= vertex_count)
+        {
+            return None;
+        }
     }
     Some(format!(
         concat!(
