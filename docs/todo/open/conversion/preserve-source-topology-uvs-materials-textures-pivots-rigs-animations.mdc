@@ -1130,6 +1130,19 @@ published as standalone payloads, so the source ordinal is the authoritative
 sprite-to-image join. The raw authored child name remains separately preserved
 rather than being rewritten to the normalized component name.
 
+Texture and image payload framing is closed over the current source. All
+10,224 `TEXTURE` chunks are version 14000, consume their complete headers, and
+own exactly one direct `IMAGE` child; no volume-image or other direct child
+families occur. Texture payload recovery now rejects additional, unknown, or
+trailing child/header data instead of scanning forward to the first image.
+
+Across texture and sprite ownership together, all 20,660 `IMAGE` chunks are
+version 14000, consume their complete image headers, and own exactly one
+`IMAGE_DATA` child. Every data child is childless and its declared byte count
+exactly consumes the physical payload. The schema-defined filename child is not
+present in the current corpus, so embedded-payload recovery fails closed rather
+than treating an unsupported filename reference as image bytes.
+
 Standard frame-controller framing is exact across the full source. All 4,714
 `FRAME_CONTROLLER` records are version 0, childless, consume their complete
 schema-defined headers exactly, and carry finite frame offsets. Recovery now
