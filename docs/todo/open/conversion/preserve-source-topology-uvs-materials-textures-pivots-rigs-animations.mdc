@@ -1079,6 +1079,18 @@ strings in total with counts from one through eight. Recovery now retains every
 ordered authored name, including declared trailing NUL data, and rejects list
 count or trailing-header drift.
 
+Physical light records are closed over the current source as well. All 346
+`LIGHT` records have exact finite headers, version 257, enabled value 1, and the
+same authored attenuation triple of 1/0/0. Their type values are 0 or 2, but
+recovery preserves those numeric values rather than deriving new type semantics.
+
+Every light owns exactly one childless 24-byte position chunk and one childless
+16-byte shadow chunk. The 298 type-2 records also own one exact 24-byte direction
+chunk, and 35 of those additionally own one exact 16-byte illumination-type
+chunk. No duplicate or unknown direct child families occur, and all child floats
+are finite. Cone and decay-range families remain accepted from the schema even
+though the current game corpus does not exercise them.
+
 Animation-wrapper evidence remains intentionally less restrictive. All 267
 wrappers occur directly under instanced animated dynamic-physics DSGs: 257 are
 compact animated-object wrappers and 10 use the full wrapper header. Full
