@@ -3619,7 +3619,9 @@ fn image_payload_rejects_header_and_child_drift() -> Result<(), String> {
             .get(4..8)
             .ok_or_else(|| String::from("image fixture header is truncated"))?
             .try_into()
-            .map_err(|error: std::array::TryFromSliceError| error.to_string())?,
+            .map_err(|error: std::array::TryFromSliceError| {
+                error.to_string()
+            })?,
     ))
     .map_err(|error| error.to_string())?;
 
