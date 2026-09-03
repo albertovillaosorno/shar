@@ -4149,6 +4149,37 @@ fn mesh_recovery_rejects_missing_declared_index_list() -> Result<(), String> {
 }
 
 #[test]
+fn primitive_recovery_rejects_out_of_range_index_target() -> Result<(), String>
+{
+    let (mut source, mesh_header, group_header) =
+        primitive_group_mesh_fixture_with_lists(0, 1, 0, 1, 3, 1)?;
+    let position_list_bytes = 12_usize
+        .checked_add(4)
+        .and_then(|size| size.checked_add(3 * 4))
+        .ok_or_else(|| String::from("position-list size overflowed"))?;
+    let first_index = mesh_header
+        .checked_add(group_header)
+        .and_then(|offset| offset.checked_add(position_list_bytes))
+        .and_then(|offset| offset.checked_add(16))
+        .ok_or_else(|| String::from("index fixture offset overflowed"))?;
+    source[first_index..first_index + 4].copy_from_slice(&1_u32.to_le_bytes());
+
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted an index outside NumVertices",
+        ));
+    }
+    let skin = wrap_mesh_primitive_group_as_skin(&source, mesh_header)?;
+    if crate::adapters::driven::decoders::mesh::skin_json(&skin).is_some() {
+        return Err(String::from(
+            "skin recovery accepted an index outside NumVertices",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn mesh_recovery_rejects_duplicate_index_lists() -> Result<(), String> {
     let (source, mesh_header, _group_header) =
         primitive_group_mesh_fixture_with_lists(0, 1, 0, 1, 3, 2)?;
