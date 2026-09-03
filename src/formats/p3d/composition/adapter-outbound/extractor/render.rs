@@ -358,24 +358,41 @@ pub(super) fn recover_world_sphere_json(
     component: &ChunkRecord,
     source: &[u8],
     kind_index: usize,
+    chunks: Option<&[ChunkRecord]>,
 ) -> Option<RecoveredComponent> {
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let version = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let num_meshes = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let num_billboards = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if version != 0 || cursor != component.header_size {
+        return None;
+    }
+    let children = world_sphere_children_json(
+        component,
+        source,
+        chunks?,
+        usize::try_from(num_meshes).ok()?,
+        usize::try_from(num_billboards).ok()?,
+    )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
-        "{{\"schema\":\"world_sphere_dsg\",\"name\":\"{}\",\"version\":{},\"\
-         num_meshes\":{},\"num_billboard_quads\":{}}}\n",
+        concat!(
+            "{{\"schema\":\"world_sphere_dsg\",",
+            "\"name\":\"{}\",\"version\":{},",
+            "\"num_meshes\":{},\"num_billboard_quads\":{},",
+            "\"children\":[{}]}}\n"
+        ),
         escape_json(&name),
         version,
         num_meshes,
-        num_billboards
+        num_billboards,
+        children
     );
     Some(json_component(
         kind,
@@ -384,6 +401,73 @@ pub(super) fn recover_world_sphere_json(
         json,
         "decoded_schema_payload",
     ))
+}
+
+/// Preserve and validate direct world-sphere child relationships.
+fn world_sphere_children_json(
+    component: &ChunkRecord,
+    source: &[u8],
+    chunks: &[ChunkRecord],
+    declared_meshes: usize,
+    declared_billboards: usize,
+) -> Option<String> {
+    const MESH: u32 = 0x0001_0000;
+    const SKELETON: u32 = 0x0000_4500;
+    const COMPOSITE_DRAWABLE: u32 = 0x0000_4512;
+    const MULTI_CONTROLLER: u32 = 0x0000_48a0;
+    const QUAD_GROUP: u32 = 0x0001_7002;
+    const ANIMATION: u32 = 0x0012_1000;
+    const FRAME_CONTROLLER: u32 = 0x0012_1200;
+    const LENS_FLARE_DSG: u32 = 0x03f0_000d;
+
+    let direct = chunks
+        .iter()
+        .filter(|child| child.parent_ordinal == Some(component.ordinal))
+        .collect::<Vec<_>>();
+    let mut physical_cursor =
+        component.offset.checked_add(component.header_size)?;
+    let physical_end = component.offset.checked_add(component.total_size)?;
+    let mut meshes = 0_usize;
+    let mut billboards = 0_usize;
+    let mut rendered = Vec::with_capacity(direct.len());
+    for child in direct {
+        if child.offset != physical_cursor
+            || !matches!(
+                child.id,
+                MESH | SKELETON
+                    | COMPOSITE_DRAWABLE
+                    | MULTI_CONTROLLER
+                    | QUAD_GROUP
+                    | ANIMATION
+                    | FRAME_CONTROLLER
+                    | LENS_FLARE_DSG
+            )
+        {
+            return None;
+        }
+        physical_cursor = physical_cursor.checked_add(child.total_size)?;
+        meshes += usize::from(child.id == MESH);
+        billboards += usize::from(child.id == QUAD_GROUP);
+        let child_bytes = raw_component_bytes(child, source).ok()?;
+        let mut name_cursor = 12;
+        let child_name = schema::read_pascal_at(child_bytes, &mut name_cursor)?;
+        rendered.push(format!(
+            concat!(
+                "{{\"source_ordinal\":{},\"kind\":\"{}\",",
+                "\"name\":\"{}\"}}"
+            ),
+            child.ordinal,
+            escape_json(child.kind.label()),
+            escape_json(&child_name)
+        ));
+    }
+    if physical_cursor != physical_end
+        || meshes != declared_meshes
+        || billboards != declared_billboards
+    {
+        return None;
+    }
+    Some(rendered.join(","))
 }
 
 /// Read fourcc.

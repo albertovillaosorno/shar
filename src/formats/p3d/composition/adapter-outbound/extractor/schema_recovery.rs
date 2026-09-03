@@ -70,7 +70,7 @@ pub(super) fn recover_render_schema_json(
             component, source, kind_index,
         ),
         "srr_world_sphere_dsg" => super::render::recover_world_sphere_json(
-            component, source, kind_index,
+            component, source, kind_index, chunks,
         ),
         "frame_controller"
         | "frame_controller_variant_a"
