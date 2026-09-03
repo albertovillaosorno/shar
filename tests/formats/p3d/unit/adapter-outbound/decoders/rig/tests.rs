@@ -123,13 +123,13 @@ fn require_json(json: &str, needle: &str, context: &str) -> Result<(), String> {
     }
 }
 
-/// Builds a skeleton fixture with one joint and rest pose.
-fn skeleton_fixture() -> Option<Vec<u8>> {
-    let joint = chunk(
+/// Builds one skeleton joint fixture with a caller-selected parent.
+fn skeleton_joint_fixture(name: &str, parent: u32) -> Option<Vec<u8>> {
+    chunk(
         SKELETON_JOINT,
         fields(vec![
-            pstring("root")?,
-            u32_field(u32::MAX),
+            pstring(name)?,
+            u32_field(parent),
             u32_field(0),
             u32_field(7),
             u32_field(1),
@@ -138,7 +138,12 @@ fn skeleton_fixture() -> Option<Vec<u8>> {
             identity_matrix(),
         ]),
         Vec::new(),
-    )?;
+    )
+}
+
+/// Builds a skeleton fixture with one joint and rest pose.
+fn skeleton_fixture() -> Option<Vec<u8>> {
+    let joint = skeleton_joint_fixture("root", u32::MAX)?;
     chunk(
         SKELETON,
         fields(vec![pstring("skel")?, u32_field(0), u32_field(1)]),
@@ -332,6 +337,51 @@ fn skeleton_decodes_joint_rest_pose() -> Result<(), String> {
         "parent index should be emitted",
     )?;
     require_json(&json, "\"rest_pose\":[1.0", "rest pose should be emitted")?;
+    Ok(())
+}
+
+#[test]
+fn skeleton_rejects_loader_contract_drift() -> Result<(), String> {
+    let source = require(skeleton_fixture(), "skeleton fixture should build")?;
+
+    let mut version_drift = source.clone();
+    version_drift
+        .get_mut(17..21)
+        .ok_or_else(|| String::from("skeleton version field is missing"))?
+        .copy_from_slice(&1_u32.to_le_bytes());
+    if skeleton_json(&version_drift).is_some() {
+        return Err(String::from("skeleton accepted an unobserved version"));
+    }
+
+    let mut empty_count = source;
+    empty_count
+        .get_mut(21..25)
+        .ok_or_else(|| String::from("skeleton count field is missing"))?
+        .copy_from_slice(&0_u32.to_le_bytes());
+    if skeleton_json(&empty_count).is_some() {
+        return Err(String::from("skeleton accepted a zero joint count"));
+    }
+
+    let root = require(
+        skeleton_joint_fixture("root", u32::MAX),
+        "root joint fixture should build",
+    )?;
+    let forward = require(
+        skeleton_joint_fixture("child", 1),
+        "forward-parent joint fixture should build",
+    )?;
+    let skeleton_name = require(pstring("skel"), "skeleton name should build")?;
+    let invalid_parent = require(
+        chunk(
+            SKELETON,
+            fields(vec![skeleton_name, u32_field(0), u32_field(2)]),
+            vec![root, forward],
+        ),
+        "forward-parent skeleton fixture should build",
+    )?;
+    if skeleton_json(&invalid_parent).is_some() {
+        return Err(String::from("skeleton accepted a non-previous parent"));
+    }
     Ok(())
 }
 

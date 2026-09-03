@@ -123,8 +123,11 @@ pub fn skeleton_json(chunk: &[u8]) -> Option<String> {
     let mut reader = Reader::new(chunk, 12);
     let name = reader.pstring()?;
     let version = reader.u32()?;
+    if version != 0 {
+        return None;
+    }
     let joint_count = u32_to_usize(reader.u32()?)?;
-    if reader.pos() != header_size {
+    if joint_count == 0 || reader.pos() != header_size {
         return None;
     }
     let children = subchunks(chunk, header_size, total_size)?;
@@ -132,11 +135,11 @@ pub fn skeleton_json(chunk: &[u8]) -> Option<String> {
         return None;
     }
     let mut joints = Vec::new();
-    for child in children {
+    for (joint_index, child) in children.into_iter().enumerate() {
         if child.id != SKELETON_JOINT {
             return None;
         }
-        joints.push(decode_joint(chunk, &child)?);
+        joints.push(decode_joint(chunk, &child, joint_index)?);
     }
     Some(format!(
         "{{\"schema\":\"skeleton\",\"name\":\"{}\",\"version\":{},\"\
@@ -286,10 +289,17 @@ pub fn vertex_key_json(chunk: &[u8]) -> Option<String> {
 
 /// Keeps `decode_joint` local because it shares the rig binary-layout
 /// invariant.
-fn decode_joint(chunk: &[u8], child: &SubChunk) -> Option<String> {
+fn decode_joint(
+    chunk: &[u8],
+    child: &SubChunk,
+    joint_index: usize,
+) -> Option<String> {
     let mut reader = Reader::new(chunk, child.data_offset());
     let name = reader.pstring()?;
     let parent = reader.u32()?;
+    if joint_index > 0 && usize::try_from(parent).ok()? >= joint_index {
+        return None;
+    }
     let dof = reader.u32()?;
     let free_axes = reader.u32()?;
     let primary_axis = reader.u32()?;
