@@ -1112,22 +1112,19 @@ fn fence_fixture(
         u32::try_from(wall_size).map_err(|error| error.to_string())?,
     );
     source.extend_from_slice(&wall_fields);
-    Ok((
-        source,
-        ChunkRecord {
-            ordinal: 1,
-            depth: 1,
-            parent_ordinal: Some(0),
-            id: FENCE,
-            kind: crate::ChunkKind::SrrFenceDsg,
-            offset: 0,
-            header_size: 12,
-            total_size,
-            payload_offset: 12,
-            payload_size: total_size.saturating_sub(12),
-            child_count: 1,
-        },
-    ))
+    Ok((source, ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: FENCE,
+        kind: crate::ChunkKind::SrrFenceDsg,
+        offset: 0,
+        header_size: 12,
+        total_size,
+        payload_offset: 12,
+        payload_size: total_size.saturating_sub(12),
+        child_count: 1,
+    }))
 }
 
 #[test]
