@@ -1005,6 +1005,7 @@ pub(super) fn runtime_locator_matrix_json(
     const TRIGGER_VOLUME: u32 = 0x0300_0006;
     const SPLINE: u32 = 0x0300_0007;
     const EXTRA_MATRIX: u32 = 0x0300_000c;
+    const IDENTITY_MATRIX: &str = "[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]";
     if !matches!(locator_type, 0 | 9) {
         return Some(String::from("null"));
     }
@@ -1029,7 +1030,7 @@ pub(super) fn runtime_locator_matrix_json(
         }
         cursor = next;
     }
-    Some(runtime_matrix.unwrap_or_else(|| String::from("null")))
+    Some(runtime_matrix.unwrap_or_else(|| String::from(IDENTITY_MATRIX)))
 }
 
 /// Decode one schema-declared 4-by-4 extra matrix without interpretation.
