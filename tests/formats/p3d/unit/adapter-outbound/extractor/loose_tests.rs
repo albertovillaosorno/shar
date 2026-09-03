@@ -187,6 +187,201 @@ fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
     Ok(())
 }
 
+#[derive(Clone, Copy)]
+enum ShaderDrift {
+    None,
+    Count,
+    UnknownChild,
+    RootTrailing,
+    ParamTrailing,
+    NonfiniteFloat,
+    Version,
+}
+
+fn shader_fixture(
+    drift: ShaderDrift,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const SHADER: u32 = 0x0001_1000;
+    const DEFINITION: u32 = 0x0001_1001;
+    const TEXTURE: u32 = 0x0001_1002;
+    const INT: u32 = 0x0001_1003;
+    const FLOAT: u32 = 0x0001_1004;
+    const COLOUR: u32 = 0x0001_1005;
+    const VECTOR: u32 = 0x0001_1006;
+    const MATRIX: u32 = 0x0001_1007;
+
+    fn leaf(id: u32, fields: &[u8]) -> Result<Vec<u8>, String> {
+        let size = 12_usize
+            .checked_add(fields.len())
+            .ok_or_else(|| String::from("shader leaf overflowed"))?;
+        let size_u32 =
+            u32::try_from(size).map_err(|error| error.to_string())?;
+        let mut bytes = Vec::new();
+        push_u32(&mut bytes, id);
+        push_u32(&mut bytes, size_u32);
+        push_u32(&mut bytes, size_u32);
+        bytes.extend_from_slice(fields);
+        Ok(bytes)
+    }
+
+    let mut children = Vec::new();
+    let mut definition_fields = Vec::new();
+    push_pascal(&mut definition_fields, "source")?;
+    let definition = b"surface";
+    push_u32(
+        &mut definition_fields,
+        u32::try_from(definition.len()).map_err(|error| error.to_string())?,
+    );
+    definition_fields.extend_from_slice(definition);
+    children.extend_from_slice(&leaf(DEFINITION, &definition_fields)?);
+
+    let mut texture_fields = b"TEX\0".to_vec();
+    push_pascal(&mut texture_fields, "diffuse.bmp")?;
+    children.extend_from_slice(&leaf(TEXTURE, &texture_fields)?);
+
+    let mut int_fields = b"LIT\0".to_vec();
+    push_u32(&mut int_fields, 1);
+    children.extend_from_slice(&leaf(INT, &int_fields)?);
+
+    let mut float_fields = b"SHIN".to_vec();
+    push_f32(
+        &mut float_fields,
+        if matches!(drift, ShaderDrift::NonfiniteFloat) {
+            f32::NAN
+        } else {
+            4_f32
+        },
+    );
+    if matches!(drift, ShaderDrift::ParamTrailing) {
+        push_u32(&mut float_fields, 99);
+    }
+    children.extend_from_slice(&leaf(FLOAT, &float_fields)?);
+
+    let mut colour_fields = b"DIFF".to_vec();
+    push_u32(&mut colour_fields, 0xff80_4020);
+    children.extend_from_slice(&leaf(COLOUR, &colour_fields)?);
+
+    let mut vector_fields = b"DIFF".to_vec();
+    for value in [1_f32, 2_f32, 3_f32] {
+        push_f32(&mut vector_fields, value);
+    }
+    children.extend_from_slice(&leaf(VECTOR, &vector_fields)?);
+
+    let mut matrix_fields = b"DIFF".to_vec();
+    for value in [
+        0_f32, 1_f32, 2_f32, 3_f32, 4_f32, 5_f32, 6_f32, 7_f32, 8_f32, 9_f32,
+        10_f32, 11_f32, 12_f32, 13_f32, 14_f32, 15_f32,
+    ] {
+        push_f32(&mut matrix_fields, value);
+    }
+    children.extend_from_slice(&leaf(MATRIX, &matrix_fields)?);
+
+    if matches!(drift, ShaderDrift::UnknownChild) {
+        children.extend_from_slice(&leaf(0xdead_beef, &[])?);
+    }
+
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "shader")?;
+    push_u32(
+        &mut fields,
+        u32::from(matches!(drift, ShaderDrift::Version)),
+    );
+    push_pascal(&mut fields, "simple")?;
+    push_u32(&mut fields, 0);
+    push_u32(&mut fields, 0);
+    push_u32(&mut fields, 0);
+    push_u32(
+        &mut fields,
+        if matches!(drift, ShaderDrift::Count) {
+            5
+        } else {
+            6
+        },
+    );
+    if matches!(drift, ShaderDrift::RootTrailing) {
+        push_u32(&mut fields, 99);
+    }
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("shader header overflowed"))?;
+    let total_size = header_size
+        .checked_add(children.len())
+        .ok_or_else(|| String::from("shader total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, SHADER);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    source.extend_from_slice(&children);
+    let component = ChunkRecord {
+        ordinal: 1,
+        depth: 0,
+        parent_ordinal: None,
+        id: SHADER,
+        kind: crate::ChunkKind::Shader,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: children.len(),
+        child_count: if matches!(drift, ShaderDrift::UnknownChild) {
+            8
+        } else {
+            7
+        },
+    };
+    Ok((source, component))
+}
+
+#[test]
+fn shader_preserves_schema_parameter_breadth() -> Result<(), String> {
+    let (source, component) = shader_fixture(ShaderDrift::None)?;
+    let recovered = schema::recover_shader_json(&component, &source, 1)
+        .ok_or_else(|| String::from("shader fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    let kinds = value["params"]
+        .as_array()
+        .ok_or_else(|| String::from("shader params should be an array"))?
+        .iter()
+        .map(|param| param["kind"].as_str().unwrap_or_default())
+        .collect::<Vec<_>>();
+    if value["version"] == 0
+        && value["num_params"] == 6
+        && kinds == ["texture", "int", "float", "colour", "vector", "matrix"]
+    {
+        Ok(())
+    } else {
+        Err(String::from("shader schema parameter breadth was lost"))
+    }
+}
+
+#[test]
+fn shader_rejects_source_contract_drift() -> Result<(), String> {
+    for drift in [
+        ShaderDrift::Count,
+        ShaderDrift::UnknownChild,
+        ShaderDrift::RootTrailing,
+        ShaderDrift::ParamTrailing,
+        ShaderDrift::NonfiniteFloat,
+        ShaderDrift::Version,
+    ] {
+        let (source, component) = shader_fixture(drift)?;
+        if schema::recover_shader_json(&component, &source, 1).is_some() {
+            return Err(String::from(
+                "shader source-contract drift must fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn camera_fixture(
     version: u32,
     position_x: f32,
