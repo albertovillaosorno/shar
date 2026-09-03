@@ -3520,8 +3520,15 @@ fn append_expression_offsets_fixture_with_relation(
 }
 
 fn primitive_group_skin_fixture() -> Result<Vec<u8>, String> {
-    const SKIN: u32 = 0x0001_0001;
     let (mesh, mesh_header, _group_header) = primitive_group_mesh_fixture()?;
+    wrap_mesh_primitive_group_as_skin(&mesh, mesh_header)
+}
+
+fn wrap_mesh_primitive_group_as_skin(
+    mesh: &[u8],
+    mesh_header: usize,
+) -> Result<Vec<u8>, String> {
+    const SKIN: u32 = 0x0001_0001;
     let primitive_group = mesh
         .get(mesh_header..)
         .ok_or_else(|| String::from("primitive group fixture is missing"))?;
@@ -3549,6 +3556,40 @@ fn primitive_group_skin_fixture() -> Result<Vec<u8>, String> {
     source.extend_from_slice(&fields);
     source.extend_from_slice(primitive_group);
     Ok(source)
+}
+
+fn matrix_target_fixture(
+    matrix_index: u8,
+    bone_index: u32,
+) -> Result<(Vec<u8>, usize), String> {
+    const MATRIX_LIST: u32 = 0x0001_000b;
+    const MATRIX_PALETTE: u32 = 0x0001_000d;
+    let (mut mesh, mesh_header, _group_header) =
+        primitive_group_mesh_fixture_with_contract(0, 1, 1)?;
+    let mut matrix_list = Vec::new();
+    push_u32(&mut matrix_list, 1);
+    matrix_list.extend_from_slice(&[
+        matrix_index,
+        matrix_index,
+        matrix_index,
+        matrix_index,
+    ]);
+    append_primitive_group_child(
+        &mut mesh,
+        mesh_header,
+        MATRIX_LIST,
+        &matrix_list,
+    )?;
+    let mut palette = Vec::new();
+    push_u32(&mut palette, 1);
+    push_u32(&mut palette, bone_index);
+    append_primitive_group_child(
+        &mut mesh,
+        mesh_header,
+        MATRIX_PALETTE,
+        &palette,
+    )?;
+    Ok((mesh, mesh_header))
 }
 
 fn primitive_group_mesh_record(
@@ -4143,6 +4184,42 @@ fn mesh_recovery_rejects_missing_declared_matrix_palette() -> Result<(), String>
         return Err(String::from(
             "mesh recovery accepted a missing declared matrix palette",
         ));
+    }
+    Ok(())
+}
+
+#[test]
+fn skin_matrix_targets_enforce_runtime_bounds() -> Result<(), String> {
+    let (valid_mesh, mesh_header) = matrix_target_fixture(0, 0)?;
+    let valid_skin =
+        wrap_mesh_primitive_group_as_skin(&valid_mesh, mesh_header)?;
+    if crate::adapters::driven::decoders::mesh::skin_json(&valid_skin).is_none()
+    {
+        return Err(String::from(
+            "runtime-valid skin matrix targets were rejected",
+        ));
+    }
+
+    for (matrix_index, bone_index) in [(1, 0), (0, 256)] {
+        let (invalid_mesh, mesh_header) =
+            matrix_target_fixture(matrix_index, bone_index)?;
+        let invalid_skin =
+            wrap_mesh_primitive_group_as_skin(&invalid_mesh, mesh_header)?;
+        if crate::adapters::driven::decoders::mesh::skin_json(&invalid_skin)
+            .is_some()
+        {
+            return Err(String::from(
+                "runtime-invalid skin matrix target was accepted",
+            ));
+        }
+        let component = primitive_group_mesh_record(&invalid_mesh, mesh_header);
+        if render::recover_mesh_json(&component, &invalid_mesh, 1, None)
+            .is_none()
+        {
+            return Err(String::from(
+                "skin-only matrix target bounds leaked into mesh recovery",
+            ));
+        }
     }
     Ok(())
 }

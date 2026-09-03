@@ -283,6 +283,7 @@ fn decode_children(
                     chunk,
                     &child,
                     source_ordinal,
+                    validate_expression_targets,
                 )?);
                 primitive_group_index = primitive_group_index.checked_add(1)?;
             },
@@ -790,10 +791,14 @@ fn decode_prim_group(
     chunk: &[u8],
     group: &super::reader::SubChunk,
     source_ordinal: Option<usize>,
+    validate_skin_runtime: bool,
 ) -> Option<String> {
     let mut reader = Reader::new(chunk, group.data_offset());
     let header = PrimitiveHeader::read(&mut reader)?;
-    if reader.pos() != group.header_end() {
+    if reader.pos() != group.header_end()
+        || (validate_skin_runtime
+            && !skin_matrix_targets_are_valid(chunk, group, &header)?)
+    {
         return None;
     }
     let lists = PrimitiveLists::decode(chunk, group)?;
@@ -801,6 +806,44 @@ fn decode_prim_group(
         return None;
     }
     Some(lists.render(&header, source_ordinal))
+}
+
+/// Validate skin matrix references exactly as the runtime loader does.
+fn skin_matrix_targets_are_valid(
+    chunk: &[u8],
+    group: &super::reader::SubChunk,
+    header: &PrimitiveHeader,
+) -> Option<bool> {
+    for list in subchunks(chunk, group.header_end(), group.end())? {
+        if !matches!(list.id, MATRIXLIST | MATRIXPALETTE) {
+            continue;
+        }
+        let bounded = chunk.get(..list.header_end())?;
+        let mut reader = Reader::new(bounded, list.data_offset());
+        let count = usize::try_from(reader.u32()?).ok()?;
+        if list.id == MATRIXLIST {
+            if header.matrix_count == 0 {
+                return Some(false);
+            }
+            for _ in 0..count {
+                for _ in 0..4 {
+                    if u32::from(reader.byte()?) >= header.matrix_count {
+                        return Some(false);
+                    }
+                }
+            }
+        } else {
+            for _ in 0..count {
+                if reader.u32()? >= 256 {
+                    return Some(false);
+                }
+            }
+        }
+        if reader.pos() != bounded.len() {
+            return Some(false);
+        }
+    }
+    Some(true)
 }
 
 /// Decode positions while retaining sparse raw bits for non-finite vertices.
