@@ -796,6 +796,7 @@ fn decode_prim_group(
     let mut reader = Reader::new(chunk, group.data_offset());
     let header = PrimitiveHeader::read(&mut reader)?;
     if reader.pos() != group.header_end()
+        || !primitive_index_targets_are_valid(chunk, group, &header)?
         || (validate_skin_runtime
             && !skin_matrix_targets_are_valid(chunk, group, &header)?)
     {
@@ -806,6 +807,32 @@ fn decode_prim_group(
         return None;
     }
     Some(lists.render(&header, source_ordinal))
+}
+
+/// Validate primitive indices exactly as the runtime loader does.
+fn primitive_index_targets_are_valid(
+    chunk: &[u8],
+    group: &super::reader::SubChunk,
+    header: &PrimitiveHeader,
+) -> Option<bool> {
+    for list in subchunks(chunk, group.header_end(), group.end())? {
+        if list.id != INDEXLIST {
+            continue;
+        }
+        let bounded = chunk.get(..list.header_end())?;
+        let mut reader = Reader::new(bounded, list.data_offset());
+        let count = usize::try_from(reader.u32()?).ok()?;
+        for _ in 0..count {
+            let index = reader.u32()?;
+            if index > u32::from(u16::MAX) || index >= header.vertex_count {
+                return Some(false);
+            }
+        }
+        if reader.pos() != bounded.len() {
+            return Some(false);
+        }
+    }
+    Some(true)
 }
 
 /// Validate skin matrix references exactly as the runtime loader does.
