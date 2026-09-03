@@ -412,16 +412,35 @@ pub(super) fn recover_fence_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const WALL: u32 = 0x0300_0000;
     let chunk = raw_component_bytes(component, source).ok()?;
-    let wall_offset = 12;
-    let (_, _, wall_total) = read_chunk_header(chunk, wall_offset)?;
-    if wall_offset + wall_total > chunk.len() {
+    if component.header_size != 12 {
         return None;
     }
-    let mut cursor = wall_offset + 12;
+    let wall_offset = component.header_size;
+    let (wall_id, wall_header, wall_total) =
+        read_chunk_header(chunk, wall_offset)?;
+    let wall_end = wall_offset.checked_add(wall_total)?;
+    if wall_id != WALL
+        || wall_header != 48
+        || wall_total != wall_header
+        || wall_end != component.total_size
+    {
+        return None;
+    }
+    let mut cursor = wall_offset.checked_add(12)?;
     let start = read_point(chunk, &mut cursor)?;
     let end = read_point(chunk, &mut cursor)?;
     let normal = read_point(chunk, &mut cursor)?;
+    if cursor != wall_end
+        || start
+            .iter()
+            .chain(end.iter())
+            .chain(normal.iter())
+            .any(|value| !value.is_finite())
+    {
+        return None;
+    }
     let name = format!("srr_fence_dsg_{kind_index:04}");
     let json = format!(
         "{{\"schema\":\"tlFenceDSGChunk.sc/tlWallChunk.sc\",\"name\":\"{}\",\"\
