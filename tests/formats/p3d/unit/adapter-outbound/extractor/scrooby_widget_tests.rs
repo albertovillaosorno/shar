@@ -106,8 +106,16 @@ fn finish_chunk(
 }
 
 fn push_widget_frame(bytes: &mut Vec<u8>, name: &str) -> Result<(), String> {
+    push_widget_frame_version(bytes, name, 1)
+}
+
+fn push_widget_frame_version(
+    bytes: &mut Vec<u8>,
+    name: &str,
+    version: u32,
+) -> Result<(), String> {
     push_pascal(bytes, name)?;
-    for value in [1_u32, 10, 20, 30, 40, 1, 2, 0x1122_3344, 7] {
+    for value in [version, 10, 20, 30, 40, 1, 2, 0x1122_3344, 7] {
         bytes.extend_from_slice(&value.to_le_bytes());
     }
     bytes.extend_from_slice(&0.5_f32.to_le_bytes());
@@ -193,7 +201,7 @@ fn recovers_multi_sprite_and_pure3d_object_fields() -> Result<(), String> {
 #[test]
 fn recovers_multi_text_and_nested_bible_reference() -> Result<(), String> {
     let mut text = vec![0_u8; 12];
-    push_widget_frame(&mut text, "Caption")?;
+    push_widget_frame_version(&mut text, "Caption", 17)?;
     push_pascal(&mut text, "font0_16")?;
     text.push(1);
     text.extend_from_slice(&0x1122_3344_u32.to_le_bytes());
@@ -325,9 +333,11 @@ fn scrooby_group_fixture() -> Result<(Vec<u8>, usize), String> {
     Ok((source, header_size))
 }
 
-fn scrooby_multi_text_fixture() -> Result<(Vec<u8>, usize), String> {
+fn scrooby_multi_text_fixture(
+    version: u32,
+) -> Result<(Vec<u8>, usize), String> {
     let mut source = vec![0_u8; 12];
-    push_widget_frame(&mut source, "Caption")?;
+    push_widget_frame_version(&mut source, "Caption", version)?;
     push_pascal(&mut source, "font0_16")?;
     source.push(1);
     for value in [0x1122_3344_u32, 3, 4, 0] {
@@ -420,8 +430,26 @@ fn group_preserves_scrooby_child_inventory() -> Result<(), String> {
 }
 
 #[test]
+fn multi_text_rejects_legacy_modern_fields() -> Result<(), String> {
+    let (source, header_size) = scrooby_multi_text_fixture(16)?;
+    let component = record(
+        ChunkKind::ScroobyMultiText,
+        0x0001_8007,
+        header_size,
+        source.len(),
+        0,
+    );
+    if scrooby_widget::recover_multi_text_json(&component, &source, 1)
+        .is_some()
+    {
+        return Err("legacy multi-text accepted modern fields".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn multi_text_rejects_scrooby_child_drift() -> Result<(), String> {
-    let (source, header_size) = scrooby_multi_text_fixture()?;
+    let (source, header_size) = scrooby_multi_text_fixture(17)?;
     let mut unknown = source.clone();
     append_empty_child(&mut unknown, 0xdead_beef);
     let total_size = unknown.len();
@@ -460,7 +488,7 @@ fn multi_text_rejects_scrooby_child_drift() -> Result<(), String> {
 
 #[test]
 fn multi_text_preserves_scrooby_child_inventory() -> Result<(), String> {
-    let (mut source, header_size) = scrooby_multi_text_fixture()?;
+    let (mut source, header_size) = scrooby_multi_text_fixture(17)?;
     for id in [0x0001_800b_u32, 0x0001_800c] {
         append_empty_child(&mut source, id);
     }
