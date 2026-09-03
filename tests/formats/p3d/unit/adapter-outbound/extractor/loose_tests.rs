@@ -1288,13 +1288,9 @@ fn sprite_fixture(
 fn sprite_preserves_exact_image_relationships() -> Result<(), String> {
     const IMAGE: u32 = 0x0001_9001;
     let (source, component, chunks) = sprite_fixture(2, IMAGE, false)?;
-    let recovered = render::recover_sprite_json(
-        &component,
-        &source,
-        1,
-        Some(&chunks),
-    )
-    .ok_or_else(|| String::from("sprite fixture should decode"))?;
+    let recovered =
+        render::recover_sprite_json(&component, &source, 1, Some(&chunks))
+            .ok_or_else(|| String::from("sprite fixture should decode"))?;
     let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
         .map_err(|error| error.to_string())?;
     if value["image_count"] == 2
