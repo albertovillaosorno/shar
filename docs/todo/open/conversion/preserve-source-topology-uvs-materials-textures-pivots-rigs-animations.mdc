@@ -1443,7 +1443,7 @@ already bounded chunk; valid source records retain their existing decoded JSON.
 The same bounded-count audit now covers Intersect DSG index/position/normal
 arrays, History lines, PedPath points, ATC attribute rows, and vertex-expression
 stage/key arrays. The shipped expression loader additionally requires at least
-one key, nondecreasing key order for binary search, and expression-stage
+one key, non-decreasing key order for binary search, and expression-stage
 ordinals 0 through 2; recovery now fails closed on those runtime-invalid shapes.
 The unsupported legacy animation-extra record remains deliberately unchanged
 because neither the current schema nor shipped loader dispatch establishes its

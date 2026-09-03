@@ -122,7 +122,9 @@ fn decode_expression_json(chunk: &[u8]) -> Option<String> {
     let mut previous_key = None;
     for _ in 0..count {
         let key = read_f32_advance(chunk, &mut cursor)?;
-        if !key.is_finite() || previous_key.is_some_and(|previous| key < previous) {
+        if !key.is_finite()
+            || previous_key.is_some_and(|previous| key < previous)
+        {
             return None;
         }
         previous_key = Some(key);

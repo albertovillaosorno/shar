@@ -95,7 +95,9 @@ fn expression_counts_reject_impossible_arrays() {
     group.extend_from_slice(&0_u32.to_le_bytes());
     group.extend_from_slice(&[1, b'n', 1, b't']);
     group.extend_from_slice(&u32::MAX.to_le_bytes());
-    assert!(vertex_expression_json("vertex_expression_group", &group).is_none());
+    assert!(
+        vertex_expression_json("vertex_expression_group", &group).is_none()
+    );
 
     let mut curve = Vec::new();
     curve.extend_from_slice(&0x0002_1000_u32.to_le_bytes());
@@ -145,7 +147,9 @@ fn expression_rejects_runtime_stage_and_key_drift() {
     group.extend_from_slice(&1_u32.to_le_bytes());
     group.extend_from_slice(&3_u32.to_le_bytes());
     group.extend_from_slice(&child);
-    assert!(vertex_expression_json("vertex_expression_group", &group).is_none());
+    assert!(
+        vertex_expression_json("vertex_expression_group", &group).is_none()
+    );
 }
 
 #[test]
