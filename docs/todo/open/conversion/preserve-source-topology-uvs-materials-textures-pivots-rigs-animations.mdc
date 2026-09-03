@@ -1003,10 +1003,17 @@ children in this family.
 The source-backed loader contract is broader than the current corpus and is kept
 intact. A key may own at most one colour list, one position list, one normal
 list, and one list for each of UV channels zero through three. Colour offsets
-are four unsigned 16-bit channels per entry. An index list is optional, but when
-present it is unique, version 0, has the same count as its offset list, and its
-indices must fit the loader's signed integer range. Recovery validates those
-contracts without making an index list mandatory.
+are four unsigned 16-bit channels per entry.
+
+An index list is optional, but when present it is unique, version 0, has the
+same count as its offset list, and its indices must fit the loader's signed
+integer range. Recovery validates those contracts without making an index list
+mandatory.
+
+Skeleton framing is exact across all 1,592 current skeletons and 22,542 joints.
+Every skeleton is version 0 and declares between 1 and 221 joints, matching its
+physical joint children exactly. For every non-root joint, the serialized
+parent refers to an earlier joint, matching the source-backed loader contract.
 
 Texture-font root framing is exact across all 39 current fonts. Every font is
 version 0, consumes its complete 50-byte header, and carries finite authored
