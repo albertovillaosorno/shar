@@ -4140,8 +4140,7 @@ fn mesh_recovery_rejects_declared_primitive_group_count_drift()
 }
 
 #[test]
-fn mesh_recovery_rejects_impossible_primitive_list_counts()
--> Result<(), String> {
+fn mesh_rejects_impossible_primitive_list_counts() -> Result<(), String> {
     let (mut position_source, mesh_header, group_header) =
         primitive_group_mesh_fixture()?;
     let position_count = mesh_header
