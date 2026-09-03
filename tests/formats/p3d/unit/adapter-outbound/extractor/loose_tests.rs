@@ -748,6 +748,33 @@ fn locator_spline_preserves_control_points_and_rail() -> Result<(), String> {
 }
 
 #[test]
+fn locator_runtime_matrix_uses_constructor_defaults() -> Result<(), String> {
+    let identity =
+        serde_json::json!([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [
+            0, 0, 0, 1
+        ],]);
+    for locator_type in [0_u32, 9] {
+        let json = render::runtime_locator_matrix_json(locator_type, &[], 0, 0)
+            .ok_or_else(|| {
+                String::from("runtime matrix default should decode")
+            })?;
+        let value: serde_json::Value =
+            serde_json::from_str(&json).map_err(|error| error.to_string())?;
+        if value != identity {
+            return Err(format!(
+                "locator type {locator_type} lost its identity matrix default",
+            ));
+        }
+    }
+    let generic = render::runtime_locator_matrix_json(2, &[], 0, 0)
+        .ok_or_else(|| String::from("generic runtime matrix should decode"))?;
+    if generic != "null" {
+        return Err(String::from("base locator invented a runtime matrix"));
+    }
+    Ok(())
+}
+
+#[test]
 fn srr_locator_preserves_extra_matrix_children() -> Result<(), String> {
     const EXTRA_MATRIX: u32 = 0x0300_000c;
     let (mut source, header_size) = srr_locator_fixture(0)?;
