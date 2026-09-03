@@ -1143,6 +1143,17 @@ exactly consumes the physical payload. The schema-defined filename child is not
 present in the current corpus, so embedded-payload recovery fails closed rather
 than treating an unsupported filename reference as image bytes.
 
+Multi-controller timing is also exact across the current corpus. All 1,487
+multi controllers are version 0 with finite length and frame-rate fields, and
+every controller owns exactly one packed `MULTI_CONTROLLER_TRACKS` child. Its
+packed track count equals the parent's `NumTracks` declaration in every case,
+including the 11 zero-track controllers and the largest 164-track controller.
+
+Every packed track consumes its childless schema fields exactly and all authored
+start-time, end-time, and scale values are finite. Recovery already enforced
+track cardinality and framing; it now also fails closed on non-finite controller
+or track timing values rather than normalizing them into JSON placeholders.
+
 Standard frame-controller framing is exact across the full source. All 4,714
 `FRAME_CONTROLLER` records are version 0, childless, consume their complete
 schema-defined headers exactly, and carry finite frame offsets. Recovery now
