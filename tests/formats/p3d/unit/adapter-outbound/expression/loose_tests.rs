@@ -132,6 +132,7 @@ fn expression_rejects_runtime_stage_and_key_drift() {
 
     assert!(decode_expression_json(&curve(&[])).is_none());
     assert!(decode_expression_json(&curve(&[1_f32, 0_f32])).is_none());
+    assert!(decode_expression_json(&curve(&[0.5_f32, 0.5_f32])).is_some());
 
     let child = curve(&[0.5_f32]);
     let header_size = 28_u32;
@@ -150,6 +151,16 @@ fn expression_rejects_runtime_stage_and_key_drift() {
     assert!(
         vertex_expression_json("vertex_expression_group", &group).is_none()
     );
+    for stage in 0_u32..=2 {
+        let stage_slot = group.get_mut(24..28);
+        assert!(stage_slot.is_some(), "expression stage field should exist");
+        if let Some(stage_slot) = stage_slot {
+            stage_slot.copy_from_slice(&stage.to_le_bytes());
+        }
+        assert!(
+            vertex_expression_json("vertex_expression_group", &group).is_some()
+        );
+    }
 }
 
 #[test]
