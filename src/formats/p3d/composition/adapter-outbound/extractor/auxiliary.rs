@@ -1318,17 +1318,27 @@ pub(super) fn recover_export_info_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const EXPORT_INFO: u32 = 0x0000_7030;
+    if component.id != EXPORT_INFO {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
-    let children =
-        child_chunks_json(chunk, component.header_size, component.total_size);
+    if cursor != component.header_size {
+        return None;
+    }
+    let entries = export_info_entries_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+    )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
         r#"{{"schema":"export_info","name":"{}","entries":[{}]}}"#,
         escape_json(&name),
-        children
+        entries,
     );
     Some(render::json_component(
         kind,
@@ -1336,6 +1346,81 @@ pub(super) fn recover_export_info_json(
         name,
         json,
         "decoded_schema_payload",
+    ))
+}
+
+/// Decode exact export-info entries in physical source order.
+fn export_info_entries_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+) -> Option<String> {
+    const NAMED_STRING: u32 = 0x0000_7031;
+    const NAMED_INT: u32 = 0x0000_7032;
+    let mut entries = Vec::new();
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if total_size < header_size || next > end {
+            return None;
+        }
+        let entry = match id {
+            NAMED_STRING => {
+                export_info_string_json(chunk, cursor, header_size, total_size)?
+            },
+            NAMED_INT => {
+                export_info_int_json(chunk, cursor, header_size, total_size)?
+            },
+            _ => return None,
+        };
+        entries.push(entry);
+        cursor = next;
+    }
+    (cursor == end).then(|| entries.join(","))
+}
+
+/// Decode one childless named export-info string.
+fn export_info_string_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    let header_end = offset.checked_add(header_size)?;
+    let end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let value = schema::read_pascal_at(chunk, &mut cursor)?;
+    if cursor != header_end || header_end != end {
+        return None;
+    }
+    Some(format!(
+        r#"{{"kind":"string","name":"{}","value":"{}"}}"#,
+        escape_json(&name),
+        escape_json(&value),
+    ))
+}
+
+/// Decode one childless named export-info integer.
+fn export_info_int_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    let header_end = offset.checked_add(header_size)?;
+    let end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let value = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != header_end || header_end != end {
+        return None;
+    }
+    Some(format!(
+        r#"{{"kind":"int","name":"{}","value":{}}}"#,
+        escape_json(&name),
+        value,
     ))
 }
 

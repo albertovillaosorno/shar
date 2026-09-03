@@ -929,6 +929,126 @@ fn follow_cam_rejects_unobserved_source_shapes() -> Result<(), String> {
     Ok(())
 }
 
+fn export_info_fixture(
+    unknown_child: bool,
+    trailing_leaf_word: bool,
+    trailing_root_word: bool,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const EXPORT_INFO: u32 = 0x0000_7030;
+    const NAMED_STRING: u32 = 0x0000_7031;
+    const NAMED_INT: u32 = 0x0000_7032;
+    fn childless_chunk(id: u32, fields: &[u8]) -> Result<Vec<u8>, String> {
+        let size = 12_usize
+            .checked_add(fields.len())
+            .ok_or_else(|| String::from("export-info leaf overflowed"))?;
+        let size_u32 = u32::try_from(size).map_err(|error| error.to_string())?;
+        let mut bytes = Vec::new();
+        push_u32(&mut bytes, id);
+        push_u32(&mut bytes, size_u32);
+        push_u32(&mut bytes, size_u32);
+        bytes.extend_from_slice(fields);
+        Ok(bytes)
+    }
+
+    let mut string_fields = Vec::new();
+    push_pascal(&mut string_fields, "ExporterVersion")?;
+    push_pascal(&mut string_fields, "4.4.0")?;
+    if trailing_leaf_word {
+        push_u32(&mut string_fields, 99);
+    }
+    let string_entry = childless_chunk(NAMED_STRING, &string_fields)?;
+
+    let mut int_fields = Vec::new();
+    push_pascal(&mut int_fields, "Export Animations")?;
+    push_u32(&mut int_fields, 1);
+    let int_id = if unknown_child {
+        0xdead_beef
+    } else {
+        NAMED_INT
+    };
+    let int_entry = childless_chunk(int_id, &int_fields)?;
+
+    let mut root_fields = Vec::new();
+    push_pascal(&mut root_fields, "Exported From Maya")?;
+    if trailing_root_word {
+        push_u32(&mut root_fields, 7);
+    }
+    let header_size = 12_usize
+        .checked_add(root_fields.len())
+        .ok_or_else(|| String::from("export-info root header overflowed"))?;
+    let total_size = header_size
+        .checked_add(string_entry.len())
+        .and_then(|size| size.checked_add(int_entry.len()))
+        .ok_or_else(|| String::from("export-info root total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, EXPORT_INFO);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&root_fields);
+    source.extend_from_slice(&string_entry);
+    source.extend_from_slice(&int_entry);
+    let component = ChunkRecord {
+        ordinal: 5,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: EXPORT_INFO,
+        kind: crate::ChunkKind::ExportInfo,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: total_size.saturating_sub(header_size),
+        child_count: 2,
+    };
+    Ok((source, component))
+}
+
+#[test]
+fn export_info_preserves_typed_entries() -> Result<(), String> {
+    let (source, component) = export_info_fixture(false, false, false)?;
+    let recovered = auxiliary::recover_export_info_json(&component, &source, 1)
+        .ok_or_else(|| String::from("export-info fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["name"] == "Exported From Maya"
+        && value["entries"][0]["kind"] == "string"
+        && value["entries"][0]["name"] == "ExporterVersion"
+        && value["entries"][0]["value"] == "4.4.0"
+        && value["entries"][1]["kind"] == "int"
+        && value["entries"][1]["name"] == "Export Animations"
+        && value["entries"][1]["value"] == 1
+    {
+        Ok(())
+    } else {
+        Err(String::from("export-info entry payloads were discarded"))
+    }
+}
+
+#[test]
+fn export_info_rejects_source_contract_drift() -> Result<(), String> {
+    for (unknown, leaf_trailing, root_trailing) in [
+        (true, false, false),
+        (false, true, false),
+        (false, false, true),
+    ] {
+        let (source, component) =
+            export_info_fixture(unknown, leaf_trailing, root_trailing)?;
+        if auxiliary::recover_export_info_json(&component, &source, 1).is_some()
+        {
+            return Err(String::from(
+                "export-info source-contract drift must fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn attribute_table_fixture(
     mass: f32,
     trailing_word: bool,
