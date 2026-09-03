@@ -263,6 +263,32 @@ fn composite_sort_order_rejects_trailing_header_bytes() -> Result<(), String> {
 }
 
 #[test]
+fn composite_sort_order_rejects_nonfinite_value() -> Result<(), String> {
+    let sort = require(
+        chunk(COMPOSITE_SORT_ORDER, f32_field(f32::NAN), Vec::new()),
+        "non-finite sort-order fixture should build",
+    )?;
+    let parent = require(
+        chunk(0xfeed_face, Vec::new(), vec![sort]),
+        "sort-order parent fixture should build",
+    )?;
+    if decode_optional_sort_order(
+        &parent,
+        12,
+        parent.len(),
+        COMPOSITE_SORT_ORDER,
+    )
+    .is_none()
+    {
+        Ok(())
+    } else {
+        Err(String::from(
+            "non-finite sort-order evidence should fail closed",
+        ))
+    }
+}
+
+#[test]
 fn composite_drawable_decodes_binding_lists() -> Result<(), String> {
     let comp = composite_drawable_fixture()?;
     let json = require(

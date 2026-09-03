@@ -558,6 +558,9 @@ fn decode_optional_sort_order(
     }
     let mut reader = Reader::new(chunk, child.data_offset());
     let sort_order = reader.f32()?;
+    if !sort_order.is_finite() {
+        return None;
+    }
     let position_mismatch = reader.pos() != child.header_end();
     let child_size_mismatch = child.header_end() != child.end();
     if position_mismatch || child_size_mismatch {
