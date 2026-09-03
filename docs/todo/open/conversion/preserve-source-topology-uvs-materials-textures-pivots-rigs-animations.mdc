@@ -1062,6 +1062,16 @@ ordinary `ANIM_DSG` containers own none. Authored `HasAlpha` values are 0, 1,
 or 9, so recovery preserves the numeric field rather than coercing it to a
 boolean. Direct child source ordinals, kinds, and authored names now survive.
 
+Spatial-tree structure is likewise exact across the current source. All 19
+`TREE_DSG` roots have exact 40-byte headers and declare 18,657 nodes in total,
+matching 18,657 direct contiguous-bin children exactly. Every bin has an exact
+20-byte header and owns exactly one childless, exact 49-byte spatial node.
+
+All tree bounds and spatial split-plane floats are finite. Plane-axis bytes are
+0, 2, or 255, while parent-offset fields can contain values such as the maximum
+unsigned 32-bit value; recovery preserves those authored fields without
+assigning leaf, split, or ancestry semantics. Both node source ordinals survive.
+
 Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
 span 0 through 62, while sounds include `nosound` and collision event names.
 Those fields now remain object attributes instead of being mislabeled as
