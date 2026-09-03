@@ -1074,6 +1074,96 @@ fn breakable_object_rejects_unknown_child() -> Result<(), String> {
     }
 }
 
+fn fence_fixture(
+    wall_id: u32,
+    start_x: f32,
+    trailing_wall_word: bool,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const FENCE: u32 = 0x03f0_0007;
+    let mut wall_fields = Vec::new();
+    for value in [
+        start_x, 0_f32, 2_f32, 3_f32, 0_f32, 4_f32, 0_f32, 0_f32, 1_f32,
+    ] {
+        push_f32(&mut wall_fields, value);
+    }
+    if trailing_wall_word {
+        push_u32(&mut wall_fields, 99);
+    }
+    let wall_size = 12_usize
+        .checked_add(wall_fields.len())
+        .ok_or_else(|| String::from("fence wall fixture overflowed"))?;
+    let total_size = 12_usize
+        .checked_add(wall_size)
+        .ok_or_else(|| String::from("fence fixture overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, FENCE);
+    push_u32(&mut source, 12);
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(&mut source, wall_id);
+    push_u32(
+        &mut source,
+        u32::try_from(wall_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(wall_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&wall_fields);
+    Ok((
+        source,
+        ChunkRecord {
+            ordinal: 1,
+            depth: 1,
+            parent_ordinal: Some(0),
+            id: FENCE,
+            kind: crate::ChunkKind::SrrFenceDsg,
+            offset: 0,
+            header_size: 12,
+            total_size,
+            payload_offset: 12,
+            payload_size: total_size.saturating_sub(12),
+            child_count: 1,
+        },
+    ))
+}
+
+#[test]
+fn fence_preserves_exact_wall_geometry() -> Result<(), String> {
+    let (source, component) = fence_fixture(0x0300_0000, 1_f32, false)?;
+    let recovered = schema::recover_fence_json(&component, &source, 1)
+        .ok_or_else(|| String::from("fence fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["start"] == serde_json::json!([1, 0, 2])
+        && value["end"] == serde_json::json!([3, 0, 4])
+        && value["normal"] == serde_json::json!([0, 0, 1])
+    {
+        Ok(())
+    } else {
+        Err(String::from("fence wall geometry was discarded"))
+    }
+}
+
+#[test]
+fn fence_rejects_unobserved_wall_shapes() -> Result<(), String> {
+    for (wall_id, start_x, trailing) in [
+        (0x0300_0001, 1_f32, false),
+        (0x0300_0000, f32::NAN, false),
+        (0x0300_0000, 1_f32, true),
+    ] {
+        let (source, component) = fence_fixture(wall_id, start_x, trailing)?;
+        if schema::recover_fence_json(&component, &source, 1).is_some() {
+            return Err(String::from(
+                "unobserved fence shape should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn world_sphere_fixture(
     version: u32,
     declared_meshes: u32,
