@@ -1154,8 +1154,8 @@ start-time, end-time, and scale values are finite. Recovery already enforced
 track cardinality and framing; it now also fails closed on non-finite controller
 or track timing values rather than normalizing them into JSON placeholders.
 
-Camera source pose is exact across all 986 current camera chunks. Every camera is
-version 2, childless, consumes its complete schema-defined header, and carries
+Camera source pose is exact across all 986 current camera chunks. Every camera
+is version 2, childless, consumes its complete schema-defined header, and carries
 13 finite float fields: FOV, aspect ratio, near/far clips, position XYZ, look
 XYZ, and up XYZ. Recovery previously discarded the final nine pose floats; it
 now preserves position, look, and up vectors and rejects framing, version, or
