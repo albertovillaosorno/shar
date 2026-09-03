@@ -78,7 +78,7 @@ pub fn data_interpretation_json(
         8 => matrix_json("directional", "basis", data),
         9 => action_json(data),
         10 => fov_json(data),
-        11 => breakable_camera_json(data),
+        11 => Some(breakable_camera_json(data)),
         12 => static_camera_json(data),
         13 => ped_group_json(data),
         14 => Some(ignored_data_json("coin", data)),
@@ -190,9 +190,8 @@ fn interior_entrance_json(data: &[u32]) -> Option<String> {
     }
     let bytes = word_bytes(data);
     let terminator = bytes.iter().position(|value| *value == 0)?;
-    let interior_name = std::str::from_utf8(bytes.get(..terminator)?)
-        .ok()?
-        .to_owned();
+    let interior_name =
+        String::from_utf8_lossy(bytes.get(..terminator)?).into_owned();
     let matrix_start = terminator.saturating_add(3).checked_div(4)?;
     let matrix_words = data.get(matrix_start..matrix_start.checked_add(9)?)?;
     Some(format!(
@@ -260,19 +259,16 @@ fn fov_json(data: &[u32]) -> Option<String> {
     ))
 }
 
-/// Decode the authored but runtime-dormant breakable-camera payload.
-fn breakable_camera_json(data: &[u32]) -> Option<String> {
-    let basis = matrix3(data)?;
-    Some(format!(
+/// Preserve the runtime-dormant breakable-camera payload without inference.
+fn breakable_camera_json(data: &[u32]) -> String {
+    format!(
         concat!(
             "{{\"kind\":\"breakable_camera\",",
             "\"loader_behavior\":\"dormant\",",
-            "\"basis\":{},",
-            "\"fov_degrees\":{}}}"
+            "\"ignored_data\":[{}]}}"
         ),
-        basis,
-        float_json(*data.get(9)?)
-    ))
+        u32_list(data)
+    )
 }
 
 /// Decode the complete static-camera field set and bit flags.
@@ -376,9 +372,7 @@ fn word_text(data: &[u32]) -> Option<String> {
         .iter()
         .position(|value| *value == 0)
         .unwrap_or(bytes.len());
-    std::str::from_utf8(bytes.get(..end)?)
-        .ok()
-        .map(ToOwned::to_owned)
+    Some(String::from_utf8_lossy(bytes.get(..end)?).into_owned())
 }
 
 /// Decode a fixed number of null-separated UTF-8 strings.
@@ -390,9 +384,7 @@ fn null_strings(bytes: &[u8], count: usize) -> Option<Vec<String>> {
         let length = remainder.iter().position(|value| *value == 0)?;
         let end = cursor.checked_add(length)?;
         strings.push(
-            std::str::from_utf8(bytes.get(cursor..end)?)
-                .ok()?
-                .to_owned(),
+            String::from_utf8_lossy(bytes.get(cursor..end)?).into_owned(),
         );
         cursor = end.checked_add(1)?;
         if strings.len() < count {

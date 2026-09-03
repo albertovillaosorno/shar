@@ -307,6 +307,56 @@ fn unknown_locator_types_preserve_base_loader_behavior() -> Result<(), String> {
 }
 
 #[test]
+fn byte_oriented_locator_text_does_not_require_utf8() -> Result<(), String> {
+    for locator_type in [1_u32, 5] {
+        let json = assert_known(locator_type, &[0x0000_00ff], 0)?;
+        if !json.contains('�') {
+            return Err(format!("locator type {locator_type} lost lossy text"));
+        }
+    }
+
+    let mut interior = vec![0x0000_00ff];
+    interior.extend_from_slice(&[
+        1_f32.to_bits(),
+        2_f32.to_bits(),
+        3_f32.to_bits(),
+        4_f32.to_bits(),
+        5_f32.to_bits(),
+        6_f32.to_bits(),
+        7_f32.to_bits(),
+        8_f32.to_bits(),
+        9_f32.to_bits(),
+    ]);
+    let interior_json = assert_known(7, &interior, 0)?;
+    if !interior_json.contains('�') {
+        return Err(String::from("interior locator lost lossy text"));
+    }
+
+    let mut action_bytes = vec![0xff, 0];
+    action_bytes.extend_from_slice(b"joint\0action\0");
+    let mut action = words(&action_bytes);
+    action.extend_from_slice(&[4, 1]);
+    let action_json = assert_known(9, &action, 0)?;
+    if !action_json.contains("\"object_name\":\"�\"") {
+        return Err(String::from("action locator lost lossy text"));
+    }
+    Ok(())
+}
+
+#[test]
+fn breakable_camera_payload_is_runtime_dormant() -> Result<(), String> {
+    for data in [Vec::new(), vec![1, 2, 3]] {
+        let json = assert_known(11, &data, 0)?;
+        for field in ["\"loader_behavior\":\"dormant\"", "\"ignored_data\":"] {
+            if !json.contains(field) {
+                return Err(format!("breakable-camera output omitted {field}"));
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn invalid_declared_locator_payloads_fail_closed() {
     assert!(data_interpretation_json(6, &[], 2).is_none());
     assert!(data_interpretation_json(6, &[0, 1], 2).is_none());
