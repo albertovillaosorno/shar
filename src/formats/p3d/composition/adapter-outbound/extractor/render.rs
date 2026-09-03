@@ -705,6 +705,12 @@ pub(super) fn recover_srr_locator_json(
         component.header_size,
         component.total_size,
     )?;
+    let runtime_matrix = runtime_locator_matrix_json(
+        locator_type,
+        chunk,
+        component.header_size,
+        component.total_size,
+    )?;
     let splines = locator_splines_json(
         chunk,
         component.header_size,
@@ -718,7 +724,8 @@ pub(super) fn recover_srr_locator_json(
          num_data_elements\":{},\"data_elements_u32\":[{}],\"\
          data_elements_f32\":[{}],\"data_ascii_lossy\":\"{}\",\"\
          data_interpretation\":{},\"num_triggers\":{},\"trigger_volumes\":\
-         [{}],\"extra_matrices\":[{}],\"splines\":[{}]}}\n",
+         [{}],\"runtime_matrix\":{},\"extra_matrices\":[{}],\"\
+         splines\":[{}]}}\n",
         escape_json(&name),
         locator_type,
         locator_type_name,
@@ -732,6 +739,7 @@ pub(super) fn recover_srr_locator_json(
         data_interpretation,
         num_triggers,
         triggers,
+        runtime_matrix,
         extra_matrices,
         splines
     );
@@ -985,6 +993,43 @@ pub(super) fn extra_matrices_json(
         cursor = next;
     }
     Some(matrices.join(","))
+}
+
+/// Resolve the authored matrix that the runtime stores for this locator type.
+pub(super) fn runtime_locator_matrix_json(
+    locator_type: u32,
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+) -> Option<String> {
+    const TRIGGER_VOLUME: u32 = 0x0300_0006;
+    const SPLINE: u32 = 0x0300_0007;
+    const EXTRA_MATRIX: u32 = 0x0300_000c;
+    if !matches!(locator_type, 0 | 9) {
+        return Some(String::from("null"));
+    }
+    let mut runtime_matrix = None;
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if total_size < header_size || next > end {
+            return None;
+        }
+        match id {
+            EXTRA_MATRIX => {
+                runtime_matrix = Some(extra_matrix_json(
+                    chunk,
+                    cursor,
+                    header_size,
+                    total_size,
+                )?);
+            },
+            TRIGGER_VOLUME | SPLINE => {},
+            _ => return None,
+        }
+        cursor = next;
+    }
+    Some(runtime_matrix.unwrap_or_else(|| String::from("null")))
 }
 
 /// Decode one schema-declared 4-by-4 extra matrix without interpretation.
