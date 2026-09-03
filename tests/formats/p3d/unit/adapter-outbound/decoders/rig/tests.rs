@@ -197,13 +197,24 @@ fn animation_fixture_with_values(first: f32, second: f32) -> Option<Vec<u8>> {
 
 /// Builds a multi-controller fixture with one timing track.
 fn multi_fixture() -> Option<Vec<u8>> {
+    multi_fixture_with_values(10., 30., 0., 10., 1.)
+}
+
+/// Builds a multi-controller fixture with caller-selected finite evidence.
+fn multi_fixture_with_values(
+    length: f32,
+    frame_rate: f32,
+    start_time: f32,
+    end_time: f32,
+    scale: f32,
+) -> Option<Vec<u8>> {
     let track = chunk(
         MULTI_CONTROLLER_TRACK,
         fields(vec![
             pstring("walk")?,
-            f32_field(0.),
-            f32_field(10.),
-            f32_field(1.),
+            f32_field(start_time),
+            f32_field(end_time),
+            f32_field(scale),
         ]),
         Vec::new(),
     )?;
@@ -212,8 +223,8 @@ fn multi_fixture() -> Option<Vec<u8>> {
         fields(vec![
             pstring("controller")?,
             u32_field(0),
-            f32_field(10.),
-            f32_field(30.),
+            f32_field(length),
+            f32_field(frame_rate),
             u32_field(1),
         ]),
         vec![track],
@@ -327,6 +338,30 @@ fn multi_controller_decodes_track_timings() -> Result<(), String> {
     require_json(&json, "\"name\":\"walk\"", "track name should be emitted")?;
     require_json(&json, "\"start_time\":0.0", "track start should be emitted")?;
     require_json(&json, "\"end_time\":10.0", "track end should be emitted")?;
+    Ok(())
+}
+
+#[test]
+fn multi_controller_rejects_nonfinite_timing_evidence() -> Result<(), String> {
+    for values in [
+        (f32::NAN, 30., 0., 10., 1.),
+        (10., f32::INFINITY, 0., 10., 1.),
+        (10., 30., f32::NAN, 10., 1.),
+        (10., 30., 0., f32::INFINITY, 1.),
+        (10., 30., 0., 10., f32::NAN),
+    ] {
+        let fixture = require(
+            multi_fixture_with_values(
+                values.0, values.1, values.2, values.3, values.4,
+            ),
+            "non-finite multi-controller fixture should build",
+        )?;
+        if multi_controller_json(&fixture).is_some() {
+            return Err(String::from(
+                "non-finite multi-controller timing must fail closed",
+            ));
+        }
+    }
     Ok(())
 }
 
