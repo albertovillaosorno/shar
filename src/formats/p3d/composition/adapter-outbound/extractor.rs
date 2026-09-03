@@ -587,6 +587,10 @@ fn texture_metadata_json(
     let usage = read_u32(chunk, cursor)?;
     cursor += 4;
     let priority = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != component.header_size {
+        return None;
+    }
     let children = auxiliary::child_chunks_json(
         chunk,
         component.header_size,
@@ -623,20 +627,30 @@ fn texture_metadata_json(
 
 /// Extract first image payload.
 fn extract_first_image_payload(texture_chunk: &[u8]) -> Option<&[u8]> {
-    let (_, texture_header, texture_total) =
+    const TEXTURE: u32 = 0x0001_9000;
+    const IMAGE: u32 = 0x0001_9001;
+    let (texture_id, texture_header, texture_total) =
         read_chunk_header(texture_chunk, 0)?;
-    let mut cursor = texture_header;
-    while cursor + 12 <= texture_total {
-        let (child_id, _child_header, child_total) =
-            read_chunk_header(texture_chunk, cursor)?;
-        if child_id == 0x0001_9001 {
-            let child_end = cursor.checked_add(child_total)?;
-            let child = texture_chunk.get(cursor..child_end)?;
-            return extract_image_payload(child);
-        }
-        cursor += child_total;
+    if texture_id != TEXTURE || texture_total != texture_chunk.len() {
+        return None;
     }
-    None
+    let mut cursor = 12;
+    let _name = schema::read_pascal_at(texture_chunk, &mut cursor)?;
+    for _ in 0..9 {
+        let _field = read_u32(texture_chunk, cursor)?;
+        cursor = cursor.checked_add(4)?;
+    }
+    if cursor != texture_header {
+        return None;
+    }
+    let (child_id, _child_header, child_total) =
+        read_chunk_header(texture_chunk, cursor)?;
+    let child_end = cursor.checked_add(child_total)?;
+    if child_id != IMAGE || child_end != texture_total {
+        return None;
+    }
+    let child = texture_chunk.get(cursor..child_end)?;
+    extract_image_payload(child)
 }
 
 /// Extract the exact payload from one `IMAGE` chunk's `IMAGE_DATA` child.

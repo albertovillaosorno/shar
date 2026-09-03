@@ -3525,6 +3525,71 @@ fn image_record(source: &[u8]) -> Result<ChunkRecord, String> {
     })
 }
 
+fn texture_fixture(
+    children: &[Vec<u8>],
+    trailing_header: bool,
+) -> Result<Vec<u8>, String> {
+    const TEXTURE: u32 = 0x0001_9000;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "texture.bmp")?;
+    for value in [14_000_u32, 4, 4, 32, 8, 1, 1, 0, 0] {
+        push_u32(&mut fields, value);
+    }
+    if trailing_header {
+        push_u32(&mut fields, 99);
+    }
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("texture fixture header overflowed"))?;
+    let children_size = children.iter().try_fold(0_usize, |total, child| {
+        total.checked_add(child.len())
+    })
+    .ok_or_else(|| String::from("texture fixture children overflowed"))?;
+    let total_size = header_size
+        .checked_add(children_size)
+        .ok_or_else(|| String::from("texture fixture total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, TEXTURE);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    for child in children {
+        source.extend_from_slice(child);
+    }
+    Ok(source)
+}
+
+#[test]
+fn texture_payload_requires_exact_single_image_child() -> Result<(), String> {
+    let payload = dds_payload_fixture();
+    let image = image_fixture(&payload, payload.len())?;
+    let valid = texture_fixture(std::slice::from_ref(&image), false)?;
+    if extract_first_image_payload(&valid) != Some(payload.as_slice()) {
+        return Err(String::from(
+            "exact texture image payload was not recovered",
+        ));
+    }
+    let unknown = empty_chunk(0xdead_beef);
+    for invalid in [
+        texture_fixture(&[unknown, image.clone()], false)?,
+        texture_fixture(&[image.clone(), image.clone()], false)?,
+        texture_fixture(std::slice::from_ref(&image), true)?,
+    ] {
+        if extract_first_image_payload(&invalid).is_some() {
+            return Err(String::from(
+                "texture child or header drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 #[test]
 fn embedded_sprite_image_recovery_preserves_exact_dds_payload()
 -> Result<(), String> {
