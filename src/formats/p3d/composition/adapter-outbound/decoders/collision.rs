@@ -43,8 +43,8 @@ const MESH: u32 = 0x0001_0000;
 const SKIN: u32 = 0x0001_0001;
 /// Scenegraph chunk id used inside instance chunks.
 const SCENEGRAPH: u32 = 0x0012_0100;
-/// Instance chunk id used by instanced physics DSG wrappers.
-const INSTANCES: u32 = 0x0300_0600;
+/// Object-attribute chunk id used by physics DSG wrappers.
+const OBJECT_ATTRIBUTES: u32 = 0x0300_0600;
 /// Legacy instance chunk id used by entity and animated wrappers.
 const LEGACY_INSTANCES: u32 = 0x0300_0008;
 /// Animated DSG wrapper chunk id.
@@ -251,6 +251,9 @@ struct DsgChildren {
     /// Physics objects stay separate because they carry material and mass
     /// data.
     physics_objects: Vec<String>,
+    /// Object attributes remain separate from placement because they carry
+    /// collision class, physical-property, and sound evidence.
+    object_attributes: Vec<String>,
     /// Instance payloads remain grouped because each owns transform records.
     instances: Vec<String>,
     /// Animation wrappers stay attached because they coordinate rig
@@ -275,7 +278,10 @@ impl DsgChildren {
                         .trim()
                         .to_owned(),
                 ),
-                INSTANCES | LEGACY_INSTANCES => {
+                OBJECT_ATTRIBUTES => decoded
+                    .object_attributes
+                    .push(decode_object_attributes(chunk, &child)?),
+                LEGACY_INSTANCES => {
                     decoded.instances.push(decode_instances(chunk, &child)?)
                 },
                 ANIM_DSG_WRAPPER | ANIM_OBJ_DSG_WRAPPER => {
@@ -304,8 +310,8 @@ impl DsgChildren {
             concat!(
                 "{{\"schema\":\"{}\",\"name\":\"{}\",\"version\":{}{},",
                 "\"render_refs\":[{}],\"collision_objects\":[{}],",
-                "\"physics_objects\":[{}],\"instances\":[{}],",
-                "\"animation_wrappers\":[{}]}}\n"
+                "\"physics_objects\":[{}],\"object_attributes\":[{}],",
+                "\"instances\":[{}],\"animation_wrappers\":[{}]}}\n"
             ),
             escape(schema),
             escape(name),
@@ -314,6 +320,7 @@ impl DsgChildren {
             self.render_refs.join(","),
             self.collision_objects.join(","),
             self.physics_objects.join(","),
+            self.object_attributes.join(","),
             self.instances.join(","),
             self.animation_wrappers.join(",")
         )
@@ -832,7 +839,11 @@ fn decode_wrapper_child(chunk: &[u8], child: &SubChunk) -> Option<String> {
             child.id,
             escape(&decode_named_ref(chunk, child,)?)
         )),
-        INSTANCES | LEGACY_INSTANCES => Some(wrap_child_json(
+        OBJECT_ATTRIBUTES => Some(wrap_child_json(
+            "object_attributes",
+            &decode_object_attributes(chunk, child)?,
+        )),
+        LEGACY_INSTANCES => Some(wrap_child_json(
             "instances",
             &decode_instances(chunk, child)?,
         )),
@@ -860,51 +871,53 @@ fn decode_named_ref(chunk: &[u8], child: &SubChunk) -> Option<String> {
     ))
 }
 
-/// Decode instance scenegraphs carried by instanced physics wrappers.
-fn decode_instances(chunk: &[u8], child: &SubChunk) -> Option<String> {
-    let mut reader = Reader::new(chunk, child.data_offset());
-    match child.id {
-        LEGACY_INSTANCES => {
-            let name = reader.pstring()?;
-            if reader.pos() != child.header_end() {
-                return None;
-            }
-            let children = subchunks(chunk, child.header_end(), child.end())?;
-            if children.len() != 1 || children.first()?.id != SCENEGRAPH {
-                return None;
-            }
-            let graph = children.first()?;
-            let bytes = child_bytes(chunk, graph)?;
-            let scenegraph =
-                super::scene::scenegraph_json(bytes)?.trim().to_owned();
-            Some(format!(
-                "{{\"name\":\"{}\",\"scenegraphs\":[{}]}}",
-                escape(&name),
-                scenegraph
-            ))
-        },
-        INSTANCES => {
-            let version = reader.u32()?;
-            let flags = reader.u32()?;
-            let name = reader.pstring()?;
-            if reader.pos() != child.header_end()
-                || !subchunks(chunk, child.header_end(), child.end())?
-                    .is_empty()
-            {
-                return None;
-            }
-            Some(format!(
-                concat!(
-                    "{{\"version\":{},\"flags\":{},",
-                    "\"name\":\"{}\",\"scenegraphs\":[]}}"
-                ),
-                version,
-                flags,
-                escape(&name)
-            ))
-        },
-        _ => None,
+/// Decode one schema-defined object-attribute record.
+fn decode_object_attributes(chunk: &[u8], child: &SubChunk) -> Option<String> {
+    if child.id != OBJECT_ATTRIBUTES {
+        return None;
     }
+    let mut reader = Reader::new(chunk, child.data_offset());
+    let class_type = reader.u32()?;
+    let physics_property_id = reader.u32()?;
+    let sound = reader.pstring()?;
+    let header_exact = reader.pos() == child.header_end();
+    let childless = child.header_end() == child.end();
+    if !header_exact || !childless {
+        return None;
+    }
+    Some(format!(
+        concat!(
+            "{{\"class_type\":{},\"physics_property_id\":{},",
+            "\"sound\":\"{}\"}}"
+        ),
+        class_type,
+        physics_property_id,
+        escape(&sound)
+    ))
+}
+
+/// Decode one legacy instance scenegraph carried by an instanced wrapper.
+fn decode_instances(chunk: &[u8], child: &SubChunk) -> Option<String> {
+    if child.id != LEGACY_INSTANCES {
+        return None;
+    }
+    let mut reader = Reader::new(chunk, child.data_offset());
+    let name = reader.pstring()?;
+    if reader.pos() != child.header_end() {
+        return None;
+    }
+    let children = subchunks(chunk, child.header_end(), child.end())?;
+    if children.len() != 1 || children.first()?.id != SCENEGRAPH {
+        return None;
+    }
+    let graph = children.first()?;
+    let bytes = child_bytes(chunk, graph)?;
+    let scenegraph = super::scene::scenegraph_json(bytes)?.trim().to_owned();
+    Some(format!(
+        "{{\"name\":\"{}\",\"scenegraphs\":[{}]}}",
+        escape(&name),
+        scenegraph
+    ))
 }
 
 /// Read and validate the chunk header, requiring the expected id.

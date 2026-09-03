@@ -703,31 +703,77 @@ fn legacy_instances_do_not_invent_extended_header_fields() -> Result<(), String>
 }
 
 #[test]
-fn physics_instances_preserve_extended_header_fields() -> Result<(), String> {
-    let instances = require(
+fn object_attributes_preserve_schema_fields() -> Result<(), String> {
+    let attributes = require(
         chunk(
-            INSTANCES,
+            OBJECT_ATTRIBUTES,
             fields(vec![
                 u32_field(7),
-                u32_field(0),
-                require(pstring("physics"), "physics name should encode")?,
+                u32_field(19),
+                require(pstring("car_hit_tree"), "sound should encode")?,
             ]),
             Vec::new(),
         ),
-        "physics instances should build",
+        "object attributes should build",
     )?;
     let child = require(
-        subchunks(&instances, 0, instances.len()),
-        "physics instance framing should decode",
+        subchunks(&attributes, 0, attributes.len()),
+        "object attribute framing should decode",
     )?
     .into_iter()
     .next()
-    .ok_or_else(|| String::from("physics instance chunk should exist"))?;
+    .ok_or_else(|| String::from("object attribute chunk should exist"))?;
     let json = require(
-        decode_instances(&instances, &child),
-        "physics instances should decode",
+        decode_object_attributes(&attributes, &child),
+        "object attributes should decode",
     )?;
-    require_json(&json, "\"version\":7", "version should be preserved")?;
-    require_json(&json, "\"flags\":0", "flags should be preserved")?;
-    Ok(())
+    require_json(&json, "\"class_type\":7", "class type should survive")?;
+    require_json(
+        &json,
+        "\"physics_property_id\":19",
+        "physical property id should survive",
+    )?;
+    require_json(&json, "car_hit_tree", "sound should survive")?;
+    if !json.contains("\"version\"") && !json.contains("\"flags\"") {
+        Ok(())
+    } else {
+        Err(String::from(
+            "object attributes were misrepresented as instance metadata",
+        ))
+    }
+}
+
+#[test]
+fn object_attributes_reject_children() -> Result<(), String> {
+    let attributes = require(
+        chunk(
+            OBJECT_ATTRIBUTES,
+            fields(vec![
+                u32_field(7),
+                u32_field(0),
+                require(pstring("nosound"), "sound should encode")?,
+            ]),
+            vec![require(
+                chunk(
+                    MESH,
+                    require(pstring("unexpected"), "name should encode")?,
+                    Vec::new(),
+                ),
+                "unexpected child should build",
+            )?],
+        ),
+        "object attributes should build",
+    )?;
+    let child = require(
+        subchunks(&attributes, 0, attributes.len()),
+        "object attribute framing should decode",
+    )?
+    .into_iter()
+    .next()
+    .ok_or_else(|| String::from("object attribute chunk should exist"))?;
+    if decode_object_attributes(&attributes, &child).is_none() {
+        Ok(())
+    } else {
+        Err(String::from("object attribute child should fail closed"))
+    }
 }
