@@ -63,6 +63,41 @@ fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn finish_chunk_header(
+    source: &mut [u8],
+    id: u32,
+    header_size: usize,
+    total_size: usize,
+) -> Result<(), String> {
+    source[0..4].copy_from_slice(&id.to_le_bytes());
+    source[4..8].copy_from_slice(
+        &u32::try_from(header_size)
+            .map_err(|error| format!("fixture header is too large: {error}"))?
+            .to_le_bytes(),
+    );
+    source[8..12].copy_from_slice(
+        &u32::try_from(total_size)
+            .map_err(|error| format!("fixture chunk is too large: {error}"))?
+            .to_le_bytes(),
+    );
+    Ok(())
+}
+
+fn scrooby_project_fixture() -> Result<(Vec<u8>, usize), String> {
+    let mut source = vec![0_u8; 12];
+    push_pascal(&mut source, "HudProject")?;
+    source.extend_from_slice(&1_u32.to_le_bytes());
+    source.extend_from_slice(&640_u32.to_le_bytes());
+    source.extend_from_slice(&480_u32.to_le_bytes());
+    push_pascal(&mut source, "PC")?;
+    push_pascal(&mut source, "pages\\")?;
+    push_pascal(&mut source, "resources\\")?;
+    push_pascal(&mut source, "screens\\")?;
+    let header_size = source.len();
+    finish_chunk_header(&mut source, 0x0001_8000, header_size, header_size)?;
+    Ok((source, header_size))
+}
+
 fn record(
     kind: ChunkKind,
     id: u32,
@@ -206,6 +241,130 @@ fn recovers_scrooby_page_header_and_child_inventory() -> Result<(), String> {
         || !json.contains(r#""name":"Icon""#)
     {
         return Err("page recovery lost header or child inventory".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn scrooby_project_rejects_header_and_child_framing_drift() -> Result<(), String> {
+    let (source, header_size) = scrooby_project_fixture()?;
+
+    let mut trailing_header = source.clone();
+    trailing_header.extend_from_slice(&0xdead_beef_u32.to_le_bytes());
+    let trailing_size = trailing_header.len();
+    finish_chunk_header(
+        &mut trailing_header,
+        0x0001_8000,
+        trailing_size,
+        trailing_size,
+    )?;
+    let component = record(
+        ChunkKind::ScroobyProject,
+        0x0001_8000,
+        trailing_size,
+        trailing_size,
+        0,
+    );
+    if auxiliary::recover_scrooby_project_json(
+        &component,
+        &trailing_header,
+        1,
+    )
+    .is_some()
+    {
+        return Err("project accepted undeclared header bytes".to_owned());
+    }
+
+    let mut unknown_child = source.clone();
+    unknown_child.extend_from_slice(&0xdead_beef_u32.to_le_bytes());
+    unknown_child.extend_from_slice(&12_u32.to_le_bytes());
+    unknown_child.extend_from_slice(&12_u32.to_le_bytes());
+    let unknown_total = unknown_child.len();
+    finish_chunk_header(
+        &mut unknown_child,
+        0x0001_8000,
+        header_size,
+        unknown_total,
+    )?;
+    let component = record(
+        ChunkKind::ScroobyProject,
+        0x0001_8000,
+        header_size,
+        unknown_total,
+        1,
+    );
+    if auxiliary::recover_scrooby_project_json(
+        &component,
+        &unknown_child,
+        1,
+    )
+    .is_some()
+    {
+        return Err("project accepted an undeclared direct child".to_owned());
+    }
+
+    let mut truncated_child = source;
+    truncated_child.extend_from_slice(&0x0001_8001_u32.to_le_bytes());
+    let truncated_total = truncated_child.len();
+    finish_chunk_header(
+        &mut truncated_child,
+        0x0001_8000,
+        header_size,
+        truncated_total,
+    )?;
+    let component = record(
+        ChunkKind::ScroobyProject,
+        0x0001_8000,
+        header_size,
+        truncated_total,
+        1,
+    );
+    if auxiliary::recover_scrooby_project_json(
+        &component,
+        &truncated_child,
+        1,
+    )
+    .is_some()
+    {
+        return Err("project ignored a truncated direct child".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn scrooby_project_preserves_declared_direct_child_inventory() -> Result<(), String> {
+    let (mut source, header_size) = scrooby_project_fixture()?;
+    for id in [0x0001_8001_u32, 0x0001_8002] {
+        source.extend_from_slice(&id.to_le_bytes());
+        source.extend_from_slice(&12_u32.to_le_bytes());
+        source.extend_from_slice(&12_u32.to_le_bytes());
+    }
+    let total_size = source.len();
+    finish_chunk_header(
+        &mut source,
+        0x0001_8000,
+        header_size,
+        total_size,
+    )?;
+    let component = record(
+        ChunkKind::ScroobyProject,
+        0x0001_8000,
+        header_size,
+        total_size,
+        2,
+    );
+    let recovered = auxiliary::recover_scrooby_project_json(
+        &component,
+        &source,
+        1,
+    )
+    .ok_or_else(|| "declared project children should decode".to_owned())?;
+    let json = String::from_utf8(recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if !json.contains(r#""id_hex":"0x00018001""#)
+        || !json.contains(r#""id_hex":"0x00018002""#)
+    {
+        return Err("project lost declared direct child inventory".to_owned());
     }
     Ok(())
 }
