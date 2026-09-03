@@ -79,9 +79,9 @@ pub(super) fn recover_render_schema_json(
                 component, source, kind_index,
             )
         },
-        "sprite" => {
-            super::render::recover_sprite_json(component, source, kind_index)
-        },
+        "sprite" => super::render::recover_sprite_json(
+            component, source, kind_index, chunks,
+        ),
         "multi_controller" => super::auxiliary::recover_multi_controller_json(
             component, source, kind_index,
         ),

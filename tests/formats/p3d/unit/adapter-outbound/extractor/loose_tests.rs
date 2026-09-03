@@ -1173,6 +1173,163 @@ fn game_attr_rejects_parameter_contract_drift() -> Result<(), String> {
     Ok(())
 }
 
+fn sprite_fixture(
+    declared_images: u32,
+    second_child_id: u32,
+    trailing_header: bool,
+) -> Result<(Vec<u8>, ChunkRecord, Vec<ChunkRecord>), String> {
+    const SPRITE: u32 = 0x0001_9005;
+    const IMAGE: u32 = 0x0001_9001;
+    fn image_child(id: u32, name: &str) -> Result<Vec<u8>, String> {
+        let mut fields = Vec::new();
+        push_pascal(&mut fields, name)?;
+        let size = 12_usize
+            .checked_add(fields.len())
+            .ok_or_else(|| String::from("sprite image child overflowed"))?;
+        let mut child = Vec::new();
+        push_u32(&mut child, id);
+        push_u32(
+            &mut child,
+            u32::try_from(size).map_err(|error| error.to_string())?,
+        );
+        push_u32(
+            &mut child,
+            u32::try_from(size).map_err(|error| error.to_string())?,
+        );
+        child.extend_from_slice(&fields);
+        Ok(child)
+    }
+
+    let first = image_child(IMAGE, "tile0.png")?;
+    let second = image_child(second_child_id, "tile1.png")?;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "sprite.png")?;
+    push_u32(&mut fields, 640);
+    push_u32(&mut fields, 480);
+    push_pascal(&mut fields, "")?;
+    push_u32(&mut fields, 64);
+    push_u32(&mut fields, 64);
+    push_u32(&mut fields, declared_images);
+    push_u32(&mut fields, 1);
+    if trailing_header {
+        push_u32(&mut fields, 99);
+    }
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("sprite fixture header overflowed"))?;
+    let total_size = header_size
+        .checked_add(first.len())
+        .and_then(|size| size.checked_add(second.len()))
+        .ok_or_else(|| String::from("sprite fixture total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, SPRITE);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    source.extend_from_slice(&first);
+    source.extend_from_slice(&second);
+    let parent = ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: SPRITE,
+        kind: crate::ChunkKind::Sprite,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: total_size.saturating_sub(header_size),
+        child_count: 2,
+    };
+    let first_record = ChunkRecord {
+        ordinal: 2,
+        depth: 2,
+        parent_ordinal: Some(1),
+        id: IMAGE,
+        kind: crate::ChunkKind::Image,
+        offset: header_size,
+        header_size: first.len(),
+        total_size: first.len(),
+        payload_offset: header_size.saturating_add(first.len()),
+        payload_size: 0,
+        child_count: 0,
+    };
+    let second_offset = header_size
+        .checked_add(first.len())
+        .ok_or_else(|| String::from("sprite second child offset overflowed"))?;
+    let second_record = ChunkRecord {
+        ordinal: 3,
+        depth: 2,
+        parent_ordinal: Some(1),
+        id: second_child_id,
+        kind: if second_child_id == IMAGE {
+            crate::ChunkKind::Image
+        } else {
+            crate::ChunkKind::Unknown
+        },
+        offset: second_offset,
+        header_size: second.len(),
+        total_size: second.len(),
+        payload_offset: second_offset.saturating_add(second.len()),
+        payload_size: 0,
+        child_count: 0,
+    };
+    let chunks = vec![parent, first_record, second_record];
+    Ok((source, parent, chunks))
+}
+
+#[test]
+fn sprite_preserves_exact_image_relationships() -> Result<(), String> {
+    const IMAGE: u32 = 0x0001_9001;
+    let (source, component, chunks) = sprite_fixture(2, IMAGE, false)?;
+    let recovered = render::recover_sprite_json(
+        &component,
+        &source,
+        1,
+        Some(&chunks),
+    )
+    .ok_or_else(|| String::from("sprite fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["image_count"] == 2
+        && value["images"][0]["source_ordinal"] == 2
+        && value["images"][0]["authored_name"] == "tile0.png"
+        && value["images"][1]["source_ordinal"] == 3
+        && value["images"][1]["authored_name"] == "tile1.png"
+    {
+        Ok(())
+    } else {
+        Err(String::from("sprite image relationships were discarded"))
+    }
+}
+
+#[test]
+fn sprite_rejects_image_relationship_drift() -> Result<(), String> {
+    const IMAGE: u32 = 0x0001_9001;
+    for (declared, child_id, trailing) in [
+        (1, IMAGE, false),
+        (2, 0xdead_beef, false),
+        (2, IMAGE, true),
+    ] {
+        let (source, component, chunks) =
+            sprite_fixture(declared, child_id, trailing)?;
+        if render::recover_sprite_json(&component, &source, 1, Some(&chunks))
+            .is_some()
+        {
+            return Err(String::from(
+                "sprite image relationship drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn frame_controller_fixture(
     frame_offset: f32,
     trailing_word: bool,
