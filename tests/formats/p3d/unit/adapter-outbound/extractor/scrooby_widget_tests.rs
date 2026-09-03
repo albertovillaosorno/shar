@@ -314,3 +314,106 @@ fn identical_nested_widgets_keep_distinct_occurrences() -> Result<(), String> {
     }
     Ok(())
 }
+
+
+fn scrooby_layer_fixture() -> Result<(Vec<u8>, usize), String> {
+    let mut source = vec![0_u8; 12];
+    push_pascal(&mut source, "HudLayer")?;
+    for value in [1_u32, 1, 0, 255] {
+        source.extend_from_slice(&value.to_le_bytes());
+    }
+    let header_size = source.len();
+    finish_chunk(&mut source, 0x0001_8003, header_size, header_size)?;
+    Ok((source, header_size))
+}
+
+#[test]
+fn scrooby_layer_rejects_undeclared_or_truncated_children() -> Result<(), String> {
+    let (source, header_size) = scrooby_layer_fixture()?;
+
+    let mut unknown_child = source.clone();
+    unknown_child.extend_from_slice(&0xdead_beef_u32.to_le_bytes());
+    unknown_child.extend_from_slice(&12_u32.to_le_bytes());
+    unknown_child.extend_from_slice(&12_u32.to_le_bytes());
+    let unknown_total = unknown_child.len();
+    finish_chunk(
+        &mut unknown_child,
+        0x0001_8003,
+        header_size,
+        unknown_total,
+    )?;
+    let component = record(
+        ChunkKind::ScroobyLayer,
+        0x0001_8003,
+        header_size,
+        unknown_total,
+        1,
+    );
+    if auxiliary::recover_scrooby_layer_json(&component, &unknown_child, 1)
+        .is_some()
+    {
+        return Err("layer accepted an undeclared direct child".to_owned());
+    }
+
+    let mut truncated_child = source;
+    truncated_child.extend_from_slice(&0x0001_8004_u32.to_le_bytes());
+    let truncated_total = truncated_child.len();
+    finish_chunk(
+        &mut truncated_child,
+        0x0001_8003,
+        header_size,
+        truncated_total,
+    )?;
+    let component = record(
+        ChunkKind::ScroobyLayer,
+        0x0001_8003,
+        header_size,
+        truncated_total,
+        1,
+    );
+    if auxiliary::recover_scrooby_layer_json(&component, &truncated_child, 1)
+        .is_some()
+    {
+        return Err("layer ignored a truncated direct child".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn scrooby_layer_preserves_declared_widget_child_inventory() -> Result<(), String> {
+    let (mut source, header_size) = scrooby_layer_fixture()?;
+    for id in [
+        0x0001_8004_u32,
+        0x0001_8006,
+        0x0001_8007,
+        0x0001_8008,
+        0x0001_8009,
+    ] {
+        source.extend_from_slice(&id.to_le_bytes());
+        source.extend_from_slice(&12_u32.to_le_bytes());
+        source.extend_from_slice(&12_u32.to_le_bytes());
+    }
+    let total_size = source.len();
+    finish_chunk(&mut source, 0x0001_8003, header_size, total_size)?;
+    let component = record(
+        ChunkKind::ScroobyLayer,
+        0x0001_8003,
+        header_size,
+        total_size,
+        5,
+    );
+    let recovered = auxiliary::recover_scrooby_layer_json(
+        &component,
+        &source,
+        1,
+    )
+    .ok_or_else(|| "declared layer children should decode".to_owned())?;
+    let json = String::from_utf8(recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    for id in ["00018004", "00018006", "00018007", "00018008", "00018009"] {
+        if !json.contains(&format!(r#""id_hex":"0x{id}""#)) {
+            return Err(format!("layer lost declared child 0x{id}"));
+        }
+    }
+    Ok(())
+}

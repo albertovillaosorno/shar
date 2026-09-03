@@ -601,8 +601,15 @@ pub(super) fn recover_scrooby_project_json(
     let page_path = schema::read_pascal_at(chunk, &mut cursor)?;
     let resource_path = schema::read_pascal_at(chunk, &mut cursor)?;
     let screen_path = schema::read_pascal_at(chunk, &mut cursor)?;
-    let children =
-        child_chunks_json(chunk, component.header_size, component.total_size);
+    if cursor != component.header_size {
+        return None;
+    }
+    let children = scrooby_container_children_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+        &[0x0001_8001, 0x0001_8002],
+    )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -744,8 +751,18 @@ pub(super) fn recover_scrooby_layer_json(
     if cursor != component.header_size {
         return None;
     }
-    let children =
-        child_chunks_json(chunk, component.header_size, component.total_size);
+    let children = scrooby_container_children_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+        &[
+            0x0001_8004,
+            0x0001_8006,
+            0x0001_8007,
+            0x0001_8008,
+            0x0001_8009,
+        ],
+    )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
@@ -767,6 +784,30 @@ pub(super) fn recover_scrooby_layer_json(
         json,
         "decoded_schema_payload",
     ))
+}
+
+/// Validate one closed Scrooby container child inventory.
+fn scrooby_container_children_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+    allowed_ids: &[u32],
+) -> Option<String> {
+    let mut children = Vec::new();
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if header_size < 12
+            || total_size < header_size
+            || next > end
+            || !allowed_ids.contains(&id)
+        {
+            return None;
+        }
+        children.push(child_chunk_summary_json(id, header_size, total_size)?);
+        cursor = next;
+    }
+    (cursor == end).then(|| children.join(","))
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
