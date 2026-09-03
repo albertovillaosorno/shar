@@ -1119,6 +1119,21 @@ fn ped_path_rejects_unobserved_source_shapes() -> Result<(), String> {
     {
         return Err(String::from("trailing ped path data should fail closed"));
     }
+    let (mut impossible, size) =
+        ped_path_fixture(&[[1_f32, 2_f32, 3_f32]], false)?;
+    impossible
+        .get_mut(12..16)
+        .ok_or_else(|| String::from("ped path count field should exist"))?
+        .copy_from_slice(&u32::MAX.to_le_bytes());
+    if auxiliary::recover_ped_path_json(
+        &ped_path_component(size),
+        &impossible,
+        1,
+    )
+    .is_some()
+    {
+        return Err(String::from("impossible ped path count should fail closed"));
+    }
     let (nonfinite, size) =
         ped_path_fixture(&[[f32::NAN, 2_f32, 3_f32]], false)?;
     if auxiliary::recover_ped_path_json(
@@ -1421,7 +1436,12 @@ fn history_preserves_declared_lines() -> Result<(), String> {
 #[test]
 fn history_rejects_source_contract_drift() -> Result<(), String> {
     for (declared, trailing, child) in
-        [(1, false, false), (2, true, false), (2, false, true)]
+        [
+            (1, false, false),
+            (u16::MAX, false, false),
+            (2, true, false),
+            (2, false, true),
+        ]
     {
         let (source, component) = history_fixture(declared, trailing, child)?;
         if auxiliary::recover_history_json(&component, &source, 1).is_some() {
@@ -1510,6 +1530,22 @@ fn attribute_table_rejects_unobserved_source_shapes() -> Result<(), String> {
     {
         return Err(String::from(
             "trailing attribute table data should fail closed",
+        ));
+    }
+    let (mut impossible, size) = attribute_table_fixture(1_f32, false)?;
+    impossible
+        .get_mut(12..16)
+        .ok_or_else(|| String::from("attribute row count field should exist"))?
+        .copy_from_slice(&u32::MAX.to_le_bytes());
+    if auxiliary::recover_attribute_table_json(
+        &attribute_table_component(size),
+        &impossible,
+        1,
+    )
+    .is_some()
+    {
+        return Err(String::from(
+            "impossible attribute row count should fail closed",
         ));
     }
     let (nonfinite, size) = attribute_table_fixture(f32::NAN, false)?;
