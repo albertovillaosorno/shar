@@ -136,6 +136,28 @@ occlusion locators carry exactly one authored data word, so extraction now
 rejects a missing word instead of synthesizing an occlusion count from the
 trigger total.
 
+Runtime storage bounds also constrain three locator payload families. All 113
+dynamic-zone locators use 8 through 35 words, all 19 interior entrances use 10
+through 15, and all 435 action locators use 8 through 14. The loader stores the
+zone/interior payload and the action text region behind one-byte sizes, so fresh
+recovery enforces the corresponding 63-word limit with zero corpus violations.
+
+Locator text remains byte-oriented source data rather than a UTF-8 validity
+contract. The game loader copies script, zone, car-name, interior-name, and
+action strings as C bytes, while normalized JSON retains every original word in
+`data_elements_u32`. Text views therefore use lossy decoding when necessary.
+The action parser preserves an authored empty first string while skipping only
+the
+padding between subsequent strings.
+
+Current source uses locator types 0 through 9 and 12 through 14; types 10, 11,
+15, and values above the declared enum are absent. Runtime dispatch nevertheless
+maps spawn-point, `NUM_TYPES`, and unknown numeric values to a base `Locator`,
+so recovery preserves that fallback instead of rejecting the package. The
+breakable-camera branch is runtime-dormant and consumes no payload fields, so
+recovery retains any authored words as ignored evidence rather than inventing a
+matrix/FOV requirement.
+
 The same raw audit finds 1,866 schema-sized `EXTRA_MATRIX` children, all finite,
 with 1,571 distinct matrix payloads; fresh locator JSON now retains those
 matrices without assigning gameplay meaning. It also finds 129 locator splines
