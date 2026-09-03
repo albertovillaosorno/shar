@@ -4365,14 +4365,7 @@ fn texture_fixture(
     children: &[Vec<u8>],
     trailing_header: bool,
 ) -> Result<Vec<u8>, String> {
-    texture_fixture_with_header(
-        children,
-        trailing_header,
-        14_000,
-        1,
-        1,
-        0,
-    )
+    texture_fixture_with_header(children, trailing_header, 14_000, 1, 1, 0)
 }
 
 fn texture_fixture_with_header(
@@ -4445,7 +4438,6 @@ fn texture_payload_requires_exact_single_image_child() -> Result<(), String> {
 }
 
 #[test]
-// jig-ignore-next-line: exact contract test name is indivisible.
 fn texture_payload_rejects_runtime_header_contract_drift() -> Result<(), String>
 {
     let payload = dds_payload_fixture();
