@@ -37,25 +37,25 @@ const MAX_BYTE_SIZED_WORDS: usize = 63;
 
 /// Return the stable runtime name for one declared locator type.
 #[must_use]
-pub const fn type_name(locator_type: u32) -> Option<&'static str> {
+pub const fn type_name(locator_type: u32) -> &'static str {
     match locator_type {
-        0 => Some("event"),
-        1 => Some("script"),
-        2 => Some("generic"),
-        3 => Some("car_start"),
-        4 => Some("spline"),
-        5 => Some("dynamic_zone"),
-        6 => Some("occlusion"),
-        7 => Some("interior_entrance"),
-        8 => Some("directional"),
-        9 => Some("action"),
-        10 => Some("fov"),
-        11 => Some("breakable_camera"),
-        12 => Some("static_camera"),
-        13 => Some("ped_group"),
-        14 => Some("coin"),
-        15 => Some("spawn_point"),
-        _ => None,
+        0 => "event",
+        1 => "script",
+        2 => "generic",
+        3 => "car_start",
+        4 => "spline",
+        5 => "dynamic_zone",
+        6 => "occlusion",
+        7 => "interior_entrance",
+        8 => "directional",
+        9 => "action",
+        10 => "fov",
+        11 => "breakable_camera",
+        12 => "static_camera",
+        13 => "ped_group",
+        14 => "coin",
+        15 => "spawn_point",
+        _ => "unknown",
     }
 }
 
@@ -82,8 +82,8 @@ pub fn data_interpretation_json(
         12 => static_camera_json(data),
         13 => ped_group_json(data),
         14 => Some(ignored_data_json("coin", data)),
-        15 => Some(spawn_point_json(data)),
-        _ => None,
+        15 => Some(base_locator_json("spawn_point", data)),
+        _ => Some(base_locator_json("unknown", data)),
     }
 }
 
@@ -324,14 +324,15 @@ fn ped_group_json(data: &[u32]) -> Option<String> {
     ))
 }
 
-/// Preserve the declared spawn-point type and its base-locator loader behavior.
-fn spawn_point_json(data: &[u32]) -> String {
+/// Preserve a locator type whose runtime falls back to the base locator.
+fn base_locator_json(kind: &str, data: &[u32]) -> String {
     format!(
         concat!(
-            "{{\"kind\":\"spawn_point\",",
+            "{{\"kind\":\"{}\",",
             "\"loader_behavior\":\"base_locator\",",
             "\"ignored_data\":[{}]}}"
         ),
+        kind,
         u32_list(data)
     )
 }

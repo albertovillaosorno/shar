@@ -71,9 +71,10 @@ fn assert_known(
 #[test]
 fn every_declared_locator_type_has_a_stable_name() {
     for locator_type in 0_u32..=15 {
-        assert!(type_name(locator_type).is_some());
+        assert_ne!(type_name(locator_type), "unknown");
     }
-    assert!(type_name(16).is_none());
+    assert_eq!(type_name(16), "unknown");
+    assert_eq!(type_name(u32::MAX), "unknown");
 }
 
 #[test]
@@ -283,10 +284,32 @@ fn action_payload_preserves_an_authored_empty_first_string()
 }
 
 #[test]
-fn invalid_or_undeclared_locator_payloads_fail_closed() {
+fn unknown_locator_types_preserve_base_loader_behavior() -> Result<(), String> {
+    for locator_type in [16_u32, 17, u32::MAX] {
+        let json = data_interpretation_json(locator_type, &[7, 9], 0)
+            .ok_or_else(|| {
+                format!("locator type {locator_type} did not decode")
+            })?;
+        let _value = serde_json::from_str::<serde_json::Value>(&json).map_err(
+            |error| format!("unknown locator emitted invalid JSON: {error}"),
+        )?;
+        for field in [
+            "\"kind\":\"unknown\"",
+            "\"loader_behavior\":\"base_locator\"",
+            "\"ignored_data\":[7,9]",
+        ] {
+            if !json.contains(field) {
+                return Err(format!("unknown locator output omitted {field}"));
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn invalid_declared_locator_payloads_fail_closed() {
     assert!(data_interpretation_json(6, &[], 2).is_none());
     assert!(data_interpretation_json(6, &[0, 1], 2).is_none());
     assert!(data_interpretation_json(8, &[0; 8], 0,).is_none());
     assert!(data_interpretation_json(9, &[0; 4], 0,).is_none());
-    assert!(data_interpretation_json(16, &[], 0,).is_none());
 }
