@@ -316,7 +316,7 @@ pub(super) fn recover_game_attr_json(
     cursor += 4;
     let num_params = usize::try_from(read_u32(chunk, cursor)?).ok()?;
     cursor = cursor.checked_add(4)?;
-    if cursor != component.header_size {
+    if version != 0 || cursor != component.header_size {
         return None;
     }
     let fallback = format!("game_attr_{kind_index:04}");

@@ -1594,6 +1594,7 @@ fn breakable_object_rejects_unknown_child() -> Result<(), String> {
 }
 
 fn game_attr_fixture(
+    version: u32,
     declared_params: u32,
     param_id: u32,
     trailing_word: bool,
@@ -1622,7 +1623,7 @@ fn game_attr_fixture(
 
     let mut fields = Vec::new();
     push_pascal(&mut fields, "attribute")?;
-    push_u32(&mut fields, 0);
+    push_u32(&mut fields, version);
     push_u32(&mut fields, declared_params);
     let header_size = 12_usize
         .checked_add(fields.len())
@@ -1659,7 +1660,7 @@ fn game_attr_fixture(
 
 #[test]
 fn game_attr_preserves_exact_declared_parameter() -> Result<(), String> {
-    let (source, component) = game_attr_fixture(1, 0x0001_2001, false)?;
+    let (source, component) = game_attr_fixture(0, 1, 0x0001_2001, false)?;
     let recovered = schema::recover_game_attr_json(&component, &source, 1)
         .ok_or_else(|| String::from("game attr fixture should decode"))?;
     let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
@@ -1676,13 +1677,14 @@ fn game_attr_preserves_exact_declared_parameter() -> Result<(), String> {
 
 #[test]
 fn game_attr_rejects_parameter_contract_drift() -> Result<(), String> {
-    for (declared, param_id, trailing) in [
-        (0, 0x0001_2001, false),
-        (1, 0xdead_beef, false),
-        (1, 0x0001_2001, true),
+    for (version, declared, param_id, trailing) in [
+        (1, 1, 0x0001_2001, false),
+        (0, 0, 0x0001_2001, false),
+        (0, 1, 0xdead_beef, false),
+        (0, 1, 0x0001_2001, true),
     ] {
         let (source, component) =
-            game_attr_fixture(declared, param_id, trailing)?;
+            game_attr_fixture(version, declared, param_id, trailing)?;
         if schema::recover_game_attr_json(&component, &source, 1).is_some() {
             return Err(String::from(
                 "game attr parameter contract drift should fail closed",
