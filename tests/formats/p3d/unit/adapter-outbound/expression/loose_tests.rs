@@ -87,6 +87,27 @@ fn expression_group_rejects_missing_declared_children() {
 }
 
 #[test]
+fn expression_counts_reject_impossible_arrays() {
+    let mut group = Vec::new();
+    group.extend_from_slice(&0x0002_1001_u32.to_le_bytes());
+    group.extend_from_slice(&26_u32.to_le_bytes());
+    group.extend_from_slice(&26_u32.to_le_bytes());
+    group.extend_from_slice(&0_u32.to_le_bytes());
+    group.extend_from_slice(&[1, b'n', 1, b't']);
+    group.extend_from_slice(&u32::MAX.to_le_bytes());
+    assert!(vertex_expression_json("vertex_expression_group", &group).is_none());
+
+    let mut curve = Vec::new();
+    curve.extend_from_slice(&0x0002_1000_u32.to_le_bytes());
+    curve.extend_from_slice(&22_u32.to_le_bytes());
+    curve.extend_from_slice(&22_u32.to_le_bytes());
+    curve.extend_from_slice(&0_u32.to_le_bytes());
+    curve.extend_from_slice(&[1, b'e']);
+    curve.extend_from_slice(&u32::MAX.to_le_bytes());
+    assert!(decode_expression_json(&curve).is_none());
+}
+
+#[test]
 fn expression_key_format_preserves_f32_roundtrip() {
     let value = f32::from_bits(0x3f80_0001);
 
