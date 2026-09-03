@@ -186,6 +186,29 @@ fn recovers_scrooby_screen_page_names_exactly() -> Result<(), String> {
 }
 
 #[test]
+fn screen_rejects_impossible_page_count() -> Result<(), String> {
+    let mut source = vec![0_u8; 12];
+    push_pascal(&mut source, "Main")?;
+    source.extend_from_slice(&1_u32.to_le_bytes());
+    source.extend_from_slice(&u32::MAX.to_le_bytes());
+    let size = source.len();
+    finish_chunk_header(&mut source, 0x0001_8001, size, size)?;
+    let component = record(
+        ChunkKind::ScroobyScreen,
+        0x0001_8001,
+        size,
+        size,
+        0,
+    );
+    if auxiliary::recover_scrooby_screen_json(&component, &source, 1)
+        .is_some()
+    {
+        return Err("screen accepted an impossible page count".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn recovers_scrooby_page_header_and_child_inventory() -> Result<(), String> {
     let mut source = vec![0_u8; 12];
     push_pascal(&mut source, "Hud")?;

@@ -199,6 +199,30 @@ fn recovers_multi_sprite_and_pure3d_object_fields() -> Result<(), String> {
 }
 
 #[test]
+fn multi_sprite_rejects_impossible_image_count() -> Result<(), String> {
+    let mut source = vec![0_u8; 12];
+    push_widget_frame(&mut source, "Icons")?;
+    source.extend_from_slice(&u32::MAX.to_le_bytes());
+    let size = source.len();
+    finish_chunk(&mut source, 0x0001_8006, size, size)?;
+    let component = record(
+        ChunkKind::ScroobyMultiSprite,
+        0x0001_8006,
+        size,
+        size,
+        0,
+    );
+    if scrooby_widget::recover_multi_sprite_json(&component, &source, 1)
+        .is_some()
+    {
+        return Err(
+            "multi-sprite accepted an impossible image count".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn recovers_multi_text_and_nested_bible_reference() -> Result<(), String> {
     let mut text = vec![0_u8; 12];
     push_widget_frame_version(&mut text, "Caption", 17)?;
@@ -283,6 +307,28 @@ fn recovers_polygon_points_and_colours() -> Result<(), String> {
         || !json.contains(r#""colors":[16909060,2695938256]"#)
     {
         return Err("polygon recovery lost points or colours".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn polygon_rejects_impossible_point_count() -> Result<(), String> {
+    let mut source = vec![0_u8; 12];
+    push_pascal(&mut source, "Shape")?;
+    source.extend_from_slice(&1_u32.to_le_bytes());
+    source.extend_from_slice(&2_u32.to_le_bytes());
+    source.extend_from_slice(&u32::MAX.to_le_bytes());
+    let size = source.len();
+    finish_chunk(&mut source, 0x0001_8009, size, size)?;
+    let component = record(
+        ChunkKind::ScroobyPolygon,
+        0x0001_8009,
+        size,
+        size,
+        0,
+    );
+    if scrooby_widget::recover_polygon_json(&component, &source, 1).is_some() {
+        return Err("polygon accepted an impossible point count".to_owned());
     }
     Ok(())
 }

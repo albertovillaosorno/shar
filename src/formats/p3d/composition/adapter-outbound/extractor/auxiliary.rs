@@ -651,6 +651,10 @@ pub(super) fn recover_scrooby_screen_json(
     cursor = cursor.checked_add(4)?;
     let page_count = usize::try_from(read_u32(chunk, cursor)?).ok()?;
     cursor = cursor.checked_add(4)?;
+    let remaining_header = chunk.get(cursor..component.header_size)?.len();
+    if page_count > remaining_header {
+        return None;
+    }
     let mut pages = Vec::with_capacity(page_count);
     for _ in 0..page_count {
         pages.push(schema::read_pascal_at(chunk, &mut cursor)?);
