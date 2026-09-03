@@ -215,7 +215,12 @@ pub fn multi_controller_json(chunk: &[u8]) -> Option<String> {
     let length = reader.f32()?;
     let frame_rate = reader.f32()?;
     let track_count = u32_to_usize(reader.u32()?)?;
-    if !length.is_finite() || !frame_rate.is_finite() {
+    if version != 0
+        || !length.is_finite()
+        || length < 0.
+        || !frame_rate.is_finite()
+        || frame_rate <= 0.
+    {
         return None;
     }
     if reader.pos() != header_size {

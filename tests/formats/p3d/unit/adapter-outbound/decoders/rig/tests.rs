@@ -202,11 +202,12 @@ fn animation_fixture_with_values(first: f32, second: f32) -> Option<Vec<u8>> {
 
 /// Builds a multi-controller fixture with one timing track.
 fn multi_fixture() -> Option<Vec<u8>> {
-    multi_fixture_with_values(10., 30., 0., 10., 1.)
+    multi_fixture_with_values(0, 10., 30., 0., 10., 1.)
 }
 
-/// Builds a multi-controller fixture with caller-selected finite evidence.
+/// Builds a multi-controller fixture with caller-selected root/timing evidence.
 fn multi_fixture_with_values(
+    version: u32,
     length: f32,
     frame_rate: f32,
     start_time: f32,
@@ -227,7 +228,7 @@ fn multi_fixture_with_values(
         MULTI_CONTROLLER,
         fields(vec![
             pstring("controller")?,
-            u32_field(0),
+            u32_field(version),
             f32_field(length),
             f32_field(frame_rate),
             u32_field(1),
@@ -452,6 +453,29 @@ fn multi_controller_decodes_track_timings() -> Result<(), String> {
 }
 
 #[test]
+fn multi_controller_rejects_loader_root_contract_drift() -> Result<(), String> {
+    for values in [
+        (1_u32, 10., 30.),
+        (0, -1., 30.),
+        (0, 10., 0.),
+        (0, 10., -30.),
+    ] {
+        let fixture = require(
+            multi_fixture_with_values(
+                values.0, values.1, values.2, 0., 10., 1.,
+            ),
+            "invalid multi-controller root fixture should build",
+        )?;
+        if multi_controller_json(&fixture).is_some() {
+            return Err(String::from(
+                "multi-controller accepted loader-invalid root evidence",
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn multi_controller_rejects_nonfinite_timing_evidence() -> Result<(), String> {
     for values in [
         (f32::NAN, 30., 0., 10., 1.),
@@ -462,7 +486,7 @@ fn multi_controller_rejects_nonfinite_timing_evidence() -> Result<(), String> {
     ] {
         let fixture = require(
             multi_fixture_with_values(
-                values.0, values.1, values.2, values.3, values.4,
+                0, values.0, values.1, values.2, values.3, values.4,
             ),
             "non-finite multi-controller fixture should build",
         )?;
