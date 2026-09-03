@@ -4283,6 +4283,50 @@ fn skin_decoder_rejects_declared_primitive_group_count_drift()
 }
 
 #[test]
+fn mesh_recovery_rejects_runtime_invalid_primitive_type() -> Result<(), String>
+{
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    let prim_type_offset = mesh_header
+        .checked_add(12 + 4 + 1 + "shader".len())
+        .ok_or_else(|| String::from("primitive type offset overflowed"))?;
+    source[prim_type_offset..prim_type_offset + 4]
+        .copy_from_slice(&5_u32.to_le_bytes());
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted a primitive type rejected by the runtime",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mesh_recovery_rejects_runtime_matrix_count_overflow() -> Result<(), String> {
+    const MATRIX_PALETTE: u32 = 0x0001_000d;
+    let (mut source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture_with_contract(0, 1, 257)?;
+    let mut palette = Vec::new();
+    push_u32(&mut palette, 257);
+    for _ in 0..257 {
+        push_u32(&mut palette, 0);
+    }
+    append_primitive_group_child(
+        &mut source,
+        mesh_header,
+        MATRIX_PALETTE,
+        &palette,
+    )?;
+    let component = primitive_group_mesh_record(&source, mesh_header);
+    if render::recover_mesh_json(&component, &source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh recovery accepted NumMatrices above the runtime limit",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn mesh_recovery_rejects_unobserved_primitive_group_version()
 -> Result<(), String> {
     let (source, mesh_header, _group_size) =

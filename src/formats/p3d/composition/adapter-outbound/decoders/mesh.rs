@@ -526,17 +526,31 @@ impl PrimitiveHeader {
 
     /// Reads the fixed header before any child list can affect decoder state.
     fn read(reader: &mut Reader<'_>) -> Option<Self> {
+        const MAX_RUNTIME_COUNT: u32 = 2_147_483_647;
         let version = reader.u32()?;
         if version != Self::SUPPORTED_VERSION {
             return None;
         }
+        let shader = reader.pstring()?;
+        let prim_type = reader.u32()?;
+        let vertex_format = reader.u32()?;
+        let vertex_count = reader.u32()?;
+        let index_count = reader.u32()?;
+        let matrix_count = reader.u32()?;
+        if prim_type > 4
+            || vertex_count > MAX_RUNTIME_COUNT
+            || index_count > MAX_RUNTIME_COUNT
+            || matrix_count > 256
+        {
+            return None;
+        }
         Some(Self {
-            shader: reader.pstring()?,
-            prim_type: reader.u32()?,
-            vertex_format: reader.u32()?,
-            vertex_count: reader.u32()?,
-            index_count: reader.u32()?,
-            matrix_count: reader.u32()?,
+            shader,
+            prim_type,
+            vertex_format,
+            vertex_count,
+            index_count,
+            matrix_count,
         })
     }
 }
