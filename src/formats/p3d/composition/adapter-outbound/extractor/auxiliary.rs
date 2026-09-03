@@ -855,7 +855,7 @@ fn scrooby_page_children_json(
     while cursor < end {
         let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
         let next = cursor.checked_add(total_size)?;
-        if total_size < header_size || next > end {
+        if header_size < 12 || total_size < header_size || next > end {
             return None;
         }
         let name = match id {

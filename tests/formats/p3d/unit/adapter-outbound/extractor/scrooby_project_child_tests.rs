@@ -245,6 +245,38 @@ fn recovers_scrooby_page_header_and_child_inventory() -> Result<(), String> {
     Ok(())
 }
 
+
+#[test]
+fn page_rejects_undersized_child_header() -> Result<(), String> {
+    let mut source = vec![0_u8; 12];
+    push_pascal(&mut source, "Hud")?;
+    source.extend_from_slice(&1_u32.to_le_bytes());
+    source.extend_from_slice(&640_u32.to_le_bytes());
+    source.extend_from_slice(&480_u32.to_le_bytes());
+    let header_size = source.len();
+    source.extend_from_slice(&0x0001_8003_u32.to_le_bytes());
+    source.extend_from_slice(&8_u32.to_le_bytes());
+    source.extend_from_slice(&12_u32.to_le_bytes());
+    let total_size = source.len();
+    finish_chunk_header(
+        &mut source,
+        0x0001_8002,
+        header_size,
+        total_size,
+    )?;
+    let component = record(
+        ChunkKind::ScroobyPage,
+        0x0001_8002,
+        header_size,
+        total_size,
+        1,
+    );
+    if auxiliary::recover_scrooby_page_json(&component, &source, 1).is_some() {
+        return Err("page accepted an undersized child header".to_owned());
+    }
+    Ok(())
+}
+
 #[test]
 fn project_rejects_scrooby_framing_drift() -> Result<(), String> {
     let (source, header_size) = scrooby_project_fixture()?;
