@@ -1811,6 +1811,167 @@ fn light_group_rejects_inline_list_drift() -> Result<(), String> {
     Ok(())
 }
 
+fn state_prop_fixture(
+    declared_states: u32,
+    declared_drawables: u32,
+    out_frame: f32,
+    relative_speed: f32,
+    unknown_child: bool,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const STATE_PROP: u32 = 0x0802_0000;
+    const STATE: u32 = 0x0802_0001;
+    const VISIBILITY: u32 = 0x0802_0002;
+    const FRAME_CONTROLLER: u32 = 0x0802_0003;
+    const EVENT: u32 = 0x0802_0004;
+    const CALLBACK: u32 = 0x0802_0005;
+    fn nested_chunk(
+        id: u32,
+        fields: &[u8],
+        children: Vec<Vec<u8>>,
+    ) -> Result<Vec<u8>, String> {
+        let header_size = 12_usize
+            .checked_add(fields.len())
+            .ok_or_else(|| String::from("state-prop header overflowed"))?;
+        let child_size = children.iter().try_fold(0_usize, |size, child| {
+            size.checked_add(child.len())
+                .ok_or_else(|| String::from("state-prop child overflowed"))
+        })?;
+        let total_size = header_size
+            .checked_add(child_size)
+            .ok_or_else(|| String::from("state-prop total overflowed"))?;
+        let mut bytes = Vec::new();
+        push_u32(&mut bytes, id);
+        push_u32(
+            &mut bytes,
+            u32::try_from(header_size).map_err(|error| error.to_string())?,
+        );
+        push_u32(
+            &mut bytes,
+            u32::try_from(total_size).map_err(|error| error.to_string())?,
+        );
+        bytes.extend_from_slice(fields);
+        for child in children {
+            bytes.extend_from_slice(&child);
+        }
+        Ok(bytes)
+    }
+    let mut visibility_fields = Vec::new();
+    push_pascal(&mut visibility_fields, "mesh")?;
+    push_u32(&mut visibility_fields, 1);
+    let visibility = nested_chunk(VISIBILITY, &visibility_fields, Vec::new())?;
+
+    let mut frame_fields = Vec::new();
+    push_pascal(&mut frame_fields, "controller")?;
+    push_u32(&mut frame_fields, 1);
+    push_u32(&mut frame_fields, 2);
+    push_u32(&mut frame_fields, 0);
+    push_f32(&mut frame_fields, 0_f32);
+    push_f32(&mut frame_fields, 10_f32);
+    push_f32(&mut frame_fields, relative_speed);
+    let frame = nested_chunk(FRAME_CONTROLLER, &frame_fields, Vec::new())?;
+
+    let mut event_fields = Vec::new();
+    push_pascal(&mut event_fields, "event")?;
+    push_u32(&mut event_fields, 0);
+    push_u32(&mut event_fields, 7);
+    let event = nested_chunk(EVENT, &event_fields, Vec::new())?;
+
+    let mut callback_fields = Vec::new();
+    push_pascal(&mut callback_fields, "callback")?;
+    push_u32(&mut callback_fields, 8);
+    push_f32(&mut callback_fields, 4.5_f32);
+    let callback = nested_chunk(CALLBACK, &callback_fields, Vec::new())?;
+
+    let mut state_fields = Vec::new();
+    push_pascal(&mut state_fields, "state0")?;
+    push_u32(&mut state_fields, 1);
+    push_u32(&mut state_fields, 0);
+    push_u32(&mut state_fields, declared_drawables);
+    push_u32(&mut state_fields, 1);
+    push_u32(&mut state_fields, 1);
+    push_u32(&mut state_fields, 1);
+    push_f32(&mut state_fields, out_frame);
+    let mut state_children = vec![visibility, frame, event, callback];
+    if unknown_child {
+        state_children.push(empty_chunk(0xdead_beef));
+    }
+    let state = nested_chunk(STATE, &state_fields, state_children)?;
+
+    let mut root_fields = Vec::new();
+    push_u32(&mut root_fields, 1);
+    push_pascal(&mut root_fields, "prop")?;
+    push_pascal(&mut root_fields, "factory")?;
+    push_u32(&mut root_fields, declared_states);
+    let source = nested_chunk(STATE_PROP, &root_fields, vec![state])?;
+    let header_size =
+        usize::try_from(read_u32(&source, 4).ok_or_else(|| {
+            String::from("state-prop header size is missing")
+        })?)
+        .map_err(|error| error.to_string())?;
+    let component = ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: STATE_PROP,
+        kind: crate::ChunkKind::StateProp,
+        offset: 0,
+        header_size,
+        total_size: source.len(),
+        payload_offset: header_size,
+        payload_size: source.len().saturating_sub(header_size),
+        child_count: 1,
+    };
+    Ok((source, component))
+}
+
+#[test]
+fn state_prop_preserves_typed_state_evidence() -> Result<(), String> {
+    let (source, component) =
+        state_prop_fixture(1, 1, 1.5_f32, 0.75_f32, false)?;
+    let recovered = auxiliary::recover_state_prop_json(&component, &source, 1)
+        .ok_or_else(|| String::from("state-prop fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    let state = value["states"]
+        .get(0)
+        .ok_or_else(|| String::from("state-prop state should be retained"))?;
+    if value["version"] == 1
+        && value["num_states"] == 1
+        && state["auto_transition"] == 1
+        && state["num_drawables"] == 1
+        && state["children"][0]["kind"] == "visibility"
+        && state["children"][1]["kind"] == "frame_controller"
+        && state["children"][2]["kind"] == "event"
+        && state["children"][3]["kind"] == "callback"
+        && state["children"][1]["relative_speed"].as_f64() == Some(0.75)
+    {
+        Ok(())
+    } else {
+        Err(String::from("typed state-prop evidence was discarded"))
+    }
+}
+
+#[test]
+fn state_prop_rejects_source_contract_drift() -> Result<(), String> {
+    for (states, drawables, out_frame, speed, unknown) in [
+        (2, 1, 1.5_f32, 0.75_f32, false),
+        (1, 2, 1.5_f32, 0.75_f32, false),
+        (1, 1, f32::NAN, 0.75_f32, false),
+        (1, 1, 1.5_f32, f32::NAN, false),
+        (1, 1, 1.5_f32, 0.75_f32, true),
+    ] {
+        let (source, component) =
+            state_prop_fixture(states, drawables, out_frame, speed, unknown)?;
+        if auxiliary::recover_state_prop_json(&component, &source, 1).is_some()
+        {
+            return Err(String::from(
+                "state-prop source-contract drift must fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn animated_dsg_fixture(
     parent_id: u32,
     version: u32,

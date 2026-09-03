@@ -1651,31 +1651,39 @@ pub(super) fn recover_state_prop_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const STATE_PROP: u32 = 0x0802_0000;
+    if component.id != STATE_PROP {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let version = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let object_factory_name = schema::read_pascal_at(chunk, &mut cursor)?;
-    let num_states = read_u32(chunk, cursor)?;
-    let children =
-        child_chunks_json(chunk, component.header_size, component.total_size);
+    let num_states = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    if version != 1 || cursor != component.header_size {
+        return None;
+    }
+    let states = state_prop_states_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+        num_states,
+    )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
         concat!(
-            r#"{{"schema":"state_prop","#,
-            r#""version":{},"#,
-            r#""name":"{}","#,
-            r#""object_factory_name":"{}","#,
-            r#""num_states":{},"#,
-            r#""children":[{}]}}"#,
+            r#"{{"schema":"state_prop","version":{},"name":"{}","#,
+            r#""object_factory_name":"{}","num_states":{},"states":[{}]}}"#,
         ),
         version,
         escape_json(&name),
         escape_json(&object_factory_name),
         num_states,
-        children
+        states,
     );
     Some(render::json_component(
         kind,
@@ -1683,6 +1691,272 @@ pub(super) fn recover_state_prop_json(
         name,
         json,
         "decoded_schema_payload",
+    ))
+}
+
+/// Decode exact state-prop states in physical source order.
+fn state_prop_states_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+    expected_states: usize,
+) -> Option<String> {
+    const STATE: u32 = 0x0802_0001;
+    let mut states = Vec::with_capacity(expected_states);
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if id != STATE || total_size < header_size || next > end {
+            return None;
+        }
+        states.push(state_prop_state_json(
+            chunk,
+            cursor,
+            header_size,
+            total_size,
+        )?);
+        cursor = next;
+    }
+    (cursor == end && states.len() == expected_states).then(|| states.join(","))
+}
+
+/// Decode one state and validate its declared typed child cardinalities.
+fn state_prop_state_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    const VISIBILITY: u32 = 0x0802_0002;
+    const FRAME_CONTROLLER: u32 = 0x0802_0003;
+    const EVENT: u32 = 0x0802_0004;
+    const CALLBACK: u32 = 0x0802_0005;
+    let header_end = offset.checked_add(header_size)?;
+    let end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let auto_transition = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let out_state = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let num_drawables = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let num_frame_controllers =
+        usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let num_events = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let num_callbacks = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let out_frame = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != header_end || !out_frame.is_finite() {
+        return None;
+    }
+    let mut child_cursor = header_end;
+    let mut children = Vec::new();
+    let mut drawables = 0_usize;
+    let mut frame_controllers = 0_usize;
+    let mut events = 0_usize;
+    let mut callbacks = 0_usize;
+    while child_cursor < end {
+        let (id, child_header, child_total) =
+            read_chunk_header(chunk, child_cursor)?;
+        let next = child_cursor.checked_add(child_total)?;
+        if child_total < child_header || next > end {
+            return None;
+        }
+        let child = match id {
+            VISIBILITY => {
+                drawables = drawables.checked_add(1)?;
+                state_prop_visibility_json(
+                    chunk,
+                    child_cursor,
+                    child_header,
+                    child_total,
+                )?
+            },
+            FRAME_CONTROLLER => {
+                frame_controllers = frame_controllers.checked_add(1)?;
+                state_prop_frame_controller_json(
+                    chunk,
+                    child_cursor,
+                    child_header,
+                    child_total,
+                )?
+            },
+            EVENT => {
+                events = events.checked_add(1)?;
+                state_prop_event_json(
+                    chunk,
+                    child_cursor,
+                    child_header,
+                    child_total,
+                )?
+            },
+            CALLBACK => {
+                callbacks = callbacks.checked_add(1)?;
+                state_prop_callback_json(
+                    chunk,
+                    child_cursor,
+                    child_header,
+                    child_total,
+                )?
+            },
+            _ => return None,
+        };
+        children.push(child);
+        child_cursor = next;
+    }
+    if child_cursor != end
+        || drawables != num_drawables
+        || frame_controllers != num_frame_controllers
+        || events != num_events
+        || callbacks != num_callbacks
+    {
+        return None;
+    }
+    Some(format!(
+        concat!(
+            r#"{{"name":"{}","auto_transition":{},"out_state":{},"#,
+            r#""num_drawables":{},"num_frame_controllers":{},"#,
+            r#""num_events":{},"num_callbacks":{},"out_frame":{},"#,
+            r#""children":[{}]}}"#,
+        ),
+        escape_json(&name),
+        auto_transition,
+        out_state,
+        num_drawables,
+        num_frame_controllers,
+        num_events,
+        num_callbacks,
+        render_f32(out_frame, out_frame.to_string()),
+        children.join(","),
+    ))
+}
+
+/// Decode one childless state-prop visibility record.
+fn state_prop_visibility_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    let header_end = offset.checked_add(header_size)?;
+    let end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let visible = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != header_end || header_end != end {
+        return None;
+    }
+    Some(format!(
+        r#"{{"kind":"visibility","name":"{}","visible":{}}}"#,
+        escape_json(&name),
+        visible,
+    ))
+}
+
+/// Decode one childless state-prop frame-controller record.
+fn state_prop_frame_controller_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    let header_end = offset.checked_add(header_size)?;
+    let end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let cyclic = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let number_of_cycles = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let hold_frame = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let min_frame = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let max_frame = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let relative_speed = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != header_end
+        || header_end != end
+        || [min_frame, max_frame, relative_speed]
+            .iter()
+            .any(|value| !value.is_finite())
+    {
+        return None;
+    }
+    Some(format!(
+        concat!(
+            r#"{{"kind":"frame_controller","name":"{}","cyclic":{},"#,
+            r#""number_of_cycles":{},"hold_frame":{},"min_frame":{},"#,
+            r#""max_frame":{},"relative_speed":{}}}"#,
+        ),
+        escape_json(&name),
+        cyclic,
+        number_of_cycles,
+        hold_frame,
+        render_f32(min_frame, min_frame.to_string()),
+        render_f32(max_frame, max_frame.to_string()),
+        render_f32(relative_speed, relative_speed.to_string()),
+    ))
+}
+
+/// Decode one childless state-prop event record.
+fn state_prop_event_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    let header_end = offset.checked_add(header_size)?;
+    let end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let state = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let event_enum = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != header_end || header_end != end {
+        return None;
+    }
+    Some(format!(
+        r#"{{"kind":"event","name":"{}","state":{},"event_enum":{}}}"#,
+        escape_json(&name),
+        state,
+        event_enum,
+    ))
+}
+
+/// Decode one childless state-prop callback record.
+fn state_prop_callback_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    let header_end = offset.checked_add(header_size)?;
+    let end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let event_enum = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let on_frame = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != header_end || header_end != end || !on_frame.is_finite() {
+        return None;
+    }
+    Some(format!(
+        concat!(
+            r#"{{"kind":"callback","name":"{}","event_enum":{},"#,
+            r#""on_frame":{}}}"#,
+        ),
+        escape_json(&name),
+        event_enum,
+        render_f32(on_frame, on_frame.to_string()),
     ))
 }
 
