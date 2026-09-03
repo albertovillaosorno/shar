@@ -1052,6 +1052,16 @@ Fence geometry is closed over the current raw corpus as well. All 10,262
 end, and normal points, and all 92,358 authored geometry floats are finite.
 Recovery now rejects wrong child IDs, trailing wall data, and non-finite values.
 
+Animated DSG topology is explicit in current source. All 215 `ANIM_DSG` and
+136 `ANIM_COLL_DSG` containers are version 0 with exact headers. Every container
+has exactly one composite drawable and one multi-controller plus one or more
+frame controllers; billboard quad groups are optional and remain source-ordered.
+
+Every `ANIM_COLL_DSG` additionally owns exactly one collision object, while
+ordinary `ANIM_DSG` containers own none. Authored `HasAlpha` values are 0, 1,
+or 9, so recovery preserves the numeric field rather than coercing it to a
+boolean. Direct child source ordinals, kinds, and authored names now survive.
+
 Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
 span 0 through 62, while sounds include `nosound` and collision event names.
 Those fields now remain object attributes instead of being mislabeled as
