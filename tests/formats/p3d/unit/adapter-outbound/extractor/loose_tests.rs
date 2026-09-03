@@ -1307,8 +1307,7 @@ fn light_fixture(
 
 #[test]
 fn light_preserves_exact_direct_children() -> Result<(), String> {
-    let (source, component) =
-        light_fixture(LightFixtureDrift::Clean)?;
+    let (source, component) = light_fixture(LightFixtureDrift::Clean)?;
     let recovered = schema::recover_light_json(&component, &source, 1)
         .ok_or_else(|| String::from("light fixture should decode"))?;
     let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
