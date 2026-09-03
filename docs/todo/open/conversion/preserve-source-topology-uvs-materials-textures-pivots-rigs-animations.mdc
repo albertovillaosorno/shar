@@ -956,8 +956,9 @@ primitive groups: 18,413 declare zero matrices and omit a matrix palette, while
 Primitive recovery now validates this relationship instead of retaining an
 unchecked `NumMatrices` declaration beside contradictory palette evidence. The
 runtime skin loader also rejects every `MATRIXLIST` slot at or above
-`NumMatrices` and every matrix-palette bone index at or above 256. The raw corpus
-contains 925,292 matrix-list indices (maximum 24) and 10,586 palette bone indices
+`NumMatrices` and every matrix-palette bone index at or above 256. The raw
+corpus contains 925,292 matrix-list indices (maximum 24) and 10,586 palette bone
+indices
 (maximum 189) across all 1,462 skinned primitive groups with zero violations;
 skin extraction now enforces those two bounds without applying them to meshes.
 
@@ -969,8 +970,9 @@ same empty string.
 
 The raw mesh/skin auxiliary audit finds 15,149 schema-sized bounding boxes and
 15,149 bounding spheres, plus 14,516 mesh render-status chunks with values only
-`0` or `1`; each observed family is singleton per parent. The runtime mesh loader
-interprets render status as zero versus nonzero rather than rejecting other
+`0` or `1`; each observed family is singleton per parent. The runtime mesh
+loader interprets render status as zero versus nonzero rather than rejecting
+other
 `LONG` values, so the observed `0`/`1` range is not a P3D validity rule. One
 `comic_v.p3d`
 mesh intentionally carries the same non-finite IEEE-754 payload in all box and
