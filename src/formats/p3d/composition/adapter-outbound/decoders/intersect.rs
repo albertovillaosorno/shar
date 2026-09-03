@@ -49,9 +49,9 @@ pub fn dsg_json(chunk: &[u8]) -> Option<String> {
         return None;
     }
     let mut reader = Reader::new(chunk, 12);
-    let indices = read_u32_array(&mut reader)?;
-    let positions = read_vec3_array(&mut reader)?;
-    let normals = read_vec3_array(&mut reader)?;
+    let indices = read_u32_array(&mut reader, header_size)?;
+    let positions = read_vec3_array(&mut reader, header_size)?;
+    let normals = read_vec3_array(&mut reader, header_size)?;
     if reader.pos() != header_size {
         return None;
     }
@@ -118,8 +118,11 @@ pub fn dsg_json(chunk: &[u8]) -> Option<String> {
 }
 
 /// Reads a count-prefixed integer list for triangle indices.
-fn read_u32_array(reader: &mut Reader<'_>) -> Option<Vec<u32>> {
+fn read_u32_array(reader: &mut Reader<'_>, end: usize) -> Option<Vec<u32>> {
     let count = usize::try_from(reader.u32()?).ok()?;
+    if !count_bytes_fit(reader, end, count, 4)? {
+        return None;
+    }
     let mut values = Vec::new();
     for _ in 0..count {
         values.push(reader.u32()?);
@@ -128,13 +131,26 @@ fn read_u32_array(reader: &mut Reader<'_>) -> Option<Vec<u32>> {
 }
 
 /// Reads a count-prefixed vector list for positions and normals.
-fn read_vec3_array(reader: &mut Reader<'_>) -> Option<Vec<String>> {
+fn read_vec3_array(reader: &mut Reader<'_>, end: usize) -> Option<Vec<String>> {
     let count = usize::try_from(reader.u32()?).ok()?;
+    if !count_bytes_fit(reader, end, count, 12)? {
+        return None;
+    }
     let mut values = Vec::new();
     for _ in 0..count {
         values.push(read_vec3(reader)?);
     }
     Some(values)
+}
+
+/// Checks whether a fixed-width count fits in the remaining header bytes.
+fn count_bytes_fit(
+    reader: &Reader<'_>,
+    end: usize,
+    count: usize,
+    width: usize,
+) -> Option<bool> {
+    Some(count.checked_mul(width)? <= end.checked_sub(reader.pos())?)
 }
 
 /// Formats one vector as a JSON array without a serializer dependency.

@@ -136,6 +136,25 @@ fn intersect_dsg_decodes_arrays_and_children() -> Result<(), String> {
 }
 
 #[test]
+fn intersect_dsg_rejects_impossible_array_counts() -> Result<(), String> {
+    for count_offset in [12_usize, 28, 68] {
+        let mut fixture =
+            require(intersect_fixture(), "intersect fixture should build")?;
+        require(
+            fixture.get_mut(count_offset..count_offset + 4),
+            "intersect count field should exist",
+        )?
+        .copy_from_slice(&u32::MAX.to_le_bytes());
+        if dsg_json(&fixture).is_some() {
+            return Err(String::from(
+                "intersect accepted an impossible inline array count",
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn intersect_dsg_rejects_missing_required_sphere() -> Result<(), String> {
     let fixture =
         require(intersect_fixture(), "intersect fixture should build")?;
