@@ -70,14 +70,26 @@ fn assert_known(
 
 #[test]
 fn event_labels_follow_runtime_enum_ordinals() {
+    for event in 0_u32..=85 {
+        assert_ne!(event_name(event), "event");
+    }
     for (event, name) in [
-        (47_u32, "parked_birds"),
+        (7_u32, "ambient_sound_city"),
+        (14, "ambient_sound_power_plant_exterior"),
+        (15, "ambient_sound_power_plant_interior"),
+        (33, "ambient_sound_retaining_wall_tunnel"),
+        (46, "ambient_sound_mansion_interior"),
+        (47, "parked_birds"),
         (48, "whacky_gravity"),
         (49, "far_plane_change"),
+        (50, "ambient_sound_country_night"),
+        (62, "ambient_sound_placeholder_9"),
         (63, "goo_damage"),
         (64, "coin_zone"),
         (65, "light_change"),
         (66, "trap"),
+        (67, "ambient_sound_seaside_night"),
+        (76, "ambient_sound_placeholder_16"),
         (77, "dynamic_zone"),
         (78, "occlusion_zone"),
         (79, "car_door"),
