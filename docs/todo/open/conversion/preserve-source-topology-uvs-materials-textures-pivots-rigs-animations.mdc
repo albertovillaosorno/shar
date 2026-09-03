@@ -1086,6 +1086,13 @@ wrappers are always version/alpha 0/0, while compact wrappers use 0/0, 1/0, or
 1/1; their child multiplicities vary across 23 observed compact shapes, so no
 single child sequence is imposed from this audit.
 
+Game-attribute framing is exact across the current source. All 673 attributes
+are version 0 and declare exactly one parameter, matching 673 physical parameter
+chunks exactly; the current corpus uses the integer parameter kind for every one.
+Recovery now validates `NumParams`, rejects unknown or truncated parameter
+chunks, and requires each supported parameter kind to consume its complete
+childless schema fields while continuing to accept all five schema-defined kinds.
+
 Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
 span 0 through 62, while sounds include `nosound` and collision event names.
 Those fields now remain object attributes instead of being mislabeled as
