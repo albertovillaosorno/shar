@@ -1119,6 +1119,28 @@ legacy recovery remains outside the new strict path: the audit preserves the
 known `TEX` and `ANIM` sentinels but does not assign names to their trailing
 fields without a repository authority for those six legacy records.
 
+Standard frame-controller framing is exact across the full source. All 4,714
+`FRAME_CONTROLLER` records are version 0, childless, consume their complete
+schema-defined headers exactly, and carry finite frame offsets. Recovery now
+requires those exact properties for the schema-backed standard controller ID.
+
+The four variant-A and two variant-B controller records are different physical
+layouts and do not consume the standard frame-controller schema. Their existing
+legacy recovery remains outside the new strict path: the audit preserves the
+known `TEX` and `ANIM` sentinels but does not assign names to their trailing
+fields without a repository authority for those six legacy records.
+
+Standard frame-controller framing is exact across the full source. All 4,714
+`FRAME_CONTROLLER` records are version 0, childless, consume their complete
+schema-defined headers exactly, and carry finite frame offsets. Recovery now
+requires those exact properties for the schema-backed standard controller ID.
+
+The four variant-A and two variant-B controller records are different physical
+layouts and do not consume the standard frame-controller schema. Their existing
+legacy recovery remains outside the new strict path: the audit preserves the
+known `TEX` and `ANIM` sentinels but does not assign names to their trailing
+fields without a repository authority for those six legacy records.
+
 Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
 span 0 through 62, while sounds include `nosound` and collision event names.
 Those fields now remain object attributes instead of being mislabeled as
