@@ -414,6 +414,10 @@ pub(super) fn recover_texture_font_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const TEXTURE_FONT: u32 = 0x0002_2000;
+    if component.id != TEXTURE_FONT {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let version = read_u32(chunk, cursor)?;
@@ -429,6 +433,15 @@ pub(super) fn recover_texture_font_json(
     let baseline = schema::read_f32(chunk, cursor)?;
     cursor += 4;
     let num_textures = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if version != 0
+        || cursor != component.header_size
+        || [font_size, font_width, font_height, baseline]
+            .iter()
+            .any(|value| !value.is_finite())
+    {
+        return None;
+    }
     let (children, glyph_count, glyph_records) = texture_font_children_json(
         chunk,
         component.header_size,

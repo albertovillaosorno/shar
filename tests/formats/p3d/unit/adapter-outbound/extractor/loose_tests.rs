@@ -4129,7 +4129,7 @@ fn texture_font_fixture(
     const GLYPH_RECORD_BYTES: u32 = 40;
 
     let mut header = Vec::new();
-    push_u32(&mut header, 7);
+    push_u32(&mut header, 0);
     push_pascal(&mut header, "fixture-font")?;
     push_pascal(&mut header, "simple")?;
     push_f32(&mut header, 16.);
@@ -4220,6 +4220,30 @@ fn texture_font_recovery_preserves_lossless_glyph_words() -> Result<(), String>
             "texture-font recovery did not preserve exact glyph words",
         ));
     }
+    Ok(())
+}
+
+#[test]
+fn texture_font_recovery_rejects_root_contract_drift() -> Result<(), String> {
+    let source = texture_font_fixture(0, 1)?;
+    let component = texture_font_record(&source)?;
+
+    let mut version_drift = source.clone();
+    version_drift[12..16].copy_from_slice(&1_u32.to_le_bytes());
+    assert!(recover_component(&component, &version_drift, 1).is_err());
+
+    let mut nonfinite = source;
+    let mut cursor = 16_usize;
+    let name_len = usize::from(nonfinite[cursor]);
+    cursor = cursor
+        .checked_add(1 + name_len)
+        .ok_or_else(|| String::from("font fixture name overflowed"))?;
+    let shader_len = usize::from(nonfinite[cursor]);
+    cursor = cursor
+        .checked_add(1 + shader_len)
+        .ok_or_else(|| String::from("font fixture shader overflowed"))?;
+    nonfinite[cursor..cursor + 4].copy_from_slice(&f32::NAN.to_le_bytes());
+    assert!(recover_component(&component, &nonfinite, 1).is_err());
     Ok(())
 }
 
