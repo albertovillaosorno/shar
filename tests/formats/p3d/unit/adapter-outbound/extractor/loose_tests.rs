@@ -1148,22 +1148,19 @@ fn world_sphere_fixture(
     );
     source.extend_from_slice(&fields);
     source.extend_from_slice(&child_bytes);
-    records.insert(
-        0,
-        ChunkRecord {
-            ordinal: 1,
-            depth: 1,
-            parent_ordinal: Some(0),
-            id: WORLD_SPHERE,
-            kind: crate::ChunkKind::SrrWorldSphereDsg,
-            offset: 0,
-            header_size,
-            total_size,
-            payload_offset: header_size,
-            payload_size: total_size.saturating_sub(header_size),
-            child_count: 3,
-        },
-    );
+    records.insert(0, ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: WORLD_SPHERE,
+        kind: crate::ChunkKind::SrrWorldSphereDsg,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: total_size.saturating_sub(header_size),
+        child_count: 3,
+    });
     Ok((source, records))
 }
 
