@@ -983,6 +983,14 @@ vertex index and three authored float offsets. Fresh extraction retains the
 container counts, indices, records, and exact offset bits while leaving morph
 or runtime interpretation deferred.
 
+The runtime target validator establishes a narrower relation for skins: every
+offset-list primitive-group index must be within the skin, must occur in the
+container `PrimGroupIndices`, and every offset vertex index must be below that
+selected primitive group's vertex count. The whole-game audit finds zero
+violations across all 20 lists and 1,592 records; extraction now enforces only
+that skin target relation while keeping mesh expression evidence and `KeyIndex`
+semantics uninterpreted.
+
 Vertex-expression framing is exact across 20 groups, 20 nested expression
 curves, and 20 mixers. Every record is version 0. Each group declares one
 expression, contains exactly one physical expression child, and preserves one
