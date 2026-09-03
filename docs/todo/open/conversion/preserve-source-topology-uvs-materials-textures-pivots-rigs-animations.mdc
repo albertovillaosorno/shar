@@ -1432,6 +1432,20 @@ nearest, or lowest-ordinal shader would therefore invent relationship authority;
 world material export remains fail-closed until an exact source-backed
 mesh-primitive-to-shader occurrence relationship is recovered or proven.
 
+Malformed authored counts now fail closed before count-sized allocation or
+iteration where the encoded source region supplies a hard bound. This covers
+Scrooby page/image/point arrays, light and locator arrays, shader and game
+attribute children, animated-object/state/controller children, mesh expression
+and primitive lists, vertex-animation offsets, and fixed-width animation keys.
+Every guard is derived from exact or minimum schema record width within the
+already bounded chunk; valid source records retain their existing decoded JSON.
+
+Packed multi-controller tracks follow the shipped loader's explicit lower bound:
+each record needs at least one Pascal-string length byte plus three floats, or
+13 bytes, before the authored count is iterated. Synthetic maximum-count
+regressions cover these bounded families so malformed declarations cannot drive
+unbounded buffers or loops before their source framing is rejected.
+
 Scrooby container framing now has explicit fail-closed recovery contracts.
 Projects admit only direct screen/page chunks, pages admit only layer and the
 four supported resource families, layers and groups admit the five implemented
