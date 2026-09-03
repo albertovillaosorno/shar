@@ -424,7 +424,11 @@ fn animation_rejects_impossible_key_count() -> Result<(), String> {
     let count_offset = channel_start
         .checked_add(20)
         .ok_or_else(|| String::from("channel count offset overflowed"))?;
-    fixture[count_offset..count_offset + 4]
+    fixture
+        .get_mut(count_offset..count_offset + 4)
+        .ok_or_else(|| {
+            String::from("animation channel count field is missing")
+        })?
         .copy_from_slice(&u32::MAX.to_le_bytes());
     if animation_json(&fixture).is_some() {
         return Err(String::from(
