@@ -1074,6 +1074,171 @@ fn breakable_object_rejects_unknown_child() -> Result<(), String> {
     }
 }
 
+fn animated_dsg_fixture(
+    parent_id: u32,
+    version: u32,
+    omit_controller: bool,
+    unknown_child: bool,
+) -> Result<(Vec<u8>, Vec<ChunkRecord>), String> {
+    const ANIM_DSG: u32 = 0x03f0_000c;
+    const ANIM_COLL_DSG: u32 = 0x03f0_0008;
+    let parent_kind = match parent_id {
+        ANIM_COLL_DSG => crate::ChunkKind::SrrAnimCollDsg,
+        ANIM_DSG => crate::ChunkKind::SrrAnimDsg,
+        _ => crate::ChunkKind::Unknown,
+    };
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "animated")?;
+    push_u32(&mut fields, version);
+    push_u32(&mut fields, 9);
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("animated DSG header overflowed"))?;
+    let mut children = vec![
+        (0x0001_7002_u32, crate::ChunkKind::QuadGroup, "quad"),
+        (
+            0x0000_4512_u32,
+            crate::ChunkKind::CompositeDrawable,
+            "composite",
+        ),
+    ];
+    if parent_id == ANIM_COLL_DSG {
+        children.push((
+            0x0701_0000_u32,
+            crate::ChunkKind::SimulationCollisionObject,
+            "collision",
+        ));
+    }
+    children.push((
+        0x0012_1200_u32,
+        crate::ChunkKind::FrameController,
+        "frame",
+    ));
+    if !omit_controller {
+        children.push((
+            0x0000_48a0_u32,
+            crate::ChunkKind::MultiController,
+            "controller",
+        ));
+    }
+    if unknown_child {
+        children.push((0xdead_beef, crate::ChunkKind::Unknown, "unknown"));
+    }
+
+    let mut child_bytes = Vec::new();
+    let mut records = Vec::new();
+    let mut offset = header_size;
+    for (index, (id, kind, name)) in children.into_iter().enumerate() {
+        let mut child_fields = Vec::new();
+        push_pascal(&mut child_fields, name)?;
+        let size = 12_usize
+            .checked_add(child_fields.len())
+            .ok_or_else(|| String::from("animated DSG child overflowed"))?;
+        push_u32(&mut child_bytes, id);
+        push_u32(
+            &mut child_bytes,
+            u32::try_from(size).map_err(|error| error.to_string())?,
+        );
+        push_u32(
+            &mut child_bytes,
+            u32::try_from(size).map_err(|error| error.to_string())?,
+        );
+        child_bytes.extend_from_slice(&child_fields);
+        records.push(ChunkRecord {
+            ordinal: 2 + index,
+            depth: 2,
+            parent_ordinal: Some(1),
+            id,
+            kind,
+            offset,
+            header_size: size,
+            total_size: size,
+            payload_offset: offset + size,
+            payload_size: 0,
+            child_count: 0,
+        });
+        offset = offset
+            .checked_add(size)
+            .ok_or_else(|| String::from("animated DSG offset overflowed"))?;
+    }
+    let total_size = header_size
+        .checked_add(child_bytes.len())
+        .ok_or_else(|| String::from("animated DSG total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, parent_id);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    source.extend_from_slice(&child_bytes);
+    records.insert(0, ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: parent_id,
+        kind: parent_kind,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: total_size.saturating_sub(header_size),
+        child_count: records.len(),
+    });
+    Ok((source, records))
+}
+
+#[test]
+fn animated_dsg_preserves_direct_child_relationships() -> Result<(), String> {
+    let (source, records) = animated_dsg_fixture(0x03f0_0008, 0, false, false)?;
+    let parent = records
+        .first()
+        .ok_or_else(|| String::from("animated DSG parent should exist"))?;
+    let recovered = schema::recover_anim_dsg_json(parent, &source, 1, &records)
+        .ok_or_else(|| String::from("animated DSG fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["has_alpha"] == 9
+        && value["children"][0]["kind"] == "quad_group"
+        && value["children"][1]["source_ordinal"] == 3
+        && value["children"][2]["kind"] == "simulation_collision_object"
+    {
+        Ok(())
+    } else {
+        Err(String::from("animated DSG child topology was discarded"))
+    }
+}
+
+#[test]
+fn animated_dsg_rejects_source_contract_drift() -> Result<(), String> {
+    for (parent_id, version, omit_controller, unknown_child) in [
+        (0x03f0_000c, 1, false, false),
+        (0x03f0_000c, 0, true, false),
+        (0x03f0_0008, 0, false, true),
+    ] {
+        let (source, records) = animated_dsg_fixture(
+            parent_id,
+            version,
+            omit_controller,
+            unknown_child,
+        )?;
+        let parent = records
+            .first()
+            .ok_or_else(|| String::from("animated DSG parent should exist"))?;
+        // jig-ignore-next-line: canonical Rust syntax is indivisible
+        if schema::recover_anim_dsg_json(parent, &source, 1, &records).is_some() {
+            return Err(String::from(
+                "animated DSG source-contract drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn fence_fixture(
     wall_id: u32,
     start_x: f32,
