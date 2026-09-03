@@ -1573,27 +1573,33 @@ pub(super) fn recover_animated_object_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const OBJECT: u32 = 0x0002_0001;
+    if component.id != OBJECT || component.header_size != component.total_size {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let version = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let factory_name = schema::read_pascal_at(chunk, &mut cursor)?;
     let starting_animation = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if version != 0 || cursor != component.header_size {
+        return None;
+    }
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
         concat!(
-            r#"{{"schema":"animated_object","#,
-            r#""version":{},"#,
-            r#""name":"{}","#,
-            r#""factory_name":"{}","#,
+            r#"{{"schema":"animated_object","version":{},"#,
+            r#""name":"{}","factory_name":"{}","#,
             r#""starting_animation":{}}}"#,
         ),
         version,
         escape_json(&name),
         escape_json(&factory_name),
-        starting_animation
+        starting_animation,
     );
     Some(render::json_component(
         kind,
@@ -1610,31 +1616,40 @@ pub(super) fn recover_animated_object_factory_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const FACTORY: u32 = 0x0002_0000;
+    if component.id != FACTORY {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let version = read_u32(chunk, cursor)?;
-    cursor += 4;
+    cursor = cursor.checked_add(4)?;
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let base_object_name = schema::read_pascal_at(chunk, &mut cursor)?;
-    let num_animations = read_u32(chunk, cursor)?;
-    let children =
-        child_chunks_json(chunk, component.header_size, component.total_size);
+    let num_animations = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    if version != 0 || cursor != component.header_size {
+        return None;
+    }
+    let animations = animated_object_animations_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+        num_animations,
+    )?;
     let kind = component.kind.label();
     let file_name = schema::fallback_name(kind, kind_index, &name);
     let json = format!(
         concat!(
-            r#"{{"schema":"animated_object_factory","#,
-            r#""version":{},"#,
-            r#""name":"{}","#,
-            r#""base_object_name":"{}","#,
-            r#""num_animations":{},"#,
-            r#""children":[{}]}}"#,
+            r#"{{"schema":"animated_object_factory","version":{},"#,
+            r#""name":"{}","base_object_name":"{}","#,
+            r#""num_animations":{},"animations":[{}]}}"#,
         ),
         version,
         escape_json(&name),
         escape_json(&base_object_name),
         num_animations,
-        children
+        animations,
     );
     Some(render::json_component(
         kind,
@@ -1642,6 +1657,128 @@ pub(super) fn recover_animated_object_factory_json(
         name,
         json,
         "decoded_schema_payload",
+    ))
+}
+
+/// Decode exact animated-object animations in physical source order.
+fn animated_object_animations_json(
+    chunk: &[u8],
+    mut cursor: usize,
+    end: usize,
+    expected_animations: usize,
+) -> Option<String> {
+    const ANIMATION: u32 = 0x0002_0002;
+    let mut animations = Vec::with_capacity(expected_animations);
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if id != ANIMATION || total_size < header_size || next > end {
+            return None;
+        }
+        animations.push(animated_object_animation_json(
+            chunk,
+            cursor,
+            header_size,
+            total_size,
+        )?);
+        cursor = next;
+    }
+    (cursor == end && animations.len() == expected_animations)
+        .then(|| animations.join(","))
+}
+
+/// Decode one animated-object animation and its standard controllers.
+fn animated_object_animation_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    const FRAME_CONTROLLER: u32 = 0x0012_1200;
+    let header_end = offset.checked_add(header_size)?;
+    let end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let version = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let frame_rate = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let num_controllers = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    if version != 0 || !frame_rate.is_finite() || cursor != header_end {
+        return None;
+    }
+    let mut controller_cursor = header_end;
+    let mut controllers = Vec::with_capacity(num_controllers);
+    while controller_cursor < end {
+        let (id, child_header, child_total) =
+            read_chunk_header(chunk, controller_cursor)?;
+        let next = controller_cursor.checked_add(child_total)?;
+        if id != FRAME_CONTROLLER || child_total < child_header || next > end {
+            return None;
+        }
+        controllers.push(animated_object_controller_json(
+            chunk,
+            controller_cursor,
+            child_header,
+            child_total,
+        )?);
+        controller_cursor = next;
+    }
+    if controller_cursor != end || controllers.len() != num_controllers {
+        return None;
+    }
+    Some(format!(
+        concat!(
+            r#"{{"name":"{}","version":{},"frame_rate":{},"#,
+            r#""num_controllers":{},"controllers":[{}]}}"#,
+        ),
+        escape_json(&name),
+        version,
+        render_f32(frame_rate, frame_rate.to_string()),
+        num_controllers,
+        controllers.join(","),
+    ))
+}
+
+/// Decode one standard childless controller owned by an animated object.
+fn animated_object_controller_json(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    let header_end = offset.checked_add(header_size)?;
+    let end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let version = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let controller_type = render::read_fourcc(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let frame_offset = schema::read_f32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    let hierarchy_name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let animation_name = schema::read_pascal_at(chunk, &mut cursor)?;
+    if version != 0
+        || !frame_offset.is_finite()
+        || cursor != header_end
+        || header_end != end
+    {
+        return None;
+    }
+    Some(format!(
+        concat!(
+            r#"{{"name":"{}","version":{},"type":"{}","#,
+            r#""frame_offset":{},"hierarchy_name":"{}","#,
+            r#""animation_name":"{}"}}"#,
+        ),
+        escape_json(&name),
+        version,
+        escape_json(&controller_type),
+        render_f32(frame_offset, frame_offset.to_string()),
+        escape_json(&hierarchy_name),
+        escape_json(&animation_name),
     ))
 }
 
