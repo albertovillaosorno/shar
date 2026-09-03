@@ -328,7 +328,8 @@ fn scrooby_layer_fixture() -> Result<(Vec<u8>, usize), String> {
 }
 
 #[test]
-fn scrooby_layer_rejects_undeclared_or_truncated_children() -> Result<(), String> {
+fn scrooby_layer_rejects_undeclared_or_truncated_children()
+-> Result<(), String> {
     let (source, header_size) = scrooby_layer_fixture()?;
 
     let mut unknown_child = source.clone();
@@ -380,7 +381,8 @@ fn scrooby_layer_rejects_undeclared_or_truncated_children() -> Result<(), String
 }
 
 #[test]
-fn scrooby_layer_preserves_declared_widget_child_inventory() -> Result<(), String> {
+fn scrooby_layer_preserves_declared_widget_child_inventory()
+-> Result<(), String> {
     let (mut source, header_size) = scrooby_layer_fixture()?;
     for id in [
         0x0001_8004_u32,
