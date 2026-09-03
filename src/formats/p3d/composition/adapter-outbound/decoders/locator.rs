@@ -32,6 +32,9 @@
 
 use super::super::json::{escape_json, render_f32};
 
+/// Maximum whole-word payload stored behind one authored 255-byte size field.
+const MAX_BYTE_SIZED_WORDS: usize = 63;
+
 /// Return the stable runtime name for one declared locator type.
 #[must_use]
 pub const fn type_name(locator_type: u32) -> Option<&'static str> {
@@ -69,7 +72,7 @@ pub fn data_interpretation_json(
         2 => Some(ignored_data_json("generic", data)),
         3 => car_start_json(data),
         4 => Some(ignored_data_json("spline", data)),
-        5 => text_json("dynamic_zone", "zone", data),
+        5 => byte_sized_text_json("dynamic_zone", "zone", data),
         6 => occlusion_json(data, num_triggers),
         7 => interior_entrance_json(data),
         8 => matrix_json("directional", "basis", data),
@@ -112,6 +115,18 @@ fn text_json(kind: &str, field: &str, data: &[u32]) -> Option<String> {
         field,
         escape_json(&value)
     ))
+}
+
+/// Decode text stored behind an authored one-byte payload-size field.
+fn byte_sized_text_json(
+    kind: &str,
+    field: &str,
+    data: &[u32],
+) -> Option<String> {
+    if data.len() > MAX_BYTE_SIZED_WORDS {
+        return None;
+    }
+    text_json(kind, field, data)
 }
 
 /// Preserve ignored words for a declared type whose runtime uses no fields.
@@ -170,6 +185,9 @@ fn occlusion_json(data: &[u32], num_triggers: u32) -> Option<String> {
 
 /// Decode an interior package name followed by a 3-by-3 transform basis.
 fn interior_entrance_json(data: &[u32]) -> Option<String> {
+    if data.len() > MAX_BYTE_SIZED_WORDS {
+        return None;
+    }
     let bytes = word_bytes(data);
     let terminator = bytes.iter().position(|value| *value == 0)?;
     let interior_name = std::str::from_utf8(bytes.get(..terminator)?)
@@ -204,6 +222,9 @@ fn action_json(data: &[u32]) -> Option<String> {
         return None;
     }
     let string_words = data.get(..data.len().checked_sub(2)?)?;
+    if string_words.len() > MAX_BYTE_SIZED_WORDS {
+        return None;
+    }
     let strings = null_strings(&word_bytes(string_words), 3)?;
     let button_input = *data.get(data.len().checked_sub(2)?)?;
     let should_transform = *data.last()? == 1;
@@ -364,9 +385,6 @@ fn null_strings(bytes: &[u8], count: usize) -> Option<Vec<String>> {
     let mut strings = Vec::with_capacity(count);
     let mut cursor = 0_usize;
     while strings.len() < count {
-        while bytes.get(cursor).is_some_and(|value| *value == 0) {
-            cursor = cursor.checked_add(1)?;
-        }
         let remainder = bytes.get(cursor..)?;
         let length = remainder.iter().position(|value| *value == 0)?;
         let end = cursor.checked_add(length)?;
@@ -376,6 +394,11 @@ fn null_strings(bytes: &[u8], count: usize) -> Option<Vec<String>> {
                 .to_owned(),
         );
         cursor = end.checked_add(1)?;
+        if strings.len() < count {
+            while bytes.get(cursor).is_some_and(|value| *value == 0) {
+                cursor = cursor.checked_add(1)?;
+            }
+        }
     }
     Some(strings)
 }
