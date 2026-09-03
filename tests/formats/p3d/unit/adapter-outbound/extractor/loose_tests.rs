@@ -191,6 +191,7 @@ fn push_pascal(bytes: &mut Vec<u8>, value: &str) -> Result<(), String> {
 enum ShaderDrift {
     None,
     Count,
+    HugeCount,
     UnknownChild,
     RootTrailing,
     ParamTrailing,
@@ -292,7 +293,9 @@ fn shader_fixture(
     push_u32(&mut fields, 0);
     push_u32(
         &mut fields,
-        if matches!(drift, ShaderDrift::Count) {
+        if matches!(drift, ShaderDrift::HugeCount) {
+            u32::MAX
+        } else if matches!(drift, ShaderDrift::Count) {
             5
         } else {
             6
@@ -366,6 +369,7 @@ fn shader_preserves_schema_parameter_breadth() -> Result<(), String> {
 fn shader_rejects_source_contract_drift() -> Result<(), String> {
     for drift in [
         ShaderDrift::Count,
+        ShaderDrift::HugeCount,
         ShaderDrift::UnknownChild,
         ShaderDrift::RootTrailing,
         ShaderDrift::ParamTrailing,
@@ -619,6 +623,29 @@ fn trigger_volume_rejects_unobserved_source_shapes() -> Result<(), String> {
 }
 
 #[test]
+fn srr_locator_rejects_impossible_data_count() -> Result<(), String> {
+    let (mut source, header_size) = srr_locator_fixture(0)?;
+    source[24..28].copy_from_slice(&u32::MAX.to_le_bytes());
+    let component = ChunkRecord {
+        ordinal: 7,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0300_0005,
+        kind: crate::ChunkKind::SrrLocator,
+        offset: 0,
+        header_size,
+        total_size: header_size,
+        payload_offset: header_size,
+        payload_size: 0,
+        child_count: 0,
+    };
+    if render::recover_srr_locator_json(&component, &source, 1).is_some() {
+        return Err(String::from("locator accepted an impossible data count"));
+    }
+    Ok(())
+}
+
+#[test]
 fn srr_locator_rejects_trailing_header_data() -> Result<(), String> {
     let (mut source, header_size) = srr_locator_fixture(0)?;
     push_u32(&mut source, 99);
@@ -677,6 +704,27 @@ fn srr_locator_rejects_nonfinite_position() -> Result<(), String> {
             "nonfinite locator position should fail closed",
         ))
     }
+}
+
+#[test]
+fn locator_spline_rejects_impossible_point_count() -> Result<(), String> {
+    const SPLINE: u32 = 0x0300_0007;
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "path")?;
+    push_u32(&mut fields, u32::MAX);
+    let size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("spline fixture overflowed"))?;
+    let size_u32 = u32::try_from(size).map_err(|error| error.to_string())?;
+    let mut source = Vec::new();
+    push_u32(&mut source, SPLINE);
+    push_u32(&mut source, size_u32);
+    push_u32(&mut source, size_u32);
+    source.extend_from_slice(&fields);
+    if render::locator_splines_json(&source, 0, source.len()).is_some() {
+        return Err(String::from("spline accepted an impossible point count"));
+    }
+    Ok(())
 }
 
 #[test]
@@ -1732,6 +1780,7 @@ fn game_attr_rejects_parameter_contract_drift() -> Result<(), String> {
     for (version, declared, param_id, trailing) in [
         (1, 1, 0x0001_2001, false),
         (0, 0, 0x0001_2001, false),
+        (0, u32::MAX, 0x0001_2001, false),
         (0, 1, 0xdead_beef, false),
         (0, 1, 0x0001_2001, true),
     ] {
@@ -2258,7 +2307,7 @@ fn light_group_preserves_inline_light_names() -> Result<(), String> {
 
 #[test]
 fn light_group_rejects_inline_list_drift() -> Result<(), String> {
-    for (declared, trailing) in [(1, false), (2, true)] {
+    for (declared, trailing) in [(1, false), (2, true), (u32::MAX, false)] {
         let (source, component) = light_group_fixture(declared, trailing)?;
         if render::recover_light_group_json(&component, &source, 1).is_some() {
             return Err(String::from(
@@ -2370,7 +2419,13 @@ fn animated_object_factory_preserves_typed_animation() -> Result<(), String> {
 fn animated_object_factory_rejects_source_contract_drift() -> Result<(), String>
 {
     for (animations, frame_rate, controllers) in
-        [(2, 30_f32, 1), (1, f32::NAN, 1), (1, 30_f32, 2)]
+        [
+            (2, 30_f32, 1),
+            (u32::MAX, 30_f32, 1),
+            (1, f32::NAN, 1),
+            (1, 30_f32, 2),
+            (1, 30_f32, u32::MAX),
+        ]
     {
         let (source, component) = animated_object_factory_fixture(
             animations,
@@ -2534,6 +2589,7 @@ fn state_prop_preserves_typed_state_evidence() -> Result<(), String> {
 fn state_prop_rejects_source_contract_drift() -> Result<(), String> {
     for (states, drawables, out_frame, speed, unknown) in [
         (2, 1, 1.5_f32, 0.75_f32, false),
+        (u32::MAX, 1, 1.5_f32, 0.75_f32, false),
         (1, 2, 1.5_f32, 0.75_f32, false),
         (1, 1, f32::NAN, 0.75_f32, false),
         (1, 1, 1.5_f32, f32::NAN, false),

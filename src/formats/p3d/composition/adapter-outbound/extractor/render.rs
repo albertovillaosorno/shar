@@ -459,6 +459,10 @@ pub(super) fn recover_light_group_json(
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let num_lights = usize::try_from(read_u32(chunk, cursor)?).ok()?;
     cursor = cursor.checked_add(4)?;
+    let remaining_header = chunk.get(cursor..component.header_size)?.len();
+    if num_lights > remaining_header {
+        return None;
+    }
     let mut lights = Vec::with_capacity(num_lights);
     for _ in 0..num_lights {
         lights.push(schema::read_pascal_at(chunk, &mut cursor)?);
@@ -668,8 +672,14 @@ pub(super) fn recover_srr_locator_json(
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let locator_type = read_u32(chunk, cursor)?;
     cursor += 4;
-    let num_data = read_u32(chunk, cursor)? as usize;
-    cursor += 4;
+    let num_data = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let remaining_header = chunk.get(cursor..component.header_size)?.len();
+    let data_bytes = num_data.checked_mul(4)?;
+    let minimum_bytes = data_bytes.checked_add(16)?;
+    if minimum_bytes > remaining_header {
+        return None;
+    }
     let mut data = Vec::with_capacity(num_data);
     for _ in 0..num_data {
         data.push(read_u32(chunk, cursor)?);
@@ -862,6 +872,12 @@ fn locator_spline_json(
     let name = schema::read_pascal_at(chunk, &mut cursor)?;
     let num_control_points = usize::try_from(read_u32(chunk, cursor)?).ok()?;
     cursor = cursor.checked_add(4)?;
+    let header_end = offset.checked_add(header_size)?;
+    let remaining_header = chunk.get(cursor..header_end)?.len();
+    let minimum_bytes = num_control_points.checked_mul(12)?;
+    if minimum_bytes > remaining_header {
+        return None;
+    }
     let mut control_points = Vec::with_capacity(num_control_points);
     for _ in 0..num_control_points {
         let point = schema::read_point(chunk, &mut cursor)?;
@@ -1159,6 +1175,10 @@ pub(super) fn shader_params_json(
     const COLOUR: u32 = 0x0001_1005;
     const VECTOR: u32 = 0x0001_1006;
     const MATRIX: u32 = 0x0001_1007;
+    let minimum_bytes = expected.checked_mul(12)?;
+    if minimum_bytes > end.checked_sub(cursor)? {
+        return None;
+    }
     let mut params = Vec::with_capacity(expected);
     while cursor < end {
         let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
@@ -1343,6 +1363,10 @@ pub(super) fn game_attr_params_json(
     end: usize,
     expected: usize,
 ) -> Option<String> {
+    let minimum_bytes = expected.checked_mul(17)?;
+    if minimum_bytes > end.checked_sub(cursor)? {
+        return None;
+    }
     let mut params = Vec::with_capacity(expected);
     for _ in 0..expected {
         let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;

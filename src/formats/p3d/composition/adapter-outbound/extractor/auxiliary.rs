@@ -1829,6 +1829,10 @@ fn animated_object_animations_json(
     expected_animations: usize,
 ) -> Option<String> {
     const ANIMATION: u32 = 0x0002_0002;
+    let minimum_bytes = expected_animations.checked_mul(12)?;
+    if minimum_bytes > end.checked_sub(cursor)? {
+        return None;
+    }
     let mut animations = Vec::with_capacity(expected_animations);
     while cursor < end {
         let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
@@ -1867,6 +1871,10 @@ fn animated_object_animation_json(
     let num_controllers = usize::try_from(read_u32(chunk, cursor)?).ok()?;
     cursor = cursor.checked_add(4)?;
     if version != 0 || !frame_rate.is_finite() || cursor != header_end {
+        return None;
+    }
+    let minimum_bytes = num_controllers.checked_mul(12)?;
+    if minimum_bytes > end.checked_sub(header_end)? {
         return None;
     }
     let mut controller_cursor = header_end;
@@ -2000,6 +2008,10 @@ fn state_prop_states_json(
     expected_states: usize,
 ) -> Option<String> {
     const STATE: u32 = 0x0802_0001;
+    let minimum_bytes = expected_states.checked_mul(12)?;
+    if minimum_bytes > end.checked_sub(cursor)? {
+        return None;
+    }
     let mut states = Vec::with_capacity(expected_states);
     while cursor < end {
         let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
