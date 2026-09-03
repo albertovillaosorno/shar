@@ -61,6 +61,10 @@ pub(super) fn recover_quad_group_json(
     let fog = read_u32(chunk, cursor)?;
     cursor += 4;
     let num_quads = read_u32(chunk, cursor)?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != component.header_size {
+        return None;
+    }
     let (quads, decoded_quad_count) = billboard_quads_json(
         chunk,
         component.header_size,
@@ -256,13 +260,16 @@ pub(super) fn billboard_quad_display(
         perspective: true,
     };
     let mut child = header_size;
-    while child + 12 <= total_size {
+    for expected_id in [DISPLAY_INFO, PERSPECTIVE_INFO] {
         let (id, child_header, child_total) = read_chunk_header(quad, child)?;
         let next = child.checked_add(child_total)?;
-        if child_total < child_header || next > total_size {
+        if id != expected_id
+            || child_total != child_header
+            || next > total_size
+        {
             return None;
         }
-        let mut field = child + 12;
+        let mut field = child.checked_add(12)?;
         match id {
             DISPLAY_INFO => {
                 read_billboard_display_info(
@@ -286,10 +293,7 @@ pub(super) fn billboard_quad_display(
         }
         child = next;
     }
-    (child == total_size
-        && display.display_info_version.is_some()
-        && display.perspective_info_version.is_some())
-    .then_some(display)
+    (child == total_size).then_some(display)
 }
 
 /// Decode one display-info child into the accumulated billboard evidence.
