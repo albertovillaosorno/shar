@@ -1162,6 +1162,13 @@ XYZ, and up XYZ. Recovery previously discarded the final nine pose floats; it
 now preserves position, look, and up vectors and rejects framing, version, or
 non-finite source drift.
 
+Composite and scene sort-order leaves are exact and finite. The current corpus
+contains 9,169 composite sort-order chunks and 13,674 scene sort-order chunks;
+every one is a childless 16-byte leaf containing one finite float. Composite
+roots additionally preserve exact three-list structure across 1,542 roots, with
+633 skin, 7,729 prop, and 807 effect bindings whose declared list counts match
+physical elements. Shared sort-order recovery now rejects non-finite values.
+
 Standard frame-controller framing is exact across the full source. All 4,714
 `FRAME_CONTROLLER` records are version 0, childless, consume their complete
 schema-defined headers exactly, and carry finite frame offsets. Recovery now
