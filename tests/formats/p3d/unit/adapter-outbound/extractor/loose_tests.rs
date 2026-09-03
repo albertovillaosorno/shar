@@ -3222,6 +3222,55 @@ fn billboard_quad_rejects_nonfinite_scalar_presentation_values()
 }
 
 #[test]
+fn billboard_quad_rejects_presentation_framing_drift() -> Result<(), String> {
+    let (source, header_size) = billboard_quad_fixture(1)?;
+    let display_total = u32::from_le_bytes(
+        source[header_size + 8..header_size + 12]
+            .try_into()
+            .map_err(|error| format!("display total slice failed: {error}"))?,
+    ) as usize;
+    let perspective = header_size
+        .checked_add(display_total)
+        .ok_or_else(|| String::from("perspective offset overflowed"))?;
+
+    let mut reordered = source[..header_size].to_vec();
+    reordered.extend_from_slice(&source[perspective..]);
+    reordered.extend_from_slice(&source[header_size..perspective]);
+    if auxiliary::billboard_quad_json(
+        &reordered,
+        header_size,
+        reordered.len(),
+    )
+    .is_some()
+    {
+        return Err(String::from(
+            "billboard quad accepted reversed presentation children",
+        ));
+    }
+
+    let perspective_total = u32::from_le_bytes(
+        source[perspective + 8..perspective + 12]
+            .try_into()
+            .map_err(|error| {
+                format!("perspective total slice failed: {error}")
+            })?,
+    );
+    let mut nested = source;
+    push_u32(&mut nested, 0xdead_beef);
+    let total = u32::try_from(nested.len()).map_err(|error| error.to_string())?;
+    nested[8..12].copy_from_slice(&total.to_le_bytes());
+    nested[perspective + 8..perspective + 12]
+        .copy_from_slice(&(perspective_total + 4).to_le_bytes());
+    if auxiliary::billboard_quad_json(&nested, header_size, nested.len()).is_some()
+    {
+        return Err(String::from(
+            "billboard quad accepted nested perspective payload bytes",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn billboard_quad_rejects_missing_presentation_children() -> Result<(), String>
 {
     let (source, header_size) = billboard_quad_fixture(1)?;
@@ -3334,6 +3383,34 @@ fn billboard_group_fixture(declared_quads: u32) -> Result<Vec<u8>, String> {
     push_u32(&mut source, total);
     source.extend_from_slice(&fields);
     Ok(source)
+}
+
+#[test]
+fn billboard_group_rejects_trailing_header_bytes() -> Result<(), String> {
+    let mut source = billboard_group_fixture(0)?;
+    push_u32(&mut source, 0xdead_beef);
+    let size = u32::try_from(source.len()).map_err(|error| error.to_string())?;
+    source[4..8].copy_from_slice(&size.to_le_bytes());
+    source[8..12].copy_from_slice(&size.to_le_bytes());
+    let component = ChunkRecord {
+        ordinal: 7,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: 0x0001_7002,
+        kind: crate::ChunkKind::QuadGroup,
+        offset: 0,
+        header_size: source.len(),
+        total_size: source.len(),
+        payload_offset: source.len(),
+        payload_size: 0,
+        child_count: 0,
+    };
+    if auxiliary::recover_quad_group_json(&component, &source, 1).is_some() {
+        return Err(String::from(
+            "billboard group accepted undeclared trailing header bytes",
+        ));
+    }
+    Ok(())
 }
 
 #[test]
