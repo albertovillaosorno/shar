@@ -130,6 +130,9 @@ pub(super) fn recover_multi_text_json(
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let frame = read_widget_frame(chunk, &mut cursor)?;
+    if frame.version <= 16 {
+        return None;
+    }
     let text_style = schema::read_pascal_at(chunk, &mut cursor)?;
     let shadow_enabled = *chunk.get(cursor)?;
     cursor = cursor.checked_add(1)?;
