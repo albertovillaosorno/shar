@@ -1203,14 +1203,8 @@ fn light_fixture(
         let size = 12_usize.saturating_add(fields.len());
         let mut child = Vec::new();
         push_u32(&mut child, id);
-        push_u32(
-            &mut child,
-            u32::try_from(size).unwrap_or(u32::MAX),
-        );
-        push_u32(
-            &mut child,
-            u32::try_from(size).unwrap_or(u32::MAX),
-        );
+        push_u32(&mut child, u32::try_from(size).unwrap_or(u32::MAX));
+        push_u32(&mut child, u32::try_from(size).unwrap_or(u32::MAX));
         child.extend_from_slice(&fields);
         child
     };
