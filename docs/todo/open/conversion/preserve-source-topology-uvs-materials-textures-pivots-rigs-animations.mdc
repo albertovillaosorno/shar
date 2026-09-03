@@ -1262,6 +1262,19 @@ instance version, flags, and name metadata. Entity `HasAlpha` values include 0,
 1, 8, and 9, so that authored field remains numeric rather than being
 reinterpreted as a boolean.
 
+Shader framing is exact across all 14,076 source shaders. Every shader is
+version 0, consumes its complete schema-defined header, and has `NumParams`
+matching its physical parameter children exactly; authored counts are 13, 16,
+19, 20, 21, 25, or 26.
+
+The current corpus contains 14,233 texture parameters, 223,301 integer
+parameters, 55,523 float parameters, and 69,037 colour parameters. Every
+parameter is childless and consumes its complete schema fields, and every float
+parameter value is finite. No shader-definition, vector, or matrix children
+occur in current source, while recovery continues to admit those schema-defined
+families and validates their exact framing rather than narrowing the format to
+the observed subset.
+
 A separate audit of the 338 mesh-used duplicate logical shader sets covers 1,312
 primitive-group consumers. Every consumer has `vertex_format=8225` and an empty
 optional vertex-shader reference. Within every duplicate set, all candidate
