@@ -1221,10 +1221,10 @@ fn light_fixture(
     };
     let position = point_child(
         POSITION,
-        [position_x, 2.0, 3.0],
+        [position_x, 2., 3.],
         matches!(drift, LightFixtureDrift::TrailingPosition),
     );
-    let direction = point_child(DIRECTION, [0.0, -1.0, 0.0], false);
+    let direction = point_child(DIRECTION, [0., -1., 0.], false);
     let mut shadow = Vec::new();
     push_u32(&mut shadow, SHADOW);
     push_u32(&mut shadow, 16);
