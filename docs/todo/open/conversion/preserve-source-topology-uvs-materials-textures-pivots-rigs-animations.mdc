@@ -1036,6 +1036,15 @@ property ID, and authored sound string and no children. They occur under static
 physics wrappers that have no placement instances as well as dynamic and
 instanced wrappers.
 
+World-sphere topology is also explicit in current source. All 15
+`WORLD_SPHERE_DSG` containers are version 0 with exact headers. Their declared
+mesh counts match 212 direct mesh children exactly, and their billboard counts
+match 23 direct billboard-quad-group children exactly. The remaining direct
+children are 30 frame controllers, 27 animations, 18 skeletons, 15 composite
+drawables, 15 multi-controllers, and three lens flares, all schema-declared.
+Fresh recovery retains each direct child's source ordinal, kind, and authored
+name in physical source order rather than reducing the container to two counts.
+
 Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
 span 0 through 62, while sounds include `nosound` and collision event names.
 Those fields now remain object attributes instead of being mislabeled as
