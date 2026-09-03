@@ -579,6 +579,28 @@ fn vertex_key_accepts_reference_loader_offset_shapes() -> Result<(), String> {
 }
 
 #[test]
+fn vertex_key_rejects_impossible_offset_count() -> Result<(), String> {
+    let colour = require(
+        chunk(
+            VERTEX_COLOUR_OFFSETS,
+            fields(vec![u32_field(0), u32_field(u32::MAX)]),
+            Vec::new(),
+        ),
+        "huge colour-offset fixture should build",
+    )?;
+    let fixture = require(
+        vertex_key_with_lists(0, vec![colour]),
+        "huge-count vertex key fixture should build",
+    )?;
+    if vertex_key_json(&fixture).is_some() {
+        return Err(String::from(
+            "vertex key accepted an impossible offset count",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn vertex_key_rejects_reference_loader_contract_drift() -> Result<(), String> {
     let mut bad_key_version =
         require(vertex_fixture(), "vertex fixture should build")?;

@@ -3924,6 +3924,41 @@ fn skin_expression_offsets_enforce_runtime_target_relation()
 }
 
 #[test]
+fn mesh_recovery_rejects_impossible_expression_counts() -> Result<(), String> {
+    let (mut group_source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    let expression_start = group_source.len();
+    append_expression_offsets_fixture(&mut group_source, 1)?;
+    group_source[expression_start + 12..expression_start + 16]
+        .copy_from_slice(&u32::MAX.to_le_bytes());
+    let component = primitive_group_mesh_record(&group_source, mesh_header);
+    if render::recover_mesh_json(&component, &group_source, 1, None).is_some() {
+        return Err(String::from(
+            "mesh accepted an impossible expression group count",
+        ));
+    }
+
+    let (mut offset_source, mesh_header, _group_header) =
+        primitive_group_mesh_fixture()?;
+    let expression_start = offset_source.len();
+    append_expression_offsets_fixture(&mut offset_source, 1)?;
+    let offset_start = expression_start
+        .checked_add(24)
+        .ok_or_else(|| String::from("expression fixture offset overflowed"))?;
+    offset_source[offset_start + 12..offset_start + 16]
+        .copy_from_slice(&u32::MAX.to_le_bytes());
+    let component = primitive_group_mesh_record(&offset_source, mesh_header);
+    if render::recover_mesh_json(&component, &offset_source, 1, None)
+        .is_some()
+    {
+        return Err(String::from(
+            "mesh accepted an impossible expression offset count",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn mesh_recovery_rejects_expression_offset_count_drift() -> Result<(), String> {
     let (mut source, mesh_header, _group_header) =
         primitive_group_mesh_fixture()?;

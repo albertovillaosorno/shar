@@ -732,6 +732,15 @@ fn decode_vertex_offset_list(
         },
         _ => return None,
     };
+    let value_width = match child.id {
+        VERTEX_COLOUR_OFFSETS | VERTEX_VECTOR2_OFFSETS => 8_usize,
+        VERTEX_VECTOR_OFFSETS => 12,
+        _ => return None,
+    };
+    let value_bytes = count.checked_mul(value_width)?;
+    if value_bytes > child.header_end().checked_sub(reader.pos())? {
+        return None;
+    }
     let values = match child.id {
         VERTEX_COLOUR_OFFSETS => read_colour_offset_values(&mut reader, count)?,
         VERTEX_VECTOR_OFFSETS => read_vector_values(&mut reader, count, 3)?,
@@ -783,6 +792,10 @@ fn decode_vertex_indices(
     }
     let count = u32_to_usize(reader.u32()?)?;
     if count != expected_count {
+        return None;
+    }
+    let value_bytes = count.checked_mul(4)?;
+    if value_bytes > index_list.header_end().checked_sub(reader.pos())? {
         return None;
     }
     let mut values = Vec::with_capacity(count);
