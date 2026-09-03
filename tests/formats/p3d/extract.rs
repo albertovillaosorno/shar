@@ -113,6 +113,36 @@ fn p3dz_rejects_zero_sized_blocks() -> Result<(), String> {
 }
 
 #[test]
+fn p3dz_rejects_output_beyond_runtime_file_size() {
+    let mut source = Vec::new();
+    source.extend_from_slice(b"P3DZ");
+    source.extend_from_slice(&u32::MAX.to_le_bytes());
+    source.extend_from_slice(&[0_u8; 4]);
+
+    let result = prepare_p3d_bytes(&source);
+    assert_eq!(
+        result.err().map(|error| error.to_string()).as_deref(),
+        Some("P3DZ declared output exceeds runtime file size")
+    );
+}
+
+#[test]
+fn p3dz_rejects_block_beyond_runtime_buffer() {
+    let mut source = Vec::new();
+    source.extend_from_slice(b"P3DZ");
+    source.extend_from_slice(&4_097_u32.to_le_bytes());
+    source.extend_from_slice(&1_u32.to_le_bytes());
+    source.extend_from_slice(&4_097_u32.to_le_bytes());
+    source.push(0);
+
+    let result = prepare_p3d_bytes(&source);
+    assert_eq!(
+        result.err().map(|error| error.to_string()).as_deref(),
+        Some("P3DZ block exceeds runtime decompression buffer")
+    );
+}
+
+#[test]
 fn p3dz_rejects_blocks_larger_than_declared_output() {
     let mut source = Vec::new();
     source.extend_from_slice(b"P3DZ");

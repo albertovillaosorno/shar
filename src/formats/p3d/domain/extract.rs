@@ -81,30 +81,31 @@ pub fn prepare_p3d_bytes(source: &[u8]) -> Result<PreparedP3d<'_>, P3dError> {
     Err(P3dError::invalid_source("unsupported Pure3D root magic"))
 }
 
+/// Runtime P3DZ decompression uses one fixed 4096-byte output cache.
+const P3DZ_BLOCK_SIZE: usize = 4_096;
+
 /// Decompress p3dz.
 fn decompress_p3dz(source: &[u8]) -> Result<Vec<u8>, P3dError> {
-    let expected_size = read_u32(source, 4)? as usize;
-    let mut cursor = 8;
-    let mut output = Vec::with_capacity(expected_size);
+    let expected_size_u32 = read_u32(source, 4)?;
+    if expected_size_u32 > i32::MAX as u32 {
+        return Err(P3dError::invalid_source(
+            "P3DZ declared output exceeds runtime file size",
+        ));
+    }
+    let expected_size = expected_size_u32 as usize;
+    preflight_p3dz_blocks(source, expected_size)?;
+
+    let mut cursor = 8_usize;
+    let mut output = Vec::new();
     while output.len() < expected_size {
         let compressed_size = read_u32(source, cursor)? as usize;
-        cursor += 4;
+        cursor = cursor.checked_add(4).ok_or_else(|| {
+            P3dError::invalid_source("P3DZ block header offset overflow")
+        })?;
         let decompressed_size = read_u32(source, cursor)? as usize;
-        cursor += 4;
-        if compressed_size == 0 || decompressed_size == 0 {
-            return Err(P3dError::invalid_source(
-                "P3DZ blocks must have nonzero sizes",
-            ));
-        }
-        let remaining_size =
-            expected_size.checked_sub(output.len()).ok_or_else(|| {
-                P3dError::invalid_source("P3DZ output size overflow")
-            })?;
-        if decompressed_size > remaining_size {
-            return Err(P3dError::invalid_source(
-                "P3DZ block exceeds declared output size",
-            ));
-        }
+        cursor = cursor.checked_add(4).ok_or_else(|| {
+            P3dError::invalid_source("P3DZ block header offset overflow")
+        })?;
         let end = cursor.checked_add(compressed_size).ok_or_else(|| {
             P3dError::invalid_source("P3DZ compressed block overflow")
         })?;
@@ -116,18 +117,11 @@ fn decompress_p3dz(source: &[u8]) -> Result<Vec<u8>, P3dError> {
             decompressed.fill(0);
             lzr_decompress(block, &mut decompressed)?;
         }
+        output.try_reserve_exact(decompressed_size).map_err(|_error| {
+            P3dError::invalid_source("P3DZ output allocation failed")
+        })?;
         output.extend_from_slice(&decompressed);
         cursor = end;
-    }
-    if output.len() != expected_size {
-        return Err(P3dError::invalid_source(
-            "P3DZ decompressed size mismatch",
-        ));
-    }
-    if cursor != source.len() {
-        return Err(P3dError::invalid_source(
-            "trailing bytes after P3DZ block stream",
-        ));
     }
     if output.get(0..4) != Some(&[0x50, 0x33, 0x44, 0xff])
         && output.get(0..4) != Some(&[0xff, 0x44, 0x33, 0x50])
@@ -137,6 +131,61 @@ fn decompress_p3dz(source: &[u8]) -> Result<Vec<u8>, P3dError> {
         ));
     }
     Ok(output)
+}
+
+/// Validate the complete compressed block stream before allocating output.
+fn preflight_p3dz_blocks(
+    source: &[u8],
+    expected_size: usize,
+) -> Result<(), P3dError> {
+    let mut cursor = 8_usize;
+    let mut produced = 0_usize;
+    while produced < expected_size {
+        let compressed_size = read_u32(source, cursor)? as usize;
+        cursor = cursor.checked_add(4).ok_or_else(|| {
+            P3dError::invalid_source("P3DZ block header offset overflow")
+        })?;
+        let decompressed_size = read_u32(source, cursor)? as usize;
+        cursor = cursor.checked_add(4).ok_or_else(|| {
+            P3dError::invalid_source("P3DZ block header offset overflow")
+        })?;
+        if compressed_size == 0 || decompressed_size == 0 {
+            return Err(P3dError::invalid_source(
+                "P3DZ blocks must have nonzero sizes",
+            ));
+        }
+        if decompressed_size > P3DZ_BLOCK_SIZE {
+            return Err(P3dError::invalid_source(
+                "P3DZ block exceeds runtime decompression buffer",
+            ));
+        }
+        produced = produced.checked_add(decompressed_size).ok_or_else(|| {
+            P3dError::invalid_source("P3DZ output size overflow")
+        })?;
+        if produced > expected_size {
+            return Err(P3dError::invalid_source(
+                "P3DZ block exceeds declared output size",
+            ));
+        }
+        let end = cursor.checked_add(compressed_size).ok_or_else(|| {
+            P3dError::invalid_source("P3DZ compressed block overflow")
+        })?;
+        let _block = source.get(cursor..end).ok_or_else(|| {
+            P3dError::invalid_source("P3DZ compressed block out of bounds")
+        })?;
+        cursor = end;
+    }
+    if produced != expected_size {
+        return Err(P3dError::invalid_source(
+            "P3DZ decompressed size mismatch",
+        ));
+    }
+    if cursor != source.len() {
+        return Err(P3dError::invalid_source(
+            "trailing bytes after P3DZ block stream",
+        ));
+    }
+    Ok(())
 }
 
 /// Read u32.
