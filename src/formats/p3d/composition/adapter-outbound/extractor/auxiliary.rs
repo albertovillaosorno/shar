@@ -1229,8 +1229,12 @@ pub(super) fn recover_history_json(
 ) -> Option<RecoveredComponent> {
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
-    let num_lines = read_u16(chunk, cursor)? as usize;
-    cursor += 2;
+    let num_lines = usize::from(read_u16(chunk, cursor)?);
+    cursor = cursor.checked_add(2)?;
+    let remaining_header = chunk.get(cursor..component.header_size)?.len();
+    if num_lines > remaining_header {
+        return None;
+    }
     let mut lines = Vec::new();
     for _ in 0..num_lines {
         lines.push(format!(
@@ -1303,8 +1307,13 @@ pub(super) fn recover_ped_path_json(
 ) -> Option<RecoveredComponent> {
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
-    let count = read_u32(chunk, cursor)? as usize;
-    cursor += 4;
+    let count = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let remaining_header = chunk.get(cursor..component.header_size)?.len();
+    let point_bytes = count.checked_mul(12)?;
+    if point_bytes > remaining_header {
+        return None;
+    }
     let mut points = Vec::new();
     for _ in 0..count {
         let p = schema::read_point(chunk, &mut cursor)?;
@@ -1671,8 +1680,13 @@ pub(super) fn recover_attribute_table_json(
 ) -> Option<RecoveredComponent> {
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
-    let num_rows = read_u32(chunk, cursor)? as usize;
-    cursor += 4;
+    let num_rows = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let remaining_header = chunk.get(cursor..component.header_size)?.len();
+    let minimum_bytes = num_rows.checked_mul(15)?;
+    if minimum_bytes > remaining_header {
+        return None;
+    }
     let mut rows = Vec::new();
     for _ in 0..num_rows {
         let sound = schema::read_pascal_at(chunk, &mut cursor)?;
