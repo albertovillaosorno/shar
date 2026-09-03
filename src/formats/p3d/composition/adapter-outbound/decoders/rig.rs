@@ -719,6 +719,9 @@ const fn channel_kind(id: u32) -> Option<&'static str> {
 fn decode_multi_tracks(chunk: &[u8], child: &SubChunk) -> Option<Vec<String>> {
     let mut reader = Reader::new(chunk, child.data_offset());
     let count = u32_to_usize(reader.u32()?)?;
+    if !minimum_count_bytes_fit(&reader, child.header_end(), count, 13)? {
+        return None;
+    }
     let mut tracks = Vec::new();
     for _ in 0..count {
         tracks.push(decode_track_fields(&mut reader)?);
