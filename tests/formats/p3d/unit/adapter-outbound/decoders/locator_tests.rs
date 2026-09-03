@@ -30,7 +30,7 @@
 
 //! Locator tests test module.
 
-use super::{data_interpretation_json, type_name};
+use super::{data_interpretation_json, event_name, type_name};
 
 /// Convert byte text into little-endian words for fixtures.
 fn words(value: &[u8]) -> Vec<u32> {
@@ -66,6 +66,32 @@ fn assert_known(
         ));
     }
     Ok(json)
+}
+
+#[test]
+fn event_labels_follow_runtime_enum_ordinals() {
+    for (event, name) in [
+        (47_u32, "parked_birds"),
+        (48, "whacky_gravity"),
+        (49, "far_plane_change"),
+        (63, "goo_damage"),
+        (64, "coin_zone"),
+        (65, "light_change"),
+        (66, "trap"),
+        (77, "dynamic_zone"),
+        (78, "occlusion_zone"),
+        (79, "car_door"),
+        (80, "action_button"),
+        (81, "interior_entrance"),
+        (82, "generic_button_handler_event"),
+        (83, "fountain_jump"),
+        (84, "load_ped_model_group"),
+        (85, "gag"),
+    ] {
+        assert_eq!(event_name(event), name);
+    }
+    assert_eq!(event_name(86), "event");
+    assert_eq!(event_name(u32::MAX), "event");
 }
 
 #[test]
