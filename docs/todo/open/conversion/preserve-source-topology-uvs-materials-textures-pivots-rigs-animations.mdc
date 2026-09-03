@@ -280,9 +280,11 @@ meaning.
 The current UV-offset range, source range, and edge range are zero for all 284
 children, but the v4 catalog still retains those fields rather than inferring a
 global default. Ten shader identities and 55 child identities occur across the
-260 groups, and no audited presentation float is non-finite. Camera-facing,
-cutoff, depth, and BQG animation execution remain deferred to a reviewed native
-presentation adapter instead of being flattened into static or skeletal FBX.
+260 groups, and no audited presentation float is non-finite. Recovery now
+requires exact quad-group headers, finite presentation scalars, and the audited
+source-ordered childless display/perspective pair. Camera-facing, cutoff, depth,
+and BQG animation execution remain deferred to a reviewed native presentation
+adapter instead of being flattened into static or skeletal FBX.
 
 Deferred billboard shader evidence now uses the same validated decoded-shader
 contract as FBX material resolution while preserving the full source parameter
