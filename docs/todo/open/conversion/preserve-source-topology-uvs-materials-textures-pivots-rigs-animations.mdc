@@ -1034,7 +1034,9 @@ The distinct `0x03000600` records are not instances: all 3,407 match the
 schema-defined object-attribute layout exactly, with a class type, physical
 property ID, and authored sound string and no children. They occur under static
 physics wrappers that have no placement instances as well as dynamic and
-instanced wrappers. Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
+instanced wrappers.
+
+Class types use 2, 3, 4, 7, 9, and 10; physical property IDs
 span 0 through 62, while sounds include `nosound` and collision event names.
 Those fields now remain object attributes instead of being mislabeled as
 instance version, flags, and name metadata. Entity `HasAlpha` values include 0,
