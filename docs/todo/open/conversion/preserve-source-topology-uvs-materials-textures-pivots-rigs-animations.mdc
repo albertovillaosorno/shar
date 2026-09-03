@@ -1119,6 +1119,17 @@ legacy recovery remains outside the new strict path: the audit preserves the
 known `TEX` and `ANIM` sentinels but does not assign names to their trailing
 fields without a repository authority for those six legacy records.
 
+Sprite image topology is exact across the current source. All 1,604 sprites
+consume their complete schema-defined headers, and their declared `ImageCount`
+values sum to 10,436, matching 10,436 direct `IMAGE` children exactly with zero
+other direct child families. Recovery now retains every direct image source
+ordinal in physical order together with its authored header name.
+
+Nested image component names may normalize authored trailing NUL padding when
+published as standalone payloads, so the source ordinal is the authoritative
+sprite-to-image join. The raw authored child name remains separately preserved
+rather than being rewritten to the normalized component name.
+
 Standard frame-controller framing is exact across the full source. All 4,714
 `FRAME_CONTROLLER` records are version 0, childless, consume their complete
 schema-defined headers exactly, and carry finite frame offsets. Recovery now
