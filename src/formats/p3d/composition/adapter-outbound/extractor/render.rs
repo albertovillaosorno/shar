@@ -685,7 +685,7 @@ pub(super) fn recover_srr_locator_json(
         return None;
     }
     let locator_type_name =
-        crate::adapters::driven::decoders::locator::type_name(locator_type)?;
+        crate::adapters::driven::decoders::locator::type_name(locator_type);
     let data_interpretation =
         crate::adapters::driven::decoders::locator::data_interpretation_json(
             locator_type,
