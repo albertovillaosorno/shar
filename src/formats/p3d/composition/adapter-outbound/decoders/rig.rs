@@ -200,6 +200,9 @@ pub fn multi_controller_json(chunk: &[u8]) -> Option<String> {
     let length = reader.f32()?;
     let frame_rate = reader.f32()?;
     let track_count = u32_to_usize(reader.u32()?)?;
+    if !length.is_finite() || !frame_rate.is_finite() {
+        return None;
+    }
     if reader.pos() != header_size {
         return None;
     }
@@ -639,6 +642,12 @@ fn decode_track_fields(reader: &mut Reader<'_>) -> Option<String> {
     let start_time = reader.f32()?;
     let end_time = reader.f32()?;
     let scale = reader.f32()?;
+    if [start_time, end_time, scale]
+        .iter()
+        .any(|value| !value.is_finite())
+    {
+        return None;
+    }
     Some(format!(
         "{{\"name\":\"{}\",\"start_time\":{},\"end_time\":{},\"scale\":\
              {}}}",
