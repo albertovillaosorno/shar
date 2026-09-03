@@ -1175,6 +1175,18 @@ consumes its full name/count/matrix header, every declared child count matches
 the physical child sequence, and every matrix float is finite. Matrix recovery
 now rejects non-finite transform evidence instead of rendering a JSON null.
 
+Particle system framing is exact across 872 factories and 872 matching system
+records. Every factory and system is version 0. Factory frame rates are finite
+and authored as 24 or 30; `CycleAnim` is 0 for 869 factories and 1 for three,
+while `EnableSorting` is 0 for all current factories. Recovery now preserves
+those fields together with the authored `NumEmitters` value.
+
+Every factory owns exactly one leading `PARTICLE_INSTANCING_INFO` child followed
+by exactly `NumEmitters` emitter-factory children. Current source uses only the
+schema-defined sprite-emitter family, with counts from 1 through 24, while the
+validator continues to admit the schema-defined base and drawable emitter kinds.
+Every particle-system record is an exact childless name-to-factory reference.
+
 Standard frame-controller framing is exact across the full source. All 4,714
 `FRAME_CONTROLLER` records are version 0, childless, consume their complete
 schema-defined headers exactly, and carry finite frame offsets. Recovery now
