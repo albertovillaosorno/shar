@@ -239,6 +239,10 @@ pub(super) fn recover_shader_json(
     source: &[u8],
     kind_index: usize,
 ) -> Option<RecoveredComponent> {
+    const SHADER: u32 = 0x0001_1000;
+    if component.id != SHADER {
+        return None;
+    }
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let name = read_pascal_at(chunk, &mut cursor)?;
@@ -251,7 +255,11 @@ pub(super) fn recover_shader_json(
     cursor += 4;
     let vertex_mask = read_u32(chunk, cursor)?;
     cursor += 4;
-    let num_params = read_u32(chunk, cursor)?;
+    let num_params = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    if version != 0 || cursor != component.header_size {
+        return None;
+    }
     let fallback = format!("shader_{kind_index:04}");
     let file_name = sanitize(if name.is_empty() {
         &fallback
@@ -262,7 +270,8 @@ pub(super) fn recover_shader_json(
         chunk,
         component.header_size,
         component.total_size,
-    );
+        num_params,
+    )?;
     let json = format!(
         concat!(
             r#"{{"schema":"shader","#,

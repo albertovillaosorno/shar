@@ -1089,10 +1089,192 @@ pub(super) fn matrix_json(matrix: &[[f32; 4]; 4]) -> String {
 /// Shader params json.
 pub(super) fn shader_params_json(
     chunk: &[u8],
-    cursor: usize,
+    mut cursor: usize,
     end: usize,
-) -> String {
-    param_chunks_json(chunk, cursor, end, true)
+    expected: usize,
+) -> Option<String> {
+    const DEFINITION: u32 = 0x0001_1001;
+    const TEXTURE: u32 = 0x0001_1002;
+    const INT: u32 = 0x0001_1003;
+    const FLOAT: u32 = 0x0001_1004;
+    const COLOUR: u32 = 0x0001_1005;
+    const VECTOR: u32 = 0x0001_1006;
+    const MATRIX: u32 = 0x0001_1007;
+    let mut params = Vec::with_capacity(expected);
+    while cursor < end {
+        let (id, header_size, total_size) = read_chunk_header(chunk, cursor)?;
+        let next = cursor.checked_add(total_size)?;
+        if total_size < header_size || next > end {
+            return None;
+        }
+        match id {
+            DEFINITION => {
+                if !shader_definition_is_exact(
+                    chunk,
+                    cursor,
+                    header_size,
+                    total_size,
+                )? {
+                    return None;
+                }
+            },
+            TEXTURE | INT | FLOAT | COLOUR | VECTOR | MATRIX => {
+                params.push(shader_param_json(
+                    chunk,
+                    cursor,
+                    id,
+                    header_size,
+                    total_size,
+                )?);
+            },
+            _ => return None,
+        }
+        cursor = next;
+    }
+    (cursor == end && params.len() == expected).then(|| params.join(","))
+}
+
+/// Validate a childless shader-definition record against its schema fields.
+fn shader_definition_is_exact(
+    chunk: &[u8],
+    offset: usize,
+    header_size: usize,
+    total_size: usize,
+) -> Option<bool> {
+    let header_end = offset.checked_add(header_size)?;
+    let total_end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let _name = schema::read_pascal_at(chunk, &mut cursor)?;
+    let length = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    let definition_end = cursor.checked_add(length)?;
+    let definition = chunk.get(cursor..definition_end)?;
+    let _definition_text = std::str::from_utf8(definition).ok()?;
+    cursor = definition_end;
+    Some(cursor == header_end && header_end == total_end)
+}
+
+/// Shader param json.
+pub(super) fn shader_param_json(
+    chunk: &[u8],
+    offset: usize,
+    id: u32,
+    header_size: usize,
+    total_size: usize,
+) -> Option<String> {
+    let header_end = offset.checked_add(header_size)?;
+    let total_end = offset.checked_add(total_size)?;
+    let mut cursor = offset.checked_add(12)?;
+    let value = match id {
+        0x0001_1002 => {
+            let param = read_fourcc(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            let value = schema::read_pascal_at(chunk, &mut cursor)?;
+            format!(
+                r#"{{"kind":"texture","param":"{}","value":"{}"}}"#,
+                escape_json(&param),
+                escape_json(&value),
+            )
+        },
+        0x0001_1003 => {
+            let param = read_fourcc(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            let value = read_u32(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            format!(
+                r#"{{"kind":"int","param":"{}","value":{}}}"#,
+                escape_json(&param),
+                value,
+            )
+        },
+        0x0001_1004 => {
+            let param = read_fourcc(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            let value = schema::read_f32(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            if !value.is_finite() {
+                return None;
+            }
+            format!(
+                r#"{{"kind":"float","param":"{}","value":{}}}"#,
+                escape_json(&param),
+                value,
+            )
+        },
+        0x0001_1005 => {
+            let param = read_fourcc(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            let value = read_u32(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            format!(
+                r#"{{"kind":"colour","param":"{}","value":{}}}"#,
+                escape_json(&param),
+                value,
+            )
+        },
+        0x0001_1006 => {
+            let param = read_fourcc(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            let values = [
+                schema::read_f32(chunk, cursor)?,
+                schema::read_f32(chunk, cursor.checked_add(4)?)?,
+                schema::read_f32(chunk, cursor.checked_add(8)?)?,
+            ];
+            cursor = cursor.checked_add(12)?;
+            if values.iter().any(|value| !value.is_finite()) {
+                return None;
+            }
+            format!(
+                r#"{{"kind":"vector","param":"{}","value":[{},{},{}]}}"#,
+                escape_json(&param),
+                values[0],
+                values[1],
+                values[2],
+            )
+        },
+        0x0001_1007 => {
+            let param = read_fourcc(chunk, cursor)?;
+            cursor = cursor.checked_add(4)?;
+            let mut values = [0_f32; 16];
+            for value in &mut values {
+                *value = schema::read_f32(chunk, cursor)?;
+                cursor = cursor.checked_add(4)?;
+                if !value.is_finite() {
+                    return None;
+                }
+            }
+            format!(
+                "{{\"kind\":\"matrix\",\"param\":\"{}\",\"value\":{}}}",
+                escape_json(&param),
+                matrix_values_array_json(&values),
+            )
+        },
+        _ => return None,
+    };
+    (cursor == header_end && header_end == total_end).then_some(value)
+}
+
+/// Render an already-decoded 4x4 matrix in source order.
+fn matrix_values_array_json(values: &[f32; 16]) -> String {
+    format!(
+        "[[{},{},{},{}],[{},{},{},{}],[{},{},{},{}],[{},{},{},{}]]",
+        values[0],
+        values[1],
+        values[2],
+        values[3],
+        values[4],
+        values[5],
+        values[6],
+        values[7],
+        values[8],
+        values[9],
+        values[10],
+        values[11],
+        values[12],
+        values[13],
+        values[14],
+        values[15],
+    )
 }
 
 /// Game attr params json.
@@ -1125,63 +1307,6 @@ pub(super) fn game_attr_params_json(
         cursor = next;
     }
     (cursor == end).then(|| params.join(","))
-}
-
-/// Param chunks json.
-pub(super) fn param_chunks_json(
-    chunk: &[u8],
-    mut cursor: usize,
-    end: usize,
-    shader_params: bool,
-) -> String {
-    let mut params = Vec::new();
-    while cursor + 12 <= end {
-        let header = read_chunk_header(chunk, cursor);
-        let Some((id, header_size, total_size)) = header else {
-            break;
-        };
-        let next = cursor.saturating_add(total_size);
-        if total_size < header_size || next > end {
-            break;
-        }
-        let parsed = if shader_params {
-            shader_param_json(chunk, cursor, id)
-        } else {
-            game_attr_param_json(chunk, cursor, id)
-        };
-        if let Some(value) = parsed {
-            params.push(value);
-        }
-        cursor = next;
-    }
-    params.join(",")
-}
-
-/// Shader param json.
-pub(super) fn shader_param_json(
-    chunk: &[u8],
-    offset: usize,
-    id: u32,
-) -> Option<String> {
-    let mut cursor = offset + 12;
-    match id {
-        0x0001_1002 => {
-            let param = read_fourcc(chunk, cursor)?;
-            cursor += 4;
-            let value = schema::read_pascal_at(chunk, &mut cursor)?;
-            Some(format!(
-                r#"{{"kind":"texture","param":"{}","value":"{}"}}"#,
-                escape_json(&param),
-                escape_json(&value)
-            ))
-        },
-        0x0001_1003 => shader_number_param(chunk, cursor, "int"),
-        0x0001_1004 => shader_float_param(chunk, cursor),
-        0x0001_1005 => shader_colour_param(chunk, cursor),
-        0x0001_1006 => shader_vector_param(chunk, cursor),
-        0x0001_1007 => shader_matrix_param(chunk, cursor),
-        _ => None,
-    }
 }
 
 /// Game attr param json.
@@ -1221,82 +1346,6 @@ pub(super) fn game_attr_param_json(
         0x0001_2005 => game_attr_matrix_param(chunk, cursor, &name),
         _ => None,
     }
-}
-
-/// Shader number param.
-pub(super) fn shader_number_param(
-    chunk: &[u8],
-    cursor: usize,
-    kind: &str,
-) -> Option<String> {
-    let param = read_fourcc(chunk, cursor)?;
-    let value = read_u32(chunk, cursor + 4)?;
-    Some(format!(
-        r#"{{"kind":"{}","param":"{}","value":{}}}"#,
-        kind,
-        escape_json(&param),
-        value
-    ))
-}
-
-/// Shader float param.
-pub(super) fn shader_float_param(
-    chunk: &[u8],
-    cursor: usize,
-) -> Option<String> {
-    let param = read_fourcc(chunk, cursor)?;
-    let value = schema::read_f32(chunk, cursor + 4)?;
-    Some(format!(
-        r#"{{"kind":"float","param":"{}","value":{}}}"#,
-        escape_json(&param),
-        value
-    ))
-}
-
-/// Shader colour param.
-pub(super) fn shader_colour_param(
-    chunk: &[u8],
-    cursor: usize,
-) -> Option<String> {
-    let param = read_fourcc(chunk, cursor)?;
-    let value = read_u32(chunk, cursor + 4)?;
-    Some(format!(
-        r#"{{"kind":"colour","param":"{}","value":{}}}"#,
-        escape_json(&param),
-        value
-    ))
-}
-
-/// Shader vector param.
-pub(super) fn shader_vector_param(
-    chunk: &[u8],
-    cursor: usize,
-) -> Option<String> {
-    let param = read_fourcc(chunk, cursor)?;
-    let x = schema::read_f32(chunk, cursor + 4)?;
-    let y = schema::read_f32(chunk, cursor + 8)?;
-    let z = schema::read_f32(chunk, cursor + 12)?;
-    Some(format!(
-        r#"{{"kind":"vector","param":"{}","value":[{},{},{}]}}"#,
-        escape_json(&param),
-        x,
-        y,
-        z
-    ))
-}
-
-/// Shader matrix param.
-pub(super) fn shader_matrix_param(
-    chunk: &[u8],
-    cursor: usize,
-) -> Option<String> {
-    let param = read_fourcc(chunk, cursor)?;
-    let matrix = matrix_values_json(chunk, cursor + 4)?;
-    Some(format!(
-        r#"{{"kind":"matrix","param":"{}","value":{}}}"#,
-        escape_json(&param),
-        matrix
-    ))
 }
 
 /// Game attr vector param.
