@@ -1050,6 +1050,94 @@ fn export_info_rejects_source_contract_drift() -> Result<(), String> {
     Ok(())
 }
 
+fn history_fixture(
+    declared_lines: u16,
+    trailing_header_word: bool,
+    child: bool,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const HISTORY: u32 = 0x0000_7000;
+    let mut fields = Vec::new();
+    fields.extend_from_slice(&declared_lines.to_le_bytes());
+    push_pascal(&mut fields, "tool version 1.0")?;
+    push_pascal(&mut fields, "tool -o output.p3d input.p3d")?;
+    if trailing_header_word {
+        push_u32(&mut fields, 99);
+    }
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("history header overflowed"))?;
+    let child_bytes = if child {
+        let mut bytes = Vec::new();
+        push_u32(&mut bytes, 0xdead_beef);
+        push_u32(&mut bytes, 12);
+        push_u32(&mut bytes, 12);
+        bytes
+    } else {
+        Vec::new()
+    };
+    let total_size = header_size
+        .checked_add(child_bytes.len())
+        .ok_or_else(|| String::from("history total overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, HISTORY);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    source.extend_from_slice(&child_bytes);
+    let component = ChunkRecord {
+        ordinal: 5,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: HISTORY,
+        kind: crate::ChunkKind::History,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: child_bytes.len(),
+        child_count: usize::from(child),
+    };
+    Ok((source, component))
+}
+
+#[test]
+fn history_preserves_declared_lines() -> Result<(), String> {
+    let (source, component) = history_fixture(2, false, false)?;
+    let recovered = auxiliary::recover_history_json(&component, &source, 1)
+        .ok_or_else(|| String::from("history fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["num_lines"] == 2
+        && value["history"][0] == "tool version 1.0"
+        && value["history"][1] == "tool -o output.p3d input.p3d"
+    {
+        Ok(())
+    } else {
+        Err(String::from("history source lines were discarded"))
+    }
+}
+
+#[test]
+fn history_rejects_source_contract_drift() -> Result<(), String> {
+    for (declared, trailing, child) in
+        [(1, false, false), (2, true, false), (2, false, true)]
+    {
+        let (source, component) = history_fixture(declared, trailing, child)?;
+        if auxiliary::recover_history_json(&component, &source, 1).is_some() {
+            return Err(String::from(
+                "history source-contract drift must fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn attribute_table_fixture(
     mass: f32,
     trailing_word: bool,
