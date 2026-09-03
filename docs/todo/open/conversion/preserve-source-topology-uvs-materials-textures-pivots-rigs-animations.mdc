@@ -1432,5 +1432,21 @@ nearest, or lowest-ordinal shader would therefore invent relationship authority;
 world material export remains fail-closed until an exact source-backed
 mesh-primitive-to-shader occurrence relationship is recovered or proven.
 
+Scrooby container framing now has explicit fail-closed recovery contracts.
+Projects admit only direct screen/page chunks, pages admit only layer and the
+four supported resource families, layers and groups admit the five implemented
+widget families, and multi-text admits only text-bible or hard-coded strings.
+Malformed child headers, truncated regions, and undeclared child IDs now reject
+typed recovery instead of producing a partial child inventory.
+
+Two Scrooby compatibility edges remain intentionally open. The shipped screen
+loader can consume embedded page children, while the current schema, extractor
+publication rules, and migration validation model pages as direct project
+children; changing only one boundary would invent ancestry. The shipped
+multi-text loader also reads shadow and initial-index fields only for versions
+above 16, while current migration fixtures require the modern fields and provide
+no older-version corpus authority. No defaults or ancestry rewrites are inferred
+for either case until end-to-end evidence closes those contracts.
+
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
