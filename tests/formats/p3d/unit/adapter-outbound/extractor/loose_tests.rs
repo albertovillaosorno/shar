@@ -1074,6 +1074,105 @@ fn breakable_object_rejects_unknown_child() -> Result<(), String> {
     }
 }
 
+fn game_attr_fixture(
+    declared_params: u32,
+    param_id: u32,
+    trailing_word: bool,
+) -> Result<(Vec<u8>, ChunkRecord), String> {
+    const GAME_ATTR: u32 = 0x0001_2000;
+    let mut param_fields = Vec::new();
+    push_pascal(&mut param_fields, "value")?;
+    push_u32(&mut param_fields, 42);
+    if trailing_word {
+        push_u32(&mut param_fields, 99);
+    }
+    let param_size = 12_usize
+        .checked_add(param_fields.len())
+        .ok_or_else(|| String::from("game attr param overflowed"))?;
+    let mut param = Vec::new();
+    push_u32(&mut param, param_id);
+    push_u32(
+        &mut param,
+        u32::try_from(param_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut param,
+        u32::try_from(param_size).map_err(|error| error.to_string())?,
+    );
+    param.extend_from_slice(&param_fields);
+
+    let mut fields = Vec::new();
+    push_pascal(&mut fields, "attribute")?;
+    push_u32(&mut fields, 0);
+    push_u32(&mut fields, declared_params);
+    let header_size = 12_usize
+        .checked_add(fields.len())
+        .ok_or_else(|| String::from("game attr header overflowed"))?;
+    let total_size = header_size
+        .checked_add(param.len())
+        .ok_or_else(|| String::from("game attr fixture overflowed"))?;
+    let mut source = Vec::new();
+    push_u32(&mut source, GAME_ATTR);
+    push_u32(
+        &mut source,
+        u32::try_from(header_size).map_err(|error| error.to_string())?,
+    );
+    push_u32(
+        &mut source,
+        u32::try_from(total_size).map_err(|error| error.to_string())?,
+    );
+    source.extend_from_slice(&fields);
+    source.extend_from_slice(&param);
+    Ok((source, ChunkRecord {
+        ordinal: 1,
+        depth: 1,
+        parent_ordinal: Some(0),
+        id: GAME_ATTR,
+        kind: crate::ChunkKind::GameAttr,
+        offset: 0,
+        header_size,
+        total_size,
+        payload_offset: header_size,
+        payload_size: param.len(),
+        child_count: 1,
+    }))
+}
+
+#[test]
+fn game_attr_preserves_exact_declared_parameter() -> Result<(), String> {
+    let (source, component) = game_attr_fixture(1, 0x0001_2001, false)?;
+    let recovered = schema::recover_game_attr_json(&component, &source, 1)
+        .ok_or_else(|| String::from("game attr fixture should decode"))?;
+    let value: serde_json::Value = serde_json::from_slice(&recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if value["num_params"] == 1
+        && value["params"][0]["kind"] == "int"
+        && value["params"][0]["value"] == 42
+    {
+        Ok(())
+    } else {
+        Err(String::from("game attr parameter was discarded"))
+    }
+}
+
+#[test]
+fn game_attr_rejects_parameter_contract_drift() -> Result<(), String> {
+    for (declared, param_id, trailing) in [
+        (0, 0x0001_2001, false),
+        (1, 0xdead_beef, false),
+        (1, 0x0001_2001, true),
+    ] {
+        let (source, component) =
+            game_attr_fixture(declared, param_id, trailing)?;
+        if schema::recover_game_attr_json(&component, &source, 1).is_some() {
+            return Err(String::from(
+                "game attr parameter contract drift should fail closed",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn light_group_fixture(
     declared_lights: u32,
     trailing_word: bool,

@@ -305,7 +305,11 @@ pub(super) fn recover_game_attr_json(
     let name = read_pascal_at(chunk, &mut cursor)?;
     let version = read_u32(chunk, cursor)?;
     cursor += 4;
-    let num_params = read_u32(chunk, cursor)?;
+    let num_params = usize::try_from(read_u32(chunk, cursor)?).ok()?;
+    cursor = cursor.checked_add(4)?;
+    if cursor != component.header_size {
+        return None;
+    }
     let fallback = format!("game_attr_{kind_index:04}");
     let file_name = sanitize(if name.is_empty() {
         &fallback
@@ -316,7 +320,8 @@ pub(super) fn recover_game_attr_json(
         chunk,
         component.header_size,
         component.total_size,
-    );
+        num_params,
+    )?;
     let json = format!(
         concat!(
             r#"{{"schema":"game_attr","#,
