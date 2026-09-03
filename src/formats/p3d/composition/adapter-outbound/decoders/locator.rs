@@ -90,7 +90,7 @@ pub fn data_interpretation_json(
 /// Decode an event locator's event identifier and optional event data.
 fn event_json(data: &[u32]) -> Option<String> {
     let event = data.first().copied()?;
-    let extra_data = data.get(1).copied();
+    let extra_data = (data.len() == 2).then(|| data.get(1).copied()).flatten();
     let extra_json = extra_data
         .map_or_else(|| String::from("null"), |value| value.to_string());
     Some(format!(
@@ -365,7 +365,7 @@ fn word_bytes(data: &[u32]) -> Vec<u8> {
     bytes
 }
 
-/// Decode one null-terminated word-packed UTF-8 string.
+/// Decode one null-terminated word-packed byte string for a JSON text view.
 fn word_text(data: &[u32]) -> Option<String> {
     let bytes = word_bytes(data);
     let end = bytes
@@ -375,7 +375,7 @@ fn word_text(data: &[u32]) -> Option<String> {
     Some(String::from_utf8_lossy(bytes.get(..end)?).into_owned())
 }
 
-/// Decode a fixed number of null-separated UTF-8 strings.
+/// Decode fixed null-separated byte strings for JSON text views.
 fn null_strings(bytes: &[u8], count: usize) -> Option<Vec<String>> {
     let mut strings = Vec::with_capacity(count);
     let mut cursor = 0_usize;

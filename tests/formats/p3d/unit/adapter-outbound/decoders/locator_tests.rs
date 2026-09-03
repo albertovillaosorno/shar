@@ -187,6 +187,27 @@ fn locator_types_eight_through_fifteen_have_typed_interpretations()
 }
 
 #[test]
+fn event_extra_data_requires_exactly_two_runtime_words() -> Result<(), String> {
+    let two_words = assert_known(0, &[49, 450], 1)?;
+    for field in [
+        "\"event_id\":49",
+        "\"event_name\":\"far_plane_change\"",
+        "\"extra_data\":450",
+    ] {
+        if !two_words.contains(field) {
+            return Err(format!("two-word event output omitted {field}"));
+        }
+    }
+    let three_words = assert_known(0, &[49, 450, 99], 1)?;
+    if !three_words.contains("\"extra_data\":null") {
+        return Err(String::from(
+            "three-word event assigned ignored runtime data",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn text_and_action_payloads_preserve_authored_fields() -> Result<(), String> {
     let script = assert_known(1, &words(b"car_wreck\0"), 1)?;
     if !script.contains("\"script\":\"car_wreck\"") {
