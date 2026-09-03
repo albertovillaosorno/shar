@@ -1254,11 +1254,11 @@ fn light_fixture(
     let constant = if matches!(drift, LightFixtureDrift::NonfiniteHeader) {
         f32::NAN
     } else {
-        1.0
+        1.
     };
     push_f32(&mut fields, constant);
-    push_f32(&mut fields, 0.0);
-    push_f32(&mut fields, 0.0);
+    push_f32(&mut fields, 0.);
+    push_f32(&mut fields, 0.);
     push_u32(&mut fields, 1);
     if matches!(drift, LightFixtureDrift::TrailingHeader) {
         push_u32(&mut fields, 99);
