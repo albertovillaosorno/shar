@@ -1212,18 +1212,26 @@ schema-backed frame-controller ID; the six legacy frame-controller variants do
 not occur in this ownership path. Recovery now preserves the typed animation and
 controller hierarchy without applying legacy-layout guesses.
 
-Export-info provenance is exact across 145 roots. Every root consumes its complete
-name header and owns only schema-defined named string or named integer leaves.
+Export-info provenance is exact across 145 roots. Every root consumes its
+complete name header and owns only schema-defined named string or named integer
+leaves.
 The corpus contains 870 childless named-string entries and 1,315 childless
 named-integer entries, all with exact header/total-size consumption and no
 unknown child kinds.
 
-Current roots preserve six named strings plus nine named integers, with ten roots
-carrying one additional named integer for mirrored-animation export. Recovery now
-retains every authored key and value in physical order, including padding bytes
+Current roots preserve six named strings plus nine named integers, with ten
+roots carrying one additional named integer for mirrored-animation export.
+Recovery now retains every authored key and value in physical order, including
+padding bytes
 inside the source Pascal strings, instead of reducing entries to chunk IDs and
 sizes. Integer fields remain numeric source metadata rather than being coerced
 into booleans.
+
+History framing is exact across 876 source records. The declared line counts are
+zero for two records, two for 13 records, and three for 861 records. Every line
+array consumes its complete schema-defined header and every history chunk is
+childless, so recovery now rejects trailing header data or nested children while
+retaining the authored history strings unchanged.
 
 Standard frame-controller framing is exact across the full source. All 4,714
 `FRAME_CONTROLLER` records are version 0, childless, consume their complete
