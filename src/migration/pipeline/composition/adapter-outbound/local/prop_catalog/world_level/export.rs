@@ -40,6 +40,7 @@ use fbx::adapters::driven::binary_character_writer::{
 use fbx::adapters::driven::decoded_component_source::read_mesh_for_analysis;
 use fbx::domain::mesh::MeshAsset;
 use fbx::domain::texture::MaterialBinding;
+use serde_json::json;
 use shar_sha256::digest_hex;
 
 use super::super::extraction::relative_art_root;
@@ -67,7 +68,7 @@ use super::layout::{
 };
 use super::model::{
     ExportedWorldCollection, WorldFbxRecord, WorldInteriorRecord,
-    WorldPackageRecord, WorldSurfaceSemanticCounts,
+    WorldPackageRecord, WorldSurfaceSemanticCounts, WorldTopologyEvidenceRecord,
 };
 use super::transform::{bake_mesh, identity, mesh_bounds, translation};
 use crate::domain::PipelineError;
@@ -140,6 +141,23 @@ struct ShapeProfile {
     triangles: usize,
     /// Positive axis extents in source units.
     extents: [f32; 3],
+}
+
+/// Exact source-authored triangle omitted only from Unreal target geometry.
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RepeatedIndexTriangleEvidence {
+    /// Published mesh identity before target-only omission.
+    mesh: String,
+    /// Optional exact authored mesh identity retained by the decoder.
+    source_mesh: Option<String>,
+    /// Primitive-group index inside the source mesh.
+    group: usize,
+    /// Optional exact source chunk ordinal for the primitive group.
+    source_ordinal: Option<usize>,
+    /// Triangle ordinal inside the authored triangulated group.
+    triangle: usize,
+    /// Exact source-authored repeated vertex indices.
+    indices: [u32; 3],
 }
 
 /// Package counter selected for checked assembly accounting.
@@ -346,8 +364,10 @@ fn append_world_fbx_to_guide(
     source: &MasterContent,
     guide: &mut MasterContent,
 ) -> Result<(), PipelineError> {
-    merge_content_presentation(guide, source)?;
-    guide.meshes.extend(source.meshes.clone());
+    let (mut target, _evidence) = split_unreal_importable_topology(source);
+    retain_used_presentation(&mut target);
+    merge_content_presentation(guide, &target)?;
+    guide.meshes.extend(target.meshes);
     Ok(())
 }
 
@@ -537,33 +557,102 @@ fn publish_nested_content_textures(
     Ok(())
 }
 
-/// Reject topology that Unreal's FBX static-mesh importer cannot consume
-/// safely.
-fn validate_unreal_importable_topology(
-    relative_path: &str,
-    meshes: &[MeshAsset],
-) -> Result<(), PipelineError> {
-    for mesh in meshes {
-        for group in &mesh.groups {
-            if let Some((triangle, indices)) =
-                group.triangles.iter().enumerate().find(|(_ordinal, indices)| {
-                    indices[0] == indices[1]
-                        || indices[0] == indices[2]
-                        || indices[1] == indices[2]
-                })
+/// Return whether one triangle repeats an authored vertex index.
+const fn repeats_vertex(indices: [u32; 3]) -> bool {
+    indices[0] == indices[1]
+        || indices[0] == indices[2]
+        || indices[1] == indices[2]
+}
+
+/// Split exact source evidence from the Unreal-importable target geometry.
+fn split_unreal_importable_topology(
+    source: &MasterContent,
+) -> (MasterContent, Vec<RepeatedIndexTriangleEvidence>) {
+    let mut target = source.clone();
+    let mut evidence = Vec::new();
+    for mesh in &mut target.meshes {
+        let mesh_name = mesh.name.clone();
+        let source_mesh = mesh.source_identity.clone();
+        for group in &mut mesh.groups {
+            let group_index = group.index;
+            let source_ordinal = group.source_ordinal;
+            let mut target_triangles =
+                Vec::with_capacity(group.triangles.len());
+            for (triangle, indices) in
+                group.triangles.iter().copied().enumerate()
             {
-                return Err(PipelineError::new(format!(
-                    concat!(
-                        "world FBX is not Unreal-importable: ",
-                        "repeated-index triangle at {}, mesh {}, group {}, ",
-                        "triangle {}: {:?}"
-                    ),
-                    relative_path, mesh.name, group.index, triangle, indices
-                )));
+                if repeats_vertex(indices) {
+                    evidence.push(RepeatedIndexTriangleEvidence {
+                        mesh: mesh_name.clone(),
+                        source_mesh: source_mesh.clone(),
+                        group: group_index,
+                        source_ordinal,
+                        triangle,
+                        indices,
+                    });
+                } else {
+                    target_triangles.push(indices);
+                }
             }
+            group.triangles = target_triangles;
         }
+        mesh.groups.retain(|group| !group.triangles.is_empty());
     }
-    Ok(())
+    target.meshes.retain(|mesh| !mesh.groups.is_empty());
+    (target, evidence)
+}
+
+/// Publish exact source-topology evidence beside one target-safe FBX.
+fn publish_topology_evidence(
+    relative_path: &str,
+    evidence: &[RepeatedIndexTriangleEvidence],
+    output_root: &Path,
+) -> Result<Option<WorldTopologyEvidenceRecord>, PipelineError> {
+    if evidence.is_empty() {
+        return Ok(None);
+    }
+    let relative = format!("{relative_path}.source-topology.json");
+    let path = output_root.join(&relative);
+    let triangles = evidence
+        .iter()
+        .map(|entry| {
+            json!({
+                "mesh": entry.mesh,
+                "source_mesh": entry.source_mesh,
+                "group": entry.group,
+                "source_ordinal": entry.source_ordinal,
+                "triangle": entry.triangle,
+                "indices": entry.indices
+            })
+        })
+        .collect::<Vec<_>>();
+    let document = json!({
+        "schema": "shar.world-fbx-source-topology.v1",
+        "fbx_path": relative_path,
+        "unreal_omitted_repeated_index_triangles": evidence.len(),
+        "triangles": triangles
+    });
+    let mut bytes = serde_json::to_vec_pretty(&document).map_err(|error| {
+        PipelineError::new(format!(
+            "world topology evidence serialization failed: {error}"
+        ))
+    })?;
+    bytes.push(b'\n');
+    fs::write(&path, &bytes).map_err(|error| {
+        PipelineError::new(format!(
+            "world topology evidence write failed: {error}"
+        ))
+    })?;
+    Ok(Some(WorldTopologyEvidenceRecord {
+        path: relative,
+        bytes: u64::try_from(bytes.len()).map_err(|error| {
+            PipelineError::new(format!(
+                "world topology evidence byte count overflowed: {error}"
+            ))
+        })?,
+        sha256: digest_hex(&bytes),
+        repeated_index_triangles: evidence.len(),
+    }))
 }
 
 /// Write one non-empty package scene and return its stable artifact record.
@@ -579,10 +668,17 @@ fn write_content_fbx(
     }
     apply_registered_algorithm(relative_path, &mut content.meshes)?;
     ensure_unique_names(&content.meshes)?;
-    validate_unreal_importable_topology(relative_path, &content.meshes)?;
     retain_used_presentation(content);
+    let (mut target, topology_evidence) =
+        split_unreal_importable_topology(content);
+    if target.meshes.is_empty() {
+        return Err(PipelineError::new(format!(
+            "world FBX has no Unreal-importable geometry: {relative_path}"
+        )));
+    }
+    retain_used_presentation(&mut target);
     let surface_semantics =
-        world_surface_semantics(&content.meshes, &content.materials)?;
+        world_surface_semantics(&target.meshes, &target.materials)?;
     let path = output_root.join(relative_path);
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|error| {
@@ -593,15 +689,20 @@ fn write_content_fbx(
     }
     let summary = write_binary_model_fbx_with_policies(
         scene_name,
-        &content.meshes,
-        &content.materials.values().cloned().collect::<Vec<_>>(),
+        &target.meshes,
+        &target.materials.values().cloned().collect::<Vec<_>>(),
         root_policy,
         &path,
     )
     .map_err(|error| {
         PipelineError::new(format!("world package FBX write failed: {error:?}"))
     })?;
-    publish_nested_content_textures(relative_path, content, output_root)?;
+    publish_nested_content_textures(relative_path, &target, output_root)?;
+    let evidence_record = publish_topology_evidence(
+        relative_path,
+        &topology_evidence,
+        output_root,
+    )?;
     let bytes = fs::read(&path).map_err(|error| {
         PipelineError::new(format!("world package FBX read failed: {error}"))
     })?;
@@ -613,6 +714,8 @@ fn write_content_fbx(
             ))
         })?,
         sha256: digest_hex(&bytes),
+        unreal_omitted_repeated_index_triangles: topology_evidence.len(),
+        topology_evidence: evidence_record,
         summary,
         surface_semantics,
     }))
