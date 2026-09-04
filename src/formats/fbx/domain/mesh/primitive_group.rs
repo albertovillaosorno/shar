@@ -87,6 +87,41 @@ impl PrimitiveGroup {
         uvs: Vec<[f32; 2]>,
         indices: &[u32],
     ) -> Result<Self, MeshError> {
+        Self::new_with_repeated_index_policy(
+            index, shader, positions, uvs, indices, false,
+        )
+    }
+
+    /// Create one source-preserving primitive group for whole-world analysis.
+    ///
+    /// This keeps authored triangle-list records whose vertex indices repeat.
+    /// Every other primitive-group validation remains identical to
+    /// [`Self::new`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when ordinary primitive-group evidence is invalid.
+    pub fn new_preserving_repeated_indices(
+        index: usize,
+        shader: impl Into<String>,
+        positions: Vec<[f32; 3]>,
+        uvs: Vec<[f32; 2]>,
+        indices: &[u32],
+    ) -> Result<Self, MeshError> {
+        Self::new_with_repeated_index_policy(
+            index, shader, positions, uvs, indices, true,
+        )
+    }
+
+    /// Construct one primitive group under an explicit repeated-index policy.
+    fn new_with_repeated_index_policy(
+        index: usize,
+        shader: impl Into<String>,
+        positions: Vec<[f32; 3]>,
+        uvs: Vec<[f32; 2]>,
+        indices: &[u32],
+        preserve_repeated_indices: bool,
+    ) -> Result<Self, MeshError> {
         let shader_name = shader.into();
         validate_shader_identity(&shader_name)?;
         if positions.is_empty() {
@@ -127,12 +162,13 @@ impl PrimitiveGroup {
             });
         }
         let triangles = triangulate_indices(indices)?;
-        if let Some((triangle, _)) =
-            triangles.iter().enumerate().find(|(_, triangle)| {
-                triangle[0] == triangle[1]
-                    || triangle[0] == triangle[2]
-                    || triangle[1] == triangle[2]
-            })
+        if !preserve_repeated_indices
+            && let Some((triangle, _)) =
+                triangles.iter().enumerate().find(|(_, triangle)| {
+                    triangle[0] == triangle[1]
+                        || triangle[0] == triangle[2]
+                        || triangle[1] == triangle[2]
+                })
         {
             return Err(MeshError::RepeatedTriangleVertex { triangle });
         }
