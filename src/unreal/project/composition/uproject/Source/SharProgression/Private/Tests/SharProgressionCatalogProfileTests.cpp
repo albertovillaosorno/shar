@@ -131,12 +131,7 @@ bool FSharProgressionProfileSnapshotValidationTest::RunTest(
         Runtime.GameInstance
     );
     FSharProgressionSnapshot InvalidSnapshot = MakeInitialProgressionSnapshot();
-    FSharProgressionValue DuplicateValue;
-    for (const FSharProgressionValue& Value : InvalidSnapshot.Values)
-    {
-        DuplicateValue = Value;
-        break;
-    }
+    const FSharProgressionValue DuplicateValue = InvalidSnapshot.Values[0];
     InvalidSnapshot.Values.Add(DuplicateValue);
     TestFalse(
         TEXT("Duplicate snapshot values fail closed"),
