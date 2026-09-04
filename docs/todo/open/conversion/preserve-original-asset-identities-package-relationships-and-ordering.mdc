@@ -1260,18 +1260,25 @@ chunk summaries but no authored identity that can be joined to a composite
 effect row. The catalog therefore does not choose package-shared or duplicate
 particle resources from those records.
 
-`shar.world-model-props.v15` now retains the exact package-local physical
-candidate pair when an authored effect has one unique same-name factory and one
-unique same-name particle system. The system must identify that same logical
-effect through `factory_name`, and both normalized rows must resolve to exact
-phase-three `particle` / `p3d-particle` members by path and source ordinal.
+`shar.world-model-props.v16` retains the exact package-local physical pair
+when an authored effect has one unique same-name factory and one unique
+same-name particle system. The system must identify that same logical effect
+through
+`factory_name`, and both normalized rows must resolve to exact phase-three
+`particle` / `p3d-particle` members by path and source ordinal.
+
+The shipped CompositeDrawable loader resolves each authored effect name through
+`P3D::Find<tEffect>`. A `tParticleSystem` is a `tEffect`, while its
+`tParticleSystemFactory` is a separate `tEffectFactory`; the system loader first
+resolves the factory and creates the named system entity. The catalog therefore
+marks the paired particle-system occurrence as the runtime effect target without
+discarding its factory provenance.
 
 Current matched-world evidence yields 248 such effect pairs, retaining 496
-classified physical member references across 480 unique phase-three member IDs.
-The catalog records both factory and system occurrences as candidate provenance;
-it does not claim that the composite effect semantically designates either one.
-The other 220 matched-world effects retain no physical candidate pair, including
-all package-shared, duplicate, and absent cases described above.
+classified physical member references across 480 unique phase-three member IDs,
+and all 248 now have an exact runtime system target. The other 220 matched-world
+effects retain no physical pair or runtime target, including all package-shared,
+duplicate, and absent cases described above.
 
 A raw-schema follow-up identifies a recovery gap inside the 63 normalized
 `srr_inst_particle_system` rows. Every current row reports exactly one direct

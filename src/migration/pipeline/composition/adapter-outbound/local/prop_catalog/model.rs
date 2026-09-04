@@ -326,7 +326,7 @@ pub(super) struct WorldPrimaryParticlePairBinding {
     pub(super) system: WorldPrimaryMemberBinding,
 }
 
-/// One authored composite effect retained without particle interpretation.
+/// One authored composite effect with bounded runtime particle interpretation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct WorldPrimaryEffectBinding {
     /// Zero-based authored effect position.
@@ -341,6 +341,8 @@ pub(super) struct WorldPrimaryEffectBinding {
     pub(super) sort_order_bits: Option<u32>,
     /// Exact same-package factory/system pair when uniquely source-backed.
     pub(super) package_particle_pair: Option<WorldPrimaryParticlePairBinding>,
+    /// Exact particle-system entity selected by the shipped `tEffect` lookup.
+    pub(super) runtime_effect_system: Option<WorldPrimaryMemberBinding>,
 }
 
 /// Exact physical provenance for the primary world-model route.

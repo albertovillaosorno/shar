@@ -92,6 +92,11 @@ fn primary_world_source_serialization_preserves_authored_selection_order() {
                     source_ordinal: 60,
                 },
             }),
+            runtime_effect_system: Some(WorldPrimaryMemberBinding {
+                package_member_id: "particle-system-60".to_owned(),
+                member_id: "spark".to_owned(),
+                source_ordinal: 60,
+            }),
         }],
         matched_composite: Some(WorldPrimaryMemberBinding {
             package_member_id: "composite-member-30".to_owned(),
@@ -171,6 +176,12 @@ fn primary_world_source_serialization_preserves_authored_selection_order() {
             "/composite_effects/0/package_particle_pair/system/source_ordinal"
         ),
         Some(&60.into())
+    );
+    assert_eq!(
+        value.pointer(
+            "/composite_effects/0/runtime_effect_system/package_member_id"
+        ),
+        Some(&"particle-system-60".into())
     );
     assert_eq!(
         value.pointer("/matched_composite/package_member_id"),
