@@ -65,13 +65,13 @@ regressions rejecting the former cross-name substitution while retaining exact
 `char_swatches_lit.bmp` lookup. Missing plain swatch authority now remains
 unresolved instead of being repaired to a different authored texture.
 
-The world material path no longer invents an untextured material when a named
-analysis shader file is missing. The current extracted corpus contains 12 real
-`lambert1` shader declarations and no decoded mesh group requiring a missing
-`lambert1` or `Pure3DSimpleShader15` shader. The former exception admitted a
-missing file only by name when world texture authority was active, without a
-decoded material source. A regression now requires that case to follow ordinary
-fail-closed material resolution.
+Missing world shaders no longer fall through an untyped file-read error. The
+current corpus has six exact mesh consumers of `lambert1` whose owning package
+does not declare that shader. Generic FBX resolution reports a typed
+`MissingShaderMember`; only the world runtime boundary may convert that result
+to Pure3D's shipped `TShader("error")` fallback, and only when package membership
+and exact mesh-consumer provenance are both proven. Unproven consumers retain
+ordinary fail-closed material resolution.
 
 Shared world-texture fallback now retains the decoded shader document instead
 of rebuilding a new material binding from its names after local texture lookup

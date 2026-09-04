@@ -1469,10 +1469,18 @@ canonical textures, and the replay advances past the original `shrubRound.png`
 collision without weakening same-resolution collision checks.
 
 The September 4 replay now also advances through both render-mesh and
-`INTERSECT_DSG` repeated-index records without discarding them. Its next exact
-boundary is `l3z3`: mesh `z3_gens108Shape_071` references `lambert1`, while that
-package has no local `lambert1` shader. The existing missing-default-shader test
-continues to fail closed rather than inventing an untextured material.
+`INTERSECT_DSG` repeated-index records without discarding them. It then exposed
+six world meshes that consume `lambert1` without declaring that shader locally,
+starting with `l3z3` mesh `z3_gens108Shape_071`. Shipped `tPrimGroupLoader`
+resolves the authored name from its temporary load store and then the global
+inventory; when neither supplies a shader it creates `TShader("error")`.
+
+Migration preserves that fallback only when the phase-three package and exact
+mesh-consumer provenance prove the missing local binding. Generic FBX material
+resolution and unproven world consumers remain strict. The shipped GL PDDI
+normalizes the `error` shader type to its ordinary untextured `simple` material
+with white diffuse/ambient defaults, so the deterministic no-external-authority
+case does not require inventing shader parameters.
 
 Malformed authored counts now fail closed before count-sized allocation or
 iteration where the encoded source region supplies a hard bound. This covers
