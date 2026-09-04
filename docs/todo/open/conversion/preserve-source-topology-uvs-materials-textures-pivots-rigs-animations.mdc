@@ -1484,7 +1484,8 @@ Cache completeness validates project and screen inventories separately, so one
 page form cannot satisfy the other's contract.
 
 Legacy MultiText is now closed from shipped runtime authority. Versions 16 and
-earlier end physically after `TextStyleName`; recovery preserves that absence and
+earlier end physically after `TextStyleName`; recovery preserves that absence
+and
 rejects modern shadow or `CurrentText` bytes on a legacy header. The runtime
 layout derives only the loader/constructor behavior that exists without those
 bytes: shadow and outline remain disabled and the initial/current text index is
