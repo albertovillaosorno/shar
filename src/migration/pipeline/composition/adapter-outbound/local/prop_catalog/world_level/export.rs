@@ -54,9 +54,7 @@ use super::algorithms::apply_registered_algorithm;
 use super::collision::load_intersect_meshes;
 use super::coordinate::PackageCoordinates;
 use super::interior::{
-    InteriorGeometryOwnership, InteriorIdentity, identity_for_package,
-    is_halloween_package, package_level,
-    retain_unowned_triangles_with_ownership,
+    InteriorIdentity, identity_for_package, is_halloween_package, package_level,
 };
 use super::inventory::{
     LevelMeshSource, is_direct_world_mesh, is_interior, object_role,
@@ -131,8 +129,6 @@ struct PendingInterior {
     record: WorldPackageRecord,
     /// Transformed render content and presentation authority.
     content: MasterContent,
-    /// Exact pre-Unreal-datum geometry used only for fusion ownership.
-    ownership_meshes: Vec<MeshAsset>,
 }
 
 /// Coarse normalized shape evidence used only for review co-location.
@@ -159,29 +155,6 @@ enum PackageCounter {
     CanonicalCoordinate,
     /// Definition-only mesh routed to the separated review gallery.
     ReviewDefinition,
-}
-
-/// Drain final and ownership meshes in one verified deterministic order.
-fn take_aligned_interior_meshes(
-    package: &mut PendingInterior,
-) -> Result<Vec<(MeshAsset, MeshAsset)>, PipelineError> {
-    if package.content.meshes.len() != package.ownership_meshes.len() {
-        return Err(PipelineError::new(
-            "interior final and ownership mesh counts changed",
-        ));
-    }
-    let render_meshes = std::mem::take(&mut package.content.meshes);
-    let ownership_meshes = std::mem::take(&mut package.ownership_meshes);
-    let mut aligned = Vec::with_capacity(render_meshes.len());
-    for (render, ownership) in render_meshes.into_iter().zip(ownership_meshes) {
-        if render.name != ownership.name {
-            return Err(PipelineError::new(
-                "interior final and ownership mesh identities changed",
-            ));
-        }
-        aligned.push((render, ownership));
-    }
-    Ok(aligned)
 }
 
 /// Export independently importable world-package scenes at one shared origin.
@@ -238,16 +211,7 @@ pub(super) fn export_world_collection(
             scratch_root: scratch_root.to_path_buf(),
             authority,
         };
-        let mut ownership_meshes = Vec::new();
-        let ownership_target =
-            is_interior(package).then_some(&mut ownership_meshes);
-        append_package(
-            &scope,
-            package,
-            &append_context,
-            &mut package_content,
-            ownership_target,
-        )?;
+        append_package(&scope, package, &append_context, &mut package_content)?;
         merge_textures(
             &mut all_textures,
             package_content.textures.values().cloned().collect(),
@@ -322,7 +286,6 @@ pub(super) fn export_world_collection(
                 halloween: is_halloween_package(&record.package_id),
                 record,
                 content: package_content,
-                ownership_meshes,
             });
             continue;
         }
@@ -449,52 +412,15 @@ fn publish_fused_interiors(
 
         let mut base = MasterContent::default();
         let mut overlay = MasterContent::default();
-        let mut owned_geometry = InteriorGeometryOwnership::default();
-        let mut removed_duplicate_triangles = 0_usize;
+        let removed_duplicate_triangles = 0_usize;
         for package in packages.iter_mut().filter(|package| !package.halloween)
         {
             merge_content_presentation(&mut base, &package.content)?;
-            for (mesh, ownership_mesh) in take_aligned_interior_meshes(package)?
-            {
-                let (retained, removed) =
-                    retain_unowned_triangles_with_ownership(
-                        mesh,
-                        &ownership_mesh,
-                        &mut owned_geometry,
-                    )?;
-                removed_duplicate_triangles = removed_duplicate_triangles
-                    .checked_add(removed)
-                    .ok_or_else(|| {
-                        PipelineError::new(
-                            "interior duplicate triangle count overflowed",
-                        )
-                    })?;
-                if let Some(retained_mesh) = retained {
-                    base.meshes.push(retained_mesh);
-                }
-            }
+            append_authored_interior_meshes(&mut base, &mut package.content);
         }
         for package in packages.iter_mut().filter(|package| package.halloween) {
             merge_content_presentation(&mut overlay, &package.content)?;
-            for (mesh, ownership_mesh) in take_aligned_interior_meshes(package)?
-            {
-                let (retained, removed) =
-                    retain_unowned_triangles_with_ownership(
-                        mesh,
-                        &ownership_mesh,
-                        &mut owned_geometry,
-                    )?;
-                removed_duplicate_triangles = removed_duplicate_triangles
-                    .checked_add(removed)
-                    .ok_or_else(|| {
-                        PipelineError::new(
-                            "interior duplicate triangle count overflowed",
-                        )
-                    })?;
-                if let Some(retained_mesh) = retained {
-                    overlay.meshes.push(retained_mesh);
-                }
-            }
+            append_authored_interior_meshes(&mut overlay, &mut package.content);
         }
         let folder = format!("interiors/{}-{}", identity.id, identity.name);
         let base_name = format!("{}-{}", identity.id, identity.name);
@@ -553,6 +479,18 @@ fn publish_fused_interiors(
         records.extend(packages.into_iter().map(|package| package.record));
     }
     Ok((interiors, records, semantics))
+}
+
+/// Append every authored interior mesh without geometry suppression.
+///
+/// `Pure3D` submits the complete serialized index stream. Interior fusion therefore
+/// preserves source mesh order and triangle multiplicity instead of treating
+/// coincident presentation values as ownership evidence.
+fn append_authored_interior_meshes(
+    target: &mut MasterContent,
+    source: &mut MasterContent,
+) {
+    target.meshes.append(&mut source.meshes);
 }
 
 /// Merge one package's presentation authority into one fused interior artifact.
@@ -671,7 +609,6 @@ fn append_package(
     package: &PhaseThreePackageRow,
     append_context: &PackageAppendContext<'_>,
     package_content: &mut MasterContent,
-    ownership_meshes: Option<&mut Vec<MeshAsset>>,
 ) -> Result<(), PipelineError> {
     let relative = relative_art_root(package)?;
     let package_root = append_context.canonical_root.join(&relative);
@@ -723,7 +660,6 @@ fn append_package(
             collisions.discarded_triangles;
     }
     if sources.is_empty() {
-        capture_interior_ownership_meshes(package_content, ownership_meshes);
         return Ok(());
     }
     let package_scratch = append_context.scratch_root.join(&package.package_id);
@@ -781,18 +717,7 @@ fn append_package(
             ))
         })?;
     }
-    capture_interior_ownership_meshes(package_content, ownership_meshes);
     Ok(())
-}
-
-/// Capture source-authored interior geometry for fusion ownership decisions.
-fn capture_interior_ownership_meshes(
-    package_content: &MasterContent,
-    ownership_meshes: Option<&mut Vec<MeshAsset>>,
-) {
-    if let Some(ownership_meshes) = ownership_meshes {
-        *ownership_meshes = package_content.meshes.clone();
-    }
 }
 
 /// Load one package's render meshes under the analysis sanitation policy.
