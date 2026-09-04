@@ -292,11 +292,27 @@ fn should_publish_component(
             .and_then(|ordinal| chunks.get(ordinal))
             .is_some_and(|parent| parent.kind.label() == "sprite");
     }
-    if matches!(kind, "scrooby_screen" | "scrooby_page") {
+    if kind == "scrooby_screen" {
         return component
             .parent_ordinal
             .and_then(|ordinal| chunks.get(ordinal))
             .is_some_and(|parent| parent.kind.label() == "scrooby_project");
+    }
+    if kind == "scrooby_page" {
+        let Some(parent) = component
+            .parent_ordinal
+            .and_then(|ordinal| chunks.get(ordinal))
+        else {
+            return false;
+        };
+        if parent.kind.label() == "scrooby_project" {
+            return true;
+        }
+        return parent.kind.label() == "scrooby_screen"
+            && parent
+                .parent_ordinal
+                .and_then(|ordinal| chunks.get(ordinal))
+                .is_some_and(|owner| owner.kind.label() == "scrooby_project");
     }
     if matches!(
         kind,

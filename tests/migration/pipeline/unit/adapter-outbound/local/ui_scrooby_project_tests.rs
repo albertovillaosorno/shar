@@ -197,6 +197,87 @@ fn write_valid_package(root: &Path) -> TestResult {
         .map_err(|error| error.to_string())
 }
 
+fn add_embedded_screen_page(root: &Path, name: &str) -> TestResult {
+    let screen = root.join("components/scrooby_screen/screen.json");
+    let screen_text = fs::read_to_string(&screen)
+        .map_err(|error| error.to_string())?;
+    let mut screen_payload =
+        serde_json::from_str::<serde_json::Value>(&screen_text)
+        .map_err(|error| error.to_string())?;
+    let screen_object = screen_payload
+        .as_object_mut()
+        .ok_or_else(|| "screen fixture should be an object".to_owned())?;
+    let _previous = screen_object.insert(
+        "children".to_owned(),
+        serde_json::json!([{"id_hex":"0x00018002"}]),
+    );
+    fs::write(
+        &screen,
+        serde_json::to_vec(&screen_payload).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    let row = write_component(
+        root,
+        13,
+        3,
+        "scrooby_page",
+        "embedded",
+        &format!(
+            r#"{{"schema":"scrooby_page","name":"{name}","children":[]}}"#,
+        ),
+    )?;
+    let ledger_path = root.join("components.jsonl");
+    let mut ledger = fs::read_to_string(&ledger_path)
+        .map_err(|error| error.to_string())?;
+    ledger = ledger.replace(
+        r#""component_count":12"#,
+        r#""component_count":13"#,
+    );
+    ledger.push_str(&row);
+    ledger.push('\n');
+    fs::write(ledger_path, ledger).map_err(|error| error.to_string())
+}
+
+#[test]
+fn accepts_embedded_page_beside_project_page() -> TestResult {
+    let root = case_dir("embedded-screen-page")?;
+    write_valid_package(&root)?;
+    add_embedded_screen_page(&root, "Embedded")?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    result.map(|_bindings| ()).map_err(|error| error.to_string())
+}
+
+#[test]
+fn screen_name_does_not_resolve_embedded_page() -> TestResult {
+    let root = case_dir("embedded-page-not-named-target")?;
+    write_valid_package(&root)?;
+    add_embedded_screen_page(&root, "Embedded")?;
+    let screen = root.join("components/scrooby_screen/screen.json");
+    let text = fs::read_to_string(&screen).map_err(|error| error.to_string())?;
+    let changed = text.replace(
+        r#""page_names":["Main"]"#,
+        r#""page_names":["Embedded"]"#,
+    );
+    if changed == text {
+        return Err("screen page-name fixture was not found".to_owned());
+    }
+    fs::write(&screen, changed).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err(
+            "embedded page satisfied a named project-page reference".to_owned(),
+        );
+    };
+    if !error.to_string().contains("Scrooby page is missing") {
+        return Err(format!(
+            "unexpected embedded page resolution error: {error}"
+        ));
+    }
+    Ok(())
+}
+
 #[test]
 fn rejects_duplicate_component_ordinal() -> TestResult {
     let root = case_dir("duplicate-component-ordinal")?;

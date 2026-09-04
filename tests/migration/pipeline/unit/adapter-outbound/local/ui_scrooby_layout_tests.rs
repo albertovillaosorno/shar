@@ -369,9 +369,17 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
             "screen",
             r#"{"schema":"scrooby_screen","version":13}"#,
         )?,
+        write_component(
+            &root,
+            8,
+            7,
+            "scrooby_page",
+            "embedded-page",
+            r#"{"schema":"scrooby_page","version":14,"resolution":[640,480]}"#,
+        )?,
     ];
     let mut ledger = String::from(
-        "{\"schema\":\"p3d.package.v1\",\"component_count\":7}\n",
+        "{\"schema\":\"p3d.package.v1\",\"component_count\":8}\n",
     );
     for row in rows {
         ledger.push_str(&row);
@@ -395,6 +403,7 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
     let text = row(5)?;
     let string = row(6)?;
     let screen = row(7)?;
+    let embedded_page = row(8)?;
     let index = |value: &serde_json::Value, field: &str| {
         value.get(field).and_then(serde_json::Value::as_u64)
     };
@@ -427,6 +436,8 @@ fn runtime_indices_follow_source_parent_child_semantics() -> TestResult {
         || index(string, "runtime_index") != Some(0)
         || index(screen, "source_sibling_index") != Some(1)
         || index(screen, "runtime_index") != Some(0)
+        || index(embedded_page, "source_sibling_index") != Some(0)
+        || index(embedded_page, "runtime_index") != Some(0)
         || screen.get("z_buffer_enabled") != Some(&serde_json::json!(false))
         || screen.get("projection_mode")
             != Some(&serde_json::json!("perspective"))

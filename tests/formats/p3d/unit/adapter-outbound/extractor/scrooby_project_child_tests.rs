@@ -121,7 +121,7 @@ fn record(
 }
 
 #[test]
-fn publishes_only_direct_screen_and_page_children_of_project() {
+fn publishes_project_and_embedded_screen_pages() {
     let project_children = [
         chunk(0, None, ChunkKind::Root),
         chunk(1, Some(0), ChunkKind::ScroobyProject),
@@ -137,12 +137,22 @@ fn publishes_only_direct_screen_and_page_children_of_project() {
         &project_children,
     ));
 
+    let embedded = [
+        chunk(0, None, ChunkKind::Root),
+        chunk(1, Some(0), ChunkKind::ScroobyProject),
+        chunk(2, Some(1), ChunkKind::ScroobyScreen),
+        chunk(3, Some(2), ChunkKind::ScroobyPage),
+    ];
+    assert!(should_publish_component(&embedded[3], &embedded));
+
     let unrelated = [
         chunk(0, None, ChunkKind::Root),
         chunk(1, Some(0), ChunkKind::ScroobyPage),
         chunk(2, Some(1), ChunkKind::ScroobyScreen),
+        chunk(3, Some(2), ChunkKind::ScroobyPage),
     ];
     assert!(!should_publish_component(&unrelated[2], &unrelated));
+    assert!(!should_publish_component(&unrelated[3], &unrelated));
 }
 
 #[test]
@@ -181,6 +191,64 @@ fn recovers_scrooby_screen_page_names_exactly() -> Result<(), String> {
         || !json.contains(r#""page_names":["Hud","Pause"]"#)
     {
         return Err("screen recovery lost authored page names".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn screen_preserves_embedded_page_inventory() -> Result<(), String> {
+    let mut source = vec![0_u8; 12];
+    push_pascal(&mut source, "Main")?;
+    source.extend_from_slice(&1_u32.to_le_bytes());
+    source.extend_from_slice(&0_u32.to_le_bytes());
+    let header_size = source.len();
+    source.extend_from_slice(&0x0001_8002_u32.to_le_bytes());
+    source.extend_from_slice(&12_u32.to_le_bytes());
+    source.extend_from_slice(&12_u32.to_le_bytes());
+    let total_size = source.len();
+    finish_chunk_header(&mut source, 0x0001_8001, header_size, total_size)?;
+    let component = record(
+        ChunkKind::ScroobyScreen,
+        0x0001_8001,
+        header_size,
+        total_size,
+        1,
+    );
+    let recovered = recover_component(&component, &source, 1)
+        .map_err(|error| error.to_string())?;
+    let json = String::from_utf8(recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if !json.contains(r#""page_names":[]"#)
+        || !json.contains(r#""id_hex":"0x00018002""#)
+    {
+        return Err("screen lost embedded page inventory".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn screen_rejects_non_page_embedded_child() -> Result<(), String> {
+    let mut source = vec![0_u8; 12];
+    push_pascal(&mut source, "Main")?;
+    source.extend_from_slice(&1_u32.to_le_bytes());
+    source.extend_from_slice(&0_u32.to_le_bytes());
+    let header_size = source.len();
+    source.extend_from_slice(&0x0001_8003_u32.to_le_bytes());
+    source.extend_from_slice(&12_u32.to_le_bytes());
+    source.extend_from_slice(&12_u32.to_le_bytes());
+    let total_size = source.len();
+    finish_chunk_header(&mut source, 0x0001_8001, header_size, total_size)?;
+    let component = record(
+        ChunkKind::ScroobyScreen,
+        0x0001_8001,
+        header_size,
+        total_size,
+        1,
+    );
+    if auxiliary::recover_scrooby_screen_json(&component, &source, 1)
+        .is_some()
+    {
+        return Err("screen accepted a non-page embedded child".to_owned());
     }
     Ok(())
 }

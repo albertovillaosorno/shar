@@ -151,7 +151,7 @@ fn scrooby_cache_rejects_orphan_published_child() -> Result<(), String> {
 }
 
 #[test]
-fn current_scrooby_cache_accepts_project_children() -> Result<(), String> {
+fn current_scrooby_cache_accepts_embedded_pages() -> Result<(), String> {
     let case = case_dir("current-scrooby-project")?;
     for kind in ["scrooby_project", "scrooby_screen", "scrooby_page"] {
         fs::create_dir_all(case.join("components").join(kind))
@@ -167,9 +167,15 @@ fn current_scrooby_cache_accepts_project_children() -> Result<(), String> {
         ),
     )
     .map_err(|error| error.to_string())?;
-    fs::write(case.join("components/scrooby_screen/screen.json"), "{}\n")
-        .map_err(|error| error.to_string())?;
-    for page in ["page-a.json", "page-b.json"] {
+    fs::write(
+        case.join("components/scrooby_screen/screen.json"),
+        concat!(
+            r#"{"schema":"scrooby_screen","children":["#,
+            r#"{"id_hex":"0x00018002"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    for page in ["page-a.json", "page-b.json", "embedded.json"] {
         fs::write(
             case.join("components/scrooby_page").join(page),
             r#"{"schema":"scrooby_page","children":[]}"#,
@@ -179,7 +185,7 @@ fn current_scrooby_cache_accepts_project_children() -> Result<(), String> {
     fs::write(
         case.join("components.jsonl"),
         concat!(
-            r#"{"schema":"p3d.package.v1","component_count":4}"#,
+            r#"{"schema":"p3d.package.v1","component_count":5}"#,
             "\n",
             r#"{"ordinal":1,"parent_ordinal":0,"kind":"scrooby_project","#,
             r#""path":"scrooby_project/project.json"}"#,
@@ -193,13 +199,18 @@ fn current_scrooby_cache_accepts_project_children() -> Result<(), String> {
             r#"{"ordinal":4,"parent_ordinal":1,"kind":"scrooby_page","#,
             r#""path":"scrooby_page/page-b.json"}"#,
             "\n",
+            r#"{"ordinal":5,"parent_ordinal":2,"kind":"scrooby_page","#,
+            r#""path":"scrooby_page/embedded.json"}"#,
+            "\n",
         ),
     )
     .map_err(|error| error.to_string())?;
     let complete = p3d_package_complete(&case);
     fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
     if !complete {
-        return Err("exact Scrooby project children were rejected".to_owned());
+        return Err(
+            "exact project and embedded Scrooby pages were rejected".to_owned(),
+        );
     }
     Ok(())
 }

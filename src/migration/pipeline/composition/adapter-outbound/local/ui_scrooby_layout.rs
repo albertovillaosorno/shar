@@ -850,6 +850,7 @@ fn runtime_index(
 fn runtime_child(parent: &str, child: &str) -> bool {
     match parent {
         "scrooby_project" => child == "scrooby_screen",
+        "scrooby_screen" => child == "scrooby_page",
         "scrooby_page" => child == "scrooby_layer",
         "scrooby_layer" | "scrooby_group" => matches!(
             child,
