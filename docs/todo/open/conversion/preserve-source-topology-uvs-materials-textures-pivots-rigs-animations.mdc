@@ -1471,14 +1471,18 @@ widget families, and multi-text admits only text-bible or hard-coded strings.
 Malformed child headers, truncated regions, and undeclared child IDs now reject
 typed recovery instead of producing a partial child inventory.
 
-Two Scrooby compatibility edges remain intentionally open. The shipped screen
-loader can consume embedded page children, while the current schema, extractor
+One Scrooby ancestry edge remains intentionally open. The shipped screen loader
+can consume embedded page children, while the current schema, extractor
 publication rules, and migration validation model pages as direct project
-children; changing only one boundary would invent ancestry. The shipped
-multi-text loader also reads shadow and initial-index fields only for versions
-above 16, while current migration fixtures require the modern fields and provide
-no older-version corpus authority. No defaults or ancestry rewrites are inferred
-for either case until end-to-end evidence closes those contracts.
+children; changing only one boundary would invent ancestry.
+
+Legacy MultiText is now closed from shipped runtime authority. Versions 16 and
+earlier end physically after `TextStyleName`; recovery preserves that absence and
+rejects modern shadow or `CurrentText` bytes on a legacy header. The runtime
+layout derives only the loader/constructor behavior that exists without those
+bytes: shadow and outline remain disabled and the initial/current text index is
+zero. Those values are not emitted as authored source fields. Versions above 16
+retain the existing authored shadow, offset, colour, and current-index path.
 
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
