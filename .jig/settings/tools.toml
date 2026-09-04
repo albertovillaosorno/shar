@@ -17,13 +17,13 @@ path = ".dependencies/validation/bin/pytest.cmd"
 path = ".dependencies/validation/bin/ruff.cmd"
 
 [entry.rust_nightly_cargo]
-path = ".dependencies/validation/bin/rust-nightly-cargo.cmd"
+path = ".dependencies/validation/rust/nightly-2026-07-14/bin/cargo.cmd"
 
 [entry.rust_nightly_cargo_clippy]
-path = ".dependencies/validation/bin/rust-nightly-clippy.cmd"
+path = ".dependencies/validation/rust/nightly-2026-07-14/bin/clippy.cmd"
 
 [entry.rust_nightly_cargo_fmt]
-path = ".dependencies/validation/bin/rust-nightly-fmt.cmd"
+path = ".dependencies/validation/rust/nightly-2026-07-14/bin/fmt.cmd"
 
 [entry.rust_stable_cargo]
-path = ".dependencies/validation/bin/rust-stable-cargo.cmd"
+path = ".dependencies/validation/rust/stable-1.97.1/bin/cargo.cmd"

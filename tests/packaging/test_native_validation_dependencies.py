@@ -88,28 +88,33 @@ class NativeValidationBootstrapTests(unittest.TestCase):
             config = tomllib.load(stream)
         tools = config["entry"]
         expected = {
-            "cspell": "cspell.cmd",
-            "git": "git.cmd",
-            "markdownlint": "markdownlint.cmd",
-            "pytest": "pytest.cmd",
-            "ruff": "ruff.cmd",
-            "rust_nightly_cargo": "rust-nightly-cargo.cmd",
-            "rust_nightly_cargo_clippy": "rust-nightly-clippy.cmd",
-            "rust_nightly_cargo_fmt": "rust-nightly-fmt.cmd",
-            "rust_stable_cargo": "rust-stable-cargo.cmd",
+            "cspell": ".dependencies/validation/bin/cspell.cmd",
+            "git": ".dependencies/validation/bin/git.cmd",
+            "markdownlint": ".dependencies/validation/bin/markdownlint.cmd",
+            "pytest": ".dependencies/validation/bin/pytest.cmd",
+            "ruff": ".dependencies/validation/bin/ruff.cmd",
+            "rust_nightly_cargo": (
+                ".dependencies/validation/rust/"
+                "nightly-2026-07-14/bin/cargo.cmd"
+            ),
+            "rust_nightly_cargo_clippy": (
+                ".dependencies/validation/rust/"
+                "nightly-2026-07-14/bin/clippy.cmd"
+            ),
+            "rust_nightly_cargo_fmt": (
+                ".dependencies/validation/rust/"
+                "nightly-2026-07-14/bin/fmt.cmd"
+            ),
+            "rust_stable_cargo": (
+                ".dependencies/validation/rust/stable-1.97.1/bin/cargo.cmd"
+            ),
         }
         observed = {
             name: values["path"]
             for name, values in tools.items()
             if name in expected
         }
-        self.assertEqual(
-            observed,
-            {
-                name: f".dependencies/validation/bin/{launcher}"
-                for name, launcher in expected.items()
-            },
-        )
+        self.assertEqual(observed, expected)
 
     def test_jig_git_version_matches_portable_bootstrap(self) -> None:
         path = _ROOT / ".jig" / "settings" / "versions.toml"

@@ -35,6 +35,8 @@
 
 """Prepare host-portable repository-local tools required by Jig."""
 
+# CSpell:ignore rustlib lld
+
 from __future__ import annotations
 
 import json
@@ -62,6 +64,14 @@ _NIGHTLY_CARGO_VERSION = "1.99.0-nightly"
 _NIGHTLY_CLIPPY_VERSION = "0.1.99"
 _NIGHTLY_RUSTFMT_VERSION = "1.9.0-nightly"
 _SCHEMA = "shar.validation-native.v1"
+_RUST_STABLE_RUNTIME = Path("rust") / f"stable-{_STABLE_RUST}"
+_RUST_NIGHTLY_RUNTIME = Path("rust") / _NIGHTLY_RUST
+_RUST_LAUNCHER_PATHS = {
+    "rust-nightly-cargo.cmd": _RUST_NIGHTLY_RUNTIME / "bin/cargo.cmd",
+    "rust-nightly-clippy.cmd": _RUST_NIGHTLY_RUNTIME / "bin/clippy.cmd",
+    "rust-nightly-fmt.cmd": _RUST_NIGHTLY_RUNTIME / "bin/fmt.cmd",
+    "rust-stable-cargo.cmd": _RUST_STABLE_RUNTIME / "bin/cargo.cmd",
+}
 
 
 class BootstrapError(RuntimeError):
@@ -234,6 +244,57 @@ def _install_javascript(root: Path, tools: HostTools) -> tuple[Path, Path]:
     return cspell, markdownlint
 
 
+def _rustup_tool_path(
+    cargo: Path,
+    rust_environment: dict[str, str],
+    toolchain: str,
+    tool: str,
+) -> Path:
+    """Resolve one direct tool inside the exact repository rustup toolchain."""
+    rustup = cargo.with_name("rustup.exe" if os.name == "nt" else "rustup")
+    output = _run(
+        [str(rustup), "which", "--toolchain", toolchain, tool],
+        environment=rust_environment,
+        timeout=60,
+    ).stdout.strip()
+    path = Path(output).resolve(strict=True)
+    rustup_home = Path(rust_environment["RUSTUP_HOME"]).resolve(strict=True)
+    if not path.is_relative_to(rustup_home / "toolchains"):
+        raise BootstrapError(f"Rust tool escaped repository toolchains: {path}")
+    return path
+
+
+def _prepare_rust_linker_root(
+    root: Path,
+    source_cargo: Path,
+    runtime: Path,
+) -> None:
+    """Publish the minimal rustlib evidence required by one wrapper."""
+    toolchain = source_cargo.parent.parent
+    suffix = ".exe" if os.name == "nt" else ""
+    candidates = sorted(
+        (toolchain / "lib/rustlib").glob(f"*/bin/rust-lld{suffix}")
+    )
+    if len(candidates) != 1:
+        raise BootstrapError(
+            "Rust toolchain must expose exactly one bundled linker: "
+            f"{toolchain}"
+        )
+    source = candidates[0]
+    host = source.parents[1].name
+    destination = (
+        root
+        / ".dependencies/validation"
+        / runtime
+        / "lib/rustlib"
+        / host
+        / "bin"
+        / source.name
+    )
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, destination)
+
+
 def _launchers(
     root: Path,
     host: HostTools,
@@ -308,11 +369,13 @@ def _write_launchers(
     root: Path,
     launchers: dict[str, Launcher],
 ) -> dict[str, Path]:
-    directory = root / ".dependencies/validation/bin"
+    directory = root / ".dependencies/validation"
     directory.mkdir(parents=True, exist_ok=True)
     paths: dict[str, Path] = {}
     for name, launcher in sorted(launchers.items()):
-        path = directory / name
+        relative = _RUST_LAUNCHER_PATHS.get(name, Path("bin") / name)
+        path = directory / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
         contents = (
             _windows_launcher(launcher)
             if os.name == "nt"
@@ -345,6 +408,14 @@ def prepare(root: Path) -> dict[str, object]:
     _prepare_jig_cargo_home(root)
     host = _host_tools()
     cargo, rust_environment = _rust_tools(root)
+    stable_cargo = _rustup_tool_path(
+        cargo, rust_environment, _STABLE_RUST, "cargo"
+    )
+    nightly_cargo = _rustup_tool_path(
+        cargo, rust_environment, _NIGHTLY_RUST, "cargo"
+    )
+    _prepare_rust_linker_root(root, stable_cargo, _RUST_STABLE_RUNTIME)
+    _prepare_rust_linker_root(root, nightly_cargo, _RUST_NIGHTLY_RUNTIME)
     cspell, markdownlint = _install_javascript(root, host)
     launchers = _write_launchers(
         root,
