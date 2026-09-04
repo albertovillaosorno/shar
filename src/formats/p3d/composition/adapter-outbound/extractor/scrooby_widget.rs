@@ -134,16 +134,28 @@ pub(super) fn recover_multi_text_json(
     let chunk = raw_component_bytes(component, source).ok()?;
     let mut cursor = 12;
     let frame = read_widget_frame(chunk, &mut cursor)?;
-    if frame.version <= 16 {
-        return None;
-    }
     let text_style = schema::read_pascal_at(chunk, &mut cursor)?;
-    let shadow_enabled = *chunk.get(cursor)?;
-    cursor = cursor.checked_add(1)?;
-    let shadow_color = read_word(chunk, &mut cursor)?;
-    let shadow_offset_x = read_word(chunk, &mut cursor)?;
-    let shadow_offset_y = read_word(chunk, &mut cursor)?;
-    let current_text = read_word(chunk, &mut cursor)?;
+    let modern_fields = if frame.version > 16 {
+        let shadow_enabled = *chunk.get(cursor)?;
+        cursor = cursor.checked_add(1)?;
+        let shadow_color = read_word(chunk, &mut cursor)?;
+        let shadow_offset_x = read_word(chunk, &mut cursor)?;
+        let shadow_offset_y = read_word(chunk, &mut cursor)?;
+        let current_text = read_word(chunk, &mut cursor)?;
+        format!(
+            concat!(
+                r#","shadow_enabled":{},"shadow_color":{},"#,
+                r#""shadow_offset":[{},{}],"current_text":{}"#,
+            ),
+            shadow_enabled,
+            shadow_color,
+            shadow_offset_x,
+            shadow_offset_y,
+            current_text,
+        )
+    } else {
+        String::new()
+    };
     if cursor != component.header_size {
         return None;
     }
@@ -159,17 +171,9 @@ pub(super) fn recover_multi_text_json(
         &frame,
         "scrooby_multi_text",
         &format!(
-            concat!(
-                r#","text_style":"{}","shadow_enabled":{},"#,
-                r#""shadow_color":{},"shadow_offset":[{},{}],"#,
-                r#""current_text":{}"#,
-            ),
+            r#","text_style":"{}"{}"#,
             escape_json(&text_style),
-            shadow_enabled,
-            shadow_color,
-            shadow_offset_x,
-            shadow_offset_y,
-            current_text,
+            modern_fields,
         ),
         &format!(r#","children":[{children}]"#),
     ))

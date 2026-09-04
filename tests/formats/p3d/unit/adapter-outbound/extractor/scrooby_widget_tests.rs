@@ -476,6 +476,46 @@ fn group_preserves_scrooby_child_inventory() -> Result<(), String> {
 }
 
 #[test]
+fn multi_text_recovers_legacy_without_modern_fields() -> Result<(), String> {
+    let mut source = vec![0_u8; 12];
+    push_widget_frame_version(&mut source, "LegacyCaption", 16)?;
+    push_pascal(&mut source, "font0_16")?;
+    let header_size = source.len();
+    append_empty_child(&mut source, 0x0001_800c);
+    let total_size = source.len();
+    finish_chunk(&mut source, 0x0001_8007, header_size, total_size)?;
+    let component = record(
+        ChunkKind::ScroobyMultiText,
+        0x0001_8007,
+        header_size,
+        total_size,
+        1,
+    );
+    let recovered =
+        scrooby_widget::recover_multi_text_json(&component, &source, 1)
+            .ok_or_else(|| "legacy multi-text should decode".to_owned())?;
+    let json = String::from_utf8(recovered.bytes)
+        .map_err(|error| error.to_string())?;
+    if !json.contains(r#""version":16"#)
+        || !json.contains(r#""text_style":"font0_16""#)
+        || !json.contains(r#""id_hex":"0x0001800c""#)
+        || json.contains("shadow_enabled")
+        || json.contains("shadow_color")
+        || json.contains("shadow_offset")
+        || json.contains("current_text")
+    {
+        return Err(
+            concat!(
+                "legacy multi-text did not preserve absent ",
+                "modern fields"
+            )
+            .to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn multi_text_rejects_legacy_modern_fields() -> Result<(), String> {
     let (source, header_size) = scrooby_multi_text_fixture(16)?;
     let component = record(

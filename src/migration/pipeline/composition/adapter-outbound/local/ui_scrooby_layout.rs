@@ -462,6 +462,31 @@ fn add_multi_text(
         "runtime_alignment_metrics".to_owned(),
         Value::String("resolved-font-current-string".to_owned()),
     );
+    let version = required_u32(payload, "version")?;
+    if version > 16 {
+        add_modern_multi_text_effects(payload, row)?;
+    } else {
+        reject_legacy_multi_text_modern_fields(payload)?;
+        let _previous =
+            row.insert("runtime_shadow_enabled".to_owned(), json!(false));
+        let _previous =
+            row.insert("runtime_outline_enabled".to_owned(), json!(false));
+        let _previous = row.insert("current_text_i32".to_owned(), json!(0));
+        let _previous = row.insert("initial_index_i32".to_owned(), json!(0));
+    }
+    let _previous = row.insert(
+        "runtime_effect_alpha_policy".to_owned(),
+        Value::String(
+            "min-effect-alpha-current-drawable-color-alpha".to_owned(),
+        ),
+    );
+    Ok(())
+}
+
+fn add_modern_multi_text_effects(
+    payload: &Value,
+    row: &mut Map<String, Value>,
+) -> PipelineOutcome<()> {
     let shadow = required_u32(payload, "shadow_enabled")?;
     if shadow > 1 {
         return Err(PipelineError::new(
@@ -527,17 +552,29 @@ fn add_multi_text(
             json!(0.05),
         );
     }
-    let _previous = row.insert(
-        "runtime_effect_alpha_policy".to_owned(),
-        Value::String(
-            "min-effect-alpha-current-drawable-color-alpha".to_owned(),
-        ),
-    );
     let current_text = semantic_i32(required_u32(payload, "current_text")?);
     let _previous =
         row.insert("current_text_i32".to_owned(), json!(current_text));
     let _previous =
         row.insert("initial_index_i32".to_owned(), json!(current_text));
+    Ok(())
+}
+
+fn reject_legacy_multi_text_modern_fields(
+    payload: &Value,
+) -> PipelineOutcome<()> {
+    for field in [
+        "shadow_enabled",
+        "shadow_color",
+        "shadow_offset",
+        "current_text",
+    ] {
+        if payload.get(field).is_some() {
+            return Err(PipelineError::new(
+                "legacy Scrooby MultiText contains a modern-only field",
+            ));
+        }
+    }
     Ok(())
 }
 
