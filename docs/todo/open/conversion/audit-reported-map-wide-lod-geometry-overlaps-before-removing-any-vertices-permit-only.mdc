@@ -74,27 +74,37 @@ replay beyond that staging-only blocker.
 Across all 129 selected terrain-world packages, 9,765 decoded meshes contain
 2,163 triangle-list primitive groups. Twelve groups contain 28 repeated-index
 triangle records, including `[786, 782, 782]` and `[794, 794, 785]` in
-`common_gens203Shape_054`. The source-preserving analysis path now retains all
-such authored records while ordinary FBX mesh loading remains strict.
+`common_gens203Shape_054`. The source-preserving analysis path retains all such
+authored records while ordinary FBX mesh loading remains strict.
 
 Shipped Pure3D independently requires that choice for render and intersect data.
 `tPrimGroupLoader::LoadStreamed` stores serialized render indices unchanged,
 while `IntersectLoader` and `IntersectDSG::mTri` preserve exact intersect
-triples.
-The replay now advances through both topology boundaries without counting those
-records as discarded.
+triples. The replay advances through both topology boundaries without counting
+those records as source discards.
 
-A live Unreal Engine 5.8.1 MCP import audit now proves that exact FBX transport
-does not make those records safe StaticMesh input. A synthetic FBX containing
-only `[0, 0, 1]` is parsed successfully but rejected because all polygons are
+A live Unreal Engine 5.8.1 MCP import audit proves that exact FBX transport does
+not make those records safe StaticMesh input. A synthetic FBX containing only
+`[0, 0, 1]` is parsed successfully but rejected because all polygons are
 degenerate. A second FBX containing one valid triangle plus one repeated-index
 triangle reaches a fatal error inside the FBX SDK smoothing conversion before
 any asset is created.
 
-World FBX publication therefore now rejects repeated-index triangles before
-writing an Unreal-bound artifact while decoded analysis keeps the exact authored
-records. The task remains open until a target representation preserves that
-source evidence without feeding unsafe geometry to Unreal.
+World publication therefore preserves those records outside Unreal geometry.
+The source-backed `MeshAsset` remains unchanged, while an import-target copy
+omits only repeated-index faces and emits an adjacent
+`*.fbx.source-topology.json` containing exact mesh, source-mesh, group, source
+ordinal, triangle ordinal, and indices. A fully incompatible mesh still fails
+closed instead of publishing an empty FBX.
+
+The first complete catalog-v6 replay publishes 12 topology sidecars containing
+exactly 28 target-only omissions while both source and collision discard counts
+remain zero. Counts by artifact are `i00 Halloween=2`, `i01 Halloween=2`,
+`l1r7=2`, `l1z1=2`, `l2z4=5`, `l3r2=1`, `l4r7=2`, `l4z1=2`, `l5z4=5`,
+`l6r2=1`, `l7r7=2`, and `l7z1=2`. All sidecar byte lengths and SHA-256 hashes
+match the catalog records, and every sidecar points to an existing FBX. A
+second isolated 129-package replay reproduces all 4,014 paths and every file
+SHA-256 byte-for-byte, including all 12 sidecars and the catalog-v6 counts.
 
 The following material boundary is six package-local `lambert1` misses,
 including `l3z3` mesh `z3_gens108Shape_071`. Shipped `tPrimGroupLoader` creates
