@@ -436,7 +436,10 @@ fn shader_component_path(
     candidates.sort_by(|left, right| left.path.cmp(&right.path));
     match candidates.as_slice() {
         [candidate] => Ok(candidate.path.clone()),
-        [] => Ok(direct),
+        [] => Err(DecodedComponentError::MissingShaderMember {
+            shader: shader_name.to_owned(),
+            searched: direct.display().to_string(),
+        }),
         _ => Err(DecodedComponentError::AmbiguousShaderMember {
             shader: shader_name.to_owned(),
             occurrences: shader_occurrences(&candidates),
@@ -1488,6 +1491,13 @@ pub enum DecodedComponentError {
         path: String,
         /// IO error text.
         source: String,
+    },
+    /// No decoded shader member matched one logical identity.
+    MissingShaderMember {
+        /// Logical shader identity requested by the caller.
+        shader: String,
+        /// Direct decoded shader path checked before padded-member discovery.
+        searched: String,
     },
     /// More than one fixed-width shader member matched one logical identity.
     AmbiguousShaderMember {
