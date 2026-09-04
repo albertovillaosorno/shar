@@ -4737,7 +4737,7 @@ const FIELDS_218: &[SchemaField] = &[
     },
 ];
 /// Subchunks 219.
-const SUBCHUNKS_219: &[&str] = &[];
+const SUBCHUNKS_219: &[&str] = &["tlScroobyPageChunk"];
 /// Fields 219.
 const FIELDS_219: &[SchemaField] = &[
     SchemaField {

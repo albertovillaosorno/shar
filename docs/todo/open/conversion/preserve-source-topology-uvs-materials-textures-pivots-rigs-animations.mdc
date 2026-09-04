@@ -1471,10 +1471,17 @@ widget families, and multi-text admits only text-bible or hard-coded strings.
 Malformed child headers, truncated regions, and undeclared child IDs now reject
 typed recovery instead of producing a partial child inventory.
 
-One Scrooby ancestry edge remains intentionally open. The shipped screen loader
-can consume embedded page children, while the current schema, extractor
-publication rules, and migration validation model pages as direct project
-children; changing only one boundary would invent ancestry.
+The remaining Scrooby page-ancestry edge is now closed end to end. The shipped
+loader supports both project-stored pages referenced by a screen's authored page
+names and physical page children embedded directly beneath a screen. Recovery
+now preserves both forms without rewriting parent ordinals: screen child
+inventory admits only Page chunks, nested pages remain screen children, and the
+schema records Page as the runtime-backed Screen subchunk. Migration resolves
+`page_names` only against direct project pages, while embedded pages receive
+runtime indices beneath their physical screen owner. Cache completeness
+validates
+project and screen inventories separately, so one page form cannot satisfy the
+other's contract.
 
 Legacy MultiText is now closed from shipped runtime authority. Versions 16 and
 earlier end physically after `TextStyleName`; recovery preserves that absence and

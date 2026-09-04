@@ -659,11 +659,15 @@ pub(super) fn recover_scrooby_screen_json(
     for _ in 0..page_count {
         pages.push(schema::read_pascal_at(chunk, &mut cursor)?);
     }
-    if cursor != component.header_size
-        || component.header_size != component.total_size
-    {
+    if cursor != component.header_size {
         return None;
     }
+    let children = scrooby_container_children_json(
+        chunk,
+        component.header_size,
+        component.total_size,
+        &[0x0001_8002],
+    )?;
     let page_names = pages
         .iter()
         .map(|page| format!("\"{}\"", escape_json(page)))
@@ -674,12 +678,14 @@ pub(super) fn recover_scrooby_screen_json(
     let json = format!(
         concat!(
             r#"{{"schema":"scrooby_screen","name":"{}","#,
-            r#""version":{},"page_count":{},"page_names":[{}]}}"#,
+            r#""version":{},"page_count":{},"page_names":[{}],"#,
+            r#""children":[{}]}}"#,
         ),
         escape_json(&name),
         version,
         page_count,
         page_names,
+        children,
     );
     Some(render::json_component(
         kind,

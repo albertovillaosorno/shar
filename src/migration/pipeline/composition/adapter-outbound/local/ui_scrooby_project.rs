@@ -1071,6 +1071,18 @@ fn validate_project_structure(components: &[Component]) -> PipelineOutcome<()> {
             )),
         })
         .collect::<PipelineOutcome<Vec<_>>>()?;
+    let screen_ordinals = components
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_screen")
+        .map(|component| {
+            if component.row.parent_ordinal != Some(project.row.ordinal) {
+                return Err(PipelineError::new(
+                    "Scrooby screen has incorrect project ancestry",
+                ));
+            }
+            Ok(component.row.ordinal)
+        })
+        .collect::<PipelineOutcome<BTreeSet<_>>>()?;
     let mut observed = Vec::<(usize, &str)>::new();
     for component in components.iter().filter(|component| {
         matches!(
@@ -1078,12 +1090,22 @@ fn validate_project_structure(components: &[Component]) -> PipelineOutcome<()> {
             "scrooby_page" | "scrooby_screen"
         )
     }) {
-        if component.row.parent_ordinal != Some(project.row.ordinal) {
+        let is_direct =
+            component.row.parent_ordinal == Some(project.row.ordinal);
+        if component.row.kind == "scrooby_page"
+            && !is_direct
+            && !component
+                .row
+                .parent_ordinal
+                .is_some_and(|parent| screen_ordinals.contains(&parent))
+        {
             return Err(PipelineError::new(
-                "Scrooby project child has incorrect ancestry",
+                "Scrooby page has unsupported ancestry",
             ));
         }
-        observed.push((component.row.ordinal, component.row.kind.as_str()));
+        if is_direct {
+            observed.push((component.row.ordinal, component.row.kind.as_str()));
+        }
     }
     observed.sort_by_key(|(ordinal, _kind)| *ordinal);
     let observed = observed
@@ -1095,7 +1117,59 @@ fn validate_project_structure(components: &[Component]) -> PipelineOutcome<()> {
             "Scrooby project child inventory disagrees with ledger ancestry",
         ));
     }
+    validate_embedded_screen_pages(components)?;
     validate_page_layers(components)
+}
+
+fn validate_embedded_screen_pages(
+    components: &[Component],
+) -> PipelineOutcome<()> {
+    let mut actual = BTreeMap::<usize, usize>::new();
+    for page in components
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_page")
+    {
+        let Some(parent) = page.row.parent_ordinal else {
+            return Err(PipelineError::new("Scrooby page has no parent"));
+        };
+        if components.iter().any(|component| {
+            component.row.ordinal == parent
+                && component.row.kind == "scrooby_screen"
+        }) {
+            let count = actual.entry(parent).or_default();
+            *count = count.checked_add(1).ok_or_else(|| {
+                PipelineError::new("Scrooby embedded page count overflowed")
+            })?;
+        }
+    }
+    for screen in components
+        .iter()
+        .filter(|component| component.row.kind == "scrooby_screen")
+    {
+        let children: &[Value] = screen
+            .payload
+            .get("children")
+            .and_then(Value::as_array)
+            .map_or(&[], Vec::as_slice);
+        for child in children {
+            if required_string(child, "id_hex")? != "0x00018002" {
+                return Err(PipelineError::new(
+                    "Scrooby screen declares a non-page embedded child",
+                ));
+            }
+        }
+        if actual.get(&screen.row.ordinal).copied().unwrap_or_default()
+            != children.len()
+        {
+            return Err(PipelineError::new(
+                concat!(
+                    "Scrooby screen embedded page inventory disagrees ",
+                    "with ancestry"
+                ),
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn validate_page_layers(components: &[Component]) -> PipelineOutcome<()> {
@@ -1428,7 +1502,16 @@ fn layout_child_kind(owner: &str, id: &str) -> PipelineOutcome<&'static str> {
 }
 
 fn validate_screen_pages(components: &[Component]) -> PipelineOutcome<()> {
-    let pages = identity_counts(components, "scrooby_page", "name")?;
+    let project = components
+        .iter()
+        .find(|component| component.row.kind == "scrooby_project")
+        .ok_or_else(|| PipelineError::new("Scrooby project is missing"))?;
+    let pages = identity_counts_with_parent(
+        components,
+        "scrooby_page",
+        "name",
+        project.row.ordinal,
+    )?;
     for component in components
         .iter()
         .filter(|component| component.row.kind == "scrooby_screen")
@@ -1523,7 +1606,16 @@ fn validate_widget_resources(components: &[Component]) -> PipelineOutcome<()> {
 fn collect_named_bindings(
     components: &[Component],
 ) -> PipelineOutcome<Vec<ScroobyPackageBinding>> {
-    let pages = identity_ordinals(components, "scrooby_page", "name")?;
+    let project = components
+        .iter()
+        .find(|component| component.row.kind == "scrooby_project")
+        .ok_or_else(|| PipelineError::new("Scrooby project is missing"))?;
+    let pages = identity_ordinals_with_parent(
+        components,
+        "scrooby_page",
+        "name",
+        project.row.ordinal,
+    )?;
     let images = identity_ordinals(
         components,
         "scrooby_image_resource",
@@ -2409,6 +2501,22 @@ fn resolve_exact_image_source<'source>(
     Ok(matched)
 }
 
+fn identity_ordinals_with_parent(
+    components: &[Component],
+    kind: &str,
+    field: &str,
+    parent_ordinal: usize,
+) -> PipelineOutcome<BTreeMap<String, Vec<usize>>> {
+    let mut ordinals = BTreeMap::<String, Vec<usize>>::new();
+    for component in components.iter().filter(|item| {
+        item.row.kind == kind && item.row.parent_ordinal == Some(parent_ordinal)
+    }) {
+        let identity = normalized_identity(&component.payload, field)?;
+        ordinals.entry(identity).or_default().push(component.row.ordinal);
+    }
+    Ok(ordinals)
+}
+
 fn identity_ordinals(
     components: &[Component],
     kind: &str,
@@ -2485,6 +2593,25 @@ fn resolve_pure3d_resource(
             "Scrooby Pure3D inventory identity is ambiguous",
         )),
     }
+}
+
+fn identity_counts_with_parent(
+    components: &[Component],
+    kind: &str,
+    field: &str,
+    parent_ordinal: usize,
+) -> PipelineOutcome<BTreeMap<String, usize>> {
+    let mut counts = BTreeMap::<String, usize>::new();
+    for component in components.iter().filter(|item| {
+        item.row.kind == kind && item.row.parent_ordinal == Some(parent_ordinal)
+    }) {
+        let identity = normalized_identity(&component.payload, field)?;
+        let count = counts.entry(identity).or_default();
+        *count = count.checked_add(1).ok_or_else(|| {
+            PipelineError::new("Scrooby resource identity count overflowed")
+        })?;
+    }
+    Ok(counts)
 }
 
 fn identity_counts(

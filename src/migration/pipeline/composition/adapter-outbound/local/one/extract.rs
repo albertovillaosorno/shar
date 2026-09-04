@@ -1347,7 +1347,9 @@ fn scrooby_project_evidence_complete(output: &Path) -> bool {
         return false;
     };
     let mut expected = BTreeMap::<usize, (usize, usize)>::new();
-    let mut actual = BTreeMap::<usize, (usize, usize)>::new();
+    let mut screen_expected = BTreeMap::<usize, usize>::new();
+    let mut screen_parents = Vec::<usize>::new();
+    let mut page_parents = Vec::<usize>::new();
     for line in text.lines().skip(1) {
         let Some(kind) = extract_json_string_field(line, "kind") else {
             return false;
@@ -1376,32 +1378,103 @@ fn scrooby_project_evidence_complete(output: &Path) -> bool {
                     return false;
                 }
             },
-            "scrooby_screen" | "scrooby_page" => {
+            "scrooby_screen" => {
+                let Some(ordinal) = extract_json_usize_field(line, "ordinal")
+                else {
+                    return false;
+                };
                 let Some(parent) =
                     extract_json_usize_field(line, "parent_ordinal")
                 else {
                     return false;
                 };
-                let counts = actual.entry(parent).or_default();
-                let count = if kind == "scrooby_screen" {
-                    &mut counts.0
-                } else {
-                    &mut counts.1
-                };
-                let Some(next) = count.checked_add(1) else {
+                let Some(path_text) = extract_json_string_field(line, "path")
+                else {
                     return false;
                 };
-                *count = next;
+                let Ok(path) = resolve_under(&components, Path::new(&path_text))
+                else {
+                    return false;
+                };
+                let Ok(screen) = fs::read_to_string(path) else {
+                    return false;
+                };
+                let Some(count) = scrooby_screen_embedded_page_count(&screen)
+                else {
+                    return false;
+                };
+                if screen_expected.insert(ordinal, count).is_some() {
+                    return false;
+                }
+                screen_parents.push(parent);
+            },
+            "scrooby_page" => {
+                let Some(parent) =
+                    extract_json_usize_field(line, "parent_ordinal")
+                else {
+                    return false;
+                };
+                page_parents.push(parent);
             },
             _ => {},
+        }
+    }
+    let mut actual = BTreeMap::<usize, (usize, usize)>::new();
+    for parent in screen_parents {
+        let counts = actual.entry(parent).or_default();
+        let Some(next) = counts.0.checked_add(1) else {
+            return false;
+        };
+        counts.0 = next;
+    }
+    let mut embedded_actual = BTreeMap::<usize, usize>::new();
+    for parent in page_parents {
+        if expected.contains_key(&parent) {
+            let counts = actual.entry(parent).or_default();
+            let Some(next) = counts.1.checked_add(1) else {
+                return false;
+            };
+            counts.1 = next;
+        } else if screen_expected.contains_key(&parent) {
+            let count = embedded_actual.entry(parent).or_default();
+            let Some(next) = count.checked_add(1) else {
+                return false;
+            };
+            *count = next;
+        } else {
+            return false;
         }
     }
     if actual.keys().any(|parent| !expected.contains_key(parent)) {
         return false;
     }
-    expected.into_iter().all(|(ordinal, counts)| {
-        actual.get(&ordinal).copied().unwrap_or_default() == counts
+    if !expected.iter().all(|(ordinal, counts)| {
+        actual.get(ordinal).copied().unwrap_or_default() == *counts
+    }) {
+        return false;
+    }
+    screen_expected.into_iter().all(|(ordinal, count)| {
+        embedded_actual.get(&ordinal).copied().unwrap_or_default() == count
     })
+}
+
+/// Count physical page children declared by one Scrooby screen JSON.
+fn scrooby_screen_embedded_page_count(screen: &str) -> Option<usize> {
+    let value = serde_json::from_str::<serde_json::Value>(screen).ok()?;
+    let object = value.as_object()?;
+    if object.get("schema")?.as_str()? != "scrooby_screen" {
+        return None;
+    }
+    let Some(children) = object.get("children") else {
+        return Some(0);
+    };
+    let children = children.as_array()?;
+    for child in children {
+        if child.as_object()?.get("id_hex")?.as_str()? != "0x00018002" {
+            return None;
+        }
+    }
+    Some(children.len())
 }
 
 /// Count exact screen/page declarations carried by one Scrooby project JSON.
