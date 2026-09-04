@@ -150,7 +150,7 @@ def test_filesystem_store_preserves_manual_skills_and_removes_stale_files(
     assert not tuple(output_root.rglob("*.tmp"))
     index = (output_root / "index.md").read_text(encoding="utf-8")
     assert "Manual guidance current: **0**" in index
-    assert "Manual guidance review required: **52**" in index
+    assert "Manual guidance review required: **53**" in index
 
 
 def test_filesystem_store_preserves_manual_fields_during_live_refresh(
@@ -205,7 +205,7 @@ def test_filesystem_store_preserves_manual_fields_during_live_refresh(
     assert "- Manual guidance status: **Current**" in refreshed
     index = (output_root / "index.md").read_text(encoding="utf-8")
     assert "Manual guidance current: **1**" in index
-    assert "Manual guidance review required: **51**" in index
+    assert "Manual guidance review required: **52**" in index
 
 
 def test_filesystem_store_migrates_manual_fields_by_native_identity(

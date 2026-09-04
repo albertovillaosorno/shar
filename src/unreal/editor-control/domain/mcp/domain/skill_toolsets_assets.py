@@ -34,6 +34,10 @@ from __future__ import annotations
 
 ASSETS_TOOLSETS = (
     (
+        "SharImportEditor",
+        "SharImportToolset",
+    ),
+    (
         "editor_toolset",
         "toolsets",
         "asset",
