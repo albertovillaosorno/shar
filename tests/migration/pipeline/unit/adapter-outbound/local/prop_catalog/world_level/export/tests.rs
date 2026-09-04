@@ -40,9 +40,9 @@ use fbx::domain::texture::MaterialBinding;
 use shar_sha256::digest_hex;
 
 use super::{
-    InteriorIdentity, MasterContent, PendingInterior, PreparedTexture,
-    WORLD_ROOT_POLICY, WorldPackageRecord, append_world_fbx_to_guide,
-    take_aligned_interior_meshes, write_content_fbx,
+    MasterContent, PreparedTexture, WORLD_ROOT_POLICY,
+    append_authored_interior_meshes, append_world_fbx_to_guide,
+    write_content_fbx,
 };
 
 const TEXTURE_FILE_NAME: &str = "interior-test.png";
@@ -121,34 +121,6 @@ fn remove_if_present(path: &Path) -> Result<(), String> {
             "interior fixture cleanup failed for {}: {error}",
             path.display()
         )),
-    }
-}
-
-fn empty_world_record() -> WorldPackageRecord {
-    WorldPackageRecord {
-        scope: "level-test".to_owned(),
-        package_id: "package-test".to_owned(),
-        subcategory: "terrain-world/test".to_owned(),
-        coordinate_reference: false,
-        interior: true,
-        map_group: None,
-        source_meshes: 0,
-        discarded_degenerate_triangles: 0,
-        authored_placements: 0,
-        reference_placements: 0,
-        canonical_placement_fallbacks: 0,
-        reference_coordinate_meshes: 0,
-        canonical_coordinate_meshes: 0,
-        review_definitions: 0,
-        independent_item_geometries: 0,
-        breakable_geometries: 0,
-        interactable_geometries: 0,
-        review_similarity_groups: 0,
-        excluded_collision_meshes: 0,
-        reference_excluded_collision_meshes: 0,
-        discarded_collision_triangles: 0,
-        world_fbx: None,
-        review_fbx: None,
     }
 }
 
@@ -316,34 +288,45 @@ fn world_fbx_write_preserves_source_mesh_order() -> Result<(), String> {
 }
 
 #[test]
-fn interior_alignment_preserves_source_mesh_order() -> Result<(), String> {
-    let meshes = vec![
-        named_textured_mesh("z-source", 10.)?,
-        named_textured_mesh("a-source", 1.)?,
-    ];
-    let mut package = PendingInterior {
-        identity: InteriorIdentity {
-            id: "i-test",
-            name: "test-interior",
-            halloween_overlay: false,
-        },
-        level: 1,
-        halloween: false,
-        record: empty_world_record(),
-        content: MasterContent {
-            meshes: meshes.clone(),
-            ..MasterContent::default()
-        },
-        ownership_meshes: meshes,
+fn interior_fusion_preserves_authored_face_multiplicity_and_order()
+-> Result<(), String> {
+    let group = PrimitiveGroup::new(
+        0,
+        "int_sh_wall_m",
+        vec![
+            [0., 0., 0.],
+            [1., 0., 0.],
+            [0., 1., 0.],
+            [0., 1., 0.],
+            [1., 0., 0.],
+            [0., 0., 0.],
+        ],
+        Vec::new(),
+        &[0, 1, 2, 3, 4, 5],
+    )
+    .map_err(|error| format!("duplicate face fixture failed: {error:?}"))?;
+    let duplicate_faces = MeshAsset::new("l7i02-wall", vec![group])
+        .map_err(|error| format!("duplicate mesh fixture failed: {error:?}"))?;
+    let second = named_textured_mesh("second-source", 10.)?;
+    let mut source = MasterContent {
+        meshes: vec![duplicate_faces, second],
+        ..MasterContent::default()
     };
-    let aligned = take_aligned_interior_meshes(&mut package)
-        .map_err(|error| error.to_string())?;
-    let names = aligned
+    let mut fused = MasterContent::default();
+    append_authored_interior_meshes(&mut fused, &mut source);
+    assert!(source.meshes.is_empty());
+    let names = fused
+        .meshes
         .iter()
-        .map(|(render, _ownership)| render.name.as_str())
+        .map(|mesh| mesh.name.as_str())
         .collect::<Vec<_>>();
-    if names != ["z-source", "a-source"] {
-        return Err(format!("interior mesh order changed: {names:?}"));
-    }
+    assert_eq!(names, ["l7i02-wall", "second-source"]);
+    let triangles = fused
+        .meshes
+        .first()
+        .and_then(|mesh| mesh.groups.first())
+        .map(|group| &group.triangles)
+        .ok_or_else(|| "duplicate-face fusion fixture is missing".to_owned())?;
+    assert_eq!(triangles, &vec![[0, 1, 2], [3, 4, 5]]);
     Ok(())
 }

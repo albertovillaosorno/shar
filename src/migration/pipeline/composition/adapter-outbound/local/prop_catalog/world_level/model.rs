@@ -113,7 +113,7 @@ pub(super) struct WorldInteriorRecord {
     pub(super) base_source_package_ids: Vec<String>,
     /// Source packages contributing only additive Halloween geometry.
     pub(super) halloween_source_package_ids: Vec<String>,
-    /// Number of already-owned triangles removed from publication.
+    /// Legacy removal count; source-preserving interior fusion keeps this zero.
     pub(super) removed_duplicate_triangles: usize,
     /// Canonical fused interior artifact.
     pub(super) base_fbx: WorldFbxRecord,
