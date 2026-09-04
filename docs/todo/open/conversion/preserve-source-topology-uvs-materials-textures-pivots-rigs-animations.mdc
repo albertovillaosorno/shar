@@ -1482,6 +1482,24 @@ normalizes the `error` shader type to its ordinary untextured `simple` material
 with white diffuse/ambient defaults, so the deterministic no-external-authority
 case does not require inventing shader parameters.
 
+The same replay audit found an independent interior source-loss bug. The prior
+fusion fingerprint included the already package-specific scene mesh name, so it
+could not prove duplicate ownership across interior variants. Across 783 direct
+interior meshes and 168,653 triangle records it suppressed only two authored
+records, both in `l7i02` mesh `int_sh_wallsShape_001`: `(2, 3, 13)` versus
+`(13, 3, 1)` and `(100, 40, 102)` versus `(102, 40, 101)`.
+
+Those pairs use distinct authored indices whose corner values happen to match.
+Shipped `tPrimGroupLoader::LoadStreamed` retains every serialized index and the
+runtime submits the complete index count, so no source-backed deletion exists.
+Fused interiors now append every source mesh and triangle in authored order;
+the legacy duplicate-removal counter remains zero.
+
+
+The post-fix 129-package replay remains at 4,002 files and 12,240 placements,
+while total bytes increase by only 64 from 449,794,224 to 449,794,288. All eight
+published interior records report zero removed duplicate triangles.
+
 Malformed authored counts now fail closed before count-sized allocation or
 iteration where the encoded source region supplies a hard bound. This covers
 Scrooby page/image/point arrays, light and locator arrays, shader and game
