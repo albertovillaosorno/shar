@@ -621,3 +621,79 @@ fn duplicate_shader_before_consumer_remains_ambiguous() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn runtime_first_duplicate_texture_binds_unique_shader() -> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-runtime-first-unique-shader-{}",
+        std::process::id()
+    ));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let shader_dir = root.join("components/shader");
+    let texture_dir = root.join("components/texture");
+    let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&texture_dir).map_err(|error| error.to_string())?;
+    fs::write(
+        shader_dir.join("first.json"),
+        concat!(
+            r#"{"name":"shared","num_params":1,"params":[{"#,
+            r#""kind":"texture","param":"TEX","value":"shared.bmp"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(texture_dir.join("shared.png"), b"first-texture")
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        texture_dir.join("shared__ordinal_2.png"),
+        b"second-texture",
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":3}"#,
+            "\n",
+            r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"#,
+            r#""kind":"texture","name":"shared.bmp","#,
+            r#""path":"texture/shared.png"}"#,
+            "\n",
+            r#"{"ordinal":2,"depth":1,"parent_ordinal":0,"#,
+            r#""kind":"texture","name":"shared.bmp","#,
+            r#""path":"texture/shared__ordinal_2.png"}"#,
+            "\n",
+            r#"{"ordinal":3,"depth":1,"parent_ordinal":0,"#,
+            r#""kind":"shader","name":"shared","#,
+            r#""path":"shader/first.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let package = phase_three_shader_package()?;
+    let provenance = ShaderConsumerProvenance {
+        source_ordinals: BTreeSet::from([42]),
+        model_member_ids: BTreeSet::from(["model-forty".to_owned()]),
+    };
+    let source = DecodedComponentSource::new(&root, &scratch);
+    let _binding = resolve_source_material(
+        &source,
+        &root,
+        "shared",
+        Some(&provenance),
+        None,
+        Some(&package),
+        "terrain-world/level-01/terrain-mesh",
+    )
+    .map_err(|error| error.to_string())?;
+    let staged = fs::read(scratch.join("shared.png"))
+        .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    if staged != b"first-texture" {
+        return Err(
+            "unique shader did not bind first runtime texture".to_owned(),
+        );
+    }
+    Ok(())
+}
