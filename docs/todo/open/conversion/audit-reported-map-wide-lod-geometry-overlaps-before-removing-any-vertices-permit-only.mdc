@@ -34,19 +34,35 @@ world meshes use the strict authored-topology loader, and its retained
 validation explicitly permits source overlap and rejects only malformed or
 non-finite bounds rather than deleting geometry by distance, extent, or LOD.
 
-The only production duplicate-triangle suppression is scoped to fused interior
-ownership. It compares exact source-authored face identity, including mesh and
-primitive-group identity, shader, topology, positions, UVs, normals, colors,
-and winding. Nearby surfaces, alternate triangulation, distinct material or UV
-presentation, reversed winding, uncovered planar spans, and the authored
-Halloween overlay remain distinct. All 19 classified interior source packages
-retain stable interior identities under the same policy.
+The previous fused-interior path attempted exact face ownership using mesh and
+primitive-group identity, shader, positions, UVs, normals, colors, and winding.
+That policy could not establish cross-package ownership: every production mesh
+name already embeds both package id and member id before fusion, so equivalent
+faces from different level variants can never share its fingerprint. The only
+possible removals were repeated value-equivalent faces inside one authored
+mesh/group.
 
-Fresh stable-Rust regressions passed all 12 interior ownership tests and both
-world-layout tests. The full 1,084-test pipeline suite also passed on the same
-committed implementation. This bounds any permissible geometry removal to exact
-source-backed duplicate faces; it does not justify deleting reported visual
-overlap merely because geometry is nearby or coincident in presentation.
+A complete audit of all 19 interior packages covers 783 direct render meshes and
+168,653 decoded triangle records. The old fingerprint removed exactly two
+records, both from Level 7 Simpsons House mesh `int_sh_wallsShape_001`, group 0,
+shader `int_sh_wall_m`. The authored pairs are `(2, 3, 13)` versus `(13, 3, 1)`
+and `(100, 40, 102)` versus `(102, 40, 101)`: distinct vertex indices resolve to
+identical corner values, so value-based ownership collapsed their second
+occurrence even though both records are serialized by the source.
+
+Shipped `tPrimGroupLoader::LoadStreamed` copies every `INDEXLIST` entry into the
+primitive group, and streamed drawing submits the complete `mIndexCount`; it has
+no face-deduplication step. Interior fusion therefore now appends source meshes
+in authored order without geometry suppression. The compatibility
+`removed_duplicate_triangles` field remains published as zero, and a focused
+regression proves value-equivalent authored face occurrences survive fusion.
+Visual overlap alone remains insufficient evidence for future removal.
+
+
+A fresh 129-package post-fix replay publishes the same 4,002 files and 12,240
+source placements with all eight interior removal counts at zero. Its output is
+449,794,288 bytes versus 449,794,224 before the fix, a bounded 64-byte increase
+while package, placement, and excluded-collision counts remain unchanged.
 
 The duplicate-shader publication blocker is now resolved from shipped Pure3D
 inventory semantics: same-section shader collisions are first-store-wins, and
@@ -75,4 +91,5 @@ including `l3z3` mesh `z3_gens108Shape_071`. Shipped `tPrimGroupLoader` creates
 the authored shader name. The migration path now reproduces that deterministic
 fallback only for exact phase-three mesh consumers whose package-local shader is
 proven absent; generic and unproven callers still fail closed. The map-wide
-overlap audit remains open pending the next full replay boundary.
+overlap audit remains open for any later screenshot-reported overlaps because
+no remaining source-backed geometry-removal rule has been established.
