@@ -1477,9 +1477,19 @@ not a source-preserving representation for those records: a repeated-index-only
 mesh is rejected as wholly degenerate, while a mixed valid/repeated-index mesh
 reaches a fatal FBX SDK smoothing-conversion error before asset creation.
 
-World FBX publication now fails closed before writing such topology; decoded
-analysis continues retaining the authored records until a separate target-safe
-evidence representation is defined.
+World FBX publication now separates source evidence from target geometry. The
+source-backed mesh remains exact, an Unreal-target copy omits only those unsafe
+faces, and an adjacent `*.fbx.source-topology.json` records their exact source
+identity and indices. Assets containing no importable target geometry still fail
+closed.
+
+A complete 129-package catalog-v6 replay emits 12 topology sidecars containing
+28 repeated-index records. The catalog reports 28 target-only omissions while
+`discarded_degenerate_triangles` and `discarded_collision_triangles` both remain
+zero, so target compatibility is no longer represented as source loss. Sidecar
+bytes, SHA-256 hashes, record counts, and paired FBX paths all cross-check. A
+second isolated replay reproduces all 4,014 files and every SHA-256
+byte-for-byte.
 
 The replay then exposed six world meshes that consume `lambert1` without
 declaring that shader locally,
