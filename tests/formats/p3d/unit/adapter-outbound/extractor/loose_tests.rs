@@ -1437,14 +1437,12 @@ fn history_preserves_declared_lines() -> Result<(), String> {
 
 #[test]
 fn history_rejects_source_contract_drift() -> Result<(), String> {
-    for (declared, trailing, child) in
-        [
-            (1, false, false),
-            (u16::MAX, false, false),
-            (2, true, false),
-            (2, false, true),
-        ]
-    {
+    for (declared, trailing, child) in [
+        (1, false, false),
+        (u16::MAX, false, false),
+        (2, true, false),
+        (2, false, true),
+    ] {
         let (source, component) = history_fixture(declared, trailing, child)?;
         if auxiliary::recover_history_json(&component, &source, 1).is_some() {
             return Err(String::from(
@@ -2456,15 +2454,13 @@ fn animated_object_factory_preserves_typed_animation() -> Result<(), String> {
 #[test]
 fn animated_object_factory_rejects_source_contract_drift() -> Result<(), String>
 {
-    for (animations, frame_rate, controllers) in
-        [
-            (2, 30_f32, 1),
-            (u32::MAX, 30_f32, 1),
-            (1, f32::NAN, 1),
-            (1, 30_f32, 2),
-            (1, 30_f32, u32::MAX),
-        ]
-    {
+    for (animations, frame_rate, controllers) in [
+        (2, 30_f32, 1),
+        (u32::MAX, 30_f32, 1),
+        (1, f32::NAN, 1),
+        (1, 30_f32, 2),
+        (1, 30_f32, u32::MAX),
+    ] {
         let (source, component) = animated_object_factory_fixture(
             animations,
             frame_rate,
@@ -3307,9 +3303,7 @@ fn billboard_quad_rejects_nonfinite_scalar_presentation_values()
         )
         .is_some()
         {
-            return Err(format!(
-                "billboard quad accepted nonfinite {field}"
-            ));
+            return Err(format!("billboard quad accepted nonfinite {field}"));
         }
     }
     Ok(())

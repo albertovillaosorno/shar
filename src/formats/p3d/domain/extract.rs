@@ -117,9 +117,11 @@ fn decompress_p3dz(source: &[u8]) -> Result<Vec<u8>, P3dError> {
             decompressed.fill(0);
             lzr_decompress(block, &mut decompressed)?;
         }
-        output.try_reserve_exact(decompressed_size).map_err(|_error| {
-            P3dError::invalid_source("P3DZ output allocation failed")
-        })?;
+        output
+            .try_reserve_exact(decompressed_size)
+            .map_err(|_error| {
+                P3dError::invalid_source("P3DZ output allocation failed")
+            })?;
         output.extend_from_slice(&decompressed);
         cursor = end;
     }
@@ -159,9 +161,10 @@ fn preflight_p3dz_blocks(
                 "P3DZ block exceeds runtime decompression buffer",
             ));
         }
-        produced = produced.checked_add(decompressed_size).ok_or_else(|| {
-            P3dError::invalid_source("P3DZ output size overflow")
-        })?;
+        produced =
+            produced.checked_add(decompressed_size).ok_or_else(|| {
+                P3dError::invalid_source("P3DZ output size overflow")
+            })?;
         if produced > expected_size {
             return Err(P3dError::invalid_source(
                 "P3DZ block exceeds declared output size",
