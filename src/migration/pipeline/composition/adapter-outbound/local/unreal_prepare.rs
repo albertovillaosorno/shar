@@ -181,6 +181,17 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &config.extracted_root,
         )?;
     let verified_scrooby_projects = scrooby_preflight.package_count();
+    let vertex_expression_context =
+        super::vertex_expression_context::preflight_vertex_expression_context(
+            &index,
+            &config.extracted_root,
+        )?;
+    let verified_vertex_expression_context = (
+        vertex_expression_context.package_count(),
+        vertex_expression_context.mixer_count(),
+        vertex_expression_context.key_count(),
+        vertex_expression_context.matched_key_count(),
+    );
     let mission_cameras =
         load_mission_camera_catalog(&index, &config.extracted_root)?;
         // jig-ignore-next-line: expression
@@ -318,6 +329,13 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &plan_bundle,
         &unreal_manifest_path,
     )?;
+    if verified_vertex_expression_context.3
+        > verified_vertex_expression_context.2
+    {
+        return Err(PipelineError::new(
+            "vertex-expression matched-key count exceeds key evidence",
+        ));
+    }
     Ok(StageReport {
         name: "prepare-unreal",
         files: PUBLISHED_FILE_COUNT,

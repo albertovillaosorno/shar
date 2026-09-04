@@ -37,7 +37,8 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use super::{
     UnrealHapPackagePlan, component_ledger_files_exist, movie_outputs_complete,
     p3d_package_complete, scrooby_layout_evidence_complete,
-    scrooby_page_resource_names_complete, sprite_image_evidence_complete,
+    scrooby_page_resource_names_complete, skin_expression_offsets_complete,
+    sprite_image_evidence_complete,
 };
 
 static CASE_ID: AtomicUsize = AtomicUsize::new(0);
@@ -54,6 +55,76 @@ fn case_dir(label: &str) -> Result<PathBuf, String> {
     fs::create_dir_all(case.join("components"))
         .map_err(|error| error.to_string())?;
     Ok(case)
+}
+
+#[test]
+fn stale_skin_cache_requires_typed_expression_offsets() -> Result<(), String> {
+    let case = case_dir("stale-skin-expression-offsets")?;
+    fs::create_dir_all(case.join("components/skin"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/skin/face.json"),
+        concat!(
+            r#"{"schema":"skin","name":"Face","unhandled_subchunks":["#,
+            r#"{"id":"0x00010018","bytes":64}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":1}"#,
+            "
+",
+            r#"{"ordinal":1,"parent_ordinal":0,"kind":"skin","#,
+            r#""path":"skin/face.json"}"#,
+            "
+",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let complete = skin_expression_offsets_complete(&case);
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if complete {
+        return Err("stale expression-offset skin cache was reused".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn current_skin_cache_accepts_typed_expression_offsets() -> Result<(), String> {
+    let case = case_dir("current-skin-expression-offsets")?;
+    fs::create_dir_all(case.join("components/skin"))
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components/skin/face.json"),
+        concat!(
+            r#"{"schema":"skin","name":"Face","expression_offsets":{"#,
+            r#""offset_lists":[{"key_index":0,"offsets":[]}]}}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        case.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":1}"#,
+            "
+",
+            r#"{"ordinal":1,"parent_ordinal":0,"kind":"skin","#,
+            r#""path":"skin/face.json"}"#,
+            "
+",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let complete = skin_expression_offsets_complete(&case);
+    fs::remove_dir_all(&case).map_err(|error| error.to_string())?;
+    if !complete {
+        return Err(
+            "typed expression-offset skin cache was rejected".to_owned(),
+        );
+    }
+    Ok(())
 }
 
 #[test]

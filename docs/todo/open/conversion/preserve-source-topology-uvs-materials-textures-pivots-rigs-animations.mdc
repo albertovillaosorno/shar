@@ -1077,20 +1077,36 @@ The runtime target validator establishes a narrower relation for skins: every
 offset-list primitive-group index must be within the skin, must occur in the
 container `PrimGroupIndices`, and every offset vertex index must be below that
 selected primitive group's vertex count. The whole-game audit finds zero
-violations across all 20 lists and 1,592 records; extraction now enforces only
-that skin target relation while keeping mesh expression evidence and `KeyIndex`
-semantics uninterpreted.
+violations across all 20 lists and 1,592 records, so extraction enforces that
+skin-local target relation without inventing morph-target output.
 
 Vertex-expression framing is exact across 20 groups, 20 nested expression
 curves, and 20 mixers. Every record is version 0. Each group declares one
 expression, contains exactly one physical expression child, and preserves one
-authored stage;
-each curve declares one key, retains one index, and carries a finite key value.
+authored stage; each curve declares one key, retains one index, and carries a
+finite key value.
 
-All current mixers retain authored type 3 together with their target and group
-names. Recovery now rejects unobserved versions and nonfinite curve keys while
-leaving mixer-type interpretation unchanged rather than turning the observed
-value into a universal enum rule.
+The shipped mixer enum assigns `VertexOffset` ordinal 3, and the mixer loader
+rejects every other serialized mixer type before resolving its target or group.
+Recovery now enforces type 3 rather than treating the current corpus value as an
+uninterpreted field. The loader resolves the named expression group and drawable
+through its entity store, so package locality is not promoted to P3D validity.
+
+`InitOffsetArray` obtains each expression key's authored index and scans every
+skin offset list for that same `KeyIndex`. Every matching list contributes
+runtime offsets; zero matches are tolerated outside diagnosis mode, and multiple
+matches are not rejected. A fresh audit of the 12 frontend `camset*`, `iris`,
+and
+`star` packages finds 20 mixers and 20 keys with 20 unique matches, zero
+unmatched lists, and zero group-target/mixer-target name differences.
+
+Migration preparation now requires each indexed mixer to resolve its named group
+and target skin inside the normalized package because the current pipeline has
+no wider entity-store context to preserve. That is a migration support gate, not
+a source-validity rule: key mapping retains zero, one, or many matching offset
+lists, and group-target equality is observed but never required. Cached skins
+that still carry `0x00010018` as an unhandled child are invalidated so resume
+regenerates typed expression-offset evidence before this preflight consumes it.
 
 Vertex-animation key framing is exact across all 139 current keys. Every key
 and every current offset list is version 0; each current key owns one position
