@@ -273,6 +273,28 @@ fn resolve_source_material(
                     ))
                 })
         },
+        Err(DecodedComponentError::AmbiguousTextureMember { texture, .. }) => {
+            resolve_runtime_first_texture_material(
+                source,
+                package_root,
+                shader,
+                &texture,
+                consumer_provenance,
+                package,
+            )?
+            .map_or_else(
+                || {
+                    Err(PipelineError::new(format!(
+                        concat!(
+                            "prop material {} has ambiguous local ",
+                            "texture {}"
+                        ),
+                        shader, texture
+                    )))
+                },
+                Ok,
+            )
+        },
         Err(error @ DecodedComponentError::AmbiguousShaderMember { .. }) => {
             let context = RuntimeMaterialContext {
                 package_root,
@@ -317,6 +339,53 @@ struct RuntimeMaterialContext<'source> {
     authority: Option<&'source SharedTextureAuthority>,
     package: Option<&'source PhaseThreePackageRow>,
     source_subcategory: &'source str,
+}
+
+/// Resolve duplicate local textures for one uniquely identified shader.
+fn resolve_runtime_first_texture_material(
+    source: &DecodedComponentSource,
+    package_root: &Path,
+    shader: &str,
+    texture: &str,
+    consumer_provenance: Option<&ShaderConsumerProvenance>,
+    package: Option<&PhaseThreePackageRow>,
+) -> Result<Option<MaterialBinding>, PipelineError> {
+    let (Some(provenance), Some(package)) =
+        (consumer_provenance, package)
+    else {
+        return Ok(None);
+    };
+    let shaders = top_level_ledger_occurrences(package_root, "shader", shader)?;
+    let [shader_occurrence] = shaders.as_slice() else {
+        return Ok(None);
+    };
+    if !runtime_shader_package_member_matches(package, shader_occurrence)
+        || !runtime_shader_precedes_consumers(
+            shader_occurrence.source_ordinal,
+            provenance,
+            package,
+        )
+    {
+        return Ok(None);
+    }
+    let Some(first_texture) = runtime_first_texture_occurrence(
+        package_root,
+        texture,
+        shader_occurrence.source_ordinal,
+    )? else {
+        return Ok(None);
+    };
+    source
+        .resolve_indexed_material_with_texture_occurrence(
+            &shader_occurrence.path,
+            &first_texture.path,
+        )
+        .map(Some)
+        .map_err(|source| {
+            PipelineError::new(format!(
+                "runtime-first unique-shader texture failed: {source:?}"
+            ))
+        })
 }
 
 /// Resolve a duplicate shader exactly as the shipped inventory would.
@@ -441,6 +510,40 @@ fn runtime_first_shader_occurrence(
     let Some(first) = ledger.first() else {
         return Ok(None);
     };
+    if !runtime_shader_precedes_consumers(
+        first.source_ordinal,
+        provenance,
+        package,
+    ) {
+        return Ok(None);
+    }
+    Ok(Some(first.clone()))
+}
+
+/// Verify one physical shader against its phase-three material coordinate.
+fn runtime_shader_package_member_matches(
+    package: &PhaseThreePackageRow,
+    occurrence: &RuntimeLedgerOccurrence,
+) -> bool {
+    let path = format!(
+        "{}/components/shader/{}",
+        package.package_root, occurrence.member
+    );
+    package
+        .find_member_by_source_coordinate(&path, occurrence.source_ordinal)
+        .is_some_and(|member| {
+            member.role == PackageRole::Material
+                && member.kind == "p3d-shader"
+                && member.source_chunk_kind == "shader"
+        })
+}
+
+/// Verify that the selected shader existed before every proven consumer.
+fn runtime_shader_precedes_consumers(
+    shader_ordinal: usize,
+    provenance: &ShaderConsumerProvenance,
+    package: &PhaseThreePackageRow,
+) -> bool {
     let mut consumer_ordinals = provenance.source_ordinals.clone();
     for member_id in &provenance.model_member_ids {
         let Some(source_ordinal) = package
@@ -453,18 +556,14 @@ fn runtime_first_shader_occurrence(
             })
             .and_then(|member| member.source_chunk_ordinal)
         else {
-            return Ok(None);
+            return false;
         };
         let _inserted = consumer_ordinals.insert(source_ordinal);
     }
-    if consumer_ordinals.is_empty()
-        || consumer_ordinals
+    !consumer_ordinals.is_empty()
+        && consumer_ordinals
             .iter()
-            .any(|ordinal| *ordinal <= first.source_ordinal)
-    {
-        return Ok(None);
-    }
-    Ok(Some(first.clone()))
+            .all(|ordinal| *ordinal > shader_ordinal)
 }
 
 /// Select the first local texture that existed when the shader was loaded.
