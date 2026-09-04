@@ -118,6 +118,22 @@ def test_project_state_links_are_ignored_explicitly() -> None:
         assert f"{project_root}/{name}" in ignore_lines
 
 
+def test_generated_project_ide_state_is_ignored_explicitly() -> None:
+    """Machine-specific Unreal project generation must not dirty Git."""
+    ignore_lines = (_REPOSITORY_ROOT / ".gitignore").read_text(
+        encoding="utf-8"
+    ).splitlines()
+    project_root = "src/unreal/project/composition/uproject"
+    expected = (
+        f"{project_root}/.ignore",
+        f"{project_root}/.vscode/",
+        f"{project_root}/Makefile",
+        f"{project_root}/*.code-workspace",
+    )
+    for pattern in expected:
+        assert pattern in ignore_lines
+
+
 def test_repository_pytest_configuration_owns_import_discovery() -> None:
     """Python tests must share one repository-owned Jig config authority."""
     config_lines = (

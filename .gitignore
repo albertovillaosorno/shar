@@ -67,6 +67,16 @@ src/unreal/project/composition/uproject/Binaries
 src/unreal/project/composition/uproject/DerivedDataCache
 src/unreal/project/composition/uproject/Intermediate
 src/unreal/project/composition/uproject/Saved
+
+# Unreal project-file generation also emits workstation-specific IDE metadata
+# beside the canonical descriptor. These files contain absolute engine/install
+# paths and are regenerated locally; keep their scope narrower than generic
+# repository IDE configuration.
+src/unreal/project/composition/uproject/.ignore
+src/unreal/project/composition/uproject/.vscode/
+src/unreal/project/composition/uproject/Makefile
+src/unreal/project/composition/uproject/*.code-workspace
+
 Build/*
 !Build/*/
 Build/*/**
