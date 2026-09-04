@@ -7,7 +7,7 @@ Generated from live MCP metadata; no engine source is copied.
 - Domain: World and UI
 - Operational posture: **Expected read-only**
 <!-- markdownlint-disable-next-line MD013 -->
-- Interface digest: `c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
+- Interface digest: `106cd0a0cc2273be4d9a633ac49dee0857958117831071949e38f01cec179e92`
 
 ## Native identities
 
@@ -97,8 +97,8 @@ and `get_component_actor` resolved it back to `Brush_0`.
 <!-- END MANUAL FIELD: manual-review-revision -->
 
 <!-- markdownlint-disable-next-line MD013 -->
-- Current revision: `1.0.0/c6e4275ffd125b32daf25b03c2746196b76c1fdd123994bde79239a30149342b`
-- Manual guidance status: **Current**
+- Current revision: `1.0.0/106cd0a0cc2273be4d9a633ac49dee0857958117831071949e38f01cec179e92`
+- Manual guidance status: **Review required**
 
 ## Before invocation
 

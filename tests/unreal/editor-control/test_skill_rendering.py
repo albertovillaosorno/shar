@@ -59,7 +59,7 @@ if TYPE_CHECKING:
 
 
 def test_taxonomy_owns_every_known_toolset_once() -> None:
-    """The fixed taxonomy covers all 52 live identities without fallback."""
+    """The fixed taxonomy covers all 53 live identities without fallback."""
     names = known_toolset_names()
 
     assert len(names) == EXPECTED_TOOLSET_COUNT
@@ -72,12 +72,17 @@ def test_taxonomy_owns_every_known_toolset_once() -> None:
     }
     assert category_counts == {
         "core-and-governance": 8,
-        "assets-and-data": 13,
+        "assets-and-data": 14,
         "world-and-ui": 4,
         "animation-and-cinematics": 8,
         "gameplay-and-ai": 10,
         "effects-physics-and-procedural": 9,
     }
+
+    assert (
+        category_for_toolset("SharImportEditor.SharImportToolset").slug
+        == "assets-and-data"
+    )
 
     with pytest.raises(ProtocolError, match="lacks skill taxonomy ownership"):
         _ = category_for_toolset("FuturePlugin.UnownedToolset")
@@ -106,12 +111,12 @@ def test_renderer_creates_one_explanatory_skill_per_capability() -> None:
     assert len(documents) == EXPECTED_DOCUMENT_COUNT
     assert len(by_path) == EXPECTED_DOCUMENT_COUNT
     root_index = by_path["index.md"]
-    assert "Toolsets: **52**" in root_index
-    assert "Capabilities: **52**" in root_index
+    assert "Toolsets: **53**" in root_index
+    assert "Capabilities: **53**" in root_index
     assert "Unreal MCP version: `1.0.0`" in root_index
     assert "Manual review revision: `1.0.0/" in root_index
     assert "Manual guidance current: **0**" in root_index
-    assert "Manual guidance review required: **52**" in root_index
+    assert "Manual guidance review required: **53**" in root_index
     assert not any(
         line.startswith(tuple(f"{number}." for number in range(2, 10)))
         for line in root_index.splitlines()

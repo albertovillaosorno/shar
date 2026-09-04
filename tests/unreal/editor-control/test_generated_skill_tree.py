@@ -51,10 +51,10 @@ _STATUS_PATTERN = re.compile(
     r"Manual guidance status: \*\*(Current|Review required)\*\*"
 )
 _LINK_PATTERN = re.compile(r"\[[^]]+\]\(([^)]+)\)")
-_EXPECTED_TOOLSETS = 52
-_EXPECTED_CAPABILITIES = 830
-_EXPECTED_SKILL_FILES = 830
-_EXPECTED_GENERATED_DOCUMENTS = 831
+_EXPECTED_TOOLSETS = 53
+_EXPECTED_CAPABILITIES = 837
+_EXPECTED_SKILL_FILES = 837
+_EXPECTED_GENERATED_DOCUMENTS = 838
 _REQUIRED_SKILL_SECTIONS = (
     "## What this tool does",
     "## When to use it",
@@ -94,8 +94,8 @@ def test_generated_root_index_contains_every_live_identity() -> None:
     """The mandatory index lists all toolsets and capability identities."""
     index = (_SKILL_ROOT / "index.md").read_text(encoding="utf-8")
 
-    assert "Toolsets: **52**" in index
-    assert "Capabilities: **830**" in index
+    assert "Toolsets: **53**" in index
+    assert "Capabilities: **837**" in index
     assert index.count("#### `") == _EXPECTED_TOOLSETS
     assert index.count("- [`") == _EXPECTED_CAPABILITIES
     assert "Unreal MCP version: `1.0.0`" in index
