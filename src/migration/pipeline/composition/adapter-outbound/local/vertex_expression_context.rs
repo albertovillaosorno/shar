@@ -26,7 +26,8 @@
 // - Usage:
 //   - Called by prepare-unreal before semantic package planning is published.
 // - Defaults:
-//   - Missing or ambiguous package-local mixer targets fail migration preflight.
+//   - Missing or ambiguous package-local mixer targets fail migration
+//     preflight.
 //
 
 //! Vertex-expression runtime relationship preflight.
@@ -250,7 +251,9 @@ fn push_mixer_keys(
                 offset_list_indices.push(list_index);
                 let count = required_array(list, "offsets")?.len();
                 offset_count = offset_count.checked_add(count).ok_or_else(|| {
-                    PipelineError::new("vertex-expression offset count overflowed")
+                    PipelineError::new(
+                        "vertex-expression offset count overflowed",
+                    )
                 })?;
             }
             out.push(VertexExpressionKeyContext {
@@ -335,7 +338,10 @@ fn identity_map<'a>(
 ) -> PipelineOutcome<BTreeMap<String, Vec<&'a Component>>> {
     let mut by_name = BTreeMap::<String, Vec<&Component>>::new();
     for component in components.iter().filter(|item| item.kind == kind) {
-        let name = clean_identity(required_string(&component.payload, "name")?)?;
+        let name = clean_identity(required_string(
+            &component.payload,
+            "name",
+        )?)?;
         by_name.entry(name).or_default().push(component);
     }
     Ok(by_name)
@@ -396,7 +402,10 @@ fn resolve_normalized_package_root(
     })
 }
 
-fn required_string<'a>(value: &'a Value, field: &str) -> PipelineOutcome<&'a str> {
+fn required_string<'a>(
+    value: &'a Value,
+    field: &str,
+) -> PipelineOutcome<&'a str> {
     value.get(field).and_then(Value::as_str).ok_or_else(|| {
         PipelineError::new(format!(
             "vertex-expression {field} is not a string"
