@@ -564,6 +564,41 @@ fn justification_matches_scrooby_runtime_axes() -> Result<(), String> {
 }
 
 #[test]
+fn legacy_text_uses_runtime_defaults() -> Result<(), String> {
+    let payload = serde_json::json!({
+        "position": [0, 0],
+        "dimensions": [100, 20],
+        "justification": [0, 2],
+        "color": 4_294_967_295_u32,
+        "translucency": 0,
+        "rotation": 0,
+        "version": 16,
+    });
+    let mut row = serde_json::Map::new();
+    add_multi_text(&payload, [640, 480], &mut row)
+        .map_err(|error| error.to_string())?;
+    assert_eq!(
+        row.get("runtime_shadow_enabled"),
+        Some(&serde_json::json!(false)),
+    );
+    assert_eq!(
+        row.get("runtime_outline_enabled"),
+        Some(&serde_json::json!(false)),
+    );
+    assert_eq!(row.get("current_text_i32"), Some(&serde_json::json!(0)));
+    assert_eq!(row.get("initial_index_i32"), Some(&serde_json::json!(0)));
+    for field in [
+        "authored_shadow_enabled",
+        "shadow_color_raw_u32",
+        "shadow_color_rgba_u8",
+        "authored_shadow_offset_i32",
+    ] {
+        assert!(row.get(field).is_none(), "legacy source invented {field}");
+    }
+    Ok(())
+}
+
+#[test]
 fn text_zero_shadow_offset_promotes_runtime_outline() -> Result<(), String> {
     let payload = serde_json::json!({
         "position": [0, 0],

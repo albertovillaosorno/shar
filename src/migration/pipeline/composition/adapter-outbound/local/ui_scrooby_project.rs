@@ -1349,7 +1349,27 @@ fn validate_layout_children(components: &[Component]) -> PipelineOutcome<()> {
                     )
                 })
                 .count();
-            let current_text = required_usize(&owner.payload, "current_text")?;
+            let version = required_usize(&owner.payload, "version")?;
+            let current_text = if version > 16 {
+                required_usize(&owner.payload, "current_text")?
+            } else {
+                for field in [
+                    "shadow_enabled",
+                    "shadow_color",
+                    "shadow_offset",
+                    "current_text",
+                ] {
+                    if owner.payload.get(field).is_some() {
+                        return Err(PipelineError::new(
+                            concat!(
+                                "legacy Scrooby MultiText contains a ",
+                                "modern-only field"
+                            ),
+                        ));
+                    }
+                }
+                0
+            };
             if current_text >= text_count {
                 return Err(PipelineError::new(
                     "Scrooby MultiText initial index is outside its strings",

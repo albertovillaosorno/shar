@@ -1374,6 +1374,50 @@ fn rejects_screen_page_count_mismatch() -> TestResult {
 }
 
 #[test]
+fn rejects_legacy_multi_text_with_modern_fields() -> TestResult {
+    let root = case_dir("legacy-multi-text-modern-fields")?;
+    write_valid_package(&root)?;
+    let text = root.join("components/scrooby_multi_text/text.json");
+    let payload = fs::read_to_string(&text).map_err(|error| error.to_string())?;
+    let changed = payload.replacen(r#""version":17"#, r#""version":16"#, 1);
+    if changed == payload {
+        return Err("MultiText version fixture was not found".to_owned());
+    }
+    fs::write(&text, changed).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err("legacy MultiText accepted a modern-only field".to_owned());
+    };
+    if !error.to_string().contains("modern-only field") {
+        return Err(format!("unexpected legacy MultiText error: {error}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn accepts_legacy_multi_text_runtime_initial_index() -> TestResult {
+    let root = case_dir("legacy-multi-text-index")?;
+    write_valid_package(&root)?;
+    let text = root.join("components/scrooby_multi_text/text.json");
+    let payload = fs::read_to_string(&text).map_err(|error| error.to_string())?;
+    let changed = payload.replacen(
+        r#""version":17,"current_text":0,"#,
+        r#""version":16,"#,
+        1,
+    );
+    if changed == payload {
+        return Err("MultiText legacy version fixture was not found".to_owned());
+    }
+    fs::write(&text, changed).map_err(|error| error.to_string())?;
+    let result = preflight_scrooby_package(&root);
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    result
+        .map(|_bindings| ())
+        .map_err(|error| error.to_string())
+}
+
+#[test]
 fn rejects_multi_text_initial_index_outside_strings() -> TestResult {
     let root = case_dir("multi-text-index")?;
     write_valid_package(&root)?;
