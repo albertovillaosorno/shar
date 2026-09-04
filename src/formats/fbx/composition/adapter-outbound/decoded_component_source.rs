@@ -50,6 +50,15 @@ use crate::ports::component_source::ComponentSource;
 /// Maximum integer value of one packed PDDI color channel.
 const MAX_COLOR_CHANNEL: f32 = 255.;
 
+/// Repeated-index triangle-list behavior selected at one decode boundary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum RepeatedIndexPolicy {
+    /// Ordinary FBX inputs reject repeated vertex indices inside one triangle.
+    Reject,
+    /// Whole-world analysis preserves authored triangle-list records exactly.
+    Preserve,
+}
+
 /// Decoded component source rooted at one normalized package directory.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DecodedComponentSource {
@@ -547,9 +556,9 @@ fn is_single_path_segment(value: &str) -> bool {
 
 /// Load one mesh for static whole-level analysis.
 ///
-/// Analysis uses the same strict authored-topology contract as ordinary mesh
-/// loading. Triangle-strip stitching degenerates are normalized by strip
-/// triangulation; malformed authored triangle lists fail closed.
+/// Analysis preserves authored repeated-index triangle-list records because the
+/// shipped runtime retains them. Triangle-strip stitching degenerates remain a
+/// deterministic normalization performed by strip triangulation.
 ///
 /// # Errors
 ///
@@ -560,7 +569,15 @@ pub fn read_mesh_for_analysis(
     package_root: &Path,
     mesh_member_id: &str,
 ) -> Result<(MeshAsset, usize), DecodedComponentError> {
-    read_member_mesh(package_root, mesh_member_id).map(|mesh| (mesh, 0))
+    let path = component_path(package_root, "mesh", mesh_member_id, "json")?;
+    let authored_identity =
+        mesh_member_authored_identity(package_root, mesh_member_id)?;
+    decode_mesh_document(
+        &path,
+        Some(&authored_identity),
+        RepeatedIndexPolicy::Preserve,
+    )
+    .map(|mesh| (mesh, 0))
 }
 
 /// Read one package mesh member through its normalized ledger relationship.
@@ -571,7 +588,11 @@ fn read_member_mesh(
     let path = component_path(package_root, "mesh", mesh_member_id, "json")?;
     let authored_identity =
         mesh_member_authored_identity(package_root, mesh_member_id)?;
-    decode_mesh_document(&path, Some(&authored_identity))
+    decode_mesh_document(
+        &path,
+        Some(&authored_identity),
+        RepeatedIndexPolicy::Reject,
+    )
 }
 
 /// Resolve the authored mesh identity for one physical normalized member.
@@ -647,20 +668,26 @@ fn mesh_member_authored_identity(
 pub fn read_indexed_mesh(
     path: &Path,
 ) -> Result<MeshAsset, DecodedComponentError> {
-    decode_mesh_document(path, None)
+    decode_mesh_document(path, None, RepeatedIndexPolicy::Reject)
 }
 
-/// Decode one mesh document under the strict authored-topology contract.
+/// Decode one mesh document under an explicit repeated-index topology policy.
 fn decode_mesh_document(
     path: &Path,
     requested_id: Option<&str>,
+    repeated_index_policy: RepeatedIndexPolicy,
 ) -> Result<MeshAsset, DecodedComponentError> {
     let decoded: DecodedMesh = read_json(path)?;
     let (decoded_name, cast_shadow) =
         validate_decoded_mesh(&decoded, requested_id)?;
     let mut groups = Vec::with_capacity(decoded.prim_groups.len());
     for (index, group) in decoded.prim_groups.into_iter().enumerate() {
-        groups.push(decode_primitive_group(index, group, &decoded_name)?);
+        groups.push(decode_primitive_group(
+            index,
+            group,
+            &decoded_name,
+            repeated_index_policy,
+        )?);
     }
     MeshAsset::new(decoded_name.clone(), groups)
         .and_then(|mesh| mesh.with_source_identity(decoded_name))
@@ -709,11 +736,12 @@ fn validate_decoded_mesh(
     Ok((decoded_name, cast_shadow))
 }
 
-/// Decode one primitive group under the strict authored-topology contract.
+/// Decode one primitive group under an explicit repeated-index topology policy.
 fn decode_primitive_group(
     index: usize,
     group: DecodedPrimitiveGroup,
     decoded_name: &str,
+    repeated_index_policy: RepeatedIndexPolicy,
 ) -> Result<PrimitiveGroup, DecodedComponentError> {
     validate_primitive_group_counts(index, &group, decoded_name)?;
     let uvs = decode_primary_uvs(index, group.uvs)?;
@@ -723,13 +751,25 @@ fn decode_primitive_group(
         &group.indices,
         decoded_name,
     )?;
-    let base_group = PrimitiveGroup::new(
-        index,
-        decoded_material_identity(&group.shader),
-        group.positions,
-        uvs,
-        &triangle_indices,
-    )
+    let shader = decoded_material_identity(&group.shader);
+    let base_group = match repeated_index_policy {
+        RepeatedIndexPolicy::Reject => PrimitiveGroup::new(
+            index,
+            shader,
+            group.positions,
+            uvs,
+            &triangle_indices,
+        ),
+        RepeatedIndexPolicy::Preserve => {
+            PrimitiveGroup::new_preserving_repeated_indices(
+                index,
+                shader,
+                group.positions,
+                uvs,
+                &triangle_indices,
+            )
+        },
+    }
     .map(|decoded| match group.source_ordinal {
         Some(source_ordinal) => decoded.with_source_ordinal(source_ordinal),
         None => decoded,

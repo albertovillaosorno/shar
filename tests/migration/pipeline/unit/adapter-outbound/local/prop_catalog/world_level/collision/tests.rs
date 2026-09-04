@@ -51,7 +51,7 @@ fn coordinate_reference_requires_exact_original_topology() {
 
 #[test]
 // jig-ignore-next-line: long identifier
-fn collision_mesh_rejects_repeated_index_source_triangles() -> Result<(), String> {
+fn collision_mesh_preserves_repeated_index_source_triangles() -> Result<(), String> {
     let document = IntersectDocument {
         schema: "intersect_dsg".to_owned(),
         num_indices: 6,
@@ -59,13 +59,19 @@ fn collision_mesh_rejects_repeated_index_source_triangles() -> Result<(), String
         num_positions: 4,
         positions: vec![[0.; 3], [1.; 3], [2.; 3], [3.; 3]],
     };
-    let result = collision_mesh("package", "surface", document, None);
-    let Err(error) = result else {
-        // jig-ignore-next-line: literal
-        return Err("collision mesh altered repeated-index source topology".to_owned());
-    };
-    if !error.to_string().contains("RepeatedTriangleVertex") {
-        return Err(format!("unexpected collision topology error: {error}"));
+    let (mesh, discarded) =
+        collision_mesh("package", "surface", document, None)
+            .map_err(|error| error.to_string())?;
+    let triangles = mesh
+        .groups
+        .first()
+        .ok_or_else(|| "collision mesh group is missing".to_owned())?
+        .triangles
+        .as_slice();
+    if triangles != [[0, 1, 2], [2, 2, 3]] || discarded != 0 {
+        return Err(format!(
+            "collision mesh changed authored topology: {triangles:?}"
+        ));
     }
     Ok(())
 }

@@ -323,7 +323,7 @@ fn collision_mesh(
         120,
         "world collision mesh has no portable identity",
     )?;
-    let group = PrimitiveGroup::new(
+    let group = PrimitiveGroup::new_preserving_repeated_indices(
         0,
         COLLISION_MATERIAL,
         positions,
