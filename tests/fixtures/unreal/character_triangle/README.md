@@ -17,7 +17,8 @@ identity, and expected read-back values before real game assets are available.
 
 - `SM_unreal_fixture_triangle.fbx` is a binary FBX 7.7 file containing one
   100-centimeter right triangle, one UV channel, three vertex colors, one normal
-  direction, one material slot, no rig, and no animation.
+  direction, explicit polygon smoothing metadata, one material slot, no rig,
+  and no animation.
 - `T_unreal_fixture_triangle_BC.png` is an 8-by-8 RGBA checkerboard authored by
   the fixture generator.
 - `unreal-import-plan.json` is the deterministic Phase 6 import-plan envelope.
@@ -34,9 +35,9 @@ JSON files use sorted keys, UTF-8, LF endings, and a final newline.
 Current SHA-256 digests:
 
 ```text
-77233971822a36a4e01ca42daa07e6a50574f7c7dc6a4a51c91b0928916eeb1e  SM_unreal_fixture_triangle.fbx
+4c2ab049d7726f179fd60ef8fde1df44c6a51ad6a191f1917764c25d26915ee3  SM_unreal_fixture_triangle.fbx
 0c1cdacf6d41ca1a607be2e2a41b18707cc531bcf64326a3dcfbe0dd3892170b  T_unreal_fixture_triangle_BC.png
-b2c4c0608f6c78f147d92c3cc0d176f29f9933e0f20b6092edf957e21cc8d538  unreal-import-plan.json
+83a3b7d8ff344c58d3e7e3b93165879066299d159098116192c8860523a71d24  unreal-import-plan.json
 34850f18e3725e8f79a0a3a0f53fd35aa71601acf6fe74b9bed138930853750c  expected-native-read-back.json
 ```
 
