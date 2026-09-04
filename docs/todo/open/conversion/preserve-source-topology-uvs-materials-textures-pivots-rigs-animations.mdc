@@ -1476,7 +1476,7 @@ loader supports both project-stored pages referenced by a screen's authored page
 names and physical page children embedded directly beneath a screen. Recovery
 now preserves both forms without rewriting parent ordinals: screen child
 inventory admits only Page chunks, nested pages remain screen children, and the
-schema records Page as the runtime-backed Screen subchunk. Migration resolves
+schema records Page as the runtime-backed Screen child chunk. Migration resolves
 `page_names` only against direct project pages, while embedded pages receive
 runtime indices beneath their physical screen owner. Cache completeness
 validates
