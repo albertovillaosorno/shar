@@ -1471,8 +1471,18 @@ canonical textures, and the replay advances past the original `shrubRound.png`
 collision without weakening same-resolution collision checks.
 
 The September 4 replay now also advances through both render-mesh and
-`INTERSECT_DSG` repeated-index records without discarding them. It then exposed
-six world meshes that consume `lambert1` without declaring that shader locally,
+`INTERSECT_DSG` repeated-index records without discarding them. A subsequent
+live Unreal Engine 5.8.1 MCP audit proves that the FBX static-mesh importer is
+not a source-preserving representation for those records: a repeated-index-only
+mesh is rejected as wholly degenerate, while a mixed valid/repeated-index mesh
+reaches a fatal FBX SDK smoothing-conversion error before asset creation.
+
+World FBX publication now fails closed before writing such topology; decoded
+analysis continues retaining the authored records until a separate target-safe
+evidence representation is defined.
+
+The replay then exposed six world meshes that consume `lambert1` without
+declaring that shader locally,
 starting with `l3z3` mesh `z3_gens108Shape_071`. Shipped `tPrimGroupLoader`
 resolves the authored name from its temporary load store and then the global
 inventory; when neither supplies a shader it creates `TShader("error")`.
