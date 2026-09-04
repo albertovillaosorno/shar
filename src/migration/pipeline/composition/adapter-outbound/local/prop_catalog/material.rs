@@ -827,11 +827,17 @@ fn resolve_materials(
             "prop material scratch creation failed: {error}"
         ))
     })?;
-    let source = DecodedComponentSource::new(package_root, scratch);
     let mut renames = BTreeMap::new();
     let mut bindings = BTreeMap::new();
     let mut textures = BTreeMap::new();
-    for shader in shaders {
+    for (shader_index, shader) in shaders.into_iter().enumerate() {
+        let shader_scratch = scratch.join(format!("shader-{shader_index:04}"));
+        fs::create_dir_all(&shader_scratch).map_err(|error| {
+            PipelineError::new(format!(
+                "prop shader scratch creation failed: {error}"
+            ))
+        })?;
+        let source = DecodedComponentSource::new(package_root, &shader_scratch);
         let binding = resolve_source_material(
             &source,
             package_root,
@@ -847,7 +853,7 @@ fn resolve_materials(
             .texture_file_name
         {
             Some(source_name) => {
-                let source_bytes = fs::read(scratch.join(&source_name))
+                let source_bytes = fs::read(shader_scratch.join(&source_name))
                     .map_err(|error| {
                         PipelineError::new(format!(
                             "prop staged texture read failed for \

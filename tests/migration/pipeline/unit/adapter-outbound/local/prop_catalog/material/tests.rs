@@ -766,3 +766,103 @@ fn shared_texture_authority_preserves_authored_name_over_cache_name()
     }
     Ok(())
 }
+
+#[test]
+fn independent_shaders_isolate_same_named_texture_staging() -> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-independent-shader-staging-{}",
+        std::process::id()
+    ));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let package = root.join("package");
+    let shader_dir = package.join("components/shader");
+    let first_dir = root.join("first");
+    let second_dir = root.join("second");
+    let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&first_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&second_dir).map_err(|error| error.to_string())?;
+    fs::write(
+        shader_dir.join("first_m.json"),
+        concat!(
+            r#"{"name":"first_m","num_params":1,"params":[{"#,
+            r#""kind":"texture","param":"TEX","value":"first.bmp"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        shader_dir.join("second_m.json"),
+        concat!(
+            r#"{"name":"second_m","num_params":1,"params":[{"#,
+            r#""kind":"texture","param":"TEX","value":"second.bmp"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let first = first_dir.join("shared.png");
+    let second = second_dir.join("shared.png");
+    fs::write(&first, b"first-payload").map_err(|error| error.to_string())?;
+    fs::write(&second, b"second-payload").map_err(|error| error.to_string())?;
+    let first_text = first
+        .to_str()
+        .ok_or_else(|| "first fixture path is not UTF-8".to_owned())?;
+    let second_text = second
+        .to_str()
+        .ok_or_else(|| "second fixture path is not UTF-8".to_owned())?;
+    let first_digest = shar_sha256::digest_hex(b"first-payload");
+    let second_digest = shar_sha256::digest_hex(b"second-payload");
+    let authority = SharedTextureAuthority::from_occurrences_for_tests(&[
+        super::super::texture_authority::TextureOccurrenceFixture {
+            logical: "first.bmp",
+            package_id: "first-package",
+            subcategory: "terrain-world/level-01/terrain-mesh",
+            package_member_id: "first-member",
+            member_id: "first",
+            source_ordinal: 1,
+            path: first_text,
+            sha256: &first_digest,
+        },
+        super::super::texture_authority::TextureOccurrenceFixture {
+            logical: "second.bmp",
+            package_id: "second-package",
+            subcategory: "terrain-world/level-01/terrain-mesh",
+            package_member_id: "second-member",
+            member_id: "second",
+            source_ordinal: 2,
+            path: second_text,
+            sha256: &second_digest,
+        },
+    ]);
+    let result = resolve_materials(
+        BTreeSet::from(["first_m".to_owned(), "second_m".to_owned()]),
+        &BTreeMap::new(),
+        &package,
+        &scratch,
+        Some(&authority),
+        None,
+        "terrain-world/level-01/terrain-mesh",
+    );
+    let cleanup = fs::remove_dir_all(&root);
+    let (_renames, materials, textures) =
+        result.map_err(|error| error.to_string())?;
+    if materials.len() != 2 || textures.len() != 2 {
+        return Err(format!(
+            "independent textures collapsed: materials={} textures={}",
+            materials.len(),
+            textures.len()
+        ));
+    }
+    let payloads = textures
+        .iter()
+        .map(|texture| texture.bytes.as_slice())
+        .collect::<BTreeSet<_>>();
+    if payloads != BTreeSet::from([
+        b"first-payload".as_slice(),
+        b"second-payload".as_slice(),
+    ]) {
+        return Err(format!("independent texture bytes changed: {payloads:?}"));
+    }
+    cleanup.map_err(|error| error.to_string())?;
+    Ok(())
+}

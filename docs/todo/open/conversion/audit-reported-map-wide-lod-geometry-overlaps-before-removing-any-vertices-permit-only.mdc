@@ -51,6 +51,24 @@ overlap merely because geometry is nearby or coincident in presentation.
 The duplicate-shader publication blocker is now resolved from shipped Pure3D
 inventory semantics: same-section shader collisions are first-store-wins, and
 the terrain-world ledger proves that authoritative first occurrences precede
-their consumers. The acceptance criterion remains open until a fresh complete
-whole-world replay and map-wide output audit are rerun against that material
-resolution without broadening the exact-face removal policy above.
+their consumers. A fresh 129-package replay then exposed an unrelated
+`shrubRound.png` scratch-name collision between independent shader resolutions.
+Per-shader scratch isolation preserves both differing payloads and advances the
+replay beyond that staging-only blocker.
+
+The next fail-closed boundary is authored triangle-list topology. Across all 129
+selected terrain-world packages, 9,765 decoded meshes contain 2,163 triangle-list
+primitive groups. Twelve groups contain 28 repeated-index triangle records; the
+first replay failure is `common_gens203Shape_054` in `l1r7`, whose triangles 377
+and 381 are `[786, 782, 782]` and `[794, 794, 785]`. The same census deliberately
+excludes triangle-strip stitching degenerates because strip triangulation owns
+that normalization.
+
+Shipped Pure3D does not authorize deleting those authored triangle-list records.
+`tPrimGroupLoader::LoadStreamed` validates each serialized index only for range,
+stores it unchanged, and `IndexedDisplayInternal` submits vertices in that exact
+index order. Repository commit `ef097ee0` likewise removed the former analysis
+discard path and added a regression that rejects altering repeated-index source
+topology. The current replay therefore fails closed and publishes no partial
+world output. Acceptance remains open pending a representation that preserves
+this source evidence without broad overlap or degenerate-face deletion.

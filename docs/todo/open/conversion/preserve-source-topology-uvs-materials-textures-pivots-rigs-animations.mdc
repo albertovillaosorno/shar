@@ -1463,6 +1463,15 @@ and all likewise resolve to an earlier first occurrence. Migration stages that
 exact first occurrence, while the remaining 209 non-local references retain the
 existing scoped shared-texture fallback.
 
+A fresh whole-world replay exposed a separate staging-only collision between
+independent shaders whose authoritative external textures share the same PNG
+basename but have different bytes. Material resolution now gives each shader an
+isolated scratch directory before content-addressed publication, so one shader
+can neither overwrite nor block another shader's staged source. A regression
+with two distinct `shared.png` payloads proves both bytes survive as separate
+canonical textures, and the replay advances past the original `shrubRound.png`
+collision without weakening same-resolution collision checks.
+
 Malformed authored counts now fail closed before count-sized allocation or
 iteration where the encoded source region supplies a hard bound. This covers
 Scrooby page/image/point arrays, light and locator arrays, shader and game
