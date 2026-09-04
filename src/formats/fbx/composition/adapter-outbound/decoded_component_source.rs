@@ -171,6 +171,32 @@ impl DecodedComponentSource {
         )
     }
 
+    /// Resolve one shader using caller-proven external texture identity.
+    ///
+    /// The logical identity is checked against decoded shader evidence while
+    /// the physical payload path may use a normalized cache file name.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when shader evidence, logical texture identity,
+    /// payload, or staging violates the decoded material contract.
+    pub fn resolve_material_with_authoritative_external_texture(
+        &self,
+        shader_id: &str,
+        texture_identity: &str,
+        texture_source: &Path,
+    ) -> Result<MaterialBinding, DecodedComponentError> {
+        let shader_path = shader_component_path(&self.package_root, shader_id)?;
+        let shader: DecodedShader = read_json(&shader_path)?;
+        ensure_shader_evidence(&shader, shader_id)?;
+        resolve_authoritative_external_material_document(
+            &self.texture_output_dir,
+            &shader,
+            texture_identity,
+            texture_source,
+        )
+    }
+
     /// Resolve one shader from the exact path published by the package index.
     ///
     /// # Errors
@@ -211,6 +237,30 @@ impl DecodedComponentSource {
             &self.texture_output_dir,
             &shader,
             Some(texture_source),
+        )
+    }
+
+    /// Resolve one indexed shader using caller-proven external texture
+    /// identity.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when shader evidence, logical texture identity,
+    /// payload, or staging violates the decoded material contract.
+    pub fn resolve_indexed_material_with_authoritative_external_texture(
+        &self,
+        shader_path: &Path,
+        texture_identity: &str,
+        texture_source: &Path,
+    ) -> Result<MaterialBinding, DecodedComponentError> {
+        let shader: DecodedShader = read_json(shader_path)?;
+        let material_name = decoded_material_identity(&shader.name);
+        ensure_shader_evidence(&shader, &material_name)?;
+        resolve_authoritative_external_material_document(
+            &self.texture_output_dir,
+            &shader,
+            texture_identity,
+            texture_source,
         )
     }
 
@@ -821,6 +871,44 @@ fn resolve_material_from_source(
         output_texture_dir,
         &shader,
         external_texture_source,
+    )
+}
+
+/// Stage an externally located payload under its proven authored identity.
+fn resolve_authoritative_external_material_document(
+    output_texture_dir: &Path,
+    shader: &DecodedShader,
+    texture_identity: &str,
+    texture_source: &Path,
+) -> Result<MaterialBinding, DecodedComponentError> {
+    let material_name = decoded_material_identity(&shader.name);
+    let texture_reference = texture_name(shader)?.ok_or_else(|| {
+        DecodedComponentError::UnexpectedTextureOccurrence {
+            shader: material_name.clone(),
+            member: texture_identity.to_owned(),
+        }
+    })?;
+    if texture_reference != texture_identity {
+        return Err(DecodedComponentError::TextureOccurrenceMismatch {
+            texture: texture_reference,
+            member: texture_identity.to_owned(),
+        });
+    }
+    if !texture_source.is_file() {
+        return Err(DecodedComponentError::MissingTexture {
+            shader: material_name,
+            texture: texture_identity.to_owned(),
+            searched: texture_source.display().to_string(),
+        });
+    }
+    let staged_name = format!("{}.png", texture_stem(texture_identity)?);
+    stage_texture_binding_as(
+        output_texture_dir,
+        &material_name,
+        texture_source,
+        &staged_name,
+        decoded_shader_semantics(shader),
+        decoded_shader_base_color(shader),
     )
 }
 

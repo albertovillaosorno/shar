@@ -255,7 +255,7 @@ fn resolve_source_material(
                 .ok_or_else(|| {
                     PipelineError::new("shared texture authority is missing")
                 })?
-                .resolve(&texture, source_subcategory)?
+                .resolve_authoritative(&texture, source_subcategory)?
                 .ok_or_else(|| {
                     PipelineError::new(format!(
                         concat!(
@@ -266,7 +266,11 @@ fn resolve_source_material(
                     ))
                 })?;
             source
-                .resolve_material_with_external_texture(shader, external)
+                .resolve_material_with_authoritative_external_texture(
+                    shader,
+                    &external.logical,
+                    external.path,
+                )
                 .map_err(|error| {
                     PipelineError::new(format!(
                         "shared prop material failed: {error:?}"
@@ -439,7 +443,7 @@ fn resolve_runtime_first_material(
                 .ok_or_else(|| {
                     PipelineError::new("shared texture authority is missing")
                 })?
-                .resolve(&texture, context.source_subcategory)?
+                .resolve_authoritative(&texture, context.source_subcategory)?
                 .ok_or_else(|| {
                     PipelineError::new(format!(
                         concat!(
@@ -450,9 +454,10 @@ fn resolve_runtime_first_material(
                     ))
                 })?;
             source
-                .resolve_indexed_material_with_external_texture(
+                .resolve_indexed_material_with_authoritative_external_texture(
                     &first_shader.path,
-                    external,
+                    &external.logical,
+                    external.path,
                 )
                 .map(Some)
                 .map_err(|source| {
