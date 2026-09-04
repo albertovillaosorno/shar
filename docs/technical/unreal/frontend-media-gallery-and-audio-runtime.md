@@ -529,7 +529,9 @@ leases fail closed.
 
 A failed optional thumbnail uses only a validated fallback. A failed preview
 returns to browsing. A failed media request restores frontend audio, input, and
-visibility. A failed settings commit restores the accepted configuration. A
+visibility. A failed settings commit restores the accepted configuration.
+
+A
 failed idle demonstration returns to the accepted splash or frontend state.
 
 No failure may award an unlock, alter completion, persist a partial setting,

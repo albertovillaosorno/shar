@@ -217,7 +217,9 @@ progression.
 Every base level has one wager race hosted through the declared mob interaction.
 The entry fee is charged once at acceptance. Resetting or abandoning the race
 does not refund it. Leaving the vehicle starts the standard ten-second recovery
-window; entering a different vehicle fails the wager. Wager completion does not
+window; entering a different vehicle fails the wager.
+
+Wager completion does not
 count as a street-race win or story mission.
 
 The runtime does not reproduce collision-loss, blocked-shortcut, or AI recovery

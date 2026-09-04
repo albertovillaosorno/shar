@@ -199,7 +199,9 @@ appear only in diagnostics and conversion evidence.
 Homer is initially unlocked. Bart unlocks after the final Chapter 1 mission and
 may be automatically selected for the next accepted mission. Bart is locked
 after
-Chapter 2 until Chapter 4 completes. Lisa missions force Lisa. Outside missions,
+Chapter 2 until Chapter 4 completes. Lisa missions force Lisa.
+
+Outside missions,
 any unlocked and eligible character may be selected from the menu.
 
 Character switching uses a safe-placement query and cannot cross terrain,

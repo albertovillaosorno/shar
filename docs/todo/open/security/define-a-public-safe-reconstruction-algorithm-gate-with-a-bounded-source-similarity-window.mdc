@@ -68,7 +68,9 @@ Its regression suite covers complete, missing, extra, invalid,
 collision-disambiguated, and non-generated suffix vectors. The companion
 `observe-manifest-counts` adapter now derives those rows read-only from a lawful
 local source, validates the same exact required root evidence as manifest
-generation, and keeps private source paths out of failures. Ephemeral
+generation, and keeps private source paths out of failures.
+
+Ephemeral
 observations use `count` rather than the minimum-policy ledger's `min`, and the
 similarity parser rejects rows or whole ledgers that mix those meanings. It also
 requires directory coordinates to retain the manifest producer's lowercase,
@@ -79,7 +81,9 @@ exact two-endpoint lowercase shape after collision normalization. The
 calibrator now also mirrors Rust 1.97's
 Unicode 17 case additions that are absent from the bundled Python 3.14
 Unicode 16 table, so newly cased uppercase endpoints cannot be accepted as
-producer-normalized aliases. The current Rust lowercase table has only one
+producer-normalized aliases.
+
+The current Rust lowercase table has only one
 two-scalar expansion, so impossible 3/4-scalar aliases and short readable
 private names cannot be accepted as supposedly obfuscated evidence.
 Alias components also retain the source tree's portable-host character policy,
@@ -93,7 +97,9 @@ counts to those
 two phases.
 JSONL calibration rows now also require the producer's compact JSON token
 framing and literal member names, rejecting all JSON token whitespace or
-escaped keys while preserving valid decoded JSON string-value escapes. Optional
+escaped keys while preserving valid decoded JSON string-value escapes.
+
+Optional
 public
 metadata distinguishes omission from explicit
 JSON `null`;
@@ -108,6 +114,7 @@ belong to the producer's public taxonomy and match the
 producer's exact `(dir, ext)` bucket classification, while unclassifiable
 coordinates fail even when `kind` is omitted. JSON object members and coordinate
 rows must also retain the producer's deterministic field and `(dir, ext)` order.
+
 Taxonomy and required-file
 lists, when present, must retain the producer's exact canonical values and
 order;
@@ -121,7 +128,9 @@ calibrator metadata cannot drift independently; duplicate required-file rows
 also fail closed. These ignored metadata fields
 therefore cannot smuggle arbitrary private
 path or kind strings into an accepted
-calibration ledger. Ledger paths must also identify non-redirected regular files
+calibration ledger.
+
+Ledger paths must also identify non-redirected regular files
 beneath non-redirected lexical directory parents before bytes are read,
 preventing calibration from traversing symlinks or Windows junctions or treating
 other special filesystem nodes as JSONL. Calibration reads one open file
@@ -133,6 +142,7 @@ changes. The read-only observation
 adapter now fails when an exact-file-only source has
 no countable structural rows, so success cannot produce an empty unusable
 ledger.
+
 Generated manifest collision ordinals are aggregated into their structural
 family before comparison because a partial candidate can legitimately change
 those ordinals. Parsed ledgers now require each suffixed family to contain the
@@ -141,7 +151,9 @@ reject a simultaneous base alias without a suffix, so malformed orphan/gapped
 ordinals
 cannot be normalized into apparently valid evidence. Hard manifest and deep
 validation remain exact and unchanged. No 45–55%
-threshold exists in that code. The technical contract also pins the read-only
+threshold exists in that code.
+
+The technical contract also pins the read-only
 source boundary, source-bound plan publication restrictions, and the rule that
 similarity cannot substitute for any hard source gate.
 
@@ -154,7 +166,9 @@ protected targets. The three platform game-family files remain deliberate empty
 placeholders and are therefore not claimed as validated release plans. The
 publication guard also requires substantive plan paths to be real repository
 files rather than symbolic links, so external content cannot satisfy validation
-while Git publishes only a redirect. The same guard now mirrors key replay
+while Git publishes only a redirect.
+
+The same guard now mirrors key replay
 constraints: a real active settings file with Rust-equivalent schema and
 resource validation, its hash in Rust's fixed settings wire order, integer wire
 types including signed-zero rejection, duplicate-key rejection, bounded
@@ -183,7 +197,9 @@ stable non-redirected snapshot of the active algorithm file limit before
 emitting a descriptor that authoring would reject. Private reference and
 variant paths now reject symlinked or
 junction-backed lexical
-directory parents before any payload read. Their read snapshots compare both the
+directory parents before any payload read.
+
+Their read snapshots compare both the
 opened descriptor and current lexical path identity before reading bytes and
 retain device, inode, modification time, platform `ctime`, and size through the
 final path check. Projection derivation grows the packed bit mask only
@@ -200,7 +216,9 @@ bytes; replay tries only the authenticated plan's bounded layout alternatives
 against the caller-supplied file and succeeds only when one projected byte
 sequence authenticates the plan. Ordinary source records remain exact-hash
 bound. The projection stores no executable payload bytes or whole-file hashes,
-and source files remain read-only. Replay retains one source snapshot and
+and source files remain read-only.
+
+Replay retains one source snapshot and
 materializes only one projected candidate at a time, so the alternative count
 cannot multiply candidate-byte memory before authentication. This closes the
 mechanism gap for known multi-edition layouts without turning similarity into
@@ -216,7 +234,9 @@ overlap in either containment direction before plan publication, preventing a
 caller from turning source payloads into protected target material merely by
 pointing the target back at the source tree. Authoring also rejects target files
 that are hard-link aliases of any source file by cross-platform physical file
-identity, closing a path-disjoint alias of the same payload. Source collection
+identity, closing a path-disjoint alias of the same payload.
+
+Source collection
 also rejects repeated physical files before source file/byte limits are checked,
 so hard-link aliases cannot inflate generic admission evidence. Target
 collection rejects repeated physical files as unsupported hard-link topology
@@ -224,7 +244,9 @@ rather than replaying them as independent copies. Replay document validation
 also rejects ancestor/descendant target path collisions before
 decryption or writes, requiring one realizable protected output tree. Target
 paths are compared by the repository's Unicode-uppercase portable identity, so
-case-equivalent paths also fail before replay. Algorithm creation uses an atomic
+case-equivalent paths also fail before replay.
+
+Algorithm creation uses an atomic
 create-new filesystem write, and a regression proves an existing plan remains
 byte-identical when publication collides. Replay final files also use create-new
 byte persistence, so an output appearing after the absence check cannot be
@@ -234,7 +256,9 @@ missing-source regression proves a private-looking source path is not disclosed.
 Authoring captures each admitted source/target file once, and key derivation
 plus
 target encryption reuse those validated bytes rather than reopening paths during
-the operation. These tests establish engine-level source binding and read-only
+the operation.
+
+These tests establish engine-level source binding and read-only
 behavior; they do not certify
 the still-placeholder distributable family plans or replace the pending
 representative-install similarity calibration.

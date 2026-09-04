@@ -263,9 +263,7 @@ pub(super) fn billboard_quad_display(
     for expected_id in [DISPLAY_INFO, PERSPECTIVE_INFO] {
         let (id, child_header, child_total) = read_chunk_header(quad, child)?;
         let next = child.checked_add(child_total)?;
-        if id != expected_id
-            || child_total != child_header
-            || next > total_size
+        if id != expected_id || child_total != child_header || next > total_size
         {
             return None;
         }

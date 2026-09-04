@@ -31,7 +31,9 @@ does not convert `Dated` into `Effective`. The terms permit use of content
 through service features and otherwise require authorization from the service,
 permission from the relevant rights holders, or another applicable legal basis
 before downloading, reproducing, distributing, modifying, or using content
-outside the ordinary service experience. They also require uploaders to have
+outside the ordinary service experience.
+
+They also require uploaders to have
 permission or another legal entitlement for included third-party intellectual
 property.
 

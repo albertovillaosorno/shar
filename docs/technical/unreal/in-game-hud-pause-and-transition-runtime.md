@@ -381,7 +381,9 @@ icons. Off-range collectibles and ordinary locations are hidden unless their
 registered profile explicitly permits another behavior. Pursuit icons have a
 distinct pulse, color, or animation profile without changing pursuit authority.
 Radar settings expose registered `auto` and `off` policies, while route guidance
-has its own independent setting. A decorative sweep, glow, pulse, or fade is
+has its own independent setting.
+
+A decorative sweep, glow, pulse, or fade is
 presentation only and cannot discover, select, or complete an objective.
 
 ## Fade transaction

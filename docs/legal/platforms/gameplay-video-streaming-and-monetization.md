@@ -53,6 +53,7 @@ storage, remote DVRs, reproduction, or fair use.
 streaming uses into private time-shifting. Its fair-use holding involved
 private, noncommercial home recording of freely broadcast programs for later
 viewing.
+
 Uploading gameplay, retaining a public library, retransmitting to others, or
 operating a paid service changes the purpose, audience, copies, and market.
 

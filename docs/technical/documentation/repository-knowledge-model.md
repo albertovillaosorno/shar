@@ -18,7 +18,9 @@ knowledge, operational guidance, and supporting evidence.
 
 The public overview summarizes purpose and status. Decision records own durable
 choices. Technical specifications explain repository-owned behavior. Skills
-provide executable task guidance. Bibliography, research, and legal records
+provide executable task guidance.
+
+Bibliography, research, and legal records
 provide supporting evidence and cannot override repository authority.
 
 ## Invariants

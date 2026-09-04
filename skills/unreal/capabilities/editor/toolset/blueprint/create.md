@@ -85,7 +85,9 @@ The destination asset and validation actor label were absent before creation.
 The call returned the Blueprint object reference, while `find_assets` returned
 its package path. `exists` returned `true`, and `get_asset_class` returned the
 generated class name `BP_MCP_Validation_C`. Compilation with warnings treated as
-errors succeeded. Spawning the compiled Blueprint increased the scene count from
+errors succeeded.
+
+Spawning the compiled Blueprint increased the scene count from
 145 to 146 and produced the requested actor label and transform. Removing that
 actor, deleting the Blueprint, and deleting its virtual folder restored all
 counts and existence checks. No content directory or `.uasset` file appeared.

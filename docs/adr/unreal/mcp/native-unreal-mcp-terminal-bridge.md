@@ -19,7 +19,9 @@ current native input schema, serialized state changes, bounded calls, and
 independent postcondition verification. Unsupported schema assertions stop the
 call before the native mutation meta-tool runs. Generated-plan capability audits
 use only registry listing and selective toolset description; they cannot invoke
-native leaf tools or mutate editor state. Project-owned editor extensions may
+native leaf tools or mutate editor state.
+
+Project-owned editor extensions may
 register narrow `UToolsetDefinition` classes at `PostEngineInit`. WAV and HAP
 imports are the first such extensions. Package persistence, external movie
 payload rollback, and postcondition policy remain in the repository client

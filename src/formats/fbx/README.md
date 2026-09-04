@@ -102,7 +102,9 @@ package FBX named `<package_name>.fbx` and deterministic
 external PNG evidence below each package's `textures/` directory when present.
 The canonical v2 ledger is `game/manifest/fbx.jsonl`. It records exact FBX
 package identities plus every declared artifact path, size, and SHA-256 digest;
-FBX rows also pin binary version 7.7. The physical cache root contains payloads
+FBX rows also pin binary version 7.7.
+
+The physical cache root contains payloads
 only after publication.
 Publication is all-or-nothing across the manifest packages currently eligible
 for direct FBX conversion. Skeletal bundles and composite geometry remain

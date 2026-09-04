@@ -58,7 +58,6 @@ in authored order without geometry suppression. The compatibility
 regression proves value-equivalent authored face occurrences survive fusion.
 Visual overlap alone remains insufficient evidence for future removal.
 
-
 A fresh 129-package post-fix replay publishes the same 4,002 files and 12,240
 source placements with all eight interior removal counts at zero. Its output is
 449,794,288 bytes versus 449,794,224 before the fix, a bounded 64-byte increase

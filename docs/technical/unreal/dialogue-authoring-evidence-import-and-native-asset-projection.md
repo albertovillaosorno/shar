@@ -473,7 +473,9 @@ Table sections form a deterministic state machine. State contains:
 
 A structural row may transition only the fields it owns. A role section cannot
 change owner. A context section cannot change priority. A legend cannot change
-anything. A line row consumes current state but cannot mutate it implicitly.
+anything.
+
+A line row consumes current state but cannot mutate it implicitly.
 
 State is reset at source boundaries and at explicit reset sections. Carrying an
 event, owner, context, or priority from one source into another is forbidden.

@@ -38,7 +38,9 @@ created for its sole benefit, held an indefinite and materially unrestricted
 right to possess and use the copies, and could discard or destroy them. The
 Ninth Circuit's *Vernor v. Autodesk* decision instead treated a transferee as a
 licensee where the copyright owner used a license designation, significantly
-restricted transfer, and imposed notable use restrictions. Physical possession,
+restricted transfer, and imposed notable use restrictions.
+
+Physical possession,
 a purchase receipt, payment, and the word `license` are therefore relevant but
 not independently conclusive.
 
@@ -54,12 +56,15 @@ boundary. Installing complete software copies on more computers than a
 per-device license authorized was infringement even though access controls
 allegedly limited simultaneous use. The Ninth Circuit distinguished efficient
 imaging within the authorized installation count from extra copies created for
+
 convenience and assignment flexibility. A concurrent-user license could present
 different facts, so the exact grant matters.
 
 Copyright and contract must then be assessed separately. *Vault Corp. v. Quaid
 Software Ltd.* invalidated a state-act-backed decompilation restriction that
-conflicted with § 117. *Bowers v. Baystate Technologies, Inc.* later enforced a
+conflicted with § 117.
+
+*Bowers v. Baystate Technologies, Inc.* later enforced a
 private reverse-engineering promise under the First Circuit law the Federal
 Circuit predicted would apply and distinguished the statutory scheme in
 *Vault*. Neither decision proves that a physical-copy purchaser accepted a
@@ -71,7 +76,9 @@ lessee may authorize a copy created solely by activating a lawfully programmed
 machine for maintenance or repair, subject to use, destruction, and access
 limits. *Storage Technology Corp. v. Custom Hardware Engineering & Consulting,
 Inc.* applied that rule to an independent service company at the preliminary-
-injunction stage. It does not classify content modification, enhancement, or
+injunction stage.
+
+It does not classify content modification, enhancement, or
 reverse engineering as machine maintenance.
 
 ## Why Local Use Is Legally Different From Distribution

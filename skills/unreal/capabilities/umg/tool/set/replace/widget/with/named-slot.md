@@ -88,7 +88,9 @@ Before replacement, `GetNamedSlots` reported one `Content` binding from
 removed the host and promoted the button directly under `ContainerRoot` using
 `CanvasPanelSlot_0`, the host's former outer slot. A new named-slot read
 returned
-an empty array, and the resulting container compiled successfully. Both
+an empty array, and the resulting container compiled successfully.
+
+Both
 temporary Widget Blueprints and their virtual folder were deleted without disk
 residue.
 <!-- END MANUAL FIELD: project-verification -->

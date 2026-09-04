@@ -85,6 +85,7 @@ Before removal, `RightColumn` contained the moved `PrimaryAction` button.
 The call returned `true`. `GetWidgets` then returned only `RootCanvas` and
 `LeftColumn`, proving that the addressed panel and its child were removed as a
 subtree. Removing `RootCanvas` returned `true` and left an empty tree.
+
 `CompileWidgetBlueprint` returned `true` for both the populated moved tree and
 the final empty tree.
 <!-- END MANUAL FIELD: project-verification -->

@@ -87,7 +87,9 @@ The disposable actor Blueprint initially had only its construction and event
 graphs and no `ValidatePayload` implementation. The call returned the exact
 nested function-graph reference. `list_graphs` included that reference, and
 `list_functions` reported `ValidatePayload` with `bIsImplemented: true`.
-`get_graph` independently returned the same reference. The graph accepted four
+`get_graph` independently returned the same reference.
+
+The graph accepted four
 parameters and compiled successfully before exact removal.
 <!-- END MANUAL FIELD: project-verification -->
 

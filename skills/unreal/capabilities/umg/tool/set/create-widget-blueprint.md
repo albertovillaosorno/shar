@@ -85,7 +85,9 @@ The destination asset was absent before creation. The call returned the Widget
 Blueprint object reference, while `find_assets` returned its package path.
 `exists` returned `true`, `get_asset_class` returned
 `WBP_MCP_Validation_C`, and Blueprint parent inspection returned exactly
-`/Script/UMG.UserWidget`. UMG compilation returned `true`. Deleting the Widget
+`/Script/UMG.UserWidget`. UMG compilation returned `true`.
+
+Deleting the Widget
 Blueprint and its remaining virtual folder restored all existence checks. No
 content directory or `.uasset` file appeared during the unsaved test.
 <!-- END MANUAL FIELD: project-verification -->

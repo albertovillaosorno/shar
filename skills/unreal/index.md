@@ -33,6 +33,7 @@ Regeneration preserves text inside manual-field markers.
 Everything outside those markers is refreshed from live MCP metadata.
 The protected review revision is never advanced automatically.
 A version or interface change marks preserved guidance for review.
+
 The live schema is authoritative when generated files drift.
 Regenerate after Unreal Engine or Toolset plugin changes:
 

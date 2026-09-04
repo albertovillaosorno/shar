@@ -88,7 +88,9 @@ The call returned `returnValue: null`. The target coordinate came from the
 current directional light actor. A separate transform read showed the
 `PlayerStart` rotation changed from pitch `0`, yaw `180`, roll `0` to
 approximately pitch `-24.702454`, yaw `0`, roll `0`. Location and scale were
-unchanged. Reapplying the captured transform restored every component exactly.
+unchanged.
+
+Reapplying the captured transform restored every component exactly.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats

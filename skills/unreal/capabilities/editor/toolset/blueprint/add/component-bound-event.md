@@ -89,7 +89,9 @@ returned `PhysicsVolumeChangedDelegate`, `OnComponentActivated`, and
 `OnComponentDeactivated`. Binding `OnComponentActivated` returned
 `EventGraph.K2Node_ComponentBoundEvent_0`. `get_node_infos` reported type ID
 `AddEvent|OnComponentActivated(DefaultSceneRoot)`, position `(112, 0)`, and the
-`OutputDelegate`, `then`, `Component`, and `bReset` output pins. The graph DSL
+`OutputDelegate`, `then`, `Component`, and `bReset` output pins.
+
+The graph DSL
 gained
 `(event OnComponentActivated(DefaultSceneRoot) (Component bReset))`, and strict
 Blueprint compilation succeeded. Deleting the complete disposable validation

@@ -79,9 +79,12 @@ and the exact act remain necessary.
   Software, Ltd.*, 847 F.2d 255 (5th Cir. 1988), public opinion text. Available
   at: <https://cyber.harvard.edu/ilaw/Contract/vault.htm> (Accessed: 15 July
   2026).
+
 - [17 U.S.C. § 117](../statutes/17-usc-117.md).
 - [17 U.S.C. § 301](../statutes/17-usc-301.md).
+
 - [Bowers v. Baystate Technologies, Inc.](bowers-v-baystate-technologies.md).
 <!-- markdownlint-disable-next-line MD013 -->
+
 - [Software license reverse-engineering
   clauses](../contracts/software-license-reverse-engineering-clauses.md).

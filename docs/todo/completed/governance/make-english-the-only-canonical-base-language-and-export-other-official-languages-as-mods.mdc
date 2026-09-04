@@ -58,6 +58,7 @@ Canonical language-mod generation now lives in the internal Rust crate
 `src/localization/languages/`, not as a user-facing tool. The contract covers
 the
 original TextBible bytes/sidecar, dialogue RCF, localized readme, localized
+
 loading/license UI assets, and normalized cinematic audio. Original runtime FMV
 indexes 1/2/3 map to extracted tracks 02/03/04 for French/German/Spanish. Rust
 tests prove
@@ -65,6 +66,7 @@ French full-surface composition, Spanish track selection, and fail-closed UI
 requirements. A read-only probe of the current lawful source finds 21 localized
 loading/license assets for each of French/German/Spanish, dialogue archives of
 166,793,216 / 186,839,040 / 156,291,072 bytes respectively, and eight normalized
+
 movie packages carrying each localized track 02/03/04. English track 01 exists
 for all 16 normalized movie packages. Earlier disposable probes exported French,
 German, and Spanish bundles with 1,632 text records each and then cleaned all

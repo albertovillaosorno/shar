@@ -28,7 +28,9 @@ SlateInspectorToolset.SlateInspectorToolset
 Register an observer on a widget subtree so its refs are continuously kept up
 to date (~100ms tick). Call this on the window or panel you are about to work
 with. It ensures new widgets appearing in that subtree are assigned refs
-automatically. Unobserve when you are done. A shallow root observer (depth 0)
+automatically. Unobserve when you are done.
+
+A shallow root observer (depth 0)
 already covers top-level windows.
 
 ## When to use it

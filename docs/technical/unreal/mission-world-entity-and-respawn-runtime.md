@@ -158,7 +158,9 @@ One entity revision has exactly one state:
 `active` means the entity can participate in gameplay. `reserved` means one
 accepted interaction owns it. `consumed` means the current activation produced
 its accepted result. `attached` means it is owned by a declared vehicle or actor
-binding. `waiting_to_respawn` uses authoritative domain time, not actor
+binding.
+
+`waiting_to_respawn` uses authoritative domain time, not actor
 visibility.
 
 `released` is terminal for the current revision. A later respawn creates a new

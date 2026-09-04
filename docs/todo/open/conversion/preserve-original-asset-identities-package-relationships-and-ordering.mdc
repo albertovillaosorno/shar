@@ -1263,7 +1263,9 @@ The shipped CompositeDrawable loader resolves each authored effect name through
 `tParticleSystem`; its `tParticleSystemFactory` is instead a separate
 `tEffectFactory`. The system loader first resolves the factory and creates the
 named system entity. A missing `tEffect` lookup is tolerated and the composite
-simply omits that effect element. The catalog therefore marks a proven paired
+simply omits that effect element.
+
+The catalog therefore marks a proven paired
 particle-system occurrence as the runtime target without inventing a target for
 unresolved rows or discarding factory provenance.
 

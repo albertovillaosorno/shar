@@ -86,6 +86,7 @@ attempt before connecting `OutputDelegate` was rejected and left that value
 unchanged. The output was then connected to the `Delegate` input of
 `Utilities|Time|SetTimerbyEvent`. Assigning `MCP_CreateEventTarget` returned
 `null`; the exact getter returned that name and strict compilation passed.
+
 Reassigning `MCP_CreateEventAlternate` produced the same verified result.
 Passing an empty string was rejected, and the alternate assignment remained
 unchanged. Reassigning the first valid function restored

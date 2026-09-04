@@ -356,7 +356,9 @@ amount. Insufficient available units rejects that spawn without changing any
 other state. Destruction converts the reservation into one emitted coin batch.
 Collected units leave the reserve and enter the spendable ledger through
 ordinary
-collection transactions. Uncollected units that expire return to the reserve
+collection transactions.
+
+Uncollected units that expire return to the reserve
 exactly once. Despawn or cancellation before destruction releases the
 reservation
 without emitting a reward.

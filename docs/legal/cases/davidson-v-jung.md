@@ -25,6 +25,7 @@ It upheld the end-user and service agreements as enforceable contracts and held
 that the contract claims were not conflict-preempted by federal copyright law.
 The defendants had expressly accepted terms restricting reverse engineering.
 The court distinguished the state licensing statute invalidated in *Vault Corp.
+
 v. Quaid Software Ltd.* and followed the private-promise reasoning reflected in
 *Bowers v. Baystate Technologies, Inc.* and Eighth Circuit contract precedent.
 

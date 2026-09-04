@@ -3355,7 +3355,8 @@ fn billboard_quad_rejects_presentation_framing_drift() -> Result<(), String> {
     nested[8..12].copy_from_slice(&total.to_le_bytes());
     nested[perspective + 8..perspective + 12]
         .copy_from_slice(&(perspective_total + 4).to_le_bytes());
-    if auxiliary::billboard_quad_json(&nested, header_size, nested.len()).is_some()
+    if auxiliary::billboard_quad_json(&nested, header_size, nested.len())
+        .is_some()
     {
         return Err(String::from(
             "billboard quad accepted nested perspective payload bytes",

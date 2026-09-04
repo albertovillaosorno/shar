@@ -83,7 +83,9 @@ direct actors and subfolder behavior have been completely inventoried.
 The temporary folder contained exactly one `PlayerStart` actor and no
 subfolders. The call returned `returnValue: 1`. `get_folders` no longer returned
 the deleted path. Enumerating every remaining folder showed the actor belonged
-to none, proving that it had moved back to the Outliner root. Final cleanup
+to none, proving that it had moved back to the Outliner root.
+
+Final cleanup
 returned the same original three-folder inventory.
 <!-- END MANUAL FIELD: project-verification -->
 

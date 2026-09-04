@@ -106,7 +106,9 @@ never report or execute a partial subset as a complete plan. Import-manifest v2
 may additionally classify normalized packages as
 `requires-semantic-conversion`; those packages intentionally emit no operation
 until a deterministic domain compiler produces a concrete Unreal target, so
-they remain upstream completion blockers rather than MCP mutation work. Bundle
+they remain upstream completion blockers rather than MCP mutation work.
+
+Bundle
 index v2 carries their aggregate `semantic_blocker_count`; execution preflight
 requires that count to be zero before it can report a complete plan, even when
 no operations were emitted.
@@ -122,11 +124,13 @@ use synchronous automated asset-import tasks without replacement or implicit
 save. Static FBX pins the import to one combined `StaticMesh`, preserves
 authored
 normals, and disables material, texture, animation, LOD, collision, Nanite, and
+
 lightmap-UV generation. HAP copies verified bytes transactionally beneath
 `Content/Movies/Generated/SHAR/`, creates a `UFileMediaSource`, and stores the
 matching `./Movies/Generated/SHAR/...` path. All three routes leave package save
 and independent read-back to `plan-apply`; media rollback deletes the external
 payload before the asset. Material and texture assets remain separate planned
+
 operations. Repository-owned JSON semantic compilers and concrete factories,
 world assembly, runtime binding,
 validation, cook, and packaging remain explicit blocked work until their
@@ -136,6 +140,7 @@ contract. Source verification keeps portable plan identities separate from
 physical
 workspace locations: `extracted/...` and `fbx-assets/...` resolve below
 `.cache/pipeline/`, while logical `manifest.jsonl` resolves to
+
 `game/manifest/unreal.jsonl`. Reads do not follow links, SHA-256 streams from
 stable file descriptors, and physical paths stay out of public reports. If an
 import response is lost after the asset appears,
@@ -151,7 +156,9 @@ by Unreal's `call_tool` meta-tool. Before that meta-tool can run, the translator
 refreshes the live tool definition and validates the complete argument object.
 Required fields, JSON types, nested objects and arrays, enums, constants,
 patterns, supported bounds, additional-property policy, and supported
-composition assertions fail locally when they do not match. Unsupported
+composition assertions fail locally when they do not match.
+
+Unsupported
 assertion keywords and ambiguous global lookup fail closed rather than bypassing
 validation. This structural gate does not infer defaults or replace Unreal's
 semantic and postcondition checks. `raw-call` remains available for top-level
@@ -165,12 +172,16 @@ lifecycle taxonomy for connection, planning, execution, assurance, maintenance,
 and extension. `skills/unreal/workflows/README.md` is the only manual workflow
 map, while the generated central index renders the same grouped routing. Each
 per-tool file contains five project-evidence fields plus one protected reviewed-
-revision token. Regeneration updates the generated shell while preserving exact
+revision token.
+
+Regeneration updates the generated shell while preserving exact
 text between valid field markers. It derives review status from the installed
 Unreal MCP plugin `VersionName` and live interface digest; `1.0` is normalized
 to public SemVer `1.0.0`. The Python package CalVer remains separate and is not
 part of skill review identity. Mismatched or legacy guidance is marked **Review
-required** without data loss. The central index records the Unreal MCP version,
+required** without data loss.
+
+The central index records the Unreal MCP version,
 revision, and exact status counts. Malformed or unknown markers fail before
 cleanup or writes. Existing output ancestors, the generated index, and the
 capability tree must also be direct regular filesystem entries; symlinks,

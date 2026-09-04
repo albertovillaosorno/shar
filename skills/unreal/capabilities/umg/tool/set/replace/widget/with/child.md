@@ -83,7 +83,9 @@ its child in the same outer hierarchy position.
 The wrapper had exactly one child, `ActionButton`. The call returned `true`.
 `GetWidgets` changed from `RootCanvas`, `VerticalBox_0`, `ActionButton` to
 `RootCanvas`, `ActionButton`. The button became a direct child of `RootCanvas`
-and received `CanvasPanelSlot_0`. The resulting tree compiled successfully.
+and received `CanvasPanelSlot_0`.
+
+The resulting tree compiled successfully.
 <!-- END MANUAL FIELD: project-verification -->
 
 ### Known project caveats

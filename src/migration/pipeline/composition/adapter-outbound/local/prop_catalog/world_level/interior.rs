@@ -148,7 +148,8 @@ pub(super) type InteriorTriangleKey = [[i64; 3]; 3];
 /// Build a geometry-only mesh key after reviewed world placement.
 ///
 /// Triangle coordinates are quantized to one millimeter, each triangle is
-/// orientation-independent, and the complete triangle multiset is sorted before
+/// orientation-independent, and the complete triangle collection is sorted
+/// before
 /// hashing. This test-only diagnostic preserves authored triangle multiplicity.
 ///
 /// # Errors

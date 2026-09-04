@@ -26,7 +26,9 @@ read-only observation rows use `count`. A row must select exactly one, and every
 coordinate row in one ledger must use the same count field. Optional `kind` and
 manifest-header metadata must retain their public JSON shapes when present;
 present taxonomy and required-file lists must exactly retain the producer's
-canonical values and order. Required-file rows are limited to the schema-v2
+canonical values and order.
+
+Required-file rows are limited to the schema-v2
 public path/minimum pairs, so
 explicit JSON `null` is not treated as absence. Excessively nested JSON also
 fails through the same path-free malformed-ledger error rather than escaping as
@@ -34,7 +36,9 @@ a parser recursion failure. Coordinate rows must also map to
 one producer-classified bucket; an optional `kind` value must match that exact
 classification, including nested RTF `document` rows. JSON object members must
 retain the producer's canonical field
-order, including nested required-file metadata. Coordinate rows must remain in
+order, including nested required-file metadata.
+
+Coordinate rows must remain in
 the producer's deterministic `(dir, ext)` order. Those metadata fields remain
 ignored by the metric.
 Directory
@@ -44,7 +48,9 @@ normalization (with the empty string reserved for the game root) and must not
 contain host-reserved punctuation, controls, invisible path modifiers, or
 trailing dot/space aliases rejected by source-tree intake. After any canonical
 collision ordinal is removed, every directory component must be the
-concatenation of the producer's two lowercased endpoint characters. The helper
+concatenation of the producer's two lowercased endpoint characters.
+
+The helper
 mirrors the Unicode 17 case additions used by Rust 1.97 even though the bundled
 Python 3.14 runtime exposes Unicode 16, so newly cased uppercase characters
 cannot masquerade as producer-normalized aliases. Normal endpoints contribute
@@ -53,14 +59,18 @@ expansion (`i` plus combining dot), which accounts for the only valid 3- or
 4-scalar component shapes. Other short readable aliases are
 rejected instead of entering calibration evidence. Coordinate
 extensions must likewise be nonempty and lowercase; files without
-extensions use the manifest's `(none)` token. Coordinate counts, required-file
+extensions use the manifest's `(none)` token.
+
+Coordinate counts, required-file
 minima, and each
 ledger's total count must fit the unsigned 64-bit range used by the supported
 64-bit Rust manifest producers. Observation `count` rows must be positive, while
 policy `min` rows may remain zero for optional coordinates. The generated
 game-root `png` coordinate is producer-owned optional policy and therefore may
 carry only zero; it cannot contribute observed or programmatic units. Every
-ledger must still contain at least one coordinate row. Measurement additionally
+ledger must still contain at least one coordinate row.
+
+Measurement additionally
 requires a candidate to contain at least one positive structural unit, matching
 producer observations while still allowing optional zero-valued `min` rows
 alongside real evidence. Signed-zero integer aliases are rejected instead of
@@ -72,7 +82,9 @@ the canonical
 producer framing: UTF-8, compact JSON token framing, LF-only record boundaries,
 no outer record whitespace, and a final LF. JSON whitespace between tokens
 and escaped object-member names are rejected rather than normalized; valid JSON
-string-value escapes remain decoded. Each ledger is opened once and its device,
+string-value escapes remain decoded.
+
+Each ledger is opened once and its device,
 inode, modification
 time, platform `ctime`, and byte count must remain identical from pre-open
 inspection through an immediate opened-path check, the completed read, and the
@@ -81,7 +93,9 @@ final path check. Descriptor/current-path parity carries redirect protection;
 count vectors are captured once and validated as stable snapshots before
 measurement; their coordinates must resolve to the same producer bucket
 taxonomy and complete collision-family shape as parsed ledgers. A stateful
-mapping therefore cannot change counts between validation and scoring. The
+mapping therefore cannot change counts between validation and scoring.
+
+The
 command never
 prints an admission result or embeds an acceptance threshold. Input failures
 omit local ledger paths.

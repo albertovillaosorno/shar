@@ -134,10 +134,12 @@ is never reconstruction input and it does not itself prove software is safe.
    is owned under `src/localization/languages/` and is emitted as deterministic
    content-only SHAR language mods. Each generated language overlay carries a
    `shar.mod-package.v1` `mod.json` whose identity and content revision are
-   independent of its storage location. The Rust implementation covers the
-   complete language surface available in the lawful source: text,
-   dialogue/audio archives, localized UI art, and localized cinematic audio
-   tracks. Missing language content fails closed instead of being invented.
+   independent of its storage location.
+
+   The Rust implementation covers the complete language surface available in
+   the lawful source: text, dialogue/audio archives, localized UI art, and
+   localized cinematic audio tracks. Missing language content fails closed
+   instead of being invented.
 
    If an expected official language is not emitted, treat that as a source
    validation result rather than copying another language into its place. For
@@ -238,7 +240,9 @@ algorithm engine binds replay to caller-supplied local source evidence,
 validates its embedded source and target descriptors, and refuses wrong or
 tampered evidence before writing replay output. Ordinary source records retain
 exact SHA-256 binding. A direct-file variant source may instead carry a bounded
-projection without a source hash (`offset-mask-set-v1`). Replay extracts the
+projection without a source hash (`offset-mask-set-v1`).
+
+Replay extracts the
 common bytes from one authenticated positional layout and derives the source key
 from those bytes, not from the edition-specific executable hash. There is no
 parallel integrity file.
@@ -364,7 +368,9 @@ enjoy, learn from the bugs you create, fix them, and iterate. Manual coding is a
 perfectly valid craft; it is simply one execution mechanism among many. SHAR is
 interested in what a mod does, how safely and coherently it is built, and
 whether
-its author had fun creating it—not in gatekeeping the author’s keyboard. Life is
+its author had fun creating it—not in gatekeeping the author’s keyboard.
+
+Life is
 too short to turn syntax entry into a purity test.
 
 **TODO: Make `AGENTS.md` default to SHAR mod authoring and validate C++ with

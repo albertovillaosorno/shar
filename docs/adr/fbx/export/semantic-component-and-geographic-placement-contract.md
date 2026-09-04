@@ -46,7 +46,9 @@ component when hinge or animation evidence supports it. Doors, hood panels,
 steering elements, lights, damage pieces, and other moving parts are separated
 only when package, hierarchy, pivot, controller, collision, or animation
 evidence
-supports that contract. Visual adjacency alone is insufficient.
+supports that contract.
+
+Visual adjacency alone is insufficient.
 
 World FBX separates terrain from structures placed above it. Houses, buildings,
 windows, doors, signs, street furniture, vegetation, interactive props,
@@ -70,7 +72,9 @@ relationships can reconstruct the whole map without manual placement. Component
 separation may use scene hierarchy, package membership, connected components,
 material assignments, locators, pivots, collision, controllers, and animation
 evidence. When evidence is insufficient, the pipeline fails closed or consumes
-a reviewed deterministic classification annotation. A manual edit in a content
+a reviewed deterministic classification annotation.
+
+A manual edit in a content
 authoring application is not the production assembly process.
 
 ## Consequences

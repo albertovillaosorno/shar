@@ -29,7 +29,9 @@ distribution with knowledge of user conduct.
 The rule applied regardless of whether the peer-to-peer software was capable of
 substantial noninfringing uses. *Sony Corp. of America v. Universal City
 Studios, Inc.* limited secondary liability based only on product distribution
-and knowledge that some users might infringe. It did not protect active
+and knowledge that some users might infringe.
+
+It did not protect active
 inducement.
 
 The reviewed evidence could support inducement because the distributors sought

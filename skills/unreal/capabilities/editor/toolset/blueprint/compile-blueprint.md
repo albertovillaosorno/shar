@@ -85,7 +85,9 @@ The call completed with `returnValue: null` and no error while
 `BP_MCP_Validation_C` class. An independent asset-backed scene spawn produced a
 valid actor with the requested label and transform, proving that the compiled
 class was usable. Compilation alone created no content directory or `.uasset`
-file. The spawned actor, Blueprint asset, and virtual folder were then removed
+file.
+
+The spawned actor, Blueprint asset, and virtual folder were then removed
 without residue.
 <!-- END MANUAL FIELD: project-verification -->
 

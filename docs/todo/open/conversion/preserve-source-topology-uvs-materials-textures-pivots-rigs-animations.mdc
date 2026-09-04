@@ -837,7 +837,9 @@ The shipped CompositeDrawable loader resolves each authored effect name through
 `tParticleSystem`; its `tParticleSystemFactory` is instead a separate
 `tEffectFactory`. The system loader first resolves the factory and creates the
 named system entity. A missing `tEffect` lookup is tolerated and the composite
-simply omits that effect element. The catalog therefore marks a proven paired
+simply omits that effect element.
+
+The catalog therefore marks a proven paired
 particle-system occurrence as the runtime target without inventing a target for
 unresolved rows or discarding factory provenance.
 
@@ -1494,7 +1496,6 @@ Shipped `tPrimGroupLoader::LoadStreamed` retains every serialized index and the
 runtime submits the complete index count, so no source-backed deletion exists.
 Fused interiors now append every source mesh and triangle in authored order;
 the legacy duplicate-removal counter remains zero.
-
 
 The post-fix 129-package replay remains at 4,002 files and 12,240 placements,
 while total bytes increase by only 64 from 449,794,224 to 449,794,288. All eight

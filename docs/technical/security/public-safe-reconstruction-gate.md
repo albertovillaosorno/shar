@@ -20,6 +20,7 @@ only to SHAR-owned cache/output locations. Ordinary `shar.algorithm.v1` source
 records retain exact SHA-256 binding. A projected variant source record instead
 contains no source hash: it authenticates only public-safe positional masks, and
 replay derives the source key from the caller's bytes selected by those masks.
+
 Protected-target hashes remain target-integrity descriptors. None of these
 values supplies reconstruction bytes or acts as an antivirus verdict.
 
@@ -39,7 +40,9 @@ generation adds `~01`, `~02`, and later ordinals according to the directories
 present in that scan. A candidate missing one colliding directory may therefore
 expose the same structural family without the suffix. Calibration strips only
 canonical generated ordinals and aggregates those family counts before
-comparison. Hard manifest and deep validation keep their exact coordinates; this
+comparison.
+
+Hard manifest and deep validation keep their exact coordinates; this
 normalization cannot admit a source.
 
 A **minimum installation** is not “an installation that reaches 60%.” It is a
@@ -74,14 +77,18 @@ rational values and deliberately exposes no acceptance result or threshold. The
 `observe-manifest-counts` source adapter can produce a public-safe count ledger
 from a lawful local installation without writing into it. Observation rows use
 `count` while tracked minimum-policy rows use `min`; the similarity CLI accepts
-either form but rejects rows that mix the two meanings. Parsed rows must also
+either form but rejects rows that mix the two meanings.
+
+Parsed rows must also
 resolve to the manifest producer's canonical bucket classification, and a
 present `kind` field must match that classification exactly. When a schema
 header includes taxonomy or required-file metadata, those lists must retain the
 producer's exact canonical values and order. Parsed coordinate rows also retain
 the producer's deterministic `(dir, ext)` ordering. It reports
 only aggregate units and ratios and keeps local input paths out of validation
-diagnostics. Observation fails when exact mandatory files exist but no countable
+diagnostics.
+
+Observation fails when exact mandatory files exist but no countable
 structural coordinate remains, so a successful observation always supplies a
 nonempty vector for calibration.
 
@@ -128,7 +135,9 @@ Repository policy additionally scans every publishable family
 non-buildable state. The active settings authority must be a real file and
 match Rust's exact settings schema, unsigned ranges, and resource relations. Its
 hash is reconstructed in the Rust `SettingsDocument` field order rather than
-depending on source JSON member order. Every substantive plan must decode as a
+depending on source JSON member order.
+
+Every substantive plan must decode as a
 `shar.algorithm.v1` object with the exact top-level source/target contract,
 lowercase hashes for ordinary source records and all target records, validated
 projection metadata without a source hash when present, 12-byte nonce evidence,
@@ -142,6 +151,7 @@ decoding.
 Generic replay checks the fixed
 nonce and protected-payload encoded lengths and canonical lowercase hex without
 decoding protected payloads.
+
 It also validates source record paths, resource limits, identity uniqueness, and
 input grouping before collecting
 caller source evidence, so malformed documents fail before private-source
@@ -153,7 +163,9 @@ portable-host policy, with an empty source path reserved for direct-file
 evidence. Source records also
 retain the collector's contiguous input numbering from zero, stable relative
 path order within each directory input, unique non-overlapping portable file
-identities, and one root kind per input. Directory targets retain the algorithm
+identities, and one root kind per input.
+
+Directory targets retain the algorithm
 creator's stable portable UTF-8 relative-path order as well. Source directory
 records use that same portable order before hashing and serialization. Portable
 identity comparisons mirror Rust 1.97's Unicode 17 uppercase additions even
@@ -170,7 +182,9 @@ contain only source spans and positional masks; every alternative selects the
 same common-byte count, duplicate layouts collapse, at most 256 distinct layouts
 are allowed, one projected source input is allowed, and both spans and aggregate
 mask bytes remain under the active
-file limit. Replay reads the caller's file once, evaluates only layouts whose
+file limit.
+
+Replay reads the caller's file once, evaluates only layouts whose
 spans fit, derives a candidate source key from each selected byte sequence, and
 accepts the first candidate that authenticates the protected plan. The user's
 edition-specific whole executable hash is neither stored nor used for that
@@ -194,7 +208,9 @@ material. Source evidence itself must also contain one record per physical file;
 hard-link aliases are rejected before source file/byte minima are evaluated and
 cannot inflate admission evidence. Target collection also rejects repeated
 physical files because this ordinary-file plan format cannot preserve hard-link
-topology faithfully. Directory replay also rejects target paths
+topology faithfully.
+
+Directory replay also rejects target paths
 that overlap by ancestry, so one protected file cannot become the parent of
 another protected file during sequential persistence. Target identities use the
 same Unicode-uppercase portable comparison as filesystem evidence, so paths
@@ -203,7 +219,9 @@ plan remains
 unusable without the local source evidence admitted by its source-bound replay
 contract. Algorithm authoring publishes the plan with create-new persistence,
 so an
-existing plan path is rejected atomically instead of being replaced. Replay uses
+existing plan path is rejected atomically instead of being replaced.
+
+Replay uses
 the same create-new byte persistence for every final recovered file, closing the
 absence-check/replacement race at the filesystem write itself.
 The

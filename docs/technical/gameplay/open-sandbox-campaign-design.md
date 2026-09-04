@@ -447,7 +447,9 @@ The player has a visible health bar. Radiation applies rate-based damage through
 volumes, surfaces, weather exposure, or declared hazards. Zombies can attack.
 Nearby vehicle explosions are lethal when the player is inside a validated
 lethal
-radius. Mission death restarts from the accepted checkpoint.
+radius.
+
+Mission death restarts from the accepted checkpoint.
 
 The Devil Homer costume changes zombie affiliation so ordinary zombies do not
 initiate attacks. Bosses, scripted enemies, radiation, explosions, and explicit

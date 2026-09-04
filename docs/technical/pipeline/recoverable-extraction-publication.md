@@ -140,7 +140,9 @@ successful run moves the accepted root to a temporary backup, publishes the
 complete staging root, and removes the backup. A failed conversion removes only
 staging; a failed publish restores the accepted backup; startup recovery
 restores
-an interrupted backup before discarding stale staging. Symbolic links and
+an interrupted backup before discarding stale staging.
+
+Symbolic links and
 non-directory transaction identities fail closed.
 
 This stage-local transaction is necessary even though complete `extract-game`

@@ -42,6 +42,7 @@ create mip chains, select platform compression, construct material instances,
 and bind approved maps. Base color is required for textured materials. Normal,
 specular, roughness, metallic, glossiness, emissive, and ambient-occlusion maps
 remain optional unless the approved FBX preparation recipe marks them required.
+
 A detected map is bound only after semantic and color-space validation.
 
 Approved components map to a closed native representation catalog: static mesh,

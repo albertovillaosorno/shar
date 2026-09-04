@@ -72,7 +72,9 @@ explicitly delegated to stage semantics. Of 3,605 objective-scoped commands,
 3,498 emit objective directives, those same 95 have required stage ownership,
 and
 12 are structural condition commands. All 375 condition-scoped commands remain
-typed across 408 condition bindings. Opaque `AddStage` flags, noncanonical
+typed across 408 condition bindings.
+
+Opaque `AddStage` flags, noncanonical
 `niether`, undocumented condition values, AI/race source tuples, collectible
 extension fields, dialogue compatibility fields, and dynamic-load compatibility
 arguments remain provenance rather than inferred runtime behavior.
@@ -107,7 +109,9 @@ decoded RADMusic state machine or infer playback/mix/transition policy. All 14
 reviewed `StageStartMusicEvent` calls now bind independently to their exact
 owning stage. Each preserves its authored token plus the reviewed
 `mission-drama` delivery channel and `legacy-case-insensitive-key32` transform
-identity. No numeric legacy key is synthesized; native migration still needs a
+identity.
+
+No numeric legacy key is synthesized; native migration still needs a
 separately validated key/event bridge and must not infer playback or mix policy.
 
 Completion-dialog identities now resolve through the canonical mission-dialog
@@ -137,7 +141,9 @@ or the exact physical vehicle package; it preserves `current` as a symbolic
 runtime vehicle and treats the reviewed stage-driver `none` token as absence
 rather than as a character. Missing or ambiguous referenced participants block
 mission intake. Explicit `LoadP3DFile` commands also bind their first path
-argument to one canonical indexed package. The source loader's optional heap and
+argument to one canonical indexed package.
+
+The source loader's optional heap and
 inventory-section parameters are validated and retained only as migration
 provenance; they do not become target allocation policy or additional P3D
 references.
@@ -156,7 +162,9 @@ member identities. Of 194 reviewed mission-start/animated camera component
 references, 190 are ambiguous under global lookup, but all 194 have one exact
 case-sensitive match when qualified by the source script's `levelNN`; none are
 missing. Four unreferenced level-local component keys retain multiple candidates
-and remain ambiguous if referenced later. No fallback across levels is allowed,
+and remain ambiguous if referenced later.
+
+No fallback across levels is allowed,
 and the package binding does not assign runtime camera timing, blending, or
 playback behavior.
 
@@ -169,6 +177,7 @@ context also adds every indexed P3D loaded by typed `SetDynaLoadData` or
 `StreetRacePropsLoad` evidence; Dyna paths receive the format's implicit `art/`
 root when needed, while unload evidence is never promoted to an active package.
 Of 462 reviewed initial Dyna P3D references, 461 map to decoded package roots.
+
 One valid source-requested root has no decoded package; that reference remains
 explicit evidence but does not become locator-visible, and no replacement root
 is inferred.
@@ -176,7 +185,9 @@ Typed locator-bearing initialization, stage, and objective directives use two
 visibility phases. Script-time lookups see static Level/Mission packages only;
 reviewed deferred lookups may additionally see initial Dyna packages. Exact
 Event and CarStart script-time references follow reviewed static load order,
-while generic and post-Dyna duplicate lookups stay ambiguous. The documented
+while generic and post-Dyna duplicate lookups stay ambiguous.
+
+The documented
 `ActivateVehicle` `NULL` sentinel is not treated as a locator. Cross-source
 binding still rechecks source size and SHA-256 against verified Unreal evidence.
 
@@ -200,7 +211,9 @@ searches remaining sections in creation order; static loading creates Level
 before Mission, and an exact-type collision within one section keeps the first
 loaded object. An audit of 751 exact script-time references found only two
 multi-candidate cases, both CarStart Level-versus-Mission collisions, and both
-therefore select Level. Generic compatible-subtype duplicates and post-Dyna
+therefore select Level.
+
+Generic compatible-subtype duplicates and post-Dyna
 exact duplicates remain fail-closed because their ordering is not statically
 stable. Camera best-side retains the same reviewed Level-before-Mission rule.
 
@@ -208,14 +221,18 @@ Typed stage markers now classify source behavior before graph emission. Iris and
 fade are visual completion requests, with iris taking precedence if both are
 authored. Stay-black and stage-complete are presentation policy, not mission
 results. Level-over requests chapter completion and game-over requests game
-completion. Authored topology now preserves dense stage order and the next
+completion.
+
+Authored topology now preserves dense stage order and the next
 source neighbor without promoting adjacency to runtime flow. All 90 explicit
 `final` markers and all four explicit level/game terminals occur only on the
 last stage; 64 selected mission sources legitimately omit `final`. Ordinary
 successor, retry, rollback, and recovery edges remain unresolved. The typed
 transition report also retains all 137 authored marker occurrences across 127
 stages with exact source ordinals and
-source order. Three stages author `ShowStageComplete` twice; both occurrences
+source order.
+
+Three stages author `ShowStageComplete` twice; both occurrences
 survive into definition-core evidence instead of collapsing into one boolean.
 
 Checkpoint evidence is retained on that authored topology without defining a
@@ -334,7 +351,9 @@ findings. Any context finding blocks semantic compilation before Unreal
 planning;
 unknown gameplay commands remain unmapped rather than becoming runtime APIs.
 Version 3 additionally carries reviewed compatibility adaptations and requires
-independent fingerprint validation for each one. Semantic intake independently
+independent fingerprint validation for each one.
+
+Semantic intake independently
 replays context nesting and reproduces every producer-derived summary, ordered
 `loadp3d` reference, and semantic role from the normalized statements, so a
 forged clean finding list or stale summary cannot bypass conversion policy.
@@ -368,7 +387,9 @@ Condition schema identity now survives the equivalent semantic projection. All
 versioned `legacy-mission-condition.*.v1` schema id. The 6 objective-scoped
 conditions also retain the exact root `AddObjective` source ordinal; the other
 402 remain explicitly stage-scoped. Source-runtime review establishes that each
-violated condition places its owning stage in the failure state. It does not
+violated condition places its owning stage in the failure state.
+
+It does not
 establish retry, rollback, checkpoint restore, abort, or successor policy.
 
 Semantic ownership is now explicit as well. Every one of the 611 semantic
@@ -377,7 +398,9 @@ ordinal. Every one of the 408 semantic condition bindings carries the same stage
 ownership plus whether the source declared it directly on the stage or while the
 root objective was open; the six objective-scoped rows also carry the root
 objective ordinal itself. Canonical character/vehicle participant references
-retain matching stage/objective/condition owner chains. Final compilation
+retain matching stage/objective/condition owner chains.
+
+Final compilation
 therefore does not need source-order heuristics to reconstruct membership.
 
 Downstream resolved bindings now retain those same owners rather than flattening
@@ -387,7 +410,9 @@ and four pickup targets preserve the exact stage and, where applicable,
 objective owner available at semantic projection time. Stage-scope pickup state
 props also preserve the exact `AddStage` owner. This is provenance only; it does
 not assign playback, navigation, state-prop lifetime, retry, rollback, or
-recovery behavior. The definition-core join now consumes the 43 countdown
+recovery behavior.
+
+The definition-core join now consumes the 43 countdown
 blocks, 36 collectible-to-waypoint links, and 180 resolved objective NPC
 waypoints directly under those exact owners rather than validating and
 discarding them.
@@ -409,7 +434,9 @@ key.
 The joined rows retain checkpoint/final/terminal evidence, canonical objective
 kind or explicit unavailable identity, typed direct objective/condition
 parameters, condition schema/scope/root-objective ownership, visual transition,
-stay-black, stage-complete presentation, and the authored next neighbor. The
+stay-black, stage-complete presentation, and the authored next neighbor.
+
+The
 reviewed corpus contains 131 objective invocations and 11 condition invocations
 with nonempty direct parameters. These rows deliberately contain no runtime
 success/failure transition ids, so final `USharMissionDefinition` emission
@@ -424,7 +451,9 @@ events, 36 collectible-waypoint bindings, 180 objective NPC waypoints, and four
 pickup state-prop bindings. All
 154 source ids resolve to verified mission-script evidence. Each condition row
 carries its reviewed `stage-failure` violation effect, and the four pickup
-bindings retain two mission-scope plus two stage-scope declarations. Before
+bindings retain two mission-scope plus two stage-scope declarations.
+
+Before
 publication, the bundle gate independently revalidates dense stage order,
 strictly increasing authored source ordinals, the exact authored next neighbor,
 final/terminal placement, and the absence of unresolved runtime edge fields.
@@ -850,7 +879,9 @@ lexeme, and car-start locator; it binds the NPC model to canonical character
 package evidence and requires each waypoint to follow a unique matching
 storefront. The 58 immediate position/waypoint references are checked against
 the exact family load sibling; current decoded evidence resolves 11 and records
-47 as `Missing` without claiming runtime absence. The 32 car-start locators stay
+47 as `Missing` without claiming runtime absence.
+
+The 32 car-start locators stay
 deferred because their runtime lookup occurs after vehicle loading.
 
 The global reward source now supplies deterministic merchandise and price

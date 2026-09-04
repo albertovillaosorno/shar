@@ -54,7 +54,9 @@ upper eyelid, and lower eyelid. Both eyes therefore expose eight semantic layer
 instances, but they need not become eight mesh objects. Layer bytes and semantic
 metadata produce a deterministic eye-profile hash. Characters with identical
 eye evidence may reference one shared profile, while any character can override
-one or more layers through a character-local profile. This phase does not add or
+one or more layers through a character-local profile.
+
+This phase does not add or
 change gaze, blink, controller, bone, transform, or texture-animation behavior.
 
 Base-color regeneration samples the validated source color associated with each
@@ -63,7 +65,9 @@ triangles. Flat-color regions are represented by stable neutral base colors.
 Authored patterns and details are resampled into their owning regions. Color
 normalization operates in linear light against a neutral daylight reference,
 preserves intended pigment relationships, and avoids baking one campaign level's
-illumination into the texture. Published base-color PNGs use the declared sRGB
+illumination into the texture.
+
+Published base-color PNGs use the declared sRGB
 encoding. Runtime lighting and time of day remain responsible for environmental
 appearance.
 
@@ -83,7 +87,9 @@ inverse-bind matrices, skin weights, animation local transforms, attachment
 identities, and deformation results remain invariant. A display change is
 accepted only when the same FBX metadata is interpreted consistently by the
 supported consumers and mathematical deformation remains unchanged. Importer-
-specific sidecars are not canonical. When visual continuity or support-bone
+specific sidecars are not canonical.
+
+When visual continuity or support-bone
 hiding cannot be represented safely in FBX metadata, cleanup is deferred rather
 than approximated through rest-pose or hierarchy changes.
 

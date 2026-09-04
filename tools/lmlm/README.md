@@ -66,7 +66,9 @@ export is republished from
 edited WIP, `mod.json` is regenerated from those current members instead of
 copying stale package metadata. Existing exports are never silently
 overwritten,
-and a stale/tampered export package fails reuse. Lua and other legacy source
+and a stale/tampered export package fails reuse.
+
+Lua and other legacy source
 files are treated as data; archive content is never executed.
 
 ## Scope

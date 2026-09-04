@@ -27,7 +27,9 @@ UMGToolSet.UMGToolSet
 
 Compiles a widget blueprint. Returns false with error details if compilation
 fails. Errors include missing BindWidget bindings, type mismatches, and graph
-errors. Call after all widgets and properties are set. Save separately via
+errors. Call after all widgets and properties are set.
+
+Save separately via
 AssetTools.save_asset.
 
 ## When to use it
