@@ -801,26 +801,17 @@ composites; supplemental runtime bindings remain separate from authored rows.
 Semantic deduplication still clears the aggregate source provenance before
 hashing.
 
-The remaining particle relationship is intentionally unresolved. For all 537
-same-name factory/system pairs, the particle-system payload explicitly names the
-same-name factory through `factory_name`, establishing that those two physical
-rows belong together.
+The historical v14 boundary retained these effect rows without interpreting
+particle resources. For all 537 same-name factory/system pairs, the
+particle-system payload explicitly names the same-name factory through
+`factory_name`, establishing that those two physical rows belong together.
+Later shipped-runtime evidence below resolves the system-vs-factory role without
+changing that preserved pair provenance.
 
-It still does not establish whether the composite effect row designates the
-factory, the system instance, or another runtime abstraction. The other 267
-effect identities have neither exact same-package row. No first-match, kind
-preference, or ordinal heuristic is introduced.
-
-`shar.world-model-props.v14` now preserves authored effect relationships on the
-matched primary world composite without resolving particle resources. Across
-the 425 matched model composites, 340 composites carry 468 effect rows: 466
-sort values are 0.5 and two are 0.1. Each row retains its authored effect index,
-identity, skeleton joint, binary translucency, and optional source-width `f32`
-sort value in exact composite effect order.
-
-This v14 evidence is provenance-only. It does not select a particle-system
-factory or particle-system instance, and it does not change model routing,
-semantic deduplication, or runtime rendering behavior. The broader terrain-world
+Across the 425 matched model composites, 340 composites carry 468 effect rows:
+466 sort values are 0.5 and two are 0.1. Each row retains its authored effect
+index, identity, skeleton joint, binary translucency, and optional source-width
+`f32` sort value in exact composite effect order. The broader terrain-world
 corpus contains 650 effect rows across 496 composites, but only the 468 rows on
 matched model composites belong to the current world-model catalog boundary.
 
@@ -840,17 +831,19 @@ particle resources from those records.
 
 `shar.world-model-props.v16` retains the exact package-local physical pair
 when an authored effect has one unique same-name factory and one unique
-same-name particle system. The system must identify that same logical effect
-through
-`factory_name`, and both normalized rows must resolve to exact phase-three
+same-name particle system. The system must identify that same logical
+effect through `factory_name`, and both normalized rows must resolve to exact
+phase-three
 `particle` / `p3d-particle` members by path and source ordinal.
 
 The shipped CompositeDrawable loader resolves each authored effect name through
-`P3D::Find<tEffect>`. A `tParticleSystem` is a `tEffect`, while its
-`tParticleSystemFactory` is a separate `tEffectFactory`; the system loader first
-resolves the factory and creates the named system entity. The catalog therefore
-marks the paired particle-system occurrence as the runtime effect target without
-discarding its factory provenance.
+`P3D::Find<tEffect>`. The shipped runtime has one concrete `tEffect` subclass:
+`tParticleSystem`; its `tParticleSystemFactory` is instead a separate
+`tEffectFactory`. The system loader first resolves the factory and creates the
+named system entity. A missing `tEffect` lookup is tolerated and the composite
+simply omits that effect element. The catalog therefore marks a proven paired
+particle-system occurrence as the runtime target without inventing a target for
+unresolved rows or discarding factory provenance.
 
 Current matched-world evidence yields 248 such effect pairs, retaining 496
 classified physical member references across 480 unique phase-three member IDs,
