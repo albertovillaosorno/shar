@@ -287,6 +287,66 @@ fn world_fbx_write_preserves_source_mesh_order() -> Result<(), String> {
     result.and(cleanup)
 }
 
+
+#[test]
+fn world_fbx_rejects_repeated_index_triangles_before_unreal_import()
+-> Result<(), String> {
+    let root = temporary_root().with_file_name(format!(
+        "shar-world-repeated-index-test-{}",
+        std::process::id()
+    ));
+    remove_if_present(&root)?;
+    fs::create_dir_all(&root).map_err(|error| {
+        format!("repeated-index fixture root creation failed: {error}")
+    })?;
+    let group = PrimitiveGroup::new_preserving_repeated_indices(
+        0,
+        "interior-material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        Vec::new(),
+        &[0, 0, 1],
+    )
+    .map_err(|error| format!("repeated-index fixture failed: {error:?}"))?;
+    let mesh = MeshAsset::new("repeated-index", vec![group])
+        .map_err(|error| format!("repeated-index mesh failed: {error:?}"))?;
+    let material = MaterialBinding::new("interior-material", None)
+        .map_err(|error| format!("repeated-index material failed: {error:?}"))?;
+    let mut content = MasterContent {
+        meshes: vec![mesh],
+        materials: BTreeMap::from([(material.material_name.clone(), material)]),
+        ..MasterContent::default()
+    };
+    let result = write_content_fbx(
+        "repeated-index",
+        "repeated-index.fbx",
+        &mut content,
+        &root,
+        ModelExportRootPolicy::ReflectX,
+    );
+    let message = match result {
+        Ok(_record) => {
+            return Err(
+                "repeated-index world FBX did not fail closed".to_owned()
+            );
+        },
+        Err(error) => error.to_string(),
+    };
+    if !message.contains("world FBX is not Unreal-importable")
+        || !message.contains("triangle 0")
+        || !message.contains("[0, 0, 1]")
+    {
+        return Err(format!(
+            "repeated-index rejection lost exact topology evidence: {message}"
+        ));
+    }
+    if root.join("repeated-index.fbx").exists() {
+        return Err(
+            "repeated-index FBX was published before rejection".to_owned()
+        );
+    }
+    remove_if_present(&root)
+}
+
 #[test]
 fn interior_fusion_preserves_authored_face_multiplicity_and_order()
 -> Result<(), String> {

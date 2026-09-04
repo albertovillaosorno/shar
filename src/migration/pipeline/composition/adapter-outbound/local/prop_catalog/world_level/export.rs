@@ -537,6 +537,35 @@ fn publish_nested_content_textures(
     Ok(())
 }
 
+/// Reject topology that Unreal's FBX static-mesh importer cannot consume
+/// safely.
+fn validate_unreal_importable_topology(
+    relative_path: &str,
+    meshes: &[MeshAsset],
+) -> Result<(), PipelineError> {
+    for mesh in meshes {
+        for group in &mesh.groups {
+            if let Some((triangle, indices)) =
+                group.triangles.iter().enumerate().find(|(_ordinal, indices)| {
+                    indices[0] == indices[1]
+                        || indices[0] == indices[2]
+                        || indices[1] == indices[2]
+                })
+            {
+                return Err(PipelineError::new(format!(
+                    concat!(
+                        "world FBX is not Unreal-importable: ",
+                        "repeated-index triangle at {}, mesh {}, group {}, ",
+                        "triangle {}: {:?}"
+                    ),
+                    relative_path, mesh.name, group.index, triangle, indices
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Write one non-empty package scene and return its stable artifact record.
 fn write_content_fbx(
     scene_name: &str,
@@ -550,6 +579,7 @@ fn write_content_fbx(
     }
     apply_registered_algorithm(relative_path, &mut content.meshes)?;
     ensure_unique_names(&content.meshes)?;
+    validate_unreal_importable_topology(relative_path, &content.meshes)?;
     retain_used_presentation(content);
     let surface_semantics =
         world_surface_semantics(&content.meshes, &content.materials)?;
