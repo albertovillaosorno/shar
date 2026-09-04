@@ -697,3 +697,72 @@ fn runtime_first_duplicate_texture_binds_unique_shader() -> Result<(), String> {
     }
     Ok(())
 }
+
+
+#[test]
+fn shared_texture_authority_preserves_authored_name_over_cache_name()
+-> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-shared-normalized-texture-{}",
+        std::process::id()
+    ));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let package = root.join("package");
+    let shader_dir = package.join("components/shader");
+    let shared_dir = root.join("shared");
+    let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&shared_dir).map_err(|error| error.to_string())?;
+    fs::write(
+        shader_dir.join("glass.json"),
+        concat!(
+            r#"{"name":"glass","num_params":1,"params":[{"#,
+            r#""kind":"texture","param":"TEX","#,
+            r#""value":"Krusty_ HumanCola_ Glass_ 8bitt_64x64.bmp"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let external = shared_dir.join(
+        "Krusty__HumanCola__Glass__8bitt_64x64.png",
+    );
+    fs::write(&external, b"source-png").map_err(|error| error.to_string())?;
+    let external_text = external
+        .to_str()
+        .ok_or_else(|| "shared fixture path is not UTF-8".to_owned())?;
+    let authority = SharedTextureAuthority::from_occurrences_for_tests(&[
+        super::super::texture_authority::TextureOccurrenceFixture {
+            logical: "Krusty_ HumanCola_ Glass_ 8bitt_64x64.bmp",
+            package_id: "level-one-terrain",
+            subcategory: "terrain-world/level-01/terrain-mesh",
+            package_member_id: "texture-member-1",
+            member_id: "normalized-cache-member",
+            source_ordinal: 1,
+            path: external_text,
+            sha256: "fixture-digest",
+        },
+    ]);
+    let source = DecodedComponentSource::new(&package, &scratch);
+    let _binding = resolve_source_material(
+        &source,
+        &package,
+        "glass",
+        None,
+        Some(&authority),
+        None,
+        "terrain-world/level-01/regions/l1r1",
+    )
+    .map_err(|error| error.to_string())?;
+    let staged = scratch.join(
+        "Krusty_ HumanCola_ Glass_ 8bitt_64x64.png",
+    );
+    let bytes = fs::read(&staged).map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    if bytes != b"source-png" {
+        return Err(
+            "shared authored texture identity was not staged".to_owned(),
+        );
+    }
+    Ok(())
+}

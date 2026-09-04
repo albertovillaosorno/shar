@@ -34,8 +34,8 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use super::{
-    SharedTextureAuthority, TextureSource, phase_three_texture_member_id,
-    texture_member_id,
+    ResolvedSharedTexture, SharedTextureAuthority, TextureSource,
+    phase_three_texture_member_id, texture_member_id,
 };
 use crate::domain::package::PhaseThreePackageRow;
 
@@ -68,10 +68,18 @@ fn same_level_terrain_mesh_is_preferred() {
         ])]),
     };
 
-    let result =
-        authority.resolve("tree.bmp", "terrain-world/level-01/regions/l1r1");
+    let result = authority.resolve_authoritative(
+        "tree.bmp",
+        "terrain-world/level-01/regions/l1r1",
+    );
 
-    assert_eq!(result, Ok(Some(std::path::Path::new("level-one.png"))));
+    assert_eq!(
+        result,
+        Ok(Some(ResolvedSharedTexture {
+            logical: "tree.bmp".to_owned(),
+            path: std::path::Path::new("level-one.png"),
+        }))
+    );
 }
 
 #[test]
@@ -101,7 +109,10 @@ fn conflicting_same_level_payloads_are_rejected() {
 
     assert!(
         authority
-            .resolve("tree.bmp", "terrain-world/level-01/regions/c",)
+            .resolve_authoritative(
+                "tree.bmp",
+                "terrain-world/level-01/regions/c",
+            )
             .is_err()
     );
 }
@@ -157,7 +168,10 @@ fn conflicting_preferred_occurrences_remain_available_as_evidence(
     );
     assert!(
         authority
-            .resolve("glow.bmp", "terrain-world/level-03/regions/l3r1")
+            .resolve_authoritative(
+                "glow.bmp",
+                "terrain-world/level-03/regions/l3r1",
+            )
             .is_err(),
         "evidence access must not weaken fail-closed resolution"
     );

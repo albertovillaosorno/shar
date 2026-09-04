@@ -81,6 +81,16 @@ pub(super) struct SharedTextureOccurrenceEvidence {
     pub(super) sha256: String,
 }
 
+/// One conflict-free shared texture selected with authored logical identity.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct ResolvedSharedTexture<'source> {
+    /// Authored logical identity proved by normalized package ledger evidence.
+    pub(super) logical: String,
+    /// Exact normalized physical PNG payload selected by scope/content
+    /// evidence.
+    pub(super) path: &'source Path,
+}
+
 /// Logical texture identities mapped to every selected package occurrence.
 #[derive(Debug)]
 pub(super) struct SharedTextureAuthority {
@@ -334,19 +344,20 @@ impl SharedTextureAuthority {
         Self { sources }
     }
 
-    /// Resolve one missing local texture using package-scope authority.
+    /// Resolve one missing local texture with explicit logical authority.
     ///
     /// # Errors
     ///
     /// Returns an error when the preferred scope contains conflicting payloads.
-    pub(super) fn resolve(
+    pub(super) fn resolve_authoritative(
         &self,
         texture_reference: &str,
         source_subcategory: &str,
-    ) -> Result<Option<&Path>, PipelineError> {
+    ) -> Result<Option<ResolvedSharedTexture<'_>>, PipelineError> {
         let logical = clean_identity(texture_reference)?;
         let preferred = self.preferred_sources(&logical, source_subcategory)?;
-        unique_payload(&logical, &preferred)
+        let path = unique_payload(&logical, &preferred)?;
+        Ok(path.map(|path| ResolvedSharedTexture { logical, path }))
     }
 
     /// Select the deterministic preferred physical scope without interpreting
