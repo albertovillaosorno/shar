@@ -169,6 +169,26 @@ fn empty_texture_parameter_is_an_untextured_material() {
 }
 
 #[test]
+fn missing_shader_member_remains_a_typed_source_error() -> Result<(), String> {
+    let root = temp_root("missing-shader-member");
+    let shader_dir = root.join("components").join("shader");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    let source = DecodedComponentSource::new(&root, root.join("textures"));
+    let result = source.resolve_material("lambert1");
+    let cleanup_result = fs::remove_dir_all(&root);
+
+    let Err(DecodedComponentError::MissingShaderMember { shader, searched }) =
+        result
+    else {
+        return Err(format!("missing shader did not stay strict: {result:?}"));
+    };
+    assert_eq!(shader, "lambert1");
+    assert!(searched.ends_with("components/shader/lambert1.json"));
+    cleanup_result.map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
 fn rejects_shader_identity_mismatches() {
     let root = temp_root("identity-mismatch");
     let shader_dir = root.join("components").join("shader");

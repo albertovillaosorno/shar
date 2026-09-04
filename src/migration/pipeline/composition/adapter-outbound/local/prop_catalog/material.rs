@@ -299,6 +299,15 @@ fn resolve_source_material(
                 Ok,
             )
         },
+        Err(DecodedComponentError::MissingShaderMember { .. })
+            if authority.is_some()
+                && runtime_missing_shader_has_package_consumers(
+                    consumer_provenance,
+                    package,
+                ) =>
+        {
+            runtime_missing_shader_material()
+        },
         Err(error @ DecodedComponentError::AmbiguousShaderMember { .. }) => {
             let context = RuntimeMaterialContext {
                 package_root,
@@ -327,6 +336,38 @@ fn resolve_source_material(
             package,
         )),
     }
+}
+
+/// Require exact package evidence before applying the runtime missing-shader
+/// fallback.
+fn runtime_missing_shader_has_package_consumers(
+    provenance: Option<&ShaderConsumerProvenance>,
+    package: Option<&PhaseThreePackageRow>,
+) -> bool {
+    let (Some(provenance), Some(package)) = (provenance, package) else {
+        return false;
+    };
+    if provenance.source_ordinals.is_empty() || provenance.model_member_ids.is_empty() {
+        return false;
+    }
+    provenance.model_member_ids.iter().all(|member_id| {
+        package.members().iter().any(|member| {
+            member.id == *member_id
+                && member.role == PackageRole::Model
+                && member.kind == "p3d-mesh"
+                && member.source_chunk_kind == "mesh"
+                && member.source_chunk_ordinal.is_some()
+        })
+    })
+}
+
+/// Reproduce the shipped primitive-group fallback for a missing shader.
+fn runtime_missing_shader_material() -> Result<MaterialBinding, PipelineError> {
+    MaterialBinding::new("error", None).map_err(|error| {
+        PipelineError::new(format!(
+            "runtime missing-shader material failed: {error:?}"
+        ))
+    })
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]

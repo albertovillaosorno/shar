@@ -355,33 +355,100 @@ fn shared_texture_fallback_preserves_decoded_shader_evidence()
 }
 
 #[test]
-fn missing_analysis_default_shader_fails_closed() -> Result<(), String> {
+fn world_missing_shader_uses_runtime_error_material() -> Result<(), String> {
     let root = std::env::temp_dir().join(format!(
-        "pipeline-missing-analysis-default-{}",
+        "pipeline-missing-world-shader-{}",
         std::process::id()
     ));
+    let shader_dir = root.join("components").join("shader");
     let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
     let source = DecodedComponentSource::new(&root, &scratch);
     let authority = SharedTextureAuthority::from_occurrences_for_tests(&[]);
+    let package = phase_three_shader_package()?;
+    let provenance = ShaderConsumerProvenance {
+        source_ordinals: BTreeSet::from([42]),
+        model_member_ids: BTreeSet::from(["model-forty".to_owned()]),
+    };
+    let result = resolve_source_material(
+        &source,
+        &root,
+        "lambert1",
+        Some(&provenance),
+        Some(&authority),
+        Some(&package),
+        "terrain-world/level-01/terrain-mesh",
+    );
+    let cleanup_result = fs::remove_dir_all(&root);
+    let binding = result.map_err(|error| error.to_string())?;
+    assert_eq!(binding.material_name, "error");
+    assert_eq!(binding.texture_file_name, None);
+    assert_eq!(binding.semantics, MaterialSemantics::default());
+    assert_eq!(binding.base_color_rgba8, [u8::MAX; 4]);
+    cleanup_result.map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn world_missing_shader_without_package_consumer_proof_stays_fail_closed()
+-> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-unproven-world-missing-shader-{}",
+        std::process::id()
+    ));
+    let shader_dir = root.join("components").join("shader");
+    let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    let source = DecodedComponentSource::new(&root, &scratch);
+    let authority = SharedTextureAuthority::from_occurrences_for_tests(&[]);
+    let package = phase_three_shader_package()?;
+    let provenance = ShaderConsumerProvenance {
+        source_ordinals: BTreeSet::from([42]),
+        model_member_ids: BTreeSet::from(["unknown-model".to_owned()]),
+    };
+    let result = resolve_source_material(
+        &source,
+        &root,
+        "lambert1",
+        Some(&provenance),
+        Some(&authority),
+        Some(&package),
+        "terrain-world/level-01/terrain-mesh",
+    );
+    let cleanup_result = fs::remove_dir_all(&root);
+    let Err(error) = result else {
+        return Err(String::from("unproven world shader used runtime fallback"));
+    };
+    assert!(error.to_string().contains("MissingShaderMember"));
+    cleanup_result.map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+#[test]
+fn non_world_missing_shader_stays_fail_closed() -> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-missing-non-world-shader-{}",
+        std::process::id()
+    ));
+    let shader_dir = root.join("components").join("shader");
+    let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    let source = DecodedComponentSource::new(&root, &scratch);
     let result = resolve_source_material(
         &source,
         &root,
         "lambert1",
         None,
-        Some(&authority),
         None,
-        "terrain-world/level-01/terrain-mesh",
+        None,
+        "",
     );
+    let cleanup_result = fs::remove_dir_all(&root);
     let Err(error) = result else {
-        return Err(String::from(
-            "missing analysis shader invented an untextured material",
-        ));
+        return Err(String::from("non-world missing shader used runtime fallback"));
     };
-    if !error.to_string().contains("prop material lambert1 failed: Read") {
-        return Err(format!(
-            "missing analysis shader changed failure boundary: {error}"
-        ));
-    }
+    assert!(error.to_string().contains("MissingShaderMember"));
+    cleanup_result.map_err(|error| error.to_string())?;
     Ok(())
 }
 
