@@ -82,8 +82,7 @@ fn expression_mixer_rejects_non_vertex_offset_type() {
         chunk.extend_from_slice(&mixer_type.to_le_bytes());
         chunk.extend_from_slice(&[1, b't', 1, b'g']);
         assert!(
-            vertex_expression_json("vertex_expression_mixer", &chunk)
-                .is_none()
+            vertex_expression_json("vertex_expression_mixer", &chunk).is_none()
         );
     }
 }
@@ -154,9 +153,8 @@ fn expression_rejects_runtime_stage_and_key_drift() {
 
     let child = curve(&[0.5_f32]);
     let header_size = 28_u32;
-    let total_size = header_size.saturating_add(
-        u32::try_from(child.len()).unwrap_or(u32::MAX),
-    );
+    let total_size = header_size
+        .saturating_add(u32::try_from(child.len()).unwrap_or(u32::MAX));
     let mut group = Vec::new();
     group.extend_from_slice(&0x0002_1001_u32.to_le_bytes());
     group.extend_from_slice(&header_size.to_le_bytes());
