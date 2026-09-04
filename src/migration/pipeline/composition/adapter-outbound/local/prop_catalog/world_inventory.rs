@@ -505,6 +505,9 @@ fn primary_world_source_binding(
                     ));
                 },
             };
+            let runtime_effect_system = package_particle_pair
+                .as_ref()
+                .map(|pair| pair.system.clone());
             Ok(WorldPrimaryEffectBinding {
                 composite_effect_index,
                 source_identity: effect.name.clone(),
@@ -512,6 +515,7 @@ fn primary_world_source_binding(
                 is_translucent: effect.is_translucent,
                 sort_order_bits: effect.sort_order_bits,
                 package_particle_pair,
+                runtime_effect_system,
             })
         })
         .collect::<Result<Vec<_>, PipelineError>>()?;

@@ -223,7 +223,7 @@ pub(super) fn write_world_catalog(
     assets: &[ExportedWorldProp],
 ) -> Result<(), PipelineError> {
     let payload = json!({
-        "schema": "shar.world-model-props.v15",
+        "schema": "shar.world-model-props.v16",
         "boundary": {
             "output": concat!(
                 "one hash-free FBX directory per readable ",
@@ -246,8 +246,8 @@ pub(super) fn write_world_catalog(
                 "the exact PTRN animation consumed only by rigid-animated ",
                 "FBX; ",
                 "retain authored composite effects and exact unique local ",
-                "particle factory/system candidate pairs without choosing ",
-                "which resource the effect designates"
+                "particle factory/system pairs; where that pair is proven, ",
+                "identify its system as the shipped tEffect lookup target"
             ),
             "deferred_render_bindings": concat!(
                 "retain authored non-mesh composite relationships including ",
@@ -517,7 +517,7 @@ fn world_primary_particle_pair_value(
     })
 }
 
-/// Render one authored composite effect without particle interpretation.
+/// Render one authored composite effect with bounded runtime interpretation.
 fn world_primary_effect_value(binding: &WorldPrimaryEffectBinding) -> Value {
     json!({
         "composite_effect_index": binding.composite_effect_index,
@@ -527,7 +527,10 @@ fn world_primary_effect_value(binding: &WorldPrimaryEffectBinding) -> Value {
         "sort_order": binding.sort_order_bits.map(f32::from_bits),
         "package_particle_pair": binding.package_particle_pair
             .as_ref()
-            .map(world_primary_particle_pair_value)
+            .map(world_primary_particle_pair_value),
+        "runtime_effect_system": binding.runtime_effect_system
+            .as_ref()
+            .map(world_primary_member_value)
     })
 }
 

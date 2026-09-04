@@ -403,6 +403,15 @@ fn primary_world_source_keeps_composite_order_and_static_skeleton()
     assert_eq!(pair.factory.source_ordinal, 50);
     assert_eq!(pair.system.package_member_id, "particle-system-member-60");
     assert_eq!(pair.system.source_ordinal, 60);
+    let runtime_system = effect
+        .runtime_effect_system
+        .as_ref()
+        .ok_or_else(|| "primary effect lost runtime system target".to_owned())?;
+    assert_eq!(
+        runtime_system.package_member_id,
+        "particle-system-member-60"
+    );
+    assert_eq!(runtime_system.source_ordinal, 60);
     assert_eq!(selected_ids, ["mesh-member-20", "mesh-member-10"]);
     let first_selected = binding
         .selected_meshes
