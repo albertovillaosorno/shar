@@ -69,8 +69,10 @@ triples.
 The replay now advances through both topology boundaries without counting those
 records as discarded.
 
-The next fail-closed replay boundary is instead material identity in `l3z3`.
-Mesh `z3_gens108Shape_071` alone references `lambert1`, but the package contains
-no local shader by that identity. The map-wide audit remains open because the
-pipeline deliberately refuses to invent a default material without runtime
-inventory evidence proving which external shader is authoritative.
+The following material boundary is six package-local `lambert1` misses,
+including `l3z3` mesh `z3_gens108Shape_071`. Shipped `tPrimGroupLoader` creates
+`TShader("error")` when its temporary store and runtime inventory cannot resolve
+the authored shader name. The migration path now reproduces that deterministic
+fallback only for exact phase-three mesh consumers whose package-local shader is
+proven absent; generic and unproven callers still fail closed. The map-wide
+overlap audit remains open pending the next full replay boundary.
