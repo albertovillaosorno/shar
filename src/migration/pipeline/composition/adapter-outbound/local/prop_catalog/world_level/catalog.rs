@@ -40,6 +40,7 @@ use serde_json::{Value, json};
 use super::model::{
     ExportedWorldCollection, WorldCollectionCounts, WorldFbxRecord,
     WorldInteriorRecord, WorldPackageRecord, WorldSurfaceSemanticCounts,
+    WorldTopologyEvidenceRecord,
 };
 use crate::domain::PipelineError;
 
@@ -119,6 +120,8 @@ pub(super) fn counts(
         discarded_degenerate_triangles: sum(packages, |package| {
             package.discarded_degenerate_triangles
         }),
+        unreal_omitted_repeated_index_triangles:
+            target_omitted_repeated_index_triangles(collection),
         authored_placements: sum(packages, |package| {
             package.authored_placements
         }),
@@ -177,7 +180,7 @@ fn catalog_value(
     collection: &ExportedWorldCollection,
 ) -> Value {
     json!({
-        "schema": "shar.world-package-collection.v5",
+        "schema": "shar.world-package-collection.v6",
         "status": "source-authored-fbx-baseline",
         "boundary": {
             "canonical_model_authority": concat!(
@@ -201,6 +204,12 @@ fn catalog_value(
             "collision_exclusion": concat!(
                 "source collision indices are counted for audit but no ",
                 "collision geometry or collision material enters any FBX"
+            ),
+            "unreal_topology_contract": concat!(
+                "source-authored repeated-index triangles remain exact in ",
+                "paired topology sidecars and are omitted only from Unreal ",
+                "target FBX geometry because the verified importer cannot ",
+                "consume them safely"
             ),
             "narrative_groups": concat!(
                 "map group labels describe recurring story families only and ",
@@ -336,6 +345,36 @@ fn interior_transform_file_value(
     })
 }
 
+/// Count target-only repeated-index omissions across every published FBX.
+fn target_omitted_repeated_index_triangles(
+    collection: &ExportedWorldCollection,
+) -> usize {
+    let packages = collection.packages.iter().flat_map(|package| {
+        [package.world_fbx.as_ref(), package.review_fbx.as_ref()]
+            .into_iter()
+            .flatten()
+    });
+    let interiors = collection.interiors.iter().flat_map(|interior| {
+        [Some(&interior.base_fbx), interior.halloween_fbx.as_ref()]
+            .into_iter()
+            .flatten()
+    });
+    packages
+        .chain(interiors)
+        .map(|artifact| artifact.unreal_omitted_repeated_index_triangles)
+        .sum()
+}
+
+/// Render one exact source-topology evidence sidecar record.
+fn topology_evidence_value(record: &WorldTopologyEvidenceRecord) -> Value {
+    json!({
+        "path": record.path,
+        "bytes": record.bytes,
+        "sha256": record.sha256,
+        "repeated_index_triangles": record.repeated_index_triangles
+    })
+}
+
 /// Sum one package counter selected by a pure projection.
 fn sum(
     packages: &[WorldPackageRecord],
@@ -362,6 +401,8 @@ fn counts_value(counts: WorldCollectionCounts) -> Value {
         "interior_halloween_fbx_files": counts.interior_halloween_fbx_files,
         "source_meshes": counts.source_meshes,
         "discarded_degenerate_triangles": counts.discarded_degenerate_triangles,
+        "unreal_omitted_repeated_index_triangles":
+            counts.unreal_omitted_repeated_index_triangles,
         "authored_placements": counts.authored_placements,
         "reference_placements": counts.reference_placements,
         "canonical_placement_fallbacks": counts.canonical_placement_fallbacks,
@@ -430,6 +471,11 @@ fn artifact_value(artifact: &WorldFbxRecord) -> Value {
         "path": artifact.path,
         "bytes": artifact.bytes,
         "sha256": artifact.sha256,
+        "unreal_omitted_repeated_index_triangles":
+            artifact.unreal_omitted_repeated_index_triangles,
+        "topology_evidence": artifact.topology_evidence
+            .as_ref()
+            .map(topology_evidence_value),
         "geometries": artifact.summary.geometries,
         "bones": artifact.summary.bones,
         "clusters": artifact.summary.clusters,

@@ -43,10 +43,28 @@ pub(super) struct WorldFbxRecord {
     pub(super) bytes: u64,
     /// Exact artifact SHA-256 digest.
     pub(super) sha256: String,
+    /// Number of source-authored repeated-index triangles omitted only from the
+    /// Unreal target geometry.
+    pub(super) unreal_omitted_repeated_index_triangles: usize,
+    /// Optional exact source-topology evidence sidecar for target omissions.
+    pub(super) topology_evidence: Option<WorldTopologyEvidenceRecord>,
     /// Binary FBX object-family summary.
     pub(super) summary: CharacterBinaryFbxSummary,
     /// Overlapping semantic surface counts.
     pub(super) surface_semantics: WorldSurfaceSemanticCounts,
+}
+
+/// One exact source-topology sidecar paired with an Unreal-safe FBX.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct WorldTopologyEvidenceRecord {
+    /// Repository-relative sidecar path.
+    pub(super) path: String,
+    /// Exact sidecar byte length.
+    pub(super) bytes: u64,
+    /// Exact sidecar SHA-256 digest.
+    pub(super) sha256: String,
+    /// Number of repeated-index triangle records retained in the sidecar.
+    pub(super) repeated_index_triangles: usize,
 }
 
 /// One normalized source package and its independently importable artifacts.
@@ -236,6 +254,9 @@ pub(super) struct WorldCollectionCounts {
     pub(super) source_meshes: usize,
     /// Legacy render discard count; strict topology keeps this zero.
     pub(super) discarded_degenerate_triangles: usize,
+    /// Source-authored repeated-index triangles omitted only from Unreal target
+    /// FBX geometry and preserved in exact topology sidecars.
+    pub(super) unreal_omitted_repeated_index_triangles: usize,
     /// Number of authored mesh placements.
     pub(super) authored_placements: usize,
     /// Number of placements using verified coordinate evidence.

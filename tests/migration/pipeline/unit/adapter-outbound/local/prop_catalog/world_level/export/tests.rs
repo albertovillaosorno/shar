@@ -42,7 +42,7 @@ use shar_sha256::digest_hex;
 use super::{
     MasterContent, PreparedTexture, WORLD_ROOT_POLICY,
     append_authored_interior_meshes, append_world_fbx_to_guide,
-    write_content_fbx,
+    split_unreal_importable_topology, write_content_fbx,
 };
 
 const TEXTURE_FILE_NAME: &str = "interior-test.png";
@@ -289,7 +289,7 @@ fn world_fbx_write_preserves_source_mesh_order() -> Result<(), String> {
 
 
 #[test]
-fn world_fbx_rejects_repeated_index_triangles_before_unreal_import()
+fn world_fbx_preserves_repeated_index_evidence_outside_unreal_geometry()
 -> Result<(), String> {
     let root = temporary_root().with_file_name(format!(
         "shar-world-repeated-index-test-{}",
@@ -302,13 +302,21 @@ fn world_fbx_rejects_repeated_index_triangles_before_unreal_import()
     let group = PrimitiveGroup::new_preserving_repeated_indices(
         0,
         "interior-material",
-        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![
+            [0., 0., 0.],
+            [1., 0., 0.],
+            [0., 1., 0.],
+            [1., 1., 0.],
+        ],
         Vec::new(),
-        &[0, 0, 1],
+        &[0, 1, 2, 0, 0, 3],
     )
-    .map_err(|error| format!("repeated-index fixture failed: {error:?}"))?;
+    .map_err(|error| format!("repeated-index fixture failed: {error:?}"))?
+    .with_source_ordinal(41);
     let mesh = MeshAsset::new("repeated-index", vec![group])
-        .map_err(|error| format!("repeated-index mesh failed: {error:?}"))?;
+        .map_err(|error| format!("repeated-index mesh failed: {error:?}"))?
+        .with_source_identity("source-mesh")
+        .map_err(|error| format!("source identity failed: {error:?}"))?;
     let material = MaterialBinding::new("interior-material", None)
         .map_err(|error| format!("repeated-index material failed: {error:?}"))?;
     let mut content = MasterContent {
@@ -316,33 +324,123 @@ fn world_fbx_rejects_repeated_index_triangles_before_unreal_import()
         materials: BTreeMap::from([(material.material_name.clone(), material)]),
         ..MasterContent::default()
     };
-    let result = write_content_fbx(
+    let source_triangles = content
+        .meshes
+        .first()
+        .and_then(|mesh| mesh.groups.first())
+        .map(|group| group.triangles.clone())
+        .ok_or_else(|| "source fixture group is missing".to_owned())?;
+    let (target, evidence) = split_unreal_importable_topology(&content);
+    let target_group = target
+        .meshes
+        .first()
+        .and_then(|mesh| mesh.groups.first())
+        .ok_or_else(|| "target fixture group is missing".to_owned())?;
+    assert_eq!(target_group.triangles, vec![[0, 1, 2]]);
+    assert_eq!(evidence.len(), 1);
+    let entry = evidence
+        .first()
+        .ok_or_else(|| "topology evidence entry is missing".to_owned())?;
+    assert_eq!(entry.mesh, "repeated-index");
+    assert_eq!(entry.source_mesh.as_deref(), Some("source-mesh"));
+    assert_eq!(entry.group, 0);
+    assert_eq!(entry.source_ordinal, Some(41));
+    assert_eq!(entry.triangle, 1);
+    assert_eq!(entry.indices, [0, 0, 3]);
+
+    let record = write_content_fbx(
         "repeated-index",
         "repeated-index.fbx",
         &mut content,
         &root,
         ModelExportRootPolicy::ReflectX,
+    )
+    .map_err(|error| error.to_string())?
+    .ok_or_else(|| "repeated-index target FBX was not written".to_owned())?;
+    let preserved = content
+        .meshes
+        .first()
+        .and_then(|mesh| mesh.groups.first())
+        .ok_or_else(|| "preserved source group is missing".to_owned())?;
+    assert_eq!(preserved.triangles, source_triangles);
+    assert_eq!(record.unreal_omitted_repeated_index_triangles, 1);
+    let sidecar = record
+        .topology_evidence
+        .ok_or_else(|| {
+            "topology evidence sidecar was not recorded".to_owned()
+        })?;
+    assert_eq!(sidecar.repeated_index_triangles, 1);
+    let sidecar_bytes = fs::read(root.join(&sidecar.path))
+        .map_err(|error| format!("topology sidecar read failed: {error}"))?;
+    assert_eq!(digest_hex(&sidecar_bytes), sidecar.sha256);
+    let value: serde_json::Value = serde_json::from_slice(&sidecar_bytes)
+        .map_err(|error| format!("topology sidecar JSON failed: {error}"))?;
+    assert_eq!(
+        value.get("schema").and_then(serde_json::Value::as_str),
+        Some("shar.world-fbx-source-topology.v1")
+    );
+    assert_eq!(
+        value
+            .get("unreal_omitted_repeated_index_triangles")
+            .and_then(serde_json::Value::as_u64),
+        Some(1)
+    );
+    let triangle = value
+        .get("triangles")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|triangles| triangles.first())
+        .ok_or_else(|| "topology sidecar triangle is missing".to_owned())?;
+    assert_eq!(
+        triangle.get("triangle").and_then(serde_json::Value::as_u64),
+        Some(1)
+    );
+    assert_eq!(triangle.get("indices"), Some(&serde_json::json!([0, 0, 3])));
+    assert!(root.join("repeated-index.fbx").is_file());
+    remove_if_present(&root)
+}
+
+#[test]
+fn world_fbx_rejects_source_with_no_unreal_importable_geometry()
+-> Result<(), String> {
+    let root = temporary_root().with_file_name(format!(
+        "shar-world-only-repeated-index-test-{}",
+        std::process::id()
+    ));
+    remove_if_present(&root)?;
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let group = PrimitiveGroup::new_preserving_repeated_indices(
+        0,
+        "interior-material",
+        vec![[0., 0., 0.], [1., 0., 0.]],
+        Vec::new(),
+        &[0, 0, 1],
+    )
+    .map_err(|error| format!("all-repeated fixture failed: {error:?}"))?;
+    let mesh = MeshAsset::new("all-repeated", vec![group])
+        .map_err(|error| format!("all-repeated mesh failed: {error:?}"))?;
+    let material = MaterialBinding::new("interior-material", None)
+        .map_err(|error| format!("all-repeated material failed: {error:?}"))?;
+    let mut content = MasterContent {
+        meshes: vec![mesh],
+        materials: BTreeMap::from([(material.material_name.clone(), material)]),
+        ..MasterContent::default()
+    };
+    let result = write_content_fbx(
+        "all-repeated",
+        "all-repeated.fbx",
+        &mut content,
+        &root,
+        ModelExportRootPolicy::ReflectX,
     );
     let message = match result {
-        Ok(_record) => {
-            return Err(
-                "repeated-index world FBX did not fail closed".to_owned()
-            );
-        },
+        Ok(_artifact) => return Err("all-repeated FBX was accepted".to_owned()),
         Err(error) => error.to_string(),
     };
-    if !message.contains("world FBX is not Unreal-importable")
-        || !message.contains("triangle 0")
-        || !message.contains("[0, 0, 1]")
-    {
-        return Err(format!(
-            "repeated-index rejection lost exact topology evidence: {message}"
-        ));
+    if !message.contains("no Unreal-importable geometry") {
+        return Err(format!("all-repeated rejection changed: {message}"));
     }
-    if root.join("repeated-index.fbx").exists() {
-        return Err(
-            "repeated-index FBX was published before rejection".to_owned()
-        );
+    if root.join("all-repeated.fbx").exists() {
+        return Err("all-repeated FBX was published".to_owned());
     }
     remove_if_present(&root)
 }
