@@ -53,8 +53,9 @@ content.
 Architecture decision records contain repository-impacting decisions only.
 Technical specifications explain only repository-owned implementation. Neither
 surface may contain concrete repository paths. Technical specifications must not
-explain proprietary external formats. Bibliography, research, and legal records
-preserve external evidence.
+explain proprietary external formats.
+
+Bibliography, research, and legal records preserve external evidence.
 
 Every production ADR reference in source, tests, skills, and documentation must
 resolve to a current decision record. When a document is reclassified as
