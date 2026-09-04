@@ -57,7 +57,7 @@ fn expression_mixer_preserves_declared_trailing_null_names()
     chunk.extend_from_slice(&27_u32.to_le_bytes());
     chunk.extend_from_slice(&0_u32.to_le_bytes());
     chunk.extend_from_slice(&[2, b'n', 0]);
-    chunk.extend_from_slice(&0_u32.to_le_bytes());
+    chunk.extend_from_slice(&3_u32.to_le_bytes());
     chunk.extend_from_slice(&[1, b't', 1, b'g']);
 
     let Some(json) = vertex_expression_json("vertex_expression_mixer", &chunk)
@@ -68,6 +68,24 @@ fn expression_mixer_preserves_declared_trailing_null_names()
         return Err(format!("trailing null was not preserved: {json:?}"));
     }
     Ok(())
+}
+
+#[test]
+fn expression_mixer_rejects_non_vertex_offset_type() {
+    for mixer_type in [0_u32, 1, 2, 4, u32::MAX] {
+        let mut chunk = Vec::new();
+        chunk.extend_from_slice(&0x0002_1002_u32.to_le_bytes());
+        chunk.extend_from_slice(&26_u32.to_le_bytes());
+        chunk.extend_from_slice(&26_u32.to_le_bytes());
+        chunk.extend_from_slice(&0_u32.to_le_bytes());
+        chunk.extend_from_slice(&[1, b'n']);
+        chunk.extend_from_slice(&mixer_type.to_le_bytes());
+        chunk.extend_from_slice(&[1, b't', 1, b'g']);
+        assert!(
+            vertex_expression_json("vertex_expression_mixer", &chunk)
+                .is_none()
+        );
+    }
 }
 
 #[test]
