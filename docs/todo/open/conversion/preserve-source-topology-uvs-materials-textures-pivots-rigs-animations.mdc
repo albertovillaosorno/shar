@@ -1475,21 +1475,23 @@ The remaining Scrooby page-ancestry edge is now closed end to end. The shipped
 loader supports both project-stored pages referenced by a screen's authored page
 names and physical page children embedded directly beneath a screen. Recovery
 now preserves both forms without rewriting parent ordinals: screen child
-inventory admits only Page chunks, nested pages remain screen children, and the
-schema records Page as the runtime-backed Screen child chunk. Migration resolves
-`page_names` only against direct project pages, while embedded pages receive
-runtime indices beneath their physical screen owner. Cache completeness
-validates
-project and screen inventories separately, so one page form cannot satisfy the
-other's contract.
+inventory admits only Page chunks, nested pages remain screen children, and
+schema metadata records Page as the runtime-backed Screen child chunk.
+
+Migration resolves `page_names` only against direct project pages, while
+embedded pages receive runtime indices beneath their physical screen owner.
+Cache completeness validates project and screen inventories separately, so one
+page form cannot satisfy the other's contract.
 
 Legacy MultiText is now closed from shipped runtime authority. Versions 16 and
 earlier end physically after `TextStyleName`; recovery preserves that absence and
 rejects modern shadow or `CurrentText` bytes on a legacy header. The runtime
 layout derives only the loader/constructor behavior that exists without those
 bytes: shadow and outline remain disabled and the initial/current text index is
-zero. Those values are not emitted as authored source fields. Versions above 16
-retain the existing authored shadow, offset, colour, and current-index path.
+zero.
+
+Those values are not emitted as authored source fields. Versions above 16 retain
+the existing authored shadow, offset, colour, and current-index path.
 
 This umbrella task remains open for broader topology, UV, material, texture,
 pivot, rig, animation, placement, and transform evidence.
