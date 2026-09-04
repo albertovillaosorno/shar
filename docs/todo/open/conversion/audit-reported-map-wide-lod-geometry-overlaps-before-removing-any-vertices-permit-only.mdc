@@ -84,6 +84,18 @@ triples.
 The replay now advances through both topology boundaries without counting those
 records as discarded.
 
+A live Unreal Engine 5.8.1 MCP import audit now proves that exact FBX transport
+does not make those records safe StaticMesh input. A synthetic FBX containing
+only `[0, 0, 1]` is parsed successfully but rejected because all polygons are
+degenerate. A second FBX containing one valid triangle plus one repeated-index
+triangle reaches a fatal error inside the FBX SDK smoothing conversion before
+any asset is created.
+
+World FBX publication therefore now rejects repeated-index triangles before
+writing an Unreal-bound artifact while decoded analysis keeps the exact authored
+records. The task remains open until a target representation preserves that
+source evidence without feeding unsafe geometry to Unreal.
+
 The following material boundary is six package-local `lambert1` misses,
 including `l3z3` mesh `z3_gens108Shape_071`. Shipped `tPrimGroupLoader` creates
 `TShader("error")` when its temporary store and runtime inventory cannot resolve
