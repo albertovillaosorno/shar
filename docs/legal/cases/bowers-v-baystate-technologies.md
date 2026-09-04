@@ -77,6 +77,7 @@ and controlling law.
 
 ## Sources
 
+<!-- jig-ignore-next-line: legal citation abbreviations are indivisible evidence -->
 - Justia (n.d.), *Bowers v. Baystate Technologies, Inc.*, 320 F.3d 1317
   (Fed. Cir. 2003), public opinion text. Available at:
   <https://law.justia.com/cases/federal/appellate-courts/F3/320/1317/615628/>

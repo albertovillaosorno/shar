@@ -236,6 +236,7 @@ lookup has now been traced for every currently modeled locator role. Pure3D
 searches the current inventory section first, then remaining sections in
 creation order. Static mission loading creates Level before Mission; within one
 
+<!-- jig-ignore-next-line: runtime lookup census is one coupled evidence statement -->
 section, an exact-type duplicate is rejected after the first load. Therefore
 exact-type script-time references use static package order. A corpus audit of
 751 such references found 242 unique candidates, 507 missing candidates, and
