@@ -245,8 +245,7 @@ fn screen_rejects_non_page_embedded_child() -> Result<(), String> {
         total_size,
         1,
     );
-    if auxiliary::recover_scrooby_screen_json(&component, &source, 1)
-        .is_some()
+    if auxiliary::recover_scrooby_screen_json(&component, &source, 1).is_some()
     {
         return Err("screen accepted a non-page embedded child".to_owned());
     }
@@ -261,15 +260,9 @@ fn screen_rejects_impossible_page_count() -> Result<(), String> {
     source.extend_from_slice(&u32::MAX.to_le_bytes());
     let size = source.len();
     finish_chunk_header(&mut source, 0x0001_8001, size, size)?;
-    let component = record(
-        ChunkKind::ScroobyScreen,
-        0x0001_8001,
-        size,
-        size,
-        0,
-    );
-    if auxiliary::recover_scrooby_screen_json(&component, &source, 1)
-        .is_some()
+    let component =
+        record(ChunkKind::ScroobyScreen, 0x0001_8001, size, size, 0);
+    if auxiliary::recover_scrooby_screen_json(&component, &source, 1).is_some()
     {
         return Err("screen accepted an impossible page count".to_owned());
     }
@@ -336,7 +329,6 @@ fn recovers_scrooby_page_header_and_child_inventory() -> Result<(), String> {
     Ok(())
 }
 
-
 #[test]
 fn page_rejects_undersized_child_header() -> Result<(), String> {
     let mut source = vec![0_u8; 12];
@@ -349,12 +341,7 @@ fn page_rejects_undersized_child_header() -> Result<(), String> {
     source.extend_from_slice(&8_u32.to_le_bytes());
     source.extend_from_slice(&12_u32.to_le_bytes());
     let total_size = source.len();
-    finish_chunk_header(
-        &mut source,
-        0x0001_8002,
-        header_size,
-        total_size,
-    )?;
+    finish_chunk_header(&mut source, 0x0001_8002, header_size, total_size)?;
     let component = record(
         ChunkKind::ScroobyPage,
         0x0001_8002,
@@ -388,12 +375,8 @@ fn project_rejects_scrooby_framing_drift() -> Result<(), String> {
         trailing_size,
         0,
     );
-    if auxiliary::recover_scrooby_project_json(
-        &component,
-        &trailing_header,
-        1,
-    )
-    .is_some()
+    if auxiliary::recover_scrooby_project_json(&component, &trailing_header, 1)
+        .is_some()
     {
         return Err("project accepted undeclared header bytes".to_owned());
     }
@@ -416,12 +399,8 @@ fn project_rejects_scrooby_framing_drift() -> Result<(), String> {
         unknown_total,
         1,
     );
-    if auxiliary::recover_scrooby_project_json(
-        &component,
-        &unknown_child,
-        1,
-    )
-    .is_some()
+    if auxiliary::recover_scrooby_project_json(&component, &unknown_child, 1)
+        .is_some()
     {
         return Err("project accepted an undeclared direct child".to_owned());
     }
@@ -442,12 +421,8 @@ fn project_rejects_scrooby_framing_drift() -> Result<(), String> {
         truncated_total,
         1,
     );
-    if auxiliary::recover_scrooby_project_json(
-        &component,
-        &truncated_child,
-        1,
-    )
-    .is_some()
+    if auxiliary::recover_scrooby_project_json(&component, &truncated_child, 1)
+        .is_some()
     {
         return Err("project ignored a truncated direct child".to_owned());
     }
@@ -463,12 +438,7 @@ fn project_preserves_scrooby_child_inventory() -> Result<(), String> {
         source.extend_from_slice(&12_u32.to_le_bytes());
     }
     let total_size = source.len();
-    finish_chunk_header(
-        &mut source,
-        0x0001_8000,
-        header_size,
-        total_size,
-    )?;
+    finish_chunk_header(&mut source, 0x0001_8000, header_size, total_size)?;
     let component = record(
         ChunkKind::ScroobyProject,
         0x0001_8000,
@@ -476,12 +446,11 @@ fn project_preserves_scrooby_child_inventory() -> Result<(), String> {
         total_size,
         2,
     );
-    let recovered = auxiliary::recover_scrooby_project_json(
-        &component,
-        &source,
-        1,
-    )
-    .ok_or_else(|| "declared project children should decode".to_owned())?;
+    let recovered =
+        auxiliary::recover_scrooby_project_json(&component, &source, 1)
+            .ok_or_else(|| {
+                "declared project children should decode".to_owned()
+            })?;
     let json = String::from_utf8(recovered.bytes)
         .map_err(|error| error.to_string())?;
     if !json.contains(r#""id_hex":"0x00018001""#)

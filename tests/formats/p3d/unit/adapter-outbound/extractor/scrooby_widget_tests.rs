@@ -205,18 +205,13 @@ fn multi_sprite_rejects_impossible_image_count() -> Result<(), String> {
     source.extend_from_slice(&u32::MAX.to_le_bytes());
     let size = source.len();
     finish_chunk(&mut source, 0x0001_8006, size, size)?;
-    let component = record(
-        ChunkKind::ScroobyMultiSprite,
-        0x0001_8006,
-        size,
-        size,
-        0,
-    );
+    let component =
+        record(ChunkKind::ScroobyMultiSprite, 0x0001_8006, size, size, 0);
     if scrooby_widget::recover_multi_sprite_json(&component, &source, 1)
         .is_some()
     {
         return Err(
-            "multi-sprite accepted an impossible image count".to_owned(),
+            "multi-sprite accepted an impossible image count".to_owned()
         );
     }
     Ok(())
@@ -320,13 +315,8 @@ fn polygon_rejects_impossible_point_count() -> Result<(), String> {
     source.extend_from_slice(&u32::MAX.to_le_bytes());
     let size = source.len();
     finish_chunk(&mut source, 0x0001_8009, size, size)?;
-    let component = record(
-        ChunkKind::ScroobyPolygon,
-        0x0001_8009,
-        size,
-        size,
-        0,
-    );
+    let component =
+        record(ChunkKind::ScroobyPolygon, 0x0001_8009, size, size, 0);
     if scrooby_widget::recover_polygon_json(&component, &source, 1).is_some() {
         return Err("polygon accepted an impossible point count".to_owned());
     }
@@ -504,13 +494,11 @@ fn multi_text_recovers_legacy_without_modern_fields() -> Result<(), String> {
         || json.contains("shadow_offset")
         || json.contains("current_text")
     {
-        return Err(
-            concat!(
-                "legacy multi-text did not preserve absent ",
-                "modern fields"
-            )
-            .to_owned(),
-        );
+        return Err(concat!(
+            "legacy multi-text did not preserve absent ",
+            "modern fields"
+        )
+        .to_owned());
     }
     Ok(())
 }
@@ -525,8 +513,7 @@ fn multi_text_rejects_legacy_modern_fields() -> Result<(), String> {
         source.len(),
         0,
     );
-    if scrooby_widget::recover_multi_text_json(&component, &source, 1)
-        .is_some()
+    if scrooby_widget::recover_multi_text_json(&component, &source, 1).is_some()
     {
         return Err("legacy multi-text accepted modern fields".to_owned());
     }
@@ -620,12 +607,7 @@ fn layer_rejects_scrooby_child_drift() -> Result<(), String> {
     unknown_child.extend_from_slice(&12_u32.to_le_bytes());
     unknown_child.extend_from_slice(&12_u32.to_le_bytes());
     let unknown_total = unknown_child.len();
-    finish_chunk(
-        &mut unknown_child,
-        0x0001_8003,
-        header_size,
-        unknown_total,
-    )?;
+    finish_chunk(&mut unknown_child, 0x0001_8003, header_size, unknown_total)?;
     let component = record(
         ChunkKind::ScroobyLayer,
         0x0001_8003,

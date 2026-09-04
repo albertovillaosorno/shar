@@ -3330,12 +3330,8 @@ fn billboard_quad_rejects_presentation_framing_drift() -> Result<(), String> {
     let mut reordered = source[..header_size].to_vec();
     reordered.extend_from_slice(&source[perspective..]);
     reordered.extend_from_slice(&source[header_size..perspective]);
-    if auxiliary::billboard_quad_json(
-        &reordered,
-        header_size,
-        reordered.len(),
-    )
-    .is_some()
+    if auxiliary::billboard_quad_json(&reordered, header_size, reordered.len())
+        .is_some()
     {
         return Err(String::from(
             "billboard quad accepted reversed presentation children",
@@ -3351,7 +3347,8 @@ fn billboard_quad_rejects_presentation_framing_drift() -> Result<(), String> {
     );
     let mut nested = source;
     push_u32(&mut nested, 0xdead_beef);
-    let total = u32::try_from(nested.len()).map_err(|error| error.to_string())?;
+    let total =
+        u32::try_from(nested.len()).map_err(|error| error.to_string())?;
     nested[8..12].copy_from_slice(&total.to_le_bytes());
     nested[perspective + 8..perspective + 12]
         .copy_from_slice(&(perspective_total + 4).to_le_bytes());
@@ -3484,7 +3481,8 @@ fn billboard_group_fixture(declared_quads: u32) -> Result<Vec<u8>, String> {
 fn billboard_group_rejects_trailing_header_bytes() -> Result<(), String> {
     let mut source = billboard_group_fixture(0)?;
     push_u32(&mut source, 0xdead_beef);
-    let size = u32::try_from(source.len()).map_err(|error| error.to_string())?;
+    let size =
+        u32::try_from(source.len()).map_err(|error| error.to_string())?;
     source[4..8].copy_from_slice(&size.to_le_bytes());
     source[8..12].copy_from_slice(&size.to_le_bytes());
     let component = ChunkRecord {
@@ -3987,8 +3985,7 @@ fn mesh_recovery_rejects_impossible_expression_counts() -> Result<(), String> {
     offset_source[offset_start + 12..offset_start + 16]
         .copy_from_slice(&u32::MAX.to_le_bytes());
     let component = primitive_group_mesh_record(&offset_source, mesh_header);
-    if render::recover_mesh_json(&component, &offset_source, 1, None)
-        .is_some()
+    if render::recover_mesh_json(&component, &offset_source, 1, None).is_some()
     {
         return Err(String::from(
             "mesh accepted an impossible expression offset count",
