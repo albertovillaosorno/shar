@@ -334,6 +334,7 @@ fn shared_texture_fallback_preserves_decoded_shader_evidence()
     let source = DecodedComponentSource::new(&package, &scratch);
     let result = resolve_source_material(
         &source,
+        &package,
         "road_m",
         None,
         Some(&authority),
@@ -364,6 +365,7 @@ fn missing_analysis_default_shader_fails_closed() -> Result<(), String> {
     let authority = SharedTextureAuthority::from_occurrences_for_tests(&[]);
     let result = resolve_source_material(
         &source,
+        &root,
         "lambert1",
         None,
         Some(&authority),
@@ -464,6 +466,158 @@ fn prepared_texture_preserves_exact_source_bytes() -> Result<(), String> {
         || prepared.file_name != format!("texture-{expected_digest}.png")
     {
         return Err("source texture content identity changed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn runtime_first_duplicate_shader_and_texture_follow_load_order()
+-> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-runtime-first-material-{}",
+        std::process::id()
+    ));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let package_root = root.join("package");
+    let shader_dir = package_root.join("components/shader");
+    let texture_dir = package_root.join("components/texture");
+    let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&texture_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&scratch).map_err(|error| error.to_string())?;
+    fs::write(
+        shader_dir.join("first.json"),
+        concat!(
+            r#"{"name":"shared","has_translucency":0,"num_params":1,"#,
+            r#""params":[{"kind":"texture","param":"TEX","#,
+            r#""value":"shared.bmp"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        shader_dir.join("second.json"),
+        concat!(
+            r#"{"name":"shared","has_translucency":1,"num_params":1,"#,
+            r#""params":[{"kind":"texture","param":"TEX","#,
+            r#""value":"shared.bmp"}]}"#,
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(texture_dir.join("shared.png"), b"first-texture")
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        texture_dir.join("shared__ordinal_2.png"),
+        b"second-texture",
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        package_root.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":4}"#,
+            "\n",
+            r#"{"ordinal":1,"depth":1,"parent_ordinal":0,"#,
+            r#""kind":"texture","name":"shared.bmp","#,
+            r#""path":"texture/shared.png"}"#,
+            "\n",
+            r#"{"ordinal":2,"depth":1,"parent_ordinal":0,"#,
+            r#""kind":"texture","name":"shared.bmp","#,
+            r#""path":"texture/shared__ordinal_2.png"}"#,
+            "\n",
+            r#"{"ordinal":3,"depth":1,"parent_ordinal":0,"#,
+            r#""kind":"shader","name":"shared","#,
+            r#""path":"shader/first.json"}"#,
+            "\n",
+            r#"{"ordinal":9,"depth":1,"parent_ordinal":0,"#,
+            r#""kind":"shader","name":"shared","#,
+            r#""path":"shader/second.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let package = phase_three_shader_package()?;
+    let provenance = ShaderConsumerProvenance {
+        source_ordinals: BTreeSet::from([42]),
+        model_member_ids: BTreeSet::from(["model-forty".to_owned()]),
+    };
+    let source = DecodedComponentSource::new(&package_root, &scratch);
+    let result = resolve_source_material(
+        &source,
+        &package_root,
+        "shared",
+        Some(&provenance),
+        None,
+        Some(&package),
+        "terrain-world/level-01/terrain-mesh",
+    );
+    let binding = result.map_err(|error| error.to_string())?;
+    let staged = fs::read(scratch.join("shared.png"))
+        .map_err(|error| error.to_string())?;
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    if binding.semantics.is_transparent() || staged != b"first-texture" {
+        return Err(format!(
+            "runtime first-store material authority drifted: {binding:?}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn duplicate_shader_before_consumer_remains_ambiguous() -> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-runtime-first-order-{}",
+        std::process::id()
+    ));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let shader_dir = root.join("components/shader");
+    let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    fs::write(shader_dir.join("first.json"), r#"{"name":"shared"}"#)
+        .map_err(|error| error.to_string())?;
+    fs::write(shader_dir.join("second.json"), r#"{"name":"shared"}"#)
+        .map_err(|error| error.to_string())?;
+    fs::write(
+        root.join("components.jsonl"),
+        concat!(
+            r#"{"schema":"p3d.package.v1","component_count":2}"#,
+            "\n",
+            r#"{"ordinal":3,"depth":1,"parent_ordinal":0,"#,
+            r#""kind":"shader","name":"shared","#,
+            r#""path":"shader/first.json"}"#,
+            "\n",
+            r#"{"ordinal":9,"depth":1,"parent_ordinal":0,"#,
+            r#""kind":"shader","name":"shared","#,
+            r#""path":"shader/second.json"}"#,
+            "\n",
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let package = phase_three_shader_package()?;
+    let provenance = ShaderConsumerProvenance {
+        source_ordinals: BTreeSet::from([2]),
+        model_member_ids: BTreeSet::new(),
+    };
+    let source = DecodedComponentSource::new(&root, &scratch);
+    let result = resolve_source_material(
+        &source,
+        &root,
+        "shared",
+        Some(&provenance),
+        None,
+        Some(&package),
+        "terrain-world/level-01/terrain-mesh",
+    );
+    fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    let Err(error) = result else {
+        return Err(
+            "consumer before first shader invented runtime authority".into(),
+        );
+    };
+    if !error.to_string().contains("AmbiguousShaderMember") {
+        return Err(format!("unexpected ordering failure: {error}"));
     }
     Ok(())
 }

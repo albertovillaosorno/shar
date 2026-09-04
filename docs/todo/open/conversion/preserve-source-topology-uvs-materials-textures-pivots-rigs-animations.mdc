@@ -1440,13 +1440,26 @@ the primitive group publishes no shader-mask selector, and the two L1
 `char_swatches_m` candidates have the same mask. These fields therefore do not
 supply source-backed occurrence authority for the current ambiguity.
 
-That exact consumer coordinate does not identify either physical shader
-occurrence. The primitive-group payload still stores only the logical
-`char_swatches_m` token, while the two differing shader candidates remain
-independent top-level chunks at ordinals 12679 and 13756. Selecting the first,
-nearest, or lowest-ordinal shader would therefore invent relationship authority;
-world material export remains fail-closed until an exact source-backed
-mesh-primitive-to-shader occurrence relationship is recovered or proven.
+The shipped Pure3D inventory supplies the missing occurrence authority.
+`TSimpleChunkHandler::Load` tests the current inventory section for a same-UID,
+same-type entity before storage; a collision discards the newly loaded entity
+and returns `LOAD_ERROR`. `TP3DFileHandler::Load` continues scanning later
+chunks, so the first same-section shader survives and later duplicates do not
+replace it.
+
+Primitive groups resolve their logical shader name through that inventory after
+the shader chunks have loaded. All 338 mesh-used duplicate shader sets are
+top-level same-section candidates, and every candidate precedes all 1,312
+consuming meshes in physical chunk order. Migration now selects the lowest
+source ordinal only when ledger, phase-three member, and consumer coordinates
+prove this exact first-store-wins case; otherwise ambiguity still fails closed.
+
+The same rule applies to top-level textures because `TTextureLoader` uses the
+same simple chunk handler. Every one of the 338 selected first shaders carries a
+texture reference; 129 resolve to package-local texture evidence, including 73
+duplicate local texture sets, and every authoritative first texture precedes its
+shader. Migration stages that exact first occurrence, while the remaining 209
+non-local references retain the existing scoped shared-texture fallback.
 
 Malformed authored counts now fail closed before count-sized allocation or
 iteration where the encoded source region supplies a hard bound. This covers
