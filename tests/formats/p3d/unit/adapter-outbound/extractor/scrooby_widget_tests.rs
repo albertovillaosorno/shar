@@ -686,12 +686,11 @@ fn layer_preserves_scrooby_child_inventory() -> Result<(), String> {
         total_size,
         5,
     );
-    let recovered = auxiliary::recover_scrooby_layer_json(
-        &component,
-        &source,
-        1,
-    )
-    .ok_or_else(|| "declared layer children should decode".to_owned())?;
+    let recovered =
+        auxiliary::recover_scrooby_layer_json(&component, &source, 1)
+            .ok_or_else(|| {
+                "declared layer children should decode".to_owned()
+            })?;
     let json = String::from_utf8(recovered.bytes)
         .map_err(|error| error.to_string())?;
     for id in ["00018004", "00018006", "00018007", "00018008", "00018009"] {

@@ -26,7 +26,6 @@ transition markers, 43 countdown blocks, 14 stage-start music events, 36
 collectible-waypoint bindings, 180 objective NPC waypoints, and four pickup
 state-prop bindings. Every definition source is one of the 344 verified
 mission-script sources, source ids are unique, and each condition row
-
 publishes the reviewed `stage-failure` violation effect. The rows still
 publish no successor/retry/rollback/recovery edges.
 
@@ -35,7 +34,6 @@ semantic staging, not `USharMissionDefinition` or StateTree asset emission.
 
 ## Acceptance criteria
 
-<!-- jig-ignore-next-line: completed checklist evidence remains one atomic item -->
 - [x] Publish the joined definition core as deterministic versioned staging data
   before native asset construction. `prepare-unreal` now writes
   `mission-definitions.jsonl` as the tenth transactional staging artifact:
@@ -44,7 +42,9 @@ semantic staging, not `USharMissionDefinition` or StateTree asset emission.
   collectible-waypoint bindings, 180 objective NPC waypoints, and four
   pickup state-prop bindings. Every definition source is one of the 344
   verified mission-script sources, source ids are unique, and each condition
-  row publishes the reviewed `stage-failure` violation effect. The rows
+  row publishes the reviewed `stage-failure` violation effect.
+
+  The rows
   still publish no successor/retry/rollback/recovery edges. This is
   source-backed semantic staging, not `USharMissionDefinition` or StateTree
   asset emission.

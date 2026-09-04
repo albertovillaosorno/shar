@@ -59,12 +59,13 @@ that this exact test is required in every linking case.
 - Statutory exceptions remain available only when every condition is met. A
   general Linux-compatibility or research objective did not establish an
   exception on the reviewed record.
-<!-- jig-ignore-next-line: legal party names and citation abbreviations are indivisible evidence -->
-- Later cases including *Chamberlain Group, Inc. v. Skylink Technologies, Inc.*,
-  *Lexmark International, Inc. v. Static Control Components, Inc.*, *MGE UPS
-  Systems, Inc. v. GE Consumer and Industrial, Inc.*, and *MDY Industries, LLC
-  v. Blizzard Entertainment, Inc.* apply materially different access-control
-  facts and circuit rules.
+
+- Later cases applying materially different access-control facts and circuit
+  rules include:
+  - *Chamberlain Group, Inc. v. Skylink Technologies, Inc.*
+  - *Lexmark International, Inc. v. Static Control Components, Inc.*
+  - *MGE UPS Systems, Inc. v. GE Consumer and Industrial, Inc.*
+  - *MDY Industries, LLC v. Blizzard Entertainment, Inc.*
 
 - *MGE UPS Systems* applied *Corley*'s distinction between circumvention and
   later use: employees who merely executed an already altered copy were not

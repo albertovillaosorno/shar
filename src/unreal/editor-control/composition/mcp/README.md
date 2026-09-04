@@ -124,28 +124,29 @@ use synchronous automated asset-import tasks without replacement or implicit
 save. Static FBX pins the import to one combined `StaticMesh`, preserves
 authored
 normals, and disables material, texture, animation, LOD, collision, Nanite, and
+lightmap-UV generation.
 
-lightmap-UV generation. HAP copies verified bytes transactionally beneath
+HAP copies verified bytes transactionally beneath
 `Content/Movies/Generated/SHAR/`, creates a `UFileMediaSource`, and stores the
 matching `./Movies/Generated/SHAR/...` path. All three routes leave package save
 and independent read-back to `plan-apply`; media rollback deletes the external
 payload before the asset. Material and texture assets remain separate planned
-
 operations. Repository-owned JSON semantic compilers and concrete factories,
-world assembly, runtime binding,
-validation, cook, and packaging remain explicit blocked work until their
-complete native routes exist. Generic or abstract `DataAsset` creation is not a
+world assembly, runtime binding, validation, cook, and packaging remain explicit
+blocked work until their complete native routes exist.
+
+Generic or abstract `DataAsset` creation is not a
 substitute for compiling normalized source into the project-owned typed runtime
 contract. Source verification keeps portable plan identities separate from
 physical
 workspace locations: `extracted/...` and `fbx-assets/...` resolve below
 `.cache/pipeline/`, while logical `manifest.jsonl` resolves to
-
 `game/manifest/unreal.jsonl`. Reads do not follow links, SHA-256 streams from
 stable file descriptors, and physical paths stay out of public reports. If an
 import response is lost after the asset appears,
-`plan-apply` treats that destination as created and compensates it. A lost
-delete
+`plan-apply` treats that destination as created and compensates it.
+
+A lost delete
 response is accepted only when independent existence read-back proves the asset
 is already absent.
 

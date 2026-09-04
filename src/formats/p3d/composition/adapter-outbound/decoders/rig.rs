@@ -601,10 +601,7 @@ fn decode_key_values(
 
 /// Keeps `decode_integer_keys` local because it shares the rig binary-layout
 /// invariant.
-fn decode_integer_keys(
-    reader: &mut Reader<'_>,
-    end: usize,
-) -> Option<String> {
+fn decode_integer_keys(reader: &mut Reader<'_>, end: usize) -> Option<String> {
     let count = u32_to_usize(reader.u32()?)?;
     if !exact_count_bytes_fit(reader, end, count, 6)? {
         return None;

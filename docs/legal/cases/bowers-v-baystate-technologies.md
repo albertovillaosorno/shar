@@ -77,17 +77,18 @@ and controlling law.
 
 ## Sources
 
-<!-- jig-ignore-next-line: legal citation abbreviations are indivisible evidence -->
 - Justia (n.d.), *Bowers v. Baystate Technologies, Inc.*, 320 F.3d 1317
-  (Fed. Cir. 2003), public opinion text. Available at:
+  (Fed. Cir. 2003), public opinion text.
+
+  Available at:
   <https://law.justia.com/cases/federal/appellate-courts/F3/320/1317/615628/>
   (Accessed: 15 July 2026).
 
 - [Vault Corp. v. Quaid Software Ltd.](vault-v-quaid-software.md).
 <!-- markdownlint-disable-next-line MD013 -->
-
 - [Software license reverse-engineering
   clauses](../contracts/software-license-reverse-engineering-clauses.md).
 
 - [17 U.S.C. § 301](../statutes/17-usc-301.md).
+
 - [17 U.S.C. § 1201](../statutes/17-usc-1201-trafficking.md).
