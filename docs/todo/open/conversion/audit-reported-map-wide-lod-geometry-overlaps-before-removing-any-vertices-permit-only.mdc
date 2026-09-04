@@ -48,8 +48,9 @@ committed implementation. This bounds any permissible geometry removal to exact
 source-backed duplicate faces; it does not justify deleting reported visual
 overlap merely because geometry is nearby or coincident in presentation.
 
-The acceptance criterion remains open because the current whole-world replay
-still fails closed before publication on an unresolved duplicate-shader
-physical-occurrence relationship. A complete map-wide output audit must be
-rerun after that independent material-identity blocker is resolved without
-inventing material occurrence authority.
+The duplicate-shader publication blocker is now resolved from shipped Pure3D
+inventory semantics: same-section shader collisions are first-store-wins, and
+the terrain-world ledger proves that authoritative first occurrences precede
+their consumers. The acceptance criterion remains open until a fresh complete
+whole-world replay and map-wide output audit are rerun against that material
+resolution without broadening the exact-face removal policy above.
