@@ -52,11 +52,12 @@ extend to ordered software, retained duplicates, extracted content, or digital
 transfers that create another copy.
 
 *Wall Data Inc. v. Los Angeles County Sheriff's Department* adds a copy-count
-boundary. Installing complete software copies on more computers than a
+boundary.
+
+Installing complete software copies on more computers than a
 per-device license authorized was infringement even though access controls
 allegedly limited simultaneous use. The Ninth Circuit distinguished efficient
 imaging within the authorized installation count from extra copies created for
-
 convenience and assignment flexibility. A concurrent-user license could present
 different facts, so the exact grant matters.
 

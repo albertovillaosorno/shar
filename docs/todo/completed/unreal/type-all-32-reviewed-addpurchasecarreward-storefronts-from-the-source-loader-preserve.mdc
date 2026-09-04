@@ -43,7 +43,6 @@ unresolved.
 
 ## Acceptance criteria
 
-<!-- jig-ignore-next-line: completed checklist evidence remains one atomic item -->
 - [x] Type all 32 reviewed `AddPurchaseCarReward` storefronts from the source
   loader: preserve exact action, choreo, position locator, trigger-radius
   lexeme, and car-start locator; bind the reward NPC to a canonical
@@ -52,7 +51,9 @@ unresolved.
   `AddPurchaseCarNPCWaypoint` calls to a unique prior storefront NPC. Pair
   all 16 level-setup sources with their exact `<family>i` to `<family>` load
   sibling and bind the 32 immediate storefront positions plus 26 waypoints
-  against that static package context. Require at least one
+  against that static package context.
+
+  Require at least one
   level-setup-specific command before classifying the source; the 16
   reviewed mission-init sources whose only overlapping command is
   `InitLevelPlayerVehicle` stay outside this sibling-load pass. Current

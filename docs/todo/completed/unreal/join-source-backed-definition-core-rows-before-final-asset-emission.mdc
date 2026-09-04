@@ -21,8 +21,9 @@ reviewed mission-script sources, 190 contain no selected mission and must
 project no stage/objective/condition rows; all 154 selected sources contain
 exactly one mission. Join all 611 stages to one authored-topology row and one
 root objective through exact owner source/dense ordinals, then attach all 408
+conditions through the same owner key.
 
-conditions through the same owner key. Preserve stage-versus-objective scope,
+Preserve stage-versus-objective scope,
 exact root-objective ownership for the 6 objective-scoped conditions,
 versioned schema id, canonical objective kind or explicit unavailable
 identity, direct typed parameters, checkpoint/final/terminal evidence, visual
@@ -37,13 +38,14 @@ only, not a runtime success/failure/retry/recovery edge.
 
 ## Acceptance criteria
 
-<!-- jig-ignore-next-line: completed checklist evidence remains one atomic item -->
 - [x] Join source-backed definition-core rows before final asset emission. Of
   344 reviewed mission-script sources, 190 contain no selected mission and
   must project no stage/objective/condition rows; all 154 selected sources
   contain exactly one mission. Join all 611 stages to one authored-topology
   row and one root objective through exact owner source/dense ordinals, then
-  attach all 408 conditions through the same owner key. Preserve
+  attach all 408 conditions through the same owner key.
+
+  Preserve
   stage-versus-objective scope, exact root-objective ownership for the 6
   objective-scoped conditions, versioned schema id, canonical objective kind
   or explicit unavailable identity, direct typed parameters,

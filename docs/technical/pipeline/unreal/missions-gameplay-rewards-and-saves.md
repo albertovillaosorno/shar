@@ -17,10 +17,10 @@ camera intents, audio, rewards, checkpoint policy, and transitions.
 ## Canonical placement
 
 <!-- markdownlint-disable-next-line MD044 -->
-<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+<!-- jig-ignore-next-line: Unreal object path is indivisible -->
 - `/Game/SHAR/Data/Missions/<chapter_id>/<mission_id>/DA_Mission_<chapter_id>_<mission_id>` <!-- markdownlint-disable-line MD013 -->
 <!-- markdownlint-disable-next-line MD044 -->
-<!-- jig-ignore-next-line: Unreal asset path is indivisible -->
+<!-- jig-ignore-next-line: Unreal object path is indivisible -->
 - `/Game/SHAR/Data/Missions/<chapter_id>/<mission_id>/DT_MissionStages_<chapter_id>_<mission_id>` <!-- markdownlint-disable-line MD013 -->
 - `/Game/SHAR/Data/Missions/Templates/ST_Mission_<template_id>`
 - `/Game/SHAR/Data/Rewards/<reward_id>/DA_Reward_<reward_id>`
@@ -235,9 +235,9 @@ Documented Event and CarStart roles receive exact type constraints, and
 lookup has now been traced for every currently modeled locator role. Pure3D
 searches the current inventory section first, then remaining sections in
 creation order. Static mission loading creates Level before Mission; within one
+section, an exact-type duplicate is rejected after the first load.
 
-<!-- jig-ignore-next-line: runtime lookup census is one coupled evidence statement -->
-section, an exact-type duplicate is rejected after the first load. Therefore
+Therefore
 exact-type script-time references use static package order. A corpus audit of
 751 such references found 242 unique candidates, 507 missing candidates, and
 two duplicated CarStart references; both duplicates are Level-versus-Mission

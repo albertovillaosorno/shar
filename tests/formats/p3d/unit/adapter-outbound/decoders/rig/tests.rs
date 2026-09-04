@@ -412,10 +412,8 @@ fn animation_decodes_group_channels_and_keys() -> Result<(), String> {
 
 #[test]
 fn animation_rejects_impossible_key_count() -> Result<(), String> {
-    let mut fixture = require(
-        animation_fixture(),
-        "animation fixture should build",
-    )?;
+    let mut fixture =
+        require(animation_fixture(), "animation fixture should build")?;
     let channel_id = CHANNEL_FLOAT1.to_le_bytes();
     let channel_start = fixture
         .windows(channel_id.len())

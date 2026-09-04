@@ -17,7 +17,7 @@ children: []
 ---
 
 <!-- markdownlint-disable-next-line MD044 -->
-<!-- jig-ignore-next-line: typed TODO heading preserves canonical title -->
+<!-- jig-ignore-next-line: TODO title is indivisible -->
 # Bind each typed locator reference against the exact selected source package context…
 
 Bind each typed locator reference against the exact selected source package
@@ -40,7 +40,6 @@ exact `AddObjective` source ordinal. Ownership does not alter `Resolved`,
 
 ## Acceptance criteria
 
-<!-- jig-ignore-next-line: completed checklist evidence remains one atomic item -->
 - [x] Bind each typed locator reference against the exact selected source
   package context formed by the matching mission-load script and its longest
   matching level-load family, plus indexed initial Dyna P3Ds after
@@ -48,7 +47,9 @@ exact `AddObjective` source ordinal. Ownership does not alter `Resolved`,
   references, 461 bind to decoded package roots and one valid
   source-requested root has no decoded package; retain that root as an
   explicit evidence gap instead of inventing an alias or aborting locator
-  preflight. Split script-time visibility from post-Dyna visibility:
+  preflight.
+
+  Split script-time visibility from post-Dyna visibility:
   immediate init/stage lookups see only static Level/Mission loads, while
   reviewed deferred lookups can see decoded initial Dyna packages. Preserve
   the `ActivateVehicle` `NULL` sentinel. Initialization locator references

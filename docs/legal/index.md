@@ -204,16 +204,17 @@ does not determine a legal outcome by itself.
 
 - Active legal records: 73.
 - Review date: 2026-07-16.
-<!-- jig-ignore-next-line: legal currentness evidence is one reviewed inventory item -->
+
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover
   Public Laws 119-1 through 119-69 and 119-71 through 119-73 for the first
   session, plus Public Law 119-70 and Public Laws 119-74 through 119-99 for the
   second session. The only classified Title 17 change is to 17 U.S.C. § 105
-  (Pub. L. 119-60, § 1702), which no record cites; this review identified no
+  (Public Law 119-60, section 1702), which no record cites; this review
+  identified no
   amendment to a cited section of Title 15, Title 17, or Title 18. The eCFR
   identifies Title 37 as current through 2026-07-10, and the 37 C.F.R. § 201.40
-  amendment history still ends at 89 FR 85446 (Oct. 28, 2024).
+  amendment history still ends at 89 FR 85446 (October 28, 2024).
 
 - Platform currentness: the live GitHub Terms of Service identify 2026-04-27 as
   their effective date. The live YouTube terms endpoint identifies 2023-12-15
@@ -231,9 +232,13 @@ Primary currentness endpoints:
 - Office of the Law Revision Counsel, *United States Code Classification
   Tables*: <https://uscode.house.gov/classification/tables.shtml> (Accessed: 14
   July 2026).
+
 - <https://www.ecfr.gov/current/title-37/part-201/section-201.40>
   (Accessed: 14 July 2026).
+
 - <https://www.copyright.gov/1201/> (Accessed: 14 July 2026).
+
 - <https://docs.github.com/en/site-policy/github-terms/github-terms-of-service>
   (Accessed: 14 July 2026).
+
 - <https://www.youtube.com/t/terms> (Accessed: 14 July 2026).

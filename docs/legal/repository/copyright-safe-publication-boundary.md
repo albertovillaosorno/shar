@@ -84,11 +84,12 @@ Those facts may be relevant to a legal analysis but do not supply publication
 authority by themselves.
 
 *Universal City Studios, Inc. v. Corley* also requires a separate publication
-review for functional access-circumvention material. A potential lawful use of
+review for functional access-circumvention material.
+
+A potential lawful use of
 content reached after circumvention does not itself authorize distribution of a
 decryption tool. Purposeful links to such a tool can also present trafficking
 risk when the publisher knows the destination material and maintains the link to
-
 disseminate it. Ordinary source links, compatibility references, and research
 citations require their own facts and are not categorically prohibited.
 

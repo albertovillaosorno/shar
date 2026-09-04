@@ -42,11 +42,12 @@ uses of the decrypted works did not create a right to distribute the access-
 circumvention tool.
 
 *MGE UPS Systems, Inc. v. GE Consumer and Industrial, Inc.* addresses the
-related § 1201(a)(1) act of circumvention. The Fifth Circuit found no DMCA
+related § 1201(a)(1) act of circumvention.
+
+The Fifth Circuit found no DMCA
 liability where an unknown source had already altered the software and the
 accused employees merely used that altered copy. The claimant did not connect
 the defendants to the act that disabled, removed, avoided, or bypassed the
-
 hardware-key control. The court withdrew an earlier opinion with materially
 different reasoning; only the substituted 622 F.3d 361 opinion controls.
 
