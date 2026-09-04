@@ -172,7 +172,7 @@ fn preserves_key_without_offset_list() -> TestResult {
     fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
     if report.key_count() != 2 || report.matched_key_count() != 1 {
         return Err(
-            "missing offset list was not preserved as an empty match".to_owned(),
+            "missing offset list did not preserve an empty match".to_owned(),
         );
     }
     let second = report.keys.get(1).ok_or("second key is missing")?;
