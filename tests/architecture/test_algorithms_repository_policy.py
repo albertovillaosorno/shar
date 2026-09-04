@@ -41,6 +41,7 @@ import unicodedata
 import pytest
 
 _ROOT = Path(__file__).resolve().parents[2]
+_MIRROR = _ROOT / ".jig/graph/mirror"
 
 
 def _algorithm_ignore_rules() -> tuple[str, ...]:
@@ -178,8 +179,9 @@ def test_algorithm_surfaces_and_settings_follow_registered_layout() -> None:
         ),
     }
     boundary = _ROOT / "src" / "foundation" / "algorithm"
+    sidecars = _MIRROR / "src" / "foundation" / "algorithm"
     for relative, content in expected.items():
-        assert (boundary / relative).read_text() == content
+        assert (sidecars / relative).read_text() == content
     settings = boundary / "composition" / "adapter-inbound" / "settings.json"
     assert settings.is_file()
     assert not (boundary / "settings.json").exists()

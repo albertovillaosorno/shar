@@ -36,6 +36,7 @@ from pathlib import Path
 import tomllib
 
 _ROOT = Path(__file__).resolve().parents[2]
+_MIRROR = _ROOT / ".jig/graph/mirror"
 
 
 def test_source_audit_is_declared_architecture_component() -> None:
@@ -67,6 +68,6 @@ def test_source_audit_facade_has_canonical_surface_sidecar() -> None:
         "authority: composition/lib.rs\n"
     )
     sidecar = (
-        _ROOT / "src/migration/source-audit/composition/lib.rs.yml"
+        _MIRROR / "src/migration/source-audit/composition/lib.rs.yml"
     )
     assert sidecar.read_text(encoding="utf-8") == expected

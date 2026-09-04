@@ -37,6 +37,7 @@ import tomllib
 
 _ROOT = Path(__file__).resolve().parents[2]
 _BOUNDARY = _ROOT / "src/localization/languages"
+_SIDECARS = _ROOT / ".jig/graph/mirror/src/localization/languages"
 
 
 def test_languages_is_declared_architecture_component() -> None:
@@ -64,7 +65,7 @@ def test_languages_has_canonical_function_metadata() -> None:
         "boundary: src/localization/languages\n"
         "authority: README.md\n"
     )
-    assert (_BOUNDARY / "README.md.yml").read_text() == expected
+    assert (_SIDECARS / "README.md.yml").read_text() == expected
 
 
 def test_languages_project_has_canonical_surface_sidecar() -> None:
@@ -76,7 +77,7 @@ def test_languages_project_has_canonical_surface_sidecar() -> None:
         "kind: project\n"
         "authority: Cargo.toml\n"
     )
-    sidecar = _BOUNDARY / "Cargo.toml.yml"
+    sidecar = _SIDECARS / "Cargo.toml.yml"
     assert sidecar.read_text() == expected
 
 
@@ -89,7 +90,7 @@ def test_languages_facade_has_canonical_surface_sidecar() -> None:
         "kind: facade\n"
         "authority: composition/lib.rs\n"
     )
-    sidecar = _BOUNDARY / "composition/lib.rs.yml"
+    sidecar = _SIDECARS / "composition/lib.rs.yml"
     assert sidecar.read_text() == expected
 
 

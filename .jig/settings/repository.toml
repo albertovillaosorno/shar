@@ -5,3 +5,5 @@ host_absolute_path_guard = false
 
 [layout]
 adjacent_component_repetition = "deny"
+# Function manifests, Cargo targets, and pytest own canonical external test roots.
+test_source_mirroring = false

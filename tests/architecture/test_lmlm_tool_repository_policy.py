@@ -37,6 +37,7 @@ import tomllib
 
 _ROOT = Path(__file__).resolve().parents[2]
 _TOOL = _ROOT / "tools/lmlm"
+_SIDECARS = _ROOT / ".jig/graph/mirror/tools/lmlm"
 
 
 def test_lmlm_tool_is_root_workspace_component() -> None:
@@ -77,13 +78,13 @@ def test_lmlm_tool_uses_registered_function_layout() -> None:
 def test_lmlm_tool_publishes_canonical_surface_metadata() -> None:
     """Keep capability, boundary, and project surfaces explicit."""
     assert (_TOOL / "lmlm.jig").read_text() == "math,rust\n"
-    assert (_TOOL / "README.md.yml").read_text() == (
+    assert (_SIDECARS / "README.md.yml").read_text() == (
         "schema: shar-boundary/v1\n"
         "path: tools/lmlm/README.md\n"
         "boundary: tools/lmlm\n"
         "authority: README.md\n"
     )
-    assert (_TOOL / "Cargo.toml.yml").read_text() == (
+    assert (_SIDECARS / "Cargo.toml.yml").read_text() == (
         "schema: shar-surface/v1\n"
         "path: tools/lmlm/Cargo.toml\n"
         "function: lmlm\n"
