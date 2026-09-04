@@ -1375,43 +1375,32 @@ identity.
 
 A whole current 149-package terrain-world audit finds 358 package-local
 logical shader sets with duplicate physical occurrences. Of those, 338 sets are
-referenced by mesh primitive groups and contain 716 physical shader occurrences:
-43 sets are byte-equal and 295 sets contain differing payloads. Every one of the
-716 occurrences has an exact phase-three package member at the same path and
-source ordinal. Physical member indexing is therefore complete for this
-ambiguity surface; the missing authored consumer-to-occurrence relationship
-remains the blocking evidence.
+referenced by mesh primitive groups and contain 716 physical shader occurrences;
+all 1,312 consuming meshes resolve to exact phase-three model members. Physical
+member indexing and source ordering are therefore complete for this ambiguity
+surface.
 
-The consumer side is now equally bounded. Across those 338 mesh-used duplicate
-shader sets, all 1,312 consuming mesh occurrences resolve by exact mesh path and
-source ordinal to classified phase-three `model` / `p3d-mesh` members, with zero
-missing or classification-drifted matches. These stable model ids strengthen
-non-selecting provenance only; they do not create a primitive-group-to-material
-edge or choose among any duplicate shader occurrences.
+The supported Pure3D primitive-group contract stores a logical `Shader` string,
+not a physical shader coordinate. The missing authority comes instead from the
+shipped inventory loader: `TSimpleChunkHandler::Load` checks the current section
+for a same-UID, same-type entity before storage, discards a colliding newly
+loaded entity, and returns `LOAD_ERROR`. `TP3DFileHandler::Load` continues to
+later chunks, so the first same-section shader survives subsequent duplicates.
 
-The supported Pure3D primitive-group contract has no hidden physical material
-coordinate to recover. `tlPrimGroupChunk` stores a logical `Shader` string,
-primitive and vertex types, and declared geometry counts; its optional
-`tlVertexShaderChunk` stores only a `VertexShaderName`. Mesh and skin containers
-both consume that same primitive-group contract. The decoder therefore preserves
-all available material-reference identity when it retains the shader string and
-the package-level primitive-group source ordinal.
+All 338 mesh-used duplicate shader sets are top-level same-section candidates,
+and every candidate precedes every consuming mesh in physical chunk order.
+World material migration therefore selects the lowest source ordinal only when
+normalized ledger rows, exact phase-three members, and consumer coordinates all
+prove this first-store-wins case. Any incomplete or differently ordered case
+continues to fail closed rather than using proximity as a heuristic.
 
-A separate audit of the 338 mesh-used duplicate logical shader sets covers 1,312
-primitive-group consumers. Every consumer has `vertex_format=8225` and an empty
-optional vertex-shader reference. Within every duplicate set, all candidate
-shaders agree on `vertex_needs=33`; 66 sets differ in shader `vertex_mask`, but
-the primitive group publishes no shader-mask selector, and the two L1
-`char_swatches_m` candidates have the same mask. These fields therefore do not
-supply source-backed occurrence authority for the current ambiguity.
-
-That exact consumer coordinate does not identify either physical shader
-occurrence. The primitive-group payload still stores only the logical
-`char_swatches_m` token, while the two differing shader candidates remain
-independent top-level chunks at ordinals 12679 and 13756. Selecting the first,
-nearest, or lowest-ordinal shader would therefore invent relationship authority;
-world material export remains fail-closed until an exact source-backed
-mesh-primitive-to-shader occurrence relationship is recovered or proven.
+The same runtime rule resolves top-level texture collisions because
+`TTextureLoader` uses the same simple chunk handler. Across consumed
+terrain-world materials, all 3,735 package-local first textures precede their
+shader. This includes 119 duplicate local texture identities: 73 attached to
+selected duplicate shaders and 46 attached to otherwise unique shaders. Exact
+first occurrences are preserved; non-local references retain scoped shared
+texture authority.
 
 This umbrella task remains open for broader asset/package identity and ordering
 evidence across the remaining conversion surfaces.
