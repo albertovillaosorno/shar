@@ -36,6 +36,7 @@ from pathlib import Path
 import tomllib
 
 _ROOT = Path(__file__).resolve().parents[2]
+_MIRROR = _ROOT / ".jig/graph/mirror"
 
 
 def test_mod_package_is_declared_architecture_component() -> None:
@@ -61,7 +62,7 @@ def test_mod_package_has_canonical_boundary_sidecar() -> None:
         "boundary: src/modding/package\n"
         "authority: README.md\n"
     )
-    sidecar = _ROOT / "src/modding/package/README.md.yml"
+    sidecar = _MIRROR / "src/modding/package/README.md.yml"
     assert sidecar.read_text(encoding="utf-8") == expected
 
 
@@ -74,7 +75,7 @@ def test_mod_package_facade_has_canonical_surface_sidecar() -> None:
         "kind: facade\n"
         "authority: composition/lib.rs\n"
     )
-    sidecar = _ROOT / "src/modding/package/composition/lib.rs.yml"
+    sidecar = _MIRROR / "src/modding/package/composition/lib.rs.yml"
     assert sidecar.read_text(encoding="utf-8") == expected
 
 

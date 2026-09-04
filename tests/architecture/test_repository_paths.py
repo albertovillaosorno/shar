@@ -38,6 +38,7 @@ import re
 import tomllib
 
 _ROOT = Path(__file__).resolve().parents[2]
+_MIRROR = _ROOT / ".jig/graph/mirror"
 _MARKDOWN_LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 _RETIRED_PATHS = (
     "mods",
@@ -116,7 +117,7 @@ def test_source_domains_have_boundary_metadata() -> None:
     ):
         relative = domain.relative_to(_ROOT).as_posix()
         readme = domain / "README.md"
-        metadata = domain / "README.md.yml"
+        metadata = _MIRROR / relative / "README.md.yml"
         if not readme.is_file() or not metadata.is_file():
             mismatches.append(f"{relative}: missing README boundary metadata")
             continue
@@ -319,7 +320,6 @@ def test_tool_functions_publish_canonical_boundary_metadata() -> None:
         required = (
             function / "function.yml",
             function / "README.md",
-            function / "README.md.yml",
             function / f"{function.name}.jig",
         )
         missing.extend(
@@ -327,6 +327,10 @@ def test_tool_functions_publish_canonical_boundary_metadata() -> None:
             for path in required
             if not path.is_file()
         )
+        relative = function.relative_to(_ROOT)
+        sidecar = _MIRROR / relative / "README.md.yml"
+        if not sidecar.is_file():
+            missing.append(sidecar.relative_to(_ROOT).as_posix())
     assert not missing, (
         f"tool function boundary artifacts missing: {missing}"
     )
@@ -350,3 +354,12 @@ def test_retired_repository_paths_stay_absent() -> None:
     """Prevent retired compatibility and replacement paths from returning."""
     present = [path for path in _RETIRED_PATHS if (_ROOT / path).exists()]
     assert not present, f"retired repository paths returned: {present}"
+
+
+def test_external_test_roots_disable_source_mirroring_explicitly() -> None:
+    """Keep Jig aligned with function-owned external test roots."""
+    with (_ROOT / ".jig/settings/repository.toml").open("rb") as stream:
+        repository = tomllib.load(stream)
+    layout = repository.get("layout")
+    assert isinstance(layout, dict)
+    assert layout.get("test_source_mirroring") is False
