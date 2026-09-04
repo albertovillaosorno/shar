@@ -1251,6 +1251,7 @@ fn p3d_package_complete(output: &Path) -> bool {
         && !has_incomplete_component_json(&components)
         && component_ledger_files_exist(output)
         && sprite_image_evidence_complete(output)
+        && skin_expression_offsets_complete(output)
         && scrooby_project_evidence_complete(output)
         && scrooby_page_resource_names_complete(output)
         && scrooby_layout_evidence_complete(output)
@@ -1333,6 +1334,46 @@ fn component_ledger_files_exist(output: &Path) -> bool {
             return false;
         }
         if !resolved.is_file() {
+            return false;
+        }
+    }
+    true
+}
+
+/// Reject cached skins that predate typed expression-offset recovery.
+fn skin_expression_offsets_complete(output: &Path) -> bool {
+    let manifest = output.join("components.jsonl");
+    let components = output.join("components");
+    let Ok(text) = fs::read_to_string(&manifest) else {
+        return false;
+    };
+    for line in text.lines().skip(1) {
+        if extract_json_string_field(line, "kind").as_deref() != Some("skin") {
+            continue;
+        }
+        let Some(path_text) = extract_json_string_field(line, "path") else {
+            return false;
+        };
+        let Ok(path) = resolve_under(&components, Path::new(&path_text)) else {
+            return false;
+        };
+        let Ok(bytes) = fs::read(path) else {
+            return false;
+        };
+        let Ok(payload) = serde_json::from_slice::<serde_json::Value>(&bytes)
+        else {
+            return false;
+        };
+        let stale_offsets = payload
+            .get("unhandled_subchunks")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|children| {
+                children.iter().any(|child| {
+                    child.get("id").and_then(serde_json::Value::as_str)
+                        == Some("0x00010018")
+                })
+            });
+        if stale_offsets {
             return false;
         }
     }
