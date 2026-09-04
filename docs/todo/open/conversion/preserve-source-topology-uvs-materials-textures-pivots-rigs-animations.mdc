@@ -26,21 +26,17 @@ No explicit task dependency was recorded in the legacy TODO.
 
 ## Evidence
 
-World-analysis mesh loading now uses the same strict authored-topology contract
-as ordinary FBX mesh loading. Triangle-strip stitching degenerates remain a
-deterministic topology conversion performed by strip triangulation, while an
-authored triangle-list record with repeated vertex indices fails closed instead
-of being silently deleted. A focused regression proves analysis no longer
-repairs a malformed triangle list; the complete FBX package, strict FBX Clippy,
-and all 54 world-level tests pass. The legacy world-catalog discard-count field
-is retained for schema compatibility and is now zero for render meshes.
+World-analysis mesh loading now has an explicit source-preserving path for
+authored triangle-list records with repeated vertex indices. Ordinary FBX mesh
+loading remains strict, while triangle-strip stitching degenerates remain the
+existing deterministic strip normalization. A focused regression preserves
+`[[0, 1, 2], [2, 2, 3]]` with a zero compatibility discard count.
 
-Intersect collision meshes now follow the same fail-closed rule. Their decoded
-format is an explicit count-prefixed triangle index array with no strip/stitch
-selector, so repeated-index source triangles are no longer deleted before mesh
-construction. A focused collision regression proves the exact malformed source
-topology is rejected, and the legacy collision discard count remains zero for
-catalog compatibility.
+Intersect collision meshes use the same explicit source-preserving constructor.
+Shipped `IntersectLoader` copies every serialized index unchanged, and
+`IntersectDSG::mTri` reads each exact three-index record. A focused collision
+regression therefore preserves repeated-index source triangles with a zero
+compatibility discard count rather than deleting or rejecting runtime data.
 
 World mesh publication now also preserves source mesh grouping itself. Spatial
 distance between disconnected components no longer triggers vertex compaction,
@@ -1471,6 +1467,12 @@ can neither overwrite nor block another shader's staged source. A regression
 with two distinct `shared.png` payloads proves both bytes survive as separate
 canonical textures, and the replay advances past the original `shrubRound.png`
 collision without weakening same-resolution collision checks.
+
+The September 4 replay now also advances through both render-mesh and
+`INTERSECT_DSG` repeated-index records without discarding them. Its next exact
+boundary is `l3z3`: mesh `z3_gens108Shape_071` references `lambert1`, while that
+package has no local `lambert1` shader. The existing missing-default-shader test
+continues to fail closed rather than inventing an untextured material.
 
 Malformed authored counts now fail closed before count-sized allocation or
 iteration where the encoded source region supplies a hard bound. This covers

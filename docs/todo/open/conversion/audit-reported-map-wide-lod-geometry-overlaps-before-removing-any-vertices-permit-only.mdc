@@ -56,19 +56,21 @@ their consumers. A fresh 129-package replay then exposed an unrelated
 Per-shader scratch isolation preserves both differing payloads and advances the
 replay beyond that staging-only blocker.
 
-The next fail-closed boundary is authored triangle-list topology. Across all 129
-selected terrain-world packages, 9,765 decoded meshes contain 2,163 triangle-list
-primitive groups. Twelve groups contain 28 repeated-index triangle records; the
-first replay failure is `common_gens203Shape_054` in `l1r7`, whose triangles 377
-and 381 are `[786, 782, 782]` and `[794, 794, 785]`. The same census deliberately
-excludes triangle-strip stitching degenerates because strip triangulation owns
-that normalization.
+Across all 129 selected terrain-world packages, 9,765 decoded meshes contain
+2,163 triangle-list primitive groups. Twelve groups contain 28 repeated-index
+triangle records, including `[786, 782, 782]` and `[794, 794, 785]` in
+`common_gens203Shape_054`. The source-preserving analysis path now retains all
+such authored records while ordinary FBX mesh loading remains strict.
 
-Shipped Pure3D does not authorize deleting those authored triangle-list records.
-`tPrimGroupLoader::LoadStreamed` validates each serialized index only for range,
-stores it unchanged, and `IndexedDisplayInternal` submits vertices in that exact
-index order. Repository commit `ef097ee0` likewise removed the former analysis
-discard path and added a regression that rejects altering repeated-index source
-topology. The current replay therefore fails closed and publishes no partial
-world output. Acceptance remains open pending a representation that preserves
-this source evidence without broad overlap or degenerate-face deletion.
+Shipped Pure3D independently requires that choice for render and intersect data.
+`tPrimGroupLoader::LoadStreamed` stores serialized render indices unchanged,
+while `IntersectLoader` and `IntersectDSG::mTri` preserve exact intersect
+triples.
+The replay now advances through both topology boundaries without counting those
+records as discarded.
+
+The next fail-closed replay boundary is instead material identity in `l3z3`.
+Mesh `z3_gens108Shape_071` alone references `lambert1`, but the package contains
+no local shader by that identity. The map-wide audit remains open because the
+pipeline deliberately refuses to invent a default material without runtime
+inventory evidence proving which external shader is authoritative.
