@@ -2,7 +2,7 @@
   "artifacts": [
     {
       "artifact_id": "mesh",
-      "byte_length": 9772,
+      "byte_length": 10252,
       "media_type": "application/vnd.autodesk.fbx",
       "metadata": {
         "source_coordinate_system": "centimeter_positive_z_up",
@@ -11,7 +11,7 @@
       "relative_path": "SM_unreal_fixture_triangle.fbx",
       "required": true,
       "role": "static_mesh",
-      "sha256": "77233971822a36a4e01ca42daa07e6a50574f7c7dc6a4a51c91b0928916eeb1e"
+      "sha256": "4c2ab049d7726f179fd60ef8fde1df44c6a51ad6a191f1917764c25d26915ee3"
     },
     {
       "artifact_id": "base_color",
