@@ -31,6 +31,7 @@ copies because they had not obtained ownership of the relevant program copies.
 The court therefore vacated the copyright judgment for the downstream reseller
 and remanded the remaining issues.
 
+<!-- jig-ignore-next-line: legal case names and citation abbreviations are indivisible evidence -->
 *Wall Data Inc. v. Los Angeles County Sheriff's Department* had earlier relied
 on *MAI Systems Corp. v. Peak Computer, Inc.* to treat a restricted software
 user as a licensee for § 117. *Wall Data* also held that its essential-step

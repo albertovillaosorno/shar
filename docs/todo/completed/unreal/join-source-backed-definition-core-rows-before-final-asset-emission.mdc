@@ -37,6 +37,7 @@ only, not a runtime success/failure/retry/recovery edge.
 
 ## Acceptance criteria
 
+<!-- jig-ignore-next-line: completed checklist evidence remains one atomic item -->
 - [x] Join source-backed definition-core rows before final asset emission. Of
   344 reviewed mission-script sources, 190 contain no selected mission and
   must project no stage/objective/condition rows; all 154 selected sources

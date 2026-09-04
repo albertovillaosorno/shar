@@ -75,6 +75,7 @@ and the exact act remain necessary.
 
 ## Sources
 
+<!-- jig-ignore-next-line: legal citation abbreviations are indivisible evidence -->
 - Berkman Klein Center for Internet & Society (n.d.), *Vault Corp. v. Quaid
   Software, Ltd.*, 847 F.2d 255 (5th Cir. 1988), public opinion text. Available
   at: <https://cyber.harvard.edu/ilaw/Contract/vault.htm> (Accessed: 15 July

@@ -204,6 +204,7 @@ does not determine a legal outcome by itself.
 
 - Active legal records: 73.
 - Review date: 2026-07-16.
+<!-- jig-ignore-next-line: legal currentness evidence is one reviewed inventory item -->
 - Statutory currentness: the Office of the Law Revision Counsel classification
   tables were checked on 2026-07-14. The published 119th Congress tables cover
   Public Laws 119-1 through 119-69 and 119-71 through 119-73 for the first

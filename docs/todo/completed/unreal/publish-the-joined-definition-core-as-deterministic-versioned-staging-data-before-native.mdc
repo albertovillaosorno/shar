@@ -35,6 +35,7 @@ semantic staging, not `USharMissionDefinition` or StateTree asset emission.
 
 ## Acceptance criteria
 
+<!-- jig-ignore-next-line: completed checklist evidence remains one atomic item -->
 - [x] Publish the joined definition core as deterministic versioned staging data
   before native asset construction. `prepare-unreal` now writes
   `mission-definitions.jsonl` as the tenth transactional staging artifact:

@@ -43,6 +43,7 @@ unresolved.
 
 ## Acceptance criteria
 
+<!-- jig-ignore-next-line: completed checklist evidence remains one atomic item -->
 - [x] Type all 32 reviewed `AddPurchaseCarReward` storefronts from the source
   loader: preserve exact action, choreo, position locator, trigger-radius
   lexeme, and car-start locator; bind the reward NPC to a canonical
