@@ -32,15 +32,16 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::decoded_component_source::{
-    DecodedComponentError, DecodedComponentSource,
+    DecodedComponentError, DecodedComponentSource, read_shader_source_evidence,
 };
 use fbx::domain::character::CharacterAsset;
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 use fbx::ports::component_source::ComponentSource as _;
+use serde_json::Value;
 use shar_sha256::digest_hex;
 
 use super::prepared::PreparedTexture;
@@ -238,6 +239,7 @@ fn canonicalize_animated_materials_with_authority(
 /// Returns an error when shader evidence or fallback texture scope is invalid.
 fn resolve_source_material(
     source: &DecodedComponentSource,
+    package_root: &Path,
     shader: &str,
     consumer_provenance: Option<&ShaderConsumerProvenance>,
     authority: Option<&SharedTextureAuthority>,
@@ -271,6 +273,27 @@ fn resolve_source_material(
                     ))
                 })
         },
+        Err(error @ DecodedComponentError::AmbiguousShaderMember { .. }) => {
+            let context = RuntimeMaterialContext {
+                package_root,
+                consumer_provenance,
+                authority,
+                package,
+                source_subcategory,
+            };
+            resolve_runtime_first_material(source, shader, context, &error)?
+                .map_or_else(
+                    || {
+                        Err(material_resolution_error(
+                            shader,
+                            consumer_provenance,
+                            &error,
+                            package,
+                        ))
+                    },
+                    Ok,
+                )
+        },
         Err(error) => Err(material_resolution_error(
             shader,
             consumer_provenance,
@@ -278,6 +301,263 @@ fn resolve_source_material(
             package,
         )),
     }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct RuntimeLedgerOccurrence {
+    member: String,
+    source_ordinal: usize,
+    path: PathBuf,
+}
+
+#[derive(Clone, Copy)]
+struct RuntimeMaterialContext<'source> {
+    package_root: &'source Path,
+    consumer_provenance: Option<&'source ShaderConsumerProvenance>,
+    authority: Option<&'source SharedTextureAuthority>,
+    package: Option<&'source PhaseThreePackageRow>,
+    source_subcategory: &'source str,
+}
+
+/// Resolve a duplicate shader exactly as the shipped inventory would.
+fn resolve_runtime_first_material(
+    source: &DecodedComponentSource,
+    shader: &str,
+    context: RuntimeMaterialContext<'_>,
+    error: &DecodedComponentError,
+) -> Result<Option<MaterialBinding>, PipelineError> {
+    let Some(first_shader) = runtime_first_shader_occurrence(
+        context.package_root,
+        shader,
+        context.consumer_provenance,
+        context.package,
+        error,
+    )? else {
+        return Ok(None);
+    };
+    let shader_evidence =
+        read_shader_source_evidence(&first_shader.path, shader)
+        .map_err(|source| {
+            PipelineError::new(format!(
+                "runtime-first shader evidence failed: {source:?}"
+            ))
+        })?;
+    if let Some(texture) = shader_evidence.texture_reference.as_deref()
+        && let Some(first_texture) = runtime_first_texture_occurrence(
+            context.package_root,
+            texture,
+            first_shader.source_ordinal,
+        )?
+    {
+        return source
+            .resolve_indexed_material_with_texture_occurrence(
+                &first_shader.path,
+                &first_texture.path,
+            )
+            .map(Some)
+            .map_err(|source| {
+                PipelineError::new(format!(
+                    "runtime-first prop texture failed: {source:?}"
+                ))
+            });
+    }
+    match source.resolve_indexed_material(&first_shader.path) {
+        Ok(binding) => Ok(Some(binding)),
+        Err(DecodedComponentError::MissingTexture {
+            texture, searched, ..
+        }) if context.authority.is_some() => {
+            let external = context.authority
+                .ok_or_else(|| {
+                    PipelineError::new("shared texture authority is missing")
+                })?
+                .resolve(&texture, context.source_subcategory)?
+                .ok_or_else(|| {
+                    PipelineError::new(format!(
+                        concat!(
+                            "runtime-first prop material {} has no scoped ",
+                            "texture authority for {}; local search was {}"
+                        ),
+                        shader, texture, searched
+                    ))
+                })?;
+            source
+                .resolve_indexed_material_with_external_texture(
+                    &first_shader.path,
+                    external,
+                )
+                .map(Some)
+                .map_err(|source| {
+                    PipelineError::new(format!(
+                        "runtime-first shared prop material failed: {source:?}"
+                    ))
+                })
+        },
+        Err(source) => Err(PipelineError::new(format!(
+            "runtime-first prop material failed: {source:?}"
+        ))),
+    }
+}
+
+/// Select the first same-section shader only with complete source coordinates.
+fn runtime_first_shader_occurrence(
+    package_root: &Path,
+    shader: &str,
+    consumer_provenance: Option<&ShaderConsumerProvenance>,
+    package: Option<&PhaseThreePackageRow>,
+    error: &DecodedComponentError,
+) -> Result<Option<RuntimeLedgerOccurrence>, PipelineError> {
+    let DecodedComponentError::AmbiguousShaderMember { occurrences, .. } = error
+    else {
+        return Ok(None);
+    };
+    let (Some(provenance), Some(package)) =
+        (consumer_provenance, package)
+    else {
+        return Ok(None);
+    };
+    if occurrences.len() < 2
+        || ambiguous_shader_package_member_ids(package, error).is_none()
+    {
+        return Ok(None);
+    }
+    let ledger = top_level_ledger_occurrences(package_root, "shader", shader)?;
+    let expected = occurrences
+        .iter()
+        .map(|occurrence| {
+            occurrence
+                .source_ordinal
+                .map(|ordinal| (occurrence.member.clone(), ordinal))
+        })
+        .collect::<Option<BTreeSet<_>>>();
+    let actual = ledger
+        .iter()
+        .map(|occurrence| {
+            (occurrence.member.clone(), occurrence.source_ordinal)
+        })
+        .collect::<BTreeSet<_>>();
+    if expected.as_ref() != Some(&actual) || ledger.len() != occurrences.len() {
+        return Ok(None);
+    }
+    let Some(first) = ledger.first() else {
+        return Ok(None);
+    };
+    let mut consumer_ordinals = provenance.source_ordinals.clone();
+    for member_id in &provenance.model_member_ids {
+        let Some(source_ordinal) = package
+            .members()
+            .iter()
+            .find(|member| {
+                member.id == *member_id
+                    && member.role == PackageRole::Model
+                    && member.source_chunk_kind == "mesh"
+            })
+            .and_then(|member| member.source_chunk_ordinal)
+        else {
+            return Ok(None);
+        };
+        let _inserted = consumer_ordinals.insert(source_ordinal);
+    }
+    if consumer_ordinals.is_empty()
+        || consumer_ordinals
+            .iter()
+            .any(|ordinal| *ordinal <= first.source_ordinal)
+    {
+        return Ok(None);
+    }
+    Ok(Some(first.clone()))
+}
+
+/// Select the first local texture that existed when the shader was loaded.
+fn runtime_first_texture_occurrence(
+    package_root: &Path,
+    texture: &str,
+    shader_ordinal: usize,
+) -> Result<Option<RuntimeLedgerOccurrence>, PipelineError> {
+    let occurrences =
+        top_level_ledger_occurrences(package_root, "texture", texture)?;
+    let Some(first) = occurrences.first() else {
+        return Ok(None);
+    };
+    if first.source_ordinal >= shader_ordinal {
+        return Err(PipelineError::new(format!(
+            concat!(
+                "prop texture {} first appears at source ordinal {} after ",
+                "runtime-first shader ordinal {}"
+            ),
+            texture, first.source_ordinal, shader_ordinal
+        )));
+    }
+    Ok(Some(first.clone()))
+}
+
+/// Read top-level occurrences for one runtime inventory identity.
+fn top_level_ledger_occurrences(
+    package_root: &Path,
+    kind: &str,
+    logical: &str,
+) -> Result<Vec<RuntimeLedgerOccurrence>, PipelineError> {
+    let manifest = package_root.join("components.jsonl");
+    let text = fs::read_to_string(&manifest).map_err(|source| {
+        PipelineError::new(format!(
+            "runtime inventory ledger read failed: {source}"
+        ))
+    })?;
+    let mut occurrences = Vec::new();
+    let prefix = format!("{kind}/");
+    for line in text.lines().skip(1) {
+        let value = serde_json::from_str::<Value>(line).map_err(|source| {
+            PipelineError::new(format!(
+                "runtime inventory ledger JSON failed: {source}"
+            ))
+        })?;
+        if value.get("kind").and_then(Value::as_str) != Some(kind) {
+            continue;
+        }
+        let Some(name) = value.get("name").and_then(Value::as_str) else {
+            continue;
+        };
+        if !name
+            .trim_end_matches(char::from(0))
+            .eq_ignore_ascii_case(logical)
+        {
+            continue;
+        }
+        if value.get("depth").and_then(Value::as_u64) != Some(1)
+            || value.get("parent_ordinal").and_then(Value::as_u64) != Some(0)
+        {
+            return Ok(Vec::new());
+        }
+        let source_ordinal = value
+            .get("ordinal")
+            .and_then(Value::as_u64)
+            .and_then(|ordinal| usize::try_from(ordinal).ok())
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "runtime inventory occurrence has no source ordinal",
+                )
+            })?;
+        let relative = value
+            .get("path")
+            .and_then(Value::as_str)
+            .and_then(|path| path.strip_prefix(&prefix))
+            .filter(|member| {
+                !member.is_empty()
+                    && !member.contains('/')
+                    && !member.contains('\\')
+            })
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "runtime inventory occurrence path is unsafe",
+                )
+            })?;
+        occurrences.push(RuntimeLedgerOccurrence {
+            member: relative.to_owned(),
+            source_ordinal,
+            path: package_root.join("components").join(kind).join(relative),
+        });
+    }
+    occurrences.sort_by_key(|occurrence| occurrence.source_ordinal);
+    Ok(occurrences)
 }
 
 /// Collect exact primitive-group provenance without an owning-mesh coordinate.
@@ -450,6 +730,7 @@ fn resolve_materials(
     for shader in shaders {
         let binding = resolve_source_material(
             &source,
+            package_root,
             &shader,
             shader_sources.get(&shader),
             authority,
