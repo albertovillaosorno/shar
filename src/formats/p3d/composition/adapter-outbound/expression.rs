@@ -161,6 +161,9 @@ fn decode_expression_mixer_json(kind: &str, chunk: &[u8]) -> Option<String> {
     }
     let name = read_pstring_advance(chunk, &mut cursor)?;
     let mixer_type = read_u32_advance(chunk, &mut cursor)?;
+    if mixer_type != 3 {
+        return None;
+    }
     let target_name = read_pstring_advance(chunk, &mut cursor)?;
     let expression_group_name = read_pstring_advance(chunk, &mut cursor)?;
     if cursor != header_size || header_size != total_size {
