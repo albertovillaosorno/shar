@@ -92,7 +92,9 @@ cleanup path are known.
 call returned an `EventGraph.K2Node_CustomEvent_0` reference. `get_node_infos`
 reported type ID `AddEvent|Custom|MCP_EventLifecycle`, position `(640, 320)`,
 and `OutputDelegate` plus `then` outputs. `list_events` then returned one
-implemented event with that name, and strict compilation succeeded. Deleting
+implemented event with that name, and strict compilation succeeded.
+
+Deleting
 the returned node removed the event from `list_events`, and strict compilation
 succeeded again.
 <!-- END MANUAL FIELD: project-verification -->

@@ -72,7 +72,9 @@ tree; FBX and Unreal move their complete generated ledgers into
 `game/manifest/` with the payload root. Competing roots or manifests, active
 extraction leases, interrupted extraction state, and FBX publication staging
 fail closed without merging or deleting either authority. Explicit non-default
-output paths remain caller-owned and are never rewritten. A default
+output paths remain caller-owned and are never rewritten.
+
+A default
 `fbx-export-catalog` run that adopts a legacy accepted catalog stops before
 rebuilding and requires an explicit removal decision; `prepare-unreal`
 validates adopted evidence through the normal current gates before use.

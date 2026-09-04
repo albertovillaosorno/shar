@@ -34,7 +34,9 @@ invocations plus explicit mission, stage, objective, and condition context
 evidence. Parsing finds the matching call parenthesis outside quoted text, so
 trailing comments never enter `args_raw` or the final positional argument, and
 nested argument groups remain intact. Version 3 also carries reviewed structural
-compatibility adaptations. Each adaptation is bound to one logical source path,
+compatibility adaptations.
+
+Each adaptation is bound to one logical source path,
 command ordinal, command identity, and surrounding invocation fingerprint; the
 semantic consumer independently revalidates that fingerprint before accepting
 it. The current corpus has exactly two such adaptations and no unresolved
@@ -46,7 +48,9 @@ those scopes. Unknown aliases, cross-scope commands, and unobserved argument
 counts fail closed. Direct mission- and stage-scope commands are also closed by
 an observed scope-and-arity registry. A command observed both outside a selected
 mission and inside one requires an explicit general-scope registration for that
-form; unrelated utility commands remain raw unscoped evidence. Positional values
+form; unrelated utility commands remain raw unscoped evidence.
+
+Positional values
 remain raw source evidence until a reviewed typed parameter compiler owns them.
 These registries are conversion evidence only: they do not claim that legacy
 parameters have already been compiled into final runtime policies.
@@ -65,7 +69,9 @@ command at
 unscoped, mission, or stage scope in source order. Each observed stage must own
 exactly one root objective. A modifier visible through both an objective and a
 nested condition is retained only by the most-specific condition scope rather
-than duplicated. The graph still publishes no Unreal asset and assigns no new
+than duplicated.
+
+The graph still publishes no Unreal asset and assigns no new
 gameplay meaning to positional arguments.
 
 The authoritative source corpus currently projects 154 mission graphs containing
@@ -83,7 +89,9 @@ direct condition parameter shapes now have closed typed representations.
 `buycar`, `buyskin`, and the reviewed `getin` form publish exact source
 references; race wager and road-arrow tokens are typed independently. The one
 source spelling `niether` is retained as explicitly unrecognized legacy evidence
-rather than repaired to `neither`. The ten `keepbarrel` numeric values and one
+rather than repaired to `neither`.
+
+The ten `keepbarrel` numeric values and one
 `damage` token are likewise typed as closed legacy shapes without assigning
 undocumented gameplay meaning. Those parameter enums now survive semantic
 projection and the private definition-core join. The corpus has 131 objective
@@ -98,7 +106,9 @@ explicitly delegated to stage semantics. This includes timers, checkpoints,
 messages, vehicles, characters, waypoints, countdowns, traffic, AI source
 tuples,
 safe zones, HUD and presentation controls, music, swap locators, completion
-signals, and transition markers. AI and race catch-up values remain exact source
+signals, and transition markers.
+
+AI and race catch-up values remain exact source
 integers or decimal lexemes where gameplay units and ordering are unresolved.
 
 Mission-scope initialization compilation now covers all 811 direct mission
@@ -115,6 +125,7 @@ required to emit stage directives through one shared delegation registry, and 12
 are the structural `AddCondition`/`CloseCondition` pairs. A registered objective
 command with no owner now fails semantic preflight instead of disappearing. All
 375 condition-scoped commands are likewise typed across all 408 conditions.
+
 Authored optionality and source spelling are preserved, including missing talk
 target options, collectible extension tails, dialogue compatibility fields,
 `niether`, source AI tuples, and other values whose gameplay meaning is not yet
@@ -129,7 +140,9 @@ resolve to one canonical participant while retaining the exact base-model,
 costume, or crowd package subcategory; vehicle source names resolve to one exact
 `cars` package. The runtime `current` vehicle token remains symbolic, and the
 reviewed `AddStageVehicle` driver token `none` emits no false character package
-reference. Missing or ambiguous referenced participant names and unindexed P3D
+reference.
+
+Missing or ambiguous referenced participant names and unindexed P3D
 loads fail closed. The source loader accepts an optional heap name and an
 optional inventory-section override; migration validates and preserves both only
 as source provenance, never as target allocation authority or additional asset
@@ -155,7 +168,9 @@ multi-controller references, global name lookup would be ambiguous for 190
 references; qualifying by the exact `levelNN` of the source mission script makes
 all 194 references unique with zero missing candidates. Four unreferenced
 level-local component keys still have multiple candidates; those candidates are
-preserved so a future reference remains explicitly ambiguous. The binding uses
+preserved so a future reference remains explicitly ambiguous.
+
+The binding uses
 `(source level, component kind, exact embedded name)` and never falls back to a
 global-name winner. Camera timing, blending, playback, and presentation behavior
 remain separate runtime concerns.
@@ -166,7 +181,9 @@ only decoded `srr_locator` records to the mission catalog. It reads the embedded
 JSON `name`, trims only trailing NUL padding, preserves the exact decoded source
 type, and binds the row to its package id and member id. Package-local duplicate
 names fail closed; cross-package duplicates remain an explicit `Ambiguous`
-result. This is required because locator names are level/load-contextual and can
+result.
+
+This is required because locator names are level/load-contextual and can
 occur in more than one package, while extracted filenames sanitize trailing NUL
 padding to underscores and the source corpus also contains genuinely authored
 trailing underscores. Filename trimming and global-name lookup are therefore not
@@ -179,7 +196,9 @@ source path rather than mission id, so repeated ids such as `m1` cannot leak
 package context across levels. Before this cross-source preflight, the mission
 source is re-read through the stable-source guard and its size and SHA-256 must
 match the already verified Unreal source evidence. Typed initialization, stage,
-and objective locator fields now use two explicit visibility phases. Locator
+and objective locator fields now use two explicit visibility phases.
+
+Locator
 lookups executed while the mission init script is parsed see only the static
 Level and Mission package loads. Reviewed deferred lookups executed during
 mission reset or objective initialization can additionally see indexed initial
@@ -188,7 +207,9 @@ Dyna Load Data
 parser now preserves ordered region load/unload, interior load/unload, and World
 Sphere enable/disable postfix operations. Base mission initialization
 remains fail-closed to its observed load-only subset, including the one corpus
-form whose final region P3D omits its terminal postfix. Dyna P3D paths use the
+form whose final region P3D omits its terminal postfix.
+
+Dyna P3D paths use the
 source
 format's implicit `art/` root unless that prefix is already explicit, and every
 resulting package root must exist in the phase-three index. Unload
@@ -197,7 +218,9 @@ also includes decoded type-5 `DynamicZone` locators. Their Dyna strings compile
 to the same ordered package-transition model, and `prepare-unreal` requires
 every
 P3D load effect to bind to an indexed package while treating an absent unload as
-a deterministic remove-if-present effect. The current corpus contains 109 such
+a deterministic remove-if-present effect.
+
+The current corpus contains 109 such
 zones, 372 indexed P3D loads, and 728 P3D unloads; 30 unload targets are absent
 from the extracted package index. No observed base-game Dyna string both loads
 and unloads the same P3D target; an order-sensitive conflict remains unresolved
@@ -212,6 +235,7 @@ Documented Event and CarStart roles receive exact type constraints, and
 lookup has now been traced for every currently modeled locator role. Pure3D
 searches the current inventory section first, then remaining sections in
 creation order. Static mission loading creates Level before Mission; within one
+
 section, an exact-type duplicate is rejected after the first load. Therefore
 exact-type script-time references use static package order. A corpus audit of
 751 such references found 242 unique candidates, 507 missing candidates, and
@@ -240,7 +264,9 @@ emission. The reviewed corpus has 6 iris and 14 fade requests, 5 stay-black
 markers, 108 stage-complete presentation markers, 3 level-over terminals, and 1
 game-over terminal. Iris is the effective visual transition in the one stage
 that authors both iris and fade. Stay-black and stage-complete remain
-presentation-only; they cannot select a mission successor. Level-over maps to a
+presentation-only; they cannot select a mission successor.
+
+Level-over maps to a
 chapter terminal override and game-over to game completion.
 
 Authored stage topology is now validated independently of runtime flow. Across
@@ -248,7 +274,9 @@ Authored stage topology is now validated independently of runtime flow. Across
 optional next authored neighbor. The corpus contains 90 explicit `final`
 markers, all on the last authored stage; 64 sources intentionally carry no
 explicit final marker. All four level/game terminal overrides are also authored
-only on the last stage. Adjacency is evidence, not a runtime successor edge, so
+only on the last stage.
+
+Adjacency is evidence, not a runtime successor edge, so
 success, retry, rollback, and recovery topology remain pending.
 
 Checkpoint evidence is now part of the same authored topology boundary. The
@@ -290,7 +318,9 @@ The normalized source-text phrase table now derives 52 language packages with
 1,632 unique text keys. That catalog contains all 300 reviewed
 `MISSION_OBJECTIVE_*` keys and all 20 `INGAME_MESSAGE_*` keys. Every one of the
 439 objective-stage and 10 locked-stage message-index uses resolves to exactly
-one canonical mirror; missing or multiply-published keys fail preflight. This
+one canonical mirror; missing or multiply-published keys fail preflight.
+
+This
 binding establishes localization identity only. Localized payload compilation
 and final Unreal text asset emission remain separate work.
 
@@ -308,7 +338,9 @@ script for their exact source level, with one unique structural window where the
 `MissionN` symbol is followed by the authored `StageN` value. The binding
 preserves script member identity, path, and both source offsets. It does not
 claim that named-asset adjacency is a decoded RADMusic state machine or choose
-playback, mix, event, or transition behavior. The 14 reviewed
+playback, mix, event, or transition behavior.
+
+The 14 reviewed
 `StageStartMusicEvent` calls now bind independently to their exact owning stage.
 Each binding preserves the authored token plus the source-runtime
 `mission-drama` delivery channel and `legacy-case-insensitive-key32` transform
@@ -359,7 +391,9 @@ package catalog. Its 42 `forsale` rows now compile into deterministic source
 offers with package identity, level, positive price, and exact vendor token.
 Those offers split evenly into 21 cars and 21 skins, with six per level. The
 only reviewed type/vendor pairs are `car/gil`, `car/simpson`, and
-`skin/interior`. This is merchandise and price evidence, not purchase,
+`skin/interior`.
+
+This is merchandise and price evidence, not purchase,
 ownership, unlock, or persistence authority.
 
 The same global reward source contains 43 `SetCarAttributes` rows. Every vehicle
@@ -368,7 +402,9 @@ plus one tuning-only vehicle. The four numeric arguments are preserved as exact
 positional lexemes and validated only against the observed finite 0.5-through-5
 range; this pipeline does not name those positions as runtime stats. Seven
 `SetTotalGags` rows likewise preserve one positive source total per level:
-15, 11, 11, 15, 6, 11, and 15. Those totals are catalog evidence, not viewed,
+15, 11, 11, 15, 6, 11, and 15.
+
+Those totals are catalog evidence, not viewed,
 completed, or saved player progress.
 
 The level storefront intake also types all 32
@@ -385,7 +421,9 @@ sources whose only overlapping command is `InitLevelPlayerVehicle` are not
 misclassified as level setup. The player-vehicle command remains resolvable once
 a valid level-setup context is selected. The pass binds all 877 immediate
 player-vehicle, NPC, storefront, waypoint, and bonus-dialogue locator references
-against those authored package roots. The current decoded locator
+against those authored package roots.
+
+The current decoded locator
 catalog resolves 212 and reports 665 as `Missing`, with zero ambiguous
 outcomes. A `Missing` result records a decoded-evidence gap; it is not promoted
 that runtime cannot supply the locator. Generic `Locator` references do not gain
@@ -393,7 +431,9 @@ cross-package precedence, while exact `CarStart` dialogue lookups may use the
 authored package order already established for exact-type inventory lookup.
  The reviewed mission-start Dyna corpus contains 462 P3D references; 461
 map to decoded package roots and one valid source-requested root has no decoded
-package. The missing root is retained as an evidence gap and excluded from
+package.
+
+The missing root is retained as an evidence gap and excluded from
 locator visibility without being aliased or interpreted as runtime absence.
 
 Population declarations are now package-backed as well. Pedestrian preflight
@@ -402,7 +442,9 @@ all 78 unique pedestrian model identities resolve uniquely to canonical
 character packages. Traffic preflight compiles 16 group-zero declarations with
 64 `AddTrafficModel` members; all 22 unique traffic models resolve uniquely to
 canonical vehicle packages. Runtime group/model capacity bounds are enforced,
-and the optional traffic big-vehicle integer is preserved exactly. All 134
+and the optional traffic big-vehicle integer is preserved exactly.
+
+All 134
 reviewed `UsePedGroup` directives bind to one declared group in the level setup
 source selected by the same level-family context used for mission locators.
 Spawn rates, pathing, runtime group switching, parked-car behavior, and traffic
@@ -423,7 +465,9 @@ histogram, strictly increasing ordinals, matching context counts, independently
 verified adaptations, and zero unresolved findings. An original zero-byte MFK
 is preserved as an inert v3 source with zero statements, invocations, summaries,
 adaptations, and findings; that exact self-consistent empty state is valid
-source evidence rather than a fabricated mission. Source bytes and statement
+source evidence rather than a fabricated mission.
+
+Source bytes and statement
 emptiness must agree in both directions: zero bytes with statements or nonzero
 bytes with zero statements is contradictory and fails closed. `prepare-unreal`
 applies the preflight only to normalized `mission-script` sources before they
@@ -513,6 +557,7 @@ six objective-scoped conditions additionally retain the exact root
 `AddObjective` ordinal. Canonical character/vehicle participant references
 retain the same
 stage/objective chain plus an exact `AddCondition` owner when condition-scoped.
+
 Final definition compilation can join these records directly instead of
 reconstructing ownership from source adjacency.
 
@@ -523,7 +568,9 @@ and four pickup targets preserve the exact stage and, where applicable,
 objective owner available at semantic projection time. Stage-scope pickup state
 props also preserve the exact `AddStage` owner. This is provenance only; it does
 not assign playback, navigation, state-prop lifetime, retry, rollback, or
-recovery behavior. The definition-core join now consumes the 43 countdown
+recovery behavior.
+
+The definition-core join now consumes the 43 countdown
 blocks, 36 collectible-to-waypoint links, and 180 resolved objective NPC
 waypoints directly under those exact owners rather than validating and
 discarding them.
@@ -537,7 +584,9 @@ exact owner stage keys. Checkpoints, final/terminal evidence, objective
 mapping, direct typed parameters, condition schema/scope/root-objective
 ownership, visual transition,
 stay-black, stage-complete presentation, and authored-next evidence survive the
-join. Runtime success/failure edges and final `USharMissionDefinition`
+join.
+
+Runtime success/failure edges and final `USharMissionDefinition`
 publication remain separate blocked work. Utility mission-script sources with no
 selected mission are also accepted by pickup state-prop preflight only when
 stage/objective semantic reports are empty.
@@ -550,7 +599,9 @@ transition-marker occurrences, 43 countdown blocks, 14 stage-start music
 events, 36 collectible-waypoint bindings, 180 objective NPC waypoints, and four
 pickup state-prop bindings. Every condition
 row carries the source-runtime `stage-failure` violation effect, while the four
-pickup bindings retain two mission-scope and two stage-scope declarations. The
+pickup bindings retain two mission-scope and two stage-scope declarations.
+
+The
 bundle contains no synthesized successor, retry, rollback, or recovery edge
 fields;
 `USharMissionDefinition` construction and StateTree runtime policy remain

@@ -483,7 +483,8 @@ fn publish_fused_interiors(
 
 /// Append every authored interior mesh without geometry suppression.
 ///
-/// `Pure3D` submits the complete serialized index stream. Interior fusion therefore
+/// `Pure3D` submits the complete serialized index stream. Interior fusion
+/// therefore
 /// preserves source mesh order and triangle multiplicity instead of treating
 /// coincident presentation values as ownership evidence.
 fn append_authored_interior_meshes(

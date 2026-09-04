@@ -69,7 +69,8 @@ Missing world shaders no longer fall through an untyped file-read error. The
 current corpus has six exact mesh consumers of `lambert1` whose owning package
 does not declare that shader. Generic FBX resolution reports a typed
 `MissingShaderMember`; only the world runtime boundary may convert that result
-to Pure3D's shipped `TShader("error")` fallback, and only when package membership
+to Pure3D's shipped `TShader("error")` fallback, and only when package
+membership
 and exact mesh-consumer provenance are both proven. Unproven consumers retain
 ordinary fail-closed material resolution.
 

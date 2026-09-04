@@ -29,7 +29,9 @@ Capture a Slate UI accessibility snapshot. Use this to read the current widget
 tree and discover refs for action tools (Click, Type, Hover, etc.). A shallow
 root observer (depth 0) covers top-level windows automatically. Before
 interacting with a specific window or panel, call Observe() on it to get deep
-coverage, then Snapshot that subtree to see its contents. Refs discovered by a
+coverage, then Snapshot that subtree to see its contents.
+
+Refs discovered by a
 previous Snapshot remain usable. You do NOT need to call Snapshot again before
 every action.
 

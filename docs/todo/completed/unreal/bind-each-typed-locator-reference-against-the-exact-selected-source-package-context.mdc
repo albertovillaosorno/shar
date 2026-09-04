@@ -29,7 +29,10 @@ package; retain that root as an explicit evidence gap instead of inventing an
 alias or aborting locator preflight. Split script-time visibility from
 post-Dyna visibility: immediate init/stage lookups see only static
 Level/Mission loads, while reviewed deferred lookups can see decoded initial
-Dyna packages. Preserve the `ActivateVehicle` `NULL` sentinel. Initialization
+
+Dyna packages. Preserve the `ActivateVehicle` `NULL` sentinel.
+
+Initialization
 locator references remain intentionally unowned; stage roles retain exact
 `AddStage` source/dense ordinals, and objective roles additionally retain the
 exact `AddObjective` source ordinal. Ownership does not alter `Resolved`,

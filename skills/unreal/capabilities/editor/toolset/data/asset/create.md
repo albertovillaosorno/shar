@@ -84,7 +84,9 @@ The destination folder and asset were absent before creation. The call
 returned `/Game/SHAR_MCP_Validation/DA_MCP_Validation.DA_MCP_Validation`.
 `find_assets` returned the package path, `exists` returned `true`, and
 `get_asset_class` returned `PrimaryDataAsset`. No `.uasset` or content directory
-appeared on disk during the unsaved test. Deleting the asset returned `true` and
+appeared on disk during the unsaved test.
+
+Deleting the asset returned `true` and
 removed it from the registry. The virtual folder remained until a separate
 folder delete, after which both existence checks were false and no filesystem
 residue existed.

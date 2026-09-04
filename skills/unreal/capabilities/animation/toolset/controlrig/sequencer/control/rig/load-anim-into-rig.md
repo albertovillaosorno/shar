@@ -90,6 +90,7 @@ Before invocation, all nine `Root_CTRL` transform channels were empty. The
 call returned `true`. Independent key reads then found 29 keys on every channel
 from frame 20 through frame 48. The loaded values included location
 `x: 0.995`, `y: -0.46`, `z: -0.72`, rotation Z at 360 degrees, and unit scale.
+
 The binding removal returned `true`, and a fresh scene search confirmed that
 the disposable skeletal actor was absent.
 <!-- END MANUAL FIELD: project-verification -->

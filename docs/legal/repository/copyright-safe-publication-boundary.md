@@ -88,6 +88,7 @@ review for functional access-circumvention material. A potential lawful use of
 content reached after circumvention does not itself authorize distribution of a
 decryption tool. Purposeful links to such a tool can also present trafficking
 risk when the publisher knows the destination material and maintains the link to
+
 disseminate it. Ordinary source links, compatibility references, and research
 citations require their own facts and are not categorically prohibited.
 
@@ -102,7 +103,9 @@ authorize uploading game-derived output or a protected payload.
 a constrained public search output on its record. That distinction does not make
 a repository index automatically publishable. Search results, manifests,
 reports, and previews must omit reconstructable expression and must not provide
-a substitute for the original files. Complete local input remains outside public
+a substitute for the original files.
+
+Complete local input remains outside public
 history unless separate distribution authority exists.
 
 *Hachette Book Group, Inc. v. Internet Archive* confirms the opposite boundary

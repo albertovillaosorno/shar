@@ -100,7 +100,9 @@ returned one exact `StaticMeshActor` reference. `find_actors` returned only that
 actor, the scene count became 146, and independent label and transform reads
 matched the request within floating-point normalization. The actor contained
 one `StaticMeshComponent`; a reflected property read returned
-`/Engine/BasicShapes/Cube.Cube` as its `staticMesh`. Removing the returned actor
+`/Engine/BasicShapes/Cube.Cube` as its `staticMesh`.
+
+Removing the returned actor
 restored the count to 145 and left no matching label.
 <!-- END MANUAL FIELD: project-verification -->
 

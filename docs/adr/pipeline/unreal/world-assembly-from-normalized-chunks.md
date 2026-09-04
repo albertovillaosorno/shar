@@ -17,7 +17,9 @@ original geometry and source-authored placement evidence. The pipeline preserves
 source positions, transforms, pivots, UVs, materials, textures, and package
 identity. One decoded source mesh remains one FBX mesh regardless of the spatial
 distance between disconnected components. Source owner and placement records
-govern independent, breakable, and interactable roles. Breakable classification
+govern independent, breakable, and interactable roles.
+
+Breakable classification
 requires the exact decoded `srr_tree_dsg` or `srr_breakable_object` container
 kind; a dynamic/static-physics name containing `tree` is not breakable
 authority. Spatial proximity is not object-identity authority. Auxiliary

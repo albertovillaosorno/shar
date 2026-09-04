@@ -46,6 +46,7 @@ related § 1201(a)(1) act of circumvention. The Fifth Circuit found no DMCA
 liability where an unknown source had already altered the software and the
 accused employees merely used that altered copy. The claimant did not connect
 the defendants to the act that disabled, removed, avoided, or bypassed the
+
 hardware-key control. The court withdrew an earlier opinion with materially
 different reasoning; only the substituted 622 F.3d 361 opinion controls.
 
@@ -64,7 +65,9 @@ or facilitating connection was alleged.
 applied that framework to maintenance devices that bypassed a password protocol.
 The automatic RAM copy occurred whenever the equipment started, whether or not
 the devices were used, and the service company was likely protected by § 117(c)
-and customer activation rights. The court therefore found no sufficient nexus to
+and customer activation rights.
+
+The court therefore found no sufficient nexus to
 copyright infringement; a possible contract violation was not enough.
 
 The Ninth Circuit later rejected the Federal Circuit's access-to-infringement

@@ -39,13 +39,17 @@ directory parents must be real filesystem entries rather than symlinks or
 Windows junctions. Each input snapshot verifies both the opened descriptor and
 current lexical path identity before any payload read, then keeps device, inode,
 modification time, platform `ctime`, and byte count stable through the read and
-final path check. Descriptor/current-path parity carries redirect protection;
+final path check.
+
+Descriptor/current-path parity carries redirect protection;
 `ctime` is additional drift evidence where the host updates it. The descriptor
 contains only bounded spans and selected-offset masks. Projection derivation
 grows the packed one-bit mask only through the latest selected offset rather
 than reserving storage for the full candidate or retaining a byte-per-candidate
 flag buffer. It contains no source payload bytes,
-source hashes, or private paths. `algorithm create` can pair that descriptor
+source hashes, or private paths.
+
+`algorithm create` can pair that descriptor
 with the compact common source using `--source-projection projection.json`;
 replay takes the caller's full variant and uses only the authenticated masks
 already stored in the plan.

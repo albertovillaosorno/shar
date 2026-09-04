@@ -59,7 +59,9 @@ injunction on August 28, 1992, announcing that the opinion would follow. Id.
 at 1517. The court dissolved the injunction as to both the copyright and
 trademark claims, declined to direct relief for Accolade, assessed appellate
 costs against Sega, and disposed of the appeal "AFFIRMED IN PART; REVERSED IN
-PART; AND REMANDED." Id. at 1518, 1528, 1533.
+PART; AND REMANDED."
+
+Id. at 1518, 1528, 1533.
 
 ## Verified Later History
 

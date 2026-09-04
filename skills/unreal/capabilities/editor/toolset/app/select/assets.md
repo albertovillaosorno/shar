@@ -84,7 +84,9 @@ opening and docking the Content Browser at `/Engine/BasicShapes`, the full
 object-path call returned `null` without timing out. An independent
 `GetSelectedAssets` read returned the package
 `/Engine/BasicShapes/Cube`. Cleanup navigated to `/Game`, which cleared the
-selection, then closed the task-opened Content Browser tab. Final reads returned
+selection, then closed the task-opened Content Browser tab.
+
+Final reads returned
 an empty selection and an empty active-browser path.
 <!-- END MANUAL FIELD: project-verification -->
 

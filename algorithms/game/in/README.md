@@ -21,7 +21,9 @@ matches for all three retained executable variants and can emit three distinct
 `offset-mask-set-v1` layouts for them. `shar.algorithm.v1` can use that
 projection without a source hash to derive the same common-byte source key
 from any represented variant without binding the user's whole executable
-hash. That local result does not certify variants that are not present in this
+hash.
+
+That local result does not certify variants that are not present in this
 workspace; additional known layouts require their own verified projection
 alternatives. These files do not by themselves define the final public
 source-admission gate, and users are not expected to supply every executable

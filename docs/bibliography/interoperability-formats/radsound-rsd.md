@@ -28,7 +28,9 @@ The rsd crate validates supported RSD metadata and emits deterministic PCM
 WAVE output. The supported legacy RSD3 PCM and PCMB layout reads its declared
 payload start from the versioned header and rejects offsets inside the header or
 beyond the physical file. RSD4 retains its compact or padded payload contract.
-Unsupported codecs and malformed frame shapes fail closed. The repository does
+Unsupported codecs and malformed frame shapes fail closed.
+
+The repository does
 not publish source RSD audio.
 
 ## Provenance And Version History

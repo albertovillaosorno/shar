@@ -66,7 +66,9 @@ deduplicating them before persistence. Focused regressions prove the exact saved
 path is revalidated, a failed architecture revalidation stops the runner, and
 `main()` performs that gate before target consumption. Architecture and
 preflight evidence are consumed from stable single-link byte snapshots whose
-SHA-256 is passed into child revalidation. `arch.py` and `check.py` refuse to
+SHA-256 is passed into child revalidation.
+
+`arch.py` and `check.py` refuse to
 revalidate a different snapshot, and the runner requires the same bytes again
 afterward, so an ABA path substitution cannot make the child validate one saved
 decision while the runner consumes another. Direct revalidation also pins the
@@ -80,7 +82,9 @@ start-element chunks are bounded and aligned. The first start element must
 resolve through the bounded UTF-8/UTF-16 string pool to the exact `manifest`
 root tag. That root must carry a no-namespace `package` raw-string attribute
 whose value satisfies Android's lite-parser package-name grammar and length
-bound, including its `android` special case. A non-empty no-namespace `split`
+bound, including its `android` special case.
+
+A non-empty no-namespace `split`
 attribute is rejected so the published artifact remains one standalone base APK;
 an absent or empty split identity remains base-package compatible. String/style
 indices, string data ranges, and required terminators must remain inside the
@@ -90,6 +94,7 @@ platform loader shape
 satisfy package admission. iOS IPAs must declare a nonempty
 `CFBundleIdentifier` using Apple's documented ASCII alphanumeric/hyphen/period
 character set, because iOS uses that identity during app-signature validation.
+
 If `CFBundlePackageType` is present it must identify an app as `APPL`; omission
 retains Apple's `.app`-extension fallback. The bundle must also declare a main
 application executable in `Info.plist` whose Mach-O image contains ARM64.
@@ -99,7 +104,9 @@ APKs/IPAs cannot create a completed `dist/<ARCH>/` target. Mobile archive
 inventories also reject rooted or Windows drive-qualified, parent/current
 traversal, backslash, and empty-segment member paths plus
 file/directory aliases and regular-file ancestors of nested members, so a valid
-native entry cannot hide an unrealizable package tree beside it. Loader-critical
+native entry cannot hide an unrealizable package tree beside it.
+
+Loader-critical
 manifest, property-list, and native entries must also be regular files when ZIP
 Unix metadata declares a file type; unrelated IPA symlinks remain admissible.
 Every archive member is also decompressed through ZIP CRC validation before
@@ -110,7 +117,9 @@ descriptor and requires the candidate path to retain that
 identity through ZIP validation, so a transient external archive cannot
 authorize different local bytes for publication. Universal Mach-O validation
 consumes every
-declared architecture record before accepting ARM64. FAT64 architecture records
+declared architecture record before accepting ARM64.
+
+FAT64 architecture records
 must keep their reserved word zero, and each declared slice must have nonzero
 in-bounds file data after the architecture table, honor its declared
 power-of-two file alignment, and not overlap another slice. Selected
@@ -119,7 +128,9 @@ an ARM64 thin Mach-O header whose CPU subtype matches the fat record after
 masking subtype feature bits. Truncated, empty, overlapping, or mislabeled fat
 slices cannot masquerade as complete macOS or iOS runtimes. Windows candidates
 likewise require a non-empty
-SHAR `.exe`; engine helper executables alone cannot satisfy publication. The
+SHAR `.exe`; engine helper executables alone cannot satisfy publication.
+
+The
 optional Windows shortcut adapter applies the same SHAR executable identity, so
 original-game, helper, empty, prefixed-helper, or non-Shipping `.exe` files are
 never auto-selected. Shortcut auto-discovery also requires `dist/` itself to
@@ -127,6 +138,7 @@ remain a real directory and traverses it with strict directory scans. Nested
 redirects, hard-linked files, special entries, or scan failures therefore fail
 instead of making a partial or externally aliased tree appear to contain one
 unambiguous SHAR executable. Explicit shortcut targets also require one link.
+
 Cached UAT manifests and Windows debug symbols are now required to be regular
 files before they can leave the candidate tree; directory entries that merely
 match `Manifest_*.txt` or `*.pdb` fail closed instead of becoming cached build
@@ -137,7 +149,9 @@ validated before those caches are replaced as well, so an otherwise well-formed
 but non-runnable package cannot displace diagnostics from the last accepted
 build.
 Artifact entries also require one filesystem link at this boundary instead of
-relying only on the earlier tree scan. Their bytes and filesystem identities are
+relying only on the earlier tree scan.
+
+Their bytes and filesystem identities are
 captured through stable descriptors before the previous diagnostic caches are
 mutated. Cache files are recreated exclusively from those captured bytes, and
 the candidate source must still match its captured identity before removal, so a
@@ -145,7 +159,9 @@ check-to-move replacement cannot substitute external manifest or symbol content.
 Linux candidates now require a non-empty SHAR native executable for both x64
 and ARM64, and macOS candidates require a `.app` bundle with a non-empty SHAR
 executable below `Contents/MacOS`. On POSIX hosts those native runtimes must
-also retain execute permission. Desktop entrypoints must identify their native
+also retain execute permission.
+
+Desktop entrypoints must identify their native
 binary format as ELF, Mach-O, or PE as appropriate, and the native header must
 match the selected x64 or ARM64 target. ELF images must carry a complete ELF64
 header with the current version, a System V/Linux OSABI, and zero ABI-version
@@ -155,7 +171,9 @@ must use an
 executable/shared-object image type and a bounded ELF64 program-header table.
 Every non-null program segment with file-backed bytes must stay inside the
 image, and the nonconforming reserved `PT_SHLIB` segment type is rejected while
-OS/processor-specific segment ranges remain admissible. `PT_DYNAMIC` file
+OS/processor-specific segment ranges remain admissible.
+
+`PT_DYNAMIC` file
 images must contain complete ELF64 dynamic-array entries and at least one
 mandatory `DT_NULL` terminator. `PT_INTERP`, when present, must occur once
 before
@@ -165,7 +183,9 @@ once before load segments, exactly describe the program-header table, and that
 table must be mapped by a loadable segment. Optional `PT_TLS` templates must
 remain read-only, keep initialized bytes no larger than the total template,
 retain valid file/virtual alignment, and avoid wrapping the virtual address
-space. At least one executable loadable segment must carry non-empty file-backed
+space.
+
+At least one executable loadable segment must carry non-empty file-backed
 bytes whose file range does not exceed its memory range or wrap the 64-bit
 virtual address space.
 Loadable ELF segments also retain the ABI alignment contract: `p_align` must be
@@ -177,6 +197,7 @@ executable file-backed bytes of a load segment rather than its zero-fill tail or
 the ELF/program-header metadata; Android loader-path libraries must be ELF
 shared objects and may legitimately
 declare no process entrypoint.
+
 Truncated, relocatable, machine-only, or out-of-bounds
 segment lookalikes fail.
 Thin and universal
@@ -190,7 +211,9 @@ carrying an ARM64 CPU field. Entrypoints inside the Mach-O header or
 load-command table are rejected. `LC_MAIN` file offsets must otherwise remain
 inside
 executable file-backed bytes of the unique `__TEXT` segment instead of escaping
-into a later executable mapping. Positive-size segment file and virtual-memory
+into a later executable mapping.
+
+Positive-size segment file and virtual-memory
 ranges must remain pairwise disjoint. Segment load-command order must also
 follow ascending VM addresses and nonzero file offsets, retaining Apple's
 `__DWARF` exception. Admitted executables require exactly one `__LINKEDIT`
@@ -200,7 +223,9 @@ commands must
 use the exact 16-byte command structure, keep every positive-size declared
 file payload inside the unique `__LINKEDIT` file mapping, keep those payload
 ranges pairwise disjoint rather than merely file-bounded, and allow at most one
-of each link-edit data command type. `LC_CODE_SIGNATURE` remains optional for
+of each link-edit data command type.
+
+`LC_CODE_SIGNATURE` remains optional for
 local/unsigned output under that same singleton rule. Object-file-only
 `LC_LINKER_OPTION` and `LC_LINKER_OPTIMIZATION_HINT` commands are rejected from
 these executable images. Classic `LC_DYLD_INFO`
@@ -210,6 +235,7 @@ appear only once in total. Present `LC_SYMTAB` metadata likewise requires its
 exact 24-byte structure, a single command, and bounded 16-byte ARM64 symbol
 entries plus a bounded string table through the shared `__LINKEDIT` range gate;
 the symbol array must end at or before the string table begins.
+
 Optional `LC_DYSYMTAB` metadata requires that `LC_SYMTAB` companion, uses one
 exact 80-byte command, and bounds its TOC, 64-bit module, reference, indirect,
 external-relocation, and local-relocation tables through the same range gate.
@@ -222,7 +248,9 @@ it may appear only once, and executable images reject the dynamic-linker-only
 `LC_ID_DYLINKER` identity command.
 Present dylib-load and `LC_RPATH` commands must likewise keep their string
 offsets beyond the fixed command structure and terminate the embedded string
-inside the command; `LC_ID_DYLIB` is rejected in these executable images. A
+inside the command; `LC_ID_DYLIB` is rejected in these executable images.
+
+A
 present `LC_UUID` must use its exact 24-byte structure and appear at most once;
 its presence is not required independently of Apple SDK format gates. Optional
 `LC_ENCRYPTION_INFO_64` metadata must also use its 24-byte Mach-O64 structure,
@@ -232,6 +260,7 @@ exact 40-byte structure and keep its declared 64-bit file range bounded. Each
 image must also carry one exact `LC_BUILD_VERSION`
 platform declaration matching macOS or iOS admission, while legacy
 `LC_VERSION_MIN_*` platform commands are rejected for these ARM64 targets.
+
 `__TEXT` must be initially
 readable/executable and `__LINKEDIT` read-only. Sections must remain inside
 their
@@ -241,7 +270,9 @@ Section records must retain the enclosing segment name, honor their declared
 power-of-two virtual-address alignment, and keep any declared 8-byte relocation
 entries inside the file. Zero-fill
 section types must carry no file offset, while nonempty ordinary sections must
-identify file-backed bytes. Segment VM
+identify file-backed bytes.
+
+Segment VM
 protections may use only
 read/write/execute bits; nonzero initial mappings must be readable and remain a
 subset of their declared maximum permissions. Legacy virtual entrypoints must
@@ -253,7 +284,9 @@ nonempty thread-command bodies do not qualify. Windows
 images must also carry a complete COFF header, no deprecated image symbol-table
 metadata, the executable-image characteristic without the DLL flag, and keep
 the obsolete Windows working-set-trim characteristic zero while retaining
-defined image flags. AMD64/ARM64 targets also reject the contradictory
+defined image flags.
+
+AMD64/ARM64 targets also reject the contradictory
 32-bit-machine characteristic. They require a bounded
 PE32+ optional header and section table with one to 96 sections whose virtual
 addresses remain beyond the loaded header span, aligned, and adjacent by loaded
@@ -263,7 +296,9 @@ alignment below 4 KiB must equal file alignment, and nonempty section file
 offsets must then equal their RVAs. Reserved loader fields remain zero,
 including
 Microsoft-reserved low `DllCharacteristics` bits, while defined
-flags such as NX compatibility remain admissible. PE32+ image size stays at or
+flags such as NX compatibility remain admissible.
+
+PE32+ image size stays at or
 below Microsoft's 2 GiB image limit, and the declared image size matches the
 final aligned loaded section span,
 the header size matches the rounded header table, and the data directory count
@@ -273,6 +308,7 @@ fully zero, while the Global Ptr slot may carry an RVA only with a zero size.
 Ordinary ranges must stay inside the loaded image; the certificate-table
 file-offset exception is bounded by the file instead, with its file offset and
 padded table size both aligned to 8-byte boundaries.
+
 Executable-image section
 headers keep COFF relocation and line-number pointers/counts at zero, reject the
 `$` grouped-section marker that Microsoft reserves for object-file ordering, and
@@ -285,7 +321,9 @@ follow section virtual-address order without overlap. A
 nonzero program
 entrypoint inside the intersection of executable loaded section memory and
 file-backed section bytes rather than virtual zero-fill or raw-file padding or
-only an `MZ`/machine lookalike. Runtime
+only an `MZ`/machine lookalike.
+
+Runtime
 size, execute permission, and
 header parsing now share one stable single-link descriptor identity that must
 still match the candidate path afterward. A transient external binary therefore
@@ -301,7 +339,9 @@ The hidden `.previous` publication identity is now checked for existence even
 when its link target is missing, so a broken symlink or other malformed stale
 backup cannot be ignored and left beside an otherwise successful target. A real
 stale backup is not deleted, and a missing publication root is not created,
-until final candidate admission succeeds. Rejection happens before the candidate
+until final candidate admission succeeds.
+
+Rejection happens before the candidate
 moves or publication state is mutated.
 
 The `dist/` publication root is also required to be a real directory rather
@@ -327,7 +367,9 @@ valid-association configuration drift is visible to direct check revalidation.
 The build runner consumes that hash too: after check revalidation it requires
 saved project path to equal the canonical repository descriptor, rechecks the
 real parent/file boundary, and compares one descriptor-bound stable snapshot to
-`project_sha256` before project-state migration or UAT. The descriptor identity
+`project_sha256` before project-state migration or UAT.
+
+The descriptor identity
 must continue to match the canonical path through the read, so redirected,
 replaced, or post-revalidation project drift fails before it can become build
 authority.
@@ -341,7 +383,9 @@ output overrides remain independent. Failed dependency-bootstrap recomputation
 invalidates stale canonical evidence but preserves a pre-existing test-output
 override that the failing invocation never published. Failed preflight
 recomputation applies the same ownership rule: stale canonical check evidence is
-removed, while an independent output override is preserved. Dependency bootstrap
+removed, while an independent output override is preserved.
+
+Dependency bootstrap
 additionally requires
 real `.dependencies` and `.dependencies/build` tool storage even when its JSON
 evidence path is overridden, because Cargo, rustup, and validator outputs remain
@@ -351,7 +395,9 @@ filesystem identity must continue to match the lexical cache path through the
 read. Downloads use an exclusively created PID staging file
 before opening the network response. The checksum is computed from the exact
 response bytes written to that owned handle, while pre-existing staging files or
-links are preserved and fail closed. Reused or freshly installed repo-local Rust
+links are preserved and fail closed.
+
+Reused or freshly installed repo-local Rust
 toolchains also require real rustup/toolchain/bin directory ancestors and
 single-link regular `cargo` and `rustc` leaves before bootstrap uses or records
 them. Windows MSVC environment discovery likewise creates its PID-named command
@@ -360,7 +406,9 @@ overwriting or deleting it. Cargo-produced validator build outputs may
 retain Cargo's canonical `release/deps` hard link, but every filesystem link
 must
 be accounted for inside that repository-owned target tree. Published validator
-identities remain real single-link files. Validator publication also creates its
+identities remain real single-link files.
+
+Validator publication also creates its
 PID staging identity exclusively, preserves a pre-existing staging file or link,
 and copies from one descriptor-bound Cargo output whose filesystem identity must
 remain stable through the copy. A stale or redirected staging path therefore
@@ -368,7 +416,9 @@ cannot overwrite external content or become the published validator. Preflight
 repeats the real-directory
 and single-link checks before trusting either validator. Each validator hash is
 also streamed from one descriptor whose stable filesystem identity must continue
-to match the canonical dependency path through the read. The binary hash is
+to match the canonical dependency path through the read.
+
+The binary hash is
 rechecked after its validator source closure is fingerprinted, so replacement
 during that longer scan cannot move binary authority outside repository-owned
 storage. Preflight also defers selecting and validating the deep-source binary
@@ -379,7 +429,9 @@ required to be real regular files when already present. Build preflight repeats
 the real `.cache/build/data` ancestor checks before consuming
 `dependencies.json`,
 so a post-bootstrap parent symlink or junction cannot redirect dependency
-authority to external JSON. Preflight parses
+authority to external JSON.
+
+Preflight parses
 and hashes one stable byte snapshot and requires the canonical dependency file
 to retain one filesystem link and the same bytes through source and engine
 validation, preventing either an external hard-link alias or a mid-check
@@ -393,6 +445,7 @@ Direct saved-check revalidation applies the same single-link rule.
 Linked or malformed saved evidence now fails before it can be consumed,
 replaced,
 or cleaned up.
+
 Their PID-named atomic staging files are now created exclusively. A pre-existing
 staging identity is preserved and causes the writer to fail closed instead of
 being truncated or removed before the final atomic replace.
@@ -400,13 +453,16 @@ The shared `.cache/build/run` directory and each per-target work root are also
 required to be real directories before Turnkey or UAT writes reports, logs,
 staging data, or candidate packages.
 Candidate and staging scratch roots are now preflighted before cleanup and
-recreation too. Linked or malformed stale scratch identities fail before UAT,
+recreation too.
+
+Linked or malformed stale scratch identities fail before UAT,
 rather than surviving ignored cleanup and reaching packaging.
 Each UAT invocation now also validates its own child write roots: existing log
 files must be real files with exactly one filesystem link. Existing logs are
 opened without truncation, descriptor/path identity is compared, and only then
 are bytes truncated through that owned descriptor; new logs use exclusive
 creation. This prevents a check-to-open replacement from redirecting UAT output.
+
 Meanwhile,
 `automation-saved/`, its `logs/` child, and the local DDC must be real
 directories. Linked identities fail before UAT starts, so cached tool output
@@ -415,7 +471,9 @@ evidence is likewise required to be a real report file with one filesystem link
 both before stale-report cleanup and after UAT returns. Redirected or
 hard-linked
 `turnkey.txt` evidence cannot make external content satisfy the SDK-validity
-gate. Report decoding also binds one descriptor identity to the cache path
+gate.
+
+Report decoding also binds one descriptor identity to the cache path
 before and after the UTF-8 read, so a post-UAT check-to-read replacement cannot
 substitute external SDK evidence. The report must contain a platform-anchored
 valid SDK row; a prefixed lookalike platform name cannot satisfy another
@@ -424,7 +482,9 @@ After UAT returns, the complete candidate tree is traversed without following
 links and rejects symbolic links, junctions, hard-linked regular files, or
 special filesystem entries before manifests/debug symbols are moved. Directory
 open failures and per-entry metadata failures both stop that traversal through a
-runner-owned error instead of exposing a partial inventory. Candidate artifact
+runner-owned error instead of exposing a partial inventory.
+
+Candidate artifact
 and diagnostic-cache discovery reuse the file/directory result of that strict
 traversal instead of recursively globbing the package again, so an
 unreadable nested directory cannot disappear from runtime admission or debug
@@ -433,7 +493,9 @@ also leaves the previous diagnostic caches unchanged. The final publication
 transaction repeats that tree gate and, for real target builds, repeats native
 or mobile artifact admission after diagnostic caching. A runtime replaced by a
 regular but wrong-format or wrong-architecture file after the first validation
-therefore cannot reach the atomic swap. The real publication-root directory
+therefore cannot reach the atomic swap.
+
+The real publication-root directory
 identity is also captured after stale-backup cleanup and must remain identical
 after final candidate validation, so replacing `dist/` with a symlink cannot
 redirect the package swap outside the repository.
@@ -454,7 +516,9 @@ publication exposed.
 Turnkey validation also confirmed the installed Windows x64 SDK as valid. Build
 preflight now reads Unreal `Build.version` through one stable single-link file
 identity, so a transient external descriptor cannot supply the required 5.8.1
-version tuple. The resolved engine root and every engine-internal directory
+version tuple.
+
+The resolved engine root and every engine-internal directory
 between it and `Build.version` must also be real rather than a symlink or
 junction. The
 host-native Unreal editor identity has the same internal-parent rule, must be a
@@ -463,7 +527,9 @@ hosts, must have execute permission. The runner similarly requires a real engine
 root and real internal parents for its host `RunUAT` launcher, then requires the
 launcher itself to be a non-linked file and executable on POSIX before Turnkey
 starts. Directory, redirected, or non-executable launchers cannot become build
-authority. UAT logs are redirected beneath
+authority.
+
+UAT logs are redirected beneath
 `.cache/build/run/<target>/automation-saved/`. A
 second real Shipping build completed successfully in 16m58s with the local DDC
 and Zen data rooted under `.cache`; its stage and archive matched the first
@@ -479,7 +545,9 @@ symlinks. Normal and error exits detach the links without deleting cached state,
 so canonical Jig traversal sees no project-root boundary afterward. Migration
 preflights all four identities, adopts
 legacy real directories by same-filesystem rename, rejects competing canonical
-state, and rolls back earlier moves if a later link fails. Standard-library
+state, and rolls back earlier moves if a later link fails.
+
+Standard-library
 regressions cover adoption, reuse, dual-authority rejection, and injected
 partial failure. On the real Windows workspace the first `Intermediate` rename
 hit a transient `WinError 5`; rollback restored all four original directories,
@@ -495,7 +563,9 @@ fingerprint under recursive-glob error suppression. Redirected, hard-linked, or
 special source entries also fail instead of being omitted from the digest. Each
 hashed source file is read through one descriptor whose device, inode,
 timestamps, size, and link count must match the lexical path before and after
-the read. This prevents scan-to-read substitution or external alias mutation
+the read.
+
+This prevents scan-to-read substitution or external alias mutation
 from entering validator evidence. Bootstrap fingerprints both validator source
 closures before
 Cargo starts and requires the same fingerprints after both builds and after
@@ -514,7 +584,9 @@ link. UE 5.8.1 exposes the supported UBT `-NoUBA` switch through BuildCookRun's
 `-UbtArgs` forwarding path. Linux build arguments now pass
 `-UbtArgs=-NoUBA` so this repository-owned linked cache layout uses native
 compiler filesystem behavior. Linux also keeps `-SkipBuildEditor` so
-BuildCookRun does not schedule a complete source-engine editor rebuild. Current
+BuildCookRun does not schedule a complete source-engine editor rebuild.
+
+Current
 Cook evidence still requires an editor-loadable project `shar` module, but a
 safe repository-local way to prepare that module has not been proven. A bounded
 UE 5.8.1 probe reduced the Shipping agenda to `shar` plus `UnrealPak`; other
@@ -533,7 +605,9 @@ can create new sessions, so killing only the RunUAT process group allowed an
 orphaned UBT to keep compiling after project-state links detached. POSIX cleanup
 now snapshots the full descendant tree by parentage before signaling, sends
 `SIGTERM` to every captured PID, and escalates only surviving PIDs to `SIGKILL`
-after a bounded wait. Windows retains `taskkill /T /F` descendant-tree
+after a bounded wait.
+
+Windows retains `taskkill /T /F` descendant-tree
 termination.
 
 Second, a shell-launched background runner inherited both an ignored and
@@ -561,7 +635,9 @@ rename, replacement-copy, or fatal-error marker, and 952 retained Shipping
 object files. Project state grew to about 4.51 GiB. A later resume preserved
 that work: UBT's initial agenda fell to 10,784 actions, the run reached
 285/10,784, and retained Shipping objects grew from 952 to 1,355 while project
-state reached 5,139,544,899 bytes. A third resume preserved that work again:
+state reached 5,139,544,899 bytes.
+
+A third resume preserved that work again:
 UBT's initial agenda fell to 10,498 actions, the run reached 409/10,498, and
 retained Shipping objects grew from 1,355 to 1,765 while project state reached
 5,533,484,783 bytes. A fourth resume preserved the cache again: UBT's initial
@@ -572,7 +648,9 @@ agenda fell to 8,663 actions, the run reached 821/8,663, and retained Shipping
 objects grew from 3,203 to 4,040 while project state reached
 7,453,112,066 bytes.
 The new log also had no compiler, UBA rename, replacement-copy, or fatal-error
-marker. A sixth resume preserved the fifth run exactly: UBT's initial agenda
+marker.
+
+A sixth resume preserved the fifth run exactly: UBT's initial agenda
 fell to 7,841 actions and the run reached 576/7,841 before interruption, with
 4,621 retained Shipping objects and 8,103,899,743 bytes of project state. No
 candidate package existed yet, so this progress remains non-admissible evidence
@@ -584,14 +662,18 @@ immediate process audit still captured one Shipping `clang++` process adopted
 by PID 1. It disappeared before the next audit, but returning while it was still
 active violated the runner-owned-process contract. An ancestry snapshot cannot
 close that race because a descendant may fork after the snapshot and lose its
-parent chain before the runner can observe it. Managed children now inherit a
+parent chain before the runner can observe it.
+
+Managed children now inherit a
 unique `SHAR_BUILD_RUNNER_CHILD` token. Linux cleanup retains the normal
 descendant-tree termination, then scans `/proc/*/environ` for that exact token
 and force-stops any remaining tagged process until none remain. The token is
 fresh per managed child and does not rely on executable names, paths, process
 groups, or parentage. A real synthetic probe spawned a tagged new-session
 child, let its parent exit so PID 1 adopted the child, then confirmed the token
-sweep discovered and removed that orphan. Unit regressions cover token copying
+sweep discovered and removed that orphan.
+
+Unit regressions cover token copying
 and a tagged PID that escapes the ancestry snapshot.
 
 A committed-runner canonical Linux interruption then exercised the same path
@@ -601,14 +683,18 @@ token was present on 12 live UAT, UBT, and compiler processes before `SIGTERM`.
 After the runner returned, an immediate `/proc` audit found zero processes
 with that token, zero SHAR UAT, UBT, or compiler processes, and
 all four project-state
-links detached. Retained Shipping objects reached 4,648 and project state
+links detached.
+
+Retained Shipping objects reached 4,648 and project state
 8,126,657,114 bytes. This closes the captured PID-1 escape race without relying
 on a delayed second process audit. A longer hardened resume then started with
 7,237 actions and reached 376/7,237 with 5,025 retained Shipping objects and
 8,484,851,155 bytes of project state. Its exact token was present on 13 live
 managed processes before `SIGTERM`; the immediate post-return audit again found
 zero tagged processes, zero SHAR managed build processes, and all four links
-detached. No candidate package existed and the UBT log had no compiler, UBA
+detached.
+
+No candidate package existed and the UBT log had no compiler, UBA
 rename, replacement-copy, fatal-error, or build-failure marker.
 
 A further canonical Linux resume reused that state again: UBT's initial agenda
@@ -621,6 +707,7 @@ returned 143 within the first second; the immediate post-return audit found zero
 processes carrying that token, zero SHAR UAT, UBT, or compiler processes, all
 four project-state links detached, and the advisory lock could be acquired
 again.
+
 The UBT log again contained no compiler, UBA rename, replacement-copy,
 fatal-error, or build-failure marker. No Linux candidate package existed, so
 this remains cache progress rather than admissible platform-package evidence.
@@ -633,7 +720,9 @@ managed-child token was present on 13 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the third
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -647,7 +736,9 @@ managed-child token was present on 13 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the seventh
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -661,7 +752,9 @@ managed-child token was present on 13 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the ninth
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -675,7 +768,9 @@ managed-child token was present on 11 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the sixth
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -689,7 +784,9 @@ managed-child token was present on 11 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the fifth
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -703,7 +800,9 @@ managed-child token was present on 11 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the sixth
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -717,7 +816,9 @@ managed-child token was present on 10 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the fifth
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -731,7 +832,9 @@ managed-child token was present on 17 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the third
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -745,7 +848,9 @@ managed-child token was present on 16 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the third
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -759,7 +864,9 @@ managed-child token was present on 16 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the third
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -773,7 +880,9 @@ managed-child token was present on 14 live RunUAT, AutomationTool, UBT,
 orphan-killer, and compiler processes. The runner returned 143 by the third
 250 ms poll; the immediate post-return audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock could be acquired again. The UBT log contained
+detached, and the advisory lock could be acquired again.
+
+The UBT log contained
 no compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so the result remains incremental cache progress rather than admissible
@@ -786,7 +895,9 @@ ended the run after 41/2,301 actions while retained Shipping objects grew from
 before termination, the exact managed-child token was present on 33 live
 runner-owned descendants. The post-run audit found zero processes carrying that
 token, zero SHAR UAT, UBT, or compiler processes, all four project-state links
-detached, and the advisory lock available again. The UBT log contained no
+detached, and the advisory lock available again.
+
+The UBT log contained no
 compiler, UBA rename, replacement-copy, fatal-error, or build-failure marker.
 Candidate and staging directories remained empty and `dist/linux-x64` was
 absent, so this remains incremental cache progress rather than admissible
@@ -799,6 +910,7 @@ Shipping objects grew from 9,642 to 10,296 and project state reached
 token was present on 34 live runner-owned descendants. The post-run audit found
 zero processes carrying that token, zero SHAR UAT, UBT, or compiler processes,
 all four project-state links detached, and the advisory lock available again.
+
 The UBT log contained no compiler, UBA rename, replacement-copy, fatal-error,
 or build-failure marker. Candidate and staging directories remained empty and
 `dist/linux-x64` was absent, so this remains incremental cache progress rather
@@ -1188,7 +1300,9 @@ exact copy produced inventory SHA-256
 `ee8b3f00772c898fab52bf1ae11f81874aea334b840335b94e76fcb7255b4e95`;
 the minimal copied Shipping executable again remained alive for eight seconds
 while the original `dist` directory was hidden, after which publication was
-restored and the copy probe deleted. This verifies the published Windows package
+restored and the copy probe deleted.
+
+This verifies the published Windows package
 can be copied away from its repository publication path without depending on
 that path.
 

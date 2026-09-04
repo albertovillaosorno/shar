@@ -92,7 +92,9 @@ Two disposable `SceneComponent` instances initially reported the actor's
 `CollisionCapsule` root as their parent. The call returned `returnValue: true`.
 A separate `get_parent_component` call then returned the exact disposable parent
 for the child. Calling the setter again without `parent` returned `true` and a
-fresh parent read returned `null`. Removing both disposable components restored
+fresh parent read returned `null`.
+
+Removing both disposable components restored
 the actor's original four-component list exactly.
 <!-- END MANUAL FIELD: project-verification -->
 

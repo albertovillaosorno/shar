@@ -122,7 +122,9 @@ FBX version `7700`. Optional `texture` records carry the owning package, exact
 `textures/*.png` path, byte count, and lowercase SHA-256 digest. Texture records
 are verified provenance for the external FBX package; they do not replace the
 separate Unreal `Texture2D` operations and do not independently promote model
-readiness. The JSONL uses UTF-8, LF line endings, no blank records, and one
+readiness.
+
+The JSONL uses UTF-8, LF line endings, no blank records, and one
 final
 LF.
 
@@ -134,7 +136,9 @@ files, noncanonical fields, stale sizes or hashes, non-PNG texture evidence,
 invalid binary headers, and any FBX version other than 7.7. A verified complete
 catalog must correspond exactly to every manifest package whose disposition is
 `requires-fbx`; it promotes those model operations to `ready` and uses only the
-generated FBX digest as each model source revision. A package-level
+generated FBX digest as each model source revision.
+
+A package-level
 `SkeletalMesh` entry reserves both its primary object and the deterministic
 `<AssetName>_Skeleton` companion; the companion is owned by the same import,
 save, read-back, and rollback transaction rather than by a second plan
@@ -262,7 +266,9 @@ For a complete plan it repeats the capability audit, checks every destination is
 absent before mutation, and applies imports serially. Each imported package must
 exist, expose the planned class, save explicitly, and report clean afterward.
 Media imports additionally require the exact stored relative path and external
-payload. A failure compensates every effect created by that transaction in
+payload.
+
+A failure compensates every effect created by that transaction in
 reverse order; movie payloads are deleted before their assets. Every absence is
 independently verified. Preexisting destinations or payloads are never adopted
 or deleted. An ambiguous import timeout is probed for either created effect
@@ -316,7 +322,9 @@ not one ad hoc StateTree or abstract data asset per source bundle. Pure3D sprite
 layouts, Scrooby project headers, TextureFont evidence, and TextBible headers
 are
 also semantic evidence rather than standalone `Texture2D`, `WidgetBlueprint`,
-`Font`, or `StringTable` factory inputs. TextureFont extraction preserves its
+`Font`, or `StringTable` factory inputs.
+
+TextureFont extraction preserves its
 embedded atlas PNGs plus each fixed 40-byte glyph record as ten raw
 little-endian
 words; field semantics remain unassigned until an authoritative compiler mapping

@@ -39,5 +39,7 @@ candidate discovery order. A separate active-set validator now rejects direct
 conflicts when both canonical package identities are present, while declarations
 against inactive packages remain inert. Active supersession cycles are now
 rejected independently of discovery order while references to inactive package
-identities remain inert. Priority and supersession winner selection remain
+identities remain inert.
+
+Priority and supersession winner selection remain
 pending full activation-policy work.

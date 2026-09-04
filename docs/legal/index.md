@@ -213,10 +213,12 @@ does not determine a legal outcome by itself.
   amendment to a cited section of Title 15, Title 17, or Title 18. The eCFR
   identifies Title 37 as current through 2026-07-10, and the 37 C.F.R. § 201.40
   amendment history still ends at 89 FR 85446 (Oct. 28, 2024).
+
 - Platform currentness: the live GitHub Terms of Service identify 2026-04-27 as
   their effective date. The live YouTube terms endpoint identifies 2023-12-15
   as the date of the reviewed United States-facing general terms. Both dates
   were reverified on 2026-07-14.
+
 - Rulemaking currentness: the Copyright Office identifies the tenth triennial
   Section 1201 proceeding as the 2027 cycle and states that renewed exemptions
   will govern October 2027 through October 2030. The current 2024 exemptions

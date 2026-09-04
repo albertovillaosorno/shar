@@ -64,9 +64,11 @@ that this exact test is required in every linking case.
   Systems, Inc. v. GE Consumer and Industrial, Inc.*, and *MDY Industries, LLC
   v. Blizzard Entertainment, Inc.* apply materially different access-control
   facts and circuit rules.
+
 - *MGE UPS Systems* applied *Corley*'s distinction between circumvention and
   later use: employees who merely executed an already altered copy were not
   shown to have performed the circumvention act.
+
 - The decision does not determine the legality of a particular SHAR parser,
   publication, hyperlink, or independently created compatible implementation.
 

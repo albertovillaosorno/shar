@@ -445,7 +445,9 @@ fn non_world_missing_shader_stays_fail_closed() -> Result<(), String> {
     );
     let cleanup_result = fs::remove_dir_all(&root);
     let Err(error) = result else {
-        return Err(String::from("non-world missing shader used runtime fallback"));
+        return Err(String::from(
+            "non-world missing shader used runtime fallback",
+        ));
     };
     assert!(error.to_string().contains("MissingShaderMember"));
     cleanup_result.map_err(|error| error.to_string())?;
@@ -835,7 +837,8 @@ fn shared_texture_authority_preserves_authored_name_over_cache_name()
 }
 
 #[test]
-fn independent_shaders_isolate_same_named_texture_staging() -> Result<(), String> {
+fn independent_shaders_isolate_same_named_texture_staging(
+) -> Result<(), String> {
     let root = std::env::temp_dir().join(format!(
         "pipeline-independent-shader-staging-{}",
         std::process::id()

@@ -36,6 +36,7 @@ on *MAI Systems Corp. v. Peak Computer, Inc.* to treat a restricted software
 user as a licensee for § 117. *Wall Data* also held that its essential-step
 defense failed even if ownership were assumed because installing the software on
 more computers than the license count was convenient rather than necessary.
+
 *Vernor* supplies the Ninth Circuit's later ownership framework; *Wall Data*
 remains relevant to copy count and essentiality.
 

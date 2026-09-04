@@ -15,7 +15,9 @@ A deterministic, public-safe manifest acts as a minimum completeness ledger. It
 uses obfuscated location identities, normalized type identities, and minimum
 counts. A positive minimum is required base-installation evidence. A zero
 minimum records an optional coordinate, including edition- or language-specific
-content, without requiring that content to be present. The ledger does not
+content, without requiring that content to be present.
+
+The ledger does not
 enumerate original file names or distribute content.
 
 Validation fails when required evidence is absent, malformed, duplicated

@@ -47,6 +47,7 @@ interaction slots. Animation uses montages, sections, slots, root motion, and
 notifies. Vehicle actions delegate to the vehicle application port. State-prop
 tasks may request typed transitions or await correlated state and marker
 observations, but cannot treat animation completion as durable state authority.
+
 Artificial-intelligence and non-player-character tasks publish movement, path,
 reaction, and interaction intent through current character and world revisions.
 Domain effects and save changes remain outside the task and commit only through

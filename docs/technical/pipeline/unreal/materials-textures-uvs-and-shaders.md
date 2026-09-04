@@ -151,7 +151,9 @@ profile intentionally uses an unlit or emissive model.
 Final `UTexture` assets generate deterministic mip chains, use texture groups by
 family, and participate in streaming unless the profile explicitly requires full
 residency. Compression is selected by semantic role and target platform. Normal
-maps use normal-map compression. Masks remain linear. UI and tiny lookup assets
+maps use normal-map compression. Masks remain linear.
+
+UI and tiny lookup assets
 may be non-streaming only when budgeted.
 
 ## Validation

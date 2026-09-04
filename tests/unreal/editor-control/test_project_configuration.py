@@ -118,7 +118,7 @@ def test_project_state_links_are_ignored_explicitly() -> None:
         assert f"{project_root}/{name}" in ignore_lines
 
 
-def test_generated_project_ide_state_is_ignored_explicitly() -> None:
+def test_generated_project_editor_state_is_ignored_explicitly() -> None:
     """Machine-specific Unreal project generation must not dirty Git."""
     ignore_lines = (_REPOSITORY_ROOT / ".gitignore").read_text(
         encoding="utf-8"

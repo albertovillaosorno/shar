@@ -107,7 +107,9 @@ digest. The generator reads `VersionName` from the associated engine plugin and
 normalizes `1.0` to `1.0.0`; the Python translator CalVer is not part of this
 token. A plugin-version or schema change therefore makes an older token stale.
 Regeneration preserves the token but derives **Review required** whenever it no
-longer matches. Never advance the token merely to silence the status.
+longer matches.
+
+Never advance the token merely to silence the status.
 
 ## Evidence threshold
 

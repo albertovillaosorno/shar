@@ -70,7 +70,9 @@ itself, establish the license accepted for one installation. The toolchain is
 governed by the Microsoft terms presented for the installed edition, channel,
 workloads, and components. Redistributable packages, Windows SDK material,
 vcpkg, and separately licensed open-source components may carry distinct
-conditions. The installed terms and component notices control.
+conditions.
+
+The installed terms and component notices control.
 
 ## Distribution, Modification, And Compatibility
 

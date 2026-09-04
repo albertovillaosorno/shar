@@ -60,7 +60,9 @@ Justice Scalia dissented. He would have applied a volitional-conduct rule and
 treated the subscriber as the actor who selected and initiated each
 transmission. He criticized the majority's cable-resemblance approach as lacking
 sufficient grounding in the statutory act of performance. The majority's cable-
-equivalent public-performance holding controls. The dissent identifies an
+equivalent public-performance holding controls.
+
+The dissent identifies an
 unresolved attribution concern for materially different technologies.
 
 ## Relationship To Cartoon Network

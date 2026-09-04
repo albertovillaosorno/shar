@@ -95,7 +95,9 @@ Rig track. The call returned `true`. A separate track inspection found a new
 `MovieSceneControlRigParameterTrack` with one section, nine `Root_CTRL`
 transform channels, and 151 keys per channel covering frames 0 through 150.
 The rotation channels independently read 90 degrees on X and 180 degrees on Z,
-and the three scale channels remained approximately one. Removing the binding
+and the three scale channels remained approximately one.
+
+Removing the binding
 returned `true`, and a fresh scene search confirmed that the disposable actor
 was absent.
 <!-- END MANUAL FIELD: project-verification -->

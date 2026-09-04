@@ -90,7 +90,9 @@ A disposable function graph initially serialized as
 `read_graph_dsl` then returned the same function body with the
 `Development|PrintString` statement and `MCP DSL lifecycle` literal, plus the
 normal trailing newline. The Blueprint compiled with warnings treated as
-errors. Writing the original empty function form also returned `null`, but a
+errors.
+
+Writing the original empty function form also returned `null`, but a
 fresh read showed the authored statement was still present and strict
 compilation still succeeded. Deleting the complete disposable validation folder
 restored virtual and physical asset absence.

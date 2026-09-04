@@ -347,7 +347,9 @@ fn runtime_missing_shader_has_package_consumers(
     let (Some(provenance), Some(package)) = (provenance, package) else {
         return false;
     };
-    if provenance.source_ordinals.is_empty() || provenance.model_member_ids.is_empty() {
+    if provenance.source_ordinals.is_empty()
+        || provenance.model_member_ids.is_empty()
+    {
         return false;
     }
     provenance.model_member_ids.iter().all(|member_id| {

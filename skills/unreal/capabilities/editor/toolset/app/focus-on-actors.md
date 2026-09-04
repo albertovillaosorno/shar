@@ -87,7 +87,9 @@ scale `(4, 6, 8)`. The call returned no structured value. The first two camera
 polls remained at the captured origin; the third poll moved the viewport to
 approximately `(248799.719, -175000, 42000)`, independently proving that the
 camera framed the target. `GetSelectedActors` stayed empty, so focusing did not
-select the actor. Cleanup restored the exact captured camera, removed the cube,
+select the actor.
+
+Cleanup restored the exact captured camera, removed the cube,
 and a fresh scene search returned no task actor.
 <!-- END MANUAL FIELD: project-verification -->
 

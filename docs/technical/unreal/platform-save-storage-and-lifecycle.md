@@ -74,6 +74,7 @@ Schema-defined scalar values have explicit widths, ranges, and normalization
 rules. Canonical identifiers use the gameplay catalog identity contract. Text
 needed by the save schema uses a deterministic Unicode normalization rule.
 Collections have deterministic key and element ordering before serialization.
+
 The serializer does not expose host byte order or native struct padding.
 
 ## Portable and device-local state

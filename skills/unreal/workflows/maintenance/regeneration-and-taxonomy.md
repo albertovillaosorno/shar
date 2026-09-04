@@ -51,6 +51,7 @@ It preserves the prior token and derives **Current** only for an exact match.
 The Unreal MCP version is read from the associated engine's
 `ModelContextProtocol.uplugin` `VersionName` and normalized to three-part
 SemVer.
+
 The Python translator package version is a separate release identity.
 
 ## Regeneration command

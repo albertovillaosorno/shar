@@ -66,7 +66,9 @@ use different compatible licenses. The repository `COPYING` file directs readers
 to the complete license text and states that Blender is not offered under an
 alternative license. The exact Blender revision, individual-file notices, and
 bundled third-party inventory control. Using Blender to create or inspect a file
-does not determine the copyright or license of that file. Add-ons, scripts,
+does not determine the copyright or license of that file.
+
+Add-ons, scripts,
 linked libraries, and copied manual material require separate analysis.
 
 ## Distribution, Modification, And Compatibility

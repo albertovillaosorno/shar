@@ -17,7 +17,9 @@ canonical legal disclaimer inside a subject record.
 Replace every braced instruction that remains in an instantiated record. Do
 not leave a required field blank. Use `Not applicable — {reason}` only after a
 reasoned review. Use `Unknown — verification required` when evidence is absent
-or inconclusive. Never convert uncertainty into a favorable assumption.
+or inconclusive.
+
+Never convert uncertainty into a favorable assumption.
 
 ## Review Status And Scope
 

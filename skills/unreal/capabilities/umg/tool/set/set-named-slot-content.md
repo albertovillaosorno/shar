@@ -88,7 +88,9 @@ A compiled disposable host Widget Blueprint exposed a `NamedSlot` named
 `Content`. The call returned a `Button` named `SlotAction`. Its ordinary parent
 and slot were `None`, `bIsVariable` was `true`, and `GetWidgets` identified
 `NamedHostInstance` as its named-slot host. `GetNamedSlots` returned exactly one
-binding connecting host, slot name, and content widget. The bound container
+binding connecting host, slot name, and content widget.
+
+The bound container
 compiled successfully before host replacement.
 <!-- END MANUAL FIELD: project-verification -->
 

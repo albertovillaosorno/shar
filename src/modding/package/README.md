@@ -14,6 +14,7 @@ simultaneously required and declared conflicting or superseded.
 Member construction, whole-manifest validation, and content-revision derivation
 share the same reserved-path, portable-path, size, digest, media-type, and role
 rules so invalid member records cannot acquire a canonical package revision.
+
 Variable-length path, media-type, and role fields are length-prefixed in the
 content-revision digest so distinct canonical field boundaries cannot alias.
 Manifest validation recomputes that content revision from canonical members and
@@ -23,7 +24,9 @@ requires exact dependency revisions, rejects duplicate identities and cycles,
 and uses canonical identity to make dependency-ready ordering independent of
 package discovery order. The separate `validate_active_conflicts` helper rejects
 any declared conflict whose canonical identity is present in the active
-candidate set while ignoring conflicts with inactive packages. Active
+candidate set while ignoring conflicts with inactive packages.
+
+Active
 supersession cycles are rejected independently as well. Full priority and
 supersession winner-selection policy remains outside these declaration-level
 helpers.

@@ -93,7 +93,9 @@ P3D/RCF/RSD/RMV audit, recording both results in saved evidence. A stale deep
 validator is rejected when its source closure changes, and focused packaging
 tests prove the ordered fast-then-deep call sequence. The filesystem-backed
 fast manifest adapter and deep validator both use strict traversal, so redirects
-and special entries fail closed instead of being silently skipped. Deep RCF
+and special entries fail closed instead of being silently skipped.
+
+Deep RCF
 validation now captures bytes through the same link-aware read boundary used by
 the other supported formats and parses that immutable snapshot instead of
 reopening the source path after traversal. Their Rust contract tests prove
@@ -107,7 +109,9 @@ errors are converted to a path-free preflight failure before they reach the
 public diagnostic. Nested executable failures likewise report only the source
 shape defect and never echo the private nested relative path. Windows path
 redaction is case-insensitive so native case normalization cannot expose the
-selected installation root. Regression tests
+selected installation root.
+
+Regression tests
 preserve useful shortfall details while
 requiring the private root to become `<selected-source>`, and a real
 `validate-game` failure fixture confirms the wrapper does not echo its absolute
@@ -132,7 +136,9 @@ therefore fails closed instead of hiding another canonical executable. Synthetic
 regressions cover directory, quoted text, executable, missing, wrong-file,
 redirected wrong-file, redirected directory/parent, mocked junction,
 nested-only,
-and nested-scan-failure selections without proprietary source data. The future
+and nested-scan-failure selections without proprietary source data.
+
+The future
 P4 GUI
 still owns concrete browse/text/drop
 event binding; this criterion now owns only the source-selection semantics

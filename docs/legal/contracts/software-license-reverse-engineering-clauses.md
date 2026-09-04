@@ -41,7 +41,9 @@ world.
 That decision is not a nationwide rule that every restriction is enforceable.
 *Vault Corp. v. Quaid Software Ltd.* held that a Louisiana statute authorizing a
 license restriction against decompilation or disassembly conflicted with § 117
-and was preempted. *Bowers* later distinguished that statutory scheme from the
+and was preempted.
+
+*Bowers* later distinguished that statutory scheme from the
 private promise before it. The *Bowers* dissent would also have found the
 reverse-engineering prohibition preempted.
 
@@ -51,6 +53,7 @@ accepted end-user and service terms had contractually relinquished reverse-
 engineering rights and rejected conflict preemption. The case also involved a
 separate authentication bypass and DMCA analysis, so its contract result cannot
 be detached from the exact agreements, conduct, and remedies before the court.
+
 Formation, notice, scope, governing law, public policy, statutory text,
 remedies, and later controlling authority remain independent questions.
 

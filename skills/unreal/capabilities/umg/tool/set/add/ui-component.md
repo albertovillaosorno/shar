@@ -83,7 +83,9 @@ SHAR widget in a Widget Blueprint.
 Class discovery returned seven loaded `UIComponent` classes, including native
 `MouseHoverComponent` and `ScaleBoxComponent`. The button initially had no UI
 components. Adding `MouseHoverComponent` returned one exact component reference.
-Adding `ScaleBoxComponent` appended a second reference. Independent `GetWidgets`
+Adding `ScaleBoxComponent` appended a second reference.
+
+Independent `GetWidgets`
 reads reproduced the same class order, and the Widget Blueprint compiled.
 <!-- END MANUAL FIELD: project-verification -->
 

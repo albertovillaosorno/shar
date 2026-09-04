@@ -47,7 +47,9 @@ commands, mission reset locators, `SetInitialWalk`, `SetDynaLoadData`,
 `StreetRacePropsLoad`, `StreetRacePropsUnload`, `UsePedGroup`, and mission HUD
 controls. The Dyna Load Data reference was also cross-checked for its documented
 postfix operations: region load/unload, interior load/unload, and World Sphere
-enable/disable. The locator reference was additionally cross-checked for
+enable/disable.
+
+The locator reference was additionally cross-checked for
 base-game type-5 `DynamicZone` use of Dyna Load Data; repository corpus
 evidence,
 not the secondary reference, remains authoritative for package identities and
@@ -64,7 +66,9 @@ compatibility implementations were additionally reviewed for source shapes such
 as `SetDestination`,
 `SetDialogueInfo`, `SetCamBestSide`, `SetConversationCam`, AI tuples, and
 mission
-FMV usage. These secondary descriptions are used only where repository evidence
+FMV usage.
+
+These secondary descriptions are used only where repository evidence
 independently closes the same command form; they are not used to invent a
 precedence rule when the same decoded locator name is present in multiple active
 packages. Undocumented `AddStage` numeric values, condition parameters, AI

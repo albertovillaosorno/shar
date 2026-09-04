@@ -91,7 +91,9 @@ Widget Blueprint tree for bounded HUD, menu, prompt, overlay, or debug UI work.
 The disposable tree began empty. Adding a `CanvasPanel` without a parent
 created the root. Two `VerticalBox` widgets added at indices `0` and `1` became
 root children. Adding the button at index `0` under `LeftColumn` returned its
-exact widget, parent, and `VerticalBoxSlot_0` references. `GetWidgets` then
+exact widget, parent, and `VerticalBoxSlot_0` references.
+
+`GetWidgets` then
 returned depth-first order `RootCanvas`, `LeftColumn`, `ActionButton`,
 `RightColumn`. Later removals restored an empty, compilable widget tree.
 <!-- END MANUAL FIELD: project-verification -->

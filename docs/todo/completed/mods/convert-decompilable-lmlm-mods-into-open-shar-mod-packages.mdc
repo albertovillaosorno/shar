@@ -59,6 +59,7 @@ validated the local Jebano `j.lmlm` (1,540 entries, 7 valid P3D payloads) and
 Muckluck `m.lmlm` (32 entries, 29 valid P3D payloads) inputs without installing
 either package. An architecture guard rejects any LMLM reference under `src/`.
 The compatibility tool remains outside the reconstruction pipeline.
+
 Folder-driven
 conversion uses `tools/lmlm/import/`, preserves WIP state under
 `.cache/lmlm/wip/`, and publishes local results under `tools/lmlm/export/`.
@@ -67,7 +68,9 @@ canonical identity is source-hash-bound and whose revision covers the current
 open workspace members. Converted packages remain content-only and require the
 `legacy.lmlm.review.v1` capability so inspectability is not confused with native
 runtime compatibility. Export publication regenerates package metadata from
-edited WIP and rejects stale existing export manifests. Synthetic tests cover
+edited WIP and rejects stale existing export manifests.
+
+Synthetic tests cover
 initial package publication, edited-WIP republishing, and stale-export rejection
 without reading local ignored compatibility inputs. Import-folder discovery now
 uses strict filesystem traversal as well; a synthetic redirect regression proves

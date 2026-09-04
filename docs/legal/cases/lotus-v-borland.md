@@ -36,7 +36,9 @@ The court concluded: "we hold that the Lotus menu command hierarchy is
 uncopyrightable subject matter," held that Borland therefore did not infringe by
 copying it, declined to reach Borland's affirmative defenses, and reversed the
 judgment of the district court. Id. at 819. Judge Boudin wrote a separate
-concurring opinion emphasizing a different view of the underlying problem. Id.
+concurring opinion emphasizing a different view of the underlying problem.
+
+Id.
 at 819-22 (Boudin, J., concurring).
 
 ## Verified Supreme Court Disposition
