@@ -54,6 +54,9 @@ pub(crate) const PIPELINE_WORKSPACE_ROOT: &str = ".cache/pipeline";
 pub(crate) const EXTRACTED_WORKSPACE_ROOT: &str = ".cache/pipeline/extracted";
 /// Default physical complete FBX catalog workspace.
 pub(crate) const FBX_WORKSPACE_ROOT: &str = ".cache/pipeline/fbx-assets";
+/// Default physical dedicated vehicle FBX catalog workspace.
+pub(crate) const VEHICLE_WORKSPACE_ROOT: &str =
+    ".cache/pipeline/vehicle-assets";
 /// Default physical complete UI-sprite raster catalog workspace.
 pub(crate) const UI_RASTER_WORKSPACE_ROOT: &str =
     ".cache/pipeline/ui-raster-assets";
