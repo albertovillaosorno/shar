@@ -33,6 +33,8 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::adapters::driven::check_cancellation;
+use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::package::{PhaseThreePackageIndex, PhaseThreePackageRow};
 use crate::domain::{PipelineError, StageReport};
 
@@ -118,7 +120,11 @@ fn build_catalog(
         source::extract_vehicle_packages(&index, game_root, &normalized)?;
     let authority = VehicleTextureAuthority::build(&index, &normalized)?;
     let mut records = Vec::<VehicleRecord>::with_capacity(packages.len());
+    let mut progress =
+        StageProgress::begin("vehicle FBX assembly", packages.len());
     for package in packages {
+        check_cancellation()?;
+        progress.advance(&package.package_id);
         records.push(prepare::export_vehicle(
             package,
             &normalized,
@@ -126,6 +132,7 @@ fn build_catalog(
             &authority,
         )?);
     }
+    progress.finish();
     catalog::write_root_catalog(staging, &records, extracted)?;
     fs::remove_dir_all(&work).map_err(|error| {
         PipelineError::new(format!("vehicle work cleanup failed: {error}"))

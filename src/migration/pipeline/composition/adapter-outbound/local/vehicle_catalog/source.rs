@@ -38,6 +38,8 @@ use serde_json::Value;
 use shar_sha256::digest_hex;
 
 use super::{VEHICLE_CATEGORY, VEHICLE_COMMON_SUBCATEGORY};
+use crate::adapters::driven::check_cancellation;
+use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::PipelineError;
 use crate::domain::package::{
     PhaseThreePackageIndex, PhaseThreePackageMember, PhaseThreePackageRow,
@@ -90,12 +92,17 @@ pub(super) fn extract_vehicle_packages(
     game_root: &Path,
     normalized_root: &Path,
 ) -> Result<usize, PipelineError> {
-    let mut count = 0_usize;
-    for package in index
+    let packages = index
         .packages()
         .iter()
         .filter(|package| package.category == VEHICLE_CATEGORY)
-    {
+        .collect::<Vec<_>>();
+    let mut progress =
+        StageProgress::begin("vehicle source extraction", packages.len());
+    let mut count = 0_usize;
+    for package in packages {
+        check_cancellation()?;
+        progress.advance(&package.package_id);
         let relative = relative_art_root(package)?;
         let source =
             game_root.join("art").join(&relative).with_extension("p3d");
@@ -116,6 +123,7 @@ pub(super) fn extract_vehicle_packages(
             PipelineError::new("vehicle package count overflowed")
         })?;
     }
+    progress.finish();
     Ok(count)
 }
 
