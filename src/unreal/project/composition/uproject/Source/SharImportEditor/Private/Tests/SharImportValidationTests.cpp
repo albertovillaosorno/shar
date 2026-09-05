@@ -32,11 +32,14 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Import/SharFbxImportPolicy.h"
 #include "Import/SharImportToolset.h"
 #include "Import/SharImportValidation.h"
 
 #include "HAL/FileManager.h"
 #include "FileMediaSource.h"
+#include "Factories/FbxSkeletalMeshImportData.h"
+#include "Factories/FbxStaticMeshImportData.h"
 #include "HAL/PlatformProcess.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/FileHelper.h"
@@ -100,6 +103,32 @@ bool FSharImportValidationTest::RunTest(const FString& Parameters)
 {
     (void)Parameters;
     FString Error;
+    UFbxStaticMeshImportData* StaticImport =
+        NewObject<UFbxStaticMeshImportData>();
+    UFbxSkeletalMeshImportData* SkeletalImport =
+        NewObject<UFbxSkeletalMeshImportData>();
+    UE::SharImportEditor::Private::ApplyFbxSceneUnitPolicy(*StaticImport);
+    UE::SharImportEditor::Private::ApplyFbxSceneUnitPolicy(
+        *SkeletalImport
+    );
+    TestEqual(
+        TEXT("Static FBX import keeps identity uniform scale"),
+        StaticImport->ImportUniformScale,
+        1.0F
+    );
+    TestTrue(
+        TEXT("Static FBX import converts authored scene units to centimeters"),
+        StaticImport->bConvertSceneUnit
+    );
+    TestEqual(
+        TEXT("Skeletal FBX import keeps identity uniform scale"),
+        SkeletalImport->ImportUniformScale,
+        1.0F
+    );
+    TestTrue(
+        TEXT("Skeletal FBX import converts scene units to centimeters"),
+        SkeletalImport->bConvertSceneUnit
+    );
     TestTrue(
         TEXT("SHAR import toolset is registered after engine initialization"),
         UToolsetRegistry::IsToolsetClassRegistered(

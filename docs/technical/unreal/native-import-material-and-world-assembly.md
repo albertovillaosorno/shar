@@ -136,6 +136,24 @@ Embedded or relative texture references are source evidence. The final UAsset
 material dependency set is rebuilt by the native import plan and is not inferred
 from arbitrary editor discovery.
 
+### Scene-unit conversion
+
+The original runtime initializes simulation with `MetersUnits`. SHAR-authored
+FBX output therefore keeps source positions in meters and declares FBX
+`UnitScaleFactor` and `OriginalUnitScaleFactor` as `100`, meaning one authored
+unit is one meter. Unreal's native world unit is one centimeter.
+
+The project-owned FBX importer must keep `ImportUniformScale` at `1.0` and
+enable `bConvertSceneUnit`. Unreal then converts the authored FBX system unit to
+centimeters exactly once. Import code must not compensate by multiplying source
+vertices, changing actor scale, or rewriting the FBX unit declaration.
+
+A missing scene-unit conversion produces assets one hundred times too small even
+though their relative proportions remain correct. Such an import can also make
+editor near-plane and culling behavior look like geometry corruption when the
+camera approaches a centimeter-scale character or vehicle. Native read-back of
+bounds must therefore be interpreted only after this unit contract is applied.
+
 ## Staging packages
 
 Staging packages are not shipping content. Their names are derived from the

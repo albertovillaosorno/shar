@@ -31,6 +31,7 @@
 //! Shar import toolset implementation.
 
 #include "Import/SharImportToolset.h"
+#include "Import/SharFbxImportPolicy.h"
 
 #include "Import/SharImportValidation.h"
 
@@ -480,6 +481,7 @@ TArray<FString> ImportStaticMeshWithNormalPolicy(
     ImportUI->bCreatePhysicsAsset = false;
 
     UFbxStaticMeshImportData* MeshImport = ImportUI->StaticMeshImportData;
+    ApplyFbxSceneUnitPolicy(*MeshImport);
     MeshImport->NormalImportMethod = ImportTangents
         ? FBXNIM_ImportNormalsAndTangents
         : FBXNIM_ImportNormals;
@@ -620,6 +622,7 @@ TArray<FString> USharImportToolset::ImportSkeletalMesh(
     ImportUI->PhysicsAsset = nullptr;
 
     UFbxSkeletalMeshImportData* MeshImport = ImportUI->SkeletalMeshImportData;
+    ApplyFbxSceneUnitPolicy(*MeshImport);
     MeshImport->ImportContentType = FBXICT_All;
     MeshImport->NormalImportMethod = FBXNIM_ImportNormals;
     MeshImport->bComputeWeightedNormals = false;
