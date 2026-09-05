@@ -78,6 +78,20 @@ missing-smoothing-group warnings. The same segment contains zero warnings and
 zero errors overall.
 
 This closes the shading-provenance blocker for the representative native smoke.
-The task remains open because the acceptance criterion requires the complete
-original world to be imported and published through the native Unreal
-transaction, not only the bounded `l1z1` proof.
+
+A fresh full-source replay now exercises the same exporter against all 129
+selected terrain-world packages directly from the original `game` P3D root.
+The accepted `shar.world-package-collection.v6` publishes 108 normal world FBXs,
+82 isolated review FBXs, eight fused base interiors, four additive Halloween
+interior overlays, 1,756 canonical textures, and 12,240 authored placements.
+It retains zero source render or collision triangle discards while recording 28
+repeated-index and 3,988 zero-area faces as Unreal-target-only omissions. All
+eight fused interiors report zero removed duplicate triangles.
+
+The corresponding `shar.world-package-transforms.v7` contains 108 import
+transform records. This proves that the complete source-authored conversion can
+finish atomically rather than only the bounded `l1z1` closure; it does not claim
+native world assembly. No repository consumer currently projects that transform
+evidence into `world-assembly-plan.json`, so the task remains open until the
+complete original world is imported and published through the native Unreal
+transaction.
