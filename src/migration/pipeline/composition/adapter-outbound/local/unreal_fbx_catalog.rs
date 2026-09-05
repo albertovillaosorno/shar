@@ -327,7 +327,7 @@ fn verify_texture(
     Ok(())
 }
 
-fn binary_fbx_version(bytes: &[u8]) -> PipelineOutcome<u32> {
+pub(super) fn binary_fbx_version(bytes: &[u8]) -> PipelineOutcome<u32> {
     if bytes.len() < FBX_HEADER_SIZE || !bytes.starts_with(FBX_MAGIC) {
         return Err(PipelineError::new(
             "generated FBX artifact has an invalid binary header",
@@ -404,7 +404,7 @@ fn claim_catalog_path(
     Ok(())
 }
 
-fn validate_relative_path(path: &str) -> PipelineOutcome<()> {
+pub(super) fn validate_relative_path(path: &str) -> PipelineOutcome<()> {
     if path.is_empty()
         || path.starts_with('/')
         || path.contains(char::from(92))
@@ -419,7 +419,7 @@ fn validate_relative_path(path: &str) -> PipelineOutcome<()> {
     Ok(())
 }
 
-fn validate_public_identifier(value: &str) -> PipelineOutcome<()> {
+pub(super) fn validate_public_identifier(value: &str) -> PipelineOutcome<()> {
     let bytes = value.as_bytes();
     if bytes.is_empty()
         || !bytes.first().is_some_and(u8::is_ascii_alphanumeric)
@@ -436,7 +436,7 @@ fn validate_public_identifier(value: &str) -> PipelineOutcome<()> {
     Ok(())
 }
 
-fn validate_digest(value: &str) -> PipelineOutcome<()> {
+pub(super) fn validate_digest(value: &str) -> PipelineOutcome<()> {
     if value.len() != 64
         || !value
             .bytes()
@@ -503,7 +503,10 @@ fn collect_inventory(
     Ok(())
 }
 
-fn validate_ancestor_chain(root: &Path, path: &Path) -> PipelineOutcome<()> {
+pub(super) fn validate_ancestor_chain(
+    root: &Path,
+    path: &Path,
+) -> PipelineOutcome<()> {
     let relative = path.strip_prefix(root).map_err(|_error| {
         PipelineError::new("generated FBX artifact escaped its catalog root")
     })?;
@@ -544,7 +547,9 @@ fn validate_directory(path: &Path, label: &str) -> PipelineOutcome<()> {
     })
 }
 
-fn validate_directory_metadata(metadata: &fs::Metadata) -> PipelineOutcome<()> {
+pub(super) fn validate_directory_metadata(
+    metadata: &fs::Metadata,
+) -> PipelineOutcome<()> {
     reject_reparse_or_symlink(metadata)?;
     if !metadata.is_dir() {
         return Err(PipelineError::new(
@@ -554,7 +559,10 @@ fn validate_directory_metadata(metadata: &fs::Metadata) -> PipelineOutcome<()> {
     Ok(())
 }
 
-fn validate_regular_file(path: &Path, label: &str) -> PipelineOutcome<()> {
+pub(super) fn validate_regular_file(
+    path: &Path,
+    label: &str,
+) -> PipelineOutcome<()> {
     let metadata = fs::symlink_metadata(path)
         .map_err(|error| io_error("inspect generated FBX file", &error))?;
     reject_reparse_or_symlink(&metadata)?;
@@ -640,7 +648,7 @@ fn required_u64(
     })
 }
 
-fn io_error(action: &str, error: &std::io::Error) -> PipelineError {
+pub(super) fn io_error(action: &str, error: &std::io::Error) -> PipelineError {
     PipelineError::new(format!("{action} failed ({:?})", error.kind()))
 }
 

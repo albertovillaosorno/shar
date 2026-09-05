@@ -63,6 +63,7 @@ use super::mission_locator_context::{
 use super::mission_music_context::preflight_mission_music_states;
 use super::mission_order_context::build_mission_order_source_reports;
 use super::unreal_fbx_catalog::verified_fbx_catalog_at;
+use super::unreal_vehicle_catalog::verified_vehicle_fbx_catalog;
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
@@ -104,7 +105,7 @@ use crate::manifest_paths::{
     FBX_MANIFEST_PATH, UNREAL_MANIFEST_GAME_RELATIVE_PATH,
 };
 use crate::workspace::{
-    FBX_WORKSPACE_ROOT, UI_RASTER_WORKSPACE_ROOT,
+    FBX_WORKSPACE_ROOT, UI_RASTER_WORKSPACE_ROOT, VEHICLE_WORKSPACE_ROOT,
     UI_SCROOBY_BINDING_WORKSPACE_ROOT, UI_SCROOBY_JOINED_RASTER_WORKSPACE_ROOT,
     UI_SCROOBY_LAYOUT_WORKSPACE_ROOT,
     UI_SCROOBY_RESOURCE_WORKSPACE_ROOT,
@@ -298,6 +299,10 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         Path::new(FBX_MANIFEST_PATH),
     )?;
     let verified_fbx_count = fbx_catalog.as_ref().map_or(0, Vec::len);
+    let vehicle_fbx_catalog =
+        verified_vehicle_fbx_catalog(Path::new(VEHICLE_WORKSPACE_ROOT))?;
+    let verified_vehicle_fbx_count =
+        vehicle_fbx_catalog.as_ref().map_or(0, Vec::len);
     let plan_bundle = unreal_manifest
         .plan_bundle_with_complete_generated_catalogs(
             &manifest_revision,
@@ -352,8 +357,9 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         note: format!(
             concat!(
                 "verified {} sources across {} semantic packages, {} ",
-                "generated FBX artifacts, {} verified UI sprite rasters, {} ",
-                "joined Scrooby sprite rasters across {} packages, and {} ",
+                "generated FBX artifacts, {} verified vehicle FBX artifacts, ",
+                "{} verified UI sprite rasters, {} joined Scrooby sprite ",
+                "rasters across {} packages, and {} ",
                 "verified Scrooby projects with {} resolved bindings, ",
                 "{} direct-import-backed bindings, {} normalized-entity-",
                 "backed bindings, {} content-equivalent bindings, {} layout ",
@@ -369,6 +375,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             unreal_manifest.source_count(),
             unreal_manifest.package_count(),
             verified_fbx_count,
+            verified_vehicle_fbx_count,
             verified_ui_raster_count,
             scrooby_joined_rasters.raster_count,
             scrooby_joined_rasters.package_count,
