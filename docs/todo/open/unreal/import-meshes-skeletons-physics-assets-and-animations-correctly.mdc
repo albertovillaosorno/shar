@@ -28,3 +28,36 @@ No explicit task dependency was recorded in the legacy TODO.
 
 Open work migrated from the canonical TODO. Add implementation and
 validation evidence here as the task advances.
+
+The persistent port preview also exercises both reviewed mesh import paths.
+`l1z1` is saved as a native Static Mesh, while Cletus and `sedana` are saved as
+Skeletal Meshes with newly created Skeleton companions. The vehicle import
+intentionally does not synthesize a Physics Asset, materials, wheel definitions,
+or Chaos construction from incomplete evidence; those remain separate typed
+construction work rather than manual editor repair.
+
+Vehicle package coverage is now explicit. The generated package index contains
+89 `cars` packages: 88 map one-to-one to dedicated vehicle FBXs, while
+`extracted-art-cars-common` is the sole shared support package. The specialized
+FBX therefore supplies verified presentation geometry without pretending to
+replace the package's remaining texture, material, physics, and runtime
+semantics.
+
+September 5 scale investigation identified a native-import defect rather than an
+FBX geometry defect. The original runtime initializes simulation with
+`MetersUnits`, and the repository FBX writers correctly declare
+`UnitScaleFactor=100` and `OriginalUnitScaleFactor=100`, meaning one authored
+unit is one meter. Unreal Engine 5.8.1 uses centimeters and its FBX asset-import
+data defaults `bConvertSceneUnit` to false. The project importer had inherited
+that default, so meter-authored coordinates were interpreted numerically as
+centimeters and preview meshes arrived one hundred times too small.
+
+`SharImportEditor` now applies one shared FBX scene-unit policy to static,
+world, and skeletal imports: `ImportUniformScale=1.0` with
+`bConvertSceneUnit=true`.
+The policy compiles against the installed Unreal Engine 5.8.1 source/toolchain
+and is covered for both static and skeletal import-data paths. The already saved
+`PortPreview` assets were imported by the old loaded editor module and therefore
+remain scale-invalid until they are reimported after that module is reloaded.
+Manual actor scaling is inspection-only and is not accepted as conversion
+evidence.

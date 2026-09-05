@@ -28,3 +28,19 @@ No explicit task dependency was recorded in the legacy TODO.
 
 Open work migrated from the canonical TODO. Add implementation and
 validation evidence here as the task advances.
+
+A persistent September 5 port-preview transaction now proves that reviewed
+source-backed artifacts can cross the live native MCP boundary without waiting
+for the incomplete global plan. `l1z1`, Cletus, and `sedana` were imported under
+`/Game/Generated/SHAR/PortPreview`; the resulting Static Mesh, two Skeletal
+Meshes, and two Skeleton companions were explicitly saved and independently
+read back as clean packages. Three unsaved preview actors were then placed in
+the currently loaded open-world editor map and focused in the viewport. Those
+actor transforms are inspection-only and are deliberately not saved as world
+assembly authority.
+
+The global executor remains fail-closed. Its accepted bundle still contains
+34,156 ready direct imports plus 52 editor-factory operations alongside 957
+semantic blockers, so no partial subset is reported as the complete plan. The
+dedicated vehicle catalog is now entering `prepare-unreal` through a separate
+read-only verification boundary rather than through an ignore-blockers switch.
