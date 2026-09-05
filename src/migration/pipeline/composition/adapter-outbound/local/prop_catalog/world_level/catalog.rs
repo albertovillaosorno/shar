@@ -122,6 +122,8 @@ pub(super) fn counts(
         }),
         unreal_omitted_repeated_index_triangles:
             target_omitted_repeated_index_triangles(collection),
+        unreal_omitted_zero_area_triangles:
+            target_omitted_zero_area_triangles(collection),
         authored_placements: sum(packages, |package| {
             package.authored_placements
         }),
@@ -365,13 +367,34 @@ fn target_omitted_repeated_index_triangles(
         .sum()
 }
 
+/// Count target-only zero-area omissions across every published FBX.
+fn target_omitted_zero_area_triangles(
+    collection: &ExportedWorldCollection,
+) -> usize {
+    let packages = collection.packages.iter().flat_map(|package| {
+        [package.world_fbx.as_ref(), package.review_fbx.as_ref()]
+            .into_iter()
+            .flatten()
+    });
+    let interiors = collection.interiors.iter().flat_map(|interior| {
+        [Some(&interior.base_fbx), interior.halloween_fbx.as_ref()]
+            .into_iter()
+            .flatten()
+    });
+    packages
+        .chain(interiors)
+        .map(|artifact| artifact.unreal_omitted_zero_area_triangles)
+        .sum()
+}
+
 /// Render one exact source-topology evidence sidecar record.
 fn topology_evidence_value(record: &WorldTopologyEvidenceRecord) -> Value {
     json!({
         "path": record.path,
         "bytes": record.bytes,
         "sha256": record.sha256,
-        "repeated_index_triangles": record.repeated_index_triangles
+        "repeated_index_triangles": record.repeated_index_triangles,
+        "zero_area_triangles": record.zero_area_triangles
     })
 }
 
@@ -403,6 +426,8 @@ fn counts_value(counts: WorldCollectionCounts) -> Value {
         "discarded_degenerate_triangles": counts.discarded_degenerate_triangles,
         "unreal_omitted_repeated_index_triangles":
             counts.unreal_omitted_repeated_index_triangles,
+        "unreal_omitted_zero_area_triangles":
+            counts.unreal_omitted_zero_area_triangles,
         "authored_placements": counts.authored_placements,
         "reference_placements": counts.reference_placements,
         "canonical_placement_fallbacks": counts.canonical_placement_fallbacks,
@@ -473,6 +498,8 @@ fn artifact_value(artifact: &WorldFbxRecord) -> Value {
         "sha256": artifact.sha256,
         "unreal_omitted_repeated_index_triangles":
             artifact.unreal_omitted_repeated_index_triangles,
+        "unreal_omitted_zero_area_triangles":
+            artifact.unreal_omitted_zero_area_triangles,
         "topology_evidence": artifact.topology_evidence
             .as_ref()
             .map(topology_evidence_value),

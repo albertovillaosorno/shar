@@ -409,15 +409,13 @@ bool BuildFileMediaSourcePathsFromObjectPath(
     }
     return true;
 }
-} // namespace UE::SharImportEditor::Private
-
-TArray<FString> USharImportToolset::ImportStaticMesh(
+TArray<FString> ImportStaticMeshWithNormalPolicy(
     const FString& SourceFile,
     const FString& FolderPath,
-    const FString& AssetName
+    const FString& AssetName,
+    bool ImportTangents
 )
 {
-    using namespace UE::SharImportEditor::Private;
     FString Error;
     if (!ValidateStaticMeshRequest(
             SourceFile,
@@ -482,7 +480,9 @@ TArray<FString> USharImportToolset::ImportStaticMesh(
     ImportUI->bCreatePhysicsAsset = false;
 
     UFbxStaticMeshImportData* MeshImport = ImportUI->StaticMeshImportData;
-    MeshImport->NormalImportMethod = FBXNIM_ImportNormals;
+    MeshImport->NormalImportMethod = ImportTangents
+        ? FBXNIM_ImportNormalsAndTangents
+        : FBXNIM_ImportNormals;
     MeshImport->bComputeWeightedNormals = false;
     MeshImport->bCombineMeshes = true;
     MeshImport->bImportMeshLODs = false;
@@ -527,6 +527,37 @@ TArray<FString> USharImportToolset::ImportStaticMesh(
         return {};
     }
     return Task->ImportedObjectPaths;
+
+}
+
+} // namespace UE::SharImportEditor::Private
+
+TArray<FString> USharImportToolset::ImportStaticMesh(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName
+)
+{
+    return UE::SharImportEditor::Private::ImportStaticMeshWithNormalPolicy(
+        SourceFile,
+        FolderPath,
+        AssetName,
+        false
+    );
+}
+
+TArray<FString> USharImportToolset::ImportWorldStaticMesh(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName
+)
+{
+    return UE::SharImportEditor::Private::ImportStaticMeshWithNormalPolicy(
+        SourceFile,
+        FolderPath,
+        AssetName,
+        true
+    );
 }
 
 TArray<FString> USharImportToolset::ImportSkeletalMesh(

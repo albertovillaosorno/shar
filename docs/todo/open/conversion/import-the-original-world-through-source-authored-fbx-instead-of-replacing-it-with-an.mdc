@@ -63,14 +63,21 @@ asset is dirty as required by the no-save staging contract. Rollback deletes
 both the asset and temporary folder, and an independent existence check returns
 false afterward.
 
-The same import exposes the next shading-provenance blocker. Unreal reports
-`No smoothing group information was found in this FBX scene`, along with
-near-zero tangent, binormal, and normal warnings. The exact `l1z1` render
-source currently contains 98 mesh documents and 111 primitive groups, and none
-of those groups carries a decoded normal array.
+That smoke exposed missing target surface frames rather than missing source
+geometry. The world FBX path now keeps source topology evidence separate while
+completing only the target-required polygon-corner normal, tangent, and binormal
+frames for render groups without authored normals. Authored normals remain
+unchanged, and target-only repeated-index and zero-area omissions remain counted
+in the topology sidecar rather than becoming silent source edits.
 
-The FBX writer consequently publishes neither `LayerElementNormal` nor
-`LayerElementSmoothing`, because its smoothing layer is intentionally coupled
-to authored normals. No smoothing value is synthesized here: the task remains
-open until shipped/source evidence establishes the lawful shading semantics for
-render groups that omit normals.
+A fresh live import of the regenerated `l1z1` artifact through
+`ImportWorldStaticMesh` succeeds as one `StaticMesh`. In the log segment emitted
+by that invocation, Unreal reports zero nearly-zero binormal warnings, zero
+nearly-zero normal warnings, zero degenerate tangent-basis warnings, and zero
+missing-smoothing-group warnings. The same segment contains zero warnings and
+zero errors overall.
+
+This closes the shading-provenance blocker for the representative native smoke.
+The task remains open because the acceptance criterion requires the complete
+original world to be imported and published through the native Unreal
+transaction, not only the bounded `l1z1` proof.
