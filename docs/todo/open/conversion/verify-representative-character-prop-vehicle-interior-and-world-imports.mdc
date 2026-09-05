@@ -27,3 +27,15 @@ No explicit task dependency was recorded in the legacy TODO.
 
 Open work migrated from the canonical TODO. Add implementation and
 validation evidence here as the task advances.
+
+A live September 4 world representative now passes the native import/read-back
+transaction. The target-safe `l1z1` world FBX imports through the SHAR editor
+toolset, reports one LOD, 30,984 vertices, 17,580 triangles, and 77 material
+slots, then rolls back without leaving a package. This proves the repeated-index
+target split is accepted by Unreal Engine 5.8.1.
+
+The representative is not yet accepted for final shading equivalence. Unreal
+warns that the scene contains no smoothing-group information and also reports
+near-zero tangent/normal data. The 111 render primitive groups in the `l1z1`
+source currently contain no decoded normal arrays, so migration must establish
+the shipped no-normal shading contract before adding any smoothing metadata.
