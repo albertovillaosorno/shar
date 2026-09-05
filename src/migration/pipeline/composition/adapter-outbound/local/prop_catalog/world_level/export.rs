@@ -35,7 +35,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
-    ModelExportRootPolicy, write_binary_model_fbx_with_policies,
+    ModelExportRootPolicy, write_binary_model_fbx_with_target_surface_frames,
 };
 use fbx::adapters::driven::decoded_component_source::read_mesh_for_analysis;
 use fbx::domain::mesh::MeshAsset;
@@ -145,7 +145,7 @@ struct ShapeProfile {
 
 /// Exact source-authored triangle omitted only from Unreal target geometry.
 #[derive(Clone, Debug, Eq, PartialEq)]
-struct RepeatedIndexTriangleEvidence {
+struct UnrealOmittedTriangleEvidence {
     /// Published mesh identity before target-only omission.
     mesh: String,
     /// Optional exact authored mesh identity retained by the decoder.
@@ -156,7 +156,9 @@ struct RepeatedIndexTriangleEvidence {
     source_ordinal: Option<usize>,
     /// Triangle ordinal inside the authored triangulated group.
     triangle: usize,
-    /// Exact source-authored repeated vertex indices.
+    /// Stable target-omission reason.
+    reason: &'static str,
+    /// Exact source-authored vertex indices.
     indices: [u32; 3],
 }
 
@@ -364,7 +366,8 @@ fn append_world_fbx_to_guide(
     source: &MasterContent,
     guide: &mut MasterContent,
 ) -> Result<(), PipelineError> {
-    let (mut target, _evidence) = split_unreal_importable_topology(source);
+    let (mut target, _evidence) =
+        split_unreal_importable_topology(source, false);
     retain_used_presentation(&mut target);
     merge_content_presentation(guide, &target)?;
     guide.meshes.extend(target.meshes);
@@ -567,7 +570,8 @@ const fn repeats_vertex(indices: [u32; 3]) -> bool {
 /// Split exact source evidence from the Unreal-importable target geometry.
 fn split_unreal_importable_topology(
     source: &MasterContent,
-) -> (MasterContent, Vec<RepeatedIndexTriangleEvidence>) {
+    omit_zero_area: bool,
+) -> (MasterContent, Vec<UnrealOmittedTriangleEvidence>) {
     let mut target = source.clone();
     let mut evidence = Vec::new();
     for mesh in &mut target.meshes {
@@ -581,13 +585,23 @@ fn split_unreal_importable_topology(
             for (triangle, indices) in
                 group.triangles.iter().copied().enumerate()
             {
-                if repeats_vertex(indices) {
-                    evidence.push(RepeatedIndexTriangleEvidence {
+                let reason = if repeats_vertex(indices) {
+                    Some("repeated_index")
+                } else if omit_zero_area
+                    && triangle_has_zero_area(&group.positions, indices)
+                {
+                    Some("zero_area")
+                } else {
+                    None
+                };
+                if let Some(reason) = reason {
+                    evidence.push(UnrealOmittedTriangleEvidence {
                         mesh: mesh_name.clone(),
                         source_mesh: source_mesh.clone(),
                         group: group_index,
                         source_ordinal,
                         triangle,
+                        reason,
                         indices,
                     });
                 } else {
@@ -602,10 +616,43 @@ fn split_unreal_importable_topology(
     (target, evidence)
 }
 
+/// Return whether one non-repeated source triangle has no geometric area.
+fn triangle_has_zero_area(positions: &[[f32; 3]], indices: [u32; 3]) -> bool {
+    let Some([one, two, three]) = triangle_positions(positions, indices) else {
+        return false;
+    };
+    let edge_one = [
+        f64::from(two[0]) - f64::from(one[0]),
+        f64::from(two[1]) - f64::from(one[1]),
+        f64::from(two[2]) - f64::from(one[2]),
+    ];
+    let edge_two = [
+        f64::from(three[0]) - f64::from(one[0]),
+        f64::from(three[1]) - f64::from(one[1]),
+        f64::from(three[2]) - f64::from(one[2]),
+    ];
+    let cross = [
+        edge_one[1].mul_add(edge_two[2], -edge_one[2] * edge_two[1]),
+        edge_one[2].mul_add(edge_two[0], -edge_one[0] * edge_two[2]),
+        edge_one[0].mul_add(edge_two[1], -edge_one[1] * edge_two[0]),
+    ];
+    cross.iter().map(|value| value * value).sum::<f64>() <= 1.0e-24
+}
+
+fn triangle_positions(
+    positions: &[[f32; 3]],
+    indices: [u32; 3],
+) -> Option<[[f32; 3]; 3]> {
+    let one = positions.get(usize::try_from(indices[0]).ok()?)?;
+    let two = positions.get(usize::try_from(indices[1]).ok()?)?;
+    let three = positions.get(usize::try_from(indices[2]).ok()?)?;
+    Some([*one, *two, *three])
+}
+
 /// Publish exact source-topology evidence beside one target-safe FBX.
 fn publish_topology_evidence(
     relative_path: &str,
-    evidence: &[RepeatedIndexTriangleEvidence],
+    evidence: &[UnrealOmittedTriangleEvidence],
     output_root: &Path,
 ) -> Result<Option<WorldTopologyEvidenceRecord>, PipelineError> {
     if evidence.is_empty() {
@@ -622,14 +669,18 @@ fn publish_topology_evidence(
                 "group": entry.group,
                 "source_ordinal": entry.source_ordinal,
                 "triangle": entry.triangle,
+                "reason": entry.reason,
                 "indices": entry.indices
             })
         })
         .collect::<Vec<_>>();
     let document = json!({
-        "schema": "shar.world-fbx-source-topology.v1",
+        "schema": "shar.world-fbx-source-topology.v2",
         "fbx_path": relative_path,
-        "unreal_omitted_repeated_index_triangles": evidence.len(),
+        "unreal_omitted_repeated_index_triangles": evidence.iter()
+            .filter(|entry| entry.reason == "repeated_index").count(),
+        "unreal_omitted_zero_area_triangles": evidence.iter()
+            .filter(|entry| entry.reason == "zero_area").count(),
         "triangles": triangles
     });
     let mut bytes = serde_json::to_vec_pretty(&document).map_err(|error| {
@@ -651,7 +702,10 @@ fn publish_topology_evidence(
             ))
         })?,
         sha256: digest_hex(&bytes),
-        repeated_index_triangles: evidence.len(),
+        repeated_index_triangles: evidence.iter()
+            .filter(|entry| entry.reason == "repeated_index").count(),
+        zero_area_triangles: evidence.iter()
+            .filter(|entry| entry.reason == "zero_area").count(),
     }))
 }
 
@@ -670,7 +724,7 @@ fn write_content_fbx(
     ensure_unique_names(&content.meshes)?;
     retain_used_presentation(content);
     let (mut target, topology_evidence) =
-        split_unreal_importable_topology(content);
+        split_unreal_importable_topology(content, true);
     if target.meshes.is_empty() {
         return Err(PipelineError::new(format!(
             "world FBX has no Unreal-importable geometry: {relative_path}"
@@ -687,7 +741,7 @@ fn write_content_fbx(
             ))
         })?;
     }
-    let summary = write_binary_model_fbx_with_policies(
+    let summary = write_binary_model_fbx_with_target_surface_frames(
         scene_name,
         &target.meshes,
         &target.materials.values().cloned().collect::<Vec<_>>(),
@@ -714,7 +768,10 @@ fn write_content_fbx(
             ))
         })?,
         sha256: digest_hex(&bytes),
-        unreal_omitted_repeated_index_triangles: topology_evidence.len(),
+        unreal_omitted_repeated_index_triangles: topology_evidence.iter()
+            .filter(|entry| entry.reason == "repeated_index").count(),
+        unreal_omitted_zero_area_triangles: topology_evidence.iter()
+            .filter(|entry| entry.reason == "zero_area").count(),
         topology_evidence: evidence_record,
         summary,
         surface_semantics,

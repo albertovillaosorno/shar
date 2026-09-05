@@ -44,6 +44,7 @@ use fbx::adapters::driven::binary_character_writer::{
     CharacterBinaryFbxError, CharacterBinaryFbxSummary, EmbeddedTexture,
     ModelExportRootPolicy, write_binary_model_fbx,
     write_binary_model_fbx_embedded, write_binary_model_fbx_with_policies,
+    write_binary_model_fbx_with_target_surface_frames,
 };
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::texture::MaterialBinding;
@@ -430,5 +431,63 @@ fn static_model_rejects_invalid_aggregate_identity() -> Result<(), String> {
     if path.exists() {
         return Err("invalid static model created an artifact".to_owned());
     }
+    Ok(())
+}
+
+#[test]
+fn target_surface_frames_complete_missing_pre_lit_geometry()
+-> Result<(), String> {
+    let preserve_path = output_path("missing-frames-preserve");
+    let target_path = output_path("missing-frames-target");
+    remove_if_present(&preserve_path)?;
+    remove_if_present(&target_path)?;
+    let group = PrimitiveGroup::new(
+        0,
+        "material",
+        vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+        vec![[0., 0.], [0., 0.], [0., 0.]],
+        &[0, 1, 2],
+    )
+    .map_err(|error| format!("missing-frame group failed: {error:?}"))?;
+    let mesh = MeshAsset::new("missing-frames", vec![group])
+        .map_err(|error| format!("missing-frame mesh failed: {error:?}"))?;
+    let binding = material()?;
+    let _preserve_summary = write_binary_model_fbx_with_policies(
+        "missing-frames",
+        std::slice::from_ref(&mesh),
+        std::slice::from_ref(&binding),
+        ModelExportRootPolicy::ReflectX,
+        &preserve_path,
+    )
+    .map_err(|error| format!("preserve write failed: {error:?}"))?;
+    let _target_summary = write_binary_model_fbx_with_target_surface_frames(
+        "missing-frames",
+        &[mesh],
+        &[binding],
+        ModelExportRootPolicy::ReflectX,
+        &target_path,
+    )
+    .map_err(|error| format!("target write failed: {error:?}"))?;
+    let preserve = fs::read(&preserve_path)
+        .map_err(|error| format!("preserve read failed: {error}"))?;
+    let target = fs::read(&target_path)
+        .map_err(|error| format!("target read failed: {error}"))?;
+    for token in [
+        "LayerElementNormal",
+        "LayerElementSmoothing",
+        "LayerElementTangent",
+        "Tangents",
+        "LayerElementBinormal",
+        "Binormals",
+    ] {
+        if contains_token(&preserve, token) {
+            return Err(format!("preserve policy synthesized {token}"));
+        }
+        if !contains_token(&target, token) {
+            return Err(format!("target policy omitted {token}"));
+        }
+    }
+    remove_if_present(&preserve_path)?;
+    remove_if_present(&target_path)?;
     Ok(())
 }

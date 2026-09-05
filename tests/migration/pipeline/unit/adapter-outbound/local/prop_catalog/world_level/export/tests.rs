@@ -330,7 +330,7 @@ fn world_fbx_preserves_repeated_index_evidence_outside_unreal_geometry()
         .and_then(|mesh| mesh.groups.first())
         .map(|group| group.triangles.clone())
         .ok_or_else(|| "source fixture group is missing".to_owned())?;
-    let (target, evidence) = split_unreal_importable_topology(&content);
+    let (target, evidence) = split_unreal_importable_topology(&content, false);
     let target_group = target
         .meshes
         .first()
@@ -377,7 +377,7 @@ fn world_fbx_preserves_repeated_index_evidence_outside_unreal_geometry()
         .map_err(|error| format!("topology sidecar JSON failed: {error}"))?;
     assert_eq!(
         value.get("schema").and_then(serde_json::Value::as_str),
-        Some("shar.world-fbx-source-topology.v1")
+        Some("shar.world-fbx-source-topology.v2")
     );
     assert_eq!(
         value
@@ -396,6 +396,71 @@ fn world_fbx_preserves_repeated_index_evidence_outside_unreal_geometry()
     );
     assert_eq!(triangle.get("indices"), Some(&serde_json::json!([0, 0, 3])));
     assert!(root.join("repeated-index.fbx").is_file());
+    remove_if_present(&root)
+}
+
+#[test]
+fn world_fbx_preserves_zero_area_evidence_outside_unreal_geometry()
+-> Result<(), String> {
+    let root = temporary_root().with_file_name(format!(
+        "shar-world-zero-area-test-{}",
+        std::process::id()
+    ));
+    remove_if_present(&root)?;
+    fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+    let group = PrimitiveGroup::new_preserving_repeated_indices(
+        0,
+        "interior-material",
+        vec![
+            [0., 0., 0.],
+            [1., 0., 0.],
+            [2., 0., 0.],
+            [0., 1., 0.],
+        ],
+        Vec::new(),
+        &[0, 1, 3, 0, 1, 2],
+    )
+    .map_err(|error| format!("zero-area fixture failed: {error:?}"))?;
+    let mesh = MeshAsset::new("zero-area", vec![group])
+        .map_err(|error| format!("zero-area mesh failed: {error:?}"))?;
+    let material = MaterialBinding::new("interior-material", None)
+        .map_err(|error| format!("zero-area material failed: {error:?}"))?;
+    let mut content = MasterContent {
+        meshes: vec![mesh],
+        materials: BTreeMap::from([(material.material_name.clone(), material)]),
+        ..MasterContent::default()
+    };
+    let record = write_content_fbx(
+        "zero-area",
+        "zero-area.fbx",
+        &mut content,
+        &root,
+        ModelExportRootPolicy::ReflectX,
+    )
+    .map_err(|error| error.to_string())?
+    .ok_or_else(|| "zero-area target FBX was not written".to_owned())?;
+    assert_eq!(record.unreal_omitted_repeated_index_triangles, 0);
+    assert_eq!(record.unreal_omitted_zero_area_triangles, 1);
+    let sidecar = record.topology_evidence
+        .ok_or_else(|| "zero-area topology evidence is missing".to_owned())?;
+    assert_eq!(sidecar.repeated_index_triangles, 0);
+    assert_eq!(sidecar.zero_area_triangles, 1);
+    let value: serde_json::Value = serde_json::from_slice(
+        &fs::read(root.join(sidecar.path)).map_err(|error| error.to_string())?
+    ).map_err(|error| error.to_string())?;
+    assert_eq!(
+        value.get("unreal_omitted_zero_area_triangles")
+            .and_then(serde_json::Value::as_u64),
+        Some(1)
+    );
+    assert_eq!(
+        value.get("triangles")
+            .and_then(serde_json::Value::as_array)
+            .and_then(|triangles| triangles.first())
+            .and_then(|triangle| triangle.get("reason"))
+            .and_then(serde_json::Value::as_str),
+        Some("zero_area")
+    );
     remove_if_present(&root)
 }
 

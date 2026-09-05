@@ -60,6 +60,22 @@ public:
     );
 
     /**
+     * Imports one target-complete world FBX with supplied normal/tangent
+     * frames.
+     * Unreal is not asked to synthesize a tangent basis from source UVs.
+     * @param SourceFile Absolute verified FBX source path.
+     * @param FolderPath Generated Unreal content folder.
+     * @param AssetName Exact destination asset name.
+     * @return The single StaticMesh object path produced by the import task.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharImportToolset")
+    static TArray<FString> ImportWorldStaticMesh(
+        const FString& SourceFile,
+        const FString& FolderPath,
+        const FString& AssetName
+    );
+
+    /**
      * Imports one reviewed FBX as a SkeletalMesh plus a new Skeleton companion.
      * PhysicsAsset and animation creation are disabled for this transaction.
      * The caller remains responsible for saving and postcondition read-back.

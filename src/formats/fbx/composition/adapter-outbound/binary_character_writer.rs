@@ -149,6 +149,16 @@ pub enum ModelExportRootPolicy {
     ReflectX,
 }
 
+/// Surface-frame representation selected for static-model publication.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ModelSurfaceFramePolicy {
+    /// Preserve only authored surface-vector channels.
+    PreserveAuthored,
+    /// Complete missing normal/tangent/binormal frames for a target that
+    /// requires a valid per-polygon-corner basis.
+    CompleteMissingForTarget,
+}
+
 impl ModelExportRootPolicy {
     pub(crate) const fn transform(self) -> TrsParts {
         match self {
@@ -436,6 +446,36 @@ pub fn write_binary_model_fbx_with_policies(
         &[],
         CharacterTextureStorage::External,
         root_policy,
+        ModelSurfaceFramePolicy::PreserveAuthored,
+        path,
+    )
+}
+
+/// Write one static model with explicit target surface-frame completion.
+///
+/// Missing source normals are represented by deterministic flat geometric
+/// frames per polygon corner. Authored normals remain untouched. This policy is
+/// intended only for targets that structurally require complete surface frames.
+///
+/// # Errors
+///
+/// Returns the same failures as [`write_binary_model_fbx`] plus a failure when
+/// one target triangle has no usable geometric normal.
+pub fn write_binary_model_fbx_with_target_surface_frames(
+    asset_name: &str,
+    meshes: &[MeshAsset],
+    materials: &[MaterialBinding],
+    root_policy: ModelExportRootPolicy,
+    path: &Path,
+) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
+    write_binary_model_fbx_with_storage(
+        asset_name,
+        meshes,
+        materials,
+        &[],
+        CharacterTextureStorage::External,
+        root_policy,
+        ModelSurfaceFramePolicy::CompleteMissingForTarget,
         path,
     )
 }
@@ -483,11 +523,16 @@ pub fn write_binary_model_fbx_embedded_with_policies(
         embedded_textures,
         CharacterTextureStorage::Embedded,
         root_policy,
+        ModelSurfaceFramePolicy::PreserveAuthored,
         path,
     )
 }
 
 /// Serialize one static model through the shared texture-storage contract.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "Static FBX storage keeps representation policies explicit."
+)]
 fn write_binary_model_fbx_with_storage(
     asset_name: &str,
     meshes: &[MeshAsset],
@@ -495,6 +540,7 @@ fn write_binary_model_fbx_with_storage(
     embedded_textures: &[EmbeddedTexture],
     texture_storage: CharacterTextureStorage,
     root_policy: ModelExportRootPolicy,
+    surface_frame_policy: ModelSurfaceFramePolicy,
     path: &Path,
 ) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
     validate_static_model(asset_name, meshes)?;
@@ -520,6 +566,7 @@ fn write_binary_model_fbx_with_storage(
         &[],
         BinarySceneKind::Static,
         root_policy,
+        surface_frame_policy,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(|error| {
         CharacterBinaryFbxError::Encoding {
@@ -573,6 +620,7 @@ fn write_binary_character_fbx_with_storage(
         animations,
         BinarySceneKind::Skinned,
         ModelExportRootPolicy::RotateY180,
+        ModelSurfaceFramePolicy::PreserveAuthored,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(|error| {
         CharacterBinaryFbxError::Encoding {
@@ -584,6 +632,10 @@ fn write_binary_character_fbx_with_storage(
 }
 
 /// Build one internal typed character FBX document.
+#[expect(
+    clippy::too_many_arguments,
+    reason = "Document assembly keeps independent FBX policies explicit."
+)]
 fn build_character_document(
     character: &CharacterAsset,
     materials: &[MaterialBinding],
@@ -592,6 +644,7 @@ fn build_character_document(
     animations: &[AnimationClip],
     scene_kind: BinarySceneKind,
     root_policy: ModelExportRootPolicy,
+    surface_frame_policy: ModelSurfaceFramePolicy,
 ) -> Result<CharacterFbxDocument, CharacterBinaryFbxError> {
     let material_plan = material_slots(character, materials)
         .map_err(CharacterBinaryFbxError::from)?;
@@ -631,6 +684,7 @@ fn build_character_document(
         &animation_plan,
         scene_kind,
         root_policy,
+        surface_frame_policy,
     )?;
     let summary = CharacterBinaryFbxSummary {
         geometries: groups.len(),
@@ -667,6 +721,7 @@ fn document_nodes(
     animation_plan: &BinaryAnimationPlan,
     scene_kind: BinarySceneKind,
     root_policy: ModelExportRootPolicy,
+    surface_frame_policy: ModelSurfaceFramePolicy,
 ) -> Result<Vec<BinaryNode>, CharacterBinaryFbxError> {
     Ok(vec![
         header_extension(),
@@ -699,6 +754,7 @@ fn document_nodes(
             animation_plan,
             scene_kind,
             root_policy,
+            surface_frame_policy,
         )?,
         connections(
             character,
@@ -1065,6 +1121,7 @@ fn objects(
     animation_plan: &BinaryAnimationPlan,
     scene_kind: BinarySceneKind,
     root_policy: ModelExportRootPolicy,
+    surface_frame_policy: ModelSurfaceFramePolicy,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let root_transform = if scene_kind.is_skinned() {
         CHARACTER_EXPORT_ROOT_TRANSFORM
@@ -1076,7 +1133,7 @@ fn objects(
         character.source_provenance.as_ref(),
     )?];
     for group in groups {
-        children.push(geometry_node(group)?);
+        children.push(geometry_node(group, surface_frame_policy)?);
         children.push(mesh_model_node(
             group.ids.model,
             &group.object_name,
@@ -1188,6 +1245,7 @@ fn uv_indices(group: &PrimitiveGroup) -> Vec<u32> {
 /// Build one mesh geometry object with normals, UVs, and material mapping.
 fn geometry_node(
     flattened: &BinaryGroup<'_>,
+    surface_frame_policy: ModelSurfaceFramePolicy,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let group = flattened.group;
     let positions = group
@@ -1213,9 +1271,31 @@ fn geometry_node(
         )]),
         i32_node("GeometryVersion", 124),
     ];
+    let complete_missing_frames = matches!(
+        surface_frame_policy,
+        ModelSurfaceFramePolicy::CompleteMissingForTarget
+    ) && !group.has_normals();
     if group.has_normals() {
         children.push(normal_layer(group)?);
-        children.push(smoothing_layer(group));
+        children.push(smoothing_layer(group, 1));
+    } else if complete_missing_frames {
+        let frames = derived_surface_frames(flattened)?;
+        children.push(derived_vector_layer(
+            "LayerElementNormal",
+            "Normals",
+            &frames.normals,
+        ));
+        children.push(smoothing_layer(group, 0));
+        children.push(derived_vector_layer(
+            "LayerElementTangent",
+            "Tangents",
+            &frames.tangents,
+        ));
+        children.push(derived_vector_layer(
+            "LayerElementBinormal",
+            "Binormals",
+            &frames.binormals,
+        ));
     }
     if group.has_uvs() {
         children.push(uv_layer(group)?);
@@ -1224,7 +1304,7 @@ fn geometry_node(
         children.push(color_layer(group)?);
     }
     children.push(material_layer());
-    children.push(layer_node(group));
+    children.push(layer_node(group, complete_missing_frames));
     Ok(BinaryNode::new(
         "Geometry",
         vec![
@@ -1286,7 +1366,7 @@ fn normal_layer(
 /// therefore already represented by split control points; assigning one
 /// smoothing-group bit to every polygon preserves that topology while giving
 /// FBX importers the explicit smoothing metadata they require.
-fn smoothing_layer(group: &PrimitiveGroup) -> BinaryNode {
+fn smoothing_layer(group: &PrimitiveGroup, value: i32) -> BinaryNode {
     BinaryNode::new(
         "LayerElementSmoothing",
         vec![BinaryProperty::I32(0)],
@@ -1296,10 +1376,170 @@ fn smoothing_layer(group: &PrimitiveGroup) -> BinaryNode {
             string_node("MappingInformationType", "ByPolygon"),
             string_node("ReferenceInformationType", "Direct"),
             BinaryNode::leaf("Smoothing", vec![BinaryProperty::I32Array(
-                vec![1; group.triangles.len()],
+                vec![value; group.triangles.len()],
             )]),
         ],
     )
+}
+
+/// Complete target-only polygon-corner surface vectors derived from geometry.
+struct DerivedSurfaceFrames {
+    normals: Vec<[f64; 3]>,
+    tangents: Vec<[f64; 3]>,
+    binormals: Vec<[f64; 3]>,
+}
+
+fn derived_surface_frames(
+    flattened: &BinaryGroup<'_>,
+) -> Result<DerivedSurfaceFrames, CharacterBinaryFbxError> {
+    let group = flattened.group;
+    let mut frames = DerivedSurfaceFrames {
+        normals: Vec::new(),
+        tangents: Vec::new(),
+        binormals: Vec::new(),
+    };
+    for (triangle_index, triangle) in group.triangles.iter().enumerate() {
+        let mut positions = [[0.; 3]; 3];
+        let mut uvs = [[0.; 2]; 3];
+        for (corner, vertex) in triangle.iter().enumerate() {
+            let index = usize::try_from(*vertex).map_err(|_error| {
+                CharacterBinaryFbxError::IndexExceedsUsize {
+                    context: "derived surface-frame vertex",
+                    value: u64::from(*vertex),
+                }
+            })?;
+            let position = group
+                .positions
+                .get(index)
+                .copied()
+                .ok_or(CharacterBinaryFbxError::VertexOutOfBounds {
+                    context: "derived surface-frame vertex",
+                    vertex: index,
+                    vertices: group.positions.len(),
+                })?
+                .map(f64::from);
+            let Some(position_slot) = positions.get_mut(corner) else {
+                return Err(CharacterBinaryFbxError::CountOverflow {
+                    context: "derived surface-frame corner",
+                });
+            };
+            *position_slot = position;
+            if let Some(uv) = group.uvs.get(index) {
+                let Some(uv_slot) = uvs.get_mut(corner) else {
+                    return Err(CharacterBinaryFbxError::CountOverflow {
+                        context: "derived surface-frame UV corner",
+                    });
+                };
+                *uv_slot = uv.map(f64::from);
+            }
+        }
+        let edge_one = subtract3(positions[1], positions[0]);
+        let edge_two = subtract3(positions[2], positions[0]);
+        let normal =
+            normalize3(cross3(edge_one, edge_two)).ok_or_else(|| {
+                CharacterBinaryFbxError::DegenerateTargetSurfaceFrame {
+                    object: flattened.object_name.clone(),
+                    triangle: triangle_index,
+                }
+            })?;
+        let tangent = tangent_for_triangle(normal, edge_one, edge_two, uvs);
+        let binormal =
+            normalize3(cross3(normal, tangent)).ok_or_else(|| {
+                CharacterBinaryFbxError::DegenerateTargetSurfaceFrame {
+                    object: flattened.object_name.clone(),
+                    triangle: triangle_index,
+                }
+            })?;
+        for _corner in 0..3 {
+            frames.normals.push(normal);
+            frames.tangents.push(tangent);
+            frames.binormals.push(binormal);
+        }
+    }
+    Ok(frames)
+}
+
+fn tangent_for_triangle(
+    normal: [f64; 3],
+    edge_one: [f64; 3],
+    edge_two: [f64; 3],
+    uvs: [[f64; 2]; 3],
+) -> [f64; 3] {
+    let du_one = [uvs[1][0] - uvs[0][0], uvs[1][1] - uvs[0][1]];
+    let du_two = [uvs[2][0] - uvs[0][0], uvs[2][1] - uvs[0][1]];
+    let determinant = du_one[0].mul_add(du_two[1], -du_one[1] * du_two[0]);
+    if determinant.abs() > 1e-12 {
+        let candidate = [
+            edge_one[0].mul_add(du_two[1], -edge_two[0] * du_one[1]),
+            edge_one[1].mul_add(du_two[1], -edge_two[1] * du_one[1]),
+            edge_one[2].mul_add(du_two[1], -edge_two[2] * du_one[1]),
+        ];
+        let projected =
+            subtract3(candidate, scale3(normal, dot3(candidate, normal)));
+        if let Some(value) = normalize3(projected) {
+            return value;
+        }
+    }
+    let axis = least_aligned_axis(normal);
+    normalize3(cross3(axis, normal)).unwrap_or([1., 0., 0.])
+}
+
+fn derived_vector_layer(
+    layer_name: &str,
+    values_name: &str,
+    values: &[[f64; 3]],
+) -> BinaryNode {
+    BinaryNode::new(layer_name, vec![BinaryProperty::I32(0)], vec![
+        i32_node("Version", 101),
+        string_node("Name", ""),
+        string_node("MappingInformationType", "ByPolygonVertex"),
+        string_node("ReferenceInformationType", "Direct"),
+        BinaryNode::leaf(values_name, vec![BinaryProperty::F64Array(
+            values
+                .iter()
+                .flat_map(|value| value.iter().copied())
+                .collect(),
+        )]),
+    ])
+}
+
+fn subtract3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
+    [left[0] - right[0], left[1] - right[1], left[2] - right[2]]
+}
+
+fn scale3(value: [f64; 3], scale: f64) -> [f64; 3] {
+    [value[0] * scale, value[1] * scale, value[2] * scale]
+}
+
+fn dot3(left: [f64; 3], right: [f64; 3]) -> f64 {
+    left[0].mul_add(right[0], left[1].mul_add(right[1], left[2] * right[2]))
+}
+
+fn cross3(left: [f64; 3], right: [f64; 3]) -> [f64; 3] {
+    [
+        left[1].mul_add(right[2], -left[2] * right[1]),
+        left[2].mul_add(right[0], -left[0] * right[2]),
+        left[0].mul_add(right[1], -left[1] * right[0]),
+    ]
+}
+
+fn normalize3(value: [f64; 3]) -> Option<[f64; 3]> {
+    let length_squared = dot3(value, value);
+    if !length_squared.is_finite() || length_squared <= 1e-24 {
+        return None;
+    }
+    Some(scale3(value, length_squared.sqrt().recip()))
+}
+
+fn least_aligned_axis(normal: [f64; 3]) -> [f64; 3] {
+    let absolute = normal.map(f64::abs);
+    if absolute[0] <= absolute[1] && absolute[0] <= absolute[2] {
+        [1., 0., 0.]
+    } else if absolute[1] <= absolute[2] {
+        [0., 1., 0.]
+    } else {
+        [0., 0., 1.]
+    }
 }
 
 /// Convert one `Pure3D` UV without altering either authored coordinate.
@@ -1391,11 +1631,18 @@ fn material_layer() -> BinaryNode {
 }
 
 /// Build layer metadata describing the available element channels.
-fn layer_node(group: &PrimitiveGroup) -> BinaryNode {
+fn layer_node(
+    group: &PrimitiveGroup,
+    complete_missing_frames: bool,
+) -> BinaryNode {
     let mut elements = vec![i32_node("Version", 100)];
-    if group.has_normals() {
+    if group.has_normals() || complete_missing_frames {
         elements.push(layer_element("LayerElementNormal"));
         elements.push(layer_element("LayerElementSmoothing"));
+    }
+    if complete_missing_frames {
+        elements.push(layer_element("LayerElementTangent"));
+        elements.push(layer_element("LayerElementBinormal"));
     }
     if group.has_uvs() {
         elements.push(layer_element("LayerElementUV"));

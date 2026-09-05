@@ -46,6 +46,9 @@ pub(super) struct WorldFbxRecord {
     /// Number of source-authored repeated-index triangles omitted only from the
     /// Unreal target geometry.
     pub(super) unreal_omitted_repeated_index_triangles: usize,
+    /// Source-authored zero-area triangles omitted only from Unreal target FBX
+    /// geometry and preserved in exact topology sidecars.
+    pub(super) unreal_omitted_zero_area_triangles: usize,
     /// Optional exact source-topology evidence sidecar for target omissions.
     pub(super) topology_evidence: Option<WorldTopologyEvidenceRecord>,
     /// Binary FBX object-family summary.
@@ -65,6 +68,8 @@ pub(super) struct WorldTopologyEvidenceRecord {
     pub(super) sha256: String,
     /// Number of repeated-index triangle records retained in the sidecar.
     pub(super) repeated_index_triangles: usize,
+    /// Number of zero-area triangle records retained in the sidecar.
+    pub(super) zero_area_triangles: usize,
 }
 
 /// One normalized source package and its independently importable artifacts.
@@ -257,6 +262,9 @@ pub(super) struct WorldCollectionCounts {
     /// Source-authored repeated-index triangles omitted only from Unreal target
     /// FBX geometry and preserved in exact topology sidecars.
     pub(super) unreal_omitted_repeated_index_triangles: usize,
+    /// Source-authored zero-area triangles omitted only from Unreal target FBX
+    /// geometry and preserved in exact topology sidecars.
+    pub(super) unreal_omitted_zero_area_triangles: usize,
     /// Number of authored mesh placements.
     pub(super) authored_placements: usize,
     /// Number of placements using verified coordinate evidence.

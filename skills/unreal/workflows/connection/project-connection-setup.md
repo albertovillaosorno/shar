@@ -80,6 +80,29 @@ After a descriptor change, the interactive editor must be restarted by the
 operator before plugin-load evidence can be trusted. Automation must not
 terminate an editor process it did not launch.
 
+## Linux graphical editor launch
+
+A service or automation shell can be attached to the logged-in user while still
+lacking the graphical-session variables required by SDL and Vulkan. On Linux,
+do not diagnose a direct launch from such a shell as a missing Vulkan driver
+until the system Vulkan loader and device enumeration are checked independently.
+
+When the user manager already owns the active graphical-session environment,
+launch the interactive editor through that manager instead of copying display
+variables into repository configuration. One acceptable operator pattern is:
+
+```text
+systemd-run --user --unit=shar-unreal-editor-SESSION --collect \
+  "$UNREAL_ENGINE_ROOT/Engine/Binaries/Linux/UnrealEditor" \
+  "$PROJECT_FILE"
+```
+
+Use a unique transient unit identity and do not stop an editor process that the
+current operation did not launch. Require the fresh editor log to identify the
+expected SDL video driver, Vulkan physical device, and driver before relying on
+rendering. MCP readiness is separate: also require `doctor` to report
+`ready: true` after the native server starts.
+
 ## Tracked server defaults
 
 The tracked editor defaults must retain:

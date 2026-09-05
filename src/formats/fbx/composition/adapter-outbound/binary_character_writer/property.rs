@@ -256,6 +256,14 @@ pub enum CharacterBinaryFbxError {
         /// Rejected index value.
         value: u64,
     },
+    /// Target-only surface-frame derivation reached a triangle with no usable
+    /// normal.
+    DegenerateTargetSurfaceFrame {
+        /// Deterministic geometry object identity.
+        object: String,
+        /// Triangle ordinal in the emitted primitive group.
+        triangle: usize,
+    },
     /// One vertex index escaped its validated source array.
     VertexOutOfBounds {
         /// Array role being indexed.
