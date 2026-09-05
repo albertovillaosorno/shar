@@ -852,14 +852,42 @@ fn billboard_sidecar_retains_controller_relationship() -> Result<(), String> {
         ),
     )
     .map_err(|error| error.to_string())?;
+    let effect_type = ["E", "F", "X"].concat();
+    let effect_name = format!("{effect_type}_smoke");
+    let effect_controller = serde_json::json!({
+        "schema": "frame_controller",
+        "name": effect_name,
+        "version": 0,
+        "type": effect_type,
+        "frame_offset": 0,
+        "animation_name": "",
+        "hierarchy_name": "smoke",
+    });
+    fs::write(
+        root.path().join("components/frame_controller/effect.json"),
+        serde_json::to_vec(&effect_controller)
+            .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
     fs::write(
         root.path().join("components/quad_group/beam.json"),
         r#"{"name":"beam"}"#,
     )
     .map_err(|error| error.to_string())?;
+    let effect_ledger_row = serde_json::json!({
+        "ordinal": 25,
+        "name": effect_name,
+        "path": "frame_controller/effect.json",
+        "kind": "frame_controller",
+    });
+    let effect_ledger_text = serde_json::to_string(&effect_ledger_row)
+        .map_err(|error| error.to_string())?;
     fs::write(
         root.path().join("components.jsonl"),
-        concat!(
+        format!(
+            "{}\n{}",
+            effect_ledger_text,
+            concat!(
             r#"{"ordinal":30,"name":"BQG_Zebra","#,
             r#""path":"frame_controller/controller.json","#,
             r#""kind":"frame_controller"}"#,
@@ -867,6 +895,7 @@ fn billboard_sidecar_retains_controller_relationship() -> Result<(), String> {
             r#"{"ordinal":40,"name":"beam","#,
             r#""path":"quad_group/beam.json","kind":"quad_group"}"#,
             "\n"
+            )
         ),
     )
     .map_err(|error| error.to_string())?;

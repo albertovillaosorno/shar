@@ -1701,6 +1701,13 @@ fn vehicle_effect_controller_relationship(
         )
     }) {
         let controller = read_vehicle_ledger_member(package_root, row)?;
+        // Unrelated controller families may omit animation identity entirely.
+        // Establish the family before validating this relationship field.
+        let controller_type =
+            vehicle_component_identity(&controller, "type", "controller type")?;
+        if controller_type != expected_controller_type {
+            continue;
+        }
         let declared_animation = vehicle_component_identity(
             &controller,
             "animation_name",
