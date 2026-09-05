@@ -102,3 +102,18 @@ boundary without flattening the vehicle into a static-mesh transaction. The
 broader acceptance criterion remains open for the native vehicle construction
 boundary: Physics Asset, materials, wheel definitions, and Chaos vehicle
 composition still require their reviewed typed construction transaction.
+
+A live native `SharVehicles` automation run after the skeletal smoke passes all
+three registered tests with zero warnings or errors. Definition validation,
+damage runtime, and selection transaction are therefore green; no native
+vehicle-construction test or construction object exists in the current module.
+This narrows the remaining P0 work to the typed construction boundary rather
+than another catalog or skeletal-import repair.
+
+Current source inspection narrows that construction gap further.
+`USharVehicleDefinition` owns canonical ids, coarse physics scalars, seats,
+damage bands, and policy ids, but no typed Skeletal Mesh, Physics Asset,
+Animation Blueprint, or wheel-definition references. The `SharVehicles` module
+also has no `ChaosVehicles` dependency, so native construction requires a
+reviewed composition boundary rather than hiding catalog paths inside existing
+identity fields.
