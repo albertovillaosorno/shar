@@ -116,22 +116,24 @@ no operations were emitted.
 The current reviewed compiler maps decoded images to
 `TextureTools.import_file`, PCM WAV files to the project-owned
 `SharImportToolset.ImportSoundWave`, verified HAP MOV files to
-`SharImportToolset.ImportFileMediaSource`, and ready static-mesh FBX operations
-to `SharImportToolset.ImportStaticMesh`. The editor-only SHAR toolset loads
-after
-engine initialization and registers through ToolsetRegistry. WAV and static FBX
-use synchronous automated asset-import tasks without replacement or implicit
-save. Static FBX pins the import to one combined `StaticMesh`, preserves
-authored
-normals, and disables material, texture, animation, LOD, collision, Nanite, and
-lightmap-UV generation.
+`SharImportToolset.ImportFileMediaSource`, ready static-mesh FBX operations to
+`SharImportToolset.ImportStaticMesh`, and ready skeletal-mesh FBX operations to
+`SharImportToolset.ImportSkeletalMesh`. The editor-only SHAR toolset loads after
+engine initialization and registers through ToolsetRegistry. WAV, static FBX,
+and skeletal FBX use synchronous automated asset-import tasks without
+replacement or implicit save. Static FBX pins the import to one combined
+`StaticMesh`, preserves authored normals, and disables material, texture,
+animation, LOD, collision, Nanite, and lightmap-UV generation. Skeletal FBX
+creates one `SkeletalMesh` plus its new `Skeleton` companion, preserves authored
+normals, and disables Physics Asset and animation creation for that transaction.
 
 HAP copies verified bytes transactionally beneath
 `Content/Movies/Generated/SHAR/`, creates a `UFileMediaSource`, and stores the
-matching `./Movies/Generated/SHAR/...` path. All three routes leave package save
-and independent read-back to `plan-apply`; media rollback deletes the external
-payload before the asset. Material and texture assets remain separate planned
-operations. Repository-owned JSON semantic compilers and concrete factories,
+matching `./Movies/Generated/SHAR/...` path. All four project-owned routes leave
+package save and independent read-back to `plan-apply`; media rollback deletes
+the external payload before the asset, while skeletal rollback owns both the
+mesh and Skeleton companion. Material and texture assets remain separate
+planned operations. Repository-owned JSON semantic compilers and concrete factories,
 world assembly, runtime binding, validation, cook, and packaging remain explicit
 blocked work until their complete native routes exist.
 
