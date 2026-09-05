@@ -81,3 +81,24 @@ The broader acceptance criterion remains open only for the representative
 vehicle transaction. Vehicle source packages deliberately remain semantic
 splits in the generic Unreal manifest; the dedicated vehicle FBX catalog and a
 native vehicle construction boundary must preserve that distinction.
+
+A complete dedicated vehicle replay now publishes all 88 vehicle FBXs plus the
+vehicle catalog from 89 source packages. The representative `sedana` FBX is
+verified at 327,292 bytes with SHA-256
+`741f6c43fbbbde89653c501921ece7de9b513261dd8e0be1d80e99abc32b0eac`.
+
+A native no-save presentation transaction imports that FBX as exactly one
+`SkeletalMesh` plus one new `Skeleton`. Independent read-back reports one LOD,
+896 render vertices, the cataloged 16-bone hierarchy in order, eight semantic
+material slots, the expected Skeleton companion, and both packages dirty.
+
+The reviewed skeletal importer intentionally creates no `PhysicsAsset`, and
+three sampled vehicle material slots have no material assigned. Compensating
+deletion removes the mesh, Skeleton, and temporary folder, with independent
+existence checks reporting all three absent afterward.
+
+This proves the dedicated vehicle catalog reaches Unreal's skeletal presentation
+boundary without flattening the vehicle into a static-mesh transaction. The
+broader acceptance criterion remains open for the native vehicle construction
+boundary: Physics Asset, materials, wheel definitions, and Chaos vehicle
+composition still require their reviewed typed construction transaction.

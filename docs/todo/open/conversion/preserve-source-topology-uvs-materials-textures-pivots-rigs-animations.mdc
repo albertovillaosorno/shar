@@ -447,61 +447,41 @@ physical coordinate rather than introducing another ordinal domain. All 1,479
 current car texture members match one ledger PNG by exact path and carry the
 same component ordinal.
 
-That one-to-one mirror is occurrence identity, not relationship authority. A
-shader still exposes only its logical texture string, so the phase-three member
-cannot select between two same-name physical occurrences without another source
-edge.
+That one-to-one mirror is occurrence identity, not relationship authority. The
+shader still exposes only its logical texture string, but the shipped Pure3D
+inventory supplies the missing runtime rule: a later same-type, same-UID entity
+collision is discarded, leaving the first loaded occurrence visible.
 
 The ambiguity is active on the current vehicle render path rather than only
-sidecar debt. All 11 quad groups using the five `TEX_` target shaders pass the
-strict billboard-source contract and are composite-reachable, so their shaders
-participate in retained material resolution. Three frame-zero logical texture
-identities have duplicate local ledger occurrences; the material adapter rejects
-all three instead of selecting one, including the byte-identical duplicate pair.
+sidecar debt. Pure3D stores same-type entities by UID in source load order and
+discards a later collision, so the first package-local texture occurrence is
+the runtime-visible source for a same-name shader reference.
 
-Two of those duplicate pairs contain different PNG payloads, so weakening that
-fail-closed behavior would invent source semantics. End-to-end publication for
-those three target materials therefore remains blocked pending stronger source
-or native occurrence authority even though v4 can represent every candidate.
+The vehicle-wide texture audit found 402 used shader bindings with two
+same-package normalized texture occurrences across 54 car packages. Of those,
+286 pairs are byte-equivalent and 116 contain different PNG payloads; both
+families now follow the same source-proven first-loaded runtime rule.
 
-The vehicle-wide texture audit is larger than the five `TEX_` effects. Across
-786 shader texture bindings that are actually referenced by retained mesh or
-billboard geometry, 402 bindings have two same-package normalized texture
-occurrences. Those duplicates span 54 car packages; 286 pairs are
-byte-equivalent and 116 pairs contain different PNG payloads.
+Vehicle texture authority still retains every physical PNG path, member id,
+source component ordinal, owning package, and SHA-256. Cross-package fallback
+remains strict because that separate scope has no package-local load collision
+to establish runtime visibility.
 
-Vehicle texture authority therefore now derives logical identity from each
-normalized texture ledger row while retaining its exact physical PNG path,
-member id, source component ordinal, owning package evidence, and SHA-256. The
-current 89 car ledgers provide complete one-to-one coverage for all 1,479
-normalized PNGs, with no path or source-ordinal gaps.
+This also unblocks the three duplicated frame-zero identities used by `TEX_`
+target shaders without discarding occurrence provenance. The material path
+supplies the runtime-visible physical PNG while the authored shader identity
+continues to control the staged logical texture name.
 
-This matters for collision-renamed payloads: 461 texture rows have physical file
-names whose normalized lookup key differs from the authored ledger identity,
-and 420 of those paths carry an explicit collision suffix. Authority lookup now
-groups those physical occurrences by authored identity before applying the same
-payload-equivalence rule; it does not infer which differing occurrence a shader
-meant.
-
-The remaining 116 differing-payload used bindings therefore stay fail-closed.
-The new occurrence evidence improves diagnostics and future sidecar authority,
-but does not turn source ordinal, filename, or byte equivalence into unsupported
-runtime texture-selection semantics.
-
-A current-route replay found zero used shader bindings whose selected material
-package lacks the logical texture and therefore needs cross-package fallback.
-The ledger-key correction is still required for that authority boundary, but it
-does not bypass the 402 local duplicate relationships that fail before fallback
-is considered.
+Vehicle controller lookup now mirrors another source distinction from the
+Pure3D frame-controller loader. All ten current effect controllers omit an
+animation identity, while 65 billboard, 35 skeletal-pattern, and five texture
+controllers carry one; relationship matching therefore establishes controller
+family before validating animation identity.
 
 All 402 duplicate used bindings share the same top-level layout: two self-owned
 texture chunks with parent ordinal 0 precede a self-owned shader chunk with
-parent ordinal 0, and exactly one texture path receives the extractor's
-generated ordinal collision suffix. The later texture is always nearer the
-shader, but the source shader texture-parameter schema stores only `Param` plus
-a string `Value`.
-It has no occurrence ordinal or handle, so proximity cannot safely select one
-physical payload.
+parent ordinal 0. The shader parameter has no occurrence handle, so ordinal
+proximity remains unsupported; source load order is the controlling rule.
 
 The FBX material adapter now exposes a separate exact texture-occurrence
 boundary for consumers that later obtain real relationship authority. A caller
@@ -511,13 +491,10 @@ path; the physical path selects the occurrence, while the shader's authored
 no texture parameter are rejected. Ordinary material resolution is unchanged
 and still rejects ambiguous same-name ledger candidates.
 
-Community tooling evidence narrows ordering semantics without resolving that
-ambiguity. Donut Team guidance for Lucas' Pure3D Editor requires a texture chunk
-to appear above the shader that references it and describes shared textures as
-resources found by the shader's logical texture name. All 402 current duplicate
-vehicle bindings already have both same-name texture occurrences above their
-shader. The public ordering evidence therefore cannot distinguish the base path
-from the ordinal-qualified collision path.
+Community tooling evidence is consistent with that ordering rule but is not its
+authority. Donut Team guidance for Lucas' Pure3D Editor requires referenced
+texture chunks above their shader; both duplicate occurrences satisfy that
+constraint, while the shipped inventory behavior determines which one survives.
 
 `shar.vehicle-catalog.v5` now carries that verified occurrence coordinate into
 TEX sidecar evidence. Every retained physical texture occurrence requires one
