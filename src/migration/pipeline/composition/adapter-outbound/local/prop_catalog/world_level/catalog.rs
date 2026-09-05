@@ -182,7 +182,7 @@ fn catalog_value(
     collection: &ExportedWorldCollection,
 ) -> Value {
     json!({
-        "schema": "shar.world-package-collection.v6",
+        "schema": "shar.world-package-collection.v7",
         "status": "source-authored-fbx-baseline",
         "boundary": {
             "canonical_model_authority": concat!(
@@ -221,6 +221,7 @@ fn catalog_value(
                 "definition-only galleries live below review/ and remain ",
                 "excluded from normal world imports"
             ),
+            "regular_scene_raster": regular_scene_raster_value(),
             "interior_policy": concat!(
                 "interior packages preserve source coordinates and authored ",
                 "UVs without base-game relocation, fuse by stable identity, ",
@@ -304,6 +305,21 @@ fn transform_files(collection: &ExportedWorldCollection) -> Vec<Value> {
         left["path"].as_str().cmp(&right["path"].as_str())
     });
     files
+}
+
+/// Render the source-backed regular world rasterization contract.
+fn regular_scene_raster_value() -> Value {
+    json!({
+        "source_cull_mode": "none",
+        "source_authority": concat!(
+            "RenderFlow registration sets PddiCullNone; the OpenGL PDDI ",
+            "backend implements that state by disabling GL_CULL_FACE"
+        ),
+        "native_material_requirement": concat!(
+            "regular world material families render both polygon faces; ",
+            "shadow and special-purpose passes retain their own cull policy"
+        )
+    })
 }
 
 /// Render one world FBX import-transform record.
@@ -549,3 +565,8 @@ fn write_json(path: &Path, value: &Value) -> Result<(), PipelineError> {
     file.write_all(&bytes)
         .map_err(|error| PipelineError::new(error.to_string()))
 }
+
+#[cfg(test)]
+// jig-ignore-next-line: exact external test path is indivisible
+#[path = "../../../../../../../../tests/migration/pipeline/unit/adapter-outbound/local/prop_catalog/world_level/catalog/tests.rs"]
+mod tests;
