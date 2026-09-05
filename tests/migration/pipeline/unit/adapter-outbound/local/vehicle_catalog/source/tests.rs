@@ -270,6 +270,79 @@ fn texture_authority_groups_collision_by_ledger_name() -> Result<(), String> {
     if authority.resolve("shared.bmp", &package.subcategory).is_ok() {
         return Err("differing collision payloads were selected".to_owned());
     }
+    let runtime_visible = authority
+        .resolve_runtime_visible("shared.bmp", &package.subcategory)
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| {
+            "runtime-visible collision was not selected".to_owned()
+        })?;
+    let visible_name = runtime_visible
+        .file_name()
+        .and_then(|value| value.to_str());
+    if visible_name != Some("shared__ordinal_10.png") {
+        return Err(format!(
+            "runtime-visible collision did not follow source order: {}",
+            runtime_visible.display()
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn texture_authority_resolves_identical_collision_payloads()
+-> Result<(), String> {
+    let root = TestDirectory::new("texture-identical-collision")?;
+    let texture_dir = root.path().join("components/texture");
+    fs::create_dir_all(&texture_dir).map_err(|error| error.to_string())?;
+    for file_name in ["shared.png", "shared__ordinal_10.png"] {
+        fs::write(texture_dir.join(file_name), b"canonical-payload")
+            .map_err(|error| error.to_string())?;
+    }
+    fs::write(
+        root.path().join("components.jsonl"),
+        concat!(
+            r#"{"ordinal":20,"name":"shared","#,
+            r#""path":"texture/shared.png","kind":"texture"}"#,
+            "\n",
+            r#"{"ordinal":10,"name":"shared","#,
+            r#""path":"texture/shared__ordinal_10.png","kind":"texture"}"#,
+            "\n"
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    let package = vehicle_row("mesh")?;
+    let sources = vehicle_package_texture_sources(&package, root.path())
+        .map_err(|error| error.to_string())?;
+    let mut grouped = BTreeMap::new();
+    for (key, source) in sources {
+        grouped.entry(key).or_insert_with(Vec::new).push(source);
+    }
+    let authority = VehicleTextureAuthority { sources: grouped };
+    let resolved = authority
+        .resolve("shared.bmp", &package.subcategory)
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "identical collision did not resolve".to_owned())?;
+    let resolved_name =
+        resolved.file_name().and_then(|value| value.to_str());
+    if resolved_name != Some("shared.png") {
+        return Err(format!(
+            "identical collision selected an unstable member: {}",
+            resolved.display()
+        ));
+    }
+    let occurrences = authority
+        .preferred_occurrences("shared.bmp", &package.subcategory)
+        .map_err(|error| error.to_string())?;
+    if occurrences.len() != 2
+        || occurrences
+            .first()
+            .zip(occurrences.get(1))
+            .is_none_or(|(left, right)| left.sha256 != right.sha256)
+    {
+        return Err(format!(
+            "identical collision provenance changed: {occurrences:?}"
+        ));
+    }
     Ok(())
 }
 
