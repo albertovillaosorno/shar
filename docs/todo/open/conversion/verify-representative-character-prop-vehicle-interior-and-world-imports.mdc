@@ -52,6 +52,32 @@ new `Skeleton` companion; independent read-back reports the expected classes
 and both packages dirty under the no-save contract. Deleting the mesh and then
 the skeleton succeeds, and independent existence checks report both absent.
 
-The broader acceptance criterion remains open because representative prop,
-vehicle, and interior transactions still require their own native import and
-read-back evidence.
+A representative prop transaction now passes the same native import boundary.
+The cataloged head-to-head flag FBX is verified against SHA-256
+`13b34f060008df50ecf45876125fb4e7cfc0a2f658b568e02a3bc4129eb36e73`
+before import. `ImportStaticMesh` returns exactly one `StaticMesh`; independent
+read-back reports the expected class and a dirty package under the no-save
+contract. Compensating deletion succeeds, and independent asset and temporary
+folder existence checks both report absent afterward.
+
+A representative fused interior transaction now passes the world-specific
+native import boundary. A complete 129-package replay publishes eight canonical
+base interiors and four additive Halloween overlays; the smallest base artifact,
+`i07-barts-room`, is verified at 3,182,860 bytes with SHA-256
+`86c063afc3fe1bc9b189c68ea59b0964185a4d4d7cf88ea4ffc07bbb56e302bb`
+before import. Its catalog records 26 geometries, 26 materials, 26 textures,
+zero repeated-index target omissions, seven zero-area target omissions, and
+zero removed duplicate triangles.
+
+`ImportWorldStaticMesh` returns exactly one `StaticMesh`. Independent native
+read-back reports one LOD, 25,918 render vertices, 9,153 render triangles, 26
+material slots, valid local bounds from
+`[-503.07611083984375, -456.65597534179688, -20.118066787719727]` to
+`[-496.23422241210938, -446.92385864257812, -16.994222640991211]`, and a dirty
+package under the no-save contract. Compensating deletion succeeds, and
+independent asset and temporary-folder existence checks both report absent.
+
+The broader acceptance criterion remains open only for the representative
+vehicle transaction. Vehicle source packages deliberately remain semantic
+splits in the generic Unreal manifest; the dedicated vehicle FBX catalog and a
+native vehicle construction boundary must preserve that distinction.
