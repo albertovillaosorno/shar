@@ -138,6 +138,12 @@ materials. Static switches are restricted to declared feature sets. Scalar,
 vector, and texture parameters use registered names and units. A new shading
 model requires an ADR and a new validation profile.
 
+Regular world surfaces preserve the original renderer's `PddiCullNone` state.
+`M_SHAR_WorldOpaque` and `M_SHAR_WorldMasked` therefore render both polygon
+faces. This is a raster-state translation, not permission to duplicate faces,
+reverse authored winding, or repair source normals. Shadow and special-purpose
+passes keep their independently validated native culling policy.
+
 ## Stylized rendering
 
 The stylized appearance is implemented through authored shape, color, material

@@ -26,3 +26,28 @@ No explicit task dependency was recorded in the legacy TODO.
 
 Open work migrated from the canonical TODO. Add implementation and
 validation evidence here as the task advances.
+
+September 5 world-preview investigation isolated apparent transparent walls and
+missing ground as presentation defects rather than evidence of deleted source
+geometry. The original `RenderFlow::DoAllRegistration` sets PDDI culling to
+`PddiCullNone`; the OpenGL PDDI backend implements that state by disabling
+`GL_CULL_FACE`. Pure3D's simple-material `2SID` parameter can temporarily
+disable culling when it was enabled, but ordinary world rendering already starts
+from the no-cull state.
+
+The `l1z1` Simpson-house shaders are opaque (`has_translucency=0`, `BLMD=0`)
+and not individually two-sided (`2SID=0`), so their apparent transparency in the
+native preview is not source-authored translucency. The preview importer also
+intentionally disables FBX material and texture import, leaving Unreal's
+one-sided default material in the slots. The world catalog now records the
+source-backed regular-scene no-cull contract so native world material families
+can reproduce it without changing topology. This additive contract advances the
+next generated world catalog to `shar.world-package-collection.v7`; the accepted
+historical `v6` artifact remains valid evidence for its earlier topology scope.
+
+Ground geometry is present in the source package. Grass, road, sidewalk,
+driveway, and asphalt material groups contribute 1,324 triangles in `l1z1`.
+The Unreal-target topology sidecar omits only 13 source triangles across the
+entire zone (11 zero-area and two repeated-index), with just one zero-area
+omission in the sampled grass track. Do not add a replacement
+floor or duplicate/backflip faces to compensate for the current preview.
