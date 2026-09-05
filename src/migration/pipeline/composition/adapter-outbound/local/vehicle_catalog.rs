@@ -100,8 +100,14 @@ fn build_catalog(
     game_root: &Path,
     staging: &Path,
 ) -> Result<(usize, usize, u64), PipelineError> {
+    check_cancellation()?;
+    let mut index_progress =
+        StageProgress::begin("vehicle catalog index load", 1);
+    index_progress.advance(&index_path.to_string_lossy());
     let index = PhaseThreePackageIndex::read(index_path)
         .map_err(|error| PipelineError::new(error.to_string()))?;
+    index_progress.finish();
+    check_cancellation()?;
     let mut packages = index
         .packages()
         .iter()
