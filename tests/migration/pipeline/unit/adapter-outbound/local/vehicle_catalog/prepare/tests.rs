@@ -353,6 +353,52 @@ fn partitioned_billboards_preserve_source_order() -> Result<(), String> {
 }
 
 #[test]
+fn nonfinite_billboard_geometry_is_deferred_without_repair()
+-> Result<(), String> {
+    let root = EffectTestDirectory::new("billboard-nonfinite")?;
+    let source = root.path().join("billboards");
+    fs::create_dir_all(&source).map_err(|error| error.to_string())?;
+    let path = source.join("brake1Shape.json");
+    let payload = billboard_json("brake1Shape").replace(
+        "\"width\":1",
+        concat!(
+            "\"width\":null,",
+            "\"presentation_nonfinite_f32_bits\":",
+            "{\"width\":2143289344}"
+        ),
+    );
+    fs::write(&path, &payload).map_err(|error| error.to_string())?;
+    let output = root.path().join("output");
+    let (retained, deferred) = partition_vehicle_billboards(
+        std::slice::from_ref(&path),
+        &output,
+    )
+    .map_err(|error| error.to_string())?;
+    if !retained.is_empty()
+        || deferred
+            != ["geometry/deferred-billboards/brake1Shape.json"]
+    {
+        return Err(format!(
+            "nonfinite billboard deferral changed: retained={retained:?} \
+             deferred={deferred:?}"
+        ));
+    }
+    let copied = fs::read_to_string(
+        output
+            .join("geometry")
+            .join("deferred-billboards")
+            .join("brake1Shape.json"),
+    )
+    .map_err(|error| error.to_string())?;
+    if copied != payload {
+        return Err(String::from(
+            "deferred billboard source evidence was changed",
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn vehicle_animation_identity_requires_source_name() {
     assert!(
         vehicle_animation_name(&serde_json::json!({"type": "effect"})).is_err()

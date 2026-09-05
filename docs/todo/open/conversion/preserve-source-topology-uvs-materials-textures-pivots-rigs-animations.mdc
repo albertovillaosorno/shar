@@ -274,13 +274,19 @@ versions, and deferred world provenance carries them without assigning runtime
 meaning.
 
 The current UV-offset range, source range, and edge range are zero for all 284
-children, but the v4 catalog still retains those fields rather than inferring a
-global default. Ten shader identities and 55 child identities occur across the
-260 groups, and no audited presentation float is non-finite. Recovery now
-requires exact quad-group headers, finite presentation scalars, and the audited
-source-ordered childless display/perspective pair. Camera-facing, cutoff, depth,
-and BQG animation execution remain deferred to a reviewed native presentation
-adapter instead of being flattened into static or skeletal FBX.
+world-billboard children, but the v4 catalog still retains those fields rather
+than inferring a global default. Ten shader identities and 55 child identities
+occur across the 260 groups, and no presentation float in that world subset is
+non-finite.
+
+That subset is not a global validity bound: the `cMilk` vehicle source contains
+one `brake1Shape` width encoded as quiet NaN bits `0x7fc00000`. Recovery retains
+its scalar as JSON `null` plus exact `presentation_nonfinite_f32_bits`, while
+vehicle inspection FBX defers that quad rather than inventing a width. Exact
+quad-group headers and the audited source-ordered childless display/perspective
+pair remain required. Camera-facing, cutoff, depth, and BQG animation execution
+remain deferred to a reviewed native presentation adapter instead of being
+flattened into static or skeletal FBX.
 
 Deferred billboard shader evidence now uses the same validated decoded-shader
 contract as FBX material resolution while preserving the full source parameter
