@@ -995,23 +995,26 @@ fn resolve_vehicle_materials(
                 } else {
                     super::VEHICLE_COMMON_SUBCATEGORY
                 };
-                let occurrences = authority
-                    .preferred_occurrences(&texture, material_subcategory)?;
-                let payloads = occurrences
-                    .iter()
-                    .map(|occurrence| occurrence.sha256.as_str())
-                    .collect::<BTreeSet<_>>()
-                    .len();
-                return Err(PipelineError::new(format!(
-                    concat!(
-                        "vehicle material {} has ambiguous texture {}: ",
-                        "{} source occurrences across {} payloads"
-                    ),
-                    shader,
-                    texture,
-                    occurrences.len(),
-                    payloads
-                )));
+                let external = authority
+                    .resolve_runtime_visible(&texture, material_subcategory)?
+                    .ok_or_else(|| {
+                        PipelineError::new(format!(
+                            "vehicle material {shader} has no runtime-visible \
+                             texture authority for {texture}"
+                        ))
+                    })?;
+                source
+                    .resolve_material_with_authoritative_external_texture(
+                        &shader,
+                        &texture,
+                        external,
+                    )
+                    .map_err(|error| {
+                        PipelineError::new(format!(
+                            "vehicle runtime-visible texture failed for \
+                             {shader}: {error:?}"
+                        ))
+                    })?
             },
             Err(error) => {
                 return Err(PipelineError::new(format!(

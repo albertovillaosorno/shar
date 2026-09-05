@@ -65,6 +65,7 @@ struct VehicleTextureSource {
 
 /// One preferred physical vehicle texture occurrence retained without
 /// selection.
+#[cfg(test)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct VehicleTextureOccurrenceEvidence {
     /// Generated package identity owning this texture occurrence.
@@ -642,7 +643,50 @@ impl VehicleTextureAuthority {
         unique_texture_path(&preferred)
     }
 
+    /// Resolve the package-local texture visible to the original runtime.
+    ///
+    /// `Pure3D` stores same-type entities by UID in source load order and
+    /// discards later collisions. This is intentionally narrower than
+    /// `resolve`: callers must name the package subcategory that owns the
+    /// shader whose local collision is being reproduced.
+    pub(super) fn resolve_runtime_visible(
+        &self,
+        reference: &str,
+        source_subcategory: &str,
+    ) -> Result<Option<&Path>, PipelineError> {
+        let key = texture_key(reference)?;
+        let Some(entries) = self.sources.get(&key) else {
+            return Ok(None);
+        };
+        let local = entries
+            .iter()
+            .filter(|entry| entry.subcategory == source_subcategory)
+            .collect::<Vec<_>>();
+        if local.is_empty() {
+            return Ok(None);
+        }
+        let package_ids = local
+            .iter()
+            .map(|entry| entry.package_id.as_str())
+            .collect::<BTreeSet<_>>();
+        if package_ids.len() != 1 {
+            return Err(PipelineError::new(
+                "vehicle runtime-visible texture scope spans packages",
+            ));
+        }
+        let visible = local
+            .into_iter()
+            .min_by_key(|entry| entry.source_ordinal)
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "vehicle runtime-visible texture selection is empty",
+                )
+            })?;
+        Ok(Some(visible.path.as_path()))
+    }
+
     /// Retain every preferred physical occurrence without choosing one member.
+    #[cfg(test)]
     pub(super) fn preferred_occurrences(
         &self,
         reference: &str,
