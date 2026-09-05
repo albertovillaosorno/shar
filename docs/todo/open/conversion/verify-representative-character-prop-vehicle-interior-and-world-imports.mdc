@@ -34,8 +34,24 @@ toolset, reports one LOD, 30,984 vertices, 17,580 triangles, and 77 material
 slots, then rolls back without leaving a package. This proves the repeated-index
 target split is accepted by Unreal Engine 5.8.1.
 
-The representative is not yet accepted for final shading equivalence. Unreal
-warns that the scene contains no smoothing-group information and also reports
-near-zero tangent/normal data. The 111 render primitive groups in the `l1z1`
-source currently contain no decoded normal arrays, so migration must establish
-the shipped no-normal shading contract before adding any smoothing metadata.
+The representative world import now also passes the target surface-frame
+contract. The world-only importer consumes the regenerated `l1z1` FBX with
+supplied normal, tangent, and binormal frames while preserving authored normals
+when present. A fresh native invocation reports zero nearly-zero normal or
+binormal warnings, zero degenerate tangent-basis warnings, zero missing
+smoothing-group warnings, and zero warnings or errors in the invocation log
+segment.
+
+This closes the representative world shading blocker.
+
+A representative character transaction now also passes native import and
+rollback. The cataloged Cletus FBX is verified against SHA-256
+`e8db1fde82875b05ac14faf95bacc7daaa916749aa201ea70aa75cf2360b7815`
+before import. `ImportSkeletalMesh` returns exactly one `SkeletalMesh` and its
+new `Skeleton` companion; independent read-back reports the expected classes
+and both packages dirty under the no-save contract. Deleting the mesh and then
+the skeleton succeeds, and independent existence checks report both absent.
+
+The broader acceptance criterion remains open because representative prop,
+vehicle, and interior transactions still require their own native import and
+read-back evidence.
