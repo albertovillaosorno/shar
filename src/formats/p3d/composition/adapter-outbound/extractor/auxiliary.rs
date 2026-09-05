@@ -217,12 +217,6 @@ pub(super) fn billboard_quad_fields(
     cursor += 4;
     let distance = schema::read_f32(quad, cursor)?;
     cursor += 4;
-    if [width, height, distance]
-        .iter()
-        .any(|value| !value.is_finite())
-    {
-        return None;
-    }
     let uv_offset = read_f32_array::<2>(quad, &mut cursor)?;
     if cursor != header_size || total_size != quad.len() {
         return None;
@@ -319,9 +313,6 @@ pub(super) fn read_billboard_display_info(
     *field += 4;
     display.edge_range = schema::read_f32(quad, *field)?;
     *field += 4;
-    if !display.source_range.is_finite() || !display.edge_range.is_finite() {
-        return None;
-    }
     (*field == child + child_header).then_some(())
 }
 
@@ -352,7 +343,7 @@ pub(super) fn render_billboard_quad_json(
     fields: &BillboardQuadFields,
     display: &BillboardQuadDisplay,
 ) -> String {
-    format!(
+    let mut json = format!(
         concat!(
             r#"{{"name":"{}","version":{},"billboard_mode":"{}","#,
             r#""translation":{},"colour":{},"uvs":[{},{},{},{}],"#,
@@ -360,7 +351,7 @@ pub(super) fn render_billboard_quad_json(
             r#""display_info_version":{},"rotation_wxyz":{},"#,
             r#""cutoff_mode":"{}","uv_offset_range":{},"#,
             r#""source_range":{},"edge_range":{},"#,
-            r#""perspective_info_version":{},"perspective":{}}}"#,
+            r#""perspective_info_version":{},"perspective":{}"#,
         ),
         escape_json(&fields.name),
         fields.version,
@@ -383,7 +374,33 @@ pub(super) fn render_billboard_quad_json(
         render_f32(display.edge_range, display.edge_range.to_string()),
         optional_u32_json(display.perspective_info_version),
         display.perspective,
-    )
+    );
+    if let Some(bits) = presentation_nonfinite_f32_bits(fields, display) {
+        json.push_str(",\"presentation_nonfinite_f32_bits\":");
+        json.push_str(&bits);
+    }
+    json.push('}');
+    json
+}
+
+/// Render exact IEEE-754 bits for non-finite scalar presentation evidence.
+fn presentation_nonfinite_f32_bits(
+    fields: &BillboardQuadFields,
+    display: &BillboardQuadDisplay,
+) -> Option<String> {
+    let values = [
+        ("width", fields.width),
+        ("height", fields.height),
+        ("distance", fields.distance),
+        ("source_range", display.source_range),
+        ("edge_range", display.edge_range),
+    ];
+    let entries = values
+        .into_iter()
+        .filter(|(_name, value)| !value.is_finite())
+        .map(|(name, value)| format!("\"{name}\":{}", value.to_bits()))
+        .collect::<Vec<_>>();
+    (!entries.is_empty()).then(|| format!("{{{}}}", entries.join(",")))
 }
 
 /// Render one optional source schema version without inventing presence.

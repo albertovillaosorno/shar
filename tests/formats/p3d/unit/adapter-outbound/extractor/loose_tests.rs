@@ -3283,27 +3283,36 @@ fn billboard_quad_preserves_child_schema_versions() -> Result<(), String> {
 }
 
 #[test]
-fn billboard_quad_rejects_nonfinite_scalar_presentation_values()
+fn billboard_quad_preserves_nonfinite_scalar_presentation_bits()
 -> Result<(), String> {
     let (source, header_size) = billboard_quad_fixture(1)?;
     let scalar_offsets = [
         (73_usize, "width"),
         (77, "height"),
         (81, "distance"),
-        (header_size + 44, "source range"),
-        (header_size + 48, "edge range"),
+        (header_size + 44, "source_range"),
+        (header_size + 48, "edge_range"),
     ];
+    let nonfinite_bits = 0x7fc0_1234_u32;
     for (offset, field) in scalar_offsets {
-        let mut malformed = source.clone();
-        malformed[offset..offset + 4].copy_from_slice(&f32::NAN.to_le_bytes());
-        if auxiliary::billboard_quad_json(
-            &malformed,
+        let mut nonfinite = source.clone();
+        nonfinite[offset..offset + 4]
+            .copy_from_slice(&nonfinite_bits.to_le_bytes());
+        let json = auxiliary::billboard_quad_json(
+            &nonfinite,
             header_size,
-            malformed.len(),
+            nonfinite.len(),
         )
-        .is_some()
+        .ok_or_else(|| format!("billboard quad rejected nonfinite {field}"))?;
+        let value: serde_json::Value =
+            serde_json::from_str(&json).map_err(|error| error.to_string())?;
+        if !value[field].is_null()
+            || value["presentation_nonfinite_f32_bits"][field]
+                != serde_json::json!(nonfinite_bits)
         {
-            return Err(format!("billboard quad accepted nonfinite {field}"));
+            return Err(format!(
+                "billboard quad discarded nonfinite {field} bits"
+            ));
         }
     }
     Ok(())
