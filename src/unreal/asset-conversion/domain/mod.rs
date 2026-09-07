@@ -31,12 +31,19 @@
 //! Unreal asset-conversion domain facade.
 
 mod conversion_plan;
+mod world_material_family;
 mod world_material_projection;
 
 pub use conversion_plan::{
     ConversionPlan, NativeAssetFamily, OperationReadiness, PlanArtifact,
     PlanBundle, PlanContext, PlanDependency, PlanFamily, SemanticBlockerClass,
     SourceFormat, UNREAL_PLAN_BUNDLE_SCHEMA, UNREAL_PLAN_SCHEMA,
+};
+pub use world_material_family::{
+    PDDI_DEFAULT_ALPHA_REFERENCE_BITS, WorldMaterialAlphaCompare,
+    WorldMaterialBlendFamily, WorldMaterialInstanceRaster,
+    WorldMaterialMasterFamily, WorldMaterialRasterProjection,
+    WorldMaterialShaderFamily,
 };
 pub use world_material_projection::{
     WORLD_MATERIAL_SOURCE_SCHEMA, WorldMaterialBindingSource,

@@ -23,6 +23,15 @@ identity, and deduplicates only equal effective `slot_presentation_sha256`
 states. It deliberately does not select an Unreal master material, infer shader
 meaning from names, or reparse P3D evidence.
 
+Reviewed PDDI raster state is projected separately into a deterministic
+`WorldMaterialMasterFamily` plus `WorldMaterialInstanceRaster`. Blend behavior,
+active alpha comparison, two-sidedness, lighting, source shader family, and the
+runtime missing-shader fallback select the master family. The effective alpha
+reference remains instance data, including PDDI's source-runtime `0.5` default
+when alpha test is enabled without an authored threshold. Unreviewed active
+blend or alpha-compare modes fail closed instead of being approximated with an
+Unreal blend mode.
+
 ## Boundary
 
 This crate must never contain:

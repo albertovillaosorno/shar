@@ -33,6 +33,8 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use super::WorldMaterialRasterProjection;
+
 /// World catalog schema that supplies the projection evidence.
 pub const WORLD_MATERIAL_SOURCE_SCHEMA: &str =
     "shar.world-package-collection.v8";
@@ -93,6 +95,8 @@ pub struct WorldMaterialBindingSource {
     pub presentation_sha256: String,
     /// Exact decoded diffuse color.
     pub base_color_rgba8: [u8; 4],
+    /// Source-backed raster family and per-instance alpha state.
+    pub raster: WorldMaterialRasterProjection,
     /// Initial source-backed surface semantics.
     pub semantics: WorldMaterialSemantics,
 }
@@ -125,6 +129,8 @@ pub struct WorldMaterialPresentation {
     pub texture_sha256: Option<String>,
     /// Exact decoded diffuse color.
     pub base_color_rgba8: [u8; 4],
+    /// Source-backed raster family and per-instance alpha state.
+    pub raster: WorldMaterialRasterProjection,
     /// Exact effective surface semantics.
     pub semantics: WorldMaterialSemantics,
 }
@@ -284,6 +290,7 @@ fn validate_slots<'source>(
             texture_file_name: binding.texture_file_name.clone(),
             texture_sha256: binding.texture_sha256.clone(),
             base_color_rgba8: binding.base_color_rgba8,
+            raster: binding.raster,
             semantics: slot.semantics,
         };
         match presentations.get(&slot.slot_presentation_sha256) {
