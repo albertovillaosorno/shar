@@ -33,7 +33,12 @@
 
 use super::{
     WorldMaterialBindingSource, WorldMaterialProjection,
-    WorldMaterialSemantics, WorldMaterialSlotSource,
+    WorldMaterialRasterProjection, WorldMaterialSemantics,
+    WorldMaterialSlotSource,
+};
+use crate::domain::{
+    WorldMaterialBlendFamily, WorldMaterialInstanceRaster,
+    WorldMaterialMasterFamily, WorldMaterialShaderFamily,
 };
 
 const BINDING_A: &str =
@@ -59,6 +64,16 @@ fn binding(hash: &str, presentation: &str) -> WorldMaterialBindingSource {
         binding_sha256: hash.to_owned(),
         presentation_sha256: presentation.to_owned(),
         base_color_rgba8: [12, 34, 56, 255],
+        raster: WorldMaterialRasterProjection {
+            master: WorldMaterialMasterFamily {
+                shader: WorldMaterialShaderFamily::Simple,
+                blend: WorldMaterialBlendFamily::Disabled,
+                alpha_compare: None,
+                two_sided: false,
+                lit: false,
+            },
+            instance: WorldMaterialInstanceRaster::default(),
+        },
         semantics: WorldMaterialSemantics::default(),
     }
 }
@@ -225,4 +240,60 @@ fn projection_rejects_binding_without_writer_slot() {
         result,
         Err("world material binding lacks an exact writer slot".to_owned())
     );
+}
+
+#[test]
+fn projection_carries_raster_family_into_effective_presentation()
+-> Result<(), String> {
+    let mut binding = binding(BINDING_A, PRESENTATION_A);
+    binding.raster = WorldMaterialRasterProjection::from_pddi(
+        WorldMaterialShaderFamily::Environment,
+        1,
+        0,
+        4,
+        None,
+        1,
+        1,
+    )?;
+    let source = slot(&binding, SLOT_OPAQUE, WorldMaterialSemantics::default());
+    let projection = WorldMaterialProjection::build(&[binding], &[source])?;
+    let presentation = projection
+        .presentations()
+        .first()
+        .ok_or("effective presentation is missing")?;
+    assert_eq!(
+        presentation.raster.master.identity(),
+        "environment__blend-alpha__alpha-test-off__two-sided__lit"
+    );
+    Ok(())
+}
+
+#[test]
+fn projection_rejects_equal_effective_hash_with_different_raster_state()
+-> Result<(), String> {
+    let first = binding(BINDING_A, PRESENTATION_A);
+    let mut second = binding(BINDING_B, PRESENTATION_B);
+    second.raster = WorldMaterialRasterProjection::from_pddi(
+        WorldMaterialShaderFamily::Simple,
+        1,
+        0,
+        4,
+        None,
+        0,
+        0,
+    )?;
+    let first_slot =
+        slot(&first, SLOT_OPAQUE, WorldMaterialSemantics::default());
+    let second_slot =
+        slot(&second, SLOT_OPAQUE, WorldMaterialSemantics::default());
+    let result = WorldMaterialProjection::build(&[first, second], &[
+        first_slot,
+        second_slot,
+    ]);
+    assert_eq!(
+        result,
+        Err("world effective presentation hash has conflicting state"
+            .to_owned())
+    );
+    Ok(())
 }
