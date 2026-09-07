@@ -161,6 +161,21 @@ impl DecodedComponentSource {
         }
     }
 
+    /// Read the validated runtime-visible source evidence for one shader.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the shader identity is missing, ambiguous, or
+    /// malformed. Callers that reproduce runtime-first duplicate selection must
+    /// use [`read_shader_source_evidence`] with their proven occurrence path.
+    pub fn shader_source_evidence(
+        &self,
+        shader_id: &str,
+    ) -> Result<ShaderSourceEvidence, DecodedComponentError> {
+        let shader_path = shader_component_path(&self.package_root, shader_id)?;
+        read_shader_source_evidence(&shader_path, shader_id)
+    }
+
     /// Resolve one shader using an exact index-published external PNG source.
     ///
     /// # Errors

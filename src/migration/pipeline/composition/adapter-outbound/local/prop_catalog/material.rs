@@ -35,13 +35,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::decoded_component_source::{
-    DecodedComponentError, DecodedComponentSource, read_shader_source_evidence,
+    DecodedComponentError, DecodedComponentSource, ShaderSourceEvidence,
+    read_shader_source_evidence,
 };
 use fbx::domain::character::CharacterAsset;
 use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 use fbx::ports::component_source::ComponentSource as _;
-use serde_json::Value;
+use serde_json::{Value, json};
 use shar_sha256::digest_hex;
 
 use super::prepared::PreparedTexture;
@@ -56,6 +57,34 @@ pub(super) struct WorldMeshSourceCoordinate<'source> {
     pub(super) member_id: &'source str,
     /// Exact package-level mesh source chunk ordinal.
     pub(super) source_ordinal: usize,
+}
+
+/// One exact runtime-visible shader source contributing a presentation state.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct CanonicalShaderPresentationSource {
+    /// Owning generated package identity when phase-three evidence exists.
+    pub(super) package_id: Option<String>,
+    /// Exact package-level source chunk ordinal when the ledger publishes it.
+    pub(super) source_ordinal: Option<usize>,
+    /// Normalized shader member file name when the ledger publishes it.
+    pub(super) member: Option<String>,
+    /// Complete validated decoded shader evidence.
+    pub(super) evidence: ShaderSourceEvidence,
+}
+
+/// Exact source presentation retained beside one canonical material binding.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct CanonicalMaterialPresentation {
+    /// Canonical material identity referenced by FBX primitive groups.
+    pub(super) material_name: String,
+    /// SHA-256 over presentation plus the runtime-addressable shader identity.
+    pub(super) binding_sha256: String,
+    /// SHA-256 over texture content, decoded shader state, tint, and semantics.
+    pub(super) presentation_sha256: String,
+    /// Exact normalized texture payload SHA-256 when this material is textured.
+    pub(super) texture_sha256: Option<String>,
+    /// Runtime-visible occurrences of this independently addressable shader.
+    pub(super) source_shaders: Vec<CanonicalShaderPresentationSource>,
 }
 
 /// Non-selecting provenance for every primitive-group consumer of one shader.
@@ -123,10 +152,68 @@ fn canonicalize_static_materials_with_authority(
     mesh_sources: Option<&[WorldMeshSourceCoordinate<'_>]>,
     source_subcategory: &str,
 ) -> Result<(Vec<MaterialBinding>, Vec<PreparedTexture>), PipelineError> {
+    let plan = canonicalize_static_material_plan_with_authority(
+        meshes,
+        package_root,
+        scratch,
+        authority,
+        package,
+        mesh_sources,
+        source_subcategory,
+    )?;
+    Ok((plan.materials, plan.textures))
+}
+
+/// Canonical world material outputs required by FBX and native projection.
+pub(super) struct WorldStaticMaterialProjection {
+    /// Canonical FBX material bindings.
+    pub(super) materials: Vec<MaterialBinding>,
+    /// Canonical normalized texture payloads.
+    pub(super) textures: Vec<PreparedTexture>,
+    /// Runtime-visible source shader evidence grouped by binding identity.
+    pub(super) presentations: Vec<CanonicalMaterialPresentation>,
+}
+
+/// Canonicalize one world mesh batch and retain native projection evidence.
+pub(super) fn canonicalize_world_static_materials_with_presentations(
+    meshes: &mut [MeshAsset],
+    package_root: &Path,
+    scratch: &Path,
+    authority: &SharedTextureAuthority,
+    package: Option<&PhaseThreePackageRow>,
+    mesh_sources: Option<&[WorldMeshSourceCoordinate<'_>]>,
+    source_subcategory: &str,
+) -> Result<WorldStaticMaterialProjection, PipelineError> {
+    let plan = canonicalize_static_material_plan_with_authority(
+        meshes,
+        package_root,
+        scratch,
+        Some(authority),
+        package,
+        mesh_sources,
+        source_subcategory,
+    )?;
+    Ok(WorldStaticMaterialProjection {
+        materials: plan.materials,
+        textures: plan.textures,
+        presentations: plan.presentations,
+    })
+}
+
+/// Build the complete static material plan before projecting wrapper outputs.
+fn canonicalize_static_material_plan_with_authority(
+    meshes: &mut [MeshAsset],
+    package_root: &Path,
+    scratch: &Path,
+    authority: Option<&SharedTextureAuthority>,
+    package: Option<&PhaseThreePackageRow>,
+    mesh_sources: Option<&[WorldMeshSourceCoordinate<'_>]>,
+    source_subcategory: &str,
+) -> Result<MaterialPlanWithPresentation, PipelineError> {
     let shader_sources =
         shader_consumer_provenance(meshes, mesh_sources, package);
     let shaders = shader_sources.keys().cloned().collect::<BTreeSet<_>>();
-    let (renames, materials, textures) = resolve_materials(
+    let plan = resolve_material_plan(
         shaders,
         &shader_sources,
         package_root,
@@ -136,7 +223,8 @@ fn canonicalize_static_materials_with_authority(
         source_subcategory,
     )?;
     for group in meshes.iter_mut().flat_map(|mesh| mesh.groups.iter_mut()) {
-        group.shader = renames
+        group.shader = plan
+            .renames
             .get(&group.shader)
             .ok_or_else(|| {
                 PipelineError::new(format!(
@@ -146,7 +234,7 @@ fn canonicalize_static_materials_with_authority(
             })?
             .clone();
     }
-    Ok((materials, textures))
+    Ok(plan)
 }
 
 /// Canonicalize rigid-animated mesh shaders and return bindings/payloads.
@@ -851,6 +939,14 @@ type MaterialPlan = (
     Vec<PreparedTexture>,
 );
 
+/// Canonical material plan with exact source presentation evidence.
+struct MaterialPlanWithPresentation {
+    renames: BTreeMap<String, String>,
+    materials: Vec<MaterialBinding>,
+    textures: Vec<PreparedTexture>,
+    presentations: Vec<CanonicalMaterialPresentation>,
+}
+
 /// Resolve and content-canonicalize one complete shader identity set.
 ///
 /// # Errors
@@ -865,6 +961,28 @@ fn resolve_materials(
     package: Option<&PhaseThreePackageRow>,
     source_subcategory: &str,
 ) -> Result<MaterialPlan, PipelineError> {
+    let plan = resolve_material_plan(
+        shaders,
+        shader_sources,
+        package_root,
+        scratch,
+        authority,
+        package,
+        source_subcategory,
+    )?;
+    Ok((plan.renames, plan.materials, plan.textures))
+}
+
+/// Resolve bindings and retain exact runtime-visible shader state.
+fn resolve_material_plan(
+    shaders: BTreeSet<String>,
+    shader_sources: &BTreeMap<String, ShaderConsumerProvenance>,
+    package_root: &Path,
+    scratch: &Path,
+    authority: Option<&SharedTextureAuthority>,
+    package: Option<&PhaseThreePackageRow>,
+    source_subcategory: &str,
+) -> Result<MaterialPlanWithPresentation, PipelineError> {
     fs::create_dir_all(scratch).map_err(|error| {
         PipelineError::new(format!(
             "prop material scratch creation failed: {error}"
@@ -873,6 +991,7 @@ fn resolve_materials(
     let mut renames = BTreeMap::new();
     let mut bindings = BTreeMap::new();
     let mut textures = BTreeMap::new();
+    let mut presentations = BTreeMap::new();
     for (shader_index, shader) in shaders.into_iter().enumerate() {
         let shader_scratch = scratch.join(format!("shader-{shader_index:04}"));
         fs::create_dir_all(&shader_scratch).map_err(|error| {
@@ -881,43 +1000,72 @@ fn resolve_materials(
             ))
         })?;
         let source = DecodedComponentSource::new(package_root, &shader_scratch);
+        let provenance = shader_sources.get(&shader);
         let binding = resolve_source_material(
             &source,
             package_root,
             &shader,
-            shader_sources.get(&shader),
+            provenance,
             authority,
             package,
             source_subcategory,
         )?;
+        let shader_source = runtime_visible_shader_evidence(
+            &source,
+            package_root,
+            &shader,
+            provenance,
+            authority,
+            package,
+        )?;
         let source_semantics = binding.semantics;
         let source_base_color = binding.base_color_rgba8;
-        let (canonical_material, canonical_texture) = match binding
-            .texture_file_name
-        {
-            Some(source_name) => {
-                let source_bytes = fs::read(shader_scratch.join(&source_name))
-                    .map_err(|error| {
-                        PipelineError::new(format!(
-                            "prop staged texture read failed for \
-                                         {source_name}: {error}"
-                        ))
-                    })?;
-                let prepared = prepare_source_texture(source_bytes);
-                let digest = prepared.sha256.clone();
-                let file_name = prepared.file_name.clone();
-                let _published_texture =
-                    textures.entry(file_name.clone()).or_insert(prepared);
-                (
-                    canonical_material_identity(
-                        Some(&digest),
-                        source_semantics,
-                    ),
-                    Some(file_name),
-                )
-            },
-            None => (canonical_material_identity(None, source_semantics), None),
-        };
+        let (texture_digest, canonical_texture) =
+            match binding.texture_file_name.as_deref() {
+                Some(source_name) => {
+                    let source_bytes =
+                        fs::read(shader_scratch.join(source_name)).map_err(
+                            |error| {
+                                PipelineError::new(format!(
+                                    "prop staged texture read failed for \
+                                     {source_name}: {error}"
+                                ))
+                            },
+                        )?;
+                    let prepared = prepare_source_texture(source_bytes);
+                    let digest = prepared.sha256.clone();
+                    let file_name = prepared.file_name.clone();
+                    match textures.get(&file_name) {
+                        Some(existing) if existing != &prepared => {
+                            return Err(PipelineError::new(format!(
+                                "prop texture identity conflicts: {file_name}"
+                            )));
+                        },
+                        Some(_) => {},
+                        None => {
+                            let _previous =
+                                textures.insert(file_name.clone(), prepared);
+                        },
+                    }
+                    (Some(digest), Some(file_name))
+                },
+                None => (None, None),
+            };
+        let presentation_sha256 = material_presentation_digest(
+            texture_digest.as_deref(),
+            source_base_color,
+            source_semantics,
+            shader_source.as_ref().map(|source| &source.evidence),
+        )?;
+        let source_shader_identity = shader_source
+            .as_ref()
+            .map(|source| source.evidence.identity.as_str());
+        let binding_sha256 = material_binding_digest(
+            &presentation_sha256,
+            source_shader_identity,
+        )?;
+        let canonical_material =
+            canonical_material_identity(&binding_sha256, source_semantics);
         let _previous_rename =
             renames.insert(shader, canonical_material.clone());
         let material =
@@ -932,16 +1080,242 @@ fn resolve_materials(
                         "canonical prop material failed: {error:?}"
                     ))
                 })?;
-        let _published_material =
-            bindings.entry(canonical_material).or_insert(material);
+        match bindings.get(&canonical_material) {
+            Some(existing) if existing != &material => {
+                return Err(PipelineError::new(format!(
+                    "canonical material conflicts: {canonical_material}"
+                )));
+            },
+            Some(_) => {},
+            None => {
+                let _previous =
+                    bindings.insert(canonical_material.clone(), material);
+            },
+        }
+        let presentation = CanonicalMaterialPresentation {
+            material_name: canonical_material.clone(),
+            binding_sha256,
+            presentation_sha256,
+            texture_sha256: texture_digest,
+            source_shaders: shader_source.into_iter().collect(),
+        };
+        match presentations.get_mut(&canonical_material) {
+            Some(existing) => {
+                merge_material_presentation_evidence(existing, presentation)?;
+            },
+            None => {
+                let _previous =
+                    presentations.insert(canonical_material, presentation);
+            },
+        }
     }
-    Ok((
+    Ok(MaterialPlanWithPresentation {
         renames,
-        bindings.into_values().collect(),
-        textures.into_values().collect(),
-    ))
+        materials: bindings.into_values().collect(),
+        textures: textures.into_values().collect(),
+        presentations: presentations.into_values().collect(),
+    })
 }
 
+/// Read the exact shader occurrence selected by the runtime-first policy.
+/// Material resolution uses the same policy.
+fn runtime_visible_shader_evidence(
+    source: &DecodedComponentSource,
+    package_root: &Path,
+    shader: &str,
+    consumer_provenance: Option<&ShaderConsumerProvenance>,
+    authority: Option<&SharedTextureAuthority>,
+    package: Option<&PhaseThreePackageRow>,
+) -> Result<Option<CanonicalShaderPresentationSource>, PipelineError> {
+    match source.shader_source_evidence(shader) {
+        Ok(evidence) => {
+            let ledger = package_root.join("components.jsonl");
+            let occurrences = if ledger.is_file() {
+                top_level_ledger_occurrences(package_root, "shader", shader)?
+            } else {
+                Vec::new()
+            };
+            let occurrence = match occurrences.as_slice() {
+                [only] => Some(only),
+                _ => None,
+            };
+            Ok(Some(CanonicalShaderPresentationSource {
+                package_id: package.map(|value| value.package_id.clone()),
+                source_ordinal: occurrence.map(|value| value.source_ordinal),
+                member: occurrence.map(|value| value.member.clone()),
+                evidence,
+            }))
+        },
+        Err(DecodedComponentError::MissingShaderMember { .. })
+            if authority.is_some()
+                && runtime_missing_shader_has_package_consumers(
+                    consumer_provenance,
+                    package,
+                ) =>
+        {
+            Ok(None)
+        },
+        Err(error @ DecodedComponentError::AmbiguousShaderMember { .. }) => {
+            let Some(first_shader) = runtime_first_shader_occurrence(
+                package_root,
+                shader,
+                consumer_provenance,
+                package,
+                &error,
+            )? else {
+                return Err(material_resolution_error(
+                    shader,
+                    consumer_provenance,
+                    &error,
+                    package,
+                ));
+            };
+            let shader_path = &first_shader.path;
+            let evidence = read_shader_source_evidence(shader_path, shader)
+                .map_err(|source| {
+                    PipelineError::new(format!(
+                        "runtime-visible shader evidence failed: {source:?}"
+                    ))
+                })?;
+            Ok(Some(CanonicalShaderPresentationSource {
+                package_id: package.map(|value| value.package_id.clone()),
+                source_ordinal: Some(first_shader.source_ordinal),
+                member: Some(first_shader.member),
+                evidence,
+            }))
+        },
+        Err(error) => Err(material_resolution_error(
+            shader,
+            consumer_provenance,
+            &error,
+            package,
+        )),
+    }
+}
+
+/// Merge equivalent visual state while retaining independently addressable
+/// source shader identity.
+pub(super) fn merge_material_presentation_evidence(
+    target: &mut CanonicalMaterialPresentation,
+    incoming: CanonicalMaterialPresentation,
+) -> Result<(), PipelineError> {
+    if target.material_name != incoming.material_name
+        || target.binding_sha256 != incoming.binding_sha256
+        || target.presentation_sha256 != incoming.presentation_sha256
+        || target.texture_sha256 != incoming.texture_sha256
+    {
+        return Err(PipelineError::new(format!(
+            "canonical prop presentation identity conflicts: {}",
+            target.material_name
+        )));
+    }
+    match (target.source_shaders.first(), incoming.source_shaders.first()) {
+        (None, None) => {},
+        (Some(left), Some(right))
+            if left.evidence.identity == right.evidence.identity
+                && same_shader_presentation_state(
+                    &left.evidence,
+                    &right.evidence,
+                ) => {},
+        _ => {
+            return Err(PipelineError::new(format!(
+                "canonical prop presentation digest conflicts: {}",
+                target.material_name
+            )));
+        },
+    }
+    for source in incoming.source_shaders {
+        if !target.source_shaders.contains(&source) {
+            target.source_shaders.push(source);
+        }
+    }
+    target.source_shaders.sort_by(|left, right| {
+        left.package_id
+            .cmp(&right.package_id)
+            .then(left.source_ordinal.cmp(&right.source_ordinal))
+            .then(left.member.cmp(&right.member))
+            .then(left.evidence.identity.cmp(&right.evidence.identity))
+    });
+    Ok(())
+}
+
+/// Compare presentation state while deliberately ignoring logical identity.
+fn same_shader_presentation_state(
+    left: &ShaderSourceEvidence,
+    right: &ShaderSourceEvidence,
+) -> bool {
+    left.schema == right.schema
+        && left.version == right.version
+        && left.platform_shader_name == right.platform_shader_name
+        && left.translucency == right.translucency
+        && left.vertex_needs == right.vertex_needs
+        && left.vertex_mask == right.vertex_mask
+        && left.parameter_count == right.parameter_count
+        && left.texture_reference == right.texture_reference
+        && left.params == right.params
+}
+
+/// Hash exact presentation state without the authored logical shader name.
+pub(super) fn material_presentation_digest(
+    texture_sha256: Option<&str>,
+    base_color_rgba8: [u8; 4],
+    semantics: MaterialSemantics,
+    shader: Option<&ShaderSourceEvidence>,
+) -> Result<String, PipelineError> {
+    let shader_value = shader.map(|evidence| {
+        json!({
+            "schema": evidence.schema,
+            "version": evidence.version,
+            "platform_shader_name": evidence.platform_shader_name,
+            "translucency": evidence.translucency,
+            "vertex_needs": evidence.vertex_needs,
+            "vertex_mask": evidence.vertex_mask,
+            "parameter_count": evidence.parameter_count,
+            "texture_reference": evidence.texture_reference,
+            "params": evidence.params.iter().map(|parameter| json!({
+                "kind": parameter.kind,
+                "param": parameter.param,
+                "value": parameter.value
+            })).collect::<Vec<_>>()
+        })
+    });
+    let value = json!({
+        "texture_sha256": texture_sha256,
+        "base_color_rgba8": base_color_rgba8,
+        "semantics": {
+            "transparent": semantics.is_transparent(),
+            "glass": semantics.is_glass(),
+            "mirror": semantics.is_mirror(),
+            "reflective": semantics.is_reflective(),
+            "light_emitter": semantics.is_light_emitter(),
+            "visual_effect": semantics.is_visual_effect()
+        },
+        "shader": shader_value
+    });
+    let bytes = serde_json::to_vec(&value).map_err(|error| {
+        PipelineError::new(format!(
+            "prop material presentation serialization failed: {error}"
+        ))
+    })?;
+    Ok(digest_hex(&bytes))
+}
+
+/// Hash one FBX material binding without collapsing runtime shader targets.
+fn material_binding_digest(
+    presentation_sha256: &str,
+    source_shader_identity: Option<&str>,
+) -> Result<String, PipelineError> {
+    let value = json!({
+        "presentation_sha256": presentation_sha256,
+        "source_shader_identity": source_shader_identity
+    });
+    let bytes = serde_json::to_vec(&value).map_err(|error| {
+        PipelineError::new(format!(
+            "prop material binding serialization failed: {error}"
+        ))
+    })?;
+    Ok(digest_hex(&bytes))
+}
 
 /// Preserve one recovered source texture and derive its content identity.
 fn prepare_source_texture(bytes: Vec<u8>) -> PreparedTexture {
@@ -953,16 +1327,12 @@ fn prepare_source_texture(bytes: Vec<u8>) -> PreparedTexture {
     }
 }
 
-/// Build one content-derived material identity without merging semantic
-/// classes.
+/// Build a content-derived identity from one runtime-addressable binding.
 fn canonical_material_identity(
-    texture_digest: Option<&str>,
+    binding_digest: &str,
     semantics: MaterialSemantics,
 ) -> String {
-    let base = texture_digest.map_or_else(
-        || "material-none".to_owned(),
-        |digest| format!("material-{digest}"),
-    );
+    let base = format!("material-{binding_digest}");
     semantics
         .suffix()
         .map_or_else(|| base.clone(), |suffix| format!("{base}-{suffix}"))

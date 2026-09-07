@@ -55,7 +55,7 @@ use crate::domain::character::{
     CompositePropSourceBinding, CompositeSkinSourceBinding, SkinnedPart,
 };
 use crate::domain::mesh::{MeshAsset, PrimitiveGroup};
-use crate::domain::texture::MaterialBinding;
+use crate::domain::texture::{MaterialBinding, MaterialSemantics};
 use crate::domain::transform::affine_inverse::{InverseError, invert_affine};
 use crate::domain::transform::matrix::{TrsParts, compose, multiply};
 
@@ -126,6 +126,17 @@ pub struct CharacterBinaryFbxSummary {
     pub textures: usize,
     /// Skeletal animation stacks written to the document.
     pub animations: usize,
+}
+
+/// One exact material slot planned for a static-model FBX document.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StaticModelMaterialSlot {
+    /// Exact FBX material object name emitted by the writer.
+    pub material_name: String,
+    /// Canonical input binding referenced by source primitive groups.
+    pub source_material_name: String,
+    /// Effective binding and geometry semantics applied to this slot.
+    pub semantics: MaterialSemantics,
 }
 
 /// Scene families sharing the deterministic binary geometry writer.
@@ -543,21 +554,7 @@ fn write_binary_model_fbx_with_storage(
     surface_frame_policy: ModelSurfaceFramePolicy,
     path: &Path,
 ) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
-    validate_static_model(asset_name, meshes)?;
-    let parts = meshes
-        .iter()
-        .cloned()
-        .map(|mesh| SkinnedPart {
-            group_influences: vec![Vec::new(); mesh.groups.len()],
-            mesh,
-        })
-        .collect();
-    let model = CharacterAsset {
-        name: asset_name.to_owned(),
-        source_provenance: None,
-        bones: Vec::new(),
-        parts,
-    };
+    let model = static_model_asset(asset_name, meshes)?;
     let document = build_character_document(
         &model,
         materials,
@@ -575,6 +572,52 @@ fn write_binary_model_fbx_with_storage(
     })?;
     persist_binary_fbx(path, &bytes)?;
     Ok(document.summary)
+}
+
+/// Plan the exact semantic material slots emitted for one static model.
+///
+/// # Errors
+///
+/// Returns the same input-validation failures as static-model serialization.
+pub fn static_model_material_slots(
+    asset_name: &str,
+    meshes: &[MeshAsset],
+    materials: &[MaterialBinding],
+) -> Result<Vec<StaticModelMaterialSlot>, CharacterBinaryFbxError> {
+    let model = static_model_asset(asset_name, meshes)?;
+    let plan = material_slots(&model, materials)
+        .map_err(CharacterBinaryFbxError::from)?;
+    Ok(plan
+        .slots
+        .into_iter()
+        .map(|slot| StaticModelMaterialSlot {
+            material_name: slot.object_name,
+            source_material_name: slot.binding.material_name.clone(),
+            semantics: slot.semantics,
+        })
+        .collect())
+}
+
+/// Adapt one validated static mesh collection to the shared character shape.
+fn static_model_asset(
+    asset_name: &str,
+    meshes: &[MeshAsset],
+) -> Result<CharacterAsset, CharacterBinaryFbxError> {
+    validate_static_model(asset_name, meshes)?;
+    let parts = meshes
+        .iter()
+        .cloned()
+        .map(|mesh| SkinnedPart {
+            group_influences: vec![Vec::new(); mesh.groups.len()],
+            mesh,
+        })
+        .collect();
+    Ok(CharacterAsset {
+        name: asset_name.to_owned(),
+        source_provenance: None,
+        bones: Vec::new(),
+        parts,
+    })
 }
 
 /// Validate one static model aggregate before adapting it to shared geometry
@@ -1969,9 +2012,7 @@ fn material_node(
 }
 
 /// Build deterministic scalar and color properties for one semantic material.
-fn material_properties(
-    semantics: crate::domain::texture::MaterialSemantics,
-) -> Vec<BinaryNode> {
+fn material_properties(semantics: MaterialSemantics) -> Vec<BinaryNode> {
     let reflective_color = if semantics.is_reflective() {
         [1f64, 1f64, 1f64]
     } else {
@@ -2026,7 +2067,7 @@ fn material_properties(
 /// Append standard FBX transparency properties when source evidence requires.
 fn append_transparency_properties(
     properties: &mut Vec<BinaryNode>,
-    semantics: crate::domain::texture::MaterialSemantics,
+    semantics: MaterialSemantics,
 ) {
     if !semantics.is_transparent() {
         return;
@@ -2043,10 +2084,7 @@ fn append_transparency_properties(
 }
 
 /// Append deterministic semantic labels without changing binding identity.
-fn semantic_object_name(
-    base: &str,
-    semantics: crate::domain::texture::MaterialSemantics,
-) -> String {
+fn semantic_object_name(base: &str, semantics: MaterialSemantics) -> String {
     semantics
         .suffix()
         .map_or_else(|| base.to_owned(), |suffix| format!("{base}__{suffix}"))

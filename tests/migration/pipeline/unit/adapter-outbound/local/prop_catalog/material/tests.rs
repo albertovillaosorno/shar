@@ -34,7 +34,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 
 use fbx::adapters::driven::decoded_component_source::{
-    DecodedComponentError, ShaderMemberOccurrence,
+    DecodedComponentError, ShaderMemberOccurrence, ShaderParameterEvidence,
+    ShaderSourceEvidence,
 };
 use fbx::domain::mesh::PrimitiveGroup;
 use fbx::domain::texture::MaterialSemantics;
@@ -42,10 +43,14 @@ use fbx::domain::texture::MaterialSemantics;
 use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
+    CanonicalMaterialPresentation, CanonicalShaderPresentationSource,
     DecodedComponentSource, ShaderConsumerProvenance, SharedTextureAuthority,
     WorldMeshSourceCoordinate, canonical_material_identity,
-    material_resolution_error, model_package_member_id, prepare_source_texture,
-    resolve_materials, resolve_source_material, shader_consumer_provenance,
+    material_binding_digest, material_presentation_digest,
+    material_resolution_error,
+    merge_material_presentation_evidence, model_package_member_id,
+    prepare_source_texture, resolve_materials, resolve_source_material,
+    shader_consumer_provenance,
 };
 
 fn phase_three_shader_package() -> Result<PhaseThreePackageRow, String> {
@@ -457,15 +462,15 @@ fn non_world_missing_shader_stays_fail_closed() -> Result<(), String> {
 #[test]
 fn canonical_material_identity_separates_surface_semantics() {
     let opaque = canonical_material_identity(
-        Some("abc123"),
+        "abc123",
         MaterialSemantics::default(),
     );
     let glass = canonical_material_identity(
-        Some("abc123"),
+        "abc123",
         MaterialSemantics::default().with_glass(true),
     );
     let emitter = canonical_material_identity(
-        Some("abc123"),
+        "abc123",
         MaterialSemantics::default()
             .with_transparent(true)
             .with_light_emitter(true),
@@ -475,6 +480,224 @@ fn canonical_material_identity_separates_surface_semantics() {
     assert_eq!(emitter, "material-abc123-transparent-light-emitter");
     assert_ne!(opaque, glass);
     assert_ne!(glass, emitter);
+}
+
+fn shader_evidence(identity: &str, two_sided: u64) -> ShaderSourceEvidence {
+    ShaderSourceEvidence {
+        schema: Some("shader".to_owned()),
+        identity: identity.to_owned(),
+        version: 0,
+        platform_shader_name: Some("simple".to_owned()),
+        translucency: Some(0),
+        vertex_needs: Some(0),
+        vertex_mask: Some(0),
+        parameter_count: Some(2),
+        texture_reference: Some("shared.bmp".to_owned()),
+        params: vec![
+            ShaderParameterEvidence {
+                kind: "texture".to_owned(),
+                param: "TEX".to_owned(),
+                value: serde_json::json!("shared.bmp"),
+            },
+            ShaderParameterEvidence {
+                kind: "int".to_owned(),
+                param: "2SID".to_owned(),
+                value: serde_json::json!(two_sided),
+            },
+        ],
+    }
+}
+
+#[test]
+fn material_digest_separates_runtime_state() -> Result<(), String> {
+    let semantics = MaterialSemantics::default();
+    let one_sided = material_presentation_digest(
+        Some("texture-sha"),
+        [u8::MAX; 4],
+        semantics,
+        Some(&shader_evidence("shared_a", 0)),
+    )
+    .map_err(|error| error.to_string())?;
+    let two_sided = material_presentation_digest(
+        Some("texture-sha"),
+        [u8::MAX; 4],
+        semantics,
+        Some(&shader_evidence("shared_a", 1)),
+    )
+    .map_err(|error| error.to_string())?;
+    assert_ne!(one_sided, two_sided);
+    Ok(())
+}
+
+#[test]
+fn material_presentation_digest_ignores_only_logical_identity()
+-> Result<(), String> {
+    let semantics = MaterialSemantics::default();
+    let first = material_presentation_digest(
+        Some("texture-sha"),
+        [u8::MAX; 4],
+        semantics,
+        Some(&shader_evidence("shared_a", 1)),
+    )
+    .map_err(|error| error.to_string())?;
+    let second = material_presentation_digest(
+        Some("texture-sha"),
+        [u8::MAX; 4],
+        semantics,
+        Some(&shader_evidence("shared_b", 1)),
+    )
+    .map_err(|error| error.to_string())?;
+    assert_eq!(first, second);
+    Ok(())
+}
+
+#[test]
+fn material_binding_digest_separates_logical_shader_identity()
+-> Result<(), String> {
+    let presentation = "presentation-sha";
+    let first = material_binding_digest(presentation, Some("shared_a"))
+        .map_err(|error| error.to_string())?;
+    let repeated = material_binding_digest(presentation, Some("shared_a"))
+        .map_err(|error| error.to_string())?;
+    let second = material_binding_digest(presentation, Some("shared_b"))
+        .map_err(|error| error.to_string())?;
+    assert_eq!(first, repeated);
+    assert_ne!(first, second);
+    Ok(())
+}
+
+#[test]
+fn equivalent_presentation_does_not_merge_distinct_shader_targets()
+-> Result<(), String> {
+    let presentation_sha256 = material_presentation_digest(
+        Some("texture-sha"),
+        [u8::MAX; 4],
+        MaterialSemantics::default(),
+        Some(&shader_evidence("shared_a", 1)),
+    )
+    .map_err(|error| error.to_string())?;
+    let make = |identity: &str, ordinal: usize| -> Result<_, String> {
+        let binding_sha256 = material_binding_digest(
+            &presentation_sha256,
+            Some(identity),
+        )
+        .map_err(|error| error.to_string())?;
+        Ok(CanonicalMaterialPresentation {
+            material_name: canonical_material_identity(
+                &binding_sha256,
+                MaterialSemantics::default(),
+            ),
+            binding_sha256,
+            presentation_sha256: presentation_sha256.clone(),
+            texture_sha256: Some("texture-sha".to_owned()),
+            source_shaders: vec![CanonicalShaderPresentationSource {
+                package_id: Some("package".to_owned()),
+                source_ordinal: Some(ordinal),
+                member: Some(format!("{identity}.json")),
+                evidence: shader_evidence(identity, 1),
+            }],
+        })
+    };
+    let mut first = make("shared_a", 10)?;
+    let second = make("shared_b", 20)?;
+    assert_ne!(first.material_name, second.material_name);
+    assert_ne!(first.binding_sha256, second.binding_sha256);
+    assert_eq!(first.presentation_sha256, second.presentation_sha256);
+    if merge_material_presentation_evidence(&mut first, second).is_ok() {
+        return Err(
+            "distinct shader targets merged into one FBX binding".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn repeated_shader_target_merges_only_provenance() -> Result<(), String> {
+    let presentation_sha256 = material_presentation_digest(
+        Some("texture-sha"),
+        [u8::MAX; 4],
+        MaterialSemantics::default(),
+        Some(&shader_evidence("shared_a", 1)),
+    )
+    .map_err(|error| error.to_string())?;
+    let binding_sha256 = material_binding_digest(
+        &presentation_sha256,
+        Some("shared_a"),
+    )
+    .map_err(|error| error.to_string())?;
+    let material_name = canonical_material_identity(
+        &binding_sha256,
+        MaterialSemantics::default(),
+    );
+    let make = |ordinal: usize| CanonicalMaterialPresentation {
+        material_name: material_name.clone(),
+        binding_sha256: binding_sha256.clone(),
+        presentation_sha256: presentation_sha256.clone(),
+        texture_sha256: Some("texture-sha".to_owned()),
+        source_shaders: vec![CanonicalShaderPresentationSource {
+            package_id: Some(format!("package-{ordinal}")),
+            source_ordinal: Some(ordinal),
+            member: Some(format!("shared_a-{ordinal}.json")),
+            evidence: shader_evidence("shared_a", 1),
+        }],
+    };
+    let mut first = make(10);
+    merge_material_presentation_evidence(&mut first, make(20))
+        .map_err(|error| error.to_string())?;
+    assert_eq!(first.source_shaders.len(), 2);
+    assert!(first
+        .source_shaders
+        .iter()
+        .all(|source| source.evidence.identity == "shared_a"));
+    Ok(())
+}
+
+#[test]
+fn equal_presentations_keep_independent_fbx_material_bindings()
+-> Result<(), String> {
+    let root = std::env::temp_dir().join(format!(
+        "pipeline-independent-shader-binding-{}",
+        std::process::id()
+    ));
+    if root.exists() {
+        fs::remove_dir_all(&root).map_err(|error| error.to_string())?;
+    }
+    let shader_dir = root.join("components/shader");
+    let scratch = root.join("scratch");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    let shader_json = |identity: &str| {
+        format!(
+            concat!(
+                r#"{{"name":"{identity}","num_params":1,"#,
+                r#""params":[{{"kind":"int","param":"2SID","#,
+                r#""value":1}}]}}"#
+            ),
+            identity = identity
+        )
+    };
+    fs::write(shader_dir.join("first_m.json"), shader_json("first_m"))
+        .map_err(|error| error.to_string())?;
+    fs::write(shader_dir.join("second_m.json"), shader_json("second_m"))
+        .map_err(|error| error.to_string())?;
+    let result = resolve_materials(
+        BTreeSet::from(["first_m".to_owned(), "second_m".to_owned()]),
+        &BTreeMap::new(),
+        &root,
+        &scratch,
+        None,
+        None,
+        "",
+    );
+    let cleanup = fs::remove_dir_all(&root);
+    let (renames, materials, textures) =
+        result.map_err(|error| error.to_string())?;
+    assert!(textures.is_empty());
+    assert_eq!(materials.len(), 2);
+    assert_eq!(renames.len(), 2);
+    let names = renames.values().collect::<BTreeSet<_>>();
+    assert_eq!(names.len(), 2);
+    cleanup.map_err(|error| error.to_string())?;
+    Ok(())
 }
 
 #[test]

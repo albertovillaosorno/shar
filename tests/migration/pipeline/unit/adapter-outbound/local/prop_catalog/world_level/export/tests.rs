@@ -39,6 +39,8 @@ use fbx::domain::mesh::{MeshAsset, PrimitiveGroup};
 use fbx::domain::texture::MaterialBinding;
 use shar_sha256::digest_hex;
 
+use super::super::super::material::CanonicalMaterialPresentation;
+
 use super::{
     MasterContent, PreparedTexture, WORLD_ROOT_POLICY,
     append_authored_interior_meshes, append_world_fbx_to_guide,
@@ -94,10 +96,30 @@ fn textured_content() -> Result<MasterContent, String> {
     Ok(MasterContent {
         meshes: vec![textured_mesh()?],
         review: Vec::new(),
+        material_presentations: BTreeMap::from([(
+            material.material_name.clone(),
+            CanonicalMaterialPresentation {
+                material_name: material.material_name.clone(),
+                binding_sha256: "fixture-binding".to_owned(),
+                presentation_sha256: "fixture-presentation".to_owned(),
+                texture_sha256: Some(texture.sha256.clone()),
+                source_shaders: Vec::new(),
+            },
+        )]),
         materials: BTreeMap::from([(material.material_name.clone(), material)]),
         textures: BTreeMap::from([(texture.file_name.clone(), texture)]),
         packages: Vec::new(),
     })
+}
+
+fn fixture_presentation(material_name: &str) -> CanonicalMaterialPresentation {
+    CanonicalMaterialPresentation {
+        material_name: material_name.to_owned(),
+        binding_sha256: "fixture-binding".to_owned(),
+        presentation_sha256: "fixture-presentation".to_owned(),
+        texture_sha256: None,
+        source_shaders: Vec::new(),
+    }
 }
 
 fn temporary_root() -> PathBuf {
@@ -171,6 +193,53 @@ fn nested_fbx_publishes_adjacent_external_textures() -> Result<(), String> {
         if published != TEXTURE_BYTES {
             return Err(String::from("nested interior texture bytes changed"));
         }
+        Ok(())
+    })();
+    let cleanup = remove_if_present(&root);
+    result.and(cleanup)
+}
+
+#[test]
+fn world_fbx_record_exposes_effective_material_slots() -> Result<(), String> {
+    let root = temporary_root().with_file_name(format!(
+        "shar-world-material-slot-test-{}",
+        std::process::id()
+    ));
+    remove_if_present(&root)?;
+    fs::create_dir_all(&root)
+        .map_err(|error| format!("material slot root failed: {error}"))?;
+    let result = (|| {
+        let mut content = textured_content()?;
+        content.meshes = vec![
+            named_textured_mesh("body", 0.)?,
+            named_textured_mesh("window_glass", 2.)?,
+        ];
+        let record = write_content_fbx(
+            "material-slots",
+            "material-slots.fbx",
+            &mut content,
+            &root,
+            ModelExportRootPolicy::ReflectX,
+        )
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "material slot FBX was not written".to_owned())?;
+        assert_eq!(record.materials.len(), 1);
+        assert_eq!(record.summary.materials, 2);
+        assert_eq!(record.material_slots.len(), 2);
+        let mut slots = record.material_slots.iter();
+        let opaque = slots.next().ok_or("opaque world slot is missing")?;
+        let glass = slots.next().ok_or("glass world slot is missing")?;
+        assert!(slots.next().is_none());
+        assert_eq!(opaque.source_material_name, "interior-material");
+        assert_eq!(opaque.slot_name, "interior-material");
+        assert!(!opaque.semantics.is_transparent());
+        assert_eq!(glass.source_material_name, "interior-material");
+        assert_eq!(glass.slot_name, "interior-material__glass");
+        assert!(glass.semantics.is_glass());
+        assert_ne!(
+            opaque.slot_presentation_sha256,
+            glass.slot_presentation_sha256
+        );
         Ok(())
     })();
     let cleanup = remove_if_present(&root);
@@ -321,6 +390,10 @@ fn world_fbx_preserves_repeated_index_evidence_outside_unreal_geometry()
         .map_err(|error| format!("repeated-index material failed: {error:?}"))?;
     let mut content = MasterContent {
         meshes: vec![mesh],
+        material_presentations: BTreeMap::from([(
+            material.material_name.clone(),
+            fixture_presentation(&material.material_name),
+        )]),
         materials: BTreeMap::from([(material.material_name.clone(), material)]),
         ..MasterContent::default()
     };
@@ -427,6 +500,10 @@ fn world_fbx_preserves_zero_area_evidence_outside_unreal_geometry()
         .map_err(|error| format!("zero-area material failed: {error:?}"))?;
     let mut content = MasterContent {
         meshes: vec![mesh],
+        material_presentations: BTreeMap::from([(
+            material.material_name.clone(),
+            fixture_presentation(&material.material_name),
+        )]),
         materials: BTreeMap::from([(material.material_name.clone(), material)]),
         ..MasterContent::default()
     };

@@ -35,7 +35,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
-    ModelExportRootPolicy, write_binary_model_fbx_with_target_surface_frames,
+    ModelExportRootPolicy, static_model_material_slots,
+    write_binary_model_fbx_with_target_surface_frames,
 };
 use fbx::adapters::driven::decoded_component_source::read_mesh_for_analysis;
 use fbx::domain::mesh::MeshAsset;
@@ -46,7 +47,9 @@ use shar_sha256::digest_hex;
 use super::super::extraction::relative_art_root;
 use super::super::inventory_common::portable_asset_name;
 use super::super::material::{
-    WorldMeshSourceCoordinate, canonicalize_world_static_materials,
+    CanonicalMaterialPresentation, WorldMeshSourceCoordinate,
+    canonicalize_world_static_materials_with_presentations,
+    material_presentation_digest, merge_material_presentation_evidence,
 };
 use super::super::model::TextureRecord;
 use super::super::prepared::PreparedTexture;
@@ -68,7 +71,8 @@ use super::layout::{
 };
 use super::model::{
     ExportedWorldCollection, WorldFbxRecord, WorldInteriorRecord,
-    WorldPackageRecord, WorldSurfaceSemanticCounts, WorldTopologyEvidenceRecord,
+    WorldMaterialSlotRecord, WorldPackageRecord, WorldSurfaceSemanticCounts,
+    WorldTopologyEvidenceRecord,
 };
 use super::transform::{bake_mesh, identity, mesh_bounds, translation};
 use crate::domain::PipelineError;
@@ -89,6 +93,9 @@ pub(super) struct MasterContent {
     review: Vec<ReviewMesh>,
     /// Content-derived material bindings.
     pub(super) materials: BTreeMap<String, MaterialBinding>,
+    /// Exact source shader state keyed by canonical material identity.
+    pub(super) material_presentations:
+        BTreeMap<String, CanonicalMaterialPresentation>,
     /// Content-derived texture payloads.
     pub(super) textures: BTreeMap<String, PreparedTexture>,
     /// Canonical package records.
@@ -262,12 +269,15 @@ pub(super) fn export_world_collection(
 
         let review = std::mem::take(&mut package_content.review);
         let review_materials = package_content.materials.clone();
+        let review_material_presentations =
+            package_content.material_presentations.clone();
         let review_textures = package_content.textures.clone();
         if !review.is_empty() {
             let mut review_content = MasterContent {
                 meshes: Vec::new(),
                 review,
                 materials: review_materials,
+                material_presentations: review_material_presentations,
                 textures: review_textures,
                 packages: Vec::new(),
             };
@@ -526,6 +536,10 @@ fn merge_content_presentation(
         &mut target.materials,
         source.materials.values().cloned().collect(),
     )?;
+    merge_material_presentations(
+        &mut target.material_presentations,
+        source.material_presentations.values().cloned().collect(),
+    )?;
     merge_textures(
         &mut target.textures,
         source.textures.values().cloned().collect(),
@@ -741,16 +755,103 @@ fn write_content_fbx(
             ))
         })?;
     }
+    let materials = target.materials.values().cloned().collect::<Vec<_>>();
+    let material_presentations = target
+        .material_presentations
+        .values()
+        .cloned()
+        .collect::<Vec<_>>();
+    let material_names = materials
+        .iter()
+        .map(|material| material.material_name.as_str())
+        .collect::<BTreeSet<_>>();
+    let presentation_names = material_presentations
+        .iter()
+        .map(|presentation| presentation.material_name.as_str())
+        .collect::<BTreeSet<_>>();
+    if material_names != presentation_names {
+        return Err(PipelineError::new(
+            "world FBX material presentation coverage is incomplete",
+        ));
+    }
+    let binding_by_name = materials
+        .iter()
+        .map(|binding| (binding.material_name.as_str(), binding))
+        .collect::<BTreeMap<_, _>>();
+    let presentation_by_name = material_presentations
+        .iter()
+        .map(|presentation| (presentation.material_name.as_str(), presentation))
+        .collect::<BTreeMap<_, _>>();
+    let material_slots = static_model_material_slots(
+        scene_name,
+        &target.meshes,
+        &materials,
+    )
+    .map_err(|error| {
+        PipelineError::new(format!(
+            "world package material slot plan failed: {error:?}"
+        ))
+    })?
+    .into_iter()
+    .map(|slot| {
+        let binding = binding_by_name
+            .get(slot.source_material_name.as_str())
+            .copied()
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "world FBX slot source binding is missing: {}",
+                    slot.source_material_name
+                ))
+            })?;
+        let presentation = presentation_by_name
+            .get(slot.source_material_name.as_str())
+            .copied()
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "world FBX slot source presentation is missing: {}",
+                    slot.source_material_name
+                ))
+            })?;
+        let shader = presentation
+            .source_shaders
+            .first()
+            .map(|source| &source.evidence);
+        let slot_presentation_sha256 = material_presentation_digest(
+            presentation.texture_sha256.as_deref(),
+            binding.base_color_rgba8,
+            slot.semantics,
+            shader,
+        )?;
+        Ok(WorldMaterialSlotRecord {
+            slot_name: slot.material_name,
+            source_material_name: slot.source_material_name,
+            binding_sha256: presentation.binding_sha256.clone(),
+            presentation_sha256: presentation.presentation_sha256.clone(),
+            slot_presentation_sha256,
+            semantics: slot.semantics,
+        })
+    })
+    .collect::<Result<Vec<_>, PipelineError>>()?;
     let summary = write_binary_model_fbx_with_target_surface_frames(
         scene_name,
         &target.meshes,
-        &target.materials.values().cloned().collect::<Vec<_>>(),
+        &materials,
         root_policy,
         &path,
     )
     .map_err(|error| {
         PipelineError::new(format!("world package FBX write failed: {error:?}"))
     })?;
+    if summary.materials != material_slots.len() {
+        return Err(PipelineError::new(format!(
+            concat!(
+                "world FBX material slot plan disagrees with writer ",
+                "summary: {} != {}"
+            ),
+            material_slots.len(),
+            summary.materials
+        )));
+    }
     publish_nested_content_textures(relative_path, &target, output_root)?;
     let evidence_record = publish_topology_evidence(
         relative_path,
@@ -773,6 +874,9 @@ fn write_content_fbx(
         unreal_omitted_zero_area_triangles: topology_evidence.iter()
             .filter(|entry| entry.reason == "zero_area").count(),
         topology_evidence: evidence_record,
+        materials,
+        material_presentations,
+        material_slots,
         summary,
         surface_semantics,
     }))
@@ -880,7 +984,7 @@ fn append_package(
             source_ordinal: source.ordinal,
         })
         .collect::<Vec<_>>();
-    let (materials, textures) = canonicalize_world_static_materials(
+    let projection = canonicalize_world_static_materials_with_presentations(
         &mut meshes,
         &package_root,
         &package_scratch,
@@ -889,8 +993,12 @@ fn append_package(
         Some(&mesh_source_coordinates),
         &package.subcategory,
     )?;
-    merge_materials(&mut package_content.materials, materials)?;
-    merge_textures(&mut package_content.textures, textures)?;
+    merge_materials(&mut package_content.materials, projection.materials)?;
+    merge_material_presentations(
+        &mut package_content.material_presentations,
+        projection.presentations,
+    )?;
+    merge_textures(&mut package_content.textures, projection.textures)?;
     for (source, mesh) in sources.into_iter().zip(meshes) {
         append_source_mesh(
             package,
@@ -1376,6 +1484,9 @@ fn retain_used_presentation(content: &mut MasterContent) {
     content
         .materials
         .retain(|name, _binding| used_materials.contains(name));
+    content
+        .material_presentations
+        .retain(|name, _presentation| used_materials.contains(name));
     let used_textures = content
         .materials
         .values()
@@ -1403,6 +1514,27 @@ fn merge_materials(
             None => {
                 let _previous =
                     target.insert(material.material_name.clone(), material);
+            },
+        }
+    }
+    Ok(())
+}
+
+/// Merge source presentation evidence without material-identity conflicts.
+fn merge_material_presentations(
+    target: &mut BTreeMap<String, CanonicalMaterialPresentation>,
+    presentations: Vec<CanonicalMaterialPresentation>,
+) -> Result<(), PipelineError> {
+    for presentation in presentations {
+        match target.get_mut(&presentation.material_name) {
+            Some(existing) => {
+                merge_material_presentation_evidence(existing, presentation)?;
+            },
+            None => {
+                let _previous = target.insert(
+                    presentation.material_name.clone(),
+                    presentation,
+                );
             },
         }
     }

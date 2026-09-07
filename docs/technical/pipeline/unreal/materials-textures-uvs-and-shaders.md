@@ -144,6 +144,22 @@ faces. This is a raster-state translation, not permission to duplicate faces,
 reverse authored winding, or repair source normals. Shadow and special-purpose
 passes keep their independently validated native culling policy.
 
+The `shar.world-package-collection.v8` artifact records both exact base
+`material_bindings` and exact `material_slots` emitted by the binary writer for
+each world FBX. Every binding row carries an independent `binding_sha256`
+for its runtime-addressable source shader target and a separate
+`presentation_sha256` for its initial visual state, plus canonical PNG identity,
+decoded diffuse RGBA8 tint, and six overlapping surface-semantic flags.
+
+A base binding may fan out to multiple FBX slots when geometry identity adds
+effective surface semantics. Each `material_slots` row therefore carries the
+exact `slot_name`, `source_material_name`, base binding and presentation hashes,
+an effective `slot_presentation_sha256`, and the effective semantic flags.
+Unreal projection must address the exact slot, join source state through
+`source_material_name`, and may deduplicate native Material Instances only by
+the effective presentation hash without merging runtime targets. It must not
+infer shader meaning from slot names or reparse source P3D packages.
+
 ## Stylized rendering
 
 The stylized appearance is implemented through authored shape, color, material
