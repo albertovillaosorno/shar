@@ -35,12 +35,13 @@ use std::fs;
 use std::io::Write as _;
 use std::path::Path;
 
+use fbx::adapters::driven::decoded_component_source::ShaderSourceEvidence;
 use serde_json::{Value, json};
 
 use super::model::{
     ExportedWorldCollection, WorldCollectionCounts, WorldFbxRecord,
-    WorldInteriorRecord, WorldPackageRecord, WorldSurfaceSemanticCounts,
-    WorldTopologyEvidenceRecord,
+    WorldInteriorRecord, WorldMaterialSlotRecord, WorldPackageRecord,
+    WorldSurfaceSemanticCounts, WorldTopologyEvidenceRecord,
 };
 use crate::domain::PipelineError;
 
@@ -182,7 +183,7 @@ fn catalog_value(
     collection: &ExportedWorldCollection,
 ) -> Value {
     json!({
-        "schema": "shar.world-package-collection.v7",
+        "schema": "shar.world-package-collection.v8",
         "status": "source-authored-fbx-baseline",
         "boundary": {
             "canonical_model_authority": concat!(
@@ -523,9 +524,91 @@ fn artifact_value(artifact: &WorldFbxRecord) -> Value {
         "bones": artifact.summary.bones,
         "clusters": artifact.summary.clusters,
         "materials": artifact.summary.materials,
+        "material_bindings": artifact.materials.iter()
+            .zip(&artifact.material_presentations)
+            .map(|(binding, presentation)| {
+                material_binding_value(binding, presentation)
+            })
+            .collect::<Vec<_>>(),
+        "material_slots": artifact.material_slots.iter()
+            .map(material_slot_value)
+            .collect::<Vec<_>>(),
         "textures": artifact.summary.textures,
         "animations": artifact.summary.animations,
         "surface_semantics": semantics_value(artifact.surface_semantics)
+    })
+}
+
+
+/// Render one exact semantic material slot emitted by the FBX writer.
+fn material_slot_value(slot: &WorldMaterialSlotRecord) -> Value {
+    let semantics = slot.semantics;
+    json!({
+        "slot_name": slot.slot_name,
+        "source_material_name": slot.source_material_name,
+        "binding_sha256": slot.binding_sha256,
+        "presentation_sha256": slot.presentation_sha256,
+        "slot_presentation_sha256": slot.slot_presentation_sha256,
+        "semantics": {
+            "transparent": semantics.is_transparent(),
+            "glass": semantics.is_glass(),
+            "mirror": semantics.is_mirror(),
+            "reflective": semantics.is_reflective(),
+            "light_emitter": semantics.is_light_emitter(),
+            "visual_effect": semantics.is_visual_effect()
+        }
+    })
+}
+
+/// Render one exact material-to-texture binding used by a written world FBX.
+fn material_binding_value(
+    binding: &fbx::domain::texture::MaterialBinding,
+    presentation: &super::super::material::CanonicalMaterialPresentation,
+) -> Value {
+    let semantics = binding.semantics;
+    json!({
+        "material_name": binding.material_name,
+        "texture_file_name": binding.texture_file_name,
+        "texture_sha256": presentation.texture_sha256,
+        "binding_sha256": presentation.binding_sha256,
+        "presentation_sha256": presentation.presentation_sha256,
+        "base_color_rgba8": binding.base_color_rgba8,
+        "semantics": {
+            "transparent": semantics.is_transparent(),
+            "glass": semantics.is_glass(),
+            "mirror": semantics.is_mirror(),
+            "reflective": semantics.is_reflective(),
+            "light_emitter": semantics.is_light_emitter(),
+            "visual_effect": semantics.is_visual_effect()
+        },
+        "source_shaders": presentation.source_shaders.iter().map(|source| {
+            json!({
+                "package_id": source.package_id,
+                "source_ordinal": source.source_ordinal,
+                "member": source.member,
+                "shader": shader_evidence_value(&source.evidence)
+            })
+        }).collect::<Vec<_>>()
+    })
+}
+
+/// Render validated runtime-visible PDDI shader evidence verbatim.
+fn shader_evidence_value(evidence: &ShaderSourceEvidence) -> Value {
+    json!({
+        "schema": evidence.schema,
+        "identity": evidence.identity,
+        "version": evidence.version,
+        "platform_shader_name": evidence.platform_shader_name,
+        "translucency": evidence.translucency,
+        "vertex_needs": evidence.vertex_needs,
+        "vertex_mask": evidence.vertex_mask,
+        "parameter_count": evidence.parameter_count,
+        "texture_reference": evidence.texture_reference,
+        "params": evidence.params.iter().map(|parameter| json!({
+            "kind": parameter.kind,
+            "param": parameter.param,
+            "value": parameter.value
+        })).collect::<Vec<_>>()
     })
 }
 

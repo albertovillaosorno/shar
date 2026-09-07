@@ -31,8 +31,27 @@
 //! Model outbound adapter.
 
 use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
+use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 
+use super::super::material::CanonicalMaterialPresentation;
 use super::super::model::TextureRecord;
+
+/// One exact material slot emitted by the binary FBX writer.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct WorldMaterialSlotRecord {
+    /// Exact FBX material object identity.
+    pub(super) slot_name: String,
+    /// Canonical input material binding used by source primitive groups.
+    pub(super) source_material_name: String,
+    /// Runtime-addressable source shader binding digest.
+    pub(super) binding_sha256: String,
+    /// Initial presentation digest before geometry semantics are merged.
+    pub(super) presentation_sha256: String,
+    /// Effective presentation digest after geometry semantics are merged.
+    pub(super) slot_presentation_sha256: String,
+    /// Exact effective semantics encoded into this FBX slot.
+    pub(super) semantics: MaterialSemantics,
+}
 
 /// One written static FBX artifact at the shared world origin.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -51,6 +70,12 @@ pub(super) struct WorldFbxRecord {
     pub(super) unreal_omitted_zero_area_triangles: usize,
     /// Optional exact source-topology evidence sidecar for target omissions.
     pub(super) topology_evidence: Option<WorldTopologyEvidenceRecord>,
+    /// Base material bindings supplied to the writer in canonical order.
+    pub(super) materials: Vec<MaterialBinding>,
+    /// Exact source shader presentation aligned by material binding identity.
+    pub(super) material_presentations: Vec<CanonicalMaterialPresentation>,
+    /// Exact semantic material slots emitted by the binary writer.
+    pub(super) material_slots: Vec<WorldMaterialSlotRecord>,
     /// Binary FBX object-family summary.
     pub(super) summary: CharacterBinaryFbxSummary,
     /// Overlapping semantic surface counts.

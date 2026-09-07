@@ -107,3 +107,44 @@ fn cluster_bones_preserve_skeleton_ordinal_order() -> Result<(), String> {
     assert_eq!(first.used_bones, ["z_root", "a_child"]);
     Ok(())
 }
+
+#[test]
+fn static_material_slot_plan_preserves_geometry_semantic_variants()
+-> Result<(), String> {
+    let group = || {
+        PrimitiveGroup::new(
+            0,
+            "surface",
+            vec![[0., 0., 0.], [1., 0., 0.], [0., 1., 0.]],
+            Vec::new(),
+            &[0, 1, 2],
+        )
+        .map_err(|error| format!("primitive group failed: {error:?}"))
+    };
+    let opaque = MeshAsset::new("body", vec![group()?])
+        .map_err(|error| format!("opaque mesh failed: {error:?}"))?;
+    let glass = MeshAsset::new("window_glass", vec![group()?])
+        .map_err(|error| format!("glass mesh failed: {error:?}"))?;
+    let materials = vec![
+        MaterialBinding::new("surface", None)
+            .map_err(|error| format!("material failed: {error:?}"))?,
+    ];
+    let slots = static_model_material_slots(
+        "semantic-variants",
+        &[opaque, glass],
+        &materials,
+    )
+    .map_err(|error| format!("slot planning failed: {error:?}"))?;
+    assert_eq!(slots.len(), 2);
+    let mut slots = slots.iter();
+    let opaque_slot = slots.next().ok_or("opaque slot is missing")?;
+    let glass_slot = slots.next().ok_or("glass slot is missing")?;
+    assert!(slots.next().is_none());
+    assert_eq!(opaque_slot.material_name, "surface");
+    assert_eq!(opaque_slot.source_material_name, "surface");
+    assert!(!opaque_slot.semantics.is_transparent());
+    assert_eq!(glass_slot.material_name, "surface__glass");
+    assert_eq!(glass_slot.source_material_name, "surface");
+    assert!(glass_slot.semantics.is_glass());
+    Ok(())
+}

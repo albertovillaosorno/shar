@@ -51,3 +51,26 @@ The Unreal-target topology sidecar omits only 13 source triangles across the
 entire zone (11 zero-area and two repeated-index), with just one zero-area
 omission in the sampled grass track. Do not add a replacement
 floor or duplicate/backflip faces to compensate for the current preview.
+
+September 5 material-projection follow-up makes the next world publication
+self-describing for native presentation. `shar.world-package-collection.v8`
+publishes base `material_bindings` with independent `binding_sha256` and
+`presentation_sha256` identities, normalized PNG identity, decoded diffuse RGBA8
+tint, and six overlapping source surface-semantic flags.
+
+The same artifact now publishes exact binary-writer `material_slots`. A base
+binding may fan out when geometry identity adds effective semantics, so each
+slot records its exact `slot_name`, `source_material_name`, base hashes, and
+an effective `slot_presentation_sha256` with its effective semantic flags.
+
+Pure3D shader and texture animation controllers resolve their target shader by
+logical identity, so distinct source shader identities remain independent even
+when presentation hashes match. Unreal automation can address the exact writer
+slot and join back through `source_material_name`; Material Instances may reuse
+an effective presentation hash only without merging those runtime targets.
+
+Full-source v8 acceptance publishes 190 FBX artifacts with 7,127 base binding
+occurrences and 7,215 exact writer slots. The 88 additional slots explain all
+31 earlier binding-to-material count gaps, while FBX bytes, base bindings, and
+the 1,756 root textures remain byte-for-byte deterministic. The exhaustive
+catalog audit reports zero errors.
