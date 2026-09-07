@@ -64,6 +64,7 @@ use super::mission_music_context::preflight_mission_music_states;
 use super::mission_order_context::build_mission_order_source_reports;
 use super::unreal_fbx_catalog::verified_fbx_catalog_at;
 use super::unreal_vehicle_catalog::verified_vehicle_fbx_catalog;
+use super::unreal_world_material_catalog::verified_world_material_catalog;
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
@@ -106,6 +107,7 @@ use crate::manifest_paths::{
 };
 use crate::workspace::{
     FBX_WORKSPACE_ROOT, UI_RASTER_WORKSPACE_ROOT, VEHICLE_WORKSPACE_ROOT,
+    WORLD_WORKSPACE_ROOT,
     UI_SCROOBY_BINDING_WORKSPACE_ROOT, UI_SCROOBY_JOINED_RASTER_WORKSPACE_ROOT,
     UI_SCROOBY_LAYOUT_WORKSPACE_ROOT,
     UI_SCROOBY_RESOURCE_WORKSPACE_ROOT,
@@ -303,6 +305,19 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         verified_vehicle_fbx_catalog(Path::new(VEHICLE_WORKSPACE_ROOT))?;
     let verified_vehicle_fbx_count =
         vehicle_fbx_catalog.as_ref().map_or(0, Vec::len);
+    let world_material_catalog =
+        verified_world_material_catalog(Path::new(WORLD_WORKSPACE_ROOT))?;
+    let world_material_counts = world_material_catalog.as_ref().map_or(
+        (0, 0, 0, 0),
+        |catalog| {
+            (
+                catalog.artifact_count,
+                catalog.binding_count,
+                catalog.slot_count,
+                catalog.master_family_count,
+            )
+        },
+    );
     let plan_bundle = unreal_manifest
         .plan_bundle_with_complete_generated_catalogs(
             &manifest_revision,
@@ -358,7 +373,9 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             concat!(
                 "verified {} sources across {} semantic packages, {} ",
                 "generated FBX artifacts, {} verified vehicle FBX artifacts, ",
-                "{} verified UI sprite rasters, {} joined Scrooby sprite ",
+                "{} verified world presentation artifacts with {} bindings, ",
+                "{} slots, and {} master families, {} verified UI sprite ",
+                "rasters, {} joined Scrooby sprite ",
                 "rasters across {} packages, and {} ",
                 "verified Scrooby projects with {} resolved bindings, ",
                 "{} direct-import-backed bindings, {} normalized-entity-",
@@ -376,6 +393,10 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             unreal_manifest.package_count(),
             verified_fbx_count,
             verified_vehicle_fbx_count,
+            world_material_counts.0,
+            world_material_counts.1,
+            world_material_counts.2,
+            world_material_counts.3,
             verified_ui_raster_count,
             scrooby_joined_rasters.raster_count,
             scrooby_joined_rasters.package_count,

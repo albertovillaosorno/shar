@@ -57,6 +57,8 @@ pub(crate) const FBX_WORKSPACE_ROOT: &str = ".cache/pipeline/fbx-assets";
 /// Default physical dedicated vehicle FBX catalog workspace.
 pub(crate) const VEHICLE_WORKSPACE_ROOT: &str =
     ".cache/pipeline/vehicle-assets";
+/// Default physical source-authored world presentation workspace.
+pub(crate) const WORLD_WORKSPACE_ROOT: &str = ".cache/pipeline/world-assets";
 /// Default physical complete UI-sprite raster catalog workspace.
 pub(crate) const UI_RASTER_WORKSPACE_ROOT: &str =
     ".cache/pipeline/ui-raster-assets";
