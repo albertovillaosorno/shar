@@ -46,7 +46,9 @@ use crate::domain::{
 const FBX_ARTIFACT_LOGICAL_ROOT: &str = "fbx-assets";
 const CATALOG_FILE: &str = "catalog.jsonl";
 pub(super) const CATALOG_SCHEMA: &str = "shar-schoenwald.fbx-catalog.v2";
-const PNG_MAGIC: &[u8] = &[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+pub(super) const PNG_MAGIC: &[u8] = &[
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+];
 pub(super) const FBX_VERSION: u32 = 7700;
 const FBX_HEADER_SIZE: usize = 27;
 const FBX_MAGIC: &[u8] = b"Kaydara FBX Binary  \0\x1a\0";
