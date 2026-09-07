@@ -15,6 +15,14 @@ The crate validates conversion evidence and produces stable Unreal target
 families, object paths, dependency plans, artifact records, and provenance. It
 does not import assets by opening Unreal Editor itself.
 
+For source-authored world presentation, the crate also accepts already-verified
+`shar.world-package-collection.v8` material rows through the typed
+`WorldMaterialProjection` boundary. That boundary preserves exact writer slot
+names and runtime-addressable binding hashes, validates normalized texture
+identity, and deduplicates only equal effective `slot_presentation_sha256`
+states. It deliberately does not select an Unreal master material, infer shader
+meaning from names, or reparse P3D evidence.
+
 ## Boundary
 
 This crate must never contain:
