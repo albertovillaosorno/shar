@@ -40,9 +40,11 @@
 #include "Materials/Material.h"
 #include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialExpressionCustom.h"
+#include "Materials/MaterialExpressionMultiply.h"
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionTextureSampleParameter2D.h"
 #include "Materials/MaterialExpressionVectorParameter.h"
+#include "Materials/MaterialExpressionVertexColor.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Misc/AutomationTest.h"
@@ -75,6 +77,44 @@ bool HasNamedVectorParameter(const UMaterial& Material, const FName Name)
             Expression
         );
         if (Parameter != nullptr && Parameter->ParameterName == Name)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool HasTextureVertexModulation(
+    const UMaterial& Material,
+    const int32 TextureOutput,
+    const int32 VertexOutput
+)
+{
+    for (UMaterialExpression* Expression : Material.GetExpressions())
+    {
+        const auto* Multiply = Cast<UMaterialExpressionMultiply>(Expression);
+        if (Multiply == nullptr)
+        {
+            continue;
+        }
+        const auto IsTextureVertexPair = [TextureOutput, VertexOutput](
+            const FExpressionInput& TextureInput,
+            const FExpressionInput& VertexInput
+        )
+        {
+            return Cast<UMaterialExpressionTextureSampleParameter2D>(
+                       TextureInput.Expression
+                   ) != nullptr
+                && TextureInput.OutputIndex == TextureOutput
+                && Cast<UMaterialExpressionVertexColor>(
+                       VertexInput.Expression
+                   ) != nullptr
+                && VertexInput.OutputIndex == VertexOutput;
+        };
+        if (
+            IsTextureVertexPair(Multiply->A, Multiply->B)
+            || IsTextureVertexPair(Multiply->B, Multiply->A)
+        )
         {
             return true;
         }
@@ -187,6 +227,14 @@ bool FSharWorldMaterialTest::RunTest(const FString& Parameters)
         TestTrue(
             TEXT("Base-color tint parameter exists"),
             HasNamedVectorParameter(*Material, TEXT("BaseColorTint"))
+        );
+        TestTrue(
+            TEXT("Unlit colour uses source texture and vertex colour"),
+            HasTextureVertexModulation(*Material, 0, 0)
+        );
+        TestTrue(
+            TEXT("Unlit alpha uses source texture and vertex alpha"),
+            HasTextureVertexModulation(*Material, 4, 4)
         );
         TestEqual(
             TEXT("Alpha-test custom discard matches source family"),
