@@ -57,7 +57,16 @@ def test_unreal_project_has_one_canonical_descriptor_root() -> None:
         _REPOSITORY_ROOT / "uproject",
         _REPOSITORY_ROOT / "shar-uproject",
     )
-    descriptors = tuple(sorted(_REPOSITORY_ROOT.rglob("*.uproject")))
+    runtime_roots = {".cache", ".dependencies", ".git", ".logs", ".temp"}
+    descriptors = tuple(
+        sorted(
+            path
+            for path in _REPOSITORY_ROOT.rglob("*.uproject")
+            if not runtime_roots.intersection(
+                path.relative_to(_REPOSITORY_ROOT).parts
+            )
+        )
+    )
 
     assert descriptors == (canonical_root / "shar.uproject",)
     assert all(not path.exists() for path in obsolete_roots)
@@ -320,4 +329,23 @@ def test_game_feature_data_primary_asset_type_is_always_cooked() -> None:
     )
 
     assert "[/Script/Engine.AssetManagerSettings]" in settings_lines
+    assert settings_lines.count(expected_entry) == 1
+
+
+def test_vehicle_presentation_primary_asset_type_is_always_cooked() -> None:
+    """Vehicle presentation definitions must remain discoverable for cooking."""
+    settings_path = (
+        _REPOSITORY_ROOT
+        / "src/unreal/project/composition/uproject/Config/DefaultGame.ini"
+    )
+    settings_lines = settings_path.read_text(encoding="utf-8").splitlines()
+    expected_entry = (
+        '+PrimaryAssetTypesToScan=(PrimaryAssetType="SharVehiclePresentation",'
+        "AssetBaseClass=/Script/SharVehicles.SharVehiclePresentationDefinition,"
+        "bHasBlueprintClasses=False,bIsEditorOnly=False,"
+        'Directories=((Path="/Game/SHAR/Data/Vehicles")),SpecificAssets=,'
+        "Rules=(Priority=0,ChunkId=-1,bApplyRecursively=True,"
+        "CookRule=AlwaysCook))"
+    )
+
     assert settings_lines.count(expected_entry) == 1
