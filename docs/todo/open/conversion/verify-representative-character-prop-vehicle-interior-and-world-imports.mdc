@@ -110,10 +110,25 @@ vehicle-construction test or construction object exists in the current module.
 This narrows the remaining P0 work to the typed construction boundary rather
 than another catalog or skeletal-import repair.
 
-Current source inspection narrows that construction gap further.
-`USharVehicleDefinition` owns canonical ids, coarse physics scalars, seats,
-damage bands, and policy ids, but no typed Skeletal Mesh, Physics Asset,
-Animation Blueprint, or wheel-definition references. The `SharVehicles` module
-also has no `ChaosVehicles` dependency, so native construction requires a
-reviewed composition boundary rather than hiding catalog paths inside existing
-identity fields.
+The typed native presentation boundary now exists without changing the
+identity/tuning contract in `USharVehicleDefinition`.
+`USharVehiclePresentationDefinition` requires the final Skeletal Mesh, Skeleton,
+Physics Asset, Animation Blueprint class, ordered Material Instances, semantic
+rig profile, deterministic preparation revision, and ordered wheel bindings.
+Each wheel binding carries its canonical wheel id, exact bone or socket, and
+native Chaos wheel class. The project registers this definition as the
+`SharVehiclePresentation` Primary Asset type, and `SharVehicles` now declares
+the `ChaosVehicles` module while the project explicitly enables
+`ChaosVehiclesPlugin`.
+
+A fresh Unreal Engine 5.8.1 Linux editor build validates that boundary natively.
+The bounded precompiled build compiled all 31 required actions for `shar`,
+`SharImportEditor`, and `SharVehicles`, including the new presentation
+definition and vehicle automation tests, then linked all three editor modules
+with `Result: Succeeded` and no compiler errors.
+
+The broader P0 criterion remains open because this definition is construction
+evidence, not a constructed vehicle. A reviewed transaction still needs to load
+and cross-check those soft references, bind the skeletal presentation and
+materials, create or apply the Physics Asset and wheel setup, configure the
+Chaos vehicle Pawn, read the result back, and compensate partial failure.
