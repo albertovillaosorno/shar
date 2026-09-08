@@ -49,6 +49,7 @@
 #include "Materials/MaterialInterface.h"
 #include "Misc/AutomationTest.h"
 #include "PhysicsEngine/PhysicsAsset.h"
+#include "PhysicsEngine/SkeletalBodySetup.h"
 #include "ReferenceSkeleton.h"
 #include "VehicleAnimationInstance.h"
 
@@ -214,6 +215,16 @@ static void AddVehicleTestBone(
     );
 }
 
+static void AddVehicleTestPhysicsBody(
+    UPhysicsAsset& PhysicsAsset,
+    const FName BoneName
+)
+{
+    auto* Body = NewObject<USkeletalBodySetup>(&PhysicsAsset);
+    Body->BoneName = BoneName;
+    PhysicsAsset.SkeletalBodySetups.Add(Body);
+}
+
 static USharVehiclePresentationDefinition*
 MakeResolvedVehiclePresentation()
 {
@@ -234,6 +245,11 @@ MakeResolvedVehiclePresentation()
     }
     SkeletalMesh->SetRefSkeleton(ReferenceSkeleton);
     SkeletalMesh->SetSkeleton(Skeleton);
+    AddVehicleTestPhysicsBody(*PhysicsAsset, FName(TEXT("w0")));
+    AddVehicleTestPhysicsBody(*PhysicsAsset, FName(TEXT("w1")));
+    AddVehicleTestPhysicsBody(*PhysicsAsset, FName(TEXT("w2")));
+    AddVehicleTestPhysicsBody(*PhysicsAsset, FName(TEXT("w3")));
+    PhysicsAsset->UpdateBodySetupIndexMap();
     TArray<FSkeletalMaterial> Materials;
     Materials.Emplace(Material, FName(TEXT("body")));
     SkeletalMesh->SetMaterials(Materials);
@@ -530,6 +546,28 @@ bool FSharVehicleConstructionTransactionTest::RunTest(
     TestTrue(
         TEXT("Rejected construction remains idle"),
         InvalidTransaction->GetState() == ESharVehicleConstructionState::Idle
+    );
+
+    auto* MissingBodyPresentation = MakeResolvedVehiclePresentation();
+    UPhysicsAsset* MissingBodyAsset =
+        MissingBodyPresentation->PhysicsAsset.Get();
+    TestNotNull(TEXT("Resolved Physics Asset exists"), MissingBodyAsset);
+    if (MissingBodyAsset == nullptr)
+    {
+        return false;
+    }
+    MissingBodyAsset->SkeletalBodySetups.RemoveAt(0);
+    MissingBodyAsset->UpdateBodySetupIndexMap();
+    auto* MissingBodyTransaction =
+        NewObject<USharVehicleConstructionTransaction>();
+    TestFalse(
+        TEXT("Construction rejects a wheel without a Physics Asset body"),
+        MissingBodyTransaction->Prepare(Pawn, Vehicle, MissingBodyPresentation)
+    );
+    TestTrue(
+        TEXT("Missing-body rejection remains idle"),
+        MissingBodyTransaction->GetState()
+            == ESharVehicleConstructionState::Idle
     );
     return true;
 }
