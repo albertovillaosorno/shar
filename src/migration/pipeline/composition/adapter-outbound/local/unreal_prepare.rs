@@ -65,6 +65,7 @@ use super::mission_order_context::build_mission_order_source_reports;
 use super::unreal_fbx_catalog::verified_fbx_catalog_at;
 use super::unreal_vehicle_catalog::verified_vehicle_fbx_catalog;
 use super::unreal_world_material_catalog::verified_world_material_catalog;
+use super::unreal_world_material_plan::render_world_material_plan;
 use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
@@ -124,20 +125,23 @@ const MISSION_TUNING_FILE: &str = "mission-tuning.jsonl";
 const VEHICLE_TUNING_FILE: &str = "vehicle-tuning.jsonl";
 /// Canonical contextual vehicle-tuning usage bundle filename.
 const VEHICLE_TUNING_USAGE_FILE: &str = "vehicle-tuning-usage.jsonl";
+/// Canonical verified world-material evidence filename.
+const WORLD_MATERIALS_FILE: &str = "world-materials.json";
 /// Canonical generated plan directory.
 const PLAN_ROOT: &str = "plans";
 /// Release index schema that binds semantic sidecars to the plan bundle.
 const RELEASE_PLAN_BUNDLE_SCHEMA: &str =
-    "shar-schoenwald.unreal-plan-bundle.v4";
+    "shar-schoenwald.unreal-plan-bundle.v5";
 /// Canonical generated plan-bundle index filename.
 const PLAN_INDEX_FILE: &str = "plans/index.json";
 /// Complete set of files published by one prepare-unreal transaction.
-const PUBLISHED_FILES: [&str; 12] = [
+const PUBLISHED_FILES: [&str; 13] = [
     SUMMARY_FILE,
     MISSION_DEFINITIONS_FILE,
     MISSION_TUNING_FILE,
     VEHICLE_TUNING_FILE,
     VEHICLE_TUNING_USAGE_FILE,
+    WORLD_MATERIALS_FILE,
     PLAN_INDEX_FILE,
     "plans/asset-import-plan.json",
     "plans/asset-construction-plan.json",
@@ -318,6 +322,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             )
         },
     );
+    let world_materials_json =
+        render_world_material_plan(world_material_catalog.as_ref())?;
     let plan_bundle = unreal_manifest
         .plan_bundle_with_complete_generated_catalogs(
             &manifest_revision,
@@ -334,6 +340,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &mission_tuning_jsonl,
         &vehicle_tuning_jsonl,
         &vehicle_tuning_usage_jsonl,
+        &world_materials_json,
     )?;
     let unreal_manifest_path =
         config.game_root.join(UNREAL_MANIFEST_GAME_RELATIVE_PATH);
@@ -345,6 +352,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &mission_tuning_jsonl,
         &vehicle_tuning_jsonl,
         &vehicle_tuning_usage_jsonl,
+        &world_materials_json,
         &release_plan_index,
         &plan_bundle,
         &unreal_manifest_path,
@@ -366,6 +374,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &mission_tuning_jsonl,
             &vehicle_tuning_jsonl,
             &vehicle_tuning_usage_jsonl,
+            &world_materials_json,
             &release_plan_index,
             &plan_bundle,
         ),
@@ -4019,6 +4028,7 @@ fn bind_release_plan_index(
     mission_tuning: &str,
     vehicle_tuning: &str,
     vehicle_tuning_usage: &str,
+    world_materials: &str,
 ) -> PipelineOutcome<ReleasePlanIndex> {
     let base = parse_object(
         plans.index_json().trim_end_matches('\n'),
@@ -4061,6 +4071,11 @@ fn bind_release_plan_index(
             artifact_id: "vehicle-tuning-usage",
             filename: VEHICLE_TUNING_USAGE_FILE,
             content: vehicle_tuning_usage,
+        },
+        SemanticArtifact {
+            artifact_id: "world-materials",
+            filename: WORLD_MATERIALS_FILE,
+            content: world_materials,
         },
     ];
     let preimage = render_release_plan_index(&base, plans, "", &artifacts)?;
@@ -4209,6 +4224,7 @@ fn published_byte_count(
     mission_tuning: &str,
     vehicle_tuning: &str,
     vehicle_tuning_usage: &str,
+    world_materials: &str,
     release_plan_index: &ReleasePlanIndex,
     plans: &PlanBundle,
 ) -> u64 {
@@ -4226,6 +4242,7 @@ fn published_byte_count(
             .saturating_add(mission_tuning.len())
             .saturating_add(vehicle_tuning.len())
             .saturating_add(vehicle_tuning_usage.len())
+            .saturating_add(world_materials.len())
             .saturating_add(plan_bytes),
     )
     .unwrap_or(u64::MAX)
@@ -4242,6 +4259,7 @@ fn publish_staging(
     mission_tuning: &str,
     vehicle_tuning: &str,
     vehicle_tuning_usage: &str,
+    world_materials: &str,
     release_plan_index: &ReleasePlanIndex,
     plans: &PlanBundle,
     manifest_destination: &Path,
@@ -4292,6 +4310,7 @@ fn publish_staging(
         (MISSION_TUNING_FILE, mission_tuning),
         (VEHICLE_TUNING_FILE, vehicle_tuning),
         (VEHICLE_TUNING_USAGE_FILE, vehicle_tuning_usage),
+        (WORLD_MATERIALS_FILE, world_materials),
         (PLAN_INDEX_FILE, release_plan_index.json.as_str()),
     ] {
         write_staged_file(&staging, relative_path, content)?;

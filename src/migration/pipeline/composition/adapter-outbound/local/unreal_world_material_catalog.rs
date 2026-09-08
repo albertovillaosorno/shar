@@ -60,6 +60,23 @@ const RUNTIME_ERROR_BINDING_SHA256: &str =
 const RUNTIME_ERROR_PRESENTATION_SHA256: &str =
     "8ee7e678c6a6b1d448a69777cb50aa4aa52dba187f36caa6bed3ff070022b088";
 
+/// One verified world FBX and its exact material projection.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct VerifiedWorldMaterialArtifact {
+    pub path: String,
+    pub bytes: u64,
+    pub sha256: String,
+    pub projection: WorldMaterialProjection,
+}
+
+/// One canonical normalized world texture ready for later native planning.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct VerifiedWorldTexture {
+    pub file_name: String,
+    pub bytes: u64,
+    pub sha256: String,
+}
+
 /// Verified aggregate world-presentation evidence for Unreal preflight.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct VerifiedWorldMaterialCatalog {
@@ -67,6 +84,8 @@ pub(super) struct VerifiedWorldMaterialCatalog {
     pub binding_count: usize,
     pub slot_count: usize,
     pub master_family_count: usize,
+    pub artifacts: Vec<VerifiedWorldMaterialArtifact>,
+    pub textures: Vec<VerifiedWorldTexture>,
 }
 
 /// Verify generated world FBX/material evidence when the root exists.
@@ -108,21 +127,21 @@ pub(super) fn verified_world_material_catalog(
         ));
     }
     let texture_table = verified_texture_table(object)?;
+    let textures = verify_canonical_textures(root, &texture_table)?;
     let mut state = WorldMaterialVerificationState::new();
-    let mut artifact_count = 0usize;
+    let mut artifacts = Vec::new();
 
     let packages = required_array(object, "packages")?;
     for package in packages {
         let package = as_object(package, "generated world package")?;
         for field in ["world_fbx", "review_fbx"] {
             if let Some(artifact) = optional_object(package, field)? {
-                verify_artifact(
+                artifacts.push(verify_artifact(
                     root,
                     artifact,
                     &texture_table,
                     &mut state,
-                )?;
-                artifact_count = artifact_count.saturating_add(1);
+                )?);
             }
         }
     }
@@ -131,17 +150,17 @@ pub(super) fn verified_world_material_catalog(
         let interior = as_object(interior, "generated world interior")?;
         for field in ["base_fbx", "halloween_fbx"] {
             if let Some(artifact) = optional_object(interior, field)? {
-                verify_artifact(
+                artifacts.push(verify_artifact(
                     root,
                     artifact,
                     &texture_table,
                     &mut state,
-                )?;
-                artifact_count = artifact_count.saturating_add(1);
+                )?);
             }
         }
     }
-    validate_declared_artifact_count(object, artifact_count)?;
+    artifacts.sort_by(|left, right| left.path.cmp(&right.path));
+    validate_declared_artifact_count(object, artifacts.len())?;
     let declared_textures = texture_table
         .keys()
         .cloned()
@@ -152,10 +171,12 @@ pub(super) fn verified_world_material_catalog(
         ));
     }
     Ok(Some(VerifiedWorldMaterialCatalog {
-        artifact_count,
+        artifact_count: artifacts.len(),
         binding_count: state.binding_count,
         slot_count: state.slot_count,
         master_family_count: state.families.len(),
+        artifacts,
+        textures,
     }))
 }
 
@@ -186,7 +207,7 @@ fn verify_artifact(
     artifact: &Map<String, Value>,
     texture_table: &BTreeMap<String, (u64, String)>,
     state: &mut WorldMaterialVerificationState,
-) -> PipelineOutcome<()> {
+) -> PipelineOutcome<VerifiedWorldMaterialArtifact> {
     let relative_path = required_string(artifact, "path")?;
     validate_relative_path(&relative_path)?;
     if Path::new(&relative_path)
@@ -243,7 +264,12 @@ fn verify_artifact(
         .binding_count
         .saturating_add(binding_sources.len());
     state.slot_count = state.slot_count.saturating_add(slot_sources.len());
-    Ok(())
+    Ok(VerifiedWorldMaterialArtifact {
+        path: relative_path,
+        bytes: expected_size,
+        sha256: expected_digest,
+        projection,
+    })
 }
 
 fn verify_fbx_bytes(
@@ -289,6 +315,97 @@ fn verified_texture_table(
         }
     }
     Ok(result)
+}
+
+fn verify_canonical_textures(
+    root: &Path,
+    texture_table: &BTreeMap<String, (u64, String)>,
+) -> PipelineOutcome<Vec<VerifiedWorldTexture>> {
+    let texture_root = root.join("textures");
+    if texture_table.is_empty() {
+        let metadata = match fs::symlink_metadata(&texture_root) {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                return Ok(Vec::new());
+            },
+            Err(error) => {
+                return Err(io_error(
+                    "inspect generated world texture root",
+                    &error,
+                ));
+            },
+            Ok(metadata) => metadata,
+        };
+        validate_directory_metadata(&metadata)?;
+        validate_ancestor_chain(root, &texture_root)?;
+        if fs::read_dir(&texture_root)
+            .map_err(|error| {
+                io_error("read generated world texture root", &error)
+            })?
+            .next()
+            .is_some()
+        {
+            return Err(PipelineError::new(
+                "generated world texture root contains undeclared files",
+            ));
+        }
+        return Ok(Vec::new());
+    }
+    validate_directory_metadata(
+        &fs::symlink_metadata(&texture_root).map_err(|error| {
+            io_error("inspect generated world texture root", &error)
+        })?,
+    )?;
+    validate_ancestor_chain(root, &texture_root)?;
+    let mut found = BTreeSet::new();
+    for entry in fs::read_dir(&texture_root)
+        .map_err(|error| io_error("read generated world texture root", &error))?
+    {
+        let entry = entry.map_err(|error| {
+            io_error("read generated world texture entry", &error)
+        })?;
+        let file_name = entry.file_name().into_string().map_err(|_error| {
+            PipelineError::new(
+                "generated world texture filename is not portable UTF-8",
+            )
+        })?;
+        if !found.insert(file_name) {
+            return Err(PipelineError::new(
+                "generated world texture root contains duplicate filenames",
+            ));
+        }
+    }
+    let expected = texture_table.keys().cloned().collect::<BTreeSet<_>>();
+    if found != expected {
+        return Err(PipelineError::new(
+            "generated world canonical texture inventory is not exact",
+        ));
+    }
+    let mut textures = Vec::with_capacity(texture_table.len());
+    for (file_name, (expected_size, expected_digest)) in texture_table {
+        let path = texture_root.join(file_name);
+        validate_regular_file(&path, "generated world canonical texture")?;
+        validate_ancestor_chain(root, &path)?;
+        let bytes = fs::read(&path).map_err(|error| {
+            io_error("read generated world canonical texture", &error)
+        })?;
+        let size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+        if size != *expected_size || digest_hex(&bytes) != *expected_digest {
+            return Err(PipelineError::new(
+                "generated world canonical texture bytes do not match catalog",
+            ));
+        }
+        if !bytes.starts_with(PNG_MAGIC) {
+            return Err(PipelineError::new(
+                "generated world canonical texture is not a PNG artifact",
+            ));
+        }
+        textures.push(VerifiedWorldTexture {
+            file_name: file_name.clone(),
+            bytes: *expected_size,
+            sha256: expected_digest.clone(),
+        });
+    }
+    Ok(textures)
 }
 
 fn verify_binding_texture(

@@ -203,10 +203,17 @@ fn write_catalog(
         }));
     }
     if unused_texture {
-        let digest = digest_hex(b"unused-texture");
+        let unused = b"\x89PNG\r\n\x1a\nunused";
+        let digest = digest_hex(unused);
+        let file_name = format!("texture-{digest}.png");
+        let texture_root = root.join("textures");
+        fs::create_dir_all(&texture_root)
+            .map_err(|error| error.to_string())?;
+        fs::write(texture_root.join(&file_name), unused)
+            .map_err(|error| error.to_string())?;
         textures.push(json!({
-            "file_name": format!("texture-{digest}.png"),
-            "bytes": 14,
+            "file_name": file_name,
+            "bytes": unused.len(),
             "sha256": digest
         }));
     }
@@ -241,7 +248,14 @@ fn absent_world_catalog_keeps_material_evidence_absent() -> Result<(), String> {
 fn verifies_world_material_projection_without_promoting_readiness()
 -> Result<(), String> {
     let root = TempRoot::new("valid")?;
-    write_catalog(&root.0, None, ShaderFixture::One, None, false)?;
+    let texture = b"\x89PNG\r\n\x1a\nverified";
+    write_catalog(
+        &root.0,
+        None,
+        ShaderFixture::One,
+        Some(texture),
+        false,
+    )?;
     let verified = verified_world_material_catalog(&root.0)
         .map_err(|error| error.to_string())?
         .ok_or_else(|| "world material evidence was absent".to_owned())?;
@@ -249,6 +263,20 @@ fn verifies_world_material_projection_without_promoting_readiness()
     assert_eq!(verified.binding_count, 1);
     assert_eq!(verified.slot_count, 1);
     assert_eq!(verified.master_family_count, 1);
+    assert_eq!(verified.artifacts.len(), 1);
+    let artifact = verified
+        .artifacts
+        .first()
+        .ok_or_else(|| "verified world artifact disappeared".to_owned())?;
+    assert_eq!(artifact.path, "world.fbx");
+    assert_eq!(artifact.projection.presentations().len(), 1);
+    assert_eq!(artifact.projection.assignments().len(), 1);
+    assert_eq!(verified.textures.len(), 1);
+    let verified_texture = verified
+        .textures
+        .first()
+        .ok_or_else(|| "verified world texture disappeared".to_owned())?;
+    assert_eq!(verified_texture.sha256, digest_hex(texture));
     Ok(())
 }
 
