@@ -9,26 +9,26 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Bounded editor creation of reviewed SHAR world master materials.
+//   - Bounded editor creation of reviewed SHAR world materials.
 // - Must-Not:
 //   - Save packages, overwrite assets, or infer source shader state.
 // - Allows:
-//   - Generated-root master assets selected by a verified conversion plan.
+//   - Generated-root material assets selected by a verified conversion plan.
 // - Split-When:
-//   - Material Instances or additional shader families gain separate policy.
+//   - Additional shader families gain separate construction policy.
 // - Merge-When:
 //   - Another editor toolset owns identical world master construction.
 // - Summary:
-//   - SHAR generated world master-material toolset.
+//   - SHAR generated world material toolset.
 // - Description:
-//   - Creates reviewed simple-unlit masters without reparsing source packages.
+//   - Creates reviewed masters and instances without reparsing source packages.
 // - Usage:
 //   - Called after world material catalog verification and native planning.
 // - Defaults:
-//   - Only textured simple-unlit world families are currently supported.
+//   - Only reviewed simple-unlit world families are currently supported.
 //
 
-//! SHAR generated world master-material toolset.
+//! SHAR generated world material toolset.
 
 #pragma once
 
@@ -54,5 +54,22 @@ public:
         const FString& AssetName,
         const FString& BlendFamily,
         bool bAlphaTest
+    );
+
+    /**
+     * Create one simple/unlit Material Instance from verified plan values.
+     * Parent and optional texture must already exist under generated roots.
+     * Tint and alpha reference are normalized plan values, never source parse
+     * inputs. The instance is left dirty and unsaved for transaction read-back.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharWorldMaterialToolset")
+    static FString CreateSimpleUnlitWorldMaterialInstance(
+        const FString& FolderPath,
+        const FString& AssetName,
+        const FString& ParentMaterialPath,
+        const FString& BaseColorTexturePath,
+        FLinearColor BaseColorTint,
+        bool bSetAlphaReference,
+        float AlphaReference
     );
 };
