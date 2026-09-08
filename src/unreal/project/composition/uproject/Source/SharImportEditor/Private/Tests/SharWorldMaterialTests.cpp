@@ -9,33 +9,36 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Native automation tests for reviewed simple-unlit world master graphs.
+//   - Native automation tests for reviewed simple-unlit world materials.
 // - Must-Not:
 //   - Save assets, parse source catalogs, or test unsupported shader families.
 // - Allows:
-//   - Transient Unreal material graphs and deterministic request validation.
+//   - Transient Unreal materials and deterministic request validation.
 // - Split-When:
-//   - Material Instance or additional shader-family tests gain own lifecycle.
+//   - Additional shader-family tests gain an independent lifecycle.
 // - Merge-When:
 //   - Another test owns the identical world-master material contract.
 // - Summary:
-//   - Simple-unlit world master material automation tests.
+//   - Simple-unlit world material automation tests.
 // - Description:
-//   - Verifies six reviewed native graph families without persistent assets.
+//   - Verifies native masters and instances without persistent assets.
 // - Usage:
 //   - Runs in editor or commandlet automation contexts.
 // - Defaults:
 //   - Unsupported blend-family inputs are rejected.
 //
 
-//! Simple-unlit world master material automation tests.
+//! Simple-unlit world material automation tests.
 
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Materials/SharWorldMaterialPolicy.h"
 #include "Materials/SharWorldMaterialToolset.h"
 
+#include "Engine/Texture2D.h"
+#include "MaterialEditingLibrary.h"
 #include "Materials/Material.h"
+#include "Materials/MaterialInstanceConstant.h"
 #include "Materials/MaterialExpressionCustom.h"
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionTextureSampleParameter2D.h"
@@ -279,6 +282,168 @@ bool FSharWorldMaterialAssetCreationTest::RunTest(const FString& Parameters)
         Material->MarkAsGarbage();
         Package->MarkAsGarbage();
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharWorldMaterialInstanceCreationTest,
+    "SHAR.Import.WorldMaterials.CreateSimpleUnlitMaterialInstance",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+
+bool FSharWorldMaterialInstanceCreationTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    const uint32 ProcessId = FPlatformProcess::GetCurrentProcessId();
+    const FString MaterialFolder =
+        TEXT("/Game/Generated/SHAR/Materials/Automation");
+    const FString MasterName = FString::Printf(
+        TEXT("TransientInstanceMaster_%u"),
+        ProcessId
+    );
+    const FString MasterPath = FString::Printf(
+        TEXT("%s/%s.%s"),
+        *MaterialFolder,
+        *MasterName,
+        *MasterName
+    );
+    const FString CreatedMaster =
+        USharWorldMaterialToolset::CreateSimpleUnlitWorldMaster(
+            MaterialFolder,
+            MasterName,
+            TEXT("alpha"),
+            true
+        );
+    TestEqual(
+        TEXT("Instance test creates its reviewed parent master"),
+        CreatedMaster,
+        MasterPath
+    );
+    UMaterial* Master = FindObject<UMaterial>(nullptr, *MasterPath);
+    TestNotNull(TEXT("Instance parent master exists in memory"), Master);
+    if (Master == nullptr)
+    {
+        return false;
+    }
+
+    const FString TextureName = FString::Printf(
+        TEXT("TransientWorldTexture_%u"),
+        ProcessId
+    );
+    const FString TexturePackagePath = FString::Printf(
+        TEXT("/Game/Generated/SHAR/Textures/Automation/%s"),
+        *TextureName
+    );
+    const FString TexturePath = FString::Printf(
+        TEXT("%s.%s"),
+        *TexturePackagePath,
+        *TextureName
+    );
+    UPackage* TexturePackage = CreatePackage(*TexturePackagePath);
+    UTexture2D* Texture = NewObject<UTexture2D>(
+        TexturePackage,
+        *TextureName,
+        RF_Public | RF_Standalone
+    );
+    TestNotNull(TEXT("Generated texture fixture exists in memory"), Texture);
+    if (Texture == nullptr)
+    {
+        return false;
+    }
+
+    const FString InstanceName = FString::Printf(
+        TEXT("TransientWorldInstance_%u"),
+        ProcessId
+    );
+    const FString InstancePath = FString::Printf(
+        TEXT("%s/%s.%s"),
+        *MaterialFolder,
+        *InstanceName,
+        *InstanceName
+    );
+    const FLinearColor Tint(0.25F, 0.5F, 0.75F, 0.625F);
+    constexpr float AlphaReference = 0.375F;
+    const FString CreatedInstance =
+        USharWorldMaterialToolset::CreateSimpleUnlitWorldMaterialInstance(
+            MaterialFolder,
+            InstanceName,
+            MasterPath,
+            TexturePath,
+            Tint,
+            true,
+            AlphaReference
+        );
+    TestEqual(
+        TEXT("World Material Instance returns planned object path"),
+        CreatedInstance,
+        InstancePath
+    );
+    UMaterialInstanceConstant* Instance =
+        FindObject<UMaterialInstanceConstant>(nullptr, *InstancePath);
+    TestNotNull(TEXT("Created world Material Instance exists"), Instance);
+    if (Instance != nullptr)
+    {
+        TestTrue(
+            TEXT("Material Instance keeps the verified parent master"),
+            Instance->Parent == Master
+        );
+        TestTrue(
+            TEXT("Material Instance keeps the verified base-color tint"),
+            UMaterialEditingLibrary::GetMaterialInstanceVectorParameterValue(
+                Instance,
+                TEXT("BaseColorTint")
+            ).Equals(Tint)
+        );
+        TestTrue(
+            TEXT("Material Instance keeps the verified texture"),
+            UMaterialEditingLibrary::GetMaterialInstanceTextureParameterValue(
+                Instance,
+                TEXT("BaseColorTexture")
+            ) == Texture
+        );
+        TestTrue(
+            TEXT("Material Instance keeps the verified alpha reference"),
+            FMath::IsNearlyEqual(
+                UMaterialEditingLibrary::
+                    GetMaterialInstanceScalarParameterValue(
+                        Instance,
+                        TEXT("AlphaReference")
+                    ),
+                AlphaReference
+            )
+        );
+        UPackage* InstancePackage = Instance->GetPackage();
+        TestTrue(
+            TEXT("Material Instance is dirty before explicit save"),
+            InstancePackage->IsDirty()
+        );
+        const FString Filename = FPackageName::LongPackageNameToFilename(
+            InstancePackage->GetName(),
+            FPackageName::GetAssetPackageExtension()
+        );
+        TestFalse(
+            TEXT("Material Instance creation does not save implicitly"),
+            IFileManager::Get().FileExists(*Filename)
+        );
+        InstancePackage->SetDirtyFlag(false);
+        Instance->ClearFlags(RF_Public | RF_Standalone);
+        Instance->MarkAsGarbage();
+        InstancePackage->MarkAsGarbage();
+    }
+
+    TexturePackage->SetDirtyFlag(false);
+    Texture->ClearFlags(RF_Public | RF_Standalone);
+    Texture->MarkAsGarbage();
+    TexturePackage->MarkAsGarbage();
+    UPackage* MasterPackage = Master->GetPackage();
+    MasterPackage->SetDirtyFlag(false);
+    Master->ClearFlags(RF_Public | RF_Standalone);
+    Master->MarkAsGarbage();
+    MasterPackage->MarkAsGarbage();
     return true;
 }
 
