@@ -33,6 +33,7 @@
 
 use super::{
     WorldMaterialNativeBlend, WorldMaterialNativeMasterBlocker,
+    WorldMaterialNativeMasterRecipe, WorldMaterialNativeMasterRequest,
     classify_world_material_native_master,
 };
 use crate::domain::{
@@ -236,4 +237,182 @@ fn blocker_codes_are_stable_and_public_safe() {
     ] {
         assert_eq!(blocker.code(), expected);
     }
+}
+
+#[test]
+fn native_recipe_identities_are_stable_across_reviewed_tool_inputs() {
+    for (recipe, expected) in [
+        (
+            WorldMaterialNativeMasterRecipe {
+                blend: WorldMaterialNativeBlend::Opaque,
+                alpha_test: false,
+                render_both_faces: true,
+            },
+            "simple-unlit__blend-opaque__alpha-test-off__both-faces",
+        ),
+        (
+            WorldMaterialNativeMasterRecipe {
+                blend: WorldMaterialNativeBlend::Opaque,
+                alpha_test: true,
+                render_both_faces: true,
+            },
+            "simple-unlit__blend-opaque__alpha-test-on__both-faces",
+        ),
+        (
+            WorldMaterialNativeMasterRecipe {
+                blend: WorldMaterialNativeBlend::SourceAlpha,
+                alpha_test: false,
+                render_both_faces: true,
+            },
+            "simple-unlit__blend-alpha__alpha-test-off__both-faces",
+        ),
+        (
+            WorldMaterialNativeMasterRecipe {
+                blend: WorldMaterialNativeBlend::SourceAlpha,
+                alpha_test: true,
+                render_both_faces: true,
+            },
+            "simple-unlit__blend-alpha__alpha-test-on__both-faces",
+        ),
+        (
+            WorldMaterialNativeMasterRecipe {
+                blend: WorldMaterialNativeBlend::Additive,
+                alpha_test: false,
+                render_both_faces: true,
+            },
+            "simple-unlit__blend-additive__alpha-test-off__both-faces",
+        ),
+        (
+            WorldMaterialNativeMasterRecipe {
+                blend: WorldMaterialNativeBlend::Additive,
+                alpha_test: true,
+                render_both_faces: true,
+            },
+            "simple-unlit__blend-additive__alpha-test-on__both-faces",
+        ),
+    ] {
+        assert_eq!(recipe.identity(), expected);
+    }
+    assert_eq!(
+        WorldMaterialNativeMasterRecipe {
+            blend: WorldMaterialNativeBlend::Opaque,
+            alpha_test: false,
+            render_both_faces: false,
+        }
+        .identity(),
+        "simple-unlit__blend-opaque__alpha-test-off__one-sided"
+    );
+}
+
+#[test]
+fn native_master_request_binds_recipe_to_canonical_generated_destination()
+-> Result<(), String> {
+    let recipe = WorldMaterialNativeMasterRecipe {
+        blend: WorldMaterialNativeBlend::SourceAlpha,
+        alpha_test: true,
+        render_both_faces: true,
+    };
+    let request = WorldMaterialNativeMasterRequest::new(
+        recipe,
+        "/Game/Generated/SHAR/Materials/World/Masters",
+        "M_WorldSimpleAlphaMasked",
+    )?;
+    assert_eq!(request.recipe(), recipe);
+    assert_eq!(
+        request.recipe().identity(),
+        "simple-unlit__blend-alpha__alpha-test-on__both-faces"
+    );
+    assert_eq!(
+        request.folder_path(),
+        "/Game/Generated/SHAR/Materials/World/Masters"
+    );
+    assert_eq!(request.asset_name(), "M_WorldSimpleAlphaMasked");
+    assert_eq!(
+        request.package_path(),
+        concat!(
+            "/Game/Generated/SHAR/Materials/World/Masters/",
+            "M_WorldSimpleAlphaMasked"
+        )
+    );
+    assert_eq!(
+        request.object_path(),
+        concat!(
+            "/Game/Generated/SHAR/Materials/World/Masters/",
+            "M_WorldSimpleAlphaMasked.M_WorldSimpleAlphaMasked"
+        )
+    );
+    Ok(())
+}
+
+#[test]
+fn native_master_request_rejects_unreviewed_destination_shapes() {
+    let recipe = WorldMaterialNativeMasterRecipe {
+        blend: WorldMaterialNativeBlend::Opaque,
+        alpha_test: false,
+        render_both_faces: true,
+    };
+    for folder in [
+        "/Game/Generated/SHAR/Textures",
+        "/Game/Generated/SHAR/Materials/",
+        "/Game/Generated/SHAR/Materials/../Escape",
+        "/Game/Generated/SHAR/Materials/World-Masters",
+    ] {
+        assert!(
+            WorldMaterialNativeMasterRequest::new(recipe, folder, "M_World")
+                .is_err()
+        );
+    }
+    for asset_name in [
+        "",
+        "WorldMaster",
+        "M_",
+        "M_Bad.Name",
+        "M_Bad/Name",
+        "M_Bad-Name",
+    ] {
+        assert!(
+            WorldMaterialNativeMasterRequest::new(
+                recipe,
+                "/Game/Generated/SHAR/Materials",
+                asset_name,
+            )
+            .is_err()
+        );
+    }
+}
+
+#[test]
+fn native_master_request_rejects_one_sided_recipe() {
+    let result = WorldMaterialNativeMasterRequest::new(
+        WorldMaterialNativeMasterRecipe {
+            blend: WorldMaterialNativeBlend::Opaque,
+            alpha_test: false,
+            render_both_faces: false,
+        },
+        "/Game/Generated/SHAR/Materials",
+        "M_WorldOpaque",
+    );
+    assert_eq!(
+        result,
+        Err("world master request must reproduce regular-world CullNone"
+            .to_owned())
+    );
+}
+
+#[test]
+fn native_master_request_rejects_oversized_object_path() {
+    let asset_name = format!("M_{}", "A".repeat(220));
+    let result = WorldMaterialNativeMasterRequest::new(
+        WorldMaterialNativeMasterRecipe {
+            blend: WorldMaterialNativeBlend::Opaque,
+            alpha_test: false,
+            render_both_faces: true,
+        },
+        "/Game/Generated/SHAR/Materials",
+        &asset_name,
+    );
+    assert_eq!(
+        result,
+        Err("world master object path is too long".to_owned())
+    );
 }

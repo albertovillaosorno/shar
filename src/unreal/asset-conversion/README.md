@@ -32,8 +32,16 @@ than being approximated.
 
 Source `2SID` stays in presentation identity, while the regular-world native
 recipe renders both faces because the source render flow already enters ordinary
-world drawing with `PddiCullNone`. This classification does not claim Texture2D,
-Material Instance, slot-assignment, save, or complete presentation readiness.
+world drawing with `PddiCullNone`. Each recipe also owns one canonical identity
+shared by pipeline evidence and later construction planning.
+
+`WorldMaterialNativeMasterRequest` can bind that recipe to a caller-selected
+canonical `M_` destination beneath `/Game/Generated/SHAR/Materials`. It
+validates the native constructor's destination and both-face preconditions but
+deliberately does not choose the asset name or contain MCP tool routing. This
+boundary does
+not claim Texture2D, Material Instance, slot-assignment, save, or complete
+presentation readiness.
 
 Reviewed PDDI raster state is projected separately into a deterministic
 `WorldMaterialMasterFamily` plus `WorldMaterialInstanceRaster`. Blend behavior,
