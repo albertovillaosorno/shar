@@ -104,3 +104,13 @@ def test_native_world_plugins_are_explicitly_enabled() -> None:
             "Enabled": True,
         }
     ]
+
+
+def test_chaos_vehicles_plugin_is_explicitly_enabled() -> None:
+    """Vehicle presentation contracts require the native Chaos vehicle types."""
+    assert _matching_plugins("ChaosVehiclesPlugin") == [
+        {
+            "Name": "ChaosVehiclesPlugin",
+            "Enabled": True,
+        }
+    ]

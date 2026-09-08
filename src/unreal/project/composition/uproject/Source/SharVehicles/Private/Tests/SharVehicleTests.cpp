@@ -33,11 +33,17 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Vehicles/SharVehicleDefinition.h"
+#include "Vehicles/SharVehiclePresentationDefinition.h"
 #include "Vehicles/SharVehicleRuntimeState.h"
 #include "Vehicles/SharVehicleSelectionTransaction.h"
 
+#include "Animation/AnimInstance.h"
+#include "Animation/Skeleton.h"
 #include "Engine/DataAsset.h"
+#include "Engine/SkeletalMesh.h"
+#include "Materials/MaterialInterface.h"
 #include "Misc/AutomationTest.h"
+#include "PhysicsEngine/PhysicsAsset.h"
 
 static constexpr float DamagedThreshold = 0.35F;
 static constexpr float CriticalThreshold = 0.70F;
@@ -55,6 +61,79 @@ static FPrimaryAssetId MakeVehicleId(const TCHAR* Name)
         FPrimaryAssetType(TEXT("SharVehicle")),
         FName(Name),
     };
+}
+
+template <typename TObject>
+static TSoftObjectPtr<TObject> MakeVehicleSoftObject(const TCHAR* ObjectPath)
+{
+    return TSoftObjectPtr<TObject>(FSoftObjectPath(ObjectPath));
+}
+
+template <typename TObject>
+static TSoftClassPtr<TObject> MakeVehicleSoftClass(const TCHAR* ClassPath)
+{
+    return TSoftClassPtr<TObject>(FSoftObjectPath(ClassPath));
+}
+
+static void FillVehiclePresentationBase(
+    USharVehiclePresentationDefinition& Presentation
+)
+{
+    Presentation.CanonicalId = FName(TEXT("family_sedan_default"));
+    Presentation.DisplayName = FText::FromString(TEXT("Family sedan default"));
+    Presentation.SourcePackageIds = {FName(TEXT("vehicle_contract"))};
+    Presentation.RevisionToken = TEXT("sha256:vehicle_presentation_v1");
+    Presentation.ValidationProfile =
+        FName(TEXT("vehicle_standard_v1"));
+    Presentation.OwningFeature = FName(TEXT("base"));
+    Presentation.PresentationVariant = FName(TEXT("default"));
+    Presentation.SkeletalMesh = MakeVehicleSoftObject<USkeletalMesh>(
+        TEXT("/Game/SHAR/Tests/Generated/SK_sedan.SK_sedan")
+    );
+    Presentation.Skeleton = MakeVehicleSoftObject<USkeleton>(
+        TEXT("/Game/SHAR/Tests/Generated/SKEL_sedan.SKEL_sedan")
+    );
+    Presentation.PhysicsAsset = MakeVehicleSoftObject<UPhysicsAsset>(
+        TEXT("/Game/SHAR/Tests/Generated/PHYS_sedan.PHYS_sedan")
+    );
+    Presentation.AnimationClass = MakeVehicleSoftClass<UAnimInstance>(
+        TEXT("/Game/SHAR/Tests/Generated/ABP_sedan.ABP_sedan_C")
+    );
+    Presentation.MaterialInstances.Add(
+        MakeVehicleSoftObject<UMaterialInterface>(
+            TEXT("/Game/SHAR/Tests/Generated/MI_sedan.MI_sedan")
+        )
+    );
+    Presentation.RigProfileId = FName(TEXT("vehicle_sedan_v1"));
+    Presentation.SemanticPreparationRevision =
+        TEXT("sha256:vehicle_semantic_presentation_v1");
+}
+
+static FSharVehicleWheelPresentationBinding MakeWheelBinding(
+    const TCHAR* WheelId,
+    const TCHAR* BoneName
+)
+{
+    FSharVehicleWheelPresentationBinding Wheel;
+    Wheel.WheelId = FName(WheelId);
+    Wheel.BoneOrSocketName = FName(BoneName);
+    Wheel.WheelClass = MakeVehicleSoftClass<UChaosVehicleWheel>(
+        TEXT("/Game/SHAR/Tests/Generated/BP_Wheel.BP_Wheel_C")
+    );
+    return Wheel;
+}
+
+static USharVehiclePresentationDefinition* MakeValidVehiclePresentation()
+{
+    auto* Presentation = NewObject<USharVehiclePresentationDefinition>();
+    FillVehiclePresentationBase(*Presentation);
+    Presentation.Wheels = {
+        MakeWheelBinding(TEXT("front_left"), TEXT("w0")),
+        MakeWheelBinding(TEXT("front_right"), TEXT("w1")),
+        MakeWheelBinding(TEXT("rear_left"), TEXT("w2")),
+        MakeWheelBinding(TEXT("rear_right"), TEXT("w3")),
+    };
+    return Presentation;
 }
 
 static USharVehicleDefinition* MakeValidVehicle()
@@ -127,6 +206,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
         | EAutomationTestFlags::EngineFilter
 )
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehiclePresentationDefinitionValidationTest,
+    "SHAR.Vehicles.Presentation.Validation",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharVehicleDamageRuntimeTest,
     "SHAR.Vehicles.Runtime.Damage",
     EAutomationTestFlags::EditorContext
@@ -159,6 +246,39 @@ bool FSharVehicleDefinitionValidationTest::RunTest(
     Errors.Reset();
     Vehicle->GatherValidationErrors(Errors);
     TestFalse(TEXT("Duplicate vehicle seat is rejected"), Errors.IsEmpty());
+    return true;
+}
+
+bool FSharVehiclePresentationDefinitionValidationTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    auto* Presentation = MakeValidVehiclePresentation();
+    TArray<FText> Errors;
+    Presentation->GatherValidationErrors(Errors);
+    TestTrue(TEXT("Valid vehicle presentation passes"), Errors.IsEmpty());
+
+    Presentation->PhysicsAsset.Reset();
+    Errors.Reset();
+    Presentation->GatherValidationErrors(Errors);
+    TestFalse(TEXT("Missing Physics Asset is rejected"), Errors.IsEmpty());
+
+    Presentation = MakeValidVehiclePresentation();
+    Presentation->Wheels[1].WheelId = Presentation->Wheels[0].WheelId;
+    Errors.Reset();
+    Presentation->GatherValidationErrors(Errors);
+    TestFalse(TEXT("Duplicate wheel identity is rejected"), Errors.IsEmpty());
+
+    Presentation = MakeValidVehiclePresentation();
+    Presentation->Wheels[1].BoneOrSocketName =
+        Presentation->Wheels[0].BoneOrSocketName;
+    Errors.Reset();
+    Presentation->GatherValidationErrors(Errors);
+    TestFalse(
+        TEXT("Duplicate wheel rig binding is rejected"),
+        Errors.IsEmpty()
+    );
     return true;
 }
 

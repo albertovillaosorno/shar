@@ -132,6 +132,10 @@
       "Enabled": false
     },
     {
+      "Name": "ChaosVehiclesPlugin",
+      "Enabled": true
+    },
+    {
       "Name": "Water",
       "Enabled": true
     },
