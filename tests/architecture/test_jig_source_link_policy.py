@@ -37,7 +37,7 @@ import tomllib
 
 _ROOT = Path(__file__).resolve().parents[2]
 _SETTINGS = _ROOT / ".jig" / "settings"
-_VALIDATION_PREFIX = ".dependencies/validation/bin/"
+_VALIDATION_ROOT = ".dependencies/validation/"
 _PORTABLE_TOOLS = {
     "cspell",
     "git",
@@ -65,11 +65,11 @@ def test_jig_tools_resolve_through_portable_validation_launchers() -> None:
             offenders.append(f"{name}:missing")
             continue
         path = entry.get("path")
-        if not isinstance(path, str) or not path.startswith(_VALIDATION_PREFIX):
+        if not isinstance(path, str) or not path.startswith(_VALIDATION_ROOT):
             offenders.append(f"{name}:{path!r}")
 
     assert not offenders, (
-        "Jig validation tools must resolve through portable launchers: "
+        "Jig validation tools must resolve through portable validation roots: "
         f"{offenders}"
     )
 
