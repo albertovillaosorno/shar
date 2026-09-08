@@ -31,6 +31,7 @@
 //! Shar import editor module registration.
 
 #include "Import/SharImportToolset.h"
+#include "Materials/SharWorldMaterialToolset.h"
 
 #include "Modules/ModuleManager.h"
 #include "ToolsetRegistry/UToolsetRegistry.h"
@@ -42,10 +43,14 @@ public:
     {
         UToolsetRegistry::RegisterToolsetClass(
             USharImportToolset::StaticClass());
+        UToolsetRegistry::RegisterToolsetClass(
+            USharWorldMaterialToolset::StaticClass());
     }
 
     virtual void ShutdownModule() override
     {
+        UToolsetRegistry::UnregisterToolsetClass(
+            USharWorldMaterialToolset::StaticClass());
         UToolsetRegistry::UnregisterToolsetClass(
             USharImportToolset::StaticClass());
     }
