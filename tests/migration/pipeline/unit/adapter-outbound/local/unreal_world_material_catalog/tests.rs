@@ -40,7 +40,8 @@ use shar_sha256::digest_hex;
 
 use super::{
     FBX_VERSION, RUNTIME_ERROR_BINDING_SHA256,
-    RUNTIME_ERROR_PRESENTATION_SHA256, verified_world_material_catalog,
+    RUNTIME_ERROR_PRESENTATION_SHA256, shader_raster,
+    verified_world_material_catalog,
 };
 
 static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
@@ -89,17 +90,21 @@ fn fbx_bytes() -> Vec<u8> {
     bytes
 }
 
-fn shader(blend: u8) -> Value {
+fn shader_with_sidedness(blend: u8, two_sided: u8) -> Value {
     json!({
         "platform_shader_name": "simple\0\0",
         "params": [
             {"param": "LIT", "value": 0},
-            {"param": "2SID", "value": 0},
+            {"param": "2SID", "value": two_sided},
             {"param": "BLMD", "value": blend},
             {"param": concat!("AC", "MP"), "value": 4},
             {"param": concat!("AT", "ST"), "value": 0}
         ]
     })
+}
+
+fn shader(blend: u8) -> Value {
+    shader_with_sidedness(blend, 0)
 }
 
 fn write_catalog(
@@ -244,6 +249,39 @@ fn verifies_world_material_projection_without_promoting_readiness()
     assert_eq!(verified.binding_count, 1);
     assert_eq!(verified.slot_count, 1);
     assert_eq!(verified.master_family_count, 1);
+    Ok(())
+}
+
+#[test]
+fn source_two_sided_flag_selects_distinct_master_family()
+-> Result<(), String> {
+    let one_sided = shader_with_sidedness(0, 0);
+    let two_sided = shader_with_sidedness(0, 1);
+    let one_sided = shader_raster(
+        one_sided
+            .as_object()
+            .ok_or_else(|| {
+                "one-sided shader fixture is not an object".to_owned()
+            })?,
+    )
+    .map_err(|error| error.to_string())?;
+    let two_sided = shader_raster(
+        two_sided
+            .as_object()
+            .ok_or_else(|| {
+                "two-sided shader fixture is not an object".to_owned()
+            })?,
+    )
+    .map_err(|error| error.to_string())?;
+    assert_eq!(
+        one_sided.master.identity(),
+        "simple__blend-none__alpha-test-off__one-sided__unlit"
+    );
+    assert_eq!(
+        two_sided.master.identity(),
+        "simple__blend-none__alpha-test-off__two-sided__unlit"
+    );
+    assert_ne!(one_sided.master, two_sided.master);
     Ok(())
 }
 
