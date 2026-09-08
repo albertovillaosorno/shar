@@ -80,6 +80,14 @@ _WORK_ROOT = Path(".cache/build/run")
 _RUN_LOCK_PATH = Path(".cache/build/run.lock")
 _PROJECT_STATE_ROOT = Path(".cache/build/project-state")
 _PROJECT_STATE_NAMES = ("Binaries", "DerivedDataCache", "Intermediate", "Saved")
+_LINUX_EDITOR_MODULE_OUTPUTS = (
+    ("shar", "libUnrealEditor-shar.so", "Linux SHAR editor module"),
+    (
+        "SharImportEditor",
+        "libUnrealEditor-SharImportEditor.so",
+        "Linux SHAR import editor module",
+    ),
+)
 _DIST_ROOT = Path("dist")
 _CHILD_STOP_TIMEOUT_SECONDS = 5
 _MANAGED_CHILD_ENV = "SHAR_BUILD_RUNNER_CHILD"
@@ -1261,8 +1269,13 @@ def _linux_editor_namespace_command(
         "Linux",
         "Development",
         str(project),
-        "-Module=shar",
+        *(
+            f"-Module={name}"
+            for name, _filename, _label in _LINUX_EDITOR_MODULE_OUTPUTS
+        ),
         "-UsePrecompiled",
+        "-NoHotReloadFromIDE",
+        "-NoHotReload",
         "-NoUBTMakefiles",
         "-NoEngineChanges",
         "-NoUBA",
@@ -1332,13 +1345,59 @@ def _linux_uat_namespace_command(
     ]
 
 
+def _require_linux_editor_shared_object(
+    output: Path,
+    label: str,
+) -> None:
+    """Require one stable x86-64 editor module shared object."""
+    payload, identity = _capture_real_bytes(output, label)
+    stream = BytesIO(payload)
+    prefix = stream.read(4)
+    valid = prefix == b"\x7fELF" and _matches_elf(
+        stream,
+        prefix,
+        "amd64",
+        identity[5],
+        require_shared_object=True,
+    )
+    if not valid:
+        raise RunFailure(f"{label} is not a valid ELF: {output}")
+
+
+def _require_linux_editor_module_manifest(root: Path) -> None:
+    """Require UBT metadata to bind every prepared project editor module."""
+    manifest = (
+        root
+        / _PROJECT_STATE_ROOT
+        / "Binaries/Linux/UnrealEditor.modules"
+    )
+    label = "Linux Unreal editor module manifest"
+    payload = _capture_real_bytes(manifest, label)[0]
+    document = _object_from_bytes(payload, label)
+    build_id = document.get("BuildId")
+    if not isinstance(build_id, str) or not build_id:
+        raise RunFailure("Linux Unreal editor module manifest has no build id")
+    modules = document.get("Modules")
+    if not isinstance(modules, dict):
+        raise RunFailure("Linux Unreal editor module manifest has no modules")
+    expected = {
+        name: filename
+        for name, filename, _label in _LINUX_EDITOR_MODULE_OUTPUTS
+    }
+    if modules != expected:
+        raise RunFailure(
+            "Linux Unreal editor module manifest does not match "
+            "prepared modules"
+        )
+
+
 def _prepare_linux_editor_module(
     root: Path,
     engine_root: Path,
     project: Path,
     work: Path,
 ) -> None:
-    """Build one editor-loadable SHAR module without engine-tree writes."""
+    """Build editor-loadable SHAR modules without engine-tree writes."""
     command = _linux_editor_namespace_command(engine_root, project, work)
     log = work / "editor-module.log"
     environment, token = _managed_child_environment()
@@ -1358,23 +1417,10 @@ def _prepare_linux_editor_module(
             f"Linux editor module build failed with {returncode}; see {log}"
         )
 
-    output = (
-        root / _PROJECT_STATE_ROOT / "Binaries/Linux/libUnrealEditor-shar.so"
-    )
-    payload, identity = _capture_real_bytes(output, "Linux SHAR editor module")
-    stream = BytesIO(payload)
-    prefix = stream.read(4)
-    valid = prefix == b"\x7fELF" and _matches_elf(
-        stream,
-        prefix,
-        "amd64",
-        identity[5],
-        require_shared_object=True,
-    )
-    if not valid:
-        raise RunFailure(
-            f"Linux SHAR editor module is not a valid ELF: {output}"
-        )
+    binary_root = root / _PROJECT_STATE_ROOT / "Binaries/Linux"
+    for _, filename, label in _LINUX_EDITOR_MODULE_OUTPUTS:
+        _require_linux_editor_shared_object(binary_root / filename, label)
+    _require_linux_editor_module_manifest(root)
 
 
 def _run_uat(

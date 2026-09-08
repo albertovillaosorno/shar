@@ -1386,7 +1386,10 @@ class LinuxEditorNamespaceTests(unittest.TestCase):
             self.assertIn("workdir=", command[9])
             for argument in (
                 "-Module=shar",
+                "-Module=SharImportEditor",
                 "-UsePrecompiled",
+                "-NoHotReloadFromIDE",
+                "-NoHotReload",
                 "-NoUBTMakefiles",
                 "-NoEngineChanges",
                 "-NoUBA",
@@ -1409,70 +1412,113 @@ class LinuxEditorNamespaceTests(unittest.TestCase):
                 Path("/engine"), Path("/project"), Path("/work")
             )
 
-    def test_success_requires_valid_editor_shared_object(self) -> None:
+    def _write_editor_outputs(self, root: Path) -> Path:
+        binary_root = root / _RUN._PROJECT_STATE_ROOT / "Binaries/Linux"
+        binary_root.mkdir(parents=True)
+        for _, filename, _ in _RUN._LINUX_EDITOR_MODULE_OUTPUTS:
+            (binary_root / filename).write_bytes(
+                _synthetic_elf(0x003E, image_type=3)
+            )
+        manifest = binary_root / "UnrealEditor.modules"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "BuildId": "synthetic-build",
+                    "Modules": {
+                        name: filename
+                        for name, filename, _label
+                        in _RUN._LINUX_EDITOR_MODULE_OUTPUTS
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        return binary_root
+
+    def _successful_editor_build_context(self) -> tuple[object, ...]:
+        return (
+            mock.patch.object(
+                _RUN,
+                "_linux_editor_namespace_command",
+                return_value=["unshare", "probe"],
+            ),
+            mock.patch.object(
+                _RUN,
+                "_managed_child_environment",
+                return_value=({}, "token"),
+            ),
+            mock.patch.object(
+                _RUN.subprocess,
+                "Popen",
+                return_value=mock.Mock(),
+            ),
+            mock.patch.object(
+                _RUN,
+                "_wait_managed_child",
+                return_value=0,
+            ),
+        )
+
+    def test_success_requires_both_editor_modules_and_manifest(self) -> None:
         with tempfile.TemporaryDirectory(prefix="shar-userns-editor-") as raw:
             root = Path(raw)
             work = root / "work"
             work.mkdir()
-            output = (
-                root
-                / _RUN._PROJECT_STATE_ROOT
-                / "Binaries/Linux/libUnrealEditor-shar.so"
-            )
-            output.parent.mkdir(parents=True)
-            output.write_bytes(_synthetic_elf(0x003E, image_type=3))
-            process = mock.Mock()
+            binary_root = self._write_editor_outputs(root)
+
+            contexts = self._successful_editor_build_context()
             with (
-                mock.patch.object(
-                    _RUN,
-                    "_linux_editor_namespace_command",
-                    return_value=["unshare", "probe"],
-                ),
-                mock.patch.object(
-                    _RUN,
-                    "_managed_child_environment",
-                    return_value=({}, "token"),
-                ),
-                mock.patch.object(
-                    _RUN.subprocess,
-                    "Popen",
-                    return_value=process,
-                ),
-                mock.patch.object(
-                    _RUN,
-                    "_wait_managed_child",
-                    return_value=0,
+                contexts[0],
+                contexts[1],
+                contexts[2],
+                contexts[3],
+            ):
+                _RUN._prepare_linux_editor_module(
+                    root, Path("/engine"), Path("/project"), work
+                )
+
+            import_output = binary_root / "libUnrealEditor-SharImportEditor.so"
+            import_output.write_bytes(b"not an ELF")
+            contexts = self._successful_editor_build_context()
+            with (
+                contexts[0],
+                contexts[1],
+                contexts[2],
+                contexts[3],
+                self.assertRaisesRegex(
+                    _RUN.RunFailure,
+                    "Linux SHAR import editor module is not a valid ELF",
                 ),
             ):
                 _RUN._prepare_linux_editor_module(
                     root, Path("/engine"), Path("/project"), work
                 )
 
-            output.write_bytes(b"not an ELF")
+    def test_editor_module_manifest_must_bind_both_outputs(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="shar-userns-editor-") as raw:
+            root = Path(raw)
+            work = root / "work"
+            work.mkdir()
+            binary_root = self._write_editor_outputs(root)
+            manifest = binary_root / "UnrealEditor.modules"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "BuildId": "synthetic-build",
+                        "Modules": {"shar": "libUnrealEditor-shar.so"},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            contexts = self._successful_editor_build_context()
             with (
-                mock.patch.object(
-                    _RUN,
-                    "_linux_editor_namespace_command",
-                    return_value=["unshare", "probe"],
-                ),
-                mock.patch.object(
-                    _RUN,
-                    "_managed_child_environment",
-                    return_value=({}, "token"),
-                ),
-                mock.patch.object(
-                    _RUN.subprocess,
-                    "Popen",
-                    return_value=process,
-                ),
-                mock.patch.object(
-                    _RUN,
-                    "_wait_managed_child",
-                    return_value=0,
-                ),
+                contexts[0],
+                contexts[1],
+                contexts[2],
+                contexts[3],
                 self.assertRaisesRegex(
                     _RUN.RunFailure,
-                    "Linux SHAR editor module is not a valid ELF",
+                    "manifest does not match prepared modules",
                 ),
             ):
                 _RUN._prepare_linux_editor_module(
