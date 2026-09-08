@@ -23,7 +23,7 @@
 // - Description:
 //   - Binds validated mesh, physics, animation, material, and wheel assets.
 // - Usage:
-//   - Resolved by the future vehicle construction transaction.
+//   - Resolved by the vehicle construction transaction.
 // - Defaults:
 //   - Missing native assets or wheel bindings fail validation.
 //
@@ -54,9 +54,9 @@ struct SHARVEHICLES_API FSharVehicleWheelPresentationBinding
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Wheel")
     FName WheelId;
 
-    /** Exact validated bone or socket used by the native wheel controller. */
+    /** Exact validated skeletal bone used by the native wheel controller. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Wheel")
-    FName BoneOrSocketName;
+    FName BoneName;
 
     /** Native Chaos wheel definition class for this wheel. */
     UPROPERTY(
