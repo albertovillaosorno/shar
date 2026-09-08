@@ -65,6 +65,9 @@ _KNOWN_ACTIONS = frozenset(
         "raw-call",
         "skills",
         "toolsets",
+        "world-material-apply",
+        "world-material-capabilities",
+        "world-material-preflight",
     }
 )
 _HELP_ACTIONS = frozenset({"--help", "-h", "help"})
@@ -76,6 +79,11 @@ _USAGE = """Usage:
     plan-capabilities [--root RELATIVE_PATH]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     plan-apply [--root RELATIVE_PATH]
+  shar-unreal-mcp world-material-preflight [--root RELATIVE_PATH]
+  shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
+    world-material-capabilities [--root RELATIVE_PATH]
+  shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
+    world-material-apply [--root RELATIVE_PATH]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS] toolsets
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS] describe TOOLSET
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]

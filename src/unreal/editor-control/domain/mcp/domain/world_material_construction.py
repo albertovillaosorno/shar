@@ -187,6 +187,15 @@ class WorldMaterialConstructionReport(NamedTuple):
     instance_count: int
     blocked_presentation_count: int
 
+    def to_json(self) -> JsonObject:
+        """Render representable and blocked world-material counts."""
+        return {
+            "blockedPresentationCount": self.blocked_presentation_count,
+            "instanceCount": self.instance_count,
+            "masterCount": self.master_count,
+            "textureCount": self.texture_count,
+        }
+
 
 class CompiledWorldMaterialConstruction(NamedTuple):
     """Ordered native requests compiled from one bound semantic sidecar."""

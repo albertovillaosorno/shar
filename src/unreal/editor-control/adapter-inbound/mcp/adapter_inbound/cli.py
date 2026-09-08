@@ -59,13 +59,38 @@ from mcp.adapter_outbound.streamable_http import StreamableHttpTransport
 from mcp.adapter_outbound.unreal_mcp_version import (
     FilesystemUnrealMcpVersionProvider,
 )
+from mcp.adapter_outbound.world_material_construction_reader import (
+    read_bound_world_material_document,
+)
+from mcp.adapter_outbound.world_material_source_verifier import (
+    verify_world_material_texture_sources,
+)
 from mcp.application.plan_application import apply_import_plan
 from mcp.application.service import UnrealMcpTranslator
 from mcp.application.skill_export import UnrealSkillExporter
+from mcp.application.world_material_application import (
+    apply_world_material_construction,
+)
 from mcp.domain.errors import UnrealMcpError
+from mcp.domain.plan_bundle import ValidatedPlanBundle
 from mcp.domain.plan_capabilities import audit_plan_capabilities
 from mcp.domain.plan_capabilities import required_toolsets
 from mcp.domain.plan_execution import compile_execution_plan
+from mcp.domain.world_material_capabilities import (
+    audit_world_material_capabilities,
+)
+from mcp.domain.world_material_capabilities import (
+    required_world_material_toolsets,
+)
+from mcp.domain.world_material_capabilities import (
+    world_material_construction_revision,
+)
+from mcp.domain.world_material_construction import (
+    CompiledWorldMaterialConstruction,
+)
+from mcp.domain.world_material_construction import (
+    compile_world_material_construction,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -108,23 +133,31 @@ def _run_invocation(invocation: CliInvocation) -> int:
         _write_stdout(usage_text())
         return _EXIT_SUCCESS
     _validate_action_operands(invocation)
-    if invocation.action == "plan-preflight":
-        return _run_plan_preflight(parse_plan_root(invocation.operands))
-    if invocation.action == "plan-execution-preflight":
-        return _run_plan_execution_preflight(
-            parse_plan_root(invocation.operands)
-        )
-    if invocation.action == "plan-capabilities":
-        return _run_plan_capabilities(
-            invocation,
-            parse_plan_root(invocation.operands),
-        )
-    if invocation.action == "plan-apply":
-        return _run_plan_apply(
-            invocation,
-            parse_plan_root(invocation.operands),
-        )
+    if invocation.action.startswith("world-material-"):
+        return _run_world_material_invocation(invocation)
+    if invocation.action.startswith("plan-"):
+        return _run_plan_invocation(invocation)
     return _run(invocation)
+
+
+def _run_world_material_invocation(invocation: CliInvocation) -> int:
+    root = parse_plan_root(invocation.operands)
+    if invocation.action == "world-material-preflight":
+        return _run_world_material_preflight(root)
+    if invocation.action == "world-material-capabilities":
+        return _run_world_material_capabilities(invocation, root)
+    return _run_world_material_apply(invocation, root)
+
+
+def _run_plan_invocation(invocation: CliInvocation) -> int:
+    root = parse_plan_root(invocation.operands)
+    if invocation.action == "plan-preflight":
+        return _run_plan_preflight(root)
+    if invocation.action == "plan-execution-preflight":
+        return _run_plan_execution_preflight(root)
+    if invocation.action == "plan-capabilities":
+        return _run_plan_capabilities(invocation, root)
+    return _run_plan_apply(invocation, root)
 
 
 def _validate_action_operands(invocation: CliInvocation) -> None:
@@ -139,6 +172,9 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         "plan-capabilities",
         "plan-execution-preflight",
         "plan-preflight",
+        "world-material-apply",
+        "world-material-capabilities",
+        "world-material-preflight",
     }:
         _ = parse_plan_root(operands)
         return
@@ -155,6 +191,93 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         _ = parse_skill_output_path(operands)
         return
     _ = parse_catalog_format(operands)
+
+
+def _world_material_context(
+    root: Path,
+) -> tuple[
+    ValidatedPlanBundle,
+    CompiledWorldMaterialConstruction,
+    dict[str, Path],
+]:
+    bundle = FilesystemPlanBundleReader(root).read_bundle()
+    document = read_bound_world_material_document(root.parent, bundle)
+    compiled = compile_world_material_construction(document)
+    sources = verify_world_material_texture_sources(
+        root.parent.parent,
+        compiled,
+    )
+    return bundle, compiled, sources
+
+
+def _world_material_evidence(
+    bundle: ValidatedPlanBundle,
+    compiled: CompiledWorldMaterialConstruction,
+    sources: dict[str, Path],
+) -> dict[str, object]:
+    return {
+        "bundle": bundle.report.to_json(),
+        "construction": compiled.report.to_json(),
+        "constructionRevision": world_material_construction_revision(compiled),
+        "verifiedTextureSourceCount": len(sources),
+    }
+
+
+def _run_world_material_preflight(root: Path) -> int:
+    bundle, compiled, sources = _world_material_context(root)
+    evidence = _world_material_evidence(bundle, compiled, sources)
+    _write_stdout(render_json(evidence))
+    return _EXIT_SUCCESS
+
+
+def _run_world_material_capabilities(
+    invocation: CliInvocation,
+    root: Path,
+) -> int:
+    bundle, compiled, sources = _world_material_context(root)
+    transport = StreamableHttpTransport(
+        invocation.endpoint,
+        timeout_seconds=invocation.timeout_seconds,
+    )
+    with UnrealMcpTranslator(transport) as translator:
+        definitions = translator.describe_available_toolsets(
+            required_world_material_toolsets(compiled)
+        )
+    capabilities = audit_world_material_capabilities(compiled, definitions)
+    payload = _world_material_evidence(bundle, compiled, sources)
+    payload["capabilities"] = capabilities.to_json()
+    _write_stdout(render_json(payload))
+    return _EXIT_SUCCESS if capabilities.complete else _EXIT_FAILURE
+
+
+def _run_world_material_apply(
+    invocation: CliInvocation,
+    root: Path,
+) -> int:
+    bundle, compiled, sources = _world_material_context(root)
+    transport = StreamableHttpTransport(
+        invocation.endpoint,
+        timeout_seconds=invocation.timeout_seconds,
+    )
+    with UnrealMcpTranslator(transport) as translator:
+        definitions = translator.describe_available_toolsets(
+            required_world_material_toolsets(compiled)
+        )
+        capabilities = audit_world_material_capabilities(compiled, definitions)
+        payload = _world_material_evidence(bundle, compiled, sources)
+        payload["capabilities"] = capabilities.to_json()
+        if not capabilities.complete:
+            _write_stdout(render_json(payload))
+            return _EXIT_FAILURE
+        application = apply_world_material_construction(
+            translator,
+            compiled,
+            capabilities,
+            sources,
+        )
+    payload["application"] = application.to_json()
+    _write_stdout(render_json(payload))
+    return _EXIT_SUCCESS
 
 
 def _run_plan_preflight(root: Path) -> int:
