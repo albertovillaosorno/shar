@@ -20,8 +20,20 @@ For source-authored world presentation, the crate also accepts already-verified
 `WorldMaterialProjection` boundary. That boundary preserves exact writer slot
 names and runtime-addressable binding hashes, validates normalized texture
 identity, and deduplicates only equal effective `slot_presentation_sha256`
-states. It deliberately does not select an Unreal master material, infer shader
-meaning from names, or reparse P3D evidence.
+states. That projection boundary deliberately does not select an Unreal master
+material, infer shader meaning from names, or reparse P3D evidence.
+
+A separate `WorldMaterialNativeMasterClassification` boundary compares verified
+presentation state with the currently reviewed native simple/unlit master
+builder. Plain opaque, source-alpha, additive, and active alpha-test raster
+recipes can map to exact tool inputs. Lit, environment, runtime-error, glass,
+mirror, reflective, light-emitter, and VFX presentation remains blocked rather
+than being approximated.
+
+Source `2SID` stays in presentation identity, while the regular-world native
+recipe renders both faces because the source render flow already enters ordinary
+world drawing with `PddiCullNone`. This classification does not claim Texture2D,
+Material Instance, slot-assignment, save, or complete presentation readiness.
 
 Reviewed PDDI raster state is projected separately into a deterministic
 `WorldMaterialMasterFamily` plus `WorldMaterialInstanceRaster`. Blend behavior,
