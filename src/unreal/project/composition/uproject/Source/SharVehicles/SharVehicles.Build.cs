@@ -20,6 +20,7 @@ public class SharVehicles : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
+                "ChaosVehicles",
                 "SharContent",
             }
         );
