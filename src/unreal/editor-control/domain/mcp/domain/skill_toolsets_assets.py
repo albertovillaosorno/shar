@@ -38,6 +38,10 @@ ASSETS_TOOLSETS = (
         "SharImportToolset",
     ),
     (
+        "SharImportEditor",
+        "SharWorldMaterialToolset",
+    ),
+    (
         "editor_toolset",
         "toolsets",
         "asset",
