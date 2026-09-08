@@ -1425,9 +1425,12 @@ class LinuxEditorNamespaceTests(unittest.TestCase):
                 {
                     "BuildId": "synthetic-build",
                     "Modules": {
-                        name: filename
-                        for name, filename, _label
-                        in _RUN._LINUX_EDITOR_MODULE_OUTPUTS
+                        "SharContent": "libUnrealEditor-SharContent.so",
+                        **{
+                            name: filename
+                            for name, filename, _label
+                            in _RUN._LINUX_EDITOR_MODULE_OUTPUTS
+                        },
                     },
                 }
             ),
