@@ -61,3 +61,11 @@ and is covered for both static and skeletal import-data paths. The already saved
 remain scale-invalid until they are reimported after that module is reloaded.
 Manual actor scaling is inspection-only and is not accepted as conversion
 evidence.
+
+September 5 presentation work adds a separate normalized base-color PNG import
+boundary beside the existing FBX/WAV/media imports. It is intentionally not a
+catch-all texture policy: it creates exactly one generated-root `Texture2D`,
+disables implicit Material creation and replacement, and leaves saving to the
+outer transaction. World catalog v8 supplies the material-to-texture relation;
+blend, culling, emission, glass, and other material behavior remain owned by the
+material projection layer rather than the byte importer.

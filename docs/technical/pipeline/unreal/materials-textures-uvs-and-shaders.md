@@ -160,6 +160,12 @@ Unreal projection must address the exact slot, join source state through
 the effective presentation hash without merging runtime targets. It must not
 infer shader meaning from slot names or reparse source P3D packages.
 
+Normalized world diffuse PNGs cross the native editor boundary as base-color
+`Texture2D` assets only. The texture importer does not create Materials, choose
+blend policy, or infer special surface behavior. Those decisions belong to the
+catalog-driven master-material and Material Instance projection after byte and
+identity verification.
+
 ## Stylized rendering
 
 The stylized appearance is implemented through authored shape, color, material

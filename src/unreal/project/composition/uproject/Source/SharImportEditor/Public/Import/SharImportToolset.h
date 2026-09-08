@@ -92,6 +92,22 @@ public:
     );
 
     /**
+     * Imports one normalized PNG base-color texture as a Texture2D under
+     * /Game/Generated/SHAR. No Material is generated implicitly.
+     * The caller remains responsible for saving and postcondition read-back.
+     * @param SourceFile Absolute verified PNG source path.
+     * @param FolderPath Generated Unreal content folder.
+     * @param AssetName Exact destination asset name.
+     * @return The single Texture2D object path produced by the import task.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharImportToolset")
+    static TArray<FString> ImportBaseColorTexture2D(
+        const FString& SourceFile,
+        const FString& FolderPath,
+        const FString& AssetName
+    );
+
+    /**
      * Imports one WAV file as a SoundWave under /Game/Generated/SHAR.
      * The caller remains responsible for saving and postcondition read-back.
      * @param SourceFile Absolute verified WAV source path.
