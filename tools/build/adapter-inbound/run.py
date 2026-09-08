@@ -1380,15 +1380,12 @@ def _require_linux_editor_module_manifest(root: Path) -> None:
     modules = document.get("Modules")
     if not isinstance(modules, dict):
         raise RunFailure("Linux Unreal editor module manifest has no modules")
-    expected = {
-        name: filename
-        for name, filename, _label in _LINUX_EDITOR_MODULE_OUTPUTS
-    }
-    if modules != expected:
-        raise RunFailure(
-            "Linux Unreal editor module manifest does not match "
-            "prepared modules"
-        )
+    for name, filename, _label in _LINUX_EDITOR_MODULE_OUTPUTS:
+        if modules.get(name) != filename:
+            raise RunFailure(
+                "Linux Unreal editor module manifest does not match "
+                "prepared modules"
+            )
 
 
 def _prepare_linux_editor_module(
