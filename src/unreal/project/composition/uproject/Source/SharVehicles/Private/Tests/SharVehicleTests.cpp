@@ -32,18 +32,25 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Vehicles/SharVehicleConstructionTransaction.h"
 #include "Vehicles/SharVehicleDefinition.h"
+#include "Vehicles/SharVehiclePawn.h"
 #include "Vehicles/SharVehiclePresentationDefinition.h"
 #include "Vehicles/SharVehicleRuntimeState.h"
 #include "Vehicles/SharVehicleSelectionTransaction.h"
 
 #include "Animation/AnimInstance.h"
 #include "Animation/Skeleton.h"
+#include "ChaosVehicleWheel.h"
+#include "ChaosWheeledVehicleMovementComponent.h"
 #include "Engine/DataAsset.h"
 #include "Engine/SkeletalMesh.h"
+#include "Materials/Material.h"
 #include "Materials/MaterialInterface.h"
 #include "Misc/AutomationTest.h"
 #include "PhysicsEngine/PhysicsAsset.h"
+#include "ReferenceSkeleton.h"
+#include "VehicleAnimationInstance.h"
 
 static constexpr float DamagedThreshold = 0.35F;
 static constexpr float CriticalThreshold = 0.70F;
@@ -116,7 +123,7 @@ static FSharVehicleWheelPresentationBinding MakeWheelBinding(
 {
     FSharVehicleWheelPresentationBinding Wheel;
     Wheel.WheelId = FName(WheelId);
-    Wheel.BoneOrSocketName = FName(BoneName);
+    Wheel.BoneName = FName(BoneName);
     Wheel.WheelClass = MakeVehicleSoftClass<UChaosVehicleWheel>(
         TEXT("/Game/SHAR/Tests/Generated/BP_Wheel.BP_Wheel_C")
     );
@@ -195,6 +202,60 @@ static USharVehicleDefinition* MakeValidVehicle()
     return Vehicle;
 }
 
+static void AddVehicleTestBone(
+    FReferenceSkeletonModifier& Modifier,
+    const TCHAR* BoneName,
+    const int32 ParentIndex
+)
+{
+    Modifier.Add(
+        FMeshBoneInfo(FName(BoneName), FString(BoneName), ParentIndex),
+        FTransform::Identity
+    );
+}
+
+static USharVehiclePresentationDefinition*
+MakeResolvedVehiclePresentation()
+{
+    auto* Presentation = MakeValidVehiclePresentation();
+    auto* Skeleton = NewObject<USkeleton>();
+    auto* SkeletalMesh = NewObject<USkeletalMesh>();
+    auto* PhysicsAsset = NewObject<UPhysicsAsset>();
+    auto* Material = NewObject<UMaterial>();
+
+    FReferenceSkeleton ReferenceSkeleton;
+    {
+        FReferenceSkeletonModifier Modifier(ReferenceSkeleton, Skeleton);
+        AddVehicleTestBone(Modifier, TEXT("root"), INDEX_NONE);
+        AddVehicleTestBone(Modifier, TEXT("w0"), 0);
+        AddVehicleTestBone(Modifier, TEXT("w1"), 0);
+        AddVehicleTestBone(Modifier, TEXT("w2"), 0);
+        AddVehicleTestBone(Modifier, TEXT("w3"), 0);
+    }
+    SkeletalMesh->SetRefSkeleton(ReferenceSkeleton);
+    SkeletalMesh->SetSkeleton(Skeleton);
+    TArray<FSkeletalMaterial> Materials;
+    Materials.Emplace(Material, FName(TEXT("body")));
+    SkeletalMesh->SetMaterials(Materials);
+
+    Presentation->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(SkeletalMesh);
+    Presentation->Skeleton = TSoftObjectPtr<USkeleton>(Skeleton);
+    Presentation->PhysicsAsset = TSoftObjectPtr<UPhysicsAsset>(PhysicsAsset);
+    Presentation->AnimationClass = TSoftClassPtr<UAnimInstance>(
+        UVehicleAnimationInstance::StaticClass()
+    );
+    Presentation->MaterialInstances = {
+        TSoftObjectPtr<UMaterialInterface>(Material),
+    };
+    for (FSharVehicleWheelPresentationBinding& Wheel : Presentation->Wheels)
+    {
+        Wheel.WheelClass = TSoftClassPtr<UChaosVehicleWheel>(
+            UChaosVehicleWheel::StaticClass()
+        );
+    }
+    return Presentation;
+}
+
 namespace
 {
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -224,6 +285,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharVehicleSelectionTransactionTest,
     "SHAR.Vehicles.Selection.Transaction",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehicleConstructionTransactionTest,
+    "SHAR.Vehicles.Construction.Transaction",
     EAutomationTestFlags::EditorContext
         | EAutomationTestFlags::ClientContext
         | EAutomationTestFlags::CommandletContext
@@ -271,8 +340,8 @@ bool FSharVehiclePresentationDefinitionValidationTest::RunTest(
     TestFalse(TEXT("Duplicate wheel identity is rejected"), Errors.IsEmpty());
 
     Presentation = MakeValidVehiclePresentation();
-    Presentation->Wheels[1].BoneOrSocketName =
-        Presentation->Wheels[0].BoneOrSocketName;
+    Presentation->Wheels[1].BoneName =
+        Presentation->Wheels[0].BoneName;
     Errors.Reset();
     Presentation->GatherValidationErrors(Errors);
     TestFalse(
@@ -361,6 +430,106 @@ bool FSharVehicleSelectionTransactionTest::RunTest(
     TestTrue(
         TEXT("Rollback preserves previous vehicle identity"),
         Rollback->GetPreviousVehicleId() == PreviousVehicle
+    );
+    return true;
+}
+
+bool FSharVehicleConstructionTransactionTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    auto* Pawn = NewObject<ASharVehiclePawn>();
+    auto* Vehicle = MakeValidVehicle();
+    auto* Presentation = MakeResolvedVehiclePresentation();
+    auto* Movement = Cast<UChaosWheeledVehicleMovementComponent>(
+        Pawn->GetVehicleMovementComponent()
+    );
+    TestNotNull(TEXT("Project Pawn exposes wheeled movement"), Movement);
+    if (Movement == nullptr)
+    {
+        return false;
+    }
+    Vehicle->Physics.MassKilograms = 1375.0F;
+    Vehicle->Physics.EngineTorqueNewtonMeters = 412.0F;
+    const float PreviousMass = Movement->Mass;
+    const float PreviousTorque = Movement->EngineSetup.MaxTorque;
+
+    auto* Transaction = NewObject<USharVehicleConstructionTransaction>();
+    TestTrue(
+        TEXT("Resolved vehicle presentation prepares"),
+        Transaction->Prepare(Pawn, Vehicle, Presentation)
+    );
+    TestTrue(
+        TEXT("Prepared construction has prepared state"),
+        Transaction->GetState() == ESharVehicleConstructionState::Prepared
+    );
+    TestTrue(
+        TEXT("Prepared vehicle construction commits"),
+        Transaction->Commit()
+    );
+    TestTrue(
+        TEXT("Committed construction has committed state"),
+        Transaction->GetState() == ESharVehicleConstructionState::Committed
+    );
+    TestTrue(
+        TEXT("Committed construction applies Skeletal Mesh"),
+        Pawn->GetMesh()->GetSkeletalMeshAsset()
+            == Presentation->SkeletalMesh.Get()
+    );
+    TestTrue(
+        TEXT("Committed construction applies Physics Asset"),
+        Pawn->GetMesh()->GetPhysicsAsset() == Presentation->PhysicsAsset.Get()
+    );
+    TestEqual(
+        TEXT("Committed construction applies every wheel"),
+        Movement->WheelSetups.Num(),
+        Presentation->Wheels.Num()
+    );
+    TestTrue(
+        TEXT("Committed construction applies vehicle mass"),
+        FMath::IsNearlyEqual(Movement->Mass, Vehicle->Physics.MassKilograms)
+    );
+    TestTrue(
+        TEXT("Committed construction applies engine torque"),
+        FMath::IsNearlyEqual(
+            Movement->EngineSetup.MaxTorque,
+            Vehicle->Physics.EngineTorqueNewtonMeters
+        )
+    );
+
+    TestTrue(
+        TEXT("Committed construction rolls back"),
+        Transaction->Rollback()
+    );
+    TestNull(
+        TEXT("Rollback restores empty Skeletal Mesh"),
+        Pawn->GetMesh()->GetSkeletalMeshAsset()
+    );
+    TestEqual(
+        TEXT("Rollback restores wheel setup count"),
+        Movement->WheelSetups.Num(),
+        0
+    );
+    TestTrue(
+        TEXT("Rollback restores vehicle mass"),
+        FMath::IsNearlyEqual(Movement->Mass, PreviousMass)
+    );
+    TestTrue(
+        TEXT("Rollback restores engine torque"),
+        FMath::IsNearlyEqual(Movement->EngineSetup.MaxTorque, PreviousTorque)
+    );
+
+    auto* InvalidPresentation = MakeResolvedVehiclePresentation();
+    InvalidPresentation->Wheels[0].BoneName = FName(TEXT("missing_wheel_bone"));
+    auto* InvalidTransaction = NewObject<USharVehicleConstructionTransaction>();
+    TestFalse(
+        TEXT("Construction rejects a wheel absent from the Skeletal Mesh"),
+        InvalidTransaction->Prepare(Pawn, Vehicle, InvalidPresentation)
+    );
+    TestTrue(
+        TEXT("Rejected construction remains idle"),
+        InvalidTransaction->GetState() == ESharVehicleConstructionState::Idle
     );
     return true;
 }

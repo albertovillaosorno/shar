@@ -115,7 +115,7 @@ identity/tuning contract in `USharVehicleDefinition`.
 `USharVehiclePresentationDefinition` requires the final Skeletal Mesh, Skeleton,
 Physics Asset, Animation Blueprint class, ordered Material Instances, semantic
 rig profile, deterministic preparation revision, and ordered wheel bindings.
-Each wheel binding carries its canonical wheel id, exact bone or socket, and
+Each wheel binding carries its canonical wheel id, exact skeletal bone, and
 native Chaos wheel class. The project registers this definition as the
 `SharVehiclePresentation` Primary Asset type, and `SharVehicles` now declares
 the `ChaosVehicles` module while the project explicitly enables
@@ -127,8 +127,24 @@ The bounded precompiled build compiled all 31 required actions for `shar`,
 definition and vehicle automation tests, then linked all three editor modules
 with `Result: Succeeded` and no compiler errors.
 
-The broader P0 criterion remains open because this definition is construction
-evidence, not a constructed vehicle. A reviewed transaction still needs to load
-and cross-check those soft references, bind the skeletal presentation and
-materials, create or apply the Physics Asset and wheel setup, configure the
-Chaos vehicle Pawn, read the result back, and compensate partial failure.
+A project-owned native construction boundary now advances that gap without
+claiming final `sedana` assembly. `ASharVehiclePawn` provides the concrete Chaos
+wheeled Pawn, while `USharVehicleConstructionTransaction` resolves the reviewed
+presentation references before mutation, verifies the exact Skeleton, material
+slot count, native wheel classes, and skeletal wheel bones, captures the prior
+Pawn configuration, and applies Skeletal Mesh, Physics Asset, animation class,
+materials, wheel setups, mass, and engine torque. Commit requires read-back of
+those applied fields and rollback restores the captured configuration.
+
+A fresh Unreal Engine 5.8.1 editor build compiled all 33 actions and linked
+`SharVehicles` with `Result: Succeeded`. The live
+`SHAR.Vehicles.Construction.Transaction` automation test then found exactly one
+test, exercised prepare, commit, native field read-back, explicit rollback, and
+rejection of a missing wheel bone, and completed with `Result={Success}` and
+exit code 0.
+
+The broader P0 criterion remains open for the representative source vehicle.
+The bounded test uses transient native assets; it does not yet create reviewed
+`sedana` Physics Asset, material, animation, or wheel-definition assets, prove
+wheel Physics Asset bodies, spawn the vehicle into a world, create live Chaos
+physics state, or validate driven behavior against source evidence.

@@ -136,10 +136,10 @@ void AppendWheelErrors(
     {
         const bool bInvalid =
             !USharPrimaryContentDefinition::IsCanonicalIdentifier(Wheel.WheelId)
-            || Wheel.BoneOrSocketName.IsNone()
+            || Wheel.BoneName.IsNone()
             || Wheel.WheelClass.IsNull()
             || SeenWheelIds.Contains(Wheel.WheelId)
-            || SeenRigNames.Contains(Wheel.BoneOrSocketName);
+            || SeenRigNames.Contains(Wheel.BoneName);
         if (bInvalid)
         {
             OutErrors.Add(NSLOCTEXT(
@@ -150,7 +150,7 @@ void AppendWheelErrors(
             ));
         }
         SeenWheelIds.Add(Wheel.WheelId);
-        SeenRigNames.Add(Wheel.BoneOrSocketName);
+        SeenRigNames.Add(Wheel.BoneName);
     }
 }
 

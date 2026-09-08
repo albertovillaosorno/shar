@@ -183,36 +183,35 @@ details only.
 
 ## Vehicle definition
 
-`USharVehicleDefinition` contains:
+The native implementation deliberately separates identity/tuning from final
+presentation instead of placing every concern in one asset.
 
-- canonical identity, revision, aliases, access classes, and content tags;
-- compatible Pawn, movement component, and simulation mode;
-- Skeletal Mesh, Physics Asset, Animation Blueprint, and material set;
-- native wheel definitions and bone or socket bindings;
-- chassis mass, center of mass, inertia, drag, downforce, and aerofoils;
-- engine torque curve, idle and maximum rotation speed, engine braking, and
-  throttle response;
-- transmission, forward and reverse gears, final drive, automatic or manual
-  policy, shift thresholds, and shift duration;
-- differential and driven-wheel policy;
-- tire friction, lateral and longitudinal grip, slip, load sensitivity, and
-  physical-surface modifiers;
-- steering geometry, maximum angle, speed-sensitive reduction, rise and fall
-  rates, and controller-device modifiers;
-- service brake, handbrake, reverse, traction, and stability policies;
-- suspension travel, spring rate, preload, damping, wheel load, trace shape, and
-  contact filtering;
-- top-speed, acceleration, recovery, and reset policies;
-- turbo, jump-boost, horn, and special ability definitions;
-- occupant seats, enter and exit anchors, camera targets, and collectible
-  hardpoints;
-- collision profiles, damage zones, damage stages, detachable-presentation
-  bindings, health, and destruction policy;
-- lights, materials, colors, shadows, wheel animation, roof-fade, damage,
-  particle, skid, audio, and accessibility presentation;
-- traffic, race, pursuit, mission, parked, secret, and retrieved variants;
-- target quality, network, streaming, and teardown policy; and
-- validation and fallback behavior.
+`USharVehicleDefinition` currently contains:
+
+- canonical identity, revision, source-package provenance, and owning feature;
+- vehicle-family identity and the canonical default-presentation identity;
+- drivable policy;
+- unit-labelled mass, maximum speed, engine torque, wheel radius, wheelbase,
+  track width, and suspension travel;
+- typed seats and damage bands;
+- AI, network-prediction, and recovery policy identities; and
+- validation that rejects incomplete or ambiguous definition data.
+
+`USharVehiclePresentationDefinition` contains the native construction assets:
+
+- final Skeletal Mesh and its exact Skeleton;
+- Physics Asset and `UVehicleAnimationInstance`-derived animation class;
+- ordered final Material Interfaces matching Skeletal Mesh slots;
+- ordered native Chaos wheel classes bound to exact skeletal bones through
+  `FChaosWheelSetup::BoneName` semantics;
+- semantic rig-profile identity and deterministic preparation revision; and
+- validation that rejects missing references or duplicate wheel identities and
+  bone bindings.
+
+The remaining tuning and gameplay families described below are target contract
+scope. They must enter additional typed definitions only when source-backed
+conversion evidence exists; they must not be hidden inside presentation paths,
+raw arrays, or mutable runtime state.
 
 Every physical quantity declares units. Unlabelled tuning constants, magic
 thresholds, compile-time platform branches, and mutable singleton parameters are
@@ -276,9 +275,24 @@ Vehicle construction follows this sequence:
 1. release temporary construction handles while retaining the instance scope.
 
 Failure destroys the candidate, releases every handle and delegate, and returns
-a
-closed result. A partially initialized native vehicle never enters an active
+a closed result. A partially initialized native vehicle never enters an active
 vehicle list, traffic lane, race grid, retrieval result, or player handoff.
+
+The current bounded implementation establishes the pre-spawn construction
+surface without pretending that full simulation startup is complete.
+`ASharVehiclePawn` supplies the project-owned concrete `AWheeledVehiclePawn`
+type. `USharVehicleConstructionTransaction` prepares one validated vehicle and
+presentation pair, resolves all reviewed soft references before mutation,
+requires exact Skeleton, material-slot, wheel-class, and wheel-bone
+compatibility, captures the target Pawn's prior configuration, and then applies
+Skeletal Mesh, Physics Asset, animation class, materials, `WheelSetups`, mass,
+and engine torque. Commit reads those fields back before publishing success;
+explicit rollback and failed commit restore the captured configuration.
+
+This bounded transaction does not spawn the Pawn, create or validate live Chaos
+physics state, prove Physics Asset wheel bodies, choose placement, or publish a
+world vehicle instance. Those remain later steps in the complete construction
+sequence above.
 
 ## Vehicle lifecycle states
 
@@ -367,7 +381,7 @@ consume a published revision and cannot retain native solver pointers.
 Each wheel definition declares:
 
 - stable identity and axle role;
-- wheel bone or socket;
+- exact skeletal wheel bone;
 - radius, width, mass, collision, and trace shape;
 - driven, steering, service-brake, and handbrake participation;
 - suspension axis, travel, spring, preload, damping, and force offset;
@@ -1097,7 +1111,8 @@ Cook and startup validation prove:
   overwrite, and accepted values match native read-back and measured behavior;
 - valid engine, transmission, differential, steering, brake, suspension, tire,
   and wheel configurations;
-- compatible wheel bones, sockets, Physics Asset bodies, and animation bindings;
+- compatible wheel bones, corresponding Physics Asset bodies, and animation
+  bindings;
 - valid damage zones, stages, materials, detachable presentation, repair, and
   destruction policy;
 - valid seats, entry, exit, camera, and payload hardpoints;
