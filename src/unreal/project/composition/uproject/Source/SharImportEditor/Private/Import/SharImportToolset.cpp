@@ -44,9 +44,11 @@
 #include "Factories/FbxStaticMeshImportData.h"
 #include "Factories/FbxSkeletalMeshImportData.h"
 #include "Factories/SoundFactory.h"
+#include "Factories/TextureFactory.h"
 #include "FileMediaSource.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/Texture2D.h"
 #include "HAL/FileManager.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Misc/Guid.h"
@@ -309,6 +311,38 @@ bool ValidateSkeletalMeshRequest(
         *SkeletonName
     );
     return true;
+}
+
+bool ValidateBaseColorTextureRequest(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName,
+    FString& OutError
+)
+{
+    OutError.Reset();
+    if (SourceFile.IsEmpty() || FPaths::IsRelative(SourceFile))
+    {
+        OutError = TEXT("source_file must be an absolute path");
+        return false;
+    }
+    if (
+        !FPaths::GetExtension(SourceFile).Equals(
+            TEXT("png"),
+            ESearchCase::IgnoreCase
+        )
+    )
+    {
+        OutError = TEXT("source_file must have a PNG extension");
+        return false;
+    }
+    FString PackagePath;
+    return ValidateGeneratedDestination(
+        FolderPath,
+        AssetName,
+        PackagePath,
+        OutError
+    );
 }
 
 bool ValidateSoundWaveRequest(
@@ -686,6 +720,88 @@ TArray<FString> USharImportToolset::ImportSkeletalMesh(
         return {};
     }
     return {Paths.MeshObjectPath, Paths.SkeletonObjectPath};
+}
+
+TArray<FString> USharImportToolset::ImportBaseColorTexture2D(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FString Error;
+    if (!ValidateBaseColorTextureRequest(
+            SourceFile,
+            FolderPath,
+            AssetName,
+            Error
+        ))
+    {
+        RaiseError(Error);
+        return {};
+    }
+    if (!IFileManager::Get().FileExists(*SourceFile))
+    {
+        RaiseError(TEXT("source_file does not exist"));
+        return {};
+    }
+    FString PackagePath;
+    if (!ValidateGeneratedDestination(
+            FolderPath,
+            AssetName,
+            PackagePath,
+            Error
+        ))
+    {
+        RaiseError(Error);
+        return {};
+    }
+    const FString ObjectPath = FString::Printf(
+        TEXT("%s.%s"),
+        *PackagePath,
+        *AssetName
+    );
+    if (AssetIdentityExists(PackagePath, ObjectPath))
+    {
+        RaiseError(TEXT("texture import output already exists"));
+        return {};
+    }
+
+    TStrongObjectPtr<UAssetImportTask> Task(NewObject<UAssetImportTask>());
+    TStrongObjectPtr<UTextureFactory> Factory(NewObject<UTextureFactory>());
+    Factory->SuppressImportOverwriteDialog();
+    Factory->bCreateMaterial = false;
+
+    Task->Filename = SourceFile;
+    Task->DestinationPath = FolderPath;
+    Task->DestinationName = AssetName;
+    Task->bAutomated = true;
+    Task->bAsync = false;
+    Task->bReplaceExisting = false;
+    Task->bReplaceExistingSettings = false;
+    Task->bSave = false;
+    Task->Factory = Factory.Get();
+    Factory->SetAssetImportTask(Task.Get());
+
+    FAssetToolsModule::GetModule().Get().ImportAssetTasks({Task.Get()});
+    if (
+        Task->ImportedObjectPaths.Num() != 1
+        || !Task->ImportedObjectPaths[0].Equals(
+            ObjectPath,
+            ESearchCase::CaseSensitive
+        )
+    )
+    {
+        RaiseError(TEXT("PNG texture import produced unexpected assets"));
+        return {};
+    }
+    UTexture2D* Texture = FindObject<UTexture2D>(nullptr, *ObjectPath);
+    if (Texture == nullptr || !Texture->GetPackage()->IsDirty())
+    {
+        RaiseError(TEXT("PNG texture import did not create a dirty Texture2D"));
+        return {};
+    }
+    return {ObjectPath};
 }
 
 TArray<FString> USharImportToolset::ImportSoundWave(

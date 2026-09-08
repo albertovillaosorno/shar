@@ -67,6 +67,13 @@ bool ValidateSkeletalMeshRequest(
     FString& OutError
 );
 
+bool ValidateBaseColorTextureRequest(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName,
+    FString& OutError
+);
+
 bool ValidateSoundWaveRequest(
     const FString& SourceFile,
     const FString& FolderPath,

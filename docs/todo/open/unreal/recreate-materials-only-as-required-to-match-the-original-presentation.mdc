@@ -74,3 +74,11 @@ occurrences and 7,215 exact writer slots. The 88 additional slots explain all
 31 earlier binding-to-material count gaps, while FBX bytes, base bindings, and
 the 1,756 root textures remain byte-for-byte deterministic. The exhaustive
 catalog audit reports zero errors.
+
+`SharImportEditor` now has a bounded base-color PNG import request that targets
+only `/Game/Generated/SHAR`, refuses replacement, disables automatic Material
+creation, and leaves the resulting `Texture2D` unsaved for transaction-owned
+postcondition checks. Native compile and live import acceptance remain required
+before this texture boundary can be considered complete. Normal maps, masks,
+and other non-color texture roles remain outside this base-color contract until
+source-backed color-space and compression policy is reviewed.

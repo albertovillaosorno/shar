@@ -46,6 +46,7 @@
 #include "Misc/PackageName.h"
 #include "Misc/Paths.h"
 #include "Sound/SoundWave.h"
+#include "Engine/Texture2D.h"
 #include "ToolsetRegistry/UToolsetRegistry.h"
 
 namespace
@@ -221,6 +222,34 @@ bool FSharImportValidationTest::RunTest(const FString& Parameters)
     );
 
     TestTrue(
+        TEXT("Canonical normalized PNG request passes"),
+        UE::SharImportEditor::Private::ValidateBaseColorTextureRequest(
+            TEXT("C:/SHAR/verified.png"),
+            TEXT("/Game/Generated/SHAR/textures/world"),
+            TEXT("world_base_color"),
+            Error
+        )
+    );
+    TestFalse(
+        TEXT("Relative normalized PNG source is rejected"),
+        UE::SharImportEditor::Private::ValidateBaseColorTextureRequest(
+            TEXT("verified.png"),
+            TEXT("/Game/Generated/SHAR/textures/world"),
+            TEXT("world_base_color"),
+            Error
+        )
+    );
+    TestFalse(
+        TEXT("Non-PNG base-color source is rejected"),
+        UE::SharImportEditor::Private::ValidateBaseColorTextureRequest(
+            TEXT("C:/SHAR/verified.tga"),
+            TEXT("/Game/Generated/SHAR/textures/world"),
+            TEXT("world_base_color"),
+            Error
+        )
+    );
+
+    TestTrue(
         TEXT("Canonical generated WAV request passes"),
         UE::SharImportEditor::Private::ValidateSoundWaveRequest(
             TEXT("C:/SHAR/verified.wav"),
@@ -257,9 +286,68 @@ bool FSharImportValidationTest::RunTest(const FString& Parameters)
         )
     );
 
+    const FString TextureFixture = FPaths::ConvertRelativePathToFull(
+        FPaths::ProjectDir()
+        / TEXT(
+            "../../../../../tests/fixtures/unreal/character_triangle/"
+            "T_unreal_fixture_triangle_BC.png"
+        )
+    );
+    TestTrue(
+        TEXT("Tracked base-color PNG fixture exists"),
+        IFileManager::Get().FileExists(*TextureFixture)
+    );
+    const FString Folder = TEXT("/Game/Generated/SHAR/__Tests__");
+    const FString TextureName = FString::Printf(
+        TEXT("TransientBaseColor_%u"),
+        FPlatformProcess::GetCurrentProcessId()
+    );
+    const FString TextureObjectPath = FString::Printf(
+        TEXT("%s/%s.%s"),
+        *Folder,
+        *TextureName,
+        *TextureName
+    );
+    const TArray<FString> ImportedTexture =
+        USharImportToolset::ImportBaseColorTexture2D(
+            TextureFixture,
+            Folder,
+            TextureName
+        );
+    TestTrue(
+        TEXT("Automated PNG import returns the planned object path"),
+        ImportedTexture.Contains(TextureObjectPath)
+    );
+    UTexture2D* Texture = FindObject<UTexture2D>(
+        nullptr,
+        *TextureObjectPath
+    );
+    TestNotNull(TEXT("Imported Texture2D exists in memory"), Texture);
+    if (Texture != nullptr)
+    {
+        TestTrue(TEXT("Base-color Texture2D uses sRGB"), Texture->SRGB);
+        UPackage* TexturePackage = Texture->GetPackage();
+        TestTrue(
+            TEXT("Imported texture package is dirty before explicit save"),
+            TexturePackage->IsDirty()
+        );
+        const FString TexturePackageFilename =
+            FPackageName::LongPackageNameToFilename(
+                TexturePackage->GetName(),
+                FPackageName::GetAssetPackageExtension()
+            );
+        TestFalse(
+            TEXT("PNG import does not save the package implicitly"),
+            IFileManager::Get().FileExists(*TexturePackageFilename)
+        );
+        TexturePackage->SetDirtyFlag(false);
+        Texture->ClearFlags(RF_Public | RF_Standalone);
+        Texture->MarkAsGarbage();
+        TexturePackage->MarkAsGarbage();
+    }
+
     const FString Fixture = WriteMinimalWaveFixture();
     TestFalse(TEXT("Minimal WAV fixture is written"), Fixture.IsEmpty());
-    const FString Folder = TEXT("/Game/Generated/SHAR/__Tests__");
     const FString AssetName = FString::Printf(
         TEXT("TransientSoundWave_%u"),
         FPlatformProcess::GetCurrentProcessId()
