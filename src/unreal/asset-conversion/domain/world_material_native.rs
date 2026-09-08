@@ -287,7 +287,7 @@ pub fn classify_world_material_native_master(
     WorldMaterialNativeMasterClassification { recipe, blockers }
 }
 
-fn is_generated_material_folder(value: &str) -> bool {
+pub(super) fn is_generated_material_folder(value: &str) -> bool {
     const ROOT: &str = "/Game/Generated/SHAR/Materials";
     const PREFIX: &str = "/Game/Generated/SHAR/Materials/";
     if value != ROOT && !value.starts_with(PREFIX) {
@@ -306,7 +306,7 @@ fn is_material_asset_name(value: &str) -> bool {
         && is_unreal_name(value)
 }
 
-fn is_unreal_name(value: &str) -> bool {
+pub(super) fn is_unreal_name(value: &str) -> bool {
     !value.is_empty()
         && value
             .bytes()
