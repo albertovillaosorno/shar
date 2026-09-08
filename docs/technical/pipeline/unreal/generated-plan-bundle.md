@@ -186,11 +186,17 @@ units, native Unreal fields, conversion rules, or runtime ranges.
 
 `world-materials.json` preserves the verified world-presentation projection
 without reparsing source packages in Unreal. It binds canonical normalized PNG
-paths and digests, deduplicated master-family identities, exact presentation
-RGBA and alpha-reference bits, material semantics, and every FBX slot to its
-effective presentation digest. The sidecar is evidence only: environment,
-lit, runtime-error, or other families that do not yet have reviewed native
-construction remain non-ready even though their source state is retained.
+paths and digests, deduplicated source master-family identities, exact
+presentation RGBA and alpha-reference bits, material semantics, and every FBX
+slot to its effective presentation digest.
+
+The sidecar also publishes the reviewed native simple/unlit master recipe for
+each representable presentation and stable blocker codes for every presentation
+that still needs lit, environment, runtime-error, glass, mirror, reflection,
+emission, or VFX policy. Native recipes preserve the regular-world
+`PddiCullNone` requirement and do not collapse the retained source master
+identity. This remains planning evidence only; Texture2D, Material Instance,
+slot assignment, save, and packaged-load readiness require their own gates.
 
 The published release index uses
 `shar-schoenwald.unreal-plan-bundle.v5`. It records the six plan identities,

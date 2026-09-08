@@ -38,15 +38,16 @@ use serde_json::{Value, json};
 use shar_unreal_conversion::domain::{
     WORLD_MATERIAL_SOURCE_SCHEMA, WorldMaterialAlphaCompare,
     WorldMaterialBlendFamily, WorldMaterialMasterFamily,
+    WorldMaterialNativeMasterClassification, WorldMaterialNativeMasterRecipe,
     WorldMaterialPresentation, WorldMaterialSemantics,
-    WorldMaterialShaderFamily,
+    WorldMaterialShaderFamily, classify_world_material_native_master,
 };
 
 use super::unreal_world_material_catalog::VerifiedWorldMaterialCatalog;
 use crate::domain::{PipelineError, PipelineOutcome};
 
 pub(super) const WORLD_MATERIAL_PLAN_SCHEMA: &str =
-    "shar-schoenwald.unreal-world-material-evidence.v1";
+    "shar-schoenwald.unreal-world-material-evidence.v2";
 
 /// Render one canonical world-material evidence document.
 ///
@@ -66,11 +67,15 @@ pub(super) fn render_world_material_plan(
                 "bindings": 0,
                 "slots": 0,
                 "master_families": 0,
+                "native_master_recipes": 0,
+                "native_master_ready_presentations": 0,
+                "native_master_blocked_presentations": 0,
                 "textures": 0,
                 "presentations": 0
             },
             "textures": [],
             "master_families": [],
+            "native_master_recipes": [],
             "presentations": [],
             "artifacts": []
         }));
@@ -142,9 +147,41 @@ pub(super) fn render_world_material_plan(
         .iter()
         .map(|(identity, master)| master_value(identity, *master))
         .collect::<Vec<_>>();
-    let presentation_values = presentations
-        .values()
-        .map(presentation_value)
+    let mut native_recipes =
+        BTreeMap::<String, WorldMaterialNativeMasterRecipe>::new();
+    let mut native_ready_count = 0usize;
+    let mut native_blocked_count = 0usize;
+    let mut presentation_values = Vec::with_capacity(presentations.len());
+    for presentation in presentations.values() {
+        let classification = classify_world_material_native_master(
+            presentation.raster.master,
+            presentation.semantics,
+        );
+        let recipe_identity = if let Some(recipe) = classification.recipe() {
+            native_ready_count = native_ready_count.saturating_add(1);
+            let identity = native_recipe_identity(recipe);
+            if native_recipes
+                .insert(identity.clone(), recipe)
+                .is_some_and(|existing| existing != recipe)
+            {
+                return Err(PipelineError::new(
+                    "native world master recipe identity conflicts",
+                ));
+            }
+            Some(identity)
+        } else {
+            native_blocked_count = native_blocked_count.saturating_add(1);
+            None
+        };
+        presentation_values.push(presentation_value(
+            presentation,
+            recipe_identity.as_deref(),
+            &classification,
+        ));
+    }
+    let native_recipe_values = native_recipes
+        .iter()
+        .map(|(identity, recipe)| native_recipe_value(identity, *recipe))
         .collect::<Vec<_>>();
     let artifact_values = catalog
         .artifacts
@@ -179,11 +216,15 @@ pub(super) fn render_world_material_plan(
             "bindings": catalog.binding_count,
             "slots": catalog.slot_count,
             "master_families": catalog.master_family_count,
+            "native_master_recipes": native_recipes.len(),
+            "native_master_ready_presentations": native_ready_count,
+            "native_master_blocked_presentations": native_blocked_count,
             "textures": catalog.textures.len(),
             "presentations": presentations.len()
         },
         "textures": texture_values,
         "master_families": master_values,
+        "native_master_recipes": native_recipe_values,
         "presentations": presentation_values,
         "artifacts": artifact_values
     }))
@@ -200,7 +241,11 @@ fn master_value(identity: &str, master: WorldMaterialMasterFamily) -> Value {
     })
 }
 
-fn presentation_value(presentation: &WorldMaterialPresentation) -> Value {
+fn presentation_value(
+    presentation: &WorldMaterialPresentation,
+    native_recipe_identity: Option<&str>,
+    classification: &WorldMaterialNativeMasterClassification,
+) -> Value {
     json!({
         "slot_presentation_sha256": presentation.slot_presentation_sha256,
         "texture_file_name": presentation.texture_file_name,
@@ -209,7 +254,38 @@ fn presentation_value(presentation: &WorldMaterialPresentation) -> Value {
         "master_family": presentation.raster.master.identity(),
         "alpha_reference_bits":
             presentation.raster.instance.alpha_reference_bits,
-        "semantics": semantics_value(presentation.semantics)
+        "semantics": semantics_value(presentation.semantics),
+        "native_master_recipe": native_recipe_identity,
+        "native_master_blockers": classification
+            .blockers()
+            .iter()
+            .map(|blocker| blocker.code())
+            .collect::<Vec<_>>()
+    })
+}
+
+fn native_recipe_identity(recipe: WorldMaterialNativeMasterRecipe) -> String {
+    format!(
+        "simple-unlit__blend-{}__alpha-test-{}__{}",
+        recipe.blend.tool_token(),
+        if recipe.alpha_test { "on" } else { "off" },
+        if recipe.render_both_faces {
+            "both-faces"
+        } else {
+            "one-sided"
+        }
+    )
+}
+
+fn native_recipe_value(
+    identity: &str,
+    recipe: WorldMaterialNativeMasterRecipe,
+) -> Value {
+    json!({
+        "identity": identity,
+        "blend_family": recipe.blend.tool_token(),
+        "alpha_test": recipe.alpha_test,
+        "render_both_faces": recipe.render_both_faces
     })
 }
 

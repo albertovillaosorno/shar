@@ -90,6 +90,41 @@ fn projection(color: [u8; 4]) -> Result<WorldMaterialProjection, String> {
     )
 }
 
+fn ordinary_projection(
+    color: [u8; 4],
+) -> Result<WorldMaterialProjection, String> {
+    let raster = WorldMaterialRasterProjection::from_pddi(
+        WorldMaterialShaderFamily::Simple,
+        1,
+        1,
+        4,
+        Some(0.375_f32.to_bits()),
+        0,
+        0,
+    )?;
+    let material = format!("material-{BINDING}");
+    WorldMaterialProjection::build(
+        &[WorldMaterialBindingSource {
+            material_name: material.clone(),
+            texture_file_name: Some(format!("texture-{TEXTURE}.png")),
+            texture_sha256: Some(TEXTURE.to_owned()),
+            binding_sha256: BINDING.to_owned(),
+            presentation_sha256: PRESENTATION.to_owned(),
+            base_color_rgba8: color,
+            raster,
+            semantics: WorldMaterialSemantics::default(),
+        }],
+        &[WorldMaterialSlotSource {
+            slot_name: material.clone(),
+            source_material_name: material,
+            binding_sha256: BINDING.to_owned(),
+            presentation_sha256: PRESENTATION.to_owned(),
+            slot_presentation_sha256: EFFECTIVE.to_owned(),
+            semantics: WorldMaterialSemantics::default(),
+        }],
+    )
+}
+
 fn catalog() -> Result<VerifiedWorldMaterialCatalog, String> {
     Ok(VerifiedWorldMaterialCatalog {
         artifact_count: 1,
@@ -145,6 +180,25 @@ fn renders_exact_verified_world_material_evidence() -> Result<(), String> {
             .pointer("/master_families/0/two_sided")
             .and_then(Value::as_bool)
             != Some(true)
+        || value
+            .pointer("/counts/native_master_recipes")
+            .and_then(Value::as_u64)
+            != Some(0)
+        || value
+            .pointer("/counts/native_master_ready_presentations")
+            .and_then(Value::as_u64)
+            != Some(0)
+        || value
+            .pointer("/counts/native_master_blocked_presentations")
+            .and_then(Value::as_u64)
+            != Some(1)
+        || !value
+            .pointer("/presentations/0/native_master_recipe")
+            .is_some_and(Value::is_null)
+        || value
+            .pointer("/presentations/0/native_master_blockers/0")
+            .and_then(Value::as_str)
+            != Some("glass-presentation")
         || value.pointer("/presentations/0/base_color_rgba8/2")
             .and_then(Value::as_u64)
             != Some(30)
@@ -170,6 +224,65 @@ fn renders_exact_verified_world_material_evidence() -> Result<(), String> {
 }
 
 #[test]
+fn ordinary_presentation_references_deduplicated_native_master_recipe()
+-> Result<(), String> {
+    let mut catalog = catalog()?;
+    let artifact = catalog
+        .artifacts
+        .first_mut()
+        .ok_or("synthetic verified world artifact disappeared")?;
+    artifact.projection = ordinary_projection([10, 20, 30, 40])?;
+    let text = render_world_material_plan(Some(&catalog))
+        .map_err(|error| error.to_string())?;
+    let value: Value = serde_json::from_str(&text)
+        .map_err(|error| error.to_string())?;
+    let identity = concat!(
+        "simple-unlit__blend-alpha__alpha-test-on__",
+        "both-faces"
+    );
+    if value.pointer("/counts/native_master_recipes").and_then(Value::as_u64)
+        != Some(1)
+        || value
+            .pointer("/counts/native_master_ready_presentations")
+            .and_then(Value::as_u64)
+            != Some(1)
+        || value
+            .pointer("/counts/native_master_blocked_presentations")
+            .and_then(Value::as_u64)
+            != Some(0)
+        || value
+            .pointer("/native_master_recipes/0/identity")
+            .and_then(Value::as_str)
+            != Some(identity)
+        || value
+            .pointer("/native_master_recipes/0/blend_family")
+            .and_then(Value::as_str)
+            != Some("alpha")
+        || value
+            .pointer("/native_master_recipes/0/alpha_test")
+            .and_then(Value::as_bool)
+            != Some(true)
+        || value
+            .pointer("/native_master_recipes/0/render_both_faces")
+            .and_then(Value::as_bool)
+            != Some(true)
+        || value
+            .pointer("/presentations/0/native_master_recipe")
+            .and_then(Value::as_str)
+            != Some(identity)
+        || value
+            .pointer("/presentations/0/native_master_blockers")
+            .and_then(Value::as_array)
+            .is_none_or(|blockers| !blockers.is_empty())
+    {
+        return Err(
+            "ordinary native world master recipe projection drifted".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
 fn missing_catalog_renders_explicit_empty_evidence() -> Result<(), String> {
     let text = render_world_material_plan(None)
         .map_err(|error| error.to_string())?;
@@ -180,6 +293,9 @@ fn missing_catalog_renders_explicit_empty_evidence() -> Result<(), String> {
         "/counts/bindings",
         "/counts/slots",
         "/counts/master_families",
+        "/counts/native_master_recipes",
+        "/counts/native_master_ready_presentations",
+        "/counts/native_master_blocked_presentations",
         "/counts/textures",
         "/counts/presentations",
     ] {
