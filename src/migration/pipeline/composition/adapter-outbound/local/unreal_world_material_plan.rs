@@ -44,10 +44,12 @@ use shar_unreal_conversion::domain::{
 };
 
 use super::unreal_world_material_catalog::VerifiedWorldMaterialCatalog;
+use super::unreal_world_material_native_plan::
+    plan_world_material_native_construction;
 use crate::domain::{PipelineError, PipelineOutcome};
 
 pub(super) const WORLD_MATERIAL_PLAN_SCHEMA: &str =
-    "shar-schoenwald.unreal-world-material-evidence.v2";
+    "shar-schoenwald.unreal-world-material-evidence.v3";
 
 /// Render one canonical world-material evidence document.
 ///
@@ -70,12 +72,20 @@ pub(super) fn render_world_material_plan(
                 "native_master_recipes": 0,
                 "native_master_ready_presentations": 0,
                 "native_master_blocked_presentations": 0,
+                "native_texture_requests": 0,
+                "native_master_requests": 0,
+                "native_instance_requests": 0,
                 "textures": 0,
                 "presentations": 0
             },
             "textures": [],
             "master_families": [],
             "native_master_recipes": [],
+            "native_construction": {
+                "texture_requests": [],
+                "master_requests": [],
+                "instance_requests": []
+            },
             "presentations": [],
             "artifacts": []
         }));
@@ -183,6 +193,11 @@ pub(super) fn render_world_material_plan(
         .iter()
         .map(|(identity, recipe)| native_recipe_value(identity, *recipe))
         .collect::<Vec<_>>();
+    let native_construction = plan_world_material_native_construction(
+        &catalog.textures,
+        &presentations,
+        &native_recipes,
+    )?;
     let artifact_values = catalog
         .artifacts
         .iter()
@@ -219,12 +234,22 @@ pub(super) fn render_world_material_plan(
             "native_master_recipes": native_recipes.len(),
             "native_master_ready_presentations": native_ready_count,
             "native_master_blocked_presentations": native_blocked_count,
+            "native_texture_requests":
+                native_construction.texture_requests.len(),
+            "native_master_requests": native_construction.master_requests.len(),
+            "native_instance_requests":
+                native_construction.instance_requests.len(),
             "textures": catalog.textures.len(),
             "presentations": presentations.len()
         },
         "textures": texture_values,
         "master_families": master_values,
         "native_master_recipes": native_recipe_values,
+        "native_construction": {
+            "texture_requests": native_construction.texture_requests,
+            "master_requests": native_construction.master_requests,
+            "instance_requests": native_construction.instance_requests
+        },
         "presentations": presentation_values,
         "artifacts": artifact_values
     }))

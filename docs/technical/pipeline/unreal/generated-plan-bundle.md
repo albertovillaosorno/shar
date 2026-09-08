@@ -195,8 +195,27 @@ each representable presentation and stable blocker codes for every presentation
 that still needs lit, environment, runtime-error, glass, mirror, reflection,
 emission, or VFX policy. Native recipes preserve the regular-world
 `PddiCullNone` requirement and do not collapse the retained source master
-identity. This remains planning evidence only; Texture2D, Material Instance,
-slot assignment, save, and packaged-load readiness require their own gates.
+identity.
+
+World-material evidence v3 additionally projects deterministic native
+construction requests without promoting them into the global construction
+plan. Each verified normalized PNG receives one content-addressed generated
+`Texture2D` destination under `/Game/Generated/SHAR/Textures/World`. Each
+reviewed recipe receives one generated master destination, and each
+representable effective presentation receives one generated Material Instance
+destination linked to that master and, when present, its canonical world
+texture.
+
+Texture identity is based on the verified PNG SHA-256 rather than an arbitrary
+package-local copy. Material Instance identity is based on the effective
+slot-presentation SHA-256.
+
+These rows are validated construction inputs, not execution claims. They do not
+assert that the generated objects exist, were saved, survived packaged reload,
+or were assigned to FBX slots. Those effects remain behind their native
+construction, slot-assignment, save, and read-back gates, and unsupported
+presentations continue to publish blockers instead of Material Instance
+requests.
 
 The published release index uses
 `shar-schoenwald.unreal-plan-bundle.v5`. It records the six plan identities,
