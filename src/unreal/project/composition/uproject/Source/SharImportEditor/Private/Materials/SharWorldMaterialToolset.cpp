@@ -47,6 +47,7 @@
 #include "Materials/MaterialExpressionScalarParameter.h"
 #include "Materials/MaterialExpressionTextureSampleParameter2D.h"
 #include "Materials/MaterialExpressionVectorParameter.h"
+#include "Materials/MaterialExpressionVertexColor.h"
 #include "Misc/PackageName.h"
 #include "ObjectTools.h"
 
@@ -384,18 +385,32 @@ bool BuildSimpleUnlitWorldMaster(
             -120,
             OutError
         );
+    UMaterialExpressionVertexColor* VertexColor =
+        AddExpression<UMaterialExpressionVertexColor>(
+            Material,
+            -800,
+            40,
+            OutError
+        );
     UMaterialExpressionVectorParameter* Tint =
         AddExpression<UMaterialExpressionVectorParameter>(
             Material,
             -800,
-            120,
+            200,
             OutError
         );
-    UMaterialExpressionMultiply* Modulate =
+    UMaterialExpressionMultiply* SourceModulate =
         AddExpression<UMaterialExpressionMultiply>(
             Material,
             -520,
-            -80,
+            -120,
+            OutError
+        );
+    UMaterialExpressionMultiply* TintModulate =
+        AddExpression<UMaterialExpressionMultiply>(
+            Material,
+            -280,
+            -120,
             OutError
         );
     UMaterialExpressionMultiply* AlphaModulate =
@@ -407,8 +422,10 @@ bool BuildSimpleUnlitWorldMaster(
         );
     if (
         Texture == nullptr
+        || VertexColor == nullptr
         || Tint == nullptr
-        || Modulate == nullptr
+        || SourceModulate == nullptr
+        || TintModulate == nullptr
         || AlphaModulate == nullptr
     )
     {
@@ -420,12 +437,18 @@ bool BuildSimpleUnlitWorldMaster(
     Texture->AutoSetSampleType();
     Tint->ParameterName = BaseColorTintParameter;
     Tint->DefaultValue = FLinearColor::White;
-    Modulate->A.Expression = Texture;
-    Modulate->B.Expression = Tint;
-    AlphaModulate->A.Connect(4, Texture);
-    AlphaModulate->B.Connect(4, Tint);
 
-    UMaterialExpression* FinalColor = Modulate;
+    // Pure3D simple/unlit presentation multiplies texture by authored vertex
+    // colour. DIFF is retained as source evidence but is not the unlit pixel
+    // tint; missing source vertex colour resolves to white in the source path.
+    SourceModulate->A.Expression = Texture;
+    SourceModulate->B.Expression = VertexColor;
+    TintModulate->A.Expression = SourceModulate;
+    TintModulate->B.Expression = Tint;
+    AlphaModulate->A.Connect(4, Texture);
+    AlphaModulate->B.Connect(4, VertexColor);
+
+    UMaterialExpression* FinalColor = TintModulate;
     if (Recipe.bAlphaTest)
     {
         UMaterialExpressionScalarParameter* Reference =
@@ -466,7 +489,7 @@ bool BuildSimpleUnlitWorldMaster(
         Clip->Inputs[0].Input.Expression = AlphaModulate;
         Clip->Inputs[1].InputName = AlphaReferenceParameter;
         Clip->Inputs[1].Input.Expression = Reference;
-        Gate->A.Expression = Modulate;
+        Gate->A.Expression = TintModulate;
         Gate->B.Expression = Clip;
         FinalColor = Gate;
     }
