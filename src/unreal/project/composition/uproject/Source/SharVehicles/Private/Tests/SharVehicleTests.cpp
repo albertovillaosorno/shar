@@ -127,7 +127,7 @@ static USharVehiclePresentationDefinition* MakeValidVehiclePresentation()
 {
     auto* Presentation = NewObject<USharVehiclePresentationDefinition>();
     FillVehiclePresentationBase(*Presentation);
-    Presentation.Wheels = {
+    Presentation->Wheels = {
         MakeWheelBinding(TEXT("front_left"), TEXT("w0")),
         MakeWheelBinding(TEXT("front_right"), TEXT("w1")),
         MakeWheelBinding(TEXT("rear_left"), TEXT("w2")),
