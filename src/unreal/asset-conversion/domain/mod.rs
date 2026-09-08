@@ -49,7 +49,7 @@ pub use world_material_family::{
 pub use world_material_native::{
     WorldMaterialNativeBlend, WorldMaterialNativeMasterBlocker,
     WorldMaterialNativeMasterClassification, WorldMaterialNativeMasterRecipe,
-    classify_world_material_native_master,
+    WorldMaterialNativeMasterRequest, classify_world_material_native_master,
 };
 pub use world_material_projection::{
     WORLD_MATERIAL_SOURCE_SCHEMA, WorldMaterialBindingSource,

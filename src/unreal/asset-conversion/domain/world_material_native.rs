@@ -76,6 +76,115 @@ pub struct WorldMaterialNativeMasterRecipe {
     pub render_both_faces: bool,
 }
 
+impl WorldMaterialNativeMasterRecipe {
+    /// Return the canonical recipe identity used across planning boundaries.
+    #[must_use]
+    pub fn identity(self) -> String {
+        let alpha_test = if self.alpha_test {
+            "on"
+        } else {
+            "off"
+        };
+        let sidedness = if self.render_both_faces {
+            "both-faces"
+        } else {
+            "one-sided"
+        };
+        format!(
+            "simple-unlit__blend-{}__alpha-test-{alpha_test}__{sidedness}",
+            self.blend.tool_token()
+        )
+    }
+}
+
+/// Validated destination and recipe inputs for one native world master.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct WorldMaterialNativeMasterRequest {
+    recipe: WorldMaterialNativeMasterRecipe,
+    folder_path: String,
+    asset_name: String,
+    package_path: String,
+    object_path: String,
+}
+
+impl WorldMaterialNativeMasterRequest {
+    /// Bind one reviewed recipe to a caller-selected generated destination.
+    ///
+    /// Destination selection remains planning policy outside this domain value.
+    /// This constructor only proves that the selected destination can be passed
+    /// to the reviewed native world-master constructor without weakening the
+    /// project naming and regular-world raster contracts.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the recipe does not reproduce regular-world
+    /// both-face rendering or the destination is not a canonical generated
+    /// Material asset.
+    pub fn new(
+        recipe: WorldMaterialNativeMasterRecipe,
+        folder_path: &str,
+        asset_name: &str,
+    ) -> Result<Self, String> {
+        if !recipe.render_both_faces {
+            return Err(
+                "world master request must reproduce regular-world CullNone"
+                    .to_owned(),
+            );
+        }
+        if !is_generated_material_folder(folder_path) {
+            return Err(
+                "world master folder is not a canonical generated material path"
+                    .to_owned(),
+            );
+        }
+        if !is_material_asset_name(asset_name) {
+            return Err("world master asset name is not canonical".to_owned());
+        }
+        let package_path = format!("{folder_path}/{asset_name}");
+        let object_path = format!("{package_path}.{asset_name}");
+        if object_path.len() > 240 {
+            return Err("world master object path is too long".to_owned());
+        }
+        Ok(Self {
+            recipe,
+            folder_path: folder_path.to_owned(),
+            asset_name: asset_name.to_owned(),
+            package_path,
+            object_path,
+        })
+    }
+
+    /// Return the reviewed native master recipe.
+    #[must_use]
+    pub const fn recipe(&self) -> WorldMaterialNativeMasterRecipe {
+        self.recipe
+    }
+
+    /// Return the exact folder argument accepted by the native constructor.
+    #[must_use]
+    pub fn folder_path(&self) -> &str {
+        &self.folder_path
+    }
+
+    /// Return the exact asset-name argument accepted by the native constructor.
+    #[must_use]
+    pub fn asset_name(&self) -> &str {
+        &self.asset_name
+    }
+
+    /// Return the generated package path owned by this request.
+    #[must_use]
+    pub fn package_path(&self) -> &str {
+        &self.package_path
+    }
+
+    /// Return the canonical object path expected from native construction.
+    #[must_use]
+    pub fn object_path(&self) -> &str {
+        &self.object_path
+    }
+}
+
 /// One reason current native master construction cannot represent a
 /// presentation faithfully.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -176,6 +285,32 @@ pub fn classify_world_material_native_master(
             render_both_faces: true,
         });
     WorldMaterialNativeMasterClassification { recipe, blockers }
+}
+
+fn is_generated_material_folder(value: &str) -> bool {
+    const ROOT: &str = "/Game/Generated/SHAR/Materials";
+    const PREFIX: &str = "/Game/Generated/SHAR/Materials/";
+    if value != ROOT && !value.starts_with(PREFIX) {
+        return false;
+    }
+    let Some(relative) = value.strip_prefix('/') else {
+        return false;
+    };
+    !relative.is_empty() && relative.split('/').all(is_unreal_name)
+}
+
+fn is_material_asset_name(value: &str) -> bool {
+    value
+        .strip_prefix("M_")
+        .is_some_and(|suffix| !suffix.is_empty())
+        && is_unreal_name(value)
+}
+
+fn is_unreal_name(value: &str) -> bool {
+    !value.is_empty()
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'_')
 }
 
 const fn native_blend(

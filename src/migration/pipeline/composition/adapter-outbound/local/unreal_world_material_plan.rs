@@ -159,7 +159,7 @@ pub(super) fn render_world_material_plan(
         );
         let recipe_identity = if let Some(recipe) = classification.recipe() {
             native_ready_count = native_ready_count.saturating_add(1);
-            let identity = native_recipe_identity(recipe);
+            let identity = recipe.identity();
             if native_recipes
                 .insert(identity.clone(), recipe)
                 .is_some_and(|existing| existing != recipe)
@@ -262,19 +262,6 @@ fn presentation_value(
             .map(|blocker| blocker.code())
             .collect::<Vec<_>>()
     })
-}
-
-fn native_recipe_identity(recipe: WorldMaterialNativeMasterRecipe) -> String {
-    format!(
-        "simple-unlit__blend-{}__alpha-test-{}__{}",
-        recipe.blend.tool_token(),
-        if recipe.alpha_test { "on" } else { "off" },
-        if recipe.render_both_faces {
-            "both-faces"
-        } else {
-            "one-sided"
-        }
-    )
 }
 
 fn native_recipe_value(
