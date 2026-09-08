@@ -274,6 +274,31 @@ fn ordinary_presentation_references_deduplicated_native_master_recipe()
             .pointer("/presentations/0/native_master_blockers")
             .and_then(Value::as_array)
             .is_none_or(|blockers| !blockers.is_empty())
+        || value
+            .pointer("/counts/native_texture_requests")
+            .and_then(Value::as_u64)
+            != Some(1)
+        || value
+            .pointer("/counts/native_master_requests")
+            .and_then(Value::as_u64)
+            != Some(1)
+        || value
+            .pointer("/counts/native_instance_requests")
+            .and_then(Value::as_u64)
+            != Some(1)
+        || value
+            .pointer("/native_construction/master_requests/0/asset_name")
+            .and_then(Value::as_str)
+            != Some(concat!(
+                "M_SHAR_World_simple_unlit_blend_alpha_alpha_test_on_",
+                "both_faces"
+            ))
+        || value
+            .pointer(
+                "/native_construction/instance_requests/0/set_alpha_reference"
+            )
+            .and_then(Value::as_bool)
+            != Some(true)
     {
         return Err(
             "ordinary native world master recipe projection drifted".to_owned(),
@@ -296,6 +321,9 @@ fn missing_catalog_renders_explicit_empty_evidence() -> Result<(), String> {
         "/counts/native_master_recipes",
         "/counts/native_master_ready_presentations",
         "/counts/native_master_blocked_presentations",
+        "/counts/native_texture_requests",
+        "/counts/native_master_requests",
+        "/counts/native_instance_requests",
         "/counts/textures",
         "/counts/presentations",
     ] {
