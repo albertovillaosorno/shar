@@ -32,6 +32,7 @@
 
 mod conversion_plan;
 mod world_material_family;
+mod world_material_native;
 mod world_material_projection;
 
 pub use conversion_plan::{
@@ -44,6 +45,11 @@ pub use world_material_family::{
     WorldMaterialBlendFamily, WorldMaterialInstanceRaster,
     WorldMaterialMasterFamily, WorldMaterialRasterProjection,
     WorldMaterialShaderFamily,
+};
+pub use world_material_native::{
+    WorldMaterialNativeBlend, WorldMaterialNativeMasterBlocker,
+    WorldMaterialNativeMasterClassification, WorldMaterialNativeMasterRecipe,
+    classify_world_material_native_master,
 };
 pub use world_material_projection::{
     WORLD_MATERIAL_SOURCE_SCHEMA, WorldMaterialBindingSource,
