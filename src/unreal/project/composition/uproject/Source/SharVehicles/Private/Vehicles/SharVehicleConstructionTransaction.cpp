@@ -196,6 +196,14 @@ bool USharVehicleConstructionTransaction::ResolveAndValidate()
             ));
             return false;
         }
+        if (ResolvedPhysicsAsset->FindBodyIndex(Wheel.BoneName) == INDEX_NONE)
+        {
+            SetError(FString::Printf(
+                TEXT("vehicle wheel bone '%s' has no Physics Asset body"),
+                *Wheel.BoneName.ToString()
+            ));
+            return false;
+        }
         ResolvedWheelClasses.Add(WheelClass);
     }
     return true;
