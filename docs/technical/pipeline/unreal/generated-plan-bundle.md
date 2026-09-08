@@ -147,8 +147,8 @@ catalog entries. A partial catalog never produces a mixed ready/pending bundle.
 
 ## Published files
 
-One successful transaction publishes exactly thirteen files across two
-accepted identities: one canonical manifest plus twelve cache artifacts.
+One successful transaction publishes exactly fourteen files across two
+accepted identities: one canonical manifest plus thirteen cache artifacts.
 
 ```text
 game/manifest/
@@ -159,6 +159,7 @@ game/manifest/
 ├── mission-tuning.jsonl
 ├── vehicle-tuning.jsonl
 ├── vehicle-tuning-usage.jsonl
+├── world-materials.json
 ├── summary.json
 └── plans/
     ├── index.json
@@ -183,14 +184,23 @@ that select a tuning profile, including an explicit `null` when source-backed
 profile resolution is unavailable. These artifacts do not assign gameplay
 units, native Unreal fields, conversion rules, or runtime ranges.
 
+`world-materials.json` preserves the verified world-presentation projection
+without reparsing source packages in Unreal. It binds canonical normalized PNG
+paths and digests, deduplicated master-family identities, exact presentation
+RGBA and alpha-reference bits, material semantics, and every FBX slot to its
+effective presentation digest. The sidecar is evidence only: environment,
+lit, runtime-error, or other families that do not yet have reviewed native
+construction remain non-ready even though their source state is retained.
+
 The published release index uses
-`shar-schoenwald.unreal-plan-bundle.v4`. It records the six plan identities,
-revisions, filenames, and operation counts plus exactly four semantic artifacts
+`shar-schoenwald.unreal-plan-bundle.v5`. It records the six plan identities,
+revisions, filenames, and operation counts plus exactly five semantic artifacts
 in canonical order: mission definitions, mission-local tuning, vehicle-tuning
-cores, and contextual tuning usage. Each semantic entry carries its stable
-artifact identity, fixed sibling filename, exact byte count, and lowercase
-SHA-256 revision. Those entries participate in the release-index revision, so a
-sidecar byte change changes the persistent bundle identity.
+cores, contextual tuning usage, and world-material evidence. Each semantic
+entry carries its stable artifact identity, fixed sibling filename, exact byte
+count, and lowercase SHA-256 revision. Those entries participate in the
+release-index revision, so a sidecar byte change changes the persistent bundle
+identity.
 
 Each plan still repeats the source-manifest revision, engine-contract revision,
 target engine version, target platform, direct plan dependencies with their
@@ -216,9 +226,9 @@ input and canonical one-line JSON with LF termination, and independently
 recalculates every plan revision and the release-bundle revision using the
 canonical hashing contract.
 
-The same gate reads the four fixed semantic siblings from the parent staging
+The same gate reads the five fixed semantic siblings from the parent staging
 root before accepting the bundle. Every sibling must be a regular non-linked
-file whose stable byte count and SHA-256 revision exactly match its v4 index
+file whose stable byte count and SHA-256 revision exactly match its v5 index
 entry. Missing, linked, truncated, replaced, or same-size tampered semantic
 evidence fails locally before any MCP transport is constructed.
 
@@ -339,8 +349,8 @@ The generic six-plan projection remains index v3 and carries
 classification by package category, exact target kind, and required import
 profile. Every class has a positive count, classes are unique and sorted, and
 their checked sum must equal the aggregate count. The published release boundary
-promotes that projection to v4 by retaining those blocker fields and adding the
-four exact semantic-artifact bindings. The breakdown, aggregate, and artifact
+promotes that projection to v5 by retaining those blocker fields and adding the
+five exact semantic-artifact bindings. The breakdown, aggregate, and artifact
 bindings all participate in the release revision and are validated by the local
 consumer before any MCP transport exists.
 

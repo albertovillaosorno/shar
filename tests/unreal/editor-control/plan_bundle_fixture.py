@@ -51,6 +51,7 @@ _SEMANTIC_ARTIFACTS = (
     ("mission-tuning", "mission-tuning.jsonl"),
     ("vehicle-tuning", "vehicle-tuning.jsonl"),
     ("vehicle-tuning-usage", "vehicle-tuning-usage.jsonl"),
+    ("world-materials", "world-materials.json"),
 )
 _PLAN_SPECS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("asset-import-plan", "asset-import-plan.json", ()),
@@ -576,7 +577,7 @@ def _index_body(
     plans: list[JsonValue],
 ) -> OrderedDict[str, JsonValue]:
     return OrderedDict((
-        ("schema", "shar-schoenwald.unreal-plan-bundle.v4"),
+        ("schema", "shar-schoenwald.unreal-plan-bundle.v5"),
         ("revision", revision),
         *_CONTEXT.items(),
         ("semantic_blocker_count", semantic_blocker_count),

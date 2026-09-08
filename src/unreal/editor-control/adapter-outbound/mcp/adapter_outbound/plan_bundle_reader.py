@@ -21,7 +21,7 @@
 # - Summary:
 #   - Generated Unreal plan bundle filesystem reader.
 # - Description:
-#   - Reads one index, six plans, and four bound semantic siblings without
+#   - Reads one index, six plans, and five bound semantic siblings without
 #     following links.
 # - Usage:
 #   - Called by local plan preflight before any MCP session is opened.

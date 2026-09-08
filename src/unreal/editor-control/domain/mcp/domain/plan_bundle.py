@@ -50,7 +50,7 @@ from mcp.domain.json_types import reject_duplicate_json_object
 from mcp.domain.json_types import require_json_object
 
 _PLAN_SCHEMA = "shar-schoenwald.unreal-plan.v1"
-_BUNDLE_SCHEMA = "shar-schoenwald.unreal-plan-bundle.v4"
+_BUNDLE_SCHEMA = "shar-schoenwald.unreal-plan-bundle.v5"
 _TARGET_ENGINE_VERSION = "5.8.1"
 _TARGET_PLATFORM = "editor"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -63,6 +63,7 @@ _SEMANTIC_ARTIFACT_SPECS: tuple[tuple[str, str], ...] = (
     ("mission-tuning", "mission-tuning.jsonl"),
     ("vehicle-tuning", "vehicle-tuning.jsonl"),
     ("vehicle-tuning-usage", "vehicle-tuning-usage.jsonl"),
+    ("world-materials", "world-materials.json"),
 )
 _PLAN_SPECS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("asset-import-plan", "asset-import-plan.json", ()),
