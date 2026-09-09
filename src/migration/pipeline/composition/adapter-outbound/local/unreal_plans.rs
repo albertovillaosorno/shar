@@ -59,7 +59,7 @@ impl UnrealImportManifest {
         &self,
         manifest_revision: &str,
     ) -> Result<PlanBundle, String> {
-        self.build_plan_bundle(manifest_revision, None, None)
+        self.build_plan_bundle(manifest_revision, None, None, None)
     }
 
     /// Build the six canonical plan families from one complete FBX catalog.
@@ -73,10 +73,16 @@ impl UnrealImportManifest {
         manifest_revision: &str,
         fbx_catalog: &[UnrealFbxArtifactEvidence],
     ) -> Result<PlanBundle, String> {
-        self.build_plan_bundle(manifest_revision, Some(fbx_catalog), None)
+        self.build_plan_bundle(
+            manifest_revision,
+            Some(fbx_catalog),
+            None,
+            None,
+        )
     }
 
-    /// Build canonical plans with complete generated model and UI catalogs.
+    /// Build canonical plans with complete generated model, vehicle, and UI
+    /// catalogs.
     ///
     /// # Errors
     ///
@@ -86,11 +92,13 @@ impl UnrealImportManifest {
         &self,
         manifest_revision: &str,
         fbx_catalog: Option<&[UnrealFbxArtifactEvidence]>,
+        vehicle_fbx_catalog: Option<&[UnrealFbxArtifactEvidence]>,
         ui_raster_catalog: &[UnrealUiRasterArtifactEvidence],
     ) -> Result<PlanBundle, String> {
         self.build_plan_bundle(
             manifest_revision,
             fbx_catalog,
+            vehicle_fbx_catalog,
             Some(ui_raster_catalog),
         )
     }
@@ -99,6 +107,7 @@ impl UnrealImportManifest {
         &self,
         manifest_revision: &str,
         fbx_catalog: Option<&[UnrealFbxArtifactEvidence]>,
+        vehicle_fbx_catalog: Option<&[UnrealFbxArtifactEvidence]>,
         ui_raster_catalog: Option<&[UnrealUiRasterArtifactEvidence]>,
     ) -> Result<PlanBundle, String> {
         let require_complete_fbx = fbx_catalog.is_some();
@@ -114,6 +123,29 @@ impl UnrealImportManifest {
                         "generated FBX catalog contains a duplicate package"
                             .to_owned(),
                     );
+                }
+            }
+        }
+
+        let mut vehicle_fbx_by_package = BTreeMap::new();
+        if let Some(entries) = vehicle_fbx_catalog {
+            for entry in entries {
+                validate_fbx_evidence(entry)?;
+                if !entry.path.starts_with("vehicle-assets/") {
+                    return Err(
+                        "vehicle FBX prerequisite path is not canonical"
+                            .to_owned(),
+                    );
+                }
+                if vehicle_fbx_by_package
+                    .insert(entry.package_id.as_str(), entry)
+                    .is_some()
+                {
+                    return Err(concat!(
+                        "vehicle FBX prerequisite catalog contains a ",
+                        "duplicate package",
+                    )
+                    .to_owned());
                 }
             }
         }
@@ -147,6 +179,7 @@ impl UnrealImportManifest {
         let mut generated = GeneratedCatalogState {
             fbx_by_package,
             require_complete_fbx,
+            vehicle_fbx_by_package,
             ui_raster_by_package,
             require_complete_ui_raster,
             ui_sprite_packages,
@@ -176,6 +209,13 @@ impl UnrealImportManifest {
         if !generated.fbx_by_package.is_empty() {
             return Err("generated FBX catalog contains an unclaimed package"
                 .to_owned());
+        }
+        if !generated.vehicle_fbx_by_package.is_empty() {
+            return Err(concat!(
+                "vehicle FBX prerequisite catalog contains an unclaimed ",
+                "package",
+            )
+            .to_owned());
         }
         if !generated.ui_raster_by_package.is_empty() {
             return Err(
@@ -274,6 +314,8 @@ struct GeneratedCatalogState<'catalog> {
     fbx_by_package:
         BTreeMap<&'catalog str, &'catalog UnrealFbxArtifactEvidence>,
     require_complete_fbx: bool,
+    vehicle_fbx_by_package:
+        BTreeMap<&'catalog str, &'catalog UnrealFbxArtifactEvidence>,
     ui_raster_by_package:
         BTreeMap<&'catalog str, &'catalog UnrealUiRasterArtifactEvidence>,
     require_complete_ui_raster: bool,
@@ -287,6 +329,16 @@ fn package_operation(
     manifest_revision: &str,
     generated: &mut GeneratedCatalogState<'_>,
 ) -> Result<Option<ConversionPlan>, String> {
+    if generated
+        .vehicle_fbx_by_package
+        .contains_key(package.package_id.as_str())
+    {
+        return vehicle_fbx_prerequisite_operation(
+            package,
+            &mut generated.vehicle_fbx_by_package,
+        )
+        .map(Some);
+    }
     match package.disposition {
         "requires-fbx" => fbx_operation(
             package,
@@ -418,6 +470,50 @@ fn ui_raster_operation(
         world_owned: false,
         runtime_bound: true,
     }
+}
+
+fn vehicle_fbx_prerequisite_operation<'catalog>(
+    package: &UnrealPackageRecord,
+    vehicle_fbx_by_package: &mut BTreeMap<
+        &'catalog str,
+        &'catalog UnrealFbxArtifactEvidence,
+    >,
+) -> Result<ConversionPlan, String> {
+    if package.category != "cars"
+        || package.conversion_family != "fbx-model"
+        || package.disposition != "requires-semantic-conversion"
+        || package.target_kind != "CompositeModel"
+        || package.importer != "semantic-converter"
+        || package.import_profile != "shar-fbx-semantic-split-v1"
+    {
+        return Err(
+            "vehicle FBX prerequisite does not match semantic car policy"
+                .to_owned(),
+        );
+    }
+    let evidence = vehicle_fbx_by_package
+        .remove(package.package_id.as_str())
+        .ok_or_else(|| {
+            "vehicle FBX prerequisite evidence is missing".to_owned()
+        })?;
+    let asset_name = format!("{}_Skeletal", package.asset_name);
+    let package_path = format!("{}_Skeletal", package.package_path);
+    Ok(ConversionPlan {
+        package_identity: package.package_id.clone(),
+        source_identity: format!("{}-vehicle-fbx", package.package_id),
+        source_format: SourceFormat::Fbx,
+        target_family: NativeAssetFamily::Model,
+        source_path: evidence.path.clone(),
+        source_revision: evidence.sha256.clone(),
+        destination: object_path(&package_path, &asset_name),
+        target_class: "SkeletalMesh".to_owned(),
+        importer: "asset-tools-fbx".to_owned(),
+        import_profile: "shar-fbx-skeletal-v1".to_owned(),
+        dependencies: Vec::new(),
+        readiness: OperationReadiness::Ready,
+        world_owned: true,
+        runtime_bound: true,
+    })
 }
 
 fn fbx_operation<'catalog>(

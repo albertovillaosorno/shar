@@ -313,6 +313,12 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         verified_vehicle_fbx_catalog(Path::new(VEHICLE_WORKSPACE_ROOT))?;
     let verified_vehicle_fbx_count =
         vehicle_fbx_catalog.as_ref().map_or(0, Vec::len);
+    let vehicle_plan_fbx_catalog = vehicle_fbx_catalog.as_ref().map(|catalog| {
+        catalog
+            .iter()
+            .map(|entry| entry.evidence.clone())
+            .collect::<Vec<_>>()
+    });
     let vehicle_physics_json =
         render_vehicle_physics_plan(vehicle_fbx_catalog.as_deref())?;
     let world_material_catalog =
@@ -334,6 +340,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         .plan_bundle_with_complete_generated_catalogs(
             &manifest_revision,
             fbx_catalog.as_deref(),
+            vehicle_plan_fbx_catalog.as_deref(),
             &ui_raster_catalog,
         )
         .map_err(|error| {

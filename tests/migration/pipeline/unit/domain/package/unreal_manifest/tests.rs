@@ -236,6 +236,65 @@ fn composite_model_index() -> Result<PhaseThreePackageIndex, String> {
         .map_err(|error| error.to_string())
 }
 
+fn vehicle_composite_index() -> Result<PhaseThreePackageIndex, String> {
+    let row = concat!(
+        "{\"package_id\":\"extracted-art-cars-vehicle\",",
+        "\"package_root\":\"extracted/art/cars/vehicle\",",
+        "\"package_category\":\"cars\",",
+        "\"package_subcategory\":\"cars/traffic-variants/vehicle\",",
+        "\"unit_count\":2,\"text_key_count\":0,",
+        "\"unit_ids\":[\"model-a\",\"camera-a\"],",
+        "\"world_ids\":[],\"texture_ids\":[],",
+        "\"material_ids\":[],\"model_ids\":[\"model-a\"],",
+        "\"physics_ids\":[],\"animation_ids\":[],",
+        "\"scene_ids\":[],\"locator_ids\":[],",
+        "\"camera_ids\":[\"camera-a\"],\"light_ids\":[],",
+        "\"particle_ids\":[],\"controller_ids\":[],",
+        "\"audio_ids\":[],\"movie_ids\":[],",
+        "\"script_ids\":[],\"text_ids\":[],\"ui_ids\":[],",
+        "\"metadata_ids\":[],\"error_ids\":[],",
+        "\"source_unit_ids\":[],\"text_key_ids\":[],",
+        "\"members\":[",
+        "{\"id\":\"model-a\",\"role\":\"model\",",
+        "\"path\":\"extracted/art/cars/vehicle/model.json\",",
+        "\"type\":\"model\",\"kind\":\"p3d-mesh\",",
+        "\"source_chunk_kind\":\"mesh\"},",
+        "{\"id\":\"camera-a\",\"role\":\"camera\",",
+        "\"path\":\"extracted/art/cars/vehicle/camera.json\",",
+        "\"type\":\"camera\",\"kind\":\"p3d-camera\",",
+        "\"source_chunk_kind\":\"camera\"}],\"text_keys\":[]}",
+    );
+    PhaseThreePackageIndex::from_jsonl(&format!("{row}\n"))
+        .map_err(|error| error.to_string())
+}
+
+fn vehicle_composite_evidence() -> Vec<UnrealSourceEvidence> {
+    composite_model_evidence()
+        .into_iter()
+        .map(|mut evidence| {
+            evidence.path = evidence.path.replace(
+                "extracted/art/ui/model",
+                "extracted/art/cars/vehicle",
+            );
+            evidence.source_path = evidence.source_path.replace(
+                "extracted/art/ui/model",
+                "extracted/art/cars/vehicle",
+            );
+            evidence
+        })
+        .collect()
+}
+
+fn verified_vehicle_fbx() -> UnrealFbxArtifactEvidence {
+    UnrealFbxArtifactEvidence {
+        package_id: "extracted-art-cars-vehicle".to_owned(),
+        path: "vehicle-assets/vehicle/vehicle.fbx".to_owned(),
+        size_bytes: 27,
+        sha256: "e".repeat(64),
+        fbx_version: 7700,
+    }
+}
+
 fn composite_model_evidence() -> Vec<UnrealSourceEvidence> {
     vec![
         UnrealSourceEvidence {
@@ -392,6 +451,97 @@ fn composite_geometry_reserves_no_false_static_mesh() -> Result<(), String> {
         || !summary.contains("\"requires_semantic_conversion\":1")
     {
         return Err(format!("composite summary is wrong: {summary}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn vehicle_fbx_prerequisite_is_ready_without_clearing_semantic_blocker()
+-> Result<(), String> {
+    let manifest = UnrealImportManifest::build(
+        &vehicle_composite_index()?,
+        vehicle_composite_evidence(),
+    )?;
+    let manifest_json = manifest.to_jsonl();
+    for expected in [
+        "\"category\":\"cars\"",
+        "\"disposition\":\"requires-semantic-conversion\"",
+        "\"target_kind\":\"CompositeModel\"",
+        "\"import_profile\":\"shar-fbx-semantic-split-v1\"",
+    ] {
+        if !manifest_json.contains(expected) {
+            return Err(format!("vehicle semantic fixture lost: {expected}"));
+        }
+    }
+    let revision = digest_hex(manifest_json.as_bytes());
+    let bundle = manifest.plan_bundle_with_complete_generated_catalogs(
+        &revision,
+        None,
+        Some(&[verified_vehicle_fbx()]),
+        &[],
+    )?;
+    if bundle.semantic_blocker_count() != 1 {
+        return Err(
+            "vehicle FBX prerequisite incorrectly cleared semantic blocker"
+                .to_owned(),
+        );
+    }
+    let [blocker] = bundle.semantic_blockers() else {
+        return Err("vehicle semantic blocker cardinality drifted".to_owned());
+    };
+    if blocker.category != "cars"
+        || blocker.target_kind != "CompositeModel"
+        || blocker.import_profile != "shar-fbx-semantic-split-v1"
+        || blocker.count != 1
+    {
+        return Err("vehicle semantic blocker identity drifted".to_owned());
+    }
+    let import = bundle
+        .artifacts()
+        .iter()
+        .find(|artifact| artifact.family == PlanFamily::AssetImport)
+        .ok_or_else(|| {
+            "vehicle prerequisite import plan is missing".to_owned()
+        })?;
+    for expected in [
+        "\"package_identity\":\"extracted-art-cars-vehicle\"",
+        "\"source_path\":\"vehicle-assets/vehicle/vehicle.fbx\"",
+        "\"target_class\":\"SkeletalMesh\"",
+        "\"import_profile\":\"shar-fbx-skeletal-v1\"",
+        "\"readiness\":\"ready\"",
+        concat!(
+            "/Game/Generated/SHAR/cars/extracted_art_cars_vehicle_Skeletal/",
+            "extracted_art_cars_vehicle_Skeletal",
+        ),
+    ] {
+        if !import.json.contains(expected) {
+            return Err(format!("vehicle prerequisite import lost: {expected}"));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn vehicle_fbx_prerequisite_rejects_non_vehicle_artifact_path()
+-> Result<(), String> {
+    let manifest = UnrealImportManifest::build(
+        &vehicle_composite_index()?,
+        vehicle_composite_evidence(),
+    )?;
+    let revision = digest_hex(manifest.to_jsonl().as_bytes());
+    let mut artifact = verified_vehicle_fbx();
+    artifact.path = "fbx-assets/vehicle/vehicle.fbx".to_owned();
+    let result = manifest.plan_bundle_with_complete_generated_catalogs(
+        &revision,
+        None,
+        Some(&[artifact]),
+        &[],
+    );
+    let Err(error) = result else {
+        return Err("non-vehicle prerequisite path was accepted".to_owned());
+    };
+    if error != "vehicle FBX prerequisite path is not canonical" {
+        return Err(format!("unexpected vehicle path failure: {error}"));
     }
     Ok(())
 }

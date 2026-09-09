@@ -254,6 +254,7 @@ fn complete_ui_raster_catalog_promotes_sprite_and_clears_blocker()
     let ready = manifest.plan_bundle_with_complete_generated_catalogs(
         &revision,
         None,
+        None,
         &[verified_ui_raster()],
     )?;
     let cleared = ready.semantic_blocker_count() == 0
@@ -305,6 +306,7 @@ fn ui_raster_does_not_claim_package_with_additional_semantic_member()
     let claimed = manifest.plan_bundle_with_complete_generated_catalogs(
         &revision,
         None,
+        None,
         &[raster],
     );
     if claimed.is_ok() {
@@ -323,7 +325,12 @@ fn complete_ui_raster_catalog_rejects_partial_extra_and_stale_evidence()
         UnrealImportManifest::build(&ui_sprite_index()?, ui_sprite_evidence())?;
     let revision = digest_hex(manifest.to_jsonl().as_bytes());
     if manifest
-        .plan_bundle_with_complete_generated_catalogs(&revision, None, &[])
+        .plan_bundle_with_complete_generated_catalogs(
+            &revision,
+            None,
+            None,
+            &[],
+        )
         .is_ok()
     {
         return Err("partial UI raster catalog was accepted".to_owned());
@@ -334,6 +341,7 @@ fn complete_ui_raster_catalog_rejects_partial_extra_and_stale_evidence()
     if manifest
         .plan_bundle_with_complete_generated_catalogs(
             &revision,
+            None,
             None,
             &[verified_ui_raster(), extra],
         )
@@ -356,6 +364,7 @@ fn complete_ui_raster_catalog_rejects_partial_extra_and_stale_evidence()
         }
         let accepted = manifest.plan_bundle_with_complete_generated_catalogs(
             &revision,
+            None,
             None,
             &[stale],
         );

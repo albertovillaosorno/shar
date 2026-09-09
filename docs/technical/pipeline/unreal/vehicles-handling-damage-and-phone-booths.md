@@ -116,6 +116,14 @@ block native construction until an exact target representation is accepted.
 contract, converts source box half-extents to Unreal's full box dimensions, and
 retains numeric magnitudes under the imported scene-unit root scale.
 
+The generated Unreal plan exposes each verified vehicle FBX through a ready
+`shar-fbx-skeletal-v1` prerequisite with its own `_Skeletal` destination while
+retaining the car package's `CompositeModel` semantic blocker. This makes the
+reviewed rig import addressable without pretending the broader vehicle semantic
+conversion is complete. Editor-control verifies `vehicle-assets/...` beneath
+the pipeline cache by stable regular-file identity and SHA-256 before general
+plan execution.
+
 The editor construction kernel revalidates that scale and the imported recipe
 bones before creating transient analytic bodies. A generated-root toolset
 publishes the reviewed candidate as a create-only, Asset-Registry-visible,
