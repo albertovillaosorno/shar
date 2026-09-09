@@ -32,7 +32,10 @@
 
 use serde_json::Value;
 
-use super::{VEHICLE_MATERIAL_PLAN_SCHEMA, render_vehicle_material_plan};
+use super::{
+    VEHICLE_MATERIAL_PLAN_SCHEMA, is_simple_unlit_graph_candidate,
+    render_vehicle_material_plan,
+};
 use crate::adapters::driven::local::unreal_vehicle_catalog::{
     VerifiedVehicleFbxArtifact, VerifiedVehicleMaterialArtifact,
     VerifiedVehicleMaterialRaster, VerifiedVehicleMaterialSemantics,
@@ -154,6 +157,29 @@ fn renders_exact_vehicle_material_projection_and_blockers()
         return Err(format!(
             "vehicle material blockers drifted: {blocker_names:?}"
         ));
+    }
+    Ok(())
+}
+
+#[test]
+fn simple_unlit_graph_candidate_stays_separate_from_presentation_readiness()
+-> Result<(), String> {
+    let mut vehicle = vehicle();
+    let [slot] = vehicle.material_slots.as_mut_slice() else {
+        return Err("vehicle material fixture cardinality drifted".to_owned());
+    };
+    slot.raster.lit = false;
+    slot.raster.blend_mode = 2;
+    slot.semantics.light_emitter = true;
+    slot.semantics.transparent = true;
+    if !is_simple_unlit_graph_candidate(slot) {
+        return Err("reviewed simple-unlit graph candidate was lost".to_owned());
+    }
+    slot.raster.blend_mode = 3;
+    if is_simple_unlit_graph_candidate(slot) {
+        return Err(
+            "unreviewed subtract blend became a graph candidate".to_owned(),
+        );
     }
     Ok(())
 }
