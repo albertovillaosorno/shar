@@ -290,6 +290,17 @@ and then applies Skeletal Mesh, Physics Asset, animation class, materials,
 publishing success; explicit rollback and failed commit restore the captured
 configuration.
 
+The source-physics handoff stops one layer before native Physics Asset creation.
+Vehicle catalog v7 resolves each collision primitive to its exact source
+skeleton joint and records sphere, oriented-box, or cylinder geometry in
+`source-bone-local` meter space. Numeric recipe fields retain the Pure3D
+`float`/f32 contract. The handoff validates finite vectors, positive dimensions,
+unit axes, and proper orthonormal box bases without repairing source values.
+
+Grounding and FBX/Unreal axis or unit conversion are not applied to this recipe.
+The editor preparation boundary must derive those target transforms from the
+same skeletal-import policy and prove them against imported bone read-back.
+
 This bounded transaction does not spawn the Pawn, create or validate live Chaos
 physics state, construct a source-derived vehicle Physics Asset, choose
 placement, or publish a world vehicle instance. Those remain later steps in the
