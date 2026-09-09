@@ -46,7 +46,9 @@ from plan_bundle_fixture import write_plan_bundle
 import pytest
 
 
-def _vehicle_physics_document() -> dict[str, object]:
+def _vehicle_physics_document(
+    source_fbx: str = "fbx-assets/skeletal/model.fbx",
+) -> dict[str, object]:
     return {
         "schema": "shar-schoenwald.unreal-vehicle-physics-evidence.v1",
         "source_schema": "shar.vehicle-catalog.v7",
@@ -75,7 +77,7 @@ def _vehicle_physics_document() -> dict[str, object]:
         "native_construction": {
             "requests": [{
                 "package_id": "skeletal-mesh-package",
-                "source_fbx": "fbx-assets/skeletal/model.fbx",
+                "source_fbx": source_fbx,
                 "subcategory": "cars/road",
                 "rig_identity": "model",
                 "joint_count": 1,
@@ -91,11 +93,14 @@ def _vehicle_physics_document() -> dict[str, object]:
     }
 
 
-def _bind_vehicle_physics_sidecar(plan_root: Path) -> None:
+def _bind_vehicle_physics_sidecar(
+    plan_root: Path,
+    source_fbx: str = "fbx-assets/skeletal/model.fbx",
+) -> None:
     sidecar = plan_root.parent / "vehicle-physics.json"
     payload = (
         json.dumps(
-            _vehicle_physics_document(),
+            _vehicle_physics_document(source_fbx),
             ensure_ascii=False,
             separators=(",", ":"),
         )
@@ -692,3 +697,76 @@ def test_cli_vehicle_physics_applies_bound_release_after_skeletal_import(
     assert "CreateVehiclePhysicsAsset" in native_leaves
     assert native_leaves.count("save_assets") == 2
     assert "delete" not in native_leaves
+
+
+def test_cli_vehicle_prerequisites_apply_with_semantic_blocker(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source_bytes = b"Kaydara FBX Binary vehicle-prerequisite-source"
+    source_revision = hashlib.sha256(source_bytes).hexdigest()
+    source_path = "vehicle-assets/model/model.fbx"
+    plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
+    _ = write_plan_bundle(
+        plan_root,
+        with_skeletal_mesh_operation=True,
+        skeletal_mesh_source_revision=source_revision,
+        skeletal_mesh_source_path=source_path,
+        semantic_blocker_count=1,
+    )
+    _bind_vehicle_physics_sidecar(plan_root, source_path)
+    source = tmp_path / ".cache" / "pipeline" / source_path
+    source.parent.mkdir(parents=True)
+    source.write_bytes(source_bytes)
+    monkeypatch.chdir(tmp_path)
+
+    with FakeUnrealServer(plan_execution=True) as server:
+        preflight = _run_json_cli(
+            capsys,
+            "vehicle-physics-prerequisites-preflight",
+        )
+        assert preflight["bundle"]["semanticBlockerCount"] == 1
+        assert preflight["prerequisites"] == {
+            "importCount": 1,
+            "readyRigCount": 1,
+            "sourceCount": 1,
+        }
+        assert preflight["sources"]["verifiedOperationCount"] == 1
+        capabilities = _run_json_cli(
+            capsys,
+            "--endpoint",
+            server.endpoint,
+            "vehicle-physics-prerequisites-capabilities",
+        )
+        assert capabilities["capabilities"]["complete"] is True
+        assert capabilities["capabilities"]["requiredToolCount"] == 6
+        applied = _run_json_cli(
+            capsys,
+            "--endpoint",
+            server.endpoint,
+            "vehicle-physics-prerequisites-apply",
+        )
+        physics = _run_json_cli(
+            capsys,
+            "--endpoint",
+            server.endpoint,
+            "vehicle-physics-apply",
+        )
+
+    assert applied["application"]["importedCount"] == 1
+    assert applied["application"]["savedCount"] == 1
+    assert applied["application"]["verifiedCount"] == 1
+    assert applied["bundle"]["semanticBlockerCount"] == 1
+    assert physics["application"]["createdCount"] == 1
+    mesh = "/Game/Generated/SHAR/models/skeletal/model"
+    skeleton = f"{mesh}_Skeleton"
+    digest = hashlib.sha256(b"skeletal-mesh-package\0model").hexdigest()[:24]
+    physics_asset = f"/Game/Generated/SHAR/VehiclePhysics/PHYS_{digest}"
+    assert server.assets == {
+        mesh: "SkeletalMesh",
+        skeleton: "Skeleton",
+        physics_asset: "PhysicsAsset",
+    }
+    assert server.dirty_assets == frozenset()
+    assert server.session_closed

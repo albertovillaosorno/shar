@@ -219,6 +219,53 @@ def test_verifies_vehicle_catalog_fbx_below_pipeline_cache(
     assert verified.by_operation == {operation.operation_id: source}
 
 
+def test_verifies_only_selected_operation_identities(
+    tmp_path: Path,
+) -> None:
+    repository, plan_root = _roots(tmp_path)
+    source = (
+        repository
+        / ".cache"
+        / "pipeline"
+        / "vehicle-assets"
+        / "a"
+        / "a.fbx"
+    )
+    source.parent.mkdir(parents=True)
+    payload = b"Kaydara FBX Binary selected"
+    source.write_bytes(payload)
+    missing = _operation(
+        "operation-0000000000000009",
+        plan_id="asset-import-plan",
+        source_path="extracted/missing.png",
+        source_revision="0" * 64,
+        readiness="ready",
+    )
+    selected = _operation(
+        "operation-000000000000000a",
+        plan_id="asset-import-plan",
+        source_path="vehicle-assets/a/a.fbx",
+        source_revision=_digest(payload),
+        readiness="ready",
+    )
+    bundle = _bundle(missing, selected)
+    verifier = FilesystemPlanSourceVerifier(repository, plan_root)
+
+    verified = verifier.verify_operation_ids(
+        bundle,
+        (selected.operation_id,),
+    )
+
+    assert verified.report.verified_operation_count == 1
+    assert verified.report.unique_source_count == 1
+    assert verified.by_operation == {selected.operation_id: source}
+    with pytest.raises(ProtocolError, match="identity is missing"):
+        verifier.verify_operation_ids(
+            bundle,
+            ("operation-000000000000000b",),
+        )
+
+
 def test_rejects_digest_mismatch_without_disclosing_physical_path(
     tmp_path: Path,
 ) -> None:

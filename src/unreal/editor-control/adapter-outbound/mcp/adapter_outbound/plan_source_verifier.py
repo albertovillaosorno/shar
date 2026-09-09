@@ -83,11 +83,36 @@ class FilesystemPlanSourceVerifier:
         self._repository_root = repository_root
         self._plan_root = plan_root
 
-    def verify(  # noqa: PLR0914 - one pass owns cross-operation evidence.
+    def verify(
         self,
         bundle: ValidatedPlanBundle,
     ) -> VerifiedPlanSources:
         """Verify every source not explicitly awaiting upstream conversion."""
+        return self._verify_operations(bundle, bundle.operations)
+
+    def verify_operation_ids(
+        self,
+        bundle: ValidatedPlanBundle,
+        operation_ids: tuple[str, ...],
+    ) -> VerifiedPlanSources:
+        """Verify one exact selected operation set in canonical bundle order."""
+        if not operation_ids or len(set(operation_ids)) != len(operation_ids):
+            fail_protocol("selected plan operation identities are invalid")
+        requested = set(operation_ids)
+        selected = tuple(
+            operation
+            for operation in bundle.operations
+            if operation.operation_id in requested
+        )
+        if len(selected) != len(operation_ids):
+            fail_protocol("selected plan operation identity is missing")
+        return self._verify_operations(bundle, selected)
+
+    def _verify_operations(  # noqa: PLR0914
+        self,
+        bundle: ValidatedPlanBundle,
+        operations: tuple[PlanOperation, ...],
+    ) -> VerifiedPlanSources:
         repository_root = self._repository_root.absolute()
         plan_root = self._plan_root.absolute()
         staging_root = plan_root.parent
@@ -98,7 +123,7 @@ class FilesystemPlanSourceVerifier:
         cached: dict[tuple[str, str], tuple[Path, int]] = {}
         revisions_by_key: dict[str, str] = {}
         skipped = 0
-        for operation in bundle.operations:
+        for operation in operations:
             if operation.readiness == "requires-conversion":
                 skipped += 1
                 continue

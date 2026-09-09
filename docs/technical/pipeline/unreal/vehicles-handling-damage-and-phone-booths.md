@@ -124,6 +124,14 @@ conversion is complete. Editor-control verifies `vehicle-assets/...` beneath
 the pipeline cache by stable regular-file identity and SHA-256 before general
 plan execution.
 
+The prerequisite import is now an explicit construction-adjacent transaction,
+not a partial `plan-apply`. It derives the exact distinct FBXs referenced by
+native-ready physics requests, verifies only those bound source bytes, audits
+the live Skeletal Mesh import and AssetTools schemas, and then performs
+create/read-back/save/clean verification with reverse-order compensation. On the
+current release this is 87 FBXs for 135 ready rigs. The cylinder-only `icecream`
+FBX is intentionally omitted because it has no native-ready physics request.
+
 The editor construction kernel revalidates that scale and the imported recipe
 bones before creating transient analytic bodies. A generated-root toolset
 publishes the reviewed candidate as a create-only, Asset-Registry-visible,

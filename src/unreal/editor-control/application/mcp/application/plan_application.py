@@ -45,6 +45,7 @@ from mcp.domain.json_types import JsonObject
 from mcp.domain.json_types import normalize_json
 from mcp.domain.json_types import reject_duplicate_json_object
 from mcp.domain.json_types import require_json_object
+from mcp.domain.plan_capabilities import ImportCapabilityReport
 from mcp.domain.plan_capabilities import PlanCapabilityReport
 from mcp.domain.plan_execution import CompiledExecutionPlan
 from mcp.domain.plan_execution import NativeAssetOutput
@@ -94,14 +95,46 @@ def apply_import_plan(
 ) -> PlanApplicationReport:
     """Apply one complete import plan or compensate every created asset."""
     _require_application_ready(compiled, capabilities, source_paths)
-    for step in compiled.imports:
+    return _apply_import_steps(
+        client,
+        compiled.report.bundle_revision,
+        compiled.imports,
+        source_paths,
+    )
+
+
+def apply_import_steps(
+    client: NativePlanClient,
+    revision: str,
+    imports: tuple[NativeImportStep, ...],
+    capabilities: ImportCapabilityReport,
+    source_paths: Mapping[str, Path],
+) -> PlanApplicationReport:
+    """Apply one exact selected import set without weakening plan gates."""
+    if not capabilities.complete:
+        fail_protocol("selected import capability audit is incomplete")
+    if capabilities.revision != revision:
+        fail_protocol("selected import capability revision is stale")
+    if capabilities.import_count != len(imports):
+        fail_protocol("selected import capability count is stale")
+    _require_import_sources(imports, source_paths)
+    return _apply_import_steps(client, revision, imports, source_paths)
+
+
+def _apply_import_steps(
+    client: NativePlanClient,
+    revision: str,
+    imports: tuple[NativeImportStep, ...],
+    source_paths: Mapping[str, Path],
+) -> PlanApplicationReport:
+    for step in imports:
         _require_step_absent(client, step, changed=False)
 
     created: list[NativeImportStep] = []
     saved_count = 0
     verified_count = 0
     try:
-        for step in compiled.imports:
+        for step in imports:
             _require_step_absent(client, step, changed=True)
             source = source_paths[step.operation_id].absolute()
             outcome = _invoke_import(client, step, source, created)
@@ -114,7 +147,7 @@ def apply_import_plan(
         raise
 
     return PlanApplicationReport(
-        bundle_revision=compiled.report.bundle_revision,
+        bundle_revision=revision,
         imported_count=len(created),
         saved_count=saved_count,
         verified_count=verified_count,
@@ -232,10 +265,17 @@ def _require_application_ready(
         fail_protocol("native import capability audit is incomplete")
     if capabilities.bundle_revision != compiled.report.bundle_revision:
         fail_protocol("native import capability revision is stale")
-    required_ids = {step.operation_id for step in compiled.imports}
+    _require_import_sources(compiled.imports, source_paths)
+
+
+def _require_import_sources(
+    imports: tuple[NativeImportStep, ...],
+    source_paths: Mapping[str, Path],
+) -> None:
+    required_ids = {step.operation_id for step in imports}
     if not required_ids or not required_ids.issubset(source_paths):
         fail_protocol("native import source evidence is incomplete")
-    if len(required_ids) != len(compiled.imports):
+    if len(required_ids) != len(imports):
         fail_protocol(
             "native import plan contains duplicate operation identities"
         )
