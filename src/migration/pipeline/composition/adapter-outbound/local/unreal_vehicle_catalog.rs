@@ -36,6 +36,9 @@ use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
 
+use fbx::adapters::driven::decoded_component_source::{
+    ShaderParameterEvidence, ShaderSourceEvidence, read_shader_source_evidence,
+};
 use serde_json::Value;
 use shar_sha256::digest_hex;
 
@@ -63,6 +66,25 @@ pub(super) struct VerifiedVehicleMaterialSemantics {
     pub visual_effect: bool,
 }
 
+/// Exact PDDI raster state retained for one verified vehicle material.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct VerifiedVehicleMaterialRaster {
+    pub shader_family: String,
+    pub has_translucency: bool,
+    pub blend_mode: u32,
+    pub alpha_test: bool,
+    pub alpha_compare: u32,
+    pub alpha_reference_bits: Option<u32>,
+    pub two_sided: bool,
+    pub lit: bool,
+    pub diffuse_rgba8: [u8; 4],
+    pub ambient_rgba8: [u8; 4],
+    pub emissive_rgba8: [u8; 4],
+    pub specular_rgba8: [u8; 4],
+    pub shininess_bits: u32,
+    pub texture_reference: Option<String>,
+}
+
 /// One verified FBX material slot plus exact shader and texture evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct VerifiedVehicleMaterialArtifact {
@@ -70,6 +92,7 @@ pub(super) struct VerifiedVehicleMaterialArtifact {
     pub source_material_name: String,
     pub base_color_rgba8: [u8; 4],
     pub semantics: VerifiedVehicleMaterialSemantics,
+    pub raster: VerifiedVehicleMaterialRaster,
     pub shader_path: String,
     pub shader_size_bytes: u64,
     pub shader_sha256: String,
@@ -440,32 +463,21 @@ fn verify_vehicle_material_slots(
                 "shaders/",
                 ".json",
             )?;
-        let shader_bytes = fs::read(root.join(vehicle).join(&shader_path))
-            .map_err(|error| {
-                io_error("read generated vehicle material shader", &error)
-            })?;
-        let shader_document = serde_json::from_slice::<Value>(&shader_bytes)
-            .map_err(|_error| {
-                PipelineError::new(
-                    "generated vehicle material shader contains invalid JSON",
-                )
-            })?;
-        if shader_document.get("schema").and_then(Value::as_str)
-            != Some("shader")
-        {
-            return Err(PipelineError::new(
-                "generated vehicle material shader schema is inconsistent",
-            ));
-        }
-        let shader_identity = shader_document
-            .get("name")
-            .and_then(Value::as_str)
-            .map(|name| name.trim_end_matches('\0'));
-        if shader_identity != Some(source_material_name.as_str()) {
-            return Err(PipelineError::new(
-                "generated vehicle material shader identity is inconsistent",
-            ));
-        }
+        let shader_full_path = root.join(vehicle).join(&shader_path);
+        let shader_evidence = read_shader_source_evidence(
+            &shader_full_path,
+            &source_material_name,
+        )
+        .map_err(|error| {
+            PipelineError::new(format!(
+                concat!(
+                    "generated vehicle material shader evidence is invalid: ",
+                    "{:?}"
+                ),
+                error
+            ))
+        })?;
+        let raster = verified_vehicle_material_raster(&shader_evidence)?;
         let texture = match slot.get("texture") {
             None | Some(Value::Null) => None,
             Some(value) => {
@@ -484,6 +496,7 @@ fn verify_vehicle_material_slots(
             source_material_name,
             base_color_rgba8,
             semantics,
+            raster,
             shader_path,
             shader_size_bytes,
             shader_sha256,
@@ -493,6 +506,183 @@ fn verify_vehicle_material_slots(
         });
     }
     Ok(result)
+}
+
+fn verified_vehicle_material_raster(
+    evidence: &ShaderSourceEvidence,
+) -> PipelineOutcome<VerifiedVehicleMaterialRaster> {
+    let shader_family = evidence
+        .platform_shader_name
+        .as_deref()
+        .map(|value| value.trim_end_matches('\0'))
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle material has no PDDI shader family",
+            )
+        })?;
+    if !matches!(shader_family, "simple" | "spheremap" | "environment") {
+        return Err(PipelineError::new(
+            "generated vehicle material PDDI shader family is unsupported",
+        ));
+    }
+    let has_translucency = match evidence.translucency {
+        Some(0) => false,
+        Some(1) => true,
+        _ => {
+            return Err(PipelineError::new(
+                "generated vehicle material translucency evidence is missing",
+            ));
+        },
+    };
+    let params = unique_shader_params(evidence)?;
+    let alpha_test = required_binary_shader_param(&params, "A\x54S\x54")?;
+    let alpha_reference_bits = optional_f32_shader_param(&params, "ACTH")?;
+    if alpha_test && alpha_reference_bits.is_none() {
+        return Err(PipelineError::new(
+            "generated vehicle alpha-test material has no threshold",
+        ));
+    }
+    Ok(VerifiedVehicleMaterialRaster {
+        shader_family: shader_family.to_owned(),
+        has_translucency,
+        blend_mode: required_u32_shader_param(&params, "BLMD")?,
+        alpha_test,
+        alpha_compare: required_u32_shader_param(&params, "A\x43M\x50")?,
+        alpha_reference_bits,
+        two_sided: required_binary_shader_param(&params, "2SID")?,
+        lit: required_binary_shader_param(&params, "LIT")?,
+        diffuse_rgba8: required_color_shader_param(&params, "DIFF")?,
+        ambient_rgba8: required_color_shader_param(
+            &params,
+            &["A", "M", "B", "I"].concat(),
+        )?,
+        emissive_rgba8: required_color_shader_param(&params, "EMIS")?,
+        specular_rgba8: required_color_shader_param(&params, "SPEC")?,
+        shininess_bits: required_f32_shader_param_bits(&params, "SHIN")?,
+        texture_reference: evidence.texture_reference.clone(),
+    })
+}
+
+fn unique_shader_params(
+    evidence: &ShaderSourceEvidence,
+) -> PipelineOutcome<
+    std::collections::BTreeMap<&str, &ShaderParameterEvidence>,
+> {
+    let mut params = std::collections::BTreeMap::new();
+    for parameter in &evidence.params {
+        if params.insert(parameter.param.as_str(), parameter).is_some() {
+            return Err(PipelineError::new(
+                "generated vehicle material shader parameter is duplicated",
+            ));
+        }
+    }
+    Ok(params)
+}
+
+fn required_u32_shader_param(
+    params: &std::collections::BTreeMap<&str, &ShaderParameterEvidence>,
+    name: &str,
+) -> PipelineOutcome<u32> {
+    let parameter = params.get(name).ok_or_else(|| {
+        PipelineError::new(format!(
+            "generated vehicle material shader parameter is missing: {name}"
+        ))
+    })?;
+    if parameter.kind != "int" {
+        return Err(PipelineError::new(format!(
+            concat!(
+                "generated vehicle material shader parameter kind is invalid: ",
+                "{}"
+            ),
+            name
+        )));
+    }
+    parameter
+        .value
+        .as_u64()
+        .and_then(|value| u32::try_from(value).ok())
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "generated vehicle material shader integer is invalid: {name}"
+            ))
+        })
+}
+
+fn required_color_shader_param(
+    params: &std::collections::BTreeMap<&str, &ShaderParameterEvidence>,
+    name: &str,
+) -> PipelineOutcome<[u8; 4]> {
+    let parameter = params.get(name).ok_or_else(|| {
+        PipelineError::new(format!(
+            "generated vehicle material shader color is missing: {name}"
+        ))
+    })?;
+    if parameter.kind != "colour" {
+        return Err(PipelineError::new(format!(
+            "generated vehicle material shader color kind is invalid: {name}"
+        )));
+    }
+    let packed = parameter
+        .value
+        .as_u64()
+        .and_then(|value| u32::try_from(value).ok())
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "generated vehicle material shader color is invalid: {name}"
+            ))
+        })?;
+    let [alpha, red, green, blue] = packed.to_be_bytes();
+    Ok([red, green, blue, alpha])
+}
+
+fn required_f32_shader_param_bits(
+    params: &std::collections::BTreeMap<&str, &ShaderParameterEvidence>,
+    name: &str,
+) -> PipelineOutcome<u32> {
+    optional_f32_shader_param(params, name)?.ok_or_else(|| {
+        PipelineError::new(format!(
+            "generated vehicle material shader float is missing: {name}"
+        ))
+    })
+}
+
+fn required_binary_shader_param(
+    params: &std::collections::BTreeMap<&str, &ShaderParameterEvidence>,
+    name: &str,
+) -> PipelineOutcome<bool> {
+    match required_u32_shader_param(params, name)? {
+        0 => Ok(false),
+        1 => Ok(true),
+        _ => Err(PipelineError::new(format!(
+            "generated vehicle material shader flag is invalid: {name}"
+        ))),
+    }
+}
+
+fn optional_f32_shader_param(
+    params: &std::collections::BTreeMap<&str, &ShaderParameterEvidence>,
+    name: &str,
+) -> PipelineOutcome<Option<u32>> {
+    let Some(parameter) = params.get(name) else {
+        return Ok(None);
+    };
+    if parameter.kind != "float" {
+        return Err(PipelineError::new(format!(
+            "generated vehicle material shader float kind is invalid: {name}"
+        )));
+    }
+    let value = parameter
+        .value
+        .as_number()
+        .and_then(|value| value.to_string().parse::<f32>().ok())
+        .filter(|value| value.is_finite())
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "generated vehicle material shader float is invalid: {name}"
+            ))
+        })?;
+    Ok(Some(value.to_bits()))
 }
 
 fn verify_material_artifact(

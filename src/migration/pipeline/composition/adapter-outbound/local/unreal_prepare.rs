@@ -64,6 +64,7 @@ use super::mission_music_context::preflight_mission_music_states;
 use super::mission_order_context::build_mission_order_source_reports;
 use super::unreal_fbx_catalog::verified_fbx_catalog_at;
 use super::unreal_vehicle_catalog::verified_vehicle_fbx_catalog;
+use super::unreal_vehicle_material_plan::render_vehicle_material_plan;
 use super::unreal_vehicle_physics_plan::render_vehicle_physics_plan;
 use super::unreal_world_material_catalog::verified_world_material_catalog;
 use super::unreal_world_material_plan::render_world_material_plan;
@@ -126,6 +127,8 @@ const MISSION_TUNING_FILE: &str = "mission-tuning.jsonl";
 const VEHICLE_TUNING_FILE: &str = "vehicle-tuning.jsonl";
 /// Canonical contextual vehicle-tuning usage bundle filename.
 const VEHICLE_TUNING_USAGE_FILE: &str = "vehicle-tuning-usage.jsonl";
+/// Canonical verified vehicle-material evidence filename.
+const VEHICLE_MATERIALS_FILE: &str = "vehicle-materials.json";
 /// Canonical verified vehicle-physics evidence filename.
 const VEHICLE_PHYSICS_FILE: &str = "vehicle-physics.json";
 /// Canonical verified world-material evidence filename.
@@ -138,12 +141,13 @@ const RELEASE_PLAN_BUNDLE_SCHEMA: &str =
 /// Canonical generated plan-bundle index filename.
 const PLAN_INDEX_FILE: &str = "plans/index.json";
 /// Complete set of files published by one prepare-unreal transaction.
-const PUBLISHED_FILES: [&str; 14] = [
+const PUBLISHED_FILES: [&str; 15] = [
     SUMMARY_FILE,
     MISSION_DEFINITIONS_FILE,
     MISSION_TUNING_FILE,
     VEHICLE_TUNING_FILE,
     VEHICLE_TUNING_USAGE_FILE,
+    VEHICLE_MATERIALS_FILE,
     VEHICLE_PHYSICS_FILE,
     WORLD_MATERIALS_FILE,
     PLAN_INDEX_FILE,
@@ -319,6 +323,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             .map(|entry| entry.evidence.clone())
             .collect::<Vec<_>>()
     });
+    let vehicle_materials_json =
+        render_vehicle_material_plan(vehicle_fbx_catalog.as_deref())?;
     let vehicle_physics_json =
         render_vehicle_physics_plan(vehicle_fbx_catalog.as_deref())?;
     let world_material_catalog =
@@ -353,6 +359,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &mission_tuning_jsonl,
         &vehicle_tuning_jsonl,
         &vehicle_tuning_usage_jsonl,
+        &vehicle_materials_json,
         &vehicle_physics_json,
         &world_materials_json,
     )?;
@@ -366,6 +373,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &mission_tuning_jsonl,
         &vehicle_tuning_jsonl,
         &vehicle_tuning_usage_jsonl,
+        &vehicle_materials_json,
         &vehicle_physics_json,
         &world_materials_json,
         &release_plan_index,
@@ -389,6 +397,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &mission_tuning_jsonl,
             &vehicle_tuning_jsonl,
             &vehicle_tuning_usage_jsonl,
+            &vehicle_materials_json,
             &vehicle_physics_json,
             &world_materials_json,
             &release_plan_index,
@@ -4038,12 +4047,17 @@ fn validate_rendered_derived_sources(
     Ok(())
 }
 
+#[expect(
+    clippy::too_many_arguments,
+    reason = "Explicit semantic sidecars keep release identity auditable."
+)]
 fn bind_release_plan_index(
     plans: &PlanBundle,
     mission_definitions: &str,
     mission_tuning: &str,
     vehicle_tuning: &str,
     vehicle_tuning_usage: &str,
+    vehicle_materials: &str,
     vehicle_physics: &str,
     world_materials: &str,
 ) -> PipelineOutcome<ReleasePlanIndex> {
@@ -4088,6 +4102,11 @@ fn bind_release_plan_index(
             artifact_id: "vehicle-tuning-usage",
             filename: VEHICLE_TUNING_USAGE_FILE,
             content: vehicle_tuning_usage,
+        },
+        SemanticArtifact {
+            artifact_id: "vehicle-materials",
+            filename: VEHICLE_MATERIALS_FILE,
+            content: vehicle_materials,
         },
         SemanticArtifact {
             artifact_id: "vehicle-physics",
@@ -4246,6 +4265,7 @@ fn published_byte_count(
     mission_tuning: &str,
     vehicle_tuning: &str,
     vehicle_tuning_usage: &str,
+    vehicle_materials: &str,
     vehicle_physics: &str,
     world_materials: &str,
     release_plan_index: &ReleasePlanIndex,
@@ -4265,6 +4285,7 @@ fn published_byte_count(
             .saturating_add(mission_tuning.len())
             .saturating_add(vehicle_tuning.len())
             .saturating_add(vehicle_tuning_usage.len())
+            .saturating_add(vehicle_materials.len())
             .saturating_add(vehicle_physics.len())
             .saturating_add(world_materials.len())
             .saturating_add(plan_bytes),
@@ -4283,6 +4304,7 @@ fn publish_staging(
     mission_tuning: &str,
     vehicle_tuning: &str,
     vehicle_tuning_usage: &str,
+    vehicle_materials: &str,
     vehicle_physics: &str,
     world_materials: &str,
     release_plan_index: &ReleasePlanIndex,
@@ -4335,6 +4357,7 @@ fn publish_staging(
         (MISSION_TUNING_FILE, mission_tuning),
         (VEHICLE_TUNING_FILE, vehicle_tuning),
         (VEHICLE_TUNING_USAGE_FILE, vehicle_tuning_usage),
+        (VEHICLE_MATERIALS_FILE, vehicle_materials),
         (VEHICLE_PHYSICS_FILE, vehicle_physics),
         (WORLD_MATERIALS_FILE, world_materials),
         (PLAN_INDEX_FILE, release_plan_index.json.as_str()),

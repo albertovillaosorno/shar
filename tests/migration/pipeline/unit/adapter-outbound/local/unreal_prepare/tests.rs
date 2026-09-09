@@ -44,7 +44,7 @@ use super::super::run_registry::{RunMode, RunRegistry};
 use super::{
     MISSION_DEFINITIONS_FILE, MISSION_TUNING_FILE, PLAN_INDEX_FILE,
     RELEASE_PLAN_BUNDLE_SCHEMA,
-    PUBLISHED_FILE_COUNT, VEHICLE_PHYSICS_FILE,
+    PUBLISHED_FILE_COUNT, VEHICLE_MATERIALS_FILE, VEHICLE_PHYSICS_FILE,
     VEHICLE_TUNING_USAGE_FILE, PUBLISHED_FILES, SUMMARY_FILE,
     VEHICLE_TUNING_FILE, WORLD_MATERIALS_FILE,
     MissionTuningReplayRecord, SourceEvidenceInput,
@@ -1345,6 +1345,7 @@ fn release_plan_index_binds_exact_semantic_sidecars() -> Result<(), String> {
         "mission-tuning\n",
         "cores\n",
         "usages\n",
+        "vehicle-materials\n",
         "vehicle-physics\n",
         "world-materials\n",
     ];
@@ -1356,6 +1357,7 @@ fn release_plan_index_binds_exact_semantic_sidecars() -> Result<(), String> {
         contents[3],
         contents[4],
         contents[5],
+        contents[6],
     )
     .map_err(|error| error.to_string())?;
     let value = serde_json::from_str::<serde_json::Value>(&release.json)
@@ -1392,6 +1394,7 @@ fn release_plan_index_binds_exact_semantic_sidecars() -> Result<(), String> {
         ("mission-tuning", MISSION_TUNING_FILE),
         ("vehicle-tuning", VEHICLE_TUNING_FILE),
         ("vehicle-tuning-usage", VEHICLE_TUNING_USAGE_FILE),
+        ("vehicle-materials", VEHICLE_MATERIALS_FILE),
         ("vehicle-physics", VEHICLE_PHYSICS_FILE),
         ("world-materials", WORLD_MATERIALS_FILE),
     ];
@@ -1422,6 +1425,7 @@ fn release_plan_index_binds_exact_semantic_sidecars() -> Result<(), String> {
         contents[3],
         contents[4],
         contents[5],
+        contents[6],
     )
     .map_err(|error| error.to_string())?;
     if changed.revision == release.revision {
@@ -1441,6 +1445,7 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
             MISSION_TUNING_FILE,
             VEHICLE_TUNING_FILE,
             VEHICLE_TUNING_USAGE_FILE,
+            VEHICLE_MATERIALS_FILE,
             VEHICLE_PHYSICS_FILE,
             WORLD_MATERIALS_FILE,
             PLAN_INDEX_FILE,
@@ -1454,9 +1459,9 @@ fn stage_report_counts_exact_published_files() -> Result<(), String> {
     {
         return Err("prepare-unreal publication inventory drifted".to_owned());
     }
-    if PUBLISHED_FILES.len() != 14 || PUBLISHED_FILE_COUNT != 15 {
+    if PUBLISHED_FILES.len() != 15 || PUBLISHED_FILE_COUNT != 16 {
         return Err(
-            "prepare-unreal must publish fourteen cache files plus one manifest"
+            "prepare-unreal must publish fifteen cache files plus one manifest"
                 .to_owned(),
         );
     }
