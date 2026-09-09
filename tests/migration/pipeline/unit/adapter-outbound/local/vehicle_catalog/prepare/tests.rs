@@ -45,7 +45,7 @@ use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
     is_wheel_identity, load_vehicle_animations, partition_vehicle_billboards,
-    publish_vehicle_physics_sidecars,
+    publish_vehicle_physics_sidecars, validate_vehicle_physics_rig_bindings,
     separate_vehicle_parts, texture_state_role, vehicle_animation_name,
     vehicle_part_role, vehicle_part_semantics,
 };
@@ -292,16 +292,32 @@ fn effect_animation_package() -> Result<PhaseThreePackageRow, String> {
 fn physics_sidecars_preserve_exact_source_members() -> Result<(), String> {
     let root = EffectTestDirectory::new("physics-sidecars")?;
     let source = root.path().join("source");
-    let collision_dir = source
-        .join("components")
-        .join("simulation_collision_object");
-    let physics_dir = source
-        .join("components")
-        .join("simulation_physics_object");
+    let components = source.join("components");
+    let skeleton_dir = components.join("skeleton");
+    let collision_dir = components.join("simulation_collision_object");
+    let physics_dir = components.join("simulation_physics_object");
+    fs::create_dir_all(&skeleton_dir).map_err(|error| error.to_string())?;
     fs::create_dir_all(&collision_dir).map_err(|error| error.to_string())?;
     fs::create_dir_all(&physics_dir).map_err(|error| error.to_string())?;
-    let collision = br#"{"schema":"simulation_collision_object","value":1}"#;
-    let physics = br#"{"schema":"simulation_physics_object","value":2}"#;
+    let skeleton = concat!(
+        r#"{"schema":"skeleton","name":"car","num_joints":2,"#,
+        r#""joints":[{"name":"car"},{"name":"w0"}]}"#
+    )
+    .as_bytes();
+    let collision = concat!(
+        r#"{"schema":"simulation_collision_object","name":"car","#,
+        r#""num_sub_objects":2,"volumes":[{"object_reference_index":0,"#,
+        r#""primitives":[{"object_reference_index":1,"#,
+        r#""primitives":[{"kind":"sphere"}]}]}]}"#
+    )
+    .as_bytes();
+    let physics = concat!(
+        r#"{"schema":"simulation_physics_object","name":"car","#,
+        r#""num_joints":2}"#
+    )
+    .as_bytes();
+    fs::write(skeleton_dir.join("car.json"), skeleton)
+        .map_err(|error| error.to_string())?;
     fs::write(collision_dir.join("car.json"), collision)
         .map_err(|error| error.to_string())?;
     fs::write(physics_dir.join("car.json"), physics)
@@ -337,6 +353,53 @@ fn physics_sidecars_preserve_exact_source_members() -> Result<(), String> {
         || physics_record.sha256 != shar_sha256::digest_hex(physics)
     {
         return Err("physics sidecar digest changed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn physics_rig_rejects_joint_reference_outside_skeleton()
+-> Result<(), String> {
+    let root = EffectTestDirectory::new("physics-invalid-joint")?;
+    let components = root.path().join("components");
+    let skeleton_dir = components.join("skeleton");
+    let collision_dir = components.join("simulation_collision_object");
+    let physics_dir = components.join("simulation_physics_object");
+    fs::create_dir_all(&skeleton_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&collision_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&physics_dir).map_err(|error| error.to_string())?;
+    fs::write(
+        skeleton_dir.join("car.json"),
+        br#"{"name":"car","num_joints":1,"joints":[{"name":"car"}]}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        collision_dir.join("car.json"),
+        concat!(
+            r#"{"name":"car","num_sub_objects":1,"volumes":[{"#,
+            r#""object_reference_index":1,"primitives":[{"kind":"obbox"}]}]}"#
+        ),
+    )
+    .map_err(|error| error.to_string())?;
+    fs::write(
+        physics_dir.join("car.json"),
+        br#"{"name":"car","num_joints":1}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    let error = match validate_vehicle_physics_rig_bindings(root.path()) {
+        Ok(()) => {
+            return Err(
+                String::from(
+                    "out-of-range collision reference unexpectedly passed",
+                ),
+            );
+        },
+        Err(error) => error,
+    };
+    if !error.to_string().contains("invalid joint reference") {
+        return Err(
+            "invalid physics joint reported the wrong failure".to_owned(),
+        );
     }
     Ok(())
 }

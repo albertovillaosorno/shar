@@ -2032,12 +2032,196 @@ fn texture_records(
     Ok(records)
 }
 
+/// Validate source collision rigs against exact skeleton joint indices.
+fn validate_vehicle_physics_rig_bindings(
+    package_root: &Path,
+) -> Result<(), PipelineError> {
+    let components = package_root.join("components");
+    let skeletons = vehicle_named_component_documents(
+        &components.join("skeleton"),
+        "skeleton",
+    )?;
+    let collisions = vehicle_named_component_documents(
+        &components.join("simulation_collision_object"),
+        "collision",
+    )?;
+    let physics = vehicle_named_component_documents(
+        &components.join("simulation_physics_object"),
+        "physics",
+    )?;
+    if collisions.is_empty()
+        || collisions.len() != physics.len()
+        || collisions.len() != skeletons.len()
+    {
+        return Err(PipelineError::new(
+            "vehicle physics rig families do not match",
+        ));
+    }
+    for (identity, collision) in &collisions {
+        let skeleton = skeletons.get(identity).ok_or_else(|| {
+            PipelineError::new("vehicle collision rig has no matching skeleton")
+        })?;
+        let physics_document = physics.get(identity).ok_or_else(|| {
+            PipelineError::new("vehicle collision rig has no matching physics")
+        })?;
+        validate_vehicle_physics_rig(
+            identity,
+            skeleton,
+            collision,
+            physics_document,
+        )?;
+    }
+    Ok(())
+}
+
+/// Load unique decoded component documents keyed by authored identity.
+fn vehicle_named_component_documents(
+    directory: &Path,
+    label: &str,
+) -> Result<BTreeMap<String, Value>, PipelineError> {
+    if !directory.is_dir() {
+        return Ok(BTreeMap::new());
+    }
+    let mut paths = fs::read_dir(directory)
+        .map_err(|error| PipelineError::new(error.to_string()))?
+        .map(|entry| {
+            entry
+                .map(|value| value.path())
+                .map_err(|error| PipelineError::new(error.to_string()))
+        })
+        .collect::<Result<Vec<_>, PipelineError>>()?;
+    paths.retain(|path| {
+        path.extension()
+            .is_some_and(|extension| extension.eq_ignore_ascii_case("json"))
+    });
+    paths.sort();
+    let mut documents = BTreeMap::new();
+    for path in paths {
+        let bytes = fs::read(&path)
+            .map_err(|error| PipelineError::new(error.to_string()))?;
+        let document = serde_json::from_slice::<Value>(&bytes)
+            .map_err(|error| PipelineError::new(error.to_string()))?;
+        let identity = document
+            .get("name")
+            .and_then(Value::as_str)
+            .map(|value| value.trim_end_matches('\0'))
+            .filter(|value| !value.is_empty() && *value == value.trim())
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "vehicle {label} rig has invalid identity"
+                ))
+            })?
+            .to_owned();
+        if documents.insert(identity, document).is_some() {
+            return Err(PipelineError::new(format!(
+                "vehicle {label} rig identity is duplicated"
+            )));
+        }
+    }
+    Ok(documents)
+}
+
+/// Validate one same-name skeleton/collision/physics source rig.
+fn validate_vehicle_physics_rig(
+    identity: &str,
+    skeleton: &Value,
+    collision: &Value,
+    physics: &Value,
+) -> Result<(), PipelineError> {
+    let joints = required_array(
+        skeleton,
+        "joints",
+        "physics-rig skeleton joints",
+    )?;
+    let joint_count = joints.len();
+    let skeleton_count = skeleton
+        .get("num_joints")
+        .and_then(Value::as_u64)
+        .and_then(|value| usize::try_from(value).ok());
+    let collision_count = collision
+        .get("num_sub_objects")
+        .and_then(Value::as_u64)
+        .and_then(|value| usize::try_from(value).ok());
+    let physics_count = physics
+        .get("num_joints")
+        .and_then(Value::as_u64)
+        .and_then(|value| usize::try_from(value).ok());
+    if joint_count == 0
+        || skeleton_count != Some(joint_count)
+        || collision_count != Some(joint_count)
+        || physics_count != Some(joint_count)
+    {
+        return Err(PipelineError::new(format!(
+            "vehicle physics rig {identity} joint counts do not match"
+        )));
+    }
+    for joint in joints {
+        let _joint_identity = joint
+            .get("name")
+            .and_then(Value::as_str)
+            .map(|value| value.trim_end_matches('\0'))
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "vehicle physics rig has a joint without identity",
+                )
+            })?;
+    }
+    let volumes = required_array(
+        collision,
+        "volumes",
+        "physics-rig collision volumes",
+    )?;
+    if volumes.is_empty() {
+        return Err(PipelineError::new(
+            "vehicle physics rig has no collision volumes",
+        ));
+    }
+    for volume in volumes {
+        validate_vehicle_collision_volume_refs(volume, joint_count)?;
+    }
+    Ok(())
+}
+
+/// Validate one recursive collision volume against source skeleton joints.
+fn validate_vehicle_collision_volume_refs(
+    volume: &Value,
+    joint_count: usize,
+) -> Result<(), PipelineError> {
+    if volume
+        .get("object_reference_index")
+        .and_then(Value::as_u64)
+        .and_then(|value| usize::try_from(value).ok())
+        .is_none_or(|value| value >= joint_count)
+    {
+        return Err(PipelineError::new(
+            "vehicle collision volume has an invalid joint reference",
+        ));
+    }
+    let primitives = required_array(
+        volume,
+        "primitives",
+        "physics-rig collision primitives",
+    )?;
+    for primitive in primitives {
+        if primitive.get("object_reference_index").is_some() {
+            validate_vehicle_collision_volume_refs(primitive, joint_count)?;
+        } else if primitive.get("kind").and_then(Value::as_str).is_none() {
+            return Err(PipelineError::new(
+                "vehicle collision primitive has no kind",
+            ));
+        }
+    }
+    Ok(())
+}
+
 /// Publish every decoded collision/physics member without reinterpretation.
 fn publish_vehicle_physics_sidecars(
     package: &PhaseThreePackageRow,
     package_root: &Path,
     vehicle_dir: &Path,
 ) -> Result<Vec<PhysicsSidecarRecord>, PipelineError> {
+    validate_vehicle_physics_rig_bindings(package_root)?;
     let mut members = package
         .members()
         .iter()
