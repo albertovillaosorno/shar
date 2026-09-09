@@ -117,11 +117,14 @@ contract, converts source box half-extents to Unreal's full box dimensions, and
 retains numeric magnitudes under the imported scene-unit root scale.
 
 The editor construction kernel revalidates that scale and the imported recipe
-bones before creating transient analytic bodies. A generated-root toolset now
+bones before creating transient analytic bodies. A generated-root toolset
 publishes the reviewed candidate as a create-only, Asset-Registry-visible,
 dirty package and reads back its mesh, body order, bone identities, and analytic
-geometry without saving. Transaction-owned save/reload and live Chaos vehicle
-behavior remain separate acceptance steps.
+geometry without saving. The outer editor-control transaction now binds this
+request to the exact skeletal import, validates live schemas, performs explicit
+save and clean-state read-back, and compensates only its own Physics Asset
+outputs on failure. Restart/reload from a freshly generated real release bundle
+and live Chaos vehicle behavior remain separate acceptance steps.
 
 ## Materials and damage
 

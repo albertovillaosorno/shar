@@ -335,11 +335,20 @@ real scene-unit `sedana` mesh. It publishes five bodies in memory, verifies
 `.uasset` exists before an explicit save. The automation completed with
 `Result={Success}` and exit code 0 on Unreal Engine 5.8.1.
 
-This bounded path still does not transactionally save and reload the generated
-Physics Asset, bind it through the production vehicle construction plan, spawn
-the Pawn, create and validate live Chaos vehicle physics, choose placement, or
-publish a world vehicle instance. Those remain later steps in the complete
-construction sequence above.
+The outer editor-control boundary now reads only the release-index-bound
+`vehicle-physics.json`, compiles an exact `source_fbx` join to the reviewed
+skeletal import, validates the live construction and AssetTools schemas, and
+owns create/read-back/save/clean verification plus reverse-order compensation
+for its Physics Asset outputs. It does not own or delete the Skeletal Mesh
+input. A real Unreal Engine 5.8.1 MCP transaction against `sedana` completed
+that save and clean-state cycle, and its session-owned test asset was then
+explicitly deleted with independent absence verification.
+
+This path still does not prove restart/reload from a freshly generated real
+release bundle, bind the saved Physics Asset through the representative
+production vehicle presentation, spawn the Pawn, create and validate live Chaos
+vehicle physics, choose placement, or publish a world vehicle instance. Those
+remain later steps in the complete construction sequence above.
 
 ## Vehicle lifecycle states
 

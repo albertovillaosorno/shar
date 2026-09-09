@@ -63,6 +63,7 @@ _SEMANTIC_ARTIFACT_SPECS: tuple[tuple[str, str], ...] = (
     ("mission-tuning", "mission-tuning.jsonl"),
     ("vehicle-tuning", "vehicle-tuning.jsonl"),
     ("vehicle-tuning-usage", "vehicle-tuning-usage.jsonl"),
+    ("vehicle-physics", "vehicle-physics.json"),
     ("world-materials", "world-materials.json"),
 )
 _PLAN_SPECS: tuple[tuple[str, str, tuple[str, ...]], ...] = (

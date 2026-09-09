@@ -31,6 +31,7 @@
 //! Shar import editor module registration.
 
 #include "Import/SharImportToolset.h"
+#include "Import/SharVehiclePhysicsToolset.h"
 #include "Materials/SharWorldMaterialToolset.h"
 
 #include "Modules/ModuleManager.h"
@@ -44,6 +45,8 @@ public:
         UToolsetRegistry::RegisterToolsetClass(
             USharImportToolset::StaticClass());
         UToolsetRegistry::RegisterToolsetClass(
+            USharVehiclePhysicsToolset::StaticClass());
+        UToolsetRegistry::RegisterToolsetClass(
             USharWorldMaterialToolset::StaticClass());
     }
 
@@ -51,6 +54,8 @@ public:
     {
         UToolsetRegistry::UnregisterToolsetClass(
             USharWorldMaterialToolset::StaticClass());
+        UToolsetRegistry::UnregisterToolsetClass(
+            USharVehiclePhysicsToolset::StaticClass());
         UToolsetRegistry::UnregisterToolsetClass(
             USharImportToolset::StaticClass());
     }

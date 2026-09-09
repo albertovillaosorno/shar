@@ -196,9 +196,29 @@ run created the five-body `sedana` Physics Asset in memory, verified `sedanA` as
 the first body, verified the package is dirty, proved no `.uasset` exists before
 an explicit save, and completed with `Result={Success}` and exit code 0.
 
-The broader P0 criterion remains open. The editor pipeline still does not own a
-transactional save/reload and compensation cycle for the reviewed Physics Asset,
-bind that saved asset through the production construction plan, create material,
-animation, or wheel-definition assets, spawn the vehicle into a world, create
-live Chaos vehicle physics state, or validate driven behavior against source
-evidence.
+The outer editor-control transaction now consumes the release-index-bound
+`vehicle-physics.json`, rejoins every ready rig to the exact reviewed skeletal
+FBX import, audits the six live construction and AssetTools schemas, requires
+the Skeletal Mesh dependency to exist with the expected class, and requires the
+deterministic Physics Asset destination to be absent before mutation. It then
+creates, reads back, explicitly saves, and proves the package clean. A lost
+construction response is reconciled through independent existence read-back,
+and rollback deletes only Physics Assets created by that transaction in reverse
+order; the Skeletal Mesh dependency is never compensation-owned.
+
+The live Unreal Engine 5.8.1 MCP schema for
+`SharImportEditor.SharVehiclePhysicsToolset` matches the typed wire contract. A
+real `sedana` editor-control transaction audited all six required schemas,
+created one Physics Asset, read back class `PhysicsAsset`, saved it, proved
+`dirty=false`, and then explicitly deleted the session-owned test asset with
+independent `exists=false` and disk-absence checks. A synthetic Streamable HTTP
+integration additionally binds an actual sidecar hash into a canonical plan
+bundle, imports its Skeletal Mesh and Skeleton, then runs vehicle-physics
+preflight, capability audit, construction, save, and clean-state verification.
+
+The broader P0 criterion remains open. The editor pipeline has not yet proved a
+restart/reload of the saved Physics Asset from a freshly generated real release
+bundle, bound that saved asset into the representative production presentation,
+created material, animation, or wheel-definition assets, spawned the vehicle
+into a world, created live Chaos vehicle physics state, or validated driven
+behavior against source evidence.
