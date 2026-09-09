@@ -196,6 +196,16 @@ run created the five-body `sedana` Physics Asset in memory, verified `sedanA` as
 the first body, verified the package is dirty, proved no `.uasset` exists before
 an explicit save, and completed with `Result={Success}` and exit code 0.
 
+`prepare-unreal` now exposes every verified vehicle FBX as a ready skeletal
+prerequisite operation while retaining the owning car package's
+`CompositeModel` semantic blocker. The prerequisite uses the reviewed
+`shar-fbx-skeletal-v1` route and a distinct generated `_Skeletal` destination;
+it is evidence needed by Physics Asset construction, not a claim that the
+vehicle's materials, presentation, or semantic composition is complete. The
+editor-control source verifier confines `vehicle-assets/...` beneath the
+pipeline cache and rechecks regular-file ancestry, stable bytes, and SHA-256
+before any general plan execution can consume that source.
+
 The outer editor-control transaction now consumes the release-index-bound
 `vehicle-physics.json`, rejoins every ready rig to the exact reviewed skeletal
 FBX import, audits the six live construction and AssetTools schemas, requires

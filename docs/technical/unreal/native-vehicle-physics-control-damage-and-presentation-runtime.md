@@ -335,6 +335,15 @@ real scene-unit `sedana` mesh. It publishes five bodies in memory, verifies
 `.uasset` exists before an explicit save. The automation completed with
 `Result={Success}` and exit code 0 on Unreal Engine 5.8.1.
 
+The generated plan now publishes a reviewed vehicle Skeletal Mesh import as a
+ready prerequisite for each verified vehicle FBX even though the owning car
+package remains `requires-semantic-conversion` as a `CompositeModel`. The
+prerequisite therefore cannot clear the semantic blocker or stand in for the
+remaining material, presentation, and runtime composition. Physical source
+verification treats `vehicle-assets/...` as a generated pipeline namespace and
+rechecks its confined regular-file bytes and SHA-256 like other generated FBX
+inputs.
+
 The outer editor-control boundary now reads only the release-index-bound
 `vehicle-physics.json`, compiles an exact `source_fbx` join to the reviewed
 skeletal import, validates the live construction and AssetTools schemas, and

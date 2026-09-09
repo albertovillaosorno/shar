@@ -186,6 +186,39 @@ def test_verifies_unique_sources_and_reuses_shared_manifest(
     assert str(repository) not in str(verified.report.to_json())
 
 
+def test_verifies_vehicle_catalog_fbx_below_pipeline_cache(
+    tmp_path: Path,
+) -> None:
+    repository, plan_root = _roots(tmp_path)
+    source = (
+        repository
+        / ".cache"
+        / "pipeline"
+        / "vehicle-assets"
+        / "sedana"
+        / "sedana.fbx"
+    )
+    source.parent.mkdir(parents=True)
+    payload = b"Kaydara FBX Binary vehicle-prerequisite"
+    source.write_bytes(payload)
+    operation = _operation(
+        "operation-0000000000000008",
+        plan_id="asset-import-plan",
+        source_path="vehicle-assets/sedana/sedana.fbx",
+        source_revision=_digest(payload),
+        readiness="ready",
+    )
+
+    verified = FilesystemPlanSourceVerifier(repository, plan_root).verify(
+        _bundle(operation)
+    )
+
+    assert verified.report.verified_operation_count == 1
+    assert verified.report.unique_source_count == 1
+    assert verified.report.unique_source_bytes == len(payload)
+    assert verified.by_operation == {operation.operation_id: source}
+
+
 def test_rejects_digest_mismatch_without_disclosing_physical_path(
     tmp_path: Path,
 ) -> None:

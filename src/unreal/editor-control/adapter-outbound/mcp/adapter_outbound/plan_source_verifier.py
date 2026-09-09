@@ -167,6 +167,12 @@ def _source_location(
             "fbx-assets",
             f".cache/pipeline/{operation.source_path}",
         )
+    if operation.source_path.startswith("vehicle-assets/"):
+        return (
+            repository_root,
+            "vehicle-assets",
+            f".cache/pipeline/{operation.source_path}",
+        )
     return repository_root, "repository", operation.source_path
 
 

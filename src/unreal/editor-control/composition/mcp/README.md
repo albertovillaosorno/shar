@@ -101,6 +101,14 @@ Generated-plan application is divided into four fail-closed gates:
   payload. Any failure deletes only effects created by that transaction in
   reverse order and verifies their absence.
 
+Verified vehicle FBXs are emitted as ready `shar-fbx-skeletal-v1`
+prerequisite operations with dedicated `_Skeletal` destinations. Their owning
+car packages remain semantic `CompositeModel` blockers, so this prerequisite
+never makes the global plan complete by itself. Physical plan-source
+verification resolves `vehicle-assets/...` only below
+`.cache/pipeline/vehicle-assets/`, rejects redirected ancestry, and verifies the
+bound SHA-256 before general execution.
+
 Vehicle Physics Asset publication adds a separate three-gate construction
 transaction after the Skeletal Mesh import is available. `vehicle-physics-
 preflight` remains local: it requires the release index to bind exactly one
