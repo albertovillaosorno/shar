@@ -238,9 +238,24 @@ integration additionally binds an actual sidecar hash into a canonical plan
 bundle, imports its Skeletal Mesh and Skeleton, then runs vehicle-physics
 preflight, capability audit, construction, save, and clean-state verification.
 
-The broader P0 criterion remains open. The editor pipeline has not yet proved a
-restart/reload of the saved Physics Asset from a freshly generated real release
-bundle, bound that saved asset into the representative production presentation,
-created material, animation, or wheel-definition assets, spawned the vehicle
-into a world, created live Chaos vehicle physics state, or validated driven
-behavior against source evidence.
+A real Unreal Engine 5.8.1 transaction now closes the representative
+save/reload blocker against release bundle
+`212926972e3bdf739e2dc395ee9a435182ea5978298678d5406b0f92007cebca`.
+It reverified the 327,292-byte `sedana` FBX, passed all six prerequisite import
+schemas and all six Physics Asset schemas, then imported and explicitly saved
+one `SkeletalMesh`, its `Skeleton`, and the six-shape `sedanA` Physics Asset.
+Immediate independent read-back reported the expected three classes with every
+package clean. After terminating that editor and opening a fresh Unreal process,
+independent read-back again reported `SkeletalMesh`, `Skeleton`, and
+`PhysicsAsset` with `dirty=false`; the exact saved `.uasset` hashes also
+survived
+the process restart unchanged.
+
+The session-owned assets were removed after the cold-reload evidence was
+captured.
+
+The broader P0 criterion remains open. The saved asset has not yet been bound
+into the representative production presentation, and source-derived material,
+animation, or wheel-definition assets are still absent. The vehicle also has not
+been spawned into a world with live Chaos vehicle physics or validated under
+driven behavior against source evidence.
