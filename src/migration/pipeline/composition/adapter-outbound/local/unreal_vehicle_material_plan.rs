@@ -109,6 +109,8 @@ struct Counts {
     translucent_slots: usize,
     alpha_test_slots: usize,
     two_sided_slots: usize,
+    simple_unlit_graph_candidates: usize,
+    presentation_special_slots: usize,
     native_ready_slots: usize,
     native_blocked_slots: usize,
 }
@@ -139,6 +141,12 @@ impl Counts {
         self.two_sided_slots = self
             .two_sided_slots
             .saturating_add(usize::from(slot.raster.two_sided));
+        self.simple_unlit_graph_candidates = self
+            .simple_unlit_graph_candidates
+            .saturating_add(usize::from(is_simple_unlit_graph_candidate(slot)));
+        self.presentation_special_slots = self
+            .presentation_special_slots
+            .saturating_add(usize::from(has_special_presentation(slot)));
         self.native_blocked_slots = self.native_blocked_slots.saturating_add(1);
     }
 
@@ -153,6 +161,8 @@ impl Counts {
             "translucent_slots": self.translucent_slots,
             "alpha_test_slots": self.alpha_test_slots,
             "two_sided_slots": self.two_sided_slots,
+            "simple_unlit_graph_candidates": self.simple_unlit_graph_candidates,
+            "presentation_special_slots": self.presentation_special_slots,
             "source_projection_ready_slots": self.slots,
             "native_ready_slots": self.native_ready_slots,
             "native_blocked_slots": self.native_blocked_slots,
@@ -204,9 +214,35 @@ fn slot_value(
             "sha256": slot.texture_sha256,
         })),
         "source_projection_status": "ready",
+        "native_graph_review": {
+            "simple_unlit_candidate": is_simple_unlit_graph_candidate(slot),
+            "presentation_special": has_special_presentation(slot),
+        },
         "native_status": "blocked",
         "native_blockers": native_blockers(slot),
     })
+}
+
+fn is_simple_unlit_graph_candidate(
+    slot: &VerifiedVehicleMaterialArtifact,
+) -> bool {
+    slot.raster.shader_family == "simple"
+        && !slot.raster.lit
+        && matches!(slot.raster.blend_mode, 0..=2)
+        && slot.raster.alpha_compare == 4
+        && (!slot.raster.alpha_test
+            || slot.raster.alpha_reference_bits.is_some())
+}
+
+const fn has_special_presentation(
+    slot: &VerifiedVehicleMaterialArtifact,
+) -> bool {
+    slot.semantics.transparent
+        || slot.semantics.glass
+        || slot.semantics.mirror
+        || slot.semantics.reflective
+        || slot.semantics.light_emitter
+        || slot.semantics.visual_effect
 }
 
 fn native_blockers(

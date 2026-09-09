@@ -266,10 +266,16 @@ texture-reference, diffuse, ambient, emissive, specular, and shininess state.
 
 `prepare-unreal` publishes that projection as release-index-bound
 `vehicle-materials.json`. Every slot remains explicitly native-blocked until a
-vehicle-specific material toolset is reviewed. `sedana` has eight ordered
-slots: two opaque lit base slots, one lit windshield glass slot, one unlit lens
-glass/light slot, and four unlit transparent light-emitter slots. These are
-verified handoff records, not native Unreal `MaterialInstance` assets.
+vehicle-specific material toolset is reviewed. A separate graph-review
+classifier identifies 429 `simple` unlit slots whose reviewed blend and alpha
+state can enter a vehicle-specific simple-unlit graph review; all 429 are also
+presentation-special, so graph candidacy does not make their runtime binding
+ready.
+
+`sedana` has eight ordered slots: two opaque lit base slots, one lit windshield
+glass slot, one unlit lens glass/light slot, and four unlit transparent
+light-emitter slots. These are verified handoff records, not native Unreal
+`MaterialInstance` assets.
 
 The broader P0 criterion remains open. The saved asset has not yet been bound
 into the representative production presentation, and source-derived material,

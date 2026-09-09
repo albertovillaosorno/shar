@@ -363,10 +363,13 @@ and shininess.
 
 The source runtime disables vertex-color arrays for lit PDDI materials and
 supplies those material lighting values directly, so a world simple-unlit
-master is not a valid vehicle-lit substitute. Vehicle light slots also remain
-separately blocked because source presentation can mutate their blend and
-visibility at runtime. No native vehicle Material Instance is claimed until a
-vehicle-specific toolset reproduces the reviewed family and read-back contract.
+master is not a valid vehicle-lit substitute. A graph-review classifier keeps
+material-graph feasibility separate from presentation readiness: 429 verified
+slots are `simple` and unlit with reviewed blend/alpha state, but all 429 also
+carry special presentation semantics. Vehicle light slots remain separately
+blocked because source presentation can mutate their blend and visibility at
+runtime. No native vehicle Material Instance is claimed until a vehicle-specific
+toolset reproduces the reviewed family and read-back contract.
 
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative
