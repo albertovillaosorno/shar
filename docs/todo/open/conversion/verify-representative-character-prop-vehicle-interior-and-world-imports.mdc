@@ -143,8 +143,31 @@ test, exercised prepare, commit, native field read-back, explicit rollback, and
 rejection of a missing wheel bone, and completed with `Result={Success}` and
 exit code 0.
 
+Construction now also requires every declared wheel bone to resolve to a body
+inside the selected Physics Asset. A second fresh 33-action Unreal Engine 5.8.1
+build completed with `Result: Succeeded`, and the same live construction test
+passed after adding a missing-Physics-Asset-body regression. This proves the
+native transaction fails closed on wheel/body mismatch without claiming that a
+source vehicle Physics Asset already exists.
+
+The dedicated vehicle catalog now preserves the missing source-physics handoff.
+Schema v6 publishes every decoded collision and physics member beside each
+vehicle FBX with its package-member identity, source path and ordinal, exact
+byte
+count, and SHA-256. A complete isolated replay again publishes all 88
+vehicles
+from 89 car packages and records 274 physics sidecars. An independent audit
+matched all 274 published sidecars byte-for-byte against their indexed source
+members and against their declared hashes.
+
+The Unreal-side catalog verifier requires both collision and physics families
+for every vehicle, validates JSON schema, canonical path/kind/ordinal identity,
+regular-file ancestry, size and hash, and rejects the previous v5 schema. It
+still promotes only the FBX as import evidence.
+
 The broader P0 criterion remains open for the representative source vehicle.
-The bounded test uses transient native assets; it does not yet create reviewed
-`sedana` Physics Asset, material, animation, or wheel-definition assets, prove
-wheel Physics Asset bodies, spawn the vehicle into a world, create live Chaos
-physics state, or validate driven behavior against source evidence.
+The bounded test uses transient native assets, while the v6 physics payloads are
+verified source evidence only. The pipeline does not yet create a reviewed
+`sedana` Physics Asset, material, animation, or wheel-definition asset from that
+evidence, spawn the vehicle into a world, create live Chaos physics state, or
+validate driven behavior against source evidence.

@@ -136,6 +136,28 @@ pub(super) struct EffectAnimationRecord {
     pub(super) texture_references: Vec<EffectTextureReferenceRecord>,
 }
 
+
+/// One verbatim decoded source physics member published beside a vehicle FBX.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct PhysicsSidecarRecord {
+    /// Published vehicle-relative sidecar path.
+    pub(super) path: String,
+    /// Exact phase-three package member identity.
+    pub(super) package_member_id: String,
+    /// Exact source member path from the generated package index.
+    pub(super) source_path: String,
+    /// Controlled source member kind.
+    pub(super) kind: String,
+    /// Exact source chunk kind.
+    pub(super) source_chunk_kind: String,
+    /// Exact source chunk ordinal.
+    pub(super) source_ordinal: usize,
+    /// Exact published sidecar byte length.
+    pub(super) bytes: u64,
+    /// Exact published sidecar SHA-256 digest.
+    pub(super) sha256: String,
+}
+
 /// One completed vehicle artifact and catalog record.
 #[derive(Clone, Debug)]
 pub(super) struct VehicleRecord {
@@ -169,4 +191,6 @@ pub(super) struct VehicleRecord {
     pub(super) textures: Vec<TextureRecord>,
     /// Published shader evidence paths.
     pub(super) shaders: Vec<String>,
+    /// Verbatim decoded collision and physics source members.
+    pub(super) physics_sidecars: Vec<PhysicsSidecarRecord>,
 }

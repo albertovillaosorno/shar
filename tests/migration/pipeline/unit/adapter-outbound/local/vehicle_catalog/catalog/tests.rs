@@ -35,7 +35,7 @@ use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
 use super::super::model::{
     EffectAnimationRecord, EffectControllerRecord,
     EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
-    GroundingRecord, VehicleRecord,
+    GroundingRecord, PhysicsSidecarRecord, VehicleRecord,
 };
 use super::vehicle_json;
 
@@ -93,6 +93,16 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
         }],
         textures: Vec::new(),
         shaders: Vec::new(),
+        physics_sidecars: vec![PhysicsSidecarRecord {
+            path: "physics/collision__ordinal_000321.json".to_owned(),
+            package_member_id: "physics-collision".to_owned(),
+            source_path: "pkg/components/collision.json".to_owned(),
+            kind: "p3d-collision".to_owned(),
+            source_chunk_kind: "simulation_collision_object".to_owned(),
+            source_ordinal: 321,
+            bytes: 42,
+            sha256: "2".repeat(64),
+        }],
     };
 
     let value = vehicle_json(&record);
@@ -109,6 +119,18 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
     {
         return Err(String::from("grounding evidence is incomplete"));
     }
+    let physics = value
+        .get("physics_sidecars")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|sidecars| sidecars.first())
+        .ok_or_else(|| "vehicle physics sidecar is missing".to_owned())?;
+    if physics.get("source_ordinal") != Some(&321.into())
+        || physics.get("package_member_id") != Some(&"physics-collision".into())
+        || physics.get("bytes") != Some(&42.into())
+    {
+        return Err("vehicle physics provenance is incomplete".to_owned());
+    }
+
     let effect = value
         .get("effect_animation_sidecars")
         .and_then(serde_json::Value::as_array)

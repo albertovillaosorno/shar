@@ -45,6 +45,7 @@ use crate::domain::package::PhaseThreePackageRow;
 
 use super::{
     is_wheel_identity, load_vehicle_animations, partition_vehicle_billboards,
+    publish_vehicle_physics_sidecars,
     separate_vehicle_parts, texture_state_role, vehicle_animation_name,
     vehicle_part_role, vehicle_part_semantics,
 };
@@ -235,12 +236,13 @@ fn effect_animation_package() -> Result<PhaseThreePackageRow, String> {
         r#"{"package_id":"pkg-car","package_root":"pkg-car","#,
         r#""package_category":"cars","#,
         r#""package_subcategory":"cars/test/car","#,
-        r#""unit_count":6,"text_key_count":0,"#,
+        r#""unit_count":8,"text_key_count":0,"#,
         r#""unit_ids":["animation-a","animation-z","texture-50","#,
-        r#""texture-60","texture-70","texture-80"],"#,
+        r#""texture-60","texture-70","texture-80","physics-90","#,
+        r#""physics-100"],"#,
         r#""world_ids":[],"texture_ids":["texture-50","texture-60","#,
         r#""texture-70","texture-80"],"material_ids":[],"#,
-        r#""model_ids":[],"physics_ids":[],"#,
+        r#""model_ids":[],"physics_ids":["physics-90","physics-100"],"#,
         r#""animation_ids":["animation-a","animation-z"],"#,
         r#""scene_ids":[],"locator_ids":[],"camera_ids":[],"#,
         r#""light_ids":[],"particle_ids":[],"controller_ids":[],"#,
@@ -269,11 +271,74 @@ fn effect_animation_package() -> Result<PhaseThreePackageRow, String> {
         r#""id":"texture-80","role":"texture","#,
         r#""path":"pkg-car/components/texture/noise.png","#,
         r#""type":"image","kind":"p3d-texture","#,
-        r#""source_chunk_kind":"texture","source_chunk_ordinal":"80"}],"#,
-        r#""text_keys":[]}"#
+        r#""source_chunk_kind":"texture","source_chunk_ordinal":"80"},{"#,
+        r#""id":"physics-90","role":"physics","#,
+        r#""path":"pkg-car/components/simulation_collision_object/car.json","#,
+        r#""type":"physics","kind":"p3d-collision","#,
+        r#""source_chunk_kind":"simulation_collision_object","#,
+        r#""source_chunk_ordinal":"90"},{"id":"physics-100","#,
+        r#""role":"physics","path":"pkg-car/components/"#,
+        r#"simulation_physics_object/car.json","type":"physics","#,
+        r#""kind":"p3d-physics","#,
+        r#""source_chunk_kind":"simulation_physics_object","#,
+        r#""source_chunk_ordinal":"100"}],"text_keys":[]}"#
     );
     PhaseThreePackageRow::from_json_line(json)
         .map_err(|error| error.to_string())
+}
+
+
+#[test]
+fn physics_sidecars_preserve_exact_source_members() -> Result<(), String> {
+    let root = EffectTestDirectory::new("physics-sidecars")?;
+    let source = root.path().join("source");
+    let collision_dir = source
+        .join("components")
+        .join("simulation_collision_object");
+    let physics_dir = source
+        .join("components")
+        .join("simulation_physics_object");
+    fs::create_dir_all(&collision_dir).map_err(|error| error.to_string())?;
+    fs::create_dir_all(&physics_dir).map_err(|error| error.to_string())?;
+    let collision = br#"{"schema":"simulation_collision_object","value":1}"#;
+    let physics = br#"{"schema":"simulation_physics_object","value":2}"#;
+    fs::write(collision_dir.join("car.json"), collision)
+        .map_err(|error| error.to_string())?;
+    fs::write(physics_dir.join("car.json"), physics)
+        .map_err(|error| error.to_string())?;
+    let output = root.path().join("vehicle");
+    fs::create_dir_all(&output).map_err(|error| error.to_string())?;
+    let records = publish_vehicle_physics_sidecars(
+        &effect_animation_package()?,
+        &source,
+        &output,
+    )
+    .map_err(|error| error.to_string())?;
+    let [collision_record, physics_record] = records.as_slice() else {
+        return Err("physics sidecars changed record count".to_owned());
+    };
+    if collision_record.source_ordinal != 90
+        || collision_record.package_member_id != "physics-90"
+        || collision_record.path != "physics/collision__ordinal_000090.json"
+        || physics_record.source_ordinal != 100
+        || physics_record.package_member_id != "physics-100"
+        || physics_record.path != "physics/physics__ordinal_000100.json"
+    {
+        return Err("physics sidecar provenance changed".to_owned());
+    }
+    let published_collision = fs::read(output.join(&collision_record.path))
+        .map_err(|error| error.to_string())?;
+    let published_physics = fs::read(output.join(&physics_record.path))
+        .map_err(|error| error.to_string())?;
+    if published_collision != collision || published_physics != physics {
+        return Err("physics sidecar payload changed".to_owned());
+    }
+    if collision_record.sha256 != shar_sha256::digest_hex(collision)
+        || physics_record.sha256 != shar_sha256::digest_hex(physics)
+    {
+        return Err("physics sidecar digest changed".to_owned());
+    }
+    Ok(())
 }
 
 fn effect_test_asset() -> Result<CharacterAsset, String> {

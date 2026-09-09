@@ -36,7 +36,9 @@ use std::path::{Path, PathBuf};
 
 use serde_json::{Value, json};
 
-use super::model::{EffectAnimationRecord, PartRecord, VehicleRecord};
+use super::model::{
+    EffectAnimationRecord, PartRecord, PhysicsSidecarRecord, VehicleRecord,
+};
 use crate::domain::PipelineError;
 
 /// Write one deterministic vehicle-local catalog.
@@ -56,7 +58,7 @@ pub(super) fn write_root_catalog(
     extracted_packages: usize,
 ) -> Result<(), PipelineError> {
     let value = json!({
-        "schema": "shar.vehicle-catalog.v5",
+        "schema": "shar.vehicle-catalog.v6",
         "boundary": {
             "source": concat!(
                 "original game P3D packages selected by the generated package ",
@@ -76,10 +78,11 @@ pub(super) fn write_root_catalog(
                 "alternate appearance textures",
                 "semantic part roles and pivot bones",
                 "hidden non-visual wheel proxies retained as physics evidence",
-                "effect animation controller, target, and texture occurrences"
+                "effect animation controller, target, and texture occurrences",
+                "verbatim decoded collision and physics source members"
             ],
             "excluded": [
-                "runtime collision and physics behavior",
+                "validated Unreal collision and Chaos physics behavior",
                 "cameras and follow-camera data",
                 "locators and triggers",
                 "camera-facing billboard execution",
@@ -146,6 +149,10 @@ pub(super) fn write_root_catalog(
             "shaders": records
                 .iter()
                 .map(|record| record.shaders.len())
+                .sum::<usize>(),
+            "physics_sidecars": records
+                .iter()
+                .map(|record| record.physics_sidecars.len())
                 .sum::<usize>()
         },
         "vehicles": records.iter().map(vehicle_json).collect::<Vec<_>>()
@@ -231,7 +238,26 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
             "bytes": texture.bytes,
             "sha256": texture.sha256
         })).collect::<Vec<_>>(),
-        "shaders": record.shaders
+        "shaders": record.shaders,
+        "physics_sidecars": record
+            .physics_sidecars
+            .iter()
+            .map(physics_sidecar_value)
+            .collect::<Vec<_>>()
+    })
+}
+
+/// Render one verbatim source physics sidecar with exact provenance.
+fn physics_sidecar_value(record: &PhysicsSidecarRecord) -> Value {
+    json!({
+        "path": record.path,
+        "package_member_id": record.package_member_id,
+        "source_path": record.source_path,
+        "kind": record.kind,
+        "source_chunk_kind": record.source_chunk_kind,
+        "source_ordinal": record.source_ordinal,
+        "bytes": record.bytes,
+        "sha256": record.sha256
     })
 }
 
