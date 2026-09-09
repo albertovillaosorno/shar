@@ -79,6 +79,14 @@ member remains byte-exact, while 137 same-name source rigs additionally publish
 matched every sidecar and every recipe back to normalized source evidence.
 
 The Unreal catalog verifier now validates sidecars and recipes fail-closed while
-continuing to promote only verified FBX presentation evidence. Creating and
-reading back reviewed native Physics Assets from this verified handoff remains
-open work.
+continuing to promote only verified FBX presentation evidence. `prepare-unreal`
+projects supported recipes into the imported bone-local frame, and the editor
+native kernel now constructs and reads back an unsaved transient Physics Asset
+against the real scene-unit `sedana` Skeletal Mesh. That representative test
+retains `sedanA` as root zero, accepts Unreal's 16 retained bones from the
+19-joint source rig, creates two chassis boxes plus four wheel spheres, and
+rejects wrong-scale and malformed geometry.
+
+Generated-root Physics Asset publication, transaction-owned save/read-back, and
+binding the reviewed asset into production vehicle construction remain open
+work.
