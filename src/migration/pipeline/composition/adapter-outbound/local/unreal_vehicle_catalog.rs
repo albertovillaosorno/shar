@@ -49,8 +49,34 @@ use crate::domain::{
 };
 
 const CATALOG_FILE: &str = "vehicles.catalog.json";
-const CATALOG_SCHEMA: &str = "shar.vehicle-catalog.v7";
+const CATALOG_SCHEMA: &str = "shar.vehicle-catalog.v8";
 const LOGICAL_ROOT: &str = "vehicle-assets";
+
+/// Effective semantic flags for one exact vehicle material slot.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(super) struct VerifiedVehicleMaterialSemantics {
+    pub transparent: bool,
+    pub glass: bool,
+    pub mirror: bool,
+    pub reflective: bool,
+    pub light_emitter: bool,
+    pub visual_effect: bool,
+}
+
+/// One verified FBX material slot plus exact shader and texture evidence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct VerifiedVehicleMaterialArtifact {
+    pub slot_name: String,
+    pub source_material_name: String,
+    pub base_color_rgba8: [u8; 4],
+    pub semantics: VerifiedVehicleMaterialSemantics,
+    pub shader_path: String,
+    pub shader_size_bytes: u64,
+    pub shader_sha256: String,
+    pub texture_path: Option<String>,
+    pub texture_size_bytes: Option<u64>,
+    pub texture_sha256: Option<String>,
+}
 
 /// One verified source collision or physics sidecar for a vehicle.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -103,15 +129,16 @@ pub(super) struct VerifiedVehiclePhysicsRig {
 pub(super) struct VerifiedVehicleFbxArtifact {
     pub evidence: UnrealFbxArtifactEvidence,
     pub subcategory: String,
+    pub material_slots: Vec<VerifiedVehicleMaterialArtifact>,
     pub physics_sidecars: Vec<VerifiedVehiclePhysicsArtifact>,
     pub physics_rigs: Vec<VerifiedVehiclePhysicsRig>,
 }
 
 /// Verify the generated vehicle FBX rows when the catalog root exists.
 ///
-/// This verifies the FBX presentation payload and the source physics sidecars.
-/// Only the FBX is promoted as import evidence; materials, Physics Assets,
-/// wheels, and runtime construction remain separate semantic work.
+/// This verifies FBX, source material artifacts, and source physics evidence.
+/// Only the FBX is promoted as import evidence; native Material Instances,
+/// Physics Assets, wheels, and runtime construction remain separate work.
 ///
 /// # Errors
 ///
@@ -167,6 +194,16 @@ pub(super) fn verified_vehicle_fbx_catalog(
             "generated vehicle catalog vehicle count is stale",
         ));
     }
+    let declared_material_slots = object
+        .get("counts")
+        .and_then(Value::as_object)
+        .and_then(|counts| counts.get("material_slots"))
+        .and_then(Value::as_u64)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle catalog has no material-slot count",
+            )
+        })?;
     let declared_physics = object
         .get("counts")
         .and_then(Value::as_object)
@@ -201,6 +238,7 @@ pub(super) fn verified_vehicle_fbx_catalog(
     let mut package_ids = BTreeSet::new();
     let mut paths = BTreeSet::new();
     let mut result = Vec::with_capacity(vehicles.len());
+    let mut verified_material_slot_count = 0_u64;
     let mut verified_physics_count = 0_u64;
     let mut verified_rig_count = 0_u64;
     let mut verified_primitive_count = 0_u64;
@@ -254,6 +292,21 @@ pub(super) fn verified_vehicle_fbx_catalog(
                 "generated vehicle FBX version is not supported",
             ));
         }
+        let material_slots = verify_vehicle_material_slots(
+            root,
+            &vehicle,
+            fbx,
+            row.get("material_slots"),
+        )?;
+        let material_slot_count =
+            u64::try_from(material_slots.len()).unwrap_or(u64::MAX);
+        verified_material_slot_count = verified_material_slot_count
+            .checked_add(material_slot_count)
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle material-slot count overflowed",
+                )
+            })?;
         let physics = verify_vehicle_physics_sidecars(
             root,
             &vehicle,
@@ -303,9 +356,15 @@ pub(super) fn verified_vehicle_fbx_catalog(
                 fbx_version: version,
             },
             subcategory,
+            material_slots,
             physics_sidecars: physics,
             physics_rigs,
         });
+    }
+    if verified_material_slot_count != declared_material_slots {
+        return Err(PipelineError::new(
+            "generated vehicle catalog material-slot count is stale",
+        ));
     }
     if verified_physics_count != declared_physics {
         return Err(PipelineError::new(
@@ -326,6 +385,204 @@ pub(super) fn verified_vehicle_fbx_catalog(
         left.evidence.package_id.cmp(&right.evidence.package_id)
     });
     Ok(Some(result))
+}
+
+fn verify_vehicle_material_slots(
+    root: &Path,
+    vehicle: &str,
+    fbx: &serde_json::Map<String, Value>,
+    value: Option<&Value>,
+) -> PipelineOutcome<Vec<VerifiedVehicleMaterialArtifact>> {
+    let slots = value.and_then(Value::as_array).ok_or_else(|| {
+        PipelineError::new(
+            "generated vehicle catalog row has no material slots",
+        )
+    })?;
+    let declared = required_u64(fbx, "materials")?;
+    if declared != u64::try_from(slots.len()).unwrap_or(u64::MAX) {
+        return Err(PipelineError::new(
+            "generated vehicle material slots disagree with FBX summary",
+        ));
+    }
+    let mut slot_names = BTreeSet::new();
+    let mut result = Vec::with_capacity(slots.len());
+    for slot in slots {
+        let slot = slot.as_object().ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle material slot is not an object",
+            )
+        })?;
+        let slot_name = required_string(slot, "slot_name")?;
+        let source_material_name =
+            required_string(slot, "source_material_name")?;
+        validate_source_identity(&slot_name)?;
+        validate_source_identity(&source_material_name)?;
+        if !slot_names.insert(slot_name.clone()) {
+            return Err(PipelineError::new(
+                "generated vehicle material slot identity is duplicated",
+            ));
+        }
+        let base_color_rgba8 = required_rgba8(slot, "base_color_rgba8")?;
+        let semantics = required_material_semantics(slot)?;
+        let shader = slot
+            .get("shader")
+            .and_then(Value::as_object)
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle material slot has no shader evidence",
+                )
+            })?;
+        let (shader_path, shader_size_bytes, shader_sha256) =
+            verify_material_artifact(
+                root,
+                vehicle,
+                shader,
+                "shaders/",
+                ".json",
+            )?;
+        let shader_bytes = fs::read(root.join(vehicle).join(&shader_path))
+            .map_err(|error| {
+                io_error("read generated vehicle material shader", &error)
+            })?;
+        let shader_document = serde_json::from_slice::<Value>(&shader_bytes)
+            .map_err(|_error| {
+                PipelineError::new(
+                    "generated vehicle material shader contains invalid JSON",
+                )
+            })?;
+        if shader_document.get("schema").and_then(Value::as_str)
+            != Some("shader")
+        {
+            return Err(PipelineError::new(
+                "generated vehicle material shader schema is inconsistent",
+            ));
+        }
+        let shader_identity = shader_document
+            .get("name")
+            .and_then(Value::as_str)
+            .map(|name| name.trim_end_matches('\0'));
+        if shader_identity != Some(source_material_name.as_str()) {
+            return Err(PipelineError::new(
+                "generated vehicle material shader identity is inconsistent",
+            ));
+        }
+        let texture = match slot.get("texture") {
+            None | Some(Value::Null) => None,
+            Some(value) => {
+                let texture = value.as_object().ok_or_else(|| {
+                    PipelineError::new(
+                        "generated vehicle material texture is not an object",
+                    )
+                })?;
+                Some(verify_material_artifact(
+                    root, vehicle, texture, "textures/", ".png",
+                )?)
+            },
+        };
+        result.push(VerifiedVehicleMaterialArtifact {
+            slot_name,
+            source_material_name,
+            base_color_rgba8,
+            semantics,
+            shader_path,
+            shader_size_bytes,
+            shader_sha256,
+            texture_path: texture.as_ref().map(|item| item.0.clone()),
+            texture_size_bytes: texture.as_ref().map(|item| item.1),
+            texture_sha256: texture.map(|item| item.2),
+        });
+    }
+    Ok(result)
+}
+
+fn verify_material_artifact(
+    root: &Path,
+    vehicle: &str,
+    record: &serde_json::Map<String, Value>,
+    prefix: &str,
+    suffix: &str,
+) -> PipelineOutcome<(String, u64, String)> {
+    let path = required_string(record, "path")?;
+    validate_relative_path(&path)?;
+    if !path.starts_with(prefix) || !path.ends_with(suffix) {
+        return Err(PipelineError::new(
+            "generated vehicle material artifact path is not canonical",
+        ));
+    }
+    let size_bytes = required_u64(record, "bytes")?;
+    let sha256 = required_string(record, "sha256")?;
+    validate_digest(&sha256)?;
+    let full_path = root.join(vehicle).join(&path);
+    validate_regular_file(&full_path, "generated vehicle material artifact")?;
+    validate_ancestor_chain(root, &full_path)?;
+    let bytes = fs::read(&full_path).map_err(|error| {
+        io_error("read generated vehicle material artifact", &error)
+    })?;
+    if u64::try_from(bytes.len()).unwrap_or(u64::MAX) != size_bytes
+        || digest_hex(&bytes) != sha256
+    {
+        return Err(PipelineError::new(
+            concat!(
+                "generated vehicle material artifact bytes do not match ",
+                "the catalog"
+            ),
+        ));
+    }
+    Ok((path, size_bytes, sha256))
+}
+
+fn required_rgba8(
+    object: &serde_json::Map<String, Value>,
+    field: &str,
+) -> PipelineOutcome<[u8; 4]> {
+    let values = object.get(field).and_then(Value::as_array).ok_or_else(|| {
+        PipelineError::new("generated vehicle material base color is invalid")
+    })?;
+    let [r, g, b, a] = values.as_slice() else {
+        return Err(PipelineError::new(
+            "generated vehicle material base color component count is invalid",
+        ));
+    };
+    let component = |value: &Value| {
+        value
+            .as_u64()
+            .and_then(|value| u8::try_from(value).ok())
+            .ok_or_else(|| {
+                PipelineError::new(concat!(
+                    "generated vehicle material base color component ",
+                    "is invalid"
+                ))
+            })
+    };
+    Ok([component(r)?, component(g)?, component(b)?, component(a)?])
+}
+
+fn required_material_semantics(
+    slot: &serde_json::Map<String, Value>,
+) -> PipelineOutcome<VerifiedVehicleMaterialSemantics> {
+    let semantics = slot
+        .get("surface_semantics")
+        .and_then(Value::as_object)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle material slot has no surface semantics",
+            )
+        })?;
+    let flag = |field: &str| {
+        semantics.get(field).and_then(Value::as_bool).ok_or_else(|| {
+            PipelineError::new(format!(
+                "generated vehicle material semantic flag is invalid: {field}"
+            ))
+        })
+    };
+    Ok(VerifiedVehicleMaterialSemantics {
+        transparent: flag("transparent")?,
+        glass: flag("glass")?,
+        mirror: flag("mirror")?,
+        reflective: flag("reflective")?,
+        light_emitter: flag("light_emitter")?,
+        visual_effect: flag("visual_effect")?,
+    })
 }
 
 fn verify_vehicle_physics_sidecars(

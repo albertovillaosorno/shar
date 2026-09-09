@@ -598,6 +598,29 @@ pub fn static_model_material_slots(
         .collect())
 }
 
+/// Plan the exact semantic material slots emitted for one skinned character.
+///
+/// # Errors
+///
+/// Returns the same material input-validation failures as character
+/// serialization.
+pub fn character_material_slots(
+    character: &CharacterAsset,
+    materials: &[MaterialBinding],
+) -> Result<Vec<StaticModelMaterialSlot>, CharacterBinaryFbxError> {
+    let plan = material_slots(character, materials)
+        .map_err(CharacterBinaryFbxError::from)?;
+    Ok(plan
+        .slots
+        .into_iter()
+        .map(|slot| StaticModelMaterialSlot {
+            material_name: slot.object_name,
+            source_material_name: slot.binding.material_name.clone(),
+            semantics: slot.semantics,
+        })
+        .collect())
+}
+
 /// Adapt one validated static mesh collection to the shared character shape.
 fn static_model_asset(
     asset_name: &str,

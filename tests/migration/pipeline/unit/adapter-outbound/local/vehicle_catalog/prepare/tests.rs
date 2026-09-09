@@ -33,6 +33,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use fbx::adapters::driven::binary_character_writer::character_material_slots;
 use fbx::domain::character::{
     CharacterAsset, CharacterSourceProvenance, SkinnedPart,
 };
@@ -104,7 +105,7 @@ fn semantic_part_records_preserve_fbx_part_order() -> Result<(), String> {
         ],
     )
     .map_err(|error| format!("vehicle fixture failed: {error:?}"))?;
-    let materials = ["z_m", "a_m"]
+    let materials = ["a_m", "z_m"]
         .into_iter()
         .map(|name| {
             MaterialBinding::new(name, None)
@@ -130,6 +131,17 @@ fn semantic_part_records_preserve_fbx_part_order() -> Result<(), String> {
             ),
             record_names,
             part_names
+        ));
+    }
+    let slots = character_material_slots(&separated, &materials)
+        .map_err(|error| format!("material slot plan failed: {error:?}"))?;
+    let slot_names = slots
+        .iter()
+        .map(|slot| slot.source_material_name.as_str())
+        .collect::<Vec<_>>();
+    if slot_names != ["z_m", "a_m"] {
+        return Err(format!(
+            "vehicle material slots lost authored order: {slot_names:?}"
         ));
     }
     Ok(())

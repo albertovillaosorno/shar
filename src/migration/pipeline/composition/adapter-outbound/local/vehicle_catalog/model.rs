@@ -50,6 +50,32 @@ pub(super) struct PartRecord {
     pub(super) bones: Vec<String>,
 }
 
+
+/// One exact semantic material slot emitted by the vehicle FBX writer.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct MaterialSlotRecord {
+    /// Exact FBX material object identity in emitted slot order.
+    pub(super) slot_name: String,
+    /// Source material binding referenced by authored primitive groups.
+    pub(super) source_material_name: String,
+    /// Decoded diffuse material tint in canonical RGBA8 order.
+    pub(super) base_color_rgba8: [u8; 4],
+    /// Exact effective semantics encoded into this FBX slot.
+    pub(super) semantics: MaterialSemantics,
+    /// Vehicle-relative normalized decoded shader document path.
+    pub(super) shader_path: String,
+    /// Exact published shader document byte length.
+    pub(super) shader_bytes: u64,
+    /// Exact published shader document SHA-256 digest.
+    pub(super) shader_sha256: String,
+    /// Vehicle-relative normalized texture payload path when textured.
+    pub(super) texture_path: Option<String>,
+    /// Exact published texture byte length when textured.
+    pub(super) texture_bytes: Option<u64>,
+    /// Exact published texture SHA-256 digest when textured.
+    pub(super) texture_sha256: Option<String>,
+}
+
 /// One published texture payload and its semantic state role.
 #[derive(Clone, Debug)]
 pub(super) struct TextureRecord {
@@ -242,6 +268,8 @@ pub(super) struct VehicleRecord {
     pub(super) textures: Vec<TextureRecord>,
     /// Published shader evidence paths.
     pub(super) shaders: Vec<String>,
+    /// Exact material slots emitted by the FBX writer in slot order.
+    pub(super) material_slots: Vec<MaterialSlotRecord>,
     /// Verbatim decoded collision and physics source members.
     pub(super) physics_sidecars: Vec<PhysicsSidecarRecord>,
     /// Bone-resolved collision recipes in source-local meter space.

@@ -78,6 +78,14 @@ fn physics_bytes() -> &'static [u8] {
     br#"{"schema":"simulation_physics_object","name":"sedanA","value":2}"#
 }
 
+fn shader_bytes() -> &'static [u8] {
+    br#"{"schema":"shader","name":"sedanA_m","value":1}"#
+}
+
+fn texture_bytes() -> &'static [u8] {
+    b"png-material-fixture"
+}
+
 fn write_catalog(
     root: &Path,
     declared_size: Option<u64>,
@@ -86,6 +94,14 @@ fn write_catalog(
     let vehicle_dir = root.join("sedana");
     fs::create_dir_all(&vehicle_dir).map_err(|error| error.to_string())?;
     fs::write(vehicle_dir.join("sedana.fbx"), &bytes)
+        .map_err(|error| error.to_string())?;
+    let shader_dir = vehicle_dir.join("shaders");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    fs::write(shader_dir.join("sedana-m.json"), shader_bytes())
+        .map_err(|error| error.to_string())?;
+    let texture_dir = vehicle_dir.join("textures");
+    fs::create_dir_all(&texture_dir).map_err(|error| error.to_string())?;
+    fs::write(texture_dir.join("sedanA.png"), texture_bytes())
         .map_err(|error| error.to_string())?;
     let physics_dir = vehicle_dir.join("physics");
     fs::create_dir_all(&physics_dir).map_err(|error| error.to_string())?;
@@ -100,10 +116,11 @@ fn write_catalog(
     )
     .map_err(|error| error.to_string())?;
     let catalog = json!({
-        "schema": "shar.vehicle-catalog.v7",
+        "schema": "shar.vehicle-catalog.v8",
         "boundary": {},
         "counts": {
             "vehicles": 1,
+            "material_slots": 1,
             "physics_sidecars": 2,
             "physics_rigs": 1,
             "physics_primitives": 1
@@ -117,8 +134,32 @@ fn write_catalog(
                 "bytes": declared_size.unwrap_or_else(|| {
                     u64::try_from(bytes.len()).unwrap_or(u64::MAX)
                 }),
-                "sha256": digest_hex(&bytes)
+                "sha256": digest_hex(&bytes),
+                "materials": 1
             },
+            "material_slots": [{
+                "slot_name": "sedanA_m",
+                "source_material_name": "sedanA_m",
+                "base_color_rgba8": [255, 255, 255, 255],
+                "surface_semantics": {
+                    "transparent": false,
+                    "glass": false,
+                    "mirror": false,
+                    "reflective": false,
+                    "light_emitter": false,
+                    "visual_effect": false
+                },
+                "shader": {
+                    "path": "shaders/sedana-m.json",
+                    "bytes": shader_bytes().len(),
+                    "sha256": digest_hex(shader_bytes())
+                },
+                "texture": {
+                    "path": "textures/sedanA.png",
+                    "bytes": texture_bytes().len(),
+                    "sha256": digest_hex(texture_bytes())
+                }
+            }],
             "physics_sidecars": [{
                 "path": "physics/collision__ordinal_000321.json",
                 "package_member_id": "physics-collision",
@@ -194,6 +235,12 @@ fn verifies_vehicle_fbx_without_promoting_other_semantics()
         || row.subcategory != "cars/traffic-variants/sedana"
         || collision.source_ordinal != 321
         || physics.source_ordinal != 361
+        || row.material_slots.len() != 1
+        || row
+            .material_slots
+            .first()
+            .map(|slot| slot.source_material_name.as_str())
+            != Some("sedanA_m")
     {
         return Err("verified vehicle evidence drifted".to_owned());
     }
@@ -241,12 +288,35 @@ fn stale_vehicle_physics_bytes_fail_closed() -> Result<(), String> {
 }
 
 #[test]
+fn stale_vehicle_material_shader_bytes_fail_closed() -> Result<(), String> {
+    let root = TempRoot::new("stale-material")?;
+    write_catalog(&root.0, None)?;
+    fs::write(
+        root.0.join("sedana/shaders/sedana-m.json"),
+        br#"{"schema":"shader","name":"sedanA_m","value":9}"#,
+    )
+    .map_err(|error| error.to_string())?;
+    let error = match verified_vehicle_fbx_catalog(&root.0) {
+        Ok(_value) => {
+            return Err(
+                "stale vehicle material unexpectedly verified".to_owned(),
+            );
+        },
+        Err(error) => error,
+    };
+    if !error.to_string().contains("material artifact bytes do not match") {
+        return Err("stale material reported the wrong failure".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
 fn previous_vehicle_catalog_schema_fails_closed() -> Result<(), String> {
     let root = TempRoot::new("old-schema")?;
     write_catalog(&root.0, None)?;
     let path = root.0.join("vehicles.catalog.json");
     let text = fs::read_to_string(&path).map_err(|error| error.to_string())?;
-    fs::write(&path, text.replace("vehicle-catalog.v7", "vehicle-catalog.v6"))
+    fs::write(&path, text.replace("vehicle-catalog.v8", "vehicle-catalog.v7"))
         .map_err(|error| error.to_string())?;
     let error = match verified_vehicle_fbx_catalog(&root.0) {
         Ok(_value) => {

@@ -94,6 +94,7 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
         }],
         textures: Vec::new(),
         shaders: Vec::new(),
+        material_slots: Vec::new(),
         physics_sidecars: vec![PhysicsSidecarRecord {
             path: "physics/collision__ordinal_000321.json".to_owned(),
             package_member_id: "physics-collision".to_owned(),

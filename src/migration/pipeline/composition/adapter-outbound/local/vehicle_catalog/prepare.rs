@@ -34,7 +34,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use fbx::adapters::driven::binary_character_writer::write_binary_character_fbx;
+use fbx::adapters::driven::binary_character_writer::{
+    character_material_slots, write_binary_character_fbx,
+};
 use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
 use fbx::adapters::driven::decoded_billboard_source::read_billboard_quad_group;
 use fbx::adapters::driven::decoded_component_source::{
@@ -56,8 +58,8 @@ use super::catalog::{recursive_files, write_new};
 use super::model::{
     EffectAnimationRecord, EffectControllerRecord,
     EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
-    GroundingRecord, PartRecord, PhysicsPrimitiveRecord, PhysicsRigRecord,
-    PhysicsSidecarRecord, TextureRecord, VehicleRecord,
+    GroundingRecord, MaterialSlotRecord, PartRecord, PhysicsPrimitiveRecord,
+    PhysicsRigRecord, PhysicsSidecarRecord, TextureRecord, VehicleRecord,
 };
 use super::source::{
     VehicleTextureAuthority, common_headlight_quad_groups, decoded_name,
@@ -195,6 +197,19 @@ pub(super) fn export_vehicle(
     verify_binary_fbx(&fbx_path)?;
     publish_unreferenced_textures(&package_root, &texture_dir, &materials)?;
     let textures = texture_records(&vehicle_dir)?;
+    let material_slots = vehicle_material_slot_records(
+        &separated,
+        &materials,
+        &vehicle_dir,
+        &textures,
+    )?;
+    if summary.materials != material_slots.len() {
+        return Err(PipelineError::new(format!(
+            "vehicle FBX material slot plan disagrees with writer: {} != {}",
+            material_slots.len(),
+            summary.materials
+        )));
+    }
     let (physics_sidecars, physics_rigs) = publish_vehicle_physics_sidecars(
         package,
         &package_root,
@@ -224,6 +239,7 @@ pub(super) fn export_vehicle(
         effect_animation_sidecars,
         textures,
         shaders,
+        material_slots,
         physics_sidecars,
         physics_rigs,
     };
@@ -2031,6 +2047,88 @@ fn texture_records(
     }
     records.sort_by(|left, right| left.path.cmp(&right.path));
     Ok(records)
+}
+
+/// Record exact skinned-FBX slots and their published source evidence.
+fn vehicle_material_slot_records(
+    asset: &CharacterAsset,
+    materials: &[MaterialBinding],
+    vehicle_dir: &Path,
+    textures: &[TextureRecord],
+) -> Result<Vec<MaterialSlotRecord>, PipelineError> {
+    let slots = character_material_slots(asset, materials).map_err(|error| {
+        PipelineError::new(format!(
+            "vehicle material slot plan failed: {error:?}"
+        ))
+    })?;
+    let bindings = materials
+        .iter()
+        .map(|binding| (binding.material_name.as_str(), binding))
+        .collect::<BTreeMap<_, _>>();
+    slots
+        .into_iter()
+        .map(|slot| {
+            let binding = bindings
+                .get(slot.source_material_name.as_str())
+                .copied()
+                .ok_or_else(|| {
+                    PipelineError::new(
+                        "vehicle material slot lost its source binding",
+                    )
+                })?;
+            let shader_path = format!(
+                "shaders/{}.json",
+                portable_name(&slot.source_material_name)
+            );
+            let shader_full_path = vehicle_dir.join(&shader_path);
+            let shader_bytes = fs::read(&shader_full_path)
+                .map_err(|error| PipelineError::new(error.to_string()))?;
+            let _shader_evidence = read_shader_source_evidence(
+                &shader_full_path,
+                &slot.source_material_name,
+            )
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "vehicle material shader evidence failed: {error:?}"
+                ))
+            })?;
+            let texture = binding
+                .texture_file_name
+                .as_ref()
+                .map(|file_name| {
+                    let expected = format!("textures/{file_name}");
+                    textures
+                        .iter()
+                        .find(|record| record.path == expected)
+                        .ok_or_else(|| {
+                            let label =
+                                "vehicle material texture evidence is missing";
+                            PipelineError::new(format!(
+                                "{label}: {expected}"
+                            ))
+                        })
+                })
+                .transpose()?;
+            Ok(MaterialSlotRecord {
+                slot_name: slot.material_name,
+                source_material_name: slot.source_material_name,
+                base_color_rgba8: binding.base_color_rgba8,
+                semantics: slot.semantics,
+                shader_path,
+                shader_bytes: u64::try_from(shader_bytes.len()).map_err(
+                    |error| {
+                        PipelineError::new(format!(
+                            "vehicle shader size overflowed: {error}"
+                        ))
+                    },
+                )?,
+                shader_sha256: digest_hex(&shader_bytes),
+                texture_path: texture.map(|record| record.path.clone()),
+                texture_bytes: texture.map(|record| record.bytes),
+                texture_sha256: texture.map(|record| record.sha256.clone()),
+            })
+        })
+        .collect()
 }
 
 /// Validate source collision rigs and build exact bone-local shape recipes.

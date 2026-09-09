@@ -42,7 +42,7 @@ use crate::domain::{PipelineError, PipelineOutcome};
 
 pub(super) const VEHICLE_PHYSICS_PLAN_SCHEMA: &str =
     "shar-schoenwald.unreal-vehicle-physics-evidence.v1";
-const SOURCE_SCHEMA: &str = "shar.vehicle-catalog.v7";
+const SOURCE_SCHEMA: &str = "shar.vehicle-catalog.v8";
 const CYLINDER_BLOCKER: &str =
     "source-cylinder-has-no-exact-aggregate-geometry";
 const DIMENSION_POLICY: &str =
