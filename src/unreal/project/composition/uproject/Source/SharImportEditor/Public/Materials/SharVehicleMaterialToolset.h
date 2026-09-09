@@ -9,14 +9,14 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Bounded editor creation of reviewed SHAR vehicle master materials.
+//   - Bounded editor creation of reviewed SHAR vehicle materials.
 // - Must-Not:
 //   - Save packages, overwrite assets, parse source catalogs, or claim special
 //   - presentation bindings are ready.
 // - Allows:
 //   - Generated vehicle material masters selected from verified plan fields.
 // - Split-When:
-//   - Vehicle Material Instances or additional shader families gain policy.
+//   - Additional shader families or runtime parameter mutation gain policy.
 // - Merge-When:
 //   - Another editor toolset owns identical vehicle master construction.
 // - Summary:
@@ -60,5 +60,22 @@ public:
         bool bAlphaTest,
         int32 AlphaCompare,
         bool bTwoSided
+    );
+
+    /**
+     * Create one vehicle Material Instance from reviewed generated inputs.
+     * The parent must be a generated vehicle master. An optional texture must
+     * live below the generated vehicle texture root. The instance remains
+     * dirty and unsaved for transaction read-back and explicit publication.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharVehicleMaterialToolset")
+    static FString CreateSimpleUnlitVehicleMaterialInstance(
+        const FString& FolderPath,
+        const FString& AssetName,
+        const FString& ParentMaterialPath,
+        const FString& BaseColorTexturePath,
+        FLinearColor BaseColorTint,
+        bool bSetAlphaReference,
+        float AlphaReference
     );
 };
