@@ -49,21 +49,35 @@ use crate::domain::{
 };
 
 const CATALOG_FILE: &str = "vehicles.catalog.json";
-const CATALOG_SCHEMA: &str = "shar.vehicle-catalog.v5";
+const CATALOG_SCHEMA: &str = "shar.vehicle-catalog.v6";
 const LOGICAL_ROOT: &str = "vehicle-assets";
 
-/// One verified vehicle FBX plus its exact package subcategory.
+/// One verified source collision or physics sidecar for a vehicle.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct VerifiedVehiclePhysicsArtifact {
+    pub path: String,
+    pub package_member_id: String,
+    pub source_path: String,
+    pub kind: String,
+    pub source_chunk_kind: String,
+    pub source_ordinal: u64,
+    pub size_bytes: u64,
+    pub sha256: String,
+}
+
+/// One verified vehicle FBX plus its exact package subcategory and physics.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct VerifiedVehicleFbxArtifact {
     pub evidence: UnrealFbxArtifactEvidence,
     pub subcategory: String,
+    pub physics_sidecars: Vec<VerifiedVehiclePhysicsArtifact>,
 }
 
 /// Verify the generated vehicle FBX rows when the catalog root exists.
 ///
-/// This intentionally verifies only the FBX presentation boundary. Vehicle
-/// textures, materials, Physics Assets, wheels, and runtime construction remain
-/// separate semantic work and are not promoted by this adapter.
+/// This verifies the FBX presentation payload and the source physics sidecars.
+/// Only the FBX is promoted as import evidence; materials, Physics Assets,
+/// wheels, and runtime construction remain separate semantic work.
 ///
 /// # Errors
 ///
@@ -119,10 +133,21 @@ pub(super) fn verified_vehicle_fbx_catalog(
             "generated vehicle catalog vehicle count is stale",
         ));
     }
+    let declared_physics = object
+        .get("counts")
+        .and_then(Value::as_object)
+        .and_then(|counts| counts.get("physics_sidecars"))
+        .and_then(Value::as_u64)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle catalog has no physics-sidecar count",
+            )
+        })?;
 
     let mut package_ids = BTreeSet::new();
     let mut paths = BTreeSet::new();
     let mut result = Vec::with_capacity(vehicles.len());
+    let mut verified_physics_count = 0_u64;
     for row in vehicles {
         let row = row.as_object().ok_or_else(|| {
             PipelineError::new("generated vehicle catalog row is not an object")
@@ -173,6 +198,16 @@ pub(super) fn verified_vehicle_fbx_catalog(
                 "generated vehicle FBX version is not supported",
             ));
         }
+        let physics = verify_vehicle_physics_sidecars(
+            root,
+            &vehicle,
+            row.get("physics_sidecars"),
+        )?;
+        verified_physics_count = verified_physics_count
+            .checked_add(u64::try_from(physics.len()).unwrap_or(u64::MAX))
+            .ok_or_else(|| {
+                PipelineError::new("generated vehicle physics count overflowed")
+            })?;
         result.push(VerifiedVehicleFbxArtifact {
             evidence: UnrealFbxArtifactEvidence {
                 package_id,
@@ -182,12 +217,128 @@ pub(super) fn verified_vehicle_fbx_catalog(
                 fbx_version: version,
             },
             subcategory,
+            physics_sidecars: physics,
         });
+    }
+    if verified_physics_count != declared_physics {
+        return Err(PipelineError::new(
+            "generated vehicle catalog physics-sidecar count is stale",
+        ));
     }
     result.sort_by(|left, right| {
         left.evidence.package_id.cmp(&right.evidence.package_id)
     });
     Ok(Some(result))
+}
+
+fn verify_vehicle_physics_sidecars(
+    root: &Path,
+    vehicle: &str,
+    value: Option<&Value>,
+) -> PipelineOutcome<Vec<VerifiedVehiclePhysicsArtifact>> {
+    let sidecars = value.and_then(Value::as_array).ok_or_else(|| {
+        PipelineError::new(
+            "generated vehicle catalog row has no physics sidecars",
+        )
+    })?;
+    if sidecars.is_empty() {
+        return Err(PipelineError::new(
+            "generated vehicle catalog row has empty physics sidecars",
+        ));
+    }
+    let mut member_ids = BTreeSet::new();
+    let mut paths = BTreeSet::new();
+    let mut ordinals = BTreeSet::new();
+    let mut source_kinds = BTreeSet::new();
+    let mut result = Vec::with_capacity(sidecars.len());
+    for sidecar in sidecars {
+        let sidecar = sidecar.as_object().ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle physics sidecar is not an object",
+            )
+        })?;
+        let path = required_string(sidecar, "path")?;
+        validate_relative_path(&path)?;
+        let package_member_id = required_string(sidecar, "package_member_id")?;
+        validate_public_identifier(&package_member_id)?;
+        let source_path = required_string(sidecar, "source_path")?;
+        validate_relative_path(&source_path)?;
+        let kind = required_string(sidecar, "kind")?;
+        let source_chunk_kind = required_string(sidecar, "source_chunk_kind")?;
+        let source_ordinal = required_u64(sidecar, "source_ordinal")?;
+        let size_bytes = required_u64(sidecar, "bytes")?;
+        let sha256 = required_string(sidecar, "sha256")?;
+        validate_digest(&sha256)?;
+        let (family, expected_kind) = match source_chunk_kind.as_str() {
+            "simulation_collision_object" => ("collision", "p3d-collision"),
+            "simulation_physics_object" => ("physics", "p3d-physics"),
+            _ => {
+                return Err(PipelineError::new(
+                    "generated vehicle physics sidecar kind is unsupported",
+                ));
+            },
+        };
+        let expected_path =
+            format!("physics/{family}__ordinal_{source_ordinal:06}.json");
+        if path != expected_path || kind != expected_kind {
+            return Err(PipelineError::new(
+                "generated vehicle physics sidecar identity is not canonical",
+            ));
+        }
+        if !member_ids.insert(package_member_id.clone())
+            || !paths.insert(path.clone())
+            || !ordinals.insert(source_ordinal)
+        {
+            return Err(PipelineError::new(
+                "generated vehicle physics sidecar is duplicated",
+            ));
+        }
+        let _source_kind_was_new =
+            source_kinds.insert(source_chunk_kind.clone());
+        let full_path = root.join(vehicle).join(&path);
+        validate_regular_file(&full_path, "generated vehicle physics sidecar")?;
+        validate_ancestor_chain(root, &full_path)?;
+        let bytes = fs::read(&full_path).map_err(|error| {
+            io_error("read generated vehicle physics sidecar", &error)
+        })?;
+        let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+        if actual_size != size_bytes || digest_hex(&bytes) != sha256 {
+            return Err(PipelineError::new(
+                "generated vehicle physics bytes do not match the catalog",
+            ));
+        }
+        let document = serde_json::from_slice::<Value>(&bytes)
+            .map_err(|_error| {
+                PipelineError::new(
+                    "generated vehicle physics sidecar contains invalid JSON",
+                )
+            })?;
+        if document.get("schema").and_then(Value::as_str)
+            != Some(source_chunk_kind.as_str())
+        {
+            return Err(PipelineError::new(
+                "generated vehicle physics sidecar schema is inconsistent",
+            ));
+        }
+        result.push(VerifiedVehiclePhysicsArtifact {
+            path: format!("{LOGICAL_ROOT}/{vehicle}/{path}"),
+            package_member_id,
+            source_path,
+            kind,
+            source_chunk_kind,
+            source_ordinal,
+            size_bytes,
+            sha256,
+        });
+    }
+    if !source_kinds.contains("simulation_collision_object")
+        || !source_kinds.contains("simulation_physics_object")
+    {
+        return Err(PipelineError::new(
+            "generated vehicle physics sidecars are incomplete",
+        ));
+    }
+    Ok(result)
 }
 
 fn required_string(

@@ -69,3 +69,14 @@ disables implicit Material creation and replacement, and leaves saving to the
 outer transaction. World catalog v8 supplies the material-to-texture relation;
 blend, culling, emission, glass, and other material behavior remain owned by the
 material projection layer rather than the byte importer.
+
+Vehicle catalog v6 now carries the source-physics boundary forward without
+synthesizing target collision. Every decoded vehicle collision and physics
+member is copied byte-exactly into the generated vehicle artifact family with
+its package-member identity, source ordinal, size, and digest. A complete
+88-vehicle replay produced 274 such sidecars, and an independent audit matched
+all 274 to their indexed source bytes.
+
+The Unreal catalog verifier now validates those sidecars fail-closed while
+continuing to promote only verified FBX presentation evidence. Creating reviewed
+native Physics Assets from this verified evidence remains open work.

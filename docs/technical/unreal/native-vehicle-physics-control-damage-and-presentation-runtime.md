@@ -283,16 +283,17 @@ surface without pretending that full simulation startup is complete.
 `ASharVehiclePawn` supplies the project-owned concrete `AWheeledVehiclePawn`
 type. `USharVehicleConstructionTransaction` prepares one validated vehicle and
 presentation pair, resolves all reviewed soft references before mutation,
-requires exact Skeleton, material-slot, wheel-class, and wheel-bone
-compatibility, captures the target Pawn's prior configuration, and then applies
-Skeletal Mesh, Physics Asset, animation class, materials, `WheelSetups`, mass,
-and engine torque. Commit reads those fields back before publishing success;
-explicit rollback and failed commit restore the captured configuration.
+requires exact Skeleton, material-slot, wheel-class, wheel-bone, and Physics
+Asset wheel-body compatibility, captures the target Pawn's prior configuration,
+and then applies Skeletal Mesh, Physics Asset, animation class, materials,
+`WheelSetups`, mass, and engine torque. Commit reads those fields back before
+publishing success; explicit rollback and failed commit restore the captured
+configuration.
 
 This bounded transaction does not spawn the Pawn, create or validate live Chaos
-physics state, prove Physics Asset wheel bodies, choose placement, or publish a
-world vehicle instance. Those remain later steps in the complete construction
-sequence above.
+physics state, construct a source-derived vehicle Physics Asset, choose
+placement, or publish a world vehicle instance. Those remain later steps in the
+complete construction sequence above.
 
 ## Vehicle lifecycle states
 

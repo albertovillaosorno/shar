@@ -56,7 +56,7 @@ use super::catalog::{recursive_files, write_new};
 use super::model::{
     EffectAnimationRecord, EffectControllerRecord,
     EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
-    GroundingRecord, PartRecord, TextureRecord,
+    GroundingRecord, PartRecord, PhysicsSidecarRecord, TextureRecord,
     VehicleRecord,
 };
 use super::source::{
@@ -195,6 +195,11 @@ pub(super) fn export_vehicle(
     verify_binary_fbx(&fbx_path)?;
     publish_unreferenced_textures(&package_root, &texture_dir, &materials)?;
     let textures = texture_records(&vehicle_dir)?;
+    let physics_sidecars = publish_vehicle_physics_sidecars(
+        package,
+        &package_root,
+        &vehicle_dir,
+    )?;
     let fbx_payload = fs::read(&fbx_path)
         .map_err(|error| PipelineError::new(error.to_string()))?;
     let record = VehicleRecord {
@@ -219,6 +224,7 @@ pub(super) fn export_vehicle(
         effect_animation_sidecars,
         textures,
         shaders,
+        physics_sidecars,
     };
     super::catalog::write_vehicle_catalog(&vehicle_dir, &record)?;
     Ok(record)
@@ -2023,6 +2029,90 @@ fn texture_records(
         });
     }
     records.sort_by(|left, right| left.path.cmp(&right.path));
+    Ok(records)
+}
+
+/// Publish every decoded collision/physics member without reinterpretation.
+fn publish_vehicle_physics_sidecars(
+    package: &PhaseThreePackageRow,
+    package_root: &Path,
+    vehicle_dir: &Path,
+) -> Result<Vec<PhysicsSidecarRecord>, PipelineError> {
+    let mut members = package
+        .members()
+        .iter()
+        .filter(|member| {
+            member.role == crate::domain::package::PackageRole::Physics
+                && matches!(
+                    member.source_chunk_kind.as_str(),
+                    "simulation_collision_object"
+                        | "simulation_physics_object"
+                )
+        })
+        .collect::<Vec<_>>();
+    members.sort_by(|left, right| {
+        left.source_chunk_ordinal
+            .cmp(&right.source_chunk_ordinal)
+            .then_with(|| left.id.cmp(&right.id))
+    });
+    if members.is_empty() {
+        return Err(PipelineError::new(
+            "vehicle has no decoded collision or physics members",
+        ));
+    }
+
+    let output_dir = vehicle_dir.join("physics");
+    fs::create_dir_all(&output_dir).map_err(|error| {
+        PipelineError::new(format!("vehicle physics output failed: {error}"))
+    })?;
+    let prefix = format!("{}/", package.package_root);
+    let mut records = Vec::with_capacity(members.len());
+    for member in members {
+        let source_ordinal = member.source_chunk_ordinal.ok_or_else(|| {
+            PipelineError::new("vehicle physics member has no source ordinal")
+        })?;
+        let relative = member.path.strip_prefix(&prefix).ok_or_else(|| {
+            PipelineError::new(
+                "vehicle physics member is outside its normalized package",
+            )
+        })?;
+        let source = package_root.join(relative);
+        let bytes = fs::read(&source).map_err(|error| {
+            PipelineError::new(format!(
+                "vehicle physics source read failed: {error}"
+            ))
+        })?;
+        drop(serde_json::from_slice::<Value>(&bytes).map_err(|error| {
+            PipelineError::new(format!(
+                "vehicle physics source is invalid JSON: {error}"
+            ))
+        })?);
+        let family = match member.source_chunk_kind.as_str() {
+            "simulation_collision_object" => "collision",
+            "simulation_physics_object" => "physics",
+            _ => {
+                return Err(PipelineError::new(
+                    "vehicle physics member has unsupported source kind",
+                ));
+            },
+        };
+        let file_name = format!("{family}__ordinal_{source_ordinal:06}.json");
+        write_new(&output_dir.join(&file_name), &bytes)?;
+        records.push(PhysicsSidecarRecord {
+            path: format!("physics/{file_name}"),
+            package_member_id: member.id.clone(),
+            source_path: member.path.clone(),
+            kind: member.kind.clone(),
+            source_chunk_kind: member.source_chunk_kind.clone(),
+            source_ordinal,
+            bytes: u64::try_from(bytes.len()).map_err(|error| {
+                PipelineError::new(format!(
+                    "vehicle physics size overflowed: {error}"
+                ))
+            })?,
+            sha256: digest_hex(&bytes),
+        });
+    }
     Ok(records)
 }
 
