@@ -79,7 +79,20 @@ fn physics_bytes() -> &'static [u8] {
 }
 
 fn shader_bytes() -> &'static [u8] {
-    br#"{"schema":"shader","name":"sedanA_m","value":1}"#
+    br#"{"schema":"shader","name":"sedanA_m","version":0,
+"pddi_shader_name":"simple\u0000\u0000","has_translucency":0,
+"vertex_needs":17,"vertex_mask":1,"num_params":11,"params":[
+{"kind":"int","param":"LIT","value":1},
+{"kind":"int","param":"2SID","value":1},
+{"kind":"int","param":"BLMD","value":0},
+{"kind":"int","param":"A\u0043M\u0050","value":4},
+{"kind":"int","param":"A\u0054S\u0054","value":0},
+{"kind":"float","param":"ACTH","value":0.5},
+{"kind":"colour","param":"DIFF","value":4294967295},
+{"kind":"colour","param":"A\u004dB\u0049","value":4278190080},
+{"kind":"colour","param":"EMIS","value":4278190080},
+{"kind":"colour","param":"SPEC","value":4278190080},
+{"kind":"float","param":"SHIN","value":10.0}]}"#
 }
 
 fn texture_bytes() -> &'static [u8] {
@@ -229,18 +242,24 @@ fn verifies_vehicle_fbx_without_promoting_other_semantics()
     let [collision, physics] = row.physics_sidecars.as_slice() else {
         return Err("verified vehicle physics evidence drifted".to_owned());
     };
+    let [material] = row.material_slots.as_slice() else {
+        return Err("verified vehicle material evidence drifted".to_owned());
+    };
     if row.evidence.package_id != "extracted-art-cars-sedana"
         || row.evidence.path != "vehicle-assets/sedana/sedana.fbx"
         || row.evidence.fbx_version != FBX_VERSION
         || row.subcategory != "cars/traffic-variants/sedana"
         || collision.source_ordinal != 321
         || physics.source_ordinal != 361
-        || row.material_slots.len() != 1
-        || row
-            .material_slots
-            .first()
-            .map(|slot| slot.source_material_name.as_str())
-            != Some("sedanA_m")
+        || material.source_material_name != "sedanA_m"
+        || material.raster.shader_family != "simple"
+        || !material.raster.lit
+        || !material.raster.two_sided
+        || material.raster.blend_mode != 0
+        || material.raster.alpha_compare != 4
+        || material.raster.diffuse_rgba8 != [255, 255, 255, 255]
+        || material.raster.ambient_rgba8 != [0, 0, 0, 255]
+        || material.raster.shininess_bits != 10.0_f32.to_bits()
     {
         return Err("verified vehicle evidence drifted".to_owned());
     }

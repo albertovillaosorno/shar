@@ -353,6 +353,21 @@ input. A real Unreal Engine 5.8.1 MCP transaction against `sedana` completed
 that save and clean-state cycle, and its session-owned test asset was then
 explicitly deleted with independent absence verification.
 
+Vehicle material preparation now has a separate release-index-bound
+`vehicle-materials.json` sidecar. It derives only from the verified v8 slot
+order and shader/texture evidence and keeps world-material construction policy
+out of the vehicle boundary. The reviewed projection preserves PDDI shader
+family, translucency, blend, alpha-test and compare, alpha threshold,
+two-sidedness, lighting, texture identity, diffuse, ambient, emissive, specular,
+and shininess.
+
+The source runtime disables vertex-color arrays for lit PDDI materials and
+supplies those material lighting values directly, so a world simple-unlit
+master is not a valid vehicle-lit substitute. Vehicle light slots also remain
+separately blocked because source presentation can mutate their blend and
+visibility at runtime. No native vehicle Material Instance is claimed until a
+vehicle-specific toolset reproduces the reviewed family and read-back contract.
+
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative
 production vehicle presentation, spawn the Pawn, create and validate live Chaos

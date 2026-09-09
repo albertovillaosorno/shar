@@ -259,10 +259,17 @@ A fresh vehicle catalog v8 replay now records the FBX material boundary in exact
 slot order instead of relying on the alphabetic shader inventory. Across all 88
 vehicles it publishes 1,029 slots; an independent audit matched every slot count
 to its FBX summary and verified all referenced shader and texture bytes and
-SHA-256 digests with zero errors. `sedana` has eight ordered slots: two opaque
-base slots, windshield and lens glass variants, and four transparent
-light-emitter variants. These are verified handoff records, not native Unreal
-`MaterialInstance` assets.
+SHA-256 digests with zero errors. The replay contains 905 `simple`, 120
+`spheremap`, and four `environment` PDDI slots. The Unreal verifier now retains
+the reviewed blend, alpha-test, alpha-compare, threshold, two-sided, lighting,
+texture-reference, diffuse, ambient, emissive, specular, and shininess state.
+
+`prepare-unreal` publishes that projection as release-index-bound
+`vehicle-materials.json`. Every slot remains explicitly native-blocked until a
+vehicle-specific material toolset is reviewed. `sedana` has eight ordered
+slots: two opaque lit base slots, one lit windshield glass slot, one unlit lens
+glass/light slot, and four unlit transparent light-emitter slots. These are
+verified handoff records, not native Unreal `MaterialInstance` assets.
 
 The broader P0 criterion remains open. The saved asset has not yet been bound
 into the representative production presentation, and source-derived material,
