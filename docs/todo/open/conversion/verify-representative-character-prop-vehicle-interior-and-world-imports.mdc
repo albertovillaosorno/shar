@@ -312,8 +312,16 @@ recipes. The requests use `/Game/Generated/SHAR/Textures/Vehicles`,
 `/Game/Generated/SHAR/Materials/Vehicles/Instances`. Source `DIFF` is retained
 as normalized instance tint; this does not double-apply the FBX preview because
 the binary FBX writer emits a fixed preview DiffuseColor rather than source
-`DIFF`. No vehicle Material Instance is saved or assigned to a mesh slot yet,
-so construction readiness remains separate from final native readiness.
+`DIFF`.
+
+Editor-control now binds that v3 sidecar through the release index, verifies
+every PNG's exact bytes and SHA-256, audits the live SHAR and AssetTools
+schemas,
+and owns a create/read-back/save transaction with reverse-order compensation
+for
+the Texture2D, Material, and Material Instance outputs. No vehicle Material
+Instance has yet been applied to a Skeletal Mesh slot, so asset construction
+readiness remains separate from final native readiness.
 
 The broader P0 criterion remains open. The saved asset has not yet been bound
 into the representative production presentation, and source-derived material,

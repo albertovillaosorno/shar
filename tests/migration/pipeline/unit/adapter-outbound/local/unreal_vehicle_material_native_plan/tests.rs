@@ -174,3 +174,23 @@ fn omits_slots_outside_reviewed_graph_subset() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn sorts_master_requests_by_recipe_identity() -> Result<(), String> {
+    let plan = plan_vehicle_material_native_construction(&[vehicle(vec![
+        slot(1, false, true),
+        slot(2, false, true),
+    ])])
+    .map_err(|error| error.to_string())?;
+    let identities = plan
+        .master_requests
+        .iter()
+        .filter_map(|item| item.get("recipe_identity").and_then(Value::as_str))
+        .collect::<Vec<_>>();
+    let mut sorted = identities.clone();
+    sorted.sort_unstable();
+    if identities != sorted || identities.len() != 2 {
+        return Err("vehicle master request order drifted".to_owned());
+    }
+    Ok(())
+}

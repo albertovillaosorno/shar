@@ -51,6 +51,7 @@ _SEMANTIC_ARTIFACTS = (
     ("mission-tuning", "mission-tuning.jsonl"),
     ("vehicle-tuning", "vehicle-tuning.jsonl"),
     ("vehicle-tuning-usage", "vehicle-tuning-usage.jsonl"),
+    ("vehicle-materials", "vehicle-materials.json"),
     ("vehicle-physics", "vehicle-physics.json"),
     ("world-materials", "world-materials.json"),
 )

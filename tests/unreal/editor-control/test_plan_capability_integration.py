@@ -127,6 +127,218 @@ def _bind_vehicle_physics_sidecar(
     )
 
 
+def _vehicle_material_document(texture_bytes: bytes) -> dict[str, object]:
+    digest = hashlib.sha256(texture_bytes).hexdigest()
+    texture_name = f"T_Vehicle_{digest}"
+    texture_package = f"/Game/Generated/SHAR/Textures/Vehicles/{texture_name}"
+    texture_object = f"{texture_package}.{texture_name}"
+    recipe = "simple-unlit-blend-additive-alpha-test-off-one-sided"
+    master_name = (
+        "M_SHAR_Vehicle_SimpleUnlit_Additive_AlphaTestOff_OneSided"
+    )
+    master_package = (
+        f"/Game/Generated/SHAR/Materials/Vehicles/Masters/{master_name}"
+    )
+    master_object = f"{master_package}.{master_name}"
+    request = "2" * 64
+    instance_name = f"MI_Vehicle_{request}"
+    instance_package = (
+        f"/Game/Generated/SHAR/Materials/Vehicles/Instances/{instance_name}"
+    )
+    return {
+        "schema": "shar-schoenwald.unreal-vehicle-material-evidence.v3",
+        "source_schema": "shar.vehicle-catalog.v8",
+        "target_policy": {
+            "source_projection": "reviewed-pddi-render-state",
+            "source_projection_status": "ready",
+            "world_material_policy_reuse": "forbidden",
+            "native_construction": (
+                "simple-unlit-texture-master-instance-ready"
+            ),
+            "mesh_slot_application": (
+                "blocked-pending-reviewed-transaction"
+            ),
+            "dynamic_light_binding": (
+                "verified-source-part-to-material-slots"
+            ),
+            "runtime_shader_mutation": "preserve-separately",
+        },
+        "counts": {
+            "slots": 8,
+            "native_graph_ready_slots": 1,
+            "native_construction_ready_slots": 1,
+            "native_texture_requests": 1,
+            "native_master_requests": 1,
+            "native_instance_requests": 1,
+            "native_ready_slots": 0,
+            "native_blocked_slots": 8,
+        },
+        "native_construction": {
+            "texture_requests": [{
+                "sha256": digest,
+                "source_path": "vehicle-assets/sedana/textures/lens.png",
+                "bytes": len(texture_bytes),
+                "folder_path": "/Game/Generated/SHAR/Textures/Vehicles",
+                "asset_name": texture_name,
+                "package_path": texture_package,
+                "object_path": texture_object,
+            }],
+            "master_requests": [{
+                "recipe_identity": recipe,
+                "shader_family": "simple",
+                "lit": False,
+                "blend_mode": 2,
+                "alpha_test": False,
+                "alpha_compare": 4,
+                "two_sided": False,
+                "folder_path": (
+                    "/Game/Generated/SHAR/Materials/Vehicles/Masters"
+                ),
+                "asset_name": master_name,
+                "package_path": master_package,
+                "object_path": master_object,
+            }],
+            "instance_requests": [{
+                "request_identity": request,
+                "package_id": "extracted-art-cars-sedana",
+                "source_fbx": "vehicle-assets/sedana/sedana.fbx",
+                "slot_index": 6,
+                "slot_name": "LENS02_m__glass-light-emitter",
+                "source_material_name": "LENS02_m",
+                "recipe_identity": recipe,
+                "texture_sha256": digest,
+                "folder_path": (
+                    "/Game/Generated/SHAR/Materials/Vehicles/Instances"
+                ),
+                "asset_name": instance_name,
+                "package_path": instance_package,
+                "object_path": f"{instance_package}.{instance_name}",
+                "parent_material_path": master_object,
+                "base_color_texture_path": texture_object,
+                "base_color_tint": [1.0, 1.0, 1.0, 1.0],
+                "set_alpha_reference": False,
+                "alpha_reference": None,
+                "alpha_reference_bits": None,
+            }],
+        },
+    }
+
+
+def _bind_vehicle_material_sidecar(
+    plan_root: Path,
+    texture_bytes: bytes,
+) -> None:
+    sidecar = plan_root.parent / "vehicle-materials.json"
+    payload = (
+        json.dumps(
+            _vehicle_material_document(texture_bytes),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        + "\n"
+    ).encode()
+    sidecar.write_bytes(payload)
+    index_path = plan_root / "index.json"
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    artifacts = index["semantic_artifacts"]
+    row = next(
+        item for item in artifacts if item["artifact_id"] == "vehicle-materials"
+    )
+    row["revision"] = hashlib.sha256(payload).hexdigest()
+    row["byte_count"] = len(payload)
+    index["revision"] = ""
+    canonical = json.dumps(
+        index, ensure_ascii=False, separators=(",", ":")
+    )
+    index["revision"] = hashlib.sha256(canonical.encode()).hexdigest()
+    index_path.write_text(
+        json.dumps(index, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def test_cli_vehicle_material_runs_three_gates_and_applies_assets(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    texture_bytes = b"synthetic-png"
+    plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
+    _ = write_plan_bundle(plan_root)
+    _bind_vehicle_material_sidecar(plan_root, texture_bytes)
+    source = (
+        tmp_path
+        / ".cache"
+        / "pipeline"
+        / "vehicle-assets"
+        / "sedana"
+        / "textures"
+        / "lens.png"
+    )
+    source.parent.mkdir(parents=True)
+    source.write_bytes(texture_bytes)
+    monkeypatch.chdir(tmp_path)
+
+    with FakeUnrealServer(plan_execution=True) as server:
+        preflight = _run_json_cli(capsys, "vehicle-material-preflight")
+        assert preflight["construction"] == {
+            "blockedSlotCount": 8,
+            "instanceCount": 1,
+            "masterCount": 1,
+            "textureCount": 1,
+        }
+        assert preflight["verifiedTextureSourceCount"] == 1
+        capability_payload = _run_json_cli(
+            capsys,
+            "--endpoint",
+            server.endpoint,
+            "vehicle-material-capabilities",
+        )
+        capabilities = capability_payload["capabilities"]
+        assert isinstance(capabilities, dict)
+        assert capabilities["complete"] is True
+        assert capabilities["requiredToolCount"] == 8
+        assert capabilities["availableToolCount"] == 8
+        applied = _run_json_cli(
+            capsys,
+            "--endpoint",
+            server.endpoint,
+            "vehicle-material-apply",
+        )
+
+    assert applied["application"] == {
+        "constructionRevision": applied["constructionRevision"],
+        "createdCount": 3,
+        "savedCount": 3,
+        "verifiedCount": 3,
+    }
+    document = _vehicle_material_document(texture_bytes)
+    native = document["native_construction"]
+    expected = {
+        native["texture_requests"][0]["package_path"]: "Texture2D",
+        native["master_requests"][0]["package_path"]: "Material",
+        native["instance_requests"][0]["package_path"]: (
+            "MaterialInstanceConstant"
+        ),
+    }
+    assert server.assets == expected
+    assert server.dirty_assets == frozenset()
+    assert server.session_closed
+    native_leaves = tuple(
+        request["params"]["arguments"].get("tool_name")
+        for request in server.requests
+        if request.get("method") == "tools/call"
+        and isinstance(request.get("params"), dict)
+        and request["params"].get("name") == "call_tool"
+    )
+    assert "ImportBaseColorTexture2D" in native_leaves
+    assert "CreateSimpleUnlitVehicleMaster" in native_leaves
+    assert "CreateSimpleUnlitVehicleMaterialInstance" in native_leaves
+    assert native_leaves.count("save_assets") == 3
+    assert "delete" not in native_leaves
+
+
 def test_translator_describes_only_available_required_toolsets() -> None:
     with FakeUnrealServer() as server:
         transport = StreamableHttpTransport(

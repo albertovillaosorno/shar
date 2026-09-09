@@ -42,6 +42,7 @@ from mcp.domain.json_types import require_json_object
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
 _TEXTURE_TOOLSET = "editor_toolset.toolsets.texture.TextureTools"
 _IMPORT_TOOLSET = "SharImportEditor.SharImportToolset"
+_MATERIAL_TOOLSET = "SharImportEditor.SharVehicleMaterialToolset"
 _PHYSICS_TOOLSET = "SharImportEditor.SharVehiclePhysicsToolset"
 
 
@@ -107,6 +108,7 @@ def _plan_tool_result(
             f"- {_ASSET_TOOLSET}: Synthetic assets\n"
             f"- {_TEXTURE_TOOLSET}: Synthetic textures\n"
             f"- {_IMPORT_TOOLSET}: Synthetic SHAR imports\n"
+            f"- {_MATERIAL_TOOLSET}: Synthetic vehicle materials\n"
             f"- {_PHYSICS_TOOLSET}: Synthetic vehicle physics\n"
         )
         return catalog, None
@@ -142,6 +144,7 @@ def _plan_native_call(
     if native_name == "exists":
         return {"returnValue": str(arguments["path"]) in assets}
     import_tools = {
+        "ImportBaseColorTexture2D",
         "ImportFileMediaSource",
         "ImportSoundWave",
         "ImportSkeletalMesh",
@@ -162,6 +165,7 @@ def _plan_native_call(
         )
         package_path = f"{folder_path}/{asset_name}"
         target_class = {
+            "ImportBaseColorTexture2D": "Texture2D",
             "ImportFileMediaSource": "FileMediaSource",
             "ImportSoundWave": "SoundWave",
             "ImportSkeletalMesh": "SkeletalMesh",
@@ -196,6 +200,16 @@ def _plan_native_call(
                 {"assetClass": target_class, "packagePath": package_path}
             ]
         }
+    if native_name in {
+        "CreateSimpleUnlitVehicleMaster",
+        "CreateSimpleUnlitVehicleMaterialInstance",
+    }:
+        return _vehicle_material_native_call(
+            native_name,
+            arguments,
+            assets=assets,
+            dirty_assets=dirty_assets,
+        )
     if native_name == "CreateVehiclePhysicsAsset":
         asset_name = str(arguments["assetName"])
         folder_path = str(arguments["folderPath"])
@@ -233,6 +247,27 @@ def _plan_native_call(
     raise AssertionError(f"unexpected fake native tool: {native_name}")
 
 
+def _vehicle_material_native_call(
+    native_name: JsonValue,
+    arguments: JsonObject,
+    *,
+    assets: dict[str, str],
+    dirty_assets: set[str],
+) -> JsonObject:
+    asset_name = str(arguments["assetName"])
+    folder_path = str(arguments["folderPath"])
+    package_path = f"{folder_path}/{asset_name}"
+    object_path = f"{package_path}.{asset_name}"
+    target_class = (
+        "Material"
+        if native_name == "CreateSimpleUnlitVehicleMaster"
+        else "MaterialInstanceConstant"
+    )
+    assets[package_path] = target_class
+    dirty_assets.add(package_path)
+    return {"returnValue": object_path}
+
+
 def _plan_schema(toolset: JsonValue | None) -> JsonObject:
     if toolset == _ASSET_TOOLSET:
         return _asset_schema()
@@ -240,6 +275,8 @@ def _plan_schema(toolset: JsonValue | None) -> JsonObject:
         return _texture_schema()
     if toolset == _IMPORT_TOOLSET:
         return _import_schema()
+    if toolset == _MATERIAL_TOOLSET:
+        return _vehicle_material_schema()
     if toolset == _PHYSICS_TOOLSET:
         return _physics_schema()
     raise AssertionError(f"unexpected fake toolset: {toolset}")
@@ -367,6 +404,29 @@ def _import_schema() -> JsonObject:
         "description": "Synthetic SHAR generated content import.",
         "tools": [
             {
+                "name": "ImportBaseColorTexture2D",
+                "description": "Import one synthetic SHAR base color texture.",
+                "inputSchema": _object_schema(
+                    {
+                        "assetName": text,
+                        "folderPath": text,
+                        "sourceFile": text,
+                    },
+                    "assetName",
+                    "folderPath",
+                    "sourceFile",
+                ),
+                "outputSchema": _object_schema(
+                    {
+                        "returnValue": {
+                            "type": "array",
+                            "items": text,
+                        }
+                    },
+                    "returnValue",
+                ),
+            },
+            {
                 "name": "DeleteFileMediaSourcePayload",
                 "description": "Delete one synthetic movie payload.",
                 "inputSchema": _object_schema({"assetPath": text}, "assetPath"),
@@ -486,6 +546,74 @@ def _import_schema() -> JsonObject:
                     },
                     "returnValue",
                 ),
+            },
+        ],
+    }
+
+
+def _vehicle_material_schema() -> JsonObject:
+    text = {"type": "string"}
+    boolean = {"type": "boolean"}
+    integer = {"type": "integer"}
+    number = {"type": "number"}
+    vector = _object_schema(
+        {"a": number, "b": number, "g": number, "r": number},
+        "a",
+        "b",
+        "g",
+        "r",
+    )
+    output = _object_schema({"returnValue": text}, "returnValue")
+    return {
+        "description": "Synthetic SHAR vehicle materials.",
+        "tools": [
+            {
+                "name": "CreateSimpleUnlitVehicleMaster",
+                "description": "Create one synthetic vehicle master.",
+                "inputSchema": _object_schema(
+                    {
+                        "alphaCompare": integer,
+                        "assetName": text,
+                        "bAlphaTest": boolean,
+                        "blendMode": integer,
+                        "bLit": boolean,
+                        "bTwoSided": boolean,
+                        "folderPath": text,
+                        "shaderFamily": text,
+                    },
+                    "alphaCompare",
+                    "assetName",
+                    "bAlphaTest",
+                    "blendMode",
+                    "bLit",
+                    "bTwoSided",
+                    "folderPath",
+                    "shaderFamily",
+                ),
+                "outputSchema": output,
+            },
+            {
+                "name": "CreateSimpleUnlitVehicleMaterialInstance",
+                "description": "Create one synthetic vehicle instance.",
+                "inputSchema": _object_schema(
+                    {
+                        "alphaReference": number,
+                        "assetName": text,
+                        "bSetAlphaReference": boolean,
+                        "baseColorTexturePath": text,
+                        "baseColorTint": vector,
+                        "folderPath": text,
+                        "parentMaterialPath": text,
+                    },
+                    "alphaReference",
+                    "assetName",
+                    "bSetAlphaReference",
+                    "baseColorTexturePath",
+                    "baseColorTint",
+                    "folderPath",
+                    "parentMaterialPath",
+                ),
+                "outputSchema": output,
             },
         ],
     }

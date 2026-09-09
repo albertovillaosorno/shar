@@ -66,6 +66,9 @@ shar-unreal-mcp plan-preflight
 shar-unreal-mcp plan-execution-preflight
 shar-unreal-mcp plan-capabilities
 shar-unreal-mcp plan-apply
+shar-unreal-mcp vehicle-material-preflight
+shar-unreal-mcp vehicle-material-capabilities
+shar-unreal-mcp vehicle-material-apply
 shar-unreal-mcp vehicle-physics-preflight
 shar-unreal-mcp vehicle-physics-capabilities
 shar-unreal-mcp vehicle-physics-apply
@@ -108,6 +111,26 @@ never makes the global plan complete by itself. Physical plan-source
 verification resolves `vehicle-assets/...` only below
 `.cache/pipeline/vehicle-assets/`, rejects redirected ancestry, and verifies the
 bound SHA-256 before general execution.
+
+Vehicle material assets have a separate three-gate transaction. The local
+`vehicle-material-preflight` requires the release index to bind exactly one
+`vehicle-materials.json`, rechecks the sidecar bytes and SHA-256, validates the
+v3/v8 construction contract, and verifies all referenced PNGs as regular,
+unlinked files with exact byte counts and content digests. It compiles only the
+reviewed simple-unlit subset into content-addressed Texture2D requests,
+deduplicated native masters, and per-slot Material Instance requests.
+
+`vehicle-material-capabilities` opens one MCP session and validates the exact
+schemas for `ImportBaseColorTexture2D`, the vehicle master/instance factories,
+and AssetTools existence, class, dirty-state, save, and deletion operations.
+`vehicle-material-apply` repeats every local and live gate, requires every
+output to be absent before the first mutation, creates textures before masters
+and masters before instances, reads back each class and dirty state, explicitly
+saves every package, and requires clean state after save. Any failure triggers
+reverse-order compensation limited to assets created by that transaction.
+This transaction still does not assign Material Instances to Skeletal Mesh
+slots, promote lit/spheremap/environment families, or make vehicle runtime
+presentation ready.
 
 Vehicle physics prerequisites have their own three-gate transaction. The local
 `vehicle-physics-prerequisites-preflight` selects only skeletal imports required

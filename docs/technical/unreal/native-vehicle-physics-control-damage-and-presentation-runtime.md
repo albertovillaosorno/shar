@@ -388,9 +388,12 @@ vehicle texture, master, and instance generated roots.
 
 Source `DIFF` becomes the normalized `BaseColorTint`; the FBX writer's material
 node uses a fixed preview DiffuseColor, so this does not multiply the source
-tint twice. These are construction requests only: save/read-back and
-skeletal-mesh slot assignment remain a separate editor-control transaction and
-native readiness stays blocked until that transaction exists.
+tint twice. Editor-control now validates release binding and physical PNG
+content, audits exact live SHAR/AssetTools schemas, and can apply the requests
+as a create/read-back/save transaction with reverse-order compensation. This
+transaction owns only the newly created Texture2D, Material, and Material
+Instance packages; Skeletal Mesh slot assignment remains a later transaction
+and native presentation readiness stays blocked until that binding is proven.
 
 For `sedana`, five of eight slots are in this construction-ready subset:
 <!-- markdownlint-disable-next-line MD044 -->
@@ -419,8 +422,9 @@ The reviewed runtime state keeps headlight enablement, brake-versus-reverse
 selection, damage suppression, and fade separate from material implementation.
 The source behavior selects reverse lights while braking in reverse and hides
 brake lights in that state, so the semantic state preserves that visible rule.
-Vehicle Material Instance publication and application are still blocked; graph
-review and binding evidence do not claim a native material asset exists.
+Vehicle Material Instance construction now has a reviewed transaction, but slot
+application remains blocked; graph review and asset publication do not claim a
+Skeletal Mesh material binding exists.
 
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative
