@@ -70,13 +70,15 @@ outer transaction. World catalog v8 supplies the material-to-texture relation;
 blend, culling, emission, glass, and other material behavior remain owned by the
 material projection layer rather than the byte importer.
 
-Vehicle catalog v6 now carries the source-physics boundary forward without
+Vehicle catalog v7 now carries the source-physics boundary forward without
 synthesizing target collision. Every decoded vehicle collision and physics
-member is copied byte-exactly into the generated vehicle artifact family with
-its package-member identity, source ordinal, size, and digest. A complete
-88-vehicle replay produced 274 such sidecars, and an independent audit matched
-all 274 to their indexed source bytes.
+member remains byte-exact, while 137 same-name source rigs additionally publish
+1,118 bone-resolved sphere, oriented-box, and cylinder primitives in
+`source-bone-local` meter space with Pure3D f32 numeric semantics. A complete
+88-vehicle replay retained 274 verbatim sidecars, and an independent audit
+matched every sidecar and every recipe back to normalized source evidence.
 
-The Unreal catalog verifier now validates those sidecars fail-closed while
-continuing to promote only verified FBX presentation evidence. Creating reviewed
-native Physics Assets from this verified evidence remains open work.
+The Unreal catalog verifier now validates sidecars and recipes fail-closed while
+continuing to promote only verified FBX presentation evidence. Creating and
+reading back reviewed native Physics Assets from this verified handoff remains
+open work.
