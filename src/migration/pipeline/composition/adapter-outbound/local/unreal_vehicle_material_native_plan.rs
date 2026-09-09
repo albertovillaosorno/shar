@@ -235,7 +235,7 @@ pub(super) fn plan_vehicle_material_native_construction(
             })
         })
         .collect();
-    let master_requests = recipes
+    let mut master_requests = recipes
         .into_iter()
         .map(|(recipe, identity)| {
             let asset_name = master_asset_name(recipe);
@@ -254,7 +254,12 @@ pub(super) fn plan_vehicle_material_native_construction(
                 "object_path": format!("{package_path}.{asset_name}")
             })
         })
-        .collect();
+        .collect::<Vec<_>>();
+    master_requests.sort_by(|left, right| {
+        left["recipe_identity"]
+            .as_str()
+            .cmp(&right["recipe_identity"].as_str())
+    });
     instances.sort_by(|left, right| {
         left["request_identity"]
             .as_str()
