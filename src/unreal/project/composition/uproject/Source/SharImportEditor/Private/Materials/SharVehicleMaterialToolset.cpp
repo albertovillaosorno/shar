@@ -9,14 +9,14 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Native construction of reviewed vehicle simple/unlit master materials.
+//   - Native construction of reviewed vehicle simple/unlit materials.
 // - Must-Not:
 //   - Parse source catalogs, save packages, overwrite assets, or promote
 //   - special vehicle presentation semantics.
 // - Allows:
 //   - Exact verified plan fields classified as simple/unlit graph candidates.
 // - Split-When:
-//   - Vehicle instances or another shader family gain independent construction.
+//   - Another shader family or runtime material mutation gains construction.
 // - Merge-When:
 //   - Another editor adapter owns identical vehicle master construction.
 // - Summary:
@@ -39,9 +39,12 @@
 
 #include "AssetToolsModule.h"
 #include "Factories/MaterialFactoryNew.h"
+#include "Factories/MaterialInstanceConstantFactoryNew.h"
+#include "Engine/Texture2D.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "MaterialEditingLibrary.h"
 #include "Materials/Material.h"
+#include "Materials/MaterialInstanceConstant.h"
 #include "Misc/PackageName.h"
 #include "ObjectTools.h"
 
@@ -53,6 +56,11 @@ constexpr TCHAR GeneratedVehicleMaterialRoot[] =
     TEXT("/Game/Generated/SHAR/Materials/Vehicles");
 constexpr TCHAR GeneratedVehicleMaterialRootPrefix[] =
     TEXT("/Game/Generated/SHAR/Materials/Vehicles/");
+constexpr TCHAR GeneratedVehicleTextureRootPrefix[] =
+    TEXT("/Game/Generated/SHAR/Textures/Vehicles/");
+constexpr TCHAR BaseColorTextureParameter[] = TEXT("BaseColorTexture");
+constexpr TCHAR BaseColorTintParameter[] = TEXT("BaseColorTint");
+constexpr TCHAR AlphaReferenceParameter[] = TEXT("AlphaReference");
 
 void RaiseVehicleMaterialError(const FString& Message)
 {
@@ -127,6 +135,159 @@ void DiscardCreatedVehicleMaterial(UObject* Material)
     }
     TArray<UObject*> Objects{Material};
     (void)ObjectTools::ForceDeleteObjects(Objects, false);
+}
+
+bool IsCanonicalGeneratedObjectPath(
+    const FString& ObjectPath,
+    const FString& RequiredPackagePrefix
+)
+{
+    const FString PackagePath =
+        FPackageName::ObjectPathToPackageName(ObjectPath);
+    const FString AssetName =
+        FPackageName::ObjectPathToObjectName(ObjectPath);
+    return !PackagePath.IsEmpty()
+        && !AssetName.IsEmpty()
+        && FPackageName::IsValidLongPackageName(PackagePath)
+        && FPackageName::GetLongPackageAssetName(PackagePath) == AssetName
+        && PackagePath.StartsWith(
+            RequiredPackagePrefix,
+            ESearchCase::CaseSensitive
+        )
+        && ObjectPath.Equals(
+            FString::Printf(TEXT("%s.%s"), *PackagePath, *AssetName),
+            ESearchCase::CaseSensitive
+        );
+}
+
+template <typename TObject>
+TObject* FindOrLoadGeneratedObject(const FString& ObjectPath)
+{
+    TObject* Object = FindObject<TObject>(nullptr, *ObjectPath);
+    return Object != nullptr
+        ? Object
+        : LoadObject<TObject>(nullptr, *ObjectPath);
+}
+
+bool HasParameter(
+    const UMaterialInterface& Material,
+    const FName ParameterName,
+    EMaterialParameterType Type
+)
+{
+    TArray<FMaterialParameterInfo> Infos;
+    TArray<FGuid> Ids;
+    Material.GetAllParameterInfoOfType(Type, Infos, Ids);
+    return Infos.ContainsByPredicate(
+        [ParameterName](const FMaterialParameterInfo& Info)
+        {
+            return Info.Name == ParameterName;
+        }
+    );
+}
+
+bool IsNormalizedColor(const FLinearColor& Color)
+{
+    const auto IsNormalized = [](const float Value)
+    {
+        return FMath::IsFinite(Value) && Value >= 0.0F && Value <= 1.0F;
+    };
+    return IsNormalized(Color.R)
+        && IsNormalized(Color.G)
+        && IsNormalized(Color.B)
+        && IsNormalized(Color.A);
+}
+
+bool ResolveVehicleMaterialInstanceInputs(
+    const FString& ParentMaterialPath,
+    const FString& BaseColorTexturePath,
+    const FLinearColor& BaseColorTint,
+    bool bSetAlphaReference,
+    float AlphaReference,
+    UMaterial*& OutParent,
+    UTexture2D*& OutTexture,
+    FString& OutError
+)
+{
+    OutParent = nullptr;
+    OutTexture = nullptr;
+    OutError.Reset();
+    if (!IsCanonicalGeneratedObjectPath(
+            ParentMaterialPath,
+            GeneratedVehicleMaterialRootPrefix
+        ))
+    {
+        OutError = TEXT("parent is not a canonical generated vehicle material");
+        return false;
+    }
+    OutParent = FindOrLoadGeneratedObject<UMaterial>(ParentMaterialPath);
+    if (OutParent == nullptr)
+    {
+        OutError = TEXT("parent does not resolve to a vehicle UMaterial");
+        return false;
+    }
+    if (
+        !HasParameter(
+            *OutParent,
+            BaseColorTintParameter,
+            EMaterialParameterType::Vector
+        )
+        || !HasParameter(
+            *OutParent,
+            BaseColorTextureParameter,
+            EMaterialParameterType::Texture
+        )
+    )
+    {
+        OutError = TEXT("vehicle parent material parameters drifted");
+        return false;
+    }
+    if (!IsNormalizedColor(BaseColorTint))
+    {
+        OutError = TEXT("base color tint must be finite normalized RGBA");
+        return false;
+    }
+    const bool bParentHasAlphaReference = HasParameter(
+        *OutParent,
+        AlphaReferenceParameter,
+        EMaterialParameterType::Scalar
+    );
+    if (bSetAlphaReference != bParentHasAlphaReference)
+    {
+        OutError = TEXT("alpha-reference request does not match parent family");
+        return false;
+    }
+    if (
+        bSetAlphaReference
+        && (
+            !FMath::IsFinite(AlphaReference)
+            || AlphaReference < 0.0F
+            || AlphaReference > 1.0F
+        )
+    )
+    {
+        OutError = TEXT("alpha reference must be finite and normalized");
+        return false;
+    }
+    if (BaseColorTexturePath.IsEmpty())
+    {
+        return true;
+    }
+    if (!IsCanonicalGeneratedObjectPath(
+            BaseColorTexturePath,
+            GeneratedVehicleTextureRootPrefix
+        ))
+    {
+        OutError = TEXT("texture is not a canonical generated vehicle texture");
+        return false;
+    }
+    OutTexture = FindOrLoadGeneratedObject<UTexture2D>(BaseColorTexturePath);
+    if (OutTexture == nullptr)
+    {
+        OutError = TEXT("vehicle texture does not resolve to a UTexture2D");
+        return false;
+    }
+    return true;
 }
 } // namespace
 
@@ -291,5 +452,118 @@ FString USharVehicleMaterialToolset::CreateSimpleUnlitVehicleMaster(
         return {};
     }
     Material->MarkPackageDirty();
+    return ObjectPath;
+}
+
+FString USharVehicleMaterialToolset::CreateSimpleUnlitVehicleMaterialInstance(
+    const FString& FolderPath,
+    const FString& AssetName,
+    const FString& ParentMaterialPath,
+    const FString& BaseColorTexturePath,
+    FLinearColor BaseColorTint,
+    bool bSetAlphaReference,
+    float AlphaReference
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FString Error;
+    FString PackagePath;
+    FString ObjectPath;
+    if (!ValidateVehicleMaterialDestination(
+            FolderPath,
+            AssetName,
+            PackagePath,
+            ObjectPath,
+            Error
+        ))
+    {
+        RaiseVehicleMaterialError(Error);
+        return {};
+    }
+    UMaterial* Parent = nullptr;
+    UTexture2D* Texture = nullptr;
+    if (!ResolveVehicleMaterialInstanceInputs(
+            ParentMaterialPath,
+            BaseColorTexturePath,
+            BaseColorTint,
+            bSetAlphaReference,
+            AlphaReference,
+            Parent,
+            Texture,
+            Error
+        ))
+    {
+        RaiseVehicleMaterialError(Error);
+        return {};
+    }
+
+    UMaterialInstanceConstantFactoryNew* Factory =
+        NewObject<UMaterialInstanceConstantFactoryNew>();
+    Factory->InitialParent = Parent;
+    UMaterialInstanceConstant* Instance = Cast<UMaterialInstanceConstant>(
+        FAssetToolsModule::GetModule().Get().CreateAsset(
+            AssetName,
+            FolderPath,
+            UMaterialInstanceConstant::StaticClass(),
+            Factory,
+            NAME_None,
+            false
+        )
+    );
+    if (Instance == nullptr)
+    {
+        RaiseVehicleMaterialError(
+            TEXT("failed to create vehicle material instance")
+        );
+        return {};
+    }
+
+    const FMaterialParameterInfo TintInfo(BaseColorTintParameter);
+    Instance->SetVectorParameterValueEditorOnly(TintInfo, BaseColorTint);
+    if (Texture != nullptr)
+    {
+        const FMaterialParameterInfo TextureInfo(BaseColorTextureParameter);
+        Instance->SetTextureParameterValueEditorOnly(TextureInfo, Texture);
+    }
+    if (bSetAlphaReference)
+    {
+        const FMaterialParameterInfo AlphaInfo(AlphaReferenceParameter);
+        Instance->SetScalarParameterValueEditorOnly(AlphaInfo, AlphaReference);
+    }
+    Instance->PostEditChange();
+
+    const FLinearColor ReadTint =
+        UMaterialEditingLibrary::GetMaterialInstanceVectorParameterValue(
+            Instance,
+            BaseColorTintParameter
+        );
+    const UTexture* ReadTexture = Texture == nullptr
+        ? nullptr
+        : UMaterialEditingLibrary::GetMaterialInstanceTextureParameterValue(
+            Instance,
+            BaseColorTextureParameter
+        );
+    const float ReadAlpha = bSetAlphaReference
+        ? UMaterialEditingLibrary::GetMaterialInstanceScalarParameterValue(
+            Instance,
+            AlphaReferenceParameter
+        )
+        : AlphaReference;
+    if (
+        !ReadTint.Equals(BaseColorTint)
+        || (Texture != nullptr && ReadTexture != Texture)
+        || (
+            bSetAlphaReference
+            && !FMath::IsNearlyEqual(ReadAlpha, AlphaReference)
+        )
+    )
+    {
+        DiscardCreatedVehicleMaterial(Instance);
+        RaiseVehicleMaterialError(
+            TEXT("vehicle material instance read-back drifted")
+        );
+        return {};
+    }
+    Instance->MarkPackageDirty();
     return ObjectPath;
 }
