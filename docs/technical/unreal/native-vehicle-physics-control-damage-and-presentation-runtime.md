@@ -374,10 +374,34 @@ alpha-compare, and two-sided fields and fails closed outside the reviewed
 subset. It shares the family-neutral texture-times-vertex-colour graph kernel
 with world materials without sharing world selection or culling policy. Native
 automation verifies all three reviewed blend modes, Greater alpha discard,
-exact one- and two-sided state, independent graph read-back, and create-only
-unsaved master construction.
+exact one- and two-sided state, independent graph read-back, create-only
+unsaved master construction, and create-only Material Instance construction
+with generated vehicle parent/texture validation plus tint, texture, and alpha
+read-back.
 
-Vehicle material evidence v2 now verifies all 3,341 retained semantic parts and
+The v3 planner turns exactly the 429 reviewed graph candidates into 429 native
+Material Instance requests. Their texture dependencies collapse to 14 unique
+content-addressed Texture2D requests and their graph state collapses to three
+master recipes: one source-alpha/two-sided recipe, 339 additive/one-sided slot
+uses, and 89 additive/two-sided slot uses. Destinations are isolated below the
+vehicle texture, master, and instance generated roots.
+
+Source `DIFF` becomes the normalized `BaseColorTint`; the FBX writer's material
+node uses a fixed preview DiffuseColor, so this does not multiply the source
+tint twice. These are construction requests only: save/read-back and
+skeletal-mesh slot assignment remain a separate editor-control transaction and
+native readiness stays blocked until that transaction exists.
+
+For `sedana`, five of eight slots are in this construction-ready subset:
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- cspell:disable -->
+`brakeFlareA_m`, `brakeFlareB_m`, `flarebase2_m`, `LENS02_m`, and `glow2_m`.
+<!-- markdownlint-disable-next-line MD044 -->
+<!-- cspell:enable -->
+The `char_swatches_m`, `sedanA_m`, and windshield slots are lit and remain
+blocked rather than being approximated with the unlit family.
+
+Vehicle material evidence v3 now verifies all 3,341 retained semantic parts and
 joins each part's source shader to the verified FBX material slots. Across the
 88 vehicles it derives 1,726 standard headlight, brake, and reverse bindings:
 1,722 have one exact material-slot join and four preserve an ambiguous join as a

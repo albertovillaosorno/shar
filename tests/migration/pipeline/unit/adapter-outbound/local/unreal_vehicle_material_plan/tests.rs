@@ -89,7 +89,7 @@ fn vehicle() -> VerifiedVehicleFbxArtifact {
             shader_size_bytes: 20,
             shader_sha256: "b".repeat(64),
             texture_path: Some(
-                "vehicle-assets/sedana/textures/sedanA.png".to_owned(),
+                "textures/sedanA.png".to_owned(),
             ),
             texture_size_bytes: Some(30),
             texture_sha256: Some("c".repeat(64)),
@@ -156,7 +156,8 @@ fn renders_exact_vehicle_material_projection_and_blockers()
         .collect::<Vec<_>>();
     if blocker_names
         != [
-            "vehicle-material-instance-publication-not-reviewed",
+            "vehicle-native-material-construction-not-applied",
+            "vehicle-material-slot-application-not-reviewed",
             "vehicle-native-material-graph-not-reviewed",
             "vehicle-lit-master-not-reviewed",
         ]
@@ -199,7 +200,23 @@ fn simple_unlit_graph_candidate_stays_separate_from_presentation_readiness()
         .and_then(Value::as_u64)
         != Some(1)
         || value
+            .pointer("/counts/native_construction_ready_slots")
+            .and_then(Value::as_u64)
+            != Some(1)
+        || value
+            .pointer("/counts/native_instance_requests")
+            .and_then(Value::as_u64)
+            != Some(1)
+        || value
             .pointer("/counts/native_ready_slots")
+            .and_then(Value::as_u64)
+            != Some(0)
+        || value
+            .pointer("/vehicles/0/slots/0/native_construction_status")
+            .and_then(Value::as_str)
+            != Some("ready")
+        || value
+            .pointer("/native_construction/instance_requests/0/slot_index")
             .and_then(Value::as_u64)
             != Some(0)
         || value

@@ -38,15 +38,21 @@ use serde_json::{Value, json};
 use super::unreal_vehicle_catalog::{
     VerifiedVehicleFbxArtifact, VerifiedVehicleMaterialArtifact,
 };
+use super::unreal_vehicle_material_native_plan::{
+    VehicleMaterialNativeConstructionPlan,
+    plan_vehicle_material_native_construction,
+};
 use crate::domain::{PipelineError, PipelineOutcome};
 
 pub(super) const VEHICLE_MATERIAL_PLAN_SCHEMA: &str =
-    "shar-schoenwald.unreal-vehicle-material-evidence.v2";
+    "shar-schoenwald.unreal-vehicle-material-evidence.v3";
 const SOURCE_SCHEMA: &str = "shar.vehicle-catalog.v8";
 const NATIVE_GRAPH_BLOCKER: &str =
     "vehicle-native-material-graph-not-reviewed";
-const INSTANCE_PUBLICATION_BLOCKER: &str =
-    "vehicle-material-instance-publication-not-reviewed";
+const NATIVE_CONSTRUCTION_BLOCKER: &str =
+    "vehicle-native-material-construction-not-applied";
+const SLOT_APPLICATION_BLOCKER: &str =
+    "vehicle-material-slot-application-not-reviewed";
 const LIGHT_PRESENTATION_BLOCKER: &str =
     "vehicle-light-material-application-not-reviewed";
 
@@ -54,6 +60,9 @@ const LIGHT_PRESENTATION_BLOCKER: &str =
 pub(super) fn render_vehicle_material_plan(
     catalog: Option<&[VerifiedVehicleFbxArtifact]>,
 ) -> PipelineOutcome<String> {
+    let native = plan_vehicle_material_native_construction(
+        catalog.unwrap_or_default(),
+    )?;
     let mut counts = Counts::default();
     let mut vehicles = Vec::new();
     if let Some(catalog) = catalog {
@@ -78,8 +87,14 @@ pub(super) fn render_vehicle_material_plan(
             }));
         }
     }
+    counts.native_construction_ready_slots = native.instance_requests.len();
+    counts.native_texture_requests = native.texture_requests.len();
+    counts.native_master_requests = native.master_requests.len();
+    counts.native_instance_requests = native.instance_requests.len();
     if counts.slots
         != counts.native_ready_slots.saturating_add(counts.native_blocked_slots)
+        || counts.native_construction_ready_slots
+            != counts.native_graph_ready_slots
     {
         return Err(PipelineError::new(
             "vehicle material native readiness counts drifted",
@@ -92,13 +107,14 @@ pub(super) fn render_vehicle_material_plan(
             "source_projection": "reviewed-pddi-render-state",
             "source_projection_status": "ready",
             "world_material_policy_reuse": "forbidden",
-            "native_construction":
-                "material-graph-reviewed-instance-publication-blocked",
+            "native_construction": "simple-unlit-texture-master-instance-ready",
+            "mesh_slot_application": "blocked-pending-reviewed-transaction",
             "dynamic_light_binding": "verified-source-part-to-material-slots",
             "runtime_shader_mutation": "preserve-separately"
         },
         "counts": counts.value(),
         "vehicles": vehicles,
+        "native_construction": native_construction_value(&native),
     });
     let mut text = serde_json::to_string(&value).map_err(|_error| {
         PipelineError::new("serialize vehicle material evidence failed")
@@ -121,6 +137,10 @@ struct Counts {
     simple_unlit_graph_candidates: usize,
     presentation_special_slots: usize,
     native_graph_ready_slots: usize,
+    native_construction_ready_slots: usize,
+    native_texture_requests: usize,
+    native_master_requests: usize,
+    native_instance_requests: usize,
     native_ready_slots: usize,
     native_blocked_slots: usize,
     dynamic_light_bindings: usize,
@@ -201,6 +221,11 @@ impl Counts {
             "presentation_special_slots": self.presentation_special_slots,
             "source_projection_ready_slots": self.slots,
             "native_graph_ready_slots": self.native_graph_ready_slots,
+            "native_construction_ready_slots":
+                self.native_construction_ready_slots,
+            "native_texture_requests": self.native_texture_requests,
+            "native_master_requests": self.native_master_requests,
+            "native_instance_requests": self.native_instance_requests,
             "native_ready_slots": self.native_ready_slots,
             "native_blocked_slots": self.native_blocked_slots,
             "dynamic_light_bindings": self.dynamic_light_bindings,
@@ -258,12 +283,17 @@ fn slot_value(
             "simple_unlit_candidate": is_simple_unlit_graph_candidate(slot),
             "presentation_special": has_special_presentation(slot),
         },
+        "native_construction_status": if is_simple_unlit_graph_candidate(slot) {
+            "ready"
+        } else {
+            "blocked"
+        },
         "native_status": "blocked",
         "native_blockers": native_blockers(slot),
     })
 }
 
-fn is_simple_unlit_graph_candidate(
+pub(super) fn is_simple_unlit_graph_candidate(
     slot: &VerifiedVehicleMaterialArtifact,
 ) -> bool {
     slot.raster.shader_family == "simple"
@@ -285,6 +315,16 @@ const fn has_special_presentation(
         || slot.semantics.visual_effect
 }
 
+
+fn native_construction_value(
+    native: &VehicleMaterialNativeConstructionPlan,
+) -> Value {
+    json!({
+        "texture_requests": native.texture_requests,
+        "master_requests": native.master_requests,
+        "instance_requests": native.instance_requests,
+    })
+}
 
 fn dynamic_light_bindings(
     vehicle: &VerifiedVehicleFbxArtifact,
@@ -354,7 +394,10 @@ fn semantic_light_role(bone: &str) -> Option<&'static str> {
 fn native_blockers(
     slot: &VerifiedVehicleMaterialArtifact,
 ) -> Vec<&'static str> {
-    let mut blockers = vec![INSTANCE_PUBLICATION_BLOCKER];
+    let mut blockers = vec![
+        NATIVE_CONSTRUCTION_BLOCKER,
+        SLOT_APPLICATION_BLOCKER,
+    ];
     if !is_simple_unlit_graph_candidate(slot) {
         blockers.push(NATIVE_GRAPH_BLOCKER);
     }

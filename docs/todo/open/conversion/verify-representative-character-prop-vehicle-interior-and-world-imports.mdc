@@ -282,11 +282,10 @@ passed unchanged after the shared-kernel extraction.
 
 `sedana` has eight ordered slots: two opaque lit base slots, one lit windshield
 glass slot, one unlit lens glass/light slot, and four unlit transparent
-light-emitter slots. The unlit records can now drive reviewed transient master
-graph construction, but they remain verified handoff records rather than native
-vehicle `MaterialInstance` bindings.
+light-emitter slots. Five of those slots now produce native construction
+requests; the three lit slots remain blocked pending a reviewed lit family.
 
-Vehicle material evidence v2 also verifies all 3,341 semantic part records and
+Vehicle material evidence v3 also verifies all 3,341 semantic part records and
 retains their exact source-mesh, shader, surface-semantic, and rig-bone joins.
 Across the corpus it derives 1,726 standard light bindings: 320 brake, 286
 reverse, 560 left-headlight, and 560 right-headlight bindings. Of those, 1,722
@@ -305,9 +304,16 @@ visibility rules without mutating materials. The source selects reverse lights
 while braking in reverse, so reverse and
 brake visibility remain mutually exclusive in that reviewed state.
 
-No vehicle Material Instance is published or applied yet. The material plan
-keeps graph readiness separate from native readiness, and every slot remains
-native-blocked until Material Instance publication succeeds.
+Vehicle material evidence v3 now projects the 429 reviewed graph candidates
+into 429 deterministic Material Instance requests, deduplicated across 14
+content-addressed Texture2D requests and three exact simple-unlit master
+recipes. The requests use `/Game/Generated/SHAR/Textures/Vehicles`,
+`/Game/Generated/SHAR/Materials/Vehicles/Masters`, and
+`/Game/Generated/SHAR/Materials/Vehicles/Instances`. Source `DIFF` is retained
+as normalized instance tint; this does not double-apply the FBX preview because
+the binary FBX writer emits a fixed preview DiffuseColor rather than source
+`DIFF`. No vehicle Material Instance is saved or assigned to a mesh slot yet,
+so construction readiness remains separate from final native readiness.
 
 The broader P0 criterion remains open. The saved asset has not yet been bound
 into the representative production presentation, and source-derived material,
