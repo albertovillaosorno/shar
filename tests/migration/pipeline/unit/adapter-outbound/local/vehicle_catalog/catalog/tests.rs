@@ -35,7 +35,8 @@ use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
 use super::super::model::{
     EffectAnimationRecord, EffectControllerRecord,
     EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
-    GroundingRecord, PhysicsSidecarRecord, VehicleRecord,
+    GroundingRecord, PhysicsPrimitiveRecord, PhysicsRigRecord,
+    PhysicsSidecarRecord, VehicleRecord,
 };
 use super::vehicle_json;
 
@@ -102,6 +103,15 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
             source_ordinal: 321,
             bytes: 42,
             sha256: "2".repeat(64),
+        }],
+        physics_rigs: vec![PhysicsRigRecord {
+            identity: "family-sedan".to_owned(),
+            joint_count: 2,
+            primitives: vec![PhysicsPrimitiveRecord::Sphere {
+                bone_name: "w0".to_owned(),
+                center_m: [0.0, 0.0, 0.0],
+                radius_m: 0.5,
+            }],
         }],
     };
 
@@ -177,6 +187,28 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
             != Some(&"image-occurrence-50".into())
     {
         return Err("vehicle effect relationship is incomplete".to_owned());
+    }
+    let rig = value
+        .get("physics_rigs")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|rigs| rigs.first())
+        .ok_or_else(|| "vehicle physics rig is missing".to_owned())?;
+    if rig.get("coordinate_space") != Some(&"source-bone-local".into())
+        || rig.get("unit") != Some(&"meter".into())
+        || rig.get("joint_count") != Some(&2.into())
+    {
+        return Err("physics rig handoff contract changed".to_owned());
+    }
+    let primitive = rig
+        .get("primitives")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|primitives| primitives.first())
+        .ok_or_else(|| "vehicle physics primitive is missing".to_owned())?;
+    if primitive.get("kind") != Some(&"sphere".into())
+        || primitive.get("bone_name") != Some(&"w0".into())
+        || primitive.get("radius_m") != Some(&serde_json::json!(0.5))
+    {
+        return Err("physics primitive handoff contract changed".to_owned());
     }
     Ok(())
 }

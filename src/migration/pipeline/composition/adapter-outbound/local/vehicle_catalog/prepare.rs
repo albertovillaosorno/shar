@@ -56,8 +56,8 @@ use super::catalog::{recursive_files, write_new};
 use super::model::{
     EffectAnimationRecord, EffectControllerRecord,
     EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
-    GroundingRecord, PartRecord, PhysicsSidecarRecord, TextureRecord,
-    VehicleRecord,
+    GroundingRecord, PartRecord, PhysicsPrimitiveRecord, PhysicsRigRecord,
+    PhysicsSidecarRecord, TextureRecord, VehicleRecord,
 };
 use super::source::{
     VehicleTextureAuthority, common_headlight_quad_groups, decoded_name,
@@ -195,7 +195,7 @@ pub(super) fn export_vehicle(
     verify_binary_fbx(&fbx_path)?;
     publish_unreferenced_textures(&package_root, &texture_dir, &materials)?;
     let textures = texture_records(&vehicle_dir)?;
-    let physics_sidecars = publish_vehicle_physics_sidecars(
+    let (physics_sidecars, physics_rigs) = publish_vehicle_physics_sidecars(
         package,
         &package_root,
         &vehicle_dir,
@@ -225,6 +225,7 @@ pub(super) fn export_vehicle(
         textures,
         shaders,
         physics_sidecars,
+        physics_rigs,
     };
     super::catalog::write_vehicle_catalog(&vehicle_dir, &record)?;
     Ok(record)
@@ -2032,10 +2033,10 @@ fn texture_records(
     Ok(records)
 }
 
-/// Validate source collision rigs against exact skeleton joint indices.
-fn validate_vehicle_physics_rig_bindings(
+/// Validate source collision rigs and build exact bone-local shape recipes.
+fn vehicle_physics_rig_recipes(
     package_root: &Path,
-) -> Result<(), PipelineError> {
+) -> Result<Vec<PhysicsRigRecord>, PipelineError> {
     let components = package_root.join("components");
     let skeletons = vehicle_named_component_documents(
         &components.join("skeleton"),
@@ -2057,6 +2058,7 @@ fn validate_vehicle_physics_rig_bindings(
             "vehicle physics rig families do not match",
         ));
     }
+    let mut records = Vec::with_capacity(collisions.len());
     for (identity, collision) in &collisions {
         let skeleton = skeletons.get(identity).ok_or_else(|| {
             PipelineError::new("vehicle collision rig has no matching skeleton")
@@ -2064,13 +2066,22 @@ fn validate_vehicle_physics_rig_bindings(
         let physics_document = physics.get(identity).ok_or_else(|| {
             PipelineError::new("vehicle collision rig has no matching physics")
         })?;
-        validate_vehicle_physics_rig(
+        records.push(build_vehicle_physics_rig(
             identity,
             skeleton,
             collision,
             physics_document,
-        )?;
+        )?);
     }
+    Ok(records)
+}
+
+/// Validate source collision rigs against exact skeleton joint indices.
+#[cfg(test)]
+fn validate_vehicle_physics_rig_bindings(
+    package_root: &Path,
+) -> Result<(), PipelineError> {
+    drop(vehicle_physics_rig_recipes(package_root)?);
     Ok(())
 }
 
@@ -2121,13 +2132,13 @@ fn vehicle_named_component_documents(
     Ok(documents)
 }
 
-/// Validate one same-name skeleton/collision/physics source rig.
-fn validate_vehicle_physics_rig(
+/// Build one same-name skeleton/collision/physics source rig recipe.
+fn build_vehicle_physics_rig(
     identity: &str,
     skeleton: &Value,
     collision: &Value,
     physics: &Value,
-) -> Result<(), PipelineError> {
+) -> Result<PhysicsRigRecord, PipelineError> {
     let joints = required_array(
         skeleton,
         "joints",
@@ -2155,17 +2166,25 @@ fn validate_vehicle_physics_rig(
             "vehicle physics rig {identity} joint counts do not match"
         )));
     }
+    let mut joint_names = Vec::with_capacity(joint_count);
+    let mut unique_joint_names = BTreeSet::new();
     for joint in joints {
-        let _joint_identity = joint
+        let joint_identity = joint
             .get("name")
             .and_then(Value::as_str)
             .map(|value| value.trim_end_matches('\0'))
-            .filter(|value| !value.is_empty())
+            .filter(|value| !value.is_empty() && *value == value.trim())
             .ok_or_else(|| {
                 PipelineError::new(
                     "vehicle physics rig has a joint without identity",
                 )
             })?;
+        if !unique_joint_names.insert(joint_identity.to_owned()) {
+            return Err(PipelineError::new(
+                "vehicle physics rig has duplicate joint identity",
+            ));
+        }
+        joint_names.push(joint_identity.to_owned());
     }
     let volumes = required_array(
         collision,
@@ -2177,27 +2196,47 @@ fn validate_vehicle_physics_rig(
             "vehicle physics rig has no collision volumes",
         ));
     }
+    let mut primitives = Vec::new();
     for volume in volumes {
-        validate_vehicle_collision_volume_refs(volume, joint_count)?;
+        collect_vehicle_collision_primitives(
+            volume,
+            &joint_names,
+            &mut primitives,
+        )?;
     }
-    Ok(())
+    if primitives.is_empty() {
+        return Err(PipelineError::new(
+            "vehicle physics rig has no collision primitives",
+        ));
+    }
+    Ok(PhysicsRigRecord {
+        identity: identity.to_owned(),
+        joint_count,
+        primitives,
+    })
 }
 
-/// Validate one recursive collision volume against source skeleton joints.
-fn validate_vehicle_collision_volume_refs(
+/// Resolve one recursive source volume into bone-local primitive recipes.
+fn collect_vehicle_collision_primitives(
     volume: &Value,
-    joint_count: usize,
+    joint_names: &[String],
+    records: &mut Vec<PhysicsPrimitiveRecord>,
 ) -> Result<(), PipelineError> {
-    if volume
+    let joint_index = volume
         .get("object_reference_index")
         .and_then(Value::as_u64)
         .and_then(|value| usize::try_from(value).ok())
-        .is_none_or(|value| value >= joint_count)
-    {
-        return Err(PipelineError::new(
+        .filter(|value| *value < joint_names.len())
+        .ok_or_else(|| {
+            PipelineError::new(
+                "vehicle collision volume has an invalid joint reference",
+            )
+        })?;
+    let bone_name = joint_names.get(joint_index).ok_or_else(|| {
+        PipelineError::new(
             "vehicle collision volume has an invalid joint reference",
-        ));
-    }
+        )
+    })?;
     let primitives = required_array(
         volume,
         "primitives",
@@ -2205,12 +2244,230 @@ fn validate_vehicle_collision_volume_refs(
     )?;
     for primitive in primitives {
         if primitive.get("object_reference_index").is_some() {
-            validate_vehicle_collision_volume_refs(primitive, joint_count)?;
-        } else if primitive.get("kind").and_then(Value::as_str).is_none() {
-            return Err(PipelineError::new(
-                "vehicle collision primitive has no kind",
-            ));
+            collect_vehicle_collision_primitives(
+                primitive,
+                joint_names,
+                records,
+            )?;
+            continue;
         }
+        records.push(vehicle_collision_primitive(primitive, bone_name)?);
+    }
+    Ok(())
+}
+
+/// Normalize one validated source primitive without changing authored values.
+fn vehicle_collision_primitive(
+    primitive: &Value,
+    bone_name: &str,
+) -> Result<PhysicsPrimitiveRecord, PipelineError> {
+    match primitive.get("kind").and_then(Value::as_str) {
+        Some("sphere") => {
+            let vectors = required_array(
+                primitive,
+                "vectors",
+                "sphere collision vectors",
+            )?;
+            let [center] = vectors.as_slice() else {
+                return Err(PipelineError::new(
+                    "vehicle sphere collision vector count is invalid",
+                ));
+            };
+            Ok(PhysicsPrimitiveRecord::Sphere {
+                bone_name: bone_name.to_owned(),
+                center_m: vehicle_collision_vec3(center)?,
+                radius_m: positive_collision_number(
+                    primitive,
+                    "radius",
+                    "sphere radius",
+                )?,
+            })
+        },
+        Some("obbox") => {
+            let vectors = required_array(
+                primitive,
+                "vectors",
+                "box collision vectors",
+            )?;
+            let [center, axis0, axis1, axis2] = vectors.as_slice() else {
+                return Err(PipelineError::new(
+                    "vehicle box collision vector count is invalid",
+                ));
+            };
+            let axes = [
+                vehicle_collision_vec3(axis0)?,
+                vehicle_collision_vec3(axis1)?,
+                vehicle_collision_vec3(axis2)?,
+            ];
+            validate_collision_basis(&axes)?;
+            let extent_values = required_array(
+                primitive,
+                "lengths",
+                "box collision half extents",
+            )?;
+            let [extent0, extent1, extent2] = extent_values.as_slice() else {
+                return Err(PipelineError::new(
+                    "vehicle box collision extent count is invalid",
+                ));
+            };
+            Ok(PhysicsPrimitiveRecord::OrientedBox {
+                bone_name: bone_name.to_owned(),
+                center_m: vehicle_collision_vec3(center)?,
+                axes,
+                half_extents_m: [
+                    positive_json_number(extent0, "box half extent")?,
+                    positive_json_number(extent1, "box half extent")?,
+                    positive_json_number(extent2, "box half extent")?,
+                ],
+            })
+        },
+        Some("cylinder") => {
+            let vectors = required_array(
+                primitive,
+                "vectors",
+                "cylinder collision vectors",
+            )?;
+            let [center, axis] = vectors.as_slice() else {
+                return Err(PipelineError::new(
+                    "vehicle cylinder collision vector count is invalid",
+                ));
+            };
+            let axis = vehicle_collision_vec3(axis)?;
+            validate_collision_unit_axis(&axis)?;
+            let flat_end = match primitive
+                .get("flat_end")
+                .and_then(Value::as_u64)
+            {
+                Some(0) => false,
+                Some(1) => true,
+                _ => {
+                    return Err(PipelineError::new(
+                        "vehicle cylinder flat-end flag is invalid",
+                    ));
+                },
+            };
+            Ok(PhysicsPrimitiveRecord::Cylinder {
+                bone_name: bone_name.to_owned(),
+                center_m: vehicle_collision_vec3(center)?,
+                axis,
+                half_length_m: positive_collision_number(
+                    primitive,
+                    "length",
+                    "cylinder half length",
+                )?,
+                radius_m: positive_collision_number(
+                    primitive,
+                    "radius",
+                    "cylinder radius",
+                )?,
+                flat_end,
+            })
+        },
+        _ => Err(PipelineError::new(
+            "vehicle collision primitive kind is unsupported",
+        )),
+    }
+}
+
+/// Read one exact finite collision vector.
+fn vehicle_collision_vec3(value: &Value) -> Result<[f32; 3], PipelineError> {
+    let values = value.as_array().ok_or_else(|| {
+        PipelineError::new("vehicle collision vector is invalid")
+    })?;
+    let [x, y, z] = values.as_slice() else {
+        return Err(PipelineError::new(
+            "vehicle collision vector component count is invalid",
+        ));
+    };
+    Ok([
+        finite_json_number(x, "collision vector component")?,
+        finite_json_number(y, "collision vector component")?,
+        finite_json_number(z, "collision vector component")?,
+    ])
+}
+
+/// Read one finite source number from decoded JSON.
+fn finite_json_number(
+    value: &Value,
+    label: &str,
+) -> Result<f32, PipelineError> {
+    value
+        .as_number()
+        .and_then(|number| number.to_string().parse::<f32>().ok())
+        .filter(|number| number.is_finite())
+        .ok_or_else(|| {
+            PipelineError::new(format!("vehicle {label} is not finite"))
+        })
+}
+
+/// Read one finite positive source number from decoded JSON.
+fn positive_json_number(
+    value: &Value,
+    label: &str,
+) -> Result<f32, PipelineError> {
+    finite_json_number(value, label).and_then(|number| {
+        if number > 0.0 {
+            Ok(number)
+        } else {
+            Err(PipelineError::new(format!(
+                "vehicle {label} is not positive"
+            )))
+        }
+    })
+}
+
+/// Read one named finite positive source number from decoded JSON.
+fn positive_collision_number(
+    value: &Value,
+    field: &str,
+    label: &str,
+) -> Result<f32, PipelineError> {
+    value.get(field).ok_or_else(|| {
+        PipelineError::new(format!("vehicle {label} is missing"))
+    }).and_then(|number| positive_json_number(number, label))
+}
+
+/// Validate one source unit axis without renormalizing authored evidence.
+fn validate_collision_unit_axis(axis: &[f32; 3]) -> Result<(), PipelineError> {
+    const TOLERANCE: f32 = 1.0e-5;
+    let squared = axis.iter().map(|value| value * value).sum::<f32>();
+    if (squared - 1.0).abs() > TOLERANCE {
+        return Err(PipelineError::new(
+            "vehicle collision axis is not unit length",
+        ));
+    }
+    Ok(())
+}
+
+/// Validate one proper orthonormal source box basis without repairing it.
+fn validate_collision_basis(axes: &[[f32; 3]; 3]) -> Result<(), PipelineError> {
+    const TOLERANCE: f32 = 1.0e-5;
+    for axis in axes {
+        validate_collision_unit_axis(axis)?;
+    }
+    let dot = |left: &[f32; 3], right: &[f32; 3]| {
+        left.iter()
+            .zip(right)
+            .map(|(left, right)| left * right)
+            .sum::<f32>()
+    };
+    if dot(&axes[0], &axes[1]).abs() > TOLERANCE
+        || dot(&axes[0], &axes[2]).abs() > TOLERANCE
+        || dot(&axes[1], &axes[2]).abs() > TOLERANCE
+    {
+        return Err(PipelineError::new(
+            "vehicle collision box axes are not orthogonal",
+        ));
+    }
+    let cross = [
+        axes[0][1] * axes[1][2] - axes[0][2] * axes[1][1],
+        axes[0][2] * axes[1][0] - axes[0][0] * axes[1][2],
+        axes[0][0] * axes[1][1] - axes[0][1] * axes[1][0],
+    ];
+    if dot(&cross, &axes[2]) <= 0.0 {
+        return Err(PipelineError::new(
+            "vehicle collision box basis is reflected",
+        ));
     }
     Ok(())
 }
@@ -2220,8 +2477,8 @@ fn publish_vehicle_physics_sidecars(
     package: &PhaseThreePackageRow,
     package_root: &Path,
     vehicle_dir: &Path,
-) -> Result<Vec<PhysicsSidecarRecord>, PipelineError> {
-    validate_vehicle_physics_rig_bindings(package_root)?;
+) -> Result<(Vec<PhysicsSidecarRecord>, Vec<PhysicsRigRecord>), PipelineError> {
+    let recipes = vehicle_physics_rig_recipes(package_root)?;
     let mut members = package
         .members()
         .iter()
@@ -2297,7 +2554,7 @@ fn publish_vehicle_physics_sidecars(
             sha256: digest_hex(&bytes),
         });
     }
-    Ok(records)
+    Ok((records, recipes))
 }
 
 /// Verify canonical external-texture binary FBX 7.7 output.

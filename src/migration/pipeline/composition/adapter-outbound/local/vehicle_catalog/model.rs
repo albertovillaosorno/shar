@@ -137,6 +137,57 @@ pub(super) struct EffectAnimationRecord {
 }
 
 
+/// One source-authored collision primitive resolved to its skeleton bone.
+#[derive(Clone, Debug, PartialEq)]
+pub(super) enum PhysicsPrimitiveRecord {
+    /// Source sphere in authored bone-local meter space.
+    Sphere {
+        /// Exact authored skeleton joint identity.
+        bone_name: String,
+        /// Source-local sphere center in meters.
+        center_m: [f32; 3],
+        /// Source sphere radius in meters.
+        radius_m: f32,
+    },
+    /// Source oriented box in authored bone-local meter space.
+    OrientedBox {
+        /// Exact authored skeleton joint identity.
+        bone_name: String,
+        /// Source-local box center in meters.
+        center_m: [f32; 3],
+        /// Exact authored orthonormal box axes.
+        axes: [[f32; 3]; 3],
+        /// Source box half extents in meters.
+        half_extents_m: [f32; 3],
+    },
+    /// Source cylinder in authored bone-local meter space.
+    Cylinder {
+        /// Exact authored skeleton joint identity.
+        bone_name: String,
+        /// Source-local cylinder center in meters.
+        center_m: [f32; 3],
+        /// Exact authored unit cylinder axis.
+        axis: [f32; 3],
+        /// Source cylinder half length in meters.
+        half_length_m: f32,
+        /// Source cylinder radius in meters.
+        radius_m: f32,
+        /// Exact authored flat-end flag.
+        flat_end: bool,
+    },
+}
+
+/// One same-name source skeleton/collision/physics rig normalized for handoff.
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct PhysicsRigRecord {
+    /// Exact authored rig identity.
+    pub(super) identity: String,
+    /// Exact source skeleton joint count.
+    pub(super) joint_count: usize,
+    /// Collision primitives in source traversal order.
+    pub(super) primitives: Vec<PhysicsPrimitiveRecord>,
+}
+
 /// One verbatim decoded source physics member published beside a vehicle FBX.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct PhysicsSidecarRecord {
@@ -193,4 +244,6 @@ pub(super) struct VehicleRecord {
     pub(super) shaders: Vec<String>,
     /// Verbatim decoded collision and physics source members.
     pub(super) physics_sidecars: Vec<PhysicsSidecarRecord>,
+    /// Bone-resolved collision recipes in source-local meter space.
+    pub(super) physics_rigs: Vec<PhysicsRigRecord>,
 }
