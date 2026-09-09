@@ -62,6 +62,7 @@ mod unreal_fbx_catalog;
 mod unreal_plans;
 mod unreal_prepare;
 mod unreal_vehicle_catalog;
+mod unreal_vehicle_physics_plan;
 mod unreal_world_material_catalog;
 mod unreal_world_material_native_plan;
 mod unreal_world_material_plan;
