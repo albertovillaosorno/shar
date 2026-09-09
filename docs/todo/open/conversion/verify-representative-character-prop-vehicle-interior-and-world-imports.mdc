@@ -172,9 +172,19 @@ schema. It still promotes only the FBX as import evidence; recipes are verified
 handoff data, not a claim that Unreal collision already exists.
 
 The broader P0 criterion remains open for the representative source vehicle.
-The bounded construction test still uses transient native assets, while v7
-physics recipes deliberately stop before target-space conversion. The editor
-pipeline does not yet create and read back a reviewed `sedana` Physics Asset,
-material, animation, or wheel-definition asset, spawn the vehicle into a world,
-create live Chaos physics state, or validate driven behavior against source
-evidence.
+The v7 handoff now projects supported source recipes into imported bone-local
+coordinates, and an editor-only native kernel constructs an unsaved Physics
+Asset after revalidating the imported rig, retained joints, exact bones,
+scene-unit scale, dimensions, and box bases. A real Unreal Engine 5.8.1
+`SHAR.Import.VehiclePhysics.TransientSedana` automation run loads the
+`PortPreviewUnits` `sedana` Skeletal Mesh, confirms Unreal retains 16 of 19
+source joints with `sedanA` still at root index zero, constructs two chassis
+boxes plus four wheel spheres across five bodies, exercises malformed-geometry
+and
+wrong-scale rejection, and completes with `Result={Success}` and exit code 0.
+
+That evidence is intentionally transient. The editor pipeline still does not
+persist and read back a reviewed `sedana` Physics Asset package, bind that asset
+through the production construction plan, create material, animation, or
+wheel-definition assets, spawn the vehicle into a world, create live Chaos
+vehicle physics state, or validate driven behavior against source evidence.

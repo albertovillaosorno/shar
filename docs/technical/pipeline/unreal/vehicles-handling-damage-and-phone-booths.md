@@ -108,6 +108,19 @@ The vehicle definition references explicit native profiles for:
 Player-facing speed, acceleration, toughness, and handling ratings are derived
 presentation metadata. They never replace real physics parameters.
 
+Vehicle catalog v7 also publishes audited source-physics recipes separately from
+the FBX. Sphere and oriented-box primitives are bound to exact source skeleton
+joints in bone-local meter space; source cylinders are retained as evidence but
+block native construction until an exact target representation is accepted.
+`prepare-unreal` reflects the local Y basis required by the skeletal-import
+contract, converts source box half-extents to Unreal's full box dimensions, and
+retains numeric magnitudes under the imported scene-unit root scale.
+
+The editor construction kernel revalidates that scale and the imported recipe
+bones before creating transient analytic bodies. Persisting a reviewed
+production Physics Asset and proving live Chaos vehicle behavior are separate
+acceptance steps.
+
 ## Materials and damage
 
 Surface roles include body paint, glass, tire, wheel, metal, interior, light

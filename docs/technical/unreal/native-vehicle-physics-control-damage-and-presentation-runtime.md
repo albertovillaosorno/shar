@@ -290,21 +290,41 @@ and then applies Skeletal Mesh, Physics Asset, animation class, materials,
 publishing success; explicit rollback and failed commit restore the captured
 configuration.
 
-The source-physics handoff stops one layer before native Physics Asset creation.
+The source-physics handoff now reaches a bounded native construction kernel.
 Vehicle catalog v7 resolves each collision primitive to its exact source
 skeleton joint and records sphere, oriented-box, or cylinder geometry in
 `source-bone-local` meter space. Numeric recipe fields retain the Pure3D
 `float`/f32 contract. The handoff validates finite vectors, positive dimensions,
 unit axes, and proper orthonormal box bases without repairing source values.
 
-Grounding and FBX/Unreal axis or unit conversion are not applied to this recipe.
-The editor preparation boundary must derive those target transforms from the
-same skeletal-import policy and prove them against imported bone read-back.
+`prepare-unreal` projects supported sphere and oriented-box recipes into the
+current imported bone-local frame while blocking source cylinders rather than
+approximating them.
 
-This bounded transaction does not spawn the Pawn, create or validate live Chaos
-physics state, construct a source-derived vehicle Physics Asset, choose
-placement, or publish a world vehicle instance. Those remain later steps in the
-complete construction sequence above.
+`BuildTransientVehiclePhysicsAsset` then revalidates the imported semantic root,
+retained joint count, exact recipe bones, scene-unit root scale, and analytic
+geometry before constructing an unsaved `UPhysicsAsset`. Bodies preserve the
+recipe's first-bone order. The representative `sedana` automation uses the
+real `PortPreviewUnits` Skeletal Mesh and constructs five bodies: two chassis
+boxes on `sedanA` plus one sphere each on `w3`, `w2`, `w1`, and `w0`. It also
+rejects the old-scale import, a source joint count smaller than the retained
+Unreal skeleton, missing bones, non-positive box dimensions, and improper box
+bases.
+
+Unreal 5.8.1 retains 16 of the 19 source joints while preserving `sedanA` as
+root bone zero, so source joint count is an upper bound rather than an equality
+requirement.
+
+The kernel deliberately retains recipe magnitudes. The reviewed skeletal import
+places the meter-to-centimeter scene-unit scale on the imported root hierarchy;
+Unreal's articulated-body path obtains each bone transform and supplies it to
+body initialization, where analytic geometry consumes that inherited scale. This
+avoids applying a second numeric conversion to the source recipe.
+
+This bounded transaction still does not persist or review a generated Physics
+Asset package, spawn the Pawn, create and validate live Chaos vehicle physics,
+choose placement, or publish a world vehicle instance. Those remain later steps
+in the complete construction sequence above.
 
 ## Vehicle lifecycle states
 
