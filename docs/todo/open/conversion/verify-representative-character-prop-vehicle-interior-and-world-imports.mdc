@@ -265,17 +265,26 @@ the reviewed blend, alpha-test, alpha-compare, threshold, two-sided, lighting,
 texture-reference, diffuse, ambient, emissive, specular, and shininess state.
 
 `prepare-unreal` publishes that projection as release-index-bound
-`vehicle-materials.json`. Every slot remains explicitly native-blocked until a
-vehicle-specific material toolset is reviewed. A separate graph-review
-classifier identifies 429 `simple` unlit slots whose reviewed blend and alpha
-state can enter a vehicle-specific simple-unlit graph review; all 429 are also
-presentation-special, so graph candidacy does not make their runtime binding
-ready.
+`vehicle-materials.json`. A graph-review classifier identifies 429 `simple`
+unlit slots whose reviewed blend and alpha state can enter the vehicle-specific
+simple-unlit graph path; all 429 are also presentation-special, so graph
+candidacy does not make their runtime binding ready.
+
+A native `USharVehicleMaterialToolset` now accepts only that reviewed graph
+subset from exact verified PDDI fields: `simple`, unlit, blend None/Alpha/Add,
+alpha compare Greater, alpha-test state, and exact two-sidedness. World and
+vehicle selection policies remain separate; they share only a family-neutral
+texture/vertex-colour graph kernel. Unreal Engine 5.8.1 automation built and
+read back one-sided and two-sided transient masters across all three reviewed
+blend modes, verified alpha-discard construction, and proved that create-only
+vehicle masters remain unsaved. The existing world-material automation also
+passed unchanged after the shared-kernel extraction.
 
 `sedana` has eight ordered slots: two opaque lit base slots, one lit windshield
 glass slot, one unlit lens glass/light slot, and four unlit transparent
-light-emitter slots. These are verified handoff records, not native Unreal
-`MaterialInstance` assets.
+light-emitter slots. The unlit records can now drive reviewed transient master
+graph construction, but they remain verified handoff records rather than native
+vehicle `MaterialInstance` bindings.
 
 The broader P0 criterion remains open. The saved asset has not yet been bound
 into the representative production presentation, and source-derived material,
