@@ -37,8 +37,9 @@ use std::path::{Path, PathBuf};
 use serde_json::{Value, json};
 
 use super::model::{
-    EffectAnimationRecord, PartRecord, PhysicsPrimitiveRecord, PhysicsRigRecord,
-    PhysicsSidecarRecord, VehicleRecord,
+    EffectAnimationRecord, MaterialSlotRecord, PartRecord,
+    PhysicsPrimitiveRecord, PhysicsRigRecord, PhysicsSidecarRecord,
+    VehicleRecord,
 };
 use crate::domain::PipelineError;
 
@@ -59,7 +60,7 @@ pub(super) fn write_root_catalog(
     extracted_packages: usize,
 ) -> Result<(), PipelineError> {
     let value = json!({
-        "schema": "shar.vehicle-catalog.v7",
+        "schema": "shar.vehicle-catalog.v8",
         "boundary": {
             "source": concat!(
                 "original game P3D packages selected by the generated package ",
@@ -81,7 +82,8 @@ pub(super) fn write_root_catalog(
                 "hidden non-visual wheel proxies retained as physics evidence",
                 "effect animation controller, target, and texture occurrences",
                 "verbatim decoded collision and physics source members",
-                "bone-resolved collision recipes in source-local meter space"
+                "bone-resolved collision recipes in source-local meter space",
+                "exact FBX material slots with shader and texture evidence"
             ],
             "excluded": [
                 "validated Unreal collision and Chaos physics behavior",
@@ -151,6 +153,10 @@ pub(super) fn write_root_catalog(
             "shaders": records
                 .iter()
                 .map(|record| record.shaders.len())
+                .sum::<usize>(),
+            "material_slots": records
+                .iter()
+                .map(|record| record.material_slots.len())
                 .sum::<usize>(),
             "physics_sidecars": records
                 .iter()
@@ -250,6 +256,11 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
             "sha256": texture.sha256
         })).collect::<Vec<_>>(),
         "shaders": record.shaders,
+        "material_slots": record
+            .material_slots
+            .iter()
+            .map(material_slot_value)
+            .collect::<Vec<_>>(),
         "physics_sidecars": record
             .physics_sidecars
             .iter()
@@ -260,6 +271,37 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
             .iter()
             .map(physics_rig_value)
             .collect::<Vec<_>>()
+    })
+}
+
+/// Render one exact vehicle FBX material slot and its source evidence.
+fn material_slot_value(record: &MaterialSlotRecord) -> Value {
+    let semantics = record.semantics;
+    let texture = record.texture_path.as_ref().map(|path| {
+        json!({
+            "path": path,
+            "bytes": record.texture_bytes,
+            "sha256": record.texture_sha256,
+        })
+    });
+    json!({
+        "slot_name": record.slot_name,
+        "source_material_name": record.source_material_name,
+        "base_color_rgba8": record.base_color_rgba8,
+        "surface_semantics": {
+            "transparent": semantics.is_transparent(),
+            "glass": semantics.is_glass(),
+            "mirror": semantics.is_mirror(),
+            "reflective": semantics.is_reflective(),
+            "light_emitter": semantics.is_light_emitter(),
+            "visual_effect": semantics.is_visual_effect(),
+        },
+        "shader": {
+            "path": record.shader_path,
+            "bytes": record.shader_bytes,
+            "sha256": record.shader_sha256,
+        },
+        "texture": texture,
     })
 }
 

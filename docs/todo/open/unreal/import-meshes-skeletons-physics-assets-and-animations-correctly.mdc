@@ -97,3 +97,14 @@ Unreal
 process reads all three back with their expected classes and `dirty=false`, and
 the saved file hashes survive the restart unchanged. Binding those reviewed
 assets into production vehicle construction remains open work.
+
+Vehicle catalog v8 now closes the material-slot handoff ambiguity without
+synthesizing target materials. A fresh 88-vehicle replay publishes 1,029 exact
+FBX material slots and independently verifies every referenced shader and
+texture artifact by size and SHA-256. `sedana` has eight ordered slots,
+including glass and light-emitter variants derived by the same planner used by
+FBX serialization.
+
+The Unreal catalog verifier requires the slot count to match the FBX summary and
+rechecks shader schema and identity. Native `MaterialInstance` creation remains
+open work.

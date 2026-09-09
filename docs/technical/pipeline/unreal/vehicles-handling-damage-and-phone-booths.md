@@ -108,10 +108,17 @@ The vehicle definition references explicit native profiles for:
 Player-facing speed, acceleration, toughness, and handling ratings are derived
 presentation metadata. They never replace real physics parameters.
 
-Vehicle catalog v7 also publishes audited source-physics recipes separately from
+Vehicle catalog v8 retains the audited source-physics recipes separately from
 the FBX. Sphere and oriented-box primitives are bound to exact source skeleton
 joints in bone-local meter space; source cylinders are retained as evidence but
 block native construction until an exact target representation is accepted.
+
+Vehicle catalog v8 additionally records the exact material slots emitted by the
+skinned FBX writer in first authored-use order. Every slot binds its effective
+surface semantics and base color to the exact published shader JSON and optional
+texture payload with byte counts and SHA-256. The Unreal catalog verifier checks
+those files and shader identities fail-closed, but still does not claim that a
+native `MaterialInstance` has been created.
 `prepare-unreal` reflects the local Y basis required by the skeletal-import
 contract, converts source box half-extents to Unreal's full box dimensions, and
 retains numeric magnitudes under the imported scene-unit root scale.
