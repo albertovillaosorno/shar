@@ -366,10 +366,20 @@ supplies those material lighting values directly, so a world simple-unlit
 master is not a valid vehicle-lit substitute. A graph-review classifier keeps
 material-graph feasibility separate from presentation readiness: 429 verified
 slots are `simple` and unlit with reviewed blend/alpha state, but all 429 also
-carry special presentation semantics. Vehicle light slots remain separately
-blocked because source presentation can mutate their blend and visibility at
-runtime. No native vehicle Material Instance is claimed until a vehicle-specific
-toolset reproduces the reviewed family and read-back contract.
+carry special presentation semantics.
+
+A vehicle-specific native toolset now reproduces only that simple-unlit graph
+subset. Its policy consumes exact verified PDDI family, lit, blend, alpha-test,
+alpha-compare, and two-sided fields and fails closed outside the reviewed
+subset. It shares the family-neutral texture-times-vertex-colour graph kernel
+with world materials without sharing world selection or culling policy. Native
+automation verifies all three reviewed blend modes, Greater alpha discard,
+exact one- and two-sided state, independent graph read-back, and create-only
+unsaved master construction.
+
+Vehicle light slots remain separately blocked because source presentation can
+mutate their blend and visibility at runtime; no vehicle Material Instance or
+presentation-ready binding is claimed yet.
 
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative

@@ -35,19 +35,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Materials/SharSimpleUnlitMaterialGraph.h"
 
 class UMaterial;
 
-enum class ESharWorldBlendFamily : uint8
-{
-    Opaque,
-    SourceAlpha,
-    Additive,
-};
-
 struct FSharSimpleUnlitWorldMasterRecipe
 {
-    ESharWorldBlendFamily Blend = ESharWorldBlendFamily::Opaque;
+    ESharSimpleUnlitBlend Blend = ESharSimpleUnlitBlend::Opaque;
     bool bAlphaTest = false;
 };
 
