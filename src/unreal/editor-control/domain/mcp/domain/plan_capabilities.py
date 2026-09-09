@@ -91,11 +91,103 @@ class PlanCapabilityReport(NamedTuple):
         }
 
 
+class ImportCapabilityReport(NamedTuple):
+    """Public-safe live-schema audit for an exact selected import set."""
+
+    revision: str
+    import_count: int
+    required_tool_count: int
+    available_tool_count: int
+    missing_tools: tuple[str, ...]
+    incompatible_tools: tuple[str, ...]
+
+    @property
+    def complete(self) -> bool:
+        """Whether every selected import has its exact native surface."""
+        return not self.missing_tools and not self.incompatible_tools
+
+    def to_json(self) -> JsonObject:
+        """Render selected import capability coverage."""
+        return {
+            "availableToolCount": self.available_tool_count,
+            "complete": self.complete,
+            "importCount": self.import_count,
+            "incompatibleTools": list(self.incompatible_tools),
+            "missingTools": list(self.missing_tools),
+            "requiredToolCount": self.required_tool_count,
+            "revision": self.revision,
+        }
+
+
+def required_import_toolsets(
+    imports: tuple[NativeImportStep, ...],
+) -> tuple[str, ...]:
+    """Return exact live toolsets needed by one selected import set."""
+    return tuple(
+        sorted({
+            requirement.toolset_name
+            for requirement in _requirements_for_imports(imports)
+        })
+    )
+
+
+def audit_import_capabilities(
+    revision: str,
+    imports: tuple[NativeImportStep, ...],
+    toolsets: tuple[ToolsetDefinition, ...],
+) -> ImportCapabilityReport:
+    """Check selected import schemas without claiming plan completeness."""
+    if not revision:
+        fail_protocol("selected import capability revision is empty")
+    definitions = {definition.name: definition for definition in toolsets}
+    requirements = _requirements_for_imports(imports)
+    missing: list[str] = []
+    incompatible: list[str] = []
+    available = 0
+    for requirement in requirements:
+        definition = definitions.get(requirement.toolset_name)
+        tool = None if definition is None else next(
+            (
+                item
+                for item in definition.tools
+                if item.name == requirement.tool_name
+            ),
+            None,
+        )
+        if tool is None:
+            missing.append(requirement.tool_name)
+            continue
+        available += 1
+        try:
+            validate_tool_arguments(
+                tool.input_schema,
+                requirement.input_example,
+                context=f"tool {tool.name} input schema",
+            )
+            output_schema = _require_output_schema(tool.output_schema)
+            validate_tool_arguments(
+                output_schema,
+                requirement.output_example,
+                context=f"tool {tool.name} output schema",
+            )
+        except ProtocolError:
+            incompatible.append(requirement.tool_name)
+    return ImportCapabilityReport(
+        revision=revision,
+        import_count=len(imports),
+        required_tool_count=len(requirements),
+        available_tool_count=available,
+        missing_tools=tuple(sorted(missing)),
+        incompatible_tools=tuple(sorted(incompatible)),
+    )
+
+
 def required_toolsets(compiled: CompiledExecutionPlan) -> tuple[str, ...]:
     """Return exact live toolset identities needed by compiled imports."""
     return tuple(
         sorted({
-            requirement.toolset_name for requirement in _requirements(compiled)
+            requirement.toolset_name
+            for requirement in _requirements_for_imports(compiled.imports)
         })
     )
 
@@ -106,7 +198,7 @@ def audit_plan_capabilities(
 ) -> PlanCapabilityReport:
     """Check required native schemas without invoking tools."""
     definitions = {definition.name: definition for definition in toolsets}
-    requirements = _requirements(compiled)
+    requirements = _requirements_for_imports(compiled.imports)
     missing: list[str] = []
     incompatible: list[str] = []
     available = 0
@@ -158,13 +250,13 @@ def _require_output_schema(schema: JsonObject | None) -> JsonObject:
     return schema
 
 
-def _requirements(
-    compiled: CompiledExecutionPlan,
+def _requirements_for_imports(
+    imports: tuple[NativeImportStep, ...],
 ) -> tuple[NativeToolRequirement, ...]:
-    if not compiled.imports:
+    if not imports:
         return ()
     first_by_route: dict[str, NativeImportStep] = {}
-    for step in compiled.imports:
+    for step in imports:
         first_by_route.setdefault(step.route_id, step)
     requirements = [
         _import_requirement(step)
@@ -173,7 +265,7 @@ def _requirements(
     media_step = first_by_route.get("file-media-source-hap-v1")
     if media_step is not None:
         requirements.extend(_media_payload_requirements(media_step))
-    example_outputs = compiled.imports[0].outputs
+    example_outputs = imports[0].outputs
     example_path = example_outputs[0].package_path
     example_paths = [output.package_path for output in example_outputs]
     requirements.extend((

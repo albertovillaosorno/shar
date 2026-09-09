@@ -130,6 +130,7 @@ def build_plan_bundle(
     static_mesh_source_revision: str | None = None,
     with_skeletal_mesh_operation: bool = False,
     skeletal_mesh_source_revision: str | None = None,
+    skeletal_mesh_source_path: str = "fbx-assets/skeletal/model.fbx",
     with_media_operation: bool = False,
     media_source_revision: str | None = None,
     with_construction_operation: bool = False,
@@ -158,7 +159,8 @@ def build_plan_bundle(
         if with_skeletal_mesh_operation and plan_id == "asset-import-plan":
             operations.append(
                 _skeletal_mesh_operation(
-                    skeletal_mesh_source_revision or "f" * 64
+                    skeletal_mesh_source_revision or "f" * 64,
+                    skeletal_mesh_source_path,
                 )
             )
         if with_media_operation and plan_id == "asset-import-plan":
@@ -242,6 +244,7 @@ def write_plan_bundle(
     static_mesh_source_revision: str | None = None,
     with_skeletal_mesh_operation: bool = False,
     skeletal_mesh_source_revision: str | None = None,
+    skeletal_mesh_source_path: str = "fbx-assets/skeletal/model.fbx",
     with_media_operation: bool = False,
     media_source_revision: str | None = None,
     with_construction_operation: bool = False,
@@ -257,6 +260,7 @@ def write_plan_bundle(
         static_mesh_source_revision=static_mesh_source_revision,
         with_skeletal_mesh_operation=with_skeletal_mesh_operation,
         skeletal_mesh_source_revision=skeletal_mesh_source_revision,
+        skeletal_mesh_source_path=skeletal_mesh_source_path,
         with_media_operation=with_media_operation,
         media_source_revision=media_source_revision,
         with_construction_operation=with_construction_operation,
@@ -425,6 +429,7 @@ def _static_mesh_operation(
 
 def _skeletal_mesh_operation(
     source_revision: str,
+    source_path: str,
 ) -> OrderedDict[str, JsonValue]:
     fields: OrderedDict[str, JsonValue] = OrderedDict((
         ("operation_id", ""),
@@ -432,7 +437,7 @@ def _skeletal_mesh_operation(
         ("source_identity", "skeletal-mesh-source"),
         ("source_format", "fbx"),
         ("target_family", "model"),
-        ("source_path", "fbx-assets/skeletal/model.fbx"),
+        ("source_path", source_path),
         ("source_revision", source_revision),
         (
             "destination",

@@ -109,6 +109,16 @@ verification resolves `vehicle-assets/...` only below
 `.cache/pipeline/vehicle-assets/`, rejects redirected ancestry, and verifies the
 bound SHA-256 before general execution.
 
+Vehicle physics prerequisites have their own three-gate transaction. The local
+`vehicle-physics-prerequisites-preflight` selects only skeletal imports required
+by native-ready rigs and verifies just those physical FBXs. Capability audit
+validates `ImportSkeletalMesh` plus AssetTools read-back, save, and compensation
+schemas. Apply remains create-only and reuses the reviewed import transaction
+without weakening global `plan-apply` completeness.
+
+The current release selects 87 vehicle FBXs for 135 ready rigs; the
+cylinder-only `icecream` dependency is not imported by this transaction.
+
 Vehicle Physics Asset publication adds a separate three-gate construction
 transaction after the Skeletal Mesh import is available. `vehicle-physics-
 preflight` remains local: it requires the release index to bind exactly one

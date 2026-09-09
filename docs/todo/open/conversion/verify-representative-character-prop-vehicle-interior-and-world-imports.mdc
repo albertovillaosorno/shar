@@ -206,6 +206,18 @@ editor-control source verifier confines `vehicle-assets/...` beneath the
 pipeline cache and rechecks regular-file ancestry, stable bytes, and SHA-256
 before any general plan execution can consume that source.
 
+A fresh real `prepare-unreal` replay published release bundle
+`212926972e3bdf739e2dc395ee9a435182ea5978298678d5406b0f92007cebca`
+with all 88 vehicle prerequisites ready while preserving 957 semantic blockers.
+The dedicated prerequisite preflight then selected the 87 distinct vehicle FBXs
+needed by 135 native-ready physics rigs, verified 56,930,932 source bytes, and
+left the two unsupported cylinder rigs blocked. Its create-only capability/apply
+transaction reuses the reviewed Skeletal Mesh import/save/rollback boundary
+without allowing the incomplete global plan to masquerade as complete. A
+synthetic Streamable HTTP integration proves that this specialized transaction
+can import its Skeletal Mesh and Skeleton while the bundle still reports a
+semantic blocker, then lets vehicle-physics publication consume that dependency.
+
 The outer editor-control transaction now consumes the release-index-bound
 `vehicle-physics.json`, rejoins every ready rig to the exact reviewed skeletal
 FBX import, audits the six live construction and AssetTools schemas, requires
