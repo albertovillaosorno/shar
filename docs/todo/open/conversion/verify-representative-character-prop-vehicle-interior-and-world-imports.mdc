@@ -97,18 +97,16 @@ three sampled vehicle material slots have no material assigned. Compensating
 deletion removes the mesh, Skeleton, and temporary folder, with independent
 existence checks reporting all three absent afterward.
 
-This proves the dedicated vehicle catalog reaches Unreal's skeletal presentation
-boundary without flattening the vehicle into a static-mesh transaction. The
-broader acceptance criterion remains open for the native vehicle construction
-boundary: Physics Asset, materials, wheel definitions, and Chaos vehicle
-composition still require their reviewed typed construction transaction.
+This proved the dedicated vehicle catalog reached Unreal's skeletal presentation
+boundary without flattening the vehicle into a static-mesh transaction. At that
+stage, the broader native construction boundary still lacked the reviewed
+Physics Asset, materials, wheel definitions, and Chaos composition.
 
-A live native `SharVehicles` automation run after the skeletal smoke passes all
-three registered tests with zero warnings or errors. Definition validation,
-damage runtime, and selection transaction are therefore green; no native
-vehicle-construction test or construction object exists in the current module.
-This narrows the remaining P0 work to the typed construction boundary rather
-than another catalog or skeletal-import repair.
+The native `SharVehicles` automation run at that stage passed all three then-
+registered tests with zero test warnings or errors. Definition validation,
+damage runtime, and selection were green, while native vehicle construction had
+not yet been implemented. That result narrowed the next P0 step to the typed
+construction boundary rather than another catalog or skeletal-import repair.
 
 The typed native presentation boundary now exists without changing the
 identity/tuning contract in `USharVehicleDefinition`.
@@ -150,29 +148,33 @@ passed after adding a missing-Physics-Asset-body regression. This proves the
 native transaction fails closed on wheel/body mismatch without claiming that a
 source vehicle Physics Asset already exists.
 
-The dedicated vehicle catalog now preserves the missing source-physics handoff.
-Schema v6 publishes every decoded collision and physics member beside each
-vehicle FBX with its package-member identity, source path and ordinal, exact
-byte
-count, and SHA-256. A complete isolated replay again publishes all 88
-vehicles
-from 89 car packages and records 274 physics sidecars. An independent audit
-matched all 274 published sidecars byte-for-byte against their indexed source
-members and against their declared hashes.
+The dedicated vehicle catalog now preserves a typed source-physics handoff.
+Schema v7 keeps every decoded collision and physics member verbatim beside each
+vehicle FBX and additionally resolves collision primitives to exact source
+skeleton bones. Recipes remain in `source-bone-local` meter space and preserve
+the original Pure3D `float`/f32 semantics rather than inventing f64 precision.
+They validate finite values, positive dimensions, unit axes, and proper
+orthonormal oriented-box bases without repairing authored values.
 
-The Unreal-side catalog verifier requires both collision and physics families
-for every vehicle, validates JSON schema, canonical path/kind/ordinal identity,
-regular-file ancestry, size and hash, and rejects the previous v5 schema. It
-still promotes only the FBX as import evidence.
+A fresh isolated v7 replay publishes all 88 vehicles from 89 car packages with
+274 verbatim physics sidecars, 137 bone-resolved rigs, and 1,118 collision
+primitives: 569 oriented boxes, 547 spheres, and 2 cylinders. An independent
+audit matched all 274 sidecars byte-for-byte to normalized source members and
+reconstructed all 137 recipes from source JSON, comparing every numeric field by
+its IEEE-754 f32 bit pattern. `sedana` retains ordinals 321/361 and resolves one
+19-joint rig with two chassis oriented boxes plus four wheel spheres on
+`w3`, `w2`, `w1`, and `w0`.
 
-Before publication, the exporter now joins same-name skeleton, collision, and
-physics rigs and rejects mismatched joint counts or out-of-range collision joint
-references. A fresh complete replay validates all 137 source rigs across the 88
-vehicles while preserving the same 274 sidecars and `sedana` ordinals 321/361.
+The Unreal-side catalog verifier requires both source physics families and the
+matching v7 recipes for every rig, validates canonical identities, ancestry,
+size, hashes, counts, dimensions, axes, and bases, and rejects the previous v6
+schema. It still promotes only the FBX as import evidence; recipes are verified
+handoff data, not a claim that Unreal collision already exists.
 
 The broader P0 criterion remains open for the representative source vehicle.
-The bounded test uses transient native assets, while the v6 physics payloads are
-verified source evidence only. The pipeline does not yet create a reviewed
-`sedana` Physics Asset, material, animation, or wheel-definition asset from that
-evidence, spawn the vehicle into a world, create live Chaos physics state, or
-validate driven behavior against source evidence.
+The bounded construction test still uses transient native assets, while v7
+physics recipes deliberately stop before target-space conversion. The editor
+pipeline does not yet create and read back a reviewed `sedana` Physics Asset,
+material, animation, or wheel-definition asset, spawn the vehicle into a world,
+create live Chaos physics state, or validate driven behavior against source
+evidence.
