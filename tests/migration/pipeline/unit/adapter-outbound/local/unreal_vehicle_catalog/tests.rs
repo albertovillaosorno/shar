@@ -134,6 +134,7 @@ fn write_catalog(
         "counts": {
             "vehicles": 1,
             "material_slots": 1,
+            "parts": 1,
             "physics_sidecars": 2,
             "physics_rigs": 1,
             "physics_primitives": 1
@@ -172,6 +173,14 @@ fn write_catalog(
                     "bytes": texture_bytes().len(),
                     "sha256": digest_hex(texture_bytes())
                 }
+            }],
+            "parts": [{
+                "name": "vehicle-body-part",
+                "source_mesh": "vehicle-body-mesh",
+                "role": "body",
+                "surface_semantics": [],
+                "shader": "sedanA_m",
+                "bones": ["sedanA"]
             }],
             "physics_sidecars": [{
                 "path": "physics/collision__ordinal_000321.json",

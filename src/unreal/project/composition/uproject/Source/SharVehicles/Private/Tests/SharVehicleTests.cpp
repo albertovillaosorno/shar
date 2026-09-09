@@ -32,10 +32,13 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include <initializer_list>
+
 #include "Vehicles/SharVehicleConstructionTransaction.h"
 #include "Vehicles/SharVehicleDefinition.h"
 #include "Vehicles/SharVehiclePawn.h"
 #include "Vehicles/SharVehiclePresentationDefinition.h"
+#include "Vehicles/SharVehiclePresentationState.h"
 #include "Vehicles/SharVehicleRuntimeState.h"
 #include "Vehicles/SharVehicleSelectionTransaction.h"
 
@@ -115,6 +118,25 @@ static void FillVehiclePresentationBase(
     Presentation.RigProfileId = FName(TEXT("vehicle_sedan_v1"));
     Presentation.SemanticPreparationRevision =
         TEXT("sha256:vehicle_semantic_presentation_v1");
+}
+
+
+static FSharVehicleLightPresentationBinding MakeLightBinding(
+    const TCHAR* BindingId,
+    const ESharVehicleLightPresentationRole Role,
+    const TCHAR* BoneName,
+    std::initializer_list<int32> MaterialSlots
+)
+{
+    FSharVehicleLightPresentationBinding Binding;
+    Binding.BindingId = FName(BindingId);
+    Binding.Role = Role;
+    Binding.BoneName = FName(BoneName);
+    for (const int32 SlotIndex : MaterialSlots)
+    {
+        Binding.MaterialSlotIndices.Add(SlotIndex);
+    }
+    return Binding;
 }
 
 static FSharVehicleWheelPresentationBinding MakeWheelBinding(
@@ -263,6 +285,14 @@ MakeResolvedVehiclePresentation()
     Presentation->MaterialInstances = {
         TSoftObjectPtr<UMaterialInterface>(Material),
     };
+    Presentation->LightBindings = {
+        MakeLightBinding(
+            TEXT("headlight_primary"),
+            ESharVehicleLightPresentationRole::Headlight,
+            TEXT("root"),
+            {0}
+        ),
+    };
     for (FSharVehicleWheelPresentationBinding& Wheel : Presentation->Wheels)
     {
         Wheel.WheelClass = TSoftClassPtr<UChaosVehicleWheel>(
@@ -285,6 +315,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharVehiclePresentationDefinitionValidationTest,
     "SHAR.Vehicles.Presentation.Validation",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehiclePresentationLightRuntimeTest,
+    "SHAR.Vehicles.Runtime.PresentationLights",
     EAutomationTestFlags::EditorContext
         | EAutomationTestFlags::ClientContext
         | EAutomationTestFlags::CommandletContext
@@ -363,6 +401,132 @@ bool FSharVehiclePresentationDefinitionValidationTest::RunTest(
     TestFalse(
         TEXT("Duplicate wheel rig binding is rejected"),
         Errors.IsEmpty()
+    );
+
+    Presentation = MakeValidVehiclePresentation();
+    Presentation->LightBindings = {
+        MakeLightBinding(
+            TEXT("brake_primary"),
+            ESharVehicleLightPresentationRole::Brake,
+            TEXT("brake1"),
+            {0}
+        ),
+    };
+    Errors.Reset();
+    Presentation->GatherValidationErrors(Errors);
+    TestTrue(TEXT("Valid light binding passes"), Errors.IsEmpty());
+
+    Presentation->LightBindings[0].MaterialSlotIndices = {1};
+    Errors.Reset();
+    Presentation->GatherValidationErrors(Errors);
+    TestFalse(TEXT("Out-of-range light slot is rejected"), Errors.IsEmpty());
+
+    Presentation = MakeValidVehiclePresentation();
+    Presentation->LightBindings = {
+        MakeLightBinding(
+            TEXT("brake_primary"),
+            ESharVehicleLightPresentationRole::Brake,
+            TEXT("brake1"),
+            {0}
+        ),
+        MakeLightBinding(
+            TEXT("brake_secondary"),
+            ESharVehicleLightPresentationRole::Brake,
+            TEXT("brake1"),
+            {0}
+        ),
+    };
+    Errors.Reset();
+    Presentation->GatherValidationErrors(Errors);
+    TestFalse(TEXT("Duplicate light target is rejected"), Errors.IsEmpty());
+    return true;
+}
+
+
+bool FSharVehiclePresentationLightRuntimeTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    auto* Presentation = MakeValidVehiclePresentation();
+    Presentation->LightBindings = {
+        MakeLightBinding(
+            TEXT("headlight_primary"),
+            ESharVehicleLightPresentationRole::Headlight,
+            TEXT("hll"),
+            {0}
+        ),
+        MakeLightBinding(
+            TEXT("brake_primary"),
+            ESharVehicleLightPresentationRole::Brake,
+            TEXT("brake1"),
+            {0}
+        ),
+        MakeLightBinding(
+            TEXT("reverse_primary"),
+            ESharVehicleLightPresentationRole::Reverse,
+            TEXT("rev1"),
+            {0}
+        ),
+    };
+    auto* State = NewObject<USharVehiclePresentationState>();
+    TestTrue(
+        TEXT("Presentation light state configures"),
+        State->Configure(Presentation)
+    );
+    bool bVisible = true;
+    TestTrue(
+        TEXT("Configured headlight binding resolves"),
+        State->GetBindingVisibility(FName(TEXT("headlight_primary")), bVisible)
+    );
+    TestFalse(TEXT("Headlights start hidden"), bVisible);
+    TestTrue(TEXT("Headlights enable"), State->SetHeadlightsEnabled(true));
+    TestTrue(
+        TEXT("Enabled headlight binding resolves"),
+        State->GetBindingVisibility(FName(TEXT("headlight_primary")), bVisible)
+    );
+    TestTrue(TEXT("Headlight becomes visible"), bVisible);
+
+    TestTrue(TEXT("Brake state enables"), State->SetBrakeState(true, false));
+    TestTrue(
+        TEXT("Brake binding resolves"),
+        State->GetBindingVisibility(FName(TEXT("brake_primary")), bVisible)
+    );
+    TestTrue(TEXT("Brake binding becomes visible"), bVisible);
+    TestTrue(TEXT("Reverse state enables"), State->SetBrakeState(true, true));
+    TestTrue(
+        TEXT("Brake binding still resolves"),
+        State->GetBindingVisibility(FName(TEXT("brake_primary")), bVisible)
+    );
+    TestFalse(TEXT("Reverse suppresses brake binding"), bVisible);
+    TestTrue(
+        TEXT("Reverse binding resolves"),
+        State->GetBindingVisibility(FName(TEXT("reverse_primary")), bVisible)
+    );
+    TestTrue(TEXT("Reverse binding becomes visible"), bVisible);
+
+    TestTrue(
+        TEXT("Damage can suppress presentation lights"),
+        State->SetLightsSuppressedByDamage(true)
+    );
+    TestTrue(
+        TEXT("Suppressed reverse binding resolves"),
+        State->GetBindingVisibility(FName(TEXT("reverse_primary")), bVisible)
+    );
+    TestFalse(TEXT("Damage suppression hides lights"), bVisible);
+    TestTrue(
+        TEXT("Damage suppression clears"),
+        State->SetLightsSuppressedByDamage(false)
+    );
+    TestTrue(TEXT("Zero fade is accepted"), State->SetFadeOpacity(0.0F));
+    TestTrue(
+        TEXT("Faded reverse binding resolves"),
+        State->GetBindingVisibility(FName(TEXT("reverse_primary")), bVisible)
+    );
+    TestFalse(TEXT("Zero fade hides lights"), bVisible);
+    TestFalse(
+        TEXT("Out-of-range fade is rejected"),
+        State->SetFadeOpacity(1.1F)
     );
     return true;
 }
@@ -546,6 +710,20 @@ bool FSharVehicleConstructionTransactionTest::RunTest(
     TestTrue(
         TEXT("Rejected construction remains idle"),
         InvalidTransaction->GetState() == ESharVehicleConstructionState::Idle
+    );
+
+    auto* InvalidLightPresentation = MakeResolvedVehiclePresentation();
+    InvalidLightPresentation->LightBindings[0].BoneName =
+        FName(TEXT("missing_light_bone"));
+    auto* InvalidLightTransaction =
+        NewObject<USharVehicleConstructionTransaction>();
+    TestFalse(
+        TEXT("Construction rejects a light absent from the Skeletal Mesh"),
+        InvalidLightTransaction->Prepare(
+            Pawn,
+            Vehicle,
+            InvalidLightPresentation
+        )
     );
 
     auto* MissingBodyPresentation = MakeResolvedVehiclePresentation();

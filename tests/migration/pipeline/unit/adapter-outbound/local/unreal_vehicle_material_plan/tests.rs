@@ -39,6 +39,7 @@ use super::{
 use crate::adapters::driven::local::unreal_vehicle_catalog::{
     VerifiedVehicleFbxArtifact, VerifiedVehicleMaterialArtifact,
     VerifiedVehicleMaterialRaster, VerifiedVehicleMaterialSemantics,
+    VerifiedVehiclePresentationPart,
 };
 use crate::domain::UnrealFbxArtifactEvidence;
 
@@ -93,6 +94,7 @@ fn vehicle() -> VerifiedVehicleFbxArtifact {
             texture_size_bytes: Some(30),
             texture_sha256: Some("c".repeat(64)),
         }],
+        presentation_parts: vec![],
         physics_sidecars: Vec::new(),
         physics_rigs: Vec::new(),
     }
@@ -116,6 +118,10 @@ fn renders_exact_vehicle_material_projection_and_blockers()
             .pointer("/counts/source_projection_ready_slots")
             .and_then(Value::as_u64)
             != Some(1)
+        || value
+            .pointer("/counts/native_graph_ready_slots")
+            .and_then(Value::as_u64)
+            != Some(0)
         || value
             .pointer("/counts/native_ready_slots")
             .and_then(Value::as_u64)
@@ -150,7 +156,8 @@ fn renders_exact_vehicle_material_projection_and_blockers()
         .collect::<Vec<_>>();
     if blocker_names
         != [
-            "vehicle-native-material-toolset-not-reviewed",
+            "vehicle-material-instance-publication-not-reviewed",
+            "vehicle-native-material-graph-not-reviewed",
             "vehicle-lit-master-not-reviewed",
         ]
     {
@@ -165,21 +172,107 @@ fn renders_exact_vehicle_material_projection_and_blockers()
 fn simple_unlit_graph_candidate_stays_separate_from_presentation_readiness()
 -> Result<(), String> {
     let mut vehicle = vehicle();
+    {
+        let [slot] = vehicle.material_slots.as_mut_slice() else {
+            return Err(
+                "vehicle material fixture cardinality drifted".to_owned(),
+            );
+        };
+        slot.raster.lit = false;
+        slot.raster.blend_mode = 2;
+        slot.semantics.light_emitter = true;
+        slot.semantics.transparent = true;
+        if !is_simple_unlit_graph_candidate(slot) {
+            return Err(
+                "reviewed simple-unlit graph candidate was lost".to_owned(),
+            );
+        }
+    }
+    let text = render_vehicle_material_plan(Some(
+        std::slice::from_ref(&vehicle),
+    ))
+        .map_err(|error| error.to_string())?;
+    let value = serde_json::from_str::<Value>(&text)
+        .map_err(|error| error.to_string())?;
+    if value
+        .pointer("/counts/native_graph_ready_slots")
+        .and_then(Value::as_u64)
+        != Some(1)
+        || value
+            .pointer("/counts/native_ready_slots")
+            .and_then(Value::as_u64)
+            != Some(0)
+        || value
+            .pointer("/vehicles/0/slots/0/native_status")
+            .and_then(Value::as_str)
+            != Some("blocked")
+    {
+        return Err("graph readiness became native readiness".to_owned());
+    }
     let [slot] = vehicle.material_slots.as_mut_slice() else {
         return Err("vehicle material fixture cardinality drifted".to_owned());
     };
-    slot.raster.lit = false;
-    slot.raster.blend_mode = 2;
-    slot.semantics.light_emitter = true;
-    slot.semantics.transparent = true;
-    if !is_simple_unlit_graph_candidate(slot) {
-        return Err("reviewed simple-unlit graph candidate was lost".to_owned());
-    }
     slot.raster.blend_mode = 3;
     if is_simple_unlit_graph_candidate(slot) {
         return Err(
             "unreviewed subtract blend became a graph candidate".to_owned(),
         );
+    }
+    Ok(())
+}
+
+
+#[test]
+fn renders_verified_dynamic_light_part_binding() -> Result<(), String> {
+    let mut vehicle = vehicle();
+    let [slot] = vehicle.material_slots.as_mut_slice() else {
+        return Err("vehicle material fixture cardinality drifted".to_owned());
+    };
+    slot.raster.lit = false;
+    slot.raster.blend_mode = 2;
+    slot.semantics.transparent = true;
+    slot.semantics.light_emitter = true;
+    vehicle.presentation_parts.push(VerifiedVehiclePresentationPart {
+        name: "brake1shape__light-emitter".to_owned(),
+        source_mesh: "brake1Shape__joint_06__instance_00".to_owned(),
+        role: "light-emitter".to_owned(),
+        shader: "sedanA_m".to_owned(),
+        surface_semantics: vec![
+            "transparent".to_owned(),
+            "light-emitter".to_owned(),
+        ],
+        bones: vec!["brake1".to_owned()],
+    });
+    let text = render_vehicle_material_plan(Some(
+        std::slice::from_ref(&vehicle),
+    ))
+        .map_err(|error| error.to_string())?;
+    let value = serde_json::from_str::<Value>(&text)
+        .map_err(|error| error.to_string())?;
+    let binding = value
+        .pointer("/vehicles/0/dynamic_light_bindings/0")
+        .ok_or_else(|| "vehicle dynamic light binding is missing".to_owned())?;
+    if binding
+        .get("semantic_role")
+        .and_then(Value::as_str)
+        != Some("brake")
+        || binding.get("bone_name").and_then(Value::as_str) != Some("brake1")
+        || binding.get("material_slot_indices")
+            != Some(&serde_json::json!([0]))
+        || binding
+            .get("slot_join_status")
+            .and_then(Value::as_str)
+            != Some("unique")
+        || value
+            .pointer("/counts/dynamic_light_bindings")
+            .and_then(Value::as_u64)
+            != Some(1)
+        || value
+            .pointer("/counts/unique_slot_light_bindings")
+            .and_then(Value::as_u64)
+            != Some(1)
+    {
+        return Err("vehicle dynamic light binding drifted".to_owned());
     }
     Ok(())
 }

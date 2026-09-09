@@ -44,6 +44,15 @@ class UPhysicsAsset;
 class USkeletalMesh;
 class USkeleton;
 
+/** Closed semantic role for one dynamic vehicle light presentation binding. */
+UENUM(BlueprintType)
+enum class ESharVehicleLightPresentationRole : uint8
+{
+    Headlight,
+    Brake,
+    Reverse,
+};
+
 /** One native wheel class bound to one semantic wheel and rig location. */
 USTRUCT(BlueprintType)
 struct SHARVEHICLES_API FSharVehicleWheelPresentationBinding
@@ -66,6 +75,30 @@ struct SHARVEHICLES_API FSharVehicleWheelPresentationBinding
         meta = (AssetBundles = "Gameplay")
     )
     TSoftClassPtr<UChaosVehicleWheel> WheelClass;
+};
+
+/** One semantic light role bound to one rig location and material set. */
+USTRUCT(BlueprintType)
+struct SHARVEHICLES_API FSharVehicleLightPresentationBinding
+{
+    GENERATED_BODY()
+
+    /** Canonical binding identity independent of source shader naming. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Light")
+    FName BindingId;
+
+    /** Closed semantic light role consumed by presentation runtime. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Light")
+    ESharVehicleLightPresentationRole Role =
+        ESharVehicleLightPresentationRole::Headlight;
+
+    /** Exact validated skeletal bone anchoring this presentation binding. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Light")
+    FName BoneName;
+
+    /** Material slots affected by this semantic light binding. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Light")
+    TArray<int32> MaterialSlotIndices;
 };
 
 /** Complete final native presentation for one drivable vehicle variant. */
@@ -128,6 +161,11 @@ public:
         meta = (AssetBundles = "Presentation")
     )
     TArray<TSoftObjectPtr<UMaterialInterface>> MaterialInstances;
+
+    /** Semantic dynamic-light bindings resolved from reviewed source
+     * evidence. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Presentation")
+    TArray<FSharVehicleLightPresentationBinding> LightBindings;
 
     /** Native wheel classes and exact rig bindings in authored wheel order. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay")

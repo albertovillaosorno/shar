@@ -286,6 +286,29 @@ light-emitter slots. The unlit records can now drive reviewed transient master
 graph construction, but they remain verified handoff records rather than native
 vehicle `MaterialInstance` bindings.
 
+Vehicle material evidence v2 also verifies all 3,341 semantic part records and
+retains their exact source-mesh, shader, surface-semantic, and rig-bone joins.
+Across the corpus it derives 1,726 standard light bindings: 320 brake, 286
+reverse, 560 left-headlight, and 560 right-headlight bindings. Of those, 1,722
+resolve one exact material slot and four retain ambiguous joins as blockers.
+
+Another 120 light-emitter part/bone pairs, including sirens, neon, and special
+VFX, remain deliberately unclassified. `sedana` has 22 standard dynamic-light
+bindings and all 22 resolve uniquely. The native presentation definition now
+stores closed Headlight/Brake/Reverse roles with exact bone and material-slot
+bindings rather than shader-name runtime conventions.
+
+Unreal Engine 5.8.1 automation passes all six `SHAR.Vehicles` tests, including
+`Runtime.PresentationLights`. The transient presentation state reproduces the
+reviewed headlight, brake-versus-reverse, damage-suppression, and fade
+visibility rules without mutating materials. The source selects reverse lights
+while braking in reverse, so reverse and
+brake visibility remain mutually exclusive in that reviewed state.
+
+No vehicle Material Instance is published or applied yet. The material plan
+keeps graph readiness separate from native readiness, and every slot remains
+native-blocked until Material Instance publication succeeds.
+
 The broader P0 criterion remains open. The saved asset has not yet been bound
 into the representative production presentation, and source-derived material,
 animation, or wheel-definition assets are still absent. The vehicle also has not

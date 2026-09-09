@@ -377,9 +377,26 @@ automation verifies all three reviewed blend modes, Greater alpha discard,
 exact one- and two-sided state, independent graph read-back, and create-only
 unsaved master construction.
 
-Vehicle light slots remain separately blocked because source presentation can
-mutate their blend and visibility at runtime; no vehicle Material Instance or
-presentation-ready binding is claimed yet.
+Vehicle material evidence v2 now verifies all 3,341 retained semantic parts and
+joins each part's source shader to the verified FBX material slots. Across the
+88 vehicles it derives 1,726 standard headlight, brake, and reverse bindings:
+1,722 have one exact material-slot join and four preserve an ambiguous join as a
+blocker. Another 120 light-emitter part/bone pairs such as sirens, neon, and
+special VFX remain unclassified rather than being coerced into these roles.
+
+`sedana` contributes 22 standard light bindings and every one has a unique slot
+join. The native presentation definition consumes only closed Headlight, Brake,
+and Reverse roles plus exact rig bones and material-slot indices; source shader
+names remain provenance rather than runtime identity. Unreal Engine 5.8.1
+automation passes all six `SHAR.Vehicles` tests, including semantic light state
+and construction rejection for an absent light bone.
+
+The reviewed runtime state keeps headlight enablement, brake-versus-reverse
+selection, damage suppression, and fade separate from material implementation.
+The source behavior selects reverse lights while braking in reverse and hides
+brake lights in that state, so the semantic state preserves that visible rule.
+Vehicle Material Instance publication and application are still blocked; graph
+review and binding evidence do not claim a native material asset exists.
 
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative
@@ -936,6 +953,13 @@ Native materials and light components consume the accepted vehicle presentation
 revision. Joint-name searches, shader-name conventions, raw texture replacement,
 and billboard-array positions are import provenance that must be converted into
 validated bindings.
+
+The current vehicle handoff performs that conversion before runtime: verified
+semantic parts resolve source shader identity to all matching material slots and
+publish exact bone bindings. Runtime definitions retain only a canonical binding
+identity, a closed Headlight/Brake/Reverse role, the validated bone, and
+material slot indices. Ambiguous slot joins remain blocked instead of selecting
+the first match.
 
 ## Damage and surface presentation
 

@@ -101,6 +101,17 @@ pub(super) struct VerifiedVehicleMaterialArtifact {
     pub texture_sha256: Option<String>,
 }
 
+/// One verified semantic vehicle part bound to source rig and shader identity.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct VerifiedVehiclePresentationPart {
+    pub name: String,
+    pub source_mesh: String,
+    pub role: String,
+    pub shader: String,
+    pub surface_semantics: Vec<String>,
+    pub bones: Vec<String>,
+}
+
 /// One verified source collision or physics sidecar for a vehicle.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct VerifiedVehiclePhysicsArtifact {
@@ -153,6 +164,7 @@ pub(super) struct VerifiedVehicleFbxArtifact {
     pub evidence: UnrealFbxArtifactEvidence,
     pub subcategory: String,
     pub material_slots: Vec<VerifiedVehicleMaterialArtifact>,
+    pub presentation_parts: Vec<VerifiedVehiclePresentationPart>,
     pub physics_sidecars: Vec<VerifiedVehiclePhysicsArtifact>,
     pub physics_rigs: Vec<VerifiedVehiclePhysicsRig>,
 }
@@ -227,6 +239,14 @@ pub(super) fn verified_vehicle_fbx_catalog(
                 "generated vehicle catalog has no material-slot count",
             )
         })?;
+    let declared_parts = object
+        .get("counts")
+        .and_then(Value::as_object)
+        .and_then(|counts| counts.get("parts"))
+        .and_then(Value::as_u64)
+        .ok_or_else(|| {
+            PipelineError::new("generated vehicle catalog has no part count")
+        })?;
     let declared_physics = object
         .get("counts")
         .and_then(Value::as_object)
@@ -262,6 +282,7 @@ pub(super) fn verified_vehicle_fbx_catalog(
     let mut paths = BTreeSet::new();
     let mut result = Vec::with_capacity(vehicles.len());
     let mut verified_material_slot_count = 0_u64;
+    let mut verified_part_count = 0_u64;
     let mut verified_physics_count = 0_u64;
     let mut verified_rig_count = 0_u64;
     let mut verified_primitive_count = 0_u64;
@@ -330,6 +351,17 @@ pub(super) fn verified_vehicle_fbx_catalog(
                     "generated vehicle material-slot count overflowed",
                 )
             })?;
+        let presentation_parts = verify_vehicle_presentation_parts(
+            row.get("parts"),
+            &material_slots,
+        )?;
+        verified_part_count = verified_part_count
+            .checked_add(
+                u64::try_from(presentation_parts.len()).unwrap_or(u64::MAX),
+            )
+            .ok_or_else(|| {
+                PipelineError::new("generated vehicle part count overflowed")
+            })?;
         let physics = verify_vehicle_physics_sidecars(
             root,
             &vehicle,
@@ -380,6 +412,7 @@ pub(super) fn verified_vehicle_fbx_catalog(
             },
             subcategory,
             material_slots,
+            presentation_parts,
             physics_sidecars: physics,
             physics_rigs,
         });
@@ -387,6 +420,11 @@ pub(super) fn verified_vehicle_fbx_catalog(
     if verified_material_slot_count != declared_material_slots {
         return Err(PipelineError::new(
             "generated vehicle catalog material-slot count is stale",
+        ));
+    }
+    if verified_part_count != declared_parts {
+        return Err(PipelineError::new(
+            "generated vehicle catalog part count is stale",
         ));
     }
     if verified_physics_count != declared_physics {
@@ -503,6 +541,132 @@ fn verify_vehicle_material_slots(
             texture_path: texture.as_ref().map(|item| item.0.clone()),
             texture_size_bytes: texture.as_ref().map(|item| item.1),
             texture_sha256: texture.map(|item| item.2),
+        });
+    }
+    Ok(result)
+}
+
+
+fn verify_vehicle_presentation_parts(
+    value: Option<&Value>,
+    material_slots: &[VerifiedVehicleMaterialArtifact],
+) -> PipelineOutcome<Vec<VerifiedVehiclePresentationPart>> {
+    let parts = value.and_then(Value::as_array).ok_or_else(|| {
+        PipelineError::new("generated vehicle catalog row has no parts")
+    })?;
+    if parts.is_empty() {
+        return Err(PipelineError::new(
+            "generated vehicle catalog row has empty parts",
+        ));
+    }
+    let known_shaders = material_slots
+        .iter()
+        .map(|slot| slot.source_material_name.as_str())
+        .collect::<BTreeSet<_>>();
+    let mut names = BTreeSet::new();
+    let mut result = Vec::with_capacity(parts.len());
+    for value in parts {
+        let part = value.as_object().ok_or_else(|| {
+            PipelineError::new("generated vehicle part is not an object")
+        })?;
+        let name = required_string(part, "name")?;
+        let source_mesh = required_string(part, "source_mesh")?;
+        let role = required_string(part, "role")?;
+        let shader = required_string(part, "shader")?;
+        for identity in [&name, &source_mesh, &role, &shader] {
+            validate_source_identity(identity)?;
+        }
+        if !names.insert(name.clone()) {
+            return Err(PipelineError::new(
+                "generated vehicle part identity is duplicated",
+            ));
+        }
+        if !matches!(
+            role.as_str(),
+            "accessory"
+                | "body"
+                | "driver"
+                | "driver-door"
+                | "glass"
+                | "hidden-wheel-proxy"
+                | "hood"
+                | "interior"
+                | "light-emitter"
+                | "passenger-door"
+                | "reflective"
+                | "transparent"
+                | "trunk"
+                | "vfx"
+                | "wheel"
+        ) {
+            return Err(PipelineError::new(
+                "generated vehicle part role is unsupported",
+            ));
+        }
+        if !known_shaders.contains(shader.as_str()) {
+            return Err(PipelineError::new(
+                "generated vehicle part shader has no material slot",
+            ));
+        }
+        let semantics = part
+            .get("surface_semantics")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle part has no surface semantics",
+                )
+            })?;
+        let mut seen_semantics = BTreeSet::new();
+        let mut surface_semantics = Vec::with_capacity(semantics.len());
+        for semantic in semantics {
+            let semantic = semantic.as_str().ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle part surface semantic is invalid",
+                )
+            })?;
+            if !matches!(
+                semantic,
+                "glass" | "light-emitter" | "reflective" | "transparent" | "vfx"
+            ) || !seen_semantics.insert(semantic)
+            {
+                return Err(PipelineError::new(
+                    "generated vehicle part surface semantic is unsupported",
+                ));
+            }
+            surface_semantics.push(semantic.to_owned());
+        }
+        let bone_values = part
+            .get("bones")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                PipelineError::new("generated vehicle part has no bones")
+            })?;
+        if bone_values.is_empty() {
+            return Err(PipelineError::new(
+                "generated vehicle part has empty bone bindings",
+            ));
+        }
+        let mut seen_bones = BTreeSet::new();
+        let mut bones = Vec::with_capacity(bone_values.len());
+        for bone in bone_values {
+            let bone = bone.as_str().ok_or_else(|| {
+                PipelineError::new("generated vehicle part bone is invalid")
+            })?;
+            validate_source_identity(bone)?;
+            if !seen_bones.insert(bone) {
+                return Err(PipelineError::new(
+                    "generated vehicle part bone is duplicated",
+                ));
+            }
+            bones.push(bone.to_owned());
+        }
+        result.push(VerifiedVehiclePresentationPart {
+            name,
+            source_mesh,
+            role,
+            shader,
+            surface_semantics,
+            bones,
         });
     }
     Ok(result)

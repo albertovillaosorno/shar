@@ -41,10 +41,14 @@ use super::unreal_vehicle_catalog::{
 use crate::domain::{PipelineError, PipelineOutcome};
 
 pub(super) const VEHICLE_MATERIAL_PLAN_SCHEMA: &str =
-    "shar-schoenwald.unreal-vehicle-material-evidence.v1";
+    "shar-schoenwald.unreal-vehicle-material-evidence.v2";
 const SOURCE_SCHEMA: &str = "shar.vehicle-catalog.v8";
-const NATIVE_TOOLSET_BLOCKER: &str =
-    "vehicle-native-material-toolset-not-reviewed";
+const NATIVE_GRAPH_BLOCKER: &str =
+    "vehicle-native-material-graph-not-reviewed";
+const INSTANCE_PUBLICATION_BLOCKER: &str =
+    "vehicle-material-instance-publication-not-reviewed";
+const LIGHT_PRESENTATION_BLOCKER: &str =
+    "vehicle-light-material-application-not-reviewed";
 
 /// Render exact verified vehicle material state and native-readiness blockers.
 pub(super) fn render_vehicle_material_plan(
@@ -63,16 +67,19 @@ pub(super) fn render_vehicle_material_plan(
                 counts.record(slot);
                 slots.push(slot_value(slot_index, slot));
             }
+            let light_bindings = dynamic_light_bindings(vehicle)?;
+            counts.record_light_bindings(&light_bindings);
             vehicles.push(json!({
                 "package_id": vehicle.evidence.package_id,
                 "source_fbx": vehicle.evidence.path,
                 "subcategory": vehicle.subcategory,
                 "slots": slots,
+                "dynamic_light_bindings": light_bindings,
             }));
         }
     }
-    if counts.slots != counts.native_blocked_slots
-        || counts.native_ready_slots != 0
+    if counts.slots
+        != counts.native_ready_slots.saturating_add(counts.native_blocked_slots)
     {
         return Err(PipelineError::new(
             "vehicle material native readiness counts drifted",
@@ -85,7 +92,9 @@ pub(super) fn render_vehicle_material_plan(
             "source_projection": "reviewed-pddi-render-state",
             "source_projection_status": "ready",
             "world_material_policy_reuse": "forbidden",
-            "native_construction": "blocked-until-vehicle-toolset-reviewed",
+            "native_construction":
+                "material-graph-reviewed-instance-publication-blocked",
+            "dynamic_light_binding": "verified-source-part-to-material-slots",
             "runtime_shader_mutation": "preserve-separately"
         },
         "counts": counts.value(),
@@ -111,8 +120,12 @@ struct Counts {
     two_sided_slots: usize,
     simple_unlit_graph_candidates: usize,
     presentation_special_slots: usize,
+    native_graph_ready_slots: usize,
     native_ready_slots: usize,
     native_blocked_slots: usize,
+    dynamic_light_bindings: usize,
+    unique_slot_light_bindings: usize,
+    ambiguous_slot_light_bindings: usize,
 }
 
 impl Counts {
@@ -147,7 +160,30 @@ impl Counts {
         self.presentation_special_slots = self
             .presentation_special_slots
             .saturating_add(usize::from(has_special_presentation(slot)));
+        if is_simple_unlit_graph_candidate(slot) {
+            self.native_graph_ready_slots =
+                self.native_graph_ready_slots.saturating_add(1);
+        }
         self.native_blocked_slots = self.native_blocked_slots.saturating_add(1);
+    }
+
+    fn record_light_bindings(&mut self, bindings: &[Value]) {
+        self.dynamic_light_bindings = self
+            .dynamic_light_bindings
+            .saturating_add(bindings.len());
+        for binding in bindings {
+            let unique = binding
+                .get("slot_join_status")
+                .and_then(Value::as_str)
+                == Some("unique");
+            if unique {
+                self.unique_slot_light_bindings =
+                    self.unique_slot_light_bindings.saturating_add(1);
+            } else {
+                self.ambiguous_slot_light_bindings =
+                    self.ambiguous_slot_light_bindings.saturating_add(1);
+            }
+        }
     }
 
     fn value(self) -> Value {
@@ -164,8 +200,12 @@ impl Counts {
             "simple_unlit_graph_candidates": self.simple_unlit_graph_candidates,
             "presentation_special_slots": self.presentation_special_slots,
             "source_projection_ready_slots": self.slots,
+            "native_graph_ready_slots": self.native_graph_ready_slots,
             "native_ready_slots": self.native_ready_slots,
             "native_blocked_slots": self.native_blocked_slots,
+            "dynamic_light_bindings": self.dynamic_light_bindings,
+            "unique_slot_light_bindings": self.unique_slot_light_bindings,
+            "ambiguous_slot_light_bindings": self.ambiguous_slot_light_bindings,
         })
     }
 }
@@ -245,10 +285,79 @@ const fn has_special_presentation(
         || slot.semantics.visual_effect
 }
 
+
+fn dynamic_light_bindings(
+    vehicle: &VerifiedVehicleFbxArtifact,
+) -> PipelineOutcome<Vec<Value>> {
+    let mut result = Vec::new();
+    for part in &vehicle.presentation_parts {
+        if !part
+            .surface_semantics
+            .iter()
+            .any(|semantic| semantic == "light-emitter")
+        {
+            continue;
+        }
+        let slot_indices = vehicle
+            .material_slots
+            .iter()
+            .enumerate()
+            .filter_map(|(index, slot)| {
+                (slot.source_material_name == part.shader).then_some(index)
+            })
+            .collect::<Vec<_>>();
+        if slot_indices.is_empty() {
+            return Err(PipelineError::new(
+                "vehicle light part lost its verified material-slot join",
+            ));
+        }
+        for bone in &part.bones {
+            let Some(semantic_role) = semantic_light_role(bone) else {
+                continue;
+            };
+            let join_status = if slot_indices.len() == 1 {
+                "unique"
+            } else {
+                "ambiguous"
+            };
+            let mut blockers = vec![LIGHT_PRESENTATION_BLOCKER];
+            if slot_indices.len() != 1 {
+                blockers.push("vehicle-light-material-slot-join-ambiguous");
+            }
+            result.push(json!({
+                "binding_id": format!("{}::{}", part.name, bone),
+                "semantic_role": semantic_role,
+                "bone_name": bone,
+                "source_part_name": part.name,
+                "source_mesh": part.source_mesh,
+                "source_shader": part.shader,
+                "material_slot_indices": slot_indices,
+                "slot_join_status": join_status,
+                "native_status": "blocked",
+                "native_blockers": blockers,
+            }));
+        }
+    }
+    Ok(result)
+}
+
+fn semantic_light_role(bone: &str) -> Option<&'static str> {
+    match bone {
+        "hll" => Some("headlight-left"),
+        "hlr" => Some("headlight-right"),
+        "brake1" | "brake2" | "brake3" | "brake4" => Some("brake"),
+        "rev1" | "rev2" | "rev3" | "rev4" => Some("reverse"),
+        _ => None,
+    }
+}
+
 fn native_blockers(
     slot: &VerifiedVehicleMaterialArtifact,
 ) -> Vec<&'static str> {
-    let mut blockers = vec![NATIVE_TOOLSET_BLOCKER];
+    let mut blockers = vec![INSTANCE_PUBLICATION_BLOCKER];
+    if !is_simple_unlit_graph_candidate(slot) {
+        blockers.push(NATIVE_GRAPH_BLOCKER);
+    }
     match slot.raster.shader_family.as_str() {
         "spheremap" => blockers.push("vehicle-spheremap-master-not-reviewed"),
         "environment" => {
@@ -269,7 +378,7 @@ fn native_blockers(
         blockers.push("vehicle-reflection-policy-not-reviewed");
     }
     if slot.semantics.light_emitter {
-        blockers.push("vehicle-runtime-light-material-policy-not-reviewed");
+        blockers.push(LIGHT_PRESENTATION_BLOCKER);
     }
     if slot.semantics.visual_effect {
         blockers.push("vehicle-vfx-material-policy-not-reviewed");

@@ -172,6 +172,32 @@ bool USharVehicleConstructionTransaction::ResolveAndValidate()
         );
         return false;
     }
+    for (
+        const FSharVehicleLightPresentationBinding& Binding
+        : Presentation->LightBindings
+    )
+    {
+        if (
+            ResolvedSkeletalMesh->GetRefSkeleton().FindBoneIndex(
+                Binding.BoneName
+            ) == INDEX_NONE
+        )
+        {
+            SetError(FString::Printf(
+                TEXT("vehicle light bone '%s' is absent from Skeletal Mesh"),
+                *Binding.BoneName.ToString()
+            ));
+            return false;
+        }
+        for (const int32 SlotIndex : Binding.MaterialSlotIndices)
+        {
+            if (!ResolvedMaterials.IsValidIndex(SlotIndex))
+            {
+                SetError(TEXT("vehicle light material slot is out of range"));
+                return false;
+            }
+        }
+    }
 
     ResolvedWheelClasses.Reset();
     for (

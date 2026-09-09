@@ -50,6 +50,7 @@ fn vehicle() -> VerifiedVehicleFbxArtifact {
         },
         subcategory: "cars/road".to_owned(),
         material_slots: Vec::new(),
+        presentation_parts: vec![],
         physics_sidecars: Vec::new(),
         physics_rigs: vec![
             VerifiedVehiclePhysicsRig {
