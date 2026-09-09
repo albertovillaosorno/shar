@@ -183,8 +183,22 @@ boxes plus four wheel spheres across five bodies, exercises malformed-geometry
 and
 wrong-scale rejection, and completes with `Result={Success}` and exit code 0.
 
-That evidence is intentionally transient. The editor pipeline still does not
-persist and read back a reviewed `sedana` Physics Asset package, bind that asset
-through the production construction plan, create material, animation, or
-wheel-definition assets, spawn the vehicle into a world, create live Chaos
-vehicle physics state, or validate driven behavior against source evidence.
+The native editor publication boundary now advances that evidence without
+stealing save ownership from the outer transaction. `USharVehiclePhysicsToolset`
+accepts the generated scene-unit Skeletal Mesh plus already projected recipe
+fields, reconstructs the validated transient candidate, deep-publishes a
+create-only Physics Asset under `/Game/Generated/SHAR`, and reads back the
+preview mesh, ordered bodies, exact bone identities, and analytic geometry. It
+registers the asset and marks the package dirty but does not save it.
+
+A real Unreal Engine 5.8.1 `SHAR.Import.VehiclePhysics.PublishSedana` automation
+run created the five-body `sedana` Physics Asset in memory, verified `sedanA` as
+the first body, verified the package is dirty, proved no `.uasset` exists before
+an explicit save, and completed with `Result={Success}` and exit code 0.
+
+The broader P0 criterion remains open. The editor pipeline still does not own a
+transactional save/reload and compensation cycle for the reviewed Physics Asset,
+bind that saved asset through the production construction plan, create material,
+animation, or wheel-definition assets, spawn the vehicle into a world, create
+live Chaos vehicle physics state, or validate driven behavior against source
+evidence.
