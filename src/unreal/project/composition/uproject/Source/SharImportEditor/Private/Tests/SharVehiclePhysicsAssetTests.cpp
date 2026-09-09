@@ -34,9 +34,13 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Import/SharVehiclePhysicsAssetBuilder.h"
+#include "Import/SharVehiclePhysicsToolset.h"
 
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Engine/SkeletalMesh.h"
+#include "HAL/FileManager.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/PackageName.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "PhysicsEngine/SkeletalBodySetup.h"
 
@@ -107,6 +111,27 @@ TArray<FSharVehiclePhysicsShapeRecipe> SedanaShapes()
             0.42785335F
         ),
     };
+}
+
+TArray<FSharVehiclePhysicsShapeInput> SedanaPublishedShapes()
+{
+    TArray<FSharVehiclePhysicsShapeInput> Result;
+    for (const FSharVehiclePhysicsShapeRecipe& Recipe : SedanaShapes())
+    {
+        FSharVehiclePhysicsShapeInput Input;
+        Input.Kind = Recipe.Kind == ESharVehiclePhysicsShapeKind::Sphere
+            ? ESharVehiclePhysicsShapeInputKind::Sphere
+            : ESharVehiclePhysicsShapeInputKind::Box;
+        Input.BoneName = Recipe.BoneName;
+        Input.Center = Recipe.Center;
+        Input.Radius = Recipe.Radius;
+        Input.AxisX = Recipe.AxisX;
+        Input.AxisY = Recipe.AxisY;
+        Input.AxisZ = Recipe.AxisZ;
+        Input.BoxExtents = Recipe.BoxExtents;
+        Result.Add(Input);
+    }
+    return Result;
 }
 } // namespace
 
@@ -301,6 +326,82 @@ bool FSharVehiclePhysicsAssetTest::RunTest(const FString& Parameters)
             RejectedAsset
         );
     }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehiclePhysicsPublicationTest,
+    "SHAR.Import.VehiclePhysics.PublishSedana",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+
+bool FSharVehiclePhysicsPublicationTest::RunTest(const FString& Parameters)
+{
+    (void)Parameters;
+    const FString Folder =
+        TEXT("/Game/Generated/SHAR/VehiclePhysics/Automation");
+    const FString AssetName = FString::Printf(
+        TEXT("PHYS_Sedana_%u"),
+        FPlatformProcess::GetCurrentProcessId()
+    );
+    const FString ObjectPath = FString::Printf(
+        TEXT("%s/%s.%s"),
+        *Folder,
+        *AssetName,
+        *AssetName
+    );
+    const FString Created =
+        USharVehiclePhysicsToolset::CreateVehiclePhysicsAsset(
+            Folder,
+            AssetName,
+            TEXT(
+                "/Game/Generated/SHAR/PortPreviewUnits/Vehicle_Sedana."
+                "Vehicle_Sedana"
+            ),
+            TEXT("sedanA"),
+            19,
+            SedanaPublishedShapes()
+        );
+    TestEqual(
+        TEXT("Physics publication returns planned object path"),
+        Created,
+        ObjectPath
+    );
+    UPhysicsAsset* Asset = FindObject<UPhysicsAsset>(nullptr, *ObjectPath);
+    if (!TestNotNull(TEXT("Published Physics Asset exists in memory"), Asset))
+    {
+        return false;
+    }
+    TestEqual(
+        TEXT("Published sedana body count"),
+        Asset->SkeletalBodySetups.Num(),
+        5
+    );
+    TestEqual(
+        TEXT("Published root body remains first"),
+        Asset->SkeletalBodySetups[0]->BoneName,
+        FName(TEXT("sedanA"))
+    );
+    UPackage* Package = Asset->GetPackage();
+    TestTrue(
+        TEXT("Published Physics Asset package is dirty"),
+        Package->IsDirty()
+    );
+    const FString PackageFilename = FPackageName::LongPackageNameToFilename(
+        Package->GetName(),
+        FPackageName::GetAssetPackageExtension()
+    );
+    TestFalse(
+        TEXT("Physics publication does not save implicitly"),
+        IFileManager::Get().FileExists(*PackageFilename)
+    );
+    FAssetRegistryModule::AssetDeleted(Asset);
+    Package->SetDirtyFlag(false);
+    Asset->ClearFlags(RF_Public | RF_Standalone);
+    Asset->MarkAsGarbage();
+    Package->MarkAsGarbage();
     return true;
 }
 

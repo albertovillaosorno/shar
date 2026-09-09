@@ -321,10 +321,25 @@ Unreal's articulated-body path obtains each bone transform and supplies it to
 body initialization, where analytic geometry consumes that inherited scale. This
 avoids applying a second numeric conversion to the source recipe.
 
-This bounded transaction still does not persist or review a generated Physics
-Asset package, spawn the Pawn, create and validate live Chaos vehicle physics,
-choose placement, or publish a world vehicle instance. Those remain later steps
-in the complete construction sequence above.
+`USharVehiclePhysicsToolset` adds the editor publication boundary around that
+kernel. It accepts only generated-root Skeletal Mesh paths and already projected
+shape fields, rebuilds the transient candidate, duplicates it into a create-only
+generated package, and independently reads back the preview mesh, body order,
+bone identities, and analytic geometry. The result is registered with the Asset
+Registry, marked dirty, and intentionally left unsaved so the owning transaction
+retains save and compensation authority.
+
+`SHAR.Import.VehiclePhysics.PublishSedana` exercises this boundary against the
+real scene-unit `sedana` mesh. It publishes five bodies in memory, verifies
+`sedanA` remains the first body, confirms the package is dirty, and proves no
+`.uasset` exists before an explicit save. The automation completed with
+`Result={Success}` and exit code 0 on Unreal Engine 5.8.1.
+
+This bounded path still does not transactionally save and reload the generated
+Physics Asset, bind it through the production vehicle construction plan, spawn
+the Pawn, create and validate live Chaos vehicle physics, choose placement, or
+publish a world vehicle instance. Those remain later steps in the complete
+construction sequence above.
 
 ## Vehicle lifecycle states
 

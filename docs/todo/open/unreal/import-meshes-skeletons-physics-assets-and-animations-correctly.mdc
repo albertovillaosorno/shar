@@ -87,6 +87,9 @@ retains `sedanA` as root zero, accepts Unreal's 16 retained bones from the
 19-joint source rig, creates two chassis boxes plus four wheel spheres, and
 rejects wrong-scale and malformed geometry.
 
-Generated-root Physics Asset publication, transaction-owned save/read-back, and
-binding the reviewed asset into production vehicle construction remain open
-work.
+Generated-root Physics Asset publication now exists as a create-only editor
+toolset. The representative `PublishSedana` automation proves the five-body
+asset is registered in memory, reads back the expected root/body geometry, marks
+the package dirty, and does not save a `.uasset` implicitly. Transaction-owned
+save/reload with compensation and binding the reviewed asset into production
+vehicle construction remain open work.
