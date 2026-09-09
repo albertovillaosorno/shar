@@ -139,8 +139,13 @@ dirty package and reads back its mesh, body order, bone identities, and analytic
 geometry without saving. The outer editor-control transaction now binds this
 request to the exact skeletal import, validates live schemas, performs explicit
 save and clean-state read-back, and compensates only its own Physics Asset
-outputs on failure. Restart/reload from a freshly generated real release bundle
-and live Chaos vehicle behavior remain separate acceptance steps.
+outputs on failure.
+
+A release-bound `sedana` transaction now survives a full editor restart: the
+saved Skeletal Mesh, Skeleton, and Physics Asset reload with their expected
+classes and clean packages, while their exact on-disk hashes stay unchanged
+across the restart. Production presentation binding and live Chaos vehicle
+behavior remain separate acceptance steps.
 
 ## Materials and damage
 

@@ -139,6 +139,15 @@ transaction; imported Skeletal Meshes and Skeletons remain separate dependencies
 and are never compensation-owned. This construction boundary does not activate
 Chaos simulation, spawn a vehicle, or bind a runtime presentation by itself.
 
+A real Unreal Engine 5.8.1 `sedana` run exercises both transactions against the
+release-bound source. It verifies the 327,292-byte FBX and audits both six-tool
+live
+surfaces, imports and saves the Skeletal Mesh plus Skeleton, creates and saves
+the six-shape Physics Asset, and reads all three back clean. A fresh editor
+process then loads the same files as `SkeletalMesh`, `Skeleton`, and
+`PhysicsAsset` with `dirty=false`, proving that explicit persistence crosses an
+editor restart before the session-owned evidence assets are removed.
+
 All four plan commands read `.cache/pipeline/unreal-staging/plans/` by default.
 The execution, capability, and
 application commands return failure while any emitted operation remains

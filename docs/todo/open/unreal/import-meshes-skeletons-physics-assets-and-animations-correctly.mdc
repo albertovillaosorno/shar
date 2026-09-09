@@ -90,6 +90,10 @@ rejects wrong-scale and malformed geometry.
 Generated-root Physics Asset publication now exists as a create-only editor
 toolset. The representative `PublishSedana` automation proves the five-body
 asset is registered in memory, reads back the expected root/body geometry, marks
-the package dirty, and does not save a `.uasset` implicitly. Transaction-owned
-save/reload with compensation and binding the reviewed asset into production
-vehicle construction remain open work.
+the package dirty, and does not save a `.uasset` implicitly. The release-bound
+editor-control transaction now also proves explicit save and cold reload for the
+real `sedana` Skeletal Mesh, Skeleton, and generated Physics Asset: a fresh
+Unreal
+process reads all three back with their expected classes and `dirty=false`, and
+the saved file hashes survive the restart unchanged. Binding those reviewed
+assets into production vehicle construction remains open work.
