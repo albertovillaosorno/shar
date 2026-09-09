@@ -165,6 +165,11 @@ for every vehicle, validates JSON schema, canonical path/kind/ordinal identity,
 regular-file ancestry, size and hash, and rejects the previous v5 schema. It
 still promotes only the FBX as import evidence.
 
+Before publication, the exporter now joins same-name skeleton, collision, and
+physics rigs and rejects mismatched joint counts or out-of-range collision joint
+references. A fresh complete replay validates all 137 source rigs across the 88
+vehicles while preserving the same 274 sidecars and `sedana` ordinals 321/361.
+
 The broader P0 criterion remains open for the representative source vehicle.
 The bounded test uses transient native assets, while the v6 physics payloads are
 verified source evidence only. The pipeline does not yet create a reviewed
