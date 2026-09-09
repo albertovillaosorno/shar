@@ -71,11 +71,11 @@ fn fbx_bytes() -> Vec<u8> {
 }
 
 fn collision_bytes() -> &'static [u8] {
-    br#"{"schema":"simulation_collision_object","value":1}"#
+    br#"{"schema":"simulation_collision_object","name":"sedanA","value":1}"#
 }
 
 fn physics_bytes() -> &'static [u8] {
-    br#"{"schema":"simulation_physics_object","value":2}"#
+    br#"{"schema":"simulation_physics_object","name":"sedanA","value":2}"#
 }
 
 fn write_catalog(
@@ -100,9 +100,14 @@ fn write_catalog(
     )
     .map_err(|error| error.to_string())?;
     let catalog = json!({
-        "schema": "shar.vehicle-catalog.v6",
+        "schema": "shar.vehicle-catalog.v7",
         "boundary": {},
-        "counts": {"vehicles": 1, "physics_sidecars": 2},
+        "counts": {
+            "vehicles": 1,
+            "physics_sidecars": 2,
+            "physics_rigs": 1,
+            "physics_primitives": 1
+        },
         "vehicles": [{
             "vehicle": "sedana",
             "package_id": "extracted-art-cars-sedana",
@@ -134,6 +139,18 @@ simulation_physics_object/sedanA.json",
                 "source_ordinal": 361,
                 "bytes": physics_bytes().len(),
                 "sha256": digest_hex(physics_bytes())
+            }],
+            "physics_rigs": [{
+                "identity": "sedanA",
+                "coordinate_space": "source-bone-local",
+                "unit": "meter",
+                "joint_count": 2,
+                "primitives": [{
+                    "kind": "sphere",
+                    "bone_name": "w0",
+                    "center_m": [0.0, 0.0, 0.0],
+                    "radius_m": 0.5
+                }]
             }]
         }]
     });
@@ -229,7 +246,7 @@ fn previous_vehicle_catalog_schema_fails_closed() -> Result<(), String> {
     write_catalog(&root.0, None)?;
     let path = root.0.join("vehicles.catalog.json");
     let text = fs::read_to_string(&path).map_err(|error| error.to_string())?;
-    fs::write(&path, text.replace("vehicle-catalog.v6", "vehicle-catalog.v5"))
+    fs::write(&path, text.replace("vehicle-catalog.v7", "vehicle-catalog.v6"))
         .map_err(|error| error.to_string())?;
     let error = match verified_vehicle_fbx_catalog(&root.0) {
         Ok(_value) => {

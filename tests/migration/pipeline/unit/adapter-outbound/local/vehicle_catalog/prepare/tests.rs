@@ -42,6 +42,7 @@ use fbx::domain::skin::SkinInfluence;
 use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
 
 use crate::domain::package::PhaseThreePackageRow;
+use super::super::model::PhysicsPrimitiveRecord;
 
 use super::{
     is_wheel_identity, load_vehicle_animations, partition_vehicle_billboards,
@@ -308,7 +309,8 @@ fn physics_sidecars_preserve_exact_source_members() -> Result<(), String> {
         r#"{"schema":"simulation_collision_object","name":"car","#,
         r#""num_sub_objects":2,"volumes":[{"object_reference_index":0,"#,
         r#""primitives":[{"object_reference_index":1,"#,
-        r#""primitives":[{"kind":"sphere"}]}]}]}"#
+        r#""primitives":[{"kind":"sphere","radius":0.5,"#,
+        r#""vectors":[[0.0,0.0,0.0]]}]}]}]}"#
     )
     .as_bytes();
     let physics = concat!(
@@ -324,7 +326,7 @@ fn physics_sidecars_preserve_exact_source_members() -> Result<(), String> {
         .map_err(|error| error.to_string())?;
     let output = root.path().join("vehicle");
     fs::create_dir_all(&output).map_err(|error| error.to_string())?;
-    let records = publish_vehicle_physics_sidecars(
+    let (records, recipes) = publish_vehicle_physics_sidecars(
         &effect_animation_package()?,
         &source,
         &output,
@@ -353,6 +355,36 @@ fn physics_sidecars_preserve_exact_source_members() -> Result<(), String> {
         || physics_record.sha256 != shar_sha256::digest_hex(physics)
     {
         return Err("physics sidecar digest changed".to_owned());
+    }
+    let [recipe] = recipes.as_slice() else {
+        return Err("physics recipe changed rig count".to_owned());
+    };
+    let [primitive] = recipe.primitives.as_slice() else {
+        return Err("physics recipe changed primitive count".to_owned());
+    };
+    match primitive {
+        PhysicsPrimitiveRecord::Sphere {
+            bone_name,
+            center_m,
+            radius_m,
+        } if bone_name == "w0"
+            && *center_m == [0.0, 0.0, 0.0]
+            && *radius_m == 0.5 => {},
+        _ => return Err("physics recipe lost bone-local sphere".to_owned()),
+    }
+    Ok(())
+}
+
+#[test]
+fn physics_recipe_preserves_source_f32_bits() -> Result<(), String> {
+    let value = serde_json::json!(-2.855_841e-23);
+    let decoded = super::finite_json_number(&value, "fixture scalar")
+        .map_err(|error| error.to_string())?;
+    if decoded.to_bits() != 0x9a0a_1999 {
+        return Err(format!(
+            "source f32 bits changed: 0x{:08x}",
+            decoded.to_bits()
+        ));
     }
     Ok(())
 }

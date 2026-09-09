@@ -37,7 +37,8 @@ use std::path::{Path, PathBuf};
 use serde_json::{Value, json};
 
 use super::model::{
-    EffectAnimationRecord, PartRecord, PhysicsSidecarRecord, VehicleRecord,
+    EffectAnimationRecord, PartRecord, PhysicsPrimitiveRecord, PhysicsRigRecord,
+    PhysicsSidecarRecord, VehicleRecord,
 };
 use crate::domain::PipelineError;
 
@@ -58,7 +59,7 @@ pub(super) fn write_root_catalog(
     extracted_packages: usize,
 ) -> Result<(), PipelineError> {
     let value = json!({
-        "schema": "shar.vehicle-catalog.v6",
+        "schema": "shar.vehicle-catalog.v7",
         "boundary": {
             "source": concat!(
                 "original game P3D packages selected by the generated package ",
@@ -79,7 +80,8 @@ pub(super) fn write_root_catalog(
                 "semantic part roles and pivot bones",
                 "hidden non-visual wheel proxies retained as physics evidence",
                 "effect animation controller, target, and texture occurrences",
-                "verbatim decoded collision and physics source members"
+                "verbatim decoded collision and physics source members",
+                "bone-resolved collision recipes in source-local meter space"
             ],
             "excluded": [
                 "validated Unreal collision and Chaos physics behavior",
@@ -153,6 +155,15 @@ pub(super) fn write_root_catalog(
             "physics_sidecars": records
                 .iter()
                 .map(|record| record.physics_sidecars.len())
+                .sum::<usize>(),
+            "physics_rigs": records
+                .iter()
+                .map(|record| record.physics_rigs.len())
+                .sum::<usize>(),
+            "physics_primitives": records
+                .iter()
+                .flat_map(|record| &record.physics_rigs)
+                .map(|rig| rig.primitives.len())
                 .sum::<usize>()
         },
         "vehicles": records.iter().map(vehicle_json).collect::<Vec<_>>()
@@ -243,8 +254,72 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
             .physics_sidecars
             .iter()
             .map(physics_sidecar_value)
+            .collect::<Vec<_>>(),
+        "physics_rigs": record
+            .physics_rigs
+            .iter()
+            .map(physics_rig_value)
             .collect::<Vec<_>>()
     })
+}
+
+/// Render one source physics rig in exact bone-local meter space.
+fn physics_rig_value(record: &PhysicsRigRecord) -> Value {
+    json!({
+        "identity": record.identity,
+        "coordinate_space": "source-bone-local",
+        "unit": "meter",
+        "joint_count": record.joint_count,
+        "primitives": record
+            .primitives
+            .iter()
+            .map(physics_primitive_value)
+            .collect::<Vec<_>>()
+    })
+}
+
+/// Render one source collision primitive without target-space conversion.
+fn physics_primitive_value(record: &PhysicsPrimitiveRecord) -> Value {
+    match record {
+        PhysicsPrimitiveRecord::Sphere {
+            bone_name,
+            center_m,
+            radius_m,
+        } => json!({
+            "kind": "sphere",
+            "bone_name": bone_name,
+            "center_m": center_m,
+            "radius_m": radius_m
+        }),
+        PhysicsPrimitiveRecord::OrientedBox {
+            bone_name,
+            center_m,
+            axes,
+            half_extents_m,
+        } => json!({
+            "kind": "oriented-box",
+            "bone_name": bone_name,
+            "center_m": center_m,
+            "axes": axes,
+            "half_extents_m": half_extents_m
+        }),
+        PhysicsPrimitiveRecord::Cylinder {
+            bone_name,
+            center_m,
+            axis,
+            half_length_m,
+            radius_m,
+            flat_end,
+        } => json!({
+            "kind": "cylinder",
+            "bone_name": bone_name,
+            "center_m": center_m,
+            "axis": axis,
+            "half_length_m": half_length_m,
+            "radius_m": radius_m,
+            "flat_end": flat_end
+        }),
+    }
 }
 
 /// Render one verbatim source physics sidecar with exact provenance.

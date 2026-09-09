@@ -49,7 +49,7 @@ use crate::domain::{
 };
 
 const CATALOG_FILE: &str = "vehicles.catalog.json";
-const CATALOG_SCHEMA: &str = "shar.vehicle-catalog.v6";
+const CATALOG_SCHEMA: &str = "shar.vehicle-catalog.v7";
 const LOGICAL_ROOT: &str = "vehicle-assets";
 
 /// One verified source collision or physics sidecar for a vehicle.
@@ -61,16 +61,50 @@ pub(super) struct VerifiedVehiclePhysicsArtifact {
     pub kind: String,
     pub source_chunk_kind: String,
     pub source_ordinal: u64,
+    pub source_identity: String,
     pub size_bytes: u64,
     pub sha256: String,
 }
 
+/// One verified bone-local source collision primitive.
+#[derive(Clone, Debug, PartialEq)]
+pub(super) enum VerifiedVehiclePhysicsPrimitive {
+    Sphere {
+        bone_name: String,
+        center_m: [f32; 3],
+        radius_m: f32,
+    },
+    OrientedBox {
+        bone_name: String,
+        center_m: [f32; 3],
+        axes: [[f32; 3]; 3],
+        half_extents_m: [f32; 3],
+    },
+    Cylinder {
+        bone_name: String,
+        center_m: [f32; 3],
+        axis: [f32; 3],
+        half_length_m: f32,
+        radius_m: f32,
+        flat_end: bool,
+    },
+}
+
+/// One verified same-name source physics rig recipe.
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct VerifiedVehiclePhysicsRig {
+    pub identity: String,
+    pub joint_count: u64,
+    pub primitives: Vec<VerifiedVehiclePhysicsPrimitive>,
+}
+
 /// One verified vehicle FBX plus its exact package subcategory and physics.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub(super) struct VerifiedVehicleFbxArtifact {
     pub evidence: UnrealFbxArtifactEvidence,
     pub subcategory: String,
     pub physics_sidecars: Vec<VerifiedVehiclePhysicsArtifact>,
+    pub physics_rigs: Vec<VerifiedVehiclePhysicsRig>,
 }
 
 /// Verify the generated vehicle FBX rows when the catalog root exists.
@@ -143,11 +177,33 @@ pub(super) fn verified_vehicle_fbx_catalog(
                 "generated vehicle catalog has no physics-sidecar count",
             )
         })?;
+    let declared_rigs = object
+        .get("counts")
+        .and_then(Value::as_object)
+        .and_then(|counts| counts.get("physics_rigs"))
+        .and_then(Value::as_u64)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle catalog has no physics-rig count",
+            )
+        })?;
+    let declared_primitives = object
+        .get("counts")
+        .and_then(Value::as_object)
+        .and_then(|counts| counts.get("physics_primitives"))
+        .and_then(Value::as_u64)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle catalog has no physics-primitive count",
+            )
+        })?;
 
     let mut package_ids = BTreeSet::new();
     let mut paths = BTreeSet::new();
     let mut result = Vec::with_capacity(vehicles.len());
     let mut verified_physics_count = 0_u64;
+    let mut verified_rig_count = 0_u64;
+    let mut verified_primitive_count = 0_u64;
     for row in vehicles {
         let row = row.as_object().ok_or_else(|| {
             PipelineError::new("generated vehicle catalog row is not an object")
@@ -203,10 +259,40 @@ pub(super) fn verified_vehicle_fbx_catalog(
             &vehicle,
             row.get("physics_sidecars"),
         )?;
+        let physics_rigs = verify_vehicle_physics_rigs(
+            row.get("physics_rigs"),
+            &physics,
+        )?;
         verified_physics_count = verified_physics_count
             .checked_add(u64::try_from(physics.len()).unwrap_or(u64::MAX))
             .ok_or_else(|| {
                 PipelineError::new("generated vehicle physics count overflowed")
+            })?;
+        verified_rig_count = verified_rig_count
+            .checked_add(u64::try_from(physics_rigs.len()).unwrap_or(u64::MAX))
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle physics-rig count overflowed",
+                )
+            })?;
+        verified_primitive_count = verified_primitive_count
+            .checked_add(
+                physics_rigs
+                    .iter()
+                    .map(|rig| {
+                        u64::try_from(rig.primitives.len()).unwrap_or(u64::MAX)
+                    })
+                    .try_fold(0_u64, u64::checked_add)
+                    .ok_or_else(|| {
+                        PipelineError::new(
+                            "vehicle physics-primitive count overflowed",
+                        )
+                    })?,
+            )
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle physics-primitive count overflowed",
+                )
             })?;
         result.push(VerifiedVehicleFbxArtifact {
             evidence: UnrealFbxArtifactEvidence {
@@ -218,11 +304,22 @@ pub(super) fn verified_vehicle_fbx_catalog(
             },
             subcategory,
             physics_sidecars: physics,
+            physics_rigs,
         });
     }
     if verified_physics_count != declared_physics {
         return Err(PipelineError::new(
             "generated vehicle catalog physics-sidecar count is stale",
+        ));
+    }
+    if verified_rig_count != declared_rigs {
+        return Err(PipelineError::new(
+            "generated vehicle catalog physics-rig count is stale",
+        ));
+    }
+    if verified_primitive_count != declared_primitives {
+        return Err(PipelineError::new(
+            "generated vehicle catalog physics-primitive count is stale",
         ));
     }
     result.sort_by(|left, right| {
@@ -320,6 +417,16 @@ fn verify_vehicle_physics_sidecars(
                 "generated vehicle physics sidecar schema is inconsistent",
             ));
         }
+        let source_identity = document
+            .get("name")
+            .and_then(Value::as_str)
+            .map(|value| value.trim_end_matches('\0'))
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle physics sidecar has no source identity",
+                )
+            })?;
+        validate_source_identity(source_identity)?;
         result.push(VerifiedVehiclePhysicsArtifact {
             path: format!("{LOGICAL_ROOT}/{vehicle}/{path}"),
             package_member_id,
@@ -327,6 +434,7 @@ fn verify_vehicle_physics_sidecars(
             kind,
             source_chunk_kind,
             source_ordinal,
+            source_identity: source_identity.to_owned(),
             size_bytes,
             sha256,
         });
@@ -339,6 +447,291 @@ fn verify_vehicle_physics_sidecars(
         ));
     }
     Ok(result)
+}
+
+fn verify_vehicle_physics_rigs(
+    value: Option<&Value>,
+    sidecars: &[VerifiedVehiclePhysicsArtifact],
+) -> PipelineOutcome<Vec<VerifiedVehiclePhysicsRig>> {
+    let rigs = value.and_then(Value::as_array).ok_or_else(|| {
+        PipelineError::new("generated vehicle catalog row has no physics rigs")
+    })?;
+    if rigs.is_empty() {
+        return Err(PipelineError::new(
+            "generated vehicle catalog row has empty physics rigs",
+        ));
+    }
+    let collision_identities = sidecars
+        .iter()
+        .filter(|sidecar| {
+            sidecar.source_chunk_kind == "simulation_collision_object"
+        })
+        .map(|sidecar| sidecar.source_identity.clone())
+        .collect::<BTreeSet<_>>();
+    let physics_identities = sidecars
+        .iter()
+        .filter(|sidecar| {
+            sidecar.source_chunk_kind == "simulation_physics_object"
+        })
+        .map(|sidecar| sidecar.source_identity.clone())
+        .collect::<BTreeSet<_>>();
+    if collision_identities != physics_identities {
+        return Err(PipelineError::new(
+            "generated vehicle physics sidecar rig identities disagree",
+        ));
+    }
+    let mut identities = BTreeSet::new();
+    let mut result = Vec::with_capacity(rigs.len());
+    for rig in rigs {
+        let rig = rig.as_object().ok_or_else(|| {
+            PipelineError::new("generated vehicle physics rig is not an object")
+        })?;
+        let identity = required_string(rig, "identity")?;
+        validate_source_identity(&identity)?;
+        if !identities.insert(identity.clone()) {
+            return Err(PipelineError::new(
+                "generated vehicle physics rig identity is duplicated",
+            ));
+        }
+        if rig.get("coordinate_space").and_then(Value::as_str)
+            != Some("source-bone-local")
+            || rig.get("unit").and_then(Value::as_str) != Some("meter")
+        {
+            return Err(PipelineError::new(
+                "generated vehicle physics rig space or unit is unsupported",
+            ));
+        }
+        let joint_count = required_u64(rig, "joint_count")?;
+        if joint_count == 0 {
+            return Err(PipelineError::new(
+                "generated vehicle physics rig joint count is invalid",
+            ));
+        }
+        let primitives = rig
+            .get("primitives")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle physics rig has no primitives",
+                )
+            })?;
+        if primitives.is_empty() {
+            return Err(PipelineError::new(
+                "generated vehicle physics rig has empty primitives",
+            ));
+        }
+        let primitives = primitives
+            .iter()
+            .map(verify_vehicle_physics_primitive)
+            .collect::<PipelineOutcome<Vec<_>>>()?;
+        result.push(VerifiedVehiclePhysicsRig {
+            identity,
+            joint_count,
+            primitives,
+        });
+    }
+    if identities != collision_identities {
+        return Err(PipelineError::new(
+            "generated vehicle physics recipes do not match source rigs",
+        ));
+    }
+    Ok(result)
+}
+
+fn verify_vehicle_physics_primitive(
+    value: &Value,
+) -> PipelineOutcome<VerifiedVehiclePhysicsPrimitive> {
+    let primitive = value.as_object().ok_or_else(|| {
+        PipelineError::new(
+            "generated vehicle physics primitive is not an object",
+        )
+    })?;
+    let bone_name = required_string(primitive, "bone_name")?;
+    validate_source_identity(&bone_name)?;
+    let center_m = required_vec3(primitive, "center_m")?;
+    match primitive.get("kind").and_then(Value::as_str) {
+        Some("sphere") => Ok(VerifiedVehiclePhysicsPrimitive::Sphere {
+            bone_name,
+            center_m,
+            radius_m: required_positive_f32(primitive, "radius_m")?,
+        }),
+        Some("oriented-box") => {
+            let axes_value = primitive
+                .get("axes")
+                .and_then(Value::as_array)
+                .ok_or_else(|| {
+                    PipelineError::new(
+                        "generated vehicle box primitive has no axes",
+                    )
+                })?;
+            let [axis0, axis1, axis2] = axes_value.as_slice() else {
+                return Err(PipelineError::new(
+                    "generated vehicle box primitive axis count is invalid",
+                ));
+            };
+            let axes = [
+                value_vec3(axis0)?,
+                value_vec3(axis1)?,
+                value_vec3(axis2)?,
+            ];
+            validate_verified_basis(&axes)?;
+            Ok(VerifiedVehiclePhysicsPrimitive::OrientedBox {
+                bone_name,
+                center_m,
+                axes,
+                half_extents_m: required_positive_vec3(
+                    primitive,
+                    "half_extents_m",
+                )?,
+            })
+        },
+        Some("cylinder") => {
+            let axis = required_vec3(primitive, "axis")?;
+            validate_verified_unit_axis(&axis)?;
+            let flat_end = primitive
+                .get("flat_end")
+                .and_then(Value::as_bool)
+                .ok_or_else(|| {
+                    PipelineError::new(
+                        "generated vehicle cylinder flat-end flag is invalid",
+                    )
+                })?;
+            Ok(VerifiedVehiclePhysicsPrimitive::Cylinder {
+                bone_name,
+                center_m,
+                axis,
+                half_length_m: required_positive_f32(
+                    primitive,
+                    "half_length_m",
+                )?,
+                radius_m: required_positive_f32(primitive, "radius_m")?,
+                flat_end,
+            })
+        },
+        _ => Err(PipelineError::new(
+            "generated vehicle physics primitive kind is unsupported",
+        )),
+    }
+}
+
+fn required_vec3(
+    object: &serde_json::Map<String, Value>,
+    field: &str,
+) -> PipelineOutcome<[f32; 3]> {
+    object.get(field).ok_or_else(|| {
+        PipelineError::new("generated vehicle physics vector is missing")
+    }).and_then(value_vec3)
+}
+
+fn required_positive_vec3(
+    object: &serde_json::Map<String, Value>,
+    field: &str,
+) -> PipelineOutcome<[f32; 3]> {
+    let values = required_vec3(object, field)?;
+    if values.iter().any(|value| *value <= 0.0) {
+        return Err(PipelineError::new(
+            "generated vehicle physics dimensions are not positive",
+        ));
+    }
+    Ok(values)
+}
+
+fn value_vec3(value: &Value) -> PipelineOutcome<[f32; 3]> {
+    let values = value.as_array().ok_or_else(|| {
+        PipelineError::new("generated vehicle physics vector is invalid")
+    })?;
+    let [x, y, z] = values.as_slice() else {
+        return Err(PipelineError::new(
+            "generated vehicle physics vector component count is invalid",
+        ));
+    };
+    Ok([
+        finite_value(x)?,
+        finite_value(y)?,
+        finite_value(z)?,
+    ])
+}
+
+fn finite_value(value: &Value) -> PipelineOutcome<f32> {
+    value
+        .as_number()
+        .and_then(|number| number.to_string().parse::<f32>().ok())
+        .filter(|number| number.is_finite())
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle physics number is not finite",
+            )
+        })
+}
+
+fn required_positive_f32(
+    object: &serde_json::Map<String, Value>,
+    field: &str,
+) -> PipelineOutcome<f32> {
+    let value = object.get(field).ok_or_else(|| {
+        PipelineError::new("generated vehicle physics dimension is missing")
+    }).and_then(finite_value)?;
+    if value <= 0.0 {
+        return Err(PipelineError::new(
+            "generated vehicle physics dimension is not positive",
+        ));
+    }
+    Ok(value)
+}
+
+fn validate_verified_unit_axis(axis: &[f32; 3]) -> PipelineOutcome<()> {
+    const TOLERANCE: f32 = 1.0e-5;
+    let squared = axis.iter().map(|value| value * value).sum::<f32>();
+    if (squared - 1.0).abs() > TOLERANCE {
+        return Err(PipelineError::new(
+            "generated vehicle physics axis is not unit length",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_verified_basis(axes: &[[f32; 3]; 3]) -> PipelineOutcome<()> {
+    const TOLERANCE: f32 = 1.0e-5;
+    for axis in axes {
+        validate_verified_unit_axis(axis)?;
+    }
+    let dot = |left: &[f32; 3], right: &[f32; 3]| {
+        left.iter()
+            .zip(right)
+            .map(|(left, right)| left * right)
+            .sum::<f32>()
+    };
+    if dot(&axes[0], &axes[1]).abs() > TOLERANCE
+        || dot(&axes[0], &axes[2]).abs() > TOLERANCE
+        || dot(&axes[1], &axes[2]).abs() > TOLERANCE
+    {
+        return Err(PipelineError::new(
+            "generated vehicle physics box axes are not orthogonal",
+        ));
+    }
+    let cross = [
+        axes[0][1] * axes[1][2] - axes[0][2] * axes[1][1],
+        axes[0][2] * axes[1][0] - axes[0][0] * axes[1][2],
+        axes[0][0] * axes[1][1] - axes[0][1] * axes[1][0],
+    ];
+    if dot(&cross, &axes[2]) <= 0.0 {
+        return Err(PipelineError::new(
+            "generated vehicle physics box basis is reflected",
+        ));
+    }
+    Ok(())
+}
+
+fn validate_source_identity(value: &str) -> PipelineOutcome<()> {
+    if value.is_empty()
+        || value != value.trim()
+        || value.chars().any(char::is_control)
+    {
+        return Err(PipelineError::new(
+            "generated vehicle source identity is invalid",
+        ));
+    }
+    Ok(())
 }
 
 fn required_string(
