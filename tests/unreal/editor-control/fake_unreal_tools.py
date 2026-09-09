@@ -42,6 +42,7 @@ from mcp.domain.json_types import require_json_object
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
 _TEXTURE_TOOLSET = "editor_toolset.toolsets.texture.TextureTools"
 _IMPORT_TOOLSET = "SharImportEditor.SharImportToolset"
+_PHYSICS_TOOLSET = "SharImportEditor.SharVehiclePhysicsToolset"
 
 
 def tool_result(
@@ -106,6 +107,7 @@ def _plan_tool_result(
             f"- {_ASSET_TOOLSET}: Synthetic assets\n"
             f"- {_TEXTURE_TOOLSET}: Synthetic textures\n"
             f"- {_IMPORT_TOOLSET}: Synthetic SHAR imports\n"
+            f"- {_PHYSICS_TOOLSET}: Synthetic vehicle physics\n"
         )
         return catalog, None
     if tool_name == "describe_toolset":
@@ -194,6 +196,14 @@ def _plan_native_call(
                 {"assetClass": target_class, "packagePath": package_path}
             ]
         }
+    if native_name == "CreateVehiclePhysicsAsset":
+        asset_name = str(arguments["assetName"])
+        folder_path = str(arguments["folderPath"])
+        package_path = f"{folder_path}/{asset_name}"
+        object_path = f"{package_path}.{asset_name}"
+        assets[package_path] = "PhysicsAsset"
+        dirty_assets.add(package_path)
+        return {"returnValue": object_path}
     if native_name == "FileMediaSourcePayloadExists":
         return {"returnValue": str(arguments["assetPath"]) in media_payloads}
     if native_name == "GetFileMediaSourcePath":
@@ -230,6 +240,8 @@ def _plan_schema(toolset: JsonValue | None) -> JsonObject:
         return _texture_schema()
     if toolset == _IMPORT_TOOLSET:
         return _import_schema()
+    if toolset == _PHYSICS_TOOLSET:
+        return _physics_schema()
     raise AssertionError(f"unexpected fake toolset: {toolset}")
 
 
@@ -476,6 +488,64 @@ def _import_schema() -> JsonObject:
                 ),
             },
         ],
+    }
+
+
+def _physics_schema() -> JsonObject:
+    text = {"type": "string"}
+    number = {"type": "number"}
+    vector = _object_schema(
+        {"x": number, "y": number, "z": number},
+        "x",
+        "y",
+        "z",
+    )
+    shape = _object_schema(
+        {
+            "axisX": vector,
+            "axisY": vector,
+            "axisZ": vector,
+            "boneName": text,
+            "boxExtents": vector,
+            "center": vector,
+            "kind": {"enum": ["Sphere", "Box"], "type": "string"},
+            "radius": number,
+        },
+        "axisX",
+        "axisY",
+        "axisZ",
+        "boneName",
+        "boxExtents",
+        "center",
+        "kind",
+        "radius",
+    )
+    return {
+        "description": "Synthetic vehicle Physics Asset construction.",
+        "tools": [{
+            "name": "CreateVehiclePhysicsAsset",
+            "description": "Create one synthetic PhysicsAsset.",
+            "inputSchema": _object_schema(
+                {
+                    "assetName": text,
+                    "folderPath": text,
+                    "rigIdentity": text,
+                    "shapes": {"items": shape, "type": "array"},
+                    "skeletalMeshPath": text,
+                    "sourceJointCount": {"type": "integer"},
+                },
+                "assetName",
+                "folderPath",
+                "rigIdentity",
+                "shapes",
+                "skeletalMeshPath",
+                "sourceJointCount",
+            ),
+            "outputSchema": _object_schema(
+                {"returnValue": text},
+                "returnValue",
+            ),
+        }],
     }
 
 

@@ -46,6 +46,82 @@ from plan_bundle_fixture import write_plan_bundle
 import pytest
 
 
+def _vehicle_physics_document() -> dict[str, object]:
+    return {
+        "schema": "shar-schoenwald.unreal-vehicle-physics-evidence.v1",
+        "source_schema": "shar.vehicle-catalog.v7",
+        "target_policy": {
+            "box_extent_policy": "source-half-to-native-full",
+            "local_axis_conversion": "reflect-y",
+            "native_dimension_policy": (
+                "retain-source-magnitude-under-bone-scale"
+            ),
+            "skeletal_import_unit_policy": "scene-unit-converted",
+            "source_coordinate_space": "source-bone-local",
+            "source_unit": "meter",
+            "unsupported_shape_policy": "block-rig",
+        },
+        "counts": {
+            "vehicles": 1,
+            "rigs": 1,
+            "primitives": 1,
+            "spheres": 1,
+            "oriented_boxes": 0,
+            "cylinders": 0,
+            "native_ready_rigs": 1,
+            "native_blocked_rigs": 0,
+            "native_shapes": 1,
+        },
+        "native_construction": {
+            "requests": [{
+                "package_id": "skeletal-mesh-package",
+                "source_fbx": "fbx-assets/skeletal/model.fbx",
+                "subcategory": "cars/road",
+                "rig_identity": "model",
+                "joint_count": 1,
+                "shapes": [{
+                    "kind": "sphere",
+                    "bone_name": "model",
+                    "center": [0.0, 0.0, 0.0],
+                    "radius": 0.5,
+                }],
+            }],
+            "blockers": [],
+        },
+    }
+
+
+def _bind_vehicle_physics_sidecar(plan_root: Path) -> None:
+    sidecar = plan_root.parent / "vehicle-physics.json"
+    payload = (
+        json.dumps(
+            _vehicle_physics_document(),
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        + "\n"
+    ).encode()
+    sidecar.write_bytes(payload)
+    index_path = plan_root / "index.json"
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    artifacts = index["semantic_artifacts"]
+    row = next(
+        item for item in artifacts if item["artifact_id"] == "vehicle-physics"
+    )
+    row["revision"] = hashlib.sha256(payload).hexdigest()
+    row["byte_count"] = len(payload)
+    index["revision"] = ""
+    canonical = json.dumps(
+        index, ensure_ascii=False, separators=(",", ":")
+    )
+    index["revision"] = hashlib.sha256(canonical.encode()).hexdigest()
+    index_path.write_text(
+        json.dumps(index, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
 def test_translator_describes_only_available_required_toolsets() -> None:
     with FakeUnrealServer() as server:
         transport = StreamableHttpTransport(
@@ -521,3 +597,98 @@ def test_cli_plan_apply_completes_one_file_media_source_over_http(
         "save_assets",
         "is_dirty",
     )
+
+
+def _run_json_cli(
+    capsys: pytest.CaptureFixture[str],
+    *arguments: str,
+) -> dict[str, object]:
+    code = main(arguments)
+    captured = capsys.readouterr()
+    assert code == 0, captured.err or captured.out
+    assert not captured.err
+    payload = json.loads(captured.out)
+    assert isinstance(payload, dict)
+    return payload
+
+
+def test_cli_vehicle_physics_applies_bound_release_after_skeletal_import(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    source_bytes = b"Kaydara FBX Binary synthetic-vehicle-physics-source"
+    source_revision = hashlib.sha256(source_bytes).hexdigest()
+    plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
+    _ = write_plan_bundle(
+        plan_root,
+        with_skeletal_mesh_operation=True,
+        skeletal_mesh_source_revision=source_revision,
+    )
+    _bind_vehicle_physics_sidecar(plan_root)
+    source = (
+        tmp_path
+        / ".cache"
+        / "pipeline"
+        / "fbx-assets"
+        / "skeletal"
+        / "model.fbx"
+    )
+    source.parent.mkdir(parents=True)
+    source.write_bytes(source_bytes)
+    monkeypatch.chdir(tmp_path)
+
+    with FakeUnrealServer(plan_execution=True) as server:
+        _run_json_cli(capsys, "--endpoint", server.endpoint, "plan-apply")
+        preflight = _run_json_cli(capsys, "vehicle-physics-preflight")
+        assert preflight["construction"] == {
+            "blockedRigCount": 0,
+            "requestCount": 1,
+            "shapeCount": 1,
+        }
+        capability_payload = _run_json_cli(
+            capsys,
+            "--endpoint",
+            server.endpoint,
+            "vehicle-physics-capabilities",
+        )
+        capabilities = capability_payload["capabilities"]
+        assert isinstance(capabilities, dict)
+        assert capabilities["complete"] is True
+        assert capabilities["requiredToolCount"] == 6
+        assert capabilities["availableToolCount"] == 6
+        applied = _run_json_cli(
+            capsys,
+            "--endpoint",
+            server.endpoint,
+            "vehicle-physics-apply",
+        )
+
+    assert applied["application"] == {
+        "blockedRigCount": 0,
+        "constructionRevision": applied["constructionRevision"],
+        "createdCount": 1,
+        "savedCount": 1,
+        "verifiedCount": 1,
+    }
+    digest = hashlib.sha256(b"skeletal-mesh-package\0model").hexdigest()[:24]
+    physics = f"/Game/Generated/SHAR/VehiclePhysics/PHYS_{digest}"
+    mesh = "/Game/Generated/SHAR/models/skeletal/model"
+    skeleton = f"{mesh}_Skeleton"
+    assert server.assets == {
+        mesh: "SkeletalMesh",
+        skeleton: "Skeleton",
+        physics: "PhysicsAsset",
+    }
+    assert server.dirty_assets == frozenset()
+    assert server.session_closed
+    native_leaves = tuple(
+        request["params"]["arguments"].get("tool_name")
+        for request in server.requests
+        if request.get("method") == "tools/call"
+        and isinstance(request.get("params"), dict)
+        and request["params"].get("name") == "call_tool"
+    )
+    assert "CreateVehiclePhysicsAsset" in native_leaves
+    assert native_leaves.count("save_assets") == 2
+    assert "delete" not in native_leaves

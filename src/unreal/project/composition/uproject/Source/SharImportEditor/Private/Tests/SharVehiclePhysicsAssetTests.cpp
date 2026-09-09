@@ -43,6 +43,7 @@
 #include "Misc/PackageName.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 #include "PhysicsEngine/SkeletalBodySetup.h"
+#include "ToolsetRegistry/UToolsetRegistry.h"
 
 namespace
 {
@@ -340,6 +341,13 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FSharVehiclePhysicsPublicationTest::RunTest(const FString& Parameters)
 {
     (void)Parameters;
+    TestTrue(
+        TEXT("Vehicle Physics toolset is registered after engine ")
+        TEXT("initialization"),
+        UToolsetRegistry::IsToolsetClassRegistered(
+            USharVehiclePhysicsToolset::StaticClass()
+        )
+    );
     const FString Folder =
         TEXT("/Game/Generated/SHAR/VehiclePhysics/Automation");
     const FString AssetName = FString::Printf(

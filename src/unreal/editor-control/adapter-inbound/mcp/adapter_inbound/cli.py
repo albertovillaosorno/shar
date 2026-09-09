@@ -59,6 +59,9 @@ from mcp.adapter_outbound.streamable_http import StreamableHttpTransport
 from mcp.adapter_outbound.unreal_mcp_version import (
     FilesystemUnrealMcpVersionProvider,
 )
+from mcp.adapter_outbound.vehicle_physics_construction_reader import (
+    read_bound_vehicle_physics_document,
+)
 from mcp.adapter_outbound.world_material_construction_reader import (
     read_bound_world_material_document,
 )
@@ -68,6 +71,9 @@ from mcp.adapter_outbound.world_material_source_verifier import (
 from mcp.application.plan_application import apply_import_plan
 from mcp.application.service import UnrealMcpTranslator
 from mcp.application.skill_export import UnrealSkillExporter
+from mcp.application.vehicle_physics_application import (
+    apply_vehicle_physics_construction,
+)
 from mcp.application.world_material_application import (
     apply_world_material_construction,
 )
@@ -76,6 +82,21 @@ from mcp.domain.plan_bundle import ValidatedPlanBundle
 from mcp.domain.plan_capabilities import audit_plan_capabilities
 from mcp.domain.plan_capabilities import required_toolsets
 from mcp.domain.plan_execution import compile_execution_plan
+from mcp.domain.vehicle_physics_capabilities import (
+    audit_vehicle_physics_capabilities,
+)
+from mcp.domain.vehicle_physics_capabilities import (
+    required_vehicle_physics_toolsets,
+)
+from mcp.domain.vehicle_physics_construction import (
+    CompiledVehiclePhysicsConstruction,
+)
+from mcp.domain.vehicle_physics_construction import (
+    compile_vehicle_physics_construction,
+)
+from mcp.domain.vehicle_physics_construction import (
+    vehicle_physics_construction_revision,
+)
 from mcp.domain.world_material_capabilities import (
     audit_world_material_capabilities,
 )
@@ -133,11 +154,22 @@ def _run_invocation(invocation: CliInvocation) -> int:
         _write_stdout(usage_text())
         return _EXIT_SUCCESS
     _validate_action_operands(invocation)
+    if invocation.action.startswith("vehicle-physics-"):
+        return _run_vehicle_physics_invocation(invocation)
     if invocation.action.startswith("world-material-"):
         return _run_world_material_invocation(invocation)
     if invocation.action.startswith("plan-"):
         return _run_plan_invocation(invocation)
     return _run(invocation)
+
+
+def _run_vehicle_physics_invocation(invocation: CliInvocation) -> int:
+    root = parse_plan_root(invocation.operands)
+    if invocation.action == "vehicle-physics-preflight":
+        return _run_vehicle_physics_preflight(root)
+    if invocation.action == "vehicle-physics-capabilities":
+        return _run_vehicle_physics_capabilities(invocation, root)
+    return _run_vehicle_physics_apply(invocation, root)
 
 
 def _run_world_material_invocation(invocation: CliInvocation) -> int:
@@ -172,6 +204,9 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         "plan-capabilities",
         "plan-execution-preflight",
         "plan-preflight",
+        "vehicle-physics-apply",
+        "vehicle-physics-capabilities",
+        "vehicle-physics-preflight",
         "world-material-apply",
         "world-material-capabilities",
         "world-material-preflight",
@@ -191,6 +226,85 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         _ = parse_skill_output_path(operands)
         return
     _ = parse_catalog_format(operands)
+
+
+def _vehicle_physics_context(
+    root: Path,
+) -> tuple[
+    ValidatedPlanBundle,
+    CompiledVehiclePhysicsConstruction,
+]:
+    bundle = FilesystemPlanBundleReader(root).read_bundle()
+    execution = compile_execution_plan(bundle)
+    document = read_bound_vehicle_physics_document(root.parent, bundle)
+    compiled = compile_vehicle_physics_construction(document, execution)
+    return bundle, compiled
+
+
+def _vehicle_physics_evidence(
+    bundle: ValidatedPlanBundle,
+    compiled: CompiledVehiclePhysicsConstruction,
+) -> dict[str, object]:
+    return {
+        "bundle": bundle.report.to_json(),
+        "construction": compiled.report.to_json(),
+        "constructionRevision": vehicle_physics_construction_revision(compiled),
+    }
+
+
+def _run_vehicle_physics_preflight(root: Path) -> int:
+    bundle, compiled = _vehicle_physics_context(root)
+    _write_stdout(render_json(_vehicle_physics_evidence(bundle, compiled)))
+    return _EXIT_SUCCESS
+
+
+def _run_vehicle_physics_capabilities(
+    invocation: CliInvocation,
+    root: Path,
+) -> int:
+    bundle, compiled = _vehicle_physics_context(root)
+    transport = StreamableHttpTransport(
+        invocation.endpoint,
+        timeout_seconds=invocation.timeout_seconds,
+    )
+    with UnrealMcpTranslator(transport) as translator:
+        definitions = translator.describe_available_toolsets(
+            required_vehicle_physics_toolsets(compiled)
+        )
+    capabilities = audit_vehicle_physics_capabilities(compiled, definitions)
+    payload = _vehicle_physics_evidence(bundle, compiled)
+    payload["capabilities"] = capabilities.to_json()
+    _write_stdout(render_json(payload))
+    return _EXIT_SUCCESS if capabilities.complete else _EXIT_FAILURE
+
+
+def _run_vehicle_physics_apply(
+    invocation: CliInvocation,
+    root: Path,
+) -> int:
+    bundle, compiled = _vehicle_physics_context(root)
+    transport = StreamableHttpTransport(
+        invocation.endpoint,
+        timeout_seconds=invocation.timeout_seconds,
+    )
+    with UnrealMcpTranslator(transport) as translator:
+        definitions = translator.describe_available_toolsets(
+            required_vehicle_physics_toolsets(compiled)
+        )
+        capabilities = audit_vehicle_physics_capabilities(compiled, definitions)
+        payload = _vehicle_physics_evidence(bundle, compiled)
+        payload["capabilities"] = capabilities.to_json()
+        if not capabilities.complete:
+            _write_stdout(render_json(payload))
+            return _EXIT_FAILURE
+        application = apply_vehicle_physics_construction(
+            translator,
+            compiled,
+            capabilities,
+        )
+    payload["application"] = application.to_json()
+    _write_stdout(render_json(payload))
+    return _EXIT_SUCCESS
 
 
 def _world_material_context(

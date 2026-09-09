@@ -66,6 +66,9 @@ shar-unreal-mcp plan-preflight
 shar-unreal-mcp plan-execution-preflight
 shar-unreal-mcp plan-capabilities
 shar-unreal-mcp plan-apply
+shar-unreal-mcp vehicle-physics-preflight
+shar-unreal-mcp vehicle-physics-capabilities
+shar-unreal-mcp vehicle-physics-apply
 shar-unreal-mcp toolsets
 shar-unreal-mcp describe EditorToolset.EditorAppToolset
 shar-unreal-mcp call \
@@ -98,8 +101,28 @@ Generated-plan application is divided into four fail-closed gates:
   payload. Any failure deletes only effects created by that transaction in
   reverse order and verifies their absence.
 
-All four read `.cache/pipeline/unreal-staging/plans/` by default. The execution,
-capability, and
+Vehicle Physics Asset publication adds a separate three-gate construction
+transaction after the Skeletal Mesh import is available. `vehicle-physics-
+preflight` remains local: it requires the release index to bind exactly one
+`vehicle-physics.json`, rechecks exact bytes and SHA-256, validates the v1/v7
+construction contract, and joins every ready `source_fbx` to exactly one
+reviewed `skeletal-mesh-fbx-v1` import step. Deterministic outputs are confined
+to `/Game/Generated/SHAR/VehiclePhysics/PHYS_<digest>`.
+
+`vehicle-physics-capabilities` opens one MCP session and validates the exact
+live schemas for `CreateVehiclePhysicsAsset` plus AssetTools existence, class,
+dirty-state, save, and deletion operations without invoking mutation.
+`vehicle-physics-apply` repeats those gates, requires each Skeletal Mesh
+package to exist as `SkeletalMesh`, requires every Physics Asset destination to
+be absent, creates and independently reads back each `PhysicsAsset`, explicitly
+saves it, and requires the package to read back clean. Failure compensation
+runs in reverse order and can delete only Physics Assets created by that
+transaction; imported Skeletal Meshes and Skeletons remain separate dependencies
+and are never compensation-owned. This construction boundary does not activate
+Chaos simulation, spawn a vehicle, or bind a runtime presentation by itself.
+
+All four plan commands read `.cache/pipeline/unreal-staging/plans/` by default.
+The execution, capability, and
 application commands return failure while any emitted operation remains
 conversion-blocked, factory-blocked, or lacks a reviewed native route. They
 never report or execute a partial subset as a complete plan. Import-manifest v2
