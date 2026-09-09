@@ -116,6 +116,69 @@ void AppendMaterialErrors(
     }
 }
 
+
+void AppendLightBindingErrors(
+    const USharVehiclePresentationDefinition& Definition,
+    TArray<FText>& OutErrors
+)
+{
+    TSet<FName> SeenIds;
+    TSet<FString> SeenTargets;
+    for (
+        const FSharVehicleLightPresentationBinding& Binding
+        : Definition.LightBindings
+    )
+    {
+        bool bInvalid =
+            !USharPrimaryContentDefinition::IsCanonicalIdentifier(
+                Binding.BindingId
+            )
+            || Binding.BoneName.IsNone()
+            || Binding.MaterialSlotIndices.IsEmpty()
+            || StaticEnum<ESharVehicleLightPresentationRole>()
+                ->IsValidEnumValue(static_cast<int64>(Binding.Role)) == false;
+        TSet<int32> SeenIndices;
+        for (const int32 SlotIndex : Binding.MaterialSlotIndices)
+        {
+            if (
+                SlotIndex < 0
+                || SlotIndex >= Definition.MaterialInstances.Num()
+                || SeenIndices.Contains(SlotIndex)
+            )
+            {
+                bInvalid = true;
+                continue;
+            }
+            SeenIndices.Add(SlotIndex);
+            const FString Target = FString::Printf(
+                TEXT("%d|%s|%d"),
+                static_cast<int32>(Binding.Role),
+                *Binding.BoneName.ToString(),
+                SlotIndex
+            );
+            if (SeenTargets.Contains(Target))
+            {
+                bInvalid = true;
+            }
+            SeenTargets.Add(Target);
+        }
+        if (SeenIds.Contains(Binding.BindingId))
+        {
+            bInvalid = true;
+        }
+        SeenIds.Add(Binding.BindingId);
+        if (bInvalid)
+        {
+            OutErrors.Add(NSLOCTEXT(
+                "SharVehiclePresentationDefinition",
+                "InvalidLightBinding",
+                "Light bindings require unique ids, valid rig bones, and "
+                "unique in-range material slots."
+            ));
+        }
+    }
+}
+
 void AppendWheelErrors(
     const USharVehiclePresentationDefinition& Definition,
     TArray<FText>& OutErrors
@@ -185,6 +248,7 @@ void USharVehiclePresentationDefinition::GatherValidationErrors(
     Super::GatherValidationErrors(OutErrors);
     AppendReferenceErrors(*this, OutErrors);
     AppendMaterialErrors(*this, OutErrors);
+    AppendLightBindingErrors(*this, OutErrors);
     AppendWheelErrors(*this, OutErrors);
     AppendIdentityErrors(*this, OutErrors);
 }
