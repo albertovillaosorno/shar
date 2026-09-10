@@ -37,6 +37,9 @@ from typing import NamedTuple
 from mcp.application.vehicle_physics_application import (
     apply_vehicle_physics_construction,
 )
+from mcp.application.vehicle_physics_verification import (
+    verify_vehicle_physics_assets,
+)
 from mcp.domain.catalog import ToolDefinition
 from mcp.domain.catalog import ToolsetDefinition
 from mcp.domain.errors import ProtocolError
@@ -58,11 +61,18 @@ from mcp.domain.vehicle_physics_construction import (
     VehiclePhysicsConstructionStep,
 )
 from mcp.domain.vehicle_physics_construction import VehiclePhysicsShape
+from mcp.domain.vehicle_physics_verification_capabilities import (
+    audit_vehicle_physics_verification_capabilities,
+)
+from mcp.domain.vehicle_physics_verification_capabilities import (
+    required_vehicle_physics_verification_toolsets,
+)
 import pytest
 
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
 _PHYSICS_TOOLSET = "SharImportEditor.SharVehiclePhysicsToolset"
 _PHYSICS_TOOL = f"{_PHYSICS_TOOLSET}.CreateVehiclePhysicsAsset"
+_VERIFY_TOOL = f"{_PHYSICS_TOOLSET}.VerifyVehiclePhysicsAsset"
 _MESH_PACKAGE = "/Game/Generated/SHAR/cars/sedana"
 _MESH_OBJECT = f"{_MESH_PACKAGE}.sedana"
 
@@ -139,12 +149,32 @@ def _toolsets(*, omit: str | None = None) -> tuple[ToolsetDefinition, ...]:
     )
     string_output = _object_schema({"returnValue": text}, "returnValue")
     boolean_output = _object_schema({"returnValue": boolean}, "returnValue")
+    verification_input = _object_schema(
+        {
+            "physicsAssetPath": text,
+            "rigIdentity": text,
+            "shapes": {"items": shape, "type": "array"},
+            "skeletalMeshPath": text,
+            "sourceJointCount": integer,
+        },
+        "physicsAssetPath",
+        "rigIdentity",
+        "shapes",
+        "skeletalMeshPath",
+        "sourceJointCount",
+    )
     physics_tools = (
         _tool(
             _PHYSICS_TOOLSET,
             "CreateVehiclePhysicsAsset",
             physics_input,
             string_output,
+        ),
+        _tool(
+            _PHYSICS_TOOLSET,
+            "VerifyVehiclePhysicsAsset",
+            verification_input,
+            boolean_output,
         ),
     )
     asset_tools = (
@@ -237,6 +267,7 @@ def _outcome(value: object) -> ToolCallOutcome:
 class _Behavior(NamedTuple):
     raise_on_create: int | None = None
     wrong_class_on_create: int | None = None
+    verification_result: bool = True
 
 
 class _SyntheticClient:
@@ -280,24 +311,31 @@ class _SyntheticClient:
             existed = self.assets.pop(path, None) is not None
             self.dirty.discard(path)
             return _outcome(existed)
-        if leaf == "CreateVehiclePhysicsAsset":
-            index = self.create_count
-            self.create_count += 1
-            package = (
-                f'{arguments["folderPath"]}/{arguments["assetName"]}'
-            )
-            object_path = f'{package}.{arguments["assetName"]}'
-            target_class = (
-                "Material"
-                if self.behavior.wrong_class_on_create == index
-                else "PhysicsAsset"
-            )
-            self.assets[package] = target_class
-            self.dirty.add(package)
-            if self.behavior.raise_on_create == index:
-                raise TimeoutError("synthetic lost Physics Asset response")
-            return _outcome(object_path)
+        if leaf in {"CreateVehiclePhysicsAsset", "VerifyVehiclePhysicsAsset"}:
+            return self._physics_call(leaf, arguments)
         raise AssertionError(f"unexpected synthetic tool {leaf}")
+
+    def _physics_call(
+        self,
+        leaf: str,
+        arguments: JsonObject,
+    ) -> ToolCallOutcome:
+        if leaf == "VerifyVehiclePhysicsAsset":
+            return _outcome(self.behavior.verification_result)
+        index = self.create_count
+        self.create_count += 1
+        package = f'{arguments["folderPath"]}/{arguments["assetName"]}'
+        object_path = f'{package}.{arguments["assetName"]}'
+        target_class = (
+            "Material"
+            if self.behavior.wrong_class_on_create == index
+            else "PhysicsAsset"
+        )
+        self.assets[package] = target_class
+        self.dirty.add(package)
+        if self.behavior.raise_on_create == index:
+            raise TimeoutError("synthetic lost Physics Asset response")
+        return _outcome(object_path)
 
 
 def test_capability_audit_accepts_exact_vehicle_physics_surface() -> None:
@@ -379,3 +417,77 @@ def test_wrong_physics_class_rolls_back_asset() -> None:
     with pytest.raises(ProtocolError, match="unexpected class"):
         apply_vehicle_physics_construction(client, compiled, capabilities)
     assert client.assets == {_MESH_PACKAGE: "SkeletalMesh"}
+
+
+def test_verification_capability_audit_accepts_read_only_surface() -> None:
+    compiled = _compiled()
+    report = audit_vehicle_physics_verification_capabilities(
+        compiled, _toolsets()
+    )
+    assert report.complete
+    assert report.verification_count == 1
+    assert report.required_tool_count == 4
+    assert report.available_tool_count == 4
+    assert required_vehicle_physics_verification_toolsets(compiled) == (
+        _PHYSICS_TOOLSET,
+        _ASSET_TOOLSET,
+    )
+
+
+def test_verification_capability_reports_missing_native_verifier() -> None:
+    compiled = _compiled()
+    report = audit_vehicle_physics_verification_capabilities(
+        compiled, _toolsets(omit=_VERIFY_TOOL)
+    )
+    assert not report.complete
+    assert report.missing_tools == (_VERIFY_TOOL,)
+
+
+def test_verification_accepts_clean_persisted_exact_asset() -> None:
+    compiled = _compiled()
+    destination = compiled.requests[0].package_path
+    capabilities = audit_vehicle_physics_verification_capabilities(
+        compiled, _toolsets()
+    )
+    client = _SyntheticClient(preexisting={destination: "PhysicsAsset"})
+    before = dict(client.assets)
+    report = verify_vehicle_physics_assets(client, compiled, capabilities)
+    assert report.verified_count == 1
+    assert client.assets == before
+    assert client.dirty == set()
+    leaves = [leaf for leaf, _ in client.calls]
+    assert leaves.count("VerifyVehiclePhysicsAsset") == 1
+    assert "save_assets" not in leaves
+    assert "delete" not in leaves
+    assert "CreateVehiclePhysicsAsset" not in leaves
+
+
+def test_verification_rejects_missing_or_dirty_persisted_asset() -> None:
+    compiled = _compiled()
+    capabilities = audit_vehicle_physics_verification_capabilities(
+        compiled, _toolsets()
+    )
+    missing = _SyntheticClient()
+    with pytest.raises(ProtocolError, match="destination is missing"):
+        verify_vehicle_physics_assets(missing, compiled, capabilities)
+    destination = compiled.requests[0].package_path
+    dirty = _SyntheticClient(preexisting={destination: "PhysicsAsset"})
+    dirty.dirty.add(destination)
+    with pytest.raises(ProtocolError, match="asset is dirty"):
+        verify_vehicle_physics_assets(dirty, compiled, capabilities)
+
+
+def test_verification_rejects_native_recipe_drift() -> None:
+    compiled = _compiled()
+    destination = compiled.requests[0].package_path
+    capabilities = audit_vehicle_physics_verification_capabilities(
+        compiled, _toolsets()
+    )
+    client = _SyntheticClient(
+        preexisting={destination: "PhysicsAsset"},
+        behavior=_Behavior(verification_result=False),
+    )
+    with pytest.raises(ProtocolError, match="recipe equivalence failed"):
+        verify_vehicle_physics_assets(client, compiled, capabilities)
+    assert client.assets[destination] == "PhysicsAsset"
+    assert client.dirty == set()

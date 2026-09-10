@@ -392,6 +392,32 @@ bool FSharVehiclePhysicsPublicationTest::RunTest(const FString& Parameters)
         Asset->SkeletalBodySetups[0]->BoneName,
         FName(TEXT("sedanA"))
     );
+    const FString PreviewMeshPath = TEXT(
+        "/Game/Generated/SHAR/PortPreviewUnits/Vehicle_Sedana.Vehicle_Sedana"
+    );
+    TestTrue(
+        TEXT("Published Physics Asset verifies against exact recipe"),
+        USharVehiclePhysicsToolset::VerifyVehiclePhysicsAsset(
+            ObjectPath,
+            PreviewMeshPath,
+            TEXT("sedanA"),
+            19,
+            SedanaPublishedShapes()
+        )
+    );
+    TArray<FSharVehiclePhysicsShapeInput> DriftedShapes =
+        SedanaPublishedShapes();
+    DriftedShapes[0].BoxExtents.X += 1.0;
+    TestFalse(
+        TEXT("Published Physics Asset rejects geometry drift"),
+        USharVehiclePhysicsToolset::VerifyVehiclePhysicsAsset(
+            ObjectPath,
+            PreviewMeshPath,
+            TEXT("sedanA"),
+            19,
+            DriftedShapes
+        )
+    );
     UPackage* Package = Asset->GetPackage();
     TestTrue(
         TEXT("Published Physics Asset package is dirty"),

@@ -293,3 +293,54 @@ FString USharVehiclePhysicsToolset::CreateVehiclePhysicsAsset(
     Package->MarkPackageDirty();
     return ObjectPath;
 }
+bool USharVehiclePhysicsToolset::VerifyVehiclePhysicsAsset(
+    const FString& PhysicsAssetPath,
+    const FString& SkeletalMeshPath,
+    FName RigIdentity,
+    int32 SourceJointCount,
+    const TArray<FSharVehiclePhysicsShapeInput>& Shapes
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    if (!IsCanonicalGeneratedObjectPath(PhysicsAssetPath)
+        || !IsCanonicalGeneratedObjectPath(SkeletalMeshPath))
+    {
+        RaiseVehiclePhysicsError(
+            TEXT("verification asset paths are not generated and canonical")
+        );
+        return false;
+    }
+    UPhysicsAsset* Asset =
+        LoadObject<UPhysicsAsset>(nullptr, *PhysicsAssetPath);
+    USkeletalMesh* Mesh = LoadObject<USkeletalMesh>(nullptr, *SkeletalMeshPath);
+    if (Asset == nullptr || Mesh == nullptr)
+    {
+        RaiseVehiclePhysicsError(
+            TEXT("verification Physics Asset or Skeletal Mesh did not load")
+        );
+        return false;
+    }
+    FString Error;
+    TArray<FSharVehiclePhysicsShapeRecipe> NativeShapes;
+    if (!ConvertShapes(Shapes, NativeShapes, Error))
+    {
+        RaiseVehiclePhysicsError(Error);
+        return false;
+    }
+    UPhysicsAsset* Candidate = nullptr;
+    if (!BuildTransientVehiclePhysicsAsset(
+            *Mesh,
+            RigIdentity,
+            SourceJointCount,
+            NativeShapes,
+            Candidate,
+            Error
+        ))
+    {
+        RaiseVehiclePhysicsError(Error);
+        return false;
+    }
+    return Candidate != nullptr
+        && Asset->GetPreviewMesh() == Mesh
+        && HasEquivalentBodies(*Candidate, *Asset);
+}

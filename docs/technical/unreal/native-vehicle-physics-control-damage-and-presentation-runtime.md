@@ -370,6 +370,25 @@ not part of the compiled construction type. On bundle
 `extracted-art-cars-sedana` selects one six-shape `sedanA` request from the
 135-request/1,104-shape global construction.
 
+Persisted Physics Asset certification is a separate read-only boundary. The
+native verifier rebuilds the transient candidate from the same selected recipe
+and requires the existing asset to retain the exact preview Skeletal Mesh, body
+order, bone identities, sphere centers/radii, and box centers/rotations/extents.
+It never saves, repairs, replaces, or deletes the persisted asset.
+
+Editor-control exposes that certification only with an explicit package scope.
+It requires the destination to exist as a clean `PhysicsAsset`, checks only the
+verifier plus AssetTools existence/class/dirty reads, and binds the result to
+the selected construction revision. A mismatch is evidence of drift, not
+permission to overwrite the package.
+
+A fresh interactive Unreal Engine 5.8.1 process verifies the persisted `sedana`
+asset through that path. The package-scoped command audits all four required
+read-only schemas, selects the exact six-shape request, and returns one verified
+asset without changing its clean state. Independent PhysicsAssetToolset
+read-back reports bodies `sedanA`, `w3`, `w2`, `w1`, and `w0`, with two boxes
+on the root and one sphere on each wheel body; no constraints are present.
+
 Vehicle material preparation now has a separate release-index-bound
 `vehicle-materials.json` sidecar. It derives only from the verified v8 slot
 order and shader/texture evidence and keeps world-material construction policy
@@ -445,6 +464,24 @@ For `sedana`, five of eight slots are in this construction-ready subset:
 The `char_swatches_m`, `sedanA_m`, and windshield slots are lit and remain
 blocked rather than being approximated with the unlit family.
 
+The recovered PDDI renderer makes the remaining `simple` lit family more
+specific without making it equivalent to Unreal's default lit shading. Its
+programmable path multiplies the base texture by emissive plus material ambient
+times scene ambient and directional-light contributions times material diffuse.
+The fixed-function path also supplies the authored specular and shininess state.
+
+Across the current vehicle corpus, all 475 `simple` lit slots use white diffuse,
+zero emissive, zero specular, and Greater alpha compare. Ambient has only black,
+white, or 191-gray RGB values, while shininess is either zero or 10; 353 slots
+are opaque, 121 are source-alpha, and one is additive. This evidence does not
+justify mapping PDDI shininess directly to Unreal Roughness or Specular.
+
+For `sedana`, `char_swatches_m` is opaque, one-sided, black-ambient, and has
+zero shininess; `sedanA_m` is opaque, two-sided, black-ambient, and has
+shininess 10. `WindsheildT_m__glass` is source-alpha, two-sided, white-ambient,
+and has shininess 10. All three keep their exact source textures and remain
+blocked until a lit graph reproduces the reviewed lighting and glass policy.
+
 Vehicle material evidence v3 now verifies all 3,341 retained semantic parts and
 joins each part's source shader to the verified FBX material slots. Across the
 88 vehicles it derives 1,726 standard headlight, brake, and reverse bindings:
@@ -463,9 +500,16 @@ The reviewed runtime state keeps headlight enablement, brake-versus-reverse
 selection, damage suppression, and fade separate from material implementation.
 The source behavior selects reverse lights while braking in reverse and hides
 brake lights in that state, so the semantic state preserves that visible rule.
-Vehicle Material Instance construction now has a reviewed transaction, but slot
-application remains blocked; graph review and asset publication do not claim a
-Skeletal Mesh material binding exists.
+The five reviewed unlit `sedana` Material Instances are now persisted on their
+exact Skeletal Mesh slots after compare-exchange, save, and cold-reload proof.
+
+The recovered source runtime also proves that vehicle headlight appearance uses
+camera-facing billboard quad groups attached to `hll` and `hlr`, while brake and
+reverse presentation uses the reviewed brake/reverse joints. Baking those quads
+as fixed FBX planes is therefore not a faithful runtime representation: a
+back-face can disappear when the camera crosses the plane. Unreal presentation
+must separate the camera-facing glow surface from native light emission instead
+of treating the imported plane as the complete headlight implementation.
 
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative

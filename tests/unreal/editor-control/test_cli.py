@@ -591,6 +591,17 @@ def test_vehicle_physics_prerequisite_options_reject_bad_scope() -> None:
         ))
 
 
+def test_vehicle_physics_verify_requires_package_scope(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    endpoint = "http://127.0.0.1:65534/mcp"
+    exit_code = main(("--endpoint", endpoint, "vehicle-physics-verify"))
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "requires --package-id" in captured.err
+    assert not captured.out
+
+
 def test_vehicle_physics_options_accept_exact_package_scope() -> None:
     options = parse_vehicle_physics_options((
         "--package-id",

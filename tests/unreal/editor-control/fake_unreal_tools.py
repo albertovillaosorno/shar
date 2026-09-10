@@ -210,14 +210,16 @@ def _plan_native_call(
             assets=assets,
             dirty_assets=dirty_assets,
         )
-    if native_name == "CreateVehiclePhysicsAsset":
-        asset_name = str(arguments["assetName"])
-        folder_path = str(arguments["folderPath"])
-        package_path = f"{folder_path}/{asset_name}"
-        object_path = f"{package_path}.{asset_name}"
-        assets[package_path] = "PhysicsAsset"
-        dirty_assets.add(package_path)
-        return {"returnValue": object_path}
+    if native_name in {
+        "CreateVehiclePhysicsAsset",
+        "VerifyVehiclePhysicsAsset",
+    }:
+        return _vehicle_physics_native_call(
+            native_name,
+            arguments,
+            assets=assets,
+            dirty_assets=dirty_assets,
+        )
     if native_name == "FileMediaSourcePayloadExists":
         return {"returnValue": str(arguments["assetPath"]) in media_payloads}
     if native_name == "GetFileMediaSourcePath":
@@ -245,6 +247,33 @@ def _plan_native_call(
         dirty_assets.discard(path)
         return {"returnValue": existed}
     raise AssertionError(f"unexpected fake native tool: {native_name}")
+
+
+def _vehicle_physics_native_call(
+    native_name: JsonValue,
+    arguments: JsonObject,
+    *,
+    assets: dict[str, str],
+    dirty_assets: set[str],
+) -> JsonObject:
+    if native_name == "VerifyVehiclePhysicsAsset":
+        physics_object = str(arguments["physicsAssetPath"])
+        mesh_object = str(arguments["skeletalMeshPath"])
+        physics_package = physics_object.rpartition(".")[0]
+        mesh_package = mesh_object.rpartition(".")[0]
+        return {
+            "returnValue": (
+                assets.get(physics_package) == "PhysicsAsset"
+                and assets.get(mesh_package) == "SkeletalMesh"
+            )
+        }
+    asset_name = str(arguments["assetName"])
+    folder_path = str(arguments["folderPath"])
+    package_path = f"{folder_path}/{asset_name}"
+    object_path = f"{package_path}.{asset_name}"
+    assets[package_path] = "PhysicsAsset"
+    dirty_assets.add(package_path)
+    return {"returnValue": object_path}
 
 
 def _vehicle_material_native_call(
@@ -648,32 +677,55 @@ def _physics_schema() -> JsonObject:
         "kind",
         "radius",
     )
+    create = {
+        "name": "CreateVehiclePhysicsAsset",
+        "description": "Create one synthetic PhysicsAsset.",
+        "inputSchema": _object_schema(
+            {
+                "assetName": text,
+                "folderPath": text,
+                "rigIdentity": text,
+                "shapes": {"items": shape, "type": "array"},
+                "skeletalMeshPath": text,
+                "sourceJointCount": {"type": "integer"},
+            },
+            "assetName",
+            "folderPath",
+            "rigIdentity",
+            "shapes",
+            "skeletalMeshPath",
+            "sourceJointCount",
+        ),
+        "outputSchema": _object_schema(
+            {"returnValue": text},
+            "returnValue",
+        ),
+    }
+    verify = {
+        "name": "VerifyVehiclePhysicsAsset",
+        "description": "Verify one synthetic PhysicsAsset.",
+        "inputSchema": _object_schema(
+            {
+                "physicsAssetPath": text,
+                "rigIdentity": text,
+                "shapes": {"items": shape, "type": "array"},
+                "skeletalMeshPath": text,
+                "sourceJointCount": {"type": "integer"},
+            },
+            "physicsAssetPath",
+            "rigIdentity",
+            "shapes",
+            "skeletalMeshPath",
+            "sourceJointCount",
+        ),
+        "outputSchema": _object_schema(
+            {"returnValue": {"type": "boolean"}},
+            "returnValue",
+        ),
+    }
     return {
         "description": "Synthetic vehicle Physics Asset construction.",
-        "tools": [{
-            "name": "CreateVehiclePhysicsAsset",
-            "description": "Create one synthetic PhysicsAsset.",
-            "inputSchema": _object_schema(
-                {
-                    "assetName": text,
-                    "folderPath": text,
-                    "rigIdentity": text,
-                    "shapes": {"items": shape, "type": "array"},
-                    "skeletalMeshPath": text,
-                    "sourceJointCount": {"type": "integer"},
-                },
-                "assetName",
-                "folderPath",
-                "rigIdentity",
-                "shapes",
-                "skeletalMeshPath",
-                "sourceJointCount",
-            ),
-            "outputSchema": _object_schema(
-                {"returnValue": text},
-                "returnValue",
-            ),
-        }],
+        "tools": [create, verify],
     }
 
 

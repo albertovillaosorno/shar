@@ -1026,7 +1026,23 @@ def test_cli_vehicle_physics_applies_bound_release_after_skeletal_import(
             "--package-id",
             "skeletal-mesh-package",
         )
+        verified = _run_json_cli(
+            capsys,
+            "--endpoint",
+            server.endpoint,
+            "vehicle-physics-verify",
+            "--package-id",
+            "skeletal-mesh-package",
+        )
 
+    assert isinstance(verified["capabilities"], dict)
+    assert verified["capabilities"]["complete"] is True
+    assert verified["capabilities"]["requiredToolCount"] == 4
+    assert verified["capabilities"]["availableToolCount"] == 4
+    assert verified["verification"] == {
+        "constructionRevision": verified["selectionRevision"],
+        "verifiedCount": 1,
+    }
     assert applied["application"] == {
         "blockedRigCount": 0,
         "constructionRevision": applied["constructionRevision"],
@@ -1053,6 +1069,7 @@ def test_cli_vehicle_physics_applies_bound_release_after_skeletal_import(
         and request["params"].get("name") == "call_tool"
     )
     assert "CreateVehiclePhysicsAsset" in native_leaves
+    assert native_leaves.count("VerifyVehiclePhysicsAsset") == 1
     assert native_leaves.count("save_assets") == 2
     assert "delete" not in native_leaves
 

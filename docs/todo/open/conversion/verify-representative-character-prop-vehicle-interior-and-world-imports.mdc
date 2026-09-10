@@ -402,8 +402,32 @@ lit slots 2, 3, and 4 remain null rather than receiving an inferred fallback.
 The broader P0 criterion remains open. Five reviewed unlit `sedana` slots are
 now persisted on the representative Skeletal Mesh, but its two opaque lit slots
 and lit windshield-glass slot still require reviewed native material families.
-The previous Physics Asset save/reload evidence was session-owned and removed,
-so no representative production Physics Asset is currently persisted beside
-the mesh. Source-derived animation and wheel-definition assets remain absent,
-and the vehicle has not been spawned into a world with live Chaos vehicle
-physics or validated under driven behavior against source evidence.
+
+A fresh interactive Unreal Engine 5.8.1 process now closes the persisted
+shape-equivalence gap without rewriting the Physics Asset. Package-scoped
+`vehicle-physics-verify` audited all four read-only schemas, selected the exact
+six-shape `sedanA` request, rebuilt the transient candidate from release-bound
+v8 evidence, and returned `verifiedCount=1`. Independent PhysicsAssetToolset
+read-back reports ordered bodies `sedanA`, `w3`, `w2`, `w1`, and `w0`: two
+boxes on `sedanA` plus one sphere on each wheel bone, with no constraints and
+the persisted package still `dirty=false`.
+
+Interactive Unreal Engine 5.8.1 inspection now confirms the representative
+`sedana` Physics Asset visually matches the intended vehicle structure: the two
+chassis boxes belong to the body and the four wheel spheres remain separated at
+the wheel locations. The imported meter-derived scale is accepted unchanged;
+viewport ergonomics are not evidence for applying an extra actor or asset scale.
+
+The same inspection exposed a distinct presentation defect. Source headlight
+assets are camera-facing billboard groups attached to `hll` and `hlr`, but the
+current FBX representation leaves their cards as fixed planes, so they can
+vanish when viewed from the back. Two disposable native SpotLight actors were
+placed at the source-derived `hll`/`hlr` rest positions for visual comparison;
+they are inspection-only and the level is not an authority or persistence
+surface. Production still requires a native vehicle-light adapter plus reviewed
+camera-facing glow presentation rather than a two-sided-material approximation.
+
+Source-derived animation and wheel-definition assets remain absent, the three
+lit `sedana` slots still require reviewed material families, and the vehicle has
+not been spawned into a world with live Chaos vehicle physics or validated under
+driven behavior against source evidence.

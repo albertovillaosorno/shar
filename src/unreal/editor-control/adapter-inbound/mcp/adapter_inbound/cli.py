@@ -92,6 +92,9 @@ from mcp.application.vehicle_material_slot_application import (
 from mcp.application.vehicle_physics_application import (
     apply_vehicle_physics_construction,
 )
+from mcp.application.vehicle_physics_verification import (
+    verify_vehicle_physics_assets,
+)
 from mcp.application.world_material_application import (
     apply_world_material_construction,
 )
@@ -174,6 +177,12 @@ from mcp.domain.vehicle_physics_prerequisites import (
 )
 from mcp.domain.vehicle_physics_selection import CompiledVehiclePhysicsSelection
 from mcp.domain.vehicle_physics_selection import select_vehicle_physics_package
+from mcp.domain.vehicle_physics_verification_capabilities import (
+    audit_vehicle_physics_verification_capabilities,
+)
+from mcp.domain.vehicle_physics_verification_capabilities import (
+    required_vehicle_physics_verification_toolsets,
+)
 from mcp.domain.world_material_capabilities import (
     audit_world_material_capabilities,
 )
@@ -309,6 +318,13 @@ def _run_vehicle_physics_invocation(invocation: CliInvocation) -> int:
         return _run_vehicle_physics_capabilities(
             invocation, options.root, options.package_id
         )
+    if invocation.action == "vehicle-physics-verify":
+        if options.package_id is None:
+            message = "vehicle-physics-verify requires --package-id"
+            raise UsageError(message)
+        return _run_vehicle_physics_verify(
+            invocation, options.root, options.package_id
+        )
     return _run_vehicle_physics_apply(
         invocation, options.root, options.package_id
     )
@@ -351,6 +367,7 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         "vehicle-physics-apply",
         "vehicle-physics-capabilities",
         "vehicle-physics-preflight",
+        "vehicle-physics-verify",
         "vehicle-physics-prerequisites-apply",
         "vehicle-physics-prerequisites-capabilities",
         "vehicle-physics-prerequisites-preflight",
@@ -866,6 +883,43 @@ def _run_vehicle_physics_capabilities(
     payload["capabilities"] = capabilities.to_json()
     _write_stdout(render_json(payload))
     return _EXIT_SUCCESS if capabilities.complete else _EXIT_FAILURE
+
+
+def _run_vehicle_physics_verify(
+    invocation: CliInvocation,
+    root: Path,
+    package_id: str,
+) -> int:
+    bundle, compiled, executable, selection = _vehicle_physics_context(
+        root, package_id
+    )
+    transport = StreamableHttpTransport(
+        invocation.endpoint,
+        timeout_seconds=invocation.timeout_seconds,
+    )
+    with UnrealMcpTranslator(transport) as translator:
+        definitions = translator.describe_available_toolsets(
+            required_vehicle_physics_verification_toolsets(executable)
+        )
+        capabilities = audit_vehicle_physics_verification_capabilities(
+            executable, definitions
+        )
+        payload = _vehicle_physics_evidence(
+            bundle,
+            compiled,
+            executable,
+            selection,
+        )
+        payload["capabilities"] = capabilities.to_json()
+        if not capabilities.complete:
+            _write_stdout(render_json(payload))
+            return _EXIT_FAILURE
+        verification = verify_vehicle_physics_assets(
+            translator, executable, capabilities
+        )
+    payload["verification"] = verification.to_json()
+    _write_stdout(render_json(payload))
+    return _EXIT_SUCCESS
 
 
 def _run_vehicle_physics_apply(
