@@ -146,7 +146,7 @@ def _vehicle_material_document(texture_bytes: bytes) -> dict[str, object]:
         f"/Game/Generated/SHAR/Materials/Vehicles/Instances/{instance_name}"
     )
     return {
-        "schema": "shar-schoenwald.unreal-vehicle-material-evidence.v3",
+        "schema": "shar-schoenwald.unreal-vehicle-material-evidence.v4",
         "source_schema": "shar.vehicle-catalog.v8",
         "target_policy": {
             "source_projection": "reviewed-pddi-render-state",
@@ -159,7 +159,7 @@ def _vehicle_material_document(texture_bytes: bytes) -> dict[str, object]:
                 "blocked-pending-reviewed-transaction"
             ),
             "dynamic_light_binding": (
-                "verified-source-part-to-material-slots"
+                "headlight-sidecar-plus-slot-bound-rear-lights"
             ),
             "runtime_shader_mutation": "preserve-separately",
         },

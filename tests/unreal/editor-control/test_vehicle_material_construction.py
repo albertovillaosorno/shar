@@ -75,7 +75,7 @@ def _document() -> dict[str, object]:
     alpha = 0.375
     alpha_bits = struct.unpack("<I", struct.pack("<f", alpha))[0]
     return {
-        "schema": "shar-schoenwald.unreal-vehicle-material-evidence.v3",
+        "schema": "shar-schoenwald.unreal-vehicle-material-evidence.v4",
         "source_schema": "shar.vehicle-catalog.v8",
         "target_policy": {
             "source_projection": "reviewed-pddi-render-state",
@@ -83,7 +83,9 @@ def _document() -> dict[str, object]:
             "world_material_policy_reuse": "forbidden",
             "native_construction": "simple-unlit-texture-master-instance-ready",
             "mesh_slot_application": "blocked-pending-reviewed-transaction",
-            "dynamic_light_binding": "verified-source-part-to-material-slots",
+            "dynamic_light_binding": (
+                "headlight-sidecar-plus-slot-bound-rear-lights"
+            ),
             "runtime_shader_mutation": "preserve-separately",
         },
         "counts": {
@@ -270,7 +272,7 @@ def test_bound_reader_rechecks_release_index_hash(tmp_path: Path) -> None:
     path.write_bytes(sidecar)
     bundle = _bundle(sidecar)
     document = read_bound_vehicle_material_document(tmp_path, bundle)
-    assert document["schema"].endswith(".v3")
+    assert document["schema"].endswith(".v4")
     path.write_bytes(sidecar + b"\n")
     with pytest.raises(ProtocolError, match="byte count is stale"):
         read_bound_vehicle_material_document(tmp_path, bundle)

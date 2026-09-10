@@ -45,7 +45,7 @@ use super::unreal_vehicle_material_native_plan::{
 use crate::domain::{PipelineError, PipelineOutcome};
 
 pub(super) const VEHICLE_MATERIAL_PLAN_SCHEMA: &str =
-    "shar-schoenwald.unreal-vehicle-material-evidence.v3";
+    "shar-schoenwald.unreal-vehicle-material-evidence.v4";
 const SOURCE_SCHEMA: &str = "shar.vehicle-catalog.v8";
 const NATIVE_GRAPH_BLOCKER: &str =
     "vehicle-native-material-graph-not-reviewed";
@@ -55,6 +55,8 @@ const SLOT_APPLICATION_BLOCKER: &str =
     "vehicle-material-slot-application-not-reviewed";
 const LIGHT_PRESENTATION_BLOCKER: &str =
     "vehicle-light-material-application-not-reviewed";
+const HEADLIGHT_GLOW_BLOCKER: &str =
+    "vehicle-headlight-native-glow-not-applied";
 
 /// Render exact verified vehicle material state and native-readiness blockers.
 pub(super) fn render_vehicle_material_plan(
@@ -109,7 +111,8 @@ pub(super) fn render_vehicle_material_plan(
             "world_material_policy_reuse": "forbidden",
             "native_construction": "simple-unlit-texture-master-instance-ready",
             "mesh_slot_application": "blocked-pending-reviewed-transaction",
-            "dynamic_light_binding": "verified-source-part-to-material-slots",
+            "dynamic_light_binding":
+                "headlight-sidecar-plus-slot-bound-rear-lights",
             "runtime_shader_mutation": "preserve-separately"
         },
         "counts": counts.value(),
@@ -146,6 +149,7 @@ struct Counts {
     dynamic_light_bindings: usize,
     unique_slot_light_bindings: usize,
     ambiguous_slot_light_bindings: usize,
+    slot_independent_headlight_bindings: usize,
 }
 
 impl Counts {
@@ -199,9 +203,17 @@ impl Counts {
             if unique {
                 self.unique_slot_light_bindings =
                     self.unique_slot_light_bindings.saturating_add(1);
-            } else {
+            } else if binding
+                .get("slot_join_status")
+                .and_then(Value::as_str)
+                == Some("ambiguous")
+            {
                 self.ambiguous_slot_light_bindings =
                     self.ambiguous_slot_light_bindings.saturating_add(1);
+            } else {
+                self.slot_independent_headlight_bindings = self
+                    .slot_independent_headlight_bindings
+                    .saturating_add(1);
             }
         }
     }
@@ -231,6 +243,8 @@ impl Counts {
             "dynamic_light_bindings": self.dynamic_light_bindings,
             "unique_slot_light_bindings": self.unique_slot_light_bindings,
             "ambiguous_slot_light_bindings": self.ambiguous_slot_light_bindings,
+            "slot_independent_headlight_bindings":
+                self.slot_independent_headlight_bindings,
         })
     }
 }
@@ -329,7 +343,7 @@ fn native_construction_value(
 fn dynamic_light_bindings(
     vehicle: &VerifiedVehicleFbxArtifact,
 ) -> PipelineOutcome<Vec<Value>> {
-    let mut result = Vec::new();
+    let mut result = headlight_sidecar_bindings(vehicle)?;
     for part in &vehicle.presentation_parts {
         if !part
             .surface_semantics
@@ -355,6 +369,9 @@ fn dynamic_light_bindings(
             let Some(semantic_role) = semantic_light_role(bone) else {
                 continue;
             };
+            if semantic_role.starts_with("headlight-") {
+                continue;
+            }
             let join_status = if slot_indices.len() == 1 {
                 "unique"
             } else {
@@ -375,6 +392,43 @@ fn dynamic_light_bindings(
                 "slot_join_status": join_status,
                 "native_status": "blocked",
                 "native_blockers": blockers,
+            }));
+        }
+    }
+    Ok(result)
+}
+
+fn headlight_sidecar_bindings(
+    vehicle: &VerifiedVehicleFbxArtifact,
+) -> PipelineOutcome<Vec<Value>> {
+    let mut result = Vec::new();
+    for sidecar in &vehicle.headlight_billboard_sidecars {
+        if sidecar.shader_identity != sidecar.material.source_material_name {
+            return Err(PipelineError::new(
+                "vehicle headlight sidecar material identity drifted",
+            ));
+        }
+        for bone in &sidecar.bones {
+            let Some(semantic_role) = semantic_light_role(bone) else {
+                return Err(PipelineError::new(
+                    "vehicle headlight sidecar has unsupported hardpoint",
+                ));
+            };
+            if !semantic_role.starts_with("headlight-") {
+                return Err(PipelineError::new(
+                    "vehicle headlight sidecar escaped headlight hardpoints",
+                ));
+            }
+            result.push(json!({
+                "binding_id": format!("{}::{}", sidecar.identity, bone),
+                "semantic_role": semantic_role,
+                "bone_name": bone,
+                "source_billboard_identity": sidecar.identity,
+                "source_shader": sidecar.shader_identity,
+                "material_slot_indices": [],
+                "slot_join_status": "not-applicable-native",
+                "native_status": "blocked",
+                "native_blockers": [HEADLIGHT_GLOW_BLOCKER],
             }));
         }
     }

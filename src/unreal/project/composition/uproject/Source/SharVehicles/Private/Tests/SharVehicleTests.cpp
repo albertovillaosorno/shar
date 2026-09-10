@@ -297,19 +297,19 @@ MakeResolvedVehiclePresentation()
             TEXT("headlight_left_lens"),
             ESharVehicleLightPresentationRole::Headlight,
             TEXT("hll"),
-            {0}
+            {}
         ),
         MakeLightBinding(
             TEXT("headlight_left_glow"),
             ESharVehicleLightPresentationRole::Headlight,
             TEXT("hll"),
-            {1}
+            {}
         ),
         MakeLightBinding(
             TEXT("headlight_right_lens"),
             ESharVehicleLightPresentationRole::Headlight,
             TEXT("hlr"),
-            {0}
+            {}
         ),
     };
     for (FSharVehicleWheelPresentationBinding& Wheel : Presentation->Wheels)
@@ -443,6 +443,46 @@ bool FSharVehiclePresentationDefinitionValidationTest::RunTest(
     Presentation->GatherValidationErrors(Errors);
     TestTrue(TEXT("Valid light binding passes"), Errors.IsEmpty());
 
+    Presentation = MakeValidVehiclePresentation();
+    Presentation->LightBindings = {
+        MakeLightBinding(
+            TEXT("headlight_primary"),
+            ESharVehicleLightPresentationRole::Headlight,
+            TEXT("hll"),
+            {}
+        ),
+    };
+    Errors.Reset();
+    Presentation->GatherValidationErrors(Errors);
+    TestTrue(TEXT("Slotless native headlight passes"), Errors.IsEmpty());
+
+    Presentation->LightBindings[0].MaterialSlotIndices = {0};
+    Errors.Reset();
+    Presentation->GatherValidationErrors(Errors);
+    TestFalse(TEXT("Slot-backed headlight is rejected"), Errors.IsEmpty());
+
+    Presentation = MakeValidVehiclePresentation();
+    Presentation->LightBindings = {
+        MakeLightBinding(
+            TEXT("brake_primary"),
+            ESharVehicleLightPresentationRole::Brake,
+            TEXT("brake1"),
+            {}
+        ),
+    };
+    Errors.Reset();
+    Presentation->GatherValidationErrors(Errors);
+    TestFalse(TEXT("Slotless brake light is rejected"), Errors.IsEmpty());
+
+    Presentation = MakeValidVehiclePresentation();
+    Presentation->LightBindings = {
+        MakeLightBinding(
+            TEXT("brake_primary"),
+            ESharVehicleLightPresentationRole::Brake,
+            TEXT("brake1"),
+            {0}
+        ),
+    };
     Presentation->LightBindings[0].MaterialSlotIndices = {1};
     Errors.Reset();
     Presentation->GatherValidationErrors(Errors);
@@ -481,7 +521,7 @@ bool FSharVehiclePresentationLightRuntimeTest::RunTest(
             TEXT("headlight_primary"),
             ESharVehicleLightPresentationRole::Headlight,
             TEXT("hll"),
-            {0}
+            {}
         ),
         MakeLightBinding(
             TEXT("brake_primary"),

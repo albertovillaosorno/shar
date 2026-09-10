@@ -129,12 +129,17 @@ void AppendLightBindingErrors(
         : Definition.LightBindings
     )
     {
+        const bool bIsHeadlight =
+            Binding.Role == ESharVehicleLightPresentationRole::Headlight;
+        const bool bInvalidSlotPolicy = bIsHeadlight
+            ? !Binding.MaterialSlotIndices.IsEmpty()
+            : Binding.MaterialSlotIndices.IsEmpty();
         bool bInvalid =
             !USharPrimaryContentDefinition::IsCanonicalIdentifier(
                 Binding.BindingId
             )
             || Binding.BoneName.IsNone()
-            || Binding.MaterialSlotIndices.IsEmpty()
+            || bInvalidSlotPolicy
             || StaticEnum<ESharVehicleLightPresentationRole>()
                 ->IsValidEnumValue(static_cast<int64>(Binding.Role)) == false;
         TSet<int32> SeenIndices;
@@ -172,8 +177,9 @@ void AppendLightBindingErrors(
             OutErrors.Add(NSLOCTEXT(
                 "SharVehiclePresentationDefinition",
                 "InvalidLightBinding",
-                "Light bindings require unique ids, valid rig bones, and "
-                "unique in-range material slots."
+                "Light bindings require unique ids and valid rig bones. "
+                "Headlights are slotless; rear lights require unique "
+                "in-range material slots."
             ));
         }
     }
