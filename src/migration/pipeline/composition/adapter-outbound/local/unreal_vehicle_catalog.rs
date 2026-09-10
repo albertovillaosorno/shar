@@ -1076,12 +1076,11 @@ fn verify_vehicle_headlight_billboards(
             &full_path,
             &identity,
         )
-            .map_err(|error| {
-                PipelineError::new(format!(
-                    "generated vehicle headlight billboard is invalid: {:?}",
-                    error
-                ))
-            })?;
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "generated vehicle headlight billboard is invalid: {error:?}"
+            ))
+        })?;
         if evidence.shader_identity != shader_identity {
             return Err(PipelineError::new(
                 "generated vehicle headlight billboard shader is inconsistent",

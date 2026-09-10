@@ -528,12 +528,15 @@ planes as its only data source.
 
 The fixed headlight planes are still retained in the current FBX contract for
 one transitional reason: `sedana` material slots 5, 6, and 7 are presently the
-construction path for `flarebase2_m`, `LENS02_m`, and `glow2_m`. Removing those
-planes before billboard materials have an independent native construction and
-presentation binding would discard reviewed source material evidence. The next
-conversion step must decouple those materials from Skeletal Mesh slots, then
-remove the common headlight groups from FBX emission and bind native
-camera-facing glow to the sidecar evidence.
+construction path for the following source materials:
+<!-- cspell:disable -->
+`flarebase2_m`, `LENS02_m`, and `glow2_m`.
+<!-- cspell:enable -->
+Removing those planes before billboard materials have an independent native
+construction and presentation binding would discard reviewed source material
+evidence. The next conversion step must decouple those materials from Skeletal
+Mesh slots, then remove the common headlight groups from FBX emission and bind
+native camera-facing glow to the sidecar evidence.
 
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative
