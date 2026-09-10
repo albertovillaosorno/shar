@@ -152,7 +152,7 @@ cylinder-only `icecream` dependency is not imported by this transaction.
 Vehicle Physics Asset publication adds a separate three-gate construction
 transaction after the Skeletal Mesh import is available. `vehicle-physics-
 preflight` remains local: it requires the release index to bind exactly one
-`vehicle-physics.json`, rechecks exact bytes and SHA-256, validates the v1/v7
+`vehicle-physics.json`, rechecks exact bytes and SHA-256, validates the v1/v8
 construction contract, and joins every ready `source_fbx` to exactly one
 reviewed `skeletal-mesh-fbx-v1` import step. Deterministic outputs are confined
 to `/Game/Generated/SHAR/VehiclePhysics/PHYS_<digest>`.

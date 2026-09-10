@@ -46,7 +46,7 @@ from mcp.domain.plan_execution import CompiledExecutionPlan
 from mcp.domain.plan_execution import NativeImportStep
 
 _SCHEMA = "shar-schoenwald.unreal-vehicle-physics-evidence.v1"
-_SOURCE_SCHEMA = "shar.vehicle-catalog.v7"
+_SOURCE_SCHEMA = "shar.vehicle-catalog.v8"
 _TOOLSET = "SharImportEditor.SharVehiclePhysicsToolset"
 _TOOL = f"{_TOOLSET}.CreateVehiclePhysicsAsset"
 _OUTPUT_ROOT = "/Game/Generated/SHAR/VehiclePhysics"
