@@ -395,6 +395,22 @@ transaction owns only the newly created Texture2D, Material, and Material
 Instance packages; Skeletal Mesh slot assignment remains a later transaction
 and native presentation readiness stays blocked until that binding is proven.
 
+The editor-control boundary can scope those native construction requests by
+canonical package identity without weakening release validation. It compiles
+the complete v3 document first, then selects the package's Material Instances
+and the exact Texture2D/master identities they reference. The scoped closure
+gets its own deterministic revision while the full construction revision is
+retained as release evidence. For `extracted-art-cars-sedana`, that closure is
+five Texture2D assets, two shared masters, and five Material Instances.
+
+A real release replay now proves that selection against bundle
+`0d5342e561b649039f54daa6626d3cc7f60a77b12b7e4e64389aede83153f73e`.
+The complete preflight verifies all 14 texture dependencies for 429 instances,
+while `extracted-art-cars-sedana` verifies only its five physical texture
+sources and compiles the expected five instances plus two shared masters.
+The scoped selection receives an independent deterministic revision while the
+full construction revision remains unchanged in the same evidence payload.
+
 For `sedana`, five of eight slots are in this construction-ready subset:
 <!-- markdownlint-disable-next-line MD044 -->
 <!-- cspell:disable -->

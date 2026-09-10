@@ -44,6 +44,7 @@ from mcp.adapter_inbound.arguments import parse_plan_root
 from mcp.adapter_inbound.arguments import parse_raw_call
 from mcp.adapter_inbound.arguments import parse_skill_output_path
 from mcp.adapter_inbound.arguments import parse_tool_call
+from mcp.adapter_inbound.arguments import parse_vehicle_material_options
 from mcp.adapter_inbound.arguments import require_operand_count
 from mcp.adapter_inbound.arguments import usage_text
 from mcp.adapter_outbound.catalog_renderer import render_catalog_json
@@ -108,6 +109,13 @@ from mcp.domain.vehicle_material_construction import (
 )
 from mcp.domain.vehicle_material_construction import (
     compile_vehicle_material_construction,
+)
+from mcp.domain.vehicle_material_selection import (
+    CompiledVehicleMaterialSelection,
+)
+from mcp.domain.vehicle_material_selection import VehicleMaterialExecutable
+from mcp.domain.vehicle_material_selection import (
+    select_vehicle_material_package,
 )
 from mcp.domain.vehicle_physics_capabilities import (
     audit_vehicle_physics_capabilities,
@@ -208,12 +216,18 @@ def _run_material_invocation(invocation: CliInvocation) -> int:
 
 
 def _run_vehicle_material_invocation(invocation: CliInvocation) -> int:
-    root = parse_plan_root(invocation.operands)
+    options = parse_vehicle_material_options(invocation.operands)
     if invocation.action == "vehicle-material-preflight":
-        return _run_vehicle_material_preflight(root)
+        return _run_vehicle_material_preflight(
+            options.root, options.package_id
+        )
     if invocation.action == "vehicle-material-capabilities":
-        return _run_vehicle_material_capabilities(invocation, root)
-    return _run_vehicle_material_apply(invocation, root)
+        return _run_vehicle_material_capabilities(
+            invocation, options.root, options.package_id
+        )
+    return _run_vehicle_material_apply(
+        invocation, options.root, options.package_id
+    )
 
 
 def _run_vehicle_physics_prerequisite_invocation(
@@ -264,13 +278,17 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         require_operand_count(action, operands, expected=0)
         return
     if action in {
+        "vehicle-material-apply",
+        "vehicle-material-capabilities",
+        "vehicle-material-preflight",
+    }:
+        _ = parse_vehicle_material_options(operands)
+        return
+    if action in {
         "plan-apply",
         "plan-capabilities",
         "plan-execution-preflight",
         "plan-preflight",
-        "vehicle-material-apply",
-        "vehicle-material-capabilities",
-        "vehicle-material-preflight",
         "vehicle-physics-apply",
         "vehicle-physics-capabilities",
         "vehicle-physics-preflight",
@@ -291,33 +309,39 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         return
     if action == "skills":
         _ = parse_skill_output_path(operands)
-        return
-    _ = parse_catalog_format(operands)
+    else:
+        _ = parse_catalog_format(operands)
 
 
 def _vehicle_material_context(
     root: Path,
+    package_id: str | None,
 ) -> tuple[
     ValidatedPlanBundle,
     CompiledVehicleMaterialConstruction,
+    VehicleMaterialExecutable,
     dict[str, Path],
 ]:
     bundle = FilesystemPlanBundleReader(root).read_bundle()
     document = read_bound_vehicle_material_document(root.parent, bundle)
     compiled = compile_vehicle_material_construction(document)
+    executable: VehicleMaterialExecutable = compiled
+    if package_id is not None:
+        executable = select_vehicle_material_package(compiled, package_id)
     sources = verify_vehicle_material_texture_sources(
         root.parent.parent,
-        compiled,
+        executable,
     )
-    return bundle, compiled, sources
+    return bundle, compiled, executable, sources
 
 
 def _vehicle_material_evidence(
     bundle: ValidatedPlanBundle,
     compiled: CompiledVehicleMaterialConstruction,
+    executable: VehicleMaterialExecutable,
     sources: dict[str, Path],
 ) -> dict[str, object]:
-    return {
+    payload: dict[str, object] = {
         "bundle": bundle.report.to_json(),
         "construction": compiled.report.to_json(),
         "constructionRevision": vehicle_material_construction_revision(
@@ -325,11 +349,24 @@ def _vehicle_material_evidence(
         ),
         "verifiedTextureSourceCount": len(sources),
     }
+    if isinstance(executable, CompiledVehicleMaterialSelection):
+        payload["selection"] = executable.report.to_json()
+        payload["selectionRevision"] = vehicle_material_construction_revision(
+            executable
+        )
+    return payload
 
 
-def _run_vehicle_material_preflight(root: Path) -> int:
-    bundle, compiled, sources = _vehicle_material_context(root)
-    payload = _vehicle_material_evidence(bundle, compiled, sources)
+def _run_vehicle_material_preflight(
+    root: Path,
+    package_id: str | None,
+) -> int:
+    bundle, compiled, executable, sources = _vehicle_material_context(
+        root, package_id
+    )
+    payload = _vehicle_material_evidence(
+        bundle, compiled, executable, sources
+    )
     _write_stdout(render_json(payload))
     return _EXIT_SUCCESS
 
@@ -337,18 +374,23 @@ def _run_vehicle_material_preflight(root: Path) -> int:
 def _run_vehicle_material_capabilities(
     invocation: CliInvocation,
     root: Path,
+    package_id: str | None,
 ) -> int:
-    bundle, compiled, sources = _vehicle_material_context(root)
+    bundle, compiled, executable, sources = _vehicle_material_context(
+        root, package_id
+    )
     transport = StreamableHttpTransport(
         invocation.endpoint,
         timeout_seconds=invocation.timeout_seconds,
     )
     with UnrealMcpTranslator(transport) as translator:
         definitions = translator.describe_available_toolsets(
-            required_vehicle_material_toolsets(compiled)
+            required_vehicle_material_toolsets(executable)
         )
-    capabilities = audit_vehicle_material_capabilities(compiled, definitions)
-    payload = _vehicle_material_evidence(bundle, compiled, sources)
+    capabilities = audit_vehicle_material_capabilities(executable, definitions)
+    payload = _vehicle_material_evidence(
+        bundle, compiled, executable, sources
+    )
     payload["capabilities"] = capabilities.to_json()
     _write_stdout(render_json(payload))
     return _EXIT_SUCCESS if capabilities.complete else _EXIT_FAILURE
@@ -357,27 +399,32 @@ def _run_vehicle_material_capabilities(
 def _run_vehicle_material_apply(
     invocation: CliInvocation,
     root: Path,
+    package_id: str | None,
 ) -> int:
-    bundle, compiled, sources = _vehicle_material_context(root)
+    bundle, compiled, executable, sources = _vehicle_material_context(
+        root, package_id
+    )
     transport = StreamableHttpTransport(
         invocation.endpoint,
         timeout_seconds=invocation.timeout_seconds,
     )
     with UnrealMcpTranslator(transport) as translator:
         definitions = translator.describe_available_toolsets(
-            required_vehicle_material_toolsets(compiled)
+            required_vehicle_material_toolsets(executable)
         )
         capabilities = audit_vehicle_material_capabilities(
-            compiled, definitions
+            executable, definitions
         )
-        payload = _vehicle_material_evidence(bundle, compiled, sources)
+        payload = _vehicle_material_evidence(
+            bundle, compiled, executable, sources
+        )
         payload["capabilities"] = capabilities.to_json()
         if not capabilities.complete:
             _write_stdout(render_json(payload))
             return _EXIT_FAILURE
         application = apply_vehicle_material_construction(
             translator,
-            compiled,
+            executable,
             capabilities,
             sources,
         )

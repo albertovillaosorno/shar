@@ -34,16 +34,14 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import TYPE_CHECKING
 from typing import cast
 
 from fake_unreal_server import FakeUnrealServer
 from mcp.adapter_inbound.arguments import UsageError
+from mcp.adapter_inbound.arguments import parse_vehicle_material_options
 from mcp.adapter_inbound.cli import main
 from mcp.domain.json_types import require_json_object
-
-if TYPE_CHECKING:
-    import pytest
+import pytest
 
 
 def test_cli_maps_stdout_unicode_error_to_failure(
@@ -528,3 +526,26 @@ def test_cli_doctor_rejects_empty_toolset_registry(
         assert payload["ready"] is False
         assert payload["missingMetaTools"] == []
         assert payload["toolsetCount"] == 0
+
+
+def test_vehicle_material_options_accept_exact_package_scope() -> None:
+    options = parse_vehicle_material_options((
+        "--package-id",
+        "extracted-art-cars-sedana",
+        "--root",
+        ".cache/custom/plans",
+    ))
+    assert str(options.root) == ".cache/custom/plans"
+    assert options.package_id == "extracted-art-cars-sedana"
+
+
+def test_vehicle_material_options_reject_duplicate_or_bad_scope() -> None:
+    with pytest.raises(UsageError, match="option is duplicated"):
+        parse_vehicle_material_options((
+            "--package-id",
+            "extracted-art-cars-sedana",
+            "--package-id",
+            "extracted-art-cars-other",
+        ))
+    with pytest.raises(UsageError, match="package id is not canonical"):
+        parse_vehicle_material_options(("--package-id", "SedanA"))

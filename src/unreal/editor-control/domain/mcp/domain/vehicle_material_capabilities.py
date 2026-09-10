@@ -41,9 +41,7 @@ from mcp.domain.catalog import ToolsetDefinition
 from mcp.domain.errors import ProtocolError
 from mcp.domain.errors import fail_protocol
 from mcp.domain.json_types import JsonObject
-from mcp.domain.vehicle_material_construction import (
-    CompiledVehicleMaterialConstruction,
-)
+from mcp.domain.vehicle_material_selection import VehicleMaterialExecutable
 
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
 
@@ -86,7 +84,7 @@ class VehicleMaterialCapabilityReport(NamedTuple):
 
 
 def vehicle_material_construction_revision(
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
 ) -> str:
     """Hash the exact typed native construction requests canonically."""
     value = {
@@ -105,7 +103,7 @@ def vehicle_material_construction_revision(
 
 
 def required_vehicle_material_toolsets(
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
 ) -> tuple[str, ...]:
     """Return exact live toolsets needed by this compiled construction."""
     names = {item.toolset_name for item in _requirements(compiled)}
@@ -113,7 +111,7 @@ def required_vehicle_material_toolsets(
 
 
 def audit_vehicle_material_capabilities(
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
     toolsets: tuple[ToolsetDefinition, ...],
 ) -> VehicleMaterialCapabilityReport:
     """Validate every required live tool schema without invoking a tool."""
@@ -169,7 +167,7 @@ def audit_vehicle_material_capabilities(
 
 
 def _requirements(
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
 ) -> tuple[VehicleMaterialToolRequirement, ...]:
     requirements: list[VehicleMaterialToolRequirement] = []
     if compiled.textures:
@@ -202,7 +200,7 @@ def _requirements(
 
 
 def _asset_requirements(
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
 ) -> tuple[VehicleMaterialToolRequirement, ...]:
     if compiled.textures:
         path = compiled.textures[0].package_path
