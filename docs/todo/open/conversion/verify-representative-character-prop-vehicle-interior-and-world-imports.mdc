@@ -332,12 +332,11 @@ the binary FBX writer emits a fixed preview DiffuseColor rather than source
 
 Editor-control now binds that v3 sidecar through the release index, verifies
 every PNG's exact bytes and SHA-256, audits the live SHAR and AssetTools
-schemas,
-and owns a create/read-back/save transaction with reverse-order compensation
-for
-the Texture2D, Material, and Material Instance outputs. No vehicle Material
-Instance has yet been applied to a Skeletal Mesh slot, so asset construction
-readiness remains separate from final native readiness.
+schemas, and owns a create/read-back/save transaction with reverse-order
+compensation for the Texture2D, Material, and Material Instance outputs. At
+that stage, no vehicle Material Instance had yet been applied to a Skeletal
+Mesh slot, so asset construction readiness remained separate from final native
+readiness.
 
 Editor-control now also supports exact package-scoped vehicle-material
 execution after the complete v3 release has compiled successfully. The selector
@@ -345,8 +344,9 @@ uses canonical `package_id`, retains only that package's Material Instances and
 the exact texture/master dependency closure they reference, and emits a
 separate selection revision while retaining the complete construction revision.
 For `extracted-art-cars-sedana`, the reviewed closure is five Texture2D
-requests, two shared master recipes, and five Material Instance requests; slot
-application remains outside this construction transaction.
+requests, two shared master recipes, and five Material Instance requests. Slot
+application remains outside that asset-construction transaction and is handled
+by a separate selected-slot publication boundary.
 
 A fresh real `prepare-unreal` replay now publishes bundle
 `0d5342e561b649039f54daa6626d3cc7f60a77b12b7e4e64389aede83153f73e`
@@ -367,9 +367,43 @@ simple-unlit masters, and five Material Instances. Those five instances retain
 slots 0, 1, 5, 6, and 7; the transaction still does not mutate Skeletal Mesh
 slot assignments.
 
-The broader P0 criterion remains open. The saved Physics Asset and five
-construction-ready Material Instances have not yet been bound into the
-representative production presentation. The three lit vehicle slots plus
-source-derived animation and wheel-definition assets remain absent, and the
-vehicle has not been spawned into a world with live Chaos vehicle physics or
-validated under driven behavior against source evidence.
+Editor-control now compiles a separate package-scoped material-slot binding by
+joining the selected vehicle material closure back to the exact reviewed
+Skeletal Mesh import for the same source FBX. The binding sorts unique slot
+indices, retains the exact imported slot names, and carries only the five
+constructed Material Instance paths. Its live capability gate requires the two
+reviewed selected-slot tools plus AssetTools existence, class, dirty-state, and
+save schemas. Missing package scope, missing or ambiguous skeletal joins, dirty
+meshes, non-null selected slots, stale revisions, and dependency class drift
+all fail closed before publication.
+
+A full dry compilation of the same release material graph resolves all 84
+packages that own native construction requests, covering all 429 request slots
+with zero package or skeletal-join failures.
+
+A real Unreal Engine 5.8.1 MCP transaction against release bundle
+`0d5342e561b649039f54daa6626d3cc7f60a77b12b7e4e64389aede83153f73e`
+now publishes the representative `sedana` material subset. Preflight compiled
+exactly five slots and capability audit matched all six required live schemas.
+
+Independent read-back first proved slots 0, 1, 5, 6, and 7 were null and the
+Skeletal Mesh was clean. The compare-exchange then bound the five verified
+Material Instances, read them back, saved exactly one Skeletal Mesh, and proved
+`dirty=false`.
+
+After terminating that editor and starting a fresh Unreal process, independent
+read-back returned the same five Material Instance object paths and the same
+clean Skeletal Mesh state, while the saved package hash remained unchanged
+across the process restart. A second apply attempt failed before mutation
+because the selected slots were already non-null; the package hash and clean
+state again remained unchanged. Cold read-back also proves the three unsupported
+lit slots 2, 3, and 4 remain null rather than receiving an inferred fallback.
+
+The broader P0 criterion remains open. Five reviewed unlit `sedana` slots are
+now persisted on the representative Skeletal Mesh, but its two opaque lit slots
+and lit windshield-glass slot still require reviewed native material families.
+The previous Physics Asset save/reload evidence was session-owned and removed,
+so no representative production Physics Asset is currently persisted beside
+the mesh. Source-derived animation and wheel-definition assets remain absent,
+and the vehicle has not been spawned into a world with live Chaos vehicle
+physics or validated under driven behavior against source evidence.

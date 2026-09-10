@@ -1030,6 +1030,26 @@ identity, a closed Headlight/Brake/Reverse role, the validated bone, and
 material slot indices. Ambiguous slot joins remain blocked instead of selecting
 the first match.
 
+Material asset construction and Skeletal Mesh slot publication are separate
+transactions. The slot-publication compiler joins one selected vehicle material
+closure to the exact planned Skeletal Mesh for the same source FBX, orders the
+selected slot indices, preserves exact imported slot names, and carries the
+already-verified Material Instance identities. It does not infer replacements
+for unsupported slots.
+
+Before mutation, editor control audits the selected-slot read and
+compare-exchange schemas plus native asset existence, class, dirty-state, and
+save schemas. Application requires the Skeletal Mesh and every replacement
+Material Instance to exist with the expected class, requires the mesh to be
+clean, and requires every selected slot to be null. One compare-exchange writes
+only those slots, independent read-back verifies the result, and the outer
+transaction explicitly saves the Skeletal Mesh and verifies it clean.
+
+A later failure, including an indeterminate compare-exchange response, first
+reconciles current slot state and restores the original null assignments only
+when the state is known to be transaction-owned. Existing meshes and Material
+Instances are dependencies, never compensation-owned assets.
+
 ## Damage and surface presentation
 
 Damage smoke, wheel smoke, sparks, skid effects, dust, backfire, and collision

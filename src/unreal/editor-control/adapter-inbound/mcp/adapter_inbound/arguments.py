@@ -70,6 +70,9 @@ _KNOWN_ACTIONS = frozenset(
         "vehicle-material-apply",
         "vehicle-material-capabilities",
         "vehicle-material-preflight",
+        "vehicle-material-slots-apply",
+        "vehicle-material-slots-capabilities",
+        "vehicle-material-slots-preflight",
         "vehicle-physics-apply",
         "vehicle-physics-capabilities",
         "vehicle-physics-preflight",
@@ -97,6 +100,13 @@ _USAGE = """Usage:
     [--package-id PACKAGE_ID]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     vehicle-material-apply [--root RELATIVE_PATH] [--package-id PACKAGE_ID]
+  shar-unreal-mcp vehicle-material-slots-preflight [--root RELATIVE_PATH]
+    --package-id PACKAGE_ID
+  shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
+    vehicle-material-slots-capabilities [--root RELATIVE_PATH]
+    --package-id PACKAGE_ID
+  shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
+    vehicle-material-slots-apply [--root RELATIVE_PATH] --package-id PACKAGE_ID
   shar-unreal-mcp vehicle-physics-prerequisites-preflight
     [--root RELATIVE_PATH] [--package-id PACKAGE_ID]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
