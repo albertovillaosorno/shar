@@ -526,17 +526,23 @@ documents already retain billboard mode, color, size, UVs, distance, rotation,
 and cutoff evidence, so native camera-facing glow no longer needs fixed FBX
 planes as its only data source.
 
-The fixed headlight planes are still retained in the current FBX contract for
-one transitional reason: `sedana` material slots 5, 6, and 7 are presently the
-construction path for the following source materials:
+Vehicle material resolution now treats the billboard shaders as independent
+presentation requirements. Each headlight sidecar carries verified source
+material identity, tint, semantics, shader bytes, and optional texture evidence,
+while the FBX writer receives only bindings referenced by actual FBX geometry.
+A regression test proves a presentation-only material cannot leak into the FBX
+slot set. For `sedana`, this decouples the source evidence for these materials
+from the continued existence of Skeletal Mesh slots 5, 6, and 7:
 <!-- CSpell:disable -->
 `flarebase2_m`, `LENS02_m`, and `glow2_m`.
 <!-- CSpell:enable -->
-Removing those planes before billboard materials have an independent native
-construction and presentation binding would discard reviewed source material
-evidence. The next conversion step must decouple those materials from Skeletal
-Mesh slots, then remove the common headlight groups from FBX emission and bind
-native camera-facing glow to the sidecar evidence.
+
+The fixed headlight planes are still retained temporarily because the generated
+dynamic-light bindings and native presentation-definition validation still
+model every light as slot-backed. The next conversion step must make Headlight
+bindings slot-independent while keeping Brake and Reverse slot-bound, project
+native glow material instances from the verified sidecar material evidence, and
+then remove the common headlight groups from FBX emission.
 
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative

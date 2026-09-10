@@ -31,11 +31,13 @@
 //! Vehicle catalog grounding-evidence regression tests.
 
 use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
+use fbx::domain::texture::MaterialSemantics;
 
 use super::super::model::{
     EffectAnimationRecord, EffectControllerRecord,
     EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
-    GroundingRecord, HeadlightBillboardSidecarRecord, PhysicsPrimitiveRecord,
+    GroundingRecord, HeadlightBillboardMaterialRecord,
+    HeadlightBillboardSidecarRecord, PhysicsPrimitiveRecord,
     PhysicsRigRecord,
     PhysicsSidecarRecord, VehicleRecord,
 };
@@ -72,6 +74,19 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
             identity: "headlightShape".to_owned(),
             shader_identity: "headlight_m".to_owned(),
             bones: vec!["hll".to_owned(), "hlr".to_owned()],
+            material: HeadlightBillboardMaterialRecord {
+                source_material_name: "headlight_m".to_owned(),
+                base_color_rgba8: [255, 220, 128, 255],
+                semantics: MaterialSemantics::default()
+                    .with_transparent(true)
+                    .with_light_emitter(true),
+                shader_path: "shaders/headlight-m.json".to_owned(),
+                shader_bytes: 32,
+                shader_sha256: "4".repeat(64),
+                texture_path: Some("textures/headlight.png".to_owned()),
+                texture_bytes: Some(48),
+                texture_sha256: Some("5".repeat(64)),
+            },
             bytes: 64,
             sha256: "3".repeat(64),
         }],
@@ -163,6 +178,19 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
         || headlight.get("bones")
             != Some(&serde_json::json!(["hll", "hlr"]))
         || headlight.get("bytes") != Some(&64.into())
+        || headlight
+            .get("material")
+            .and_then(|material| material.get("source_material_name"))
+            != Some(&"headlight_m".into())
+        || headlight
+            .get("material")
+            .and_then(|material| material.get("base_color_rgba8"))
+            != Some(&serde_json::json!([255, 220, 128, 255]))
+        || headlight
+            .get("material")
+            .and_then(|material| material.get("texture"))
+            .and_then(|texture| texture.get("bytes"))
+            != Some(&48.into())
     {
         return Err(
             "vehicle headlight billboard evidence is incomplete".to_owned(),

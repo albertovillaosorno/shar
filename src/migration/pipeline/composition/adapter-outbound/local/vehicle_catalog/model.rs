@@ -145,6 +145,29 @@ pub(super) struct EffectTextureReferenceRecord {
     pub(super) occurrences: Vec<EffectTextureOccurrenceRecord>,
 }
 
+/// One material retained for native headlight presentation outside FBX slots.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct HeadlightBillboardMaterialRecord {
+    /// Canonical source material identity.
+    pub(super) source_material_name: String,
+    /// Decoded diffuse material tint in canonical RGBA8 order.
+    pub(super) base_color_rgba8: [u8; 4],
+    /// Presentation semantics after billboard light-emitter classification.
+    pub(super) semantics: MaterialSemantics,
+    /// Vehicle-relative normalized decoded shader document path.
+    pub(super) shader_path: String,
+    /// Exact published shader document byte length.
+    pub(super) shader_bytes: u64,
+    /// Exact published shader document SHA-256 digest.
+    pub(super) shader_sha256: String,
+    /// Vehicle-relative normalized texture payload path when textured.
+    pub(super) texture_path: Option<String>,
+    /// Exact texture payload byte length when textured.
+    pub(super) texture_bytes: Option<u64>,
+    /// Exact texture payload SHA-256 digest when textured.
+    pub(super) texture_sha256: Option<String>,
+}
+
 /// One source headlight billboard retained for native runtime replacement.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct HeadlightBillboardSidecarRecord {
@@ -156,6 +179,8 @@ pub(super) struct HeadlightBillboardSidecarRecord {
     pub(super) shader_identity: String,
     /// Runtime hardpoints receiving this common billboard group.
     pub(super) bones: Vec<String>,
+    /// Independent source material evidence for native glow construction.
+    pub(super) material: HeadlightBillboardMaterialRecord,
     /// Exact published sidecar byte length.
     pub(super) bytes: u64,
     /// Exact published sidecar SHA-256 digest.

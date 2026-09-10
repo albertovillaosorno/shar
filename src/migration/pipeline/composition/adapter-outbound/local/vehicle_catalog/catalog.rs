@@ -37,8 +37,9 @@ use std::path::{Path, PathBuf};
 use serde_json::{Value, json};
 
 use super::model::{
-    EffectAnimationRecord, HeadlightBillboardSidecarRecord, MaterialSlotRecord,
-    PartRecord, PhysicsPrimitiveRecord, PhysicsRigRecord, PhysicsSidecarRecord,
+    EffectAnimationRecord, HeadlightBillboardMaterialRecord,
+    HeadlightBillboardSidecarRecord, MaterialSlotRecord, PartRecord,
+    PhysicsPrimitiveRecord, PhysicsRigRecord, PhysicsSidecarRecord,
     VehicleRecord,
 };
 use crate::domain::PipelineError;
@@ -293,8 +294,41 @@ fn headlight_billboard_sidecar_value(
         "identity": record.identity,
         "shader_identity": record.shader_identity,
         "bones": record.bones,
+        "material": headlight_billboard_material_value(&record.material),
         "bytes": record.bytes,
         "sha256": record.sha256,
+    })
+}
+
+/// Render one headlight presentation material independent of FBX slots.
+fn headlight_billboard_material_value(
+    record: &HeadlightBillboardMaterialRecord,
+) -> Value {
+    let semantics = record.semantics;
+    let texture = record.texture_path.as_ref().map(|path| {
+        json!({
+            "path": path,
+            "bytes": record.texture_bytes,
+            "sha256": record.texture_sha256,
+        })
+    });
+    json!({
+        "source_material_name": record.source_material_name,
+        "base_color_rgba8": record.base_color_rgba8,
+        "surface_semantics": {
+            "transparent": semantics.is_transparent(),
+            "glass": semantics.is_glass(),
+            "mirror": semantics.is_mirror(),
+            "reflective": semantics.is_reflective(),
+            "light_emitter": semantics.is_light_emitter(),
+            "visual_effect": semantics.is_visual_effect(),
+        },
+        "shader": {
+            "path": record.shader_path,
+            "bytes": record.shader_bytes,
+            "sha256": record.shader_sha256,
+        },
+        "texture": texture,
     })
 }
 
