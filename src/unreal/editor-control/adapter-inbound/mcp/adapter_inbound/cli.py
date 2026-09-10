@@ -45,6 +45,9 @@ from mcp.adapter_inbound.arguments import parse_raw_call
 from mcp.adapter_inbound.arguments import parse_skill_output_path
 from mcp.adapter_inbound.arguments import parse_tool_call
 from mcp.adapter_inbound.arguments import parse_vehicle_material_options
+from mcp.adapter_inbound.arguments import (
+    parse_vehicle_physics_prerequisite_options,
+)
 from mcp.adapter_inbound.arguments import require_operand_count
 from mcp.adapter_inbound.arguments import usage_text
 from mcp.adapter_outbound.catalog_renderer import render_catalog_json
@@ -133,10 +136,19 @@ from mcp.domain.vehicle_physics_construction import (
     vehicle_physics_construction_revision,
 )
 from mcp.domain.vehicle_physics_prerequisites import (
+    CompiledVehiclePhysicsPrerequisiteSelection,
+)
+from mcp.domain.vehicle_physics_prerequisites import (
     CompiledVehiclePhysicsPrerequisites,
 )
 from mcp.domain.vehicle_physics_prerequisites import (
+    VehiclePhysicsPrerequisiteExecutable,
+)
+from mcp.domain.vehicle_physics_prerequisites import (
     compile_vehicle_physics_prerequisites,
+)
+from mcp.domain.vehicle_physics_prerequisites import (
+    select_vehicle_physics_prerequisite_package,
 )
 from mcp.domain.vehicle_physics_prerequisites import (
     vehicle_physics_prerequisite_revision,
@@ -233,12 +245,18 @@ def _run_vehicle_material_invocation(invocation: CliInvocation) -> int:
 def _run_vehicle_physics_prerequisite_invocation(
     invocation: CliInvocation,
 ) -> int:
-    root = parse_plan_root(invocation.operands)
+    options = parse_vehicle_physics_prerequisite_options(invocation.operands)
     if invocation.action == "vehicle-physics-prerequisites-preflight":
-        return _run_vehicle_physics_prerequisite_preflight(root)
+        return _run_vehicle_physics_prerequisite_preflight(
+            options.root, options.package_id
+        )
     if invocation.action == "vehicle-physics-prerequisites-capabilities":
-        return _run_vehicle_physics_prerequisite_capabilities(invocation, root)
-    return _run_vehicle_physics_prerequisite_apply(invocation, root)
+        return _run_vehicle_physics_prerequisite_capabilities(
+            invocation, options.root, options.package_id
+        )
+    return _run_vehicle_physics_prerequisite_apply(
+        invocation, options.root, options.package_id
+    )
 
 
 def _run_vehicle_physics_invocation(invocation: CliInvocation) -> int:
@@ -281,8 +299,14 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         "vehicle-material-apply",
         "vehicle-material-capabilities",
         "vehicle-material-preflight",
+        "vehicle-physics-prerequisites-apply",
+        "vehicle-physics-prerequisites-capabilities",
+        "vehicle-physics-prerequisites-preflight",
     }:
-        _ = parse_vehicle_material_options(operands)
+        if action.startswith("vehicle-material-"):
+            _ = parse_vehicle_material_options(operands)
+        else:
+            _ = parse_vehicle_physics_prerequisite_options(operands)
         return
     if action in {
         "plan-apply",
@@ -435,9 +459,11 @@ def _run_vehicle_material_apply(
 
 def _vehicle_physics_prerequisite_context(
     root: Path,
+    package_id: str | None,
 ) -> tuple[
     ValidatedPlanBundle,
     CompiledVehiclePhysicsPrerequisites,
+    VehiclePhysicsPrerequisiteExecutable,
     dict[str, Path],
     dict[str, object],
 ]:
@@ -449,7 +475,14 @@ def _vehicle_physics_prerequisite_context(
         construction,
         execution,
     )
-    operation_ids = tuple(step.operation_id for step in prerequisites.imports)
+    executable: VehiclePhysicsPrerequisiteExecutable = prerequisites
+    if package_id is not None:
+        executable = select_vehicle_physics_prerequisite_package(
+            construction,
+            prerequisites,
+            package_id,
+        )
+    operation_ids = tuple(step.operation_id for step in executable.imports)
     verified = FilesystemPlanSourceVerifier(Path(), root).verify_operation_ids(
         bundle,
         operation_ids,
@@ -457,6 +490,7 @@ def _vehicle_physics_prerequisite_context(
     return (
         bundle,
         prerequisites,
+        executable,
         verified.by_operation,
         verified.report.to_json(),
     )
@@ -465,9 +499,10 @@ def _vehicle_physics_prerequisite_context(
 def _vehicle_physics_prerequisite_evidence(
     bundle: ValidatedPlanBundle,
     prerequisites: CompiledVehiclePhysicsPrerequisites,
+    executable: VehiclePhysicsPrerequisiteExecutable,
     source_report: dict[str, object],
 ) -> dict[str, object]:
-    return {
+    payload: dict[str, object] = {
         "bundle": bundle.report.to_json(),
         "prerequisites": prerequisites.report.to_json(),
         "prerequisiteRevision": vehicle_physics_prerequisite_revision(
@@ -475,15 +510,25 @@ def _vehicle_physics_prerequisite_evidence(
         ),
         "sources": source_report,
     }
+    if isinstance(executable, CompiledVehiclePhysicsPrerequisiteSelection):
+        payload["selection"] = executable.report.to_json()
+        payload["selectionRevision"] = vehicle_physics_prerequisite_revision(
+            executable
+        )
+    return payload
 
 
-def _run_vehicle_physics_prerequisite_preflight(root: Path) -> int:
-    bundle, prerequisites, _, source_report = (
-        _vehicle_physics_prerequisite_context(root)
+def _run_vehicle_physics_prerequisite_preflight(
+    root: Path,
+    package_id: str | None,
+) -> int:
+    bundle, prerequisites, executable, _, source_report = (
+        _vehicle_physics_prerequisite_context(root, package_id)
     )
     payload = _vehicle_physics_prerequisite_evidence(
         bundle,
         prerequisites,
+        executable,
         source_report,
     )
     _write_stdout(render_json(payload))
@@ -493,27 +538,29 @@ def _run_vehicle_physics_prerequisite_preflight(root: Path) -> int:
 def _run_vehicle_physics_prerequisite_capabilities(
     invocation: CliInvocation,
     root: Path,
+    package_id: str | None,
 ) -> int:
-    bundle, prerequisites, _, source_report = (
-        _vehicle_physics_prerequisite_context(root)
+    bundle, prerequisites, executable, _, source_report = (
+        _vehicle_physics_prerequisite_context(root, package_id)
     )
-    revision = vehicle_physics_prerequisite_revision(prerequisites)
+    revision = vehicle_physics_prerequisite_revision(executable)
     transport = StreamableHttpTransport(
         invocation.endpoint,
         timeout_seconds=invocation.timeout_seconds,
     )
     with UnrealMcpTranslator(transport) as translator:
         definitions = translator.describe_available_toolsets(
-            required_import_toolsets(prerequisites.imports)
+            required_import_toolsets(executable.imports)
         )
     capabilities = audit_import_capabilities(
         revision,
-        prerequisites.imports,
+        executable.imports,
         definitions,
     )
     payload = _vehicle_physics_prerequisite_evidence(
         bundle,
         prerequisites,
+        executable,
         source_report,
     )
     payload["capabilities"] = capabilities.to_json()
@@ -524,27 +571,29 @@ def _run_vehicle_physics_prerequisite_capabilities(
 def _run_vehicle_physics_prerequisite_apply(
     invocation: CliInvocation,
     root: Path,
+    package_id: str | None,
 ) -> int:
-    bundle, prerequisites, sources, source_report = (
-        _vehicle_physics_prerequisite_context(root)
+    bundle, prerequisites, executable, sources, source_report = (
+        _vehicle_physics_prerequisite_context(root, package_id)
     )
-    revision = vehicle_physics_prerequisite_revision(prerequisites)
+    revision = vehicle_physics_prerequisite_revision(executable)
     transport = StreamableHttpTransport(
         invocation.endpoint,
         timeout_seconds=invocation.timeout_seconds,
     )
     with UnrealMcpTranslator(transport) as translator:
         definitions = translator.describe_available_toolsets(
-            required_import_toolsets(prerequisites.imports)
+            required_import_toolsets(executable.imports)
         )
         capabilities = audit_import_capabilities(
             revision,
-            prerequisites.imports,
+            executable.imports,
             definitions,
         )
         payload = _vehicle_physics_prerequisite_evidence(
             bundle,
             prerequisites,
+            executable,
             source_report,
         )
         payload["capabilities"] = capabilities.to_json()
@@ -554,7 +603,7 @@ def _run_vehicle_physics_prerequisite_apply(
         application = apply_import_steps(
             translator,
             revision,
-            prerequisites.imports,
+            executable.imports,
             capabilities,
             sources,
         )

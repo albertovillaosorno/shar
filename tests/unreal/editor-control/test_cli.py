@@ -39,6 +39,9 @@ from typing import cast
 from fake_unreal_server import FakeUnrealServer
 from mcp.adapter_inbound.arguments import UsageError
 from mcp.adapter_inbound.arguments import parse_vehicle_material_options
+from mcp.adapter_inbound.arguments import (
+    parse_vehicle_physics_prerequisite_options,
+)
 from mcp.adapter_inbound.cli import main
 from mcp.domain.json_types import require_json_object
 import pytest
@@ -549,3 +552,22 @@ def test_vehicle_material_options_reject_duplicate_or_bad_scope() -> None:
         ))
     with pytest.raises(UsageError, match="package id is not canonical"):
         parse_vehicle_material_options(("--package-id", "SedanA"))
+
+
+def test_vehicle_physics_prerequisite_options_accept_scope() -> None:
+    options = parse_vehicle_physics_prerequisite_options((
+        "--root",
+        ".cache/custom/plans",
+        "--package-id",
+        "extracted-art-cars-sedana",
+    ))
+    assert str(options.root) == ".cache/custom/plans"
+    assert options.package_id == "extracted-art-cars-sedana"
+
+
+def test_vehicle_physics_prerequisite_options_reject_bad_scope() -> None:
+    with pytest.raises(UsageError, match="package id is not canonical"):
+        parse_vehicle_physics_prerequisite_options((
+            "--package-id",
+            "SedanA",
+        ))

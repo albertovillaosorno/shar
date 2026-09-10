@@ -219,6 +219,14 @@ synthetic Streamable HTTP integration proves that this specialized transaction
 can import its Skeletal Mesh and Skeleton while the bundle still reports a
 semantic blocker, then lets vehicle-physics publication consume that dependency.
 
+The same prerequisite transaction now supports exact package-scoped execution
+after the complete 87-import/135-rig prerequisite graph has compiled. Against
+bundle `0d5342e561b649039f54daa6626d3cc7f60a77b12b7e4e64389aede83153f73e`,
+`extracted-art-cars-sedana` selects one ready rig, one Skeletal Mesh import, and
+one source FBX; physical verification covers exactly 327,292 bytes. The scoped
+revision remains distinct from the global prerequisite revision, so selection
+cannot masquerade as global prerequisite evidence.
+
 The outer editor-control transaction now consumes the release-index-bound
 `vehicle-physics.json`, rejoins every ready rig to the exact reviewed skeletal
 FBX import, audits the six live construction and AssetTools schemas, requires

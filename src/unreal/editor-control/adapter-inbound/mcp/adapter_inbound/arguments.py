@@ -98,11 +98,13 @@ _USAGE = """Usage:
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     vehicle-material-apply [--root RELATIVE_PATH] [--package-id PACKAGE_ID]
   shar-unreal-mcp vehicle-physics-prerequisites-preflight
-    [--root RELATIVE_PATH]
+    [--root RELATIVE_PATH] [--package-id PACKAGE_ID]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     vehicle-physics-prerequisites-capabilities [--root RELATIVE_PATH]
+    [--package-id PACKAGE_ID]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     vehicle-physics-prerequisites-apply [--root RELATIVE_PATH]
+    [--package-id PACKAGE_ID]
   shar-unreal-mcp vehicle-physics-preflight [--root RELATIVE_PATH]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     vehicle-physics-capabilities [--root RELATIVE_PATH]
@@ -144,6 +146,13 @@ class CliInvocation(NamedTuple):
 
 class VehicleMaterialOptions(NamedTuple):
     """Validated local options for vehicle-material three-gate commands."""
+
+    root: Path
+    package_id: str | None
+
+
+class VehiclePhysicsPrerequisiteOptions(NamedTuple):
+    """Validated options for vehicle-physics prerequisite commands."""
 
     root: Path
     package_id: str | None
@@ -268,8 +277,29 @@ def parse_vehicle_material_options(
     operands: tuple[str, ...],
 ) -> VehicleMaterialOptions:
     """Parse optional plan root and exact vehicle package identity."""
+    root, package_id = _parse_vehicle_package_options(
+        operands, command="vehicle-material"
+    )
+    return VehicleMaterialOptions(root=root, package_id=package_id)
+
+
+def parse_vehicle_physics_prerequisite_options(
+    operands: tuple[str, ...],
+) -> VehiclePhysicsPrerequisiteOptions:
+    """Parse optional root and vehicle package for physics prerequisites."""
+    root, package_id = _parse_vehicle_package_options(
+        operands, command="vehicle-physics-prerequisites"
+    )
+    return VehiclePhysicsPrerequisiteOptions(root=root, package_id=package_id)
+
+
+def _parse_vehicle_package_options(
+    operands: tuple[str, ...],
+    *,
+    command: str,
+) -> tuple[Path, str | None]:
     if len(operands) % _TWO_OPTION_PARTS != 0:
-        _fail_usage("vehicle-material options require option/value pairs")
+        _fail_usage(f"{command} options require option/value pairs")
     root = Path(".cache/pipeline/unreal-staging/plans")
     package_id: str | None = None
     seen: set[str] = set()
@@ -277,20 +307,18 @@ def parse_vehicle_material_options(
         option = operands[index]
         value = operands[index + 1]
         if option in seen:
-            _fail_usage(f"vehicle-material option is duplicated: {option}")
+            _fail_usage(f"{command} option is duplicated: {option}")
         seen.add(option)
         if option == "--root":
             root = _portable_relative_child(value, label="plan root")
             continue
         if option == "--package-id":
             if _PACKAGE_ID.fullmatch(value) is None:
-                _fail_usage("vehicle-material package id is not canonical")
+                _fail_usage(f"{command} package id is not canonical")
             package_id = value
             continue
-        _fail_usage(
-            "vehicle-material accepts only --root and --package-id options"
-        )
-    return VehicleMaterialOptions(root=root, package_id=package_id)
+        _fail_usage(f"{command} accepts only --root and --package-id options")
+    return root, package_id
 
 
 def parse_plan_root(operands: tuple[str, ...]) -> Path:

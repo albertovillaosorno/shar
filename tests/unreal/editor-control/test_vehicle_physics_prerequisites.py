@@ -50,6 +50,9 @@ from mcp.domain.vehicle_physics_prerequisites import (
     compile_vehicle_physics_prerequisites,
 )
 from mcp.domain.vehicle_physics_prerequisites import (
+    select_vehicle_physics_prerequisite_package,
+)
+from mcp.domain.vehicle_physics_prerequisites import (
     vehicle_physics_prerequisite_revision,
 )
 import pytest
@@ -103,6 +106,8 @@ def _request(
     identity: str,
     *,
     source: str = _SOURCE,
+    package_id: str = "sedana",
+    skeletal_mesh_path: str = _OBJECT,
 ) -> VehiclePhysicsConstructionStep:
     shape = VehiclePhysicsShape(
         kind="sphere",
@@ -113,11 +118,11 @@ def _request(
         extents=(0.0, 0.0, 0.0),
     )
     return VehiclePhysicsConstructionStep(
-        package_id="sedana",
+        package_id=package_id,
         source_fbx=source,
         rig_identity=identity,
         source_joint_count=19,
-        skeletal_mesh_path=_OBJECT,
+        skeletal_mesh_path=skeletal_mesh_path,
         folder_path="/Game/Generated/SHAR/VehiclePhysics",
         asset_name=f"PHYS_{identity}",
         package_path=f"/Game/Generated/SHAR/VehiclePhysics/PHYS_{identity}",
@@ -191,3 +196,59 @@ def test_revision_binds_source_revision() -> None:
     assert vehicle_physics_prerequisite_revision(first) != (
         vehicle_physics_prerequisite_revision(second)
     )
+
+
+def test_selects_exact_package_after_global_prerequisites_compile() -> None:
+    other_source = "vehicle-assets/other/other.fbx"
+    other_object = "/Game/Generated/SHAR/cars/other_Skeletal.other_Skeletal"
+    construction = _construction(
+        _request("sedana", package_id="extracted-art-cars-sedana"),
+        _request(
+            "other",
+            source=other_source,
+            package_id="extracted-art-cars-other",
+            skeletal_mesh_path=other_object,
+        ),
+    )
+    prerequisites = compile_vehicle_physics_prerequisites(
+        construction,
+        _execution(
+            _import(),
+            _import(
+                source=other_source,
+                operation="operation-0000000000000002",
+                destination=other_object,
+            ),
+        ),
+    )
+    selected = select_vehicle_physics_prerequisite_package(
+        construction,
+        prerequisites,
+        "extracted-art-cars-sedana",
+    )
+    assert prerequisites.report.import_count == 2
+    assert prerequisites.report.ready_rig_count == 2
+    assert selected.report.to_json() == {
+        "importCount": 1,
+        "packageId": "extracted-art-cars-sedana",
+        "readyRigCount": 1,
+        "sourceCount": 1,
+    }
+    assert selected.imports == (_import(),)
+    assert vehicle_physics_prerequisite_revision(selected) != (
+        vehicle_physics_prerequisite_revision(prerequisites)
+    )
+
+
+def test_package_selection_rejects_package_without_ready_rig() -> None:
+    construction = _construction(_request("sedana"))
+    prerequisites = compile_vehicle_physics_prerequisites(
+        construction,
+        _execution(_import()),
+    )
+    with pytest.raises(ProtocolError, match="has no native-ready rigs"):
+        select_vehicle_physics_prerequisite_package(
+            construction,
+            prerequisites,
+            "extracted-art-cars-missing",
+        )

@@ -344,6 +344,14 @@ verification treats `vehicle-assets/...` as a generated pipeline namespace and
 rechecks its confined regular-file bytes and SHA-256 like other generated FBX
 inputs.
 
+Package-scoped prerequisite execution now preserves that global proof while
+reducing mutation scope. The complete 87-import/135-ready-rig prerequisite graph
+is compiled first; an exact `package_id` then retains only the Skeletal Mesh
+imports referenced by that package's ready rigs and receives a separate
+selection revision. For `extracted-art-cars-sedana`, release bundle
+`0d5342e561b649039f54daa6626d3cc7f60a77b12b7e4e64389aede83153f73e`
+selects one ready `sedanA` rig and one 327,292-byte FBX import.
+
 The outer editor-control boundary now reads only the release-index-bound
 `vehicle-physics.json`, compiles an exact `source_fbx` join to the reviewed
 skeletal import, validates the live construction and AssetTools schemas, and
