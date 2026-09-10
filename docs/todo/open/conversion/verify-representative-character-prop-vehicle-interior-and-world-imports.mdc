@@ -237,6 +237,14 @@ construction response is reconciled through independent existence read-back,
 and rollback deletes only Physics Assets created by that transaction in reverse
 order; the Skeletal Mesh dependency is never compensation-owned.
 
+That Physics Asset transaction now supports the same exact package scope after
+full construction compilation. Against release bundle
+`0d5342e561b649039f54daa6626d3cc7f60a77b12b7e4e64389aede83153f73e`,
+the global construction remains 135 ready requests, 1,104 native shapes, and
+two blocked rigs; `extracted-art-cars-sedana` selects exactly one `sedanA`
+request with six shapes. Its scoped construction revision is distinct, while
+the two blocked rigs remain explicitly labeled as global evidence.
+
 The live Unreal Engine 5.8.1 MCP schema for
 `SharImportEditor.SharVehiclePhysicsToolset` matches the typed wire contract. A
 real `sedana` editor-control transaction audited all six required schemas,

@@ -161,6 +161,12 @@ construction contract, and joins every ready `source_fbx` to exactly one
 reviewed `skeletal-mesh-fbx-v1` import step. Deterministic outputs are confined
 to `/Game/Generated/SHAR/VehiclePhysics/PHYS_<digest>`.
 
+All three vehicle-physics commands accept optional `--package-id PACKAGE_ID`.
+The complete construction still compiles first; scoped execution then keeps
+only ready requests owned by that exact package and emits a distinct
+`selectionRevision`. Blocker identity is not inferred per package, so scoped
+evidence labels the retained blocker count explicitly as global.
+
 `vehicle-physics-capabilities` opens one MCP session and validates the exact
 live schemas for `CreateVehiclePhysicsAsset` plus AssetTools existence, class,
 dirty-state, save, and deletion operations without invoking mutation.

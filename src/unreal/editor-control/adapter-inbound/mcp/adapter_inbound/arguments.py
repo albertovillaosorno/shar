@@ -106,10 +106,12 @@ _USAGE = """Usage:
     vehicle-physics-prerequisites-apply [--root RELATIVE_PATH]
     [--package-id PACKAGE_ID]
   shar-unreal-mcp vehicle-physics-preflight [--root RELATIVE_PATH]
+    [--package-id PACKAGE_ID]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     vehicle-physics-capabilities [--root RELATIVE_PATH]
+    [--package-id PACKAGE_ID]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
-    vehicle-physics-apply [--root RELATIVE_PATH]
+    vehicle-physics-apply [--root RELATIVE_PATH] [--package-id PACKAGE_ID]
   shar-unreal-mcp world-material-preflight [--root RELATIVE_PATH]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     world-material-capabilities [--root RELATIVE_PATH]
@@ -153,6 +155,13 @@ class VehicleMaterialOptions(NamedTuple):
 
 class VehiclePhysicsPrerequisiteOptions(NamedTuple):
     """Validated options for vehicle-physics prerequisite commands."""
+
+    root: Path
+    package_id: str | None
+
+
+class VehiclePhysicsOptions(NamedTuple):
+    """Validated options for vehicle Physics Asset commands."""
 
     root: Path
     package_id: str | None
@@ -291,6 +300,16 @@ def parse_vehicle_physics_prerequisite_options(
         operands, command="vehicle-physics-prerequisites"
     )
     return VehiclePhysicsPrerequisiteOptions(root=root, package_id=package_id)
+
+
+def parse_vehicle_physics_options(
+    operands: tuple[str, ...],
+) -> VehiclePhysicsOptions:
+    """Parse optional root and exact vehicle package for Physics Assets."""
+    root, package_id = _parse_vehicle_package_options(
+        operands, command="vehicle-physics"
+    )
+    return VehiclePhysicsOptions(root=root, package_id=package_id)
 
 
 def _parse_vehicle_package_options(
