@@ -51,7 +51,7 @@ def _vehicle_physics_document(
 ) -> dict[str, object]:
     return {
         "schema": "shar-schoenwald.unreal-vehicle-physics-evidence.v1",
-        "source_schema": "shar.vehicle-catalog.v7",
+        "source_schema": "shar.vehicle-catalog.v8",
         "target_policy": {
             "box_extent_policy": "source-half-to-native-full",
             "local_axis_conversion": "reflect-y",

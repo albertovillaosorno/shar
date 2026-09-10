@@ -58,7 +58,7 @@ _SOURCE_FBX = "vehicle-assets/sedana/sedana.fbx"
 def _document() -> dict[str, object]:
     return {
         "schema": "shar-schoenwald.unreal-vehicle-physics-evidence.v1",
-        "source_schema": "shar.vehicle-catalog.v7",
+        "source_schema": "shar.vehicle-catalog.v8",
         "target_policy": {
             "source_coordinate_space": "source-bone-local",
             "source_unit": "meter",
@@ -233,6 +233,16 @@ def test_compile_rejects_policy_and_geometry_drift() -> None:
     with pytest.raises(ProtocolError, match="basis is not orthogonal"):
         compile_vehicle_physics_construction(
             document, _execution(_skeletal_step())
+        )
+
+
+def test_compile_rejects_previous_vehicle_catalog_source_schema() -> None:
+    document = _document()
+    document["source_schema"] = "shar.vehicle-catalog.v7"
+    with pytest.raises(ProtocolError, match="source schema is not supported"):
+        compile_vehicle_physics_construction(
+            document,
+            _execution(_skeletal_step()),
         )
 
 
