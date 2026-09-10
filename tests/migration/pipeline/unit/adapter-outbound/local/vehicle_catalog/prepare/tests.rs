@@ -558,8 +558,10 @@ fn headlight_billboards_publish_exact_runtime_reference()
     let binding = MaterialBinding::new("material", None)
         .map_err(|error| format!("headlight material failed: {error:?}"))?;
     let materials = BTreeMap::from([(String::from("material"), binding)]);
+    let headlight_bones = vec!["hll".to_owned(), "hlr".to_owned()];
     let records = publish_headlight_billboard_sidecars(
         std::slice::from_ref(&path),
+        &headlight_bones,
         &output,
         &materials,
         &[],
@@ -584,6 +586,37 @@ fn headlight_billboards_publish_exact_runtime_reference()
         .map_err(|error| error.to_string())?;
     if copied != payload {
         return Err("headlight sidecar payload changed".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn headlight_billboards_are_absent_without_authored_hardpoints()
+-> Result<(), String> {
+    let root = EffectTestDirectory::new("headlight-no-hardpoints")?;
+    let source = root.path().join("billboards");
+    fs::create_dir_all(&source).map_err(|error| error.to_string())?;
+    let path = source.join("headlight.json");
+    fs::write(&path, billboard_json("headlightShape"))
+        .map_err(|error| error.to_string())?;
+    let output = root.path().join("output");
+    let records = publish_headlight_billboard_sidecars(
+        std::slice::from_ref(&path),
+        &[],
+        &output,
+        &BTreeMap::new(),
+        &[],
+    )
+    .map_err(|error| error.to_string())?;
+    if !records.is_empty() {
+        return Err(format!(
+            "headlight sidecars survived without hardpoints: {records:?}"
+        ));
+    }
+    if output.join("presentation/headlights").exists() {
+        return Err(
+            "headlight directory was invented without hardpoints".to_owned()
+        );
     }
     Ok(())
 }

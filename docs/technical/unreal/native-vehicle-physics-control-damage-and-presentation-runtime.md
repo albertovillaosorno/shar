@@ -546,11 +546,33 @@ presentation validation enforces the same split: Headlight uses no material
 slot,
 while Brake and Reverse must retain one or more unique in-range slots.
 
-The fixed headlight planes are therefore no longer required for material or
-semantic light-binding authority, but they are still present in current FBX
-emission. The next conversion step can remove the common headlight groups from
-FBX geometry and project native camera-facing glow material instances from the
-verified sidecar material evidence beside the real-time Spot Lights.
+The vehicle export path now excludes those three common headlight groups from
+FBX render geometry. It retains whichever authored `hll` and/or `hlr` hardpoints
+exist as runtime joints, including their complete ancestor chains, without
+manufacturing replacement mesh parts. Vehicles with no authored headlight
+hardpoint publish no common-headlight sidecars or presentation-only material
+requirements.
+
+A fresh full-corpus replay publishes all 88 vehicles successfully. Across that
+catalog the removal drops 242 FBX material slots and 1,120 render parts; 82
+vehicles publish three common-headlight sidecars and six publish none. Of those
+82 vehicles, 78 retain both hardpoints, two retain only `hll`, and two retain
+only `hlr`. `sedana` preserves 16 bones while dropping from 29 to 15 geometries
+and from eight to five FBX materials; its three removed materials are
+<!-- CSpell:disable -->
+`flarebase2_m`, `LENS02_m`, and `glow2_m`.
+<!-- CSpell:enable -->
+
+The five Material Instances previously persisted on the representative Unreal
+Skeletal Mesh remain valid evidence for the earlier eight-slot import. A
+reimport from this new five-slot FBX must remove the three legacy
+headlight slots rather than migrate or fabricate replacements for them.
+
+The next conversion step is to project native camera-facing glow material
+instances from the verified sidecars beside the real-time Spot Lights. This is
+a runtime replacement for the original engine limitation, not a
+reinterpretation of the authored color, size, texture, UV, orientation, or
+hardpoint evidence.
 
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative

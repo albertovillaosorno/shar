@@ -280,6 +280,46 @@ simulation_physics_object/sedanA.json",
     .map_err(|error| error.to_string())
 }
 
+
+fn rewrite_headlight_bones(root: &Path, bones: &[&str]) -> Result<(), String> {
+    let path = root.join("vehicles.catalog.json");
+    let bytes = fs::read(&path).map_err(|error| error.to_string())?;
+    let mut catalog: serde_json::Value =
+        serde_json::from_slice(&bytes).map_err(|error| error.to_string())?;
+    let vehicles = catalog
+        .get_mut("vehicles")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or_else(|| "fixture vehicles are missing".to_owned())?;
+    let vehicle = vehicles
+        .first_mut()
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or_else(|| "fixture vehicle is missing".to_owned())?;
+    let sidecars = vehicle
+        .get_mut("headlight_billboard_sidecars")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or_else(|| "fixture headlight sidecars are missing".to_owned())?;
+    if bones.is_empty() {
+        sidecars.clear();
+    } else {
+        let sidecar = sidecars
+            .first_mut()
+            .and_then(serde_json::Value::as_object_mut)
+            .ok_or_else(|| "fixture headlight sidecar is missing".to_owned())?;
+        let _previous = sidecar.insert("bones".to_owned(), json!(bones));
+    }
+    let counts = catalog
+        .get_mut("counts")
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or_else(|| "fixture counts are missing".to_owned())?;
+    let _previous = counts.insert(
+        "headlight_billboard_sidecars".to_owned(),
+        json!(usize::from(!bones.is_empty())),
+    );
+    let rendered =
+        serde_json::to_vec_pretty(&catalog).map_err(|error| error.to_string())?;
+    fs::write(path, rendered).map_err(|error| error.to_string())
+}
+
 #[test]
 fn absent_vehicle_catalog_keeps_specialized_evidence_absent()
 -> Result<(), String> {
@@ -336,6 +376,76 @@ fn verifies_vehicle_fbx_without_promoting_other_semantics()
         || material.raster.shininess_bits != 10.0_f32.to_bits()
     {
         return Err("verified vehicle evidence drifted".to_owned());
+    }
+    Ok(())
+}
+
+
+#[test]
+fn accepts_single_authored_headlight_hardpoint() -> Result<(), String> {
+    for bones in [["hll"].as_slice(), ["hlr"].as_slice()] {
+        let root = TempRoot::new("single-headlight-hardpoint")?;
+        write_catalog(&root.0, None)?;
+        rewrite_headlight_bones(&root.0, bones)?;
+        let rows = verified_vehicle_fbx_catalog(&root.0)
+            .map_err(|error| error.to_string())?
+            .ok_or_else(|| "vehicle evidence was absent".to_owned())?;
+        let [row] = rows.as_slice() else {
+            return Err("single-hardpoint fixture row count drifted".to_owned());
+        };
+        let [headlight] = row.headlight_billboard_sidecars.as_slice() else {
+            return Err("single-hardpoint sidecar was not retained".to_owned());
+        };
+        if headlight.bones != bones {
+            return Err(format!(
+                "single hardpoint changed: {:?}",
+                headlight.bones
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn accepts_vehicle_without_headlight_hardpoints() -> Result<(), String> {
+    let root = TempRoot::new("no-headlight-hardpoints")?;
+    write_catalog(&root.0, None)?;
+    rewrite_headlight_bones(&root.0, &[])?;
+    let rows = verified_vehicle_fbx_catalog(&root.0)
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "vehicle evidence was absent".to_owned())?;
+    let [row] = rows.as_slice() else {
+        return Err("no-hardpoint fixture row count drifted".to_owned());
+    };
+    if !row.headlight_billboard_sidecars.is_empty() {
+        return Err("headlight sidecar survived without hardpoints".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn noncanonical_headlight_hardpoints_fail_closed() -> Result<(), String> {
+    for bones in [
+        ["hlr", "hll"].as_slice(),
+        ["hll", "hll"].as_slice(),
+        ["hll", "unknown"].as_slice(),
+    ] {
+        let root = TempRoot::new("bad-headlight-hardpoints")?;
+        write_catalog(&root.0, None)?;
+        rewrite_headlight_bones(&root.0, bones)?;
+        let error = match verified_vehicle_fbx_catalog(&root.0) {
+            Ok(_value) => {
+                return Err(format!(
+                    "noncanonical hardpoints unexpectedly verified: {bones:?}"
+                ));
+            },
+            Err(error) => error,
+        };
+        if !error.to_string().contains("bones are not canonical") {
+            return Err(format!(
+                "noncanonical hardpoints reported wrong failure: {error}"
+            ));
+        }
     }
     Ok(())
 }

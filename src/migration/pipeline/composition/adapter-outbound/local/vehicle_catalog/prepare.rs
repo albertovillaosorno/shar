@@ -44,10 +44,8 @@ use fbx::adapters::driven::decoded_billboard_source::{
 use fbx::adapters::driven::decoded_component_source::{
     DecodedComponentError, DecodedComponentSource, read_shader_source_evidence,
 };
-use fbx::adapters::driven::decoded_rigid_prop_source::{
-    SupplementalRigidPropBinding,
-    load_instanced_rigid_prop_asset_with_billboards,
-};
+use fbx::adapters::driven::decoded_rigid_prop_source::
+    load_instanced_rigid_prop_asset_with_billboards;
 use fbx::domain::animation::AnimationClip;
 use fbx::domain::character::{CharacterAsset, SkinnedPart};
 use fbx::domain::mesh::MeshAsset;
@@ -108,25 +106,14 @@ pub(super) fn export_vehicle(
         .collect::<Vec<_>>();
     let source_billboard_paths =
         vehicle_quad_group_paths(package, &package_root)?;
-    let (mut retained_billboard_paths, deferred_billboards) =
+    let (retained_billboard_paths, deferred_billboards) =
         partition_vehicle_billboards(&source_billboard_paths, &vehicle_dir)?;
     deferred_geometry.extend(deferred_billboards);
     deferred_geometry.sort();
     let (common_root, common_headlights) =
         common_headlight_quad_groups(normalized_root)?;
-    let headlight_shader_names =
+    let mut headlight_shader_names =
         headlight_billboard_shader_names(&common_headlights)?;
-    let mut supplemental = Vec::new();
-    for path in &common_headlights {
-        let component_name = decoded_name(path)?;
-        for joint_id in ["hll", "hlr"] {
-            supplemental.push(SupplementalRigidPropBinding {
-                component_name: component_name.clone(),
-                joint_id: joint_id.to_owned(),
-            });
-        }
-    }
-    retained_billboard_paths.extend(common_headlights.iter().cloned());
     let billboard_refs = retained_billboard_paths
         .iter()
         .map(PathBuf::as_path)
@@ -137,7 +124,8 @@ pub(super) fn export_vehicle(
         &mesh_refs,
         &billboard_refs,
         &composite,
-        &supplemental,
+        &[],
+        &["hll", "hlr"],
     )
     .map_err(|error| {
         PipelineError::new(format!(
@@ -145,6 +133,19 @@ pub(super) fn export_vehicle(
             package.package_id
         ))
     })?;
+    let headlight_bones = ["hll", "hlr"]
+        .into_iter()
+        .filter(|candidate| {
+            assembled_asset
+                .bones
+                .iter()
+                .any(|bone| bone.id == *candidate)
+        })
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    if headlight_bones.is_empty() {
+        headlight_shader_names.clear();
+    }
     let hidden_proxy_indices =
         hidden_wheel_proxy_indices(&assembled_asset, &vehicle);
     let (grounded_asset, ground_offset, root_bone, grounding_source) =
@@ -214,6 +215,7 @@ pub(super) fn export_vehicle(
     let textures = texture_records(&vehicle_dir)?;
     let headlight_billboard_sidecars = publish_headlight_billboard_sidecars(
         &common_headlights,
+        &headlight_bones,
         &vehicle_dir,
         &resolved_materials,
         &textures,
@@ -380,10 +382,14 @@ fn headlight_billboard_shader_names(
 /// Publish exact common headlight billboard evidence beside one vehicle.
 fn publish_headlight_billboard_sidecars(
     paths: &[PathBuf],
+    headlight_bones: &[String],
     vehicle_dir: &Path,
     materials: &BTreeMap<String, MaterialBinding>,
     textures: &[TextureRecord],
 ) -> Result<Vec<HeadlightBillboardSidecarRecord>, PipelineError> {
+    if headlight_bones.is_empty() {
+        return Ok(Vec::new());
+    }
     let directory = vehicle_dir.join("presentation").join("headlights");
     fs::create_dir_all(&directory)
         .map_err(|error| PipelineError::new(error.to_string()))?;
@@ -444,7 +450,7 @@ fn publish_headlight_billboard_sidecars(
             path: relative,
             identity: evidence.group_identity,
             shader_identity: evidence.shader_identity,
-            bones: vec!["hll".to_owned(), "hlr".to_owned()],
+            bones: headlight_bones.to_vec(),
             material: HeadlightBillboardMaterialRecord {
                 source_material_name: binding.material_name.clone(),
                 base_color_rgba8: binding.base_color_rgba8,
