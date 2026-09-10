@@ -35,6 +35,7 @@
 #include <initializer_list>
 
 #include "Vehicles/SharVehicleConstructionTransaction.h"
+#include "Vehicles/SharVehicleNativeBrakeLightAdapter.h"
 #include "Vehicles/SharVehicleNativeLightAdapter.h"
 #include "Vehicles/SharVehicleDefinition.h"
 #include "Vehicles/SharVehiclePawn.h"
@@ -269,6 +270,10 @@ MakeResolvedVehiclePresentation()
         AddVehicleTestBone(Modifier, TEXT("w3"), 0);
         AddVehicleTestBone(Modifier, TEXT("hll"), 0);
         AddVehicleTestBone(Modifier, TEXT("hlr"), 0);
+        AddVehicleTestBone(Modifier, TEXT("brake1"), 0);
+        AddVehicleTestBone(Modifier, TEXT("brake2"), 0);
+        AddVehicleTestBone(Modifier, TEXT("brake3"), 0);
+        AddVehicleTestBone(Modifier, TEXT("brake4"), 0);
     }
     SkeletalMesh->SetRefSkeleton(ReferenceSkeleton);
     SkeletalMesh->SetSkeleton(Skeleton);
@@ -311,6 +316,30 @@ MakeResolvedVehiclePresentation()
             TEXT("hlr"),
             {}
         ),
+        MakeLightBinding(
+            TEXT("brake1"),
+            ESharVehicleLightPresentationRole::Brake,
+            TEXT("brake1"),
+            {0}
+        ),
+        MakeLightBinding(
+            TEXT("brake2"),
+            ESharVehicleLightPresentationRole::Brake,
+            TEXT("brake2"),
+            {1}
+        ),
+        MakeLightBinding(
+            TEXT("brake3"),
+            ESharVehicleLightPresentationRole::Brake,
+            TEXT("brake3"),
+            {0}
+        ),
+        MakeLightBinding(
+            TEXT("brake4"),
+            ESharVehicleLightPresentationRole::Brake,
+            TEXT("brake4"),
+            {1}
+        ),
     };
     for (FSharVehicleWheelPresentationBinding& Wheel : Presentation->Wheels)
     {
@@ -350,6 +379,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharVehicleNativeHeadlightAdapterTest,
     "SHAR.Vehicles.Runtime.NativeHeadlightAdapter",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehicleNativeBrakeLightAdapterTest,
+    "SHAR.Vehicles.Runtime.NativeBrakeLightAdapter",
     EAutomationTestFlags::EditorContext
         | EAutomationTestFlags::ClientContext
         | EAutomationTestFlags::CommandletContext
@@ -706,6 +743,115 @@ bool FSharVehicleNativeHeadlightAdapterTest::RunTest(
     return true;
 }
 
+
+bool FSharVehicleNativeBrakeLightAdapterTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    auto* Pawn = NewObject<ASharVehiclePawn>();
+    auto* Presentation = MakeResolvedVehiclePresentation();
+    Pawn->GetMesh()->SetSkeletalMesh(Presentation->SkeletalMesh.Get());
+    auto* State = NewObject<USharVehiclePresentationState>();
+    auto* Adapter = NewObject<USharVehicleNativeBrakeLightAdapter>();
+
+    FSharVehicleNativeBrakeLightConfiguration InvalidConfiguration;
+    TestFalse(
+        TEXT("Incomplete brake-light settings fail closed"),
+        Adapter->ConfigureBrakeLights(
+            Pawn,
+            Presentation,
+            State,
+            InvalidConfiguration
+        )
+    );
+    TestEqual(
+        TEXT("Failed brake configuration creates no emitters"),
+        Adapter->GetBrakeLightEmitterCount(),
+        0
+    );
+
+    FSharVehicleNativeBrakeLightConfiguration Configuration;
+    Configuration.IntensityLumens = 400.0F;
+    Configuration.AttenuationRadiusCentimeters = 500.0F;
+    Configuration.InnerConeAngleDegrees = 20.0F;
+    Configuration.OuterConeAngleDegrees = 40.0F;
+    Configuration.LightColor = FLinearColor::Red;
+    Configuration.BoneLocalDirection = -FVector::ForwardVector;
+    TestTrue(
+        TEXT("Authored brake hardpoints configure"),
+        Adapter->ConfigureBrakeLights(Pawn, Presentation, State, Configuration)
+    );
+    TestEqual(
+        TEXT("Four authored brake hardpoints stay distinct"),
+        Adapter->GetBrakeLightEmitterCount(),
+        4
+    );
+    for (int32 Index = 0; Index < 4; ++Index)
+    {
+        const FName ExpectedBone(*FString::Printf(TEXT("brake%d"), Index + 1));
+        TestEqual(
+            TEXT("Brake emitter preserves authored hardpoint order"),
+            Adapter->GetBrakeLightEmitterBone(Index),
+            ExpectedBone
+        );
+        USpotLightComponent* Light = Adapter->GetBrakeLightEmitter(Index);
+        TestNotNull(TEXT("Native brake SpotLight exists"), Light);
+        if (Light == nullptr)
+        {
+            return false;
+        }
+        TestEqual(
+            TEXT("Brake emitter attaches to exact authored hardpoint"),
+            Light->GetAttachSocketName(),
+            ExpectedBone
+        );
+        TestTrue(
+            TEXT("Brake emitter adds no manual location offset"),
+            Light->GetRelativeLocation().IsNearlyZero()
+        );
+        TestFalse(
+            TEXT("Native brake light starts hidden"),
+            Light->IsVisible()
+        );
+    }
+
+    TestTrue(TEXT("Brake state enables"), State->SetBrakeState(true, false));
+    TestTrue(
+        TEXT("Native brake lights refresh"),
+        Adapter->RefreshBrakeLights()
+    );
+    for (int32 Index = 0; Index < 4; ++Index)
+    {
+        TestTrue(
+            TEXT("Native brake emitter follows brake state"),
+            Adapter->GetBrakeLightEmitter(Index)->IsVisible()
+        );
+    }
+    TestTrue(
+        TEXT("Reverse state replaces brake presentation"),
+        State->SetBrakeState(true, true)
+    );
+    TestTrue(
+        TEXT("Brake adapter refreshes reverse suppression"),
+        Adapter->RefreshBrakeLights()
+    );
+    for (int32 Index = 0; Index < 4; ++Index)
+    {
+        TestFalse(
+            TEXT("Reverse hides native brake emitter"),
+            Adapter->GetBrakeLightEmitter(Index)->IsVisible()
+        );
+    }
+
+    Adapter->ResetBrakeLights();
+    TestEqual(
+        TEXT("Reset removes transient brake emitters"),
+        Adapter->GetBrakeLightEmitterCount(),
+        0
+    );
+    return true;
+}
 
 bool FSharVehicleDamageRuntimeTest::RunTest(const FString& Parameters)
 {
