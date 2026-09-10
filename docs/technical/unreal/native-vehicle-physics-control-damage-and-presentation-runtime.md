@@ -542,7 +542,7 @@ billboard sidecars instead of FBX presentation parts. Those bindings carry no
 material-slot indices and retain the sidecar identity, source shader, and exact
 `hll`/`hlr` hardpoint. Brake and Reverse bindings remain derived from semantic
 FBX parts and continue to require their verified material-slot joins. Native
-presentation validation enforces the same split: Headlight must be slotless,
+presentation validation enforces the same split: Headlight uses no material slot,
 while Brake and Reverse must retain one or more unique in-range slots.
 
 The fixed headlight planes are therefore no longer required for material or
