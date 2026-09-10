@@ -511,6 +511,30 @@ back-face can disappear when the camera crosses the plane. Unreal presentation
 must separate the camera-facing glow surface from native light emission instead
 of treating the imported plane as the complete headlight implementation.
 
+Native headlight emission now has a dedicated runtime adapter. It creates one
+movable Spot Light per unique reviewed headlight bone, deduplicates multiple
+semantic part bindings that share the same hardpoint, and refreshes visibility
+from the vehicle presentation state. Light intensity, attenuation, cone angles,
+color, and local direction remain explicit configuration; temporary inspection
+values are not promoted to authored tuning.
+
+Vehicle export now also republishes the three common source headlight quad-group
+documents as byte-identical, SHA-256-bound presentation sidecars. Each sidecar
+retains its authored group and shader identities and records the `hll`/`hlr`
+hardpoints that received the common groups in the original runtime. The source
+documents already retain billboard mode, color, size, UVs, distance, rotation,
+and cutoff evidence, so native camera-facing glow no longer needs fixed FBX
+planes as its only data source.
+
+The fixed headlight planes are still retained in the current FBX contract for
+one transitional reason: `sedana` material slots 5, 6, and 7 are presently the
+construction path for `flarebase2_m`, `LENS02_m`, and `glow2_m`. Removing those
+planes before billboard materials have an independent native construction and
+presentation binding would discard reviewed source material evidence. The next
+conversion step must decouple those materials from Skeletal Mesh slots, then
+remove the common headlight groups from FBX emission and bind native
+camera-facing glow to the sidecar evidence.
+
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative
 production vehicle presentation, spawn the Pawn, create and validate live Chaos

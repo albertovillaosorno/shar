@@ -37,8 +37,8 @@ use std::path::{Path, PathBuf};
 use serde_json::{Value, json};
 
 use super::model::{
-    EffectAnimationRecord, MaterialSlotRecord, PartRecord,
-    PhysicsPrimitiveRecord, PhysicsRigRecord, PhysicsSidecarRecord,
+    EffectAnimationRecord, HeadlightBillboardSidecarRecord, MaterialSlotRecord,
+    PartRecord, PhysicsPrimitiveRecord, PhysicsRigRecord, PhysicsSidecarRecord,
     VehicleRecord,
 };
 use crate::domain::PipelineError;
@@ -79,6 +79,7 @@ pub(super) fn write_root_catalog(
                 "damage textures",
                 "alternate appearance textures",
                 "semantic part roles and pivot bones",
+                "common headlight billboard evidence for native replacement",
                 "hidden non-visual wheel proxies retained as physics evidence",
                 "effect animation controller, target, and texture occurrences",
                 "verbatim decoded collision and physics source members",
@@ -141,6 +142,10 @@ pub(super) fn write_root_catalog(
             "skeletal_animations": records
                 .iter()
                 .map(|record| record.animations.len())
+                .sum::<usize>(),
+            "headlight_billboard_sidecars": records
+                .iter()
+                .map(|record| record.headlight_billboard_sidecars.len())
                 .sum::<usize>(),
             "effect_animation_sidecars": records
                 .iter()
@@ -244,6 +249,11 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
         })).collect::<Vec<_>>(),
         "deferred_geometry": record.deferred_geometry,
         "animations": record.animations,
+        "headlight_billboard_sidecars": record
+            .headlight_billboard_sidecars
+            .iter()
+            .map(headlight_billboard_sidecar_value)
+            .collect::<Vec<_>>(),
         "effect_animation_sidecars": record
             .effect_animation_sidecars
             .iter()
@@ -271,6 +281,20 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
             .iter()
             .map(physics_rig_value)
             .collect::<Vec<_>>()
+    })
+}
+
+/// Render one exact common source headlight billboard sidecar.
+fn headlight_billboard_sidecar_value(
+    record: &HeadlightBillboardSidecarRecord,
+) -> Value {
+    json!({
+        "path": record.path,
+        "identity": record.identity,
+        "shader_identity": record.shader_identity,
+        "bones": record.bones,
+        "bytes": record.bytes,
+        "sha256": record.sha256,
     })
 }
 

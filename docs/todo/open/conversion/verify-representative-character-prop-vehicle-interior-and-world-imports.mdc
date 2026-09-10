@@ -424,8 +424,22 @@ current FBX representation leaves their cards as fixed planes, so they can
 vanish when viewed from the back. Two disposable native SpotLight actors were
 placed at the source-derived `hll`/`hlr` rest positions for visual comparison;
 they are inspection-only and the level is not an authority or persistence
-surface. Production still requires a native vehicle-light adapter plus reviewed
-camera-facing glow presentation rather than a two-sided-material approximation.
+surface. A native runtime headlight adapter now creates one movable Spot Light
+per unique `hll`/`hlr` hardpoint and follows the semantic PresentationState; its
+photometric settings remain explicit rather than adopting the temporary
+inspection values. Vehicle export also republishes the three common headlight
+quad-group documents as byte-identical, digest-bound presentation sidecars with
+`hll`/`hlr` bindings, preserving the source color, size, UV, orientation,
+distance, and cutoff evidence needed by a native camera-facing glow.
+
+The current FBX still contains those common headlight cards because `sedana`
+slots 5, 6, and 7 remain the construction path for `flarebase2_m`, `LENS02_m`,
+and `glow2_m`. Removing the planes before those materials have an independent
+native presentation binding would lose reviewed evidence. The next step is to
+decouple those three billboard materials from Skeletal Mesh slots, remove the
+common headlight groups from FBX emission, and instantiate the camera-facing
+glow beside the native real-time lights. No new visual acceptance is claimed
+until that complete replacement is visible in Unreal.
 
 Source-derived animation and wheel-definition assets remain absent, the three
 lit `sedana` slots still require reviewed material families, and the vehicle has
