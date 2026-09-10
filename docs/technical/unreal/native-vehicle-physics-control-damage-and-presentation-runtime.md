@@ -537,12 +537,19 @@ from the continued existence of Skeletal Mesh slots 5, 6, and 7:
 `flarebase2_m`, `LENS02_m`, and `glow2_m`.
 <!-- CSpell:enable -->
 
-The fixed headlight planes are still retained temporarily because the generated
-dynamic-light bindings and native presentation-definition validation still
-model every light as slot-backed. The next conversion step must make Headlight
-bindings slot-independent while keeping Brake and Reverse slot-bound, project
-native glow material instances from the verified sidecar material evidence, and
-then remove the common headlight groups from FBX emission.
+Vehicle material evidence v4 now derives Headlight bindings from the verified
+billboard sidecars instead of FBX presentation parts. Those bindings carry no
+material-slot indices and retain the sidecar identity, source shader, and exact
+`hll`/`hlr` hardpoint. Brake and Reverse bindings remain derived from semantic
+FBX parts and continue to require their verified material-slot joins. Native
+presentation validation enforces the same split: Headlight must be slotless,
+while Brake and Reverse must retain one or more unique in-range slots.
+
+The fixed headlight planes are therefore no longer required for material or
+semantic light-binding authority, but they are still present in current FBX
+emission. The next conversion step can remove the common headlight groups from
+FBX geometry and project native camera-facing glow material instances from the
+verified sidecar material evidence beside the real-time Spot Lights.
 
 This path still does not prove restart/reload from a freshly generated real
 release bundle, bind the saved Physics Asset through the representative

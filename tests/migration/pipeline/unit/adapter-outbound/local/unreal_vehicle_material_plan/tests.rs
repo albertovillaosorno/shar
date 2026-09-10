@@ -37,11 +37,42 @@ use super::{
     render_vehicle_material_plan,
 };
 use crate::adapters::driven::local::unreal_vehicle_catalog::{
-    VerifiedVehicleFbxArtifact, VerifiedVehicleMaterialArtifact,
+    VerifiedVehicleFbxArtifact, VerifiedVehicleHeadlightBillboardArtifact,
+    VerifiedVehicleHeadlightMaterialArtifact, VerifiedVehicleMaterialArtifact,
     VerifiedVehicleMaterialRaster, VerifiedVehicleMaterialSemantics,
     VerifiedVehiclePresentationPart,
 };
 use crate::domain::UnrealFbxArtifactEvidence;
+
+fn headlight_sidecar(
+    raster: VerifiedVehicleMaterialRaster,
+    semantics: VerifiedVehicleMaterialSemantics,
+) -> VerifiedVehicleHeadlightBillboardArtifact {
+    VerifiedVehicleHeadlightBillboardArtifact {
+        path: concat!(
+            "vehicle-assets/sedana/presentation/headlights/",
+            "glow.json"
+        )
+        .to_owned(),
+        identity: "glowShape".to_owned(),
+        shader_identity: "glow_m".to_owned(),
+        bones: vec!["hll".to_owned(), "hlr".to_owned()],
+        material: VerifiedVehicleHeadlightMaterialArtifact {
+            source_material_name: "glow_m".to_owned(),
+            base_color_rgba8: [255, 224, 128, 255],
+            semantics,
+            raster,
+            shader_path: "vehicle-assets/sedana/shaders/glow-m.json".to_owned(),
+            shader_size_bytes: 40,
+            shader_sha256: "d".repeat(64),
+            texture_path: Some("textures/glow.png".to_owned()),
+            texture_size_bytes: Some(50),
+            texture_sha256: Some("e".repeat(64)),
+        },
+        size_bytes: 60,
+        sha256: "f".repeat(64),
+    }
+}
 
 fn vehicle() -> VerifiedVehicleFbxArtifact {
     VerifiedVehicleFbxArtifact {
@@ -239,6 +270,59 @@ fn simple_unlit_graph_candidate_stays_separate_from_presentation_readiness()
     Ok(())
 }
 
+
+#[test]
+fn renders_slot_independent_headlight_sidecar_bindings() -> Result<(), String> {
+    let mut vehicle = vehicle();
+    let [slot] = vehicle.material_slots.as_slice() else {
+        return Err("vehicle material fixture cardinality drifted".to_owned());
+    };
+    let mut semantics = slot.semantics;
+    semantics.light_emitter = true;
+    let mut raster = slot.raster.clone();
+    raster.lit = false;
+    vehicle.headlight_billboard_sidecars = vec![headlight_sidecar(
+        raster,
+        semantics,
+    )];
+    let text = render_vehicle_material_plan(Some(
+        std::slice::from_ref(&vehicle),
+    ))
+        .map_err(|error| error.to_string())?;
+    let value = serde_json::from_str::<Value>(&text)
+        .map_err(|error| error.to_string())?;
+    let bindings = value
+        .pointer("/vehicles/0/dynamic_light_bindings")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "vehicle headlight bindings are missing".to_owned())?;
+    let [left, right] = bindings.as_slice() else {
+        return Err(format!("unexpected headlight bindings: {bindings:?}"));
+    };
+    if left.get("semantic_role").and_then(Value::as_str)
+        != Some("headlight-left")
+        || left.get("bone_name").and_then(Value::as_str) != Some("hll")
+        || left.get("material_slot_indices") != Some(&serde_json::json!([]))
+        || left.get("slot_join_status").and_then(Value::as_str)
+            != Some("not-applicable-native")
+        || right.get("semantic_role").and_then(Value::as_str)
+            != Some("headlight-right")
+        || value
+            .pointer("/counts/slot_independent_headlight_bindings")
+            .and_then(Value::as_u64)
+            != Some(2)
+        || value
+            .pointer("/counts/unique_slot_light_bindings")
+            .and_then(Value::as_u64)
+            != Some(0)
+        || value
+            .pointer("/counts/ambiguous_slot_light_bindings")
+            .and_then(Value::as_u64)
+            != Some(0)
+    {
+        return Err("slot-independent headlight binding drifted".to_owned());
+    }
+    Ok(())
+}
 
 #[test]
 fn renders_verified_dynamic_light_part_binding() -> Result<(), String> {

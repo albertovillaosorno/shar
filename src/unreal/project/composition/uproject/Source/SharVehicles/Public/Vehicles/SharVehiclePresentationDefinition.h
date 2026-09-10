@@ -77,7 +77,8 @@ struct SHARVEHICLES_API FSharVehicleWheelPresentationBinding
     TSoftClassPtr<UChaosVehicleWheel> WheelClass;
 };
 
-/** One semantic light role bound to one rig location and material set. */
+/** One semantic light role bound to one rig location and optional material
+ * set. */
 USTRUCT(BlueprintType)
 struct SHARVEHICLES_API FSharVehicleLightPresentationBinding
 {
@@ -96,7 +97,7 @@ struct SHARVEHICLES_API FSharVehicleLightPresentationBinding
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Light")
     FName BoneName;
 
-    /** Material slots affected by this semantic light binding. */
+    /** Rear-light material slots; native headlights must leave this empty. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Light")
     TArray<int32> MaterialSlotIndices;
 };

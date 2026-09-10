@@ -22,7 +22,7 @@
 # - Summary:
 #   - Vehicle-material native construction compiler.
 # - Description:
-#   - Validates v3 generated identities, dependency links, and exact tool wires.
+#   - Validates v4 generated identities, dependency links, and exact tool wires.
 # - Usage:
 #   - Called after release-index binding and before filesystem or live checks.
 # - Defaults:
@@ -43,7 +43,7 @@ from mcp.domain.json_types import JsonObject
 from mcp.domain.json_types import JsonValue
 from mcp.domain.json_types import require_json_object
 
-_SCHEMA = "shar-schoenwald.unreal-vehicle-material-evidence.v3"
+_SCHEMA = "shar-schoenwald.unreal-vehicle-material-evidence.v4"
 _SOURCE_SCHEMA = "shar.vehicle-catalog.v8"
 _TEXTURE_ROOT = "/Game/Generated/SHAR/Textures/Vehicles"
 _MASTER_ROOT = "/Game/Generated/SHAR/Materials/Vehicles/Masters"
@@ -62,7 +62,7 @@ _EXPECTED_POLICY = {
     "world_material_policy_reuse": "forbidden",
     "native_construction": "simple-unlit-texture-master-instance-ready",
     "mesh_slot_application": "blocked-pending-reviewed-transaction",
-    "dynamic_light_binding": "verified-source-part-to-material-slots",
+    "dynamic_light_binding": "headlight-sidecar-plus-slot-bound-rear-lights",
     "runtime_shader_mutation": "preserve-separately",
 }
 
@@ -230,7 +230,7 @@ class CompiledVehicleMaterialConstruction(NamedTuple):
 def compile_vehicle_material_construction(
     document: JsonObject,
 ) -> CompiledVehicleMaterialConstruction:
-    """Validate and type one v3 vehicle-material construction document."""
+    """Validate and type one v4 vehicle-material construction document."""
     if document.get("schema") != _SCHEMA:
         fail_protocol("vehicle-material construction schema is not supported")
     if document.get("source_schema") != _SOURCE_SCHEMA:

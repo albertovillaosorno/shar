@@ -445,13 +445,16 @@ from the continued existence of slots 5, 6, and 7:
 `flarebase2_m`, `LENS02_m`, and `glow2_m`.
 <!-- CSpell:enable -->
 
-The current FBX still contains the common headlight cards because generated
-Headlight bindings and native presentation validation still require material
-slots. The next step is to make Headlight bindings slot-independent while Brake
-and Reverse remain slot-bound, create native camera-facing glow from the
-verified sidecars, and then remove the common headlight groups from FBX
-emission. No new visual acceptance is claimed until that complete replacement
-is visible in Unreal.
+Vehicle material evidence v4 now derives Headlight bindings from the verified
+billboard sidecars with no material-slot indices. Brake and Reverse bindings
+remain slot-backed. Native presentation validation enforces the same split, so
+headlights can no longer regress to the legacy plane/material-slot model.
+
+The current FBX still contains the common headlight cards, but they are no
+longer authority for headlight material or semantic binding. The next step is to
+remove those groups from FBX emission and instantiate native camera-facing glow
+from the verified sidecars beside the real-time Spot Lights. No new visual
+acceptance is claimed until that complete replacement is visible in Unreal.
 
 Source-derived animation and wheel-definition assets remain absent, the three
 lit `sedana` slots still require reviewed material families, and the vehicle has
