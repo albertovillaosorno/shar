@@ -428,6 +428,14 @@ sources and compiles the expected five instances plus two shared masters.
 The scoped selection receives an independent deterministic revision while the
 full construction revision remains unchanged in the same evidence payload.
 
+The import-editor module registers the vehicle-material toolset as an explicit
+ToolsetRegistry surface. Native Unreal Engine 5.8.1 automation verifies that
+registration together with the master and Material Instance construction paths.
+A live MCP run against the same release then audits all eight required schemas
+and applies the `sedana` closure as exactly 12 created, saved, and independently
+verified assets: five textures, two masters, and five Material Instances. This
+closes asset publication only; the Skeletal Mesh material array is unchanged.
+
 For `sedana`, five of eight slots are in this construction-ready subset:
 <!-- markdownlint-disable-next-line MD044 -->
 <!-- cspell:disable -->

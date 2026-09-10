@@ -356,8 +356,20 @@ Global preflight verified all 14 texture digests and retained the 14/3/429
 construction counts; scoped `sedana` preflight independently verified five
 texture sources and produced the expected 5/2/5 closure.
 
-The broader P0 criterion remains open. The saved asset has not yet been bound
-into the representative production presentation, and source-derived material,
-animation, or wheel-definition assets are still absent. The vehicle also has not
-been spawned into a world with live Chaos vehicle physics or validated under
-driven behavior against source evidence.
+A live Unreal Engine 5.8.1 MCP run now proves that scoped asset publication.
+The import-editor module registers the vehicle-material toolset alongside the
+existing import, vehicle-physics, and world-material toolsets; native automation
+finds four `SHAR.Import.VehicleMaterials` tests and all four pass, including an
+explicit ToolsetRegistry registration assertion. The live capability audit then
+finds all eight required schemas compatible, and scoped `sedana` apply creates,
+saves, and independently verifies exactly 12 assets: five Texture2D assets, two
+simple-unlit masters, and five Material Instances. Those five instances retain
+slots 0, 1, 5, 6, and 7; the transaction still does not mutate Skeletal Mesh
+slot assignments.
+
+The broader P0 criterion remains open. The saved Physics Asset and five
+construction-ready Material Instances have not yet been bound into the
+representative production presentation. The three lit vehicle slots plus
+source-derived animation and wheel-definition assets remain absent, and the
+vehicle has not been spawned into a world with live Chaos vehicle physics or
+validated under driven behavior against source evidence.
