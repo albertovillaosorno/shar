@@ -1011,8 +1011,11 @@ fn verify_vehicle_headlight_billboards(
         })?;
         let path = required_string(sidecar, "path")?;
         validate_relative_path(&path)?;
+        let has_json_extension = Path::new(&path)
+            .extension()
+            .is_some_and(|extension| extension.eq_ignore_ascii_case("json"));
         if !path.starts_with("presentation/headlights/")
-            || !path.ends_with(".json")
+            || !has_json_extension
             || !paths.insert(path.clone())
         {
             return Err(PipelineError::new(
