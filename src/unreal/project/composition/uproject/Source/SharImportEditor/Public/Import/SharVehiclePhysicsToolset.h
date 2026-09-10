@@ -96,4 +96,17 @@ public:
         int32 SourceJointCount,
         const TArray<FSharVehiclePhysicsShapeInput>& Shapes
     );
+
+    /**
+     * Verify one existing generated Physics Asset against exact plan fields.
+     * This is read-only and returns false for geometry or preview-mesh drift.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharVehiclePhysicsToolset")
+    static bool VerifyVehiclePhysicsAsset(
+        const FString& PhysicsAssetPath,
+        const FString& SkeletalMeshPath,
+        FName RigIdentity,
+        int32 SourceJointCount,
+        const TArray<FSharVehiclePhysicsShapeInput>& Shapes
+    );
 };
