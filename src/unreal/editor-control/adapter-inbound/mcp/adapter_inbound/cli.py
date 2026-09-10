@@ -45,6 +45,7 @@ from mcp.adapter_inbound.arguments import parse_raw_call
 from mcp.adapter_inbound.arguments import parse_skill_output_path
 from mcp.adapter_inbound.arguments import parse_tool_call
 from mcp.adapter_inbound.arguments import parse_vehicle_material_options
+from mcp.adapter_inbound.arguments import parse_vehicle_physics_options
 from mcp.adapter_inbound.arguments import (
     parse_vehicle_physics_prerequisite_options,
 )
@@ -153,6 +154,8 @@ from mcp.domain.vehicle_physics_prerequisites import (
 from mcp.domain.vehicle_physics_prerequisites import (
     vehicle_physics_prerequisite_revision,
 )
+from mcp.domain.vehicle_physics_selection import CompiledVehiclePhysicsSelection
+from mcp.domain.vehicle_physics_selection import select_vehicle_physics_package
 from mcp.domain.world_material_capabilities import (
     audit_world_material_capabilities,
 )
@@ -260,12 +263,16 @@ def _run_vehicle_physics_prerequisite_invocation(
 
 
 def _run_vehicle_physics_invocation(invocation: CliInvocation) -> int:
-    root = parse_plan_root(invocation.operands)
+    options = parse_vehicle_physics_options(invocation.operands)
     if invocation.action == "vehicle-physics-preflight":
-        return _run_vehicle_physics_preflight(root)
+        return _run_vehicle_physics_preflight(options.root, options.package_id)
     if invocation.action == "vehicle-physics-capabilities":
-        return _run_vehicle_physics_capabilities(invocation, root)
-    return _run_vehicle_physics_apply(invocation, root)
+        return _run_vehicle_physics_capabilities(
+            invocation, options.root, options.package_id
+        )
+    return _run_vehicle_physics_apply(
+        invocation, options.root, options.package_id
+    )
 
 
 def _run_world_material_invocation(invocation: CliInvocation) -> int:
@@ -299,23 +306,20 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         "vehicle-material-apply",
         "vehicle-material-capabilities",
         "vehicle-material-preflight",
+        "vehicle-physics-apply",
+        "vehicle-physics-capabilities",
+        "vehicle-physics-preflight",
         "vehicle-physics-prerequisites-apply",
         "vehicle-physics-prerequisites-capabilities",
         "vehicle-physics-prerequisites-preflight",
     }:
-        if action.startswith("vehicle-material-"):
-            _ = parse_vehicle_material_options(operands)
-        else:
-            _ = parse_vehicle_physics_prerequisite_options(operands)
+        _validate_vehicle_scoped_operands(action, operands)
         return
     if action in {
         "plan-apply",
         "plan-capabilities",
         "plan-execution-preflight",
         "plan-preflight",
-        "vehicle-physics-apply",
-        "vehicle-physics-capabilities",
-        "vehicle-physics-preflight",
         "world-material-apply",
         "world-material-capabilities",
         "world-material-preflight",
@@ -335,6 +339,18 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         _ = parse_skill_output_path(operands)
     else:
         _ = parse_catalog_format(operands)
+
+
+def _validate_vehicle_scoped_operands(
+    action: str,
+    operands: tuple[str, ...],
+) -> None:
+    if action.startswith("vehicle-material-"):
+        _ = parse_vehicle_material_options(operands)
+    elif action.startswith("vehicle-physics-prerequisites-"):
+        _ = parse_vehicle_physics_prerequisite_options(operands)
+    else:
+        _ = parse_vehicle_physics_options(operands)
 
 
 def _vehicle_material_context(
@@ -614,49 +630,83 @@ def _run_vehicle_physics_prerequisite_apply(
 
 def _vehicle_physics_context(
     root: Path,
+    package_id: str | None,
 ) -> tuple[
     ValidatedPlanBundle,
     CompiledVehiclePhysicsConstruction,
+    CompiledVehiclePhysicsConstruction,
+    CompiledVehiclePhysicsSelection | None,
 ]:
     bundle = FilesystemPlanBundleReader(root).read_bundle()
     execution = compile_execution_plan(bundle)
     document = read_bound_vehicle_physics_document(root.parent, bundle)
     compiled = compile_vehicle_physics_construction(document, execution)
-    return bundle, compiled
+    executable = compiled
+    selection: CompiledVehiclePhysicsSelection | None = None
+    if package_id is not None:
+        selection = select_vehicle_physics_package(compiled, package_id)
+        executable = selection.construction
+    return bundle, compiled, executable, selection
 
 
 def _vehicle_physics_evidence(
     bundle: ValidatedPlanBundle,
     compiled: CompiledVehiclePhysicsConstruction,
+    executable: CompiledVehiclePhysicsConstruction,
+    selection: CompiledVehiclePhysicsSelection | None,
 ) -> dict[str, object]:
-    return {
+    payload: dict[str, object] = {
         "bundle": bundle.report.to_json(),
         "construction": compiled.report.to_json(),
         "constructionRevision": vehicle_physics_construction_revision(compiled),
     }
+    if selection is not None:
+        payload["selection"] = selection.report.to_json()
+        payload["selectionRevision"] = vehicle_physics_construction_revision(
+            executable
+        )
+    return payload
 
 
-def _run_vehicle_physics_preflight(root: Path) -> int:
-    bundle, compiled = _vehicle_physics_context(root)
-    _write_stdout(render_json(_vehicle_physics_evidence(bundle, compiled)))
+def _run_vehicle_physics_preflight(
+    root: Path,
+    package_id: str | None,
+) -> int:
+    bundle, compiled, executable, selection = _vehicle_physics_context(
+        root, package_id
+    )
+    _write_stdout(render_json(_vehicle_physics_evidence(
+        bundle,
+        compiled,
+        executable,
+        selection,
+    )))
     return _EXIT_SUCCESS
 
 
 def _run_vehicle_physics_capabilities(
     invocation: CliInvocation,
     root: Path,
+    package_id: str | None,
 ) -> int:
-    bundle, compiled = _vehicle_physics_context(root)
+    bundle, compiled, executable, selection = _vehicle_physics_context(
+        root, package_id
+    )
     transport = StreamableHttpTransport(
         invocation.endpoint,
         timeout_seconds=invocation.timeout_seconds,
     )
     with UnrealMcpTranslator(transport) as translator:
         definitions = translator.describe_available_toolsets(
-            required_vehicle_physics_toolsets(compiled)
+            required_vehicle_physics_toolsets(executable)
         )
-    capabilities = audit_vehicle_physics_capabilities(compiled, definitions)
-    payload = _vehicle_physics_evidence(bundle, compiled)
+    capabilities = audit_vehicle_physics_capabilities(executable, definitions)
+    payload = _vehicle_physics_evidence(
+        bundle,
+        compiled,
+        executable,
+        selection,
+    )
     payload["capabilities"] = capabilities.to_json()
     _write_stdout(render_json(payload))
     return _EXIT_SUCCESS if capabilities.complete else _EXIT_FAILURE
@@ -665,25 +715,35 @@ def _run_vehicle_physics_capabilities(
 def _run_vehicle_physics_apply(
     invocation: CliInvocation,
     root: Path,
+    package_id: str | None,
 ) -> int:
-    bundle, compiled = _vehicle_physics_context(root)
+    bundle, compiled, executable, selection = _vehicle_physics_context(
+        root, package_id
+    )
     transport = StreamableHttpTransport(
         invocation.endpoint,
         timeout_seconds=invocation.timeout_seconds,
     )
     with UnrealMcpTranslator(transport) as translator:
         definitions = translator.describe_available_toolsets(
-            required_vehicle_physics_toolsets(compiled)
+            required_vehicle_physics_toolsets(executable)
         )
-        capabilities = audit_vehicle_physics_capabilities(compiled, definitions)
-        payload = _vehicle_physics_evidence(bundle, compiled)
+        capabilities = audit_vehicle_physics_capabilities(
+            executable, definitions
+        )
+        payload = _vehicle_physics_evidence(
+            bundle,
+            compiled,
+            executable,
+            selection,
+        )
         payload["capabilities"] = capabilities.to_json()
         if not capabilities.complete:
             _write_stdout(render_json(payload))
             return _EXIT_FAILURE
         application = apply_vehicle_physics_construction(
             translator,
-            compiled,
+            executable,
             capabilities,
         )
     payload["application"] = application.to_json()

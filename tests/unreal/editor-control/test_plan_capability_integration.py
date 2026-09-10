@@ -988,9 +988,20 @@ def test_cli_vehicle_physics_applies_bound_release_after_skeletal_import(
 
     with FakeUnrealServer(plan_execution=True) as server:
         _run_json_cli(capsys, "--endpoint", server.endpoint, "plan-apply")
-        preflight = _run_json_cli(capsys, "vehicle-physics-preflight")
+        preflight = _run_json_cli(
+            capsys,
+            "vehicle-physics-preflight",
+            "--package-id",
+            "skeletal-mesh-package",
+        )
         assert preflight["construction"] == {
             "blockedRigCount": 0,
+            "requestCount": 1,
+            "shapeCount": 1,
+        }
+        assert preflight["selection"] == {
+            "globalBlockedRigCount": 0,
+            "packageId": "skeletal-mesh-package",
             "requestCount": 1,
             "shapeCount": 1,
         }
@@ -999,6 +1010,8 @@ def test_cli_vehicle_physics_applies_bound_release_after_skeletal_import(
             "--endpoint",
             server.endpoint,
             "vehicle-physics-capabilities",
+            "--package-id",
+            "skeletal-mesh-package",
         )
         capabilities = capability_payload["capabilities"]
         assert isinstance(capabilities, dict)
@@ -1010,6 +1023,8 @@ def test_cli_vehicle_physics_applies_bound_release_after_skeletal_import(
             "--endpoint",
             server.endpoint,
             "vehicle-physics-apply",
+            "--package-id",
+            "skeletal-mesh-package",
         )
 
     assert applied["application"] == {

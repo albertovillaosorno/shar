@@ -361,6 +361,15 @@ input. A real Unreal Engine 5.8.1 MCP transaction against `sedana` completed
 that save and clean-state cycle, and its session-owned test asset was then
 explicitly deleted with independent absence verification.
 
+Package-scoped Physics Asset execution now compiles that complete construction
+before reducing ready requests. The selection keeps exact `package_id`
+ownership and gets a deterministic revision over its reduced request tuple;
+blocker counts stay explicitly global because blocker package identities are
+not part of the compiled construction type. On bundle
+`0d5342e561b649039f54daa6626d3cc7f60a77b12b7e4e64389aede83153f73e`,
+`extracted-art-cars-sedana` selects one six-shape `sedanA` request from the
+135-request/1,104-shape global construction.
+
 Vehicle material preparation now has a separate release-index-bound
 `vehicle-materials.json` sidecar. It derives only from the verified v8 slot
 order and shader/texture evidence and keeps world-material construction policy
