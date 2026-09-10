@@ -30,6 +30,7 @@
 
 //! Tests unit tests.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -49,8 +50,8 @@ use super::{
     is_wheel_identity, load_vehicle_animations, partition_vehicle_billboards,
     publish_headlight_billboard_sidecars, publish_vehicle_physics_sidecars,
     validate_vehicle_physics_rig_bindings,
-    separate_vehicle_parts, texture_state_role, vehicle_animation_name,
-    vehicle_part_role, vehicle_part_semantics,
+    separate_vehicle_parts, texture_state_role, used_vehicle_material_bindings,
+    vehicle_animation_name, vehicle_part_role, vehicle_part_semantics,
 };
 
 fn role(mesh: &str, shader: &str) -> &'static str {
@@ -84,6 +85,43 @@ fn ordered_vehicle_part(
         mesh,
         group_influences: vec![influences],
     })
+}
+
+#[test]
+fn presentation_only_materials_do_not_become_fbx_slots() -> Result<(), String> {
+    let root = Bone {
+        id: "root".to_owned(),
+        parent_id: None,
+        rest_matrix: [
+            1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+        ],
+        source_identity: None,
+        source_rig: None,
+    };
+    let asset = CharacterAsset::new(
+        "vehicle",
+        vec![root],
+        vec![ordered_vehicle_part("body", "body_m")?],
+    )
+    .map_err(|error| format!("vehicle fixture failed: {error:?}"))?;
+    let body = MaterialBinding::new("body_m", None)
+        .map_err(|error| format!("body material failed: {error:?}"))?;
+    let glow = MaterialBinding::new("glow_m", None)
+        .map_err(|error| format!("glow material failed: {error:?}"))?;
+    let materials = BTreeMap::from([
+        (String::from("body_m"), body),
+        (String::from("glow_m"), glow),
+    ]);
+    let retained = used_vehicle_material_bindings(&asset, materials);
+    let [binding] = retained.as_slice() else {
+        return Err(format!("unexpected FBX material set: {retained:?}"));
+    };
+    if binding.material_name != "body_m" {
+        return Err(
+            "presentation-only material leaked into FBX slots".to_owned(),
+        );
+    }
+    Ok(())
 }
 
 #[test]
@@ -513,9 +551,18 @@ fn headlight_billboards_publish_exact_runtime_reference()
     let payload = billboard_json("headlightShape");
     fs::write(&path, &payload).map_err(|error| error.to_string())?;
     let output = root.path().join("output");
+    let shader_dir = output.join("shaders");
+    fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
+    fs::write(shader_dir.join("material.json"), b"{}")
+        .map_err(|error| error.to_string())?;
+    let binding = MaterialBinding::new("material", None)
+        .map_err(|error| format!("headlight material failed: {error:?}"))?;
+    let materials = BTreeMap::from([(String::from("material"), binding)]);
     let records = publish_headlight_billboard_sidecars(
         std::slice::from_ref(&path),
         &output,
+        &materials,
+        &[],
     )
     .map_err(|error| error.to_string())?;
     let [record] = records.as_slice() else {
@@ -525,6 +572,10 @@ fn headlight_billboards_publish_exact_runtime_reference()
         || record.identity != "headlightShape"
         || record.shader_identity != "material"
         || record.bones != ["hll", "hlr"]
+        || record.material.source_material_name != "material"
+        || record.material.shader_path != "shaders/material.json"
+        || !record.material.semantics.is_light_emitter()
+        || record.material.texture_path.is_some()
         || record.bytes != u64::try_from(payload.len()).unwrap_or(u64::MAX)
     {
         return Err(format!("headlight sidecar metadata changed: {record:?}"));

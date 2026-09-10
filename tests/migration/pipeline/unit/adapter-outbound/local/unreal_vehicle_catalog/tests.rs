@@ -99,6 +99,16 @@ fn texture_bytes() -> &'static [u8] {
     b"png-material-fixture"
 }
 
+fn headlight_shader_bytes() -> Vec<u8> {
+    String::from_utf8_lossy(shader_bytes())
+        .replace("sedanA_m", "headlight_m")
+        .replace(
+            r#""param":"LIT","value":1"#,
+            r#""param":"LIT","value":0"#,
+        )
+        .into_bytes()
+}
+
 fn headlight_bytes() -> &'static [u8] {
     br#"{"schema":"quad_group","version":0,"name":"headlightShape",
 "shader":"headlight_m","z_test":1,"z_write":0,"fog":0,"num_quads":1,
@@ -123,6 +133,9 @@ fn write_catalog(
     let shader_dir = vehicle_dir.join("shaders");
     fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
     fs::write(shader_dir.join("sedana-m.json"), shader_bytes())
+        .map_err(|error| error.to_string())?;
+    let headlight_shader = headlight_shader_bytes();
+    fs::write(shader_dir.join("headlight-m.json"), &headlight_shader)
         .map_err(|error| error.to_string())?;
     let texture_dir = vehicle_dir.join("textures");
     fs::create_dir_all(&texture_dir).map_err(|error| error.to_string())?;
@@ -204,6 +217,24 @@ fn write_catalog(
                 "identity": "headlightShape",
                 "shader_identity": "headlight_m",
                 "bones": ["hll", "hlr"],
+                "material": {
+                    "source_material_name": "headlight_m",
+                    "base_color_rgba8": [255, 255, 255, 255],
+                    "surface_semantics": {
+                        "transparent": true,
+                        "glass": false,
+                        "mirror": false,
+                        "reflective": false,
+                        "light_emitter": true,
+                        "visual_effect": false
+                    },
+                    "shader": {
+                        "path": "shaders/headlight-m.json",
+                        "bytes": headlight_shader.len(),
+                        "sha256": digest_hex(&headlight_shader)
+                    },
+                    "texture": null
+                },
                 "bytes": headlight_bytes().len(),
                 "sha256": digest_hex(headlight_bytes())
             }],
@@ -289,6 +320,9 @@ fn verifies_vehicle_fbx_without_promoting_other_semantics()
         || headlight.identity != "headlightShape"
         || headlight.shader_identity != "headlight_m"
         || headlight.bones != ["hll", "hlr"]
+        || headlight.material.source_material_name != "headlight_m"
+        || headlight.material.raster.lit
+        || !headlight.material.semantics.light_emitter
         || collision.source_ordinal != 321
         || physics.source_ordinal != 361
         || material.source_material_name != "sedanA_m"

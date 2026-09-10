@@ -113,6 +113,21 @@ pub(super) struct VerifiedVehiclePresentationPart {
     pub bones: Vec<String>,
 }
 
+/// One verified headlight presentation material independent of FBX slots.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct VerifiedVehicleHeadlightMaterialArtifact {
+    pub source_material_name: String,
+    pub base_color_rgba8: [u8; 4],
+    pub semantics: VerifiedVehicleMaterialSemantics,
+    pub raster: VerifiedVehicleMaterialRaster,
+    pub shader_path: String,
+    pub shader_size_bytes: u64,
+    pub shader_sha256: String,
+    pub texture_path: Option<String>,
+    pub texture_size_bytes: Option<u64>,
+    pub texture_sha256: Option<String>,
+}
+
 /// One verified common headlight billboard sidecar.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct VerifiedVehicleHeadlightBillboardArtifact {
@@ -120,6 +135,7 @@ pub(super) struct VerifiedVehicleHeadlightBillboardArtifact {
     pub identity: String,
     pub shader_identity: String,
     pub bones: Vec<String>,
+    pub material: VerifiedVehicleHeadlightMaterialArtifact,
     pub size_bytes: u64,
     pub sha256: String,
 }
@@ -1089,16 +1105,103 @@ fn verify_vehicle_headlight_billboards(
                 "generated vehicle headlight billboard shader is inconsistent",
             ));
         }
+        let material = verify_vehicle_headlight_material(
+            root,
+            vehicle,
+            sidecar.get("material"),
+            &shader_identity,
+        )?;
         result.push(VerifiedVehicleHeadlightBillboardArtifact {
             path: format!("{LOGICAL_ROOT}/{vehicle}/{path}"),
             identity,
             shader_identity,
             bones,
+            material,
             size_bytes,
             sha256,
         });
     }
     Ok(result)
+}
+
+fn verify_vehicle_headlight_material(
+    root: &Path,
+    vehicle: &str,
+    value: Option<&Value>,
+    shader_identity: &str,
+) -> PipelineOutcome<VerifiedVehicleHeadlightMaterialArtifact> {
+    let material = value.and_then(Value::as_object).ok_or_else(|| {
+        PipelineError::new(
+            "generated vehicle headlight billboard has no material evidence",
+        )
+    })?;
+    let source_material_name =
+        required_string(material, "source_material_name")?;
+    validate_source_identity(&source_material_name)?;
+    if source_material_name != shader_identity {
+        return Err(PipelineError::new(
+            "generated vehicle headlight material identity is inconsistent",
+        ));
+    }
+    let base_color_rgba8 = required_rgba8(material, "base_color_rgba8")?;
+    let semantics = required_material_semantics(material)?;
+    if !semantics.light_emitter {
+        return Err(PipelineError::new(
+            "generated vehicle headlight material lost emitter semantics",
+        ));
+    }
+    let shader = material
+        .get("shader")
+        .and_then(Value::as_object)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle headlight material has no shader evidence",
+            )
+        })?;
+    let (shader_path, shader_size_bytes, shader_sha256) =
+        verify_material_artifact(
+            root,
+            vehicle,
+            shader,
+            "shaders/",
+            ".json",
+        )?;
+    let shader_full_path = root.join(vehicle).join(&shader_path);
+    let shader_evidence = read_shader_source_evidence(
+        &shader_full_path,
+        &source_material_name,
+    )
+    .map_err(|error| {
+        PipelineError::new(format!(
+            "generated vehicle headlight shader evidence is invalid: {error:?}"
+        ))
+    })?;
+    let raster = verified_vehicle_material_raster(&shader_evidence)?;
+    let texture = match material.get("texture") {
+        None | Some(Value::Null) => None,
+        Some(value) => {
+            let texture = value.as_object().ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle headlight texture is not an object",
+                )
+            })?;
+            Some(verify_material_artifact(
+                root, vehicle, texture, "textures/", ".png",
+            )?)
+        },
+    };
+    Ok(VerifiedVehicleHeadlightMaterialArtifact {
+        source_material_name,
+        base_color_rgba8,
+        semantics,
+        raster,
+        shader_path,
+        shader_size_bytes,
+        shader_sha256,
+        texture_path: texture.as_ref().map(|item| item.0.clone()),
+        texture_size_bytes: texture.as_ref().map(|item| item.1),
+        texture_sha256: texture.map(|item| item.2),
+    })
 }
 
 fn verify_vehicle_physics_sidecars(

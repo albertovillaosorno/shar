@@ -60,8 +60,9 @@ use super::catalog::{recursive_files, write_new};
 use super::model::{
     EffectAnimationRecord, EffectControllerRecord,
     EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
-    GroundingRecord, HeadlightBillboardSidecarRecord, MaterialSlotRecord,
-    PartRecord, PhysicsPrimitiveRecord,
+    GroundingRecord, HeadlightBillboardMaterialRecord,
+    HeadlightBillboardSidecarRecord, MaterialSlotRecord, PartRecord,
+    PhysicsPrimitiveRecord,
     PhysicsRigRecord, PhysicsSidecarRecord, TextureRecord, VehicleRecord,
 };
 use super::source::{
@@ -113,8 +114,8 @@ pub(super) fn export_vehicle(
     deferred_geometry.sort();
     let (common_root, common_headlights) =
         common_headlight_quad_groups(normalized_root)?;
-    let headlight_billboard_sidecars =
-        publish_headlight_billboard_sidecars(&common_headlights, &vehicle_dir)?;
+    let headlight_shader_names =
+        headlight_billboard_shader_names(&common_headlights)?;
     let mut supplemental = Vec::new();
     for path in &common_headlights {
         let component_name = decoded_name(path)?;
@@ -125,7 +126,7 @@ pub(super) fn export_vehicle(
             });
         }
     }
-    retained_billboard_paths.extend(common_headlights);
+    retained_billboard_paths.extend(common_headlights.iter().cloned());
     let billboard_refs = retained_billboard_paths
         .iter()
         .map(PathBuf::as_path)
@@ -168,13 +169,14 @@ pub(super) fn export_vehicle(
         )?;
     deferred_geometry.extend(wheel_proxy_sidecars);
     deferred_geometry.sort();
-    let (materials, shaders) = resolve_vehicle_materials(
+    let (materials, resolved_materials, shaders) = resolve_vehicle_materials(
         package,
         &package_root,
         &common_root,
         &texture_dir,
         &shader_dir,
         authority,
+        &headlight_shader_names,
         &mut prepared_asset,
     )?;
     let (separated, parts) =
@@ -200,8 +202,18 @@ pub(super) fn export_vehicle(
         ))
     })?;
     verify_binary_fbx(&fbx_path)?;
-    publish_unreferenced_textures(&package_root, &texture_dir, &materials)?;
+    let all_materials = resolved_materials
+        .values()
+        .cloned()
+        .collect::<Vec<_>>();
+    publish_unreferenced_textures(&package_root, &texture_dir, &all_materials)?;
     let textures = texture_records(&vehicle_dir)?;
+    let headlight_billboard_sidecars = publish_headlight_billboard_sidecars(
+        &common_headlights,
+        &vehicle_dir,
+        &resolved_materials,
+        &textures,
+    )?;
     let material_slots = vehicle_material_slot_records(
         &separated,
         &materials,
@@ -340,10 +352,33 @@ fn partition_vehicle_meshes(
     Ok((retained, deferred))
 }
 
+/// Resolve every source shader needed by common headlight presentation.
+fn headlight_billboard_shader_names(
+    paths: &[PathBuf],
+) -> Result<BTreeSet<String>, PipelineError> {
+    paths
+        .iter()
+        .map(|path| {
+            let identity = decoded_name(path)?;
+            read_billboard_source_evidence(path, &identity)
+                .map(|evidence| evidence.shader_identity)
+                .map_err(|error| {
+                    PipelineError::new(format!(
+                        "vehicle headlight billboard decode failed for {}: \
+                         {error:?}",
+                        path.display()
+                    ))
+                })
+        })
+        .collect()
+}
+
 /// Publish exact common headlight billboard evidence beside one vehicle.
 fn publish_headlight_billboard_sidecars(
     paths: &[PathBuf],
     vehicle_dir: &Path,
+    materials: &BTreeMap<String, MaterialBinding>,
+    textures: &[TextureRecord],
 ) -> Result<Vec<HeadlightBillboardSidecarRecord>, PipelineError> {
     let directory = vehicle_dir.join("presentation").join("headlights");
     fs::create_dir_all(&directory)
@@ -371,11 +406,58 @@ fn publish_headlight_billboard_sidecars(
             })?;
         let relative = format!("presentation/headlights/{file_name}");
         write_new(&directory.join(file_name), &payload)?;
+        let binding = materials
+            .get(&evidence.shader_identity)
+            .ok_or_else(|| {
+                PipelineError::new(format!(
+                    "vehicle headlight material binding is missing: {}",
+                    evidence.shader_identity
+                ))
+            })?;
+        let shader_path = format!(
+            "shaders/{}.json",
+            portable_name(&binding.material_name)
+        );
+        let shader_bytes = fs::read(vehicle_dir.join(&shader_path))
+            .map_err(|error| PipelineError::new(error.to_string()))?;
+        let texture = binding
+            .texture_file_name
+            .as_ref()
+            .map(|file_name| {
+                let expected = format!("textures/{file_name}");
+                textures
+                    .iter()
+                    .find(|record| record.path == expected)
+                    .ok_or_else(|| {
+                        PipelineError::new(format!(
+                            "vehicle headlight texture evidence is missing: \
+                             {expected}"
+                        ))
+                    })
+            })
+            .transpose()?;
         records.push(HeadlightBillboardSidecarRecord {
             path: relative,
             identity: evidence.group_identity,
             shader_identity: evidence.shader_identity,
             bones: vec!["hll".to_owned(), "hlr".to_owned()],
+            material: HeadlightBillboardMaterialRecord {
+                source_material_name: binding.material_name.clone(),
+                base_color_rgba8: binding.base_color_rgba8,
+                semantics: binding.semantics.with_light_emitter(true),
+                shader_path,
+                shader_bytes: u64::try_from(shader_bytes.len()).map_err(
+                    |error| {
+                        PipelineError::new(format!(
+                            "vehicle headlight shader size overflowed: {error}"
+                        ))
+                    },
+                )?,
+                shader_sha256: digest_hex(&shader_bytes),
+                texture_path: texture.map(|record| record.path.clone()),
+                texture_bytes: texture.map(|record| record.bytes),
+                texture_sha256: texture.map(|record| record.sha256.clone()),
+            },
             bytes: u64::try_from(payload.len()).map_err(|error| {
                 PipelineError::new(format!(
                     "vehicle headlight billboard size overflowed: {error}"
@@ -1028,15 +1110,25 @@ fn resolve_vehicle_materials(
     texture_dir: &Path,
     shader_dir: &Path,
     authority: &VehicleTextureAuthority,
+    presentation_shaders: &BTreeSet<String>,
     asset: &mut CharacterAsset,
-) -> Result<(Vec<MaterialBinding>, Vec<String>), PipelineError> {
-    let shader_names = asset
+) -> Result<
+    (
+        Vec<MaterialBinding>,
+        BTreeMap<String, MaterialBinding>,
+        Vec<String>,
+    ),
+    PipelineError,
+> {
+    let mut shader_names = asset
         .parts
         .iter()
         .flat_map(|part| part.mesh.groups.iter())
         .map(|group| group.shader.clone())
         .collect::<BTreeSet<_>>();
+    shader_names.extend(presentation_shaders.iter().cloned());
     let mut by_source = BTreeMap::new();
+    let mut bindings_by_source = BTreeMap::<String, MaterialBinding>::new();
     let mut by_material = BTreeMap::<String, MaterialBinding>::new();
     for shader in shader_names {
         let material_root =
@@ -1107,6 +1199,8 @@ fn resolve_vehicle_materials(
                 "vehicle material identity conflicts: {material_name}"
             )));
         }
+        let _previous_binding =
+            bindings_by_source.insert(shader.clone(), binding.clone());
         let _previous_source = by_source.insert(shader.clone(), material_name);
         publish_shader_document(&material_root, shader_dir, &shader)?;
     }
@@ -1122,12 +1216,32 @@ fn resolve_vehicle_materials(
             })?
             .clone();
     }
+    let fbx_materials = used_vehicle_material_bindings(asset, by_material);
     let shaders = by_source
         .into_values()
         .collect::<BTreeSet<_>>()
         .into_iter()
         .collect();
-    Ok((by_material.into_values().collect(), shaders))
+    Ok((fbx_materials, bindings_by_source, shaders))
+}
+
+/// Retain only material bindings referenced by FBX geometry.
+fn used_vehicle_material_bindings(
+    asset: &CharacterAsset,
+    materials: BTreeMap<String, MaterialBinding>,
+) -> Vec<MaterialBinding> {
+    let used_materials = asset
+        .parts
+        .iter()
+        .flat_map(|part| part.mesh.groups.iter())
+        .map(|group| group.shader.as_str())
+        .collect::<BTreeSet<_>>();
+    materials
+        .into_iter()
+        .filter_map(|(name, binding)| {
+            used_materials.contains(name.as_str()).then_some(binding)
+        })
+        .collect()
 }
 
 /// Select the exact package that owns one used shader identity.
