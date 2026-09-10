@@ -69,6 +69,37 @@ class CompiledVehiclePhysicsPrerequisites(NamedTuple):
     imports: tuple[NativeImportStep, ...]
 
 
+class VehiclePhysicsPrerequisiteSelectionReport(NamedTuple):
+    """Public-safe coverage for one exact vehicle package prerequisite scope."""
+
+    package_id: str
+    import_count: int
+    ready_rig_count: int
+    source_count: int
+
+    def to_json(self) -> JsonObject:
+        """Render one scoped prerequisite selection."""
+        return {
+            "importCount": self.import_count,
+            "packageId": self.package_id,
+            "readyRigCount": self.ready_rig_count,
+            "sourceCount": self.source_count,
+        }
+
+
+class CompiledVehiclePhysicsPrerequisiteSelection(NamedTuple):
+    """Executable prerequisite imports selected for one vehicle package."""
+
+    report: VehiclePhysicsPrerequisiteSelectionReport
+    imports: tuple[NativeImportStep, ...]
+
+
+VehiclePhysicsPrerequisiteExecutable = (
+    CompiledVehiclePhysicsPrerequisites
+    | CompiledVehiclePhysicsPrerequisiteSelection
+)
+
+
 def compile_vehicle_physics_prerequisites(
     construction: CompiledVehiclePhysicsConstruction,
     execution: CompiledExecutionPlan,
@@ -89,6 +120,47 @@ def compile_vehicle_physics_prerequisites(
         VehiclePhysicsPrerequisiteReport(
             import_count=len(imports),
             ready_rig_count=len(construction.requests),
+            source_count=len(required_sources),
+        ),
+        imports,
+    )
+
+
+def select_vehicle_physics_prerequisite_package(
+    construction: CompiledVehiclePhysicsConstruction,
+    prerequisites: CompiledVehiclePhysicsPrerequisites,
+    package_id: str,
+) -> CompiledVehiclePhysicsPrerequisiteSelection:
+    """Select one package after global prerequisite compilation succeeds."""
+    requests = tuple(
+        request
+        for request in construction.requests
+        if request.package_id == package_id
+    )
+    if not requests:
+        fail_protocol(
+            "vehicle-physics prerequisite package has no native-ready rigs"
+        )
+    required_sources = {request.source_fbx for request in requests}
+    imports = tuple(
+        step
+        for step in prerequisites.imports
+        if step.source_path in required_sources
+    )
+    _require_unique_imports(imports, required_sources)
+    by_source = {step.source_path: step for step in imports}
+    for request in requests:
+        destination = by_source[request.source_fbx].destination
+        if destination != request.skeletal_mesh_path:
+            fail_protocol(
+                "vehicle-physics prerequisite scoped destination "
+                "does not match rig"
+            )
+    return CompiledVehiclePhysicsPrerequisiteSelection(
+        VehiclePhysicsPrerequisiteSelectionReport(
+            package_id=package_id,
+            import_count=len(imports),
+            ready_rig_count=len(requests),
             source_count=len(required_sources),
         ),
         imports,
@@ -162,7 +234,7 @@ def _require_unique_imports(
 
 
 def vehicle_physics_prerequisite_revision(
-    compiled: CompiledVehiclePhysicsPrerequisites,
+    compiled: VehiclePhysicsPrerequisiteExecutable,
 ) -> str:
     """Hash the exact selected prerequisite import contract canonically."""
     encoded = json.dumps(

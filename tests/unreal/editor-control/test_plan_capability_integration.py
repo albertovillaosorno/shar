@@ -1068,6 +1068,8 @@ def test_cli_vehicle_prerequisites_apply_with_semantic_blocker(
         preflight = _run_json_cli(
             capsys,
             "vehicle-physics-prerequisites-preflight",
+            "--package-id",
+            "skeletal-mesh-package",
         )
         assert preflight["bundle"]["semanticBlockerCount"] == 1
         assert preflight["prerequisites"] == {
@@ -1076,11 +1078,22 @@ def test_cli_vehicle_prerequisites_apply_with_semantic_blocker(
             "sourceCount": 1,
         }
         assert preflight["sources"]["verifiedOperationCount"] == 1
+        assert preflight["selection"] == {
+            "importCount": 1,
+            "packageId": "skeletal-mesh-package",
+            "readyRigCount": 1,
+            "sourceCount": 1,
+        }
+        assert preflight["selectionRevision"] != (
+            preflight["prerequisiteRevision"]
+        )
         capabilities = _run_json_cli(
             capsys,
             "--endpoint",
             server.endpoint,
             "vehicle-physics-prerequisites-capabilities",
+            "--package-id",
+            "skeletal-mesh-package",
         )
         assert capabilities["capabilities"]["complete"] is True
         assert capabilities["capabilities"]["requiredToolCount"] == 6
@@ -1089,6 +1102,8 @@ def test_cli_vehicle_prerequisites_apply_with_semantic_blocker(
             "--endpoint",
             server.endpoint,
             "vehicle-physics-prerequisites-apply",
+            "--package-id",
+            "skeletal-mesh-package",
         )
         physics = _run_json_cli(
             capsys,
