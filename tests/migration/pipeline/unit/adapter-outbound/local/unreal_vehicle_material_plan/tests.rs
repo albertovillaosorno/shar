@@ -95,6 +95,7 @@ fn vehicle() -> VerifiedVehicleFbxArtifact {
             texture_sha256: Some("c".repeat(64)),
         }],
         presentation_parts: vec![],
+        headlight_billboard_sidecars: Vec::new(),
         physics_sidecars: Vec::new(),
         physics_rigs: Vec::new(),
     }

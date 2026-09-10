@@ -47,7 +47,8 @@ use super::super::model::PhysicsPrimitiveRecord;
 
 use super::{
     is_wheel_identity, load_vehicle_animations, partition_vehicle_billboards,
-    publish_vehicle_physics_sidecars, validate_vehicle_physics_rig_bindings,
+    publish_headlight_billboard_sidecars, publish_vehicle_physics_sidecars,
+    validate_vehicle_physics_rig_bindings,
     separate_vehicle_parts, texture_state_role, vehicle_animation_name,
     vehicle_part_role, vehicle_part_semantics,
 };
@@ -500,6 +501,40 @@ fn billboard_json(name: &str) -> String {
         ),
         name = name
     )
+}
+
+#[test]
+fn headlight_billboards_publish_exact_runtime_reference()
+-> Result<(), String> {
+    let root = EffectTestDirectory::new("headlight-sidecar")?;
+    let source = root.path().join("billboards");
+    fs::create_dir_all(&source).map_err(|error| error.to_string())?;
+    let path = source.join("headlight.json");
+    let payload = billboard_json("headlightShape");
+    fs::write(&path, &payload).map_err(|error| error.to_string())?;
+    let output = root.path().join("output");
+    let records = publish_headlight_billboard_sidecars(
+        std::slice::from_ref(&path),
+        &output,
+    )
+    .map_err(|error| error.to_string())?;
+    let [record] = records.as_slice() else {
+        return Err(format!("unexpected headlight sidecars: {records:?}"));
+    };
+    if record.path != "presentation/headlights/headlight.json"
+        || record.identity != "headlightShape"
+        || record.shader_identity != "material"
+        || record.bones != ["hll", "hlr"]
+        || record.bytes != u64::try_from(payload.len()).unwrap_or(u64::MAX)
+    {
+        return Err(format!("headlight sidecar metadata changed: {record:?}"));
+    }
+    let copied = fs::read_to_string(output.join(&record.path))
+        .map_err(|error| error.to_string())?;
+    if copied != payload {
+        return Err("headlight sidecar payload changed".to_owned());
+    }
+    Ok(())
 }
 
 #[test]

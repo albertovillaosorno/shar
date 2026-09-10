@@ -145,6 +145,23 @@ pub(super) struct EffectTextureReferenceRecord {
     pub(super) occurrences: Vec<EffectTextureOccurrenceRecord>,
 }
 
+/// One source headlight billboard retained for native runtime replacement.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct HeadlightBillboardSidecarRecord {
+    /// Published vehicle-relative sidecar path.
+    pub(super) path: String,
+    /// Exact authored billboard group identity.
+    pub(super) identity: String,
+    /// Exact authored source shader identity.
+    pub(super) shader_identity: String,
+    /// Runtime hardpoints receiving this common billboard group.
+    pub(super) bones: Vec<String>,
+    /// Exact published sidecar byte length.
+    pub(super) bytes: u64,
+    /// Exact published sidecar SHA-256 digest.
+    pub(super) sha256: String,
+}
+
 /// One non-skeletal vehicle animation preserved as a source sidecar.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct EffectAnimationRecord {
@@ -262,6 +279,9 @@ pub(super) struct VehicleRecord {
     pub(super) hidden_wheel_proxies: usize,
     /// Published skeletal animation artifact paths.
     pub(super) animations: Vec<String>,
+    /// Common source headlight billboards retained outside runtime policy.
+    pub(super) headlight_billboard_sidecars:
+        Vec<HeadlightBillboardSidecarRecord>,
     /// Published effect-animation sidecars with exact source relationships.
     pub(super) effect_animation_sidecars: Vec<EffectAnimationRecord>,
     /// Published texture artifact records.

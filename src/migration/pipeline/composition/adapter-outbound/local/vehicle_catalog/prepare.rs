@@ -38,7 +38,9 @@ use fbx::adapters::driven::binary_character_writer::{
     character_material_slots, write_binary_character_fbx,
 };
 use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
-use fbx::adapters::driven::decoded_billboard_source::read_billboard_quad_group;
+use fbx::adapters::driven::decoded_billboard_source::{
+    read_billboard_quad_group, read_billboard_source_evidence,
+};
 use fbx::adapters::driven::decoded_component_source::{
     DecodedComponentError, DecodedComponentSource, read_shader_source_evidence,
 };
@@ -58,7 +60,8 @@ use super::catalog::{recursive_files, write_new};
 use super::model::{
     EffectAnimationRecord, EffectControllerRecord,
     EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
-    GroundingRecord, MaterialSlotRecord, PartRecord, PhysicsPrimitiveRecord,
+    GroundingRecord, HeadlightBillboardSidecarRecord, MaterialSlotRecord,
+    PartRecord, PhysicsPrimitiveRecord,
     PhysicsRigRecord, PhysicsSidecarRecord, TextureRecord, VehicleRecord,
 };
 use super::source::{
@@ -110,6 +113,8 @@ pub(super) fn export_vehicle(
     deferred_geometry.sort();
     let (common_root, common_headlights) =
         common_headlight_quad_groups(normalized_root)?;
+    let headlight_billboard_sidecars =
+        publish_headlight_billboard_sidecars(&common_headlights, &vehicle_dir)?;
     let mut supplemental = Vec::new();
     for path in &common_headlights {
         let component_name = decoded_name(path)?;
@@ -236,6 +241,7 @@ pub(super) fn export_vehicle(
         deferred_geometry,
         hidden_wheel_proxies,
         animations: animations.iter().map(|clip| clip.name.clone()).collect(),
+        headlight_billboard_sidecars,
         effect_animation_sidecars,
         textures,
         shaders,
@@ -332,6 +338,53 @@ fn partition_vehicle_meshes(
     }
     deferred.sort();
     Ok((retained, deferred))
+}
+
+/// Publish exact common headlight billboard evidence beside one vehicle.
+fn publish_headlight_billboard_sidecars(
+    paths: &[PathBuf],
+    vehicle_dir: &Path,
+) -> Result<Vec<HeadlightBillboardSidecarRecord>, PipelineError> {
+    let directory = vehicle_dir.join("presentation").join("headlights");
+    fs::create_dir_all(&directory)
+        .map_err(|error| PipelineError::new(error.to_string()))?;
+    let mut records = Vec::with_capacity(paths.len());
+    for path in paths {
+        let identity = decoded_name(path)?;
+        let evidence = read_billboard_source_evidence(path, &identity)
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "vehicle headlight billboard decode failed for {}: \
+                     {error:?}",
+                    path.display()
+                ))
+            })?;
+        let payload = fs::read(path)
+            .map_err(|error| PipelineError::new(error.to_string()))?;
+        let file_name = path
+            .file_name()
+            .and_then(|value| value.to_str())
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "vehicle headlight billboard path has no UTF-8 file name",
+                )
+            })?;
+        let relative = format!("presentation/headlights/{file_name}");
+        write_new(&directory.join(file_name), &payload)?;
+        records.push(HeadlightBillboardSidecarRecord {
+            path: relative,
+            identity: evidence.group_identity,
+            shader_identity: evidence.shader_identity,
+            bones: vec!["hll".to_owned(), "hlr".to_owned()],
+            bytes: u64::try_from(payload.len()).map_err(|error| {
+                PipelineError::new(format!(
+                    "vehicle headlight billboard size overflowed: {error}"
+                ))
+            })?,
+            sha256: digest_hex(&payload),
+        });
+    }
+    Ok(records)
 }
 
 /// Defer malformed billboard evidence without inventing source geometry.

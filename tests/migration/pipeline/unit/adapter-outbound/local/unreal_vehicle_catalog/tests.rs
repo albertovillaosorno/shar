@@ -99,6 +99,18 @@ fn texture_bytes() -> &'static [u8] {
     b"png-material-fixture"
 }
 
+fn headlight_bytes() -> &'static [u8] {
+    br#"{"schema":"quad_group","version":0,"name":"headlightShape",
+"shader":"headlight_m","z_test":1,"z_write":0,"fog":0,"num_quads":1,
+"quads":[{"name":"quad","version":2,"billboard_mode":"ALL_AXIS",
+"translation":[0.0,0.0,0.0],"colour":4294967295,
+"uvs":[[0.0,0.0],[1.0,0.0],[1.0,1.0],[0.0,1.0]],
+"width":1.0,"height":1.0,"distance":0.0,"uv_offset":[0.0,0.0],
+"display_info_version":null,"rotation_wxyz":[1.0,0.0,0.0,0.0],
+"cutoff_mode":"none","uv_offset_range":[0.0,0.0],"source_range":0.0,
+"edge_range":0.0,"perspective_info_version":null,"perspective":false}]}"#
+}
+
 fn write_catalog(
     root: &Path,
     declared_size: Option<u64>,
@@ -115,6 +127,10 @@ fn write_catalog(
     let texture_dir = vehicle_dir.join("textures");
     fs::create_dir_all(&texture_dir).map_err(|error| error.to_string())?;
     fs::write(texture_dir.join("sedanA.png"), texture_bytes())
+        .map_err(|error| error.to_string())?;
+    let headlight_dir = vehicle_dir.join("presentation").join("headlights");
+    fs::create_dir_all(&headlight_dir).map_err(|error| error.to_string())?;
+    fs::write(headlight_dir.join("headlight.json"), headlight_bytes())
         .map_err(|error| error.to_string())?;
     let physics_dir = vehicle_dir.join("physics");
     fs::create_dir_all(&physics_dir).map_err(|error| error.to_string())?;
@@ -135,6 +151,7 @@ fn write_catalog(
             "vehicles": 1,
             "material_slots": 1,
             "parts": 1,
+            "headlight_billboard_sidecars": 1,
             "physics_sidecars": 2,
             "physics_rigs": 1,
             "physics_primitives": 1
@@ -181,6 +198,14 @@ fn write_catalog(
                 "surface_semantics": [],
                 "shader": "sedanA_m",
                 "bones": ["sedanA"]
+            }],
+            "headlight_billboard_sidecars": [{
+                "path": "presentation/headlights/headlight.json",
+                "identity": "headlightShape",
+                "shader_identity": "headlight_m",
+                "bones": ["hll", "hlr"],
+                "bytes": headlight_bytes().len(),
+                "sha256": digest_hex(headlight_bytes())
             }],
             "physics_sidecars": [{
                 "path": "physics/collision__ordinal_000321.json",
@@ -248,6 +273,9 @@ fn verifies_vehicle_fbx_without_promoting_other_semantics()
     let [row] = rows.as_slice() else {
         return Err("vehicle catalog returned wrong row count".to_owned());
     };
+    let [headlight] = row.headlight_billboard_sidecars.as_slice() else {
+        return Err("verified headlight billboard evidence drifted".to_owned());
+    };
     let [collision, physics] = row.physics_sidecars.as_slice() else {
         return Err("verified vehicle physics evidence drifted".to_owned());
     };
@@ -258,6 +286,9 @@ fn verifies_vehicle_fbx_without_promoting_other_semantics()
         || row.evidence.path != "vehicle-assets/sedana/sedana.fbx"
         || row.evidence.fbx_version != FBX_VERSION
         || row.subcategory != "cars/traffic-variants/sedana"
+        || headlight.identity != "headlightShape"
+        || headlight.shader_identity != "headlight_m"
+        || headlight.bones != ["hll", "hlr"]
         || collision.source_ordinal != 321
         || physics.source_ordinal != 361
         || material.source_material_name != "sedanA_m"
@@ -287,6 +318,29 @@ fn stale_vehicle_fbx_size_fails_closed() -> Result<(), String> {
     };
     if !error.to_string().contains("bytes do not match") {
         return Err("stale size reported the wrong failure".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn stale_headlight_billboard_bytes_fail_closed() -> Result<(), String> {
+    let root = TempRoot::new("stale-headlight")?;
+    write_catalog(&root.0, None)?;
+    fs::write(
+        root.0.join("sedana/presentation/headlights/headlight.json"),
+        b"{}",
+    )
+    .map_err(|error| error.to_string())?;
+    let error = match verified_vehicle_fbx_catalog(&root.0) {
+        Ok(_value) => {
+            return Err(
+                "stale headlight billboard unexpectedly verified".to_owned(),
+            );
+        },
+        Err(error) => error,
+    };
+    if !error.to_string().contains("headlight billboard bytes") {
+        return Err("stale headlight reported the wrong failure".to_owned());
     }
     Ok(())
 }

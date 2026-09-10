@@ -36,6 +36,7 @@ use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
 
+use fbx::adapters::driven::decoded_billboard_source as billboard_source;
 use fbx::adapters::driven::decoded_component_source::{
     ShaderParameterEvidence, ShaderSourceEvidence, read_shader_source_evidence,
 };
@@ -112,6 +113,17 @@ pub(super) struct VerifiedVehiclePresentationPart {
     pub bones: Vec<String>,
 }
 
+/// One verified common headlight billboard sidecar.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct VerifiedVehicleHeadlightBillboardArtifact {
+    pub path: String,
+    pub identity: String,
+    pub shader_identity: String,
+    pub bones: Vec<String>,
+    pub size_bytes: u64,
+    pub sha256: String,
+}
+
 /// One verified source collision or physics sidecar for a vehicle.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(super) struct VerifiedVehiclePhysicsArtifact {
@@ -165,6 +177,8 @@ pub(super) struct VerifiedVehicleFbxArtifact {
     pub subcategory: String,
     pub material_slots: Vec<VerifiedVehicleMaterialArtifact>,
     pub presentation_parts: Vec<VerifiedVehiclePresentationPart>,
+    pub headlight_billboard_sidecars:
+        Vec<VerifiedVehicleHeadlightBillboardArtifact>,
     pub physics_sidecars: Vec<VerifiedVehiclePhysicsArtifact>,
     pub physics_rigs: Vec<VerifiedVehiclePhysicsRig>,
 }
@@ -239,6 +253,16 @@ pub(super) fn verified_vehicle_fbx_catalog(
                 "generated vehicle catalog has no material-slot count",
             )
         })?;
+    let declared_headlight_billboards = object
+        .get("counts")
+        .and_then(Value::as_object)
+        .and_then(|counts| counts.get("headlight_billboard_sidecars"))
+        .and_then(Value::as_u64)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle catalog has no headlight billboard count",
+            )
+        })?;
     let declared_parts = object
         .get("counts")
         .and_then(Value::as_object)
@@ -283,6 +307,7 @@ pub(super) fn verified_vehicle_fbx_catalog(
     let mut result = Vec::with_capacity(vehicles.len());
     let mut verified_material_slot_count = 0_u64;
     let mut verified_part_count = 0_u64;
+    let mut verified_headlight_billboard_count = 0_u64;
     let mut verified_physics_count = 0_u64;
     let mut verified_rig_count = 0_u64;
     let mut verified_primitive_count = 0_u64;
@@ -362,6 +387,21 @@ pub(super) fn verified_vehicle_fbx_catalog(
             .ok_or_else(|| {
                 PipelineError::new("generated vehicle part count overflowed")
             })?;
+        let headlight_billboards = verify_vehicle_headlight_billboards(
+            root,
+            &vehicle,
+            row.get("headlight_billboard_sidecars"),
+        )?;
+        verified_headlight_billboard_count = verified_headlight_billboard_count
+            .checked_add(
+                u64::try_from(headlight_billboards.len())
+                    .unwrap_or(u64::MAX),
+            )
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle headlight billboard count overflowed",
+                )
+            })?;
         let physics = verify_vehicle_physics_sidecars(
             root,
             &vehicle,
@@ -413,6 +453,7 @@ pub(super) fn verified_vehicle_fbx_catalog(
             subcategory,
             material_slots,
             presentation_parts,
+            headlight_billboard_sidecars: headlight_billboards,
             physics_sidecars: physics,
             physics_rigs,
         });
@@ -425,6 +466,11 @@ pub(super) fn verified_vehicle_fbx_catalog(
     if verified_part_count != declared_parts {
         return Err(PipelineError::new(
             "generated vehicle catalog part count is stale",
+        ));
+    }
+    if verified_headlight_billboard_count != declared_headlight_billboards {
+        return Err(PipelineError::new(
+            "generated vehicle catalog headlight billboard count is stale",
         ));
     }
     if verified_physics_count != declared_physics {
@@ -937,6 +983,120 @@ fn required_material_semantics(
         light_emitter: flag("light_emitter")?,
         visual_effect: flag("visual_effect")?,
     })
+}
+
+fn verify_vehicle_headlight_billboards(
+    root: &Path,
+    vehicle: &str,
+    value: Option<&Value>,
+) -> PipelineOutcome<Vec<VerifiedVehicleHeadlightBillboardArtifact>> {
+    let sidecars = value.and_then(Value::as_array).ok_or_else(|| {
+        PipelineError::new(
+            "generated vehicle catalog row has no headlight billboards",
+        )
+    })?;
+    if sidecars.is_empty() {
+        return Err(PipelineError::new(
+            "generated vehicle catalog row has empty headlight billboards",
+        ));
+    }
+    let mut paths = BTreeSet::new();
+    let mut identities = BTreeSet::new();
+    let mut result = Vec::with_capacity(sidecars.len());
+    for sidecar in sidecars {
+        let sidecar = sidecar.as_object().ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle headlight billboard is not an object",
+            )
+        })?;
+        let path = required_string(sidecar, "path")?;
+        validate_relative_path(&path)?;
+        if !path.starts_with("presentation/headlights/")
+            || !path.ends_with(".json")
+            || !paths.insert(path.clone())
+        {
+            return Err(PipelineError::new(
+                "generated vehicle headlight billboard path is not canonical",
+            ));
+        }
+        let identity = required_string(sidecar, "identity")?;
+        let shader_identity = required_string(sidecar, "shader_identity")?;
+        validate_source_identity(&identity)?;
+        validate_source_identity(&shader_identity)?;
+        if !identities.insert(identity.clone()) {
+            return Err(PipelineError::new(
+                "generated vehicle headlight billboard identity is duplicated",
+            ));
+        }
+        let bone_values = sidecar
+            .get("bones")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle headlight billboard has no bones",
+                )
+            })?;
+        let bones = bone_values
+            .iter()
+            .map(|value| {
+                value.as_str().map(str::to_owned).ok_or_else(|| {
+                    PipelineError::new(
+                        "generated vehicle headlight billboard bone is invalid",
+                    )
+                })
+            })
+            .collect::<PipelineOutcome<Vec<_>>>()?;
+        if bones.len() != 2 || bones[0] != "hll" || bones[1] != "hlr" {
+            return Err(PipelineError::new(
+                "generated vehicle headlight billboard bones are not canonical",
+            ));
+        }
+        let size_bytes = required_u64(sidecar, "bytes")?;
+        let sha256 = required_string(sidecar, "sha256")?;
+        validate_digest(&sha256)?;
+        let full_path = root.join(vehicle).join(&path);
+        validate_regular_file(
+            &full_path,
+            "generated vehicle headlight billboard sidecar",
+        )?;
+        validate_ancestor_chain(root, &full_path)?;
+        let bytes = fs::read(&full_path).map_err(|error| {
+            io_error("read generated vehicle headlight billboard", &error)
+        })?;
+        let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
+        if actual_size != size_bytes || digest_hex(&bytes) != sha256 {
+            return Err(PipelineError::new(
+                concat!(
+                    "generated vehicle headlight billboard bytes do not ",
+                    "match catalog"
+                ),
+            ));
+        }
+        let evidence = billboard_source::read_billboard_source_evidence(
+            &full_path,
+            &identity,
+        )
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "generated vehicle headlight billboard is invalid: {:?}",
+                    error
+                ))
+            })?;
+        if evidence.shader_identity != shader_identity {
+            return Err(PipelineError::new(
+                "generated vehicle headlight billboard shader is inconsistent",
+            ));
+        }
+        result.push(VerifiedVehicleHeadlightBillboardArtifact {
+            path: format!("{LOGICAL_ROOT}/{vehicle}/{path}"),
+            identity,
+            shader_identity,
+            bones,
+            size_bytes,
+            sha256,
+        });
+    }
+    Ok(result)
 }
 
 fn verify_vehicle_physics_sidecars(

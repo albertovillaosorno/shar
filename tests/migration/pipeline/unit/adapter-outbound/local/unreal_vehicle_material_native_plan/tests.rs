@@ -54,6 +54,7 @@ fn vehicle(
         subcategory: "sedanA".to_owned(),
         material_slots: slots,
         presentation_parts: Vec::new(),
+        headlight_billboard_sidecars: Vec::new(),
         physics_sidecars: Vec::new(),
         physics_rigs: Vec::new(),
     }

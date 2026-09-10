@@ -35,7 +35,8 @@ use fbx::adapters::driven::binary_character_writer::CharacterBinaryFbxSummary;
 use super::super::model::{
     EffectAnimationRecord, EffectControllerRecord,
     EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
-    GroundingRecord, PhysicsPrimitiveRecord, PhysicsRigRecord,
+    GroundingRecord, HeadlightBillboardSidecarRecord, PhysicsPrimitiveRecord,
+    PhysicsRigRecord,
     PhysicsSidecarRecord, VehicleRecord,
 };
 use super::vehicle_json;
@@ -66,6 +67,14 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
         deferred_geometry: Vec::new(),
         hidden_wheel_proxies: 0,
         animations: Vec::new(),
+        headlight_billboard_sidecars: vec![HeadlightBillboardSidecarRecord {
+            path: "presentation/headlights/headlight.json".to_owned(),
+            identity: "headlightShape".to_owned(),
+            shader_identity: "headlight_m".to_owned(),
+            bones: vec!["hll".to_owned(), "hlr".to_owned()],
+            bytes: 64,
+            sha256: "3".repeat(64),
+        }],
         effect_animation_sidecars: vec![EffectAnimationRecord {
             path: "animations/effects/light.json".to_owned(),
             identity: "light-animation".to_owned(),
@@ -140,6 +149,24 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
         || physics.get("bytes") != Some(&42.into())
     {
         return Err("vehicle physics provenance is incomplete".to_owned());
+    }
+
+    let headlight = value
+        .get("headlight_billboard_sidecars")
+        .and_then(serde_json::Value::as_array)
+        .and_then(|sidecars| sidecars.first())
+        .ok_or_else(|| {
+            "vehicle headlight billboard sidecar is missing".to_owned()
+        })?;
+    if headlight.get("identity") != Some(&"headlightShape".into())
+        || headlight.get("shader_identity") != Some(&"headlight_m".into())
+        || headlight.get("bones")
+            != Some(&serde_json::json!(["hll", "hlr"]))
+        || headlight.get("bytes") != Some(&64.into())
+    {
+        return Err(
+            "vehicle headlight billboard evidence is incomplete".to_owned(),
+        );
     }
 
     let effect = value
