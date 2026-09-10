@@ -40,6 +40,7 @@
 #include "AssetToolsModule.h"
 #include "Factories/MaterialFactoryNew.h"
 #include "Factories/MaterialInstanceConstantFactoryNew.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/Texture2D.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "MaterialEditingLibrary.h"
@@ -58,6 +59,10 @@ constexpr TCHAR GeneratedVehicleMaterialRootPrefix[] =
     TEXT("/Game/Generated/SHAR/Materials/Vehicles/");
 constexpr TCHAR GeneratedVehicleTextureRootPrefix[] =
     TEXT("/Game/Generated/SHAR/Textures/Vehicles/");
+constexpr TCHAR GeneratedVehicleInstanceRootPrefix[] =
+    TEXT("/Game/Generated/SHAR/Materials/Vehicles/Instances/");
+constexpr TCHAR GeneratedVehicleSkeletalMeshRootPrefix[] =
+    TEXT("/Game/Generated/SHAR/cars/");
 constexpr TCHAR BaseColorTextureParameter[] = TEXT("BaseColorTexture");
 constexpr TCHAR BaseColorTintParameter[] = TEXT("BaseColorTint");
 constexpr TCHAR AlphaReferenceParameter[] = TEXT("AlphaReference");
@@ -366,6 +371,140 @@ bool ReadBackSimpleUnlitVehicleMaster(
     };
     return ReadBackSimpleUnlitMaterialGraph(Material, GraphRecipe, OutError);
 }
+
+FString MaterialObjectPath(const UMaterialInterface* Material)
+{
+    return Material == nullptr ? FString{} : Material->GetPathName();
+}
+
+bool ResolveVehicleSkeletalMesh(
+    const FString& SkeletalMeshPath,
+    USkeletalMesh*& OutMesh,
+    FString& OutError
+)
+{
+    OutMesh = nullptr;
+    OutError.Reset();
+    if (!IsCanonicalGeneratedObjectPath(
+            SkeletalMeshPath,
+            GeneratedVehicleSkeletalMeshRootPrefix
+        ))
+    {
+        OutError = TEXT("skeletal_mesh_path is not a generated vehicle mesh");
+        return false;
+    }
+    OutMesh = FindOrLoadGeneratedObject<USkeletalMesh>(SkeletalMeshPath);
+    if (OutMesh == nullptr)
+    {
+        OutError = TEXT("generated vehicle Skeletal Mesh does not exist");
+        return false;
+    }
+    return true;
+}
+
+bool ValidateVehicleSlotSelection(
+    const USkeletalMesh& Mesh,
+    const TArray<int32>& SlotIndices,
+    const TArray<FString>& ExpectedSlotNames,
+    FString& OutError
+)
+{
+    OutError.Reset();
+    if (SlotIndices.IsEmpty() || SlotIndices.Num() != ExpectedSlotNames.Num())
+    {
+        OutError = TEXT("slot selection arrays must be nonempty and aligned");
+        return false;
+    }
+    const TArray<FSkeletalMaterial>& Materials = Mesh.GetMaterials();
+    int32 PreviousIndex = INDEX_NONE;
+    for (int32 Position = 0; Position < SlotIndices.Num(); ++Position)
+    {
+        const int32 SlotIndex = SlotIndices[Position];
+        if (SlotIndex <= PreviousIndex || !Materials.IsValidIndex(SlotIndex))
+        {
+            OutError = TEXT(
+                "slot indices must be unique, ascending, and valid"
+            );
+            return false;
+        }
+        if (
+            ExpectedSlotNames[Position].IsEmpty()
+            || !Materials[SlotIndex].MaterialSlotName.ToString().Equals(
+                ExpectedSlotNames[Position],
+                ESearchCase::CaseSensitive
+            )
+        )
+        {
+            OutError = TEXT("Skeletal Mesh material slot name drifted");
+            return false;
+        }
+        PreviousIndex = SlotIndex;
+    }
+    return true;
+}
+
+bool ValidateVehicleMaterialPath(const FString& MaterialPath)
+{
+    return MaterialPath.IsEmpty()
+        || IsCanonicalGeneratedObjectPath(
+            MaterialPath,
+            GeneratedVehicleInstanceRootPrefix
+        );
+}
+
+bool ResolveVehicleReplacementMaterials(
+    const TArray<FString>& ReplacementMaterialPaths,
+    TArray<UMaterialInterface*>& OutMaterials,
+    FString& OutError
+)
+{
+    OutMaterials.Reset();
+    OutError.Reset();
+    for (const FString& MaterialPath : ReplacementMaterialPaths)
+    {
+        if (!ValidateVehicleMaterialPath(MaterialPath))
+        {
+            OutError = TEXT("replacement material path is not canonical");
+            return false;
+        }
+        UMaterialInstanceConstant* Material = MaterialPath.IsEmpty()
+            ? nullptr
+            : FindOrLoadGeneratedObject<UMaterialInstanceConstant>(
+                MaterialPath
+            );
+        if (!MaterialPath.IsEmpty() && Material == nullptr)
+        {
+            OutError = TEXT(
+                "replacement vehicle Material Instance does not exist"
+            );
+            return false;
+        }
+        OutMaterials.Add(Material);
+    }
+    return true;
+}
+
+bool ReadVehicleMaterialPaths(
+    const USkeletalMesh& Mesh,
+    const TArray<int32>& SlotIndices,
+    TArray<FString>& OutMaterialPaths
+)
+{
+    OutMaterialPaths.Reset();
+    const TArray<FSkeletalMaterial>& Materials = Mesh.GetMaterials();
+    for (const int32 SlotIndex : SlotIndices)
+    {
+        if (!Materials.IsValidIndex(SlotIndex))
+        {
+            OutMaterialPaths.Reset();
+            return false;
+        }
+        OutMaterialPaths.Add(
+            MaterialObjectPath(Materials[SlotIndex].MaterialInterface)
+        );
+    }
+    return true;
+}
 } // namespace UE::SharImportEditor::Private
 
 FString USharVehicleMaterialToolset::CreateSimpleUnlitVehicleMaster(
@@ -566,4 +705,128 @@ FString USharVehicleMaterialToolset::CreateSimpleUnlitVehicleMaterialInstance(
     }
     Instance->MarkPackageDirty();
     return ObjectPath;
+}
+TArray<FString> USharVehicleMaterialToolset::ReadVehicleMaterialSlots(
+    const FString& SkeletalMeshPath,
+    const TArray<int32>& SlotIndices,
+    const TArray<FString>& ExpectedSlotNames
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FString Error;
+    USkeletalMesh* Mesh = nullptr;
+    if (
+        !ResolveVehicleSkeletalMesh(SkeletalMeshPath, Mesh, Error)
+        || !ValidateVehicleSlotSelection(
+            *Mesh,
+            SlotIndices,
+            ExpectedSlotNames,
+            Error
+        )
+    )
+    {
+        RaiseVehicleMaterialError(Error);
+        return {};
+    }
+    TArray<FString> MaterialPaths;
+    if (!ReadVehicleMaterialPaths(*Mesh, SlotIndices, MaterialPaths))
+    {
+        RaiseVehicleMaterialError(
+            TEXT("failed to read vehicle material slots")
+        );
+        return {};
+    }
+    return MaterialPaths;
+}
+
+TArray<FString>
+USharVehicleMaterialToolset::CompareExchangeVehicleMaterialSlots(
+    const FString& SkeletalMeshPath,
+    const TArray<int32>& SlotIndices,
+    const TArray<FString>& ExpectedSlotNames,
+    const TArray<FString>& ExpectedMaterialPaths,
+    const TArray<FString>& ReplacementMaterialPaths
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FString Error;
+    USkeletalMesh* Mesh = nullptr;
+    if (
+        !ResolveVehicleSkeletalMesh(SkeletalMeshPath, Mesh, Error)
+        || !ValidateVehicleSlotSelection(
+            *Mesh,
+            SlotIndices,
+            ExpectedSlotNames,
+            Error
+        )
+        || SlotIndices.Num() != ExpectedMaterialPaths.Num()
+        || SlotIndices.Num() != ReplacementMaterialPaths.Num()
+    )
+    {
+        if (Error.IsEmpty())
+        {
+            Error = TEXT("material compare-exchange arrays are not aligned");
+        }
+        RaiseVehicleMaterialError(Error);
+        return {};
+    }
+    for (const FString& MaterialPath : ExpectedMaterialPaths)
+    {
+        if (!ValidateVehicleMaterialPath(MaterialPath))
+        {
+            RaiseVehicleMaterialError(
+                TEXT("expected material path is not canonical")
+            );
+            return {};
+        }
+    }
+    TArray<FString> CurrentMaterialPaths;
+    if (!ReadVehicleMaterialPaths(*Mesh, SlotIndices, CurrentMaterialPaths))
+    {
+        RaiseVehicleMaterialError(
+            TEXT("failed to read current material slots")
+        );
+        return {};
+    }
+    if (CurrentMaterialPaths != ExpectedMaterialPaths)
+    {
+        RaiseVehicleMaterialError(
+            TEXT("vehicle material compare-exchange expectation drifted")
+        );
+        return {};
+    }
+    TArray<UMaterialInterface*> Replacements;
+    if (!ResolveVehicleReplacementMaterials(
+            ReplacementMaterialPaths,
+            Replacements,
+            Error
+        ))
+    {
+        RaiseVehicleMaterialError(Error);
+        return {};
+    }
+
+    TArray<FSkeletalMaterial> Materials = Mesh->GetMaterials();
+    Mesh->Modify();
+    for (int32 Position = 0; Position < SlotIndices.Num(); ++Position)
+    {
+        Materials[SlotIndices[Position]].MaterialInterface =
+            Replacements[Position];
+    }
+    Mesh->SetMaterials(Materials);
+    Mesh->PostEditChange();
+    Mesh->MarkPackageDirty();
+
+    TArray<FString> ReadBackPaths;
+    if (
+        !ReadVehicleMaterialPaths(*Mesh, SlotIndices, ReadBackPaths)
+        || ReadBackPaths != ReplacementMaterialPaths
+    )
+    {
+        RaiseVehicleMaterialError(
+            TEXT("vehicle material slot read-back drifted after mutation")
+        );
+        return {};
+    }
+    return ReadBackPaths;
 }
