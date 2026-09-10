@@ -86,6 +86,9 @@ from mcp.application.skill_export import UnrealSkillExporter
 from mcp.application.vehicle_material_application import (
     apply_vehicle_material_construction,
 )
+from mcp.application.vehicle_material_slot_application import (
+    apply_vehicle_material_slot_binding,
+)
 from mcp.application.vehicle_physics_application import (
     apply_vehicle_physics_construction,
 )
@@ -120,6 +123,21 @@ from mcp.domain.vehicle_material_selection import (
 from mcp.domain.vehicle_material_selection import VehicleMaterialExecutable
 from mcp.domain.vehicle_material_selection import (
     select_vehicle_material_package,
+)
+from mcp.domain.vehicle_material_slot_binding import (
+    CompiledVehicleMaterialSlotBinding,
+)
+from mcp.domain.vehicle_material_slot_binding import (
+    compile_vehicle_material_slot_binding,
+)
+from mcp.domain.vehicle_material_slot_binding import (
+    vehicle_material_slot_binding_revision,
+)
+from mcp.domain.vehicle_material_slot_capabilities import (
+    audit_vehicle_material_slot_capabilities,
+)
+from mcp.domain.vehicle_material_slot_capabilities import (
+    required_vehicle_material_slot_toolsets,
 )
 from mcp.domain.vehicle_physics_capabilities import (
     audit_vehicle_physics_capabilities,
@@ -225,6 +243,8 @@ def _run_invocation(invocation: CliInvocation) -> int:
 
 
 def _run_material_invocation(invocation: CliInvocation) -> int:
+    if invocation.action.startswith("vehicle-material-slots-"):
+        return _run_vehicle_material_slot_invocation(invocation)
     if invocation.action.startswith("vehicle-material-"):
         return _run_vehicle_material_invocation(invocation)
     return _run_world_material_invocation(invocation)
@@ -241,6 +261,25 @@ def _run_vehicle_material_invocation(invocation: CliInvocation) -> int:
             invocation, options.root, options.package_id
         )
     return _run_vehicle_material_apply(
+        invocation, options.root, options.package_id
+    )
+
+
+def _run_vehicle_material_slot_invocation(invocation: CliInvocation) -> int:
+    options = parse_vehicle_material_options(invocation.operands)
+    if options.package_id is None:
+        message = "vehicle material slot commands require --package-id"
+        failure = UsageError(message)
+        raise failure
+    if invocation.action == "vehicle-material-slots-preflight":
+        return _run_vehicle_material_slot_preflight(
+            options.root, options.package_id
+        )
+    if invocation.action == "vehicle-material-slots-capabilities":
+        return _run_vehicle_material_slot_capabilities(
+            invocation, options.root, options.package_id
+        )
+    return _run_vehicle_material_slot_apply(
         invocation, options.root, options.package_id
     )
 
@@ -306,6 +345,9 @@ def _validate_action_operands(invocation: CliInvocation) -> None:
         "vehicle-material-apply",
         "vehicle-material-capabilities",
         "vehicle-material-preflight",
+        "vehicle-material-slots-apply",
+        "vehicle-material-slots-capabilities",
+        "vehicle-material-slots-preflight",
         "vehicle-physics-apply",
         "vehicle-physics-capabilities",
         "vehicle-physics-preflight",
@@ -467,6 +509,120 @@ def _run_vehicle_material_apply(
             executable,
             capabilities,
             sources,
+        )
+    payload["application"] = application.to_json()
+    _write_stdout(render_json(payload))
+    return _EXIT_SUCCESS
+
+
+def _vehicle_material_slot_context(
+    root: Path,
+    package_id: str,
+) -> tuple[
+    ValidatedPlanBundle,
+    CompiledVehicleMaterialConstruction,
+    CompiledVehicleMaterialSelection,
+    CompiledVehicleMaterialSlotBinding,
+]:
+    bundle = FilesystemPlanBundleReader(root).read_bundle()
+    execution = compile_execution_plan(bundle)
+    document = read_bound_vehicle_material_document(root.parent, bundle)
+    construction = compile_vehicle_material_construction(document)
+    selection = select_vehicle_material_package(construction, package_id)
+    binding = compile_vehicle_material_slot_binding(selection, execution)
+    return bundle, construction, selection, binding
+
+
+def _vehicle_material_slot_evidence(
+    bundle: ValidatedPlanBundle,
+    construction: CompiledVehicleMaterialConstruction,
+    selection: CompiledVehicleMaterialSelection,
+    binding: CompiledVehicleMaterialSlotBinding,
+) -> dict[str, object]:
+    return {
+        "binding": binding.report.to_json(),
+        "bindingRevision": vehicle_material_slot_binding_revision(binding),
+        "bundle": bundle.report.to_json(),
+        "construction": construction.report.to_json(),
+        "constructionRevision": vehicle_material_construction_revision(
+            construction
+        ),
+        "selection": selection.report.to_json(),
+        "selectionRevision": vehicle_material_construction_revision(
+            selection
+        ),
+    }
+
+
+def _run_vehicle_material_slot_preflight(
+    root: Path,
+    package_id: str,
+) -> int:
+    bundle, construction, selection, binding = (
+        _vehicle_material_slot_context(root, package_id)
+    )
+    payload = _vehicle_material_slot_evidence(
+        bundle, construction, selection, binding
+    )
+    _write_stdout(render_json(payload))
+    return _EXIT_SUCCESS
+
+
+def _run_vehicle_material_slot_capabilities(
+    invocation: CliInvocation,
+    root: Path,
+    package_id: str,
+) -> int:
+    bundle, construction, selection, binding = (
+        _vehicle_material_slot_context(root, package_id)
+    )
+    transport = StreamableHttpTransport(
+        invocation.endpoint,
+        timeout_seconds=invocation.timeout_seconds,
+    )
+    with UnrealMcpTranslator(transport) as translator:
+        definitions = translator.describe_available_toolsets(
+            required_vehicle_material_slot_toolsets(binding)
+        )
+    capabilities = audit_vehicle_material_slot_capabilities(
+        binding, definitions
+    )
+    payload = _vehicle_material_slot_evidence(
+        bundle, construction, selection, binding
+    )
+    payload["capabilities"] = capabilities.to_json()
+    _write_stdout(render_json(payload))
+    return _EXIT_SUCCESS if capabilities.complete else _EXIT_FAILURE
+
+
+def _run_vehicle_material_slot_apply(
+    invocation: CliInvocation,
+    root: Path,
+    package_id: str,
+) -> int:
+    bundle, construction, selection, binding = (
+        _vehicle_material_slot_context(root, package_id)
+    )
+    transport = StreamableHttpTransport(
+        invocation.endpoint,
+        timeout_seconds=invocation.timeout_seconds,
+    )
+    with UnrealMcpTranslator(transport) as translator:
+        definitions = translator.describe_available_toolsets(
+            required_vehicle_material_slot_toolsets(binding)
+        )
+        capabilities = audit_vehicle_material_slot_capabilities(
+            binding, definitions
+        )
+        payload = _vehicle_material_slot_evidence(
+            bundle, construction, selection, binding
+        )
+        payload["capabilities"] = capabilities.to_json()
+        if not capabilities.complete:
+            _write_stdout(render_json(payload))
+            return _EXIT_FAILURE
+        application = apply_vehicle_material_slot_binding(
+            translator, binding, capabilities
         )
     payload["application"] = application.to_json()
     _write_stdout(render_json(payload))

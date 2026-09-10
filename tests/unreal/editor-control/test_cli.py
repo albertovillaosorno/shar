@@ -532,6 +532,23 @@ def test_cli_doctor_rejects_empty_toolset_registry(
         assert payload["toolsetCount"] == 0
 
 
+def test_vehicle_material_slot_commands_require_package_scope(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    endpoint = "http://127.0.0.1:65534/mcp"
+    actions = (
+        "vehicle-material-slots-preflight",
+        "vehicle-material-slots-capabilities",
+        "vehicle-material-slots-apply",
+    )
+    for action in actions:
+        exit_code = main(("--endpoint", endpoint, action))
+        captured = capsys.readouterr()
+        assert exit_code == 2
+        assert "require --package-id" in captured.err
+        assert not captured.out
+
+
 def test_vehicle_material_options_accept_exact_package_scope() -> None:
     options = parse_vehicle_material_options((
         "--package-id",
