@@ -78,4 +78,33 @@ public:
         bool bSetAlphaReference,
         float AlphaReference
     );
+
+    /**
+     * Read exact material paths from selected generated vehicle mesh slots.
+     * Slot indices must be unique and ascending, and every supplied slot name
+     * must match the imported Skeletal Mesh. Empty strings represent null
+     * materials. The mesh is not modified.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharVehicleMaterialToolset")
+    static TArray<FString> ReadVehicleMaterialSlots(
+        const FString& SkeletalMeshPath,
+        const TArray<int32>& SlotIndices,
+        const TArray<FString>& ExpectedSlotNames
+    );
+
+    /**
+     * Compare and exchange selected generated vehicle Skeletal Mesh materials.
+     * Current paths must exactly match ExpectedMaterialPaths before mutation.
+     * Replacement paths must be generated vehicle Material Instances or empty
+     * for rollback. Slot topology and names are preserved. The mesh remains
+     * dirty and unsaved for outer transaction read-back and explicit save.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharVehicleMaterialToolset")
+    static TArray<FString> CompareExchangeVehicleMaterialSlots(
+        const FString& SkeletalMeshPath,
+        const TArray<int32>& SlotIndices,
+        const TArray<FString>& ExpectedSlotNames,
+        const TArray<FString>& ExpectedMaterialPaths,
+        const TArray<FString>& ReplacementMaterialPaths
+    );
 };

@@ -39,6 +39,7 @@
 #include "Materials/SharVehicleMaterialPolicy.h"
 #include "Materials/SharVehicleMaterialToolset.h"
 
+#include "Engine/SkeletalMesh.h"
 #include "Engine/Texture2D.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
@@ -476,6 +477,161 @@ bool FSharVehicleMaterialInstanceCreationTest::RunTest(
     Master->ClearFlags(RF_Public | RF_Standalone);
     Master->MarkAsGarbage();
     MasterPackage->MarkAsGarbage();
+    return true;
+}
+
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehicleMaterialSlotCompareExchangeTest,
+    "SHAR.Import.VehicleMaterials.MaterialSlotCompareExchange",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+
+bool FSharVehicleMaterialSlotCompareExchangeTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    const uint32 ProcessId = FPlatformProcess::GetCurrentProcessId();
+    const FString MeshName = FString::Printf(
+        TEXT("TransientVehicleSlotMesh_%u"),
+        ProcessId
+    );
+    const FString MeshPackagePath = FString::Printf(
+        TEXT("/Game/Generated/SHAR/cars/Automation/%s"),
+        *MeshName
+    );
+    const FString MeshObjectPath = FString::Printf(
+        TEXT("%s.%s"),
+        *MeshPackagePath,
+        *MeshName
+    );
+    UPackage* MeshPackage = CreatePackage(*MeshPackagePath);
+    USkeletalMesh* Mesh = NewObject<USkeletalMesh>(
+        MeshPackage,
+        *MeshName,
+        RF_Public | RF_Standalone
+    );
+    TestNotNull(TEXT("Vehicle slot fixture mesh exists"), Mesh);
+    if (Mesh == nullptr)
+    {
+        return false;
+    }
+    TArray<FSkeletalMaterial> Materials;
+    Materials.Emplace(
+        nullptr,
+        FName(TEXT("slot_a")),
+        FName(TEXT("slot_a"))
+    );
+    Materials.Emplace(
+        nullptr,
+        FName(TEXT("slot_b")),
+        FName(TEXT("slot_b"))
+    );
+    Materials.Emplace(
+        nullptr,
+        FName(TEXT("slot_c")),
+        FName(TEXT("slot_c"))
+    );
+    Mesh->SetMaterials(Materials);
+    MeshPackage->SetDirtyFlag(false);
+
+    const FString InstanceName = FString::Printf(
+        TEXT("TransientVehicleSlotInstance_%u"),
+        ProcessId
+    );
+    const FString InstancePackagePath = FString::Printf(
+        TEXT("/Game/Generated/SHAR/Materials/Vehicles/Instances/Automation/%s"),
+        *InstanceName
+    );
+    const FString InstanceObjectPath = FString::Printf(
+        TEXT("%s.%s"),
+        *InstancePackagePath,
+        *InstanceName
+    );
+    UPackage* InstancePackage = CreatePackage(*InstancePackagePath);
+    UMaterialInstanceConstant* Instance = NewObject<UMaterialInstanceConstant>(
+        InstancePackage,
+        *InstanceName,
+        RF_Public | RF_Standalone
+    );
+    TestNotNull(TEXT("Vehicle slot fixture instance exists"), Instance);
+    if (Instance == nullptr)
+    {
+        return false;
+    }
+
+    const TArray<int32> SlotIndices{0, 2};
+    const TArray<FString> SlotNames{TEXT("slot_a"), TEXT("slot_c")};
+    const TArray<FString> EmptyPaths{TEXT(""), TEXT("")};
+    const TArray<FString> InstancePaths{
+        InstanceObjectPath,
+        InstanceObjectPath,
+    };
+    TestEqual(
+        TEXT("Vehicle selected slots initially have null materials"),
+        USharVehicleMaterialToolset::ReadVehicleMaterialSlots(
+            MeshObjectPath,
+            SlotIndices,
+            SlotNames
+        ),
+        EmptyPaths
+    );
+    TestEqual(
+        TEXT("Vehicle slot compare-exchange applies exact instance paths"),
+        USharVehicleMaterialToolset::CompareExchangeVehicleMaterialSlots(
+            MeshObjectPath,
+            SlotIndices,
+            SlotNames,
+            EmptyPaths,
+            InstancePaths
+        ),
+        InstancePaths
+    );
+    TestTrue(
+        TEXT("Vehicle slot compare-exchange marks mesh dirty"),
+        MeshPackage->IsDirty()
+    );
+    TestTrue(
+        TEXT("Vehicle slot names are preserved"),
+        Mesh->GetMaterials()[0].MaterialSlotName == TEXT("slot_a")
+            && Mesh->GetMaterials()[2].MaterialSlotName == TEXT("slot_c")
+    );
+    TestNull(
+        TEXT("Vehicle unselected material slot stays unchanged"),
+        Mesh->GetMaterials()[1].MaterialInterface.Get()
+    );
+    TestEqual(
+        TEXT("Vehicle slot compare-exchange rolls back to null materials"),
+        USharVehicleMaterialToolset::CompareExchangeVehicleMaterialSlots(
+            MeshObjectPath,
+            SlotIndices,
+            SlotNames,
+            InstancePaths,
+            EmptyPaths
+        ),
+        EmptyPaths
+    );
+    TestFalse(
+        TEXT("Vehicle slot transaction does not save mesh implicitly"),
+        IFileManager::Get().FileExists(
+            *FPackageName::LongPackageNameToFilename(
+                MeshPackagePath,
+                FPackageName::GetAssetPackageExtension()
+            )
+        )
+    );
+
+    MeshPackage->SetDirtyFlag(false);
+    Mesh->ClearFlags(RF_Public | RF_Standalone);
+    Mesh->MarkAsGarbage();
+    MeshPackage->MarkAsGarbage();
+    InstancePackage->SetDirtyFlag(false);
+    Instance->ClearFlags(RF_Public | RF_Standalone);
+    Instance->MarkAsGarbage();
+    InstancePackage->MarkAsGarbage();
     return true;
 }
 
