@@ -457,10 +457,10 @@ closes asset publication only; the Skeletal Mesh material array is unchanged.
 
 For `sedana`, five of eight slots are in this construction-ready subset:
 <!-- markdownlint-disable-next-line MD044 -->
-<!-- cspell:disable -->
+<!-- CSpell:disable -->
 `brakeFlareA_m`, `brakeFlareB_m`, `flarebase2_m`, `LENS02_m`, and `glow2_m`.
 <!-- markdownlint-disable-next-line MD044 -->
-<!-- cspell:enable -->
+<!-- CSpell:enable -->
 The `char_swatches_m`, `sedanA_m`, and windshield slots are lit and remain
 blocked rather than being approximated with the unlit family.
 
@@ -529,9 +529,9 @@ planes as its only data source.
 The fixed headlight planes are still retained in the current FBX contract for
 one transitional reason: `sedana` material slots 5, 6, and 7 are presently the
 construction path for the following source materials:
-<!-- cspell:disable -->
+<!-- CSpell:disable -->
 `flarebase2_m`, `LENS02_m`, and `glow2_m`.
-<!-- cspell:enable -->
+<!-- CSpell:enable -->
 Removing those planes before billboard materials have an independent native
 construction and presentation binding would discard reviewed source material
 evidence. The next conversion step must decouple those materials from Skeletal

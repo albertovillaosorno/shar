@@ -1046,7 +1046,7 @@ fn verify_vehicle_headlight_billboards(
                 })
             })
             .collect::<PipelineOutcome<Vec<_>>>()?;
-        if bones.len() != 2 || bones[0] != "hll" || bones[1] != "hlr" {
+        if bones.as_slice() != ["hll", "hlr"] {
             return Err(PipelineError::new(
                 "generated vehicle headlight billboard bones are not canonical",
             ));

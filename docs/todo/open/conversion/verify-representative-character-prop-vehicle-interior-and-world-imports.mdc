@@ -437,9 +437,9 @@ evidence needed by a native camera-facing glow.
 
 The current FBX still contains those common headlight cards because `sedana`
 slots 5, 6, and 7 remain the construction path for these source materials:
-<!-- cspell:disable -->
+<!-- CSpell:disable -->
 `flarebase2_m`, `LENS02_m`, and `glow2_m`.
-<!-- cspell:enable -->
+<!-- CSpell:enable -->
 Removing the planes before those materials have an independent native
 presentation binding would lose reviewed evidence. The next step is to decouple
 those three billboard materials from Skeletal Mesh slots, remove the common
