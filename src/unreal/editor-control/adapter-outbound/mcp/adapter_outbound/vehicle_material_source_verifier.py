@@ -39,14 +39,12 @@ from pathlib import PurePosixPath
 import stat
 
 from mcp.domain.errors import fail_protocol
-from mcp.domain.vehicle_material_construction import (
-    CompiledVehicleMaterialConstruction,
-)
+from mcp.domain.vehicle_material_selection import VehicleMaterialExecutable
 
 
 def verify_vehicle_material_texture_sources(
     release_root: Path,
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
 ) -> dict[str, Path]:
     """Verify every planned vehicle PNG and return SHA-256 keyed paths."""
     root = release_root.absolute()

@@ -323,6 +323,23 @@ the Texture2D, Material, and Material Instance outputs. No vehicle Material
 Instance has yet been applied to a Skeletal Mesh slot, so asset construction
 readiness remains separate from final native readiness.
 
+Editor-control now also supports exact package-scoped vehicle-material
+execution after the complete v3 release has compiled successfully. The selector
+uses canonical `package_id`, retains only that package's Material Instances and
+the exact texture/master dependency closure they reference, and emits a
+separate selection revision while retaining the complete construction revision.
+For `extracted-art-cars-sedana`, the reviewed closure is five Texture2D
+requests, two shared master recipes, and five Material Instance requests; slot
+application remains outside this construction transaction.
+
+A fresh real `prepare-unreal` replay now publishes bundle
+`0d5342e561b649039f54daa6626d3cc7f60a77b12b7e4e64389aede83153f73e`
+with the v3 vehicle-material sidecar bound at 2,762,993 bytes and SHA-256
+`86a8edb9b000cf60019f1d294241774880cf2eb2b456e0f9fb3f637372e75266`.
+Global preflight verified all 14 texture digests and retained the 14/3/429
+construction counts; scoped `sedana` preflight independently verified five
+texture sources and produced the expected 5/2/5 closure.
+
 The broader P0 criterion remains open. The saved asset has not yet been bound
 into the representative production presentation, and source-derived material,
 animation, or wheel-definition assets are still absent. The vehicle also has not

@@ -228,10 +228,19 @@ def _bind_vehicle_material_sidecar(
     plan_root: Path,
     texture_bytes: bytes,
 ) -> None:
+    _bind_vehicle_material_document(
+        plan_root, _vehicle_material_document(texture_bytes)
+    )
+
+
+def _bind_vehicle_material_document(
+    plan_root: Path,
+    document: dict[str, object],
+) -> None:
     sidecar = plan_root.parent / "vehicle-materials.json"
     payload = (
         json.dumps(
-            _vehicle_material_document(texture_bytes),
+            document,
             ensure_ascii=False,
             separators=(",", ":"),
         )
@@ -256,6 +265,128 @@ def _bind_vehicle_material_sidecar(
         encoding="utf-8",
         newline="\n",
     )
+
+
+def _two_package_vehicle_material_document(
+    selected_bytes: bytes,
+    other_bytes: bytes,
+) -> dict[str, object]:
+    document = _vehicle_material_document(selected_bytes)
+    native = document["native_construction"]
+    textures = native["texture_requests"]
+    instances = native["instance_requests"]
+    selected = instances[0]
+    digest = hashlib.sha256(other_bytes).hexdigest()
+    texture_name = f"T_Vehicle_{digest}"
+    texture_package = f"/Game/Generated/SHAR/Textures/Vehicles/{texture_name}"
+    texture_object = f"{texture_package}.{texture_name}"
+    textures.append({
+        "sha256": digest,
+        "source_path": "vehicle-assets/other/textures/other.png",
+        "bytes": len(other_bytes),
+        "folder_path": "/Game/Generated/SHAR/Textures/Vehicles",
+        "asset_name": texture_name,
+        "package_path": texture_package,
+        "object_path": texture_object,
+    })
+    request = "3" * 64
+    name = f"MI_Vehicle_{request}"
+    package = f"/Game/Generated/SHAR/Materials/Vehicles/Instances/{name}"
+    instances.append({
+        **selected,
+        "request_identity": request,
+        "package_id": "extracted-art-cars-other",
+        "source_fbx": "vehicle-assets/other/other.fbx",
+        "slot_index": 1,
+        "slot_name": "other_m__transparent-light-emitter",
+        "source_material_name": "other_m",
+        "texture_sha256": digest,
+        "asset_name": name,
+        "package_path": package,
+        "object_path": f"{package}.{name}",
+        "base_color_texture_path": texture_object,
+    })
+    textures.sort(key=lambda item: str(item["sha256"]))
+    instances.sort(key=lambda item: str(item["request_identity"]))
+    counts = document["counts"]
+    counts["slots"] = 9
+    counts["native_graph_ready_slots"] = 2
+    counts["native_construction_ready_slots"] = 2
+    counts["native_texture_requests"] = 2
+    counts["native_instance_requests"] = 2
+    counts["native_blocked_slots"] = 9
+    return document
+
+
+def test_cli_vehicle_material_scope_uses_only_selected_dependencies(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    selected_bytes = b"selected-png"
+    other_bytes = b"missing-other-png"
+    plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
+    _ = write_plan_bundle(plan_root)
+    document = _two_package_vehicle_material_document(
+        selected_bytes, other_bytes
+    )
+    _bind_vehicle_material_document(plan_root, document)
+    source = (
+        tmp_path
+        / ".cache"
+        / "pipeline"
+        / "vehicle-assets"
+        / "sedana"
+        / "textures"
+        / "lens.png"
+    )
+    source.parent.mkdir(parents=True)
+    source.write_bytes(selected_bytes)
+    monkeypatch.chdir(tmp_path)
+    scope = ("--package-id", "extracted-art-cars-sedana")
+
+    with FakeUnrealServer(plan_execution=True) as server:
+        preflight = _run_json_cli(
+            capsys, "vehicle-material-preflight", *scope
+        )
+        assert preflight["construction"] == {
+            "blockedSlotCount": 9,
+            "instanceCount": 2,
+            "masterCount": 1,
+            "textureCount": 2,
+        }
+        assert preflight["selection"] == {
+            "instanceCount": 1,
+            "masterCount": 1,
+            "packageId": "extracted-art-cars-sedana",
+            "textureCount": 1,
+        }
+        assert preflight["verifiedTextureSourceCount"] == 1
+        assert preflight["selectionRevision"] != preflight[
+            "constructionRevision"
+        ]
+        capabilities = _run_json_cli(
+            capsys,
+            "--endpoint",
+            server.endpoint,
+            "vehicle-material-capabilities",
+            *scope,
+        )
+        assert capabilities["capabilities"]["constructionCount"] == 3
+        applied = _run_json_cli(
+            capsys,
+            "--endpoint",
+            server.endpoint,
+            "vehicle-material-apply",
+            *scope,
+        )
+
+    assert applied["application"]["createdCount"] == 3
+    assert applied["application"]["constructionRevision"] == applied[
+        "selectionRevision"
+    ]
+    assert len(server.assets) == 3
+    assert all("other" not in path.lower() for path in server.assets)
 
 
 def test_cli_vehicle_material_runs_three_gates_and_applies_assets(

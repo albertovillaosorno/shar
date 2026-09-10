@@ -120,6 +120,13 @@ unlinked files with exact byte counts and content digests. It compiles only the
 reviewed simple-unlit subset into content-addressed Texture2D requests,
 deduplicated native masters, and per-slot Material Instance requests.
 
+The three vehicle-material commands also accept `--package-id PACKAGE_ID`.
+Selection is applied only after the complete release-bound document compiles
+successfully; it retains instances for that exact canonical package id plus only
+the texture and master dependencies those instances reference. Output keeps the
+complete `constructionRevision` and adds a distinct `selectionRevision`, so
+scoped execution cannot masquerade as complete-corpus construction evidence.
+
 `vehicle-material-capabilities` opens one MCP session and validates the exact
 schemas for `ImportBaseColorTexture2D`, the vehicle master/instance factories,
 and AssetTools existence, class, dirty-state, save, and deletion operations.

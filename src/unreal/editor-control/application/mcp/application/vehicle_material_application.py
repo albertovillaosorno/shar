@@ -52,9 +52,7 @@ from mcp.domain.vehicle_material_capabilities import (
 from mcp.domain.vehicle_material_capabilities import (
     vehicle_material_construction_revision,
 )
-from mcp.domain.vehicle_material_construction import (
-    CompiledVehicleMaterialConstruction,
-)
+from mcp.domain.vehicle_material_selection import VehicleMaterialExecutable
 
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
 
@@ -106,7 +104,7 @@ class _NativeCall(NamedTuple):
 
 def apply_vehicle_material_construction(
     client: NativeVehicleMaterialClient,
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
     capabilities: VehicleMaterialCapabilityReport,
     texture_sources: Mapping[str, Path],
 ) -> VehicleMaterialApplicationReport:
@@ -133,7 +131,7 @@ def apply_vehicle_material_construction(
 
 def _apply_textures(
     client: NativeVehicleMaterialClient,
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
     texture_sources: Mapping[str, Path],
     created: list[_AssetSpec],
 ) -> None:
@@ -153,7 +151,7 @@ def _apply_textures(
 
 def _apply_masters(
     client: NativeVehicleMaterialClient,
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
     created: list[_AssetSpec],
 ) -> None:
     for step in compiled.masters:
@@ -172,7 +170,7 @@ def _apply_masters(
 
 def _apply_instances(
     client: NativeVehicleMaterialClient,
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
     created: list[_AssetSpec],
 ) -> None:
     for step in compiled.instances:
@@ -207,7 +205,7 @@ def _apply_call(
 
 
 def _require_ready(
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
     capabilities: VehicleMaterialCapabilityReport,
     texture_sources: Mapping[str, Path],
 ) -> None:
@@ -229,7 +227,7 @@ def _require_ready(
 
 
 def _all_specs(
-    compiled: CompiledVehicleMaterialConstruction,
+    compiled: VehicleMaterialExecutable,
 ) -> tuple[_AssetSpec, ...]:
     return tuple(
         _AssetSpec(step.package_path, step.object_path, step.target_class)
