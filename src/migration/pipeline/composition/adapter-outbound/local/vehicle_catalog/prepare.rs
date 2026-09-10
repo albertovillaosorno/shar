@@ -169,16 +169,20 @@ pub(super) fn export_vehicle(
         )?;
     deferred_geometry.extend(wheel_proxy_sidecars);
     deferred_geometry.sort();
-    let (materials, resolved_materials, shaders) = resolve_vehicle_materials(
+    let material_context = VehicleMaterialResolutionContext {
         package,
-        &package_root,
-        &common_root,
-        &texture_dir,
-        &shader_dir,
+        package_root: &package_root,
+        common_root: &common_root,
+        texture_dir: &texture_dir,
+        shader_dir: &shader_dir,
         authority,
-        &headlight_shader_names,
-        &mut prepared_asset,
-    )?;
+        presentation_shaders: &headlight_shader_names,
+    };
+    let resolved =
+        resolve_vehicle_materials(&material_context, &mut prepared_asset)?;
+    let materials = resolved.fbx_materials;
+    let resolved_materials = resolved.by_source;
+    let shaders = resolved.shaders;
     let (separated, parts) =
         separate_vehicle_parts(prepared_asset, &materials)?;
     let (mut animations, effect_animation_sidecars) = load_vehicle_animations(
@@ -1101,44 +1105,53 @@ fn is_wheel_identity(mesh: &str) -> bool {
         || matches!(mesh.strip_suffix("shape"), Some("w0" | "w1" | "w2" | "w3"))
 }
 
+struct VehicleMaterialResolutionContext<'a> {
+    package: &'a PhaseThreePackageRow,
+    package_root: &'a Path,
+    common_root: &'a Path,
+    texture_dir: &'a Path,
+    shader_dir: &'a Path,
+    authority: &'a VehicleTextureAuthority,
+    presentation_shaders: &'a BTreeSet<String>,
+}
+
+struct ResolvedVehicleMaterials {
+    fbx_materials: Vec<MaterialBinding>,
+    by_source: BTreeMap<String, MaterialBinding>,
+    shaders: Vec<String>,
+}
+
 /// Resolve used shaders, preserve authored identities, and publish JSON
 /// sidecars.
 fn resolve_vehicle_materials(
-    package: &PhaseThreePackageRow,
-    package_root: &Path,
-    common_root: &Path,
-    texture_dir: &Path,
-    shader_dir: &Path,
-    authority: &VehicleTextureAuthority,
-    presentation_shaders: &BTreeSet<String>,
+    context: &VehicleMaterialResolutionContext<'_>,
     asset: &mut CharacterAsset,
-) -> Result<
-    (
-        Vec<MaterialBinding>,
-        BTreeMap<String, MaterialBinding>,
-        Vec<String>,
-    ),
-    PipelineError,
-> {
+) -> Result<ResolvedVehicleMaterials, PipelineError> {
     let mut shader_names = asset
         .parts
         .iter()
         .flat_map(|part| part.mesh.groups.iter())
         .map(|group| group.shader.clone())
         .collect::<BTreeSet<_>>();
-    shader_names.extend(presentation_shaders.iter().cloned());
+    shader_names.extend(context.presentation_shaders.iter().cloned());
     let mut by_source = BTreeMap::new();
     let mut bindings_by_source = BTreeMap::<String, MaterialBinding>::new();
     let mut by_material = BTreeMap::<String, MaterialBinding>::new();
     for shader in shader_names {
         let material_root =
-            shader_material_root(package_root, common_root, &shader)?;
-        let source = DecodedComponentSource::new(&material_root, texture_dir);
+            shader_material_root(
+                context.package_root,
+                context.common_root,
+                &shader,
+            )?;
+        let source =
+            DecodedComponentSource::new(&material_root, context.texture_dir);
         let binding = match source.resolve_material(&shader) {
             Ok(binding) => binding,
             Err(DecodedComponentError::MissingTexture { texture, .. }) => {
-                let external = authority
-                    .resolve(&texture, &package.subcategory)?
+                let external = context
+                    .authority
+                    .resolve(&texture, &context.package.subcategory)?
                     .ok_or_else(|| {
                         PipelineError::new(format!(
                             "vehicle shader {shader} has no texture \
@@ -1158,12 +1171,14 @@ fn resolve_vehicle_materials(
                 texture,
                 ..
             }) => {
-                let material_subcategory = if material_root == package_root {
-                    package.subcategory.as_str()
-                } else {
-                    super::VEHICLE_COMMON_SUBCATEGORY
-                };
-                let external = authority
+                let material_subcategory =
+                    if material_root == context.package_root {
+                        context.package.subcategory.as_str()
+                    } else {
+                        super::VEHICLE_COMMON_SUBCATEGORY
+                    };
+                let external = context
+                    .authority
                     .resolve_runtime_visible(&texture, material_subcategory)?
                     .ok_or_else(|| {
                         PipelineError::new(format!(
@@ -1202,7 +1217,7 @@ fn resolve_vehicle_materials(
         let _previous_binding =
             bindings_by_source.insert(shader.clone(), binding.clone());
         let _previous_source = by_source.insert(shader.clone(), material_name);
-        publish_shader_document(&material_root, shader_dir, &shader)?;
+        publish_shader_document(&material_root, context.shader_dir, &shader)?;
     }
     for group in asset
         .parts
@@ -1222,7 +1237,11 @@ fn resolve_vehicle_materials(
         .collect::<BTreeSet<_>>()
         .into_iter()
         .collect();
-    Ok((fbx_materials, bindings_by_source, shaders))
+    Ok(ResolvedVehicleMaterials {
+        fbx_materials,
+        by_source: bindings_by_source,
+        shaders,
+    })
 }
 
 /// Retain only material bindings referenced by FBX geometry.
