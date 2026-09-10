@@ -450,11 +450,33 @@ billboard sidecars with no material-slot indices. Brake and Reverse bindings
 remain slot-backed. Native presentation validation enforces the same split, so
 headlights can no longer regress to the legacy plane/material-slot model.
 
-The current FBX still contains the common headlight cards, but they are no
-longer authority for headlight material or semantic binding. The next step is to
-remove those groups from FBX emission and instantiate native camera-facing glow
-from the verified sidecars beside the real-time Spot Lights. No new visual
-acceptance is claimed until that complete replacement is visible in Unreal.
+The vehicle export path now removes the three common headlight cards from FBX
+render geometry while retaining whichever `hll`/`hlr` hardpoints the source rig
+authors. Unit coverage proves named runtime joints and their ancestor chains can
+survive without manufacturing render geometry. Vehicles with no authored
+headlight hardpoint now publish neither common-headlight sidecars nor their
+presentation-only material requirements.
+
+A fresh full replay publishes all 88 vehicles and binds the resulting change:
+242 FBX material slots and 1,120 render parts disappear across the corpus. The
+new catalog has 78 vehicles with both `hll`/`hlr`, two with only `hll`, two with
+only `hlr`, and six with no common-headlight sidecars. `sedana` retains all 16
+required FBX bones while changing from 29 to 15 geometries and eight to five
+material slots. Its removed slots are exactly:
+<!-- CSpell:disable -->
+`flarebase2_m`, `LENS02_m`, and `glow2_m`.
+<!-- CSpell:enable -->
+The three byte-bound source billboard documents remain sidecars on
+`hll` and `hlr`.
+
+The five unlit Material Instances already persisted on the old representative
+Skeletal Mesh remain evidence for that earlier eight-slot import. The next
+`sedana` reimport must remove the three legacy headlight slots rather than move
+those instances to unrelated slots.
+
+The next step is to instantiate native camera-facing glow from those verified
+sidecars beside the real-time Spot Lights. No new visual acceptance is claimed
+until that complete replacement is visible in Unreal.
 
 Source-derived animation and wheel-definition assets remain absent, the three
 lit `sedana` slots still require reviewed material families, and the vehicle has

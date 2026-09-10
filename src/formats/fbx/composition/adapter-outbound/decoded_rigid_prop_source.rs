@@ -146,6 +146,7 @@ pub fn load_instanced_rigid_prop_asset(
         &[],
         composite_path,
         &[],
+        &[],
     )
 }
 
@@ -163,6 +164,7 @@ pub fn load_instanced_rigid_prop_asset_with_billboards(
     billboard_paths: &[&Path],
     composite_path: &Path,
     supplemental: &[SupplementalRigidPropBinding],
+    retained_joint_ids: &[&str],
 ) -> Result<CharacterAsset, SkinSourceError> {
     let (skeleton_name, bones) = load_skeleton(skeleton_path)?;
     let composite =
@@ -196,6 +198,7 @@ pub fn load_instanced_rigid_prop_asset_with_billboards(
             &mut state,
         )?;
     }
+    retain_named_joints(&bones, retained_joint_ids, &mut state.selected_joints);
     ensure_required_bindings(&required_meshes, &state.bound_names)?;
     let retained_indices =
         retained_bone_indices(&bones, &state.selected_joints)?;
@@ -209,6 +212,24 @@ pub fn load_instanced_rigid_prop_asset_with_billboards(
     CharacterAsset::new(name, retained_bones, state.parts)
         .map(|asset| asset.with_source_provenance(source_provenance))
         .map_err(SkinSourceError::Character)
+}
+
+/// Retain available runtime-joint candidates without manufacturing geometry.
+fn retain_named_joints(
+    bones: &[Bone],
+    retained_joint_ids: &[&str],
+    selected_joints: &mut BTreeSet<usize>,
+) {
+    let by_name = bones
+        .iter()
+        .enumerate()
+        .map(|(index, bone)| (bone.id.as_str(), index))
+        .collect::<BTreeMap<_, _>>();
+    for joint_id in retained_joint_ids {
+        if let Some(index) = by_name.get(joint_id).copied() {
+            let _inserted = selected_joints.insert(index);
+        }
+    }
 }
 
 /// Append valid supplemental source-to-joint bindings in authored order.

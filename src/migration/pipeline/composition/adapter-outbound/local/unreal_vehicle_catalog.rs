@@ -1012,9 +1012,7 @@ fn verify_vehicle_headlight_billboards(
         )
     })?;
     if sidecars.is_empty() {
-        return Err(PipelineError::new(
-            "generated vehicle catalog row has empty headlight billboards",
-        ));
+        return Ok(Vec::new());
     }
     let mut paths = BTreeSet::new();
     let mut identities = BTreeSet::new();
@@ -1065,7 +1063,10 @@ fn verify_vehicle_headlight_billboards(
                 })
             })
             .collect::<PipelineOutcome<Vec<_>>>()?;
-        if bones.as_slice() != ["hll", "hlr"] {
+        if bones.as_slice() != ["hll"]
+            && bones.as_slice() != ["hlr"]
+            && bones.as_slice() != ["hll", "hlr"]
+        {
             return Err(PipelineError::new(
                 "generated vehicle headlight billboard bones are not canonical",
             ));

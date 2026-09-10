@@ -301,6 +301,110 @@ fn loads_selected_prop_and_prunes_unselected_branches() -> Result<(), String> {
 }
 
 #[test]
+fn retains_runtime_joint_without_geometry() -> Result<(), String> {
+    let root = temp_root("runtime-joint-retention");
+    let (skeleton_path, composite_path, mesh_path) =
+        write_fixture(&root, "BodyShape")?;
+
+    let result =
+        decoded_rigid_prop_source::
+            load_instanced_rigid_prop_asset_with_billboards(
+                "runtime-retained",
+                &skeleton_path,
+                &[mesh_path.as_path()],
+                &[],
+                &composite_path,
+                &[],
+                &["glow"],
+            );
+    remove_fixture(&root)?;
+    let asset = result.map_err(|error| {
+        format!("runtime joint retention failed: {error:?}")
+    })?;
+    let bone_ids = asset
+        .bones
+        .iter()
+        .map(|bone| bone.id.as_str())
+        .collect::<Vec<_>>();
+    if bone_ids != ["root", "body", "glow"] {
+        return Err(format!("runtime joint retention drifted: {bone_ids:?}"));
+    }
+    let [part] = asset.parts.as_slice() else {
+        return Err(format!(
+            "unexpected retained render parts: {:?}",
+            asset.parts
+        ));
+    };
+    if !part.mesh.name.starts_with("BodyShape") {
+        return Err("runtime joint manufactured render geometry".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn retains_available_runtime_joint_without_inventing_missing_peer()
+-> Result<(), String> {
+    let root = temp_root("partial-runtime-joint");
+    let (skeleton_path, composite_path, mesh_path) =
+        write_fixture(&root, "BodyShape")?;
+    let result =
+        decoded_rigid_prop_source::
+            load_instanced_rigid_prop_asset_with_billboards(
+                "runtime-retained",
+                &skeleton_path,
+                &[mesh_path.as_path()],
+                &[],
+                &composite_path,
+                &[],
+                &["missing", "glow"],
+            );
+    remove_fixture(&root)?;
+    let asset = result.map_err(|error| {
+        format!("partial runtime joint retention failed: {error:?}")
+    })?;
+    let bone_ids = asset
+        .bones
+        .iter()
+        .map(|bone| bone.id.as_str())
+        .collect::<Vec<_>>();
+    if bone_ids != ["root", "body", "glow"] {
+        return Err(format!("partial runtime retention drifted: {bone_ids:?}"));
+    }
+    Ok(())
+}
+
+#[test]
+fn accepts_when_runtime_joint_candidates_are_absent() -> Result<(), String> {
+    let root = temp_root("absent-runtime-joints");
+    let (skeleton_path, composite_path, mesh_path) =
+        write_fixture(&root, "BodyShape")?;
+    let result =
+        decoded_rigid_prop_source::
+            load_instanced_rigid_prop_asset_with_billboards(
+                "runtime-retained",
+                &skeleton_path,
+                &[mesh_path.as_path()],
+                &[],
+                &composite_path,
+                &[],
+                &["missing-left", "missing-right"],
+            );
+    remove_fixture(&root)?;
+    let asset = result.map_err(|error| {
+        format!("absent runtime joints rejected asset: {error:?}")
+    })?;
+    let bone_ids = asset
+        .bones
+        .iter()
+        .map(|bone| bone.id.as_str())
+        .collect::<Vec<_>>();
+    if bone_ids != ["root", "body"] {
+        return Err(format!("absent runtime retention drifted: {bone_ids:?}"));
+    }
+    Ok(())
+}
+
+#[test]
 fn preserves_missing_sort_order_as_absent_provenance() -> Result<(), String> {
     let root = temp_root("missing-sort-order");
     let (skeleton_path, composite_path, mesh_path) =
