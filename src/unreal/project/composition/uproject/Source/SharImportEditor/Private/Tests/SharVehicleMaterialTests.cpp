@@ -47,6 +47,7 @@
 #include "Materials/MaterialInstanceConstant.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/PackageName.h"
+#include "ToolsetRegistry/UToolsetRegistry.h"
 
 namespace
 {
@@ -74,6 +75,29 @@ bool ResolveVehicleRecipe(
     );
 }
 } // namespace
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehicleMaterialToolsetRegistrationTest,
+    "SHAR.Import.VehicleMaterials.ToolsetRegistration",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+
+bool FSharVehicleMaterialToolsetRegistrationTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    TestTrue(
+        TEXT("Vehicle material toolset is registered after engine ")
+        TEXT("initialization"),
+        UToolsetRegistry::IsToolsetClassRegistered(
+            USharVehicleMaterialToolset::StaticClass()
+        )
+    );
+    return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharVehicleMaterialPolicyTest,
