@@ -35,6 +35,7 @@
 #include <initializer_list>
 
 #include "Vehicles/SharVehicleConstructionTransaction.h"
+#include "Vehicles/SharVehicleNativeLightAdapter.h"
 #include "Vehicles/SharVehicleDefinition.h"
 #include "Vehicles/SharVehiclePawn.h"
 #include "Vehicles/SharVehiclePresentationDefinition.h"
@@ -46,6 +47,7 @@
 #include "Animation/Skeleton.h"
 #include "ChaosVehicleWheel.h"
 #include "ChaosWheeledVehicleMovementComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "Engine/DataAsset.h"
 #include "Engine/SkeletalMesh.h"
 #include "Materials/Material.h"
@@ -255,6 +257,7 @@ MakeResolvedVehiclePresentation()
     auto* SkeletalMesh = NewObject<USkeletalMesh>();
     auto* PhysicsAsset = NewObject<UPhysicsAsset>();
     auto* Material = NewObject<UMaterial>();
+    auto* SecondaryMaterial = NewObject<UMaterial>();
 
     FReferenceSkeleton ReferenceSkeleton;
     {
@@ -264,6 +267,8 @@ MakeResolvedVehiclePresentation()
         AddVehicleTestBone(Modifier, TEXT("w1"), 0);
         AddVehicleTestBone(Modifier, TEXT("w2"), 0);
         AddVehicleTestBone(Modifier, TEXT("w3"), 0);
+        AddVehicleTestBone(Modifier, TEXT("hll"), 0);
+        AddVehicleTestBone(Modifier, TEXT("hlr"), 0);
     }
     SkeletalMesh->SetRefSkeleton(ReferenceSkeleton);
     SkeletalMesh->SetSkeleton(Skeleton);
@@ -274,6 +279,7 @@ MakeResolvedVehiclePresentation()
     PhysicsAsset->UpdateBodySetupIndexMap();
     TArray<FSkeletalMaterial> Materials;
     Materials.Emplace(Material, FName(TEXT("body")));
+    Materials.Emplace(SecondaryMaterial, FName(TEXT("lights")));
     SkeletalMesh->SetMaterials(Materials);
 
     Presentation->SkeletalMesh = TSoftObjectPtr<USkeletalMesh>(SkeletalMesh);
@@ -284,12 +290,25 @@ MakeResolvedVehiclePresentation()
     );
     Presentation->MaterialInstances = {
         TSoftObjectPtr<UMaterialInterface>(Material),
+        TSoftObjectPtr<UMaterialInterface>(SecondaryMaterial),
     };
     Presentation->LightBindings = {
         MakeLightBinding(
-            TEXT("headlight_primary"),
+            TEXT("headlight_left_lens"),
             ESharVehicleLightPresentationRole::Headlight,
-            TEXT("root"),
+            TEXT("hll"),
+            {0}
+        ),
+        MakeLightBinding(
+            TEXT("headlight_left_glow"),
+            ESharVehicleLightPresentationRole::Headlight,
+            TEXT("hll"),
+            {1}
+        ),
+        MakeLightBinding(
+            TEXT("headlight_right_lens"),
+            ESharVehicleLightPresentationRole::Headlight,
+            TEXT("hlr"),
             {0}
         ),
     };
@@ -323,6 +342,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharVehiclePresentationLightRuntimeTest,
     "SHAR.Vehicles.Runtime.PresentationLights",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehicleNativeHeadlightAdapterTest,
+    "SHAR.Vehicles.Runtime.NativeHeadlightAdapter",
     EAutomationTestFlags::EditorContext
         | EAutomationTestFlags::ClientContext
         | EAutomationTestFlags::CommandletContext
@@ -530,6 +557,115 @@ bool FSharVehiclePresentationLightRuntimeTest::RunTest(
     );
     return true;
 }
+
+bool FSharVehicleNativeHeadlightAdapterTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    auto* Pawn = NewObject<ASharVehiclePawn>();
+    auto* Presentation = MakeResolvedVehiclePresentation();
+    Pawn->GetMesh()->SetSkeletalMesh(Presentation->SkeletalMesh.Get());
+    auto* State = NewObject<USharVehiclePresentationState>();
+    auto* Adapter = NewObject<USharVehicleNativeLightAdapter>();
+
+    FSharVehicleNativeHeadlightConfiguration InvalidConfiguration;
+    TestFalse(
+        TEXT("Incomplete headlight light settings fail closed"),
+        Adapter->ConfigureHeadlights(
+            Pawn,
+            Presentation,
+            State,
+            InvalidConfiguration
+        )
+    );
+    TestEqual(
+        TEXT("Failed configuration creates no emitters"),
+        Adapter->GetHeadlightEmitterCount(),
+        0
+    );
+
+    FSharVehicleNativeHeadlightConfiguration Configuration;
+    Configuration.IntensityLumens = 1250.0F;
+    Configuration.AttenuationRadiusCentimeters = 900.0F;
+    Configuration.InnerConeAngleDegrees = 15.0F;
+    Configuration.OuterConeAngleDegrees = 30.0F;
+    Configuration.LightColor = FLinearColor::White;
+    Configuration.BoneLocalDirection = FVector::ForwardVector;
+    TestTrue(
+        TEXT("Reviewed headlight hardpoints configure"),
+        Adapter->ConfigureHeadlights(Pawn, Presentation, State, Configuration)
+    );
+    TestEqual(
+        TEXT("Part bindings deduplicate to two physical hardpoints"),
+        Adapter->GetHeadlightEmitterCount(),
+        2
+    );
+    TestEqual(
+        TEXT("Left hardpoint keeps hll"),
+        Adapter->GetHeadlightEmitterBone(0),
+        FName(TEXT("hll"))
+    );
+    TestEqual(
+        TEXT("Right hardpoint keeps hlr"),
+        Adapter->GetHeadlightEmitterBone(1),
+        FName(TEXT("hlr"))
+    );
+    USpotLightComponent* Left = Adapter->GetHeadlightEmitter(0);
+    USpotLightComponent* Right = Adapter->GetHeadlightEmitter(1);
+    TestNotNull(TEXT("Left native SpotLight exists"), Left);
+    TestNotNull(TEXT("Right native SpotLight exists"), Right);
+    if (Left == nullptr || Right == nullptr)
+    {
+        return false;
+    }
+    TestEqual(
+        TEXT("Left emitter attaches to hll"),
+        Left->GetAttachSocketName(),
+        FName(TEXT("hll"))
+    );
+    TestEqual(
+        TEXT("Right emitter attaches to hlr"),
+        Right->GetAttachSocketName(),
+        FName(TEXT("hlr"))
+    );
+    TestFalse(TEXT("Native headlights start hidden"), Left->IsVisible());
+    TestFalse(
+        TEXT("Native headlights start hidden together"),
+        Right->IsVisible()
+    );
+
+    TestTrue(
+        TEXT("Semantic headlights enable"),
+        State->SetHeadlightsEnabled(true)
+    );
+    TestTrue(TEXT("Native headlights refresh"), Adapter->RefreshHeadlights());
+    TestTrue(TEXT("Left native headlight follows state"), Left->IsVisible());
+    TestTrue(TEXT("Right native headlight follows state"), Right->IsVisible());
+
+    TestTrue(
+        TEXT("Damage suppresses semantic lights"),
+        State->SetLightsSuppressedByDamage(true)
+    );
+    TestTrue(TEXT("Suppression refreshes"), Adapter->RefreshHeadlights());
+    TestFalse(
+        TEXT("Suppression hides left native headlight"),
+        Left->IsVisible()
+    );
+    TestFalse(
+        TEXT("Suppression hides right native headlight"),
+        Right->IsVisible()
+    );
+
+    Adapter->ResetHeadlights();
+    TestEqual(
+        TEXT("Reset removes transient native emitters"),
+        Adapter->GetHeadlightEmitterCount(),
+        0
+    );
+    return true;
+}
+
 
 bool FSharVehicleDamageRuntimeTest::RunTest(const FString& Parameters)
 {
