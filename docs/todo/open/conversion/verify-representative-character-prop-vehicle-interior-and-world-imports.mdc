@@ -469,10 +469,19 @@ material slots. Its removed slots are exactly:
 The three byte-bound source billboard documents remain sidecars on
 `hll` and `hlr`.
 
-The five unlit Material Instances already persisted on the old representative
-Skeletal Mesh remain evidence for that earlier eight-slot import. The next
-`sedana` reimport must remove the three legacy headlight slots rather than move
-those instances to unrelated slots.
+The five unlit Material Instances persisted on the earlier eight-slot asset
+remain historical evidence for that import. A real headless `sedana` reimport
+now preserves the two brake instances in slots 0 and 1 while replacing the
+Skeletal Mesh topology with exactly five source-backed slots; the three lit and
+glass slots remain null. Read-back reports 16 bones, 638 triangles, 840
+vertices,
+the same Skeleton, and no attached Physics Asset.
+
+The accepted mesh save leaves both mesh and Skeleton clean and refreshes the
+asset registry to remove all three legacy headlight Material Instance
+dependencies. Its source import record now carries the regenerated FBX MD5
+`c35134f34e4eca0fd42a624bf9c9481e`, so those removed cards cannot survive as
+stale material-slot references in the persisted mesh.
 
 The next step is to instantiate native camera-facing glow from those verified
 sidecars beside the real-time Spot Lights. No new visual acceptance is claimed
