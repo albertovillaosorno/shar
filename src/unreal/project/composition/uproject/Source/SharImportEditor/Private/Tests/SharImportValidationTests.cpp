@@ -34,6 +34,7 @@
 
 #include "Import/SharFbxImportPolicy.h"
 #include "Import/SharImportToolset.h"
+#include "Import/SharSkeletalMeshReimportToolset.h"
 #include "Import/SharImportValidation.h"
 
 #include "HAL/FileManager.h"
@@ -134,6 +135,12 @@ bool FSharImportValidationTest::RunTest(const FString& Parameters)
         TEXT("SHAR import toolset is registered after engine initialization"),
         UToolsetRegistry::IsToolsetClassRegistered(
             USharImportToolset::StaticClass()
+        )
+    );
+    TestTrue(
+        TEXT("Skeletal reimport toolset is registered"),
+        UToolsetRegistry::IsToolsetClassRegistered(
+            USharSkeletalMeshReimportToolset::StaticClass()
         )
     );
     TestTrue(

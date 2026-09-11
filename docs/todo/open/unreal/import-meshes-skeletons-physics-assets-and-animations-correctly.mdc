@@ -98,6 +98,16 @@ process reads all three back with their expected classes and `dirty=false`, and
 the saved file hashes survive the restart unchanged. Binding those reviewed
 assets into production vehicle construction remains open work.
 
+September 10 adds a separate generated-SkeletalMesh reimport boundary without
+weakening the create-only import tool. Reimport requires the canonical mesh and
+Skeleton to already exist as clean saved packages, accepts an attached Physics
+Asset only beneath the generated SHAR root, and preserves all three native
+identities. It applies the same FBX unit/normal policy as first import and
+creates no materials, textures, animations, or Physics Asset. The accepted new
+mesh dirty for caller-owned read-back and save. A failed native reimport or any
+companion/postcondition drift reloads the previous saved packages before the
+operation reports failure.
+
 Vehicle catalog v8 now closes the material-slot handoff ambiguity without
 synthesizing target materials. A fresh 88-vehicle replay publishes 1,029 exact
 FBX material slots and independently verifies every referenced shader and

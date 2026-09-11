@@ -31,6 +31,7 @@
 //! Shar import editor module registration.
 
 #include "Import/SharImportToolset.h"
+#include "Import/SharSkeletalMeshReimportToolset.h"
 #include "Import/SharVehiclePhysicsToolset.h"
 #include "Materials/SharVehicleMaterialToolset.h"
 #include "Materials/SharWorldMaterialToolset.h"
@@ -45,6 +46,8 @@ public:
     {
         UToolsetRegistry::RegisterToolsetClass(
             USharImportToolset::StaticClass());
+        UToolsetRegistry::RegisterToolsetClass(
+            USharSkeletalMeshReimportToolset::StaticClass());
         UToolsetRegistry::RegisterToolsetClass(
             USharVehiclePhysicsToolset::StaticClass());
         UToolsetRegistry::RegisterToolsetClass(
@@ -61,6 +64,8 @@ public:
             USharVehicleMaterialToolset::StaticClass());
         UToolsetRegistry::UnregisterToolsetClass(
             USharVehiclePhysicsToolset::StaticClass());
+        UToolsetRegistry::UnregisterToolsetClass(
+            USharSkeletalMeshReimportToolset::StaticClass());
         UToolsetRegistry::UnregisterToolsetClass(
             USharImportToolset::StaticClass());
     }
