@@ -22,11 +22,11 @@
 # - Summary:
 #   - Vehicle-material native construction compiler.
 # - Description:
-#   - Validates v4 generated identities, dependency links, and exact tool wires.
+#   - Validates v5 generated identities, dependency links, and exact tool wires.
 # - Usage:
 #   - Called after release-index binding and before filesystem or live checks.
 # - Defaults:
-#   - Only the planned simple-unlit subset compiles; final readiness stays out.
+#   - Reviewed simple unlit and opaque-lit subsets compile; readiness stays out.
 #
 
 """Typed compilation of reviewed vehicle material construction requests."""
@@ -43,7 +43,7 @@ from mcp.domain.json_types import JsonObject
 from mcp.domain.json_types import JsonValue
 from mcp.domain.json_types import require_json_object
 
-_SCHEMA = "shar-schoenwald.unreal-vehicle-material-evidence.v4"
+_SCHEMA = "shar-schoenwald.unreal-vehicle-material-evidence.v5"
 _SOURCE_SCHEMA = "shar.vehicle-catalog.v8"
 _TEXTURE_ROOT = "/Game/Generated/SHAR/Textures/Vehicles"
 _MASTER_ROOT = "/Game/Generated/SHAR/Materials/Vehicles/Masters"
@@ -51,16 +51,23 @@ _INSTANCE_ROOT = "/Game/Generated/SHAR/Materials/Vehicles/Instances"
 _IMPORT_TOOLSET = "SharImportEditor.SharImportToolset"
 _TEXTURE_TOOL = f"{_IMPORT_TOOLSET}.ImportBaseColorTexture2D"
 _MATERIAL_TOOLSET = "SharImportEditor.SharVehicleMaterialToolset"
-_MASTER_TOOL = f"{_MATERIAL_TOOLSET}.CreateSimpleUnlitVehicleMaster"
+_UNLIT_MASTER_TOOL = f"{_MATERIAL_TOOLSET}.CreateSimpleUnlitVehicleMaster"
+_UNLIT_MASTER_VERIFY_TOOL = (
+    f"{_MATERIAL_TOOLSET}.VerifySimpleUnlitVehicleMaster"
+)
+_LIT_MASTER_TOOL = f"{_MATERIAL_TOOLSET}.CreateSimpleLitVehicleMaster"
+_LIT_MASTER_VERIFY_TOOL = f"{_MATERIAL_TOOLSET}.VerifySimpleLitVehicleMaster"
 _INSTANCE_TOOL = (
-    f"{_MATERIAL_TOOLSET}.CreateSimpleUnlitVehicleMaterialInstance"
+    f"{_MATERIAL_TOOLSET}.CreateVehicleMaterialInstance"
 )
 _SHA256_LENGTH = 64
 _EXPECTED_POLICY = {
     "source_projection": "reviewed-pddi-render-state",
     "source_projection_status": "ready",
     "world_material_policy_reuse": "forbidden",
-    "native_construction": "simple-unlit-texture-master-instance-ready",
+    "native_construction": (
+        "simple-unlit-and-opaque-lit-texture-master-instance-ready"
+    ),
     "mesh_slot_application": "blocked-pending-reviewed-transaction",
     "dynamic_light_binding": "headlight-sidecar-plus-slot-bound-rear-lights",
     "runtime_shader_mutation": "preserve-separately",
@@ -129,7 +136,7 @@ class VehicleMaterialMasterStep(NamedTuple):
     @property
     def tool_name(self) -> str:
         """Native reviewed vehicle master tool."""
-        return _MASTER_TOOL
+        return _UNLIT_MASTER_TOOL
 
     def arguments(self) -> JsonObject:
         """Build exact simple-unlit vehicle master arguments."""
@@ -143,6 +150,82 @@ class VehicleMaterialMasterStep(NamedTuple):
             "folderPath": self.folder_path,
             "shaderFamily": "simple",
         }
+
+    @property
+    def verify_tool_name(self) -> str:
+        """Native read-only verifier for an existing shared master."""
+        return _UNLIT_MASTER_VERIFY_TOOL
+
+    def verify_arguments(self) -> JsonObject:
+        """Build exact simple-unlit master read-back arguments."""
+        arguments = self.arguments()
+        del arguments["assetName"]
+        del arguments["folderPath"]
+        arguments["objectPath"] = self.object_path
+        return arguments
+
+
+class VehicleMaterialLitMasterStep(NamedTuple):
+    """One deduplicated reviewed opaque simple-lit vehicle master."""
+
+    recipe_identity: str
+    object_path: str
+    package_path: str
+    folder_path: str
+    asset_name: str
+    two_sided: bool
+    source_shininess: float
+
+    @property
+    def target_class(self) -> str:
+        """Expected native output class."""
+        return "Material"
+
+    @property
+    def toolset_name(self) -> str:
+        """Native vehicle material toolset."""
+        return _MATERIAL_TOOLSET
+
+    @property
+    def tool_name(self) -> str:
+        """Native reviewed opaque simple-lit master tool."""
+        return _LIT_MASTER_TOOL
+
+    def arguments(self) -> JsonObject:
+        """Build exact opaque simple-lit vehicle master arguments."""
+        black = {"a": 1.0, "b": 0.0, "g": 0.0, "r": 0.0}
+        return {
+            "alphaCompare": 4,
+            "assetName": self.asset_name,
+            "bAlphaTest": False,
+            "blendMode": 0,
+            "bLit": True,
+            "bTwoSided": self.two_sided,
+            "folderPath": self.folder_path,
+            "shaderFamily": "simple",
+            "sourceAmbient": black,
+            "sourceEmissive": black,
+            "sourceShininess": self.source_shininess,
+            "sourceSpecular": black,
+        }
+
+    @property
+    def verify_tool_name(self) -> str:
+        """Native read-only verifier for an existing shared lit master."""
+        return _LIT_MASTER_VERIFY_TOOL
+
+    def verify_arguments(self) -> JsonObject:
+        """Build exact simple-lit master read-back arguments."""
+        arguments = self.arguments()
+        del arguments["assetName"]
+        del arguments["folderPath"]
+        arguments["objectPath"] = self.object_path
+        return arguments
+
+
+VehicleMaterialAnyMasterStep = (
+    VehicleMaterialMasterStep | VehicleMaterialLitMasterStep
+)
 
 
 class VehicleMaterialInstanceStep(NamedTuple):
@@ -223,14 +306,14 @@ class CompiledVehicleMaterialConstruction(NamedTuple):
 
     report: VehicleMaterialConstructionReport
     textures: tuple[VehicleMaterialTextureStep, ...]
-    masters: tuple[VehicleMaterialMasterStep, ...]
+    masters: tuple[VehicleMaterialAnyMasterStep, ...]
     instances: tuple[VehicleMaterialInstanceStep, ...]
 
 
 def compile_vehicle_material_construction(
     document: JsonObject,
 ) -> CompiledVehicleMaterialConstruction:
-    """Validate and type one v4 vehicle-material construction document."""
+    """Validate and type one v5 vehicle-material construction document."""
     if document.get("schema") != _SCHEMA:
         fail_protocol("vehicle-material construction schema is not supported")
     if document.get("source_schema") != _SOURCE_SCHEMA:
@@ -321,19 +404,31 @@ def _texture(value: JsonValue) -> VehicleMaterialTextureStep:
     )
 
 
-def _master(value: JsonValue) -> VehicleMaterialMasterStep:
+def _master(value: JsonValue) -> VehicleMaterialAnyMasterStep:
     row = require_json_object(value, context="vehicle master request")
     folder, asset, package, object_path = _destination(
         row, _MASTER_ROOT, "vehicle master request"
     )
-    if row.get("shader_family") != "simple" or row.get("lit") is not False:
-        fail_protocol("vehicle master request escaped simple-unlit policy")
+    if row.get("shader_family") != "simple":
+        fail_protocol("vehicle master request escaped simple policy")
     blend = _integer(row, "blend_mode")
-    if blend not in {0, 1, 2} or _integer(row, "alpha_compare") != 4:
+    if _integer(row, "alpha_compare") != 4:
         fail_protocol("vehicle master raster policy is unsupported")
     alpha_test = _boolean(row, "alpha_test", "vehicle master request")
     two_sided = _boolean(row, "two_sided", "vehicle master request")
     recipe = _text(row, "recipe_identity", "vehicle master request")
+    lit = _boolean(row, "lit", "vehicle master request")
+    if lit:
+        return _lit_master(
+            row,
+            (folder, asset, package, object_path),
+            recipe=recipe,
+            blend=blend,
+            alpha_test=alpha_test,
+            two_sided=two_sided,
+        )
+    if blend not in {0, 1, 2}:
+        fail_protocol("vehicle master raster policy is unsupported")
     expected_recipe = _recipe_identity(
         blend, alpha_test=alpha_test, two_sided=two_sided
     )
@@ -351,6 +446,46 @@ def _master(value: JsonValue) -> VehicleMaterialMasterStep:
         blend,
         alpha_test,
         two_sided,
+    )
+
+
+def _lit_master(
+    row: JsonObject,
+    destination: tuple[str, str, str, str],
+    *,
+    recipe: str,
+    blend: int,
+    alpha_test: bool,
+    two_sided: bool,
+) -> VehicleMaterialLitMasterStep:
+    folder, asset, package, object_path = destination
+    if blend != 0 or alpha_test:
+        fail_protocol("vehicle simple-lit master raster policy is unsupported")
+    ambient = _rgba8(row.get("source_ambient_rgba8"))
+    specular = _rgba8(row.get("source_specular_rgba8"))
+    emissive = _rgba8(row.get("source_emissive_rgba8"))
+    black = (0, 0, 0, 255)
+    if ambient != black or specular != black or emissive != black:
+        fail_protocol("vehicle simple-lit master escaped black-response policy")
+    shininess = _bounded_float(
+        row, "source_shininess", low=0.0, high=128.0
+    )
+    bits = _u32(row, "source_shininess_bits")
+    packed = struct.unpack("<I", struct.pack("<f", shininess))[0]
+    if bits != packed:
+        fail_protocol("vehicle simple-lit shininess bits disagree")
+    expected_recipe = _lit_recipe_identity(bits, two_sided=two_sided)
+    expected_asset = _lit_master_asset(bits, two_sided=two_sided)
+    if recipe != expected_recipe or asset != expected_asset:
+        fail_protocol("vehicle simple-lit master identity drifted")
+    return VehicleMaterialLitMasterStep(
+        recipe,
+        object_path,
+        package,
+        folder,
+        asset,
+        two_sided,
+        shininess,
     )
 
 
@@ -430,7 +565,7 @@ def _instance_alpha(row: JsonObject) -> tuple[bool, float | None]:
 
 def _require_dependency_links(
     textures: tuple[VehicleMaterialTextureStep, ...],
-    masters: tuple[VehicleMaterialMasterStep, ...],
+    masters: tuple[VehicleMaterialAnyMasterStep, ...],
     instances: tuple[VehicleMaterialInstanceStep, ...],
 ) -> None:
     texture_by_sha = {item.sha256: item.object_path for item in textures}
@@ -461,7 +596,7 @@ def _require_sorted_unique(
 
 def _require_unique_paths(
     textures: tuple[VehicleMaterialTextureStep, ...],
-    masters: tuple[VehicleMaterialMasterStep, ...],
+    masters: tuple[VehicleMaterialAnyMasterStep, ...],
     instances: tuple[VehicleMaterialInstanceStep, ...],
 ) -> None:
     paths = [
@@ -493,6 +628,54 @@ def _master_asset(
         f"AlphaTest{'On' if alpha_test else 'Off'}_"
         f"{'TwoSided' if two_sided else 'OneSided'}"
     )
+
+
+def _lit_recipe_identity(bits: int, *, two_sided: bool) -> str:
+    face = "both-faces" if two_sided else "one-sided"
+    return f"simple-lit-opaque-shininess-{bits:08x}-{face}"
+
+
+def _lit_master_asset(bits: int, *, two_sided: bool) -> str:
+    face = "TwoSided" if two_sided else "OneSided"
+    return f"M_SHAR_Vehicle_SimpleLit_Opaque_Shininess{bits:08X}_{face}"
+
+
+def _rgba8(value: JsonValue | None) -> tuple[int, int, int, int]:
+    if not isinstance(value, list) or len(value) != 4:
+        fail_protocol("vehicle simple-lit source colour is not RGBA8")
+    result: list[int] = []
+    for component in value:
+        if (
+            isinstance(component, bool)
+            or not isinstance(component, int)
+            or not 0 <= component <= 255
+        ):
+            fail_protocol("vehicle simple-lit source colour is not RGBA8")
+        result.append(component)
+    return result[0], result[1], result[2], result[3]
+
+
+def _u32(row: JsonObject, key: str) -> int:
+    value = row.get(key)
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, int)
+        or not 0 <= value <= 0xFFFFFFFF
+    ):
+        fail_protocol(f"vehicle-material field {key} is not uint32")
+    return value
+
+
+def _bounded_float(
+    row: JsonObject, key: str, *, low: float, high: float
+) -> float:
+    value = row.get(key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        fail_protocol(f"vehicle-material field {key} is not numeric")
+    result = float(value)
+    if not math.isfinite(result) or not low <= result <= high:
+        fail_protocol(f"vehicle-material field {key} is outside reviewed range")
+    return result
 
 
 def _destination(

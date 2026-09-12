@@ -19,7 +19,10 @@ proprietary external formats.
 
 - [Repository knowledge model](documentation/repository-knowledge-model.md)
 
-## FBX conversion
+## Deprecated FBX interoperability
+
+These documents describe retained interoperability and migration behavior. FBX
+is not the production Unreal asset-construction boundary.
 
 - [Character semantic preparation](fbx/character-semantic-preparation.md)
 - [Animation clip timing](fbx/animation/clip-timing.md)
@@ -182,6 +185,9 @@ proprietary external formats.
 - [Native cooked-asset construction and registration
   runtime](unreal/native-cooked-asset-construction-and-registration-runtime.md)
 - [Native asset planning](unreal/native-asset-planning.md)
+<!-- markdownlint-disable-next-line MD013 -->
+- [Native assets from normalized
+  JSON](pipeline/unreal/native-assets-from-normalized-json.md)
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native import, material rebuild, and world
   assembly](unreal/native-import-material-and-world-assembly.md)

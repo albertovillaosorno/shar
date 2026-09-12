@@ -1,0 +1,66 @@
+---
+schema: shar.todo.v1
+id: known-vehicle-native-asset-blockers
+status: open
+priority: P0
+lane: unreal
+active: true
+parent: replace-fbx-unreal-ingestion-with-native-json-assets
+dependencies: [replace-fbx-unreal-ingestion-with-native-json-assets]
+children: []
+---
+
+# Resolve known native vehicle blockers before presentation review
+
+Track known vehicle defects that still prevent complete source-faithful native
+vehicle construction. These are implementation blockers, not requests for
+manual visual tuning.
+
+## Acceptance criteria
+
+- [ ] Construct vehicle render geometry and rig directly from normalized JSON
+  without an FBX import prerequisite.
+- [ ] Preserve authored wheel geometry while replacing temporary spherical wheel
+  collision assumptions with the exact accepted native tire and suspension
+  representation.
+- [ ] Translate authored articulated joint semantics for doors, hood, and trunk
+  instead of leaving secondary bodies permanently kinematic.
+- [ ] Recreate source-backed reflective `spheremap`, glass, wheel, and remaining
+  material families without inventing PBR values or fallback textures.
+- [ ] Bind all source-backed vehicle material slots so missing presentation is
+  explicit and no slot silently falls back to Unreal's default material.
+- [ ] Preserve the proven vehicle basis with forward `+X`, right `+Y`, and up
+  `+Z` through native construction rather than FBX root rotations or mirrors.
+- [ ] Keep vehicle self-collision and source joint policy deterministic and
+  verified against normalized physics evidence.
+- [ ] Retest steering, braking, suspension, damage, articulated parts, cameras,
+  and runtime stability after the native asset path replaces FBX.
+
+## Dependencies
+
+Parent task:
+`replace-fbx-unreal-ingestion-with-native-json-assets`.
+
+## Native Unreal asset pivot — 2026-09-12
+
+Normalized extracted JSON and versioned normalized plans are the canonical
+production handoff into Unreal. FBX is deprecated for production Unreal asset
+construction and may remain only as temporary interoperability, inspection, or
+migration evidence. New implementation work must construct target assets through
+tested native Unreal automation without making FBX transforms, scene units,
+material slots, or importer behavior authoritative. Existing FBX-based evidence
+remains historical or transitional and must be retired from production once the
+equivalent native constructor has parity coverage.
+
+## Evidence
+
+Current Snake evidence proves the coordinate and Physics Asset corrections but
+not full vehicle completion. The production Skeletal Mesh is X-forward, the
+Physics Asset remains stable in PIE, and the spring-configuration warning is
+absent, while several material families and articulated joint behaviors remain
+explicitly incomplete.
+
+Wheel collision is currently represented by analytic spheres from source
+collision evidence. That representation is useful for a bounded physics probe
+but is not authority for final tire contact, wheel width, suspension, steering,
+or visible wheel presentation.

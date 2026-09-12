@@ -507,7 +507,7 @@ fn vehicle_fbx_prerequisite_is_ready_without_clearing_semantic_blocker()
         "\"package_identity\":\"extracted-art-cars-vehicle\"",
         "\"source_path\":\"vehicle-assets/vehicle/vehicle.fbx\"",
         "\"target_class\":\"SkeletalMesh\"",
-        "\"import_profile\":\"shar-fbx-skeletal-v1\"",
+        "\"import_profile\":\"shar-fbx-vehicle-skeletal-v1\"",
         "\"readiness\":\"ready\"",
         concat!(
             "/Game/Generated/SHAR/cars/extracted_art_cars_vehicle_Skeletal/",

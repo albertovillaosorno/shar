@@ -25,11 +25,10 @@ moving parts. Non-drivable decorative vehicles use Static Mesh definitions.
 
 ## Normalized source package
 
-A drivable vehicle package contains one canonical binary FBX 7.7 skeletal scene,
-external normalized textures, a vehicle-rig manifest, physics and tuning
-records, damage and presentation records, optional animation packages, and one
-import plan. A decorative vehicle package may use a static-mesh FBX and an
-explicitly non-drivable definition.
+A drivable vehicle package contains normalized geometry, rig, animation,
+material, texture, physics, tuning, damage, and presentation JSON plus one
+versioned native construction plan. A decorative vehicle package uses the same
+normalized evidence with an explicitly non-drivable definition.
 
 ## Coordinate and mesh contract
 
@@ -46,13 +45,11 @@ node names.
 
 ### Source-backed grounding
 
-Vehicle FBX publication derives its vertical normalization from source geometry;
-it does not apply an editor-authored or hand-tuned height correction. Ordinary
-road vehicles require exactly four authored road-wheel surfaces bound to `w0`
-through `w3`. The exporter finds their lowest finite authored Y coordinate and
-applies its negation to every vehicle part, the unique skeleton root bind, and
-root animation samples. The FBX writer preserves that authored Y axis while its
-character export root only rotates 180 degrees around Y.
+Normalized vehicle evidence derives grounding from source geometry; it does not
+apply an editor-authored or hand-tuned height correction. Ordinary road vehicles
+require exactly four authored road-wheel surfaces bound to `w0` through `w3`.
+The native construction plan applies that source-backed offset consistently to
+mesh, root bind, animation, and physics data before target publication.
 
 `mono-v` uses a separate source-backed strategy because its four authored wheel
 boxes are nonvisual proxies: their source rest surfaces stay unchanged while the
@@ -108,36 +105,26 @@ The vehicle definition references explicit native profiles for:
 Player-facing speed, acceleration, toughness, and handling ratings are derived
 presentation metadata. They never replace real physics parameters.
 
-Vehicle catalog v8 retains the audited source-physics recipes separately from
-the FBX. Sphere and oriented-box primitives are bound to exact source skeleton
-joints in bone-local meter space; source cylinders are retained as evidence but
-block native construction until an exact target representation is accepted.
+Vehicle catalog v8 retains the audited source-physics recipes directly from
+normalized source evidence. Sphere and oriented-box primitives are bound to
+exact source skeleton joints in bone-local meter space. Source cylinders remain
+evidence and block native construction until an exact target representation is
+accepted.
 
-Vehicle catalog v8 additionally records the exact material slots emitted by the
-skinned FBX writer in first authored-use order. Every slot binds its effective
-surface semantics and base color to the exact published shader JSON and optional
-texture payload with byte counts and SHA-256. The Unreal catalog verifier checks
-those files and shader identities fail-closed, but still does not claim that a
-native `MaterialInstance` has been created.
-`prepare-unreal` reflects the local Y basis required by the skeletal-import
-contract, converts source box half-extents to Unreal's full box dimensions, and
-retains numeric magnitudes under the imported scene-unit root scale.
+Vehicle catalog v8 additionally records ordered material ownership and exact
+shader and texture evidence independently of any transport-format slot table.
+The Unreal catalog verifier checks those files and identities fail-closed before
+material construction.
 
-The generated Unreal plan exposes each verified vehicle FBX through a ready
-`shar-fbx-skeletal-v1` prerequisite with its own `_Skeletal` destination while
-retaining the car package's `CompositeModel` semantic blocker. This makes the
-reviewed rig import addressable without pretending the broader vehicle semantic
-conversion is complete. Editor-control verifies `vehicle-assets/...` beneath
-the pipeline cache by stable regular-file identity and SHA-256 before general
-plan execution.
+Native vehicle plans convert source `+X` right, `+Y` up, `+Z` forward into
+Unreal vehicle `+X` forward, `+Y` right, `+Z` up exactly once. Box dimensions,
+shape axes, skeleton rest transforms, animation samples, and semantic landmarks
+all use that same typed conversion.
 
-The prerequisite import is now an explicit construction-adjacent transaction,
-not a partial `plan-apply`. It derives the exact distinct FBXs referenced by
-native-ready physics requests, verifies only those bound source bytes, audits
-the live Skeletal Mesh import and AssetTools schemas, and then performs
-create/read-back/save/clean verification with reverse-order compensation. On the
-current release this is 87 FBXs for 135 ready rigs. The cylinder-only `icecream`
-FBX is intentionally omitted because it has no native-ready physics request.
+The current FBX prerequisite path is deprecated migration evidence. Production
+completion requires direct Skeletal Mesh, Skeleton, animation, material, and
+Physics Asset construction from normalized JSON, after which FBX-specific root,
+scene-unit, and importer policies are removed.
 
 The editor construction kernel revalidates that scale and the imported recipe
 bones before creating transient analytic bodies. A generated-root toolset

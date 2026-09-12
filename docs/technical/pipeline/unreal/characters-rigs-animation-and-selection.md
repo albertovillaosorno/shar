@@ -47,7 +47,7 @@ animation library](shared-character-animation-library.md).
 
 A character presentation package contains:
 
-- one canonical binary FBX 7.7 skeletal scene;
+- normalized mesh, rig, skin, and animation JSON evidence;
 - external texture files defined by the material contract;
 - one semantic preparation manifest describing mesh sections, surface roles, UV
   channels, eye layers, presentation variant, and texture bindings;

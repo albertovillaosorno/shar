@@ -9,18 +9,18 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Native construction of reviewed vehicle simple/unlit materials.
+//   - Native construction of reviewed vehicle simple materials.
 // - Must-Not:
 //   - Parse source catalogs, save packages, overwrite assets, or promote
 //   - special vehicle presentation semantics.
 // - Allows:
-//   - Exact verified plan fields classified as simple/unlit graph candidates.
+//   - Exact verified plan fields in reviewed simple material subsets.
 // - Split-When:
 //   - Another shader family or runtime material mutation gains construction.
 // - Merge-When:
 //   - Another editor adapter owns identical vehicle master construction.
 // - Summary:
-//   - Vehicle simple/unlit material construction adapter.
+//   - Vehicle simple material construction adapter.
 // - Description:
 //   - Applies vehicle-specific policy to the shared reviewed graph kernel and
 //   - reads back the result before returning an unsaved generated asset.
@@ -31,7 +31,9 @@
 //   - gated.
 //
 
-//! Vehicle simple/unlit material construction adapter.
+//! Vehicle simple material construction adapter.
+
+// CSpell:ignore MATUSAGE
 
 #include "Materials/SharVehicleMaterialToolset.h"
 
@@ -59,6 +61,8 @@ constexpr TCHAR GeneratedVehicleMaterialRootPrefix[] =
     TEXT("/Game/Generated/SHAR/Materials/Vehicles/");
 constexpr TCHAR GeneratedVehicleTextureRootPrefix[] =
     TEXT("/Game/Generated/SHAR/Textures/Vehicles/");
+constexpr TCHAR GeneratedVehicleMasterRootPrefix[] =
+    TEXT("/Game/Generated/SHAR/Materials/Vehicles/Masters/");
 constexpr TCHAR GeneratedVehicleInstanceRootPrefix[] =
     TEXT("/Game/Generated/SHAR/Materials/Vehicles/Instances/");
 constexpr TCHAR GeneratedVehicleSkeletalMeshRootPrefix[] =
@@ -344,12 +348,160 @@ bool ResolveSimpleUnlitVehicleMasterRecipe(
     return true;
 }
 
+bool ResolveSimpleLitVehicleMasterRecipe(
+    const FString& ShaderFamily,
+    bool bLit,
+    int32 BlendMode,
+    bool bAlphaTest,
+    int32 AlphaCompare,
+    bool bTwoSided,
+    FLinearColor SourceAmbient,
+    FLinearColor SourceSpecular,
+    FLinearColor SourceEmissive,
+    float SourceShininess,
+    FSharSimpleLitVehicleMasterRecipe& OutRecipe,
+    FString& OutError
+)
+{
+    OutRecipe = {};
+    OutError.Reset();
+    if (!ShaderFamily.Equals(TEXT("simple"), ESearchCase::CaseSensitive))
+    {
+        OutError = TEXT("shader_family is not the reviewed simple family");
+        return false;
+    }
+    if (!bLit)
+    {
+        OutError = TEXT("simple-lit vehicle master requires lit source state");
+        return false;
+    }
+    if (BlendMode != 0 || bAlphaTest || AlphaCompare != 4)
+    {
+        OutError = TEXT("simple-lit raster policy is not reviewed");
+        return false;
+    }
+    const auto IsBlack = [](const FLinearColor& Color)
+    {
+        return IsNormalizedColor(Color)
+            && FMath::IsNearlyZero(Color.R)
+            && FMath::IsNearlyZero(Color.G)
+            && FMath::IsNearlyZero(Color.B)
+            && FMath::IsNearlyEqual(Color.A, 1.0F);
+    };
+    if (
+        !IsBlack(SourceAmbient)
+        || !IsBlack(SourceSpecular)
+        || !IsBlack(SourceEmissive)
+    )
+    {
+        OutError = TEXT(
+            "simple-lit nonblack ambient/specular/emissive is not reviewed"
+        );
+        return false;
+    }
+    if (
+        !FMath::IsFinite(SourceShininess)
+        || SourceShininess < 0.0F
+        || SourceShininess > 128.0F
+    )
+    {
+        OutError = TEXT("source shininess is outside the reviewed GL range");
+        return false;
+    }
+    OutRecipe.SourceShininess = SourceShininess;
+    OutRecipe.bTwoSided = bTwoSided;
+    return true;
+}
+
+bool HasVehicleSkeletalUsage(
+    const UMaterial& Material,
+    FString& OutError
+)
+{
+    if (!Material.GetUsageByFlag(MATUSAGE_SkeletalMesh))
+    {
+        OutError = TEXT("vehicle master lacks SkeletalMesh material usage");
+        return false;
+    }
+    return true;
+}
+
+bool UpgradeVehicleMasterSkeletalUsage(
+    UMaterial& Material,
+    const TFunctionRef<bool(FString&)> ReadGraph,
+    FString& OutError
+)
+{
+    if (Material.GetPackage()->IsDirty())
+    {
+        OutError = TEXT("vehicle master must be clean before usage upgrade");
+        return false;
+    }
+    if (!ReadGraph(OutError))
+    {
+        return false;
+    }
+    if (Material.GetUsageByFlag(MATUSAGE_SkeletalMesh))
+    {
+        return true;
+    }
+
+    Material.Modify();
+    Material.SetUsageByFlag(MATUSAGE_SkeletalMesh, true);
+    Material.PostEditChange();
+    if (
+        !Material.GetUsageByFlag(MATUSAGE_SkeletalMesh)
+        || !ReadGraph(OutError)
+    )
+    {
+        Material.SetUsageByFlag(MATUSAGE_SkeletalMesh, false);
+        Material.PostEditChange();
+        Material.GetPackage()->SetDirtyFlag(false);
+        if (OutError.IsEmpty())
+        {
+            OutError = TEXT("vehicle master usage upgrade read-back drifted");
+        }
+        return false;
+    }
+    Material.MarkPackageDirty();
+    return true;
+}
+
+bool BuildSimpleLitVehicleMaster(
+    UMaterial& Material,
+    const FSharSimpleLitVehicleMasterRecipe& Recipe,
+    FString& OutError
+)
+{
+    Material.SetUsageByFlag(MATUSAGE_SkeletalMesh, true);
+    const FSharSimpleLitMaterialGraphRecipe GraphRecipe{
+        Recipe.SourceShininess,
+        Recipe.bTwoSided,
+    };
+    return BuildSimpleLitMaterialGraph(Material, GraphRecipe, OutError);
+}
+
+bool ReadBackSimpleLitVehicleMaster(
+    const UMaterial& Material,
+    const FSharSimpleLitVehicleMasterRecipe& Recipe,
+    FString& OutError
+)
+{
+    const FSharSimpleLitMaterialGraphRecipe GraphRecipe{
+        Recipe.SourceShininess,
+        Recipe.bTwoSided,
+    };
+    return HasVehicleSkeletalUsage(Material, OutError)
+        && ReadBackSimpleLitMaterialGraph(Material, GraphRecipe, OutError);
+}
+
 bool BuildSimpleUnlitVehicleMaster(
     UMaterial& Material,
     const FSharSimpleUnlitVehicleMasterRecipe& Recipe,
     FString& OutError
 )
 {
+    Material.SetUsageByFlag(MATUSAGE_SkeletalMesh, true);
     const FSharSimpleUnlitMaterialGraphRecipe GraphRecipe{
         Recipe.Blend,
         Recipe.bAlphaTest,
@@ -369,7 +521,8 @@ bool ReadBackSimpleUnlitVehicleMaster(
         Recipe.bAlphaTest,
         Recipe.bTwoSided,
     };
-    return ReadBackSimpleUnlitMaterialGraph(Material, GraphRecipe, OutError);
+    return HasVehicleSkeletalUsage(Material, OutError)
+        && ReadBackSimpleUnlitMaterialGraph(Material, GraphRecipe, OutError);
 }
 
 FString MaterialObjectPath(const UMaterialInterface* Material)
@@ -594,7 +747,329 @@ FString USharVehicleMaterialToolset::CreateSimpleUnlitVehicleMaster(
     return ObjectPath;
 }
 
-FString USharVehicleMaterialToolset::CreateSimpleUnlitVehicleMaterialInstance(
+FString USharVehicleMaterialToolset::CreateSimpleLitVehicleMaster(
+    const FString& FolderPath,
+    const FString& AssetName,
+    const FString& ShaderFamily,
+    bool bLit,
+    int32 BlendMode,
+    bool bAlphaTest,
+    int32 AlphaCompare,
+    bool bTwoSided,
+    FLinearColor SourceAmbient,
+    FLinearColor SourceSpecular,
+    FLinearColor SourceEmissive,
+    float SourceShininess
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FString Error;
+    FSharSimpleLitVehicleMasterRecipe Recipe;
+    if (!ResolveSimpleLitVehicleMasterRecipe(
+            ShaderFamily,
+            bLit,
+            BlendMode,
+            bAlphaTest,
+            AlphaCompare,
+            bTwoSided,
+            SourceAmbient,
+            SourceSpecular,
+            SourceEmissive,
+            SourceShininess,
+            Recipe,
+            Error
+        ))
+    {
+        RaiseVehicleMaterialError(Error);
+        return {};
+    }
+    FString PackagePath;
+    FString ObjectPath;
+    if (!ValidateVehicleMaterialDestination(
+            FolderPath,
+            AssetName,
+            PackagePath,
+            ObjectPath,
+            Error
+        ))
+    {
+        RaiseVehicleMaterialError(Error);
+        return {};
+    }
+
+    UMaterialFactoryNew* Factory = NewObject<UMaterialFactoryNew>();
+    UMaterial* Material = Cast<UMaterial>(
+        FAssetToolsModule::GetModule().Get().CreateAsset(
+            AssetName,
+            FolderPath,
+            UMaterial::StaticClass(),
+            Factory,
+            NAME_None,
+            false
+        )
+    );
+    if (Material == nullptr)
+    {
+        RaiseVehicleMaterialError(
+            TEXT("failed to create simple-lit vehicle master material")
+        );
+        return {};
+    }
+    if (!BuildSimpleLitVehicleMaster(*Material, Recipe, Error))
+    {
+        DiscardCreatedVehicleMaterial(Material);
+        RaiseVehicleMaterialError(Error);
+        return {};
+    }
+    UMaterialEditingLibrary::LayoutMaterialExpressions(Material);
+    const TArray<FString> CompileErrors =
+        UMaterialEditingLibrary::RecompileMaterial(Material);
+    if (!CompileErrors.IsEmpty())
+    {
+        DiscardCreatedVehicleMaterial(Material);
+        RaiseVehicleMaterialError(
+            TEXT("simple-lit vehicle master material did not compile")
+        );
+        return {};
+    }
+    if (!ReadBackSimpleLitVehicleMaster(*Material, Recipe, Error))
+    {
+        DiscardCreatedVehicleMaterial(Material);
+        RaiseVehicleMaterialError(Error);
+        return {};
+    }
+    Material->MarkPackageDirty();
+    return ObjectPath;
+}
+
+bool USharVehicleMaterialToolset::VerifySimpleUnlitVehicleMaster(
+    const FString& ObjectPath,
+    const FString& ShaderFamily,
+    bool bLit,
+    int32 BlendMode,
+    bool bAlphaTest,
+    int32 AlphaCompare,
+    bool bTwoSided
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FString Error;
+    FSharSimpleUnlitVehicleMasterRecipe Recipe;
+    if (!ResolveSimpleUnlitVehicleMasterRecipe(
+            ShaderFamily,
+            bLit,
+            BlendMode,
+            bAlphaTest,
+            AlphaCompare,
+            bTwoSided,
+            Recipe,
+            Error
+        ))
+    {
+        RaiseVehicleMaterialError(Error);
+        return false;
+    }
+    if (!IsCanonicalGeneratedObjectPath(
+            ObjectPath,
+            GeneratedVehicleMasterRootPrefix
+        ))
+    {
+        RaiseVehicleMaterialError(
+            TEXT("master is not a canonical generated vehicle material")
+        );
+        return false;
+    }
+    UMaterial* Material = FindOrLoadGeneratedObject<UMaterial>(ObjectPath);
+    return Material != nullptr
+        && ReadBackSimpleUnlitVehicleMaster(*Material, Recipe, Error);
+}
+
+bool USharVehicleMaterialToolset::VerifySimpleLitVehicleMaster(
+    const FString& ObjectPath,
+    const FString& ShaderFamily,
+    bool bLit,
+    int32 BlendMode,
+    bool bAlphaTest,
+    int32 AlphaCompare,
+    bool bTwoSided,
+    FLinearColor SourceAmbient,
+    FLinearColor SourceSpecular,
+    FLinearColor SourceEmissive,
+    float SourceShininess
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FString Error;
+    FSharSimpleLitVehicleMasterRecipe Recipe;
+    if (!ResolveSimpleLitVehicleMasterRecipe(
+            ShaderFamily,
+            bLit,
+            BlendMode,
+            bAlphaTest,
+            AlphaCompare,
+            bTwoSided,
+            SourceAmbient,
+            SourceSpecular,
+            SourceEmissive,
+            SourceShininess,
+            Recipe,
+            Error
+        ))
+    {
+        RaiseVehicleMaterialError(Error);
+        return false;
+    }
+    if (!IsCanonicalGeneratedObjectPath(
+            ObjectPath,
+            GeneratedVehicleMasterRootPrefix
+        ))
+    {
+        RaiseVehicleMaterialError(
+            TEXT("master is not a canonical generated vehicle material")
+        );
+        return false;
+    }
+    UMaterial* Material = FindOrLoadGeneratedObject<UMaterial>(ObjectPath);
+    return Material != nullptr
+        && ReadBackSimpleLitVehicleMaster(*Material, Recipe, Error);
+}
+
+bool USharVehicleMaterialToolset::UpgradeSimpleUnlitVehicleMasterSkeletalUsage(
+    const FString& ObjectPath,
+    const FString& ShaderFamily,
+    bool bLit,
+    int32 BlendMode,
+    bool bAlphaTest,
+    int32 AlphaCompare,
+    bool bTwoSided
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FString Error;
+    FSharSimpleUnlitVehicleMasterRecipe Recipe;
+    if (!ResolveSimpleUnlitVehicleMasterRecipe(
+            ShaderFamily,
+            bLit,
+            BlendMode,
+            bAlphaTest,
+            AlphaCompare,
+            bTwoSided,
+            Recipe,
+            Error
+        )
+        || !IsCanonicalGeneratedObjectPath(
+            ObjectPath,
+            GeneratedVehicleMasterRootPrefix
+        ))
+    {
+        if (Error.IsEmpty())
+        {
+            Error = TEXT(
+                "master is not a canonical generated vehicle material"
+            );
+        }
+        RaiseVehicleMaterialError(Error);
+        return false;
+    }
+    UMaterial* Material = FindOrLoadGeneratedObject<UMaterial>(ObjectPath);
+    if (Material == nullptr)
+    {
+        RaiseVehicleMaterialError(TEXT("vehicle master does not exist"));
+        return false;
+    }
+    const FSharSimpleUnlitMaterialGraphRecipe GraphRecipe{
+        Recipe.Blend,
+        Recipe.bAlphaTest,
+        Recipe.bTwoSided,
+    };
+    const auto ReadGraph = [Material, &GraphRecipe](FString& GraphError)
+    {
+        return ReadBackSimpleUnlitMaterialGraph(
+            *Material,
+            GraphRecipe,
+            GraphError
+        );
+    };
+    if (!UpgradeVehicleMasterSkeletalUsage(*Material, ReadGraph, Error))
+    {
+        RaiseVehicleMaterialError(Error);
+        return false;
+    }
+    return ReadBackSimpleUnlitVehicleMaster(*Material, Recipe, Error);
+}
+
+bool USharVehicleMaterialToolset::UpgradeSimpleLitVehicleMasterSkeletalUsage(
+    const FString& ObjectPath,
+    const FString& ShaderFamily,
+    bool bLit,
+    int32 BlendMode,
+    bool bAlphaTest,
+    int32 AlphaCompare,
+    bool bTwoSided,
+    FLinearColor SourceAmbient,
+    FLinearColor SourceSpecular,
+    FLinearColor SourceEmissive,
+    float SourceShininess
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    FString Error;
+    FSharSimpleLitVehicleMasterRecipe Recipe;
+    if (!ResolveSimpleLitVehicleMasterRecipe(
+            ShaderFamily,
+            bLit,
+            BlendMode,
+            bAlphaTest,
+            AlphaCompare,
+            bTwoSided,
+            SourceAmbient,
+            SourceSpecular,
+            SourceEmissive,
+            SourceShininess,
+            Recipe,
+            Error
+        )
+        || !IsCanonicalGeneratedObjectPath(
+            ObjectPath,
+            GeneratedVehicleMasterRootPrefix
+        ))
+    {
+        if (Error.IsEmpty())
+        {
+            Error = TEXT(
+                "master is not a canonical generated vehicle material"
+            );
+        }
+        RaiseVehicleMaterialError(Error);
+        return false;
+    }
+    UMaterial* Material = FindOrLoadGeneratedObject<UMaterial>(ObjectPath);
+    if (Material == nullptr)
+    {
+        RaiseVehicleMaterialError(TEXT("vehicle master does not exist"));
+        return false;
+    }
+    const FSharSimpleLitMaterialGraphRecipe GraphRecipe{
+        Recipe.SourceShininess,
+        Recipe.bTwoSided,
+    };
+    const auto ReadGraph = [Material, &GraphRecipe](FString& GraphError)
+    {
+        return ReadBackSimpleLitMaterialGraph(
+            *Material,
+            GraphRecipe,
+            GraphError
+        );
+    };
+    if (!UpgradeVehicleMasterSkeletalUsage(*Material, ReadGraph, Error))
+    {
+        RaiseVehicleMaterialError(Error);
+        return false;
+    }
+    return ReadBackSimpleLitVehicleMaster(*Material, Recipe, Error);
+}
+
+FString USharVehicleMaterialToolset::CreateVehicleMaterialInstance(
     const FString& FolderPath,
     const FString& AssetName,
     const FString& ParentMaterialPath,

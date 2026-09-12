@@ -31,7 +31,7 @@
 //! Binary identity outbound adapter.
 
 const GEOMETRY_ID_BASE: u64 = 2_000_000;
-/// Object-id base for deduplicated material, texture, and video triples.
+/// Object-id base for material slots and candidate texture/video identities.
 const MATERIAL_ID_BASE: u64 = 3_000_000;
 /// Object-id base for limb-node model and node-attribute pairs.
 const BONE_ID_BASE: u64 = 4_000_000;
@@ -62,7 +62,7 @@ pub(super) struct BoneIds {
     pub(super) attribute: u64,
 }
 
-/// Deterministic object ids for one material triple.
+/// Deterministic material id plus candidate texture/video ids for its slot.
 #[derive(Clone, Copy)]
 pub(super) struct MaterialIds {
     /// Material object id.

@@ -9,9 +9,11 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Dirty, unsaved publication of verified vehicle Physics Assets.
+//   - Dirty, unsaved create and explicit in-place rebuild of verified
+//   - vehicle Physics Assets.
 // - Must-Not:
-//   - Parse source catalogs, save packages, overwrite assets, or approximate
+//   - Parse source catalogs, save packages, replace asset identity, or
+//   - approximate
 //   - unsupported source shapes.
 // - Allows:
 //   - Already projected sphere and box fields from prepare-unreal evidence.
@@ -22,11 +24,13 @@
 // - Summary:
 //   - SHAR generated vehicle Physics Asset toolset.
 // - Description:
-//   - Publishes one reviewed native Physics Asset from verified recipe fields.
+//   - Publishes or rebuilds one reviewed native Physics Asset from verified
+//   - recipe fields.
 // - Usage:
 //   - Called after skeletal import and vehicle-physics plan verification.
 // - Defaults:
-//   - Creation is create-only, generated-root-only, dirty, and unsaved.
+//   - Creation is create-only; rebuild is explicit, identity-preserving,
+//   - generated-root-only, dirty, and unsaved.
 //
 
 //! SHAR generated vehicle Physics Asset toolset.
@@ -98,8 +102,21 @@ public:
     );
 
     /**
+     * Rebuild one clean generated Physics Asset without replacing its UObject.
+     * The result stays dirty and unsaved for caller-owned persistence.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharVehiclePhysicsToolset")
+    static FString RebuildVehiclePhysicsAsset(
+        const FString& PhysicsAssetPath,
+        const FString& SkeletalMeshPath,
+        FName RigIdentity,
+        int32 SourceJointCount,
+        const TArray<FSharVehiclePhysicsShapeInput>& Shapes
+    );
+
+    /**
      * Verify one existing generated Physics Asset against exact plan fields.
-     * This is read-only and returns false for geometry or preview-mesh drift.
+     * This is read-only and returns false for any native physics drift.
      */
     UFUNCTION(meta = (AICallable), Category = "SharVehiclePhysicsToolset")
     static bool VerifyVehiclePhysicsAsset(

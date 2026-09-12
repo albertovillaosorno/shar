@@ -23,7 +23,8 @@
 // - Description:
 //   - Registers and unregisters the project ToolsetRegistry toolset.
 // - Usage:
-//   - Used through the SharImportEditor module and its native toolset boundary.
+//   - Used through the SharImportEditor module and its native toolset
+//   - boundary.
 // - Defaults:
 //   - Invalid, ambiguous, or replacement requests fail explicitly.
 //
@@ -32,6 +33,8 @@
 
 #include "Import/SharImportToolset.h"
 #include "Import/SharSkeletalMeshReimportToolset.h"
+#include "Import/SharVehicleDriveTestAnimToolset.h"
+#include "Import/SharVehicleDriveTestToolset.h"
 #include "Import/SharVehiclePhysicsToolset.h"
 #include "Materials/SharVehicleMaterialToolset.h"
 #include "Materials/SharWorldMaterialToolset.h"
@@ -49,6 +52,10 @@ public:
         UToolsetRegistry::RegisterToolsetClass(
             USharSkeletalMeshReimportToolset::StaticClass());
         UToolsetRegistry::RegisterToolsetClass(
+            USharVehicleDriveTestAnimToolset::StaticClass());
+        UToolsetRegistry::RegisterToolsetClass(
+            USharVehicleDriveTestToolset::StaticClass());
+        UToolsetRegistry::RegisterToolsetClass(
             USharVehiclePhysicsToolset::StaticClass());
         UToolsetRegistry::RegisterToolsetClass(
             USharVehicleMaterialToolset::StaticClass());
@@ -64,6 +71,10 @@ public:
             USharVehicleMaterialToolset::StaticClass());
         UToolsetRegistry::UnregisterToolsetClass(
             USharVehiclePhysicsToolset::StaticClass());
+        UToolsetRegistry::UnregisterToolsetClass(
+            USharVehicleDriveTestToolset::StaticClass());
+        UToolsetRegistry::UnregisterToolsetClass(
+            USharVehicleDriveTestAnimToolset::StaticClass());
         UToolsetRegistry::UnregisterToolsetClass(
             USharSkeletalMeshReimportToolset::StaticClass());
         UToolsetRegistry::UnregisterToolsetClass(

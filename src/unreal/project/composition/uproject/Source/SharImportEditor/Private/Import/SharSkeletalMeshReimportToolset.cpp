@@ -122,7 +122,8 @@ bool ReloadSavedRevision(
 void ConfigureReimportFactory(
     UReimportFbxSkeletalMeshFactory& Factory,
     USkeleton* Skeleton,
-    UPhysicsAsset* PhysicsAsset
+    UPhysicsAsset* PhysicsAsset,
+    const bool bForceFrontXAxis
 )
 {
     UFbxImportUI* ImportUI = Factory.ImportUI;
@@ -144,6 +145,7 @@ void ConfigureReimportFactory(
 
     UFbxSkeletalMeshImportData* MeshImport = ImportUI->SkeletalMeshImportData;
     ApplyFbxSceneUnitPolicy(*MeshImport);
+    MeshImport->bForceFrontXAxis = bForceFrontXAxis;
     MeshImport->ImportContentType = FBXICT_All;
     MeshImport->NormalImportMethod = FBXNIM_ImportNormals;
     MeshImport->bComputeWeightedNormals = false;
@@ -292,10 +294,11 @@ TArray<FString> FailAndReload(
 } // namespace
 } // namespace UE::SharImportEditor::Private
 
-TArray<FString> USharSkeletalMeshReimportToolset::ReimportSkeletalMeshRevision(
+static TArray<FString> ReimportSkeletalMeshWithFrontXAxisPolicy(
     const FString& SourceFile,
     const FString& FolderPath,
-    const FString& AssetName
+    const FString& AssetName,
+    const bool bForceFrontXAxis
 )
 {
     using namespace UE::SharImportEditor::Private;
@@ -351,7 +354,12 @@ TArray<FString> USharSkeletalMeshReimportToolset::ReimportSkeletalMeshRevision(
         );
         return {};
     }
-    ConfigureReimportFactory(*Factory, Skeleton, PhysicsAsset);
+    ConfigureReimportFactory(
+        *Factory,
+        Skeleton,
+        PhysicsAsset,
+        bForceFrontXAxis
+    );
 
     const bool Reimported = FReimportManager::Instance()->Reimport(
         Mesh,
@@ -382,4 +390,33 @@ TArray<FString> USharSkeletalMeshReimportToolset::ReimportSkeletalMeshRevision(
         return FailAndReload(RollbackPackages, Error);
     }
     return {Paths.MeshObjectPath, Paths.SkeletonObjectPath};
+}
+
+TArray<FString> USharSkeletalMeshReimportToolset::ReimportSkeletalMeshRevision(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName
+)
+{
+    return ReimportSkeletalMeshWithFrontXAxisPolicy(
+        SourceFile,
+        FolderPath,
+        AssetName,
+        false
+    );
+}
+
+TArray<FString>
+USharSkeletalMeshReimportToolset::ReimportVehicleSkeletalMeshRevision(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName
+)
+{
+    return ReimportSkeletalMeshWithFrontXAxisPolicy(
+        SourceFile,
+        FolderPath,
+        AssetName,
+        false
+    );
 }

@@ -68,12 +68,13 @@ def _import(
     revision: str = "1" * 64,
     operation: str = "operation-0000000000000001",
     destination: str = _OBJECT,
+    route_id: str = "vehicle-skeletal-mesh-fbx-v1",
 ) -> NativeImportStep:
     package, _, asset = destination.rpartition(".")
     folder, _, _ = package.rpartition("/")
     return NativeImportStep(
         operation_id=operation,
-        route_id="skeletal-mesh-fbx-v1",
+        route_id=route_id,
         source_path=source,
         source_revision=revision,
         destination=destination,
@@ -82,7 +83,11 @@ def _import(
         folder_path=folder,
         asset_name=asset,
         toolset_name="SharImportEditor.SharImportToolset",
-        tool_name="SharImportEditor.SharImportToolset.ImportSkeletalMesh",
+        tool_name=(
+            "SharImportEditor.SharImportToolset.ImportVehicleSkeletalMesh"
+            if route_id == "vehicle-skeletal-mesh-fbx-v1"
+            else "SharImportEditor.SharImportToolset.ImportSkeletalMesh"
+        ),
         external_payload_path=None,
     )
 
@@ -96,7 +101,10 @@ def _execution(*imports: NativeImportStep) -> CompiledExecutionPlan:
             semantic_blocker_count=1,
             blocked_readiness={},
             unsupported_routes={},
-            route_counts={"skeletal-mesh-fbx-v1": len(imports)},
+            route_counts={
+                route: sum(1 for item in imports if item.route_id == route)
+                for route in {item.route_id for item in imports}
+            },
         ),
         imports,
     )
@@ -156,6 +164,14 @@ def test_deduplicates_two_ready_rigs_using_one_vehicle_fbx() -> None:
     assert compiled.report.source_count == 1
     assert compiled.report.ready_rig_count == 2
     assert compiled.imports[0].source_path == _SOURCE
+
+
+def test_rejects_generic_skeletal_route_for_vehicle_prerequisite() -> None:
+    with pytest.raises(ProtocolError, match="skeletal import is missing"):
+        compile_vehicle_physics_prerequisites(
+            _construction(_request("sedana")),
+            _execution(_import(route_id="skeletal-mesh-fbx-v1")),
+        )
 
 
 def test_rejects_non_vehicle_source_and_destination_mismatch() -> None:

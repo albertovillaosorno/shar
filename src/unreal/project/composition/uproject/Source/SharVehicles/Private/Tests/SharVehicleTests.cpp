@@ -38,6 +38,8 @@
 #include "Vehicles/SharVehicleNativeBrakeLightAdapter.h"
 #include "Vehicles/SharVehicleNativeLightAdapter.h"
 #include "Vehicles/SharVehicleDefinition.h"
+#include "Vehicles/SharSnakeDriveTestWheel.h"
+#include "Vehicles/SharVehicleDriveTestPawn.h"
 #include "Vehicles/SharVehiclePawn.h"
 #include "Vehicles/SharVehiclePresentationDefinition.h"
 #include "Vehicles/SharVehiclePresentationState.h"
@@ -48,6 +50,7 @@
 #include "Animation/Skeleton.h"
 #include "ChaosVehicleWheel.h"
 #include "ChaosWheeledVehicleMovementComponent.h"
+#include "Camera/CameraComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "Engine/DataAsset.h"
 #include "Engine/SkeletalMesh.h"
@@ -55,6 +58,7 @@
 #include "Materials/MaterialInterface.h"
 #include "Misc/AutomationTest.h"
 #include "PhysicsEngine/PhysicsAsset.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "PhysicsEngine/SkeletalBodySetup.h"
 #include "ReferenceSkeleton.h"
 #include "VehicleAnimationInstance.h"
@@ -161,10 +165,10 @@ static USharVehiclePresentationDefinition* MakeValidVehiclePresentation()
     auto* Presentation = NewObject<USharVehiclePresentationDefinition>();
     FillVehiclePresentationBase(*Presentation);
     Presentation->Wheels = {
-        MakeWheelBinding(TEXT("front_left"), TEXT("w0")),
-        MakeWheelBinding(TEXT("front_right"), TEXT("w1")),
-        MakeWheelBinding(TEXT("rear_left"), TEXT("w2")),
-        MakeWheelBinding(TEXT("rear_right"), TEXT("w3")),
+        MakeWheelBinding(TEXT("rear_right"), TEXT("w0")),
+        MakeWheelBinding(TEXT("rear_left"), TEXT("w1")),
+        MakeWheelBinding(TEXT("front_left"), TEXT("w2")),
+        MakeWheelBinding(TEXT("front_right"), TEXT("w3")),
     };
     return Presentation;
 }
@@ -411,6 +415,23 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharVehicleConstructionTransactionTest,
     "SHAR.Vehicles.Construction.Transaction",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharSnakeDriveTestWheelDefaultsTest,
+    "SHAR.Vehicles.Runtime.SnakeDriveTestWheelDefaults",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehicleDriveTestPawnTest,
+    "SHAR.Vehicles.Runtime.DriveTestPawn",
     EAutomationTestFlags::EditorContext
         | EAutomationTestFlags::ClientContext
         | EAutomationTestFlags::CommandletContext
@@ -932,6 +953,107 @@ bool FSharVehicleSelectionTransactionTest::RunTest(
     TestTrue(
         TEXT("Rollback preserves previous vehicle identity"),
         Rollback->GetPreviousVehicleId() == PreviousVehicle
+    );
+    return true;
+}
+
+bool FSharSnakeDriveTestWheelDefaultsTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    const auto* Rear = GetDefault<USharSnakeDriveTestRearWheel>();
+    const auto* Front = GetDefault<USharSnakeDriveTestFrontWheel>();
+    TestNotNull(TEXT("Snake rear drive-test wheel default exists"), Rear);
+    TestNotNull(TEXT("Snake front drive-test wheel default exists"), Front);
+    if (Rear == nullptr || Front == nullptr)
+    {
+        return false;
+    }
+
+    TestTrue(
+        TEXT("Snake rear wheel preserves authored radius"),
+        FMath::IsNearlyEqual(Rear->WheelRadius, 41.1083281F)
+    );
+    TestTrue(
+        TEXT("Snake rear wheel is engine-driven"),
+        Rear->bAffectedByEngine
+    );
+    TestTrue(TEXT("Snake rear wheel receives brake"), Rear->bAffectedByBrake);
+    TestTrue(
+        TEXT("Snake rear wheel receives handbrake"),
+        Rear->bAffectedByHandbrake
+    );
+    TestFalse(
+        TEXT("Snake rear wheel does not steer"),
+        Rear->bAffectedBySteering
+    );
+
+    TestTrue(
+        TEXT("Snake front wheel preserves authored radius"),
+        FMath::IsNearlyEqual(Front->WheelRadius, 34.9751204F)
+    );
+    TestFalse(
+        TEXT("Snake front wheel is not engine-driven"),
+        Front->bAffectedByEngine
+    );
+    TestFalse(
+        TEXT("Snake front wheel does not receive brake"),
+        Front->bAffectedByBrake
+    );
+    TestFalse(
+        TEXT("Snake front wheel does not receive handbrake"),
+        Front->bAffectedByHandbrake
+    );
+    TestTrue(
+        TEXT("Snake front wheel steers"),
+        Front->bAffectedBySteering
+    );
+    TestTrue(
+        TEXT("Snake front wheel preserves authored steer limit"),
+        FMath::IsNearlyEqual(Front->MaxSteerAngle, 30.0F)
+    );
+    return true;
+}
+
+bool FSharVehicleDriveTestPawnTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    auto* Pawn = NewObject<ASharVehicleDriveTestPawn>();
+    TestNotNull(TEXT("Drive-test Pawn constructs"), Pawn);
+    if (Pawn == nullptr)
+    {
+        return false;
+    }
+    TestTrue(
+        TEXT("Drive-test Pawn auto-possesses local player zero"),
+        Pawn->AutoPossessPlayer == EAutoReceiveInput::Player0
+    );
+    TestTrue(
+        TEXT("Drive-test Pawn enables chassis simulation"),
+        Pawn->GetMesh()->BodyInstance.bSimulatePhysics
+    );
+    TestTrue(
+        TEXT("Drive-test Pawn enables chassis gravity"),
+        Pawn->GetMesh()->BodyInstance.bEnableGravity
+    );
+    TestNotNull(
+        TEXT("Drive-test Pawn owns a chase-camera boom"),
+        Pawn->GetDriveTestCameraBoom()
+    );
+    TestNotNull(
+        TEXT("Drive-test Pawn owns a chase camera"),
+        Pawn->GetDriveTestCamera()
+    );
+    TestTrue(
+        TEXT("Drive-test chase camera auto-activates"),
+        Pawn->GetDriveTestCamera()->bAutoActivate
+    );
+    TestNotNull(
+        TEXT("Drive-test Pawn retains Chaos vehicle movement"),
+        Pawn->GetVehicleMovementComponent()
     );
     return true;
 }

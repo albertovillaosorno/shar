@@ -49,6 +49,7 @@ public class SharImportEditor : ModuleRules
                 "AssetRegistry",
                 "AssetTools",
                 "AudioEditor",
+                "ChaosVehicles",
                 "MaterialEditor",
                 "MediaAssets",
                 "UnrealEd",

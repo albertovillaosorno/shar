@@ -35,7 +35,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::{
-    character_material_slots, write_binary_character_fbx,
+    ModelExportRootPolicy, character_material_slots,
+    write_binary_character_fbx_with_root_policy,
 };
 use fbx::adapters::driven::decoded_animation_source::load_animation_clips;
 use fbx::adapters::driven::decoded_billboard_source::{
@@ -47,6 +48,8 @@ use fbx::adapters::driven::decoded_component_source::{
 use fbx::adapters::driven::decoded_rigid_prop_source::
     load_instanced_rigid_prop_asset_with_billboards;
 use fbx::domain::animation::AnimationClip;
+use fbx::domain::animation::quaternion::{from_row_matrix, to_row_matrix};
+use fbx::domain::transform::matrix::multiply;
 use fbx::domain::character::{CharacterAsset, SkinnedPart};
 use fbx::domain::mesh::MeshAsset;
 use fbx::domain::texture::{MaterialBinding, MaterialSemantics};
@@ -184,7 +187,7 @@ pub(super) fn export_vehicle(
     let materials = resolved.fbx_materials;
     let resolved_materials = resolved.by_source;
     let shaders = resolved.shaders;
-    let (separated, parts) =
+    let (mut separated, parts) =
         separate_vehicle_parts(prepared_asset, &materials)?;
     let (mut animations, effect_animation_sidecars) = load_vehicle_animations(
         package,
@@ -193,11 +196,13 @@ pub(super) fn export_vehicle(
         &separated,
     )?;
     ground_vehicle_animations(&mut animations, &root_bone, ground_offset)?;
+    rebase_vehicle_for_chaos(&mut separated, &mut animations)?;
     let fbx_path = vehicle_dir.join(format!("{vehicle}.fbx"));
-    let summary = write_binary_character_fbx(
+    let summary = write_binary_character_fbx_with_root_policy(
         &separated,
         &materials,
         &animations,
+        ModelExportRootPolicy::Identity,
         &fbx_path,
     )
     .map_err(|error| {
@@ -892,6 +897,82 @@ fn is_road_wheel_bone(value: &str) -> bool {
         value.to_ascii_lowercase().as_str(),
         "w0" | "w1" | "w2" | "w3"
     )
+}
+
+/// Re-express one source vehicle in Unreal Chaos local axes.
+fn rebase_vehicle_for_chaos(
+    asset: &mut CharacterAsset,
+    clips: &mut [AnimationClip],
+) -> Result<(), PipelineError> {
+    for group in asset
+        .parts
+        .iter_mut()
+        .flat_map(|part| &mut part.mesh.groups)
+    {
+        for position in &mut group.positions {
+            *position = vehicle_chaos_vector(*position);
+        }
+        for normal in &mut group.normals {
+            *normal = vehicle_chaos_vector(*normal);
+        }
+    }
+    for bone in &mut asset.bones {
+        bone.rest_matrix = rebase_vehicle_matrix_f32(bone.rest_matrix);
+    }
+    for clip in clips {
+        for track in &mut clip.tracks {
+            for sample in &mut track.samples {
+                let matrix = to_row_matrix(
+                    sample.rotation_wxyz,
+                    sample.translation,
+                );
+                let rebased = rebase_vehicle_matrix(matrix);
+                sample.translation = [
+                    rebased[12],
+                    rebased[13],
+                    rebased[14],
+                ];
+                sample.rotation_wxyz = from_row_matrix(&rebased).map_err(
+                    |error| PipelineError::new(format!(
+                        "vehicle Chaos basis conversion failed: {error:?}"
+                    )),
+                )?;
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Map SHAR lateral/up/longitudinal axes to Chaos forward/right/up axes.
+const fn vehicle_chaos_vector(vector: [f32; 3]) -> [f32; 3] {
+    [vector[2], vector[0], vector[1]]
+}
+
+/// Conjugate one source f32 local matrix by the same axis permutation.
+const fn rebase_vehicle_matrix_f32(matrix: [f32; 16]) -> [f32; 16] {
+    [
+        matrix[10], matrix[8], matrix[9], matrix[11],
+        matrix[2], matrix[0], matrix[1], matrix[3],
+        matrix[6], matrix[4], matrix[5], matrix[7],
+        matrix[14], matrix[12], matrix[13], matrix[15],
+    ]
+}
+
+/// Conjugate one local transform into the vehicle Chaos basis.
+fn rebase_vehicle_matrix(matrix: [f64; 16]) -> [f64; 16] {
+    const BASIS: [f64; 16] = [
+        0., 1., 0., 0.,
+        0., 0., 1., 0.,
+        1., 0., 0., 0.,
+        0., 0., 0., 1.,
+    ];
+    const BASIS_INVERSE: [f64; 16] = [
+        0., 0., 1., 0.,
+        1., 0., 0., 0.,
+        0., 1., 0., 0.,
+        0., 0., 0., 1.,
+    ];
+    multiply(&multiply(&BASIS_INVERSE, &matrix), &BASIS)
 }
 
 /// Apply the same grounding translation to root animation samples.
@@ -2475,6 +2556,16 @@ fn build_vehicle_physics_rig(
             ));
         }
         joint_names.push(joint_identity.to_owned());
+    }
+    let self_collisions = required_array(
+        collision,
+        "self_collisions",
+        "physics-rig self collisions",
+    )?;
+    if !self_collisions.is_empty() {
+        return Err(PipelineError::new(
+            "vehicle physics rig has unsupported self collisions",
+        ));
     }
     let volumes = required_array(
         collision,

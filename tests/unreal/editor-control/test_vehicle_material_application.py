@@ -32,9 +32,14 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from typing import NamedTuple
 
+from mcp.adapter_outbound.vehicle_material_source_verifier import (
+    VerifiedVehicleMaterialTextureSource,
+)
 from mcp.application.vehicle_material_application import (
     apply_vehicle_material_construction,
 )
@@ -56,6 +61,9 @@ from mcp.domain.vehicle_material_construction import (
     VehicleMaterialConstructionReport,
 )
 from mcp.domain.vehicle_material_construction import VehicleMaterialInstanceStep
+from mcp.domain.vehicle_material_construction import (
+    VehicleMaterialLitMasterStep,
+)
 from mcp.domain.vehicle_material_construction import VehicleMaterialMasterStep
 from mcp.domain.vehicle_material_construction import VehicleMaterialTextureStep
 import pytest
@@ -64,6 +72,7 @@ _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
 _IMPORT_TOOLSET = "SharImportEditor.SharImportToolset"
 _MATERIAL_TOOLSET = "SharImportEditor.SharVehicleMaterialToolset"
 _SHA = "1" * 64
+_SOURCE_MD5 = hashlib.md5(b"png", usedforsecurity=False).hexdigest()
 _REQUEST = "2" * 64
 _RECIPE = "simple-unlit-blend-alpha-alpha-test-on-both-faces"
 
@@ -153,6 +162,34 @@ def _toolsets(*, omit: str | None = None) -> tuple[ToolsetDefinition, ...]:
         "folderPath",
         "shaderFamily",
     )
+    lit_master_input = _object_schema(
+        {
+            "alphaCompare": integer,
+            "assetName": text,
+            "bAlphaTest": boolean,
+            "blendMode": integer,
+            "bLit": boolean,
+            "bTwoSided": boolean,
+            "folderPath": text,
+            "shaderFamily": text,
+            "sourceAmbient": rgba,
+            "sourceEmissive": rgba,
+            "sourceShininess": number,
+            "sourceSpecular": rgba,
+        },
+        "alphaCompare",
+        "assetName",
+        "bAlphaTest",
+        "blendMode",
+        "bLit",
+        "bTwoSided",
+        "folderPath",
+        "shaderFamily",
+        "sourceAmbient",
+        "sourceEmissive",
+        "sourceShininess",
+        "sourceSpecular",
+    )
     instance_input = _object_schema(
         {
             "alphaReference": number,
@@ -180,7 +217,49 @@ def _toolsets(*, omit: str | None = None) -> tuple[ToolsetDefinition, ...]:
         ),
         _tool(
             _MATERIAL_TOOLSET,
-            "CreateSimpleUnlitVehicleMaterialInstance",
+            "CreateSimpleLitVehicleMaster",
+            lit_master_input,
+            string_output,
+        ),
+        _tool(
+            _MATERIAL_TOOLSET,
+            "VerifySimpleUnlitVehicleMaster",
+            _object_schema(
+                {
+                    key: value
+                    for key, value in master_input["properties"].items()
+                    if key not in {"assetName", "folderPath"}
+                } | {"objectPath": text},
+                *(
+                    key
+                    for key in master_input["required"]
+                    if key not in {"assetName", "folderPath"}
+                ),
+                "objectPath",
+            ),
+            boolean_output,
+        ),
+        _tool(
+            _MATERIAL_TOOLSET,
+            "VerifySimpleLitVehicleMaster",
+            _object_schema(
+                {
+                    key: value
+                    for key, value in lit_master_input["properties"].items()
+                    if key not in {"assetName", "folderPath"}
+                } | {"objectPath": text},
+                *(
+                    key
+                    for key in lit_master_input["required"]
+                    if key not in {"assetName", "folderPath"}
+                ),
+                "objectPath",
+            ),
+            boolean_output,
+        ),
+        _tool(
+            _MATERIAL_TOOLSET,
+            "CreateVehicleMaterialInstance",
             instance_input,
             string_output,
         ),
@@ -203,6 +282,20 @@ def _toolsets(*, omit: str | None = None) -> tuple[ToolsetDefinition, ...]:
             "get_asset_class",
             _object_schema({"asset_path": text}, "asset_path"),
             string_output,
+        ),
+        _tool(
+            _ASSET_TOOLSET,
+            "get_asset_tags",
+            _object_schema({"asset_path": text}, "asset_path"),
+            _object_schema(
+                {
+                    "returnValue": {
+                        "additionalProperties": text,
+                        "type": "object",
+                    }
+                },
+                "returnValue",
+            ),
         ),
         _tool(
             _ASSET_TOOLSET,
@@ -308,6 +401,7 @@ def _outcome(value: object) -> ToolCallOutcome:
 class _Behavior(NamedTuple):
     raise_after_leaf: str | None = None
     wrong_class_leaf: str | None = None
+    false_verify_leaf: str | None = None
 
 
 class _SyntheticClient:
@@ -334,13 +428,21 @@ class _SyntheticClient:
         asset_outcome = self._asset_call(leaf, arguments)
         if asset_outcome is not None:
             return asset_outcome
+        if leaf in {
+            "VerifySimpleLitVehicleMaster",
+            "VerifySimpleUnlitVehicleMaster",
+        }:
+            return _outcome(self.behavior.false_verify_leaf != leaf)
         package = f'{arguments["folderPath"]}/{arguments["assetName"]}'
         object_path = f'{package}.{arguments["assetName"]}'
         if leaf == "ImportBaseColorTexture2D":
             return self._create(leaf, package, "Texture2D", [object_path])
-        if leaf == "CreateSimpleUnlitVehicleMaster":
+        if leaf in {
+            "CreateSimpleLitVehicleMaster",
+            "CreateSimpleUnlitVehicleMaster",
+        }:
             return self._create(leaf, package, "Material", object_path)
-        if leaf == "CreateSimpleUnlitVehicleMaterialInstance":
+        if leaf == "CreateVehicleMaterialInstance":
             return self._create(
                 leaf,
                 package,
@@ -354,13 +456,21 @@ class _SyntheticClient:
         leaf: str,
         arguments: JsonObject,
     ) -> ToolCallOutcome | None:
+        outcome: ToolCallOutcome | None = None
         if leaf == "exists":
-            return _outcome(str(arguments["path"]) in self.assets)
-        if leaf == "get_asset_class":
-            return _outcome(self.assets[str(arguments["asset_path"])])
-        if leaf == "is_dirty":
-            return _outcome(str(arguments["asset_path"]) in self.dirty)
-        if leaf == "save_assets":
+            outcome = _outcome(str(arguments["path"]) in self.assets)
+        elif leaf == "get_asset_class":
+            outcome = _outcome(self.assets[str(arguments["asset_path"])])
+        elif leaf == "get_asset_tags":
+            source = json.dumps([{"FileMD5": _SOURCE_MD5}])
+            outcome = _outcome({
+                "AssetImportData": source,
+                "IsSourceValid": "True",
+                "SRGB": "True",
+            })
+        elif leaf == "is_dirty":
+            outcome = _outcome(str(arguments["asset_path"]) in self.dirty)
+        elif leaf == "save_assets":
             raw_paths = arguments["asset_paths"]
             if not isinstance(raw_paths, list):
                 raise AssertionError("synthetic save paths are not an array")
@@ -368,13 +478,13 @@ class _SyntheticClient:
             complete = all(path in self.assets for path in paths)
             if complete:
                 self.dirty.difference_update(paths)
-            return _outcome(complete)
-        if leaf == "delete":
+            outcome = _outcome(complete)
+        elif leaf == "delete":
             path = str(arguments["path"])
             existed = self.assets.pop(path, None) is not None
             self.dirty.discard(path)
-            return _outcome(existed)
-        return None
+            outcome = _outcome(existed)
+        return outcome
 
     def _create(
         self,
@@ -395,10 +505,18 @@ class _SyntheticClient:
         return _outcome(result)
 
 
-def _sources(tmp_path: Path) -> dict[str, Path]:
+def _sources(
+    tmp_path: Path,
+) -> dict[str, VerifiedVehicleMaterialTextureSource]:
     source = tmp_path / "texture.png"
-    source.write_bytes(b"png")
-    return {_SHA: source}
+    data = b"png"
+    source.write_bytes(data)
+    return {
+        _SHA: VerifiedVehicleMaterialTextureSource(
+            path=source,
+            md5=_SOURCE_MD5,
+        )
+    }
 
 
 def test_capability_audit_accepts_exact_vehicle_material_surface() -> None:
@@ -406,8 +524,8 @@ def test_capability_audit_accepts_exact_vehicle_material_surface() -> None:
     report = audit_vehicle_material_capabilities(compiled, _toolsets())
     assert report.complete
     assert report.construction_count == 3
-    assert report.required_tool_count == 8
-    assert report.available_tool_count == 8
+    assert report.required_tool_count == 10
+    assert report.available_tool_count == 10
     assert report.missing_tools == ()
     assert report.incompatible_tools == ()
     assert required_vehicle_material_toolsets(compiled) == (
@@ -417,10 +535,41 @@ def test_capability_audit_accepts_exact_vehicle_material_surface() -> None:
     )
 
 
+def test_capability_audit_requires_both_master_families() -> None:
+    compiled = _compiled()
+    lit_name = "M_SHAR_Vehicle_SimpleLit_Opaque_Shininess41200000_TwoSided"
+    lit_package = (
+        f"/Game/Generated/SHAR/Materials/Vehicles/Masters/{lit_name}"
+    )
+    lit = VehicleMaterialLitMasterStep(
+        recipe_identity=(
+            "simple-lit-opaque-shininess-41200000-both-faces"
+        ),
+        object_path=f"{lit_package}.{lit_name}",
+        package_path=lit_package,
+        folder_path="/Game/Generated/SHAR/Materials/Vehicles/Masters",
+        asset_name=lit_name,
+        two_sided=True,
+        source_shininess=10.0,
+    )
+    mixed = compiled._replace(masters=(*compiled.masters, lit))
+    report = audit_vehicle_material_capabilities(mixed, _toolsets())
+    assert report.complete
+    assert report.required_tool_count == 12
+    assert report.available_tool_count == 12
+    missing_identity = f"{_MATERIAL_TOOLSET}.CreateSimpleLitVehicleMaster"
+    missing = audit_vehicle_material_capabilities(
+        mixed,
+        _toolsets(omit=missing_identity),
+    )
+    assert not missing.complete
+    assert missing.missing_tools == (missing_identity,)
+
+
 def test_capability_audit_reports_missing_instance_factory() -> None:
     compiled = _compiled()
     identity = (
-        f"{_MATERIAL_TOOLSET}.CreateSimpleUnlitVehicleMaterialInstance"
+        f"{_MATERIAL_TOOLSET}.CreateVehicleMaterialInstance"
     )
     report = audit_vehicle_material_capabilities(
         compiled,
@@ -428,7 +577,7 @@ def test_capability_audit_reports_missing_instance_factory() -> None:
     )
     assert not report.complete
     assert report.missing_tools == (identity,)
-    assert report.available_tool_count == 7
+    assert report.available_tool_count == 9
 
 
 def test_application_creates_saves_and_verifies_in_dependency_order(
@@ -453,13 +602,13 @@ def test_application_creates_saves_and_verifies_in_dependency_order(
         if leaf in {
             "ImportBaseColorTexture2D",
             "CreateSimpleUnlitVehicleMaster",
-            "CreateSimpleUnlitVehicleMaterialInstance",
+            "CreateVehicleMaterialInstance",
         }
     )
     assert mutations == (
         "ImportBaseColorTexture2D",
         "CreateSimpleUnlitVehicleMaster",
-        "CreateSimpleUnlitVehicleMaterialInstance",
+        "CreateVehicleMaterialInstance",
     )
     assert sum(leaf == "save_assets" for leaf, _ in client.calls) == 3
 
@@ -469,8 +618,10 @@ def test_application_refuses_preexisting_destination_before_mutation(
 ) -> None:
     compiled = _compiled()
     capabilities = audit_vehicle_material_capabilities(compiled, _toolsets())
-    master = compiled.masters[0]
-    client = _SyntheticClient(preexisting={master.package_path: "Material"})
+    instance = compiled.instances[0]
+    client = _SyntheticClient(
+        preexisting={instance.package_path: "MaterialInstanceConstant"}
+    )
     with pytest.raises(ProtocolError, match="destination already exists"):
         apply_vehicle_material_construction(
             client,
@@ -480,6 +631,58 @@ def test_application_refuses_preexisting_destination_before_mutation(
         )
     leaves = tuple(leaf for leaf, _ in client.calls)
     assert "ImportBaseColorTexture2D" not in leaves
+    assert "delete" not in leaves
+
+
+def test_application_reuses_exact_shared_dependencies(
+    tmp_path: Path,
+) -> None:
+    compiled = _compiled()
+    capabilities = audit_vehicle_material_capabilities(compiled, _toolsets())
+    texture = compiled.textures[0]
+    master = compiled.masters[0]
+    client = _SyntheticClient(preexisting={
+        texture.package_path: "Texture2D",
+        master.package_path: "Material",
+    })
+    report = apply_vehicle_material_construction(
+        client, compiled, capabilities, _sources(tmp_path)
+    )
+    assert report.created_count == 1
+    assert report.saved_count == 1
+    assert report.verified_count == 3
+    assert report.reused_dependency_count == 2
+    leaves = tuple(leaf for leaf, _ in client.calls)
+    assert "ImportBaseColorTexture2D" not in leaves
+    assert "CreateSimpleUnlitVehicleMaster" not in leaves
+    assert leaves.count("VerifySimpleUnlitVehicleMaster") == 2
+    assert leaves.count("get_asset_tags") == 2
+    assert "CreateVehicleMaterialInstance" in leaves
+    assert "delete" not in leaves
+
+
+def test_application_rejects_reused_master_drift_before_mutation(
+    tmp_path: Path,
+) -> None:
+    compiled = _compiled()
+    capabilities = audit_vehicle_material_capabilities(compiled, _toolsets())
+    texture = compiled.textures[0]
+    master = compiled.masters[0]
+    client = _SyntheticClient(
+        preexisting={
+            texture.package_path: "Texture2D",
+            master.package_path: "Material",
+        },
+        behavior=_Behavior(
+            false_verify_leaf="VerifySimpleUnlitVehicleMaster"
+        ),
+    )
+    with pytest.raises(ProtocolError, match="master recipe drifted"):
+        apply_vehicle_material_construction(
+            client, compiled, capabilities, _sources(tmp_path)
+        )
+    leaves = tuple(leaf for leaf, _ in client.calls)
+    assert "CreateVehicleMaterialInstance" not in leaves
     assert "delete" not in leaves
 
 
@@ -517,7 +720,7 @@ def test_instance_class_drift_compensates_all_assets_in_reverse_order(
     capabilities = audit_vehicle_material_capabilities(compiled, _toolsets())
     client = _SyntheticClient(
         behavior=_Behavior(
-            wrong_class_leaf="CreateSimpleUnlitVehicleMaterialInstance"
+            wrong_class_leaf="CreateVehicleMaterialInstance"
         )
     )
     with pytest.raises(ProtocolError, match="unexpected class"):

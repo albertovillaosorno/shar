@@ -45,6 +45,8 @@ pub(super) const VEHICLE_PHYSICS_PLAN_SCHEMA: &str =
 const SOURCE_SCHEMA: &str = "shar.vehicle-catalog.v8";
 const CYLINDER_BLOCKER: &str =
     "source-cylinder-has-no-exact-aggregate-geometry";
+const RIG_BINDING_BLOCKER: &str =
+    "source-rig-is-not-imported-render-root";
 const DIMENSION_POLICY: &str =
     "retain-source-magnitude-under-bone-scale";
 
@@ -81,7 +83,7 @@ pub(super) fn render_vehicle_physics_plan(
                         shapes.push(json!({
                             "kind": "sphere",
                             "bone_name": bone_name,
-                            "center": reflect_y(*center_m),
+                            "center": vehicle_chaos_vector(*center_m),
                             "radius": radius_m
                         }));
                     },
@@ -99,7 +101,7 @@ pub(super) fn render_vehicle_physics_plan(
                         shapes.push(json!({
                             "kind": "box",
                             "bone_name": bone_name,
-                            "center": reflect_y(*center_m),
+                            "center": vehicle_chaos_vector(*center_m),
                             "axes": target_axes,
                             "extents": [
                                 extent0 * 2.0,
@@ -115,6 +117,9 @@ pub(super) fn render_vehicle_physics_plan(
                         }
                     },
                 }
+            }
+            if rig.identity != vehicle.render_root_bone {
+                rig_blockers.push(RIG_BINDING_BLOCKER);
             }
             if rig_blockers.is_empty() {
                 counts.native_ready_rigs =
@@ -175,9 +180,12 @@ fn plan_value(requests: &[Value], blockers: &[Value], counts: Counts) -> Value {
             "source_coordinate_space": "source-bone-local",
             "source_unit": "meter",
             "skeletal_import_unit_policy": "scene-unit-converted",
-            "local_axis_conversion": "reflect-y",
+            "local_axis_conversion": "source-x-y-z-to-target-z-x-y",
             "native_dimension_policy": DIMENSION_POLICY,
             "box_extent_policy": "source-half-to-native-full",
+            "rig_binding_policy": "match-imported-render-root",
+            "self_collision_policy": "source-empty-disable-all",
+            "secondary_body_policy": "kinematic-until-joints-translated",
             "unsupported_shape_policy": "block-rig"
         },
         "counts": {
@@ -198,24 +206,14 @@ fn plan_value(requests: &[Value], blockers: &[Value], counts: Counts) -> Value {
     })
 }
 
-/// Convert one source-local vector into the imported Unreal bone-local frame.
-const fn reflect_y(vector: [f32; 3]) -> [f32; 3] {
-    [vector[0], -vector[1], vector[2]]
+/// Convert SHAR lateral/up/longitudinal into Chaos forward/right/up.
+const fn vehicle_chaos_vector(vector: [f32; 3]) -> [f32; 3] {
+    [vector[2], vector[0], vector[1]]
 }
 
-/// Reflect the source basis and restore positive handedness without changing
-/// oriented-box geometry. Negating one box axis is geometrically equivalent.
+/// Re-express one authored box basis in the same proper target basis.
 fn target_box_axes(axes: [[f32; 3]; 3]) -> [[f32; 3]; 3] {
-    let [axis0, axis1, axis2] = axes;
-    let axis0 = reflect_y(axis0);
-    let axis1 = reflect_y(axis1);
-    let reflected_axis2 = reflect_y(axis2);
-    let axis2 = [
-        -reflected_axis2[0],
-        -reflected_axis2[1],
-        -reflected_axis2[2],
-    ];
-    [axis0, axis1, axis2]
+    axes.map(vehicle_chaos_vector)
 }
 
 fn validate_target_basis(axes: &[[f32; 3]; 3]) -> PipelineOutcome<()> {

@@ -13,8 +13,9 @@ would duplicate behavior and allow graphics quality levels to drift.
 ## Decision
 
 Material translation consumes canonical semantic-region and modern texture
-evidence prepared during FBX conversion. Neutral base-color textures preserve
-intended pigment relationships without baking one campaign level's illumination
+evidence prepared during normalized source conversion. Neutral base-color
+textures preserve intended pigment relationships without baking one campaign
+level's illumination
 into the asset. Native material rules then preserve observable layering, blend,
 texture, and shading behavior across all supported graphics presets and respond
 to the active environment lighting and time-of-day state.

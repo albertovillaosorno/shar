@@ -68,6 +68,9 @@ from mcp.adapter_outbound.vehicle_material_construction_reader import (
     read_bound_vehicle_material_document,
 )
 from mcp.adapter_outbound.vehicle_material_source_verifier import (
+    VerifiedVehicleMaterialTextureSource,
+)
+from mcp.adapter_outbound.vehicle_material_source_verifier import (
     verify_vehicle_material_texture_sources,
 )
 from mcp.adapter_outbound.vehicle_physics_construction_reader import (
@@ -263,14 +266,22 @@ def _run_vehicle_material_invocation(invocation: CliInvocation) -> int:
     options = parse_vehicle_material_options(invocation.operands)
     if invocation.action == "vehicle-material-preflight":
         return _run_vehicle_material_preflight(
-            options.root, options.package_id
+            options.root,
+            options.package_id,
+            options.slot_indices,
         )
     if invocation.action == "vehicle-material-capabilities":
         return _run_vehicle_material_capabilities(
-            invocation, options.root, options.package_id
+            invocation,
+            options.root,
+            options.package_id,
+            options.slot_indices,
         )
     return _run_vehicle_material_apply(
-        invocation, options.root, options.package_id
+        invocation,
+        options.root,
+        options.package_id,
+        options.slot_indices,
     )
 
 
@@ -282,14 +293,22 @@ def _run_vehicle_material_slot_invocation(invocation: CliInvocation) -> int:
         raise failure
     if invocation.action == "vehicle-material-slots-preflight":
         return _run_vehicle_material_slot_preflight(
-            options.root, options.package_id
+            options.root,
+            options.package_id,
+            options.slot_indices,
         )
     if invocation.action == "vehicle-material-slots-capabilities":
         return _run_vehicle_material_slot_capabilities(
-            invocation, options.root, options.package_id
+            invocation,
+            options.root,
+            options.package_id,
+            options.slot_indices,
         )
     return _run_vehicle_material_slot_apply(
-        invocation, options.root, options.package_id
+        invocation,
+        options.root,
+        options.package_id,
+        options.slot_indices,
     )
 
 
@@ -415,18 +434,23 @@ def _validate_vehicle_scoped_operands(
 def _vehicle_material_context(
     root: Path,
     package_id: str | None,
+    slot_indices: tuple[int, ...],
 ) -> tuple[
     ValidatedPlanBundle,
     CompiledVehicleMaterialConstruction,
     VehicleMaterialExecutable,
-    dict[str, Path],
+    dict[str, VerifiedVehicleMaterialTextureSource],
 ]:
     bundle = FilesystemPlanBundleReader(root).read_bundle()
     document = read_bound_vehicle_material_document(root.parent, bundle)
     compiled = compile_vehicle_material_construction(document)
     executable: VehicleMaterialExecutable = compiled
     if package_id is not None:
-        executable = select_vehicle_material_package(compiled, package_id)
+        executable = select_vehicle_material_package(
+            compiled,
+            package_id,
+            slot_indices,
+        )
     sources = verify_vehicle_material_texture_sources(
         root.parent.parent,
         executable,
@@ -438,7 +462,7 @@ def _vehicle_material_evidence(
     bundle: ValidatedPlanBundle,
     compiled: CompiledVehicleMaterialConstruction,
     executable: VehicleMaterialExecutable,
-    sources: dict[str, Path],
+    sources: dict[str, VerifiedVehicleMaterialTextureSource],
 ) -> dict[str, object]:
     payload: dict[str, object] = {
         "bundle": bundle.report.to_json(),
@@ -459,9 +483,12 @@ def _vehicle_material_evidence(
 def _run_vehicle_material_preflight(
     root: Path,
     package_id: str | None,
+    slot_indices: tuple[int, ...],
 ) -> int:
     bundle, compiled, executable, sources = _vehicle_material_context(
-        root, package_id
+        root,
+        package_id,
+        slot_indices,
     )
     payload = _vehicle_material_evidence(
         bundle, compiled, executable, sources
@@ -474,9 +501,12 @@ def _run_vehicle_material_capabilities(
     invocation: CliInvocation,
     root: Path,
     package_id: str | None,
+    slot_indices: tuple[int, ...],
 ) -> int:
     bundle, compiled, executable, sources = _vehicle_material_context(
-        root, package_id
+        root,
+        package_id,
+        slot_indices,
     )
     transport = StreamableHttpTransport(
         invocation.endpoint,
@@ -499,9 +529,12 @@ def _run_vehicle_material_apply(
     invocation: CliInvocation,
     root: Path,
     package_id: str | None,
+    slot_indices: tuple[int, ...],
 ) -> int:
     bundle, compiled, executable, sources = _vehicle_material_context(
-        root, package_id
+        root,
+        package_id,
+        slot_indices,
     )
     transport = StreamableHttpTransport(
         invocation.endpoint,
@@ -535,6 +568,7 @@ def _run_vehicle_material_apply(
 def _vehicle_material_slot_context(
     root: Path,
     package_id: str,
+    slot_indices: tuple[int, ...],
 ) -> tuple[
     ValidatedPlanBundle,
     CompiledVehicleMaterialConstruction,
@@ -545,7 +579,11 @@ def _vehicle_material_slot_context(
     execution = compile_execution_plan(bundle)
     document = read_bound_vehicle_material_document(root.parent, bundle)
     construction = compile_vehicle_material_construction(document)
-    selection = select_vehicle_material_package(construction, package_id)
+    selection = select_vehicle_material_package(
+        construction,
+        package_id,
+        slot_indices,
+    )
     binding = compile_vehicle_material_slot_binding(selection, execution)
     return bundle, construction, selection, binding
 
@@ -574,9 +612,10 @@ def _vehicle_material_slot_evidence(
 def _run_vehicle_material_slot_preflight(
     root: Path,
     package_id: str,
+    slot_indices: tuple[int, ...],
 ) -> int:
     bundle, construction, selection, binding = (
-        _vehicle_material_slot_context(root, package_id)
+        _vehicle_material_slot_context(root, package_id, slot_indices)
     )
     payload = _vehicle_material_slot_evidence(
         bundle, construction, selection, binding
@@ -589,9 +628,10 @@ def _run_vehicle_material_slot_capabilities(
     invocation: CliInvocation,
     root: Path,
     package_id: str,
+    slot_indices: tuple[int, ...],
 ) -> int:
     bundle, construction, selection, binding = (
-        _vehicle_material_slot_context(root, package_id)
+        _vehicle_material_slot_context(root, package_id, slot_indices)
     )
     transport = StreamableHttpTransport(
         invocation.endpoint,
@@ -616,9 +656,10 @@ def _run_vehicle_material_slot_apply(
     invocation: CliInvocation,
     root: Path,
     package_id: str,
+    slot_indices: tuple[int, ...],
 ) -> int:
     bundle, construction, selection, binding = (
-        _vehicle_material_slot_context(root, package_id)
+        _vehicle_material_slot_context(root, package_id, slot_indices)
     )
     transport = StreamableHttpTransport(
         invocation.endpoint,

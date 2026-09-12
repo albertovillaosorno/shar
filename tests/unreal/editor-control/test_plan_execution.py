@@ -263,3 +263,32 @@ def test_compiles_skeletal_fbx_with_explicit_skeleton_companion() -> None:
         output.rollback_order for output in step.rollback_outputs
     )
     assert rollback_orders == (0, 1)
+
+
+def test_compiles_vehicle_skeletal_fbx_with_vehicle_route() -> None:
+    operation = _operation(
+        operation_id="operation-0000000000000008",
+        source_format="fbx",
+        target_family="model",
+        target_class="SkeletalMesh",
+        importer="asset-tools-fbx",
+        import_profile="shar-fbx-vehicle-skeletal-v1",
+    )
+    compiled = compile_execution_plan(_bundle(operation))
+    assert compiled.report.complete
+    assert compiled.report.route_counts == {
+        "vehicle-skeletal-mesh-fbx-v1": 1
+    }
+    step = compiled.imports[0]
+    assert step.tool_name == (
+        "SharImportEditor.SharImportToolset.ImportVehicleSkeletalMesh"
+    )
+    assert step.arguments("C:/verified/vehicle.fbx") == {
+        "assetName": "asset_0000000000000008",
+        "folderPath": "/Game/Generated/SHAR/test",
+        "sourceFile": "C:/verified/vehicle.fbx",
+    }
+    assert tuple(output.role for output in step.outputs) == (
+        "primary",
+        "skeleton",
+    )

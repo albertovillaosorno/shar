@@ -1,6 +1,7 @@
 # Character semantic texture, rig, outfit, and prop contract
 
-- Status: Accepted
+- Status: Deprecated
+- Superseded by: Normalized JSON to native Unreal assets
 - Decision date: 2026-07-14
 - Scope: Canonical character FBX preparation
 

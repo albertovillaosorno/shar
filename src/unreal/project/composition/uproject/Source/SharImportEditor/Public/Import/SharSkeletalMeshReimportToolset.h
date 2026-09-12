@@ -58,4 +58,15 @@ public:
         const FString& FolderPath,
         const FString& AssetName
     );
+
+    /**
+     * Reimports one generated vehicle SkeletalMesh without another axis
+     * conversion; the published FBX already owns Unreal vehicle axes.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharSkeletalMeshReimportToolset")
+    static TArray<FString> ReimportVehicleSkeletalMeshRevision(
+        const FString& SourceFile,
+        const FString& FolderPath,
+        const FString& AssetName
+    );
 };

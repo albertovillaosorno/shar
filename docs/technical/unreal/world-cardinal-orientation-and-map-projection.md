@@ -1,7 +1,7 @@
 # World cardinal orientation and map projection
 
 - Status: Active
-- Last reviewed: 2026-08-03
+- Last reviewed: 2026-09-12
 - Runtime owner: `SharWorld`
 
 ## Canonical contract
@@ -17,26 +17,21 @@ The connected SHAR world uses one orientation contract in Unreal world space:
 | Up | `+Z` |
 | Map center | `(0, 0, 0)` centimeters |
 
-World FBX, missions, minimap, compass, route guidance, and spatial content use
+World construction, missions, minimap, compass, route guidance, and spatial
+content use
 this contract. Consumers must not introduce a second yaw offset or per-feature
 interpretation of north.
 
-## FBX orientation boundary
+## Native orientation boundary
 
-Source world geometry is not rotated or repositioned package by package. Each
-world FBX publishes the same `SHAR_Export_Root` with the `ReflectX` policy. This
-is the only explicit source-to-FBX/Unreal basis conversion.
+Source world geometry remains in its declared source basis in normalized JSON.
+The native world construction plan applies the source-to-Unreal basis exactly
+once to geometry, placement, collision, locators, and related spatial evidence.
 
-Import actors use:
-
-```text
-Location = (0, 0, 0)
-Rotation = (0, 0, 0)
-Scale    = (1, 1, 1)
-```
-
-`Force Front XAxis` remains disabled. Importers must not add another mirror,
-yaw correction, height offset, UV mirror, or map translation.
+Actor transforms remain identity unless source evidence explicitly owns a
+placement transform. Importer front-axis switches, export-root reflections, yaw
+corrections, height offsets, UV mirrors, and map translations are not coordinate
+authority.
 
 ## Runtime authority
 
@@ -93,5 +88,5 @@ or reposition world geometry to make the projection work.
 
 Automation covers cardinal and intercardinal bearings, normalization, heading
 wraparound, north-up projection, and rejection of mirrored runtime orientation.
-FBX import validation additionally confirms identity actor transforms and the
-single declared `ReflectX` export root.
+Native construction validation additionally confirms identity actor transforms
+and the single declared source-to-Unreal basis conversion.

@@ -38,8 +38,9 @@ use std::path::PathBuf;
 
 use binary_artifact::read_binary_pair;
 use fbx::adapters::driven::binary_character_writer::{
-    CharacterBinaryFbxSummary, EmbeddedTexture, write_binary_character_fbx,
-    write_binary_character_fbx_embedded,
+    CharacterBinaryFbxSummary, EmbeddedTexture, ModelExportRootPolicy,
+    write_binary_character_fbx, write_binary_character_fbx_embedded,
+    write_binary_character_fbx_with_root_policy,
 };
 use fbx::domain::character::{
     CharacterAsset, CharacterSourceProvenance, CompositeEffectSourceBinding,
@@ -695,6 +696,131 @@ fn writes_deterministic_binary_fbx_7700_with_standard_footer() {
         .and_then(|bytes| <[u8; 4]>::try_from(bytes).ok())
         .map(u32::from_le_bytes);
     assert_eq!(footer_version, Some(FBX_VERSION));
+}
+
+#[test]
+fn writes_identity_skinned_export_root_when_requested() -> Result<(), String> {
+    let character = synthetic_character()?;
+    let path = output_path("identity-skinned-root");
+    let _summary = write_binary_character_fbx_with_root_policy(
+        &character,
+        &materials()?,
+        &[],
+        ModelExportRootPolicy::Identity,
+        &path,
+    )
+    .map_err(|error| format!("identity skinned FBX failed: {error:?}"))?;
+    let bytes = fs::read(&path).map_err(|error| error.to_string())?;
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+
+    let source_global_bind = [
+        1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 2., 3., 4., 1.,
+    ];
+    let source_token = f64_array_token(&source_global_bind)
+        .ok_or_else(|| "identity bone token does not fit FBX".to_owned())?;
+    assert!(
+        byte_window_count(&bytes, &source_token) >= 2,
+        "bone pose and TransformLink must preserve the source global bind"
+    );
+
+    let rotated_root = compose(&TrsParts {
+        translation: [0., 0., 0.],
+        rotation_degrees: [0., 180., 0.],
+        scale: [1., 1., 1.],
+    });
+    let rotated_bone = multiply(&source_global_bind, &rotated_root);
+    let rotated_token = f64_array_token(&rotated_bone)
+        .ok_or_else(|| "rotated bone token does not fit FBX".to_owned())?;
+    assert_eq!(
+        byte_window_count(&bytes, &rotated_token),
+        0,
+        "Identity root must not retain the default character Y rotation"
+    );
+    Ok(())
+}
+
+#[test]
+fn writes_reflected_skinned_export_root_when_requested() -> Result<(), String> {
+    let character = synthetic_character()?;
+    let path = output_path("reflected-skinned-root");
+    let _summary = write_binary_character_fbx_with_root_policy(
+        &character,
+        &materials()?,
+        &[],
+        ModelExportRootPolicy::ReflectX,
+        &path,
+    )
+    .map_err(|error| format!("reflected skinned FBX failed: {error:?}"))?;
+    let bytes = fs::read(&path).map_err(|error| error.to_string())?;
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+
+    let reflected_root = compose(&TrsParts {
+        translation: [0., 0., 0.],
+        rotation_degrees: [0., 0., 0.],
+        scale: [-1., 1., 1.],
+    });
+    let root_token = f64_array_token(&reflected_root)
+        .ok_or_else(|| "reflected root token does not fit FBX".to_owned())?;
+    assert!(
+        byte_window_count(&bytes, &root_token) >= 3,
+        "root, mesh bind, and associate model must share ReflectX"
+    );
+
+    let source_global_bind = [
+        1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 2., 3., 4., 1.,
+    ];
+    let reflected_bone = multiply(&source_global_bind, &reflected_root);
+    let bone_token = f64_array_token(&reflected_bone)
+        .ok_or_else(|| "reflected bone token does not fit FBX".to_owned())?;
+    assert!(
+        byte_window_count(&bytes, &bone_token) >= 2,
+        "bone pose and TransformLink must use the reflected root"
+    );
+    Ok(())
+}
+
+#[test]
+fn shares_texture_objects_across_semantic_material_variants()
+-> Result<(), String> {
+    let mut character = synthetic_character()?;
+    let mut vfx_part = character
+        .parts
+        .first()
+        .cloned()
+        .ok_or_else(|| "synthetic character has no part".to_owned())?;
+    vfx_part.mesh.name = "backfire".to_owned();
+    character.parts.push(vfx_part);
+
+    let path = output_path("shared-semantic-texture");
+    let summary =
+        write_binary_character_fbx(&character, &materials()?, &[], &path)
+            .map_err(|error| format!("shared-texture FBX failed: {error:?}"))?;
+    let bytes = fs::read(&path).map_err(|error| error.to_string())?;
+    fs::remove_file(&path).map_err(|error| error.to_string())?;
+
+    assert_eq!(summary.materials, 2);
+    assert_eq!(summary.textures, 1);
+    for token in [
+        b"skin\0\x01Material".as_slice(),
+        b"skin__vfx\0\x01Material".as_slice(),
+        b"skin\0\x01Texture".as_slice(),
+        b"skin\0\x01Video".as_slice(),
+    ] {
+        assert!(
+            bytes.windows(token.len()).any(|window| window == token),
+            "shared-texture FBX is missing token: {token:?}"
+        );
+    }
+    for token in [
+        b"skin__vfx\0\x01Texture".as_slice(),
+        b"skin__vfx\0\x01Video".as_slice(),
+    ] {
+        assert!(
+            !bytes.windows(token.len()).any(|window| window == token),
+            "semantic material variant must reuse canonical texture: {token:?}"
+        );
+    }
+    Ok(())
 }
 
 #[test]

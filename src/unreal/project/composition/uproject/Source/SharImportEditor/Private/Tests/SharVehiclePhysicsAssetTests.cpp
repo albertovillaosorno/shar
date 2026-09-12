@@ -208,6 +208,11 @@ bool FSharVehiclePhysicsAssetTest::RunTest(const FString& Parameters)
     {
         const USkeletalBodySetup* RootBody =
             Asset->SkeletalBodySetups[RootBodyIndex];
+        TestEqual(
+            TEXT("Root body follows component simulation"),
+            RootBody->PhysicsType,
+            PhysType_Default
+        );
         TestEqual(TEXT("Root box count"), RootBody->AggGeom.BoxElems.Num(), 2);
         if (RootBody->AggGeom.BoxElems.Num() == 2)
         {
@@ -229,19 +234,47 @@ bool FSharVehiclePhysicsAssetTest::RunTest(const FString& Parameters)
          })
     {
         const int32 BodyIndex = Asset->FindBodyIndex(Wheel);
-        TestTrue(
-            *FString::Printf(TEXT("Wheel body %s resolves"), *Wheel.ToString()),
-            BodyIndex != INDEX_NONE
+        const FString ResolveMessage = FString::Printf(
+            TEXT("Wheel body %s resolves"),
+            *Wheel.ToString()
         );
+        TestTrue(*ResolveMessage, BodyIndex != INDEX_NONE);
         if (BodyIndex != INDEX_NONE)
         {
+            const int32 SphereCount = Asset
+                ->SkeletalBodySetups[BodyIndex]
+                ->AggGeom.SphereElems.Num();
             TestEqual(
                 *FString::Printf(
                     TEXT("Wheel body %s sphere count"),
                     *Wheel.ToString()
                 ),
-                Asset->SkeletalBodySetups[BodyIndex]->AggGeom.SphereElems.Num(),
+                SphereCount,
                 1
+            );
+            TestEqual(
+                *FString::Printf(
+                    TEXT("Wheel body %s stays kinematic before Chaos setup"),
+                    *Wheel.ToString()
+                ),
+                Asset->SkeletalBodySetups[BodyIndex]->PhysicsType,
+                PhysType_Kinematic
+            );
+        }
+    }
+    for (int32 Left = 0; Left < Asset->SkeletalBodySetups.Num(); ++Left)
+    {
+        for (int32 Right = Left + 1;
+             Right < Asset->SkeletalBodySetups.Num();
+             ++Right)
+        {
+            TestFalse(
+                *FString::Printf(
+                    TEXT("Vehicle bodies %d and %d do not self-collide"),
+                    Left,
+                    Right
+                ),
+                Asset->IsCollisionEnabled(Left, Right)
             );
         }
     }
@@ -421,6 +454,58 @@ bool FSharVehiclePhysicsPublicationTest::RunTest(const FString& Parameters)
     UPackage* Package = Asset->GetPackage();
     TestTrue(
         TEXT("Published Physics Asset package is dirty"),
+        Package->IsDirty()
+    );
+
+    Package->SetDirtyFlag(false);
+    const int32 WheelIndex = Asset->FindBodyIndex(TEXT("w3"));
+    TestTrue(TEXT("Published wheel resolves for drift"), WheelIndex > 0);
+    if (WheelIndex > 0)
+    {
+        Asset->SkeletalBodySetups[WheelIndex]->PhysicsType = PhysType_Default;
+        Asset->EnableCollision(0, WheelIndex);
+    }
+    TestFalse(
+        TEXT("Verifier rejects simulation and collision policy drift"),
+        USharVehiclePhysicsToolset::VerifyVehiclePhysicsAsset(
+            ObjectPath,
+            PreviewMeshPath,
+            TEXT("sedanA"),
+            19,
+            SedanaPublishedShapes()
+        )
+    );
+    UPhysicsAsset* const OriginalIdentity = Asset;
+    const FString Rebuilt =
+        USharVehiclePhysicsToolset::RebuildVehiclePhysicsAsset(
+            ObjectPath,
+            PreviewMeshPath,
+            TEXT("sedanA"),
+            19,
+            SedanaPublishedShapes()
+        );
+    TestEqual(
+        TEXT("Physics rebuild returns the existing object path"),
+        Rebuilt,
+        ObjectPath
+    );
+    Asset = FindObject<UPhysicsAsset>(nullptr, *ObjectPath);
+    TestTrue(
+        TEXT("Physics rebuild preserves UObject identity"),
+        Asset == OriginalIdentity
+    );
+    TestTrue(
+        TEXT("Rebuilt Physics Asset verifies against exact recipe"),
+        USharVehiclePhysicsToolset::VerifyVehiclePhysicsAsset(
+            ObjectPath,
+            PreviewMeshPath,
+            TEXT("sedanA"),
+            19,
+            SedanaPublishedShapes()
+        )
+    );
+    TestTrue(
+        TEXT("Rebuilt Physics Asset is dirty for caller-owned save"),
         Package->IsDirty()
     );
     const FString PackageFilename = FPackageName::LongPackageNameToFilename(

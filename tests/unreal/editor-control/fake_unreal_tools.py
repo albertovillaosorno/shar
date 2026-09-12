@@ -148,6 +148,7 @@ def _plan_native_call(
         "ImportFileMediaSource",
         "ImportSoundWave",
         "ImportSkeletalMesh",
+        "ImportVehicleSkeletalMesh",
         "ImportStaticMesh",
         "import_file",
     }
@@ -169,6 +170,7 @@ def _plan_native_call(
             "ImportFileMediaSource": "FileMediaSource",
             "ImportSoundWave": "SoundWave",
             "ImportSkeletalMesh": "SkeletalMesh",
+            "ImportVehicleSkeletalMesh": "SkeletalMesh",
             "ImportStaticMesh": "StaticMesh",
             "import_file": "Texture2D",
         }[str(native_name)]
@@ -183,7 +185,10 @@ def _plan_native_call(
                 media_payloads[object_path] = (
                     f"./Movies/Generated/SHAR/{relative_package}.mov"
                 )
-            if native_name == "ImportSkeletalMesh":
+            if native_name in {
+                "ImportSkeletalMesh",
+                "ImportVehicleSkeletalMesh",
+            }:
                 skeleton_name = f"{asset_name}_Skeleton"
                 skeleton_package = f"{folder_path}/{skeleton_name}"
                 assets[skeleton_package] = "Skeleton"
@@ -201,8 +206,14 @@ def _plan_native_call(
             ]
         }
     if native_name in {
+        "VerifySimpleLitVehicleMaster",
+        "VerifySimpleUnlitVehicleMaster",
+    }:
+        return {"returnValue": True}
+    if native_name in {
+        "CreateSimpleLitVehicleMaster",
         "CreateSimpleUnlitVehicleMaster",
-        "CreateSimpleUnlitVehicleMaterialInstance",
+        "CreateVehicleMaterialInstance",
     }:
         return _vehicle_material_native_call(
             native_name,
@@ -229,6 +240,14 @@ def _plan_native_call(
         asset_path = str(arguments["assetPath"])
         existed = media_payloads.pop(asset_path, None) is not None
         return {"returnValue": existed}
+    if native_name == "get_asset_tags":
+        return {
+            "returnValue": {
+                "AssetImportData": "[]",
+                "IsSourceValid": "True",
+                "SRGB": "True",
+            }
+        }
     if native_name == "get_asset_class":
         return {"returnValue": assets[str(arguments["asset_path"])]}
     if native_name == "save_assets":
@@ -289,7 +308,10 @@ def _vehicle_material_native_call(
     object_path = f"{package_path}.{asset_name}"
     target_class = (
         "Material"
-        if native_name == "CreateSimpleUnlitVehicleMaster"
+        if native_name in {
+            "CreateSimpleLitVehicleMaster",
+            "CreateSimpleUnlitVehicleMaster",
+        }
         else "MaterialInstanceConstant"
     )
     assets[package_path] = target_class
@@ -364,6 +386,23 @@ def _asset_schema() -> JsonObject:
                 ),
                 "outputSchema": _object_schema(
                     {"returnValue": text},
+                    "returnValue",
+                ),
+            },
+            {
+                "name": "get_asset_tags",
+                "description": "Return synthetic asset registry tags.",
+                "inputSchema": _object_schema(
+                    {"asset_path": text},
+                    "asset_path",
+                ),
+                "outputSchema": _object_schema(
+                    {
+                        "returnValue": {
+                            "additionalProperties": text,
+                            "type": "object",
+                        }
+                    },
                     "returnValue",
                 ),
             },
@@ -506,6 +545,31 @@ def _import_schema() -> JsonObject:
                 ),
             },
             {
+                "name": "ImportVehicleSkeletalMesh",
+                "description": (
+                    "Import one synthetic vehicle SkeletalMesh and Skeleton."
+                ),
+                "inputSchema": _object_schema(
+                    {
+                        "assetName": text,
+                        "folderPath": text,
+                        "sourceFile": text,
+                    },
+                    "assetName",
+                    "folderPath",
+                    "sourceFile",
+                ),
+                "outputSchema": _object_schema(
+                    {
+                        "returnValue": {
+                            "type": "array",
+                            "items": text,
+                        }
+                    },
+                    "returnValue",
+                ),
+            },
+            {
                 "name": "ImportSkeletalMesh",
                 "description": (
                     "Import one synthetic SkeletalMesh and Skeleton."
@@ -622,7 +686,100 @@ def _vehicle_material_schema() -> JsonObject:
                 "outputSchema": output,
             },
             {
-                "name": "CreateSimpleUnlitVehicleMaterialInstance",
+                "name": "CreateSimpleLitVehicleMaster",
+                "description": "Create one synthetic lit vehicle master.",
+                "inputSchema": _object_schema(
+                    {
+                        "alphaCompare": integer,
+                        "assetName": text,
+                        "bAlphaTest": boolean,
+                        "blendMode": integer,
+                        "bLit": boolean,
+                        "bTwoSided": boolean,
+                        "folderPath": text,
+                        "shaderFamily": text,
+                        "sourceAmbient": vector,
+                        "sourceEmissive": vector,
+                        "sourceShininess": number,
+                        "sourceSpecular": vector,
+                    },
+                    "alphaCompare",
+                    "assetName",
+                    "bAlphaTest",
+                    "blendMode",
+                    "bLit",
+                    "bTwoSided",
+                    "folderPath",
+                    "shaderFamily",
+                    "sourceAmbient",
+                    "sourceEmissive",
+                    "sourceShininess",
+                    "sourceSpecular",
+                ),
+                "outputSchema": output,
+            },
+            {
+                "name": "VerifySimpleUnlitVehicleMaster",
+                "description": "Verify one synthetic vehicle master.",
+                "inputSchema": _object_schema(
+                    {
+                        "alphaCompare": integer,
+                        "bAlphaTest": boolean,
+                        "blendMode": integer,
+                        "bLit": boolean,
+                        "bTwoSided": boolean,
+                        "objectPath": text,
+                        "shaderFamily": text,
+                    },
+                    "alphaCompare",
+                    "bAlphaTest",
+                    "blendMode",
+                    "bLit",
+                    "bTwoSided",
+                    "objectPath",
+                    "shaderFamily",
+                ),
+                "outputSchema": _object_schema(
+                    {"returnValue": boolean},
+                    "returnValue",
+                ),
+            },
+            {
+                "name": "VerifySimpleLitVehicleMaster",
+                "description": "Verify one synthetic lit vehicle master.",
+                "inputSchema": _object_schema(
+                    {
+                        "alphaCompare": integer,
+                        "bAlphaTest": boolean,
+                        "blendMode": integer,
+                        "bLit": boolean,
+                        "bTwoSided": boolean,
+                        "objectPath": text,
+                        "shaderFamily": text,
+                        "sourceAmbient": vector,
+                        "sourceEmissive": vector,
+                        "sourceShininess": number,
+                        "sourceSpecular": vector,
+                    },
+                    "alphaCompare",
+                    "bAlphaTest",
+                    "blendMode",
+                    "bLit",
+                    "bTwoSided",
+                    "objectPath",
+                    "shaderFamily",
+                    "sourceAmbient",
+                    "sourceEmissive",
+                    "sourceShininess",
+                    "sourceSpecular",
+                ),
+                "outputSchema": _object_schema(
+                    {"returnValue": boolean},
+                    "returnValue",
+                ),
+            },
+            {
+                "name": "CreateVehicleMaterialInstance",
                 "description": "Create one synthetic vehicle instance.",
                 "inputSchema": _object_schema(
                     {

@@ -1,6 +1,7 @@
 # Semantic component and geographic placement contract
 
-- Status: Accepted
+- Status: Deprecated
+- Superseded by: Normalized JSON to native Unreal assets
 - Decision date: 2026-07-14
 - Scope: Canonical prop, vehicle, and world FBX preparation
 

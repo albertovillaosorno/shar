@@ -37,8 +37,8 @@
 
 #include "SharVehiclePawn.generated.h"
 
-UCLASS(BlueprintType)
-class SHARVEHICLES_API ASharVehiclePawn final : public AWheeledVehiclePawn
+UCLASS(BlueprintType, Blueprintable)
+class SHARVEHICLES_API ASharVehiclePawn : public AWheeledVehiclePawn
 {
     GENERATED_BODY()
 

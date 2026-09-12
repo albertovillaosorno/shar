@@ -92,6 +92,18 @@ public:
     );
 
     /**
+     * Imports one vehicle FBX already published in Unreal vehicle axes.
+     * No second front-axis conversion is applied during skeletal import.
+     * PhysicsAsset and animation creation remain disabled.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharImportToolset")
+    static TArray<FString> ImportVehicleSkeletalMesh(
+        const FString& SourceFile,
+        const FString& FolderPath,
+        const FString& AssetName
+    );
+
+    /**
      * Imports one normalized PNG base-color texture as a Texture2D under
      * /Game/Generated/SHAR. No Material is generated implicitly.
      * The caller remains responsible for saving and postcondition read-back.

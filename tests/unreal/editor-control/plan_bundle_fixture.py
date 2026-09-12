@@ -132,6 +132,9 @@ def build_plan_bundle(
     with_skeletal_mesh_operation: bool = False,
     skeletal_mesh_source_revision: str | None = None,
     skeletal_mesh_source_path: str = "fbx-assets/skeletal/model.fbx",
+    with_vehicle_skeletal_mesh_operation: bool = False,
+    vehicle_skeletal_mesh_source_revision: str | None = None,
+    vehicle_skeletal_mesh_source_path: str = "vehicle-assets/model/model.fbx",
     with_media_operation: bool = False,
     media_source_revision: str | None = None,
     with_construction_operation: bool = False,
@@ -162,6 +165,16 @@ def build_plan_bundle(
                 _skeletal_mesh_operation(
                     skeletal_mesh_source_revision or "f" * 64,
                     skeletal_mesh_source_path,
+                )
+            )
+        if (
+            with_vehicle_skeletal_mesh_operation
+            and plan_id == "asset-import-plan"
+        ):
+            operations.append(
+                _vehicle_skeletal_mesh_operation(
+                    vehicle_skeletal_mesh_source_revision or "1" * 64,
+                    vehicle_skeletal_mesh_source_path,
                 )
             )
         if with_media_operation and plan_id == "asset-import-plan":
@@ -246,6 +259,9 @@ def write_plan_bundle(
     with_skeletal_mesh_operation: bool = False,
     skeletal_mesh_source_revision: str | None = None,
     skeletal_mesh_source_path: str = "fbx-assets/skeletal/model.fbx",
+    with_vehicle_skeletal_mesh_operation: bool = False,
+    vehicle_skeletal_mesh_source_revision: str | None = None,
+    vehicle_skeletal_mesh_source_path: str = "vehicle-assets/model/model.fbx",
     with_media_operation: bool = False,
     media_source_revision: str | None = None,
     with_construction_operation: bool = False,
@@ -262,6 +278,15 @@ def write_plan_bundle(
         with_skeletal_mesh_operation=with_skeletal_mesh_operation,
         skeletal_mesh_source_revision=skeletal_mesh_source_revision,
         skeletal_mesh_source_path=skeletal_mesh_source_path,
+        with_vehicle_skeletal_mesh_operation=(
+            with_vehicle_skeletal_mesh_operation
+        ),
+        vehicle_skeletal_mesh_source_revision=(
+            vehicle_skeletal_mesh_source_revision
+        ),
+        vehicle_skeletal_mesh_source_path=(
+            vehicle_skeletal_mesh_source_path
+        ),
         with_media_operation=with_media_operation,
         media_source_revision=media_source_revision,
         with_construction_operation=with_construction_operation,
@@ -450,6 +475,50 @@ def _skeletal_mesh_operation(
         ("dependencies", []),
         ("readiness", "ready"),
         ("world_owned", False),
+        ("runtime_bound", True),
+    ))
+    preimage = "\n".join(
+        str(fields[field])
+        for field in (
+            "package_identity",
+            "source_identity",
+            "source_format",
+            "target_family",
+            "source_path",
+            "source_revision",
+            "destination",
+            "target_class",
+            "importer",
+            "import_profile",
+        )
+    )
+    fields["operation_id"] = f"operation-{_digest(preimage)[:16]}"
+    return fields
+
+
+def _vehicle_skeletal_mesh_operation(
+    source_revision: str,
+    source_path: str,
+) -> OrderedDict[str, JsonValue]:
+    asset_name = "model_Skeletal"
+    fields: OrderedDict[str, JsonValue] = OrderedDict((
+        ("operation_id", ""),
+        ("package_identity", "skeletal-mesh-package"),
+        ("source_identity", "vehicle-skeletal-mesh-source"),
+        ("source_format", "fbx"),
+        ("target_family", "model"),
+        ("source_path", source_path),
+        ("source_revision", source_revision),
+        (
+            "destination",
+            f"/Game/Generated/SHAR/cars/{asset_name}.{asset_name}",
+        ),
+        ("target_class", "SkeletalMesh"),
+        ("importer", "asset-tools-fbx"),
+        ("import_profile", "shar-fbx-vehicle-skeletal-v1"),
+        ("dependencies", []),
+        ("readiness", "ready"),
+        ("world_owned", True),
         ("runtime_bound", True),
     ))
     preimage = "\n".join(

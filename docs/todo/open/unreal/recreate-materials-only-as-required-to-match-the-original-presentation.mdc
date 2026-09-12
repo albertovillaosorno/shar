@@ -22,6 +22,17 @@ Recreate materials only as required to match the original presentation.
 
 No explicit task dependency was recorded in the legacy TODO.
 
+## Native Unreal asset pivot — 2026-09-12
+
+Normalized extracted JSON and versioned normalized plans are the canonical
+production handoff into Unreal. FBX is deprecated for production Unreal asset
+construction and may remain only as temporary interoperability, inspection, or
+migration evidence. New implementation work must construct target assets
+through tested native Unreal automation without making FBX transforms, scene
+units, material slots, or importer behavior authoritative. Existing FBX-based
+evidence remains historical or transitional and must be retired from production
+once the equivalent native constructor has parity coverage.
+
 ## Evidence
 
 Open work migrated from the canonical TODO. Add implementation and
@@ -82,3 +93,157 @@ postcondition checks. Native compile and live import acceptance remain required
 before this texture boundary can be considered complete. Normal maps, masks,
 and other non-color texture roles remain outside this base-color contract until
 source-backed color-space and compression policy is reviewed.
+
+September 10 vehicle-material follow-up reviews the ordinary Pure3D
+`simple + LIT` subset instead of treating every lit slot as an unresolved PBR
+redesign. The original OpenGL material path supplies diffuse, ambient,
+emissive, specular, and shininess while disabling the mesh color array during
+lit draws. Unreal's retained Phong-power conversion provides the reviewed
+shininess-to-roughness relation without hand-tuned material values.
+
+The next vehicle-material evidence revision is v5. It admits only opaque,
+non-special `simple + LIT` slots with no alpha test, black source ambient,
+specular, and emissive response, and finite shininess in the OpenGL 0 through
+128 range. Glass, translucency, reflection, light-emitter, and visual-effect
+semantics stay outside this family and therefore continue to fail closed.
+
+Applying that classifier to the accepted 88-vehicle evidence identifies 104
+construction-ready lit slots across 45 vehicles. They collapse to four native
+master recipes: shininess 0 or 10, each with one-sided or two-sided culling.
+Another 243 otherwise compatible lit slots retain non-black authored ambient and
+stay blocked until that fixed-function response has a reviewed Unreal mapping.
+Their material-plan evidence now identifies the missing context-ambient-light
+runtime mapping explicitly instead of collapsing it into a generic lit blocker.
+
+Across all semantic families, 389 lit slots retain that non-black ambient term;
+the v5 aggregate count exposes that remaining runtime dependency directly.
+For `sedana`, the reviewed subset is exactly `char_swatches_m` and `sedanA_m`;
+`WindsheildT_m__glass` remains blocked by the dedicated glass policy. The two
+brake slots are already published from the earlier unlit transaction, so v5
+must migrate this existing asset incrementally: construction and slot binding
+select only indices 2 and 3, leaving indices 0 and 1 untouched.
+
+The current non-native gates pass 53 vehicle-catalog tests, nine material-plan
+tests, four native-plan tests, and 73 editor-control material/CLI tests. A Linux
+`sharEditor` module build passes all 20 Unreal Header Tool, Clang, link, and
+metadata actions for `shar` and `SharImportEditor` without engine-tree writes.
+The headless `SHAR.Import.VehicleMaterials` Automation slice discovers seven
+tests and all seven pass, including simple-lit policy, asset creation, Material
+Instance texture/tint read-back, and slot compare-exchange coverage.
+
+A complete 88-vehicle `prepare-unreal` replay publishes v5 with 291
+construction-ready slots, 98 texture requests, seven masters, and 291 Material
+Instance requests. Scoped offline preflight for `sedana` indices 2 and 3
+resolves
+two textures, two lit masters, and two instances; the matching slot-binding
+preflight reports exactly `[2, 3]`, while requesting glass index 4 fails
+locally.
+
+A live Unreal migration now exercises that exact `sedana` scope. From the final
+hybrid engine root, headless Automation passes all seven vehicle-material tests
+in 52 seconds, while graphical MCP readiness arrives in 40 seconds on the first
+accepted launch and 49 seconds after restart. Live capability audits are
+complete for both construction and slot publication. The construction
+transaction creates, saves, and verifies both textures, both lit masters, and
+both Material Instances.
+
+The slot transaction then saves the Skeletal Mesh and verifies indices 2 and 3.
+A fresh Editor process reads those same two Material Instance object paths back
+from the persisted Skeletal Mesh. Live Material Instance parameter read-back
+also matches both planned base-color textures and the source-white tint exactly.
+Indices 0 and 1 remain outside the migration, and glass index 4 remains blocked
+by the dedicated policy.
+
+The same corpus review isolates vehicle glass rather than treating all
+translucency as one family. Seventy-nine verified glass slots occur across 77
+vehicles; 77 use Pure3D alpha blending, which the original OpenGL backend maps
+to source-alpha over one-minus-source-alpha. Seventy-eight are lit, and all 79
+retain black source specular and emissive response.
+
+<!-- CSpell:ignore glasstruc ENVB ROTV ENVBLEND -->
+The verified vehicle glass uses 16 distinct texture payloads. Most windshield
+textures have a constant authored alpha of 77, 97, 145, 190, or 191; only the
+reviewed `glasstrucSign` texture in this set has a broad variable-alpha mask.
+
+`sedana` uses `WindsheildT.png` with alpha 145 on every texel. Its transparency
+therefore remains source-backed. The glass classifier also requires the verified
+PNG artifact, not only a source texture reference; the remaining blocker is a
+reviewed treatment of its white fixed-function ambient term in Unreal's lit
+translucent model.
+
+September 12 vehicle-preview validation isolated an Unreal target-usage defect
+from source presentation semantics. Generated vehicle masters were created with
+Skeletal Mesh usage unset, so PIE could temporarily substitute the default
+material while compiling the missing permutation. Vehicle master construction
+now declares Skeletal Mesh usage explicitly. Exact master read-back requires
+that target usage.
+
+A bounded migration accepts only a clean generated master whose reviewed simple
+lit or simple unlit recipe passes graph read-back. It changes only the Skeletal
+Mesh usage flag and refreshes editor material state. It then verifies the
+same recipe
+and leaves saving to the caller.
+
+The five master recipes currently used by Snake were migrated through that
+boundary and survive a cold Editor reload with the usage flag enabled. A PIE
+spawn of Snake then reports no missing-SkeletalMesh-usage warning, no default
+material substitution, no spring-configuration warning, and no vehicle warning.
+This fixes a target representation requirement only; it does not promote any
+previously blocked source material family.
+
+The same investigation tightened the remaining vehicle sphere-map contract.
+Snake has five reflective `spheremap` slots. Each source shader is opaque and
+lit and uses its component base texture plus `EnvMap.bmp`. Source shininess is
+10; ambient, specular, and emissive terms are black; and the authored gray
+`ENVB` byte is 76.
+
+Snake's vehicle tuning independently contains `SetShininess(0.3)`. Despite its
+historical name, that command does not change the shader shininess field. The
+reachable vehicle runtime converts it to `int(255 * 0.3) == 76` and stores that
+byte as the environment-reflection intensity, exactly matching all five source
+shader `ENVB` values.
+
+At display time, the user vehicle updates `ROTV` only for continuous signed
+longitudinal movement between 0.01 and 50 source distance units. Its first
+component accumulates signed distance times 0.05 modulo one turn; its third
+component carries the local camera/movement-axis angle. `ENVBLEND` is broadcast
+every display: exterior uses the configured reflection byte, interior uses that
+byte shifted right by two, and damage multiplies it by
+`clamp(0.75 * life + 0.25, 0, 1)`, where life is current hit points divided by
+designer hit points.
+
+The available reference backend does not consume `REFL`, `ROTV`, or `ENVB` and
+falls the `spheremap` shader name through its ordinary simple-material program.
+No other reference backend supplies the missing reflection-sampling or blend
+equation. Therefore the runtime parameter math is now source-backed, but the
+actual sphere-map sampling/composition remains unproven. Keep
+`vehicle-spheremap-master-not-reviewed` and the reflection-policy blocker until
+that visual equation has independent evidence; do not replace it with an
+invented metallic/roughness or generic Unreal reflection treatment.
+
+The full accepted corpus contains 120 `spheremap` slots across 29 vehicles. All
+29 corresponding physical-vehicle tuning records contain exactly one
+`SetShininess` command; none are missing or duplicated. The authored values are
+0.05, 0.1, 0.15, 0.19, 0.2, 0.25, 0.3, or 0.4, which map through the reachable
+runtime conversion to reflection-intensity bytes 12, 25, 38, 48, 51, 63, 76,
+or 102 respectively.
+
+The current v5 Unreal vehicle-material evidence identifies `spheremap` and
+retains the base texture plus common raster fields, but it does not yet project
+the authored `REFL` texture identity or `ENVB` colour. `ROTV` is absent as
+expected
+from authored sidecars because the user-vehicle runtime derives it from motion
+and camera state. A future evidence revision must preserve `REFL` and `ENVB`
+and join the per-vehicle tuning value before native sphere-map construction can
+be reviewed. Do not encode a synthetic authored `ROTV` field.
+
+A full sidecar audit confirms the stricter source envelope: all 120 sphere-map
+shaders retain both `REFL` and `ENVB`. All 120 reference `EnvMap.bmp` for
+`REFL`. Authored `ENVB` is not a substitute for vehicle tuning. Only 10 of 120
+sphere-map slots happen to match the byte produced by their vehicle's
+`SetShininess` value; 110 differ.
+
+The reachable display path broadcasts a new per-vehicle `ENVBLEND` every frame.
+Treat shader `ENVB` as source shader state and `SetShininess` as the runtime
+vehicle override. Snake's 76-to-76 match corroborates the conversion but does
+not imply that both authored values are generally identical.

@@ -33,8 +33,9 @@
 use serde_json::Value;
 
 use super::{
-    VEHICLE_MATERIAL_PLAN_SCHEMA, is_simple_unlit_graph_candidate,
-    render_vehicle_material_plan,
+    VEHICLE_MATERIAL_PLAN_SCHEMA, is_simple_lit_opaque_graph_candidate,
+    is_simple_lit_source_alpha_glass_candidate,
+    is_simple_unlit_graph_candidate, render_vehicle_material_plan,
 };
 use crate::adapters::driven::local::unreal_vehicle_catalog::{
     VerifiedVehicleFbxArtifact, VerifiedVehicleHeadlightBillboardArtifact,
@@ -84,6 +85,7 @@ fn vehicle() -> VerifiedVehicleFbxArtifact {
             fbx_version: 7_700,
         },
         subcategory: "cars/road".to_owned(),
+        render_root_bone: "sedanA".to_owned(),
         material_slots: vec![VerifiedVehicleMaterialArtifact {
             slot_name: "sedanA_m".to_owned(),
             source_material_name: "sedanA_m".to_owned(),
@@ -111,6 +113,8 @@ fn vehicle() -> VerifiedVehicleFbxArtifact {
                 specular_rgba8: [0, 0, 0, 255],
                 shininess_bits: 10.0_f32.to_bits(),
                 texture_reference: Some("sedanA.bmp".to_owned()),
+                reflection_texture_reference: None,
+                environment_blend_rgba8: None,
             },
             shader_path: concat!(
                 "vehicle-assets/sedana/shaders/",
@@ -153,7 +157,19 @@ fn renders_exact_vehicle_material_projection_and_blockers()
         || value
             .pointer("/counts/native_graph_ready_slots")
             .and_then(Value::as_u64)
+            != Some(1)
+        || value
+            .pointer("/counts/simple_lit_opaque_graph_candidates")
+            .and_then(Value::as_u64)
+            != Some(1)
+        || value
+            .pointer("/counts/context_ambient_light_slots")
+            .and_then(Value::as_u64)
             != Some(0)
+        || value
+            .pointer("/counts/native_construction_ready_slots")
+            .and_then(Value::as_u64)
+            != Some(1)
         || value
             .pointer("/counts/native_ready_slots")
             .and_then(Value::as_u64)
@@ -174,6 +190,14 @@ fn renders_exact_vehicle_material_projection_and_blockers()
             != Some(&serde_json::json!([0, 0, 0, 255]))
         || slot.pointer("/pddi/shininess_bits").and_then(Value::as_u64)
             != Some(u64::from(10.0_f32.to_bits()))
+        || slot
+            .pointer("/native_graph_review/simple_lit_opaque_candidate")
+            .and_then(Value::as_bool)
+            != Some(true)
+        || slot
+            .get("native_construction_status")
+            .and_then(Value::as_str)
+            != Some("ready")
         || slot.get("native_status").and_then(Value::as_str) != Some("blocked")
     {
         return Err("vehicle PDDI projection drifted".to_owned());
@@ -190,13 +214,262 @@ fn renders_exact_vehicle_material_projection_and_blockers()
         != [
             "vehicle-native-material-construction-not-applied",
             "vehicle-material-slot-application-not-reviewed",
-            "vehicle-native-material-graph-not-reviewed",
-            "vehicle-lit-master-not-reviewed",
         ]
     {
         return Err(format!(
             "vehicle material blockers drifted: {blocker_names:?}"
         ));
+    }
+    Ok(())
+}
+
+#[test]
+fn mixed_vehicle_keeps_glass_out_of_native_construction()
+-> Result<(), String> {
+    let mut vehicle = vehicle();
+    let body = vehicle
+        .material_slots
+        .first()
+        .cloned()
+        .ok_or_else(|| "vehicle material fixture is empty".to_owned())?;
+
+    let mut brake_a = body.clone();
+    brake_a.slot_name = "brakeFlareA_m__transparent-light-emitter".to_owned();
+    brake_a.source_material_name = "brakeFlareA_m".to_owned();
+    brake_a.semantics.transparent = true;
+    brake_a.semantics.light_emitter = true;
+    brake_a.raster.lit = false;
+    brake_a.raster.has_translucency = true;
+    brake_a.raster.blend_mode = 2;
+
+    let mut brake_b = brake_a.clone();
+    brake_b.slot_name = "brakeFlareB_m__transparent-light-emitter".to_owned();
+    brake_b.source_material_name = "brakeFlareB_m".to_owned();
+
+    let mut swatches = body.clone();
+    swatches.slot_name = "char_swatches_m".to_owned();
+    swatches.source_material_name = "char_swatches_m".to_owned();
+
+    let mut glass = body.clone();
+    glass.slot_name = "WindsheildT_m__glass".to_owned();
+    glass.source_material_name = "WindsheildT_m".to_owned();
+    glass.semantics.transparent = true;
+    glass.semantics.glass = true;
+    glass.raster.has_translucency = true;
+    glass.raster.blend_mode = 1;
+    glass.raster.ambient_rgba8 = [255, 255, 255, 255];
+
+    vehicle.material_slots = vec![brake_a, brake_b, swatches, body, glass];
+    let text = render_vehicle_material_plan(Some(
+        std::slice::from_ref(&vehicle),
+    ))
+        .map_err(|error| error.to_string())?;
+    let value = serde_json::from_str::<Value>(&text)
+        .map_err(|error| error.to_string())?;
+    let counts = value
+        .get("counts")
+        .ok_or_else(|| "vehicle material counts are missing".to_owned())?;
+    if counts.get("slots").and_then(Value::as_u64) != Some(5)
+        || counts
+            .get("native_graph_ready_slots")
+            .and_then(Value::as_u64)
+            != Some(4)
+        || counts
+            .get("native_construction_ready_slots")
+            .and_then(Value::as_u64)
+            != Some(4)
+        || counts
+            .get("native_instance_requests")
+            .and_then(Value::as_u64)
+            != Some(4)
+        || counts
+            .get("simple_lit_source_alpha_glass_candidates")
+            .and_then(Value::as_u64)
+            != Some(1)
+    {
+        return Err("mixed vehicle material counts drifted".to_owned());
+    }
+    let requests = value
+        .pointer("/native_construction/instance_requests")
+        .and_then(Value::as_array)
+        .ok_or_else(|| {
+            "mixed vehicle instance requests are missing".to_owned()
+        })?;
+    let mut indices = requests
+        .iter()
+        .filter_map(|request| request.get("slot_index"))
+        .filter_map(Value::as_u64)
+        .collect::<Vec<_>>();
+    indices.sort_unstable();
+    if indices != [0, 1, 2, 3] {
+        return Err(format!(
+            "mixed vehicle slot selection drifted: {indices:?}"
+        ));
+    }
+    let glass_value = value
+        .pointer("/vehicles/0/slots/4")
+        .ok_or_else(|| "mixed vehicle glass slot is missing".to_owned())?;
+    if glass_value
+        .get("native_construction_status")
+        .and_then(Value::as_str)
+        != Some("blocked")
+    {
+        return Err(
+            "mixed vehicle glass escaped construction blocker".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn simple_lit_opaque_candidate_rejects_special_or_non_black_state()
+-> Result<(), String> {
+    let mut vehicle = vehicle();
+    let [slot] = vehicle.material_slots.as_mut_slice() else {
+        return Err("vehicle material fixture cardinality drifted".to_owned());
+    };
+    if !is_simple_lit_opaque_graph_candidate(slot) {
+        return Err("reviewed simple-lit opaque candidate was lost".to_owned());
+    }
+    slot.raster.ambient_rgba8 = [255, 255, 255, 255];
+    if is_simple_lit_opaque_graph_candidate(slot) {
+        return Err("non-black ambient escaped the reviewed subset".to_owned());
+    }
+    slot.raster.ambient_rgba8 = [0, 0, 0, 255];
+    slot.semantics.glass = true;
+    if is_simple_lit_opaque_graph_candidate(slot) {
+        return Err("glass escaped the dedicated policy boundary".to_owned());
+    }
+    slot.semantics.glass = false;
+    slot.raster.specular_rgba8 = [1, 0, 0, 255];
+    if is_simple_lit_opaque_graph_candidate(slot) {
+        return Err("coloured specular escaped the reviewed subset".to_owned());
+    }
+    slot.raster.specular_rgba8 = [0, 0, 0, 255];
+    let verified_texture = slot.texture_path.take();
+    if is_simple_lit_opaque_graph_candidate(slot) {
+        return Err(
+            "lit slot without texture escaped the reviewed subset".to_owned(),
+        );
+    }
+    slot.texture_path = verified_texture;
+    slot.raster.shininess_bits = f32::NAN.to_bits();
+    if is_simple_lit_opaque_graph_candidate(slot) {
+        return Err(
+            "non-finite shininess escaped the reviewed subset".to_owned(),
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn non_black_ambient_reports_context_runtime_blocker() -> Result<(), String> {
+    let mut vehicle = vehicle();
+    let [slot] = vehicle.material_slots.as_mut_slice() else {
+        return Err("vehicle material fixture cardinality drifted".to_owned());
+    };
+    slot.raster.ambient_rgba8 = [255, 255, 255, 255];
+    if is_simple_lit_opaque_graph_candidate(slot) {
+        return Err("context ambient slot escaped lit review".to_owned());
+    }
+    let text = render_vehicle_material_plan(Some(
+        std::slice::from_ref(&vehicle),
+    ))
+        .map_err(|error| error.to_string())?;
+    let value = serde_json::from_str::<Value>(&text)
+        .map_err(|error| error.to_string())?;
+    if value
+        .pointer("/counts/context_ambient_light_slots")
+        .and_then(Value::as_u64)
+        != Some(1)
+    {
+        return Err("context ambient aggregate count drifted".to_owned());
+    }
+    let blockers = value
+        .pointer("/vehicles/0/slots/0/native_blockers")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "context ambient blockers are missing".to_owned())?;
+    let names = blockers.iter().filter_map(Value::as_str).collect::<Vec<_>>();
+    if !names.contains(&"vehicle-context-ambient-light-not-reviewed")
+        || !names.contains(&"vehicle-lit-master-not-reviewed")
+        || names.contains(&"vehicle-glass-policy-not-reviewed")
+    {
+        return Err(format!(
+            "context ambient blocker detail drifted: {names:?}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn glass_source_alpha_candidate_stays_blocked() -> Result<(), String> {
+    let mut vehicle = vehicle();
+    let [slot] = vehicle.material_slots.as_mut_slice() else {
+        return Err("vehicle material fixture cardinality drifted".to_owned());
+    };
+    slot.slot_name = "WindsheildT_m__glass".to_owned();
+    slot.semantics.transparent = true;
+    slot.semantics.glass = true;
+    slot.raster.has_translucency = true;
+    slot.raster.blend_mode = 1;
+    slot.raster.ambient_rgba8 = [255, 255, 255, 255];
+    slot.raster.diffuse_rgba8 = [255, 255, 255, 255];
+    slot.raster.specular_rgba8 = [0, 0, 0, 255];
+    slot.raster.emissive_rgba8 = [0, 0, 0, 255];
+    if !is_simple_lit_source_alpha_glass_candidate(slot) {
+        return Err("reviewed source-alpha glass candidate was lost".to_owned());
+    }
+    let verified_texture = slot.texture_path.take();
+    if is_simple_lit_source_alpha_glass_candidate(slot) {
+        return Err(
+            concat!(
+                "glass without verified texture escaped the ",
+                "reviewed subset"
+            )
+            .to_owned(),
+        );
+    }
+    slot.texture_path = verified_texture;
+    let text = render_vehicle_material_plan(Some(
+        std::slice::from_ref(&vehicle),
+    ))
+        .map_err(|error| error.to_string())?;
+    let value = serde_json::from_str::<Value>(&text)
+        .map_err(|error| error.to_string())?;
+    if value
+        .pointer("/counts/simple_lit_source_alpha_glass_candidates")
+        .and_then(Value::as_u64)
+        != Some(1)
+        || value
+            .pointer("/counts/context_ambient_light_slots")
+            .and_then(Value::as_u64)
+            != Some(1)
+    {
+        return Err("source-alpha glass evidence count drifted".to_owned());
+    }
+    let slot_value = value
+        .pointer("/vehicles/0/slots/0")
+        .ok_or_else(|| "vehicle glass slot is missing".to_owned())?;
+    if slot_value
+        .pointer("/native_graph_review/simple_lit_source_alpha_glass_candidate")
+        .and_then(Value::as_bool)
+        != Some(true)
+        || slot_value
+            .get("native_construction_status")
+            .and_then(Value::as_str)
+            != Some("blocked")
+    {
+        return Err("glass review escaped native blocker".to_owned());
+    }
+    let blockers = slot_value
+        .get("native_blockers")
+        .and_then(Value::as_array)
+        .ok_or_else(|| "glass blockers are missing".to_owned())?;
+    let names = blockers.iter().filter_map(Value::as_str).collect::<Vec<_>>();
+    if !names.contains(&"vehicle-context-ambient-light-not-reviewed")
+        || !names.contains(&"vehicle-glass-policy-not-reviewed")
+    {
+        return Err(format!("glass blocker detail drifted: {names:?}"));
     }
     Ok(())
 }

@@ -35,6 +35,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use fbx::adapters::driven::binary_character_writer::character_material_slots;
+use fbx::domain::animation::{
+    AnimationClip, BoneAnimationTrack, LocalTransformSample,
+};
 use fbx::domain::character::{
     CharacterAsset, CharacterSourceProvenance, SkinnedPart,
 };
@@ -47,7 +50,9 @@ use crate::domain::package::PhaseThreePackageRow;
 use super::super::model::PhysicsPrimitiveRecord;
 
 use super::{
-    is_wheel_identity, load_vehicle_animations, partition_vehicle_billboards,
+    build_vehicle_physics_rig, is_wheel_identity, load_vehicle_animations,
+    partition_vehicle_billboards,
+    rebase_vehicle_for_chaos,
     publish_headlight_billboard_sidecars, publish_vehicle_physics_sidecars,
     validate_vehicle_physics_rig_bindings,
     separate_vehicle_parts, texture_state_role, used_vehicle_material_bindings,
@@ -244,6 +249,73 @@ fn semantic_roles_keep_moving_and_glass_parts_separate() {
 }
 
 #[test]
+fn vehicle_chaos_rebase_preserves_geometry() -> Result<(), String> {
+    let mut asset = effect_test_asset()?;
+    let root = asset
+        .bones
+        .first_mut()
+        .ok_or_else(|| "fixture has no root bone".to_owned())?;
+    root.rest_matrix = [
+        1., 0., 0., 0.,
+        0., 1., 0., 0.,
+        0., 0., 1., 0.,
+        1., 2., 3., 1.,
+    ];
+    let mut clips = vec![AnimationClip {
+        name: "idle".to_owned(),
+        source_identity: None,
+        frame_rate: 60.,
+        cyclic: false,
+        frame_count: 1,
+        tracks: vec![BoneAnimationTrack {
+            bone_id: "root".to_owned(),
+            samples: vec![LocalTransformSample {
+                translation: [1., 2., 3.],
+                rotation_wxyz: [1., 0., 0., 0.],
+            }],
+        }],
+        ignored_group_ids: Vec::new(),
+    }];
+    rebase_vehicle_for_chaos(&mut asset, &mut clips)
+        .map_err(|error| error.to_string())?;
+    let group = asset
+        .parts
+        .first()
+        .and_then(|part| part.mesh.groups.first())
+        .ok_or_else(|| "fixture has no mesh group".to_owned())?;
+    if group.positions != [[0., 0., 0.], [0., 1., 0.], [0., 0., 1.]] {
+        return Err(format!(
+            "vehicle positions were not rebased to Chaos: {:?}",
+            group.positions
+        ));
+    }
+    let rest_translation = asset
+        .bones
+        .first()
+        .and_then(|bone| bone.rest_matrix.get(12..15))
+        .ok_or_else(|| "fixture root translation is missing".to_owned())?;
+    if rest_translation != [3., 1., 2.] {
+        return Err(format!(
+            "vehicle rest translation was not rebased: {rest_translation:?}"
+        ));
+    }
+    let sample = clips
+        .first()
+        .and_then(|clip| clip.tracks.first())
+        .and_then(|track| track.samples.first())
+        .copied()
+        .ok_or_else(|| "fixture animation sample is missing".to_owned())?;
+    if sample.translation != [3., 1., 2.]
+        || sample.rotation_wxyz != [1., 0., 0., 0.]
+    {
+        return Err(format!(
+            "vehicle animation was not rebased: {sample:?}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn wheel_identity_does_not_capture_unrelated_body_names() {
     assert!(is_wheel_identity("wshape3"));
     assert!(is_wheel_identity("w2shape"));
@@ -358,7 +430,8 @@ fn physics_sidecars_preserve_exact_source_members() -> Result<(), String> {
     .as_bytes();
     let collision = concat!(
         r#"{"schema":"simulation_collision_object","name":"car","#,
-        r#""num_sub_objects":2,"volumes":[{"object_reference_index":0,"#,
+        r#""num_sub_objects":2,"self_collisions":[],"volumes":[{"#,
+        r#""object_reference_index":0,"#,
         r#""primitives":[{"object_reference_index":1,"#,
         r#""primitives":[{"kind":"sphere","radius":0.5,"#,
         r#""vectors":[[0.0,0.0,0.0]]}]}]}]}"#
@@ -427,6 +500,49 @@ fn physics_sidecars_preserve_exact_source_members() -> Result<(), String> {
 }
 
 #[test]
+fn physics_rig_rejects_authored_self_collision_pairs() -> Result<(), String> {
+    let skeleton = serde_json::json!({
+        "num_joints": 1,
+        "joints": [{"name": "car"}]
+    });
+    let collision = serde_json::json!({
+        "num_sub_objects": 1,
+        "self_collisions": [{
+            "joint_index1": 0,
+            "joint_index2": 0,
+            "self_only1": 0,
+            "self_only2": 0
+        }],
+        "volumes": [{
+            "object_reference_index": 0,
+            "primitives": [{
+                "kind": "sphere",
+                "radius": 0.5,
+                "vectors": [[0.0, 0.0, 0.0]]
+            }]
+        }]
+    });
+    let physics = serde_json::json!({"num_joints": 1});
+    let Err(error) = build_vehicle_physics_rig(
+        "car",
+        &skeleton,
+        &collision,
+        &physics,
+    ) else {
+        return Err("authored self collisions were accepted".to_owned());
+    };
+    if !error
+        .to_string()
+        .contains("unsupported self collisions")
+    {
+        return Err(format!(
+            "unexpected self-collision rejection: {error}"
+        ));
+    }
+    Ok(())
+}
+
+#[test]
 fn physics_recipe_preserves_source_f32_bits() -> Result<(), String> {
     let value = serde_json::json!(-2.855_841e-23);
     let decoded = super::finite_json_number(&value, "fixture scalar")
@@ -459,7 +575,8 @@ fn physics_rig_rejects_joint_reference_outside_skeleton()
     fs::write(
         collision_dir.join("car.json"),
         concat!(
-            r#"{"name":"car","num_sub_objects":1,"volumes":[{"#,
+            r#"{"name":"car","num_sub_objects":1,"self_collisions":[],"#,
+            r#""volumes":[{"#,
             r#""object_reference_index":1,"primitives":[{"kind":"obbox"}]}]}"#
         ),
     )

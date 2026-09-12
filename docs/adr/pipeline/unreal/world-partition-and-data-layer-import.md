@@ -17,7 +17,8 @@ data-layer plans with stable component identities, geographic placements,
 dependencies, streaming boundaries, level-state projections, and verification
 instead of manual level placement.
 
-The partition plan consumes canonical FBX component and placement evidence. Data
+The partition plan consumes canonical normalized component and placement JSON
+evidence. Data
 layers select the active campaign or test state; they do not create alternate
 geographic identities for the same physical location.
 

@@ -10,7 +10,7 @@
 // Boundary-Contract:
 // - Owns:
 //   - Canonical generated destinations and construction requests for the
-//     reviewed vehicle simple/unlit material subset.
+//     reviewed vehicle simple/unlit and opaque simple/lit subsets.
 // - Must-Not:
 //   - Read source files, contact Unreal Editor, assign mesh slots, save assets,
 //     or reuse world-only material policy.
@@ -24,8 +24,8 @@
 // - Summary:
 //   - Native vehicle-material construction request projection.
 // - Description:
-//   - Projects only already verified simple/unlit PDDI slots into create-only
-//   - native requests while preserving source texture, tint, and alpha state.
+//   - Projects verified simple/unlit and opaque simple/lit PDDI slots into
+//   - create-only requests while preserving source texture and render state.
 // - Usage:
 //   - Called by vehicle-material evidence rendering after catalog verification.
 // - Defaults:
@@ -40,7 +40,9 @@ use serde_json::{Value, json};
 use shar_sha256::digest_hex;
 
 use super::unreal_vehicle_catalog::VerifiedVehicleFbxArtifact;
-use super::unreal_vehicle_material_plan::is_simple_unlit_graph_candidate;
+use super::unreal_vehicle_material_plan::{
+    is_simple_lit_opaque_graph_candidate, is_simple_unlit_graph_candidate,
+};
 use crate::domain::{PipelineError, PipelineOutcome};
 
 const VEHICLE_TEXTURE_FOLDER: &str = "/Game/Generated/SHAR/Textures/Vehicles";
@@ -57,25 +59,51 @@ pub(super) struct VehicleMaterialNativeConstructionPlan {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-struct MasterRecipe {
-    blend_mode: u32,
-    alpha_test: bool,
-    two_sided: bool,
+enum MasterRecipe {
+    SimpleUnlit {
+        blend_mode: u32,
+        alpha_test: bool,
+        two_sided: bool,
+    },
+    SimpleLitOpaque {
+        shininess_bits: u32,
+        two_sided: bool,
+    },
 }
 
 impl MasterRecipe {
     fn identity(self) -> String {
-        format!(
-            "simple-unlit-blend-{}-alpha-test-{}-{}",
-            match self.blend_mode {
-                0 => "opaque",
-                1 => "alpha",
-                2 => "additive",
-                _ => "unsupported",
-            },
-            if self.alpha_test { "on" } else { "off" },
-            if self.two_sided { "both-faces" } else { "one-sided" }
-        )
+        match self {
+            Self::SimpleUnlit {
+                blend_mode,
+                alpha_test,
+                two_sided,
+            } => format!(
+                "simple-unlit-blend-{}-alpha-test-{}-{}",
+                match blend_mode {
+                    0 => "opaque",
+                    1 => "alpha",
+                    2 => "additive",
+                    _ => "unsupported",
+                },
+                if alpha_test { "on" } else { "off" },
+                if two_sided { "both-faces" } else { "one-sided" }
+            ),
+            Self::SimpleLitOpaque {
+                shininess_bits,
+                two_sided,
+            } => format!(
+                "simple-lit-opaque-shininess-{shininess_bits:08x}-{}",
+                if two_sided { "both-faces" } else { "one-sided" }
+            ),
+        }
+    }
+
+    const fn alpha_test(self) -> bool {
+        match self {
+            Self::SimpleUnlit { alpha_test, .. } => alpha_test,
+            Self::SimpleLitOpaque { .. } => false,
+        }
     }
 }
 
@@ -112,13 +140,19 @@ pub(super) fn plan_vehicle_material_native_construction(
                 )
             })?;
         for (slot_index, slot) in vehicle.material_slots.iter().enumerate() {
-            if !is_simple_unlit_graph_candidate(slot) {
+            let recipe = if is_simple_unlit_graph_candidate(slot) {
+                MasterRecipe::SimpleUnlit {
+                    blend_mode: slot.raster.blend_mode,
+                    alpha_test: slot.raster.alpha_test,
+                    two_sided: slot.raster.two_sided,
+                }
+            } else if is_simple_lit_opaque_graph_candidate(slot) {
+                MasterRecipe::SimpleLitOpaque {
+                    shininess_bits: slot.raster.shininess_bits,
+                    two_sided: slot.raster.two_sided,
+                }
+            } else {
                 continue;
-            }
-            let recipe = MasterRecipe {
-                blend_mode: slot.raster.blend_mode,
-                alpha_test: slot.raster.alpha_test,
-                two_sided: slot.raster.two_sided,
             };
             let recipe_identity = recipe.identity();
             let _planned_identity = recipes
@@ -167,7 +201,7 @@ pub(super) fn plan_vehicle_material_native_construction(
                     ));
                 },
             };
-            let alpha_reference = if recipe.alpha_test {
+            let alpha_reference = if recipe.alpha_test() {
                 let bits = slot.raster.alpha_reference_bits.ok_or_else(|| {
                     PipelineError::new(
                         "vehicle alpha-test slot lost alpha reference",
@@ -194,6 +228,12 @@ pub(super) fn plan_vehicle_material_native_construction(
             let package_path =
                 format!("{VEHICLE_INSTANCE_FOLDER}/{asset_name}");
             let parent = master_object_path(recipe);
+            let base_color_rgba8 = match recipe {
+                MasterRecipe::SimpleLitOpaque { .. } => {
+                    slot.raster.diffuse_rgba8
+                },
+                MasterRecipe::SimpleUnlit { .. } => slot.base_color_rgba8,
+            };
             instances.push(json!({
                 "request_identity": request_identity,
                 "package_id": vehicle.evidence.package_id,
@@ -209,7 +249,7 @@ pub(super) fn plan_vehicle_material_native_construction(
                 "object_path": format!("{package_path}.{asset_name}"),
                 "parent_material_path": parent,
                 "base_color_texture_path": texture_path,
-                "base_color_tint": slot.base_color_rgba8.map(|value| {
+                "base_color_tint": base_color_rgba8.map(|value| {
                     f64::from(value) / 255.0
                 }),
                 "set_alpha_reference": alpha_reference.is_some(),
@@ -237,23 +277,7 @@ pub(super) fn plan_vehicle_material_native_construction(
         .collect();
     let mut master_requests = recipes
         .into_iter()
-        .map(|(recipe, identity)| {
-            let asset_name = master_asset_name(recipe);
-            let package_path = format!("{VEHICLE_MASTER_FOLDER}/{asset_name}");
-            json!({
-                "recipe_identity": identity,
-                "shader_family": "simple",
-                "lit": false,
-                "blend_mode": recipe.blend_mode,
-                "alpha_test": recipe.alpha_test,
-                "alpha_compare": 4,
-                "two_sided": recipe.two_sided,
-                "folder_path": VEHICLE_MASTER_FOLDER,
-                "asset_name": asset_name,
-                "package_path": package_path,
-                "object_path": format!("{package_path}.{asset_name}")
-            })
-        })
+        .map(|(recipe, identity)| master_request(recipe, &identity))
         .collect::<Vec<_>>();
     master_requests.sort_by(|left, right| {
         left["recipe_identity"]
@@ -277,18 +301,78 @@ fn texture_object_path(sha256: &str) -> String {
     format!("{VEHICLE_TEXTURE_FOLDER}/{asset_name}.{asset_name}")
 }
 
+fn master_request(recipe: MasterRecipe, identity: &str) -> Value {
+    let asset_name = master_asset_name(recipe);
+    let package_path = format!("{VEHICLE_MASTER_FOLDER}/{asset_name}");
+    match recipe {
+        MasterRecipe::SimpleUnlit {
+            blend_mode,
+            alpha_test,
+            two_sided,
+        } => json!({
+            "recipe_identity": identity,
+            "shader_family": "simple",
+            "lit": false,
+            "blend_mode": blend_mode,
+            "alpha_test": alpha_test,
+            "alpha_compare": 4,
+            "two_sided": two_sided,
+            "folder_path": VEHICLE_MASTER_FOLDER,
+            "asset_name": asset_name,
+            "package_path": package_path,
+            "object_path": format!("{package_path}.{asset_name}"),
+        }),
+        MasterRecipe::SimpleLitOpaque {
+            shininess_bits,
+            two_sided,
+        } => json!({
+            "recipe_identity": identity,
+            "shader_family": "simple",
+            "lit": true,
+            "blend_mode": 0,
+            "alpha_test": false,
+            "alpha_compare": 4,
+            "two_sided": two_sided,
+            "source_ambient_rgba8": [0, 0, 0, 255],
+            "source_specular_rgba8": [0, 0, 0, 255],
+            "source_emissive_rgba8": [0, 0, 0, 255],
+            "source_shininess_bits": shininess_bits,
+            "source_shininess": f32::from_bits(shininess_bits),
+            "folder_path": VEHICLE_MASTER_FOLDER,
+            "asset_name": asset_name,
+            "package_path": package_path,
+            "object_path": format!("{package_path}.{asset_name}"),
+        }),
+    }
+}
+
 fn master_asset_name(recipe: MasterRecipe) -> String {
-    let blend = match recipe.blend_mode {
-        0 => "Opaque",
-        1 => "Alpha",
-        2 => "Additive",
-        _ => "Unsupported",
-    };
-    format!(
-        "M_SHAR_Vehicle_SimpleUnlit_{blend}_AlphaTest{}_{}",
-        if recipe.alpha_test { "On" } else { "Off" },
-        if recipe.two_sided { "TwoSided" } else { "OneSided" }
-    )
+    match recipe {
+        MasterRecipe::SimpleUnlit {
+            blend_mode,
+            alpha_test,
+            two_sided,
+        } => {
+            let blend = match blend_mode {
+                0 => "Opaque",
+                1 => "Alpha",
+                2 => "Additive",
+                _ => "Unsupported",
+            };
+            format!(
+                "M_SHAR_Vehicle_SimpleUnlit_{blend}_AlphaTest{}_{}",
+                if alpha_test { "On" } else { "Off" },
+                if two_sided { "TwoSided" } else { "OneSided" }
+            )
+        },
+        MasterRecipe::SimpleLitOpaque {
+            shininess_bits,
+            two_sided,
+        } => format!(
+            "M_SHAR_Vehicle_SimpleLit_Opaque_Shininess{shininess_bits:08X}_{}",
+            if two_sided { "TwoSided" } else { "OneSided" }
+        ),
+    }
 }
 
 fn master_object_path(recipe: MasterRecipe) -> String {

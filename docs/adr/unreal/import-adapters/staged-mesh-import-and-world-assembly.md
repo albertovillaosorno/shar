@@ -1,6 +1,7 @@
 # Staged mesh import and world assembly
 
-- Status: Accepted
+- Status: Superseded
+- Superseded by: Normalized JSON to native Unreal assets
 - Decision date: 2026-07-14
 - Scope: Phase 6 native Unreal import from normalized FBX, texture, WAV, JSON,
   and MOV evidence

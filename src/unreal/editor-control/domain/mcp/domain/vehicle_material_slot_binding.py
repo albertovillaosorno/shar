@@ -54,10 +54,15 @@ class VehicleMaterialSlotBindingReport(NamedTuple):
 
     package_id: str
     slot_count: int
+    slot_indices: tuple[int, ...]
 
     def to_json(self) -> JsonObject:
         """Render binding coverage without asset paths."""
-        return {"packageId": self.package_id, "slotCount": self.slot_count}
+        return {
+            "packageId": self.package_id,
+            "slotCount": self.slot_count,
+            "slotIndices": list(self.slot_indices),
+        }
 
 
 class CompiledVehicleMaterialSlotBinding(NamedTuple):
@@ -127,7 +132,9 @@ def compile_vehicle_material_slot_binding(
         fail_protocol("vehicle material slot source ownership drifted")
     return CompiledVehicleMaterialSlotBinding(
         VehicleMaterialSlotBindingReport(
-            selection.report.package_id, len(indices)
+            selection.report.package_id,
+            len(indices),
+            indices,
         ),
         selection.source_fbx,
         skeletal.destination,
@@ -147,7 +154,7 @@ def _resolve_skeletal_import(
         step
         for step in execution.imports
         if step.source_path == source_fbx
-        and step.route_id == "skeletal-mesh-fbx-v1"
+        and step.route_id == "vehicle-skeletal-mesh-fbx-v1"
     )
     if len(matches) != 1:
         fail_protocol("vehicle material Skeletal Mesh import join is not exact")

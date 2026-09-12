@@ -75,11 +75,12 @@
 
 ## Purpose
 
-This specification defines the planned conversion of normalized FBX, texture,
-WAV, JSON, and MOV evidence into native Unreal assets. It applies only after the
-canonical conversion phases have produced validated engine-independent evidence.
-It does not change the binary FBX writer, package taxonomy, extraction behavior,
-or runtime gameplay contracts. Cooked runtime requests, package mounting, and
+This specification defines production construction of native Unreal assets from
+normalized typed JSON plus approved texture, audio, and media evidence. It
+applies only after canonical conversion has produced validated
+engine-independent
+evidence. FBX is deprecated migration and interoperability evidence, not the
+production construction boundary. Cooked runtime requests, package mounting, and
 source-decoder exclusion follow the
 <!-- markdownlint-disable-next-line MD013 -->
 [native asset load request and streaming
@@ -119,40 +120,23 @@ textures, package files, office documents, screenshots, and other non-semantic
 artifacts are conversion inputs and never become per-file runtime or coverage
 authority.
 
-## FBX source contract
+## Normalized JSON source contract
 
-An accepted FBX source provides:
+Accepted source evidence provides stable mesh, material, texture, skeleton,
+animation, transform, collision, and semantic identities required by its package
+profile. Geometry and rig records preserve source-space values and provenance;
+the native plan owns target conversion.
 
-- stable scene, node, mesh, material-slot, texture, skeleton, animation, camera,
-  and transform identities required by its package profile;
-- real canonical texture evidence for every material slot that is not explicitly
-  declared untextured;
-- deterministic source UV channels and surface-vector metadata;
-- deterministic normal, tangent, smoothing, skin, bind-pose, collision, and
-  animation evidence where required; and
-- one import-recipe revision and one final native target identity.
+### Basis and unit conversion
 
-Embedded or relative texture references are source evidence. The final UAsset
-material dependency set is rebuilt by the native import plan and is not inferred
-from arbitrary editor discovery.
+Normalized evidence declares its source units and basis explicitly. Each native
+asset family applies one typed source-to-Unreal conversion to geometry, normals,
+rest transforms, animation samples, collision shapes, and semantic attachments.
 
-### Scene-unit conversion
-
-The original runtime initializes simulation with `MetersUnits`. SHAR-authored
-FBX output therefore keeps source positions in meters and declares FBX
-`UnitScaleFactor` and `OriginalUnitScaleFactor` as `100`, meaning one authored
-unit is one meter. Unreal's native world unit is one centimeter.
-
-The project-owned FBX importer must keep `ImportUniformScale` at `1.0` and
-enable `bConvertSceneUnit`. Unreal then converts the authored FBX system unit to
-centimeters exactly once. Import code must not compensate by multiplying source
-vertices, changing actor scale, or rewriting the FBX unit declaration.
-
-A missing scene-unit conversion produces assets one hundred times too small even
-though their relative proportions remain correct. Such an import can also make
-editor near-plane and culling behavior look like geometry corruption when the
-camera approaches a centimeter-scale character or vehicle. Native read-back of
-bounds must therefore be interpreted only after this unit contract is applied.
+Unreal centimeters and target axes are construction outputs, not reasons to
+rewrite source JSON. Importer scene-unit flags, uniform scale, negative-scale
+roots, or front-axis switches are deprecated compatibility mechanisms and cannot
+be production authority.
 
 ## Staging packages
 
@@ -495,10 +479,10 @@ XML, CSS, or header companions are not packaged or copied into public docs.
 
 ## World source and decomposition
 
-World conversion begins with one natural assembled FBX scene for each declared
-world package. That source preserves authored transforms, hierarchy, material
-membership, and placement relationships. It is evidence, not the final native
-streaming unit.
+World conversion begins with normalized geometry, hierarchy, material
+membership, and placement JSON for each declared world package. That evidence
+preserves authored relationships without requiring a mesh interchange scene and
+is not itself the final native streaming unit.
 
 The decomposition plan assigns every shipping world element to one stable
 component identity, including:
@@ -512,7 +496,8 @@ component identity, including:
 - decals and presentation-only surfaces; and
 - authored grouping or attachment roots.
 
-No component may be lost merely because it was nested inside a larger FBX node.
+No component may be lost merely because it was nested inside a larger source
+assembly.
 Duplicate geometry is preserved only when the plan proves distinct placement or
 presentation intent.
 
