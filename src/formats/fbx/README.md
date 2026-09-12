@@ -3,6 +3,17 @@
 This crate is the Phase 4 model-normalization boundary for FBX-capable assets.
 It is intentionally hexagonal and package-index driven.
 
+## Deprecation notice
+
+FBX is deprecated as a production Unreal ingestion boundary. This crate remains
+for interoperability, diagnostics, deterministic migration comparison, and any
+non-Unreal consumer that still requires FBX. New Unreal production work must
+consume normalized JSON and versioned plans through native asset constructors.
+
+Do not add new Unreal-specific coordinate, unit, material, skeleton, or physics
+policy to FBX. Existing production consumers are removed incrementally after
+their native constructors prove parity against the same normalized evidence.
+
 ## Architectural rule
 
 The package index is an intake contract, not a geometry model.

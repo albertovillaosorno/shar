@@ -104,8 +104,14 @@ Generated-plan application is divided into four fail-closed gates:
   payload. Any failure deletes only effects created by that transaction in
   reverse order and verifies their absence.
 
-Verified vehicle FBXs are emitted as ready `shar-fbx-skeletal-v1`
-prerequisite operations with dedicated `_Skeletal` destinations. Their owning
+The vehicle FBX prerequisite described below is deprecated migration
+compatibility. It remains executable until direct native Skeletal Mesh and
+Skeleton construction reaches parity, but new production behavior must not add
+dependencies on its importer semantics.
+
+During migration, verified vehicle FBXs are emitted as ready
+`shar-fbx-skeletal-v1` prerequisite operations with dedicated `_Skeletal`
+destinations. Their owning
 car packages remain semantic `CompositeModel` blockers, so this prerequisite
 never makes the global plan complete by itself. Physical plan-source
 verification resolves `vehicle-assets/...` only below
@@ -154,9 +160,11 @@ and restores those slots to null if any later verification fails. The same
 optional slot scope is therefore usable for incremental publication without
 rewriting already-correct material slots.
 
-Vehicle physics prerequisites have their own three-gate transaction. The local
-`vehicle-physics-prerequisites-preflight` selects only skeletal imports required
-by native-ready rigs and verifies just those physical FBXs. All three commands
+Vehicle physics prerequisites currently retain a deprecated three-gate FBX
+transaction. The local `vehicle-physics-prerequisites-preflight` selects only
+skeletal imports required by native-ready rigs and verifies just those physical
+FBXs. This prerequisite is removed when native Skeletal Mesh construction owns
+the stable mesh identity directly. All three commands
 accept optional `--package-id PACKAGE_ID`; global prerequisite compilation still
 runs first, then scoped execution keeps only imports needed by ready rigs for
 that exact package and emits a distinct `selectionRevision`.
@@ -173,8 +181,10 @@ Vehicle Physics Asset publication adds a separate three-gate construction
 transaction after the Skeletal Mesh import is available. `vehicle-physics-
 preflight` remains local: it requires the release index to bind exactly one
 `vehicle-physics.json`, rechecks exact bytes and SHA-256, validates the v1/v8
-construction contract, and joins every ready `source_fbx` to exactly one
-reviewed `vehicle-skeletal-mesh-fbx-v1` import step. Deterministic outputs are
+construction contract, and temporarily joins every ready `source_fbx` to one
+deprecated `vehicle-skeletal-mesh-fbx-v1` import step. The native replacement
+will join the same physics evidence to the stable Skeletal Mesh identity without
+a transport prerequisite. Deterministic outputs are
 confined
 to `/Game/Generated/SHAR/VehiclePhysics/PHYS_<digest>`.
 

@@ -30,6 +30,22 @@ native asset construction from normalized extracted JSON and versioned plans.
 - [ ] Regenerate the complete project from normalized evidence without requiring
   an FBX file for production Unreal asset construction.
 
+## Current retirement order
+
+- [ ] Replace vehicle FBX publication in
+  `vehicle_catalog/prepare.rs` and the
+  `vehicle-skeletal-mesh-fbx-v1` plan step with a native Skeletal Mesh and
+  Skeleton constructor fed by normalized geometry, rig, and skin evidence.
+- [ ] Decouple `vehicle_physics_prerequisites.py`,
+  `vehicle_physics_construction.py`, and `vehicle_material_slot_binding.py` from
+  the deprecated FBX route and join them to stable native mesh identity.
+- [ ] Replace world and prop FBX publication, including `ReflectX` in
+  `prop_catalog/world_level/export.rs`, with one typed native basis conversion.
+- [ ] Replace character and generic static/skeletal FBX routes after equivalent
+  native geometry, rig, skin, animation, and material constructors have parity.
+- [ ] Remove production FBX catalogs, staging prerequisites, and generic Unreal
+  FBX execution routes only after no production plan references them.
+
 ## Dependencies
 
 The normalized extraction and provenance ledgers remain source authority. Native
