@@ -508,7 +508,7 @@ fn vehicle_fbx_prerequisite_operation<'catalog>(
         destination: object_path(&package_path, &asset_name),
         target_class: "SkeletalMesh".to_owned(),
         importer: "asset-tools-fbx".to_owned(),
-        import_profile: "shar-fbx-skeletal-v1".to_owned(),
+        import_profile: "shar-fbx-vehicle-skeletal-v1".to_owned(),
         dependencies: Vec::new(),
         readiness: OperationReadiness::Ready,
         world_owned: true,

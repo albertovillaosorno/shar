@@ -46,7 +46,9 @@ repository reference must point to the current owning decision.
   linting](engineering/quality/strict-validation-and-linting.md)
   — Accepted
 
-## FBX conversion
+## FBX interoperability
+
+FBX decisions in this section are deprecated for production Unreal ingestion.
 
 <!-- markdownlint-disable-next-line MD013 -->
 - [Unsupported model evidence
@@ -55,15 +57,15 @@ repository reference must point to the current owning decision.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Character semantic texture, rig, outfit, and prop
   contract](fbx/export/character-semantic-texture-rig-and-outfit-contract.md)
-  — Accepted
+  — Deprecated
 <!-- markdownlint-disable-next-line MD013 -->
 - [First-principles FBX output
   contract](fbx/export/fbx-output-contract-boundary.md)
-  — Accepted
+  — Deprecated
 <!-- markdownlint-disable-next-line MD013 -->
 - [Semantic component and geographic placement
   contract](fbx/export/semantic-component-and-geographic-placement-contract.md)
-  — Accepted
+  — Deprecated
 <!-- markdownlint-disable-next-line MD013 -->
 - [Package evidence discovery
   boundary](fbx/extraction/source-discovery-boundary.md)
@@ -142,7 +144,7 @@ repository reference must point to the current owning decision.
 - [Lossless fail-closed
   extraction](pipeline/extraction/lossless-extraction-contract.md)
   — Accepted
-- [Hexagonal scene export](pipeline/fbx/hexagonal-scene-export.md) — Accepted
+- [Hexagonal scene export](pipeline/fbx/hexagonal-scene-export.md) — Deprecated
 - [Game manifest as a completeness ledger](pipeline/game-manifest-ledger.md) —
   Accepted
 <!-- markdownlint-disable-next-line MD013 -->
@@ -164,6 +166,10 @@ repository reference must point to the current owning decision.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native asset translation without
   copy-paste](pipeline/unreal/native-asset-translation-and-no-copy-paste.md)
+  — Accepted
+<!-- markdownlint-disable-next-line MD013 -->
+- [Normalized JSON to native Unreal
+  assets](pipeline/unreal/normalized-json-to-native-unreal-assets.md)
   — Accepted
 <!-- markdownlint-disable-next-line MD013 -->
 - [Faithful seven-chapter open-world
@@ -222,7 +228,7 @@ repository reference must point to the current owning decision.
 <!-- markdownlint-disable-next-line MD013 -->
 - [Staged mesh import and world
   assembly](unreal/import-adapters/staged-mesh-import-and-world-assembly.md)
-  — Accepted
+  — Superseded
 <!-- markdownlint-disable-next-line MD013 -->
 - [Native MCP tool projection and protected skill
   guidance](unreal/mcp/native-tool-cli-projection-and-skills.md)

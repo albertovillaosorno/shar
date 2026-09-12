@@ -113,7 +113,7 @@ def compile_vehicle_physics_prerequisites(
         step
         for step in execution.imports
         if step.source_path in required_sources
-        and step.route_id == "skeletal-mesh-fbx-v1"
+        and step.route_id == "vehicle-skeletal-mesh-fbx-v1"
     )
     _require_unique_imports(imports, required_sources)
     return CompiledVehiclePhysicsPrerequisites(
@@ -185,7 +185,7 @@ def _skeletal_imports(
 ) -> dict[str, NativeImportStep]:
     matches: dict[str, NativeImportStep] = {}
     for step in execution.imports:
-        if step.route_id != "skeletal-mesh-fbx-v1":
+        if step.route_id != "vehicle-skeletal-mesh-fbx-v1":
             continue
         if step.source_path not in required_sources:
             continue

@@ -30,14 +30,22 @@
 
 //! Generated vehicle catalog verifier tests.
 
+// CSpell:ignore ACMP ATST AMBI ENVB
+
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use fbx::adapters::driven::decoded_component_source::{
+    ShaderParameterEvidence, ShaderSourceEvidence,
+};
 use serde_json::json;
 use shar_sha256::digest_hex;
 
-use super::{FBX_VERSION, verified_vehicle_fbx_catalog};
+use super::{
+    FBX_VERSION, verified_vehicle_fbx_catalog,
+    verified_vehicle_material_raster,
+};
 
 static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
 
@@ -109,6 +117,48 @@ fn headlight_shader_bytes() -> Vec<u8> {
         .into_bytes()
 }
 
+fn shader_param(
+    kind: &str,
+    param: &str,
+    value: serde_json::Value,
+) -> ShaderParameterEvidence {
+    ShaderParameterEvidence {
+        kind: kind.to_owned(),
+        param: param.to_owned(),
+        value,
+    }
+}
+
+fn spheremap_evidence() -> ShaderSourceEvidence {
+    ShaderSourceEvidence {
+        schema: Some("shader".to_owned()),
+        identity: "body_m".to_owned(),
+        version: 0,
+        platform_shader_name: Some("spheremap".to_owned()),
+        translucency: Some(0),
+        vertex_needs: None,
+        vertex_mask: None,
+        parameter_count: None,
+        texture_reference: Some("body.bmp".to_owned()),
+        params: vec![
+            shader_param("texture", "TEX", json!("body.bmp")),
+            shader_param("texture", "REFL", json!("EnvMap.bmp\0\0")),
+            shader_param("int", "LIT", json!(1)),
+            shader_param("int", "2SID", json!(0)),
+            shader_param("int", "BLMD", json!(0)),
+            shader_param("int", "ACMP", json!(4)),
+            shader_param("int", "ATST", json!(0)),
+            shader_param("float", "ACTH", json!(0.5)),
+            shader_param("float", "SHIN", json!(10.0)),
+            shader_param("colour", "DIFF", json!(4_294_967_295_u64)),
+            shader_param("colour", "AMBI", json!(4_278_190_080_u64)),
+            shader_param("colour", "EMIS", json!(4_278_190_080_u64)),
+            shader_param("colour", "SPEC", json!(4_278_190_080_u64)),
+            shader_param("colour", "ENVB", json!(4_283_190_348_u64)),
+        ],
+    }
+}
+
 fn headlight_bytes() -> &'static [u8] {
     br#"{"schema":"quad_group","version":0,"name":"headlightShape",
 "shader":"headlight_m","z_test":1,"z_write":0,"fog":0,"num_quads":1,
@@ -173,6 +223,11 @@ fn write_catalog(
             "vehicle": "sedana",
             "package_id": "extracted-art-cars-sedana",
             "subcategory": "cars/traffic-variants/sedana",
+            "grounding": {
+                "source": "road-wheel-surfaces",
+                "offset_y": 0.75,
+                "root_bone": "sedanA"
+            },
             "fbx": {
                 "path": "sedana/sedana.fbx",
                 "bytes": declared_size.unwrap_or_else(|| {
@@ -321,6 +376,71 @@ fn rewrite_headlight_bones(root: &Path, bones: &[&str]) -> Result<(), String> {
 }
 
 #[test]
+fn retains_spheremap_reflection_source_evidence() -> Result<(), String> {
+    let raster = verified_vehicle_material_raster(&spheremap_evidence())
+        .map_err(|error| error.to_string())?;
+    if raster.shader_family != "spheremap"
+        || raster.reflection_texture_reference.as_deref()
+            != Some("EnvMap.bmp")
+        || raster.environment_blend_rgba8 != Some([76, 76, 76, 255])
+        || raster.texture_reference.as_deref() != Some("body.bmp")
+    {
+        return Err("spheremap reflection evidence drifted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn noncanonical_spheremap_reflection_identity_fails_closed()
+-> Result<(), String> {
+    let mut evidence = spheremap_evidence();
+    let reflection = evidence
+        .params
+        .iter_mut()
+        .find(|parameter| parameter.param == "REFL")
+        .ok_or_else(|| "reflection fixture is missing".to_owned())?;
+    reflection.value = json!(" EnvMap.bmp");
+    match verified_vehicle_material_raster(&evidence) {
+        Err(error)
+            if error
+                .to_string()
+                .contains("shader texture is invalid: REFL") => Ok(()),
+        Err(error) => Err(format!("unexpected reflection error: {error}")),
+        Ok(_) => Err(
+            "noncanonical reflection unexpectedly verified".to_owned(),
+        ),
+    }
+}
+
+#[test]
+fn incomplete_spheremap_reflection_evidence_fails_closed()
+-> Result<(), String> {
+    for missing in ["REFL", "ENVB"] {
+        let mut evidence = spheremap_evidence();
+        evidence
+            .params
+            .retain(|parameter| parameter.param != missing);
+        match verified_vehicle_material_raster(&evidence) {
+            Err(error)
+                if error
+                    .to_string()
+                    .contains("spheremap evidence is incomplete") => {},
+            Err(error) => {
+                return Err(format!(
+                    "unexpected spheremap {missing} error: {error}"
+                ));
+            },
+            Ok(_) => {
+                return Err(format!(
+                    "spheremap without {missing} unexpectedly verified"
+                ));
+            },
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn absent_vehicle_catalog_keeps_specialized_evidence_absent()
 -> Result<(), String> {
     let root = TempRoot::new("absent")?;
@@ -374,6 +494,8 @@ fn verifies_vehicle_fbx_without_promoting_other_semantics()
         || material.raster.diffuse_rgba8 != [255, 255, 255, 255]
         || material.raster.ambient_rgba8 != [0, 0, 0, 255]
         || material.raster.shininess_bits != 10.0_f32.to_bits()
+        || material.raster.reflection_texture_reference.is_some()
+        || material.raster.environment_blend_rgba8.is_some()
     {
         return Err("verified vehicle evidence drifted".to_owned());
     }

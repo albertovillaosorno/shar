@@ -37,19 +37,27 @@ import hashlib
 from pathlib import Path
 from pathlib import PurePosixPath
 import stat
+from typing import NamedTuple
 
 from mcp.domain.errors import fail_protocol
 from mcp.domain.vehicle_material_selection import VehicleMaterialExecutable
 
 
+class VerifiedVehicleMaterialTextureSource(NamedTuple):
+    """One source path with integrity and Unreal-import provenance digest."""
+
+    path: Path
+    md5: str
+
+
 def verify_vehicle_material_texture_sources(
     release_root: Path,
     compiled: VehicleMaterialExecutable,
-) -> dict[str, Path]:
-    """Verify every planned vehicle PNG and return SHA-256 keyed paths."""
+) -> dict[str, VerifiedVehicleMaterialTextureSource]:
+    """Verify every planned PNG and return SHA-256 keyed provenance."""
     root = release_root.absolute()
     _require_directory(root)
-    verified: dict[str, Path] = {}
+    verified: dict[str, VerifiedVehicleMaterialTextureSource] = {}
     for step in compiled.textures:
         relative = PurePosixPath(step.source_path)
         if (
@@ -82,7 +90,10 @@ def verify_vehicle_material_texture_sources(
             fail_protocol("vehicle texture source digest is stale")
         if step.sha256 in verified:
             fail_protocol("vehicle texture source digest is duplicated")
-        verified[step.sha256] = path
+        verified[step.sha256] = VerifiedVehicleMaterialTextureSource(
+            path=path,
+            md5=hashlib.md5(data, usedforsecurity=False).hexdigest(),
+        )
     return verified
 
 

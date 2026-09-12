@@ -35,13 +35,22 @@ from __future__ import annotations
 import hashlib
 
 from mcp.domain.errors import ProtocolError
+from mcp.domain.vehicle_material_capabilities import (
+    vehicle_material_construction_revision,
+)
 from mcp.domain.vehicle_material_construction import (
     CompiledVehicleMaterialConstruction,
+)
+from mcp.domain.vehicle_material_construction import (
+    VehicleMaterialAnyMasterStep,
 )
 from mcp.domain.vehicle_material_construction import (
     VehicleMaterialConstructionReport,
 )
 from mcp.domain.vehicle_material_construction import VehicleMaterialInstanceStep
+from mcp.domain.vehicle_material_construction import (
+    VehicleMaterialLitMasterStep,
+)
 from mcp.domain.vehicle_material_construction import VehicleMaterialMasterStep
 from mcp.domain.vehicle_material_construction import VehicleMaterialTextureStep
 from mcp.domain.vehicle_material_selection import (
@@ -53,7 +62,7 @@ _TEXTURE_ROOT = "/Game/Generated/SHAR/Textures/Vehicles"
 _MASTER_ROOT = "/Game/Generated/SHAR/Materials/Vehicles/Masters"
 _INSTANCE_ROOT = "/Game/Generated/SHAR/Materials/Vehicles/Instances"
 _RECIPE_SHARED = "simple-unlit-blend-additive-alpha-test-off-one-sided"
-_RECIPE_OTHER = "simple-unlit-blend-additive-alpha-test-off-both-faces"
+_RECIPE_LIT = "simple-lit-opaque-shininess-41200000-both-faces"
 
 
 def _texture(digit: str) -> VehicleMaterialTextureStep:
@@ -90,6 +99,24 @@ def _master(
     )
 
 
+def _lit_master(
+    recipe: str,
+    name: str,
+    *,
+    two_sided: bool,
+) -> VehicleMaterialLitMasterStep:
+    package = f"{_MASTER_ROOT}/{name}"
+    return VehicleMaterialLitMasterStep(
+        recipe_identity=recipe,
+        object_path=f"{package}.{name}",
+        package_path=package,
+        folder_path=_MASTER_ROOT,
+        asset_name=name,
+        two_sided=two_sided,
+        source_shininess=10.0,
+    )
+
+
 def _instance(
     package_id: str,
     *,
@@ -97,7 +124,7 @@ def _instance(
     slot_index: int,
     recipe: str,
     texture: VehicleMaterialTextureStep,
-    master: VehicleMaterialMasterStep,
+    master: VehicleMaterialAnyMasterStep,
 ) -> VehicleMaterialInstanceStep:
     request = hashlib.sha256(
         f"{package_id}\0{slot_index}".encode()
@@ -133,9 +160,9 @@ def _compiled() -> CompiledVehicleMaterialConstruction:
         "M_SHAR_Vehicle_SimpleUnlit_Additive_AlphaTestOff_OneSided",
         two_sided=False,
     )
-    other_master = _master(
-        _RECIPE_OTHER,
-        "M_SHAR_Vehicle_SimpleUnlit_Additive_AlphaTestOff_TwoSided",
+    other_master = _lit_master(
+        _RECIPE_LIT,
+        "M_SHAR_Vehicle_SimpleLit_Opaque_Shininess41200000_TwoSided",
         two_sided=True,
     )
     instances = (
@@ -151,7 +178,7 @@ def _compiled() -> CompiledVehicleMaterialConstruction:
             "extracted-art-cars-sedana",
             source_fbx="vehicle-assets/sedana/sedana.fbx",
             slot_index=7,
-            recipe=_RECIPE_OTHER,
+            recipe=_RECIPE_LIT,
             texture=other_texture,
             master=other_master,
         ),
@@ -180,6 +207,7 @@ def test_selects_exact_package_and_dependency_closure() -> None:
         "instanceCount": 2,
         "masterCount": 2,
         "packageId": "extracted-art-cars-sedana",
+        "slotIndices": [0, 7],
         "textureCount": 2,
     }
     assert selected.source_fbx == "vehicle-assets/sedana/sedana.fbx"
@@ -188,6 +216,53 @@ def test_selects_exact_package_and_dependency_closure() -> None:
         "1" * 64,
         "2" * 64,
     )
+    assert isinstance(selected.masters[0], VehicleMaterialMasterStep)
+    assert isinstance(selected.masters[1], VehicleMaterialLitMasterStep)
+
+
+def test_selects_exact_construction_ready_slot_subset() -> None:
+    compiled = _compiled()
+    complete = select_vehicle_material_package(
+        compiled,
+        "extracted-art-cars-sedana",
+    )
+    selected = select_vehicle_material_package(
+        compiled,
+        "extracted-art-cars-sedana",
+        (7,),
+    )
+    assert selected.report.to_json() == {
+        "instanceCount": 1,
+        "masterCount": 1,
+        "packageId": "extracted-art-cars-sedana",
+        "slotIndices": [7],
+        "textureCount": 1,
+    }
+    assert tuple(item.slot_index for item in selected.instances) == (7,)
+    assert tuple(item.sha256 for item in selected.textures) == ("2" * 64,)
+    assert isinstance(selected.masters[0], VehicleMaterialLitMasterStep)
+    assert vehicle_material_construction_revision(selected) != (
+        vehicle_material_construction_revision(complete)
+    )
+
+    with pytest.raises(
+        ProtocolError,
+        match="requested vehicle material slot is not construction-ready",
+    ):
+        select_vehicle_material_package(
+            _compiled(),
+            "extracted-art-cars-sedana",
+            (4,),
+        )
+    with pytest.raises(
+        ProtocolError,
+        match="slot selection is not canonical",
+    ):
+        select_vehicle_material_package(
+            _compiled(),
+            "extracted-art-cars-sedana",
+            (7, 0),
+        )
 
 
 def test_shared_dependency_is_retained_once_for_other_package() -> None:

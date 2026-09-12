@@ -205,6 +205,32 @@ bool BuildTransientVehiclePhysicsAsset(
         Box.Z = static_cast<float>(Shape.BoxExtents.Z);
         Body->AggGeom.BoxElems.Add(Box);
     }
+    // SHAR vehicle self collision is opt-in by explicit source pairs.
+    // Current native-ready rigs require that source pair list to be empty.
+    // Keep secondary authored shapes present but non-simulated until their
+    // source articulation joints have an exact Chaos translation.
+    for (USkeletalBodySetup* Body : Candidate->SkeletalBodySetups)
+    {
+        if (Body == nullptr)
+        {
+            OutError = TEXT("vehicle physics body setup is invalid");
+            return false;
+        }
+        Body->PhysicsType = Body->BoneName == RigIdentity
+            ? PhysType_Default
+            : PhysType_Kinematic;
+    }
+    // An empty SHAR self-collision list means no bodies in this rig collide
+    // with one another. Preserve that opt-in source behavior explicitly.
+    for (int32 Left = 0; Left < Candidate->SkeletalBodySetups.Num(); ++Left)
+    {
+        for (int32 Right = Left + 1;
+             Right < Candidate->SkeletalBodySetups.Num();
+             ++Right)
+        {
+            Candidate->DisableCollision(Left, Right);
+        }
+    }
     Candidate->SetPreviewMesh(&SkeletalMesh, false);
     Candidate->UpdateBodySetupIndexMap();
     Candidate->UpdateBoundsBodiesArray();

@@ -52,9 +52,19 @@ from mcp.domain.vehicle_material_capabilities import (
 from mcp.domain.vehicle_material_capabilities import (
     vehicle_material_construction_revision,
 )
+from mcp.domain.vehicle_material_construction import (
+    VehicleMaterialAnyMasterStep,
+)
 from mcp.domain.vehicle_material_selection import VehicleMaterialExecutable
 
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
+
+
+class VehicleMaterialTextureSourceEvidence(Protocol):
+    """Verified physical texture evidence supplied by the filesystem adapter."""
+
+    path: Path
+    md5: str
 
 
 class NativeVehicleMaterialClient(Protocol):
@@ -77,6 +87,7 @@ class VehicleMaterialApplicationReport(NamedTuple):
     created_count: int
     saved_count: int
     verified_count: int
+    reused_dependency_count: int
 
     def to_json(self) -> JsonObject:
         """Render successful counts without paths or source identities."""
@@ -85,6 +96,7 @@ class VehicleMaterialApplicationReport(NamedTuple):
             "createdCount": self.created_count,
             "savedCount": self.saved_count,
             "verifiedCount": self.verified_count,
+            "reusedDependencyCount": self.reused_dependency_count,
         }
 
 
@@ -106,17 +118,26 @@ def apply_vehicle_material_construction(
     client: NativeVehicleMaterialClient,
     compiled: VehicleMaterialExecutable,
     capabilities: VehicleMaterialCapabilityReport,
-    texture_sources: Mapping[str, Path],
+    texture_sources: Mapping[str, VehicleMaterialTextureSourceEvidence],
 ) -> VehicleMaterialApplicationReport:
     """Apply all representable requests or compensate every created asset."""
     _require_ready(compiled, capabilities, texture_sources)
-    for spec in _all_specs(compiled):
-        _require_absent(client, spec, changed=False)
+    reused = _preflight_destinations(
+        client,
+        compiled,
+        texture_sources,
+    )
 
     created: list[_AssetSpec] = []
     try:
-        _apply_textures(client, compiled, texture_sources, created)
-        _apply_masters(client, compiled, created)
+        _apply_textures(client, compiled, texture_sources, created, reused)
+        _apply_masters(client, compiled, created, reused)
+        _verify_reused_dependencies(
+            client,
+            compiled,
+            texture_sources,
+            reused,
+        )
         _apply_instances(client, compiled, created)
     except Exception as error:
         _compensate(client, created, error)
@@ -125,17 +146,21 @@ def apply_vehicle_material_construction(
         construction_revision=capabilities.construction_revision,
         created_count=len(created),
         saved_count=len(created),
-        verified_count=len(created),
+        verified_count=len(created) + len(reused),
+        reused_dependency_count=len(reused),
     )
 
 
 def _apply_textures(
     client: NativeVehicleMaterialClient,
     compiled: VehicleMaterialExecutable,
-    texture_sources: Mapping[str, Path],
+    texture_sources: Mapping[str, VehicleMaterialTextureSourceEvidence],
     created: list[_AssetSpec],
+    reused: set[str],
 ) -> None:
     for step in compiled.textures:
+        if step.package_path in reused:
+            continue
         spec = _AssetSpec(
             step.package_path, step.object_path, step.target_class
         )
@@ -143,7 +168,7 @@ def _apply_textures(
             spec,
             step.toolset_name,
             step.tool_name,
-            step.arguments(str(texture_sources[step.sha256].absolute())),
+            step.arguments(str(texture_sources[step.sha256].path.absolute())),
             "texture",
         )
         _apply_call(client, call, created)
@@ -153,8 +178,11 @@ def _apply_masters(
     client: NativeVehicleMaterialClient,
     compiled: VehicleMaterialExecutable,
     created: list[_AssetSpec],
+    reused: set[str],
 ) -> None:
     for step in compiled.masters:
+        if step.package_path in reused:
+            continue
         spec = _AssetSpec(
             step.package_path, step.object_path, step.target_class
         )
@@ -204,10 +232,122 @@ def _apply_call(
     _verify_and_save(client, call.spec)
 
 
+def _preflight_destinations(
+    client: NativeVehicleMaterialClient,
+    compiled: VehicleMaterialExecutable,
+    texture_sources: Mapping[str, VehicleMaterialTextureSourceEvidence],
+) -> set[str]:
+    reused: set[str] = set()
+    for step in compiled.textures:
+        if _exists(client, step.package_path):
+            _verify_existing_texture(
+                client, step.package_path, texture_sources[step.sha256]
+            )
+            reused.add(step.package_path)
+    for step in compiled.masters:
+        if _exists(client, step.package_path):
+            _verify_existing_master(client, step)
+            reused.add(step.package_path)
+    for step in compiled.instances:
+        _require_absent(
+            client,
+            _AssetSpec(step.package_path, step.object_path, step.target_class),
+            changed=False,
+        )
+    return reused
+
+
+def _verify_reused_dependencies(
+    client: NativeVehicleMaterialClient,
+    compiled: VehicleMaterialExecutable,
+    texture_sources: Mapping[str, VehicleMaterialTextureSourceEvidence],
+    reused: set[str],
+) -> None:
+    for step in compiled.textures:
+        if step.package_path in reused:
+            _verify_existing_texture(
+                client, step.package_path, texture_sources[step.sha256]
+            )
+    for step in compiled.masters:
+        if step.package_path in reused:
+            _verify_existing_master(client, step)
+
+
+def _verify_existing_texture(
+    client: NativeVehicleMaterialClient,
+    package_path: str,
+    evidence: VehicleMaterialTextureSourceEvidence,
+) -> None:
+    if _asset_class(client, package_path) != "Texture2D":
+        fail_protocol("reused vehicle texture class drifted")
+    if _is_dirty(client, package_path):
+        fail_protocol("reused vehicle texture is dirty")
+    outcome = client.call_tool(
+        _ASSET_TOOLSET,
+        f"{_ASSET_TOOLSET}.get_asset_tags",
+        {"asset_path": package_path},
+    )
+    result = _structured_result(
+        outcome, context="reused vehicle texture tags"
+    )
+    tags = normalize_json(
+        result.get("returnValue"), context="reused vehicle texture tags"
+    )
+    tags = require_json_object(tags, context="reused vehicle texture tags")
+    raw_import = tags.get("AssetImportData")
+    if (
+        not isinstance(raw_import, str)
+        or tags.get("SRGB") != "True"
+        or tags.get("IsSourceValid") != "True"
+    ):
+        fail_protocol("reused vehicle texture provenance is incomplete")
+    try:
+        source_rows = json.loads(
+            raw_import,
+            object_pairs_hook=reject_duplicate_json_object,
+            parse_constant=lambda _: fail_protocol(
+                "reused vehicle texture provenance is non-finite"
+            ),
+        )
+    except (json.JSONDecodeError, UnicodeError) as error:
+        fail_protocol(
+            "reused vehicle texture provenance is invalid",
+            cause=error,
+        )
+    source_rows = normalize_json(
+        source_rows, context="reused vehicle texture provenance"
+    )
+    if not isinstance(source_rows, list) or len(source_rows) != 1:
+        fail_protocol("reused vehicle texture provenance is not singular")
+    source = require_json_object(
+        source_rows[0], context="reused vehicle texture provenance row"
+    )
+    if source.get("FileMD5") != evidence.md5:
+        fail_protocol("reused vehicle texture source digest drifted")
+
+
+def _verify_existing_master(
+    client: NativeVehicleMaterialClient,
+    step: VehicleMaterialAnyMasterStep,
+) -> None:
+    package_path = step.package_path
+    if _asset_class(client, package_path) != "Material":
+        fail_protocol("reused vehicle master class drifted")
+    if _is_dirty(client, package_path):
+        fail_protocol("reused vehicle master is dirty")
+    outcome = client.call_tool(
+        step.toolset_name,
+        step.verify_tool_name,
+        step.verify_arguments(),
+    )
+    if not _return_boolean(outcome, context="reused vehicle master read-back"):
+        fail_protocol("reused vehicle master recipe drifted")
+
+
 def _require_ready(
     compiled: VehicleMaterialExecutable,
     capabilities: VehicleMaterialCapabilityReport,
-    texture_sources: Mapping[str, Path],
+    texture_sources: Mapping[str, VehicleMaterialTextureSourceEvidence],
 ) -> None:
     expected_revision = vehicle_material_construction_revision(compiled)
     if not capabilities.complete:

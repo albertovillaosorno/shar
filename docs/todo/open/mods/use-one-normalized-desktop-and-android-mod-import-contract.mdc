@@ -48,6 +48,17 @@ assets; opaque precompiled payloads are not the preferred canonical format.
 
 Depends on deterministic mod identity and package validation contracts.
 
+## Native Unreal asset pivot — 2026-09-12
+
+Normalized extracted JSON and versioned normalized plans are the canonical
+production handoff into Unreal. FBX is deprecated for production Unreal asset
+construction and may remain only as temporary interoperability, inspection, or
+migration evidence. New implementation work must construct target assets
+through tested native Unreal automation without making FBX transforms, scene
+units, material slots, or importer behavior authoritative. Existing FBX-based
+evidence remains historical or transitional and must be retired from production
+once the equivalent native constructor has parity coverage.
+
 ## Evidence
 
 The previous task title mentioned desktop and Android only. The product contract

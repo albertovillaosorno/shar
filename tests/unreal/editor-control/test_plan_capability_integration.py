@@ -45,18 +45,35 @@ from mcp.domain.endpoint import McpEndpoint
 from plan_bundle_fixture import write_plan_bundle
 import pytest
 
+_VEHICLE_MODEL_SOURCE = "vehicle-assets/model/model.fbx"
+_VEHICLE_MODEL_MESH = "/Game/Generated/SHAR/cars/model_Skeletal"
+_VEHICLE_MODEL_SKELETON = f"{_VEHICLE_MODEL_MESH}_Skeleton"
+_VEHICLE_MODEL_PHYSICS = (
+    "/Game/Generated/SHAR/VehiclePhysics/PHYS_"
+    + hashlib.sha256(b"skeletal-mesh-package\0model").hexdigest()[:24]
+)
+
 
 def _vehicle_physics_document(
-    source_fbx: str = "fbx-assets/skeletal/model.fbx",
+    source_fbx: str = _VEHICLE_MODEL_SOURCE,
 ) -> dict[str, object]:
     return {
         "schema": "shar-schoenwald.unreal-vehicle-physics-evidence.v1",
         "source_schema": "shar.vehicle-catalog.v8",
         "target_policy": {
             "box_extent_policy": "source-half-to-native-full",
-            "local_axis_conversion": "reflect-y",
+            "local_axis_conversion": (
+                "source-x-y-z-to-target-z-x-y"
+            ),
             "native_dimension_policy": (
                 "retain-source-magnitude-under-bone-scale"
+            ),
+            "rig_binding_policy": "match-imported-render-root",
+            "secondary_body_policy": (
+                "kinematic-until-joints-translated"
+            ),
+            "self_collision_policy": (
+                "source-empty-disable-all"
             ),
             "skeletal_import_unit_policy": "scene-unit-converted",
             "source_coordinate_space": "source-bone-local",
@@ -95,7 +112,7 @@ def _vehicle_physics_document(
 
 def _bind_vehicle_physics_sidecar(
     plan_root: Path,
-    source_fbx: str = "fbx-assets/skeletal/model.fbx",
+    source_fbx: str = _VEHICLE_MODEL_SOURCE,
 ) -> None:
     sidecar = plan_root.parent / "vehicle-physics.json"
     payload = (
@@ -146,14 +163,14 @@ def _vehicle_material_document(texture_bytes: bytes) -> dict[str, object]:
         f"/Game/Generated/SHAR/Materials/Vehicles/Instances/{instance_name}"
     )
     return {
-        "schema": "shar-schoenwald.unreal-vehicle-material-evidence.v4",
+        "schema": "shar-schoenwald.unreal-vehicle-material-evidence.v5",
         "source_schema": "shar.vehicle-catalog.v8",
         "target_policy": {
             "source_projection": "reviewed-pddi-render-state",
             "source_projection_status": "ready",
             "world_material_policy_reuse": "forbidden",
             "native_construction": (
-                "simple-unlit-texture-master-instance-ready"
+                "simple-unlit-and-opaque-lit-texture-master-instance-ready"
             ),
             "mesh_slot_application": (
                 "blocked-pending-reviewed-transaction"
@@ -343,7 +360,12 @@ def test_cli_vehicle_material_scope_uses_only_selected_dependencies(
     source.parent.mkdir(parents=True)
     source.write_bytes(selected_bytes)
     monkeypatch.chdir(tmp_path)
-    scope = ("--package-id", "extracted-art-cars-sedana")
+    scope = (
+        "--package-id",
+        "extracted-art-cars-sedana",
+        "--slot-index",
+        "6",
+    )
 
     with FakeUnrealServer(plan_execution=True) as server:
         preflight = _run_json_cli(
@@ -359,6 +381,7 @@ def test_cli_vehicle_material_scope_uses_only_selected_dependencies(
             "instanceCount": 1,
             "masterCount": 1,
             "packageId": "extracted-art-cars-sedana",
+            "slotIndices": [6],
             "textureCount": 1,
         }
         assert preflight["verifiedTextureSourceCount"] == 1
@@ -387,6 +410,37 @@ def test_cli_vehicle_material_scope_uses_only_selected_dependencies(
     ]
     assert len(server.assets) == 3
     assert all("other" not in path.lower() for path in server.assets)
+
+
+def test_cli_vehicle_material_slot_scope_rejects_unready_slot_locally(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    selected_bytes = b"selected-png"
+    other_bytes = b"other-png"
+    plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
+    _ = write_plan_bundle(plan_root)
+    document = _two_package_vehicle_material_document(
+        selected_bytes,
+        other_bytes,
+    )
+    _bind_vehicle_material_document(plan_root, document)
+    monkeypatch.chdir(tmp_path)
+
+    code = main((
+        "vehicle-material-preflight",
+        "--package-id",
+        "extracted-art-cars-sedana",
+        "--slot-index",
+        "4",
+    ))
+    captured = capsys.readouterr()
+    assert code == 1
+    assert "requested vehicle material slot is not construction-ready" in (
+        captured.err
+    )
+    assert not captured.out
 
 
 def test_cli_vehicle_material_runs_three_gates_and_applies_assets(
@@ -429,8 +483,8 @@ def test_cli_vehicle_material_runs_three_gates_and_applies_assets(
         capabilities = capability_payload["capabilities"]
         assert isinstance(capabilities, dict)
         assert capabilities["complete"] is True
-        assert capabilities["requiredToolCount"] == 8
-        assert capabilities["availableToolCount"] == 8
+        assert capabilities["requiredToolCount"] == 10
+        assert capabilities["availableToolCount"] == 10
         applied = _run_json_cli(
             capsys,
             "--endpoint",
@@ -443,6 +497,7 @@ def test_cli_vehicle_material_runs_three_gates_and_applies_assets(
         "createdCount": 3,
         "savedCount": 3,
         "verifiedCount": 3,
+        "reusedDependencyCount": 0,
     }
     document = _vehicle_material_document(texture_bytes)
     native = document["native_construction"]
@@ -465,7 +520,7 @@ def test_cli_vehicle_material_runs_three_gates_and_applies_assets(
     )
     assert "ImportBaseColorTexture2D" in native_leaves
     assert "CreateSimpleUnlitVehicleMaster" in native_leaves
-    assert "CreateSimpleUnlitVehicleMaterialInstance" in native_leaves
+    assert "CreateVehicleMaterialInstance" in native_leaves
     assert native_leaves.count("save_assets") == 3
     assert "delete" not in native_leaves
 
@@ -970,18 +1025,11 @@ def test_cli_vehicle_physics_applies_bound_release_after_skeletal_import(
     plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
     _ = write_plan_bundle(
         plan_root,
-        with_skeletal_mesh_operation=True,
-        skeletal_mesh_source_revision=source_revision,
+        with_vehicle_skeletal_mesh_operation=True,
+        vehicle_skeletal_mesh_source_revision=source_revision,
     )
     _bind_vehicle_physics_sidecar(plan_root)
-    source = (
-        tmp_path
-        / ".cache"
-        / "pipeline"
-        / "fbx-assets"
-        / "skeletal"
-        / "model.fbx"
-    )
+    source = tmp_path / ".cache" / "pipeline" / _VEHICLE_MODEL_SOURCE
     source.parent.mkdir(parents=True)
     source.write_bytes(source_bytes)
     monkeypatch.chdir(tmp_path)
@@ -1050,14 +1098,10 @@ def test_cli_vehicle_physics_applies_bound_release_after_skeletal_import(
         "savedCount": 1,
         "verifiedCount": 1,
     }
-    digest = hashlib.sha256(b"skeletal-mesh-package\0model").hexdigest()[:24]
-    physics = f"/Game/Generated/SHAR/VehiclePhysics/PHYS_{digest}"
-    mesh = "/Game/Generated/SHAR/models/skeletal/model"
-    skeleton = f"{mesh}_Skeleton"
     assert server.assets == {
-        mesh: "SkeletalMesh",
-        skeleton: "Skeleton",
-        physics: "PhysicsAsset",
+        _VEHICLE_MODEL_MESH: "SkeletalMesh",
+        _VEHICLE_MODEL_SKELETON: "Skeleton",
+        _VEHICLE_MODEL_PHYSICS: "PhysicsAsset",
     }
     assert server.dirty_assets == frozenset()
     assert server.session_closed
@@ -1081,17 +1125,16 @@ def test_cli_vehicle_prerequisites_apply_with_semantic_blocker(
 ) -> None:
     source_bytes = b"Kaydara FBX Binary vehicle-prerequisite-source"
     source_revision = hashlib.sha256(source_bytes).hexdigest()
-    source_path = "vehicle-assets/model/model.fbx"
     plan_root = tmp_path / ".cache" / "pipeline" / "unreal-staging" / "plans"
     _ = write_plan_bundle(
         plan_root,
-        with_skeletal_mesh_operation=True,
-        skeletal_mesh_source_revision=source_revision,
-        skeletal_mesh_source_path=source_path,
+        with_vehicle_skeletal_mesh_operation=True,
+        vehicle_skeletal_mesh_source_revision=source_revision,
+        vehicle_skeletal_mesh_source_path=_VEHICLE_MODEL_SOURCE,
         semantic_blocker_count=1,
     )
-    _bind_vehicle_physics_sidecar(plan_root, source_path)
-    source = tmp_path / ".cache" / "pipeline" / source_path
+    _bind_vehicle_physics_sidecar(plan_root)
+    source = tmp_path / ".cache" / "pipeline" / _VEHICLE_MODEL_SOURCE
     source.parent.mkdir(parents=True)
     source.write_bytes(source_bytes)
     monkeypatch.chdir(tmp_path)
@@ -1149,14 +1192,10 @@ def test_cli_vehicle_prerequisites_apply_with_semantic_blocker(
     assert applied["application"]["verifiedCount"] == 1
     assert applied["bundle"]["semanticBlockerCount"] == 1
     assert physics["application"]["createdCount"] == 1
-    mesh = "/Game/Generated/SHAR/models/skeletal/model"
-    skeleton = f"{mesh}_Skeleton"
-    digest = hashlib.sha256(b"skeletal-mesh-package\0model").hexdigest()[:24]
-    physics_asset = f"/Game/Generated/SHAR/VehiclePhysics/PHYS_{digest}"
     assert server.assets == {
-        mesh: "SkeletalMesh",
-        skeleton: "Skeleton",
-        physics_asset: "PhysicsAsset",
+        _VEHICLE_MODEL_MESH: "SkeletalMesh",
+        _VEHICLE_MODEL_SKELETON: "Skeleton",
+        _VEHICLE_MODEL_PHYSICS: "PhysicsAsset",
     }
     assert server.dirty_assets == frozenset()
     assert server.session_closed

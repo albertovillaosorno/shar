@@ -120,7 +120,12 @@ class _SyntheticClient:
         leaf = tool_name.rsplit(".", 1)[-1]
         if leaf == "exists":
             return _outcome(str(arguments["path"]) in self.assets)
-        if leaf in {"ImportFileMediaSource", "ImportStaticMesh", "import_file"}:
+        if leaf in {
+            "ImportFileMediaSource",
+            "ImportStaticMesh",
+            "ImportVehicleSkeletalMesh",
+            "import_file",
+        }:
             self.import_count += 1
             is_native = leaf != "import_file"
             asset_name = str(
@@ -139,6 +144,8 @@ class _SyntheticClient:
                 if leaf == "ImportFileMediaSource"
                 else "StaticMesh"
                 if leaf == "ImportStaticMesh"
+                else "SkeletalMesh"
+                if leaf == "ImportVehicleSkeletalMesh"
                 else "Texture2D"
             )
             self.assets[package_path] = target_class
@@ -154,7 +161,7 @@ class _SyntheticClient:
             returned_object_paths = [object_path]
             if (
                 self.behavior.companion_mode != "none"
-                and leaf == "ImportStaticMesh"
+                and leaf in {"ImportStaticMesh", "ImportVehicleSkeletalMesh"}
             ):
                 companion_name = f"{asset_name}_Skeleton"
                 companion_package = f"{folder_path}/{companion_name}"
@@ -252,6 +259,28 @@ def _static_mesh_operation(index: int) -> PlanOperation:
     )
 
 
+def _vehicle_skeletal_mesh_operation(index: int) -> PlanOperation:
+    asset_name = f"vehicle_{index}_Skeletal"
+    return PlanOperation(
+        plan_id="asset-import-plan",
+        operation_id=f"operation-{index:016x}",
+        package_identity=f"vehicle-package-{index}",
+        source_identity=f"vehicle-source-{index}",
+        source_format="fbx",
+        target_family="model",
+        source_path=f"vehicle-assets/vehicle-{index}/vehicle-{index}.fbx",
+        source_revision=f"{index:064x}",
+        destination=f"/Game/Generated/SHAR/cars/{asset_name}.{asset_name}",
+        target_class="SkeletalMesh",
+        importer="asset-tools-fbx",
+        import_profile="shar-fbx-vehicle-skeletal-v1",
+        dependencies=(),
+        readiness="ready",
+        world_owned=True,
+        runtime_bound=True,
+    )
+
+
 def _media_operation(index: int) -> PlanOperation:
     asset_name = f"movie_{index}"
     return PlanOperation(
@@ -331,7 +360,11 @@ def _sources(
             "mov"
             if step.has_external_payload
             else "fbx"
-            if step.route_id == "static-mesh-fbx-v1"
+            if step.route_id in {
+                "skeletal-mesh-fbx-v1",
+                "static-mesh-fbx-v1",
+                "vehicle-skeletal-mesh-fbx-v1",
+            }
             else "png"
         )
         source = tmp_path / f"{step.operation_id}.{extension}"
@@ -423,6 +456,42 @@ def test_applies_static_mesh_through_owned_native_import(
             "sourceFile": str(sources[step.operation_id]),
         }
     ]
+
+
+def test_applies_vehicle_skeletal_mesh_with_skeleton_companion(
+    tmp_path: Path,
+) -> None:
+    compiled = _compiled(_vehicle_skeletal_mesh_operation(19))
+    client = _SyntheticClient(
+        behavior=_SyntheticBehavior(companion_mode="normal")
+    )
+    sources = _sources(tmp_path, compiled)
+    report = apply_import_plan(
+        client,
+        compiled,
+        _capabilities(compiled),
+        sources,
+    )
+    step = compiled.imports[0]
+    assert report.imported_count == 1
+    assert report.saved_count == 1
+    assert report.verified_count == 1
+    expected_packages = {output.package_path for output in step.outputs}
+    assert set(client.assets) == expected_packages
+    assert tuple(client.assets[path] for path in client.assets) == (
+        "SkeletalMesh",
+        "Skeleton",
+    )
+    native_calls = [
+        arguments
+        for name, arguments in client.calls
+        if name.rsplit(".", 1)[-1] == "ImportVehicleSkeletalMesh"
+    ]
+    assert native_calls == [{
+        "assetName": step.asset_name,
+        "folderPath": step.folder_path,
+        "sourceFile": str(sources[step.operation_id]),
+    }]
 
 
 def test_rejects_incomplete_plan_before_any_native_call(tmp_path: Path) -> None:

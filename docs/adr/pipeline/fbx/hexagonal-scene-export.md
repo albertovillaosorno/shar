@@ -1,6 +1,7 @@
 # Hexagonal scene export
 
-- Status: Accepted
+- Status: Deprecated
+- Superseded by: Normalized JSON to native Unreal assets
 - Decision date: 2026-07-12
 - Scope: Model package conversion
 

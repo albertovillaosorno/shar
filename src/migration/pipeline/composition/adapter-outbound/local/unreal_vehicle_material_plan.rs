@@ -23,12 +23,12 @@
 //   - Verified vehicle material plan-evidence renderer.
 // - Description:
 //   - Separates exact source projection readiness from native Unreal material
-//   - construction readiness without approximating lit or runtime state.
+//   - construction readiness without approximating unsupported runtime state.
 // - Usage:
 //   - Consumed after vehicle-catalog verification and before editor mutation.
 // - Defaults:
-//   - Every slot remains native-blocked until the vehicle material toolset is
-//   - reviewed and implemented.
+//   - Reviewed graph subsets may construct assets; slot publication remains
+//   - blocked until its transaction validates them.
 //
 
 //! Verified vehicle material plan-evidence renderer.
@@ -45,7 +45,7 @@ use super::unreal_vehicle_material_native_plan::{
 use crate::domain::{PipelineError, PipelineOutcome};
 
 pub(super) const VEHICLE_MATERIAL_PLAN_SCHEMA: &str =
-    "shar-schoenwald.unreal-vehicle-material-evidence.v4";
+    "shar-schoenwald.unreal-vehicle-material-evidence.v5";
 const SOURCE_SCHEMA: &str = "shar.vehicle-catalog.v8";
 const NATIVE_GRAPH_BLOCKER: &str =
     "vehicle-native-material-graph-not-reviewed";
@@ -57,6 +57,8 @@ const LIGHT_PRESENTATION_BLOCKER: &str =
     "vehicle-light-material-application-not-reviewed";
 const HEADLIGHT_GLOW_BLOCKER: &str =
     "vehicle-headlight-native-glow-not-applied";
+const CONTEXT_AMBIENT_BLOCKER: &str =
+    "vehicle-context-ambient-light-not-reviewed";
 
 /// Render exact verified vehicle material state and native-readiness blockers.
 pub(super) fn render_vehicle_material_plan(
@@ -109,7 +111,8 @@ pub(super) fn render_vehicle_material_plan(
             "source_projection": "reviewed-pddi-render-state",
             "source_projection_status": "ready",
             "world_material_policy_reuse": "forbidden",
-            "native_construction": "simple-unlit-texture-master-instance-ready",
+            "native_construction":
+                "simple-unlit-and-opaque-lit-texture-master-instance-ready",
             "mesh_slot_application": "blocked-pending-reviewed-transaction",
             "dynamic_light_binding":
                 "headlight-sidecar-plus-slot-bound-rear-lights",
@@ -138,6 +141,9 @@ struct Counts {
     alpha_test_slots: usize,
     two_sided_slots: usize,
     simple_unlit_graph_candidates: usize,
+    simple_lit_opaque_graph_candidates: usize,
+    simple_lit_source_alpha_glass_candidates: usize,
+    context_ambient_light_slots: usize,
     presentation_special_slots: usize,
     native_graph_ready_slots: usize,
     native_construction_ready_slots: usize,
@@ -181,10 +187,26 @@ impl Counts {
         self.simple_unlit_graph_candidates = self
             .simple_unlit_graph_candidates
             .saturating_add(usize::from(is_simple_unlit_graph_candidate(slot)));
+        self.simple_lit_opaque_graph_candidates = self
+            .simple_lit_opaque_graph_candidates
+            .saturating_add(usize::from(
+                is_simple_lit_opaque_graph_candidate(slot),
+            ));
+        self.simple_lit_source_alpha_glass_candidates = self
+            .simple_lit_source_alpha_glass_candidates
+            .saturating_add(usize::from(
+                is_simple_lit_source_alpha_glass_candidate(slot),
+            ));
+        self.context_ambient_light_slots = self
+            .context_ambient_light_slots
+            .saturating_add(usize::from(
+                slot.raster.lit
+                    && slot.raster.ambient_rgba8 != [0, 0, 0, 255],
+            ));
         self.presentation_special_slots = self
             .presentation_special_slots
             .saturating_add(usize::from(has_special_presentation(slot)));
-        if is_simple_unlit_graph_candidate(slot) {
+        if is_reviewed_native_graph_candidate(slot) {
             self.native_graph_ready_slots =
                 self.native_graph_ready_slots.saturating_add(1);
         }
@@ -230,6 +252,11 @@ impl Counts {
             "alpha_test_slots": self.alpha_test_slots,
             "two_sided_slots": self.two_sided_slots,
             "simple_unlit_graph_candidates": self.simple_unlit_graph_candidates,
+            "simple_lit_opaque_graph_candidates":
+                self.simple_lit_opaque_graph_candidates,
+            "simple_lit_source_alpha_glass_candidates":
+                self.simple_lit_source_alpha_glass_candidates,
+            "context_ambient_light_slots": self.context_ambient_light_slots,
             "presentation_special_slots": self.presentation_special_slots,
             "source_projection_ready_slots": self.slots,
             "native_graph_ready_slots": self.native_graph_ready_slots,
@@ -295,9 +322,15 @@ fn slot_value(
         "source_projection_status": "ready",
         "native_graph_review": {
             "simple_unlit_candidate": is_simple_unlit_graph_candidate(slot),
+            "simple_lit_opaque_candidate":
+                is_simple_lit_opaque_graph_candidate(slot),
+            "simple_lit_source_alpha_glass_candidate":
+                is_simple_lit_source_alpha_glass_candidate(slot),
             "presentation_special": has_special_presentation(slot),
         },
-        "native_construction_status": if is_simple_unlit_graph_candidate(slot) {
+        "native_construction_status": if is_reviewed_native_graph_candidate(
+            slot,
+        ) {
             "ready"
         } else {
             "blocked"
@@ -316,6 +349,58 @@ pub(super) fn is_simple_unlit_graph_candidate(
         && slot.raster.alpha_compare == 4
         && (!slot.raster.alpha_test
             || slot.raster.alpha_reference_bits.is_some())
+}
+
+pub(super) fn is_simple_lit_opaque_graph_candidate(
+    slot: &VerifiedVehicleMaterialArtifact,
+) -> bool {
+    let shininess = f32::from_bits(slot.raster.shininess_bits);
+    slot.raster.shader_family == "simple"
+        && slot.raster.lit
+        && !slot.raster.has_translucency
+        && slot.raster.blend_mode == 0
+        && !slot.raster.alpha_test
+        && slot.raster.alpha_compare == 4
+        && slot.raster.ambient_rgba8 == [0, 0, 0, 255]
+        && slot.raster.specular_rgba8 == [0, 0, 0, 255]
+        && slot.raster.emissive_rgba8 == [0, 0, 0, 255]
+        && slot.raster.texture_reference.is_some()
+        && slot.texture_path.is_some()
+        && shininess.is_finite()
+        && (0.0..=128.0).contains(&shininess)
+        && !has_special_presentation(slot)
+}
+
+pub(super) fn is_simple_lit_source_alpha_glass_candidate(
+    slot: &VerifiedVehicleMaterialArtifact,
+) -> bool {
+    let shininess = f32::from_bits(slot.raster.shininess_bits);
+    slot.raster.shader_family == "simple"
+        && slot.raster.lit
+        && slot.raster.has_translucency
+        && slot.raster.blend_mode == 1
+        && !slot.raster.alpha_test
+        && slot.raster.alpha_compare == 4
+        && slot.raster.diffuse_rgba8 == [255, 255, 255, 255]
+        && slot.raster.specular_rgba8 == [0, 0, 0, 255]
+        && slot.raster.emissive_rgba8 == [0, 0, 0, 255]
+        && slot.raster.texture_reference.is_some()
+        && slot.texture_path.is_some()
+        && shininess.is_finite()
+        && (0.0..=128.0).contains(&shininess)
+        && slot.semantics.transparent
+        && slot.semantics.glass
+        && !slot.semantics.mirror
+        && !slot.semantics.reflective
+        && !slot.semantics.light_emitter
+        && !slot.semantics.visual_effect
+}
+
+fn is_reviewed_native_graph_candidate(
+    slot: &VerifiedVehicleMaterialArtifact,
+) -> bool {
+    is_simple_unlit_graph_candidate(slot)
+        || is_simple_lit_opaque_graph_candidate(slot)
 }
 
 const fn has_special_presentation(
@@ -452,7 +537,7 @@ fn native_blockers(
         NATIVE_CONSTRUCTION_BLOCKER,
         SLOT_APPLICATION_BLOCKER,
     ];
-    if !is_simple_unlit_graph_candidate(slot) {
+    if !is_reviewed_native_graph_candidate(slot) {
         blockers.push(NATIVE_GRAPH_BLOCKER);
     }
     match slot.raster.shader_family.as_str() {
@@ -462,8 +547,11 @@ fn native_blockers(
         },
         _ => {},
     }
-    if slot.raster.lit {
+    if slot.raster.lit && !is_simple_lit_opaque_graph_candidate(slot) {
         blockers.push("vehicle-lit-master-not-reviewed");
+    }
+    if slot.raster.lit && slot.raster.ambient_rgba8 != [0, 0, 0, 255] {
+        blockers.push(CONTEXT_AMBIENT_BLOCKER);
     }
     if slot.semantics.glass {
         blockers.push("vehicle-glass-policy-not-reviewed");

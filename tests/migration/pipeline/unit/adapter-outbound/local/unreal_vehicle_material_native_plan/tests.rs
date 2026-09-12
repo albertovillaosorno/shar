@@ -52,6 +52,7 @@ fn vehicle(
             fbx_version: 7_700,
         },
         subcategory: "sedanA".to_owned(),
+        render_root_bone: "sedanA".to_owned(),
         material_slots: slots,
         presentation_parts: Vec::new(),
         headlight_billboard_sidecars: Vec::new(),
@@ -92,6 +93,8 @@ fn slot(
             specular_rgba8: [0, 0, 0, 255],
             shininess_bits: 10.0_f32.to_bits(),
             texture_reference: texture.then(|| "glow2.bmp".to_owned()),
+            reflection_texture_reference: None,
+            environment_blend_rgba8: None,
         },
         shader_path: "shaders/glow2-m.json".to_owned(),
         shader_size_bytes: 20,
@@ -157,6 +160,64 @@ fn plans_vehicle_texture_master_and_per_slot_instance() -> Result<(), String> {
             .is_none_or(|path| !path.contains("T_Vehicle_cccc"))
     {
         return Err("vehicle instance parameter projection drifted".to_owned());
+    }
+    Ok(())
+}
+
+#[test]
+fn plans_reviewed_simple_lit_opaque_master() -> Result<(), String> {
+    let mut lit = slot(0, true, true);
+    lit.semantics = VerifiedVehicleMaterialSemantics {
+        transparent: false,
+        glass: false,
+        mirror: false,
+        reflective: false,
+        light_emitter: false,
+        visual_effect: false,
+    };
+    lit.raster.has_translucency = false;
+    lit.raster.two_sided = true;
+    lit.base_color_rgba8 = [255, 0, 0, 255];
+    lit.raster.diffuse_rgba8 = [0, 255, 0, 255];
+    lit.raster.ambient_rgba8 = [0, 0, 0, 255];
+    lit.raster.specular_rgba8 = [0, 0, 0, 255];
+    lit.raster.emissive_rgba8 = [0, 0, 0, 255];
+    lit.raster.shininess_bits = 10.0_f32.to_bits();
+    let plan = plan_vehicle_material_native_construction(&[vehicle(vec![lit])])
+        .map_err(|error| error.to_string())?;
+    let [texture] = plan.texture_requests.as_slice() else {
+        return Err("simple-lit texture request cardinality drifted".to_owned());
+    };
+    let [master] = plan.master_requests.as_slice() else {
+        return Err("simple-lit master request cardinality drifted".to_owned());
+    };
+    let [instance] = plan.instance_requests.as_slice() else {
+        return Err(
+            "simple-lit instance request cardinality drifted".to_owned(),
+        );
+    };
+    if texture.get("sha256").and_then(Value::as_str) != Some(&"c".repeat(64))
+        || master.get("lit").and_then(Value::as_bool) != Some(true)
+        || master.get("blend_mode").and_then(Value::as_u64) != Some(0)
+        || master.get("source_ambient_rgba8")
+            != Some(&serde_json::json!([0, 0, 0, 255]))
+        || master.get("source_specular_rgba8")
+            != Some(&serde_json::json!([0, 0, 0, 255]))
+        || master.get("source_emissive_rgba8")
+            != Some(&serde_json::json!([0, 0, 0, 255]))
+        || master.get("source_shininess_bits").and_then(Value::as_u64)
+            != Some(u64::from(10.0_f32.to_bits()))
+        || master.get("source_shininess").and_then(Value::as_f64)
+            != Some(10.0)
+        || master
+            .get("asset_name")
+            .and_then(Value::as_str)
+            .is_none_or(|name| !name.contains("SimpleLit_Opaque"))
+        || instance.get("slot_index").and_then(Value::as_u64) != Some(0)
+        || instance.get("base_color_tint")
+            != Some(&serde_json::json!([0.0, 1.0, 0.0, 1.0]))
+    {
+        return Err("simple-lit native construction request drifted".to_owned());
     }
     Ok(())
 }

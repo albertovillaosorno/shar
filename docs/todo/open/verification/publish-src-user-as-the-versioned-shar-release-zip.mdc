@@ -37,6 +37,17 @@ game assets, Unreal source tree, or developer-only build state.
 
 Depends on the complete `src/user` exporter/GUI and final platform verification.
 
+## Native Unreal asset pivot — 2026-09-12
+
+Normalized extracted JSON and versioned normalized plans are the canonical
+production handoff into Unreal. FBX is deprecated for production Unreal asset
+construction and may remain only as temporary interoperability, inspection, or
+migration evidence. New implementation work must construct target assets
+through tested native Unreal automation without making FBX transforms, scene
+units, material slots, or importer behavior authoritative. Existing FBX-based
+evidence remains historical or transitional and must be retired from production
+once the equivalent native constructor has parity coverage.
+
 ## Evidence
 
 P5 owns the public ZIP publication proof; it does not own base-game conversion.

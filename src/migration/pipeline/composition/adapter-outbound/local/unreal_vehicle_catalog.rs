@@ -32,6 +32,8 @@
 
 //! Generated vehicle FBX catalog verification.
 
+// CSpell:ignore ENVB
+
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
@@ -84,6 +86,8 @@ pub(super) struct VerifiedVehicleMaterialRaster {
     pub specular_rgba8: [u8; 4],
     pub shininess_bits: u32,
     pub texture_reference: Option<String>,
+    pub reflection_texture_reference: Option<String>,
+    pub environment_blend_rgba8: Option<[u8; 4]>,
 }
 
 /// One verified FBX material slot plus exact shader and texture evidence.
@@ -191,6 +195,7 @@ pub(super) struct VerifiedVehiclePhysicsRig {
 pub(super) struct VerifiedVehicleFbxArtifact {
     pub evidence: UnrealFbxArtifactEvidence,
     pub subcategory: String,
+    pub render_root_bone: String,
     pub material_slots: Vec<VerifiedVehicleMaterialArtifact>,
     pub presentation_parts: Vec<VerifiedVehiclePresentationPart>,
     pub headlight_billboard_sidecars:
@@ -342,6 +347,16 @@ pub(super) fn verified_vehicle_fbx_catalog(
         validate_vehicle_subcategory(&subcategory)?;
         let vehicle = required_string(row, "vehicle")?;
         validate_vehicle_name(&vehicle)?;
+        let grounding = row
+            .get("grounding")
+            .and_then(Value::as_object)
+            .ok_or_else(|| {
+                PipelineError::new(
+                    "generated vehicle catalog row has no grounding record",
+                )
+            })?;
+        let render_root_bone = required_string(grounding, "root_bone")?;
+        validate_source_identity(&render_root_bone)?;
         let fbx = row.get("fbx").and_then(Value::as_object).ok_or_else(|| {
             PipelineError::new(
                 "generated vehicle catalog row has no FBX record",
@@ -427,6 +442,16 @@ pub(super) fn verified_vehicle_fbx_catalog(
             row.get("physics_rigs"),
             &physics,
         )?;
+        if physics_rigs
+            .iter()
+            .filter(|rig| rig.identity == render_root_bone)
+            .count()
+            != 1
+        {
+            return Err(PipelineError::new(
+                "generated vehicle physics rigs have no unique render root",
+            ));
+        }
         verified_physics_count = verified_physics_count
             .checked_add(u64::try_from(physics.len()).unwrap_or(u64::MAX))
             .ok_or_else(|| {
@@ -467,6 +492,7 @@ pub(super) fn verified_vehicle_fbx_catalog(
                 fbx_version: version,
             },
             subcategory,
+            render_root_bone,
             material_slots,
             presentation_parts,
             headlight_billboard_sidecars: headlight_billboards,
@@ -769,6 +795,20 @@ fn verified_vehicle_material_raster(
             "generated vehicle alpha-test material has no threshold",
         ));
     }
+    let reflection_texture_reference =
+        optional_texture_shader_param(&params, "REFL")?;
+    let environment_blend_rgba8 =
+        optional_color_shader_param(&params, "ENVB")?;
+    if shader_family == "spheremap"
+        && (
+            reflection_texture_reference.is_none()
+            || environment_blend_rgba8.is_none()
+        )
+    {
+        return Err(PipelineError::new(
+            "generated vehicle spheremap evidence is incomplete",
+        ));
+    }
     Ok(VerifiedVehicleMaterialRaster {
         shader_family: shader_family.to_owned(),
         has_translucency,
@@ -787,6 +827,8 @@ fn verified_vehicle_material_raster(
         specular_rgba8: required_color_shader_param(&params, "SPEC")?,
         shininess_bits: required_f32_shader_param_bits(&params, "SHIN")?,
         texture_reference: evidence.texture_reference.clone(),
+        reflection_texture_reference,
+        environment_blend_rgba8,
     })
 }
 
@@ -833,6 +875,62 @@ fn required_u32_shader_param(
                 "generated vehicle material shader integer is invalid: {name}"
             ))
         })
+}
+
+fn optional_texture_shader_param(
+    params: &std::collections::BTreeMap<&str, &ShaderParameterEvidence>,
+    name: &str,
+) -> PipelineOutcome<Option<String>> {
+    let Some(parameter) = params.get(name) else {
+        return Ok(None);
+    };
+    if parameter.kind != "texture" {
+        return Err(PipelineError::new(format!(
+            "generated vehicle material shader texture kind is invalid: {name}"
+        )));
+    }
+    let value = parameter.value.as_str().ok_or_else(|| {
+        PipelineError::new(format!(
+            "generated vehicle material shader texture is invalid: {name}"
+        ))
+    })?;
+    let value = value.trim_end_matches('\0');
+    if value.is_empty() {
+        return Err(PipelineError::new(format!(
+            "generated vehicle material shader texture is empty: {name}"
+        )));
+    }
+    if value != value.trim() || value.chars().any(char::is_control) {
+        return Err(PipelineError::new(format!(
+            "generated vehicle material shader texture is invalid: {name}"
+        )));
+    }
+    Ok(Some(value.to_owned()))
+}
+
+fn optional_color_shader_param(
+    params: &std::collections::BTreeMap<&str, &ShaderParameterEvidence>,
+    name: &str,
+) -> PipelineOutcome<Option<[u8; 4]>> {
+    let Some(parameter) = params.get(name) else {
+        return Ok(None);
+    };
+    if parameter.kind != "colour" {
+        return Err(PipelineError::new(format!(
+            "generated vehicle material shader colour kind is invalid: {name}"
+        )));
+    }
+    let packed = parameter
+        .value
+        .as_u64()
+        .and_then(|value| u32::try_from(value).ok())
+        .ok_or_else(|| {
+            PipelineError::new(format!(
+                "generated vehicle material shader colour is invalid: {name}"
+            ))
+        })?;
+    let [alpha, red, green, blue] = packed.to_be_bytes();
+    Ok(Some([red, green, blue, alpha]))
 }
 
 fn required_color_shader_param(

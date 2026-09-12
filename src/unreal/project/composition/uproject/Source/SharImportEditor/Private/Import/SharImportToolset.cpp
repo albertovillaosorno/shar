@@ -596,10 +596,11 @@ TArray<FString> USharImportToolset::ImportWorldStaticMesh(
     );
 }
 
-TArray<FString> USharImportToolset::ImportSkeletalMesh(
+static TArray<FString> ImportSkeletalMeshWithFrontXAxisPolicy(
     const FString& SourceFile,
     const FString& FolderPath,
-    const FString& AssetName
+    const FString& AssetName,
+    const bool bForceFrontXAxis
 )
 {
     using namespace UE::SharImportEditor::Private;
@@ -657,6 +658,7 @@ TArray<FString> USharImportToolset::ImportSkeletalMesh(
 
     UFbxSkeletalMeshImportData* MeshImport = ImportUI->SkeletalMeshImportData;
     ApplyFbxSceneUnitPolicy(*MeshImport);
+    MeshImport->bForceFrontXAxis = bForceFrontXAxis;
     MeshImport->ImportContentType = FBXICT_All;
     MeshImport->NormalImportMethod = FBXNIM_ImportNormals;
     MeshImport->bComputeWeightedNormals = false;
@@ -720,6 +722,34 @@ TArray<FString> USharImportToolset::ImportSkeletalMesh(
         return {};
     }
     return {Paths.MeshObjectPath, Paths.SkeletonObjectPath};
+}
+
+TArray<FString> USharImportToolset::ImportSkeletalMesh(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName
+)
+{
+    return ImportSkeletalMeshWithFrontXAxisPolicy(
+        SourceFile,
+        FolderPath,
+        AssetName,
+        false
+    );
+}
+
+TArray<FString> USharImportToolset::ImportVehicleSkeletalMesh(
+    const FString& SourceFile,
+    const FString& FolderPath,
+    const FString& AssetName
+)
+{
+    return ImportSkeletalMeshWithFrontXAxisPolicy(
+        SourceFile,
+        FolderPath,
+        AssetName,
+        false
+    );
 }
 
 TArray<FString> USharImportToolset::ImportBaseColorTexture2D(

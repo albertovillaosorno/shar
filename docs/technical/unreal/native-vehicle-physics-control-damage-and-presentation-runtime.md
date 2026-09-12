@@ -302,7 +302,8 @@ current imported bone-local frame while blocking source cylinders rather than
 approximating them.
 
 `BuildTransientVehiclePhysicsAsset` then revalidates the imported semantic root,
-retained joint count, exact recipe bones, scene-unit root scale, and analytic
+retained joint count, exact recipe bones, native basis and unit policy, and
+analytic
 geometry before constructing an unsaved `UPhysicsAsset`. Bodies preserve the
 recipe's first-bone order. The representative `sedana` automation uses the
 real `PortPreviewUnits` Skeletal Mesh and constructs five bodies: two chassis

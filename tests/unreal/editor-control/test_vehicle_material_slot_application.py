@@ -102,7 +102,13 @@ def _instance(slot: int, digit: str) -> VehicleMaterialInstanceStep:
 
 def _selection() -> CompiledVehicleMaterialSelection:
     return CompiledVehicleMaterialSelection(
-        VehicleMaterialSelectionReport("extracted-art-cars-sedana", 0, 0, 2),
+        VehicleMaterialSelectionReport(
+            "extracted-art-cars-sedana",
+            0,
+            0,
+            2,
+            (0, 7),
+        ),
         "vehicle-assets/sedana/sedana.fbx",
         (),
         (),
@@ -113,7 +119,7 @@ def _selection() -> CompiledVehicleMaterialSelection:
 def _execution() -> CompiledExecutionPlan:
     step = NativeImportStep(
         operation_id="operation-sedana",
-        route_id="skeletal-mesh-fbx-v1",
+        route_id="vehicle-skeletal-mesh-fbx-v1",
         source_path="vehicle-assets/sedana/sedana.fbx",
         source_revision="a" * 64,
         destination=_MESH_OBJECT,
@@ -122,7 +128,9 @@ def _execution() -> CompiledExecutionPlan:
         folder_path=_MESH_PACKAGE.rpartition("/")[0],
         asset_name="extracted_art_cars_sedana_Skeletal",
         toolset_name="SharImportEditor.SharImportToolset",
-        tool_name="SharImportEditor.SharImportToolset.ImportSkeletalMesh",
+        tool_name=(
+            "SharImportEditor.SharImportToolset.ImportVehicleSkeletalMesh"
+        ),
         external_payload_path=None,
     )
     report = PlanExecutionReport("b" * 64, 1, 1, 0, {}, {}, {step.route_id: 1})
@@ -322,6 +330,7 @@ def test_compiler_joins_skeletal_import_and_sorts_slots() -> None:
     assert compiled.report.to_json() == {
         "packageId": "extracted-art-cars-sedana",
         "slotCount": 2,
+        "slotIndices": [0, 7],
     }
     assert compiled.skeletal_mesh_path == _MESH_OBJECT
     assert compiled.slot_indices == (0, 7)
@@ -329,6 +338,17 @@ def test_compiler_joins_skeletal_import_and_sorts_slots() -> None:
     assert compiled.material_paths[0].endswith(
         f"{"1" * 64}.MI_Vehicle_{"1" * 64}"
     )
+
+
+def test_compiler_rejects_generic_skeletal_route() -> None:
+    selection = _selection()
+    generic = _execution().imports[0]._replace(
+        route_id="skeletal-mesh-fbx-v1",
+        tool_name="SharImportEditor.SharImportToolset.ImportSkeletalMesh",
+    )
+    execution = _execution()._replace(imports=(generic,))
+    with pytest.raises(ProtocolError, match="import join is not exact"):
+        compile_vehicle_material_slot_binding(selection, execution)
 
 
 def test_compiler_rejects_missing_or_ambiguous_skeletal_join() -> None:

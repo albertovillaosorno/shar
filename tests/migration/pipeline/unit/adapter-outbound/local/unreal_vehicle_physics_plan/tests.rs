@@ -49,6 +49,7 @@ fn vehicle() -> VerifiedVehicleFbxArtifact {
             fbx_version: 7_700,
         },
         subcategory: "cars/road".to_owned(),
+        render_root_bone: "sedanA".to_owned(),
         material_slots: Vec::new(),
         presentation_parts: vec![],
         headlight_billboard_sidecars: Vec::new(),
@@ -74,6 +75,15 @@ fn vehicle() -> VerifiedVehicleFbxArtifact {
                         radius_m: 0.4,
                     },
                 ],
+            },
+            VerifiedVehiclePhysicsRig {
+                identity: "sedanAux".to_owned(),
+                joint_count: 19,
+                primitives: vec![VerifiedVehiclePhysicsPrimitive::Sphere {
+                    bone_name: "sedanAux".to_owned(),
+                    center_m: [0.0, 0.0, 0.0],
+                    radius_m: 0.5,
+                }],
             },
             VerifiedVehiclePhysicsRig {
                 identity: "blocked".to_owned(),
@@ -103,19 +113,40 @@ fn renders_exact_native_vehicle_physics_requests() -> Result<(), String> {
     {
         return Err("vehicle physics plan schema drifted".to_owned());
     }
+    let policy = value
+        .get("target_policy")
+        .and_then(Value::as_object)
+        .ok_or_else(|| "vehicle physics target policy is missing".to_owned())?;
+    for (field, expected) in [
+        (
+            "local_axis_conversion",
+            "source-x-y-z-to-target-z-x-y",
+        ),
+        ("self_collision_policy", "source-empty-disable-all"),
+        (
+            "secondary_body_policy",
+            "kinematic-until-joints-translated",
+        ),
+    ] {
+        if policy.get(field).and_then(Value::as_str) != Some(expected) {
+            return Err(format!(
+                "vehicle physics target policy {field} drifted"
+            ));
+        }
+    }
     let counts = value
         .get("counts")
         .and_then(Value::as_object)
         .ok_or_else(|| "vehicle physics counts are missing".to_owned())?;
     for (field, expected) in [
         ("vehicles", 1_u64),
-        ("rigs", 2),
-        ("primitives", 3),
+        ("rigs", 3),
+        ("primitives", 4),
         ("oriented_boxes", 1),
-        ("spheres", 1),
+        ("spheres", 2),
         ("cylinders", 1),
         ("native_ready_rigs", 1),
-        ("native_blocked_rigs", 1),
+        ("native_blocked_rigs", 2),
         ("native_shapes", 2),
     ] {
         if counts.get(field).and_then(Value::as_u64) != Some(expected) {
@@ -139,20 +170,20 @@ fn renders_exact_native_vehicle_physics_requests() -> Result<(), String> {
     let [box_shape, sphere_shape] = shapes.as_slice() else {
         return Err("ready vehicle shape count drifted".to_owned());
     };
-    if box_shape.get("center") != Some(&serde_json::json!([1.0, -2.0, 3.0]))
+    if box_shape.get("center") != Some(&serde_json::json!([3.0, 1.0, 2.0]))
         || box_shape.get("extents")
             != Some(&serde_json::json!([4.0, 6.0, 8.0]))
         || box_shape.get("axes")
             != Some(&serde_json::json!([
-                [1.0, 0.0, 0.0],
-                [0.0, -1.0, 0.0],
-                [0.0, 0.0, -1.0]
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [1.0, 0.0, 0.0]
             ]))
     {
         return Err("oriented-box target projection drifted".to_owned());
     }
     if sphere_shape.get("center")
-        != Some(&serde_json::json!([0.25, 0.5, 0.75]))
+        != Some(&serde_json::json!([0.75, 0.25, -0.5]))
         || sphere_shape.get("radius")
             != Some(
                 &serde_json::to_value(0.4_f32)
@@ -161,12 +192,26 @@ fn renders_exact_native_vehicle_physics_requests() -> Result<(), String> {
     {
         return Err("sphere target projection drifted".to_owned());
     }
-    let blocker = native
+    let blockers = native
         .get("blockers")
         .and_then(Value::as_array)
-        .and_then(|rows| rows.first())
+        .ok_or_else(|| "vehicle physics blockers are missing".to_owned())?;
+    let auxiliary = blockers
+        .iter()
+        .find(|row| row.get("rig_identity") == Some(&Value::from("sedanAux")))
+        .ok_or_else(|| "auxiliary-rig blocker is missing".to_owned())?;
+    if auxiliary.get("blockers")
+        != Some(&serde_json::json!([
+            "source-rig-is-not-imported-render-root"
+        ]))
+    {
+        return Err("auxiliary-rig blocker contract drifted".to_owned());
+    }
+    let unsupported = blockers
+        .iter()
+        .find(|row| row.get("rig_identity") == Some(&Value::from("blocked")))
         .ok_or_else(|| "cylinder blocker is missing".to_owned())?;
-    if blocker
+    if unsupported
         .get("blockers")
         .and_then(Value::as_array)
         .and_then(|rows| rows.first())

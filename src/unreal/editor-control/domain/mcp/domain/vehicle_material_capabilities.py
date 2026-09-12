@@ -172,19 +172,38 @@ def _requirements(
     requirements: list[VehicleMaterialToolRequirement] = []
     if compiled.textures:
         step = compiled.textures[0]
-        requirements.append(VehicleMaterialToolRequirement(
-            step.toolset_name,
-            step.tool_name,
-            step.arguments("C:/SHAR/verified-vehicle-texture.png"),
-            {"returnValue": [step.object_path]},
+        requirements.extend((
+            VehicleMaterialToolRequirement(
+                step.toolset_name,
+                step.tool_name,
+                step.arguments("C:/SHAR/verified-vehicle-texture.png"),
+                {"returnValue": [step.object_path]},
+            ),
+            VehicleMaterialToolRequirement(
+                _ASSET_TOOLSET,
+                f"{_ASSET_TOOLSET}.get_asset_tags",
+                {"asset_path": step.package_path},
+                {"returnValue": {"AssetImportData": "[]"}},
+            ),
         ))
-    if compiled.masters:
-        step = compiled.masters[0]
-        requirements.append(VehicleMaterialToolRequirement(
-            step.toolset_name,
-            step.tool_name,
-            step.arguments(),
-            {"returnValue": step.object_path},
+    seen_master_tools: set[str] = set()
+    for step in compiled.masters:
+        if step.tool_name in seen_master_tools:
+            continue
+        seen_master_tools.add(step.tool_name)
+        requirements.extend((
+            VehicleMaterialToolRequirement(
+                step.toolset_name,
+                step.tool_name,
+                step.arguments(),
+                {"returnValue": step.object_path},
+            ),
+            VehicleMaterialToolRequirement(
+                step.toolset_name,
+                step.verify_tool_name,
+                step.verify_arguments(),
+                {"returnValue": True},
+            ),
         ))
     if compiled.instances:
         step = compiled.instances[0]

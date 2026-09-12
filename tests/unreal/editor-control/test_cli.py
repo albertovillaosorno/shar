@@ -558,6 +558,52 @@ def test_vehicle_material_options_accept_exact_package_scope() -> None:
     ))
     assert str(options.root) == ".cache/custom/plans"
     assert options.package_id == "extracted-art-cars-sedana"
+    assert options.slot_indices == ()
+
+
+def test_vehicle_material_options_accept_exact_slot_scope() -> None:
+    options = parse_vehicle_material_options((
+        "--package-id",
+        "extracted-art-cars-sedana",
+        "--slot-index",
+        "2",
+        "--slot-index",
+        "3",
+    ))
+    assert options.package_id == "extracted-art-cars-sedana"
+    assert options.slot_indices == (2, 3)
+
+
+def test_vehicle_material_options_reject_invalid_slot_scope() -> None:
+    with pytest.raises(UsageError, match="requires --package-id"):
+        parse_vehicle_material_options(("--slot-index", "2"))
+    with pytest.raises(UsageError, match="slot index is duplicated"):
+        parse_vehicle_material_options((
+            "--package-id",
+            "extracted-art-cars-sedana",
+            "--slot-index",
+            "2",
+            "--slot-index",
+            "2",
+        ))
+    with pytest.raises(UsageError, match="must be ascending"):
+        parse_vehicle_material_options((
+            "--package-id",
+            "extracted-art-cars-sedana",
+            "--slot-index",
+            "3",
+            "--slot-index",
+            "2",
+        ))
+    for value in ("-1", "+2", "02", "2147483648"):
+        message = "exceeds int32" if value == "2147483648" else "not canonical"
+        with pytest.raises(UsageError, match=message):
+            parse_vehicle_material_options((
+                "--package-id",
+                "extracted-art-cars-sedana",
+                "--slot-index",
+                value,
+            ))
 
 
 def test_vehicle_material_options_reject_duplicate_or_bad_scope() -> None:

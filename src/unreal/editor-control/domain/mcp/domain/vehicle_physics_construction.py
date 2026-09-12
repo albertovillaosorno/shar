@@ -52,8 +52,11 @@ _TOOL = f"{_TOOLSET}.CreateVehiclePhysicsAsset"
 _OUTPUT_ROOT = "/Game/Generated/SHAR/VehiclePhysics"
 _EXPECTED_POLICY = {
     "box_extent_policy": "source-half-to-native-full",
-    "local_axis_conversion": "reflect-y",
+    "local_axis_conversion": "source-x-y-z-to-target-z-x-y",
     "native_dimension_policy": "retain-source-magnitude-under-bone-scale",
+    "rig_binding_policy": "match-imported-render-root",
+    "secondary_body_policy": "kinematic-until-joints-translated",
+    "self_collision_policy": "source-empty-disable-all",
     "skeletal_import_unit_policy": "scene-unit-converted",
     "source_coordinate_space": "source-bone-local",
     "source_unit": "meter",
@@ -222,7 +225,7 @@ def _skeletal_imports_by_source(
 ) -> dict[str, NativeImportStep]:
     matches: dict[str, NativeImportStep] = {}
     for step in execution.imports:
-        if step.route_id != "skeletal-mesh-fbx-v1":
+        if step.route_id != "vehicle-skeletal-mesh-fbx-v1":
             continue
         if step.source_path in matches:
             fail_protocol("vehicle-physics source FBX import is ambiguous")

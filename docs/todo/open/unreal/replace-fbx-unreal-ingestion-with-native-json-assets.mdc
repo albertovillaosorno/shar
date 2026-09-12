@@ -1,0 +1,61 @@
+---
+schema: shar.todo.v1
+id: replace-fbx-unreal-ingestion-with-native-json-assets
+status: open
+priority: P0
+lane: unreal
+active: true
+parent: null
+dependencies: []
+children: []
+---
+
+# Retire FBX production ingestion and build native assets from normalized JSON
+
+Replace FBX as the production Unreal mesh and scene boundary with deterministic
+native asset construction from normalized extracted JSON and versioned plans.
+
+## Acceptance criteria
+
+- [ ] Build Static Mesh, Skeletal Mesh, Skeleton, animation, Physics Asset, and
+  related native assets directly from normalized source evidence.
+- [ ] Apply source-to-Unreal basis and unit conversion exactly once in typed
+  native construction code, never through FBX export-root compensation.
+- [ ] Prove native read-back parity for representative world, prop, character,
+  interior, and vehicle assets before removing each FBX consumer.
+- [ ] Keep the FBX writer available only as deprecated interoperability and
+  diagnostic tooling until no production Unreal plan depends on it.
+- [ ] Remove obsolete FBX-specific axis rotations, root reflections, scene-unit
+  workarounds, and material-slot transport policy after native parity exists.
+- [ ] Regenerate the complete project from normalized evidence without requiring
+  an FBX file for production Unreal asset construction.
+
+## Dependencies
+
+The normalized extraction and provenance ledgers remain source authority. Native
+construction must consume those verified records rather than reparsing raw game
+packages inside Unreal.
+
+## Native Unreal asset pivot — 2026-09-12
+
+Normalized extracted JSON and versioned normalized plans are the canonical
+production handoff into Unreal. FBX is deprecated for production Unreal asset
+construction and may remain only as temporary interoperability, inspection, or
+migration evidence. New implementation work must construct target assets through
+tested native Unreal automation without making FBX transforms, scene units,
+material slots, or importer behavior authoritative. Existing FBX-based evidence
+remains historical or transitional and must be retired from production once the
+equivalent native constructor has parity coverage.
+
+## Evidence
+
+The vehicle work demonstrated why the boundary must move. Correct vehicle
+geometry required compensating for FBX export-root, importer-axis, scene-unit,
+and root-local Chaos semantics across multiple layers even though normalized P3D
+evidence already contained the source geometry, skeleton, animation, collision,
+and material records.
+
+The accepted native Physics Asset and material toolsets show the replacement
+pattern. They consume typed plans, construct Unreal objects directly, verify
+read-back, preserve stable object identity, and fail closed without asking FBX
+to encode target-specific runtime policy.

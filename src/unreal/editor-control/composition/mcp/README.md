@@ -112,20 +112,25 @@ verification resolves `vehicle-assets/...` only below
 `.cache/pipeline/vehicle-assets/`, rejects redirected ancestry, and verifies the
 bound SHA-256 before general execution.
 
-Vehicle material assets have a separate three-gate transaction. The local
-`vehicle-material-preflight` requires the release index to bind exactly one
-`vehicle-materials.json`, rechecks the sidecar bytes and SHA-256, validates the
-v3/v8 construction contract, and verifies all referenced PNGs as regular,
-unlinked files with exact byte counts and content digests. It compiles only the
-reviewed simple-unlit subset into content-addressed Texture2D requests,
-deduplicated native masters, and per-slot Material Instance requests.
+Vehicle material assets have a separate three-gate construction transaction.
+The local `vehicle-material-preflight` requires the release index to bind
+exactly
+one `vehicle-materials.json`, rechecks the sidecar bytes and SHA-256, validates
+the v5/v8 construction contract, and verifies all referenced PNGs as regular,
+unlinked files with exact byte counts and content digests. It compiles reviewed
+simple-unlit and opaque simple-lit subsets into content-addressed Texture2D
+requests, deduplicated native masters, and per-slot Material Instance requests.
+Glass and lit materials with unresolved context ambient remain blocked.
 
 The three vehicle-material commands also accept `--package-id PACKAGE_ID`.
-Selection is applied only after the complete release-bound document compiles
-successfully; it retains instances for that exact canonical package id plus only
-the texture and master dependencies those instances reference. Output keeps the
-complete `constructionRevision` and adds a distinct `selectionRevision`, so
-scoped execution cannot masquerade as complete-corpus construction evidence.
+With a package selected, repeated `--slot-index INDEX` options may narrow the
+transaction to an exact ascending set of construction-ready slots. A requested
+slot that is absent, blocked, duplicated, or out of order fails locally.
+
+The selected instances retain only their exact texture and master dependencies.
+Output keeps the complete `constructionRevision` and adds a distinct
+`selectionRevision`, so scoped execution cannot masquerade as complete-corpus
+construction evidence.
 
 `vehicle-material-capabilities` opens one MCP session and validates the exact
 schemas for `ImportBaseColorTexture2D`, the vehicle master/instance factories,
@@ -136,8 +141,18 @@ and masters before instances, reads back each class and dirty state, explicitly
 saves every package, and requires clean state after save. Any failure triggers
 reverse-order compensation limited to assets created by that transaction.
 This transaction still does not assign Material Instances to Skeletal Mesh
-slots, promote lit/spheremap/environment families, or make vehicle runtime
-presentation ready.
+slots, promote glass, spheremap, environment, or context-ambient families, or
+make vehicle runtime presentation ready.
+
+The `vehicle-material-slots-*` commands form a separate package-scoped
+publication transaction. Preflight joins the selected construction-ready slots
+to exactly one planned generated Skeletal Mesh, and capabilities validates the
+read/CAS plus AssetTools schemas. Apply requires the mesh to be clean, every
+selected slot to be null, and every Material Instance dependency to exist; it
+publishes all selected slots with one compare-and-exchange, saves, reads back,
+and restores those slots to null if any later verification fails. The same
+optional slot scope is therefore usable for incremental publication without
+rewriting already-correct material slots.
 
 Vehicle physics prerequisites have their own three-gate transaction. The local
 `vehicle-physics-prerequisites-preflight` selects only skeletal imports required
@@ -146,19 +161,21 @@ accept optional `--package-id PACKAGE_ID`; global prerequisite compilation still
 runs first, then scoped execution keeps only imports needed by ready rigs for
 that exact package and emits a distinct `selectionRevision`.
 
-Capability audit validates `ImportSkeletalMesh` plus AssetTools read-back, save,
-and compensation schemas. Apply remains create-only and reuses the reviewed
-import transaction without weakening global `plan-apply` completeness.
+Capability audit validates `ImportVehicleSkeletalMesh` plus AssetTools
+read-back, save, and compensation schemas. Apply remains create-only and reuses
+the reviewed vehicle import transaction without weakening global `plan-apply`
+completeness.
 
-The current release selects 87 vehicle FBXs for 135 ready rigs; the
-cylinder-only `icecream` dependency is not imported by this transaction.
+The current release selects 87 vehicle FBXs for 87 native-ready rigs; the
+cylinder-blocked vehicle dependency is not imported by this transaction.
 
 Vehicle Physics Asset publication adds a separate three-gate construction
 transaction after the Skeletal Mesh import is available. `vehicle-physics-
 preflight` remains local: it requires the release index to bind exactly one
 `vehicle-physics.json`, rechecks exact bytes and SHA-256, validates the v1/v8
 construction contract, and joins every ready `source_fbx` to exactly one
-reviewed `skeletal-mesh-fbx-v1` import step. Deterministic outputs are confined
+reviewed `vehicle-skeletal-mesh-fbx-v1` import step. Deterministic outputs are
+confined
 to `/Game/Generated/SHAR/VehiclePhysics/PHYS_<digest>`.
 
 All three vehicle-physics commands accept optional `--package-id PACKAGE_ID`.

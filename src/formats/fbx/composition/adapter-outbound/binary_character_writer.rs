@@ -122,7 +122,7 @@ pub struct CharacterBinaryFbxSummary {
     pub clusters: usize,
     /// Deduplicated materials written to the document.
     pub materials: usize,
-    /// Textures referenced by written materials.
+    /// Unique texture files referenced by written materials.
     pub textures: usize,
     /// Skeletal animation stacks written to the document.
     pub animations: usize,
@@ -383,12 +383,34 @@ pub fn write_binary_character_fbx(
     animations: &[AnimationClip],
     path: &Path,
 ) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
+    write_binary_character_fbx_with_root_policy(
+        character,
+        materials,
+        animations,
+        ModelExportRootPolicy::RotateY180,
+        path,
+    )
+}
+
+/// Write one validated skinned FBX with an explicit export-root policy.
+///
+/// # Errors
+///
+/// Returns the same failures as [`write_binary_character_fbx`].
+pub fn write_binary_character_fbx_with_root_policy(
+    character: &CharacterAsset,
+    materials: &[MaterialBinding],
+    animations: &[AnimationClip],
+    root_policy: ModelExportRootPolicy,
+    path: &Path,
+) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
     write_binary_character_fbx_with_storage(
         character,
         materials,
         &[],
         CharacterTextureStorage::External,
         animations,
+        root_policy,
         path,
     )
 }
@@ -412,6 +434,7 @@ pub fn write_binary_character_fbx_embedded(
         embedded_textures,
         CharacterTextureStorage::Embedded,
         animations,
+        ModelExportRootPolicy::RotateY180,
         path,
     )
 }
@@ -676,6 +699,7 @@ fn write_binary_character_fbx_with_storage(
     embedded_textures: &[EmbeddedTexture],
     texture_storage: CharacterTextureStorage,
     animations: &[AnimationClip],
+    root_policy: ModelExportRootPolicy,
     path: &Path,
 ) -> Result<CharacterBinaryFbxSummary, CharacterBinaryFbxError> {
     let document = build_character_document(
@@ -685,7 +709,7 @@ fn write_binary_character_fbx_with_storage(
         texture_storage,
         animations,
         BinarySceneKind::Skinned,
-        ModelExportRootPolicy::RotateY180,
+        root_policy,
         ModelSurfaceFramePolicy::PreserveAuthored,
     )?;
     let bytes = encode_binary_document(&document.nodes).map_err(|error| {
@@ -761,11 +785,7 @@ fn build_character_document(
             0
         },
         materials: material_plan.slots.len(),
-        textures: material_plan
-            .slots
-            .iter()
-            .filter(|slot| slot.binding.texture_file_name.is_some())
-            .count(),
+        textures: unique_texture_count(&material_plan.slots),
         animations: animations.len(),
     };
     Ok(CharacterFbxDocument { nodes, summary })
@@ -925,6 +945,15 @@ fn documents(active_stack_name: &str) -> BinaryNode {
     ])
 }
 
+/// Count unique texture files while preserving first material use as owner.
+fn unique_texture_count(material_slots: &[MaterialSlot<'_>]) -> usize {
+    material_slots
+        .iter()
+        .filter_map(|slot| slot.binding.texture_file_name.as_deref())
+        .collect::<BTreeSet<_>>()
+        .len()
+}
+
 /// Build definitions with explicit counts for every emitted object family.
 // One ordered section keeps all object-family counts and ids auditable.
 fn definitions(
@@ -934,10 +963,7 @@ fn definitions(
     animation_counts: BinaryAnimationCounts,
     scene_kind: BinarySceneKind,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    let texture_count = material_slots
-        .iter()
-        .filter(|slot| slot.binding.texture_file_name.is_some())
-        .count();
+    let texture_count = unique_texture_count(material_slots);
     let cluster_total = if scene_kind.is_skinned() {
         binary_cluster_count(groups)
     } else {
@@ -1189,11 +1215,7 @@ fn objects(
     root_policy: ModelExportRootPolicy,
     surface_frame_policy: ModelSurfaceFramePolicy,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
-    let root_transform = if scene_kind.is_skinned() {
-        CHARACTER_EXPORT_ROOT_TRANSFORM
-    } else {
-        root_policy.transform()
-    };
+    let root_transform = root_policy.transform();
     let mut children = vec![export_root_node(
         &root_transform,
         character.source_provenance.as_ref(),
@@ -1214,9 +1236,12 @@ fn objects(
             )?);
         }
     }
+    let mut emitted_textures = BTreeSet::new();
     for slot in material_slots {
         children.push(material_node(slot)?);
-        if let Some(texture_file) = &slot.binding.texture_file_name {
+        if let Some(texture_file) = &slot.binding.texture_file_name
+            && emitted_textures.insert(texture_file.as_str())
+        {
             let relative_path =
                 texture_relative_path(texture_file, texture_payloads.storage);
             let content = match texture_payloads.storage {
@@ -1271,11 +1296,16 @@ fn objects(
                 bone_id,
                 group.influences,
                 &transform.global_bind,
+                &root_transform,
             )?);
         }
     }
     if scene_kind.is_skinned() {
-        children.push(bind_pose_node(groups, bone_transforms)?);
+        children.push(bind_pose_node(
+            groups,
+            bone_transforms,
+            &root_transform,
+        )?);
     }
     children.extend(animation_plan.objects.iter().cloned());
     Ok(BinaryNode::branch("Objects", children))
@@ -2237,6 +2267,7 @@ fn cluster_node(
     bone_id: &str,
     influences: &[crate::domain::skin::SkinInfluence],
     global_bind: &[f64; 16],
+    root_transform: &TrsParts,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let mut indexes = Vec::new();
     let mut weights = Vec::new();
@@ -2258,7 +2289,7 @@ fn cluster_node(
             error,
         }
     })?;
-    let export_root_bind = compose(&CHARACTER_EXPORT_ROOT_TRANSFORM);
+    let export_root_bind = compose(root_transform);
     let export_space_global_bind = multiply(global_bind, &export_root_bind);
     Ok(BinaryNode::new(
         "Deformer",
@@ -2293,6 +2324,7 @@ fn cluster_node(
 fn bind_pose_node(
     groups: &[BinaryGroup<'_>],
     bone_transforms: &[BoneTransform],
+    root_transform: &TrsParts,
 ) -> Result<BinaryNode, CharacterBinaryFbxError> {
     let model_node_count = groups
         .len()
@@ -2305,7 +2337,7 @@ fn bind_pose_node(
             context: "bind pose nodes",
         },
     )?;
-    let export_root_bind = compose(&CHARACTER_EXPORT_ROOT_TRANSFORM);
+    let export_root_bind = compose(root_transform);
     let mut children = vec![
         string_node("Type", "BindPose"),
         i32_node("Version", 100),
@@ -2374,24 +2406,32 @@ fn connections(
             )?);
         }
     }
+    let mut texture_ids = BTreeMap::new();
     for slot in &material_plan.slots {
-        if slot.binding.texture_file_name.is_some() {
-            children.push(object_connection(slot.ids.video, slot.ids.texture)?);
+        if let Some(texture_file) = slot.binding.texture_file_name.as_deref() {
+            let canonical_ids =
+                *texture_ids.entry(texture_file).or_insert(slot.ids);
+            if canonical_ids.texture == slot.ids.texture {
+                children.push(object_connection(
+                    canonical_ids.video,
+                    canonical_ids.texture,
+                )?);
+            }
             children.push(property_connection(
-                slot.ids.texture,
+                canonical_ids.texture,
                 slot.ids.material,
                 "DiffuseColor",
             )?);
             if slot.semantics.is_transparent() {
                 children.push(property_connection(
-                    slot.ids.texture,
+                    canonical_ids.texture,
                     slot.ids.material,
                     "TransparentColor",
                 )?);
             }
             if slot.semantics.is_light_emitter() {
                 children.push(property_connection(
-                    slot.ids.texture,
+                    canonical_ids.texture,
                     slot.ids.material,
                     "EmissiveColor",
                 )?);

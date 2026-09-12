@@ -9,8 +9,7 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Native selection policy for reviewed vehicle simple/unlit material
-//   - graphs.
+//   - Native selection policy for reviewed vehicle simple material graphs.
 // - Must-Not:
 //   - Parse plan JSON, promote presentation-special slots, or reuse world-only
 //   - culling assumptions.
@@ -21,21 +20,22 @@
 // - Merge-When:
 //   - Another vehicle policy owns the identical reviewed subset.
 // - Summary:
-//   - Vehicle simple/unlit material graph policy.
+//   - Vehicle simple material graph policy.
 // - Description:
 //   - Converts exact graph-review fields into the shared native kernel while
 //   - retaining vehicle-specific readiness boundaries.
 // - Usage:
 //   - Used by the vehicle material toolset and native automation tests.
 // - Defaults:
-//   - Anything outside the current simple/unlit candidate classifier fails.
+//   - Anything outside the reviewed simple material classifiers fails.
 //
 
-//! Vehicle simple/unlit material graph policy.
+//! Vehicle simple material graph policy.
 
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Materials/SharSimpleLitMaterialGraph.h"
 #include "Materials/SharSimpleUnlitMaterialGraph.h"
 
 class UMaterial;
@@ -44,6 +44,12 @@ struct FSharSimpleUnlitVehicleMasterRecipe
 {
     ESharSimpleUnlitBlend Blend = ESharSimpleUnlitBlend::Opaque;
     bool bAlphaTest = false;
+    bool bTwoSided = false;
+};
+
+struct FSharSimpleLitVehicleMasterRecipe
+{
+    float SourceShininess = 0.0F;
     bool bTwoSided = false;
 };
 
@@ -57,6 +63,33 @@ bool ResolveSimpleUnlitVehicleMasterRecipe(
     int32 AlphaCompare,
     bool bTwoSided,
     FSharSimpleUnlitVehicleMasterRecipe& OutRecipe,
+    FString& OutError
+);
+
+bool ResolveSimpleLitVehicleMasterRecipe(
+    const FString& ShaderFamily,
+    bool bLit,
+    int32 BlendMode,
+    bool bAlphaTest,
+    int32 AlphaCompare,
+    bool bTwoSided,
+    FLinearColor SourceAmbient,
+    FLinearColor SourceSpecular,
+    FLinearColor SourceEmissive,
+    float SourceShininess,
+    FSharSimpleLitVehicleMasterRecipe& OutRecipe,
+    FString& OutError
+);
+
+bool BuildSimpleLitVehicleMaster(
+    UMaterial& Material,
+    const FSharSimpleLitVehicleMasterRecipe& Recipe,
+    FString& OutError
+);
+
+bool ReadBackSimpleLitVehicleMaster(
+    const UMaterial& Material,
+    const FSharSimpleLitVehicleMasterRecipe& Recipe,
     FString& OutError
 );
 

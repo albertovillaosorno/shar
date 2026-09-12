@@ -21,7 +21,7 @@ and required to prove the importer without private game assets.
 
 The first fixture set contains:
 
-- one synthetic triangle mesh in canonical binary FBX 7.7;
+- one synthetic normalized triangle-mesh JSON fixture;
 - one tiny lossless base-color PNG;
 - one deterministic `unreal-import-plan.json`;
 - one expected native read-back JSON contract;
@@ -93,7 +93,8 @@ A new binary fixture requires:
 - a maximum size appropriate for the focused contract;
 - canonical validation.
 
-Broad exceptions such as `!tests/**`, `!**/*.fbx`, or `!**/*.png` are forbidden.
+Broad exceptions such as `!tests/**`, interchange globs, or image globs are
+forbidden.
 A fixture containing extracted, private, branded, or third-party content is
 rejected regardless of size.
 

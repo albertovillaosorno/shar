@@ -63,9 +63,18 @@ def _document() -> dict[str, object]:
             "source_coordinate_space": "source-bone-local",
             "source_unit": "meter",
             "skeletal_import_unit_policy": "scene-unit-converted",
-            "local_axis_conversion": "reflect-y",
+            "local_axis_conversion": (
+                "source-x-y-z-to-target-z-x-y"
+            ),
             "native_dimension_policy": (
                 "retain-source-magnitude-under-bone-scale"
+            ),
+            "rig_binding_policy": "match-imported-render-root",
+            "secondary_body_policy": (
+                "kinematic-until-joints-translated"
+            ),
+            "self_collision_policy": (
+                "source-empty-disable-all"
             ),
             "box_extent_policy": "source-half-to-native-full",
             "unsupported_shape_policy": "block-rig",
@@ -126,7 +135,7 @@ def _skeletal_step() -> NativeImportStep:
     asset = "extracted_art_cars_sedana"
     return NativeImportStep(
         operation_id="operation-0000000000000001",
-        route_id="skeletal-mesh-fbx-v1",
+        route_id="vehicle-skeletal-mesh-fbx-v1",
         source_path=_SOURCE_FBX,
         source_revision="1" * 64,
         destination=f"{package}.{asset}",
@@ -135,7 +144,9 @@ def _skeletal_step() -> NativeImportStep:
         folder_path="/Game/Generated/SHAR/cars",
         asset_name=asset,
         toolset_name="SharImportEditor.SharImportToolset",
-        tool_name="SharImportEditor.SharImportToolset.ImportSkeletalMesh",
+        tool_name=(
+            "SharImportEditor.SharImportToolset.ImportVehicleSkeletalMesh"
+        ),
         external_payload_path=None,
     )
 
@@ -148,7 +159,7 @@ def _execution(*steps: NativeImportStep) -> CompiledExecutionPlan:
         semantic_blocker_count=0,
         blocked_readiness={},
         unsupported_routes={},
-        route_counts={"skeletal-mesh-fbx-v1": len(steps)},
+        route_counts={"vehicle-skeletal-mesh-fbx-v1": len(steps)},
     )
     return CompiledExecutionPlan(report, steps)
 
@@ -220,9 +231,24 @@ def test_compile_rejects_missing_and_ambiguous_skeletal_join() -> None:
         )
 
 
+def test_rejects_generic_skeletal_route_for_vehicle_physics() -> None:
+    generic = _skeletal_step()._replace(
+        route_id="skeletal-mesh-fbx-v1",
+        tool_name="SharImportEditor.SharImportToolset.ImportSkeletalMesh",
+    )
+    with pytest.raises(ProtocolError, match="no skeletal import"):
+        compile_vehicle_physics_construction(_document(), _execution(generic))
+
+
 def test_compile_rejects_policy_and_geometry_drift() -> None:
     document = _document()
     document["target_policy"]["local_axis_conversion"] = "none"
+    with pytest.raises(ProtocolError, match="target policy drifted"):
+        compile_vehicle_physics_construction(
+            document, _execution(_skeletal_step())
+        )
+    document = _document()
+    document["target_policy"]["rig_binding_policy"] = "allow-auxiliary-rigs"
     with pytest.raises(ProtocolError, match="target policy drifted"):
         compile_vehicle_physics_construction(
             document, _execution(_skeletal_step())

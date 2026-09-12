@@ -86,10 +86,16 @@ aesthetic preference, AI suggestions, or third-party mods as source authority.
 
 ## Model conversion
 
-The canonical FBX artifact is generated from first principles by the
-repository-owned binary writer. Do not use Blender or Maya for generation,
-conversion, staging, repair, validation, or acceptance. Legacy helpers that
-invoke those applications are not supported evidence.
+Normalized extracted JSON and versioned plans are the canonical production
+model boundary for Unreal. Native editor automation constructs Unreal assets
+directly from that evidence and owns target-specific basis, unit, and runtime
+representation policy.
+
+FBX is deprecated for production Unreal ingestion. The repository-owned binary
+writer may remain for interoperability, diagnostics, and migration comparison,
+but new production work must not make FBX importer behavior authoritative. Do
+not use Blender or Maya for generation, conversion, staging, repair, validation,
+or acceptance.
 
 ## Validation
 

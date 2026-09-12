@@ -54,6 +54,8 @@ from mcp.domain.json_types import require_json_object
 _DEFAULT_TIMEOUT_SECONDS = 30.0
 _TWO_OPTION_PARTS = 2
 _PACKAGE_ID = re.compile(r"^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9]))*$")
+_SLOT_INDEX = re.compile(r"^(?:0|[1-9][0-9]*)$")
+_MAX_INT32 = 2_147_483_647
 _KNOWN_ACTIONS = frozenset(
     {
         "call",
@@ -95,19 +97,21 @@ _USAGE = """Usage:
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     plan-apply [--root RELATIVE_PATH]
   shar-unreal-mcp vehicle-material-preflight [--root RELATIVE_PATH]
-    [--package-id PACKAGE_ID]
+    [--package-id PACKAGE_ID] [--slot-index INDEX]...
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     vehicle-material-capabilities [--root RELATIVE_PATH]
-    [--package-id PACKAGE_ID]
+    [--package-id PACKAGE_ID] [--slot-index INDEX]...
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     vehicle-material-apply [--root RELATIVE_PATH] [--package-id PACKAGE_ID]
+    [--slot-index INDEX]...
   shar-unreal-mcp vehicle-material-slots-preflight [--root RELATIVE_PATH]
-    --package-id PACKAGE_ID
+    --package-id PACKAGE_ID [--slot-index INDEX]...
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     vehicle-material-slots-capabilities [--root RELATIVE_PATH]
-    --package-id PACKAGE_ID
+    --package-id PACKAGE_ID [--slot-index INDEX]...
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
     vehicle-material-slots-apply [--root RELATIVE_PATH] --package-id PACKAGE_ID
+    [--slot-index INDEX]...
   shar-unreal-mcp vehicle-physics-prerequisites-preflight
     [--root RELATIVE_PATH] [--package-id PACKAGE_ID]
   shar-unreal-mcp [--endpoint URL] [--timeout SECONDS]
@@ -164,6 +168,7 @@ class VehicleMaterialOptions(NamedTuple):
 
     root: Path
     package_id: str | None
+    slot_indices: tuple[int, ...]
 
 
 class VehiclePhysicsPrerequisiteOptions(NamedTuple):
@@ -298,11 +303,58 @@ def parse_catalog_format(operands: tuple[str, ...]) -> str:
 def parse_vehicle_material_options(
     operands: tuple[str, ...],
 ) -> VehicleMaterialOptions:
-    """Parse optional plan root and exact vehicle package identity."""
-    root, package_id = _parse_vehicle_package_options(
-        operands, command="vehicle-material"
-    )
-    return VehicleMaterialOptions(root=root, package_id=package_id)
+    """Parse optional root, package, and exact construction-ready slots."""
+    if len(operands) % _TWO_OPTION_PARTS != 0:
+        _fail_usage("vehicle-material options require option/value pairs")
+    root = Path(".cache/pipeline/unreal-staging/plans")
+    package_id: str | None = None
+    slot_indices: list[int] = []
+    seen_singletons: set[str] = set()
+    for index in range(0, len(operands), _TWO_OPTION_PARTS):
+        option = operands[index]
+        value = operands[index + 1]
+        if option == "--slot-index":
+            slot_indices.append(_parse_vehicle_material_slot_index(value))
+            continue
+        if option in seen_singletons:
+            _fail_usage(f"vehicle-material option is duplicated: {option}")
+        seen_singletons.add(option)
+        if option == "--root":
+            root = _portable_relative_child(value, label="plan root")
+            continue
+        if option == "--package-id":
+            if _PACKAGE_ID.fullmatch(value) is None:
+                _fail_usage("vehicle-material package id is not canonical")
+            package_id = value
+            continue
+        _fail_usage(
+            "vehicle-material accepts only --root, --package-id, and "
+            "--slot-index options"
+        )
+    slots = tuple(slot_indices)
+    _validate_vehicle_material_slot_scope(package_id, slots)
+    return VehicleMaterialOptions(root, package_id, slots)
+
+
+def _parse_vehicle_material_slot_index(value: str) -> int:
+    if _SLOT_INDEX.fullmatch(value) is None:
+        _fail_usage("vehicle-material slot index is not canonical")
+    slot_index = int(value)
+    if slot_index > _MAX_INT32:
+        _fail_usage("vehicle-material slot index exceeds int32")
+    return slot_index
+
+
+def _validate_vehicle_material_slot_scope(
+    package_id: str | None,
+    slot_indices: tuple[int, ...],
+) -> None:
+    if slot_indices and package_id is None:
+        _fail_usage("vehicle-material --slot-index requires --package-id")
+    if len(slot_indices) != len(set(slot_indices)):
+        _fail_usage("vehicle-material slot index is duplicated")
+    if slot_indices != tuple(sorted(slot_indices)):
+        _fail_usage("vehicle-material slot indices must be ascending")
 
 
 def parse_vehicle_physics_prerequisite_options(

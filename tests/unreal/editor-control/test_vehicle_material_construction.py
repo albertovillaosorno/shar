@@ -43,6 +43,9 @@ from mcp.adapter_outbound.vehicle_material_construction_reader import (
     read_bound_vehicle_material_document,
 )
 from mcp.adapter_outbound.vehicle_material_source_verifier import (
+    VerifiedVehicleMaterialTextureSource,
+)
+from mcp.adapter_outbound.vehicle_material_source_verifier import (
     verify_vehicle_material_texture_sources,
 )
 from mcp.domain.errors import ProtocolError
@@ -75,13 +78,15 @@ def _document() -> dict[str, object]:
     alpha = 0.375
     alpha_bits = struct.unpack("<I", struct.pack("<f", alpha))[0]
     return {
-        "schema": "shar-schoenwald.unreal-vehicle-material-evidence.v4",
+        "schema": "shar-schoenwald.unreal-vehicle-material-evidence.v5",
         "source_schema": "shar.vehicle-catalog.v8",
         "target_policy": {
             "source_projection": "reviewed-pddi-render-state",
             "source_projection_status": "ready",
             "world_material_policy_reuse": "forbidden",
-            "native_construction": "simple-unlit-texture-master-instance-ready",
+            "native_construction": (
+                "simple-unlit-and-opaque-lit-texture-master-instance-ready"
+            ),
             "mesh_slot_application": "blocked-pending-reviewed-transaction",
             "dynamic_light_binding": (
                 "headlight-sidecar-plus-slot-bound-rear-lights"
@@ -149,6 +154,44 @@ def _document() -> dict[str, object]:
     }
 
 
+def _lit_document() -> dict[str, object]:
+    document = _document()
+    bits = struct.unpack("<I", struct.pack("<f", 10.0))[0]
+    recipe = f"simple-lit-opaque-shininess-{bits:08x}-both-faces"
+    master_name = (
+        f"M_SHAR_Vehicle_SimpleLit_Opaque_Shininess{bits:08X}_TwoSided"
+    )
+    master_package = (
+        f"/Game/Generated/SHAR/Materials/Vehicles/Masters/{master_name}"
+    )
+    master_object = f"{master_package}.{master_name}"
+    master = document["native_construction"]["master_requests"][0]
+    master.update({
+        "recipe_identity": recipe,
+        "lit": True,
+        "blend_mode": 0,
+        "alpha_test": False,
+        "two_sided": True,
+        "source_ambient_rgba8": [0, 0, 0, 255],
+        "source_specular_rgba8": [0, 0, 0, 255],
+        "source_emissive_rgba8": [0, 0, 0, 255],
+        "source_shininess_bits": bits,
+        "source_shininess": 10.0,
+        "asset_name": master_name,
+        "package_path": master_package,
+        "object_path": master_object,
+    })
+    instance = document["native_construction"]["instance_requests"][0]
+    instance.update({
+        "recipe_identity": recipe,
+        "parent_material_path": master_object,
+        "set_alpha_reference": False,
+        "alpha_reference": None,
+        "alpha_reference_bits": None,
+    })
+    return document
+
+
 def test_compiles_exact_vehicle_material_tool_wires() -> None:
     compiled = compile_vehicle_material_construction(_document())
     assert compiled.report.to_json() == {
@@ -166,6 +209,7 @@ def test_compiles_exact_vehicle_material_tool_wires() -> None:
         "folderPath": texture.folder_path,
         "sourceFile": "/verified/lens.png",
     }
+    assert instance.tool_name.endswith("CreateVehicleMaterialInstance")
     assert master.arguments() == {
         "alphaCompare": 4,
         "assetName": master.asset_name,
@@ -185,6 +229,44 @@ def test_compiles_exact_vehicle_material_tool_wires() -> None:
     assert instance.arguments()["alphaReference"] == pytest.approx(0.375)
 
 
+def test_compiles_exact_opaque_simple_lit_master_tool_wire() -> None:
+    compiled = compile_vehicle_material_construction(_lit_document())
+    master = compiled.masters[0]
+    assert master.tool_name.endswith("CreateSimpleLitVehicleMaster")
+    assert master.arguments() == {
+        "alphaCompare": 4,
+        "assetName": master.asset_name,
+        "bAlphaTest": False,
+        "blendMode": 0,
+        "bLit": True,
+        "bTwoSided": True,
+        "folderPath": master.folder_path,
+        "shaderFamily": "simple",
+        "sourceAmbient": {"a": 1.0, "b": 0.0, "g": 0.0, "r": 0.0},
+        "sourceEmissive": {"a": 1.0, "b": 0.0, "g": 0.0, "r": 0.0},
+        "sourceShininess": 10.0,
+        "sourceSpecular": {"a": 1.0, "b": 0.0, "g": 0.0, "r": 0.0},
+    }
+
+
+def test_rejects_simple_lit_response_and_shininess_drift() -> None:
+    document = _lit_document()
+    master = document["native_construction"]["master_requests"][0]
+    master["source_ambient_rgba8"] = [255, 255, 255, 255]
+    with pytest.raises(ProtocolError, match="black-response policy"):
+        compile_vehicle_material_construction(document)
+    document = _lit_document()
+    master = document["native_construction"]["master_requests"][0]
+    master["source_specular_rgba8"] = [1, 0, 0, 255]
+    with pytest.raises(ProtocolError, match="black-response policy"):
+        compile_vehicle_material_construction(document)
+    document = _lit_document()
+    master = document["native_construction"]["master_requests"][0]
+    master["source_shininess_bits"] = 0
+    with pytest.raises(ProtocolError, match="shininess bits disagree"):
+        compile_vehicle_material_construction(document)
+
+
 def test_rejects_unplanned_dependencies_and_raster_drift() -> None:
     document = _document()
     instance = document["native_construction"]["instance_requests"][0]
@@ -193,8 +275,8 @@ def test_rejects_unplanned_dependencies_and_raster_drift() -> None:
         compile_vehicle_material_construction(document)
     document = _document()
     master = document["native_construction"]["master_requests"][0]
-    master["lit"] = True
-    with pytest.raises(ProtocolError, match="simple-unlit policy"):
+    master["blend_mode"] = 3
+    with pytest.raises(ProtocolError, match="raster policy is unsupported"):
         compile_vehicle_material_construction(document)
     document = _document()
     texture = document["native_construction"]["texture_requests"][0]
@@ -235,7 +317,12 @@ def test_source_verifier_checks_bytes_digest_and_symlink(
     source.parent.mkdir(parents=True)
     source.write_bytes(data)
     verified = verify_vehicle_material_texture_sources(tmp_path, compiled)
-    assert verified == {digest: source}
+    assert verified == {
+        digest: VerifiedVehicleMaterialTextureSource(
+            path=source,
+            md5=hashlib.md5(data, usedforsecurity=False).hexdigest(),
+        )
+    }
     source.unlink()
     target = tmp_path / "target.png"
     target.write_bytes(data)
@@ -272,7 +359,7 @@ def test_bound_reader_rechecks_release_index_hash(tmp_path: Path) -> None:
     path.write_bytes(sidecar)
     bundle = _bundle(sidecar)
     document = read_bound_vehicle_material_document(tmp_path, bundle)
-    assert document["schema"].endswith(".v4")
+    assert document["schema"].endswith(".v5")
     path.write_bytes(sidecar + b"\n")
     with pytest.raises(ProtocolError, match="byte count is stale"):
         read_bound_vehicle_material_document(tmp_path, bundle)

@@ -11,10 +11,10 @@ playable native reimplementation. That order must prevent downstream runtime or
 packaging work from being treated as complete before its evidence and conversion
 preconditions are satisfied, while excluding unrelated online products.
 
-FBX generation also needs an internal dependency order. Publishing all models as
-soon as transport succeeds would preserve source texture debt, defer semantic
-component discovery to Unreal, and make later repair compete with already
-published interchange artifacts.
+Normalized model preparation also needs an internal dependency order. Native
+construction cannot begin from transport success alone because semantic
+components, rigs, materials, physics, and placement must already be represented
+in verified normalized evidence.
 
 ## Decision
 
@@ -25,7 +25,7 @@ or completion status.
 1. decode required source evidence;
 1. generate the minor-unit manifest;
 1. classify deterministic packages;
-1. generate semantically prepared first-principles binary FBX artifacts;
+1. publish semantically complete normalized JSON asset evidence;
 1. establish native Unreal MCP terminal control;
 1. convert normalized evidence into native Unreal assets;
 1. implement the complete native runtime;
@@ -52,14 +52,14 @@ Phase 4 proceeds in the following fixed order:
    moving parts with stable pivots and transforms;
 1. decompose world evidence into terrain, structures, windows, doors, linked
    interiors, landmarks, props, and geographic placement records; and
-1. prove deterministic reconstruction of the one geographic map from its FBX
-   components and assembly manifest.
+1. prove deterministic reconstruction of the one geographic map from normalized
+   components and assembly evidence.
 
 Character modernization in Phase 4 does not increase polygon or vertex counts.
 Semantic UV, material, texture, eye, outfit, prop, vehicle, and world component
-preparation belongs to canonical FBX. Phase 6 consumes and validates that
-prepared interchange evidence; it does not become the first owner of those
-separations.
+preparation belongs to normalized source evidence. Phase 6 constructs native
+Unreal assets directly from that evidence; deprecated FBX views are optional
+comparison artifacts only.
 
 The roadmap excludes a first-party multiplayer campaign, matchmaking, hosted
 platform, marketplace, social layer, server browser, and general launcher. Phase
@@ -75,7 +75,8 @@ scope.
   Skinner, and Chief Wiggum pass semantic texture, eye, rig-display, outfit, and
   prop-bearing complete-model conformance.
 - Props and vehicles depend on the shared component and transform contracts.
-- World decomposition remains last within FBX work because it depends on stable
+- World decomposition remains last within normalized asset preparation because
+  it depends on stable
   component identity, geographic placement, and deterministic assembly.
 - Phase labels describe dependency order, not publication, release, or schedule
   commitments.
@@ -85,8 +86,8 @@ scope.
 ## Rejected alternatives
 
 - Runtime-first development without sound conversion evidence.
-- Publishing transport-only character FBX before texture and rig preparation.
-- Deferring semantic component separation to UAsset import.
+- Publishing transport-only interchange before texture and rig preparation.
+- Deferring semantic component separation to native asset construction.
 - Processing the world before characters, props, and vehicles establish the
   reusable conversion contracts.
 - Combining the remake with an online platform or general editor.

@@ -22,7 +22,7 @@
 // - Summary:
 //   - SHAR generated vehicle material toolset.
 // - Description:
-//   - Creates only the reviewed simple/unlit graph candidate subset.
+//   - Creates reviewed bounded simple/unlit and opaque simple/lit graphs.
 // - Usage:
 //   - Called after vehicle material plan verification and native planning.
 // - Defaults:
@@ -63,13 +63,100 @@ public:
     );
 
     /**
+     * Create one reviewed opaque simple/lit vehicle master.
+     * The source family must be simple and lit with PDDI None blend, no alpha
+     * test, black ambient/specular/emissive, and finite shininess in the GL
+     * range.
+     * TwoSided is preserved exactly. The material stays dirty and unsaved.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharVehicleMaterialToolset")
+    static FString CreateSimpleLitVehicleMaster(
+        const FString& FolderPath,
+        const FString& AssetName,
+        const FString& ShaderFamily,
+        bool bLit,
+        int32 BlendMode,
+        bool bAlphaTest,
+        int32 AlphaCompare,
+        bool bTwoSided,
+        FLinearColor SourceAmbient,
+        FLinearColor SourceSpecular,
+        FLinearColor SourceEmissive,
+        float SourceShininess
+    );
+
+    /** Verify one existing simple/unlit master without mutating it. */
+    UFUNCTION(meta = (AICallable), Category = "SharVehicleMaterialToolset")
+    static bool VerifySimpleUnlitVehicleMaster(
+        const FString& ObjectPath,
+        const FString& ShaderFamily,
+        bool bLit,
+        int32 BlendMode,
+        bool bAlphaTest,
+        int32 AlphaCompare,
+        bool bTwoSided
+    );
+
+    /** Verify one existing opaque simple/lit master without mutating it. */
+    UFUNCTION(meta = (AICallable), Category = "SharVehicleMaterialToolset")
+    static bool VerifySimpleLitVehicleMaster(
+        const FString& ObjectPath,
+        const FString& ShaderFamily,
+        bool bLit,
+        int32 BlendMode,
+        bool bAlphaTest,
+        int32 AlphaCompare,
+        bool bTwoSided,
+        FLinearColor SourceAmbient,
+        FLinearColor SourceSpecular,
+        FLinearColor SourceEmissive,
+        float SourceShininess
+    );
+
+    /**
+     * Upgrade one clean simple/unlit master for SkeletalMesh rendering.
+     * The exact graph recipe is verified before and after the usage-only edit.
+     * The package remains unsaved and dirty after a successful mutation.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharVehicleMaterialToolset")
+    static bool UpgradeSimpleUnlitVehicleMasterSkeletalUsage(
+        const FString& ObjectPath,
+        const FString& ShaderFamily,
+        bool bLit,
+        int32 BlendMode,
+        bool bAlphaTest,
+        int32 AlphaCompare,
+        bool bTwoSided
+    );
+
+    /**
+     * Upgrade one clean opaque simple/lit master for SkeletalMesh rendering.
+     * The exact graph recipe is verified before and after the usage-only edit.
+     * The package remains unsaved and dirty after a successful mutation.
+     */
+    UFUNCTION(meta = (AICallable), Category = "SharVehicleMaterialToolset")
+    static bool UpgradeSimpleLitVehicleMasterSkeletalUsage(
+        const FString& ObjectPath,
+        const FString& ShaderFamily,
+        bool bLit,
+        int32 BlendMode,
+        bool bAlphaTest,
+        int32 AlphaCompare,
+        bool bTwoSided,
+        FLinearColor SourceAmbient,
+        FLinearColor SourceSpecular,
+        FLinearColor SourceEmissive,
+        float SourceShininess
+    );
+
+    /**
      * Create one vehicle Material Instance from reviewed generated inputs.
      * The parent must be a generated vehicle master. An optional texture must
      * live below the generated vehicle texture root. The instance remains
      * dirty and unsaved for transaction read-back and explicit publication.
      */
     UFUNCTION(meta = (AICallable), Category = "SharVehicleMaterialToolset")
-    static FString CreateSimpleUnlitVehicleMaterialInstance(
+    static FString CreateVehicleMaterialInstance(
         const FString& FolderPath,
         const FString& AssetName,
         const FString& ParentMaterialPath,

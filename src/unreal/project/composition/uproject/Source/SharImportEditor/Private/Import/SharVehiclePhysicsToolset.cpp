@@ -27,7 +27,8 @@
 // - Usage:
 //   - Exposed through USharVehiclePhysicsToolset.
 // - Defaults:
-//   - Only generated-root Skeletal Meshes and create-only outputs are accepted.
+//   - Only generated-root Skeletal Meshes and create-only outputs are
+//   - accepted.
 //
 
 //! Vehicle Physics Asset publication adapter.
@@ -37,6 +38,7 @@
 #include "Import/SharVehiclePhysicsAssetBuilder.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Editor.h"
 #include "Engine/SkeletalMesh.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Misc/PackageName.h"
@@ -156,10 +158,9 @@ bool HasEquivalentBodies(
     const UPhysicsAsset& Published
 )
 {
-    if (
-        Candidate.SkeletalBodySetups.Num()
-        != Published.SkeletalBodySetups.Num()
-    )
+    if (Candidate.SkeletalBodySetups.Num()
+            != Published.SkeletalBodySetups.Num()
+        || Candidate.ConstraintSetup.Num() != Published.ConstraintSetup.Num())
     {
         return false;
     }
@@ -171,12 +172,65 @@ bool HasEquivalentBodies(
         if (Expected == nullptr
             || Actual == nullptr
             || Expected->BoneName != Actual->BoneName
+            || Expected->PhysicsType != Actual->PhysicsType
+            || Expected->bConsiderForBounds != Actual->bConsiderForBounds
             || Expected->AggGeom.SphereElems != Actual->AggGeom.SphereElems
             || Expected->AggGeom.BoxElems != Actual->AggGeom.BoxElems)
         {
             return false;
         }
     }
+    for (int32 Left = 0; Left < Candidate.SkeletalBodySetups.Num(); ++Left)
+    {
+        for (int32 Right = Left + 1;
+             Right < Candidate.SkeletalBodySetups.Num();
+             ++Right)
+        {
+            if (Candidate.IsCollisionEnabled(Left, Right)
+                != Published.IsCollisionEnabled(Left, Right))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool ReplacePhysicsAssetState(
+    UPhysicsAsset& Target,
+    const UPhysicsAsset& Source,
+    FString& OutError
+)
+{
+    TArray<TObjectPtr<USkeletalBodySetup>> Bodies;
+    Bodies.Reserve(Source.SkeletalBodySetups.Num());
+    for (const USkeletalBodySetup* SourceBody : Source.SkeletalBodySetups)
+    {
+        if (SourceBody == nullptr)
+        {
+            OutError = TEXT("vehicle Physics Asset source body is invalid");
+            return false;
+        }
+        USkeletalBodySetup* Body = DuplicateObject<USkeletalBodySetup>(
+            SourceBody,
+            &Target
+        );
+        if (Body == nullptr)
+        {
+            OutError = TEXT("vehicle Physics Asset body duplication failed");
+            return false;
+        }
+        Body->ClearFlags(RF_Transient);
+        Body->SetFlags(RF_Transactional);
+        Bodies.Add(Body);
+    }
+    Target.ClearAllPhysicsMeshes();
+    Target.SkeletalBodySetups = MoveTemp(Bodies);
+    Target.ConstraintSetup.Reset();
+    Target.CollisionDisableTable = Source.CollisionDisableTable;
+    Target.SetPreviewMesh(Source.GetPreviewMesh(), false);
+    Target.UpdateBodySetupIndexMap();
+    Target.UpdateBoundsBodiesArray();
     return true;
 }
 
@@ -229,7 +283,10 @@ FString USharVehiclePhysicsToolset::CreateVehiclePhysicsAsset(
         );
         return {};
     }
-    USkeletalMesh* Mesh = LoadObject<USkeletalMesh>(nullptr, *SkeletalMeshPath);
+    USkeletalMesh* Mesh = LoadObject<USkeletalMesh>(
+        nullptr,
+        *SkeletalMeshPath
+    );
     if (Mesh == nullptr)
     {
         RaiseVehiclePhysicsError(TEXT("skeletal_mesh_path did not load"));
@@ -293,6 +350,115 @@ FString USharVehiclePhysicsToolset::CreateVehiclePhysicsAsset(
     Package->MarkPackageDirty();
     return ObjectPath;
 }
+FString USharVehiclePhysicsToolset::RebuildVehiclePhysicsAsset(
+    const FString& PhysicsAssetPath,
+    const FString& SkeletalMeshPath,
+    FName RigIdentity,
+    int32 SourceJointCount,
+    const TArray<FSharVehiclePhysicsShapeInput>& Shapes
+)
+{
+    using namespace UE::SharImportEditor::Private;
+    if (!IsCanonicalGeneratedObjectPath(PhysicsAssetPath)
+        || !IsCanonicalGeneratedObjectPath(SkeletalMeshPath))
+    {
+        RaiseVehiclePhysicsError(
+            TEXT("rebuild asset paths are not generated and canonical")
+        );
+        return {};
+    }
+    if (GEditor != nullptr && GEditor->PlayWorld != nullptr)
+    {
+        RaiseVehiclePhysicsError(
+            TEXT("vehicle Physics Asset rebuild is blocked during PIE")
+        );
+        return {};
+    }
+    UPhysicsAsset* Asset =
+        LoadObject<UPhysicsAsset>(nullptr, *PhysicsAssetPath);
+    USkeletalMesh* Mesh = LoadObject<USkeletalMesh>(
+        nullptr,
+        *SkeletalMeshPath
+    );
+    if (Asset == nullptr || Mesh == nullptr)
+    {
+        RaiseVehiclePhysicsError(
+            TEXT("rebuild Physics Asset or Skeletal Mesh did not load")
+        );
+        return {};
+    }
+    UPackage* Package = Asset->GetPackage();
+    if (Package == nullptr || Package->IsDirty())
+    {
+        RaiseVehiclePhysicsError(
+            TEXT("vehicle Physics Asset rebuild requires a clean package")
+        );
+        return {};
+    }
+
+    FString Error;
+    TArray<FSharVehiclePhysicsShapeRecipe> NativeShapes;
+    if (!ConvertShapes(Shapes, NativeShapes, Error))
+    {
+        RaiseVehiclePhysicsError(Error);
+        return {};
+    }
+    UPhysicsAsset* Candidate = nullptr;
+    if (!BuildTransientVehiclePhysicsAsset(
+            *Mesh,
+            RigIdentity,
+            SourceJointCount,
+            NativeShapes,
+            Candidate,
+            Error
+        ))
+    {
+        RaiseVehiclePhysicsError(Error);
+        return {};
+    }
+    UPhysicsAsset* Backup = DuplicateObject<UPhysicsAsset>(
+        Asset,
+        GetTransientPackage()
+    );
+    if (Backup == nullptr)
+    {
+        RaiseVehiclePhysicsError(
+            TEXT("vehicle Physics Asset rebuild backup failed")
+        );
+        return {};
+    }
+
+    Asset->Modify();
+    if (!ReplacePhysicsAssetState(*Asset, *Candidate, Error)
+        || Asset->GetPreviewMesh() != Mesh
+        || !HasEquivalentBodies(*Candidate, *Asset))
+    {
+        FString RestoreError;
+        const bool Restored = ReplacePhysicsAssetState(
+            *Asset,
+            *Backup,
+            RestoreError
+        );
+        Package->ClearDirtyFlag();
+        if (!Restored)
+        {
+            Error += FString::Printf(
+                TEXT("; rollback failed: %s"),
+                *RestoreError
+            );
+        }
+        RaiseVehiclePhysicsError(
+            Error.IsEmpty()
+                ? TEXT("vehicle Physics Asset rebuild read-back drifted")
+                : Error
+        );
+        return {};
+    }
+    Package->MarkPackageDirty();
+    UPhysicsAsset::OnRefreshPhysicsAssetChange.Broadcast(Asset);
+    return PhysicsAssetPath;
+}
+
 bool USharVehiclePhysicsToolset::VerifyVehiclePhysicsAsset(
     const FString& PhysicsAssetPath,
     const FString& SkeletalMeshPath,
@@ -312,7 +478,10 @@ bool USharVehiclePhysicsToolset::VerifyVehiclePhysicsAsset(
     }
     UPhysicsAsset* Asset =
         LoadObject<UPhysicsAsset>(nullptr, *PhysicsAssetPath);
-    USkeletalMesh* Mesh = LoadObject<USkeletalMesh>(nullptr, *SkeletalMeshPath);
+    USkeletalMesh* Mesh = LoadObject<USkeletalMesh>(
+        nullptr,
+        *SkeletalMeshPath
+    );
     if (Asset == nullptr || Mesh == nullptr)
     {
         RaiseVehiclePhysicsError(

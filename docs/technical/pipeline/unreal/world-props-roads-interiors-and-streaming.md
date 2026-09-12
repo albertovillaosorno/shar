@@ -14,15 +14,14 @@ recenter, or rebuild source geography.
 
 ## Canonical world source
 
-The original decoded map is imported through deterministic binary FBX 7.7.
-World FBXs preserve source positions, pivots, transforms, UVs, materials,
-textures, and package identities. One `SHAR_Export_Root` with `ReflectX` owns
-the explicit source-to-FBX/Unreal basis conversion.
+The original decoded map is constructed directly from normalized geometry and
+placement JSON. Native world plans preserve source positions, pivots,
+transforms,
+UVs, materials, textures, and package identities while applying the documented
+source-to-Unreal basis exactly once.
 
-Import every world FBX with identity actor location, rotation, and scale.
-Disable
-`Force Front XAxis`. Do not add an actor mirror, yaw adjustment, height offset,
-UV mirror, map offset, or interior movement.
+Do not add actor mirrors, yaw adjustments, height offsets, UV mirrors, map
+offsets, interior movements, or transport-format root compensation.
 
 The base project does not use an Unreal Landscape replacement. Terrain, roads,
 shorelines, seabed, buildings, props, and interiors come from original decoded
@@ -31,20 +30,20 @@ faithful base port.
 
 ## Structural guide
 
-The optional structural guide combines normal-import world FBX geometry for
-editor inspection. It shares the same `ReflectX` root and preserves source
-positions and UVs. It excludes review galleries and adds no placement, height,
-terrain, collision, or guide-only geometry.
+The optional structural guide visualizes normalized world geometry for editor
+inspection. It preserves source positions and UVs without becoming coordinate
+authority. It excludes review galleries and adds no placement, height, terrain,
+collision, or guide-only geometry.
 
 The guide is not runtime, gameplay, collision, navigation, or material
 authority. Delete it without changing production regeneration.
 
 ## Coordinates
 
-Source coordinates remain authoritative through export. Unreal read-back must
-verify finite transforms, bounds, pivots, package identity, and the declared FBX
-root basis. Validation does not enforce a synthetic map extent, sea-level
-translation, or common height datum.
+Source coordinates remain authoritative through normalized evidence. Unreal
+read-back must verify finite transforms, bounds, pivots, package identity, and
+the declared native basis conversion. Validation does not enforce a synthetic
+map extent, sea-level translation, or common height datum.
 
 ## Asset decomposition
 
@@ -74,8 +73,8 @@ lighting, navigation, save policy, and world-state bindings. Fused interior FBXs
 retain source-space geometry. Level 7 Halloween output contains only source
 triangles absent from the canonical base.
 
-Nested interior FBXs publish their exact external texture set beside the FBX so
-Unreal import cannot degrade silently to missing materials.
+Nested interior evidence publishes its exact texture set so native
+construction cannot degrade silently to missing materials.
 
 ## Data Layers and streaming
 
@@ -96,5 +95,5 @@ Publication rejects:
 - unresolved external textures;
 - map, interior, height, UV, or actor-transform corrections not declared by
   source evidence;
-- partial FBX or catalog publication; and
+- partial normalized evidence or native catalog publication; and
 - a world-import path that depends on an Unreal Landscape replacement.

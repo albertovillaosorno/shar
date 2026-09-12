@@ -172,6 +172,29 @@ def _toolsets(
             "returnValue",
         ),
     )
+    vehicle_skeletal_import = _tool(
+        _IMPORT_TOOLSET,
+        "ImportVehicleSkeletalMesh",
+        _object_schema(
+            {
+                "assetName": text,
+                "folderPath": text,
+                "sourceFile": text,
+            },
+            "assetName",
+            "folderPath",
+            "sourceFile",
+        ),
+        _object_schema(
+            {
+                "returnValue": {
+                    "type": "array",
+                    "items": text,
+                }
+            },
+            "returnValue",
+        ),
+    )
     static_import = _tool(
         _IMPORT_TOOLSET,
         "ImportStaticMesh",
@@ -212,7 +235,11 @@ def _toolsets(
         description="SHAR imports.",
         tools=tuple(
             tool
-            for tool in (skeletal_import, static_import)
+            for tool in (
+                skeletal_import,
+                vehicle_skeletal_import,
+                static_import,
+            )
             if tool.name != omit
         ),
         raw_schema={},
@@ -319,6 +346,41 @@ def _compiled_skeletal_mesh() -> CompiledExecutionPlan:
     return compile_execution_plan(ValidatedPlanBundle(report, (operation,)))
 
 
+def _compiled_vehicle_skeletal_mesh() -> CompiledExecutionPlan:
+    operation = PlanOperation(
+        plan_id="asset-import-plan",
+        operation_id="operation-0000000000000004",
+        package_identity="vehicle-package",
+        source_identity="vehicle-source",
+        source_format="fbx",
+        target_family="model",
+        source_path="vehicle-assets/sedana/sedana.fbx",
+        source_revision="4" * 64,
+        destination=(
+            "/Game/Generated/SHAR/cars/sedana_Skeletal.sedana_Skeletal"
+        ),
+        target_class="SkeletalMesh",
+        importer="asset-tools-fbx",
+        import_profile="shar-fbx-vehicle-skeletal-v1",
+        dependencies=(),
+        readiness="ready",
+        world_owned=True,
+        runtime_bound=True,
+    )
+    report = PlanBundleReport(
+        revision="5" * 64,
+        source_manifest_revision="6" * 64,
+        engine_contract_revision="shar-unreal-porting-contract-v1",
+        target_engine_version="5.8.1",
+        target_platform="editor",
+        semantic_blocker_count=0,
+        operation_count=1,
+        readiness_counts={"ready": 1},
+        plans=(),
+    )
+    return compile_execution_plan(ValidatedPlanBundle(report, (operation,)))
+
+
 def test_accepts_complete_live_import_save_and_readback_surface() -> None:
     compiled = _compiled_texture()
     report = audit_plan_capabilities(compiled, _toolsets())
@@ -358,6 +420,22 @@ def test_skeletal_mesh_requires_owned_companion_aware_import_schema() -> None:
     assert required_toolsets(compiled) == (_IMPORT_TOOLSET, _ASSET_TOOLSET)
 
     missing_identity = f"{_IMPORT_TOOLSET}.ImportSkeletalMesh"
+    missing = audit_plan_capabilities(
+        compiled,
+        _toolsets(omit=missing_identity),
+    )
+    assert not missing.complete
+    assert missing.missing_tools == (missing_identity,)
+
+
+def test_vehicle_skeletal_mesh_requires_vehicle_import_schema() -> None:
+    compiled = _compiled_vehicle_skeletal_mesh()
+    report = audit_plan_capabilities(compiled, _toolsets())
+    assert report.complete
+    assert report.required_tool_count == 6
+    assert required_toolsets(compiled) == (_IMPORT_TOOLSET, _ASSET_TOOLSET)
+
+    missing_identity = f"{_IMPORT_TOOLSET}.ImportVehicleSkeletalMesh"
     missing = audit_plan_capabilities(
         compiled,
         _toolsets(omit=missing_identity),
