@@ -46,6 +46,24 @@ native asset construction from normalized extracted JSON and versioned plans.
 - [ ] Remove production FBX catalogs, staging prerequisites, and generic Unreal
   FBX execution routes only after no production plan references them.
 
+## 2026-09-12 production-seam audit
+
+The current `vehicle.catalog.json` retains an FBX artifact summary but not the
+complete vertex, triangle, normal, UV, skin-weight, and bind-pose payload needed
+for direct Skeletal Mesh construction. That data exists transiently during
+vehicle preparation through model types currently housed under `formats/fbx`.
+
+The first implementation checkpoint is therefore engine-neutral model evidence,
+not another Unreal importer. Move the reusable geometry, rig, skin, and
+animation
+representation out of FBX ownership and publish a versioned normalized JSON
+payload before implementing the native Unreal constructor.
+
+`SharImportEditor` currently has no production direct-mesh builder based on
+`MeshDescription` or equivalent skeletal construction data. Add that capability
+only after the normalized model payload has a deterministic schema, provenance,
+hashes, and representative vehicle fixtures.
+
 ## Dependencies
 
 The normalized extraction and provenance ledgers remain source authority. Native
