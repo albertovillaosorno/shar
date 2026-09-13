@@ -4,7 +4,7 @@ id: use-one-normalized-desktop-and-android-mod-import-contract
 status: open
 priority: P4
 lane: mods
-active: true
+active: false
 parent: null
 <!-- markdownlint-disable-next-line MD044 -->
 # jig-ignore-next-line: typed TODO identity is canonical

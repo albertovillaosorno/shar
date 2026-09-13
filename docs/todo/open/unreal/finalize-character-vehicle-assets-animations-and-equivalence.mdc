@@ -1,0 +1,33 @@
+---
+schema: shar.todo.v1
+id: finalize-character-vehicle-assets-animations-and-equivalence
+status: open
+priority: P3
+lane: unreal
+active: false
+parent: null
+dependencies: [port-missions-menus-roster-and-progression-after-runtime]
+children: []
+---
+
+# Finalize character and vehicle assets, animations, and equivalence
+
+Finalize content assets after the game is already behaviorally complete and
+playable. At this stage each converted asset has a known Unreal consumer and a
+known gameplay contract, so equivalence can be tested against real usage.
+
+## Acceptance criteria
+
+- [ ] Finalize all character and vehicle geometry, skeletons, physics assets,
+  animations, materials, attachments, and presentation behavior.
+- [ ] Finish remaining native asset conversion and retire transitional FBX
+  consumers only where native parity is proven.
+- [ ] Run representative and corpus-wide equivalence tests against actual
+  gameplay consumers rather than editor appearance alone.
+- [ ] Do not change authored transforms or scales to compensate for a runtime or
+  consumer defect.
+
+## Dependencies
+
+Depends on the functionally complete missions, menus, roster, and progression
+phase.

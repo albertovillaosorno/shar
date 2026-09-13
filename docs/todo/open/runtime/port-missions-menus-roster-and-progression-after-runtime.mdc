@@ -1,0 +1,33 @@
+---
+schema: shar.todo.v1
+id: port-missions-menus-roster-and-progression-after-runtime
+status: open
+priority: P2
+lane: runtime
+active: false
+parent: null
+dependencies: [complete-game-runtime-and-rendering-behavior-before-final-assets]
+children: []
+---
+
+# Port missions, menus, roster, and progression after runtime completion
+
+Port structured game content only after the runtime systems it invokes already
+exist. This phase should leave the game functionally complete except for final
+character/vehicle assets, their animation presentation, and later equivalence
+polish.
+
+## Acceptance criteria
+
+- [ ] Port all missions, objectives, conditions, triggers, races, collectibles,
+  rewards, checkpoints, dialogue routing, and progression gates.
+- [ ] Reproduce HUD, menus, navigation, character and vehicle roster data, and
+  selection/unlock flows on the completed runtime.
+- [ ] Bind normalized mission/UI/tuning/localization evidence to stable runtime
+  APIs instead of using asset conversion as behavioral authority.
+- [ ] Reach a start-to-finish functionally playable base before final asset
+  completion becomes a blocker.
+
+## Dependencies
+
+Depends on completed runtime and rendering behavior.

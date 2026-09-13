@@ -2,11 +2,11 @@
 schema: shar.todo.v1
 id: replace-fbx-unreal-ingestion-with-native-json-assets
 status: open
-priority: P0
+priority: P3
 lane: unreal
-active: true
+active: false
 parent: null
-dependencies: []
+dependencies: [finalize-character-vehicle-assets-animations-and-equivalence]
 children: []
 ---
 
@@ -163,6 +163,29 @@ atomically. That rerun is the remaining publication gate: it must produce 88
 `vehicle-skeletal-mesh-native-v1` construction operations and zero production
 vehicle FBX import operations before the ingestion migration can be considered
 published.
+
+## 2026-09-13 native vehicle production publication checkpoint
+
+A complete `prepare-unreal` run now publishes the native vehicle route
+atomically. The accepted `asset-construction-plan` contains 88
+`shar-native-vehicle-skeletal-v1` operations sourced from 88 unique
+`vehicle-assets/<vehicle>/model.normalized.json` files and targeting 88 unique
+Skeletal Mesh destinations. Every operation is `ready`, uses the native skeletal
+builder, and consumes JSON model evidence.
+
+The accepted `asset-import-plan` contains zero vehicle FBX import operations,
+and neither the deprecated vehicle FBX profile nor route appears in the
+published production plans. Deprecated FBX artifacts remain only in the vehicle
+workspace as compatibility evidence; they are no longer a produced Unreal
+vehicle prerequisite.
+
+The next vehicle-native blocker is Physics Asset semantics rather than mesh
+ingestion. The published vehicle-physics evidence currently contains 137 source
+rigs: 87 native-ready shape rigs and 50 blocked rigs. Native construction still
+keeps secondary bodies kinematic until source articulation joints are
+translated,
+and current ready rigs require the authored self-collision pair list to be
+empty.
 
 ## Dependencies
 

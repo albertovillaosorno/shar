@@ -2,11 +2,11 @@
 schema: shar.todo.v1
 id: support-keyboard-mouse-and-controller-input-across-gameplay-and-menus
 status: open
-priority: P4
+priority: P0
 lane: product
 active: false
 parent: null
-dependencies: []
+dependencies: [complete-source-faithful-world-before-player-and-vehicle-polish]
 children: []
 ---
 
@@ -20,7 +20,7 @@ Support keyboard/mouse and controller input across gameplay and menus.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+The current code-first roadmap dependency is declared in frontmatter.
 
 ## Native Unreal asset pivot — 2026-09-12
 

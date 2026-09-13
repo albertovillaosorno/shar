@@ -4,9 +4,9 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: preserve-the-delivery-order-faithful-port-first-compatibility-and-quality-of-life
 status: open
-priority: P4
+priority: P0
 lane: product
-active: false
+active: true
 parent: null
 dependencies: []
 children: []
@@ -23,6 +23,32 @@ quality-of-life improvements second, richer community mod content third.
 
 - [ ] Preserve the delivery order: faithful port first, compatibility and
   quality-of-life improvements second, richer community mod content third.
+
+## Code-first faithful-port order — 2026-09-13
+
+The faithful port is code-first, not asset-first. Runtime behavior must be
+understood from the preserved reference and source evidence and implemented in
+Unreal before final asset conversion becomes a delivery blocker.
+
+The required order is:
+
+1. establish the Unreal runtime foundation and gameplay contracts;
+1. build the complete source-faithful world, including levels, interiors,
+   props, placement, collision, and streaming;
+1. make one default player character and one default vehicle controllable in
+   that world with representative cameras and interaction;
+1. complete gameplay systems, rendering/shader behavior, saves, loading, audio,
+   traffic, pedestrians, damage, recovery, and other runtime code;
+1. port missions, objectives, menus, roster, progression, and structured
+   content on top of that completed runtime;
+1. only then finalize character and vehicle assets, animations, presentation,
+   and asset-by-asset equivalence;
+1. finish packaging, mods, release hardening, and final parity verification.
+
+Placeholder or representative assets are acceptable during the early runtime
+phases when they preserve the behavioral contract. They must never become
+source authority or excuse invented transforms, gameplay values, or final
+presentation.
 
 ## Dependencies
 

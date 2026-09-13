@@ -2,9 +2,9 @@
 schema: shar.todo.v1
 id: known-vehicle-native-asset-blockers
 status: open
-priority: P0
+priority: P3
 lane: unreal
-active: true
+active: false
 parent: replace-fbx-unreal-ingestion-with-native-json-assets
 dependencies: [replace-fbx-unreal-ingestion-with-native-json-assets]
 children: []
@@ -57,6 +57,33 @@ source-faithful physics and presentation items tracked above: self-collision,
 authored articulated joints, final wheel/tire behavior, and unresolved material
 families. None should be replaced with visual transform fixes, invented PBR
 values, or fallback textures.
+
+## Native route published — 2026-09-13
+
+The production publication gate is now complete. A full `prepare-unreal` run
+published 88 native vehicle Skeletal Mesh construction operations from
+normalized
+JSON and zero vehicle FBX import operations. The native source paths and Unreal
+destinations are both unique across all 88 vehicles, and every operation is
+ready for `SharVehicleSkeletalAssetToolset`.
+
+The remaining blocker is therefore source-faithful vehicle physics and
+presentation, not Skeletal Mesh ingestion. The current published Physics Asset
+plan contains 137 source rigs, 1,118 primitives, 87 native-ready rigs, and 50
+blocked rigs. Its policy intentionally disables all internal body collisions for
+source rigs whose self-collision list is empty and keeps secondary bodies
+kinematic until authored articulation joints are translated.
+
+The full regenerated corpus confirms that all 137 collision rigs have empty
+self-collision lists. The current disable-all internal-body policy therefore
+preserves the authored corpus rather than approximating it.
+
+Physics Objects retain 113 one-degree-of-freedom articulated joints across 31
+vehicles. Eighty-two articulated joints use stiffness `0.8` with authored angle
+range `0.0` to `1.0`; 31 use stiffness `0.5` with authored angle range `0.0` to
+`0.5`. Transporting those exact joint records into the native Physics Asset
+plan and constructing their constraints is the next physics implementation
+boundary.
 
 ## Dependencies
 

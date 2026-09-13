@@ -1,0 +1,32 @@
+---
+schema: shar.todo.v1
+id: make-default-player-and-vehicle-playable-in-the-complete-world
+status: open
+priority: P0
+lane: runtime
+active: false
+parent: null
+dependencies: [complete-source-faithful-world-before-player-and-vehicle-polish]
+children: []
+---
+
+# Make one default player and vehicle playable in the complete world
+
+Create the first real vertical slice only after the world exists. One default
+player and one default vehicle must exercise the runtime contracts without
+requiring the final character or vehicle asset set.
+
+## Acceptance criteria
+
+- [ ] Walk, run, turn, jump, interact, enter and exit a vehicle, and recover
+  using source-backed gameplay semantics.
+- [ ] Drive, steer, accelerate, brake, reverse, collide, recover, and use the
+  representative vehicle camera in the authored world.
+- [ ] Support keyboard/mouse and controller input needed by the vertical slice.
+- [ ] Validate world collision, streaming, camera transitions, and
+  player/vehicle
+  ownership through the same representative flow.
+
+## Dependencies
+
+Depends on the complete source-faithful world milestone.

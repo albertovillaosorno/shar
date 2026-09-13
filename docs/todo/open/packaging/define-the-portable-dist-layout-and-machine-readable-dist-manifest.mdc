@@ -2,9 +2,9 @@
 schema: shar.todo.v1
 id: define-the-portable-dist-layout-and-machine-readable-dist-manifest
 status: open
-priority: P3
+priority: P4
 lane: packaging
-active: true
+active: false
 parent: null
 dependencies: [canonical-multi-platform-build-runner]
 children: []

@@ -4,7 +4,7 @@ id: publish-src-user-as-the-versioned-shar-release-zip
 status: open
 priority: P5
 lane: verification
-active: true
+active: false
 parent: null
 dependencies: [build-the-lightweight-src-user-exporter-and-cross-platform-gui]
 children: []

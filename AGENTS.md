@@ -97,6 +97,22 @@ but new production work must not make FBX importer behavior authoritative. Do
 not use Blender or Maya for generation, conversion, staging, repair, validation,
 or acceptance.
 
+## Delivery order
+
+The faithful port is code-first rather than asset-first. Establish the Unreal
+runtime foundation first, then build the complete source-faithful world, then
+make one default player and one default vehicle playable in that world.
+
+After that vertical slice, complete gameplay systems and source-backed rendering
+behavior before porting missions, menus, roster, and progression. Final
+character/vehicle assets, animations, presentation polish, and asset-by-asset
+equivalence come only after the base is functionally playable.
+
+Use representative or placeholder assets when a runtime contract needs a test
+fixture, but never promote those fixtures into source authority. Do not let
+asset-conversion completeness determine gameplay behavior that should instead be
+derived from the preserved reference and source evidence.
+
 ## Validation
 
 Use Jig as the canonical repository validator for final evidence. Run

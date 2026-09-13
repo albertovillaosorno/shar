@@ -8,23 +8,42 @@ priority: P0
 lane: conversion
 active: false
 parent: null
-dependencies: []
+dependencies:
+  - establish-playable-unreal-runtime-foundation-before-world-content
 children: []
 ---
 
-# Import the original world through source-authored FBX instead of replacing it…
+# Build the original world in Unreal from source-authored evidence
 
-Import the original world through source-authored FBX instead of replacing it
-with an Unreal Landscape.
+Build the original world in Unreal without replacing it with an Unreal
+Landscape. The production goal is a source-backed playable world; existing FBX
+artifacts are migration and diagnostic evidence, not runtime authority.
 
 ## Acceptance criteria
 
-- [ ] Import the original world through source-authored FBX instead of replacing
-  it with an Unreal Landscape.
+- [ ] Build the complete exterior and interior world in Unreal without replacing
+  source geometry with an Unreal Landscape.
+- [ ] Preserve source-authored world geometry, props, placement, collision, and
+  ownership required for traversal and gameplay.
+- [ ] Drive production world construction from normalized/source-backed evidence
+  and native Unreal contracts; keep FBX only as migration comparison evidence.
+- [ ] Do not block world gameplay on final character, vehicle, or presentation
+  asset polish.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+The current code-first roadmap dependency is declared in frontmatter.
+
+## Code-first world phase — 2026-09-13
+
+This task is now part of the P0 playable-world phase. Earlier FBX import smokes
+remain useful evidence that source geometry survived conversion, but they do not
+define the final production boundary.
+
+The current acceptance target is the complete authored world in Unreal with
+levels, interiors, props, placement, collision, locators, and streaming behavior
+available to runtime code. Final character/vehicle assets and asset-equivalence
+polish are explicitly later phases.
 
 ## Native Unreal asset pivot — 2026-09-12
 

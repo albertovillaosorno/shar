@@ -4,7 +4,7 @@ id: build-the-lightweight-src-user-exporter-and-cross-platform-gui
 status: open
 priority: P4
 lane: packaging
-active: true
+active: false
 parent: null
 <!-- markdownlint-disable-next-line MD044 -->
 # jig-ignore-next-line: typed TODO identity is canonical
