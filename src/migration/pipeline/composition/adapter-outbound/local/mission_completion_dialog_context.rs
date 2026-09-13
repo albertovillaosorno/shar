@@ -38,7 +38,7 @@ use crate::domain::{
     MissionCharacterCatalogReference, MissionReferenceCatalog,
     MissionStageDirective, PackageRole, PhaseThreePackageIndex,
     PhaseThreePackageRow, PipelineError, PipelineOutcome,
-    compile_mission_scope_graphs, preflight_mission_stage_semantics,
+    preflight_mission_stage_semantics,
 };
 
 /// One participant package contributing audio to a completion conversation.
@@ -173,13 +173,8 @@ pub(super) fn preflight_mission_completion_dialogs(
 ) -> PipelineOutcome<MissionCompletionDialogReport> {
     let mut bindings = Vec::new();
     for snapshot in snapshots {
-        let scopes = compile_mission_scope_graphs(snapshot.evidence())
-            .map_err(|error| {
-                PipelineError::new(format!(
-                    "mission completion-dialog scope failed: {error}"
-                ))
-            })?;
-        let stages = preflight_mission_stage_semantics(&scopes)
+        let scopes = snapshot.scopes();
+        let stages = preflight_mission_stage_semantics(scopes)
             .map_err(|error| {
                 PipelineError::new(format!(
                     "mission completion-dialog stage failed: {error}"

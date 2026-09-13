@@ -72,8 +72,8 @@ use crate::adapters::driven::check_cancellation;
 use crate::adapters::driven::local::progress::StageProgress;
 use crate::domain::{
     MISSION_SCRIPT_SCHEMA, VEHICLE_TUNING_SCHEMA, MissionCameraCatalog,
-    MissionInitializationBinding,
-    MissionLocatorCatalog, MissionP3dReferenceCatalog, MissionReferenceCatalog,
+    MissionInitializationBinding, MissionLocatorCatalog,
+    MissionP3dReferenceCatalog, MissionReferenceCatalog, MissionScopeReport,
     MissionVehicleCatalogReference, PhaseThreePackageIndex,
     VehicleTuningSourceCatalog, VehicleTuningUsageReport,
     preflight_vehicle_tuning_usages,
@@ -574,10 +574,10 @@ fn source_evidence(
     let tuning_usage = preflight_cross_source_mission_locators(
         &inputs,
         &report.evidence,
+        &report.mission_snapshots,
         mission_references,
         mission_cameras,
         mission_locators,
-        mission_p3d_references,
         index,
         &config.extracted_root,
     )?;
@@ -589,6 +589,7 @@ fn source_evidence(
 /// Verified source evidence plus selected mission-definition rows.
 struct SourceEvidenceReport {
     evidence: Vec<UnrealSourceEvidence>,
+    mission_snapshots: Vec<MissionLocatorScriptSnapshot>,
     mission_definitions: Vec<String>,
     mission_definition_replay: Vec<MissionDefinitionReplayRecord>,
     mission_tuning: String,
@@ -672,6 +673,14 @@ struct MissionSourceOutput {
     definition: Option<MissionDefinitionOutput>,
     tuning: String,
     tuning_replay: Vec<MissionTuningReplayRecord>,
+    prepared: Option<PreparedMissionSource>,
+}
+
+/// Reusable semantic mission evidence retained after source verification.
+struct PreparedMissionSource {
+    evidence: crate::domain::MissionScriptEvidence,
+    scopes: MissionScopeReport,
+    package_roots: Vec<String>,
 }
 
 /// Exact normalized mission invocation retained for output replay validation.
@@ -691,6 +700,7 @@ struct MissionTuningReplayRecord {
 /// One verified physical source and its optional selected mission definition.
 struct VerifiedSourceOutput {
     evidence: UnrealSourceEvidence,
+    mission_snapshot: Option<MissionLocatorScriptSnapshot>,
     mission_definition: Option<MissionDefinitionOutput>,
     mission_tuning: String,
     mission_tuning_replay: Vec<MissionTuningReplayRecord>,
@@ -726,6 +736,7 @@ fn parallel_source_evidence(
     if inputs.is_empty() {
         return Ok(SourceEvidenceReport {
             evidence: Vec::new(),
+            mission_snapshots: Vec::new(),
             mission_definitions: Vec::new(),
             mission_definition_replay: Vec::new(),
             mission_tuning: String::new(),
@@ -795,6 +806,7 @@ fn parallel_source_evidence(
     }
     collected.sort_by_key(|(position, _result)| *position);
     let mut evidence = Vec::with_capacity(collected.len());
+    let mut mission_snapshots = Vec::new();
     let mut mission_definitions = Vec::new();
     let mut mission_definition_replay = Vec::new();
     let mut mission_tuning = String::new();
@@ -804,6 +816,9 @@ fn parallel_source_evidence(
     for (_position, result) in collected {
         let output = result?;
         evidence.push(output.evidence);
+        if let Some(snapshot) = output.mission_snapshot {
+            mission_snapshots.push(snapshot);
+        }
         if let Some(definition) = output.mission_definition {
             mission_definitions.push(definition.jsonl);
             mission_definition_replay.push(definition.replay);
@@ -818,6 +833,7 @@ fn parallel_source_evidence(
     progress.finish();
     Ok(SourceEvidenceReport {
         evidence,
+        mission_snapshots,
         mission_definitions,
         mission_definition_replay,
         mission_tuning,
@@ -838,10 +854,10 @@ fn parallel_source_evidence(
 fn preflight_cross_source_mission_locators(
     inputs: &[SourceEvidenceInput],
     verified: &[UnrealSourceEvidence],
+    snapshots: &[MissionLocatorScriptSnapshot],
     mission_references: &MissionReferenceCatalog,
     mission_cameras: &MissionCameraCatalog,
     mission_locators: &MissionLocatorCatalog,
-    mission_p3d_references: &MissionP3dReferenceCatalog,
     index: &PhaseThreePackageIndex,
     extracted_root: &Path,
 ) -> PipelineOutcome<VehicleTuningUsageOutput> {
@@ -853,68 +869,71 @@ fn preflight_cross_source_mission_locators(
             ));
         }
     }
+    let mut snapshots_by_path = BTreeMap::new();
+    for snapshot in snapshots {
+        if snapshots_by_path
+            .insert(snapshot.source_path(), snapshot)
+            .is_some()
+        {
+            return Err(PipelineError::new(
+                "mission semantic snapshot source path is duplicated",
+            ));
+        }
+    }
+    let mission_count = inputs
+        .iter()
+        .filter(|input| input.kind == "mission-script")
+        .count();
+    if snapshots_by_path.len() != mission_count {
+        return Err(PipelineError::new(
+            "mission semantic snapshot count changed after verification",
+        ));
+    }
 
-    let tuning_sources = VehicleTuningSourceCatalog::from_package_index(index)
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "vehicle tuning usage catalog intake failed: {error}"
-            ))
-        })?;
+    let mut progress = StageProgress::begin(
+        "Mission cross-source preflight",
+        9,
+    );
+    progress.advance("physical mission snapshots");
     let mut mission_source_ids = BTreeMap::new();
-    let mut snapshots = Vec::new();
     for input in inputs {
         check_cancellation()?;
         if input.kind != "mission-script" {
             continue;
         }
         let source = verified_by_id.get(input.id.as_str()).ok_or_else(|| {
-                        // jig-ignore-next-line: literal
-            PipelineError::new("mission locator source is missing from verified evidence")
+            PipelineError::new(
+                "mission locator source is missing from verified evidence",
+            )
         })?;
         if source.source_path != input.source_path {
             return Err(PipelineError::new(
                 "mission locator source provenance changed after verification",
             ));
         }
-        let bytes = read_stable_source_bytes(&input.resolved)?;
-        let actual_size = u64::try_from(bytes.len()).unwrap_or(u64::MAX);
-                // jig-ignore-next-line: expression
-                if actual_size != input.expected_size || actual_size != source.size_bytes {
+        if !snapshots_by_path.contains_key(input.source_path.as_str()) {
+            return Err(PipelineError::new(
+                "mission semantic snapshot disappeared after verification",
+            ));
+        }
+        let (actual_size, sha256) = stream_source_digest(&input.resolved)?;
+        if actual_size != input.expected_size
+            || actual_size != source.size_bytes
+        {
             return Err(PipelineError::new(format!(
                 "mission locator source size changed after verification for {}",
                 input.path
             )));
         }
-        if digest_hex(&bytes) != source.sha256 {
+        if sha256 != source.sha256 {
             return Err(PipelineError::new(format!(
-                                // jig-ignore-next-line: literal
-                                "mission locator source digest changed after verification for {}",
+                concat!(
+                    "mission locator source digest changed after ",
+                    "verification for {}"
+                ),
                 input.path
             )));
         }
-        let text = std::str::from_utf8(&bytes).map_err(|_error| {
-                        // jig-ignore-next-line: literal
-            PipelineError::new("mission locator source is not valid UTF-8 after verification")
-        })?;
-        let evidence = preflight_mission_script(text).map_err(|error| {
-            PipelineError::new(format!(
-                "mission locator source semantic preflight failed: {error}"
-            ))
-        })?;
-        let loads = preflight_mission_package_loads_with_catalog(
-            &evidence,
-            mission_p3d_references,
-        )
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "mission locator source package-load preflight failed: {error}"
-            ))
-        })?;
-        let package_roots = loads
-            .bindings()
-            .iter()
-            .map(|binding| binding.package_root().to_owned())
-            .collect();
         if mission_source_ids
             .insert(input.source_path.clone(), input.id.clone())
             .is_some()
@@ -923,17 +942,19 @@ fn preflight_cross_source_mission_locators(
                 "mission tuning usage source path is duplicated",
             ));
         }
-        snapshots.push(MissionLocatorScriptSnapshot::new(
-            input.source_path.clone(),
-            evidence,
-            package_roots,
-        ));
     }
 
-    check_cancellation()?;
+    progress.advance("vehicle tuning usages");
+    let tuning_sources = VehicleTuningSourceCatalog::from_package_index(index)
+        .map_err(|error| {
+            PipelineError::new(format!(
+                "vehicle tuning usage catalog intake failed: {error}"
+            ))
+        })?;
     let mut vehicle_tuning_usages = String::new();
     let mut vehicle_tuning_usage_replay = Vec::new();
-    for snapshot in &snapshots {
+    for snapshot in snapshots {
+        check_cancellation()?;
         let source_id = mission_source_ids
             .get(snapshot.source_path())
             .ok_or_else(|| {
@@ -941,15 +962,9 @@ fn preflight_cross_source_mission_locators(
                     "mission tuning usage source identity disappeared",
                 )
             })?;
-        let scopes = compile_mission_scope_graphs(snapshot.evidence())
-            .map_err(|error| {
-                PipelineError::new(format!(
-                    "vehicle tuning usage scope preflight failed: {error}"
-                ))
-            })?;
         let report = preflight_vehicle_tuning_usages(
             source_id,
-            &scopes,
+            snapshot.scopes(),
             mission_references,
             &tuning_sources,
         )
@@ -967,28 +982,38 @@ fn preflight_cross_source_mission_locators(
         );
     }
 
+    progress.advance("mission authored order");
     check_cancellation()?;
     drop(
-        build_mission_order_source_reports(&snapshots).map_err(|error| {
+        build_mission_order_source_reports(snapshots).map_err(|error| {
             PipelineError::new(format!(
                 "mission authored registration preflight failed: {error}"
             ))
         })?,
     );
+
+    progress.advance("mission music");
+    check_cancellation()?;
     drop(preflight_mission_music_states(
         index,
         extracted_root,
-        &snapshots,
+        snapshots,
     )?);
+
+    progress.advance("completion dialogue");
+    check_cancellation()?;
     drop(completion_dialog_context::preflight_mission_completion_dialogs(
         index,
         mission_references,
-        &snapshots,
+        snapshots,
     )?);
+
+    progress.advance("dialogue info");
+    check_cancellation()?;
     drop(dialogue_info_context::preflight_mission_dialogue_info(
         index,
         mission_references,
-        &snapshots,
+        snapshots,
     )?);
 
     let indexed_package_roots = index
@@ -996,27 +1021,24 @@ fn preflight_cross_source_mission_locators(
         .iter()
         .map(|package| package.package_root.to_ascii_lowercase())
         .collect::<BTreeSet<_>>();
+
+    progress.advance("level locator references");
     check_cancellation()?;
-    let level_contexts = build_level_locator_source_contexts(&snapshots)
+    let level_contexts = build_level_locator_source_contexts(snapshots)
         .map_err(|error| {
             PipelineError::new(format!(
                 "level locator sibling-load context failed: {error}"
             ))
         })?;
-    for snapshot in &snapshots {
+    for snapshot in snapshots {
         check_cancellation()?;
         let Some(level_context) =
             level_contexts.get(snapshot.source_path())
         else {
             continue;
         };
-        let scopes = compile_mission_scope_graphs(snapshot.evidence())
-            .map_err(|error| {
-                PipelineError::new(format!(
-                    "level locator scope preflight failed: {error}"
-                ))
-            })?;
-        let npcs = preflight_mission_level_npcs(mission_references, &scopes)
+        let scopes = snapshot.scopes();
+        let npcs = preflight_mission_level_npcs(mission_references, scopes)
             .map_err(|error| {
                 PipelineError::new(format!(
                     "level locator NPC preflight failed: {error}"
@@ -1024,7 +1046,7 @@ fn preflight_cross_source_mission_locators(
             })?;
         let purchases = preflight_mission_purchase_rewards(
             mission_references,
-            &scopes,
+            scopes,
         )
         .map_err(|error| {
             PipelineError::new(format!(
@@ -1035,7 +1057,7 @@ fn preflight_cross_source_mission_locators(
             preflight_mission_level_locator_references(
                 mission_locators,
                 level_context.package_roots(),
-                &scopes,
+                scopes,
                 &npcs,
                 &purchases,
             )
@@ -1047,29 +1069,32 @@ fn preflight_cross_source_mission_locators(
             })?,
         );
     }
-        // jig-ignore-next-line: expression
-        let contexts = build_mission_locator_source_contexts(&snapshots, &indexed_package_roots)
-        .map_err(|error| {
-            PipelineError::new(format!(
-                "mission locator active-package context failed: {error}"
-            ))
-        })?;
-    for snapshot in &snapshots {
+
+    progress.advance("mission locator contexts");
+    check_cancellation()?;
+    let contexts = build_mission_locator_source_contexts(
+        snapshots,
+        &indexed_package_roots,
+    )
+    .map_err(|error| {
+        PipelineError::new(format!(
+            "mission locator active-package context failed: {error}"
+        ))
+    })?;
+
+    progress.advance("mission locator references");
+    for snapshot in snapshots {
         check_cancellation()?;
         let Some(context) = contexts.get(snapshot.source_path()) else {
             continue;
         };
-                // jig-ignore-next-line: expression
-                let scopes = compile_mission_scope_graphs(snapshot.evidence()).map_err(|error| {
-                        // jig-ignore-next-line: literal
-            PipelineError::new(format!("mission locator scope preflight failed: {error}"))
-        })?;
-                // jig-ignore-next-line: expression
-                let initialization = preflight_mission_initialization(&scopes).map_err(|error| {
-            PipelineError::new(format!(
-                "mission locator initialization preflight failed: {error}"
-            ))
-        })?;
+        let scopes = snapshot.scopes();
+        let initialization = preflight_mission_initialization(scopes)
+            .map_err(|error| {
+                PipelineError::new(format!(
+                    "mission locator initialization preflight failed: {error}"
+                ))
+            })?;
         let has_ped_group_selection = initialization
             .missions()
             .iter()
@@ -1092,15 +1117,9 @@ fn preflight_cross_source_mission_locators(
                         "mission pedestrian-group setup source disappeared",
                     )
                 })?;
-            let setup_scopes = compile_mission_scope_graphs(setup.evidence())
-                .map_err(|error| {
-                    PipelineError::new(format!(
-                        "mission pedestrian-group setup scope failed: {error}"
-                    ))
-                })?;
             let groups = preflight_mission_ped_groups(
                 mission_references,
-                &setup_scopes,
+                setup.scopes(),
             )
             .map_err(|error| {
                 PipelineError::new(format!(
@@ -1135,7 +1154,7 @@ fn preflight_cross_source_mission_locators(
             })?,
         );
         let stage_semantics =
-            preflight_mission_stage_semantics(&scopes).map_err(|error| {
+            preflight_mission_stage_semantics(scopes).map_err(|error| {
                 PipelineError::new(format!(
                     "mission locator stage preflight failed: {error}"
                 ))
@@ -1153,7 +1172,7 @@ fn preflight_cross_source_mission_locators(
                 })?,
         );
         let objective_semantics =
-            preflight_mission_objective_semantics(&scopes).map_err(|error| {
+            preflight_mission_objective_semantics(scopes).map_err(|error| {
                 PipelineError::new(format!(
                     "mission locator objective preflight failed: {error}"
                 ))
@@ -1170,7 +1189,7 @@ fn preflight_cross_source_mission_locators(
             preflight_mission_locator_references(
                 mission_locators,
                 context.active_packages(),
-                &scopes,
+                scopes,
                 &initialization,
                 &stage_semantics,
                 &objective_semantics,
@@ -1182,6 +1201,7 @@ fn preflight_cross_source_mission_locators(
             })?,
         );
     }
+    progress.finish();
     Ok(VehicleTuningUsageOutput {
         jsonl: vehicle_tuning_usages,
         replay: vehicle_tuning_usage_replay,
@@ -1232,6 +1252,7 @@ fn read_source_evidence(
     let (
         actual_size,
         sha256,
+        mission_snapshot,
         mission_definition,
         mission_tuning,
         mission_tuning_replay,
@@ -1250,12 +1271,27 @@ fn read_source_evidence(
                 mission_references,
                 mission_p3d_references,
             )?;
+            let MissionSourceOutput {
+                definition,
+                tuning,
+                tuning_replay,
+                prepared,
+            } = mission;
+            let mission_snapshot = prepared.map(|prepared| {
+                MissionLocatorScriptSnapshot::new(
+                    input.source_path.clone(),
+                    prepared.evidence,
+                    prepared.scopes,
+                    prepared.package_roots,
+                )
+            });
             (
                 actual_size,
                 digest_hex(&bytes),
-                mission.definition,
-                mission.tuning,
-                mission.tuning_replay,
+                mission_snapshot,
+                definition,
+                tuning,
+                tuning_replay,
                 None,
             )
         },
@@ -1276,6 +1312,7 @@ fn read_source_evidence(
                 actual_size,
                 digest_hex(&bytes),
                 None,
+                None,
                 String::new(),
                 Vec::new(),
                 vehicle_tuning_core,
@@ -1286,6 +1323,7 @@ fn read_source_evidence(
             (
                 actual_size,
                 sha256,
+                None,
                 None,
                 String::new(),
                 Vec::new(),
@@ -1302,21 +1340,22 @@ fn read_source_evidence(
     Ok(VerifiedSourceOutput {
         evidence: UnrealSourceEvidence {
             id: input.id.clone(),
-        path: input.path.clone(),
-        file_extension: input.file_extension.clone(),
-        unit_type: input.unit_type.clone(),
-        subtype: input.subtype.clone(),
-        kind: input.kind.clone(),
-        function: input.function.clone(),
-        schema: input.schema.clone(),
-        origin: input.origin.clone(),
-        source_path: input.source_path.clone(),
-        source_chunk_kind: input.source_chunk_kind.clone(),
-        size_bytes: actual_size,
-        sha256,
-        unreal_import_relation: input.unreal_import_relation.clone(),
+            path: input.path.clone(),
+            file_extension: input.file_extension.clone(),
+            unit_type: input.unit_type.clone(),
+            subtype: input.subtype.clone(),
+            kind: input.kind.clone(),
+            function: input.function.clone(),
+            schema: input.schema.clone(),
+            origin: input.origin.clone(),
+            source_path: input.source_path.clone(),
+            source_chunk_kind: input.source_chunk_kind.clone(),
+            size_bytes: actual_size,
+            sha256,
+            unreal_import_relation: input.unreal_import_relation.clone(),
             future_normalization: input.future_normalization.clone(),
         },
+        mission_snapshot,
         mission_definition,
         mission_tuning,
         mission_tuning_replay,
@@ -1603,6 +1642,7 @@ fn validate_normalized_mission_source(
             definition: None,
             tuning: String::new(),
             tuning_replay: Vec::new(),
+            prepared: None,
         });
     }
     if schema != MISSION_SCRIPT_SCHEMA {
@@ -1634,16 +1674,19 @@ fn validate_normalized_mission_source(
             ))
         })?,
     );
-    drop(
-        preflight_mission_package_loads_with_catalog(
-            &evidence,
-            mission_p3d_references,
-        )
-        .map_err(|error| {
-                        // jig-ignore-next-line: literal
-            PipelineError::new(format!("mission package-load preflight failed: {error}"))
-        })?,
-    );
+    let package_loads = preflight_mission_package_loads_with_catalog(
+        &evidence,
+        mission_p3d_references,
+    )
+    .map_err(|error| {
+        // jig-ignore-next-line: literal
+        PipelineError::new(format!("mission package-load preflight failed: {error}"))
+    })?;
+    let package_roots = package_loads
+        .bindings()
+        .iter()
+        .map(|binding| binding.package_root().to_owned())
+        .collect();
     drop(preflight_mission_objectives(&evidence).map_err(|error| {
         // jig-ignore-next-line: literal
         PipelineError::new(format!("mission objective preflight failed: {error}"))
@@ -1821,12 +1864,17 @@ fn validate_normalized_mission_source(
         definition: mission_definition,
         tuning: mission_tuning,
         tuning_replay: mission_tuning_replay,
+        prepared: Some(PreparedMissionSource {
+            evidence,
+            scopes,
+            package_roots,
+        }),
     })
 }
 
 fn mission_tuning_replay_records(
     source_id: &str,
-    scopes: &crate::domain::MissionScopeReport,
+    scopes: &MissionScopeReport,
 ) -> Vec<MissionTuningReplayRecord> {
     let mut records = Vec::new();
     for command in scopes

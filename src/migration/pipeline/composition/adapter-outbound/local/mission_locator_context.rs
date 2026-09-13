@@ -38,9 +38,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::domain::{
     MissionInitializationBinding, MissionInitializationDirective,
         MissionLocatorActivePackageReport,
-        MissionLocatorActivePackages,
+        MissionLocatorActivePackages, MissionScopeReport,
         MissionScriptEvidence,
-    compile_mission_scope_graphs, preflight_mission_initialization,
+    preflight_mission_initialization,
 };
 
 const MISSION_ROOT: &str = "extracted/game/scripts/missions/";
@@ -63,19 +63,22 @@ const LEVEL_SETUP_ANCHOR_COMMANDS: &[&str] = &[
 pub(super) struct MissionLocatorScriptSnapshot {
     source_path: String,
     evidence: MissionScriptEvidence,
+    scopes: MissionScopeReport,
     package_roots: Vec<String>,
 }
 
 impl MissionLocatorScriptSnapshot {
-    /// Build one cross-script locator context input.
+    /// Build one cross-script locator context input from validated evidence.
     pub(super) const fn new(
         source_path: String,
         evidence: MissionScriptEvidence,
+        scopes: MissionScopeReport,
         package_roots: Vec<String>,
     ) -> Self {
         Self {
             source_path,
             evidence,
+            scopes,
             package_roots,
         }
     }
@@ -88,6 +91,11 @@ impl MissionLocatorScriptSnapshot {
     /// Return structurally validated mission evidence.
     pub(super) const fn evidence(&self) -> &MissionScriptEvidence {
         &self.evidence
+    }
+
+    /// Return the already-validated mission scope projection.
+    pub(super) const fn scopes(&self) -> &MissionScopeReport {
+        &self.scopes
     }
 }
 
@@ -309,7 +317,7 @@ pub(super) fn build_mission_locator_source_contexts(
     let available = by_path.keys().copied().collect::<BTreeSet<_>>();
     let mut contexts = BTreeMap::new();
     for snapshot in snapshots {
-        let scopes = compile_mission_scope_graphs(&snapshot.evidence)?;
+        let scopes = snapshot.scopes();
         if scopes.missions().is_empty() {
             continue;
         }
@@ -331,7 +339,7 @@ pub(super) fn build_mission_locator_source_contexts(
             .ok_or_else(|| "mission locator mission-load source disappeared".to_owned())?;
         let mut script_package_roots = level_load.package_roots.clone();
         script_package_roots.extend(mission_load.package_roots.iter().cloned());
-        let initialization = preflight_mission_initialization(&scopes)?;
+        let initialization = preflight_mission_initialization(scopes)?;
         let [initialization] = initialization.missions() else {
                         // jig-ignore-next-line: literal
             return Err("mission locator initialization context drifted".to_owned());
