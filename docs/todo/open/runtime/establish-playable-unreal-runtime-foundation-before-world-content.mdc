@@ -63,10 +63,33 @@ context, and active context controls input availability.
   source exit before target entry.
 - [ ] Bind loading readiness, world readiness, and input policy to the gameplay
   transition without making asset availability the state-machine authority.
-- [ ] Add the minimal project-owned gameplay bootstrap classes required by
+- [x] Add the minimal project-owned gameplay bootstrap classes required by
   Unreal, including the controller and representative player pawn boundary.
-- [ ] Prove `LoadingGameplay -> Gameplay -> Pause/Resume` lifecycle behavior in
+- [x] Prove `LoadingGameplay -> Gameplay -> Pause/Resume` lifecycle behavior in
   automation before building final player or vehicle presentation.
+
+## Native gameplay framework bootstrap — 2026-09-13
+
+The root `shar` module now owns `ASharGameMode`, `ASharGameState`,
+`ASharPlayerController`, and a neutral `ASharPlayerPawn`. Project settings
+select
+the SHAR Game Mode globally, and its class defaults select the other
+project-owned framework classes. The representative Pawn owns only a scene root,
+does not tick, and cannot auto-possess a player or AI; movement, collision,
+camera, mesh, animation, and input mapping remain deferred to validated avatar
+and character policy.
+
+`SHAR.Runtime.GameplayFramework.Bootstrap` verifies the configured global Game
+Mode and all framework class defaults without depending on final assets.
+`SHAR.Application.Transition.GameplayPauseResumeLifecycle` drives the real
+application coordinator through `front_end -> loading_gameplay -> gameplay ->
+pause -> gameplay`. Every step proves the source observation remains active
+through preparation and readiness and changes only at commit, then completes and
+releases its transaction.
+
+This does not yet bind world-readiness barriers or input leases to native player
+control. Those effects remain the next lifecycle-composition step and must not
+be inferred from Pawn existence or possession.
 
 ## Root gameplay catalog foundation — 2026-09-13
 
