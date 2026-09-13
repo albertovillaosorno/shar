@@ -9,7 +9,7 @@
 #
 # Boundary-Contract:
 # - Owns:
-#   - Repository policy for authored Unreal C++ headers and UHT boundaries.
+#   - Repository policy for authored Unreal C++ headers and reflection.
 # - Must-Not:
 #   - Inspect generated build products or external Unreal Engine sources.
 # - Allows:
@@ -21,7 +21,7 @@
 # - Summary:
 #   - Guards SHAR Unreal header naming and generated-header consistency.
 # - Description:
-#   - Requires .h and pragma-once everywhere while matching UHT generated
+#   - Requires .h and pragma-once everywhere while matching generated
 #   - includes exactly to headers that contain Unreal reflection declarations.
 # - Usage:
 #   - Run through the canonical repository pytest or Jig gate.
@@ -74,7 +74,7 @@ def test_unreal_headers_use_pragma_once() -> None:
 
 
 def test_reflection_headers_include_matching_generated_header() -> None:
-    """Require reflected declarations to include their matching UHT output."""
+    """Require reflected declarations to include matching generated output."""
     offenders: list[str] = []
     for path in _headers():
         text = path.read_text(encoding="utf-8")
@@ -84,7 +84,10 @@ def test_reflection_headers_include_matching_generated_header() -> None:
         if includes != [path.stem]:
             relative = path.relative_to(_ROOT).as_posix()
             offenders.append(f"{relative}: generated includes={includes}")
-    assert not offenders, f"invalid reflected header UHT includes: {offenders}"
+    assert not offenders, (
+        "invalid reflected header generated includes: "
+        f"{offenders}"
+    )
 
 
 def test_non_reflection_headers_have_no_generated_header() -> None:
@@ -95,4 +98,7 @@ def test_non_reflection_headers_have_no_generated_header() -> None:
         if not _REFLECTION_DECLARATION.search(path.read_text(encoding="utf-8"))
         and _GENERATED_INCLUDE.search(path.read_text(encoding="utf-8"))
     ]
-    assert not offenders, f"ordinary headers include UHT output: {offenders}"
+    assert not offenders, (
+        "ordinary headers include generated output: "
+        f"{offenders}"
+    )
