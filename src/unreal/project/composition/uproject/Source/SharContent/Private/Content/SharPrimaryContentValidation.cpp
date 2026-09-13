@@ -30,7 +30,7 @@
 
 //! Shar primary content validation composition module.
 
-#include "Content/SharPrimaryContentValidation.hpp"
+#include "Content/SharPrimaryContentValidation.h"
 
 #include "Content/SharPrimaryContentDefinition.h"
 #include "Engine/DataAsset.h"

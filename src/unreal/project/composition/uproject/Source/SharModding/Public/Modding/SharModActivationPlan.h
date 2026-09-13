@@ -30,8 +30,8 @@
 
 //! Shar mod activation plan composition module.
 
-#ifndef SHAR_SHAR_MOD_ACTIVATION_PLAN_HEADER_INCLUDED
-#define SHAR_SHAR_MOD_ACTIVATION_PLAN_HEADER_INCLUDED
+#pragma once
+
 #include "CoreMinimal.h"
 #include "Modding/SharModDescriptor.h"
 
@@ -49,5 +49,3 @@ public:
         const TArray<const USharModDescriptor*>& Descriptors
     );
 };
-
-#endif  // SHAR_SHAR_MOD_ACTIVATION_PLAN_HEADER_INCLUDED

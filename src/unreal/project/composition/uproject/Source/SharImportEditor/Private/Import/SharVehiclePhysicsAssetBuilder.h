@@ -31,8 +31,8 @@
 //! Vehicle Physics Asset construction kernel.
 
 
-#ifndef SHAR_SHAR_VEHICLE_PHYSICS_ASSET_BUILDER_HEADER_INCLUDED
-#define SHAR_SHAR_VEHICLE_PHYSICS_ASSET_BUILDER_HEADER_INCLUDED
+#pragma once
+
 #include "CoreMinimal.h"
 
 class UPhysicsAsset;
@@ -67,5 +67,3 @@ bool BuildTransientVehiclePhysicsAsset(
     FString& OutError
 );
 } // namespace UE::SharImportEditor::Private
-
-#endif  // SHAR_SHAR_VEHICLE_PHYSICS_ASSET_BUILDER_HEADER_INCLUDED

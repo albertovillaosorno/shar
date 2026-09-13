@@ -33,7 +33,7 @@
 #include "Cheats/SharCheatEffectSubsystem.h"
 
 #include "Cheats/SharCheatContracts.h"
-#include "Cheats/SharCheatIdentity.hpp"
+#include "Cheats/SharCheatIdentity.h"
 
 #include "Meta/SharMetaCatalogDefinition.h"
 #include "Meta/SharMetaCatalogSubsystem.h"

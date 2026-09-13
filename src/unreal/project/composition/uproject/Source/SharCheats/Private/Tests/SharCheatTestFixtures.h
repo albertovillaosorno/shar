@@ -30,8 +30,8 @@
 
 //! Shar cheat test fixtures composition module.
 
-#ifndef SHAR_SHAR_CHEAT_TEST_FIXTURES_HEADER_INCLUDED
-#define SHAR_SHAR_CHEAT_TEST_FIXTURES_HEADER_INCLUDED
+#pragma once
+
 #include "Cheats/SharCheatEffectSubsystem.h"
 #include "Cheats/SharCheatSubsystem.h"
 #include "Engine/GameInstance.h"
@@ -330,5 +330,3 @@ inline FSharCheatActivationResolution MakeCheatResolution(
     Resolution.ActivationRevision = Request.ActivationRevision;
     return Resolution;
 }
-
-#endif  // SHAR_SHAR_CHEAT_TEST_FIXTURES_HEADER_INCLUDED

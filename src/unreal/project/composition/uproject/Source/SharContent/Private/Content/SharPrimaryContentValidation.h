@@ -30,12 +30,12 @@
 
 //! Shar primary content validation composition module.
 
-#ifndef SHAR_SHAR_PRIMARY_CONTENT_VALIDATION_HEADER_INCLUDED
-#define SHAR_SHAR_PRIMARY_CONTENT_VALIDATION_HEADER_INCLUDED
+#pragma once
+
 // File:
-//   - SharPrimaryContentValidation.hpp
+//   - SharPrimaryContentValidation.h
 // jig-ignore-next-line: exact syntax is indivisible
-// Path: src/unreal/project/composition/uproject/Source/SharContent/Private/Content/SharPrimaryContentValidation.hpp
+// Path: src/unreal/project/composition/uproject/Source/SharContent/Private/Content/SharPrimaryContentValidation.h
 //
 // Copyright:
 //   - Copyright © 2026 Alberto Villa Osorno.
@@ -100,5 +100,3 @@ public:
         TArray<FText>& OutErrors
     );
 };
-
-#endif  // SHAR_SHAR_PRIMARY_CONTENT_VALIDATION_HEADER_INCLUDED

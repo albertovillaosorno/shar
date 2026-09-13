@@ -30,8 +30,8 @@
 
 //! Shar frontend test fixtures composition module.
 
-#ifndef SHAR_SHAR_FRONTEND_TEST_FIXTURES_HEADER_INCLUDED
-#define SHAR_SHAR_FRONTEND_TEST_FIXTURES_HEADER_INCLUDED
+#pragma once
+
 #include "Engine/GameInstance.h"
 #include "UI/SharFrontendCatalogDefinition.h"
 #include "UI/SharFrontendCatalogSubsystem.h"
@@ -270,5 +270,3 @@ inline bool AcceptFrontendPostCommit(
         }
     );
 }
-
-#endif  // SHAR_SHAR_FRONTEND_TEST_FIXTURES_HEADER_INCLUDED

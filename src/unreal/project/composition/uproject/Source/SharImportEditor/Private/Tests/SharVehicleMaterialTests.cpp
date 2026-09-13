@@ -37,7 +37,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Materials/SharVehicleMaterialPolicy.hpp"
+#include "Materials/SharVehicleMaterialPolicy.h"
 #include "Materials/SharVehicleMaterialToolset.h"
 
 #include "Engine/SkeletalMesh.h"

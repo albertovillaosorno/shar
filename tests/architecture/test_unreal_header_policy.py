@@ -9,24 +9,24 @@
 #
 # Boundary-Contract:
 # - Owns:
-#   - Repository policy for authored Unreal C++ header naming and guards.
+#   - Repository policy for authored Unreal C++ headers and UHT boundaries.
 # - Must-Not:
 #   - Inspect generated build products or external Unreal Engine sources.
 # - Allows:
-#   - Read project-owned headers and enforce portable include boundaries.
+#   - Read project-owned headers and enforce Unreal reflection conventions.
 # - Split-When:
-#   - Header naming and include-guard policy gain independent lifecycles.
+#   - Reflection and general header policy gain independent lifecycles.
 # - Merge-When:
 #   - Another architecture test owns the same authored-header contract.
 # - Summary:
-#   - Guards SHAR Unreal header extensions and include guards.
+#   - Guards SHAR Unreal header naming and generated-header consistency.
 # - Description:
-#   - Reserves .h for Unreal-reflected headers, uses .hpp otherwise, and forbids
-#   - pragma-once in ordinary project-owned C++ headers.
+#   - Requires .h and pragma-once everywhere while matching UHT generated
+#   - includes exactly to headers that contain Unreal reflection declarations.
 # - Usage:
 #   - Run through the canonical repository pytest or Jig gate.
 # - Defaults:
-#   - Reads only tracked project source.
+#   - Reads only project-owned Unreal source headers.
 #
 
 """Architecture guards for project-owned Unreal C++ headers."""
@@ -37,87 +37,62 @@ from pathlib import Path
 import re
 
 _ROOT = Path(__file__).resolve().parents[2]
-_UNREAL_SOURCE = (
-    _ROOT / "src/unreal/project/composition/uproject/Source"
-)
-_HEADER_SUFFIXES = frozenset({".h", ".hpp"})
+_UNREAL_SOURCE = _ROOT / "src/unreal/project/composition/uproject/Source"
 _PRAGMA_ONCE = re.compile(r"^\s*#\s*pragma\s+once\b", re.MULTILINE)
+_REFLECTION_DECLARATION = re.compile(
+    r"^\s*U(?:CLASS|STRUCT|ENUM|INTERFACE)\s*\(",
+    re.MULTILINE,
+)
+_GENERATED_INCLUDE = re.compile(
+    r'^\s*#\s*include\s+"([A-Za-z0-9_]+)\.generated\.h"\s*$',
+    re.MULTILINE,
+)
 
 
 def _headers() -> tuple[Path, ...]:
-    """Return authored Unreal headers without generated build products."""
-    return tuple(
-        sorted(
-            path
-            for path in _UNREAL_SOURCE.rglob("*")
-            if path.is_file() and path.suffix in _HEADER_SUFFIXES
-        )
-    )
+    """Return project-owned Unreal headers."""
+    return tuple(sorted(_UNREAL_SOURCE.rglob("*.h")))
 
 
-def _guard(path: Path) -> str:
-    """Return the deterministic include guard for one authored header."""
-    stem = path.stem
-    snake = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", stem)
-    snake = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", snake).upper()
-    return f"SHAR_{snake}_HEADER_INCLUDED"
+def test_unreal_headers_use_h_extension_only() -> None:
+    """Keep project headers aligned with Unreal's conventional .h extension."""
+    hpp_files = [
+        path.relative_to(_ROOT).as_posix()
+        for path in _UNREAL_SOURCE.rglob("*.hpp")
+    ]
+    assert not hpp_files, f"Unreal project headers must use .h: {hpp_files}"
 
 
-def test_ordinary_unreal_headers_forbid_pragma_once() -> None:
-    """Use portable include guards in ordinary project C++ headers."""
+def test_unreal_headers_use_pragma_once() -> None:
+    """Require the same header guard convention across project Unreal code."""
     offenders = [
         path.relative_to(_ROOT).as_posix()
         for path in _headers()
-        if path.suffix == ".hpp"
-        and _PRAGMA_ONCE.search(path.read_text(encoding="utf-8"))
+        if not _PRAGMA_ONCE.search(path.read_text(encoding="utf-8"))
     ]
-    assert not offenders, (
-        "#pragma once is forbidden in ordinary SHAR headers: "
-        f"{offenders}"
-    )
+    assert not offenders, f"SHAR headers require #pragma once: {offenders}"
 
 
-def test_reflected_unreal_headers_use_required_pragma_once() -> None:
-    """Keep reflected headers in the form accepted by Unreal Header Tool."""
-    offenders = [
-        path.relative_to(_ROOT).as_posix()
-        for path in _headers()
-        if path.suffix == ".h"
-        and not _PRAGMA_ONCE.search(path.read_text(encoding="utf-8"))
-    ]
-    assert not offenders, (
-        "reflected Unreal headers require #pragma once: "
-        f"{offenders}"
-    )
-
-
-def test_unreal_header_extensions_match_reflection_policy() -> None:
-    """Reserve .h for reflected inputs and use .hpp for ordinary C++ headers."""
+def test_reflection_headers_include_matching_generated_header() -> None:
+    """Require reflected declarations to include their matching UHT output."""
     offenders: list[str] = []
     for path in _headers():
         text = path.read_text(encoding="utf-8")
-        reflected = ".generated.h" in text
-        expected = ".h" if reflected else ".hpp"
-        if path.suffix != expected:
-            relative = path.relative_to(_ROOT).as_posix()
-            offenders.append(f"{relative}: expected {expected}")
-    assert not offenders, f"noncanonical Unreal header extensions: {offenders}"
-
-
-def test_ordinary_unreal_headers_use_deterministic_include_guards() -> None:
-    """Require one deterministic include guard around each ordinary header."""
-    offenders: list[str] = []
-    for path in _headers():
-        if path.suffix != ".hpp":
+        if not _REFLECTION_DECLARATION.search(text):
             continue
-        guard = _guard(path)
-        text = path.read_text(encoding="utf-8")
-        lines = text.splitlines()
-        if (
-            f"#ifndef {guard}" not in lines
-            or f"#define {guard}" not in lines
-            or not lines
-            or lines[-1] != f"#endif  // {guard}"
-        ):
-            offenders.append(path.relative_to(_ROOT).as_posix())
-    assert not offenders, f"noncanonical Unreal include guards: {offenders}"
+        includes = _GENERATED_INCLUDE.findall(text)
+        if includes != [path.stem]:
+            relative = path.relative_to(_ROOT).as_posix()
+            offenders.append(f"{relative}: generated includes={includes}")
+    assert not offenders, f"invalid reflected header UHT includes: {offenders}"
+
+
+def test_non_reflection_headers_have_no_generated_header() -> None:
+    """Reject generated-header coupling from ordinary C++ headers."""
+    offenders = [
+        path.relative_to(_ROOT).as_posix()
+        for path in _headers()
+        if not _REFLECTION_DECLARATION.search(path.read_text(encoding="utf-8"))
+        and _GENERATED_INCLUDE.search(path.read_text(encoding="utf-8"))
+    ]
+    assert not offenders, f"ordinary headers include UHT output: {offenders}"

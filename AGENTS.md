@@ -31,13 +31,11 @@ and repository operators, not ordinary end-user modding documentation.
 
 ## Unreal C++ header policy
 
-Use `.hpp` plus portable macro include guards for ordinary project-owned C++
-headers; `#pragma once` is forbidden there. Reserve `.h` for headers consumed by
-Unreal Header Tool and therefore including a matching generated header. Those
-reflected `.h` files are the sole `#pragma once` exception because Unreal Header
-Tool does not discover reflected `.hpp` files and rejects reflection macros
-inside ordinary preprocessor include guards. Repository architecture tests
-enforce this boundary.
+Use Unreal's conventional `.h` extension and `#pragma once` for every
+project-owned C++ header. Headers containing Unreal reflection declarations must
+include exactly their matching `*.generated.h`; ordinary C++ headers must not
+include generated UHT output. Repository architecture tests enforce this
+boundary without imposing a second header extension or manual macro guards.
 
 ## Unreal control
 

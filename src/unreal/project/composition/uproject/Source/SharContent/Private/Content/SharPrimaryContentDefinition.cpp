@@ -32,7 +32,7 @@
 
 #include "Content/SharPrimaryContentDefinition.h"
 
-#include "Content/SharPrimaryContentValidation.hpp"
+#include "Content/SharPrimaryContentValidation.h"
 #include "Engine/DataAsset.h"
 
 #if WITH_EDITOR
