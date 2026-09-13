@@ -131,6 +131,19 @@ bool FSharApplicationCatalogGraphValidationTest::RunTest(
         BrokenCatalog->Activate()
             == ESharApplicationCatalogResult::EdgeNotReciprocal
     );
+
+    auto* MissingReturnGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* MissingReturnCatalog =
+        MakeApplicationCatalog(
+            *MissingReturnGameInstance,
+            ESharApplicationCatalogShape::MissingOverlayReturn,
+            false
+        );
+    TestTrue(
+        TEXT("Overlay without a resolvable return owner is rejected"),
+        MissingReturnCatalog->Activate()
+            == ESharApplicationCatalogResult::OverlayReturnMissing
+    );
     return true;
 }
 

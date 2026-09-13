@@ -176,7 +176,8 @@ validator rejects:
 - missing entry or exit reachability;
 - a required mode with no valid predecessor;
 - transition cycles that cannot be cancelled or completed;
-- a pause transition without a resumable owner;
+- a pause transition whose resumable owner is missing or is not both its
+  declared predecessor and permitted successor;
 - a loading mode without one terminal active or recovery mode;
 - a mode that retains a world while declaring no world ownership; and
 - transitions that bypass required profile, save, or catalog readiness.

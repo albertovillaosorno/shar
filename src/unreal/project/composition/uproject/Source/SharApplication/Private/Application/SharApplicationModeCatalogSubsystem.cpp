@@ -199,6 +199,28 @@ bool USharApplicationModeCatalogSubsystem::AreLoadingTargetsResolvable() const
     );
 }
 
+bool USharApplicationModeCatalogSubsystem::AreOverlayReturnsResolvable() const
+{
+    return Algo::AllOf(
+        Definitions,
+        [this](const TObjectPtr<USharApplicationModeDefinition>& Definition)
+        {
+            if (Definition == nullptr)
+            {
+                return false;
+            }
+            if (Definition->ModeKind != ESharApplicationModeKind::Overlay)
+            {
+                return true;
+            }
+            const FName ReturnModeId = Definition->ReturnModeId;
+            return FindMode(ReturnModeId) != nullptr
+                && Definition->AllowedPredecessorIds.Contains(ReturnModeId)
+                && Definition->AllowedSuccessorIds.Contains(ReturnModeId);
+        }
+    );
+}
+
 static bool TryReachApplicationMode(
     const USharApplicationModeDefinition* Definition,
     TSet<FName>& ReachedModeIds
@@ -272,6 +294,10 @@ USharApplicationModeCatalogSubsystem::ValidateGraph() const
     if (!AreLoadingTargetsResolvable())
     {
         return ESharApplicationCatalogResult::LoadingTargetMissing;
+    }
+    if (!AreOverlayReturnsResolvable())
+    {
+        return ESharApplicationCatalogResult::OverlayReturnMissing;
     }
     return IsEveryModeReachableFrom(Entry->CanonicalId)
         ? ESharApplicationCatalogResult::Accepted
