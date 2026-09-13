@@ -53,6 +53,14 @@ mapping the complete rig into the accepted Unreal basis. Animation construction
 uses the same basis policy as the rest pose and never depends on an importer's
 implicit axis conversion.
 
+For vehicles, the Unreal-side decode boundary validates
+`shar.normalized-skeletal-model.v1` before object creation. Its sole target
+conversion is source `(X right, Y up, Z forward)` to Unreal
+`(X forward, Y right, Z up)`: vectors map to `(Z, X, Y)`, positions additionally
+convert meters to centimeters, and local rest matrices use the same proper basis
+conjugation. Native Skeletal Mesh, Skeleton, and animation builders consume that
+already-validated target recipe rather than repeating coordinate policy.
+
 ## Physics
 
 Physics Assets are built from normalized collision and physics plans after the
