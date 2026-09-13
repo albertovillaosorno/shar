@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "SharCheatTestFixtures.h"
+#include "SharCheatTestFixtures.hpp"
 
 #include "Cheats/SharCheatContracts.h"
 #include "Cheats/SharCheatSubsystem.h"

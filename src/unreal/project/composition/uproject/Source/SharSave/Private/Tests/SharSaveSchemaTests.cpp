@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "SharSaveTestFixtures.h"
+#include "SharSaveTestFixtures.hpp"
 
 #include "Misc/AutomationTest.h"
 #include "Save/SharSaveSchemaDefinition.h"

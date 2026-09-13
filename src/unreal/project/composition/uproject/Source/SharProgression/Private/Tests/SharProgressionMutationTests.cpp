@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "SharProgressionTestFixtures.h"
+#include "SharProgressionTestFixtures.hpp"
 
 #include "Misc/AutomationTest.h"
 #include "Progression/SharProgressionContracts.h"

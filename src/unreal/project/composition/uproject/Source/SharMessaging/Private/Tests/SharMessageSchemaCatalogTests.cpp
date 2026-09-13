@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "SharMessagingTestFixtures.h"
+#include "SharMessagingTestFixtures.hpp"
 
 #include "Messaging/SharMessageSchemaCatalog.h"
 #include "Misc/AutomationTest.h"

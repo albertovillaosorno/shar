@@ -30,8 +30,8 @@
 
 //! Shar loading test fixtures composition module.
 
-#pragma once
-
+#ifndef SHAR_SHAR_LOADING_TEST_FIXTURES_HEADER_INCLUDED
+#define SHAR_SHAR_LOADING_TEST_FIXTURES_HEADER_INCLUDED
 #include "Loading/SharLoadCoordinatorSubsystem.h"
 #include "Loading/SharWorldReadinessSubsystem.h"
 
@@ -199,3 +199,5 @@ inline FSharLoadPlan MakeOptionalPlan()
         .bIncludeOptional = true,
     });
 }
+
+#endif  // SHAR_SHAR_LOADING_TEST_FIXTURES_HEADER_INCLUDED

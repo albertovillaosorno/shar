@@ -33,7 +33,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Import/SharVehiclePhysicsAssetBuilder.h"
+#include "Import/SharVehiclePhysicsAssetBuilder.hpp"
 #include "Import/SharVehiclePhysicsToolset.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"

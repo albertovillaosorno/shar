@@ -32,7 +32,7 @@
 
 #include "Materials/SharWorldMaterialToolset.h"
 
-#include "Materials/SharWorldMaterialPolicy.h"
+#include "Materials/SharWorldMaterialPolicy.hpp"
 
 #include "AssetToolsModule.h"
 #include "Factories/MaterialFactoryNew.h"

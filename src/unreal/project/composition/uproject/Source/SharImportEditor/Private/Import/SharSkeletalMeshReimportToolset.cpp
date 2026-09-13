@@ -32,8 +32,8 @@
 
 #include "Import/SharSkeletalMeshReimportToolset.h"
 
-#include "Import/SharFbxImportPolicy.h"
-#include "Import/SharImportValidation.h"
+#include "Import/SharFbxImportPolicy.hpp"
+#include "Import/SharImportValidation.hpp"
 
 #include "Animation/Skeleton.h"
 #include "EditorReimportHandler.h"

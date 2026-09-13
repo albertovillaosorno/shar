@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "SharInteractionTestFixtures.h"
+#include "SharInteractionTestFixtures.hpp"
 
 #include "Interaction/SharInteractionSubsystem.h"
 #include "Misc/AutomationTest.h"

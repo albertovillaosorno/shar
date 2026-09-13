@@ -32,9 +32,9 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Import/SharVehicleSkeletalAssetBuilder.h"
+#include "Import/SharVehicleSkeletalAssetBuilder.hpp"
 #include "Import/SharVehicleSkeletalAssetToolset.h"
-#include "Import/SharVehicleSkeletalModelBuilder.h"
+#include "Import/SharVehicleSkeletalModelBuilder.hpp"
 
 #include "Animation/Skeleton.h"
 #include "Engine/SkeletalMesh.h"

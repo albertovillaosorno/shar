@@ -30,10 +30,11 @@
 
 //! Shar composition module.
 
-#pragma once
+#ifndef SHAR_SHAR_HEADER_INCLUDED
+#define SHAR_SHAR_HEADER_INCLUDED
 // File:
-//   - shar.h
-// Path: src/unreal/project/composition/uproject/Source/shar/shar.h
+//   - shar.hpp
+// Path: src/unreal/project/composition/uproject/Source/shar/shar.hpp
 //
 // Copyright:
 //   - Copyright © 2026 Alberto Villa Osorno.
@@ -83,3 +84,5 @@
 class FSharGameModule final : public FDefaultGameModuleImpl
 {
 };
+
+#endif  // SHAR_SHAR_HEADER_INCLUDED

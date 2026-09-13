@@ -30,8 +30,8 @@
 
 //! Native vehicle skeletal UObject shell builder.
 
-#pragma once
-
+#ifndef SHAR_SHAR_VEHICLE_SKELETAL_ASSET_BUILDER_HEADER_INCLUDED
+#define SHAR_SHAR_VEHICLE_SKELETAL_ASSET_BUILDER_HEADER_INCLUDED
 #include "CoreMinimal.h"
 
 class USkeletalMesh;
@@ -62,3 +62,5 @@ bool VerifyVehicleSkeletalAssets(
     const FSharNormalizedVehicleSkeletalModel &Model, const USkeletalMesh &Mesh,
     const USkeleton &Skeleton, FString &OutError);
 } // namespace UE::SharImportEditor::Private
+
+#endif  // SHAR_SHAR_VEHICLE_SKELETAL_ASSET_BUILDER_HEADER_INCLUDED

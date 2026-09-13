@@ -30,8 +30,8 @@
 
 //! Shar presentation test fixtures composition module.
 
-#pragma once
-
+#ifndef SHAR_SHAR_PRESENTATION_TEST_FIXTURES_HEADER_INCLUDED
+#define SHAR_SHAR_PRESENTATION_TEST_FIXTURES_HEADER_INCLUDED
 #include "Presentation/SharPresentationPlaybackSubsystem.h"
 
 #include "Engine/DataAsset.h"
@@ -109,3 +109,5 @@ inline USharPresentationPlaybackSubsystem* MakePresentationSubsystem(
     Subsystem->RegisterChannel(MakePresentationChannel(DuplicatePolicy));
     return Subsystem;
 }
+
+#endif  // SHAR_SHAR_PRESENTATION_TEST_FIXTURES_HEADER_INCLUDED

@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "SharPresentationTestFixtures.h"
+#include "SharPresentationTestFixtures.hpp"
 
 #include "Misc/AutomationTest.h"
 #include "Presentation/SharPresentationPlaybackSubsystem.h"
