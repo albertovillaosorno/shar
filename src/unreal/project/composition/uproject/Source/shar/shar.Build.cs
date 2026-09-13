@@ -67,5 +67,6 @@ public class shar : ModuleRules
                 "SharApplication",
             }
         );
+        PrivateDependencyModuleNames.Add("EngineSettings");
     }
 }

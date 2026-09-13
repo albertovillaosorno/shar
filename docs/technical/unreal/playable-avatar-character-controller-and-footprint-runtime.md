@@ -79,6 +79,30 @@ animation,
 rendering, collision, asset, and lifecycle facilities while preserving stable
 semantic identities and project-owned gameplay rules.
 
+## Gameplay framework bootstrap contract
+
+Before character assets or movement tuning exist, the project owns a minimal
+native gameplay framework boundary. The global game mode selects project-owned
+Game State, Player Controller, and representative player Pawn classes. The Pawn
+exists only as a possession and transform boundary with a neutral scene root;
+it does not define movement speed, collision shape, camera, mesh, animation, or
+input mappings before those policies are backed by validated character data.
+
+Unreal owns player creation, default-pawn spawning, and controller possession at
+this layer. The application coordinator remains the authority for whether
+`gameplay` is committed and whether world input may be leased. A spawned or
+possessed Pawn therefore cannot by itself enter gameplay, bypass
+`loading_gameplay`, or enable input while loading. This preserves the reference
+ordering in which loading suppresses gameplay input and the old context stops
+before the next context starts.
+
+The bootstrap is valid when the configured global Game Mode resolves to the
+project class, its class defaults select the project Game State, Player
+Controller, and Pawn, and the representative Pawn has no automatic player
+possession independent of Game Mode. Later character construction replaces or
+configures this neutral Pawn boundary through the validated avatar transaction;
+it must not treat bootstrap defaults as gameplay tuning authority.
+
 ## Native Unreal foundation
 
 The implementation uses native facilities where applicable:

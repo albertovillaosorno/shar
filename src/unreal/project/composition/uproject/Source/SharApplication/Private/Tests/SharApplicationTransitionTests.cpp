@@ -79,6 +79,77 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
         | EAutomationTestFlags::CommandletContext
         | EAutomationTestFlags::EngineFilter
 )
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharApplicationGameplayPauseResumeLifecycleTest,
+    "SHAR.Application.Transition.GameplayPauseResumeLifecycle",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+
+FString ModeRevision(const FName& ModeId)
+{
+    return FString::Printf(TEXT("sha256:%s_v1"), *ModeId.ToString());
+}
+
+FSharApplicationModeRequest MakeLifecycleRequest(
+    const FName& RequestId,
+    const FName& SourceModeId,
+    const FName& TargetModeId
+)
+{
+    FSharApplicationModeRequest Request;
+    Request.RequestId = RequestId;
+    Request.SourceModeId = SourceModeId;
+    Request.TargetModeId = TargetModeId;
+    Request.ReasonId = FName(TEXT("lifecycle_step"));
+    Request.CallerId = FName(TEXT("lifecycle_test"));
+    Request.Priority = ESharApplicationTransitionPriority::Gameplay;
+    Request.CatalogRevision = TEXT("sha256:application_catalog_v1");
+    Request.SourceModeRevision = ModeRevision(SourceModeId);
+    Request.TargetModeRevision = ModeRevision(TargetModeId);
+    Request.SessionRevision = TEXT("sha256:gameplay_session_v1");
+    Request.ProfileRevision = TEXT("sha256:profile_v1");
+    Request.WorldRevision = TEXT("sha256:springfield_world_v1");
+    Request.RequestRevision = FString::Printf(
+        TEXT("sha256:%s_v1"),
+        *RequestId.ToString()
+    );
+    Request.ReturnModeId = TargetModeId == FName(TEXT("pause"))
+        ? SourceModeId
+        : FName();
+    Request.DeadlineSeconds = DefaultApplicationDeadlineSeconds;
+    return Request;
+}
+
+void PrepareLifecycleRequest(
+    USharApplicationModeCoordinator& Coordinator,
+    const FSharApplicationModeRequest& Request,
+    const TArray<FName>& RequiredServices
+)
+{
+    Coordinator.Begin(Request.RequestId);
+    for (const FName& ServiceId : RequiredServices)
+    {
+        FSharApplicationServiceEvidence Evidence;
+        Evidence.RequestId = Request.RequestId;
+        Evidence.ServiceId = ServiceId;
+        Evidence.Status = ESharApplicationServiceStatus::Ready;
+        Evidence.CatalogRevision = Request.CatalogRevision;
+        Evidence.RequestRevision = Request.RequestRevision;
+        Evidence.ServiceRevision = TEXT("sha256:service_v1");
+        Coordinator.RecordServiceEvidence(Evidence);
+    }
+    Coordinator.BeginReadinessVerification(Request.RequestId);
+    FSharApplicationBarrierEvidence Barrier;
+    Barrier.RequestId = Request.RequestId;
+    Barrier.BarrierId = FName(TEXT("mode_ready_barrier_v1"));
+    Barrier.CatalogRevision = Request.CatalogRevision;
+    Barrier.RequestRevision = Request.RequestRevision;
+    Barrier.TargetModeRevision = Request.TargetModeRevision;
+    Coordinator.AcceptBarrier(Barrier);
+}
 } // namespace
 
 bool FSharApplicationTransitionSuccessTest::RunTest(
@@ -311,6 +382,102 @@ bool FSharApplicationTransitionThirdModeRecoveryRevisionTest::RunTest(
     TestTrue(
         TEXT("Third recovery does not reuse failed target revision"),
         Recovered.ActiveModeRevision != Request.TargetModeRevision
+    );
+    return true;
+}
+
+bool FSharApplicationGameplayPauseResumeLifecycleTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    const FSharApplicationRuntimeFixture Runtime = MakeApplicationRuntime();
+
+    struct FStep
+    {
+        FName RequestId;
+        FName SourceModeId;
+        FName TargetModeId;
+        TArray<FName> RequiredServices;
+    };
+    const TArray<FStep> Steps = {
+        {
+            FName(TEXT("enter_loading_gameplay")),
+            FName(TEXT("front_end")),
+            FName(TEXT("loading_gameplay")),
+            {
+                FName(TEXT("catalog_service")),
+                FName(TEXT("world_service")),
+            },
+        },
+        {
+            FName(TEXT("commit_gameplay")),
+            FName(TEXT("loading_gameplay")),
+            FName(TEXT("gameplay")),
+            {},
+        },
+        {
+            FName(TEXT("enter_pause")),
+            FName(TEXT("gameplay")),
+            FName(TEXT("pause")),
+            {},
+        },
+        {
+            FName(TEXT("resume_gameplay")),
+            FName(TEXT("pause")),
+            FName(TEXT("gameplay")),
+            {},
+        },
+    };
+
+    for (const FStep& Step : Steps)
+    {
+        const FSharApplicationModeRequest Request = MakeLifecycleRequest(
+            Step.RequestId,
+            Step.SourceModeId,
+            Step.TargetModeId
+        );
+        TestTrue(
+            TEXT("Lifecycle request is accepted"),
+            Runtime.Coordinator->Submit(Request)
+                == ESharApplicationOperationResult::Accepted
+        );
+        PrepareLifecycleRequest(
+            *Runtime.Coordinator,
+            Request,
+            Step.RequiredServices
+        );
+        TestTrue(
+            TEXT("Source remains active until commit"),
+            Runtime.Coordinator->GetObservation().ActiveModeId
+                == Step.SourceModeId
+        );
+        TestTrue(
+            TEXT("Prepared lifecycle step commits"),
+            Runtime.Coordinator->Commit(Request.RequestId)
+                == ESharApplicationOperationResult::Accepted
+        );
+        TestTrue(
+            TEXT("Commit publishes target mode"),
+            Runtime.Coordinator->GetObservation().ActiveModeId
+                == Step.TargetModeId
+        );
+        TestTrue(
+            TEXT("Committed lifecycle step completes"),
+            Runtime.Coordinator->Complete(Request.RequestId)
+                == ESharApplicationOperationResult::Accepted
+        );
+        TestTrue(
+            TEXT("Completed lifecycle step releases"),
+            Runtime.Coordinator->Release(Request.RequestId)
+                == ESharApplicationOperationResult::Accepted
+        );
+    }
+
+    TestTrue(
+        TEXT("Pause resume returns to gameplay"),
+        Runtime.Coordinator->GetObservation().ActiveModeId
+            == FName(TEXT("gameplay"))
     );
     return true;
 }
