@@ -127,6 +127,12 @@ The next runtime step is production Primary Asset loading for the root catalog
 and its complete Application Mode family, followed by loading/world/input
 readiness effects for `loading_gameplay`, `gameplay`, and pause/resume.
 
+Recovery identity hardening now keeps committed-failure observations coherent:
+if a target recovers to a third mode, the coordinator publishes the recovery
+definition's revision token instead of reusing the failed target revision.
+Synthetic application fixtures now give every mode its own deterministic
+revision, and a dedicated third-mode recovery regression covers the case.
+
 ## Dependencies
 
 This is the first implementation phase after the delivery-order authority.

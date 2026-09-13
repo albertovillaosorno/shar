@@ -71,6 +71,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
         | EAutomationTestFlags::CommandletContext
         | EAutomationTestFlags::EngineFilter
 )
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharApplicationTransitionThirdModeRecoveryRevisionTest,
+    "SHAR.Application.Transition.ThirdModeRecoveryRevision",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
 } // namespace
 
 bool FSharApplicationTransitionSuccessTest::RunTest(
@@ -247,6 +255,62 @@ bool FSharApplicationTransitionPostCommitRecoveryTest::RunTest(
             Request.RequestId,
             ESharApplicationTransitionCommand::Fail
         )) == ESharApplicationOperationResult::AlreadyTerminal
+    );
+    return true;
+}
+
+bool FSharApplicationTransitionThirdModeRecoveryRevisionTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    FSharApplicationRuntimeFixture Runtime;
+    Runtime.GameInstance = NewObject<UGameInstance>();
+    Runtime.Catalog = MakeApplicationCatalog(
+        *Runtime.GameInstance,
+        ESharApplicationCatalogShape::RecoveryToExit,
+        true
+    );
+    Runtime.Coordinator = NewObject<USharApplicationModeCoordinator>(
+        Runtime.GameInstance
+    );
+    TestTrue(
+        TEXT("Coordinator accepts third-mode recovery fixture"),
+        Runtime.Coordinator->Configure(
+            Runtime.Catalog,
+            MakeInitialApplicationObservation()
+        )
+    );
+
+    const FSharApplicationModeRequest Request = MakeApplicationRequest({
+        .RequestId = FName(TEXT("third_mode_recovery_transition")),
+        .Priority = ESharApplicationTransitionPriority::Recovery,
+        .CallerId = FName(TEXT("loading_runtime")),
+    });
+    Runtime.Coordinator->Submit(Request);
+    PrepareApplicationTransition(*Runtime.Coordinator, Request);
+    Runtime.Coordinator->Commit(Request.RequestId);
+
+    TestTrue(
+        TEXT("Committed failure enters declared third recovery mode"),
+        Runtime.Coordinator->Resolve(MakeApplicationResolution(
+            Request.RequestId,
+            ESharApplicationTransitionCommand::Fail
+        )) == ESharApplicationOperationResult::Accepted
+    );
+    const FSharApplicationModeObservation Recovered =
+        Runtime.Coordinator->GetObservation();
+    TestTrue(
+        TEXT("Third recovery selects exit mode"),
+        Recovered.ActiveModeId == FName(TEXT("exit"))
+    );
+    TestTrue(
+        TEXT("Third recovery publishes recovery mode revision"),
+        Recovered.ActiveModeRevision == TEXT("sha256:exit_v1")
+    );
+    TestTrue(
+        TEXT("Third recovery does not reuse failed target revision"),
+        Recovered.ActiveModeRevision != Request.TargetModeRevision
     );
     return true;
 }

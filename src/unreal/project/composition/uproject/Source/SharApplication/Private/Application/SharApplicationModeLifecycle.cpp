@@ -368,10 +368,7 @@ USharApplicationModeCoordinator::RecoverCommittedFailure(
             : FailureResult;
     }
     Observation.ActiveModeId = Recovery->CanonicalId;
-    Observation.ActiveModeRevision =
-        Recovery->CanonicalId == Snapshot.Request.SourceModeId
-        ? Snapshot.Request.SourceModeRevision
-        : Snapshot.Request.TargetModeRevision;
+    Observation.ActiveModeRevision = Recovery->RevisionToken;
     return PublishTerminal(
         Snapshot,
         ESharApplicationTransitionState::Recovered,
