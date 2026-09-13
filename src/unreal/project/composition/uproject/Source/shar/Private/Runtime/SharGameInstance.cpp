@@ -32,14 +32,40 @@
 
 #include "Runtime/SharGameInstance.h"
 
+#include "Catalog/SharGameplayCatalogSubsystem.h"
+#include "Engine/AssetManager.h"
 
 void USharGameInstance::Init()
 {
     Super::Init();
     RuntimeBootstrap = NewObject<USharRuntimeBootstrap>(this);
+    RuntimeAssetLoader = NewObject<USharRuntimeAssetLoader>(this);
+    UAssetManager::CallOrRegister_OnCompletedInitialScan(
+        FSimpleDelegate::CreateUObject(
+            this,
+            &USharGameInstance::StartRuntimeAssetLoading
+        )
+    );
 }
 
 USharRuntimeBootstrap* USharGameInstance::GetRuntimeBootstrap() const
 {
     return RuntimeBootstrap;
+}
+
+USharRuntimeAssetLoader* USharGameInstance::GetRuntimeAssetLoader() const
+{
+    return RuntimeAssetLoader;
+}
+
+void USharGameInstance::StartRuntimeAssetLoading()
+{
+    if (RuntimeAssetLoader == nullptr)
+    {
+        return;
+    }
+    RuntimeAssetLoader->Start(
+        UAssetManager::GetIfInitialized(),
+        GetSubsystem<USharGameplayCatalogSubsystem>()
+    );
 }

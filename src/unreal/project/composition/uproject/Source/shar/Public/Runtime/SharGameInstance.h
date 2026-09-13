@@ -35,6 +35,7 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 
+#include "Runtime/SharRuntimeAssetLoader.h"
 #include "Runtime/SharRuntimeBootstrap.h"
 
 #include "SharGameInstance.generated.h"
@@ -50,7 +51,15 @@ public:
     UFUNCTION(BlueprintPure, Category = "SHAR|Runtime")
     [[nodiscard]] USharRuntimeBootstrap* GetRuntimeBootstrap() const;
 
+    UFUNCTION(BlueprintPure, Category = "SHAR|Runtime")
+    [[nodiscard]] USharRuntimeAssetLoader* GetRuntimeAssetLoader() const;
+
 private:
+    void StartRuntimeAssetLoading();
+
     UPROPERTY(Transient)
     TObjectPtr<USharRuntimeBootstrap> RuntimeBootstrap;
+
+    UPROPERTY(Transient)
+    TObjectPtr<USharRuntimeAssetLoader> RuntimeAssetLoader;
 };

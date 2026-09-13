@@ -124,6 +124,21 @@ Every request declares:
 A request cannot contain an arbitrary filename, callback pointer, memory heap,
 source archive handle, or unbounded user-data payload.
 
+## Root startup Primary Asset loading
+
+The project game instance defers root runtime discovery until Unreal Asset
+Manager reports that its initial scan has completed. `USharRuntimeAssetLoader`
+then requires exactly one registered `SharCatalog`, requests that Primary Asset
+asynchronously, activates it through `USharGameplayCatalogSubsystem`, and loads
+exactly the `SharApplicationMode` identities declared by the accepted catalog.
+
+Startup does not scan directories, synthesize missing definitions, or treat an
+incomplete Asset Registry as an empty catalog. Missing or ambiguous catalog
+identity, failed object resolution, catalog activation failure, and incomplete
+Application Mode loading each become typed terminal loader failures. The loaded
+mode objects remain composition input; loading them does not itself commit an
+application-mode transition.
+
 ## Stable asset identity
 
 Runtime identity uses Asset Manager primary-asset identities, stable package
