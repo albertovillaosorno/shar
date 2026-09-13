@@ -84,6 +84,29 @@ target-basis conversion. FBX remains required only by the current compatibility
 import route. The next implementation checkpoint is the direct native Skeletal
 Mesh and Skeleton constructor consuming this verified model payload.
 
+## 2026-09-12 native vehicle decode checkpoint
+
+`SharImportEditor` now owns a native normalized-vehicle decode kernel for
+`shar.normalized-skeletal-model.v1`. It validates the declared source basis,
+units, hierarchy, topology, vertex channels, skin identities, and the same
+per-vertex weight invariant used by the normalized Rust domain. It rejects
+already target-rebased payloads before UObject construction.
+
+The kernel applies the vehicle source-to-Unreal conversion exactly once:
+positions use `(Z, X, Y) * 100` from source meters to Unreal centimeters,
+directions use `(Z, X, Y)`, and local rest matrices use the corresponding
+proper basis conjugation with translation scaled once. Synthetic asymmetric
+automation tests cover the mapping and fail-closed cases.
+
+A headless Unreal corpus probe decoded all 88 standalone normalized vehicle
+models with unique model identities. A Snake probe additionally verified the
+29 retained bones, 39 render parts, one animation clip, and asymmetric `w0`
+rest translation after conversion. No FBX import was used for these probes.
+
+This checkpoint does not yet publish `USkeletalMesh` or `USkeleton`. The
+production vehicle route therefore remains the deprecated FBX compatibility
+route until native object construction and read-back parity are implemented.
+
 ## Dependencies
 
 The normalized extraction and provenance ledgers remain source authority. Native

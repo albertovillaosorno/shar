@@ -40,6 +40,7 @@ public class SharImportEditor : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
+                "Json",
                 "ToolsetRegistry",
             }
         );
