@@ -315,11 +315,15 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         )?;
     check_cancellation()?;
     plan_progress.advance("generated model catalogs");
+    let mut model_progress =
+        StageProgress::begin("Generated model catalogs", 4);
+    model_progress.advance("generic FBX catalog");
     let fbx_catalog = verified_fbx_catalog_at(
         Path::new(FBX_WORKSPACE_ROOT),
         Path::new(FBX_MANIFEST_PATH),
     )?;
     let verified_fbx_count = fbx_catalog.as_ref().map_or(0, Vec::len);
+    model_progress.advance("vehicle catalog");
     let vehicle_fbx_catalog =
         verified_vehicle_fbx_catalog(Path::new(VEHICLE_WORKSPACE_ROOT))?;
     let verified_vehicle_fbx_count =
@@ -336,10 +340,12 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             })
             .collect::<Vec<_>>()
         });
+    model_progress.advance("vehicle material and physics plans");
     let vehicle_materials_json =
         render_vehicle_material_plan(vehicle_fbx_catalog.as_deref())?;
     let vehicle_physics_json =
         render_vehicle_physics_plan(vehicle_fbx_catalog.as_deref())?;
+    model_progress.advance("world material catalog");
     let world_material_catalog =
         verified_world_material_catalog(Path::new(WORLD_WORKSPACE_ROOT))?;
     let world_material_counts = world_material_catalog.as_ref().map_or(
@@ -355,6 +361,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     );
     let world_materials_json =
         render_world_material_plan(world_material_catalog.as_ref())?;
+    model_progress.finish();
     plan_progress.advance("plan bundle");
     let plan_bundle = unreal_manifest
         .plan_bundle_with_complete_generated_catalogs(
