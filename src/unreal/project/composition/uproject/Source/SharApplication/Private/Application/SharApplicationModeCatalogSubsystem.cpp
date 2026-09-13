@@ -35,21 +35,28 @@
 #include "Algo/AllOf.h"
 #include "Algo/Find.h"
 #include "Application/SharApplicationModeDefinition.h"
+#include "Catalog/SharGameplayCatalog.h"
+#include "Catalog/SharGameplayCatalogSubsystem.h"
 
-static bool IsRevisionToken(const FString& Revision)
-{
-    return Revision.StartsWith(TEXT("sha256:"));
-}
-
-bool USharApplicationModeCatalogSubsystem::ConfigureRevision(
-    const FString& InCatalogRevision
+bool USharApplicationModeCatalogSubsystem::ConfigureRootCatalog(
+    USharGameplayCatalogSubsystem* InRootCatalog
 )
 {
-    if (!IsRevisionToken(InCatalogRevision))
+    if (InRootCatalog == nullptr || !InRootCatalog->IsActive())
     {
         return false;
     }
-    CatalogRevision = InCatalogRevision;
+    const USharGameplayCatalog* GameplayCatalog =
+        InRootCatalog->GetCatalog();
+    if (GameplayCatalog == nullptr
+        || GameplayCatalog->FindFamilyByType(
+            FPrimaryAssetType(TEXT("SharApplicationMode"))
+        ) == nullptr)
+    {
+        return false;
+    }
+    RootCatalog = InRootCatalog;
+    CatalogRevision = InRootCatalog->GetCatalogRevision();
     Definitions.Reset();
     bActive = false;
     return true;
@@ -96,9 +103,15 @@ USharApplicationModeCatalogSubsystem::RegisterMode(
     {
         return ESharApplicationCatalogResult::AlreadyActive;
     }
-    if (CatalogRevision.IsEmpty() || Definition == nullptr)
+    if (RootCatalog == nullptr || !RootCatalog->IsActive()
+        || CatalogRevision != RootCatalog->GetCatalogRevision()
+        || Definition == nullptr)
     {
         return ESharApplicationCatalogResult::InvalidDefinition;
+    }
+    if (!RootCatalog->ContainsDefinition(Definition->GetPrimaryAssetId()))
+    {
+        return ESharApplicationCatalogResult::DefinitionNotCatalogued;
     }
     TArray<FText> Errors;
     Definition->GatherValidationErrors(Errors);
@@ -267,6 +280,11 @@ USharApplicationModeCatalogSubsystem::ValidateGraph() const
 
 ESharApplicationCatalogResult USharApplicationModeCatalogSubsystem::Activate()
 {
+    if (RootCatalog == nullptr || !RootCatalog->IsActive()
+        || CatalogRevision != RootCatalog->GetCatalogRevision())
+    {
+        return ESharApplicationCatalogResult::InvalidRevision;
+    }
     if (bActive)
     {
         return ESharApplicationCatalogResult::AlreadyActive;

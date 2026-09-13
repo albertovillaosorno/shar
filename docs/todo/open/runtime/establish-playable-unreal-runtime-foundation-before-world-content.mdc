@@ -39,16 +39,16 @@ The Unreal project already has substantial code-first infrastructure.
 `SharVehicles` provide typed state and subsystem boundaries that should be
 completed rather than replaced.
 
-The current executable bootstrap is incomplete. `DefaultEngine.ini` opens the
-SHAR OpenWorld map and selects `SharGameInstance`, but the project has no
-project-owned gameplay `GameMode`, `GameState`, `PlayerController`, or player
-character/pawn class; only vehicle pawns are present.
+The current executable bootstrap is still incomplete. `DefaultEngine.ini`
+opens the SHAR OpenWorld map and now selects the composition-root
+`SharGameInstance`, but the project has no project-owned gameplay `GameMode`,
+`GameState`, `PlayerController`, or player character/pawn class; only vehicle
+pawns are present.
 
-There are also two disconnected application-state authorities.
-`SharGameInstance` owns a small startup state machine, while
-`SharApplicationModeCoordinator` owns the richer queued transition, readiness,
-commit, recovery, and revision contract. Neither currently proves the reference
-GameFlow effect ordering at the playable world boundary.
+The former duplicate startup state authority has been removed.
+`SharGameInstance` is now a state-free composition shell, while
+`SharApplicationModeCoordinator` is the sole application-mode authority for
+queued transition, readiness, commit, recovery, and revision state.
 
 Reference behavior establishes the first lifecycle invariant: context changes
 are requested before they are executed, and the transition boundary stops the
@@ -57,8 +57,8 @@ context, and active context controls input availability.
 
 ## First implementation slice
 
-- [ ] Select one application-mode authority and bridge startup/loading/gameplay
-  through it instead of keeping independent state machines.
+- [x] Select one application-mode authority and remove the independent
+  GameInstance startup state machine.
 - [ ] Preserve requested-versus-committed transition semantics and ordered
   source exit before target entry.
 - [ ] Bind loading readiness, world readiness, and input policy to the gameplay
@@ -95,6 +95,37 @@ This slice intentionally does not implement alias-table resolution, bounded
 asynchronous Asset Manager loading, bundle acquisition, or dependency-closure
 loading yet. Those remain composition work before the application coordinator
 can consume production mode definitions.
+
+## Application authority consolidation — 2026-09-13
+
+The second code-first slice removes the parallel startup state machine from
+`SharUI`. `USharGameInstance` now lives in the root `shar` composition module,
+contains no application-mode state, and owns only `USharRuntimeBootstrap`.
+`SharUI` returns to its frontend-only boundary.
+
+`USharApplicationModeCatalogSubsystem` no longer accepts a free-form catalog
+revision. It must bind to an active `USharGameplayCatalogSubsystem` and
+inherit the accepted root revision.
+It rejects any Application Mode whose Primary Asset ID
+is not declared by the root `SharCatalog` application-mode family.
+
+`USharRuntimeBootstrap` composes the root catalog, complete declared
+Application Mode set, mode catalog, and coordinator exactly once. It rejects an
+incomplete mode family before coordinator configuration, while the coordinator
+remains the sole owner of active mode and transition state.
+
+Validation evidence for this slice is currently compile-level: the affected
+The `SharContent`, `SharApplication`, `SharUI`, and `shar` modules pass Unreal
+Header Tool, Clang, and editor linking with no compiler warnings or errors.
+Headless
+startup resolves the moved `/Script/shar.SharGameInstance` without class-load
+errors, but the command-line Automation harness did not emit a reliable terminal
+result for the new bootstrap test, so that test is not claimed as
+executed.
+
+The next runtime step is production Primary Asset loading for the root catalog
+and its complete Application Mode family, followed by loading/world/input
+readiness effects for `loading_gameplay`, `gameplay`, and pause/resume.
 
 ## Dependencies
 

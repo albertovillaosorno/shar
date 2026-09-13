@@ -63,6 +63,8 @@ public class shar : ModuleRules
                 "Engine",
                 "InputCore",
                 "EnhancedInput",
+                "SharContent",
+                "SharApplication",
             }
         );
     }

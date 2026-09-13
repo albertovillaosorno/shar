@@ -35,6 +35,8 @@
 #include "Application/SharApplicationModeCatalogSubsystem.h"
 #include "Application/SharApplicationModeCoordinator.h"
 #include "Application/SharApplicationModeDefinition.h"
+#include "Catalog/SharGameplayCatalog.h"
+#include "Catalog/SharGameplayCatalogSubsystem.h"
 
 #include "Engine/GameInstance.h"
 
@@ -209,11 +211,39 @@ inline USharApplicationModeCatalogSubsystem* MakeApplicationCatalog(
     const bool bActivate
 )
 {
+    const TArray<USharApplicationModeDefinition*> Modes =
+        MakeApplicationModes(Shape);
+
+    auto* RootDefinition = NewObject<USharGameplayCatalog>();
+    RootDefinition->CanonicalId = FName(TEXT("gameplay"));
+    RootDefinition->DisplayName = FText::FromString(TEXT("Gameplay catalog"));
+    RootDefinition->SourcePackageIds = {
+        FName(TEXT("application_catalog_contract"))
+    };
+    RootDefinition->RevisionToken = TEXT("sha256:application_catalog_v1");
+    RootDefinition->ValidationProfile =
+        FName(TEXT("gameplay_catalog_v1"));
+    RootDefinition->OwningFeature = FName(TEXT("base"));
+
+    FSharGameplayCatalogFamily ModeFamily;
+    ModeFamily.FamilyId = FName(TEXT("application_modes"));
+    ModeFamily.PrimaryAssetTypeName = FName(TEXT("SharApplicationMode"));
+    for (const USharApplicationModeDefinition* Mode : Modes)
+    {
+        ModeFamily.DefinitionIds.Add(Mode->GetPrimaryAssetId());
+    }
+    RootDefinition->Families.Add(ModeFamily);
+
+    auto* RootCatalog = NewObject<USharGameplayCatalogSubsystem>(
+        &GameInstance
+    );
+    RootCatalog->Activate(RootDefinition);
+
     auto* Catalog = NewObject<USharApplicationModeCatalogSubsystem>(
         &GameInstance
     );
-    Catalog->ConfigureRevision(TEXT("sha256:application_catalog_v1"));
-    for (USharApplicationModeDefinition* Mode : MakeApplicationModes(Shape))
+    Catalog->ConfigureRootCatalog(RootCatalog);
+    for (USharApplicationModeDefinition* Mode : Modes)
     {
         Catalog->RegisterMode(Mode);
     }
