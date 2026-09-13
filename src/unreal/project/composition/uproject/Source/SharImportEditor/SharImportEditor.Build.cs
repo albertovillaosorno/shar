@@ -47,9 +47,13 @@ public class SharImportEditor : ModuleRules
         PrivateDependencyModuleNames.AddRange(
             new[]
             {
+                "AnimationCore",
                 "AssetRegistry",
                 "AssetTools",
                 "AudioEditor",
+                "MeshDescription",
+                "SkeletalMeshDescription",
+                "StaticMeshDescription",
                 "ChaosVehicles",
                 "MaterialEditor",
                 "MediaAssets",
