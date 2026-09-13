@@ -316,7 +316,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     check_cancellation()?;
     plan_progress.advance("generated model catalogs");
     let mut model_progress =
-        StageProgress::begin("Generated model catalogs", 4);
+        StageProgress::begin("Generated model catalogs", 5);
     model_progress.advance("generic FBX catalog");
     let fbx_catalog = verified_fbx_catalog_at(
         Path::new(FBX_WORKSPACE_ROOT),
@@ -345,7 +345,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         render_vehicle_material_plan(vehicle_fbx_catalog.as_deref())?;
     let vehicle_physics_json =
         render_vehicle_physics_plan(vehicle_fbx_catalog.as_deref())?;
-    model_progress.advance("world material catalog");
+    model_progress.advance("world material verification");
     let world_material_catalog =
         verified_world_material_catalog(Path::new(WORLD_WORKSPACE_ROOT))?;
     let world_material_counts = world_material_catalog.as_ref().map_or(
@@ -359,6 +359,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             )
         },
     );
+    model_progress.advance("world material render");
     let world_materials_json =
         render_world_material_plan(world_material_catalog.as_ref())?;
     model_progress.finish();
