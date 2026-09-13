@@ -104,6 +104,15 @@ bool FSharApplicationCatalogGraphValidationTest::RunTest(
             ESharApplicationCatalogShape::Valid,
             false
         );
+    USharApplicationModeDefinition* Uncatalogued = MakeApplicationMode({
+        .ModeId = FName(TEXT("uncatalogued_mode")),
+        .ModeKind = ESharApplicationModeKind::Active,
+    });
+    TestTrue(
+        TEXT("Root catalog rejects undeclared application mode"),
+        ValidCatalog->RegisterMode(Uncatalogued)
+            == ESharApplicationCatalogResult::DefinitionNotCatalogued
+    );
     TestTrue(
         TEXT("Complete reciprocal mode graph activates"),
         ValidCatalog->Activate() == ESharApplicationCatalogResult::Accepted

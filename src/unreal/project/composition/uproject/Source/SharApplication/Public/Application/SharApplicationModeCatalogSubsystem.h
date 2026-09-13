@@ -36,6 +36,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 
 #include "Application/SharApplicationModeDefinition.h"
+#include "Catalog/SharGameplayCatalogSubsystem.h"
 #include "SharApplicationModeCatalogSubsystem.generated.h"
 
 UENUM(BlueprintType)
@@ -52,6 +53,7 @@ enum class ESharApplicationCatalogResult : uint8
     EdgeNotReciprocal,
     UnreachableMode,
     LoadingTargetMissing,
+    DefinitionNotCatalogued,
 };
 
 UCLASS()
@@ -62,7 +64,9 @@ class SHARAPPLICATION_API USharApplicationModeCatalogSubsystem final
 
 public:
     UFUNCTION(BlueprintCallable, Category = "SHAR|Application")
-    bool ConfigureRevision(const FString& InCatalogRevision);
+    bool ConfigureRootCatalog(
+        USharGameplayCatalogSubsystem* InRootCatalog
+    );
 
     UFUNCTION(BlueprintCallable, Category = "SHAR|Application")
     ESharApplicationCatalogResult RegisterMode(
@@ -92,6 +96,9 @@ public:
     [[nodiscard]] const FString& GetCatalogRevision() const;
 
 private:
+    UPROPERTY(Transient)
+    TObjectPtr<USharGameplayCatalogSubsystem> RootCatalog;
+
     UPROPERTY(Transient)
     FString CatalogRevision;
 
