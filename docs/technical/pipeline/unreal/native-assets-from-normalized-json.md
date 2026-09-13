@@ -64,8 +64,13 @@ already-validated target recipe rather than repeating coordinate policy.
 Vehicle skeletal construction first materializes a transient `USkeleton` and
 `USkeletalMesh`, then commits LOD 0 source `MeshDescription` data containing the
 validated target-basis geometry, material groups, bone hierarchy, and skin
-weights. This source-data checkpoint is not itself proof of built render data or
-persisted package parity; publication remains gated on those later read-backs.
+weights. The builder then generates native Skeletal Mesh render data and
+verifies LOD 0 through the public render-data boundary before publication.
+
+Create-only publication duplicates the verified pair into generated packages,
+reconnects the mesh to the published Skeleton, verifies native read-back, and
+leaves both packages dirty and unsaved. Persisted save/reload parity remains a
+separate gate before a production plan may replace the FBX compatibility route.
 
 ## Physics
 

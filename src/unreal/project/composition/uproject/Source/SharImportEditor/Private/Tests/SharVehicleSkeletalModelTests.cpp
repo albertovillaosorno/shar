@@ -33,6 +33,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Import/SharVehicleSkeletalAssetBuilder.h"
+#include "Import/SharVehicleSkeletalAssetToolset.h"
 #include "Import/SharVehicleSkeletalModelBuilder.h"
 
 #include "Animation/Skeleton.h"
@@ -40,7 +41,11 @@
 #include "HAL/FileManager.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/CommandLine.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Guid.h"
 #include "Misc/Parse.h"
+#include "Misc/Paths.h"
+#include "Rendering/SkeletalMeshRenderData.h"
 
 namespace
 {
@@ -74,8 +79,8 @@ FString ValidModelJson()
     "mesh_id":"body",
     "primitive_groups":[{
       "material_id":"body_m",
-      "positions":[[1,2,3],[4,5,6],[7,8,9]],
-      "normals":[[1,0,0],[0,1,0],[0,0,1]],
+      "positions":[[1,2,3],[2,2,3],[1,3,3]],
+      "normals":[[0,0,1],[0,0,1],[0,0,1]],
       "colors":[[1,0,0,1],[0,1,0,1],[0,0,1,1]],
       "uv0":[[0,0],[1,0],[0,1]],
       "triangles":[[0,1,2]],
@@ -131,7 +136,7 @@ bool FSharVehicleNormalizedModelDecodeTest::RunTest(const FString &Parameters)
     TestTrue(TEXT("Position converts exactly once"),
              Group.PositionsCm[0].Equals(FVector3f(300.0F, 100.0F, 200.0F)));
     TestTrue(TEXT("Normal uses the same proper basis"),
-             Group.Normals[0].Equals(FVector3f(0.0F, 1.0F, 0.0F)));
+             Group.Normals[0].Equals(FVector3f(1.0F, 0.0F, 0.0F)));
     return true;
 }
 
@@ -341,6 +346,131 @@ bool FSharVehicleSkeletalAssetShellTest::RunTest(const FString &Parameters)
              Mesh->GetSkeleton() == Skeleton);
     TestEqual(TEXT("Native Skeleton merged bone count"),
               Skeleton->GetReferenceSkeleton().GetNum(), 2);
+    FSkeletalMeshRenderData *RenderData = Mesh->GetResourceForRendering();
+    if (!TestNotNull(TEXT("Native render data exists"), RenderData))
+    {
+        return false;
+    }
+    TestEqual(TEXT("Native render LOD count"), RenderData->LODRenderData.Num(),
+              1);
+    if (RenderData->LODRenderData.Num() == 1)
+    {
+        const FSkeletalMeshLODRenderData &LOD = RenderData->LODRenderData[0];
+        TestEqual(TEXT("Native render vertex count"), LOD.GetNumVertices(), 3U);
+        TestEqual(TEXT("Native render section count"), LOD.RenderSections.Num(),
+                  1);
+    }
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehicleSkeletalAssetPublishTest,
+    "SHAR.Import.VehicleSkeletalModel.PublishesNativeSkeletalAssetsCreateOnly",
+    EAutomationTestFlags::EditorContext |
+        EAutomationTestFlags::CommandletContext |
+        EAutomationTestFlags::EngineFilter)
+
+bool FSharVehicleSkeletalAssetPublishTest::RunTest(const FString &Parameters)
+{
+    (void)Parameters;
+    using namespace UE::SharImportEditor::Private;
+    FSharNormalizedVehicleSkeletalModel Model;
+    FString Error;
+    if (!ParseNormalizedVehicleSkeletalModel(ValidModelJson(), Model, Error))
+    {
+        AddError(Error);
+        return false;
+    }
+    const FString Suffix = FGuid::NewGuid().ToString(EGuidFormats::Digits);
+    const FString MeshName = TEXT("SK_NativeVehicle_") + Suffix;
+    const FString SkeletonName = TEXT("SKEL_NativeVehicle_") + Suffix;
+    const FString Folder = TEXT("/Game/Generated/SHAR/Automation");
+    FSharPublishedVehicleSkeletalAssets Published;
+    if (!TestTrue(TEXT("Native skeletal pair publishes"),
+                  PublishVehicleSkeletalAssetsCreateOnly(
+                      Model, Folder, MeshName, SkeletonName, Published, Error)))
+    {
+        AddError(Error);
+        return false;
+    }
+    if (!TestNotNull(TEXT("Published native mesh exists"), Published.Mesh) ||
+        !TestNotNull(TEXT("Published native Skeleton exists"),
+                     Published.Skeleton))
+    {
+        return false;
+    }
+    TestTrue(TEXT("Published mesh is public standalone"),
+             Published.Mesh->HasAllFlags(RF_Public | RF_Standalone));
+    TestTrue(TEXT("Published Skeleton is public standalone"),
+             Published.Skeleton->HasAllFlags(RF_Public | RF_Standalone));
+    TestTrue(TEXT("Published mesh package is dirty"),
+             Published.Mesh->GetPackage()->IsDirty());
+    TestTrue(TEXT("Published Skeleton package is dirty"),
+             Published.Skeleton->GetPackage()->IsDirty());
+    TestTrue(TEXT("Published mesh references published Skeleton"),
+             Published.Mesh->GetSkeleton() == Published.Skeleton);
+    TestEqual(TEXT("Published mesh object path"), Published.MeshObjectPath,
+              FString::Printf(TEXT("%s/%s.%s"), *Folder, *MeshName, *MeshName));
+    TestEqual(TEXT("Published Skeleton object path"),
+              Published.SkeletonObjectPath,
+              FString::Printf(TEXT("%s/%s.%s"), *Folder, *SkeletonName,
+                              *SkeletonName));
+    FSharPublishedVehicleSkeletalAssets Duplicate;
+    FString DuplicateError;
+    TestFalse(TEXT("Native skeletal publication is create-only"),
+              PublishVehicleSkeletalAssetsCreateOnly(Model, Folder, MeshName,
+                                                     SkeletonName, Duplicate,
+                                                     DuplicateError));
+    TestTrue(TEXT("Duplicate publication explains existing output"),
+             DuplicateError.Contains(TEXT("already exists")));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehicleSkeletalAssetToolsetTest,
+    "SHAR.Import.VehicleSkeletalModel.ToolsetPublishesNativeSkeletalAssets",
+    EAutomationTestFlags::EditorContext |
+        EAutomationTestFlags::CommandletContext |
+        EAutomationTestFlags::EngineFilter)
+
+bool FSharVehicleSkeletalAssetToolsetTest::RunTest(const FString &Parameters)
+{
+    (void)Parameters;
+    const FString Suffix = FGuid::NewGuid().ToString(EGuidFormats::Digits);
+    const FString SourceFile =
+        FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Automation"),
+                        TEXT("normalized_vehicle_") + Suffix + TEXT(".json"));
+    IFileManager::Get().MakeDirectory(*FPaths::GetPath(SourceFile), true);
+    if (!FFileHelper::SaveStringToFile(ValidModelJson(), *SourceFile))
+    {
+        AddError(TEXT("Failed to write normalized vehicle fixture"));
+        return false;
+    }
+    const FString Folder = TEXT("/Game/Generated/SHAR/Automation");
+    const FString AssetName = TEXT("SK_NativeToolset_") + Suffix;
+    const FString MeshPath =
+        USharVehicleSkeletalAssetToolset::CreateVehicleSkeletalMesh(
+            SourceFile, Folder, AssetName);
+    IFileManager::Get().Delete(*SourceFile, false, true, true);
+    const FString ExpectedMesh =
+        FString::Printf(TEXT("%s/%s.%s"), *Folder, *AssetName, *AssetName);
+    const FString SkeletonName = AssetName + TEXT("_Skeleton");
+    const FString ExpectedSkeleton = FString::Printf(
+        TEXT("%s/%s.%s"), *Folder, *SkeletonName, *SkeletonName);
+    TestEqual(TEXT("Toolset returns native mesh path"), MeshPath, ExpectedMesh);
+    USkeletalMesh *Mesh = FindObject<USkeletalMesh>(nullptr, *ExpectedMesh);
+    USkeleton *Skeleton = FindObject<USkeleton>(nullptr, *ExpectedSkeleton);
+    if (!TestNotNull(TEXT("Toolset native mesh exists"), Mesh) ||
+        !TestNotNull(TEXT("Toolset native Skeleton exists"), Skeleton))
+    {
+        return false;
+    }
+    TestTrue(TEXT("Toolset mesh references companion Skeleton"),
+             Mesh->GetSkeleton() == Skeleton);
+    TestTrue(TEXT("Toolset leaves mesh package dirty"),
+             Mesh->GetPackage()->IsDirty());
+    TestTrue(TEXT("Toolset leaves Skeleton package dirty"),
+             Skeleton->GetPackage()->IsDirty());
     return true;
 }
 
