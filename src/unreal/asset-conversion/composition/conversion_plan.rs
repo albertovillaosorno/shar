@@ -195,6 +195,12 @@ fn validate_operation_set(operations: &[ConversionPlan]) -> Result<(), String> {
             ));
         }
     }
+    if operations
+        .iter()
+        .all(|operation| operation.dependencies.is_empty())
+    {
+        return Ok(());
+    }
     let operation_families = operations
         .iter()
         .map(|operation| (operation.operation_id(), operation.family()))
