@@ -46,6 +46,7 @@ enum class ESharApplicationCatalogShape : uint8
 {
     Valid,
     BrokenReciprocalEdge,
+    RecoveryToExit,
 };
 
 struct FSharApplicationModeFixture
@@ -96,7 +97,10 @@ inline void FillApplicationDefinitionBase(
     Definition.CanonicalId = ModeId;
     Definition.DisplayName = FText::FromString(ModeId.ToString());
     Definition.SourcePackageIds = {FName(TEXT("application_mode_contract"))};
-    Definition.RevisionToken = TEXT("sha256:application_mode_v1");
+    Definition.RevisionToken = FString::Printf(
+        TEXT("sha256:%s_v1"),
+        *ModeId.ToString()
+    );
     Definition.ValidationProfile = FName(TEXT("application_mode_v1"));
     Definition.OwningFeature = FName(TEXT("base"));
     Definition.EntryPlanId = FName(TEXT("mode_entry_plan_v1"));
@@ -170,7 +174,9 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
             FName(TEXT("world_service")),
         },
         .SuccessModeId = FName(TEXT("gameplay")),
-        .RecoveryModeId = FName(TEXT("front_end")),
+        .RecoveryModeId = Shape == ESharApplicationCatalogShape::RecoveryToExit
+            ? FName(TEXT("exit"))
+            : FName(TEXT("front_end")),
         .ReturnModeId = FName(),
         .WorldPolicy = ESharApplicationWorldPolicy::Prepare,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::ReadOnly,

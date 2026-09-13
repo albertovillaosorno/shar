@@ -200,8 +200,11 @@ A transition follows these phases:
 
 Failure before commit leaves the source mode active. Failure after commit
 follows
-the definition's rollback or safe-recovery mode. A loading-screen animation or
-transport callback is not readiness evidence by itself.
+the definition's rollback or safe-recovery mode. When recovery selects a mode
+other than the failed source or target, the resulting observation uses that
+recovery definition's own revision token; it never reuses the failed target's
+revision as recovery identity. A loading-screen animation or transport callback
+is not readiness evidence by itself.
 
 ## Mode requests and frame execution
 
