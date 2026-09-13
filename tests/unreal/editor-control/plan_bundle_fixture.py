@@ -134,7 +134,9 @@ def build_plan_bundle(
     skeletal_mesh_source_path: str = "fbx-assets/skeletal/model.fbx",
     with_vehicle_skeletal_mesh_operation: bool = False,
     vehicle_skeletal_mesh_source_revision: str | None = None,
-    vehicle_skeletal_mesh_source_path: str = "vehicle-assets/model/model.fbx",
+    vehicle_skeletal_mesh_source_path: str = (
+        "vehicle-assets/model/model.normalized.json"
+    ),
     with_media_operation: bool = False,
     media_source_revision: str | None = None,
     with_construction_operation: bool = False,
@@ -169,7 +171,7 @@ def build_plan_bundle(
             )
         if (
             with_vehicle_skeletal_mesh_operation
-            and plan_id == "asset-import-plan"
+            and plan_id == "asset-construction-plan"
         ):
             operations.append(
                 _vehicle_skeletal_mesh_operation(
@@ -261,7 +263,9 @@ def write_plan_bundle(
     skeletal_mesh_source_path: str = "fbx-assets/skeletal/model.fbx",
     with_vehicle_skeletal_mesh_operation: bool = False,
     vehicle_skeletal_mesh_source_revision: str | None = None,
-    vehicle_skeletal_mesh_source_path: str = "vehicle-assets/model/model.fbx",
+    vehicle_skeletal_mesh_source_path: str = (
+        "vehicle-assets/model/model.normalized.json"
+    ),
     with_media_operation: bool = False,
     media_source_revision: str | None = None,
     with_construction_operation: bool = False,
@@ -505,7 +509,7 @@ def _vehicle_skeletal_mesh_operation(
         ("operation_id", ""),
         ("package_identity", "skeletal-mesh-package"),
         ("source_identity", "vehicle-skeletal-mesh-source"),
-        ("source_format", "fbx"),
+        ("source_format", "json"),
         ("target_family", "model"),
         ("source_path", source_path),
         ("source_revision", source_revision),
@@ -514,8 +518,8 @@ def _vehicle_skeletal_mesh_operation(
             f"/Game/Generated/SHAR/cars/{asset_name}.{asset_name}",
         ),
         ("target_class", "SkeletalMesh"),
-        ("importer", "asset-tools-fbx"),
-        ("import_profile", "shar-fbx-vehicle-skeletal-v1"),
+        ("importer", "native-skeletal-builder"),
+        ("import_profile", "shar-native-vehicle-skeletal-v1"),
         ("dependencies", []),
         ("readiness", "ready"),
         ("world_owned", True),

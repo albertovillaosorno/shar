@@ -64,6 +64,20 @@ _EXPECTED_POLICY = {
 }
 
 
+def _normalized_model_source(source_fbx: str) -> str:
+    prefix = "vehicle-assets/"
+    if (
+        not source_fbx.startswith(prefix)
+        or not source_fbx.endswith(".fbx")
+        or "/" not in source_fbx[len(prefix):]
+    ):
+        fail_protocol("vehicle source FBX identity is not canonical")
+    folder = source_fbx.rpartition("/")[0]
+    if not folder or folder == prefix.rstrip("/"):
+        fail_protocol("vehicle source FBX identity is not canonical")
+    return f"{folder}/model.normalized.json"
+
+
 class VehiclePhysicsShape(NamedTuple):
     """One already projected native analytic shape."""
 
@@ -225,10 +239,10 @@ def _skeletal_imports_by_source(
 ) -> dict[str, NativeImportStep]:
     matches: dict[str, NativeImportStep] = {}
     for step in execution.imports:
-        if step.route_id != "vehicle-skeletal-mesh-fbx-v1":
+        if step.route_id != "vehicle-skeletal-mesh-native-v1":
             continue
         if step.source_path in matches:
-            fail_protocol("vehicle-physics source FBX import is ambiguous")
+            fail_protocol("vehicle-physics normalized model is ambiguous")
         matches[step.source_path] = step
     return matches
 
@@ -244,12 +258,13 @@ def _request(
     source_joint_count = _integer(row, "joint_count")
     if source_joint_count <= 0:
         fail_protocol("vehicle-physics source joint count is not positive")
-    skeletal = imports.get(source_fbx)
+    normalized_source = _normalized_model_source(source_fbx)
+    skeletal = imports.get(normalized_source)
     if skeletal is None:
-        fail_protocol("vehicle-physics source FBX has no skeletal import")
+        fail_protocol("vehicle-physics source has no native skeletal build")
     if skeletal.target_class != "SkeletalMesh":
         fail_protocol(
-            "vehicle-physics source FBX did not resolve to SkeletalMesh"
+            "vehicle-physics native build did not resolve to SkeletalMesh"
         )
     shapes = tuple(_shape(item) for item in _array(row, "shapes"))
     if not shapes:

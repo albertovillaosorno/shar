@@ -378,6 +378,7 @@ def _require_exact_import_result(
         "sound-wave-wav-v1",
         "skeletal-mesh-fbx-v1",
         "vehicle-skeletal-mesh-fbx-v1",
+        "vehicle-skeletal-mesh-native-v1",
         "static-mesh-fbx-v1",
     }:
         if any(not isinstance(item, str) or not item for item in value):

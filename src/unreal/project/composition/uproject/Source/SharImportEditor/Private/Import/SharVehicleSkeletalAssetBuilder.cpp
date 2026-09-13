@@ -89,6 +89,10 @@ bool BuildCreateOnlyDestination(const FString &FolderPath,
     return true;
 }
 
+FTransform TransformFromRowMajorMatrix(const std::array<double, 16> &Matrix);
+
+TArray<FName> MaterialSlots(const FSharNormalizedVehicleSkeletalModel &Model);
+
 void DiscardPublishedObject(UObject *Object)
 {
     if (Object == nullptr)
@@ -105,23 +109,91 @@ void DiscardPublishedObject(UObject *Object)
     }
 }
 
-bool HasExpectedPublishedState(const FSharNormalizedVehicleSkeletalModel &Model,
-                               const USkeletalMesh &Mesh,
-                               const USkeleton &Skeleton)
+bool HasExpectedRigState(const FSharNormalizedVehicleSkeletalModel &Model,
+                         const USkeletalMesh &Mesh, const USkeleton &Skeleton)
 {
-    if (Mesh.GetSkeleton() != &Skeleton ||
-        Mesh.GetRefSkeleton().GetNum() != Model.Bones.Num() ||
-        Skeleton.GetReferenceSkeleton().GetNum() != Model.Bones.Num())
+    if (Mesh.GetSkeleton() != &Skeleton)
     {
         return false;
     }
+    const FReferenceSkeleton &MeshRef = Mesh.GetRefSkeleton();
+    const FReferenceSkeleton &SkeletonRef = Skeleton.GetReferenceSkeleton();
+    if (MeshRef.GetNum() != Model.Bones.Num() ||
+        SkeletonRef.GetNum() != Model.Bones.Num())
+    {
+        return false;
+    }
+    for (int32 Index = 0; Index < Model.Bones.Num(); ++Index)
+    {
+        const FSharVehicleBoneRecipe &Expected = Model.Bones[Index];
+        const FTransform ExpectedTransform =
+            TransformFromRowMajorMatrix(Expected.LocalRestMatrix);
+        if (MeshRef.GetBoneName(Index) != Expected.BoneName ||
+            MeshRef.GetParentIndex(Index) != Expected.ParentIndex ||
+            !MeshRef.GetRefBonePose()[Index].Equals(ExpectedTransform,
+                                                    1.0e-4) ||
+            SkeletonRef.GetBoneName(Index) != Expected.BoneName ||
+            SkeletonRef.GetParentIndex(Index) != Expected.ParentIndex)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool HasExpectedMaterialSlots(const FSharNormalizedVehicleSkeletalModel &Model,
+                              const USkeletalMesh &Mesh)
+{
+    const TArray<FName> Expected = MaterialSlots(Model);
+    const TArray<FSkeletalMaterial> &Actual = Mesh.GetMaterials();
+    if (Actual.Num() != Expected.Num())
+    {
+        return false;
+    }
+    for (int32 Index = 0; Index < Expected.Num(); ++Index)
+    {
+        if (Actual[Index].MaterialSlotName != Expected[Index])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool HasExpectedSourceGeometry(const FSharNormalizedVehicleSkeletalModel &Model,
+                               const USkeletalMesh &Mesh)
+{
+    const FMeshDescription *Description = Mesh.GetMeshDescription(0);
+    if (Description == nullptr)
+    {
+        return false;
+    }
+    int32 ExpectedVertices = 0;
+    int32 ExpectedTriangles = 0;
+    int32 ExpectedGroups = 0;
+    for (const FSharVehiclePartRecipe &Part : Model.Parts)
+    {
+        for (const FSharVehiclePrimitiveGroupRecipe &Group : Part.Groups)
+        {
+            ExpectedVertices += Group.PositionsCm.Num();
+            ExpectedTriangles += Group.Triangles.Num();
+            ++ExpectedGroups;
+        }
+    }
+    return Description->Vertices().Num() == ExpectedVertices &&
+           Description->Triangles().Num() == ExpectedTriangles &&
+           Description->PolygonGroups().Num() == ExpectedGroups;
+}
+
+bool HasExpectedRenderData(const USkeletalMesh &Mesh)
+{
     const FSkeletalMeshRenderData *RenderData = Mesh.GetResourceForRendering();
     if (RenderData == nullptr || RenderData->LODRenderData.Num() != 1)
     {
         return false;
     }
-    return RenderData->LODRenderData[0].GetNumVertices() > 0 &&
-           !RenderData->LODRenderData[0].RenderSections.IsEmpty();
+    const FSkeletalMeshLODRenderData &LOD = RenderData->LODRenderData[0];
+    return LOD.GetNumVertices() > 0 && !LOD.RenderSections.IsEmpty();
 }
 
 bool IsFiniteMatrix(const std::array<double, 16> &Matrix)
@@ -422,11 +494,16 @@ bool PublishVehicleSkeletalAssetsCreateOnly(
     PublishedMesh->SetFlags(RF_Public | RF_Standalone | RF_Transactional);
     PublishedMesh->SetSkeleton(PublishedSkeleton);
     PublishedSkeleton->MergeAllBonesToBoneTree(PublishedMesh);
-    if (!HasExpectedPublishedState(Model, *PublishedMesh, *PublishedSkeleton))
+    if (!VerifyVehicleSkeletalAssets(Model, *PublishedMesh, *PublishedSkeleton,
+                                     OutError))
     {
         DiscardPublishedObject(PublishedMesh);
         DiscardPublishedObject(PublishedSkeleton);
-        return Fail(OutError, TEXT("vehicle skeletal publication drifted"));
+        if (OutError.IsEmpty())
+        {
+            OutError = TEXT("vehicle skeletal publication drifted");
+        }
+        return false;
     }
 
     FAssetRegistryModule::AssetCreated(PublishedSkeleton);
@@ -437,6 +514,37 @@ bool PublishVehicleSkeletalAssetsCreateOnly(
     OutAssets.Skeleton = PublishedSkeleton;
     OutAssets.MeshObjectPath = MoveTemp(MeshObjectPath);
     OutAssets.SkeletonObjectPath = MoveTemp(SkeletonObjectPath);
+    return true;
+}
+
+bool VerifyVehicleSkeletalAssets(
+    const FSharNormalizedVehicleSkeletalModel &Model, const USkeletalMesh &Mesh,
+    const USkeleton &Skeleton, FString &OutError)
+{
+    OutError.Reset();
+    if (!ValidateModelRecipe(Model, OutError))
+    {
+        return false;
+    }
+    if (!HasExpectedRigState(Model, Mesh, Skeleton))
+    {
+        return Fail(OutError, TEXT("vehicle skeletal rig read-back drifted"));
+    }
+    if (!HasExpectedMaterialSlots(Model, Mesh))
+    {
+        return Fail(OutError,
+                    TEXT("vehicle skeletal material-slot read-back drifted"));
+    }
+    if (!HasExpectedSourceGeometry(Model, Mesh))
+    {
+        return Fail(OutError,
+                    TEXT("vehicle skeletal source-geometry read-back drifted"));
+    }
+    if (!HasExpectedRenderData(Mesh))
+    {
+        return Fail(OutError,
+                    TEXT("vehicle skeletal render-data read-back drifted"));
+    }
     return true;
 }
 } // namespace UE::SharImportEditor::Private

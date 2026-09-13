@@ -46,6 +46,20 @@ from mcp.domain.vehicle_physics_construction import (
 )
 
 
+def _normalized_model_source(source_fbx: str) -> str:
+    prefix = "vehicle-assets/"
+    if (
+        not source_fbx.startswith(prefix)
+        or not source_fbx.endswith(".fbx")
+        or "/" not in source_fbx[len(prefix):]
+    ):
+        fail_protocol("vehicle source FBX identity is not canonical")
+    folder = source_fbx.rpartition("/")[0]
+    if not folder or folder == prefix.rstrip("/"):
+        fail_protocol("vehicle source FBX identity is not canonical")
+    return f"{folder}/model.normalized.json"
+
+
 class VehiclePhysicsPrerequisiteReport(NamedTuple):
     """Public-safe counts for exact vehicle skeletal prerequisite imports."""
 
@@ -109,11 +123,14 @@ def compile_vehicle_physics_prerequisites(
     _require_vehicle_sources(required_sources)
     skeletal_by_source = _skeletal_imports(required_sources, execution)
     _require_request_joins(construction, skeletal_by_source)
+    normalized_sources = {
+        _normalized_model_source(source) for source in required_sources
+    }
     imports = tuple(
         step
         for step in execution.imports
-        if step.source_path in required_sources
-        and step.route_id == "vehicle-skeletal-mesh-fbx-v1"
+        if step.source_path in normalized_sources
+        and step.route_id == "vehicle-skeletal-mesh-native-v1"
     )
     _require_unique_imports(imports, required_sources)
     return CompiledVehiclePhysicsPrerequisites(
@@ -145,12 +162,14 @@ def select_vehicle_physics_prerequisite_package(
     imports = tuple(
         step
         for step in prerequisites.imports
-        if step.source_path in required_sources
+        if step.source_path
+        in {_normalized_model_source(source) for source in required_sources}
     )
     _require_unique_imports(imports, required_sources)
     by_source = {step.source_path: step for step in imports}
     for request in requests:
-        destination = by_source[request.source_fbx].destination
+        normalized_source = _normalized_model_source(request.source_fbx)
+        destination = by_source[normalized_source].destination
         if destination != request.skeletal_mesh_path:
             fail_protocol(
                 "vehicle-physics prerequisite scoped destination "
@@ -185,17 +204,20 @@ def _skeletal_imports(
 ) -> dict[str, NativeImportStep]:
     matches: dict[str, NativeImportStep] = {}
     for step in execution.imports:
-        if step.route_id != "vehicle-skeletal-mesh-fbx-v1":
+        if step.route_id != "vehicle-skeletal-mesh-native-v1":
             continue
-        if step.source_path not in required_sources:
+        if step.source_path not in {
+            _normalized_model_source(source) for source in required_sources
+        }:
             continue
         if step.source_path in matches:
             fail_protocol(
                 "vehicle-physics prerequisite skeletal import is ambiguous"
             )
         matches[step.source_path] = step
-    if set(matches) != required_sources:
-        fail_protocol("vehicle-physics prerequisite skeletal import is missing")
+    expected = {_normalized_model_source(source) for source in required_sources}
+    if set(matches) != expected:
+        fail_protocol("vehicle-physics prerequisite skeletal build is missing")
     return matches
 
 
@@ -204,7 +226,7 @@ def _require_request_joins(
     skeletal_by_source: dict[str, NativeImportStep],
 ) -> None:
     for request in construction.requests:
-        step = skeletal_by_source[request.source_fbx]
+        step = skeletal_by_source[_normalized_model_source(request.source_fbx)]
         if step.target_class != "SkeletalMesh":
             fail_protocol(
                 "vehicle-physics prerequisite target is not SkeletalMesh"

@@ -68,24 +68,33 @@ def _import(
     revision: str = "1" * 64,
     operation: str = "operation-0000000000000001",
     destination: str = _OBJECT,
-    route_id: str = "vehicle-skeletal-mesh-fbx-v1",
+    route_id: str = "vehicle-skeletal-mesh-native-v1",
 ) -> NativeImportStep:
     package, _, asset = destination.rpartition(".")
     folder, _, _ = package.rpartition("/")
     return NativeImportStep(
         operation_id=operation,
         route_id=route_id,
-        source_path=source,
+        source_path=(
+            source.rpartition("/")[0] + "/model.normalized.json"
+            if route_id == "vehicle-skeletal-mesh-native-v1"
+            else source
+        ),
         source_revision=revision,
         destination=destination,
         target_class="SkeletalMesh",
         package_path=package,
         folder_path=folder,
         asset_name=asset,
-        toolset_name="SharImportEditor.SharImportToolset",
+        toolset_name=(
+            "SharImportEditor.SharVehicleSkeletalAssetToolset"
+            if route_id == "vehicle-skeletal-mesh-native-v1"
+            else "SharImportEditor.SharImportToolset"
+        ),
         tool_name=(
-            "SharImportEditor.SharImportToolset.ImportVehicleSkeletalMesh"
-            if route_id == "vehicle-skeletal-mesh-fbx-v1"
+            "SharImportEditor.SharVehicleSkeletalAssetToolset."
+            "CreateVehicleSkeletalMesh"
+            if route_id == "vehicle-skeletal-mesh-native-v1"
             else "SharImportEditor.SharImportToolset.ImportSkeletalMesh"
         ),
         external_payload_path=None,
@@ -163,11 +172,13 @@ def test_deduplicates_two_ready_rigs_using_one_vehicle_fbx() -> None:
     assert compiled.report.import_count == 1
     assert compiled.report.source_count == 1
     assert compiled.report.ready_rig_count == 2
-    assert compiled.imports[0].source_path == _SOURCE
+    assert compiled.imports[0].source_path == (
+        "vehicle-assets/sedana/model.normalized.json"
+    )
 
 
 def test_rejects_generic_skeletal_route_for_vehicle_prerequisite() -> None:
-    with pytest.raises(ProtocolError, match="skeletal import is missing"):
+    with pytest.raises(ProtocolError, match="skeletal build is missing"):
         compile_vehicle_physics_prerequisites(
             _construction(_request("sedana")),
             _execution(_import(route_id="skeletal-mesh-fbx-v1")),

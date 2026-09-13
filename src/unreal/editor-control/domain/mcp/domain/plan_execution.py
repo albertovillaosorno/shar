@@ -64,6 +64,12 @@ _VEHICLE_SKELETAL_MESH_ROUTE = (
     "asset-tools-fbx",
     "shar-fbx-vehicle-skeletal-v1",
 )
+_NATIVE_VEHICLE_SKELETAL_MESH_ROUTE = (
+    "json",
+    "SkeletalMesh",
+    "native-skeletal-builder",
+    "shar-native-vehicle-skeletal-v1",
+)
 _AUDIO_ROUTE = (
     "wav",
     "SoundWave",
@@ -107,6 +113,14 @@ _ROUTE_SURFACE = {
         "vehicle-skeletal-mesh-fbx-v1",
         _IMPORT_TOOLSET,
         f"{_IMPORT_TOOLSET}.ImportVehicleSkeletalMesh",
+    ),
+    _NATIVE_VEHICLE_SKELETAL_MESH_ROUTE: (
+        "vehicle-skeletal-mesh-native-v1",
+        "SharImportEditor.SharVehicleSkeletalAssetToolset",
+        (
+            "SharImportEditor.SharVehicleSkeletalAssetToolset."
+            "CreateVehicleSkeletalMesh"
+        ),
     ),
 }
 
@@ -205,6 +219,7 @@ class NativeImportStep(NamedTuple):
             "sound-wave-wav-v1",
             "skeletal-mesh-fbx-v1",
             "vehicle-skeletal-mesh-fbx-v1",
+            "vehicle-skeletal-mesh-native-v1",
             "static-mesh-fbx-v1",
         }:
             return {
@@ -339,7 +354,11 @@ def _output_contract(
     folder_path: str,
     asset_name: str,
 ) -> tuple[tuple[NativeAssetOutput, ...], str | None]:
-    if route in {_SKELETAL_MESH_ROUTE, _VEHICLE_SKELETAL_MESH_ROUTE}:
+    if route in {
+        _SKELETAL_MESH_ROUTE,
+        _VEHICLE_SKELETAL_MESH_ROUTE,
+        _NATIVE_VEHICLE_SKELETAL_MESH_ROUTE,
+    }:
         skeleton_name = f"{asset_name}_Skeleton"
         skeleton_package = f"{folder_path}/{skeleton_name}"
         return (

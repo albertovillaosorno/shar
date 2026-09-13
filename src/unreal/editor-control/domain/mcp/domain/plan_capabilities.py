@@ -309,6 +309,7 @@ def _import_requirement(step: NativeImportStep) -> NativeToolRequirement:
         "sound-wave-wav-v1": "wav",
         "skeletal-mesh-fbx-v1": "fbx",
         "vehicle-skeletal-mesh-fbx-v1": "fbx",
+        "vehicle-skeletal-mesh-native-v1": "json",
         "static-mesh-fbx-v1": "fbx",
         "texture-image-v1": "png",
     }
@@ -320,6 +321,7 @@ def _import_requirement(step: NativeImportStep) -> NativeToolRequirement:
             "sound-wave-wav-v1",
             "skeletal-mesh-fbx-v1",
             "vehicle-skeletal-mesh-fbx-v1",
+            "vehicle-skeletal-mesh-native-v1",
             "static-mesh-fbx-v1",
         }
         else {"returnValue": []}

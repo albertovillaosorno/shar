@@ -195,6 +195,29 @@ def _toolsets(
             "returnValue",
         ),
     )
+    native_vehicle_skeletal = _tool(
+        "SharImportEditor.SharVehicleSkeletalAssetToolset",
+        "CreateVehicleSkeletalMesh",
+        _object_schema(
+            {
+                "assetName": text,
+                "folderPath": text,
+                "sourceFile": text,
+            },
+            "assetName",
+            "folderPath",
+            "sourceFile",
+        ),
+        _object_schema(
+            {
+                "returnValue": {
+                    "type": "array",
+                    "items": text,
+                }
+            },
+            "returnValue",
+        ),
+    )
     static_import = _tool(
         _IMPORT_TOOLSET,
         "ImportStaticMesh",
@@ -244,7 +267,22 @@ def _toolsets(
         ),
         raw_schema={},
     )
-    return asset_definition, texture_definition, import_definition
+    native_vehicle_definition = ToolsetDefinition(
+        name="SharImportEditor.SharVehicleSkeletalAssetToolset",
+        description="Native vehicle skeletal assets.",
+        tools=(
+            ()
+            if native_vehicle_skeletal.name == omit
+            else (native_vehicle_skeletal,)
+        ),
+        raw_schema={},
+    )
+    return (
+        asset_definition,
+        texture_definition,
+        import_definition,
+        native_vehicle_definition,
+    )
 
 
 def _compiled_texture() -> CompiledExecutionPlan:
@@ -348,20 +386,20 @@ def _compiled_skeletal_mesh() -> CompiledExecutionPlan:
 
 def _compiled_vehicle_skeletal_mesh() -> CompiledExecutionPlan:
     operation = PlanOperation(
-        plan_id="asset-import-plan",
+        plan_id="asset-construction-plan",
         operation_id="operation-0000000000000004",
         package_identity="vehicle-package",
         source_identity="vehicle-source",
-        source_format="fbx",
+        source_format="json",
         target_family="model",
-        source_path="vehicle-assets/sedana/sedana.fbx",
+        source_path="vehicle-assets/sedana/model.normalized.json",
         source_revision="4" * 64,
         destination=(
             "/Game/Generated/SHAR/cars/sedana_Skeletal.sedana_Skeletal"
         ),
         target_class="SkeletalMesh",
-        importer="asset-tools-fbx",
-        import_profile="shar-fbx-vehicle-skeletal-v1",
+        importer="native-skeletal-builder",
+        import_profile="shar-native-vehicle-skeletal-v1",
         dependencies=(),
         readiness="ready",
         world_owned=True,
@@ -433,9 +471,15 @@ def test_vehicle_skeletal_mesh_requires_vehicle_import_schema() -> None:
     report = audit_plan_capabilities(compiled, _toolsets())
     assert report.complete
     assert report.required_tool_count == 6
-    assert required_toolsets(compiled) == (_IMPORT_TOOLSET, _ASSET_TOOLSET)
+    assert required_toolsets(compiled) == (
+        "SharImportEditor.SharVehicleSkeletalAssetToolset",
+        _ASSET_TOOLSET,
+    )
 
-    missing_identity = f"{_IMPORT_TOOLSET}.ImportVehicleSkeletalMesh"
+    missing_identity = (
+        "SharImportEditor.SharVehicleSkeletalAssetToolset."
+        "CreateVehicleSkeletalMesh"
+    )
     missing = audit_plan_capabilities(
         compiled,
         _toolsets(omit=missing_identity),

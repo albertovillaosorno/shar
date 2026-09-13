@@ -131,8 +131,19 @@ and render read-back, registers both assets, and leaves both packages dirty and
 unsaved. A public native skeletal toolset accepts `model.normalized.json` and
 publishes the deterministic companion `${asset_name}_Skeleton` without FBX.
 
-Persisted save/reload parity and switching the production plan route remain
-before the deprecated FBX compatibility path can be removed.
+Persisted save/reload parity is now proven on the real Snake normalized model.
+The native mesh and companion Skeleton were saved, the editor process was
+closed, a fresh process reloaded both `.uasset` files, and the strong verifier
+reconfirmed rig/rest pose, material slots, source `MeshDescription`, and render
+LOD data. The probe assets were then deleted.
+
+The vehicle plan now produces `vehicle-skeletal-mesh-native-v1` from
+`vehicle-assets/<id>/model.normalized.json` through
+`SharVehicleSkeletalAssetToolset.CreateVehicleSkeletalMesh`. Physics and
+material-slot prerequisites join that native build while retaining legacy FBX
+identity only as source provenance in their current evidence schemas. The old
+FBX vehicle route remains supported solely as deprecated compatibility and is no
+longer the produced vehicle prerequisite.
 
 ## Dependencies
 

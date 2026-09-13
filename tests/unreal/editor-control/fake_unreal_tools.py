@@ -42,6 +42,9 @@ from mcp.domain.json_types import require_json_object
 _ASSET_TOOLSET = "editor_toolset.toolsets.asset.AssetTools"
 _TEXTURE_TOOLSET = "editor_toolset.toolsets.texture.TextureTools"
 _IMPORT_TOOLSET = "SharImportEditor.SharImportToolset"
+_NATIVE_SKELETAL_TOOLSET = (
+    "SharImportEditor.SharVehicleSkeletalAssetToolset"
+)
 _MATERIAL_TOOLSET = "SharImportEditor.SharVehicleMaterialToolset"
 _PHYSICS_TOOLSET = "SharImportEditor.SharVehiclePhysicsToolset"
 
@@ -108,6 +111,7 @@ def _plan_tool_result(
             f"- {_ASSET_TOOLSET}: Synthetic assets\n"
             f"- {_TEXTURE_TOOLSET}: Synthetic textures\n"
             f"- {_IMPORT_TOOLSET}: Synthetic SHAR imports\n"
+            f"- {_NATIVE_SKELETAL_TOOLSET}: Synthetic native vehicle mesh\n"
             f"- {_MATERIAL_TOOLSET}: Synthetic vehicle materials\n"
             f"- {_PHYSICS_TOOLSET}: Synthetic vehicle physics\n"
         )
@@ -149,6 +153,7 @@ def _plan_native_call(
         "ImportSoundWave",
         "ImportSkeletalMesh",
         "ImportVehicleSkeletalMesh",
+        "CreateVehicleSkeletalMesh",
         "ImportStaticMesh",
         "import_file",
     }
@@ -171,6 +176,7 @@ def _plan_native_call(
             "ImportSoundWave": "SoundWave",
             "ImportSkeletalMesh": "SkeletalMesh",
             "ImportVehicleSkeletalMesh": "SkeletalMesh",
+            "CreateVehicleSkeletalMesh": "SkeletalMesh",
             "ImportStaticMesh": "StaticMesh",
             "import_file": "Texture2D",
         }[str(native_name)]
@@ -188,6 +194,7 @@ def _plan_native_call(
             if native_name in {
                 "ImportSkeletalMesh",
                 "ImportVehicleSkeletalMesh",
+                "CreateVehicleSkeletalMesh",
             }:
                 skeleton_name = f"{asset_name}_Skeleton"
                 skeleton_package = f"{folder_path}/{skeleton_name}"
@@ -326,6 +333,8 @@ def _plan_schema(toolset: JsonValue | None) -> JsonObject:
         return _texture_schema()
     if toolset == _IMPORT_TOOLSET:
         return _import_schema()
+    if toolset == _NATIVE_SKELETAL_TOOLSET:
+        return _native_skeletal_schema()
     if toolset == _MATERIAL_TOOLSET:
         return _vehicle_material_schema()
     if toolset == _PHYSICS_TOOLSET:
@@ -457,6 +466,38 @@ def _texture_schema() -> JsonObject:
                         "returnValue": {
                             "type": "array",
                             "items": {"type": "object"},
+                        }
+                    },
+                    "returnValue",
+                ),
+            }
+        ],
+    }
+
+
+def _native_skeletal_schema() -> JsonObject:
+    text = {"type": "string"}
+    return {
+        "description": "Synthetic native vehicle skeletal construction.",
+        "tools": [
+            {
+                "name": "CreateVehicleSkeletalMesh",
+                "description": "Create native vehicle mesh and Skeleton.",
+                "inputSchema": _object_schema(
+                    {
+                        "assetName": text,
+                        "folderPath": text,
+                        "sourceFile": text,
+                    },
+                    "assetName",
+                    "folderPath",
+                    "sourceFile",
+                ),
+                "outputSchema": _object_schema(
+                    {
+                        "returnValue": {
+                            "type": "array",
+                            "items": text,
                         }
                     },
                     "returnValue",

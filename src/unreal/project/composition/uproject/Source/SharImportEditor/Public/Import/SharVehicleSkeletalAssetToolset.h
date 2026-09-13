@@ -50,7 +50,13 @@ class SHARIMPORTEDITOR_API USharVehicleSkeletalAssetToolset
      * Both outputs stay dirty and unsaved for caller-owned persistence.
      */
     UFUNCTION(meta = (AICallable), Category = "SharVehicleSkeletalAssetToolset")
-    static FString CreateVehicleSkeletalMesh(const FString &SourceFile,
-                                             const FString &FolderPath,
-                                             const FString &AssetName);
+    static TArray<FString> CreateVehicleSkeletalMesh(
+        const FString &SourceFile,
+        const FString &FolderPath,
+        const FString &AssetName);
+
+    /** Verify one generated native vehicle SkeletalMesh against source JSON. */
+    UFUNCTION(meta = (AICallable), Category = "SharVehicleSkeletalAssetToolset")
+    static bool VerifyVehicleSkeletalMesh(const FString &SourceFile,
+                                          const FString &SkeletalMeshPath);
 };

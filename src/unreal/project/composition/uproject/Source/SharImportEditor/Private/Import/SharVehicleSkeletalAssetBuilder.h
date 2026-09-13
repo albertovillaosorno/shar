@@ -57,4 +57,8 @@ bool PublishVehicleSkeletalAssetsCreateOnly(
     const FSharNormalizedVehicleSkeletalModel &Model, const FString &FolderPath,
     const FString &MeshAssetName, const FString &SkeletonAssetName,
     FSharPublishedVehicleSkeletalAssets &OutAssets, FString &OutError);
+
+bool VerifyVehicleSkeletalAssets(
+    const FSharNormalizedVehicleSkeletalModel &Model, const USkeletalMesh &Mesh,
+    const USkeleton &Skeleton, FString &OutError);
 } // namespace UE::SharImportEditor::Private

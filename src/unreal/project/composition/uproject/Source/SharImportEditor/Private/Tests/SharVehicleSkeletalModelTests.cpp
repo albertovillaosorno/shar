@@ -46,6 +46,7 @@
 #include "Misc/Parse.h"
 #include "Misc/Paths.h"
 #include "Rendering/SkeletalMeshRenderData.h"
+#include "ToolsetRegistry/UToolsetRegistry.h"
 
 namespace
 {
@@ -427,6 +428,23 @@ bool FSharVehicleSkeletalAssetPublishTest::RunTest(const FString &Parameters)
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehicleSkeletalAssetToolsetRegistrationTest,
+    "SHAR.Import.VehicleSkeletalModel.RegistersNativeSkeletalToolset",
+    EAutomationTestFlags::EditorContext |
+        EAutomationTestFlags::CommandletContext |
+        EAutomationTestFlags::EngineFilter)
+
+bool FSharVehicleSkeletalAssetToolsetRegistrationTest::RunTest(
+    const FString &Parameters)
+{
+    (void)Parameters;
+    TestTrue(TEXT("Native skeletal toolset is registered"),
+             UToolsetRegistry::IsToolsetClassRegistered(
+                 USharVehicleSkeletalAssetToolset::StaticClass()));
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharVehicleSkeletalAssetToolsetTest,
     "SHAR.Import.VehicleSkeletalModel.ToolsetPublishesNativeSkeletalAssets",
     EAutomationTestFlags::EditorContext |
@@ -448,7 +466,7 @@ bool FSharVehicleSkeletalAssetToolsetTest::RunTest(const FString &Parameters)
     }
     const FString Folder = TEXT("/Game/Generated/SHAR/Automation");
     const FString AssetName = TEXT("SK_NativeToolset_") + Suffix;
-    const FString MeshPath =
+    const TArray<FString> Outputs =
         USharVehicleSkeletalAssetToolset::CreateVehicleSkeletalMesh(
             SourceFile, Folder, AssetName);
     IFileManager::Get().Delete(*SourceFile, false, true, true);
@@ -457,7 +475,14 @@ bool FSharVehicleSkeletalAssetToolsetTest::RunTest(const FString &Parameters)
     const FString SkeletonName = AssetName + TEXT("_Skeleton");
     const FString ExpectedSkeleton = FString::Printf(
         TEXT("%s/%s.%s"), *Folder, *SkeletonName, *SkeletonName);
-    TestEqual(TEXT("Toolset returns native mesh path"), MeshPath, ExpectedMesh);
+    TestEqual(TEXT("Toolset output count"), Outputs.Num(), 2);
+    if (Outputs.Num() == 2)
+    {
+        TestEqual(TEXT("Toolset returns native mesh path"), Outputs[0],
+                  ExpectedMesh);
+        TestEqual(TEXT("Toolset returns native Skeleton path"), Outputs[1],
+                  ExpectedSkeleton);
+    }
     USkeletalMesh *Mesh = FindObject<USkeletalMesh>(nullptr, *ExpectedMesh);
     USkeleton *Skeleton = FindObject<USkeleton>(nullptr, *ExpectedSkeleton);
     if (!TestNotNull(TEXT("Toolset native mesh exists"), Mesh) ||

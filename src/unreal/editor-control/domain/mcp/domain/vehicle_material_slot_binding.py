@@ -49,6 +49,20 @@ _READ_TOOL = f"{_MATERIAL_TOOLSET}.ReadVehicleMaterialSlots"
 _CAS_TOOL = f"{_MATERIAL_TOOLSET}.CompareExchangeVehicleMaterialSlots"
 
 
+def _normalized_model_source(source_fbx: str) -> str:
+    prefix = "vehicle-assets/"
+    if (
+        not source_fbx.startswith(prefix)
+        or not source_fbx.endswith(".fbx")
+        or "/" not in source_fbx[len(prefix):]
+    ):
+        fail_protocol("vehicle source FBX identity is not canonical")
+    folder = source_fbx.rpartition("/")[0]
+    if not folder or folder == prefix.rstrip("/"):
+        fail_protocol("vehicle source FBX identity is not canonical")
+    return f"{folder}/model.normalized.json"
+
+
 class VehicleMaterialSlotBindingReport(NamedTuple):
     """Public-safe coverage for one exact vehicle material binding."""
 
@@ -153,8 +167,8 @@ def _resolve_skeletal_import(
     matches = tuple(
         step
         for step in execution.imports
-        if step.source_path == source_fbx
-        and step.route_id == "vehicle-skeletal-mesh-fbx-v1"
+        if step.source_path == _normalized_model_source(source_fbx)
+        and step.route_id == "vehicle-skeletal-mesh-native-v1"
     )
     if len(matches) != 1:
         fail_protocol("vehicle material Skeletal Mesh import join is not exact")

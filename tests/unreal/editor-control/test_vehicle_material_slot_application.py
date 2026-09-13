@@ -119,17 +119,18 @@ def _selection() -> CompiledVehicleMaterialSelection:
 def _execution() -> CompiledExecutionPlan:
     step = NativeImportStep(
         operation_id="operation-sedana",
-        route_id="vehicle-skeletal-mesh-fbx-v1",
-        source_path="vehicle-assets/sedana/sedana.fbx",
+        route_id="vehicle-skeletal-mesh-native-v1",
+        source_path="vehicle-assets/sedana/model.normalized.json",
         source_revision="a" * 64,
         destination=_MESH_OBJECT,
         target_class="SkeletalMesh",
         package_path=_MESH_PACKAGE,
         folder_path=_MESH_PACKAGE.rpartition("/")[0],
         asset_name="extracted_art_cars_sedana_Skeletal",
-        toolset_name="SharImportEditor.SharImportToolset",
+        toolset_name="SharImportEditor.SharVehicleSkeletalAssetToolset",
         tool_name=(
-            "SharImportEditor.SharImportToolset.ImportVehicleSkeletalMesh"
+            "SharImportEditor.SharVehicleSkeletalAssetToolset."
+            "CreateVehicleSkeletalMesh"
         ),
         external_payload_path=None,
     )

@@ -135,17 +135,18 @@ def _skeletal_step() -> NativeImportStep:
     asset = "extracted_art_cars_sedana"
     return NativeImportStep(
         operation_id="operation-0000000000000001",
-        route_id="vehicle-skeletal-mesh-fbx-v1",
-        source_path=_SOURCE_FBX,
+        route_id="vehicle-skeletal-mesh-native-v1",
+        source_path="vehicle-assets/sedana/model.normalized.json",
         source_revision="1" * 64,
         destination=f"{package}.{asset}",
         target_class="SkeletalMesh",
         package_path=package,
         folder_path="/Game/Generated/SHAR/cars",
         asset_name=asset,
-        toolset_name="SharImportEditor.SharImportToolset",
+        toolset_name="SharImportEditor.SharVehicleSkeletalAssetToolset",
         tool_name=(
-            "SharImportEditor.SharImportToolset.ImportVehicleSkeletalMesh"
+            "SharImportEditor.SharVehicleSkeletalAssetToolset."
+            "CreateVehicleSkeletalMesh"
         ),
         external_payload_path=None,
     )
@@ -159,7 +160,7 @@ def _execution(*steps: NativeImportStep) -> CompiledExecutionPlan:
         semantic_blocker_count=0,
         blocked_readiness={},
         unsupported_routes={},
-        route_counts={"vehicle-skeletal-mesh-fbx-v1": len(steps)},
+        route_counts={"vehicle-skeletal-mesh-native-v1": len(steps)},
     )
     return CompiledExecutionPlan(report, steps)
 
@@ -221,11 +222,11 @@ def test_compiles_exact_vehicle_physics_wire_from_skeletal_join() -> None:
 
 
 def test_compile_rejects_missing_and_ambiguous_skeletal_join() -> None:
-    with pytest.raises(ProtocolError, match="has no skeletal import"):
+    with pytest.raises(ProtocolError, match="no native skeletal build"):
         compile_vehicle_physics_construction(_document(), _execution())
     first = _skeletal_step()
     second = first._replace(operation_id="operation-0000000000000002")
-    with pytest.raises(ProtocolError, match="import is ambiguous"):
+    with pytest.raises(ProtocolError, match="normalized model is ambiguous"):
         compile_vehicle_physics_construction(
             _document(), _execution(first, second)
         )
@@ -236,7 +237,7 @@ def test_rejects_generic_skeletal_route_for_vehicle_physics() -> None:
         route_id="skeletal-mesh-fbx-v1",
         tool_name="SharImportEditor.SharImportToolset.ImportSkeletalMesh",
     )
-    with pytest.raises(ProtocolError, match="no skeletal import"):
+    with pytest.raises(ProtocolError, match="no native skeletal build"):
         compile_vehicle_physics_construction(_document(), _execution(generic))
 
 
