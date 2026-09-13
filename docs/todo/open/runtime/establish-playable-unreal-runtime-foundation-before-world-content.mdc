@@ -68,6 +68,34 @@ context, and active context controls input availability.
 - [ ] Prove `LoadingGameplay -> Gameplay -> Pause/Resume` lifecycle behavior in
   automation before building final player or vehicle presentation.
 
+## Root gameplay catalog foundation — 2026-09-13
+
+The first code-first runtime slice now establishes the missing root catalog
+boundary required by the application and loading coordinators. `SharContent`
+provides `USharGameplayCatalog`, grouped Primary Asset identities, deterministic
+validation, and `USharGameplayCatalogSubsystem` as the single accepted catalog
+revision authority.
+
+The Asset Manager now registers `SharCatalog` under
+`/Game/SHAR/Data/Catalog`. Activation fails closed for invalid definitions,
+rejects in-place replacement of an accepted revision, and exposes read-only
+identity lookup without directory scanning or final presentation assets.
+
+Validation evidence:
+
+- `sharEditor Linux Development` built `SharContent` and the root runtime module
+  with Unreal Header Tool and Clang successfully and no compiler warnings
+  or errors;
+- `SHAR.Content.GameplayCatalog.Activation` reached
+  `Result={Success}` in headless NullRHI automation; and
+- `SHAR.Content.GameplayCatalog.Validation` ran independently in headless
+  NullRHI automation and reached `Result={Success}` with process exit code zero.
+
+This slice intentionally does not implement alias-table resolution, bounded
+asynchronous Asset Manager loading, bundle acquisition, or dependency-closure
+loading yet. Those remain composition work before the application coordinator
+can consume production mode definitions.
+
 ## Dependencies
 
 This is the first implementation phase after the delivery-order authority.
