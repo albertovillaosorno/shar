@@ -123,9 +123,24 @@ errors, but the command-line Automation harness did not emit a reliable terminal
 result for the new bootstrap test, so that test is not claimed as
 executed.
 
-The next runtime step is production Primary Asset loading for the root catalog
-and its complete Application Mode family, followed by loading/world/input
+Production Primary Asset loading now begins from the project game instance only
+after Asset Manager completes its initial scan. `USharRuntimeAssetLoader`
+requires exactly one `SharCatalog`, loads and activates it asynchronously, then
+loads exactly the complete `SharApplicationMode` family declared by that root
+catalog. Missing or ambiguous assets fail with typed startup results instead of
+falling back to directory scans or synthetic production definitions.
+
+The repository still contains no authored files beneath `/Game/SHAR/Data`, so
+production startup cannot yet reach a loaded runtime catalog. The next runtime
+step is to generate the catalog and Application Mode Data Assets, then compose
+the loaded definitions into the coordinator before adding loading/world/input
 readiness effects for `loading_gameplay`, `gameplay`, and pause/resume.
+
+Validation for the loader slice uses a synthetic empty Asset Manager inventory:
+`SHAR.Runtime.AssetLoading.Preflight` proves missing dependencies and zero root
+catalogs fail closed, while the `shar` module passes Unreal Header Tool, Clang,
+and editor linking. No successful production asset load is claimed before the
+generated Data Assets exist.
 
 Recovery identity hardening now keeps committed-failure observations coherent:
 if a target recovers to a third mode, the coordinator publishes the recovery
