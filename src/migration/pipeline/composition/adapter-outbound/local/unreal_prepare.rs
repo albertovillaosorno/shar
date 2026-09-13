@@ -232,6 +232,8 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &mission_p3d_references,
         &index,
     )?;
+    let mut plan_progress = StageProgress::begin("Unreal plan assembly", 8);
+    plan_progress.advance("semantic bundles");
     let mission_definitions_jsonl = validate_mission_definition_bundle(
         &source_report.mission_definitions,
         &source_report.evidence,
@@ -254,6 +256,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &source_report.evidence,
         &source_report.vehicle_tuning_usage_replay,
     )?;
+    plan_progress.advance("import manifest");
     let evidence = retain_importable_evidence(&index, source_report.evidence);
     let unreal_manifest = UnrealImportManifest::build(&index, evidence)
         // jig-ignore-next-line: literal
@@ -268,6 +271,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         )?;
     let manifest_revision = digest_hex(manifest_jsonl.as_bytes());
     check_cancellation()?;
+    plan_progress.advance("UI raster catalog");
     let ui_raster_catalog =
         super::ui_sprite_raster::publish_complete_ui_sprite_raster_catalog(
             &index,
@@ -282,6 +286,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             &ui_raster_catalog,
         )?;
     check_cancellation()?;
+    plan_progress.advance("Scrooby catalogs");
     let scrooby_joined_rasters =
         super::ui_scrooby_joined_raster::publish_scrooby_joined_raster_catalog(
             &index,
@@ -309,6 +314,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             Path::new(UI_SCROOBY_RESOURCE_WORKSPACE_ROOT),
         )?;
     check_cancellation()?;
+    plan_progress.advance("generated model catalogs");
     let fbx_catalog = verified_fbx_catalog_at(
         Path::new(FBX_WORKSPACE_ROOT),
         Path::new(FBX_MANIFEST_PATH),
@@ -349,6 +355,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     );
     let world_materials_json =
         render_world_material_plan(world_material_catalog.as_ref())?;
+    plan_progress.advance("plan bundle");
     let plan_bundle = unreal_manifest
         .plan_bundle_with_complete_generated_catalogs(
             &manifest_revision,
@@ -360,6 +367,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
             let message = format!("Unreal plan generation failed: {error}");
             PipelineError::new(message)
         })?;
+    plan_progress.advance("release plan index");
     let release_plan_index = bind_release_plan_index(
         &plan_bundle,
         &mission_definitions_jsonl,
@@ -373,6 +381,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
     let unreal_manifest_path =
         config.game_root.join(UNREAL_MANIFEST_GAME_RELATIVE_PATH);
     check_cancellation()?;
+    plan_progress.advance("staging publication");
     publish_staging(
         &manifest_jsonl,
         &summary_json,
@@ -387,6 +396,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         &plan_bundle,
         &unreal_manifest_path,
     )?;
+    plan_progress.finish();
     if verified_vertex_expression_context.3
         > verified_vertex_expression_context.2
     {

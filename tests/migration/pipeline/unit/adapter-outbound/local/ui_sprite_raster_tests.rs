@@ -758,3 +758,11 @@ fn compiles_joined_scrooby_sprite_by_exact_ordinal() -> Result<(), String> {
     }
     Ok(())
 }
+
+#[test]
+fn raster_worker_count_is_bounded_and_never_zero() {
+    assert_eq!(super::ui_raster_worker_count_for(1, 0), 1);
+    assert_eq!(super::ui_raster_worker_count_for(1, 8), 1);
+    assert_eq!(super::ui_raster_worker_count_for(12, 2), 2);
+    assert_eq!(super::ui_raster_worker_count_for(12, 100), 8);
+}

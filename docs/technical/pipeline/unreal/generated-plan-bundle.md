@@ -54,7 +54,10 @@ being retained wholesale.
 
 Manifest rows are parsed and validated before worker dispatch, completed results
 are restored to manifest order before planning, and therefore worker scheduling
-cannot alter published ordering or which earlier row owns an error.
+cannot alter published ordering or which earlier row owns an error. UI sprite
+raster compilation follows the same rule: independent raster packages may be
+decoded and PNG-encoded concurrently, but results and failures are restored to
+package-index order before reuse checks or publication.
 
 `.cache/pipeline/unreal-staging/` is generated, disposable, and ignored by
 Git. Every published plan targets Unreal Engine 5.8.1 exactly; changing the

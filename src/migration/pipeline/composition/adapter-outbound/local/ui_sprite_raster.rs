@@ -40,6 +40,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::thread;
 
 use fbx::adapters::driven::semantic_texture_png::{
     decode_png_bytes, encode_png_bytes,
@@ -131,27 +134,84 @@ pub(super) fn compile_ui_sprite_raster_catalog(
     index: &PhaseThreePackageIndex,
     extracted_root: &Path,
 ) -> PipelineOutcome<Vec<CompiledUiSpriteRaster>> {
-    let mut artifacts = Vec::new();
-    for package in index.packages() {
-        let Some(tile_encoding) = sprite_tile_encoding(package) else {
-            continue;
-        };
-        let package_root = resolve_normalized_package_root(
-            extracted_root,
-            &package.package_root,
-        )?;
-        let artifact = compile_ui_sprite_raster(
-            &package.package_id,
-            &package_root,
-            tile_encoding,
-        )?;
-        validate_indexed_source_paths(
-            package,
-            &artifact.source_component_paths,
-        )?;
-        artifacts.push(artifact);
+    let jobs = index
+        .packages()
+        .iter()
+        .filter_map(|package| {
+            sprite_tile_encoding(package)
+                .map(|tile_encoding| (package, tile_encoding))
+        })
+        .collect::<Vec<_>>();
+    if jobs.is_empty() {
+        return Ok(Vec::new());
     }
-    Ok(artifacts)
+    let next = AtomicUsize::new(0);
+    let collected = Mutex::new(Vec::with_capacity(jobs.len()));
+    let workers = ui_raster_worker_count(jobs.len());
+    thread::scope(|scope| {
+        for _worker in 0..workers {
+            let _handle = scope.spawn(|| loop {
+                let position = next.fetch_add(1, Ordering::Relaxed);
+                let Some((package, tile_encoding)) = jobs.get(position) else {
+                    break;
+                };
+                let result = resolve_normalized_package_root(
+                    extracted_root,
+                    &package.package_root,
+                )
+                .and_then(|package_root| {
+                    compile_ui_sprite_raster(
+                        &package.package_id,
+                        &package_root,
+                        *tile_encoding,
+                    )
+                })
+                .and_then(|artifact| {
+                    validate_indexed_source_paths(
+                        package,
+                        &artifact.source_component_paths,
+                    )?;
+                    Ok(artifact)
+                });
+                collected
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .push((position, result));
+            });
+        }
+    });
+    let mut results = collected
+        .into_inner()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if results.len() != jobs.len() {
+        return Err(PipelineError::new(format!(
+            "UI raster workers returned {} of {} packages",
+            results.len(),
+            jobs.len(),
+        )));
+    }
+    results.sort_by_key(|(position, _result)| *position);
+    results
+        .into_iter()
+        .map(|(_position, result)| result)
+        .collect()
+}
+
+/// Bound CPU-heavy sprite compilation to two-thirds of logical processors.
+fn ui_raster_worker_count(package_count: usize) -> usize {
+    let available =
+        thread::available_parallelism().map_or(1, std::num::NonZeroUsize::get);
+    ui_raster_worker_count_for(available, package_count)
+}
+
+/// Calculate the stable two-thirds worker limit for one raster catalog.
+fn ui_raster_worker_count_for(available: usize, package_count: usize) -> usize {
+    available
+        .saturating_mul(2)
+        .checked_div(3)
+        .unwrap_or(1)
+        .max(1)
+        .min(package_count.max(1))
 }
 
 fn sprite_tile_encoding(
