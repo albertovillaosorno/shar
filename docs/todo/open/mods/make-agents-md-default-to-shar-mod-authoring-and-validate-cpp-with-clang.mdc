@@ -4,7 +4,7 @@ id: make-agents-md-default-to-shar-mod-authoring-and-validate-cpp-with-clang
 status: open
 priority: P4
 lane: mods
-active: true
+active: false
 parent: null
 dependencies: [finish-user-facing-and-ai-agent-modding-skills]
 children: []

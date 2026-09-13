@@ -2,11 +2,11 @@
 schema: shar.todo.v1
 id: bind-generated-assets-through-stable-contracts-instead-of-direct-paths
 status: open
-priority: P2
+priority: P1
 lane: runtime
 active: false
 parent: null
-dependencies: []
+dependencies: [make-default-player-and-vehicle-playable-in-the-complete-world]
 children: []
 ---
 
@@ -20,7 +20,7 @@ Bind generated assets through stable contracts instead of direct paths.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+The current code-first roadmap dependency is declared in frontmatter.
 
 ## Native Unreal asset pivot — 2026-09-12
 

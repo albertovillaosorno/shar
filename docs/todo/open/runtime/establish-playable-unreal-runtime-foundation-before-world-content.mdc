@@ -1,0 +1,73 @@
+---
+schema: shar.todo.v1
+id: establish-playable-unreal-runtime-foundation-before-world-content
+status: open
+priority: P0
+lane: runtime
+active: true
+parent: null
+dependencies:
+  - "preserve-the-delivery-order-faithful-port-first-compatibility-and-\
+    quality-of-life"
+children: []
+---
+
+# Establish the playable Unreal runtime foundation before world content
+
+Implement the target-side runtime contracts before finalizing content assets.
+Use the preserved behavior reference and source evidence to define lifecycle,
+state, timing, input, physics, camera, event, and ownership semantics in Unreal.
+
+## Acceptance criteria
+
+- [ ] Establish the gameplay framework, game flow, event boundaries, ownership,
+  timing, and reset/lifecycle rules required by later systems.
+- [ ] Record behavioral and mathematical contracts before implementing each
+  source-derived runtime system.
+- [ ] Keep runtime code independent from final character, vehicle, material, and
+  animation asset quality wherever stable typed interfaces are sufficient.
+- [ ] Provide synthetic or representative fixtures for runtime tests so missing
+  final art cannot block code-level behavioral validation.
+- [ ] Use source/reference evidence rather than asset appearance to choose
+  gameplay behavior, units, thresholds, or state transitions.
+
+## Runtime inventory checkpoint — 2026-09-13
+
+The Unreal project already has substantial code-first infrastructure.
+`SharApplication`, `SharWorld`, `SharLoading`, `SharMessaging`, `SharCamera`,
+`SharInteraction`, `SharMissions`, `SharProgression`, `SharSave`, `SharUI`, and
+`SharVehicles` provide typed state and subsystem boundaries that should be
+completed rather than replaced.
+
+The current executable bootstrap is incomplete. `DefaultEngine.ini` opens the
+SHAR OpenWorld map and selects `SharGameInstance`, but the project has no
+project-owned gameplay `GameMode`, `GameState`, `PlayerController`, or player
+character/pawn class; only vehicle pawns are present.
+
+There are also two disconnected application-state authorities.
+`SharGameInstance` owns a small startup state machine, while
+`SharApplicationModeCoordinator` owns the richer queued transition, readiness,
+commit, recovery, and revision contract. Neither currently proves the reference
+GameFlow effect ordering at the playable world boundary.
+
+Reference behavior establishes the first lifecycle invariant: context changes
+are requested before they are executed, and the transition boundary stops the
+old context before starting the new one. Normal gameplay follows a loading
+context, and active context controls input availability.
+
+## First implementation slice
+
+- [ ] Select one application-mode authority and bridge startup/loading/gameplay
+  through it instead of keeping independent state machines.
+- [ ] Preserve requested-versus-committed transition semantics and ordered
+  source exit before target entry.
+- [ ] Bind loading readiness, world readiness, and input policy to the gameplay
+  transition without making asset availability the state-machine authority.
+- [ ] Add the minimal project-owned gameplay bootstrap classes required by
+  Unreal, including the controller and representative player pawn boundary.
+- [ ] Prove `LoadingGameplay -> Gameplay -> Pause/Resume` lifecycle behavior in
+  automation before building final player or vehicle presentation.
+
+## Dependencies
+
+This is the first implementation phase after the delivery-order authority.

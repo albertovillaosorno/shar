@@ -4,11 +4,12 @@ schema: shar.todo.v1
 # jig-ignore-next-line: typed TODO identity is canonical
 id: reproduce-original-world-streaming-placement-physics-animation-effects-and-platform
 status: open
-priority: P2
+priority: P0
 lane: runtime
 active: false
 parent: null
-dependencies: []
+dependencies:
+  - establish-playable-unreal-runtime-foundation-before-world-content
 children: []
 ---
 
@@ -24,7 +25,7 @@ and platform input behavior.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+The current code-first roadmap dependency is declared in frontmatter.
 
 ## Native Unreal asset pivot — 2026-09-12
 

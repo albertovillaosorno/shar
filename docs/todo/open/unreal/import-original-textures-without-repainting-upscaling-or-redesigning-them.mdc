@@ -2,11 +2,11 @@
 schema: shar.todo.v1
 id: import-original-textures-without-repainting-upscaling-or-redesigning-them
 status: open
-priority: P1
+priority: P3
 lane: unreal
 active: false
 parent: null
-dependencies: []
+dependencies: [finalize-character-vehicle-assets-animations-and-equivalence]
 children: []
 ---
 
@@ -21,7 +21,7 @@ Import original textures without repainting, upscaling, or redesigning them.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+The current code-first roadmap dependency is declared in frontmatter.
 
 ## Native Unreal asset pivot — 2026-09-12
 

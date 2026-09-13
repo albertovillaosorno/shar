@@ -2,11 +2,11 @@
 schema: shar.todo.v1
 id: import-meshes-skeletons-physics-assets-and-animations-correctly
 status: open
-priority: P1
+priority: P3
 lane: unreal
 active: false
 parent: null
-dependencies: []
+dependencies: [finalize-character-vehicle-assets-animations-and-equivalence]
 <!-- markdownlint-disable-next-line MD044 -->
 # jig-ignore-next-line: typed TODO identity is canonical
 children: [import-package-level-skeletal-fbx-through-a-companion-aware-transaction-that-owns-the]
@@ -22,7 +22,7 @@ Import meshes, skeletons, physics assets, and animations correctly.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+The current code-first roadmap dependency is declared in frontmatter.
 
 ## Native Unreal asset pivot — 2026-09-12
 

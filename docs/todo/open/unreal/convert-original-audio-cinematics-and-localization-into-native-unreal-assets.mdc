@@ -2,11 +2,11 @@
 schema: shar.todo.v1
 id: convert-original-audio-cinematics-and-localization-into-native-unreal-assets
 status: open
-priority: P1
+priority: P2
 lane: unreal
 active: false
 parent: null
-dependencies: []
+dependencies: [complete-game-runtime-and-rendering-behavior-before-final-assets]
 children: []
 ---
 
@@ -23,7 +23,7 @@ assets.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+The current code-first roadmap dependency is declared in frontmatter.
 
 ## Native Unreal asset pivot — 2026-09-12
 

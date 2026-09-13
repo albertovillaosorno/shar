@@ -1,0 +1,31 @@
+---
+schema: shar.todo.v1
+id: complete-game-runtime-and-rendering-behavior-before-final-assets
+status: open
+priority: P1
+lane: runtime
+active: false
+parent: null
+dependencies: [make-default-player-and-vehicle-playable-in-the-complete-world]
+children: []
+---
+
+# Complete game runtime and rendering behavior before final assets
+
+Finish game systems after the playable vertical slice and before the final asset
+pass. Asset consumers must target stable runtime contracts rather than forcing
+runtime behavior to emerge from whatever was converted first.
+
+## Acceptance criteria
+
+- [ ] Complete traffic, pedestrians, cameras, interaction, damage, recovery,
+  effects, audio, cinematics, loading, saves, profiles, and progression systems.
+- [ ] Implement source-backed material and shader behavior needed by gameplay
+  and faithful presentation without inventing PBR values.
+- [ ] Complete runtime state transitions, event ordering, timing, and lifecycle
+  behavior required by missions and menus.
+- [ ] Add behavior-focused parity tests before content-specific asset polish.
+
+## Dependencies
+
+Depends on the default player and vehicle vertical slice.

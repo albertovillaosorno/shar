@@ -2,9 +2,9 @@
 schema: shar.todo.v1
 id: canonical-multi-platform-build-runner
 status: open
-priority: P3
+priority: P4
 lane: packaging
-active: true
+active: false
 parent: null
 dependencies: []
 children: []

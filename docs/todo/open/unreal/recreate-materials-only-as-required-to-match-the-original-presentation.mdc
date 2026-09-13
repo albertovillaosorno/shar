@@ -6,7 +6,7 @@ priority: P1
 lane: unreal
 active: false
 parent: null
-dependencies: []
+dependencies: [make-default-player-and-vehicle-playable-in-the-complete-world]
 children: []
 ---
 
@@ -20,7 +20,7 @@ Recreate materials only as required to match the original presentation.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+The current code-first roadmap dependency is declared in frontmatter.
 
 ## Native Unreal asset pivot — 2026-09-12
 

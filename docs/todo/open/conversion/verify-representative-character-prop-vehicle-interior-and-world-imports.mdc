@@ -2,11 +2,11 @@
 schema: shar.todo.v1
 id: verify-representative-character-prop-vehicle-interior-and-world-imports
 status: open
-priority: P0
+priority: P3
 lane: conversion
 active: false
 parent: null
-dependencies: []
+dependencies: [finalize-character-vehicle-assets-animations-and-equivalence]
 children: []
 ---
 
@@ -21,7 +21,7 @@ Verify representative character, prop, vehicle, interior, and world imports.
 
 ## Dependencies
 
-No explicit task dependency was recorded in the legacy TODO.
+The current code-first roadmap dependency is declared in frontmatter.
 
 ## Native Unreal asset pivot — 2026-09-12
 
