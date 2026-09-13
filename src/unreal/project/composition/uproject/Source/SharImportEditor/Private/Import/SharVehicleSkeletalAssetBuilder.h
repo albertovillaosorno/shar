@@ -11,9 +11,9 @@
 // - Owns:
 //   - Transient native vehicle Skeleton and SkeletalMesh shell construction.
 // - Must-Not:
-//   - Save packages, build render LODs, or repeat source-basis conversion.
+//   - Save packages, publish content, or repeat source-basis conversion.
 // - Allows:
-//   - Construct UObjects from an already validated Unreal-basis recipe.
+//   - Construct transient UObjects and render data from a validated recipe.
 // - Split-When:
 //   - Render geometry publication gains its own construction lifecycle.
 // - Merge-When:
@@ -23,7 +23,7 @@
 // - Description:
 //   - Materializes rig identity, rest transforms, and material slots natively.
 // - Usage:
-//   - Runs after normalized model decoding and before render LOD construction.
+//   - Runs after normalized model decoding and before package publication.
 // - Defaults:
 //   - Invalid recipes fail before output objects are returned.
 //
@@ -44,4 +44,17 @@ struct FSharNormalizedVehicleSkeletalModel;
 bool BuildTransientVehicleSkeletalAssetShell(
     const FSharNormalizedVehicleSkeletalModel &Model, USkeletalMesh *&OutMesh,
     USkeleton *&OutSkeleton, FString &OutError);
+
+struct FSharPublishedVehicleSkeletalAssets
+{
+    USkeletalMesh *Mesh = nullptr;
+    USkeleton *Skeleton = nullptr;
+    FString MeshObjectPath;
+    FString SkeletonObjectPath;
+};
+
+bool PublishVehicleSkeletalAssetsCreateOnly(
+    const FSharNormalizedVehicleSkeletalModel &Model, const FString &FolderPath,
+    const FString &MeshAssetName, const FString &SkeletonAssetName,
+    FSharPublishedVehicleSkeletalAssets &OutAssets, FString &OutError);
 } // namespace UE::SharImportEditor::Private

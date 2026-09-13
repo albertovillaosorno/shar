@@ -120,9 +120,19 @@ bones, and default skin weights. A synthetic asymmetric automation test reached
 `Result={Success}` after the required source-model, LOD-info, and imported-model
 LOD records were initialized through Unreal's native skeletal mesh API.
 
-This is still a transient construction checkpoint. Render-data build,
-persisted package publication, and persisted read-back parity remain before the
-production vehicle route can stop using the deprecated FBX compatibility path.
+The transient builder now also calls Unreal's native Skeletal Mesh build and
+verifies real LOD 0 render data. The synthetic asymmetric test requires exactly
+one render LOD with the expected rendered vertices and section, and passes
+repeatedly with zero warnings through the Automation controller.
+
+A private create-only publisher now duplicates the validated pair into generated
+packages, reconnects the published mesh to its published Skeleton, verifies rig
+and render read-back, registers both assets, and leaves both packages dirty and
+unsaved. A public native skeletal toolset accepts `model.normalized.json` and
+publishes the deterministic companion `${asset_name}_Skeleton` without FBX.
+
+Persisted save/reload parity and switching the production plan route remain
+before the deprecated FBX compatibility path can be removed.
 
 ## Dependencies
 

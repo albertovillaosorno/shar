@@ -11,9 +11,9 @@
 // - Owns:
 //   - Transient native vehicle Skeleton and SkeletalMesh shell construction.
 // - Must-Not:
-//   - Save packages, build render LODs, or repeat source-basis conversion.
+//   - Save packages, publish content, or repeat source-basis conversion.
 // - Allows:
-//   - Construct UObjects from an already validated Unreal-basis recipe.
+//   - Construct transient UObjects and render data from a validated recipe.
 // - Split-When:
 //   - Render geometry publication gains its own construction lifecycle.
 // - Merge-When:
@@ -23,7 +23,7 @@
 // - Description:
 //   - Materializes rig identity, rest transforms, and material slots natively.
 // - Usage:
-//   - Runs after normalized model decoding and before render LOD construction.
+//   - Runs after normalized model decoding and before package publication.
 // - Defaults:
 //   - Invalid recipes fail before output objects are returned.
 //
@@ -35,12 +35,15 @@
 #include "Import/SharVehicleSkeletalModelBuilder.h"
 
 #include "Animation/Skeleton.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "BoneWeights.h"
 #include "Engine/SkeletalMesh.h"
 #include "MeshDescription.h"
+#include "Misc/PackageName.h"
 #include "ReferenceSkeleton.h"
 #include "Rendering/SkeletalMeshLODModel.h"
 #include "Rendering/SkeletalMeshModel.h"
+#include "Rendering/SkeletalMeshRenderData.h"
 #include "SkeletalMeshAttributes.h"
 
 namespace UE::SharImportEditor::Private
@@ -51,6 +54,74 @@ bool Fail(FString &OutError, const TCHAR *Message)
 {
     OutError = Message;
     return false;
+}
+
+constexpr const TCHAR *GeneratedRoot = TEXT("/Game/Generated/SHAR/");
+
+bool BuildCreateOnlyDestination(const FString &FolderPath,
+                                const FString &AssetName,
+                                FString &OutPackagePath, FString &OutObjectPath,
+                                FString &OutError)
+{
+    if (!FolderPath.StartsWith(GeneratedRoot, ESearchCase::CaseSensitive))
+    {
+        return Fail(
+            OutError,
+            TEXT("vehicle skeletal output must be beneath generated root"));
+    }
+    if (AssetName.IsEmpty() || AssetName.Contains(TEXT("/")) ||
+        AssetName.Contains(TEXT(".")))
+    {
+        return Fail(OutError, TEXT("vehicle skeletal asset name is invalid"));
+    }
+    OutPackagePath = FolderPath + TEXT("/") + AssetName;
+    if (!FPackageName::IsValidLongPackageName(OutPackagePath))
+    {
+        return Fail(OutError, TEXT("vehicle skeletal package path is invalid"));
+    }
+    OutObjectPath = FString::Printf(TEXT("%s.%s"), *OutPackagePath, *AssetName);
+    if (FindObject<UObject>(nullptr, *OutObjectPath) != nullptr ||
+        FindPackage(nullptr, *OutPackagePath) != nullptr ||
+        FPackageName::DoesPackageExist(OutPackagePath))
+    {
+        return Fail(OutError, TEXT("vehicle skeletal output already exists"));
+    }
+    return true;
+}
+
+void DiscardPublishedObject(UObject *Object)
+{
+    if (Object == nullptr)
+    {
+        return;
+    }
+    UPackage *Package = Object->GetPackage();
+    Object->ClearFlags(RF_Public | RF_Standalone);
+    Object->MarkAsGarbage();
+    if (Package != nullptr)
+    {
+        Package->ClearDirtyFlag();
+        Package->MarkAsGarbage();
+    }
+}
+
+bool HasExpectedPublishedState(const FSharNormalizedVehicleSkeletalModel &Model,
+                               const USkeletalMesh &Mesh,
+                               const USkeleton &Skeleton)
+{
+    if (Mesh.GetSkeleton() != &Skeleton ||
+        Mesh.GetRefSkeleton().GetNum() != Model.Bones.Num() ||
+        Skeleton.GetReferenceSkeleton().GetNum() != Model.Bones.Num())
+    {
+        return false;
+    }
+    const FSkeletalMeshRenderData *RenderData = Mesh.GetResourceForRendering();
+    if (RenderData == nullptr || RenderData->LODRenderData.Num() != 1)
+    {
+        return false;
+    }
+    return RenderData->LODRenderData[0].GetNumVertices() > 0 &&
+           !RenderData->LODRenderData[0].RenderSections.IsEmpty();
 }
 
 bool IsFiniteMatrix(const std::array<double, 16> &Matrix)
@@ -271,7 +342,6 @@ bool BuildTransientVehicleSkeletalAssetShell(
     Mesh->SetSkeleton(Skeleton);
     Skeleton->MergeAllBonesToBoneTree(Mesh);
     Mesh->SetNumSourceModels(1);
-    Mesh->AddLODInfo();
     FSkeletalMeshModel *ImportedModel = Mesh->GetImportedModel();
     if (ImportedModel == nullptr)
     {
@@ -289,9 +359,84 @@ bool BuildTransientVehicleSkeletalAssetShell(
         Materials.Emplace(nullptr, Slot);
     }
     Mesh->SetMaterials(Materials);
+    Mesh->InvalidateDeriveDataCacheGUID();
+    Mesh->Build();
 
     OutMesh = Mesh;
     OutSkeleton = Skeleton;
+    return true;
+}
+
+bool PublishVehicleSkeletalAssetsCreateOnly(
+    const FSharNormalizedVehicleSkeletalModel &Model, const FString &FolderPath,
+    const FString &MeshAssetName, const FString &SkeletonAssetName,
+    FSharPublishedVehicleSkeletalAssets &OutAssets, FString &OutError)
+{
+    OutAssets = {};
+    OutError.Reset();
+    FString MeshPackagePath;
+    FString MeshObjectPath;
+    FString SkeletonPackagePath;
+    FString SkeletonObjectPath;
+    if (!BuildCreateOnlyDestination(FolderPath, MeshAssetName, MeshPackagePath,
+                                    MeshObjectPath, OutError) ||
+        !BuildCreateOnlyDestination(FolderPath, SkeletonAssetName,
+                                    SkeletonPackagePath, SkeletonObjectPath,
+                                    OutError) ||
+        MeshPackagePath == SkeletonPackagePath)
+    {
+        if (OutError.IsEmpty())
+        {
+            OutError = TEXT("vehicle skeletal destinations collide");
+        }
+        return false;
+    }
+
+    USkeletalMesh *CandidateMesh = nullptr;
+    USkeleton *CandidateSkeleton = nullptr;
+    if (!BuildTransientVehicleSkeletalAssetShell(Model, CandidateMesh,
+                                                 CandidateSkeleton, OutError))
+    {
+        return false;
+    }
+
+    UPackage *SkeletonPackage = CreatePackage(*SkeletonPackagePath);
+    USkeleton *PublishedSkeleton = DuplicateObject<USkeleton>(
+        CandidateSkeleton, SkeletonPackage, FName(*SkeletonAssetName));
+    if (PublishedSkeleton == nullptr)
+    {
+        return Fail(OutError, TEXT("vehicle Skeleton publication failed"));
+    }
+    PublishedSkeleton->ClearFlags(RF_Transient);
+    PublishedSkeleton->SetFlags(RF_Public | RF_Standalone | RF_Transactional);
+
+    UPackage *MeshPackage = CreatePackage(*MeshPackagePath);
+    USkeletalMesh *PublishedMesh = DuplicateObject<USkeletalMesh>(
+        CandidateMesh, MeshPackage, FName(*MeshAssetName));
+    if (PublishedMesh == nullptr)
+    {
+        DiscardPublishedObject(PublishedSkeleton);
+        return Fail(OutError, TEXT("vehicle SkeletalMesh publication failed"));
+    }
+    PublishedMesh->ClearFlags(RF_Transient);
+    PublishedMesh->SetFlags(RF_Public | RF_Standalone | RF_Transactional);
+    PublishedMesh->SetSkeleton(PublishedSkeleton);
+    PublishedSkeleton->MergeAllBonesToBoneTree(PublishedMesh);
+    if (!HasExpectedPublishedState(Model, *PublishedMesh, *PublishedSkeleton))
+    {
+        DiscardPublishedObject(PublishedMesh);
+        DiscardPublishedObject(PublishedSkeleton);
+        return Fail(OutError, TEXT("vehicle skeletal publication drifted"));
+    }
+
+    FAssetRegistryModule::AssetCreated(PublishedSkeleton);
+    FAssetRegistryModule::AssetCreated(PublishedMesh);
+    SkeletonPackage->MarkPackageDirty();
+    MeshPackage->MarkPackageDirty();
+    OutAssets.Mesh = PublishedMesh;
+    OutAssets.Skeleton = PublishedSkeleton;
+    OutAssets.MeshObjectPath = MoveTemp(MeshObjectPath);
+    OutAssets.SkeletonObjectPath = MoveTemp(SkeletonObjectPath);
     return true;
 }
 } // namespace UE::SharImportEditor::Private
