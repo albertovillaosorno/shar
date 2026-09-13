@@ -56,7 +56,8 @@ use super::{
         parallel_source_evidence,
         prepare_io_error,
     publication_error, read_utf8, restore_previous_publication,
-    retain_source_ids, source_worker_count_for, stream_source_digest,
+    retain_source_ids, source_work_order, source_worker_count_for,
+    stream_source_digest,
     bind_release_plan_index, validate_audit, validate_generated_chain,
     validate_mission_tuning_bundle,
     validate_public_identifier,
@@ -622,6 +623,35 @@ fn streamed_source_digest_matches_one_shot_across_io_blocks() -> Result<(), Stri
         return Err("streamed source digest changed across I/O blocks".to_owned());
     }
     Ok(())
+}
+
+
+#[test]
+fn source_work_order_prioritizes_large_inputs_stably() {
+    let input = |id: &str, size: u64| SourceEvidenceInput {
+        id: id.to_owned(),
+        path: format!("extracted/{id}.bin"),
+        resolved: PathBuf::from(format!("/{id}.bin")),
+        expected_size: size,
+        file_extension: "bin".to_owned(),
+        unit_type: "metadata".to_owned(),
+        subtype: "none".to_owned(),
+        kind: "test".to_owned(),
+        function: "test".to_owned(),
+        schema: "none".to_owned(),
+        origin: "test".to_owned(),
+        source_path: "none".to_owned(),
+        source_chunk_kind: "none".to_owned(),
+        unreal_import_relation: "none".to_owned(),
+        future_normalization: "none".to_owned(),
+    };
+    let inputs = [
+        input("small", 5),
+        input("large-a", 500),
+        input("large-b", 500),
+        input("medium", 50),
+    ];
+    assert_eq!(source_work_order(&inputs), [1, 2, 3, 0]);
 }
 
 #[test]

@@ -769,6 +769,7 @@ fn parallel_source_evidence(
     let next = AtomicUsize::new(0);
     let (sender, receiver) = mpsc::channel();
     let workers = source_worker_count(inputs.len());
+    let work_order = source_work_order(inputs);
     // jig-ignore-next-line: literal
     let mut progress = StageProgress::begin("Unreal source evidence", inputs.len());
     let mut collected = Vec::with_capacity(inputs.len());
@@ -778,6 +779,7 @@ fn parallel_source_evidence(
             let worker_stop = &stop;
             let worker_next = &next;
             let worker_inputs = inputs;
+            let worker_order = &work_order;
             let worker_mission_references = mission_references;
             let worker_mission_p3d_references = mission_p3d_references;
             let _handle = scope.spawn(move || {
@@ -785,7 +787,11 @@ fn parallel_source_evidence(
                     if worker_stop.load(Ordering::Acquire) {
                         break;
                     }
-                    let position = worker_next.fetch_add(1, Ordering::Relaxed);
+                    let work_position =
+                        worker_next.fetch_add(1, Ordering::Relaxed);
+                    let Some(&position) = worker_order.get(work_position) else {
+                        break;
+                    };
                     let Some(input) = worker_inputs.get(position) else {
                         break;
                     };
@@ -1511,6 +1517,25 @@ fn stream_source_digest(path: &Path) -> PipelineOutcome<(u64, String)> {
         ));
     }
     Ok((total, digest.finalize_hex()))
+}
+
+/// Dispatch larger sources first while retaining manifest positions.
+fn source_work_order(inputs: &[SourceEvidenceInput]) -> Vec<usize> {
+    let mut order = inputs
+        .iter()
+        .enumerate()
+        .map(|(position, input)| (position, input.expected_size))
+        .collect::<Vec<_>>();
+    order.sort_by(|left, right| {
+        right
+            .1
+            .cmp(&left.1)
+            .then_with(|| left.0.cmp(&right.0))
+    });
+    order
+        .into_iter()
+        .map(|(position, _size)| position)
+        .collect()
 }
 
 /// Bound physical source verification workers for this machine.
