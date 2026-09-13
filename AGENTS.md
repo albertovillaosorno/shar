@@ -34,7 +34,8 @@ and repository operators, not ordinary end-user modding documentation.
 Use Unreal's conventional `.h` extension and `#pragma once` for every
 project-owned C++ header. Headers containing Unreal reflection declarations must
 include exactly their matching `*.generated.h`; ordinary C++ headers must not
-include generated UHT output. Repository architecture tests enforce this
+include generated Unreal Header Tool output. Repository architecture tests
+enforce this
 boundary without imposing a second header extension or manual macro guards.
 
 ## Unreal control
