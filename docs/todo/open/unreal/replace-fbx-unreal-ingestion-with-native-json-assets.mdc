@@ -145,6 +145,25 @@ identity only as source provenance in their current evidence schemas. The old
 FBX vehicle route remains supported solely as deprecated compatibility and is no
 longer the produced vehicle prerequisite.
 
+## 2026-09-13 regenerated vehicle workspace checkpoint
+
+The canonical `.cache/pipeline/vehicle-assets` workspace was regenerated with
+the current producer after `prepare-unreal` correctly rejected an older v8
+catalog that predated normalized-model publication. The regenerated catalog
+declares 88 vehicles and 88 normalized models; all 88 vehicle rows contain a
+`model.normalized.json` record, all 88 files exist, and independent size and
+SHA-256 verification found zero mismatches. Every normalized payload reports
+`shar.normalized-skeletal-model.v1`.
+
+The same 88 rows still retain FBX records solely as deprecated compatibility
+evidence. The exporter reports this boundary explicitly as normalized vehicle
+models with deprecated FBX compatibility artifacts. The accepted Unreal staging
+is intentionally unchanged until a fresh `prepare-unreal` run completes
+atomically. That rerun is the remaining publication gate: it must produce 88
+`vehicle-skeletal-mesh-native-v1` construction operations and zero production
+vehicle FBX import operations before the ingestion migration can be considered
+published.
+
 ## Dependencies
 
 The normalized extraction and provenance ledgers remain source authority. Native

@@ -36,6 +36,28 @@ manual visual tuning.
 - [ ] Retest steering, braking, suspension, damage, articulated parts, cameras,
   and runtime stability after the native asset path replaces FBX.
 
+## Production publication gate — 2026-09-13
+
+The vehicle workspace itself is no longer blocked on normalized-model evidence:
+all 88 standalone vehicle rows now carry verified
+`shar.normalized-skeletal-model.v1` payloads with matching bytes and SHA-256.
+FBX remains alongside those rows only as explicitly deprecated compatibility
+evidence.
+
+A full `prepare-unreal` attempt failed closed before publication because the
+previous cached vehicle catalog lacked the newly required `normalized_models`
+count and per-vehicle normalized-model rows. That stale workspace has now been
+regenerated. The next pipeline run must prove the production-plan transition by
+publishing 88 native vehicle construction routes and zero vehicle FBX import
+routes. Until that atomic publication succeeds, manual presentation review is
+not a useful acceptance gate.
+
+After publication, the remaining vehicle implementation blockers are still the
+source-faithful physics and presentation items tracked above: self-collision,
+authored articulated joints, final wheel/tire behavior, and unresolved material
+families. None should be replaced with visual transform fixes, invented PBR
+values, or fallback textures.
+
 ## Dependencies
 
 Parent task:
