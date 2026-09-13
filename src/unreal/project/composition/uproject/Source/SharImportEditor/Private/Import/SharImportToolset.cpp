@@ -31,9 +31,9 @@
 //! Shar import toolset implementation.
 
 #include "Import/SharImportToolset.h"
-#include "Import/SharFbxImportPolicy.hpp"
+#include "Import/SharFbxImportPolicy.h"
 
-#include "Import/SharImportValidation.hpp"
+#include "Import/SharImportValidation.h"
 
 #include "AssetImportTask.h"
 #include "Animation/Skeleton.h"

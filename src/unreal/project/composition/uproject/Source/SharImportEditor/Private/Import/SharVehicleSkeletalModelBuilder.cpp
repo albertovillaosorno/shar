@@ -30,7 +30,7 @@
 
 //! Vehicle normalized skeletal-model construction input implementation.
 
-#include "Import/SharVehicleSkeletalModelBuilder.hpp"
+#include "Import/SharVehicleSkeletalModelBuilder.h"
 
 #include "Dom/JsonObject.h"
 #include "Dom/JsonValue.h"

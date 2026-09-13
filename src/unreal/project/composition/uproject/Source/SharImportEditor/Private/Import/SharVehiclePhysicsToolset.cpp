@@ -35,7 +35,7 @@
 
 #include "Import/SharVehiclePhysicsToolset.h"
 
-#include "Import/SharVehiclePhysicsAssetBuilder.hpp"
+#include "Import/SharVehiclePhysicsAssetBuilder.h"
 
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Editor.h"

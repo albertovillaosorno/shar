@@ -30,8 +30,8 @@
 
 //! Shar messaging test fixtures composition module.
 
-#ifndef SHAR_SHAR_MESSAGING_TEST_FIXTURES_HEADER_INCLUDED
-#define SHAR_SHAR_MESSAGING_TEST_FIXTURES_HEADER_INCLUDED
+#pragma once
+
 #include "Messaging/SharMessageSchemaCatalog.h"
 #include "Messaging/SharWorldMessageRouterSubsystem.h"
 
@@ -134,5 +134,3 @@ inline USharWorldMessageRouterSubsystem* MakeMessageRouter(
     );
     return Router;
 }
-
-#endif  // SHAR_SHAR_MESSAGING_TEST_FIXTURES_HEADER_INCLUDED

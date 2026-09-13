@@ -30,7 +30,7 @@
 
 //! Shar composition module.
 
-#include "shar.hpp"
+#include "shar.h"
 
 #include "Modules/ModuleManager.h"
 

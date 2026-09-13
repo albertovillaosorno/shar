@@ -32,8 +32,8 @@
 
 #include "Import/SharVehicleSkeletalAssetToolset.h"
 
-#include "Import/SharVehicleSkeletalAssetBuilder.hpp"
-#include "Import/SharVehicleSkeletalModelBuilder.hpp"
+#include "Import/SharVehicleSkeletalAssetBuilder.h"
+#include "Import/SharVehicleSkeletalModelBuilder.h"
 
 #include "Animation/Skeleton.h"
 #include "Engine/SkeletalMesh.h"

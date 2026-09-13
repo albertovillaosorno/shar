@@ -32,7 +32,7 @@
 
 //! Shared simple/unlit material graph implementation.
 
-#include "Materials/SharSimpleUnlitMaterialGraph.hpp"
+#include "Materials/SharSimpleUnlitMaterialGraph.h"
 
 #include "MaterialEditingLibrary.h"
 #include "Materials/Material.h"

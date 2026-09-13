@@ -32,10 +32,10 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Import/SharFbxImportPolicy.hpp"
+#include "Import/SharFbxImportPolicy.h"
 #include "Import/SharImportToolset.h"
 #include "Import/SharSkeletalMeshReimportToolset.h"
-#include "Import/SharImportValidation.hpp"
+#include "Import/SharImportValidation.h"
 
 #include "HAL/FileManager.h"
 #include "FileMediaSource.h"

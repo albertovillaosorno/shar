@@ -30,8 +30,8 @@
 
 //! Vehicle normalized skeletal-model construction input.
 
-#ifndef SHAR_SHAR_VEHICLE_SKELETAL_MODEL_BUILDER_HEADER_INCLUDED
-#define SHAR_SHAR_VEHICLE_SKELETAL_MODEL_BUILDER_HEADER_INCLUDED
+#pragma once
+
 #include "CoreMinimal.h"
 
 #include <array>
@@ -92,5 +92,3 @@ bool ParseNormalizedVehicleSkeletalModelFile(
     const FString &SourceFile, FSharNormalizedVehicleSkeletalModel &OutModel,
     FString &OutError);
 } // namespace UE::SharImportEditor::Private
-
-#endif  // SHAR_SHAR_VEHICLE_SKELETAL_MODEL_BUILDER_HEADER_INCLUDED

@@ -30,8 +30,8 @@
 
 //! Shared reviewed simple/lit material graph kernel.
 
-#ifndef SHAR_SHAR_SIMPLE_LIT_MATERIAL_GRAPH_HEADER_INCLUDED
-#define SHAR_SHAR_SIMPLE_LIT_MATERIAL_GRAPH_HEADER_INCLUDED
+#pragma once
+
 #include "CoreMinimal.h"
 
 class UMaterial;
@@ -58,5 +58,3 @@ bool ReadBackSimpleLitMaterialGraph(
     FString& OutError
 );
 }
-
-#endif  // SHAR_SHAR_SIMPLE_LIT_MATERIAL_GRAPH_HEADER_INCLUDED

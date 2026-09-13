@@ -30,8 +30,8 @@
 
 //! Shar save test fixtures composition module.
 
-#ifndef SHAR_SHAR_SAVE_TEST_FIXTURES_HEADER_INCLUDED
-#define SHAR_SHAR_SAVE_TEST_FIXTURES_HEADER_INCLUDED
+#pragma once
+
 #include "Save/SharSaveContracts.h"
 #include "Save/SharSaveRepositorySubsystem.h"
 #include "Save/SharSaveSchemaCatalogSubsystem.h"
@@ -295,5 +295,3 @@ inline void CompleteSaveTransaction(
         .ResultingAcceptedRevision = Document.DocumentRevision,
     }));
 }
-
-#endif  // SHAR_SHAR_SAVE_TEST_FIXTURES_HEADER_INCLUDED

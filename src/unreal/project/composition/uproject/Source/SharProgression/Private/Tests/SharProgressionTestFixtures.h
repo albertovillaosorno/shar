@@ -30,8 +30,8 @@
 
 //! Shar progression test fixtures composition module.
 
-#ifndef SHAR_SHAR_PROGRESSION_TEST_FIXTURES_HEADER_INCLUDED
-#define SHAR_SHAR_PROGRESSION_TEST_FIXTURES_HEADER_INCLUDED
+#pragma once
+
 #include "Progression/SharProgressionCatalogDefinition.h"
 #include "Progression/SharProgressionCatalogSubsystem.h"
 #include "Progression/SharProgressionContracts.h"
@@ -233,5 +233,3 @@ inline void BeginAndPrepareProgressionMutation(
     Subsystem.Begin(Request.MutationId);
     Subsystem.Prepare(Request.MutationId);
 }
-
-#endif  // SHAR_SHAR_PROGRESSION_TEST_FIXTURES_HEADER_INCLUDED

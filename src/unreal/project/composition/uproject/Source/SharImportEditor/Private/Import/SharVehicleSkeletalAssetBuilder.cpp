@@ -30,9 +30,9 @@
 
 //! Native vehicle skeletal UObject shell builder implementation.
 
-#include "Import/SharVehicleSkeletalAssetBuilder.hpp"
+#include "Import/SharVehicleSkeletalAssetBuilder.h"
 
-#include "Import/SharVehicleSkeletalModelBuilder.hpp"
+#include "Import/SharVehicleSkeletalModelBuilder.h"
 
 #include "Animation/Skeleton.h"
 #include "AssetRegistry/AssetRegistryModule.h"

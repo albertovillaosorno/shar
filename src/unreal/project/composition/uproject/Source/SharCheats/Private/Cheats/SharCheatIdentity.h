@@ -30,8 +30,8 @@
 
 //! Shar cheat identity composition module.
 
-#ifndef SHAR_SHAR_CHEAT_IDENTITY_HEADER_INCLUDED
-#define SHAR_SHAR_CHEAT_IDENTITY_HEADER_INCLUDED
+#pragma once
+
 #include "CoreMinimal.h"
 
 namespace SharCheatIdentity
@@ -75,5 +75,3 @@ inline bool IsCanonical(const FName& Candidate)
     return HasValidBoundary(Value) && HasCanonicalCharacters(Value);
 }
 } // namespace SharCheatIdentity
-
-#endif  // SHAR_SHAR_CHEAT_IDENTITY_HEADER_INCLUDED

@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "SharFrontendTestFixtures.hpp"
+#include "SharFrontendTestFixtures.h"
 
 #include "Engine/GameInstance.h"
 #include "Misc/AutomationTest.h"
