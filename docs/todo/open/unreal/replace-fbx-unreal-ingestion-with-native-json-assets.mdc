@@ -107,6 +107,23 @@ This checkpoint does not yet publish `USkeletalMesh` or `USkeleton`. The
 production vehicle route therefore remains the deprecated FBX compatibility
 route until native object construction and read-back parity are implemented.
 
+## 2026-09-12 native skeletal UObject checkpoint
+
+`SharImportEditor` can now construct transient `USkeleton` and `USkeletalMesh`
+objects directly from the validated vehicle recipe. It materializes the decoded
+reference skeleton, target-basis rest transforms, and authored material-slot
+identity without passing through FBX.
+
+The same builder now creates LOD 0 source `MeshDescription` data and commits the
+normalized positions, normals, UV0, vertex colors, triangles, polygon groups,
+bones, and default skin weights. A synthetic asymmetric automation test reached
+`Result={Success}` after the required source-model, LOD-info, and imported-model
+LOD records were initialized through Unreal's native skeletal mesh API.
+
+This is still a transient construction checkpoint. Render-data build,
+persisted package publication, and persisted read-back parity remain before the
+production vehicle route can stop using the deprecated FBX compatibility path.
+
 ## Dependencies
 
 The normalized extraction and provenance ledgers remain source authority. Native

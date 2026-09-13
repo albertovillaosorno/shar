@@ -61,6 +61,12 @@ convert meters to centimeters, and local rest matrices use the same proper basis
 conjugation. Native Skeletal Mesh, Skeleton, and animation builders consume that
 already-validated target recipe rather than repeating coordinate policy.
 
+Vehicle skeletal construction first materializes a transient `USkeleton` and
+`USkeletalMesh`, then commits LOD 0 source `MeshDescription` data containing the
+validated target-basis geometry, material groups, bone hierarchy, and skin
+weights. This source-data checkpoint is not itself proof of built render data or
+persisted package parity; publication remains gated on those later read-backs.
+
 ## Physics
 
 Physics Assets are built from normalized collision and physics plans after the

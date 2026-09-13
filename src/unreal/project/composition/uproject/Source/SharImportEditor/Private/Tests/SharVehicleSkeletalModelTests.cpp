@@ -32,8 +32,11 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
+#include "Import/SharVehicleSkeletalAssetBuilder.h"
 #include "Import/SharVehicleSkeletalModelBuilder.h"
 
+#include "Animation/Skeleton.h"
+#include "Engine/SkeletalMesh.h"
 #include "HAL/FileManager.h"
 #include "Misc/AutomationTest.h"
 #include "Misc/CommandLine.h"
@@ -282,6 +285,62 @@ bool FSharVehicleNormalizedModelCorpusDirectoryProbeTest::RunTest(
         ModelIds.Add(Model.ModelId);
     }
     TestEqual(TEXT("Unique normalized vehicle identities"), ModelIds.Num(), 88);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharVehicleSkeletalAssetShellTest,
+    "SHAR.Import.VehicleSkeletalModel.BuildsNativeSkeletalAssetShell",
+    EAutomationTestFlags::EditorContext |
+        EAutomationTestFlags::CommandletContext |
+        EAutomationTestFlags::EngineFilter)
+
+bool FSharVehicleSkeletalAssetShellTest::RunTest(const FString &Parameters)
+{
+    (void)Parameters;
+    using namespace UE::SharImportEditor::Private;
+    FSharNormalizedVehicleSkeletalModel Model;
+    FString Error;
+    if (!ParseNormalizedVehicleSkeletalModel(ValidModelJson(), Model, Error))
+    {
+        AddError(Error);
+        return false;
+    }
+    USkeletalMesh *Mesh = nullptr;
+    USkeleton *Skeleton = nullptr;
+    if (!TestTrue(TEXT("Native skeletal asset shell constructs"),
+                  BuildTransientVehicleSkeletalAssetShell(Model, Mesh, Skeleton,
+                                                          Error)))
+    {
+        AddError(Error);
+        return false;
+    }
+    if (!TestNotNull(TEXT("Native SkeletalMesh exists"), Mesh) ||
+        !TestNotNull(TEXT("Native Skeleton exists"), Skeleton))
+    {
+        return false;
+    }
+    const FReferenceSkeleton &MeshRef = Mesh->GetRefSkeleton();
+    TestEqual(TEXT("Native mesh bone count"), MeshRef.GetNum(), 2);
+    TestEqual(TEXT("Native root identity"), MeshRef.GetBoneName(0),
+              FName("root"));
+    TestEqual(TEXT("Native child identity"), MeshRef.GetBoneName(1),
+              FName("wheel-left-front"));
+    TestEqual(TEXT("Native child parent"), MeshRef.GetParentIndex(1), 0);
+    TestTrue(TEXT("Native child translation is target centimeters"),
+             MeshRef.GetRefBonePose()[1].GetTranslation().Equals(
+                 FVector(600.0, -400.0, 500.0), 1.0e-3));
+    TestEqual(TEXT("Native material slot count"), Mesh->GetMaterials().Num(),
+              1);
+    if (Mesh->GetMaterials().Num() == 1)
+    {
+        TestEqual(TEXT("Native material slot identity"),
+                  Mesh->GetMaterials()[0].MaterialSlotName, FName("body_m"));
+    }
+    TestTrue(TEXT("Native mesh owns decoded Skeleton"),
+             Mesh->GetSkeleton() == Skeleton);
+    TestEqual(TEXT("Native Skeleton merged bone count"),
+              Skeleton->GetReferenceSkeleton().GetNum(), 2);
     return true;
 }
 
