@@ -30,8 +30,8 @@
 
 //! Shar import request validation.
 
-#pragma once
-
+#ifndef SHAR_SHAR_IMPORT_VALIDATION_HEADER_INCLUDED
+#define SHAR_SHAR_IMPORT_VALIDATION_HEADER_INCLUDED
 #include "CoreMinimal.h"
 
 namespace UE::SharImportEditor::Private
@@ -95,3 +95,5 @@ bool BuildFileMediaSourcePathsFromObjectPath(
     FString& OutError
 );
 }
+
+#endif  // SHAR_SHAR_IMPORT_VALIDATION_HEADER_INCLUDED

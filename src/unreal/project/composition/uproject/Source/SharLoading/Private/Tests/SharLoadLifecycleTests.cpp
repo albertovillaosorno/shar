@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "SharLoadingTestFixtures.h"
+#include "SharLoadingTestFixtures.hpp"
 
 #include "Loading/SharLoadCoordinatorSubsystem.h"
 #include "Misc/AutomationTest.h"

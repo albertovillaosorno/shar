@@ -30,7 +30,7 @@
 
 //! Shar mod activation plan composition module.
 
-#include "Modding/SharModActivationPlan.h"
+#include "Modding/SharModActivationPlan.hpp"
 
 #include "Algo/AllOf.h"
 #include "Algo/Find.h"

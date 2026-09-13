@@ -30,8 +30,8 @@
 
 //! Shar interaction test fixtures composition module.
 
-#pragma once
-
+#ifndef SHAR_SHAR_INTERACTION_TEST_FIXTURES_HEADER_INCLUDED
+#define SHAR_SHAR_INTERACTION_TEST_FIXTURES_HEADER_INCLUDED
 #include "Interaction/SharInteractionSubsystem.h"
 
 #include "Engine/DataAsset.h"
@@ -113,3 +113,5 @@ inline USharInteractionSubsystem* MakeConfiguredInteractionSubsystem()
     );
     return Subsystem;
 }
+
+#endif  // SHAR_SHAR_INTERACTION_TEST_FIXTURES_HEADER_INCLUDED

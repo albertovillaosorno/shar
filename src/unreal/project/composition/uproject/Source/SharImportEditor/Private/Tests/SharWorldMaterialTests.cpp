@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Materials/SharWorldMaterialPolicy.h"
+#include "Materials/SharWorldMaterialPolicy.hpp"
 #include "Materials/SharWorldMaterialToolset.h"
 
 #include "Engine/Texture2D.h"

@@ -32,11 +32,11 @@
 
 //! Vehicle simple material graph policy.
 
-#pragma once
-
+#ifndef SHAR_SHAR_VEHICLE_MATERIAL_POLICY_HEADER_INCLUDED
+#define SHAR_SHAR_VEHICLE_MATERIAL_POLICY_HEADER_INCLUDED
 #include "CoreMinimal.h"
-#include "Materials/SharSimpleLitMaterialGraph.h"
-#include "Materials/SharSimpleUnlitMaterialGraph.h"
+#include "Materials/SharSimpleLitMaterialGraph.hpp"
+#include "Materials/SharSimpleUnlitMaterialGraph.hpp"
 
 class UMaterial;
 
@@ -105,3 +105,5 @@ bool ReadBackSimpleUnlitVehicleMaster(
     FString& OutError
 );
 }
+
+#endif  // SHAR_SHAR_VEHICLE_MATERIAL_POLICY_HEADER_INCLUDED

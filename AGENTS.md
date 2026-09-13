@@ -29,6 +29,16 @@ User-facing mod skills must remain understandable to non-programmers. Unreal
 skills are different: they are technical operating instructions for AI agents
 and repository operators, not ordinary end-user modding documentation.
 
+## Unreal C++ header policy
+
+Use `.hpp` plus portable macro include guards for ordinary project-owned C++
+headers; `#pragma once` is forbidden there. Reserve `.h` for headers consumed by
+Unreal Header Tool and therefore including a matching generated header. Those
+reflected `.h` files are the sole `#pragma once` exception because Unreal Header
+Tool does not discover reflected `.hpp` files and rejects reflection macros
+inside ordinary preprocessor include guards. Repository architecture tests
+enforce this boundary.
+
 ## Unreal control
 
 Connect to Unreal through the official native inbound MCP server by using the

@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "SharApplicationTestFixtures.h"
+#include "SharApplicationTestFixtures.hpp"
 
 #include "Application/SharApplicationModeCoordinator.h"
 #include "Misc/AutomationTest.h"

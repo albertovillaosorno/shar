@@ -32,7 +32,7 @@
 //! Vehicle Physics Asset construction kernel implementation.
 
 
-#include "Import/SharVehiclePhysicsAssetBuilder.h"
+#include "Import/SharVehiclePhysicsAssetBuilder.hpp"
 
 #include "Engine/SkeletalMesh.h"
 #include "PhysicsEngine/PhysicsAsset.h"

@@ -37,7 +37,7 @@
 
 #include "Materials/SharVehicleMaterialToolset.h"
 
-#include "Materials/SharVehicleMaterialPolicy.h"
+#include "Materials/SharVehicleMaterialPolicy.hpp"
 
 #include "AssetToolsModule.h"
 #include "Factories/MaterialFactoryNew.h"

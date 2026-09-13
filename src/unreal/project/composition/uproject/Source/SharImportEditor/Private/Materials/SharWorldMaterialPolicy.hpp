@@ -32,10 +32,10 @@
 
 //! Source-backed simple-unlit world master material policy.
 
-#pragma once
-
+#ifndef SHAR_SHAR_WORLD_MATERIAL_POLICY_HEADER_INCLUDED
+#define SHAR_SHAR_WORLD_MATERIAL_POLICY_HEADER_INCLUDED
 #include "CoreMinimal.h"
-#include "Materials/SharSimpleUnlitMaterialGraph.h"
+#include "Materials/SharSimpleUnlitMaterialGraph.hpp"
 
 class UMaterial;
 
@@ -60,3 +60,5 @@ bool BuildSimpleUnlitWorldMaster(
     FString& OutError
 );
 }
+
+#endif  // SHAR_SHAR_WORLD_MATERIAL_POLICY_HEADER_INCLUDED

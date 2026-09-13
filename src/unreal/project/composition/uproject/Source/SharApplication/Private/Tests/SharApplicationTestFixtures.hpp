@@ -30,8 +30,8 @@
 
 //! Shar application test fixtures composition module.
 
-#pragma once
-
+#ifndef SHAR_SHAR_APPLICATION_TEST_FIXTURES_HEADER_INCLUDED
+#define SHAR_SHAR_APPLICATION_TEST_FIXTURES_HEADER_INCLUDED
 #include "Application/SharApplicationModeCatalogSubsystem.h"
 #include "Application/SharApplicationModeCoordinator.h"
 #include "Application/SharApplicationModeDefinition.h"
@@ -398,3 +398,5 @@ inline void PrepareApplicationTransition(
         MakeApplicationBarrierEvidence(Request.RequestId)
     );
 }
+
+#endif  // SHAR_SHAR_APPLICATION_TEST_FIXTURES_HEADER_INCLUDED

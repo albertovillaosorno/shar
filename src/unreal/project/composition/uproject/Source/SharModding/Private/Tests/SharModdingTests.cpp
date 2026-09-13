@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "Modding/SharModActivationPlan.h"
+#include "Modding/SharModActivationPlan.hpp"
 #include "Modding/SharModDescriptor.h"
 
 #include "Misc/AutomationTest.h"

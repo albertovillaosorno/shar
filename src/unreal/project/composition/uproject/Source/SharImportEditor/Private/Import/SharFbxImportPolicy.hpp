@@ -31,8 +31,8 @@
 
 //! SHAR FBX scene-unit import policy.
 
-#pragma once
-
+#ifndef SHAR_SHAR_FBX_IMPORT_POLICY_HEADER_INCLUDED
+#define SHAR_SHAR_FBX_IMPORT_POLICY_HEADER_INCLUDED
 #include "Factories/FbxAssetImportData.h"
 
 namespace UE::SharImportEditor::Private
@@ -43,3 +43,5 @@ inline void ApplyFbxSceneUnitPolicy(UFbxAssetImportData& ImportData)
     ImportData.bConvertSceneUnit = true;
 }
 }
+
+#endif  // SHAR_SHAR_FBX_IMPORT_POLICY_HEADER_INCLUDED

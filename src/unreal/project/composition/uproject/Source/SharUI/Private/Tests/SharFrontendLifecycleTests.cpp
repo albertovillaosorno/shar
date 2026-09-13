@@ -32,7 +32,7 @@
 
 #if WITH_DEV_AUTOMATION_TESTS
 
-#include "SharFrontendTestFixtures.h"
+#include "SharFrontendTestFixtures.hpp"
 
 #include "Misc/AutomationTest.h"
 #include "UI/SharFrontendCatalogDefinition.h"
