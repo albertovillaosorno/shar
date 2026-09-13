@@ -101,6 +101,19 @@ pub struct UnrealFbxArtifactEvidence {
     pub fbx_version: u32,
 }
 
+/// Verified normalized model artifact supplied by the filesystem adapter.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UnrealNormalizedModelArtifactEvidence {
+    /// Semantic package that owns the normalized model artifact.
+    pub package_id: String,
+    /// Canonical repository-relative normalized JSON path.
+    pub path: String,
+    /// Exact normalized JSON byte length.
+    pub size_bytes: u64,
+    /// Exact lowercase SHA-256 digest of the normalized JSON bytes.
+    pub sha256: String,
+}
+
 /// Verified generated UI-sprite raster supplied by the filesystem adapter.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UnrealUiRasterArtifactEvidence {

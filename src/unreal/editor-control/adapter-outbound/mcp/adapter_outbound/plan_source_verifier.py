@@ -129,6 +129,7 @@ class FilesystemPlanSourceVerifier:
                 continue
             if (
                 operation.plan_id == "asset-construction-plan"
+                and operation.target_family == "structured-data"
                 and operation.source_revision
                 != bundle.report.source_manifest_revision
             ):
@@ -172,7 +173,10 @@ def _source_location(
     *,
     repository_root: Path,
 ) -> tuple[Path, str, str]:
-    if operation.plan_id == "asset-construction-plan":
+    if (
+        operation.plan_id == "asset-construction-plan"
+        and operation.target_family == "structured-data"
+    ):
         if operation.source_path != "manifest.jsonl":
             fail_protocol("construction operation source is not canonical")
         return (

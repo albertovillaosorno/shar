@@ -45,7 +45,8 @@ from mcp.domain.endpoint import McpEndpoint
 from plan_bundle_fixture import write_plan_bundle
 import pytest
 
-_VEHICLE_MODEL_SOURCE = "vehicle-assets/model/model.fbx"
+_VEHICLE_FBX_SOURCE = "vehicle-assets/model/model.fbx"
+_VEHICLE_MODEL_SOURCE = "vehicle-assets/model/model.normalized.json"
 _VEHICLE_MODEL_MESH = "/Game/Generated/SHAR/cars/model_Skeletal"
 _VEHICLE_MODEL_SKELETON = f"{_VEHICLE_MODEL_MESH}_Skeleton"
 _VEHICLE_MODEL_PHYSICS = (
@@ -55,7 +56,7 @@ _VEHICLE_MODEL_PHYSICS = (
 
 
 def _vehicle_physics_document(
-    source_fbx: str = _VEHICLE_MODEL_SOURCE,
+    source_fbx: str = _VEHICLE_FBX_SOURCE,
 ) -> dict[str, object]:
     return {
         "schema": "shar-schoenwald.unreal-vehicle-physics-evidence.v1",
@@ -112,7 +113,7 @@ def _vehicle_physics_document(
 
 def _bind_vehicle_physics_sidecar(
     plan_root: Path,
-    source_fbx: str = _VEHICLE_MODEL_SOURCE,
+    source_fbx: str = _VEHICLE_FBX_SOURCE,
 ) -> None:
     sidecar = plan_root.parent / "vehicle-physics.json"
     payload = (

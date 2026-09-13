@@ -35,6 +35,10 @@
 #include "Import/SharVehicleSkeletalAssetBuilder.h"
 #include "Import/SharVehicleSkeletalModelBuilder.h"
 
+#include "Animation/Skeleton.h"
+#include "Engine/SkeletalMesh.h"
+#include "Misc/PackageName.h"
+
 namespace
 {
 void RaiseNativeSkeletalError(const FString &Error)
@@ -44,7 +48,7 @@ void RaiseNativeSkeletalError(const FString &Error)
 }
 } // namespace
 
-FString USharVehicleSkeletalAssetToolset::CreateVehicleSkeletalMesh(
+TArray<FString> USharVehicleSkeletalAssetToolset::CreateVehicleSkeletalMesh(
     const FString &SourceFile, const FString &FolderPath,
     const FString &AssetName)
 {
@@ -64,5 +68,51 @@ FString USharVehicleSkeletalAssetToolset::CreateVehicleSkeletalMesh(
         RaiseNativeSkeletalError(Error);
         return {};
     }
-    return Published.MeshObjectPath;
+    return {
+        Published.MeshObjectPath,
+        Published.SkeletonObjectPath,
+    };
+}
+
+bool USharVehicleSkeletalAssetToolset::VerifyVehicleSkeletalMesh(
+    const FString &SourceFile, const FString &SkeletalMeshPath)
+{
+    using namespace UE::SharImportEditor::Private;
+    const FString PackagePath =
+        FPackageName::ObjectPathToPackageName(SkeletalMeshPath);
+    const FString ObjectName =
+        FPackageName::ObjectPathToObjectName(SkeletalMeshPath);
+    if (PackagePath.IsEmpty() || ObjectName.IsEmpty() ||
+        !PackagePath.StartsWith(TEXT("/Game/Generated/SHAR/"),
+                                ESearchCase::CaseSensitive))
+    {
+        RaiseNativeSkeletalError(
+            TEXT("skeletal_mesh_path is not generated and canonical"));
+        return false;
+    }
+    FSharNormalizedVehicleSkeletalModel Model;
+    FString Error;
+    if (!ParseNormalizedVehicleSkeletalModelFile(SourceFile, Model, Error))
+    {
+        RaiseNativeSkeletalError(Error);
+        return false;
+    }
+    USkeletalMesh *Mesh = LoadObject<USkeletalMesh>(nullptr, *SkeletalMeshPath);
+    if (Mesh == nullptr)
+    {
+        RaiseNativeSkeletalError(TEXT("skeletal_mesh_path did not load"));
+        return false;
+    }
+    USkeleton *Skeleton = Mesh->GetSkeleton();
+    if (Skeleton == nullptr)
+    {
+        RaiseNativeSkeletalError(TEXT("native vehicle Skeleton is missing"));
+        return false;
+    }
+    if (!VerifyVehicleSkeletalAssets(Model, *Mesh, *Skeleton, Error))
+    {
+        RaiseNativeSkeletalError(Error);
+        return false;
+    }
+    return true;
 }

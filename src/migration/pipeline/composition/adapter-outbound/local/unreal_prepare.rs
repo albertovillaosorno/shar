@@ -82,7 +82,8 @@ use crate::domain::{
         PipelineOutcome,
         StageReport,
         UNREAL_IMPORT_MANIFEST_SCHEMA,
-    UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest, UnrealSourceEvidence,
+    UNREAL_IMPORT_SUMMARY_SCHEMA, UnrealImportManifest,
+    UnrealNormalizedModelArtifactEvidence, UnrealSourceEvidence,
     compile_mission_scope_graphs,
     preflight_mission_authored_stage_topology,
     preflight_mission_camera_references,
@@ -317,12 +318,18 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         verified_vehicle_fbx_catalog(Path::new(VEHICLE_WORKSPACE_ROOT))?;
     let verified_vehicle_fbx_count =
         vehicle_fbx_catalog.as_ref().map_or(0, Vec::len);
-    let vehicle_plan_fbx_catalog = vehicle_fbx_catalog.as_ref().map(|catalog| {
+    let vehicle_plan_model_catalog =
+        vehicle_fbx_catalog.as_ref().map(|catalog| {
         catalog
             .iter()
-            .map(|entry| entry.evidence.clone())
+            .map(|entry| UnrealNormalizedModelArtifactEvidence {
+                package_id: entry.evidence.package_id.clone(),
+                path: entry.normalized_model.path.clone(),
+                size_bytes: entry.normalized_model.size_bytes,
+                sha256: entry.normalized_model.sha256.clone(),
+            })
             .collect::<Vec<_>>()
-    });
+        });
     let vehicle_materials_json =
         render_vehicle_material_plan(vehicle_fbx_catalog.as_deref())?;
     let vehicle_physics_json =
@@ -346,7 +353,7 @@ pub(super) fn prepare_unreal(config: &PipelineConfig) -> PipelineOutcome<StageRe
         .plan_bundle_with_complete_generated_catalogs(
             &manifest_revision,
             fbx_catalog.as_deref(),
-            vehicle_plan_fbx_catalog.as_deref(),
+            vehicle_plan_model_catalog.as_deref(),
             &ui_raster_catalog,
         )
         .map_err(|error| {

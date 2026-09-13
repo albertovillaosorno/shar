@@ -91,6 +91,29 @@ fn json_operation() -> ConversionPlan {
     }
 }
 
+fn json_model_operation(readiness: OperationReadiness) -> ConversionPlan {
+    ConversionPlan {
+        package_identity: "vehicle-package".to_owned(),
+        source_identity: "vehicle-normalized-model".to_owned(),
+        source_format: SourceFormat::Json,
+        target_family: NativeAssetFamily::Model,
+        source_path: "vehicle-assets/vehicle/model.normalized.json".to_owned(),
+        source_revision: "f".repeat(64),
+        destination: concat!(
+            "/Game/Generated/SHAR/cars/vehicle_Skeletal/",
+            "vehicle_Skeletal.vehicle_Skeletal"
+        )
+        .to_owned(),
+        target_class: "SkeletalMesh".to_owned(),
+        importer: "native-skeletal-builder".to_owned(),
+        import_profile: "shar-native-vehicle-skeletal-v1".to_owned(),
+        dependencies: Vec::new(),
+        readiness,
+        world_owned: true,
+        runtime_bound: true,
+    }
+}
+
 fn fbx_operation(readiness: OperationReadiness) -> ConversionPlan {
     ConversionPlan {
         package_identity: "model-package".to_owned(),
@@ -116,6 +139,22 @@ fn fbx_operation(readiness: OperationReadiness) -> ConversionPlan {
         world_owned: true,
         runtime_bound: true,
     }
+}
+
+#[test]
+fn accepts_ready_json_model_construction() -> Result<(), String> {
+    let bundle = PlanBundle::build(&context(), vec![json_model_operation(
+        OperationReadiness::Ready,
+    )])?;
+    let artifact = bundle
+        .artifacts()
+        .iter()
+        .find(|artifact| artifact.family == PlanFamily::AssetConstruction)
+        .ok_or_else(|| "JSON model construction plan is missing".to_owned())?;
+    if !artifact.json.contains("shar-native-vehicle-skeletal-v1") {
+        return Err("JSON model construction profile drifted".to_owned());
+    }
+    Ok(())
 }
 
 #[test]

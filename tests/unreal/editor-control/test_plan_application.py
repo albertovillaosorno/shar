@@ -124,6 +124,7 @@ class _SyntheticClient:
             "ImportFileMediaSource",
             "ImportStaticMesh",
             "ImportVehicleSkeletalMesh",
+            "CreateVehicleSkeletalMesh",
             "import_file",
         }:
             self.import_count += 1
@@ -145,7 +146,10 @@ class _SyntheticClient:
                 else "StaticMesh"
                 if leaf == "ImportStaticMesh"
                 else "SkeletalMesh"
-                if leaf == "ImportVehicleSkeletalMesh"
+                if leaf in {
+                    "ImportVehicleSkeletalMesh",
+                    "CreateVehicleSkeletalMesh",
+                }
                 else "Texture2D"
             )
             self.assets[package_path] = target_class
@@ -161,7 +165,12 @@ class _SyntheticClient:
             returned_object_paths = [object_path]
             if (
                 self.behavior.companion_mode != "none"
-                and leaf in {"ImportStaticMesh", "ImportVehicleSkeletalMesh"}
+                and leaf
+                in {
+                    "ImportStaticMesh",
+                    "ImportVehicleSkeletalMesh",
+                    "CreateVehicleSkeletalMesh",
+                }
             ):
                 companion_name = f"{asset_name}_Skeleton"
                 companion_package = f"{folder_path}/{companion_name}"
@@ -262,18 +271,18 @@ def _static_mesh_operation(index: int) -> PlanOperation:
 def _vehicle_skeletal_mesh_operation(index: int) -> PlanOperation:
     asset_name = f"vehicle_{index}_Skeletal"
     return PlanOperation(
-        plan_id="asset-import-plan",
+        plan_id="asset-construction-plan",
         operation_id=f"operation-{index:016x}",
         package_identity=f"vehicle-package-{index}",
         source_identity=f"vehicle-source-{index}",
-        source_format="fbx",
+        source_format="json",
         target_family="model",
-        source_path=f"vehicle-assets/vehicle-{index}/vehicle-{index}.fbx",
+        source_path=f"vehicle-assets/vehicle-{index}/model.normalized.json",
         source_revision=f"{index:064x}",
         destination=f"/Game/Generated/SHAR/cars/{asset_name}.{asset_name}",
         target_class="SkeletalMesh",
-        importer="asset-tools-fbx",
-        import_profile="shar-fbx-vehicle-skeletal-v1",
+        importer="native-skeletal-builder",
+        import_profile="shar-native-vehicle-skeletal-v1",
         dependencies=(),
         readiness="ready",
         world_owned=True,
@@ -365,6 +374,8 @@ def _sources(
                 "static-mesh-fbx-v1",
                 "vehicle-skeletal-mesh-fbx-v1",
             }
+            else "json"
+            if step.route_id == "vehicle-skeletal-mesh-native-v1"
             else "png"
         )
         source = tmp_path / f"{step.operation_id}.{extension}"
@@ -485,7 +496,7 @@ def test_applies_vehicle_skeletal_mesh_with_skeleton_companion(
     native_calls = [
         arguments
         for name, arguments in client.calls
-        if name.rsplit(".", 1)[-1] == "ImportVehicleSkeletalMesh"
+        if name.rsplit(".", 1)[-1] == "CreateVehicleSkeletalMesh"
     ]
     assert native_calls == [{
         "assetName": step.asset_name,

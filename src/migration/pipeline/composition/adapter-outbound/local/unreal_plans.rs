@@ -40,7 +40,8 @@ use shar_unreal_conversion::domain::{
 };
 
 use crate::domain::package::unreal_manifest::{
-    UnrealFbxArtifactEvidence, UnrealImportManifest, UnrealPackageRecord,
+    UnrealFbxArtifactEvidence, UnrealImportManifest,
+    UnrealNormalizedModelArtifactEvidence, UnrealPackageRecord,
     UnrealSourceRecord, UnrealUiRasterArtifactEvidence, object_path,
 };
 
@@ -92,13 +93,13 @@ impl UnrealImportManifest {
         &self,
         manifest_revision: &str,
         fbx_catalog: Option<&[UnrealFbxArtifactEvidence]>,
-        vehicle_fbx_catalog: Option<&[UnrealFbxArtifactEvidence]>,
+        vehicle_model_catalog: Option<&[UnrealNormalizedModelArtifactEvidence]>,
         ui_raster_catalog: &[UnrealUiRasterArtifactEvidence],
     ) -> Result<PlanBundle, String> {
         self.build_plan_bundle(
             manifest_revision,
             fbx_catalog,
-            vehicle_fbx_catalog,
+            vehicle_model_catalog,
             Some(ui_raster_catalog),
         )
     }
@@ -107,7 +108,7 @@ impl UnrealImportManifest {
         &self,
         manifest_revision: &str,
         fbx_catalog: Option<&[UnrealFbxArtifactEvidence]>,
-        vehicle_fbx_catalog: Option<&[UnrealFbxArtifactEvidence]>,
+        vehicle_model_catalog: Option<&[UnrealNormalizedModelArtifactEvidence]>,
         ui_raster_catalog: Option<&[UnrealUiRasterArtifactEvidence]>,
     ) -> Result<PlanBundle, String> {
         let require_complete_fbx = fbx_catalog.is_some();
@@ -127,22 +128,16 @@ impl UnrealImportManifest {
             }
         }
 
-        let mut vehicle_fbx_by_package = BTreeMap::new();
-        if let Some(entries) = vehicle_fbx_catalog {
+        let mut vehicle_model_by_package = BTreeMap::new();
+        if let Some(entries) = vehicle_model_catalog {
             for entry in entries {
-                validate_fbx_evidence(entry)?;
-                if !entry.path.starts_with("vehicle-assets/") {
-                    return Err(
-                        "vehicle FBX prerequisite path is not canonical"
-                            .to_owned(),
-                    );
-                }
-                if vehicle_fbx_by_package
+                validate_normalized_model_evidence(entry)?;
+                if vehicle_model_by_package
                     .insert(entry.package_id.as_str(), entry)
                     .is_some()
                 {
                     return Err(concat!(
-                        "vehicle FBX prerequisite catalog contains a ",
+                        "vehicle normalized-model catalog contains a ",
                         "duplicate package",
                     )
                     .to_owned());
@@ -179,7 +174,7 @@ impl UnrealImportManifest {
         let mut generated = GeneratedCatalogState {
             fbx_by_package,
             require_complete_fbx,
-            vehicle_fbx_by_package,
+            vehicle_model_by_package,
             ui_raster_by_package,
             require_complete_ui_raster,
             ui_sprite_packages,
@@ -210,9 +205,9 @@ impl UnrealImportManifest {
             return Err("generated FBX catalog contains an unclaimed package"
                 .to_owned());
         }
-        if !generated.vehicle_fbx_by_package.is_empty() {
+        if !generated.vehicle_model_by_package.is_empty() {
             return Err(concat!(
-                "vehicle FBX prerequisite catalog contains an unclaimed ",
+                "vehicle normalized-model catalog contains an unclaimed ",
                 "package",
             )
             .to_owned());
@@ -314,8 +309,10 @@ struct GeneratedCatalogState<'catalog> {
     fbx_by_package:
         BTreeMap<&'catalog str, &'catalog UnrealFbxArtifactEvidence>,
     require_complete_fbx: bool,
-    vehicle_fbx_by_package:
-        BTreeMap<&'catalog str, &'catalog UnrealFbxArtifactEvidence>,
+    vehicle_model_by_package: BTreeMap<
+        &'catalog str,
+        &'catalog UnrealNormalizedModelArtifactEvidence,
+    >,
     ui_raster_by_package:
         BTreeMap<&'catalog str, &'catalog UnrealUiRasterArtifactEvidence>,
     require_complete_ui_raster: bool,
@@ -330,12 +327,12 @@ fn package_operation(
     generated: &mut GeneratedCatalogState<'_>,
 ) -> Result<Option<ConversionPlan>, String> {
     if generated
-        .vehicle_fbx_by_package
+        .vehicle_model_by_package
         .contains_key(package.package_id.as_str())
     {
-        return vehicle_fbx_prerequisite_operation(
+        return vehicle_native_model_operation(
             package,
-            &mut generated.vehicle_fbx_by_package,
+            &mut generated.vehicle_model_by_package,
         )
         .map(Some);
     }
@@ -472,11 +469,11 @@ fn ui_raster_operation(
     }
 }
 
-fn vehicle_fbx_prerequisite_operation<'catalog>(
+fn vehicle_native_model_operation<'catalog>(
     package: &UnrealPackageRecord,
-    vehicle_fbx_by_package: &mut BTreeMap<
+    vehicle_model_by_package: &mut BTreeMap<
         &'catalog str,
-        &'catalog UnrealFbxArtifactEvidence,
+        &'catalog UnrealNormalizedModelArtifactEvidence,
     >,
 ) -> Result<ConversionPlan, String> {
     if package.category != "cars"
@@ -487,28 +484,32 @@ fn vehicle_fbx_prerequisite_operation<'catalog>(
         || package.import_profile != "shar-fbx-semantic-split-v1"
     {
         return Err(
-            "vehicle FBX prerequisite does not match semantic car policy"
+            "vehicle native prerequisite does not match semantic car policy"
                 .to_owned(),
         );
     }
-    let evidence = vehicle_fbx_by_package
+    let evidence = vehicle_model_by_package
         .remove(package.package_id.as_str())
         .ok_or_else(|| {
-            "vehicle FBX prerequisite evidence is missing".to_owned()
+            "vehicle normalized-model prerequisite evidence is missing"
+                .to_owned()
         })?;
     let asset_name = format!("{}_Skeletal", package.asset_name);
     let package_path = format!("{}_Skeletal", package.package_path);
     Ok(ConversionPlan {
         package_identity: package.package_id.clone(),
-        source_identity: format!("{}-vehicle-fbx", package.package_id),
-        source_format: SourceFormat::Fbx,
+        source_identity: format!(
+            "{}-vehicle-normalized-model",
+            package.package_id
+        ),
+        source_format: SourceFormat::Json,
         target_family: NativeAssetFamily::Model,
         source_path: evidence.path.clone(),
         source_revision: evidence.sha256.clone(),
         destination: object_path(&package_path, &asset_name),
         target_class: "SkeletalMesh".to_owned(),
-        importer: "asset-tools-fbx".to_owned(),
-        import_profile: "shar-fbx-vehicle-skeletal-v1".to_owned(),
+        importer: "native-skeletal-builder".to_owned(),
+        import_profile: "shar-native-vehicle-skeletal-v1".to_owned(),
         dependencies: Vec::new(),
         readiness: OperationReadiness::Ready,
         world_owned: true,
@@ -591,6 +592,51 @@ fn construction_operation(
         world_owned: is_world_category(&package.category),
         runtime_bound: true,
     }
+}
+
+fn validate_normalized_model_evidence(
+    evidence: &UnrealNormalizedModelArtifactEvidence,
+) -> Result<(), String> {
+    let id = evidence.package_id.as_bytes();
+    if id.is_empty()
+        || !id.first().is_some_and(u8::is_ascii_alphanumeric)
+        || !id.last().is_some_and(u8::is_ascii_alphanumeric)
+        || id.windows(2).any(|pair| pair == b"--")
+        || !id.iter().copied().all(|byte| {
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-'
+        })
+    {
+        return Err(
+            "vehicle normalized-model package identity is invalid".to_owned(),
+        );
+    }
+    let expected_prefix = format!(
+        "vehicle-assets/{}/",
+        evidence
+            .package_id
+            .strip_prefix("extracted-art-cars-")
+            .unwrap_or(evidence.package_id.as_str())
+    );
+    if !evidence.path.starts_with(&expected_prefix)
+        || !evidence.path.ends_with("/model.normalized.json")
+        || evidence.size_bytes == 0
+    {
+        return Err(
+            "vehicle normalized-model prerequisite path is not canonical"
+                .to_owned(),
+        );
+    }
+    if evidence.sha256.len() != 64
+        || !evidence
+            .sha256
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
+    {
+        return Err(
+            "vehicle normalized-model digest is not canonical".to_owned(),
+        );
+    }
+    Ok(())
 }
 
 fn validate_fbx_evidence(

@@ -428,27 +428,36 @@ fn validate_source_contract(
     target_family: NativeAssetFamily,
     readiness: OperationReadiness,
 ) -> Result<(), String> {
-    let expected_family = match source_format {
-        SourceFormat::Fbx => NativeAssetFamily::Model,
-        SourceFormat::Wav => NativeAssetFamily::Audio,
-        SourceFormat::Image => NativeAssetFamily::Texture,
-        SourceFormat::Hap => NativeAssetFamily::Media,
-        SourceFormat::Json => NativeAssetFamily::StructuredData,
+    let family_matches = match source_format {
+        SourceFormat::Fbx => target_family == NativeAssetFamily::Model,
+        SourceFormat::Wav => target_family == NativeAssetFamily::Audio,
+        SourceFormat::Image => target_family == NativeAssetFamily::Texture,
+        SourceFormat::Hap => target_family == NativeAssetFamily::Media,
+        SourceFormat::Json => matches!(
+            target_family,
+            NativeAssetFamily::StructuredData | NativeAssetFamily::Model
+        ),
     };
-    if target_family != expected_family {
+    if !family_matches {
         return Err("source format does not match target family".to_owned());
     }
-    let readiness_matches = match source_format {
-        SourceFormat::Fbx => matches!(
+    let readiness_matches = match (source_format, target_family) {
+        (SourceFormat::Fbx, NativeAssetFamily::Model) => matches!(
             readiness,
             OperationReadiness::Ready | OperationReadiness::RequiresConversion
         ),
-        SourceFormat::Wav | SourceFormat::Image | SourceFormat::Hap => {
+        (SourceFormat::Wav | SourceFormat::Image | SourceFormat::Hap, _) => {
             readiness == OperationReadiness::Ready
         },
-        SourceFormat::Json => {
+        (SourceFormat::Json, NativeAssetFamily::StructuredData) => {
             readiness == OperationReadiness::RequiresEditorFactory
         },
+        (SourceFormat::Json, NativeAssetFamily::Model) => matches!(
+            readiness,
+            OperationReadiness::Ready
+                | OperationReadiness::RequiresEditorFactory
+        ),
+        _ => false,
     };
     if !readiness_matches {
         return Err(

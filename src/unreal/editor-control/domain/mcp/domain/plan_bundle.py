@@ -632,7 +632,7 @@ def _validate_plan(  # noqa: PLR0912 - complete envelope validation
     return operations
 
 
-def _validate_operation(  # noqa: PLR0914 - atomic operation contract
+def _validate_operation(  # noqa: PLR0912, PLR0914 - atomic operation contract
     operation: JsonObject,
     *,
     plan_id: str,
@@ -689,31 +689,41 @@ def _validate_operation(  # noqa: PLR0914 - atomic operation contract
     _boolean(operation, "world_owned", context="plan operation")
     _boolean(operation, "runtime_bound", context="plan operation")
 
-    expected = {
-        "json": (
-            "structured-data",
-            {"requires-editor-factory"},
-            "asset-construction-plan",
-        ),
-        "image": ("texture", {"ready"}, "asset-import-plan"),
-        "wav": ("audio", {"ready"}, "asset-import-plan"),
-        "hap": ("media", {"ready"}, "asset-import-plan"),
-        "fbx": (
-            "model",
-            {"ready", "requires-conversion"},
-            "asset-import-plan",
-        ),
-    }.get(source_format)
-    if expected is None:
-        fail_protocol("plan operation source format is unsupported")
-    expected_family, expected_readiness, expected_plan = expected
-    if target_family != expected_family or readiness not in expected_readiness:
+    if source_format == "json":
+        if target_family == "structured-data":
+            expected_readiness = {"requires-editor-factory"}
+        elif target_family == "model":
+            expected_readiness = {"ready", "requires-editor-factory"}
+        else:
+            fail_protocol("plan operation source contract is inconsistent")
+        expected_plan = "asset-construction-plan"
+    else:
+        expected = {
+            "image": ("texture", {"ready"}, "asset-import-plan"),
+            "wav": ("audio", {"ready"}, "asset-import-plan"),
+            "hap": ("media", {"ready"}, "asset-import-plan"),
+            "fbx": (
+                "model",
+                {"ready", "requires-conversion"},
+                "asset-import-plan",
+            ),
+        }.get(source_format)
+        if expected is None:
+            fail_protocol("plan operation source format is unsupported")
+        expected_family, expected_readiness, expected_plan = expected
+        if target_family != expected_family:
+            fail_protocol("plan operation source contract is inconsistent")
+    if readiness not in expected_readiness:
         fail_protocol("plan operation source contract is inconsistent")
     if plan_id != expected_plan:
         fail_protocol("plan operation is assigned to the wrong plan family")
-    if source_format == "json" and (
-        source_path != "manifest.jsonl"
-        or source_revision != source_manifest_revision
+    if (
+        source_format == "json"
+        and target_family == "structured-data"
+        and (
+            source_path != "manifest.jsonl"
+            or source_revision != source_manifest_revision
+        )
     ):
         fail_protocol("construction operation source evidence is not canonical")
 

@@ -36,6 +36,7 @@
 #include "Import/SharVehicleDriveTestAnimToolset.h"
 #include "Import/SharVehicleDriveTestToolset.h"
 #include "Import/SharVehiclePhysicsToolset.h"
+#include "Import/SharVehicleSkeletalAssetToolset.h"
 #include "Materials/SharVehicleMaterialToolset.h"
 #include "Materials/SharWorldMaterialToolset.h"
 
@@ -44,7 +45,7 @@
 
 class FSharImportEditorModule final : public IModuleInterface
 {
-public:
+  public:
     virtual void StartupModule() override
     {
         UToolsetRegistry::RegisterToolsetClass(
@@ -58,6 +59,8 @@ public:
         UToolsetRegistry::RegisterToolsetClass(
             USharVehiclePhysicsToolset::StaticClass());
         UToolsetRegistry::RegisterToolsetClass(
+            USharVehicleSkeletalAssetToolset::StaticClass());
+        UToolsetRegistry::RegisterToolsetClass(
             USharVehicleMaterialToolset::StaticClass());
         UToolsetRegistry::RegisterToolsetClass(
             USharWorldMaterialToolset::StaticClass());
@@ -69,6 +72,8 @@ public:
             USharWorldMaterialToolset::StaticClass());
         UToolsetRegistry::UnregisterToolsetClass(
             USharVehicleMaterialToolset::StaticClass());
+        UToolsetRegistry::UnregisterToolsetClass(
+            USharVehicleSkeletalAssetToolset::StaticClass());
         UToolsetRegistry::UnregisterToolsetClass(
             USharVehiclePhysicsToolset::StaticClass());
         UToolsetRegistry::UnregisterToolsetClass(

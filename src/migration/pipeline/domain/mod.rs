@@ -111,6 +111,7 @@ pub use package::{
     PhaseThreeTextKey,
     UNREAL_IMPORT_MANIFEST_SCHEMA, UNREAL_IMPORT_SUMMARY_SCHEMA,
     UnrealFbxArtifactEvidence, UnrealImportManifest, UnrealNativePlan,
+    UnrealNormalizedModelArtifactEvidence,
     UnrealSourceEvidence, UnrealTargetKind, UnrealUiRasterArtifactEvidence,
     VehicleTuningCommandInvocation, VehicleTuningEvidence,
     VehicleTuningSourceCatalog, VehicleTuningSourceReference,

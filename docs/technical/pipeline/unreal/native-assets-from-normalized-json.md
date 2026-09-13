@@ -69,8 +69,14 @@ verifies LOD 0 through the public render-data boundary before publication.
 
 Create-only publication duplicates the verified pair into generated packages,
 reconnects the mesh to the published Skeleton, verifies native read-back, and
-leaves both packages dirty and unsaved. Persisted save/reload parity remains a
-separate gate before a production plan may replace the FBX compatibility route.
+leaves both packages dirty and unsaved. A real Snake save followed by a cold
+editor restart verified the persisted mesh and Skeleton against the same
+normalized JSON before both probe assets were removed.
+
+Vehicle skeletal plan production now uses the normalized JSON model route and
+the native skeletal toolset. The former vehicle FBX route remains executable as
+deprecated migration compatibility, but it is no longer the generated vehicle
+SkeletalMesh prerequisite.
 
 ## Physics
 

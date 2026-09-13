@@ -34,7 +34,8 @@ use shar_sha256::digest_hex;
 use shar_unreal_conversion::domain::PlanFamily;
 
 use super::{
-    UnrealFbxArtifactEvidence, UnrealImportManifest, UnrealSourceEvidence,
+    UnrealFbxArtifactEvidence, UnrealImportManifest,
+    UnrealNormalizedModelArtifactEvidence, UnrealSourceEvidence,
 };
 use crate::domain::package::PhaseThreePackageIndex;
 
@@ -285,13 +286,12 @@ fn vehicle_composite_evidence() -> Vec<UnrealSourceEvidence> {
         .collect()
 }
 
-fn verified_vehicle_fbx() -> UnrealFbxArtifactEvidence {
-    UnrealFbxArtifactEvidence {
+fn verified_vehicle_model() -> UnrealNormalizedModelArtifactEvidence {
+    UnrealNormalizedModelArtifactEvidence {
         package_id: "extracted-art-cars-vehicle".to_owned(),
-        path: "vehicle-assets/vehicle/vehicle.fbx".to_owned(),
-        size_bytes: 27,
+        path: "vehicle-assets/vehicle/model.normalized.json".to_owned(),
+        size_bytes: 128,
         sha256: "e".repeat(64),
-        fbx_version: 7700,
     }
 }
 
@@ -408,7 +408,7 @@ fn emits_complete_deterministic_plan_bundle() -> Result<(), String> {
     let import = first
         .artifacts()
         .iter()
-        .find(|artifact| artifact.family == PlanFamily::AssetImport)
+        .find(|artifact| artifact.family == PlanFamily::AssetConstruction)
         .ok_or_else(|| "asset import plan is missing".to_owned())?;
     if import.operation_count != 1
         || !import.json.contains(r#""source_format":"image""#)
@@ -456,7 +456,7 @@ fn composite_geometry_reserves_no_false_static_mesh() -> Result<(), String> {
 }
 
 #[test]
-fn vehicle_fbx_prerequisite_is_ready_without_clearing_semantic_blocker()
+fn vehicle_native_prerequisite_is_ready_without_clearing_semantic_blocker()
 -> Result<(), String> {
     let manifest = UnrealImportManifest::build(
         &vehicle_composite_index()?,
@@ -477,12 +477,12 @@ fn vehicle_fbx_prerequisite_is_ready_without_clearing_semantic_blocker()
     let bundle = manifest.plan_bundle_with_complete_generated_catalogs(
         &revision,
         None,
-        Some(&[verified_vehicle_fbx()]),
+        Some(&[verified_vehicle_model()]),
         &[],
     )?;
     if bundle.semantic_blocker_count() != 1 {
         return Err(
-            "vehicle FBX prerequisite incorrectly cleared semantic blocker"
+            "vehicle native prerequisite incorrectly cleared semantic blocker"
                 .to_owned(),
         );
     }
@@ -499,15 +499,18 @@ fn vehicle_fbx_prerequisite_is_ready_without_clearing_semantic_blocker()
     let import = bundle
         .artifacts()
         .iter()
-        .find(|artifact| artifact.family == PlanFamily::AssetImport)
+        .find(|artifact| artifact.family == PlanFamily::AssetConstruction)
         .ok_or_else(|| {
-            "vehicle prerequisite import plan is missing".to_owned()
+            "vehicle prerequisite construction plan is missing".to_owned()
         })?;
     for expected in [
         "\"package_identity\":\"extracted-art-cars-vehicle\"",
-        "\"source_path\":\"vehicle-assets/vehicle/vehicle.fbx\"",
+        concat!(
+            "\"source_path\":\"vehicle-assets/vehicle/",
+            "model.normalized.json\"",
+        ),
         "\"target_class\":\"SkeletalMesh\"",
-        "\"import_profile\":\"shar-fbx-vehicle-skeletal-v1\"",
+        "\"import_profile\":\"shar-native-vehicle-skeletal-v1\"",
         "\"readiness\":\"ready\"",
         concat!(
             "/Game/Generated/SHAR/cars/extracted_art_cars_vehicle_Skeletal/",
@@ -515,22 +518,24 @@ fn vehicle_fbx_prerequisite_is_ready_without_clearing_semantic_blocker()
         ),
     ] {
         if !import.json.contains(expected) {
-            return Err(format!("vehicle prerequisite import lost: {expected}"));
+            return Err(format!(
+                "vehicle prerequisite construction lost: {expected}"
+            ));
         }
     }
     Ok(())
 }
 
 #[test]
-fn vehicle_fbx_prerequisite_rejects_non_vehicle_artifact_path()
+fn vehicle_native_prerequisite_rejects_non_vehicle_artifact_path()
 -> Result<(), String> {
     let manifest = UnrealImportManifest::build(
         &vehicle_composite_index()?,
         vehicle_composite_evidence(),
     )?;
     let revision = digest_hex(manifest.to_jsonl().as_bytes());
-    let mut artifact = verified_vehicle_fbx();
-    artifact.path = "fbx-assets/vehicle/vehicle.fbx".to_owned();
+    let mut artifact = verified_vehicle_model();
+    artifact.path = "vehicle-assets/other/model.normalized.json".to_owned();
     let result = manifest.plan_bundle_with_complete_generated_catalogs(
         &revision,
         None,
@@ -538,9 +543,11 @@ fn vehicle_fbx_prerequisite_rejects_non_vehicle_artifact_path()
         &[],
     );
     let Err(error) = result else {
-        return Err("non-vehicle prerequisite path was accepted".to_owned());
+        return Err(
+            "non-canonical native prerequisite path was accepted".to_owned(),
+        );
     };
-    if error != "vehicle FBX prerequisite path is not canonical" {
+    if error != "vehicle normalized-model prerequisite path is not canonical" {
         return Err(format!("unexpected vehicle path failure: {error}"));
     }
     Ok(())
