@@ -38,7 +38,7 @@ use super::mission_music_context::source_level;
 use crate::domain::{
     MissionCharacterCatalogReference, MissionObjectiveDirective,
     MissionReferenceCatalog, PhaseThreePackageIndex, PipelineError,
-    PipelineOutcome, compile_mission_scope_graphs,
+    PipelineOutcome,
     preflight_mission_objective_semantics,
 };
 
@@ -154,13 +154,8 @@ pub(super) fn preflight_mission_dialogue_info(
 ) -> PipelineOutcome<MissionDialogueInfoReport> {
     let mut bindings = Vec::new();
     for snapshot in snapshots {
-        let scopes = compile_mission_scope_graphs(snapshot.evidence())
-            .map_err(|error| {
-                PipelineError::new(format!(
-                    "mission dialogue-info scope failed: {error}"
-                ))
-            })?;
-        let objectives = preflight_mission_objective_semantics(&scopes)
+        let scopes = snapshot.scopes();
+        let objectives = preflight_mission_objective_semantics(scopes)
             .map_err(|error| {
                 PipelineError::new(format!(
                     "mission dialogue-info objective failed: {error}"

@@ -44,7 +44,7 @@ use super::mission_locator_context::MissionLocatorScriptSnapshot;
 use crate::domain::{
     MissionStageDirective, PackageRole, PhaseThreePackageIndex,
     PhaseThreePackageMember, PhaseThreePackageRow, PipelineError,
-    PipelineOutcome, compile_mission_scope_graphs,
+    PipelineOutcome,
     preflight_mission_stage_semantics,
 };
 
@@ -166,13 +166,8 @@ pub(super) fn preflight_mission_music_states(
     let mut cache = BTreeMap::<u8, LevelMusicMetadata>::new();
     let mut bindings = Vec::new();
     for snapshot in snapshots {
-        let scopes = compile_mission_scope_graphs(snapshot.evidence())
-            .map_err(|error| {
-                PipelineError::new(format!(
-                    "mission music scope preflight failed: {error}"
-                ))
-            })?;
-        let stages = preflight_mission_stage_semantics(&scopes)
+        let scopes = snapshot.scopes();
+        let stages = preflight_mission_stage_semantics(scopes)
             .map_err(|error| {
                 PipelineError::new(format!(
                     "mission music stage preflight failed: {error}"

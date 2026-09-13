@@ -118,9 +118,12 @@ fn snapshot(
     mission_id: Option<&str>,
     roots: &[&str],
 ) -> Result<MissionLocatorScriptSnapshot, String> {
+    let evidence = mission_evidence(mission_id)?;
+    let scopes = crate::domain::compile_mission_scope_graphs(&evidence)?;
     Ok(MissionLocatorScriptSnapshot::new(
         path.to_owned(),
-        mission_evidence(mission_id)?,
+        evidence,
+        scopes,
         roots.iter().map(|root| (*root).to_owned()).collect(),
     ))
 }
@@ -178,9 +181,12 @@ fn dynamic_snapshot(
     mission_id: &str,
     source_data: &str,
 ) -> Result<MissionLocatorScriptSnapshot, String> {
+    let evidence = dynamic_mission_evidence(mission_id, source_data)?;
+    let scopes = crate::domain::compile_mission_scope_graphs(&evidence)?;
     Ok(MissionLocatorScriptSnapshot::new(
         path.to_owned(),
-        dynamic_mission_evidence(mission_id, source_data)?,
+        evidence,
+        scopes,
         Vec::new(),
     ))
 }
@@ -519,9 +525,12 @@ fn player_vehicle_only_evidence() -> Result<MissionScriptEvidence, String> {
 fn level_setup_snapshot(
     path: &str,
 ) -> Result<MissionLocatorScriptSnapshot, String> {
+    let evidence = level_setup_evidence()?;
+    let scopes = crate::domain::compile_mission_scope_graphs(&evidence)?;
     Ok(MissionLocatorScriptSnapshot::new(
         path.to_owned(),
-        level_setup_evidence()?,
+        evidence,
+        scopes,
         Vec::new(),
     ))
 }
@@ -630,9 +639,12 @@ fn selected_mission_remembers_level_setup_sibling() -> Result<(), String> {
 
 #[test]
 fn player_vehicle_only_source_is_not_level_setup() -> Result<(), String> {
+    let evidence = player_vehicle_only_evidence()?;
+    let scopes = crate::domain::compile_mission_scope_graphs(&evidence)?;
     let snapshots = vec![MissionLocatorScriptSnapshot::new(
         "extracted/game/scripts/missions/level01/m6i.mfk.json".to_owned(),
-        player_vehicle_only_evidence()?,
+        evidence,
+        scopes,
         Vec::new(),
     )];
     let contexts = build_level_locator_source_contexts(&snapshots)?;
