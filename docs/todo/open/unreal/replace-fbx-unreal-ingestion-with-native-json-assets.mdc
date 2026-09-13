@@ -64,6 +64,26 @@ payload before implementing the native Unreal constructor.
 only after the normalized model payload has a deterministic schema, provenance,
 hashes, and representative vehicle fixtures.
 
+## 2026-09-12 normalized vehicle model checkpoint
+
+Vehicle preparation now publishes `model.normalized.json` before the deprecated
+FBX target-basis rebase. Schema `shar.normalized-skeletal-model.v1` retains the
+complete render mesh groups, source basis, skeleton hierarchy and rest matrices,
+skin influences, source rig metadata, and package-local animation samples.
+
+Two fresh full-corpus exports produced 88 standalone vehicle models from the 89
+car P3Ds, excluding only the shared `common` dependency package. All 88 model
+payloads and the root catalog were byte-identical between runs. Snake wheel
+bones remained in source `+X right, +Y up, +Z forward` coordinates, proving the
+Chaos `(Z,X,Y)` conversion did not leak into normalized evidence.
+
+`prepare-unreal` now verifies each normalized model path, bytes, SHA-256,
+schema,
+identity, source coordinate contract, array counts, and the explicit absence of
+target-basis conversion. FBX remains required only by the current compatibility
+import route. The next implementation checkpoint is the direct native Skeletal
+Mesh and Skeleton constructor consuming this verified model payload.
+
 ## Dependencies
 
 The normalized extraction and provenance ledgers remain source authority. Native

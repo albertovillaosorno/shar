@@ -67,8 +67,13 @@ pub(super) fn write_root_catalog(
                 "original game P3D packages selected by the generated package ",
                 "index"
             ),
-            "fbx": [
-                "render geometry split into semantic objects",
+            "normalized_model": [
+                "complete skinned render geometry in declared source basis",
+                "authored render skeleton and bind transforms",
+                "skin influences and package-local skeletal animation clips"
+            ],
+            "fbx_compatibility": [
+                "deprecated render geometry interchange",
                 "authored render skeleton and component pivots",
                 "package-local skeletal animation clips",
                 "external normal-state texture bindings",
@@ -97,6 +102,7 @@ pub(super) fn write_root_catalog(
         },
         "counts": {
             "vehicles": records.len(),
+            "normalized_models": records.len(),
             "freshly_extracted_car_packages": extracted_packages,
             "parts": records
                 .iter()
@@ -191,7 +197,16 @@ fn vehicle_json(record: &VehicleRecord) -> Value {
         "vehicle": record.vehicle,
         "package_id": record.package_id,
         "subcategory": record.subcategory,
+        "normalized_model": {
+            "path": record.normalized_model.path,
+            "bytes": record.normalized_model.bytes,
+            "sha256": record.normalized_model.sha256,
+            "parts": record.normalized_model.parts,
+            "bones": record.normalized_model.bones,
+            "animations": record.normalized_model.animations
+        },
         "fbx": {
+            "deprecated": true,
             "path": record.fbx_path,
             "bytes": record.fbx_bytes,
             "sha256": record.fbx_sha256,

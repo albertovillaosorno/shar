@@ -196,6 +196,18 @@ pub(super) fn export_vehicle(
         &separated,
     )?;
     ground_vehicle_animations(&mut animations, &root_bone, ground_offset)?;
+    let grounding = GroundingRecord {
+        source: grounding_source,
+        offset_y: ground_offset,
+        root_bone,
+    };
+    let normalized_model =
+        super::normalized_model::publish_normalized_skeletal_model(
+            &vehicle_dir,
+            &separated,
+            &animations,
+            &grounding,
+        )?;
     rebase_vehicle_for_chaos(&mut separated, &mut animations)?;
     let fbx_path = vehicle_dir.join(format!("{vehicle}.fbx"));
     let summary = write_binary_character_fbx_with_root_policy(
@@ -255,11 +267,8 @@ pub(super) fn export_vehicle(
         })?,
         fbx_sha256: digest_hex(&fbx_payload),
         summary,
-        grounding: GroundingRecord {
-            source: grounding_source,
-            offset_y: ground_offset,
-            root_bone,
-        },
+        normalized_model,
+        grounding,
         parts,
         deferred_geometry,
         hidden_wheel_proxies,

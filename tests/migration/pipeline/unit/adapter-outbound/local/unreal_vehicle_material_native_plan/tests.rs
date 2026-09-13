@@ -35,7 +35,8 @@ use serde_json::Value;
 
 use super::plan_vehicle_material_native_construction;
 use crate::adapters::driven::local::unreal_vehicle_catalog::{
-    VerifiedVehicleFbxArtifact, VerifiedVehicleMaterialArtifact,
+    VerifiedNormalizedModelArtifact, VerifiedVehicleFbxArtifact,
+    VerifiedVehicleMaterialArtifact,
     VerifiedVehicleMaterialRaster, VerifiedVehicleMaterialSemantics,
 };
 use crate::domain::UnrealFbxArtifactEvidence;
@@ -50,6 +51,14 @@ fn vehicle(
             sha256: "a".repeat(64),
             size_bytes: 10,
             fbx_version: 7_700,
+        },
+        normalized_model: VerifiedNormalizedModelArtifact {
+            path: "vehicle-assets/sedana/model.normalized.json".to_owned(),
+            size_bytes: 20,
+            sha256: "9".repeat(64),
+            parts: 1,
+            bones: 1,
+            animations: 0,
         },
         subcategory: "sedanA".to_owned(),
         render_root_bone: "sedanA".to_owned(),

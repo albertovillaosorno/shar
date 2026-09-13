@@ -40,6 +40,7 @@ use crate::domain::{PipelineError, StageReport};
 
 mod catalog;
 mod model;
+mod normalized_model;
 mod prepare;
 mod source;
 
@@ -82,8 +83,8 @@ pub(super) fn export_vehicle_catalog(
                 files,
                 bytes,
                 note: format!(
-                    "published {vehicles} semantically separated vehicle \
-                         FBX files"
+                    "published {vehicles} normalized vehicle models with \
+                         deprecated FBX compatibility artifacts"
                 ),
             })
         },
@@ -127,7 +128,7 @@ fn build_catalog(
     let authority = VehicleTextureAuthority::build(&index, &normalized)?;
     let mut records = Vec::<VehicleRecord>::with_capacity(packages.len());
     let mut progress =
-        StageProgress::begin("vehicle FBX assembly", packages.len());
+        StageProgress::begin("vehicle model assembly", packages.len());
     for package in packages {
         check_cancellation()?;
         progress.advance(&package.package_id);

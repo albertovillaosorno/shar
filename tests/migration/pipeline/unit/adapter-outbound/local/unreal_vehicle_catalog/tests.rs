@@ -171,6 +171,27 @@ fn headlight_bytes() -> &'static [u8] {
 "edge_range":0.0,"perspective_info_version":null,"perspective":false}]}"#
 }
 
+fn normalized_model_bytes() -> Result<Vec<u8>, String> {
+    serde_json::to_vec_pretty(&json!({
+        "schema": "shar.normalized-skeletal-model.v1",
+        "model_id": "sedana",
+        "coordinate_system": {
+            "handedness": "right-handed",
+            "right_axis": "+X",
+            "up_axis": "+Y",
+            "forward_axis": "+Z",
+            "unit": "meter"
+        },
+        "normalization": {
+            "target_basis_applied": false
+        },
+        "bones": [{"bone_id": "sedanA"}],
+        "parts": [{"mesh_id": "body"}],
+        "animations": []
+    }))
+    .map_err(|error| error.to_string())
+}
+
 fn write_catalog(
     root: &Path,
     declared_size: Option<u64>,
@@ -179,6 +200,9 @@ fn write_catalog(
     let vehicle_dir = root.join("sedana");
     fs::create_dir_all(&vehicle_dir).map_err(|error| error.to_string())?;
     fs::write(vehicle_dir.join("sedana.fbx"), &bytes)
+        .map_err(|error| error.to_string())?;
+    let normalized_model = normalized_model_bytes()?;
+    fs::write(vehicle_dir.join("model.normalized.json"), &normalized_model)
         .map_err(|error| error.to_string())?;
     let shader_dir = vehicle_dir.join("shaders");
     fs::create_dir_all(&shader_dir).map_err(|error| error.to_string())?;
@@ -212,6 +236,7 @@ fn write_catalog(
         "boundary": {},
         "counts": {
             "vehicles": 1,
+            "normalized_models": 1,
             "material_slots": 1,
             "parts": 1,
             "headlight_billboard_sidecars": 1,
@@ -228,7 +253,16 @@ fn write_catalog(
                 "offset_y": 0.75,
                 "root_bone": "sedanA"
             },
+            "normalized_model": {
+                "path": "model.normalized.json",
+                "bytes": normalized_model.len(),
+                "sha256": digest_hex(&normalized_model),
+                "parts": 1,
+                "bones": 1,
+                "animations": 0
+            },
             "fbx": {
+                "deprecated": true,
                 "path": "sedana/sedana.fbx",
                 "bytes": declared_size.unwrap_or_else(|| {
                     u64::try_from(bytes.len()).unwrap_or(u64::MAX)
@@ -335,6 +369,63 @@ simulation_physics_object/sedanA.json",
     .map_err(|error| error.to_string())
 }
 
+
+fn rewrite_normalized_target_basis(
+    root: &Path,
+    target_basis_applied: bool,
+) -> Result<(), String> {
+    let model_path = root.join("sedana/model.normalized.json");
+    let mut model: serde_json::Value = serde_json::from_slice(
+        &fs::read(&model_path).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    let target_basis = model
+        .pointer_mut("/normalization/target_basis_applied")
+        .ok_or_else(|| {
+            "normalized fixture has no target basis flag".to_owned()
+        })?;
+    *target_basis = target_basis_applied.into();
+    let model_bytes =
+        serde_json::to_vec_pretty(&model).map_err(|error| error.to_string())?;
+    fs::write(&model_path, &model_bytes)
+        .map_err(|error| error.to_string())?;
+
+    let catalog_path = root.join("vehicles.catalog.json");
+    let mut catalog: serde_json::Value = serde_json::from_slice(
+        &fs::read(&catalog_path).map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())?;
+    let record = catalog
+        .pointer_mut("/vehicles/0/normalized_model")
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or_else(|| "catalog fixture has no normalized model".to_owned())?;
+    if record
+        .insert(
+            "bytes".to_owned(),
+            u64::try_from(model_bytes.len())
+                .map_err(|error| error.to_string())?
+                .into(),
+        )
+        .is_none()
+    {
+        return Err("catalog fixture has no normalized byte count".to_owned());
+    }
+    if record
+        .insert(
+            "sha256".to_owned(),
+            digest_hex(&model_bytes).into(),
+        )
+        .is_none()
+    {
+        return Err("catalog fixture has no normalized digest".to_owned());
+    }
+    fs::write(
+        &catalog_path,
+        serde_json::to_vec_pretty(&catalog)
+            .map_err(|error| error.to_string())?,
+    )
+    .map_err(|error| error.to_string())
+}
 
 fn rewrite_headlight_bones(root: &Path, bones: &[&str]) -> Result<(), String> {
     let path = root.join("vehicles.catalog.json");
@@ -476,6 +567,11 @@ fn verifies_vehicle_fbx_without_promoting_other_semantics()
     if row.evidence.package_id != "extracted-art-cars-sedana"
         || row.evidence.path != "vehicle-assets/sedana/sedana.fbx"
         || row.evidence.fbx_version != FBX_VERSION
+        || row.normalized_model.path
+            != "vehicle-assets/sedana/model.normalized.json"
+        || row.normalized_model.parts != 1
+        || row.normalized_model.bones != 1
+        || row.normalized_model.animations != 0
         || row.subcategory != "cars/traffic-variants/sedana"
         || headlight.identity != "headlightShape"
         || headlight.shader_identity != "headlight_m"
@@ -568,6 +664,28 @@ fn noncanonical_headlight_hardpoints_fail_closed() -> Result<(), String> {
                 "noncanonical hardpoints reported wrong failure: {error}"
             ));
         }
+    }
+    Ok(())
+}
+
+#[test]
+fn target_basis_in_normalized_model_fails_closed() -> Result<(), String> {
+    let root = TempRoot::new("normalized-target-basis")?;
+    write_catalog(&root.0, None)?;
+    rewrite_normalized_target_basis(&root.0, true)?;
+    let error = match verified_vehicle_fbx_catalog(&root.0) {
+        Ok(_value) => {
+            return Err(
+                "target-rebased normalized model unexpectedly verified"
+                    .to_owned(),
+            );
+        },
+        Err(error) => error,
+    };
+    if !error.to_string().contains("already applies target basis") {
+        return Err(format!(
+            "target-basis drift reported the wrong failure: {error}"
+        ));
     }
     Ok(())
 }
