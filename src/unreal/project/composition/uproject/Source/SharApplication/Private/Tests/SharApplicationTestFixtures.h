@@ -47,6 +47,7 @@ enum class ESharApplicationCatalogShape : uint8
     Valid,
     BrokenReciprocalEdge,
     RecoveryToExit,
+    MissingOverlayReturn,
 };
 
 struct FSharApplicationModeFixture
@@ -185,14 +186,36 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
     Modes.Add(MakeApplicationMode({
         .ModeId = FName(TEXT("gameplay")),
         .ModeKind = ESharApplicationModeKind::Active,
-        .PredecessorIds = {FName(TEXT("loading_gameplay"))},
-        .SuccessorIds = {FName(TEXT("exit"))},
+        .PredecessorIds = {
+            FName(TEXT("loading_gameplay")),
+            FName(TEXT("pause")),
+        },
+        .SuccessorIds = {
+            FName(TEXT("pause")),
+            FName(TEXT("exit")),
+        },
         .RequiredServiceIds = {},
         .SuccessModeId = FName(),
         .RecoveryModeId = FName(TEXT("front_end")),
         .ReturnModeId = FName(),
         .WorldPolicy = ESharApplicationWorldPolicy::Own,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::Durable,
+        .bDemonstrationMode = false,
+    }));
+    Modes.Add(MakeApplicationMode({
+        .ModeId = FName(TEXT("pause")),
+        .ModeKind = ESharApplicationModeKind::Overlay,
+        .PredecessorIds = {FName(TEXT("gameplay"))},
+        .SuccessorIds = {FName(TEXT("gameplay"))},
+        .RequiredServiceIds = {},
+        .SuccessModeId = FName(),
+        .RecoveryModeId = FName(TEXT("front_end")),
+        .ReturnModeId = Shape
+                == ESharApplicationCatalogShape::MissingOverlayReturn
+            ? FName(TEXT("missing_gameplay"))
+            : FName(TEXT("gameplay")),
+        .WorldPolicy = ESharApplicationWorldPolicy::Retain,
+        .ProgressionPolicy = ESharApplicationProgressionPolicy::ReadOnly,
         .bDemonstrationMode = false,
     }));
     Modes.Add(MakeApplicationMode({
