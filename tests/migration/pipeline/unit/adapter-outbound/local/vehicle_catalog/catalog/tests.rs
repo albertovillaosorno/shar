@@ -37,8 +37,8 @@ use super::super::model::{
     EffectAnimationRecord, EffectControllerRecord,
     EffectTextureOccurrenceRecord, EffectTextureReferenceRecord,
     GroundingRecord, HeadlightBillboardMaterialRecord,
-    HeadlightBillboardSidecarRecord, PhysicsPrimitiveRecord,
-    PhysicsRigRecord,
+    HeadlightBillboardSidecarRecord, NormalizedModelArtifactRecord,
+    PhysicsPrimitiveRecord, PhysicsRigRecord,
     PhysicsSidecarRecord, VehicleRecord,
 };
 use super::vehicle_json;
@@ -59,6 +59,14 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
             materials: 0,
             textures: 0,
             animations: 0,
+        },
+        normalized_model: NormalizedModelArtifactRecord {
+            path: "model.normalized.json".to_owned(),
+            bytes: 1234,
+            sha256: "a".repeat(64),
+            parts: 7,
+            bones: 9,
+            animations: 2,
         },
         grounding: GroundingRecord {
             source: "road-wheel-surfaces",
@@ -141,6 +149,26 @@ fn vehicle_catalog_records_source_backed_grounding() -> Result<(), String> {
     };
 
     let value = vehicle_json(&record);
+    let normalized = value
+        .get("normalized_model")
+        .and_then(serde_json::Value::as_object)
+        .ok_or_else(|| "vehicle catalog omitted normalized model".to_owned())?;
+    if normalized.get("path") != Some(&"model.normalized.json".into())
+        || normalized.get("bytes") != Some(&1234.into())
+        || normalized.get("sha256") != Some(&"a".repeat(64).into())
+        || normalized.get("parts") != Some(&7.into())
+        || normalized.get("bones") != Some(&9.into())
+        || normalized.get("animations") != Some(&2.into())
+    {
+        return Err("normalized model evidence is incomplete".to_owned());
+    }
+    if value
+        .get("fbx")
+        .and_then(|fbx| fbx.get("deprecated"))
+        != Some(&true.into())
+    {
+        return Err("FBX compatibility artifact is not deprecated".to_owned());
+    }
     let grounding = value
         .get("grounding")
         .and_then(serde_json::Value::as_object)

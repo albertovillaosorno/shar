@@ -277,6 +277,23 @@ pub(super) struct PhysicsSidecarRecord {
     pub(super) sha256: String,
 }
 
+/// One complete engine-neutral normalized skeletal-model artifact.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct NormalizedModelArtifactRecord {
+    /// Vehicle-relative normalized model path.
+    pub(super) path: String,
+    /// Exact normalized model byte length.
+    pub(super) bytes: u64,
+    /// Exact normalized model SHA-256 digest.
+    pub(super) sha256: String,
+    /// Number of retained skinned mesh parts.
+    pub(super) parts: usize,
+    /// Number of retained skeleton bones.
+    pub(super) bones: usize,
+    /// Number of retained skeletal animation clips.
+    pub(super) animations: usize,
+}
+
 /// One completed vehicle artifact and catalog record.
 #[derive(Clone, Debug)]
 pub(super) struct VehicleRecord {
@@ -294,7 +311,9 @@ pub(super) struct VehicleRecord {
     pub(super) fbx_sha256: String,
     /// Binary FBX object-family summary.
     pub(super) summary: CharacterBinaryFbxSummary,
-    /// Source-backed vertical normalization applied to this FBX.
+    /// Complete normalized model evidence used by native construction.
+    pub(super) normalized_model: NormalizedModelArtifactRecord,
+    /// Source-backed vertical normalization applied during model preparation.
     pub(super) grounding: GroundingRecord,
     /// Deterministically ordered semantic part records.
     pub(super) parts: Vec<PartRecord>,

@@ -38,7 +38,8 @@ use super::{
     is_simple_unlit_graph_candidate, render_vehicle_material_plan,
 };
 use crate::adapters::driven::local::unreal_vehicle_catalog::{
-    VerifiedVehicleFbxArtifact, VerifiedVehicleHeadlightBillboardArtifact,
+    VerifiedNormalizedModelArtifact, VerifiedVehicleFbxArtifact,
+    VerifiedVehicleHeadlightBillboardArtifact,
     VerifiedVehicleHeadlightMaterialArtifact, VerifiedVehicleMaterialArtifact,
     VerifiedVehicleMaterialRaster, VerifiedVehicleMaterialSemantics,
     VerifiedVehiclePresentationPart,
@@ -83,6 +84,14 @@ fn vehicle() -> VerifiedVehicleFbxArtifact {
             size_bytes: 10,
             sha256: "a".repeat(64),
             fbx_version: 7_700,
+        },
+        normalized_model: VerifiedNormalizedModelArtifact {
+            path: "vehicle-assets/sedana/model.normalized.json".to_owned(),
+            size_bytes: 20,
+            sha256: "9".repeat(64),
+            parts: 1,
+            bones: 1,
+            animations: 0,
         },
         subcategory: "cars/road".to_owned(),
         render_root_bone: "sedanA".to_owned(),

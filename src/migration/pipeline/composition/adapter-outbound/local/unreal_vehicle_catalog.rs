@@ -9,11 +9,12 @@
 //
 // Boundary-Contract:
 // - Owns:
-//   - Verification of generated vehicle FBX catalog evidence for Unreal plans.
+//   - Verification of generated vehicle model catalog evidence for Unreal
+//     plans.
 // - Must-Not:
 //   - Infer gameplay construction or collapse vehicle support packages.
 // - Allows:
-//   - Read the deterministic vehicle catalog and verify its FBX payload bytes.
+//   - Verify normalized model evidence plus deprecated FBX payload bytes.
 // - Split-When:
 //   - Split when vehicle plan promotion gains an independent lifecycle.
 // - Merge-When:
@@ -30,7 +31,7 @@
 //   - Missing roots remain absent; malformed or stale roots fail closed.
 //
 
-//! Generated vehicle FBX catalog verification.
+//! Generated vehicle model catalog verification.
 
 // CSpell:ignore ENVB
 
@@ -57,6 +58,7 @@ use crate::domain::{
 const CATALOG_FILE: &str = "vehicles.catalog.json";
 const CATALOG_SCHEMA: &str = "shar.vehicle-catalog.v8";
 const LOGICAL_ROOT: &str = "vehicle-assets";
+const NORMALIZED_MODEL_SCHEMA: &str = "shar.normalized-skeletal-model.v1";
 
 /// Effective semantic flags for one exact vehicle material slot.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -190,10 +192,22 @@ pub(super) struct VerifiedVehiclePhysicsRig {
     pub primitives: Vec<VerifiedVehiclePhysicsPrimitive>,
 }
 
+/// One verified engine-neutral skeletal-model payload.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(super) struct VerifiedNormalizedModelArtifact {
+    pub path: String,
+    pub size_bytes: u64,
+    pub sha256: String,
+    pub parts: u64,
+    pub bones: u64,
+    pub animations: u64,
+}
+
 /// One verified vehicle FBX plus its exact package subcategory and physics.
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct VerifiedVehicleFbxArtifact {
     pub evidence: UnrealFbxArtifactEvidence,
+    pub normalized_model: VerifiedNormalizedModelArtifact,
     pub subcategory: String,
     pub render_root_bone: String,
     pub material_slots: Vec<VerifiedVehicleMaterialArtifact>,
@@ -262,6 +276,21 @@ pub(super) fn verified_vehicle_fbx_catalog(
     if declared != u64::try_from(vehicles.len()).unwrap_or(u64::MAX) {
         return Err(PipelineError::new(
             "generated vehicle catalog vehicle count is stale",
+        ));
+    }
+    let declared_normalized_models = object
+        .get("counts")
+        .and_then(Value::as_object)
+        .and_then(|counts| counts.get("normalized_models"))
+        .and_then(Value::as_u64)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated vehicle catalog has no normalized-model count",
+            )
+        })?;
+    if declared_normalized_models != declared {
+        return Err(PipelineError::new(
+            "generated vehicle catalog normalized-model count is stale",
         ));
     }
     let declared_material_slots = object
@@ -357,11 +386,21 @@ pub(super) fn verified_vehicle_fbx_catalog(
             })?;
         let render_root_bone = required_string(grounding, "root_bone")?;
         validate_source_identity(&render_root_bone)?;
+        let normalized_model = verify_normalized_vehicle_model(
+            root,
+            &vehicle,
+            row.get("normalized_model"),
+        )?;
         let fbx = row.get("fbx").and_then(Value::as_object).ok_or_else(|| {
             PipelineError::new(
                 "generated vehicle catalog row has no FBX record",
             )
         })?;
+        if fbx.get("deprecated").and_then(Value::as_bool) != Some(true) {
+            return Err(PipelineError::new(
+                "generated vehicle FBX is not marked deprecated",
+            ));
+        }
         let relative_path = required_string(fbx, "path")?;
         validate_relative_path(&relative_path)?;
         let expected_path = format!("{vehicle}/{vehicle}.fbx");
@@ -491,6 +530,7 @@ pub(super) fn verified_vehicle_fbx_catalog(
                 sha256: expected_sha256,
                 fbx_version: version,
             },
+            normalized_model,
             subcategory,
             render_root_bone,
             material_slots,
@@ -534,6 +574,122 @@ pub(super) fn verified_vehicle_fbx_catalog(
         left.evidence.package_id.cmp(&right.evidence.package_id)
     });
     Ok(Some(result))
+}
+
+fn verify_normalized_vehicle_model(
+    root: &Path,
+    vehicle: &str,
+    value: Option<&Value>,
+) -> PipelineOutcome<VerifiedNormalizedModelArtifact> {
+    let model = value.and_then(Value::as_object).ok_or_else(|| {
+        PipelineError::new(
+            "generated vehicle catalog row has no normalized model",
+        )
+    })?;
+    let relative_path = required_string(model, "path")?;
+    validate_relative_path(&relative_path)?;
+    if relative_path != "model.normalized.json" {
+        return Err(PipelineError::new(
+            "generated vehicle normalized-model path is not canonical",
+        ));
+    }
+    let size_bytes = required_u64(model, "bytes")?;
+    let expected_sha256 = required_string(model, "sha256")?;
+    validate_digest(&expected_sha256)?;
+    let parts = required_u64(model, "parts")?;
+    let bones = required_u64(model, "bones")?;
+    let animations = required_u64(model, "animations")?;
+    let path = root.join(vehicle).join(&relative_path);
+    validate_regular_file(&path, "generated normalized vehicle model")?;
+    validate_ancestor_chain(root, &path)?;
+    let bytes = fs::read(&path).map_err(|error| {
+        io_error("read generated normalized vehicle model", &error)
+    })?;
+    if u64::try_from(bytes.len()).unwrap_or(u64::MAX) != size_bytes
+        || digest_hex(&bytes) != expected_sha256
+    {
+        return Err(PipelineError::new(
+            "generated normalized vehicle model bytes do not match catalog",
+        ));
+    }
+    let payload = serde_json::from_slice::<Value>(&bytes).map_err(|_error| {
+        PipelineError::new("generated normalized vehicle model is invalid JSON")
+    })?;
+    let payload = payload.as_object().ok_or_else(|| {
+        PipelineError::new(
+            "generated normalized vehicle model is not an object",
+        )
+    })?;
+    if payload.get("schema").and_then(Value::as_str)
+        != Some(NORMALIZED_MODEL_SCHEMA)
+        || payload.get("model_id").and_then(Value::as_str) != Some(vehicle)
+    {
+        return Err(PipelineError::new(
+            "generated normalized vehicle model identity is invalid",
+        ));
+    }
+    let coordinates = payload
+        .get("coordinate_system")
+        .and_then(Value::as_object)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated normalized vehicle model has no coordinate contract",
+            )
+        })?;
+    if coordinates.get("handedness").and_then(Value::as_str)
+        != Some("right-handed")
+        || coordinates.get("right_axis").and_then(Value::as_str) != Some("+X")
+        || coordinates.get("up_axis").and_then(Value::as_str) != Some("+Y")
+        || coordinates.get("forward_axis").and_then(Value::as_str) != Some("+Z")
+        || coordinates.get("unit").and_then(Value::as_str) != Some("meter")
+    {
+        return Err(PipelineError::new(
+            "generated normalized vehicle model coordinate contract is invalid",
+        ));
+    }
+    let normalization = payload
+        .get("normalization")
+        .and_then(Value::as_object)
+        .ok_or_else(|| {
+            PipelineError::new(
+                "generated normalized vehicle model has no normalization \
+record",
+            )
+        })?;
+    if normalization
+        .get("target_basis_applied")
+        .and_then(Value::as_bool)
+        != Some(false)
+    {
+        return Err(PipelineError::new(
+            "generated normalized vehicle model already applies target basis",
+        ));
+    }
+    for (field, declared) in [
+        ("parts", parts),
+        ("bones", bones),
+        ("animations", animations),
+    ] {
+        let actual = payload
+            .get(field)
+            .and_then(Value::as_array)
+            .map_or(u64::MAX, |rows| {
+                u64::try_from(rows.len()).unwrap_or(u64::MAX)
+            });
+        if actual != declared {
+            return Err(PipelineError::new(
+                "generated normalized vehicle model count is stale",
+            ));
+        }
+    }
+    Ok(VerifiedNormalizedModelArtifact {
+        path: format!("{LOGICAL_ROOT}/{vehicle}/{relative_path}"),
+        size_bytes,
+        sha256: expected_sha256,
+        parts,
+        bones,
+        animations,
+    })
 }
 
 fn verify_vehicle_material_slots(

@@ -35,6 +35,13 @@ mirror or axis swap cannot pass through symmetric geometry unnoticed.
 
 ## Meshes and rigs
 
+Vehicle model publication uses `shar.normalized-skeletal-model.v1`. The payload
+is emitted before any deprecated FBX or Chaos target-basis conversion and pins
+its coordinate contract as right-handed meters with `+X` right, `+Y` up, and
+`+Z` forward. It carries complete mesh groups, material identities, skeleton
+rest matrices, skin influences, source rig metadata, and skeletal animation
+samples. Catalog records bind each payload by exact bytes and SHA-256.
+
 Static and skeletal mesh constructors consume normalized vertices, indices,
 normals, texture coordinates, colors, material ownership, skeleton hierarchy,
 bind transforms, skin influences, and semantic component identities directly.
