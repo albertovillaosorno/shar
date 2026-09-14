@@ -115,11 +115,19 @@ USharRuntimeAssetLoader::GetLoadedApplicationModes() const
     return Modes;
 }
 
+FSharRuntimeAssetLoadTerminalDelegate& USharRuntimeAssetLoader::OnTerminal()
+{
+    return TerminalDelegate;
+}
+
 void USharRuntimeAssetLoader::HandleCatalogLoaded()
 {
-    if (Status != ESharRuntimeAssetLoadStatus::LoadingCatalog
-        || AssetManager == nullptr
-        || RootCatalog == nullptr)
+    if (bTerminalPublished
+        || Status != ESharRuntimeAssetLoadStatus::LoadingCatalog)
+    {
+        return;
+    }
+    if (AssetManager == nullptr || RootCatalog == nullptr)
     {
         Fail(ESharRuntimeAssetLoadFailure::CatalogLoadFailed);
         return;
@@ -162,8 +170,12 @@ void USharRuntimeAssetLoader::HandleCatalogLoaded()
 
 void USharRuntimeAssetLoader::HandleApplicationModesLoaded()
 {
-    if (Status != ESharRuntimeAssetLoadStatus::LoadingApplicationModes
-        || AssetManager == nullptr)
+    if (bTerminalPublished
+        || Status != ESharRuntimeAssetLoadStatus::LoadingApplicationModes)
+    {
+        return;
+    }
+    if (AssetManager == nullptr)
     {
         Fail(ESharRuntimeAssetLoadFailure::ApplicationModeLoadFailed);
         return;
@@ -186,10 +198,26 @@ void USharRuntimeAssetLoader::HandleApplicationModesLoaded()
     }
     Failure = ESharRuntimeAssetLoadFailure::None;
     Status = ESharRuntimeAssetLoadStatus::Ready;
+    PublishTerminal();
+}
+
+void USharRuntimeAssetLoader::PublishTerminal()
+{
+    if (bTerminalPublished)
+    {
+        return;
+    }
+    bTerminalPublished = true;
+    TerminalDelegate.Broadcast(Status, Failure);
 }
 
 void USharRuntimeAssetLoader::Fail(const ESharRuntimeAssetLoadFailure Reason)
 {
+    if (bTerminalPublished)
+    {
+        return;
+    }
     Failure = Reason;
     Status = ESharRuntimeAssetLoadStatus::Failed;
+    PublishTerminal();
 }
