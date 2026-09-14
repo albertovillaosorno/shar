@@ -111,6 +111,14 @@ these per-player input leases with the same application transition revision, so
 `loading_gameplay` can stage them and only the gameplay commit can activate
 world input. Asset availability remains evidence, not state-machine authority.
 
+Before production startup can invoke the runtime bootstrap, the initial `entry`
+observation must not invent world, profile, or session revisions. The entry
+contract therefore uses absent authority (`NAME_None` plus empty revision
+strings) until boot establishes real revisioned state. Synthetic `*_none*`
+revisions are test fixtures, not production identities. `USharRuntimeBootstrap`
+now derives the initial mode identity and revision from the loaded `Entry`
+definition rather than accepting an externally constructed observation.
+
 ## Root gameplay catalog foundation — 2026-09-13
 
 The first code-first runtime slice now establishes the missing root catalog

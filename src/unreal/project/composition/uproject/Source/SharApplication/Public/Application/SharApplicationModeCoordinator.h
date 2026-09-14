@@ -301,6 +301,11 @@ class SHARAPPLICATION_API USharApplicationModeCoordinator final
     GENERATED_BODY()
 
 public:
+    [[nodiscard]] static bool IsValidInitialObservation(
+        const FSharApplicationModeObservation& InitialObservation,
+        const USharApplicationModeDefinition& ActiveMode
+    );
+
     UFUNCTION(BlueprintCallable, Category = "SHAR|Application")
     bool Configure(
         USharApplicationModeCatalogSubsystem* InCatalog,

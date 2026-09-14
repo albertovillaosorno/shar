@@ -40,6 +40,14 @@
 namespace
 {
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharApplicationEntryAuthorityAbsenceTest,
+    "SHAR.Application.Configuration.EntryAuthorityAbsence",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharApplicationTransitionSuccessTest,
     "SHAR.Application.Transition.SuccessLifecycle",
     EAutomationTestFlags::EditorContext
@@ -151,6 +159,80 @@ void PrepareLifecycleRequest(
     Coordinator.AcceptBarrier(Barrier);
 }
 } // namespace
+
+bool FSharApplicationEntryAuthorityAbsenceTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    auto* GameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* Catalog = MakeApplicationCatalog(
+        *GameInstance,
+        ESharApplicationCatalogShape::Valid,
+        true
+    );
+
+    FSharApplicationModeObservation EntryObservation;
+    EntryObservation.ActiveModeId = FName(TEXT("entry"));
+    EntryObservation.ActiveModeRevision = TEXT("sha256:entry_v1");
+    auto* EntryCoordinator = NewObject<USharApplicationModeCoordinator>(
+        GameInstance
+    );
+    TestTrue(
+        TEXT("Entry accepts absent world profile and session authority"),
+        EntryCoordinator->Configure(Catalog, EntryObservation)
+    );
+    const FSharApplicationModeObservation Accepted =
+        EntryCoordinator->GetObservation();
+    TestTrue(TEXT("Entry has no world identity"), Accepted.WorldId.IsNone());
+    TestTrue(
+        TEXT("Entry has no fabricated world revision"),
+        Accepted.WorldRevision.IsEmpty()
+    );
+    TestTrue(
+        TEXT("Entry has no fabricated profile revision"),
+        Accepted.ProfileRevision.IsEmpty()
+    );
+    TestTrue(
+        TEXT("Entry has no fabricated session revision"),
+        Accepted.SessionRevision.IsEmpty()
+    );
+
+    FSharApplicationModeObservation StaleEntry = EntryObservation;
+    StaleEntry.ActiveModeRevision = TEXT("sha256:stale_entry_v1");
+    auto* StaleCoordinator = NewObject<USharApplicationModeCoordinator>(
+        GameInstance
+    );
+    TestFalse(
+        TEXT("Entry rejects a revision not owned by its definition"),
+        StaleCoordinator->Configure(Catalog, StaleEntry)
+    );
+
+    FSharApplicationModeObservation SyntheticEntry = EntryObservation;
+    SyntheticEntry.WorldId = FName(TEXT("no_world"));
+    SyntheticEntry.WorldRevision = TEXT("sha256:no_world_v1");
+    SyntheticEntry.ProfileRevision = TEXT("sha256:profile_none_v1");
+    SyntheticEntry.SessionRevision = TEXT("sha256:session_none_v1");
+    auto* SyntheticCoordinator = NewObject<USharApplicationModeCoordinator>(
+        GameInstance
+    );
+    TestFalse(
+        TEXT("Entry rejects fabricated absent-authority revisions"),
+        SyntheticCoordinator->Configure(Catalog, SyntheticEntry)
+    );
+
+    FSharApplicationModeObservation FrontEndObservation;
+    FrontEndObservation.ActiveModeId = FName(TEXT("front_end"));
+    FrontEndObservation.ActiveModeRevision = TEXT("sha256:front_end_v1");
+    auto* FrontEndCoordinator = NewObject<USharApplicationModeCoordinator>(
+        GameInstance
+    );
+    TestFalse(
+        TEXT("Non-entry mode still requires concrete revisions"),
+        FrontEndCoordinator->Configure(Catalog, FrontEndObservation)
+    );
+    return true;
+}
 
 bool FSharApplicationTransitionSuccessTest::RunTest(
     const FString& Parameters

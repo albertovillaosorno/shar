@@ -132,13 +132,21 @@ bool FSharRuntimeBootstrapApplicationTest::RunTest(const FString& Parameters)
             == ESharGameplayCatalogActivationResult::Accepted
     );
 
-    FSharApplicationModeObservation Observation;
-    Observation.ActiveModeId = FName(TEXT("entry"));
-    Observation.ActiveModeRevision = TEXT("sha256:runtime_mode_v1");
-    Observation.WorldId = FName(TEXT("no_world"));
-    Observation.WorldRevision = TEXT("sha256:no_world_v1");
-    Observation.ProfileRevision = TEXT("sha256:profile_v1");
-    Observation.SessionRevision = TEXT("sha256:session_v1");
+    Modes[0]->ModeKind = ESharApplicationModeKind::Boot;
+    TestTrue(
+        TEXT("Mode family without entry fails before composition"),
+        Bootstrap->ConfigureApplicationRuntime(
+            RootCatalog,
+            ApplicationCatalog,
+            Coordinator,
+            Modes
+        ) == ESharRuntimeBootstrapResult::CoordinatorRejected
+    );
+    TestFalse(
+        TEXT("Missing entry leaves bootstrap unconfigured"),
+        Bootstrap->IsApplicationRuntimeConfigured()
+    );
+    Modes[0]->ModeKind = ESharApplicationModeKind::Entry;
 
     TArray<USharApplicationModeDefinition*> IncompleteModes = Modes;
     IncompleteModes.Pop();
@@ -148,8 +156,7 @@ bool FSharRuntimeBootstrapApplicationTest::RunTest(const FString& Parameters)
             RootCatalog,
             ApplicationCatalog,
             Coordinator,
-            IncompleteModes,
-            Observation
+            IncompleteModes
         ) == ESharRuntimeBootstrapResult::IncompleteApplicationModes
     );
     TestFalse(
@@ -162,13 +169,31 @@ bool FSharRuntimeBootstrapApplicationTest::RunTest(const FString& Parameters)
             RootCatalog,
             ApplicationCatalog,
             Coordinator,
-            Modes,
-            Observation
+            Modes
         ) == ESharRuntimeBootstrapResult::Accepted
     );
+    const FSharApplicationModeObservation Initial =
+        Coordinator->GetObservation();
     TestTrue(
-        TEXT("Coordinator observes the declared initial mode"),
-        Coordinator->GetObservation().ActiveModeId == FName(TEXT("entry"))
+        TEXT("Coordinator derives the declared entry mode"),
+        Initial.ActiveModeId == FName(TEXT("entry"))
+    );
+    TestTrue(
+        TEXT("Coordinator derives the entry definition revision"),
+        Initial.ActiveModeRevision == TEXT("sha256:runtime_mode_v1")
+    );
+    TestTrue(TEXT("Initial entry has no world"), Initial.WorldId.IsNone());
+    TestTrue(
+        TEXT("Initial entry has no world revision"),
+        Initial.WorldRevision.IsEmpty()
+    );
+    TestTrue(
+        TEXT("Initial entry has no profile revision"),
+        Initial.ProfileRevision.IsEmpty()
+    );
+    TestTrue(
+        TEXT("Initial entry has no session revision"),
+        Initial.SessionRevision.IsEmpty()
     );
     TestTrue(
         TEXT("Application runtime configures exactly once"),
@@ -176,8 +201,7 @@ bool FSharRuntimeBootstrapApplicationTest::RunTest(const FString& Parameters)
             RootCatalog,
             ApplicationCatalog,
             Coordinator,
-            Modes,
-            Observation
+            Modes
         ) == ESharRuntimeBootstrapResult::AlreadyConfigured
     );
     return true;

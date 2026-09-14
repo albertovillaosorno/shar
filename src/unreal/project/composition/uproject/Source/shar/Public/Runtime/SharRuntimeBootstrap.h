@@ -59,8 +59,7 @@ public:
         USharGameplayCatalogSubsystem* RootCatalog,
         USharApplicationModeCatalogSubsystem* ApplicationCatalog,
         USharApplicationModeCoordinator* Coordinator,
-        const TArray<USharApplicationModeDefinition*>& Modes,
-        const FSharApplicationModeObservation& InitialObservation
+        const TArray<USharApplicationModeDefinition*>& Modes
     );
 
     UFUNCTION(BlueprintPure, Category = "SHAR|Runtime")
