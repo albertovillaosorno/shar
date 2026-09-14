@@ -149,6 +149,24 @@ Each lease declares local player, context identity, priority, owning mode or
 feature, expected revision, and release reason. A context becomes active only
 when its owner commits.
 
+The initial native lease authority is `USharLocalPlayerInputSubsystem`, one
+instance per `ULocalPlayer`. Staging records a validated mapping context without
+calling Enhanced Input. Commit requires the owning local player to have an
+`UEnhancedInputLocalPlayerSubsystem` backed by a live `UEnhancedPlayerInput`;
+otherwise the lease remains staged and fails closed.
+
+A successful commit installs exactly one mapping context at its declared
+priority, while release removes exactly the mapping registered by that lease.
+Every successful add has one matching remove, and the same mapping context
+cannot be owned by two unreleased SHAR leases at once. Code outside the lease
+authority must not register a context while SHAR owns its active lease.
+
+Lease identity, owner-mode identity, owner-mode revision, and lease revision are
+checked independently of UObject identity. Reusing a stale revision, committing
+a released lease, or attempting to adopt a mapping already owned outside the
+lease fails without changing active input. Subsystem teardown releases every
+active mapping before discarding lease records.
+
 World teardown, application-mode exit, local-player removal, feature
 deactivation, focus loss where required, and cancellation release affected
 leases. A released context cannot continue receiving hidden input.

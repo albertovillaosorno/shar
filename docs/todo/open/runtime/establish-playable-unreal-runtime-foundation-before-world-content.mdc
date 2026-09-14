@@ -39,11 +39,10 @@ The Unreal project already has substantial code-first infrastructure.
 `SharVehicles` provide typed state and subsystem boundaries that should be
 completed rather than replaced.
 
-The current executable bootstrap is still incomplete. `DefaultEngine.ini`
-opens the SHAR OpenWorld map and now selects the composition-root
-`SharGameInstance`, but the project has no project-owned gameplay `GameMode`,
-`GameState`, `PlayerController`, or player character/pawn class; only vehicle
-pawns are present.
+The executable bootstrap now selects the composition-root `SharGameInstance`
+and the project-owned Game Mode, Game State, Player Controller, and neutral
+player Pawn. Runtime composition remains incomplete because world-readiness and
+per-local-player input leases are not yet bound to application-mode commit.
 
 The former duplicate startup state authority has been removed.
 `SharGameInstance` is now a state-free composition shell, while
@@ -90,6 +89,27 @@ releases its transaction.
 This does not yet bind world-readiness barriers or input leases to native player
 control. Those effects remain the next lifecycle-composition step and must not
 be inferred from Pawn existence or possession.
+
+## Per-local-player input leases — 2026-09-14
+
+`SharInput` now provides `USharLocalPlayerInputSubsystem` as the first native
+input authority scoped to one `ULocalPlayer`. A mapping-context lease stages
+without changing native input, carries independent owner-mode and lease
+revisions, rejects duplicate ownership, and activates only when commit can reach
+a live `UEnhancedPlayerInput`. Release removes the mapping, and local-player
+teardown releases any still-active contexts before subsystem destruction.
+
+`SHAR.Input.LocalPlayer.LeaseLifecycle` uses synthetic mapping contexts with a
+transient native local player and Player Controller. It proves staging has no
+side effect, commit fails closed before Enhanced Player Input exists, retry can
+activate the mapping at the declared priority, stale revisions cannot commit or
+release, duplicate SHAR ownership is rejected, explicit release removes the
+mapping, and local-player teardown removes an active mapping automatically.
+
+The remaining lifecycle-composition step is to correlate world readiness and
+these per-player input leases with the same application transition revision, so
+`loading_gameplay` can stage them and only the gameplay commit can activate
+world input. Asset availability remains evidence, not state-machine authority.
 
 ## Root gameplay catalog foundation — 2026-09-13
 
