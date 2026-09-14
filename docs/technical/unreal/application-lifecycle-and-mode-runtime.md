@@ -289,6 +289,22 @@ prerequisites, but it cannot construct gameplay managers or select a player
 profile by side effect. Its only successful successor is the validated boot
 request.
 
+The initial `entry` observation represents authority that does not exist yet by
+absence, not by fabricated revision identities. `WorldId` is `None`, and world,
+profile, and session revision strings are empty. A non-empty revision is always
+a real accepted revision token and therefore begins with `sha256:`. Startup must
+not mint `no_world`, `profile_none`, `session_none`, or equivalent sentinel
+revisions merely to satisfy coordinator validation.
+
+The runtime composition bootstrap derives this initial observation directly from
+the loaded `Entry` mode definition. The observed active-mode revision must equal
+the definition revision exactly. Callers do not provide startup profile,
+session, world, or mode-revision placeholders.
+
+Initial observations for other mode kinds continue to require concrete world,
+profile, and session revision tokens until their own absence policies are
+explicitly modeled.
+
 `exit` is a terminal transition plan. It:
 
 1. rejects new non-exit mode requests;

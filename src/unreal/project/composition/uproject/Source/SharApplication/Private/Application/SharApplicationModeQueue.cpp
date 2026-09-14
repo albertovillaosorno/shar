@@ -35,6 +35,7 @@
 #include "Algo/AnyOf.h"
 #include "Algo/Find.h"
 #include "Application/SharApplicationModeCatalogSubsystem.h"
+#include "Application/SharApplicationModeDefinition.h"
 #include "Content/SharPrimaryContentDefinition.h"
 
 static constexpr int32 MaximumPendingTransitions = 32;
@@ -79,6 +80,33 @@ bool USharApplicationModeCoordinator::IsValidRequest(
         !FMath::IsFinite(Request.DeadlineSeconds)
         || Request.DeadlineSeconds <= 0.0;
     return !bInvalidIdentity && !bInvalidRevision && !bInvalidDeadline;
+}
+
+bool USharApplicationModeCoordinator::IsValidInitialObservation(
+    const FSharApplicationModeObservation& InitialObservation,
+    const USharApplicationModeDefinition& ActiveMode
+)
+{
+    const bool bInvalidCommon =
+        InitialObservation.ActiveModeId != ActiveMode.CanonicalId
+        || InitialObservation.ActiveModeRevision != ActiveMode.RevisionToken
+        || !IsCanonicalApplicationIdentity(InitialObservation.ActiveModeId)
+        || !IsRevisionToken(InitialObservation.ActiveModeRevision);
+    if (bInvalidCommon)
+    {
+        return false;
+    }
+    if (ActiveMode.ModeKind == ESharApplicationModeKind::Entry)
+    {
+        return InitialObservation.WorldId.IsNone()
+            && InitialObservation.WorldRevision.IsEmpty()
+            && InitialObservation.ProfileRevision.IsEmpty()
+            && InitialObservation.SessionRevision.IsEmpty();
+    }
+    return IsCanonicalApplicationIdentity(InitialObservation.WorldId)
+        && IsRevisionToken(InitialObservation.WorldRevision)
+        && IsRevisionToken(InitialObservation.ProfileRevision)
+        && IsRevisionToken(InitialObservation.SessionRevision);
 }
 
 bool USharApplicationModeCoordinator::IsTerminalState(
@@ -174,16 +202,13 @@ bool USharApplicationModeCoordinator::Configure(
     const FSharApplicationModeObservation& InitialObservation
 )
 {
-    const bool bInvalid =
-        InCatalog == nullptr
+    const USharApplicationModeDefinition* ActiveMode = InCatalog == nullptr
+        ? nullptr
+        : InCatalog->FindMode(InitialObservation.ActiveModeId);
+    if (InCatalog == nullptr
         || !InCatalog->IsActive()
-        || !IsCanonicalApplicationIdentity(InitialObservation.ActiveModeId)
-        || !IsRevisionToken(InitialObservation.ActiveModeRevision)
-        || !IsRevisionToken(InitialObservation.WorldRevision)
-        || !IsRevisionToken(InitialObservation.ProfileRevision)
-        || !IsRevisionToken(InitialObservation.SessionRevision)
-        || InCatalog->FindMode(InitialObservation.ActiveModeId) == nullptr;
-    if (bInvalid)
+        || ActiveMode == nullptr
+        || !IsValidInitialObservation(InitialObservation, *ActiveMode))
     {
         return false;
     }

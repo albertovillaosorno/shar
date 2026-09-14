@@ -36,7 +36,6 @@
 #include "Application/SharApplicationModeCoordinator.h"
 #include "Catalog/SharGameplayCatalog.h"
 #include "Catalog/SharGameplayCatalogSubsystem.h"
-#include "Content/SharPrimaryContentDefinition.h"
 
 namespace
 {
@@ -81,31 +80,28 @@ bool IsCompleteModeSet(
     return SeenModes.Num() == Modes.Num();
 }
 
-bool IsRevisionToken(const FString& Revision)
-{
-    return Revision.StartsWith(TEXT("sha256:"));
-}
-
-bool IsValidInitialObservation(
-    const FSharApplicationModeObservation& Observation,
+const USharApplicationModeDefinition* FindEntryMode(
     const TArray<USharApplicationModeDefinition*>& Modes
 )
 {
-    const bool bModeExists = Modes.ContainsByPredicate(
-        [&Observation](const USharApplicationModeDefinition* Mode)
+    USharApplicationModeDefinition* const* Entry = Modes.FindByPredicate(
+        [](const USharApplicationModeDefinition* Mode)
         {
             return Mode != nullptr
-                && Mode->CanonicalId == Observation.ActiveModeId;
+                && Mode->ModeKind == ESharApplicationModeKind::Entry;
         }
     );
-    return bModeExists
-        && USharPrimaryContentDefinition::IsCanonicalIdentifier(
-            Observation.ActiveModeId
-        )
-        && IsRevisionToken(Observation.ActiveModeRevision)
-        && IsRevisionToken(Observation.WorldRevision)
-        && IsRevisionToken(Observation.ProfileRevision)
-        && IsRevisionToken(Observation.SessionRevision);
+    return Entry == nullptr ? nullptr : *Entry;
+}
+
+FSharApplicationModeObservation MakeInitialEntryObservation(
+    const USharApplicationModeDefinition& Entry
+)
+{
+    FSharApplicationModeObservation Observation;
+    Observation.ActiveModeId = Entry.CanonicalId;
+    Observation.ActiveModeRevision = Entry.RevisionToken;
+    return Observation;
 }
 } // namespace
 
@@ -113,8 +109,7 @@ ESharRuntimeBootstrapResult USharRuntimeBootstrap::ConfigureApplicationRuntime(
     USharGameplayCatalogSubsystem* RootCatalog,
     USharApplicationModeCatalogSubsystem* ApplicationCatalog,
     USharApplicationModeCoordinator* Coordinator,
-    const TArray<USharApplicationModeDefinition*>& Modes,
-    const FSharApplicationModeObservation& InitialObservation
+    const TArray<USharApplicationModeDefinition*>& Modes
 )
 {
     if (bApplicationRuntimeConfigured)
@@ -131,8 +126,17 @@ ESharRuntimeBootstrapResult USharRuntimeBootstrap::ConfigureApplicationRuntime(
     {
         return ESharRuntimeBootstrapResult::IncompleteApplicationModes;
     }
-    if (Coordinator == nullptr
-        || !IsValidInitialObservation(InitialObservation, Modes))
+    const USharApplicationModeDefinition* EntryMode = FindEntryMode(Modes);
+    if (Coordinator == nullptr || EntryMode == nullptr)
+    {
+        return ESharRuntimeBootstrapResult::CoordinatorRejected;
+    }
+    const FSharApplicationModeObservation InitialObservation =
+        MakeInitialEntryObservation(*EntryMode);
+    if (!USharApplicationModeCoordinator::IsValidInitialObservation(
+            InitialObservation,
+            *EntryMode
+        ))
     {
         return ESharRuntimeBootstrapResult::CoordinatorRejected;
     }
