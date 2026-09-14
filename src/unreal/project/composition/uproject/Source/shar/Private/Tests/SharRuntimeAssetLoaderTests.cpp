@@ -76,6 +76,20 @@ bool FSharRuntimeAssetLoaderPreflightTest::RunTest(const FString& Parameters)
         NewObject<USharGameplayCatalogSubsystem>(GameInstance);
     auto* EmptyAssetManager = NewObject<UAssetManager>();
     auto* EmptyInventoryLoader = NewObject<USharRuntimeAssetLoader>();
+    int32 EmptyInventoryTerminalCount = 0;
+    EmptyInventoryLoader->OnTerminal().AddLambda(
+        [&EmptyInventoryTerminalCount](
+            const ESharRuntimeAssetLoadStatus Status,
+            const ESharRuntimeAssetLoadFailure Failure
+        )
+        {
+            if (Status == ESharRuntimeAssetLoadStatus::Failed
+                && Failure == ESharRuntimeAssetLoadFailure::CatalogNotUnique)
+            {
+                ++EmptyInventoryTerminalCount;
+            }
+        }
+    );
     TestTrue(
         TEXT("Zero root catalogs fail closed"),
         EmptyInventoryLoader->Start(EmptyAssetManager, RootCatalog)
@@ -91,6 +105,21 @@ bool FSharRuntimeAssetLoaderPreflightTest::RunTest(const FString& Parameters)
     TestTrue(
         TEXT("Failed discovery exposes no application modes"),
         EmptyInventoryLoader->GetLoadedApplicationModes().IsEmpty()
+    );
+    TestEqual(
+        TEXT("Failed discovery publishes one terminal"),
+        EmptyInventoryTerminalCount,
+        1
+    );
+    TestTrue(
+        TEXT("Repeated start remains rejected"),
+        EmptyInventoryLoader->Start(EmptyAssetManager, RootCatalog)
+            == ESharRuntimeAssetLoadStartResult::AlreadyStarted
+    );
+    TestEqual(
+        TEXT("Repeated start cannot republish the terminal"),
+        EmptyInventoryTerminalCount,
+        1
     );
     return true;
 }

@@ -301,6 +301,17 @@ the loaded `Entry` mode definition. The observed active-mode revision must equal
 the definition revision exactly. Callers do not provide startup profile,
 session, world, or mode-revision placeholders.
 
+The game instance waits for the Asset Manager initial scan, then one runtime
+asset loader resolves the root catalog and exactly its declared Application Mode
+family. The loader publishes one terminal result; only `Ready` may invoke the
+runtime bootstrap, while `Failed` leaves the application catalog and coordinator
+not configured.
+
+Runtime composition uses the existing game-instance catalog and coordinator
+subsystems rather than constructing replacement authorities. Duplicate or stale
+asset-load callbacks from an earlier loading phase are ignored, and a published
+terminal result cannot be replaced or emitted twice.
+
 Initial observations for other mode kinds continue to require concrete world,
 profile, and session revision tokens until their own absence policies are
 explicitly modeled.

@@ -74,6 +74,12 @@ enum class ESharRuntimeAssetLoadFailure : uint8
     ApplicationModeLoadFailed,
 };
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(
+    FSharRuntimeAssetLoadTerminalDelegate,
+    ESharRuntimeAssetLoadStatus,
+    ESharRuntimeAssetLoadFailure
+);
+
 UCLASS()
 class SHAR_API USharRuntimeAssetLoader final : public UObject
 {
@@ -96,9 +102,12 @@ public:
     [[nodiscard]] TArray<USharApplicationModeDefinition*>
     GetLoadedApplicationModes() const;
 
+    [[nodiscard]] FSharRuntimeAssetLoadTerminalDelegate& OnTerminal();
+
 private:
     void HandleCatalogLoaded();
     void HandleApplicationModesLoaded();
+    void PublishTerminal();
     void Fail(ESharRuntimeAssetLoadFailure Reason);
 
     UPROPERTY(Transient)
@@ -117,4 +126,6 @@ private:
     TArray<FPrimaryAssetId> ApplicationModeAssetIds;
     ESharRuntimeAssetLoadStatus Status = ESharRuntimeAssetLoadStatus::Idle;
     ESharRuntimeAssetLoadFailure Failure = ESharRuntimeAssetLoadFailure::None;
+    bool bTerminalPublished = false;
+    FSharRuntimeAssetLoadTerminalDelegate TerminalDelegate;
 };

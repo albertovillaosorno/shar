@@ -32,6 +32,8 @@
 
 #include "Runtime/SharGameInstance.h"
 
+#include "Application/SharApplicationModeCatalogSubsystem.h"
+#include "Application/SharApplicationModeCoordinator.h"
 #include "Catalog/SharGameplayCatalogSubsystem.h"
 #include "Engine/AssetManager.h"
 
@@ -40,6 +42,10 @@ void USharGameInstance::Init()
     Super::Init();
     RuntimeBootstrap = NewObject<USharRuntimeBootstrap>(this);
     RuntimeAssetLoader = NewObject<USharRuntimeAssetLoader>(this);
+    RuntimeAssetLoader->OnTerminal().AddUObject(
+        this,
+        &USharGameInstance::HandleRuntimeAssetLoadTerminal
+    );
     UAssetManager::CallOrRegister_OnCompletedInitialScan(
         FSimpleDelegate::CreateUObject(
             this,
@@ -67,5 +73,25 @@ void USharGameInstance::StartRuntimeAssetLoading()
     RuntimeAssetLoader->Start(
         UAssetManager::GetIfInitialized(),
         GetSubsystem<USharGameplayCatalogSubsystem>()
+    );
+}
+
+void USharGameInstance::HandleRuntimeAssetLoadTerminal(
+    const ESharRuntimeAssetLoadStatus Status,
+    const ESharRuntimeAssetLoadFailure Failure
+)
+{
+    if (Status != ESharRuntimeAssetLoadStatus::Ready
+        || Failure != ESharRuntimeAssetLoadFailure::None
+        || RuntimeAssetLoader == nullptr
+        || RuntimeBootstrap == nullptr)
+    {
+        return;
+    }
+    RuntimeBootstrap->ConfigureApplicationRuntime(
+        GetSubsystem<USharGameplayCatalogSubsystem>(),
+        GetSubsystem<USharApplicationModeCatalogSubsystem>(),
+        GetSubsystem<USharApplicationModeCoordinator>(),
+        RuntimeAssetLoader->GetLoadedApplicationModes()
     );
 }

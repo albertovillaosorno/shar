@@ -56,6 +56,10 @@ public:
 
 private:
     void StartRuntimeAssetLoading();
+    void HandleRuntimeAssetLoadTerminal(
+        ESharRuntimeAssetLoadStatus Status,
+        ESharRuntimeAssetLoadFailure Failure
+    );
 
     UPROPERTY(Transient)
     TObjectPtr<USharRuntimeBootstrap> RuntimeBootstrap;

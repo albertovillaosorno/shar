@@ -151,8 +151,8 @@ can consume production mode definitions.
 
 The second code-first slice removes the parallel startup state machine from
 `SharUI`. `USharGameInstance` now lives in the root `shar` composition module,
-contains no application-mode state, and owns only `USharRuntimeBootstrap`.
-`SharUI` returns to its frontend-only boundary.
+contains no application-mode state, and owns only the root loading and bootstrap
+adapters. `SharUI` returns to its frontend-only boundary.
 
 `USharApplicationModeCatalogSubsystem` no longer accepts a free-form catalog
 revision. It must bind to an active `USharGameplayCatalogSubsystem` and
@@ -165,14 +165,11 @@ Application Mode set, mode catalog, and coordinator exactly once. It rejects an
 incomplete mode family before coordinator configuration, while the coordinator
 remains the sole owner of active mode and transition state.
 
-Validation evidence for this slice is currently compile-level: the affected
-The `SharContent`, `SharApplication`, `SharUI`, and `shar` modules pass Unreal
-Header Tool, Clang, and editor linking with no compiler warnings or errors.
-Headless
-startup resolves the moved `/Script/shar.SharGameInstance` without class-load
-errors, but the command-line Automation harness did not emit a reliable terminal
-result for the new bootstrap test, so that test is not claimed as
-executed.
+Validation is no longer compile-only.
+`SHAR.Runtime.Bootstrap.ApplicationComposition`
+executes in headless NullRHI Automation and proves a complete synthetic mode
+family configures the catalog and coordinator exactly once with the loaded
+`Entry` revision and absent world, profile, and session authorities.
 
 Production Primary Asset loading now begins from the project game instance only
 after Asset Manager completes its initial scan. `USharRuntimeAssetLoader`
@@ -182,16 +179,27 @@ catalog. Missing or ambiguous assets fail with typed startup results instead of
 falling back to directory scans or synthetic production definitions.
 
 The repository still contains no authored files beneath `/Game/SHAR/Data`, so
-production startup cannot yet reach a loaded runtime catalog. The next runtime
-step is to generate the catalog and Application Mode Data Assets, then compose
-the loaded definitions into the coordinator before adding loading/world/input
-readiness effects for `loading_gameplay`, `gameplay`, and pause/resume.
+production startup cannot yet reach a loaded runtime catalog. Deterministic
+generation of the root catalog and Application Mode Data Assets remains a
+content pipeline prerequisite. Runtime composition of successfully loaded
+definitions is no longer pending.
 
-Validation for the loader slice uses a synthetic empty Asset Manager inventory:
-`SHAR.Runtime.AssetLoading.Preflight` proves missing dependencies and zero root
-catalogs fail closed, while the `shar` module passes Unreal Header Tool, Clang,
-and editor linking. No successful production asset load is claimed before the
-generated Data Assets exist.
+`USharRuntimeAssetLoader` now publishes one terminal result. `USharGameInstance`
+subscribes before loading begins and composes only `Ready` into the existing
+game-instance Application Mode catalog and coordinator subsystems. Loader
+failure leaves those authorities not configured.
+
+`SHAR.Runtime.AssetLoading.ApplicationComposition` uses a transient synthetic
+Asset Manager inventory without creating packages. It proves exact catalog and
+mode-family requests, deferred mode completion, stale catalog-callback
+rejection, single terminal publication, and successful bootstrap into the
+loaded `Entry`. `SHAR.Runtime.AssetLoading.Preflight` continues to prove missing
+dependencies and zero root catalogs fail closed.
+
+No successful production asset load is claimed before the generated Data Assets
+exist. The next lifecycle-composition work remains correlating loading
+readiness, world readiness, and per-local-player input leases with one
+application transition revision.
 
 Recovery identity hardening now keeps committed-failure observations coherent:
 if a target recovers to a third mode, the coordinator publishes the recovery
