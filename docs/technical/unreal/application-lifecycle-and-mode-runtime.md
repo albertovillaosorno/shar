@@ -222,10 +222,21 @@ already-exited gameplay authority.
 Failure after commit follows the same recovery contract. When recovery selects a
 mode other than the failed source or target, the resulting observation uses that
 recovery definition's own revision token; it never reuses the failed target's
-revision as recovery identity. World and session authority are reconciled with
-the recovery mode policies, so a recovery without either authority cannot
-retain those stale revisions. A loading-screen animation or transport callback
-is not readiness evidence by itself.
+revision as recovery identity. World, session, and profile authority are
+reconciled with the recovery mode policies, so absent recovery authority cannot
+retain stale revisions.
+
+Immediate recovery does not execute another preparation transaction. A recovery
+mode therefore cannot declare `Prepare` for world, session, or profile
+authority. Any authority required by recovery must already exist both before
+target commit and after target commit: the failed target and every permitted
+predecessor must publish it.
+
+Catalog activation rejects an incompatible recovery graph. The coordinator also
+validates the candidate recovery observation before publishing it, so corrupted
+post-activation definition state fails closed instead of publishing an invalid
+mode. A loading-screen animation or transport callback is not readiness evidence
+by itself.
 
 ## Mode requests and frame execution
 
@@ -880,6 +891,7 @@ Catalog validation rejects:
 - invalid transition cycles;
 - loading modes without success and recovery targets;
 - any declared recovery target that does not resolve in the active catalog;
+- recovery targets that require unavailable or newly prepared authority;
 - entry or exit tasks without typed native implementations;
 - missing timeouts or cancellation behavior;
 - modes that own undeclared worlds, input, audio, or UI leases;

@@ -178,6 +178,32 @@ bool FSharApplicationCatalogGraphValidationTest::RunTest(
             == ESharApplicationCatalogResult::RecoveryTargetMissing
     );
 
+    auto* MissingRecoveryAuthorityGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* MissingRecoveryAuthorityCatalog =
+        MakeApplicationCatalog(
+            *MissingRecoveryAuthorityGameInstance,
+            ESharApplicationCatalogShape::RecoveryRequiresMissingAuthority,
+            false
+        );
+    TestTrue(
+        TEXT("Recovery authority must exist before and after target commit"),
+        MissingRecoveryAuthorityCatalog->Activate()
+            == ESharApplicationCatalogResult::RecoveryAuthorityMismatch
+    );
+
+    auto* PreparingRecoveryGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* PreparingRecoveryCatalog =
+        MakeApplicationCatalog(
+            *PreparingRecoveryGameInstance,
+            ESharApplicationCatalogShape::RecoveryRequiresPreparation,
+            false
+        );
+    TestTrue(
+        TEXT("Immediate recovery cannot introduce prepared authority"),
+        PreparingRecoveryCatalog->Activate()
+            == ESharApplicationCatalogResult::RecoveryAuthorityMismatch
+    );
+
     auto* MissingWorldAuthorityGameInstance = NewObject<UGameInstance>();
     USharApplicationModeCatalogSubsystem* MissingWorldAuthorityCatalog =
         MakeApplicationCatalog(

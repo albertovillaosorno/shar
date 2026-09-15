@@ -261,6 +261,67 @@ static bool RequiresProfileAuthority(
         || Policy == ESharApplicationProfilePolicy::Own;
 }
 
+static bool RequiresRecoveryPreparation(
+    const USharApplicationModeDefinition& Recovery
+)
+{
+    return Recovery.WorldPolicy == ESharApplicationWorldPolicy::Prepare
+        || Recovery.SessionPolicy == ESharApplicationSessionPolicy::Prepare
+        || Recovery.ProfilePolicy == ESharApplicationProfilePolicy::Prepare;
+}
+
+static bool CanPreserveRecoveryAuthorities(
+    const USharApplicationModeDefinition& Producer,
+    const USharApplicationModeDefinition& Recovery
+)
+{
+    const bool bWorldCompatible =
+        !RequiresWorldAuthority(Recovery.WorldPolicy)
+        || RequiresWorldAuthority(Producer.WorldPolicy);
+    const bool bSessionCompatible =
+        !RequiresSessionAuthority(Recovery.SessionPolicy)
+        || RequiresSessionAuthority(Producer.SessionPolicy);
+    const bool bProfileCompatible =
+        !RequiresProfileAuthority(Recovery.ProfilePolicy)
+        || RequiresProfileAuthority(Producer.ProfilePolicy);
+    return bWorldCompatible && bSessionCompatible && bProfileCompatible;
+}
+
+bool USharApplicationModeCatalogSubsystem::
+AreRecoveryAuthorityPoliciesCompatible() const
+{
+    return Algo::AllOf(
+        Definitions,
+        [this](const TObjectPtr<USharApplicationModeDefinition>& Definition)
+        {
+            if (Definition == nullptr || Definition->RecoveryModeId.IsNone())
+            {
+                return Definition != nullptr;
+            }
+            const USharApplicationModeDefinition* Recovery =
+                FindMode(Definition->RecoveryModeId);
+            if (Recovery == nullptr || RequiresRecoveryPreparation(*Recovery)
+                || !CanPreserveRecoveryAuthorities(*Definition, *Recovery))
+            {
+                return false;
+            }
+            return Algo::AllOf(
+                Definition->AllowedPredecessorIds,
+                [this, Recovery](const FName& PredecessorId)
+                {
+                    const USharApplicationModeDefinition* Predecessor =
+                        FindMode(PredecessorId);
+                    return Predecessor != nullptr
+                        && CanPreserveRecoveryAuthorities(
+                            *Predecessor,
+                            *Recovery
+                        );
+                }
+            );
+        }
+    );
+}
+
 bool
 USharApplicationModeCatalogSubsystem::AreAuthorityPoliciesCompatible() const
 {
@@ -388,6 +449,10 @@ USharApplicationModeCatalogSubsystem::ValidateGraph() const
     if (!AreRecoveryTargetsResolvable())
     {
         return ESharApplicationCatalogResult::RecoveryTargetMissing;
+    }
+    if (!AreRecoveryAuthorityPoliciesCompatible())
+    {
+        return ESharApplicationCatalogResult::RecoveryAuthorityMismatch;
     }
     if (!AreOverlayReturnsResolvable())
     {

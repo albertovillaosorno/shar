@@ -301,6 +301,32 @@ and ordinary front-end, gameplay, and pause context changes do not reinitialize
 that authority. Modern profile selection remains owned by profile/save services;
 Application stores only the correlated revision needed for mode fencing.
 
+## Recovery authority compatibility — 2026-09-15
+
+Recovery after source-exit or target commit now fails closed on authority
+requirements. Because the coordinator publishes recovery directly rather than
+starting a second preparation transaction, a recovery mode cannot use `Prepare`
+for world, gameplay-session, or selected-profile authority. Any authority it
+requires must already exist in both possible observations: the failed target
+and every permitted predecessor.
+
+Catalog activation returns a typed recovery-authority mismatch for impossible
+recovery graphs. The coordinator independently builds and validates a candidate
+recovery observation before publication, so even corrupted post-activation
+policy state cannot publish a mode that claims missing authority.
+
+`SHAR.Application.Catalog.GraphValidation` covers recovery to an authority that
+is absent before target commit and recovery that attempts new preparation.
+`SHAR.Application.Transition.InvalidRecoveryAuthority` mutates transient test
+policy after activation and proves runtime recovery still fails closed without
+corrupting the prior observation.
+
+Preserved behavior evidence remains lifecycle ordering: the legacy game-flow
+boundary stops one context before starting another, while loading owns temporary
+world-preparation state and suppresses gameplay input. Modern recovery therefore
+cannot pretend that a new world/session/profile preparation happened merely by
+changing the active mode identity.
+
 ## Root gameplay catalog foundation — 2026-09-13
 
 The first code-first runtime slice now establishes the missing root catalog

@@ -122,6 +122,7 @@ enum class ESharApplicationOperationResult : uint8
     InvalidState,
     AlreadyTerminal,
     RecoveryMissing,
+    RecoveryInvalidAuthority,
     Released,
 };
 

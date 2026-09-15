@@ -454,21 +454,40 @@ USharApplicationModeCoordinator::RecoverAfterHandoff(
             ? ESharApplicationOperationResult::RecoveryMissing
             : FailureResult;
     }
-    Observation.ActiveModeId = Recovery->CanonicalId;
-    Observation.ActiveModeRevision = Recovery->RevisionToken;
+    const bool bRecoveryRequiresPreparation =
+        Recovery->WorldPolicy == ESharApplicationWorldPolicy::Prepare
+        || Recovery->SessionPolicy == ESharApplicationSessionPolicy::Prepare
+        || Recovery->ProfilePolicy == ESharApplicationProfilePolicy::Prepare;
+    FSharApplicationModeObservation RecoveredObservation = Observation;
+    RecoveredObservation.ActiveModeId = Recovery->CanonicalId;
+    RecoveredObservation.ActiveModeRevision = Recovery->RevisionToken;
     if (!RequiresWorldAuthority(*Recovery))
     {
-        Observation.WorldId = FName();
-        Observation.WorldRevision.Reset();
+        RecoveredObservation.WorldId = FName();
+        RecoveredObservation.WorldRevision.Reset();
     }
     if (!RequiresSessionAuthority(*Recovery))
     {
-        Observation.SessionRevision.Reset();
+        RecoveredObservation.SessionRevision.Reset();
     }
     if (!RequiresProfileAuthority(*Recovery))
     {
-        Observation.ProfileRevision.Reset();
+        RecoveredObservation.ProfileRevision.Reset();
     }
+    if (bRecoveryRequiresPreparation
+        || !IsValidInitialObservation(RecoveredObservation, *Recovery))
+    {
+        const ESharApplicationOperationResult FailureResult =
+            PublishTerminal(
+                Snapshot,
+                ESharApplicationTransitionState::Failed,
+                ESharApplicationTerminalResult::Failed
+            );
+        return FailureResult == ESharApplicationOperationResult::Accepted
+            ? ESharApplicationOperationResult::RecoveryInvalidAuthority
+            : FailureResult;
+    }
+    Observation = RecoveredObservation;
     return PublishTerminal(
         Snapshot,
         ESharApplicationTransitionState::Recovered,
