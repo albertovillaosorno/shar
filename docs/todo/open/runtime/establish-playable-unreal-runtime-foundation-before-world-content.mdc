@@ -174,6 +174,26 @@ completion
 from plan identity or Asset Manager state and does not execute subsystem-owned
 plan effects itself.
 
+## World authority absence policy — 2026-09-15
+
+Application world observations now follow the target mode's declared
+`WorldPolicy` instead of requiring a fabricated world token in every non-entry
+mode. `Prepare`, `Retain`, and `Own` require a canonical world identity and real
+revision. `None` and `TearDown` require world identity and revision to be
+absent.
+
+The front-end test fixture no longer uses `no_gameplay_world` or
+`sha256:world_none_v1`. Configuration accepts an absent front-end world while
+rejecting those sentinel values. Transition submission also validates the target
+mode policy, so a teardown target such as `exit` accepts absence and rejects a
+fabricated replacement identity.
+
+Recovery now reconciles the observation with the recovery mode's world policy.
+Returning to `front_end` or `exit` clears the stale gameplay world identity and
+revision rather than carrying destroyed world authority across the lifecycle
+boundary. Profile and session absence remain separate policy work and are not
+broadened by this change.
+
 ## Root gameplay catalog foundation — 2026-09-13
 
 The first code-first runtime slice now establishes the missing root catalog

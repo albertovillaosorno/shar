@@ -333,9 +333,14 @@ subsystems rather than constructing replacement authorities. Duplicate or stale
 asset-load callbacks from an earlier loading phase are ignored, and a published
 terminal result cannot be replaced or emitted twice.
 
-Initial observations for other mode kinds continue to require concrete world,
-profile, and session revision tokens until their own absence policies are
-explicitly modeled.
+World authority follows each mode definition's `WorldPolicy`. `Prepare`,
+`Retain`, and `Own` require one canonical world identity plus a real revision.
+`None` and `TearDown` require `WorldId` to be `None` and the world revision
+to be empty; sentinel identities such as `no_gameplay_world` are invalid.
+
+Entry additionally has no profile or session authority. Other mode kinds still
+require concrete profile and session revisions until those absence policies are
+modeled separately.
 
 `exit` is a terminal transition plan. It:
 
@@ -431,9 +436,12 @@ Front-end entry requires:
 - input leases for the active local front-end users.
 
 Returning from gameplay, demo, or super sprint must cancel world-bound handles
-before front-end commit. Front-end presentation cannot infer completion or
-unlock
-state from the previous mode.
+before front-end commit. The committed front end therefore exposes no gameplay
+world identity or revision. Recovery to front end clears any stale gameplay
+world observation instead of carrying it across the teardown boundary.
+
+Front-end presentation cannot infer completion or unlock state from the previous
+mode.
 <!-- markdownlint-disable-next-line MD013 -->
 
 The committed front end acquires one UI-navigation lease, one front-end audio

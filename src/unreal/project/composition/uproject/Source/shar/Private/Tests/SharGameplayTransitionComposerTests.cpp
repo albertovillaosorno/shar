@@ -125,6 +125,10 @@ FComposerApplicationFixture MakeComposerApplication(UGameInstance& GameInstance)
             {}
         ),
     };
+    Modes[0]->WorldPolicy = ESharApplicationWorldPolicy::None;
+    Modes[1]->WorldPolicy = ESharApplicationWorldPolicy::Prepare;
+    Modes[2]->WorldPolicy = ESharApplicationWorldPolicy::Own;
+    Modes[3]->WorldPolicy = ESharApplicationWorldPolicy::TearDown;
     Modes[1]->SuccessModeId = FName(TEXT("gameplay"));
     Modes[1]->RecoveryModeId = FName(TEXT("entry"));
     Modes[2]->RecoveryModeId = FName(TEXT("entry"));
