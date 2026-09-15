@@ -71,6 +71,16 @@ enum class ESharApplicationSessionPolicy : uint8
 };
 
 UENUM(BlueprintType)
+enum class ESharApplicationProfilePolicy : uint8
+{
+    None,
+    Prepare,
+    Retain,
+    Own,
+    TearDown,
+};
+
+UENUM(BlueprintType)
 enum class ESharApplicationProgressionPolicy : uint8
 {
     None,
@@ -122,6 +132,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Session")
     ESharApplicationSessionPolicy SessionPolicy =
         ESharApplicationSessionPolicy::None;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Profile")
+    ESharApplicationProfilePolicy ProfilePolicy =
+        ESharApplicationProfilePolicy::None;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Progression")
     ESharApplicationProgressionPolicy ProgressionPolicy =

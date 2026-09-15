@@ -64,6 +64,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
         | EAutomationTestFlags::EngineFilter
 )
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharApplicationProfileAuthorityPolicyTest,
+    "SHAR.Application.Configuration.ProfileAuthorityPolicy",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharApplicationTransitionSuccessTest,
     "SHAR.Application.Transition.SuccessLifecycle",
     EAutomationTestFlags::EditorContext
@@ -160,6 +168,32 @@ FSharApplicationModeRequest MakeLifecycleRequest(
     Request.ReturnModeId = TargetModeId == FName(TEXT("pause"))
         ? SourceModeId
         : FName();
+    Request.DeadlineSeconds = DefaultApplicationDeadlineSeconds;
+    return Request;
+}
+
+FSharApplicationModeRequest MakeProfileLifecycleRequest(
+    const FName& RequestId,
+    const FName& SourceModeId,
+    const FName& TargetModeId,
+    const FString& ProfileRevision
+)
+{
+    FSharApplicationModeRequest Request;
+    Request.RequestId = RequestId;
+    Request.SourceModeId = SourceModeId;
+    Request.TargetModeId = TargetModeId;
+    Request.ReasonId = FName(TEXT("profile_lifecycle"));
+    Request.CallerId = FName(TEXT("profile_test"));
+    Request.Priority = ESharApplicationTransitionPriority::User;
+    Request.CatalogRevision = TEXT("sha256:application_catalog_v1");
+    Request.SourceModeRevision = ModeRevision(SourceModeId);
+    Request.TargetModeRevision = ModeRevision(TargetModeId);
+    Request.ProfileRevision = ProfileRevision;
+    Request.RequestRevision = FString::Printf(
+        TEXT("sha256:%s_v1"),
+        *RequestId.ToString()
+    );
     Request.DeadlineSeconds = DefaultApplicationDeadlineSeconds;
     return Request;
 }
@@ -274,6 +308,18 @@ bool FSharApplicationEntryAuthorityAbsenceTest::RunTest(
         TEXT("Front end accepts absent gameplay world and session"),
         FrontEndCoordinator->Configure(Catalog, FrontEndObservation)
     );
+    FSharApplicationModeObservation MissingProfileFrontEnd =
+        FrontEndObservation;
+    MissingProfileFrontEnd.ProfileRevision.Reset();
+    auto* MissingProfileFrontEndCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    TestFalse(
+        TEXT("Front end rejects absent selected-profile authority"),
+        MissingProfileFrontEndCoordinator->Configure(
+            Catalog,
+            MissingProfileFrontEnd
+        )
+    );
     FSharApplicationModeObservation FabricatedFrontEnd = FrontEndObservation;
     FabricatedFrontEnd.WorldId = FName(TEXT("no_gameplay_world"));
     FabricatedFrontEnd.WorldRevision = TEXT("sha256:world_none_v1");
@@ -282,6 +328,103 @@ bool FSharApplicationEntryAuthorityAbsenceTest::RunTest(
     TestFalse(
         TEXT("Front end rejects fabricated world authority"),
         FabricatedFrontEndCoordinator->Configure(Catalog, FabricatedFrontEnd)
+    );
+    return true;
+}
+
+bool FSharApplicationProfileAuthorityPolicyTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    auto* GameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* Catalog = MakeApplicationCatalog(
+        *GameInstance,
+        ESharApplicationCatalogShape::Valid,
+        true
+    );
+    auto* Coordinator = NewObject<USharApplicationModeCoordinator>(
+        GameInstance
+    );
+    FSharApplicationModeObservation EntryObservation;
+    EntryObservation.ActiveModeId = FName(TEXT("entry"));
+    EntryObservation.ActiveModeRevision = TEXT("sha256:entry_v1");
+    TestTrue(
+        TEXT("Profile lifecycle begins with absent entry authority"),
+        Coordinator->Configure(Catalog, EntryObservation)
+    );
+
+    const FString ProfileRevision(TEXT("sha256:profile_v1"));
+    const FSharApplicationModeRequest BootRequest =
+        MakeProfileLifecycleRequest(
+            FName(TEXT("boot_prepares_profile")),
+            FName(TEXT("entry")),
+            FName(TEXT("boot")),
+            ProfileRevision
+        );
+    TestTrue(
+        TEXT("Boot accepts one concrete profile revision to prepare"),
+        Coordinator->Submit(BootRequest)
+            == ESharApplicationOperationResult::Accepted
+    );
+    PrepareLifecycleRequest(*Coordinator, BootRequest, {});
+    TestTrue(
+        TEXT("Boot commit publishes prepared profile authority"),
+        Coordinator->Commit(BootRequest.RequestId)
+            == ESharApplicationOperationResult::Accepted
+            && Coordinator->GetObservation().ProfileRevision
+                == ProfileRevision
+    );
+    Coordinator->Complete(BootRequest.RequestId);
+    Coordinator->Release(BootRequest.RequestId);
+
+    FSharApplicationModeRequest WrongFrontEnd =
+        MakeProfileLifecycleRequest(
+            FName(TEXT("frontend_replaces_profile")),
+            FName(TEXT("boot")),
+            FName(TEXT("front_end")),
+            TEXT("sha256:other_profile_v1")
+        );
+    TestTrue(
+        TEXT("Front-end ownership rejects replacement prepared profile"),
+        Coordinator->Submit(WrongFrontEnd)
+            == ESharApplicationOperationResult::StaleRevision
+    );
+
+    const FSharApplicationModeRequest FrontEndRequest =
+        MakeProfileLifecycleRequest(
+            FName(TEXT("frontend_owns_profile")),
+            FName(TEXT("boot")),
+            FName(TEXT("front_end")),
+            ProfileRevision
+        );
+    TestTrue(
+        TEXT("Front end accepts the exact prepared profile revision"),
+        Coordinator->Submit(FrontEndRequest)
+            == ESharApplicationOperationResult::Accepted
+    );
+    PrepareLifecycleRequest(*Coordinator, FrontEndRequest, {});
+    TestTrue(
+        TEXT("Front-end commit preserves prepared profile authority"),
+        Coordinator->Commit(FrontEndRequest.RequestId)
+            == ESharApplicationOperationResult::Accepted
+            && Coordinator->GetObservation().ProfileRevision
+                == ProfileRevision
+    );
+    Coordinator->Complete(FrontEndRequest.RequestId);
+    Coordinator->Release(FrontEndRequest.RequestId);
+
+    FSharApplicationModeRequest WrongLoading = MakeApplicationRequest({
+        .RequestId = FName(TEXT("loading_replaces_profile")),
+        .Priority = ESharApplicationTransitionPriority::Gameplay,
+        .CallerId = FName(TEXT("profile_test")),
+    });
+    WrongLoading.ProfileRevision = TEXT("sha256:other_profile_v1");
+    WrongLoading.RequestRevision = TEXT("sha256:loading_replaces_profile_v1");
+    TestTrue(
+        TEXT("Loading retention rejects replacement selected profile"),
+        Coordinator->Submit(WrongLoading)
+            == ESharApplicationOperationResult::StaleRevision
     );
     return true;
 }
@@ -357,7 +500,7 @@ bool FSharApplicationWorldAuthorityPolicyTest::RunTest(
     ExitRequest.SourceModeRevision = GameplayObservation.ActiveModeRevision;
     ExitRequest.TargetModeRevision = TEXT("sha256:exit_v1");
     ExitRequest.SessionRevision.Reset();
-    ExitRequest.ProfileRevision = GameplayObservation.ProfileRevision;
+    ExitRequest.ProfileRevision.Reset();
     ExitRequest.RequestRevision = TEXT("sha256:exit_without_world_v1");
     ExitRequest.DeadlineSeconds = DefaultApplicationDeadlineSeconds;
     TestTrue(
@@ -507,7 +650,7 @@ bool FSharApplicationSessionAuthorityPolicyTest::RunTest(
     ExitRequest.CatalogRevision = TEXT("sha256:application_catalog_v1");
     ExitRequest.SourceModeRevision = GameplayObservation.ActiveModeRevision;
     ExitRequest.TargetModeRevision = TEXT("sha256:exit_v1");
-    ExitRequest.ProfileRevision = GameplayObservation.ProfileRevision;
+    ExitRequest.ProfileRevision.Reset();
     ExitRequest.RequestRevision = TEXT("sha256:exit_without_session_v1");
     ExitRequest.DeadlineSeconds = DefaultApplicationDeadlineSeconds;
     TestTrue(
@@ -535,6 +678,7 @@ bool FSharApplicationSessionAuthorityPolicyTest::RunTest(
         ExitCoordinator->Commit(ExitRequest.RequestId)
             == ESharApplicationOperationResult::Accepted
             && ExitCoordinator->GetObservation().SessionRevision.IsEmpty()
+            && ExitCoordinator->GetObservation().ProfileRevision.IsEmpty()
     );
     return true;
 }
@@ -819,6 +963,10 @@ bool FSharApplicationTransitionThirdModeRecoveryRevisionTest::RunTest(
     TestTrue(
         TEXT("Exit recovery does not retain gameplay-session authority"),
         Recovered.SessionRevision.IsEmpty()
+    );
+    TestTrue(
+        TEXT("Exit recovery does not retain selected-profile authority"),
+        Recovered.ProfileRevision.IsEmpty()
     );
     return true;
 }

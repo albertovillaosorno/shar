@@ -272,6 +272,35 @@ performs its fresh level initialization only when entered from loading. The
 modern ownership handoff therefore promotes the prepared world rather than
 minting a different one at mode commit.
 
+## Selected-profile authority policy — 2026-09-15
+
+Application mode definitions now declare `ProfilePolicy` independently from
+world and gameplay-session policy. The main lifecycle fixture follows the
+contracted startup route `entry -> boot -> front_end`: entry has no selected
+profile, boot prepares one concrete revision, and front end accepts that exact
+revision as active profile authority. Gameplay loading, gameplay, and pause
+retain it; exit tears it down.
+
+Coordinator configuration and submission now validate profile presence from the
+target mode policy rather than from a special-case mode-kind rule. A retaining
+or owning target rejects a replacement profile revision, catalog activation
+rejects profile ownership/retention edges whose predecessor has no profile
+authority, and post-handoff recovery clears the profile only when the recovery
+mode does not require it.
+
+`SHAR.Application.Configuration.ProfileAuthorityPolicy` exercises startup
+acquisition and the boot-to-front-end handoff, including replacement rejection.
+Definition and graph Automation cover missing recovery for profile retention and
+impossible profile predecessor edges. The root gameplay-transition fixture keeps
+profile absent because that integration test owns only world, loading, and input
+composition.
+
+The preserved behavior basis is lifecycle continuity rather than a direct
+legacy class translation: startup initializes durable game-data/save services,
+and ordinary front-end, gameplay, and pause context changes do not reinitialize
+that authority. Modern profile selection remains owned by profile/save services;
+Application stores only the correlated revision needed for mode fencing.
+
 ## Root gameplay catalog foundation — 2026-09-13
 
 The first code-first runtime slice now establishes the missing root catalog

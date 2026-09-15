@@ -100,6 +100,15 @@ bool FSharApplicationDefinitionValidationTest::RunTest(
         TEXT("Session-retaining mode requires explicit recovery"),
         Errors.IsEmpty()
     );
+
+    Definition->SessionPolicy = ESharApplicationSessionPolicy::None;
+    Definition->ProfilePolicy = ESharApplicationProfilePolicy::Retain;
+    Errors.Reset();
+    Definition->GatherValidationErrors(Errors);
+    TestFalse(
+        TEXT("Profile-retaining mode requires explicit recovery"),
+        Errors.IsEmpty()
+    );
     return true;
 }
 
@@ -218,6 +227,32 @@ bool FSharApplicationCatalogGraphValidationTest::RunTest(
     TestTrue(
         TEXT("Owned session requires authority on every predecessor"),
         MissingOwnedSessionCatalog->Activate()
+            == ESharApplicationCatalogResult::AuthorityPolicyMismatch
+    );
+
+    auto* MissingOwnedProfileGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* MissingOwnedProfileCatalog =
+        MakeApplicationCatalog(
+            *MissingOwnedProfileGameInstance,
+            ESharApplicationCatalogShape::OwnProfileFromAbsentAuthority,
+            false
+        );
+    TestTrue(
+        TEXT("Owned profile requires authority on every predecessor"),
+        MissingOwnedProfileCatalog->Activate()
+            == ESharApplicationCatalogResult::AuthorityPolicyMismatch
+    );
+
+    auto* MissingRetainedProfileGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* MissingRetainedProfileCatalog =
+        MakeApplicationCatalog(
+            *MissingRetainedProfileGameInstance,
+            ESharApplicationCatalogShape::RetainProfileFromAbsentAuthority,
+            false
+        );
+    TestTrue(
+        TEXT("Retained profile requires authority on every predecessor"),
+        MissingRetainedProfileCatalog->Activate()
             == ESharApplicationCatalogResult::AuthorityPolicyMismatch
     );
     return true;

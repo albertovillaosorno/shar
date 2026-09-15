@@ -462,6 +462,13 @@ private:
         const FString& SessionRevision,
         const USharApplicationModeDefinition& Mode
     );
+    [[nodiscard]] static bool RequiresProfileAuthority(
+        const USharApplicationModeDefinition& Mode
+    );
+    [[nodiscard]] static bool IsValidProfileAuthority(
+        const FString& ProfileRevision,
+        const USharApplicationModeDefinition& Mode
+    );
     [[nodiscard]] static bool IsValidRequest(
         const FSharApplicationModeRequest& Request
     );

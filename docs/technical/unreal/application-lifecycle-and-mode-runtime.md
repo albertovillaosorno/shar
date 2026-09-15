@@ -348,6 +348,12 @@ Gameplay-session authority follows each mode definition's `SessionPolicy`.
 `TearDown` require the session revision to be empty; sentinel revisions such as
 `sha256:session_none_v1` are invalid.
 
+Selected-profile authority follows `ProfilePolicy` with the same explicit
+presence rules. `entry` uses `None`; `boot` uses `Prepare`; `front_end` uses
+`Own`; gameplay loading, gameplay, and pause use `Retain`; and `exit` uses
+`TearDown`. The policy describes whether a mode may rely on a selected-profile
+revision; profile and save services remain the owners of profile data.
+
 `Retain` additionally requires exact identity with the source observation; it
 cannot replace the retained session. The same exact-match rule applies to a
 retained world identity and revision. `Own` promotes authority already prepared,
@@ -362,8 +368,12 @@ instead of deferring them to a request that can never pass revision fencing.
 Session policy remains independent from world policy so either authority can
 fail closed on its own lifecycle boundary.
 
-Entry additionally has no profile authority. Other mode kinds still require a
-concrete profile revision until profile-selection absence is modeled separately.
+Profile absence is represented by an empty revision only when the active mode's
+`ProfilePolicy` is `None` or `TearDown`. `Prepare`, `Retain`, and `Own`
+require a real `sha256:` revision. A retaining or owning target may not replace
+the profile revision published by an authority-bearing source; a new selected
+profile must
+enter through an explicit `Prepare` boundary.
 
 `exit` is a terminal transition plan. It:
 
@@ -386,8 +396,9 @@ cannot rely on singleton destruction order.
 ## Boot mode
 
 Boot mode prepares the minimum services needed for a valid front end. Its plan
-is
-explicitly ordered by dependency, not by singleton construction side effects.
+is explicitly ordered by dependency, not by singleton construction side effects.
+Profile discovery and selection publish the concrete profile revision that the
+front end accepts without substituting another revision.
 
 The plan includes:
 
@@ -881,8 +892,8 @@ Catalog validation rejects:
 
 Required tests include:
 
-- graph reachability, invalid-edge rejection, and retained-authority
-  predecessor compatibility;
+- graph reachability, invalid-edge rejection, and world, session, and profile
+  authority predecessor compatibility;
 - boot success, optional-media fallback, and required-media failure;
 - configuration load, migration, quarantine, and defaulting;
 - front-end readiness plus gameplay-world and gameplay-session absence;
@@ -903,7 +914,8 @@ Required tests include:
 - One transition transaction owns each mode change.
 - Preparation completion is verified before commit.
 - Gameplay-session presence or absence follows the committed mode policy.
-- Retained world and session authority cannot change across an ordinary resume.
+- Selected-profile presence or absence follows the committed profile policy.
+- Retained world, session, and profile authority cannot change across handoff.
 - Input, audio, world, and presentation ownership uses move-only leases.
 - Demo sessions cannot mutate durable progression.
 - Platform suspension is not the same as player pause.
