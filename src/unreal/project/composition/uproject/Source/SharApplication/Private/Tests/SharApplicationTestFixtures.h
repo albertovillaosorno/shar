@@ -57,6 +57,8 @@ enum class ESharApplicationCatalogShape : uint8
     RetainProfileFromAbsentAuthority,
     RecoveryRequiresMissingAuthority,
     RecoveryRequiresPreparation,
+    DuplicateEntry,
+    DuplicateExit,
 };
 
 struct FSharApplicationModeFixture
@@ -305,6 +307,24 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
         .ProgressionPolicy = ESharApplicationProgressionPolicy::None,
         .bDemonstrationMode = false,
     }));
+    if (Shape == ESharApplicationCatalogShape::DuplicateEntry)
+    {
+        Modes.Add(MakeApplicationMode({
+            .ModeId = FName(TEXT("entry_backup")),
+            .ModeKind = ESharApplicationModeKind::Entry,
+            .PredecessorIds = {},
+            .SuccessorIds = {FName(TEXT("boot"))},
+        }));
+    }
+    if (Shape == ESharApplicationCatalogShape::DuplicateExit)
+    {
+        Modes.Add(MakeApplicationMode({
+            .ModeId = FName(TEXT("exit_backup")),
+            .ModeKind = ESharApplicationModeKind::Exit,
+            .PredecessorIds = {FName(TEXT("gameplay"))},
+            .SuccessorIds = {},
+        }));
+    }
     return Modes;
 }
 

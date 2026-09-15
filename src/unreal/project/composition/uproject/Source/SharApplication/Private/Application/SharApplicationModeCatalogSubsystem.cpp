@@ -94,6 +94,22 @@ USharApplicationModeCatalogSubsystem::FindModeByKind(
     return Definition == nullptr ? nullptr : *Definition;
 }
 
+int32 USharApplicationModeCatalogSubsystem::CountModesByKind(
+    const ESharApplicationModeKind ModeKind
+) const
+{
+    int32 Count = 0;
+    for (const TObjectPtr<USharApplicationModeDefinition>& Definition :
+         Definitions)
+    {
+        Count += Definition != nullptr
+            && Definition->ModeKind == ModeKind
+            ? 1
+            : 0;
+    }
+    return Count;
+}
+
 ESharApplicationCatalogResult
 USharApplicationModeCatalogSubsystem::RegisterMode(
     USharApplicationModeDefinition* Definition
@@ -424,16 +440,26 @@ bool USharApplicationModeCatalogSubsystem::IsEveryModeReachableFrom(
 ESharApplicationCatalogResult
 USharApplicationModeCatalogSubsystem::ValidateGraph() const
 {
-    const USharApplicationModeDefinition* Entry =
-        FindModeByKind(ESharApplicationModeKind::Entry);
-    if (Entry == nullptr)
+    const int32 EntryCount = CountModesByKind(ESharApplicationModeKind::Entry);
+    if (EntryCount == 0)
     {
         return ESharApplicationCatalogResult::EntryMissing;
     }
-    if (FindModeByKind(ESharApplicationModeKind::Exit) == nullptr)
+    if (EntryCount != 1)
+    {
+        return ESharApplicationCatalogResult::EntryAmbiguous;
+    }
+    const int32 ExitCount = CountModesByKind(ESharApplicationModeKind::Exit);
+    if (ExitCount == 0)
     {
         return ESharApplicationCatalogResult::ExitMissing;
     }
+    if (ExitCount != 1)
+    {
+        return ESharApplicationCatalogResult::ExitAmbiguous;
+    }
+    const USharApplicationModeDefinition* Entry =
+        FindModeByKind(ESharApplicationModeKind::Entry);
     if (!AreEdgesResolvable())
     {
         return ESharApplicationCatalogResult::EdgeMissing;
