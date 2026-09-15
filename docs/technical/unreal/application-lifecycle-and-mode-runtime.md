@@ -232,6 +232,9 @@ is not readiness evidence by itself.
 Callers submit typed mode requests; they do not push, pop, or replace an ordinal
 context stack directly. Every request records source mode, target mode, reason,
 priority, caller, expected revisions, parameters, and stable request identity.
+The source and target mode revisions must equal the active catalog definitions
+at submission. Later barrier or lifecycle evidence can correlate a request, but
+cannot self-certify a caller-invented destination revision.
 
 Pause and other reversible overlays receive an explicit return token naming the
 retained session and permitted predecessor. Returning validates that token
@@ -347,8 +350,17 @@ Gameplay-session authority follows each mode definition's `SessionPolicy`.
 
 `Retain` additionally requires exact identity with the source observation; it
 cannot replace the retained session. The same exact-match rule applies to a
-retained world identity and revision. Session policy remains independent from
-world policy so either authority can fail closed on its own lifecycle boundary.
+retained world identity and revision. A transition from a retaining source to a
+`Retain` or `Own` target preserves that identity as well. Replacing retained
+authority requires an explicit preparation or teardown boundary rather than an
+ordinary resume edge.
+
+Catalog activation rejects a `Retain` target when any declared predecessor does
+not publish the corresponding world or gameplay-session authority. This keeps
+unsatisfiable lifecycle edges out of the active graph instead of deferring them
+to a request that can never pass revision fencing. Session policy remains
+independent from world policy so either authority can fail closed on its own
+lifecycle boundary.
 
 Entry additionally has no profile authority. Other mode kinds still require a
 concrete profile revision until profile-selection absence is modeled separately.
@@ -856,6 +868,7 @@ Catalog validation rejects:
 - unreachable modes;
 - invalid transition cycles;
 - loading modes without success and recovery targets;
+- any declared recovery target that does not resolve in the active catalog;
 - entry or exit tasks without typed native implementations;
 - missing timeouts or cancellation behavior;
 - modes that own undeclared worlds, input, audio, or UI leases;
@@ -868,7 +881,8 @@ Catalog validation rejects:
 
 Required tests include:
 
-- graph reachability and invalid-edge rejection;
+- graph reachability, invalid-edge rejection, and retained-authority
+  predecessor compatibility;
 - boot success, optional-media fallback, and required-media failure;
 - configuration load, migration, quarantine, and defaulting;
 - front-end readiness plus gameplay-world and gameplay-session absence;
@@ -889,8 +903,10 @@ Required tests include:
 - One transition transaction owns each mode change.
 - Preparation completion is verified before commit.
 - Gameplay-session presence or absence follows the committed mode policy.
+- Retained world and session authority cannot change across an ordinary resume.
 - Input, audio, world, and presentation ownership uses move-only leases.
 - Demo sessions cannot mutate durable progression.
 - Platform suspension is not the same as player pause.
 - Late callbacks cannot complete a replacement transition.
+- A request cannot publish a mode revision not owned by its catalog definition.
 - Every failed transition reaches a declared valid mode or typed fatal result.

@@ -175,11 +175,16 @@ static void AppendOwnershipErrors(
         // jig-ignore-next-line: exact syntax is indivisible
         AddModeError(OutErrors, TEXT("Optional application mode targets must be canonical when present."));
     }
-    if (Definition.WorldPolicy == ESharApplicationWorldPolicy::Retain
-        && Definition.RecoveryModeId.IsNone())
+    const bool bRetainsAuthority =
+        Definition.WorldPolicy == ESharApplicationWorldPolicy::Retain
+        || Definition.SessionPolicy == ESharApplicationSessionPolicy::Retain;
+    if (bRetainsAuthority && Definition.RecoveryModeId.IsNone())
     {
-        // jig-ignore-next-line: exact syntax is indivisible
-        AddModeError(OutErrors, TEXT("World-retaining mode requires an explicit recovery target."));
+        AddModeError(
+            OutErrors,
+            // jig-ignore-next-line: exact syntax is indivisible
+            TEXT("Authority-retaining mode requires an explicit recovery target.")
+        );
     }
     if (Definition.bDemonstrationMode
         && Definition.ProgressionPolicy

@@ -89,6 +89,17 @@ bool FSharApplicationDefinitionValidationTest::RunTest(
         TEXT("Demonstration mode with durable progression is rejected"),
         Errors.IsEmpty()
     );
+
+    Definition->ProgressionPolicy =
+        ESharApplicationProgressionPolicy::ReadOnly;
+    Definition->SessionPolicy = ESharApplicationSessionPolicy::Retain;
+    Definition->RecoveryModeId = FName();
+    Errors.Reset();
+    Definition->GatherValidationErrors(Errors);
+    TestFalse(
+        TEXT("Session-retaining mode requires explicit recovery"),
+        Errors.IsEmpty()
+    );
     return true;
 }
 
@@ -143,6 +154,45 @@ bool FSharApplicationCatalogGraphValidationTest::RunTest(
         TEXT("Overlay without a resolvable return owner is rejected"),
         MissingReturnCatalog->Activate()
             == ESharApplicationCatalogResult::OverlayReturnMissing
+    );
+
+    auto* MissingRecoveryGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* MissingRecoveryCatalog =
+        MakeApplicationCatalog(
+            *MissingRecoveryGameInstance,
+            ESharApplicationCatalogShape::MissingRecoveryTarget,
+            false
+        );
+    TestTrue(
+        TEXT("Non-loading recovery target must resolve in catalog"),
+        MissingRecoveryCatalog->Activate()
+            == ESharApplicationCatalogResult::RecoveryTargetMissing
+    );
+
+    auto* MissingWorldAuthorityGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* MissingWorldAuthorityCatalog =
+        MakeApplicationCatalog(
+            *MissingWorldAuthorityGameInstance,
+            ESharApplicationCatalogShape::RetainWorldFromAbsentAuthority,
+            false
+        );
+    TestTrue(
+        TEXT("Retained world requires authority on every predecessor"),
+        MissingWorldAuthorityCatalog->Activate()
+            == ESharApplicationCatalogResult::AuthorityPolicyMismatch
+    );
+
+    auto* MissingSessionAuthorityGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* MissingSessionAuthorityCatalog =
+        MakeApplicationCatalog(
+            *MissingSessionAuthorityGameInstance,
+            ESharApplicationCatalogShape::RetainSessionFromAbsentAuthority,
+            false
+        );
+    TestTrue(
+        TEXT("Retained session requires authority on every predecessor"),
+        MissingSessionAuthorityCatalog->Activate()
+            == ESharApplicationCatalogResult::AuthorityPolicyMismatch
     );
     return true;
 }

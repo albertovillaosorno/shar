@@ -199,6 +199,19 @@ bool USharApplicationModeCatalogSubsystem::AreLoadingTargetsResolvable() const
     );
 }
 
+bool USharApplicationModeCatalogSubsystem::AreRecoveryTargetsResolvable() const
+{
+    return Algo::AllOf(
+        Definitions,
+        [this](const TObjectPtr<USharApplicationModeDefinition>& Definition)
+        {
+            return Definition != nullptr
+                && (Definition->RecoveryModeId.IsNone()
+                    || FindMode(Definition->RecoveryModeId) != nullptr);
+        }
+    );
+}
+
 bool USharApplicationModeCatalogSubsystem::AreOverlayReturnsResolvable() const
 {
     return Algo::AllOf(
@@ -217,6 +230,60 @@ bool USharApplicationModeCatalogSubsystem::AreOverlayReturnsResolvable() const
             return FindMode(ReturnModeId) != nullptr
                 && Definition->AllowedPredecessorIds.Contains(ReturnModeId)
                 && Definition->AllowedSuccessorIds.Contains(ReturnModeId);
+        }
+    );
+}
+
+static bool RequiresWorldAuthority(
+    const ESharApplicationWorldPolicy Policy
+)
+{
+    return Policy == ESharApplicationWorldPolicy::Prepare
+        || Policy == ESharApplicationWorldPolicy::Retain
+        || Policy == ESharApplicationWorldPolicy::Own;
+}
+
+static bool RequiresSessionAuthority(
+    const ESharApplicationSessionPolicy Policy
+)
+{
+    return Policy == ESharApplicationSessionPolicy::Prepare
+        || Policy == ESharApplicationSessionPolicy::Retain
+        || Policy == ESharApplicationSessionPolicy::Own;
+}
+
+bool
+USharApplicationModeCatalogSubsystem::AreAuthorityPoliciesCompatible() const
+{
+    return Algo::AllOf(
+        Definitions,
+        [this](const TObjectPtr<USharApplicationModeDefinition>& Definition)
+        {
+            if (Definition == nullptr)
+            {
+                return false;
+            }
+            return Algo::AllOf(
+                Definition->AllowedPredecessorIds,
+                [this, &Definition](const FName& PredecessorId)
+                {
+                    const USharApplicationModeDefinition* Predecessor =
+                        FindMode(PredecessorId);
+                    if (Predecessor == nullptr)
+                    {
+                        return false;
+                    }
+                    const bool bWorldCompatible =
+                        Definition->WorldPolicy
+                            != ESharApplicationWorldPolicy::Retain
+                        || RequiresWorldAuthority(Predecessor->WorldPolicy);
+                    const bool bSessionCompatible =
+                        Definition->SessionPolicy
+                            != ESharApplicationSessionPolicy::Retain
+                        || RequiresSessionAuthority(Predecessor->SessionPolicy);
+                    return bWorldCompatible && bSessionCompatible;
+                }
+            );
         }
     );
 }
@@ -295,9 +362,17 @@ USharApplicationModeCatalogSubsystem::ValidateGraph() const
     {
         return ESharApplicationCatalogResult::LoadingTargetMissing;
     }
+    if (!AreRecoveryTargetsResolvable())
+    {
+        return ESharApplicationCatalogResult::RecoveryTargetMissing;
+    }
     if (!AreOverlayReturnsResolvable())
     {
         return ESharApplicationCatalogResult::OverlayReturnMissing;
+    }
+    if (!AreAuthorityPoliciesCompatible())
+    {
+        return ESharApplicationCatalogResult::AuthorityPolicyMismatch;
     }
     return IsEveryModeReachableFrom(Entry->CanonicalId)
         ? ESharApplicationCatalogResult::Accepted

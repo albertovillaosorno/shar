@@ -300,11 +300,18 @@ USharApplicationModeCoordinator::ClassifySubmission(
     {
         return ESharApplicationOperationResult::InvalidRequest;
     }
+    const USharApplicationModeDefinition* Source =
+        Catalog->FindMode(Request.SourceModeId);
     const USharApplicationModeDefinition* Target =
         Catalog->FindMode(Request.TargetModeId);
-    if (Target == nullptr)
+    if (Source == nullptr || Target == nullptr)
     {
         return ESharApplicationOperationResult::ModeMissing;
+    }
+    if (Request.SourceModeRevision != Source->RevisionToken
+        || Request.TargetModeRevision != Target->RevisionToken)
+    {
+        return ESharApplicationOperationResult::StaleRevision;
     }
     if (!IsValidWorldAuthority(
         Request.WorldId,
@@ -321,6 +328,27 @@ USharApplicationModeCoordinator::ClassifySubmission(
         return ESharApplicationOperationResult::StaleRevision;
     }
     if (Target->SessionPolicy == ESharApplicationSessionPolicy::Retain
+        && Request.SessionRevision != Observation.SessionRevision)
+    {
+        return ESharApplicationOperationResult::StaleRevision;
+    }
+    const bool bSourceRetainsWorld =
+        Source->WorldPolicy == ESharApplicationWorldPolicy::Retain;
+    const bool bTargetKeepsWorld =
+        Target->WorldPolicy == ESharApplicationWorldPolicy::Retain
+        || Target->WorldPolicy == ESharApplicationWorldPolicy::Own;
+    if (bSourceRetainsWorld && bTargetKeepsWorld
+        && (Request.WorldId != Observation.WorldId
+            || Request.WorldRevision != Observation.WorldRevision))
+    {
+        return ESharApplicationOperationResult::StaleRevision;
+    }
+    const bool bSourceRetainsSession =
+        Source->SessionPolicy == ESharApplicationSessionPolicy::Retain;
+    const bool bTargetKeepsSession =
+        Target->SessionPolicy == ESharApplicationSessionPolicy::Retain
+        || Target->SessionPolicy == ESharApplicationSessionPolicy::Own;
+    if (bSourceRetainsSession && bTargetKeepsSession
         && Request.SessionRevision != Observation.SessionRevision)
     {
         return ESharApplicationOperationResult::StaleRevision;

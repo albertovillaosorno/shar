@@ -48,6 +48,9 @@ enum class ESharApplicationCatalogShape : uint8
     BrokenReciprocalEdge,
     RecoveryToExit,
     MissingOverlayReturn,
+    MissingRecoveryTarget,
+    RetainWorldFromAbsentAuthority,
+    RetainSessionFromAbsentAuthority,
 };
 
 struct FSharApplicationModeFixture
@@ -202,10 +205,20 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
         },
         .RequiredServiceIds = {},
         .SuccessModeId = FName(),
-        .RecoveryModeId = FName(TEXT("front_end")),
+        .RecoveryModeId = Shape
+                == ESharApplicationCatalogShape::MissingRecoveryTarget
+            ? FName(TEXT("missing_recovery"))
+            : FName(TEXT("front_end")),
         .ReturnModeId = FName(),
-        .WorldPolicy = ESharApplicationWorldPolicy::Own,
-        .SessionPolicy = ESharApplicationSessionPolicy::Own,
+        .WorldPolicy = Shape
+                == ESharApplicationCatalogShape::RetainWorldFromAbsentAuthority
+            ? ESharApplicationWorldPolicy::None
+            : ESharApplicationWorldPolicy::Own,
+        .SessionPolicy = Shape
+                == ESharApplicationCatalogShape::
+                    RetainSessionFromAbsentAuthority
+            ? ESharApplicationSessionPolicy::None
+            : ESharApplicationSessionPolicy::Own,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::Durable,
         .bDemonstrationMode = false,
     }));

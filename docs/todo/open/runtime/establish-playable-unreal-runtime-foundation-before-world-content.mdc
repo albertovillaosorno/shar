@@ -216,6 +216,42 @@ and recovery cleanup. Profile
 selection remains intentionally unchanged until its own authority policy is
 modeled.
 
+## Retained-authority graph fencing — 2026-09-15
+
+Pause/resume authority is now fenced in both the active request path and the
+catalog graph. A source with `Retain` world or gameplay-session policy cannot
+transition directly to a `Retain` or `Own` target while substituting a different
+identity or revision. Introducing a new authority requires a preparation or
+teardown boundary.
+
+Catalog activation also rejects any `Retain` target whose declared predecessor
+does not publish the authority that target promises to retain. This prevents a
+syntactically reachable but semantically impossible mode edge from becoming
+active. `SHAR.Application.Catalog.GraphValidation` covers world and session
+predecessor mismatches, while the pause/resume lifecycle regression rejects
+replacement world and session revisions before accepting the real resume.
+
+The preserved behavior evidence is that ordinary pause keeps the active level,
+and gameplay startup performs fresh level-owned initialization only when entered
+from loading rather than when returning from pause. The modern contract
+therefore models resume as authority continuity, not a new world/session
+acquisition.
+
+The same submission boundary now binds both source and target mode revisions to
+the loaded catalog definitions. Previously a caller could provide an arbitrary
+well-formed target revision and then submit matching readiness/lifecycle
+evidence; commit would publish that caller-owned revision. Submission now
+returns `StaleRevision` before creating a transition snapshot whenever either
+mode revision differs from the catalog-owned definition. The stale-evidence
+Automation test covers rejection and preservation of the source observation.
+
+Recovery references now fail closed during catalog activation as well. A
+non-loading mode can no longer declare a canonical-looking but absent
+`RecoveryModeId`; activation returns `RecoveryTargetMissing`. Modes that retain
+world or gameplay-session authority also require an explicit recovery target at
+definition validation, so retained authority never has an undeclared failure
+route.
+
 ## Root gameplay catalog foundation — 2026-09-13
 
 The first code-first runtime slice now establishes the missing root catalog

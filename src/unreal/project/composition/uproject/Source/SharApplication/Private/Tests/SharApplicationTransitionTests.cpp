@@ -602,6 +602,35 @@ bool FSharApplicationTransitionStaleEvidenceTest::RunTest(
 {
     (void)Parameters;
     const FSharApplicationRuntimeFixture Runtime = MakeApplicationRuntime();
+    FSharApplicationModeRequest StaleTargetRevision =
+        MakeApplicationRequest({
+            .RequestId = FName(TEXT("stale_target_revision")),
+            .Priority = ESharApplicationTransitionPriority::User,
+            .CallerId = FName(TEXT("frontend_runtime")),
+        });
+    StaleTargetRevision.TargetModeRevision =
+        TEXT("sha256:stale_loading_gameplay_v0");
+    StaleTargetRevision.RequestRevision =
+        TEXT("sha256:stale_target_revision_v1");
+    TestTrue(
+        TEXT("Catalog-owned target revision rejects caller substitution"),
+        Runtime.Coordinator->Submit(StaleTargetRevision)
+            == ESharApplicationOperationResult::StaleRevision
+    );
+    FSharApplicationTransitionSnapshot RejectedSnapshot;
+    TestFalse(
+        TEXT("Rejected target revision creates no transition snapshot"),
+        Runtime.Coordinator->GetTransitionSnapshot(
+            StaleTargetRevision.RequestId,
+            RejectedSnapshot
+        )
+    );
+    TestTrue(
+        TEXT("Rejected target revision preserves source observation"),
+        Runtime.Coordinator->GetObservation().ActiveModeId
+            == FName(TEXT("front_end"))
+    );
+
     const FSharApplicationModeRequest Request = MakeApplicationRequest({
         .RequestId = FName(TEXT("stale_evidence_transition")),
         .Priority = ESharApplicationTransitionPriority::User,
@@ -997,6 +1026,31 @@ bool FSharApplicationGameplayPauseResumeLifecycleTest::RunTest(
             Step.SourceModeId,
             Step.TargetModeId
         );
+        if (Step.SourceModeId == FName(TEXT("pause")))
+        {
+            FSharApplicationModeRequest WrongWorld = Request;
+            WrongWorld.RequestId = FName(TEXT("resume_with_other_world"));
+            WrongWorld.RequestRevision =
+                TEXT("sha256:resume_with_other_world_v1");
+            WrongWorld.WorldId = FName(TEXT("other_world"));
+            WrongWorld.WorldRevision = TEXT("sha256:other_world_v1");
+            TestTrue(
+                TEXT("Resume rejects replacement retained world authority"),
+                Runtime.Coordinator->Submit(WrongWorld)
+                    == ESharApplicationOperationResult::StaleRevision
+            );
+
+            FSharApplicationModeRequest WrongSession = Request;
+            WrongSession.RequestId = FName(TEXT("resume_with_other_session"));
+            WrongSession.RequestRevision =
+                TEXT("sha256:resume_with_other_session_v1");
+            WrongSession.SessionRevision = TEXT("sha256:other_session_v1");
+            TestTrue(
+                TEXT("Resume rejects replacement retained session authority"),
+                Runtime.Coordinator->Submit(WrongSession)
+                    == ESharApplicationOperationResult::StaleRevision
+            );
+        }
         TestTrue(
             TEXT("Lifecycle request is accepted"),
             Runtime.Coordinator->Submit(Request)
