@@ -192,17 +192,35 @@ A transition follows these phases:
 1. validate source mode, target mode, caller, parameters, and revisions;
 1. freeze or reject conflicting transition requests;
 1. prepare required services, worlds, features, assets, and presentation;
-1. verify readiness without changing the active mode;
-1. acquire input, audio, world, and presentation leases;
+1. stage target leases and verify readiness without changing the active mode;
+1. execute and verify the source mode's declared exit plan;
+1. execute and verify the target mode's declared entry plan;
 1. commit the target mode atomically;
-1. release source-mode leases and tear down obsolete state;
+1. activate target input, simulation, audio, world, and presentation leases;
+1. release obsolete source-mode leases and state;
 1. verify the target postcondition; and
 1. publish one terminal result.
 
-Failure before commit leaves the source mode active. Failure after commit
-follows
-the definition's rollback or safe-recovery mode. When recovery selects a mode
-other than the failed source or target, the resulting observation uses that
+The exit and entry plans form an ordered lifecycle handoff. Their completion
+records carry catalog, transition, mode, mode-revision, and plan identity.
+Target entry completion is rejected until source exit completion has been
+accepted, and
+`Commit` rejects a transition until both completions are present. The
+coordinator
+correlates this evidence but does not execute subsystem effects or fabricate
+completion on their behalf.
+
+Failure before source-exit completion leaves the source mode active. Once source
+exit completion is accepted, the handoff is irreversible.
+
+Failure, cancellation, or supersession follows the target definition's
+safe-recovery mode when one is declared, even when the target has not yet been
+published. A terminal target such as `exit` may instead publish the typed fatal
+result required by its shutdown policy. It does not fabricate a return to an
+already-exited gameplay authority.
+
+Failure after commit follows the same recovery contract. When recovery selects a
+mode other than the failed source or target, the resulting observation uses that
 recovery definition's own revision token; it never reuses the failed target's
 revision as recovery identity. A loading-screen animation or transport callback
 is not readiness evidence by itself.
@@ -226,9 +244,12 @@ frame use priority and stable request identity; callback arrival and container
 order cannot select the winner.
 
 Mode commit occurs before the target receives active input or simulation leases.
-The source remains authoritative until commit. Native subsystem and tick-group
-ordering performs per-frame work after commit; the coordinator does not manually
-update every manager from one custom timer callback.
+The source remains the published authority until commit even after its exit-plan
+completion has begun the ordered handoff. Target entry therefore prepares the
+new mode but cannot activate gameplay input or simulation early. Native
+subsystem and
+tick-group ordering performs per-frame work after commit; the coordinator
+does not manually update every manager from one custom timer callback.
 
 Engine delta time and pause policy govern simulation. Development breakpoint or
 single-step handling may clamp diagnostic presentation time, but cannot rewrite
@@ -456,12 +477,19 @@ accepting duplicate caller claims. It records loading, world, and input service
 evidence only when catalog, world, mode, and transition revisions all match.
 
 Input readiness is side-effect free. A staged mapping context must be
-commit-ready
-against live Enhanced Input while remaining absent from the native mapping set.
-After the application coordinator commits gameplay, the adapter activates those
-leases, publishes loading success, and completes the application transition. A
-stale transition is rejected before commit; partial post-commit input failure
-releases activated mappings and enters the declared application recovery path.
+commit-ready against live Enhanced Input while remaining absent from the native
+mapping set. Gameplay commit additionally requires caller-supplied lifecycle
+completion records.
+
+The composition adapter submits source-exit evidence before target-entry
+evidence and never synthesizes either from the catalog. After the application
+coordinator
+accepts that ordered handoff and commits gameplay, the adapter activates staged
+input leases, publishes loading success, and completes the application
+transition.
+
+A stale transition is rejected before handoff. Failure after source exit cancels
+pending loading work and enters the declared application recovery path.
 
 The loading plan follows the
 <!-- markdownlint-disable-next-line MD013 -->
@@ -759,7 +787,8 @@ select the winner.
 
 ## Failure and recovery
 
-Every mode declares a safe recovery target. Typical policies are:
+Every recoverable mode declares a safe recovery target. Terminal failure paths
+instead declare one typed fatal result. Typical policies are:
 
 - boot failure to a recoverable error presentation or exit;
 - gameplay-load failure back to front end;

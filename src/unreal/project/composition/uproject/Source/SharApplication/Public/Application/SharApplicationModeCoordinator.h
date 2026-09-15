@@ -77,6 +77,13 @@ enum class ESharApplicationServiceStatus : uint8
 };
 
 UENUM(BlueprintType)
+enum class ESharApplicationLifecyclePhase : uint8
+{
+    SourceExit,
+    TargetEntry,
+};
+
+UENUM(BlueprintType)
 enum class ESharApplicationTerminalResult : uint8
 {
     None,
@@ -199,6 +206,34 @@ struct SHARAPPLICATION_API FSharApplicationServiceEvidence
 };
 
 USTRUCT(BlueprintType)
+struct SHARAPPLICATION_API FSharApplicationLifecycleEvidence
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
+    FName RequestId;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lifecycle")
+    ESharApplicationLifecyclePhase Phase =
+        ESharApplicationLifecyclePhase::SourceExit;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mode")
+    FName ModeId;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Plan")
+    FName PlanId;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
+    FString CatalogRevision;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
+    FString RequestRevision;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
+    FString ModeRevision;
+};
+
+USTRUCT(BlueprintType)
 struct SHARAPPLICATION_API FSharApplicationBarrierEvidence
 {
     GENERATED_BODY()
@@ -290,6 +325,12 @@ struct SHARAPPLICATION_API FSharApplicationTransitionSnapshot
     UPROPERTY(BlueprintReadOnly, Category = "Evidence")
     bool bBarrierAccepted = false;
 
+    UPROPERTY(BlueprintReadOnly, Category = "Lifecycle")
+    bool bSourceExitCompleted = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Lifecycle")
+    bool bTargetEntryCompleted = false;
+
     UPROPERTY(BlueprintReadOnly, Category = "Commit")
     bool bCommitted = false;
 
@@ -332,6 +373,10 @@ public:
 
     ESharApplicationOperationResult AcceptBarrier(
         const FSharApplicationBarrierEvidence& Evidence
+    );
+
+    ESharApplicationOperationResult RecordLifecycleEvidence(
+        const FSharApplicationLifecycleEvidence& Evidence
     );
 
     ESharApplicationOperationResult Commit(const FName& RequestId);
@@ -433,7 +478,7 @@ private:
         ESharApplicationTransitionState State,
         ESharApplicationTerminalResult Result
     );
-    [[nodiscard]] ESharApplicationOperationResult RecoverCommittedFailure(
+    [[nodiscard]] ESharApplicationOperationResult RecoverAfterHandoff(
         FSharApplicationTransitionSnapshot& Snapshot
     );
 };

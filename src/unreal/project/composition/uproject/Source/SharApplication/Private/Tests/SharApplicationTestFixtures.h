@@ -352,6 +352,31 @@ inline FSharApplicationServiceEvidence MakeApplicationServiceEvidence(
     return Evidence;
 }
 
+inline FSharApplicationLifecycleEvidence MakeApplicationLifecycleEvidence(
+    const FSharApplicationModeRequest& Request,
+    const ESharApplicationLifecyclePhase Phase
+)
+{
+    FSharApplicationLifecycleEvidence Evidence;
+    Evidence.RequestId = Request.RequestId;
+    Evidence.Phase = Phase;
+    Evidence.CatalogRevision = Request.CatalogRevision;
+    Evidence.RequestRevision = Request.RequestRevision;
+    if (Phase == ESharApplicationLifecyclePhase::SourceExit)
+    {
+        Evidence.ModeId = Request.SourceModeId;
+        Evidence.ModeRevision = Request.SourceModeRevision;
+        Evidence.PlanId = FName(TEXT("mode_exit_plan_v1"));
+    }
+    else
+    {
+        Evidence.ModeId = Request.TargetModeId;
+        Evidence.ModeRevision = Request.TargetModeRevision;
+        Evidence.PlanId = FName(TEXT("mode_entry_plan_v1"));
+    }
+    return Evidence;
+}
+
 inline FSharApplicationBarrierEvidence MakeApplicationBarrierEvidence(
     const FName& RequestId
 )
@@ -398,4 +423,12 @@ inline void PrepareApplicationTransition(
     Coordinator.AcceptBarrier(
         MakeApplicationBarrierEvidence(Request.RequestId)
     );
+    Coordinator.RecordLifecycleEvidence(MakeApplicationLifecycleEvidence(
+        Request,
+        ESharApplicationLifecyclePhase::SourceExit
+    ));
+    Coordinator.RecordLifecycleEvidence(MakeApplicationLifecycleEvidence(
+        Request,
+        ESharApplicationLifecyclePhase::TargetEntry
+    ));
 }
