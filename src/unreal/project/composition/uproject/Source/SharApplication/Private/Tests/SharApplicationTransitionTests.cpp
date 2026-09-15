@@ -1026,6 +1026,31 @@ bool FSharApplicationGameplayPauseResumeLifecycleTest::RunTest(
             Step.SourceModeId,
             Step.TargetModeId
         );
+        if (Step.SourceModeId == FName(TEXT("loading_gameplay")))
+        {
+            FSharApplicationModeRequest WrongWorld = Request;
+            WrongWorld.RequestId = FName(TEXT("commit_with_other_world"));
+            WrongWorld.RequestRevision =
+                TEXT("sha256:commit_with_other_world_v1");
+            WrongWorld.WorldId = FName(TEXT("other_world"));
+            WrongWorld.WorldRevision = TEXT("sha256:other_world_v1");
+            TestTrue(
+                TEXT("Gameplay ownership rejects another prepared world"),
+                Runtime.Coordinator->Submit(WrongWorld)
+                    == ESharApplicationOperationResult::StaleRevision
+            );
+
+            FSharApplicationModeRequest WrongSession = Request;
+            WrongSession.RequestId = FName(TEXT("commit_with_other_session"));
+            WrongSession.RequestRevision =
+                TEXT("sha256:commit_with_other_session_v1");
+            WrongSession.SessionRevision = TEXT("sha256:other_session_v1");
+            TestTrue(
+                TEXT("Gameplay ownership rejects another prepared session"),
+                Runtime.Coordinator->Submit(WrongSession)
+                    == ESharApplicationOperationResult::StaleRevision
+            );
+        }
         if (Step.SourceModeId == FName(TEXT("pause")))
         {
             FSharApplicationModeRequest WrongWorld = Request;

@@ -273,13 +273,19 @@ USharApplicationModeCatalogSubsystem::AreAuthorityPoliciesCompatible() const
                     {
                         return false;
                     }
-                    const bool bWorldCompatible =
+                    const bool bTargetKeepsWorld =
                         Definition->WorldPolicy
-                            != ESharApplicationWorldPolicy::Retain
+                            == ESharApplicationWorldPolicy::Retain
+                        || Definition->WorldPolicy
+                            == ESharApplicationWorldPolicy::Own;
+                    const bool bWorldCompatible = !bTargetKeepsWorld
                         || RequiresWorldAuthority(Predecessor->WorldPolicy);
-                    const bool bSessionCompatible =
+                    const bool bTargetKeepsSession =
                         Definition->SessionPolicy
-                            != ESharApplicationSessionPolicy::Retain
+                            == ESharApplicationSessionPolicy::Retain
+                        || Definition->SessionPolicy
+                            == ESharApplicationSessionPolicy::Own;
+                    const bool bSessionCompatible = !bTargetKeepsSession
                         || RequiresSessionAuthority(Predecessor->SessionPolicy);
                     return bWorldCompatible && bSessionCompatible;
                 }

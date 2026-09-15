@@ -252,6 +252,26 @@ world or gameplay-session authority also require an explicit recovery target at
 definition validation, so retained authority never has an undeclared failure
 route.
 
+## Prepared-authority ownership handoff — 2026-09-15
+
+The `loading_gameplay -> gameplay` boundary now preserves the exact world and
+session authority prepared by loading. A target `Own` policy can promote
+prepared, retained, or already-owned authority, but cannot substitute another
+identity or revision during application commit. A new authority must enter
+through an explicit target `Prepare` boundary.
+
+Catalog validation applies the same rule structurally: every predecessor of a
+`Retain` or `Own` world/session target must publish that authority. Synthetic
+graph regressions cover invalid ownership edges, and the full pause/resume
+lifecycle rejects replacement world and session revisions both when gameplay
+claims prepared loading authority and when pause returns retained authority.
+
+Preserved behavior evidence remains the loading/gameplay boundary itself: the
+legacy loading context constructs the level-facing runtime while gameplay
+performs its fresh level initialization only when entered from loading. The
+modern ownership handoff therefore promotes the prepared world rather than
+minting a different one at mode commit.
+
 ## Root gameplay catalog foundation — 2026-09-13
 
 The first code-first runtime slice now establishes the missing root catalog
