@@ -62,6 +62,8 @@ struct FSharApplicationModeFixture
     FName ReturnModeId;
     ESharApplicationWorldPolicy WorldPolicy =
         ESharApplicationWorldPolicy::None;
+    ESharApplicationSessionPolicy SessionPolicy =
+        ESharApplicationSessionPolicy::None;
     ESharApplicationProgressionPolicy ProgressionPolicy =
         ESharApplicationProgressionPolicy::None;
     bool bDemonstrationMode = false;
@@ -125,6 +127,7 @@ inline USharApplicationModeDefinition* MakeApplicationMode(
     Definition->RecoveryModeId = Fixture.RecoveryModeId;
     Definition->ReturnModeId = Fixture.ReturnModeId;
     Definition->WorldPolicy = Fixture.WorldPolicy;
+    Definition->SessionPolicy = Fixture.SessionPolicy;
     Definition->ProgressionPolicy = Fixture.ProgressionPolicy;
     Definition->bDemonstrationMode = Fixture.bDemonstrationMode;
     return Definition;
@@ -145,6 +148,7 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
         .RecoveryModeId = FName(),
         .ReturnModeId = FName(),
         .WorldPolicy = ESharApplicationWorldPolicy::None,
+        .SessionPolicy = ESharApplicationSessionPolicy::None,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::None,
         .bDemonstrationMode = false,
     }));
@@ -158,6 +162,7 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
         .RecoveryModeId = FName(),
         .ReturnModeId = FName(),
         .WorldPolicy = ESharApplicationWorldPolicy::None,
+        .SessionPolicy = ESharApplicationSessionPolicy::None,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::ReadOnly,
         .bDemonstrationMode = false,
     }));
@@ -180,6 +185,7 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
             : FName(TEXT("front_end")),
         .ReturnModeId = FName(),
         .WorldPolicy = ESharApplicationWorldPolicy::Prepare,
+        .SessionPolicy = ESharApplicationSessionPolicy::Prepare,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::ReadOnly,
         .bDemonstrationMode = false,
     }));
@@ -199,6 +205,7 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
         .RecoveryModeId = FName(TEXT("front_end")),
         .ReturnModeId = FName(),
         .WorldPolicy = ESharApplicationWorldPolicy::Own,
+        .SessionPolicy = ESharApplicationSessionPolicy::Own,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::Durable,
         .bDemonstrationMode = false,
     }));
@@ -215,6 +222,7 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
             ? FName(TEXT("missing_gameplay"))
             : FName(TEXT("gameplay")),
         .WorldPolicy = ESharApplicationWorldPolicy::Retain,
+        .SessionPolicy = ESharApplicationSessionPolicy::Retain,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::ReadOnly,
         .bDemonstrationMode = false,
     }));
@@ -228,6 +236,7 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
         .RecoveryModeId = FName(),
         .ReturnModeId = FName(),
         .WorldPolicy = ESharApplicationWorldPolicy::TearDown,
+        .SessionPolicy = ESharApplicationSessionPolicy::TearDown,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::None,
         .bDemonstrationMode = false,
     }));
@@ -291,7 +300,7 @@ inline FSharApplicationModeObservation MakeInitialApplicationObservation()
     Observation.WorldId = FName();
     Observation.WorldRevision.Reset();
     Observation.ProfileRevision = TEXT("sha256:profile_v1");
-    Observation.SessionRevision = TEXT("sha256:session_v1");
+    Observation.SessionRevision.Reset();
     return Observation;
 }
 

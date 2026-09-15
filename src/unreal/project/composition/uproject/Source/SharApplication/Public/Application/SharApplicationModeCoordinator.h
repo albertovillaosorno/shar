@@ -455,6 +455,13 @@ private:
         const FString& WorldRevision,
         const USharApplicationModeDefinition& Mode
     );
+    [[nodiscard]] static bool RequiresSessionAuthority(
+        const USharApplicationModeDefinition& Mode
+    );
+    [[nodiscard]] static bool IsValidSessionAuthority(
+        const FString& SessionRevision,
+        const USharApplicationModeDefinition& Mode
+    );
     [[nodiscard]] static bool IsValidRequest(
         const FSharApplicationModeRequest& Request
     );

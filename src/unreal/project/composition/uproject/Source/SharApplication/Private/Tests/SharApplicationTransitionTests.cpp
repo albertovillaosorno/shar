@@ -56,6 +56,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
         | EAutomationTestFlags::EngineFilter
 )
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharApplicationSessionAuthorityPolicyTest,
+    "SHAR.Application.Configuration.SessionAuthorityPolicy",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharApplicationTransitionSuccessTest,
     "SHAR.Application.Transition.SuccessLifecycle",
     EAutomationTestFlags::EditorContext
@@ -258,12 +266,12 @@ bool FSharApplicationEntryAuthorityAbsenceTest::RunTest(
     FrontEndObservation.ActiveModeId = FName(TEXT("front_end"));
     FrontEndObservation.ActiveModeRevision = TEXT("sha256:front_end_v1");
     FrontEndObservation.ProfileRevision = TEXT("sha256:profile_v1");
-    FrontEndObservation.SessionRevision = TEXT("sha256:session_v1");
+    FrontEndObservation.SessionRevision.Reset();
     auto* FrontEndCoordinator = NewObject<USharApplicationModeCoordinator>(
         GameInstance
     );
     TestTrue(
-        TEXT("Front end accepts absent gameplay-world authority"),
+        TEXT("Front end accepts absent gameplay world and session"),
         FrontEndCoordinator->Configure(Catalog, FrontEndObservation)
     );
     FSharApplicationModeObservation FabricatedFrontEnd = FrontEndObservation;
@@ -348,7 +356,7 @@ bool FSharApplicationWorldAuthorityPolicyTest::RunTest(
     ExitRequest.CatalogRevision = TEXT("sha256:application_catalog_v1");
     ExitRequest.SourceModeRevision = GameplayObservation.ActiveModeRevision;
     ExitRequest.TargetModeRevision = TEXT("sha256:exit_v1");
-    ExitRequest.SessionRevision = GameplayObservation.SessionRevision;
+    ExitRequest.SessionRevision.Reset();
     ExitRequest.ProfileRevision = GameplayObservation.ProfileRevision;
     ExitRequest.RequestRevision = TEXT("sha256:exit_without_world_v1");
     ExitRequest.DeadlineSeconds = DefaultApplicationDeadlineSeconds;
@@ -367,6 +375,147 @@ bool FSharApplicationWorldAuthorityPolicyTest::RunTest(
         TEXT("World-teardown target rejects fabricated world authority"),
         Coordinator->Submit(FabricatedExit)
             == ESharApplicationOperationResult::InvalidRequest
+    );
+    return true;
+}
+
+bool FSharApplicationSessionAuthorityPolicyTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    auto* GameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* Catalog = MakeApplicationCatalog(
+        *GameInstance,
+        ESharApplicationCatalogShape::Valid,
+        true
+    );
+
+    auto* FrontEndCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    const FSharApplicationModeObservation FrontEndObservation =
+        MakeInitialApplicationObservation();
+    TestTrue(
+        TEXT("Front end configures without gameplay-session authority"),
+        FrontEndCoordinator->Configure(Catalog, FrontEndObservation)
+    );
+    FSharApplicationModeObservation FabricatedFrontEnd = FrontEndObservation;
+    FabricatedFrontEnd.SessionRevision = TEXT("sha256:session_none_v1");
+    auto* FabricatedFrontEndCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    TestFalse(
+        TEXT("Front end rejects fabricated gameplay-session authority"),
+        FabricatedFrontEndCoordinator->Configure(Catalog, FabricatedFrontEnd)
+    );
+
+    FSharApplicationModeRequest MissingSessionLoading =
+        MakeApplicationRequest({
+            .RequestId = FName(TEXT("loading_without_session")),
+            .Priority = ESharApplicationTransitionPriority::Gameplay,
+            .CallerId = FName(TEXT("session_policy_test")),
+        });
+    MissingSessionLoading.SessionRevision.Reset();
+    TestTrue(
+        TEXT("Session-preparing loading rejects absent session authority"),
+        FrontEndCoordinator->Submit(MissingSessionLoading)
+            == ESharApplicationOperationResult::InvalidRequest
+    );
+
+    FSharApplicationModeObservation GameplayObservation;
+    GameplayObservation.ActiveModeId = FName(TEXT("gameplay"));
+    GameplayObservation.ActiveModeRevision = TEXT("sha256:gameplay_v1");
+    GameplayObservation.WorldId = FName(TEXT("springfield_world"));
+    GameplayObservation.WorldRevision = TEXT("sha256:springfield_world_v1");
+    GameplayObservation.ProfileRevision = TEXT("sha256:profile_v1");
+    GameplayObservation.SessionRevision = TEXT("sha256:gameplay_session_v1");
+    auto* GameplayCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    TestTrue(
+        TEXT("Session-owning gameplay requires a concrete session revision"),
+        GameplayCoordinator->Configure(Catalog, GameplayObservation)
+    );
+    FSharApplicationModeObservation MissingSessionGameplay =
+        GameplayObservation;
+    MissingSessionGameplay.SessionRevision.Reset();
+    auto* MissingSessionGameplayCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    TestFalse(
+        TEXT("Session-owning gameplay rejects absent session authority"),
+        MissingSessionGameplayCoordinator->Configure(
+            Catalog,
+            MissingSessionGameplay
+        )
+    );
+
+    auto* RetainCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    TestTrue(
+        TEXT("Pause retention fixture configures from gameplay"),
+        RetainCoordinator->Configure(Catalog, GameplayObservation)
+    );
+    const FSharApplicationModeRequest PauseRequest = MakeLifecycleRequest(
+        FName(TEXT("pause_retains_session")),
+        FName(TEXT("gameplay")),
+        FName(TEXT("pause"))
+    );
+    TestTrue(
+        TEXT("Session-retaining pause accepts the gameplay session"),
+        RetainCoordinator->Submit(PauseRequest)
+            == ESharApplicationOperationResult::Accepted
+    );
+    PrepareLifecycleRequest(*RetainCoordinator, PauseRequest, {});
+    TestTrue(
+        TEXT("Pause commit retains the gameplay-session revision"),
+        RetainCoordinator->Commit(PauseRequest.RequestId)
+            == ESharApplicationOperationResult::Accepted
+            && RetainCoordinator->GetObservation().SessionRevision
+                == GameplayObservation.SessionRevision
+    );
+
+    auto* ExitCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    TestTrue(
+        TEXT("Exit teardown fixture configures from gameplay"),
+        ExitCoordinator->Configure(Catalog, GameplayObservation)
+    );
+    FSharApplicationModeRequest ExitRequest;
+    ExitRequest.RequestId = FName(TEXT("exit_without_session"));
+    ExitRequest.SourceModeId = GameplayObservation.ActiveModeId;
+    ExitRequest.TargetModeId = FName(TEXT("exit"));
+    ExitRequest.ReasonId = FName(TEXT("quit_game"));
+    ExitRequest.CallerId = FName(TEXT("session_policy_test"));
+    ExitRequest.Priority = ESharApplicationTransitionPriority::FatalExit;
+    ExitRequest.CatalogRevision = TEXT("sha256:application_catalog_v1");
+    ExitRequest.SourceModeRevision = GameplayObservation.ActiveModeRevision;
+    ExitRequest.TargetModeRevision = TEXT("sha256:exit_v1");
+    ExitRequest.ProfileRevision = GameplayObservation.ProfileRevision;
+    ExitRequest.RequestRevision = TEXT("sha256:exit_without_session_v1");
+    ExitRequest.DeadlineSeconds = DefaultApplicationDeadlineSeconds;
+    TestTrue(
+        TEXT("Session-teardown exit accepts absent target session authority"),
+        ExitCoordinator->Submit(ExitRequest)
+            == ESharApplicationOperationResult::Accepted
+    );
+
+    FSharApplicationModeRequest FabricatedExit = ExitRequest;
+    FabricatedExit.RequestId = FName(TEXT("exit_with_fake_session"));
+    FabricatedExit.RequestRevision = TEXT("sha256:exit_with_fake_session_v1");
+    FabricatedExit.SessionRevision = TEXT("sha256:session_none_v1");
+    auto* FabricatedExitCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    FabricatedExitCoordinator->Configure(Catalog, GameplayObservation);
+    TestTrue(
+        TEXT("Session-teardown exit rejects fabricated session authority"),
+        FabricatedExitCoordinator->Submit(FabricatedExit)
+            == ESharApplicationOperationResult::InvalidRequest
+    );
+
+    PrepareLifecycleRequest(*ExitCoordinator, ExitRequest, {});
+    TestTrue(
+        TEXT("Exit commit removes gameplay-session authority"),
+        ExitCoordinator->Commit(ExitRequest.RequestId)
+            == ESharApplicationOperationResult::Accepted
+            && ExitCoordinator->GetObservation().SessionRevision.IsEmpty()
     );
     return true;
 }
@@ -400,6 +549,10 @@ bool FSharApplicationTransitionSuccessTest::RunTest(
         TEXT("Committed observation exposes target revision"),
         CommittedObservation.ActiveModeRevision
             == Request.TargetModeRevision
+    );
+    TestTrue(
+        TEXT("Commit acquires the prepared gameplay-session revision"),
+        CommittedObservation.SessionRevision == Request.SessionRevision
     );
     TestTrue(
         TEXT("Postcondition verification publishes success"),
@@ -540,6 +693,10 @@ bool FSharApplicationTransitionPostCommitRecoveryTest::RunTest(
             && Runtime.Coordinator->GetObservation().WorldRevision.IsEmpty()
     );
     TestTrue(
+        TEXT("Front-end recovery clears gameplay-session authority"),
+        Runtime.Coordinator->GetObservation().SessionRevision.IsEmpty()
+    );
+    TestTrue(
         TEXT("Post-commit failure publishes recovered terminal result"),
         Runtime.Coordinator->GetTerminalResult(Request.RequestId)
             == ESharApplicationTerminalResult::Recovered
@@ -610,6 +767,10 @@ bool FSharApplicationTransitionThirdModeRecoveryRevisionTest::RunTest(
     TestTrue(
         TEXT("Exit recovery does not retain gameplay-world authority"),
         Recovered.WorldId.IsNone() && Recovered.WorldRevision.IsEmpty()
+    );
+    TestTrue(
+        TEXT("Exit recovery does not retain gameplay-session authority"),
+        Recovered.SessionRevision.IsEmpty()
     );
     return true;
 }

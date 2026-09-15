@@ -461,6 +461,10 @@ USharApplicationModeCoordinator::RecoverAfterHandoff(
         Observation.WorldId = FName();
         Observation.WorldRevision.Reset();
     }
+    if (!RequiresSessionAuthority(*Recovery))
+    {
+        Observation.SessionRevision.Reset();
+    }
     return PublishTerminal(
         Snapshot,
         ESharApplicationTransitionState::Recovered,
