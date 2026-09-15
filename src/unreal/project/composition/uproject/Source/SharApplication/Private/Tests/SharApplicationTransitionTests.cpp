@@ -88,6 +88,22 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
         | EAutomationTestFlags::EngineFilter
 )
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharApplicationLifecycleHandoffRecoveryTest,
+    "SHAR.Application.Transition.LifecycleHandoffRecovery",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharApplicationLifecycleOrderingTest,
+    "SHAR.Application.Transition.LifecycleOrdering",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharApplicationGameplayPauseResumeLifecycleTest,
     "SHAR.Application.Transition.GameplayPauseResumeLifecycle",
     EAutomationTestFlags::EditorContext
@@ -158,6 +174,14 @@ void PrepareLifecycleRequest(
     Barrier.RequestRevision = Request.RequestRevision;
     Barrier.TargetModeRevision = Request.TargetModeRevision;
     Coordinator.AcceptBarrier(Barrier);
+    Coordinator.RecordLifecycleEvidence(MakeApplicationLifecycleEvidence(
+        Request,
+        ESharApplicationLifecyclePhase::SourceExit
+    ));
+    Coordinator.RecordLifecycleEvidence(MakeApplicationLifecycleEvidence(
+        Request,
+        ESharApplicationLifecyclePhase::TargetEntry
+    ));
 }
 } // namespace
 
@@ -465,6 +489,158 @@ bool FSharApplicationTransitionThirdModeRecoveryRevisionTest::RunTest(
     TestTrue(
         TEXT("Third recovery does not reuse failed target revision"),
         Recovered.ActiveModeRevision != Request.TargetModeRevision
+    );
+    return true;
+}
+
+bool FSharApplicationLifecycleHandoffRecoveryTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    const FSharApplicationRuntimeFixture Runtime = MakeApplicationRuntime();
+    const FSharApplicationModeRequest Request = MakeApplicationRequest({
+        .RequestId = FName(TEXT("lifecycle_handoff_failure")),
+        .Priority = ESharApplicationTransitionPriority::Recovery,
+        .CallerId = FName(TEXT("lifecycle_test")),
+    });
+    Runtime.Coordinator->Submit(Request);
+    Runtime.Coordinator->Begin(Request.RequestId);
+    Runtime.Coordinator->RecordServiceEvidence(MakeApplicationServiceEvidence({
+        .RequestId = Request.RequestId,
+        .ServiceId = FName(TEXT("catalog_service")),
+        .Status = ESharApplicationServiceStatus::Ready,
+    }));
+    Runtime.Coordinator->RecordServiceEvidence(MakeApplicationServiceEvidence({
+        .RequestId = Request.RequestId,
+        .ServiceId = FName(TEXT("world_service")),
+        .Status = ESharApplicationServiceStatus::Ready,
+    }));
+    Runtime.Coordinator->BeginReadinessVerification(Request.RequestId);
+    Runtime.Coordinator->AcceptBarrier(
+        MakeApplicationBarrierEvidence(Request.RequestId)
+    );
+    Runtime.Coordinator->RecordLifecycleEvidence(
+        MakeApplicationLifecycleEvidence(
+            Request,
+            ESharApplicationLifecyclePhase::SourceExit
+        )
+    );
+
+    TestTrue(
+        TEXT("Failure after source exit enters declared recovery"),
+        Runtime.Coordinator->Resolve(MakeApplicationResolution(
+            Request.RequestId,
+            ESharApplicationTransitionCommand::Fail
+        )) == ESharApplicationOperationResult::Accepted
+    );
+    TestTrue(
+        TEXT("Handoff failure publishes recovered terminal result"),
+        Runtime.Coordinator->GetTerminalResult(Request.RequestId)
+            == ESharApplicationTerminalResult::Recovered
+    );
+    TestTrue(
+        TEXT("Recovery restores the declared front-end authority"),
+        Runtime.Coordinator->GetObservation().ActiveModeId
+            == FName(TEXT("front_end"))
+    );
+    return true;
+}
+
+bool FSharApplicationLifecycleOrderingTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    const FSharApplicationRuntimeFixture Runtime = MakeApplicationRuntime();
+    const FSharApplicationModeRequest Request = MakeApplicationRequest({
+        .RequestId = FName(TEXT("lifecycle_order_transition")),
+        .Priority = ESharApplicationTransitionPriority::Gameplay,
+        .CallerId = FName(TEXT("lifecycle_test")),
+    });
+    Runtime.Coordinator->Submit(Request);
+    Runtime.Coordinator->Begin(Request.RequestId);
+    Runtime.Coordinator->RecordServiceEvidence(MakeApplicationServiceEvidence({
+        .RequestId = Request.RequestId,
+        .ServiceId = FName(TEXT("catalog_service")),
+        .Status = ESharApplicationServiceStatus::Ready,
+    }));
+    Runtime.Coordinator->RecordServiceEvidence(MakeApplicationServiceEvidence({
+        .RequestId = Request.RequestId,
+        .ServiceId = FName(TEXT("world_service")),
+        .Status = ESharApplicationServiceStatus::Ready,
+    }));
+    Runtime.Coordinator->BeginReadinessVerification(Request.RequestId);
+    Runtime.Coordinator->AcceptBarrier(
+        MakeApplicationBarrierEvidence(Request.RequestId)
+    );
+
+    FSharApplicationLifecycleEvidence TargetEntry =
+        MakeApplicationLifecycleEvidence(
+            Request,
+            ESharApplicationLifecyclePhase::TargetEntry
+        );
+    TestTrue(
+        TEXT("Target entry cannot complete before source exit"),
+        Runtime.Coordinator->RecordLifecycleEvidence(TargetEntry)
+            == ESharApplicationOperationResult::DependencyBlocked
+    );
+    TestTrue(
+        TEXT("Commit cannot bypass lifecycle ordering"),
+        Runtime.Coordinator->Commit(Request.RequestId)
+            == ESharApplicationOperationResult::InvalidState
+    );
+    TestTrue(
+        TEXT("Source remains authoritative before lifecycle handoff"),
+        Runtime.Coordinator->GetObservation().ActiveModeId
+            == Request.SourceModeId
+    );
+
+    FSharApplicationLifecycleEvidence SourceExit =
+        MakeApplicationLifecycleEvidence(
+            Request,
+            ESharApplicationLifecyclePhase::SourceExit
+        );
+    FSharApplicationLifecycleEvidence StaleExit = SourceExit;
+    StaleExit.RequestRevision = TEXT("sha256:stale_lifecycle");
+    TestTrue(
+        TEXT("Stale source-exit completion is rejected"),
+        Runtime.Coordinator->RecordLifecycleEvidence(StaleExit)
+            == ESharApplicationOperationResult::StaleRevision
+    );
+    TestTrue(
+        TEXT("Correlated source exit completes first"),
+        Runtime.Coordinator->RecordLifecycleEvidence(SourceExit)
+            == ESharApplicationOperationResult::Accepted
+    );
+    FSharApplicationTransitionSnapshot LifecycleSnapshot;
+    TestTrue(
+        TEXT("Source exit completion is observable before target entry"),
+        Runtime.Coordinator->GetTransitionSnapshot(
+            Request.RequestId,
+            LifecycleSnapshot
+        ) && LifecycleSnapshot.bSourceExitCompleted
+            && !LifecycleSnapshot.bTargetEntryCompleted
+    );
+    TestTrue(
+        TEXT("Duplicate source exit is rejected"),
+        Runtime.Coordinator->RecordLifecycleEvidence(SourceExit)
+            == ESharApplicationOperationResult::DuplicateEvidence
+    );
+    TestTrue(
+        TEXT("Target entry completes after source exit"),
+        Runtime.Coordinator->RecordLifecycleEvidence(TargetEntry)
+            == ESharApplicationOperationResult::Accepted
+    );
+    TestTrue(
+        TEXT("Ordered lifecycle handoff permits commit"),
+        Runtime.Coordinator->Commit(Request.RequestId)
+            == ESharApplicationOperationResult::Accepted
+    );
+    TestTrue(
+        TEXT("Target becomes active only after ordered handoff and commit"),
+        Runtime.Coordinator->GetObservation().ActiveModeId
+            == Request.TargetModeId
     );
     return true;
 }

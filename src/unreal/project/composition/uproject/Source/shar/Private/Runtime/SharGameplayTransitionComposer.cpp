@@ -318,6 +318,8 @@ USharGameplayTransitionComposer::PrepareGameplayReadiness(
 ESharGameplayTransitionCompositionResult
 USharGameplayTransitionComposer::CommitGameplay(
     const FSharGameplayTransitionCompositionRequest& Request,
+    const FSharApplicationLifecycleEvidence& SourceExitEvidence,
+    const FSharApplicationLifecycleEvidence& TargetEntryEvidence,
     USharApplicationModeCatalogSubsystem* ApplicationCatalog,
     USharApplicationModeCoordinator* ApplicationCoordinator,
     USharLoadCoordinatorSubsystem* LoadCoordinator,
@@ -340,10 +342,30 @@ USharGameplayTransitionComposer::CommitGameplay(
         return Preflight;
     }
 
-    if (ApplicationCoordinator->Commit(Request.ApplicationRequestId)
+    if (ApplicationCoordinator->RecordLifecycleEvidence(SourceExitEvidence)
         != ESharApplicationOperationResult::Accepted)
     {
         return ESharGameplayTransitionCompositionResult::ApplicationRejected;
+    }
+    if (ApplicationCoordinator->RecordLifecycleEvidence(TargetEntryEvidence)
+        != ESharApplicationOperationResult::Accepted)
+    {
+        CancelLoad(*LoadCoordinator, Request.LoadRequestId);
+        return RecoverApplication(
+            *ApplicationCoordinator,
+            State.Application.Request
+        ) ? ESharGameplayTransitionCompositionResult::ApplicationRejected
+          : ESharGameplayTransitionCompositionResult::RecoveryFailed;
+    }
+    if (ApplicationCoordinator->Commit(Request.ApplicationRequestId)
+        != ESharApplicationOperationResult::Accepted)
+    {
+        CancelLoad(*LoadCoordinator, Request.LoadRequestId);
+        return RecoverApplication(
+            *ApplicationCoordinator,
+            State.Application.Request
+        ) ? ESharGameplayTransitionCompositionResult::ApplicationRejected
+          : ESharGameplayTransitionCompositionResult::RecoveryFailed;
     }
 
     for (int32 Index = 0; Index < Request.InputLeases.Num(); ++Index)

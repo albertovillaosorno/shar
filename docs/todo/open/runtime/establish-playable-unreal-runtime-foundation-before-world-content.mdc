@@ -41,8 +41,11 @@ completed rather than replaced.
 
 The executable bootstrap now selects the composition-root `SharGameInstance`
 and the project-owned Game Mode, Game State, Player Controller, and neutral
-player Pawn. Runtime composition remains incomplete because world-readiness and
-per-local-player input leases are not yet bound to application-mode commit.
+player Pawn. Runtime composition now binds world readiness, per-local-player
+input leases, and ordered source-exit/target-entry lifecycle evidence to
+application-mode
+commit. Production content definitions and the services that execute each
+lifecycle plan remain separate authorities.
 
 The former duplicate startup state authority has been removed.
 `SharGameInstance` is now a state-free composition shell, while
@@ -58,7 +61,7 @@ context, and active context controls input availability.
 
 - [x] Select one application-mode authority and remove the independent
   GameInstance startup state machine.
-- [ ] Preserve requested-versus-committed transition semantics and ordered
+- [x] Preserve requested-versus-committed transition semantics and ordered
   source exit before target entry.
 - [x] Bind loading readiness, world readiness, and input policy to the gameplay
   transition without making asset availability the state-machine authority.
@@ -86,9 +89,9 @@ pause -> gameplay`. Every step proves the source observation remains active
 through preparation and readiness and changes only at commit, then completes and
 releases its transaction.
 
-This does not yet bind world-readiness barriers or input leases to native player
-control. Those effects remain the next lifecycle-composition step and must not
-be inferred from Pawn existence or possession.
+World-readiness barriers and staged input leases are now correlated at the
+root gameplay composition boundary. Pawn existence or possession still cannot
+stand in for readiness, lifecycle-plan completion, or committed input authority.
 
 ## Per-local-player input leases — 2026-09-14
 
@@ -106,10 +109,11 @@ activate the mapping at the declared priority, stale revisions cannot commit or
 release, duplicate SHAR ownership is rejected, explicit release removes the
 mapping, and local-player teardown removes an active mapping automatically.
 
-The remaining lifecycle-composition step is to correlate world readiness and
-these per-player input leases with the same application transition revision, so
-`loading_gameplay` can stage them and only the gameplay commit can activate
-world input. Asset availability remains evidence, not state-machine authority.
+World readiness and per-player input leases now carry the same application
+transition revision. `loading_gameplay` can stage input without activation, and
+the gameplay composition adapter activates it only after ordered lifecycle
+handoff and application commit. Asset availability remains evidence, not
+state-machine authority.
 
 Before production startup can invoke the runtime bootstrap, the initial `entry`
 observation must not invent world, profile, or session revisions. The entry
@@ -142,6 +146,33 @@ barrier from a stale transition without activating input, then proves the
 correlated path keeps `loading_gameplay` authoritative through readiness and
 activates gameplay input only after gameplay commit. World readiness separately
 rejects checkpoint callbacks carrying a stale transition revision.
+
+## Ordered application lifecycle handoff — 2026-09-14
+
+`USharApplicationModeCoordinator` now consumes typed lifecycle completion
+evidence for each transition. `SourceExit` must match the active source mode's
+revision and `ExitPlanId`; `TargetEntry` must match the target mode's revision
+and `EntryPlanId`. Target entry is dependency-blocked until source exit has been
+accepted, and `Commit` rejects attempts to bypass either completion.
+
+The active observation remains on the source through both handoff records and
+changes only when commit succeeds. Once source-exit completion is accepted,
+ordinary pre-commit cancellation is no longer safe: a subsequent failure follows
+the target's declared recovery mode when one exists because source effects may
+already have been released. Terminal shutdown targets retain their explicit
+fatal result instead of inventing recovery.
+
+`SHAR.Application.Transition.LifecycleOrdering` proves ordering, stale-evidence
+fencing, duplicate rejection, source authority before commit, and target
+publication only after both lifecycle records. A separate handoff recovery
+regression proves failure after source exit enters recovery rather than
+pretending the exited source is intact.
+
+The root gameplay composer accepts those lifecycle records from its caller and
+submits them in source-exit then target-entry order. It does not infer
+completion
+from plan identity or Asset Manager state and does not execute subsystem-owned
+plan effects itself.
 
 ## Root gameplay catalog foundation — 2026-09-13
 

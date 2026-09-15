@@ -250,6 +250,90 @@ ESharApplicationOperationResult USharApplicationModeCoordinator::AcceptBarrier(
     return ESharApplicationOperationResult::Accepted;
 }
 
+ESharApplicationOperationResult
+USharApplicationModeCoordinator::RecordLifecycleEvidence(
+    const FSharApplicationLifecycleEvidence& Evidence
+)
+{
+    FSharApplicationTransitionSnapshot* Snapshot =
+        FindTransition(Evidence.RequestId);
+    if (Snapshot == nullptr)
+    {
+        return ESharApplicationOperationResult::NotFound;
+    }
+    if (Snapshot->State != ESharApplicationTransitionState::ReadyToCommit
+        || !Snapshot->bBarrierAccepted)
+    {
+        return IsTerminalState(Snapshot->State)
+            ? ESharApplicationOperationResult::AlreadyTerminal
+            : ESharApplicationOperationResult::InvalidState;
+    }
+    const bool bValidPhase =
+        Evidence.Phase == ESharApplicationLifecyclePhase::SourceExit
+        || Evidence.Phase == ESharApplicationLifecyclePhase::TargetEntry;
+    if (!bValidPhase
+        || !IsCanonicalEvidenceIdentity(Evidence.ModeId)
+        || !IsCanonicalEvidenceIdentity(Evidence.PlanId)
+        || !IsRevisionToken(Evidence.ModeRevision))
+    {
+        return ESharApplicationOperationResult::InvalidRequest;
+    }
+    if (!MatchesEvidenceRevision(
+        *Snapshot,
+        Evidence.CatalogRevision,
+        Evidence.RequestRevision
+    ))
+    {
+        return ESharApplicationOperationResult::StaleRevision;
+    }
+
+    const bool bSourceExit =
+        Evidence.Phase == ESharApplicationLifecyclePhase::SourceExit;
+    const FName ExpectedModeId = bSourceExit
+        ? Snapshot->Request.SourceModeId
+        : Snapshot->Request.TargetModeId;
+    const FString& ExpectedModeRevision = bSourceExit
+        ? Snapshot->Request.SourceModeRevision
+        : Snapshot->Request.TargetModeRevision;
+    const USharApplicationModeDefinition* Definition =
+        Catalog->FindMode(ExpectedModeId);
+    if (Definition == nullptr)
+    {
+        return ESharApplicationOperationResult::ModeMissing;
+    }
+    const FName ExpectedPlanId = bSourceExit
+        ? Definition->ExitPlanId
+        : Definition->EntryPlanId;
+    if (Evidence.ModeRevision != ExpectedModeRevision)
+    {
+        return ESharApplicationOperationResult::StaleRevision;
+    }
+    if (Evidence.ModeId != ExpectedModeId || Evidence.PlanId != ExpectedPlanId)
+    {
+        return ESharApplicationOperationResult::InvalidRequest;
+    }
+
+    if (bSourceExit)
+    {
+        if (Snapshot->bSourceExitCompleted)
+        {
+            return ESharApplicationOperationResult::DuplicateEvidence;
+        }
+        Snapshot->bSourceExitCompleted = true;
+        return ESharApplicationOperationResult::Accepted;
+    }
+    if (!Snapshot->bSourceExitCompleted)
+    {
+        return ESharApplicationOperationResult::DependencyBlocked;
+    }
+    if (Snapshot->bTargetEntryCompleted)
+    {
+        return ESharApplicationOperationResult::DuplicateEvidence;
+    }
+    Snapshot->bTargetEntryCompleted = true;
+    return ESharApplicationOperationResult::Accepted;
+}
+
 ESharApplicationOperationResult USharApplicationModeCoordinator::Commit(
     const FName& RequestId
 )
@@ -260,7 +344,9 @@ ESharApplicationOperationResult USharApplicationModeCoordinator::Commit(
         return ESharApplicationOperationResult::NotFound;
     }
     if (Snapshot->State != ESharApplicationTransitionState::ReadyToCommit
-        || !Snapshot->bBarrierAccepted)
+        || !Snapshot->bBarrierAccepted
+        || !Snapshot->bSourceExitCompleted
+        || !Snapshot->bTargetEntryCompleted)
     {
         return IsTerminalState(Snapshot->State)
             ? ESharApplicationOperationResult::AlreadyTerminal
@@ -336,7 +422,7 @@ ESharApplicationOperationResult USharApplicationModeCoordinator::Complete(
 }
 
 ESharApplicationOperationResult
-USharApplicationModeCoordinator::RecoverCommittedFailure(
+USharApplicationModeCoordinator::RecoverAfterHandoff(
     FSharApplicationTransitionSnapshot& Snapshot
 )
 {
@@ -403,9 +489,9 @@ ESharApplicationOperationResult USharApplicationModeCoordinator::Resolve(
     {
         return ESharApplicationOperationResult::AlreadyTerminal;
     }
-    if (Snapshot->bCommitted)
+    if (Snapshot->bSourceExitCompleted || Snapshot->bCommitted)
     {
-        return RecoverCommittedFailure(*Snapshot);
+        return RecoverAfterHandoff(*Snapshot);
     }
     switch (Resolution.Command)
     {

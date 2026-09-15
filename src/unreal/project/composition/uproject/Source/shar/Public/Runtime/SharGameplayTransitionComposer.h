@@ -43,6 +43,7 @@
 
 class USharApplicationModeCatalogSubsystem;
 class USharApplicationModeCoordinator;
+struct FSharApplicationLifecycleEvidence;
 class USharLoadCoordinatorSubsystem;
 class USharLocalPlayerInputSubsystem;
 class USharWorldReadinessSubsystem;
@@ -96,6 +97,8 @@ public:
 
     ESharGameplayTransitionCompositionResult CommitGameplay(
         const FSharGameplayTransitionCompositionRequest& Request,
+        const FSharApplicationLifecycleEvidence& SourceExitEvidence,
+        const FSharApplicationLifecycleEvidence& TargetEntryEvidence,
         USharApplicationModeCatalogSubsystem* ApplicationCatalog,
         USharApplicationModeCoordinator* ApplicationCoordinator,
         USharLoadCoordinatorSubsystem* LoadCoordinator,
