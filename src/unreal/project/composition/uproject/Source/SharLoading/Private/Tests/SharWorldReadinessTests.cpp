@@ -78,7 +78,17 @@ bool FSharWorldReadinessBarrierTest::RunTest(const FString& Parameters)
                 .BarrierId = Barrier.BarrierId,
                 .CheckpointId = FName(TEXT("actors_ready")),
                 .WorldRevision = TEXT("sha256:world_old"),
+                .TransitionRevision = Barrier.TransitionRevision,
             }) == ESharWorldReadinessResult::StaleWorld
+    );
+    TestTrue(
+        TEXT("Stale transition callback is rejected"),
+        Readiness->CompleteCheckpoint({
+                .BarrierId = Barrier.BarrierId,
+                .CheckpointId = FName(TEXT("actors_ready")),
+                .WorldRevision = TEXT("sha256:world_v1"),
+                .TransitionRevision = TEXT("sha256:old_transition"),
+            }) == ESharWorldReadinessResult::StaleTransition
     );
     TestTrue(
         TEXT("Unknown checkpoint is rejected"),
@@ -86,6 +96,7 @@ bool FSharWorldReadinessBarrierTest::RunTest(const FString& Parameters)
                 .BarrierId = Barrier.BarrierId,
                 .CheckpointId = FName(TEXT("lighting_ready")),
                 .WorldRevision = TEXT("sha256:world_v1"),
+                .TransitionRevision = Barrier.TransitionRevision,
             }) == ESharWorldReadinessResult::CheckpointMissing
     );
     TestTrue(
@@ -94,6 +105,7 @@ bool FSharWorldReadinessBarrierTest::RunTest(const FString& Parameters)
                 .BarrierId = Barrier.BarrierId,
                 .CheckpointId = FName(TEXT("actors_ready")),
                 .WorldRevision = TEXT("sha256:world_v1"),
+                .TransitionRevision = Barrier.TransitionRevision,
             }) == ESharWorldReadinessResult::Accepted
     );
     TestTrue(
@@ -102,17 +114,20 @@ bool FSharWorldReadinessBarrierTest::RunTest(const FString& Parameters)
                 .BarrierId = Barrier.BarrierId,
                 .CheckpointId = FName(TEXT("actors_ready")),
                 .WorldRevision = TEXT("sha256:world_v1"),
+                .TransitionRevision = Barrier.TransitionRevision,
             }) == ESharWorldReadinessResult::DuplicateCheckpoint
     );
     Readiness->CompleteCheckpoint({
             .BarrierId = Barrier.BarrierId,
             .CheckpointId = FName(TEXT("collision_ready")),
             .WorldRevision = TEXT("sha256:world_v1"),
+            .TransitionRevision = Barrier.TransitionRevision,
         });
     Readiness->CompleteCheckpoint({
             .BarrierId = Barrier.BarrierId,
             .CheckpointId = FName(TEXT("navigation_ready")),
             .WorldRevision = TEXT("sha256:world_v1"),
+            .TransitionRevision = Barrier.TransitionRevision,
         });
     TestTrue(
         TEXT("Barrier becomes ready exactly once"),
@@ -124,6 +139,7 @@ bool FSharWorldReadinessBarrierTest::RunTest(const FString& Parameters)
                 .BarrierId = Barrier.BarrierId,
                 .CheckpointId = FName(TEXT("navigation_ready")),
                 .WorldRevision = TEXT("sha256:world_v1"),
+                .TransitionRevision = Barrier.TransitionRevision,
             }) == ESharWorldReadinessResult::AlreadyReady
     );
     TestTrue(

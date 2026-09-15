@@ -76,6 +76,7 @@ bool USharLocalPlayerInputSubsystem::IsValidRequest(
         && IsCanonicalInputId(Request.ContextId)
         && IsCanonicalInputId(Request.OwnerModeId)
         && IsRevisionToken(Request.OwnerModeRevision)
+        && IsRevisionToken(Request.TransitionRevision)
         && IsRevisionToken(Request.LeaseRevision)
         && Request.MappingContext != nullptr;
 }
@@ -151,17 +152,20 @@ ESharInputContextLeaseResult USharLocalPlayerInputSubsystem::StageLease(
     return ESharInputContextLeaseResult::Accepted;
 }
 
-ESharInputContextLeaseResult USharLocalPlayerInputSubsystem::CommitLease(
+ESharInputContextLeaseResult
+USharLocalPlayerInputSubsystem::CheckCommitReadiness(
     const FName& LeaseId,
-    const FString& LeaseRevision
-)
+    const FString& LeaseRevision,
+    const FString& TransitionRevision
+) const
 {
-    FSharInputContextLeaseRecord* Lease = FindLease(LeaseId);
+    const FSharInputContextLeaseRecord* Lease = FindLease(LeaseId);
     if (Lease == nullptr)
     {
         return ESharInputContextLeaseResult::NotFound;
     }
-    if (Lease->Request.LeaseRevision != LeaseRevision)
+    if (Lease->Request.LeaseRevision != LeaseRevision
+        || Lease->Request.TransitionRevision != TransitionRevision)
     {
         return ESharInputContextLeaseResult::StaleRevision;
     }
@@ -173,15 +177,36 @@ ESharInputContextLeaseResult USharLocalPlayerInputSubsystem::CommitLease(
     {
         return ESharInputContextLeaseResult::InvalidState;
     }
-
     UEnhancedInputLocalPlayerSubsystem* EnhancedInput = GetEnhancedInput();
     if (EnhancedInput == nullptr || EnhancedInput->GetPlayerInput() == nullptr)
     {
         return ESharInputContextLeaseResult::EnhancedInputUnavailable;
     }
-    if (EnhancedInput->HasMappingContext(Lease->Request.MappingContext))
+    return EnhancedInput->HasMappingContext(Lease->Request.MappingContext)
+        ? ESharInputContextLeaseResult::MappingContextInUse
+        : ESharInputContextLeaseResult::Accepted;
+}
+
+ESharInputContextLeaseResult USharLocalPlayerInputSubsystem::CommitLease(
+    const FName& LeaseId,
+    const FString& LeaseRevision,
+    const FString& TransitionRevision
+)
+{
+    const ESharInputContextLeaseResult Readiness = CheckCommitReadiness(
+        LeaseId,
+        LeaseRevision,
+        TransitionRevision
+    );
+    if (Readiness != ESharInputContextLeaseResult::Accepted)
     {
-        return ESharInputContextLeaseResult::MappingContextInUse;
+        return Readiness;
+    }
+    FSharInputContextLeaseRecord* Lease = FindLease(LeaseId);
+    UEnhancedInputLocalPlayerSubsystem* EnhancedInput = GetEnhancedInput();
+    if (Lease == nullptr || EnhancedInput == nullptr)
+    {
+        return ESharInputContextLeaseResult::EnhancedInputUnavailable;
     }
 
     EnhancedInput->AddMappingContext(
@@ -252,6 +277,7 @@ bool USharLocalPlayerInputSubsystem::GetLeaseObservation(
     OutObservation.ContextId = Lease->Request.ContextId;
     OutObservation.OwnerModeId = Lease->Request.OwnerModeId;
     OutObservation.OwnerModeRevision = Lease->Request.OwnerModeRevision;
+    OutObservation.TransitionRevision = Lease->Request.TransitionRevision;
     OutObservation.LeaseRevision = Lease->Request.LeaseRevision;
     OutObservation.Priority = Lease->Request.Priority;
     OutObservation.State = Lease->State;

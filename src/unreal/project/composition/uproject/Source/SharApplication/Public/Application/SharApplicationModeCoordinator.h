@@ -157,6 +157,9 @@ struct SHARAPPLICATION_API FSharApplicationModeRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
     FString ProfileRevision;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "World")
+    FName WorldId;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
     FString WorldRevision;
 
@@ -352,6 +355,12 @@ public:
     UFUNCTION(BlueprintPure, Category = "SHAR|Application")
     [[nodiscard]] ESharApplicationTerminalResult GetTerminalResult(
         const FName& RequestId
+    ) const;
+
+    UFUNCTION(BlueprintPure, Category = "SHAR|Application")
+    bool GetTransitionSnapshot(
+        const FName& RequestId,
+        FSharApplicationTransitionSnapshot& OutSnapshot
     ) const;
 
     UFUNCTION(BlueprintPure, Category = "SHAR|Application")

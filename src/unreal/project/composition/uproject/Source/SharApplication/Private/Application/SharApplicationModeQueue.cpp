@@ -67,6 +67,7 @@ bool USharApplicationModeCoordinator::IsValidRequest(
         || !IsCanonicalApplicationIdentity(Request.TargetModeId)
         || !IsCanonicalApplicationIdentity(Request.ReasonId)
         || !IsCanonicalApplicationIdentity(Request.CallerId)
+        || !IsCanonicalApplicationIdentity(Request.WorldId)
         || !IsCanonicalOrNone(Request.ReturnModeId);
     const bool bInvalidRevision =
         !IsRevisionToken(Request.CatalogRevision)

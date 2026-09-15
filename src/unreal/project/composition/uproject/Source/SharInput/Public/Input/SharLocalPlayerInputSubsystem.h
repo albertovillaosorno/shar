@@ -84,6 +84,9 @@ struct SHARINPUT_API FSharInputContextLeaseRequest
     FString OwnerModeRevision;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
+    FString TransitionRevision;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
     FString LeaseRevision;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mapping")
@@ -109,6 +112,9 @@ struct SHARINPUT_API FSharInputContextLeaseObservation
 
     UPROPERTY(BlueprintReadOnly, Category = "Revision")
     FString OwnerModeRevision;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Revision")
+    FString TransitionRevision;
 
     UPROPERTY(BlueprintReadOnly, Category = "Revision")
     FString LeaseRevision;
@@ -147,10 +153,18 @@ public:
         const FSharInputContextLeaseRequest& Request
     );
 
+    UFUNCTION(BlueprintPure, Category = "SHAR|Input")
+    ESharInputContextLeaseResult CheckCommitReadiness(
+        const FName& LeaseId,
+        const FString& LeaseRevision,
+        const FString& TransitionRevision
+    ) const;
+
     UFUNCTION(BlueprintCallable, Category = "SHAR|Input")
     ESharInputContextLeaseResult CommitLease(
         const FName& LeaseId,
-        const FString& LeaseRevision
+        const FString& LeaseRevision,
+        const FString& TransitionRevision
     );
 
     UFUNCTION(BlueprintCallable, Category = "SHAR|Input")

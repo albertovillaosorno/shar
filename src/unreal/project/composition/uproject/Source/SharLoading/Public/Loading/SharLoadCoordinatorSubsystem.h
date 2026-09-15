@@ -466,6 +466,12 @@ public:
     ) const;
 
     UFUNCTION(BlueprintPure, Category = "SHAR|Loading")
+    bool GetRequestSnapshot(
+        const FName& RequestId,
+        FSharLoadRequestSnapshot& OutSnapshot
+    ) const;
+
+    UFUNCTION(BlueprintPure, Category = "SHAR|Loading")
     [[nodiscard]] FSharLoadProgress GetProgress(const FName& RequestId) const;
 
     UFUNCTION(BlueprintPure, Category = "SHAR|Loading")

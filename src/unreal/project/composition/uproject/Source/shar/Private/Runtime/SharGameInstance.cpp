@@ -42,6 +42,8 @@ void USharGameInstance::Init()
     Super::Init();
     RuntimeBootstrap = NewObject<USharRuntimeBootstrap>(this);
     RuntimeAssetLoader = NewObject<USharRuntimeAssetLoader>(this);
+    GameplayTransitionComposer =
+        NewObject<USharGameplayTransitionComposer>(this);
     RuntimeAssetLoader->OnTerminal().AddUObject(
         this,
         &USharGameInstance::HandleRuntimeAssetLoadTerminal
@@ -62,6 +64,12 @@ USharRuntimeBootstrap* USharGameInstance::GetRuntimeBootstrap() const
 USharRuntimeAssetLoader* USharGameInstance::GetRuntimeAssetLoader() const
 {
     return RuntimeAssetLoader;
+}
+
+USharGameplayTransitionComposer*
+USharGameInstance::GetGameplayTransitionComposer() const
+{
+    return GameplayTransitionComposer;
 }
 
 void USharGameInstance::StartRuntimeAssetLoading()

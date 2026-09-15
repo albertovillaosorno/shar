@@ -67,6 +67,7 @@ bool USharWorldReadinessSubsystem::IsValidBarrier(
     return IsCanonicalWorldReadinessId(Barrier.BarrierId)
         && IsCanonicalWorldReadinessId(Barrier.WorldId)
         && IsRevisionToken(Barrier.WorldRevision)
+        && IsRevisionToken(Barrier.TransitionRevision)
         && !Barrier.RequiredCheckpointIds.IsEmpty()
         && !HasDuplicateCheckpointIds(Barrier.RequiredCheckpointIds)
         && !Barrier.RequiredCheckpointIds.ContainsByPredicate(
@@ -139,6 +140,7 @@ ESharWorldReadinessResult USharWorldReadinessSubsystem::RegisterBarrier(
     Snapshot.BarrierId = Barrier.BarrierId;
     Snapshot.WorldId = Barrier.WorldId;
     Snapshot.WorldRevision = Barrier.WorldRevision;
+    Snapshot.TransitionRevision = Barrier.TransitionRevision;
     Snapshot.RequiredCheckpointIds = Barrier.RequiredCheckpointIds;
     Snapshot.Revision = 1;
     Barriers.Add(Snapshot);
@@ -167,6 +169,10 @@ ESharWorldReadinessResult USharWorldReadinessSubsystem::CompleteCheckpoint(
         || Snapshot->WorldRevision != Completion.WorldRevision)
     {
         return ESharWorldReadinessResult::StaleWorld;
+    }
+    if (Snapshot->TransitionRevision != Completion.TransitionRevision)
+    {
+        return ESharWorldReadinessResult::StaleTransition;
     }
     if (Snapshot->bReady)
     {
@@ -218,6 +224,20 @@ int32 USharWorldReadinessSubsystem::GetRequiredCheckpointCount(
 {
     const FSharWorldReadinessSnapshot* Snapshot = FindBarrier(BarrierId);
     return Snapshot == nullptr ? 0 : Snapshot->RequiredCheckpointIds.Num();
+}
+
+bool USharWorldReadinessSubsystem::GetBarrierSnapshot(
+    const FName& BarrierId,
+    FSharWorldReadinessSnapshot& OutSnapshot
+) const
+{
+    const FSharWorldReadinessSnapshot* Snapshot = FindBarrier(BarrierId);
+    if (Snapshot == nullptr)
+    {
+        return false;
+    }
+    OutSnapshot = *Snapshot;
+    return true;
 }
 
 int32 USharWorldReadinessSubsystem::TeardownWorld()

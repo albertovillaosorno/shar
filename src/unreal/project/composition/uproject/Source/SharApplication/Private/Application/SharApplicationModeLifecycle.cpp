@@ -280,6 +280,7 @@ ESharApplicationOperationResult USharApplicationModeCoordinator::Commit(
     Observation.ActiveModeRevision = Snapshot->Request.TargetModeRevision;
     Observation.SessionRevision = Snapshot->Request.SessionRevision;
     Observation.ProfileRevision = Snapshot->Request.ProfileRevision;
+    Observation.WorldId = Snapshot->Request.WorldId;
     Observation.WorldRevision = Snapshot->Request.WorldRevision;
     Snapshot->bCommitted = true;
     Snapshot->State = ESharApplicationTransitionState::Committed;
@@ -474,6 +475,21 @@ USharApplicationModeCoordinator::GetTerminalResult(
     return Snapshot == nullptr
         ? ESharApplicationTerminalResult::None
         : Snapshot->TerminalResult;
+}
+
+bool USharApplicationModeCoordinator::GetTransitionSnapshot(
+    const FName& RequestId,
+    FSharApplicationTransitionSnapshot& OutSnapshot
+) const
+{
+    const FSharApplicationTransitionSnapshot* Snapshot =
+        FindTransition(RequestId);
+    if (Snapshot == nullptr)
+    {
+        return false;
+    }
+    OutSnapshot = *Snapshot;
+    return true;
 }
 
 FSharApplicationModeObservation

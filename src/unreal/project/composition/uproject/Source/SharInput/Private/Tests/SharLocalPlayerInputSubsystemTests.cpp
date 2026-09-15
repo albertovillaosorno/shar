@@ -54,6 +54,7 @@ FSharInputContextLeaseRequest MakeGameplayLease(UInputMappingContext* Context)
     Request.ContextId = FName(TEXT("gameplay_on_foot"));
     Request.OwnerModeId = FName(TEXT("gameplay"));
     Request.OwnerModeRevision = TEXT("sha256:gameplay_v1");
+    Request.TransitionRevision = TEXT("sha256:commit_gameplay_v1");
     Request.LeaseRevision = TEXT("sha256:gameplay_input_lease_v1");
     Request.MappingContext = Context;
     Request.Priority = GameplayPriority;
@@ -106,13 +107,28 @@ bool FSharLocalPlayerInputLeaseLifecycleTest::RunTest(
     );
     TestTrue(
         TEXT("Stale commit revision is rejected"),
-        Input->CommitLease(Request.LeaseId, TEXT("sha256:stale"))
+        Input->CommitLease(
+            Request.LeaseId,
+            TEXT("sha256:stale"),
+            Request.TransitionRevision
+        )
             == ESharInputContextLeaseResult::StaleRevision
     );
     TestTrue(
+        TEXT("Readiness fails before Enhanced Player Input exists"),
+        Input->CheckCommitReadiness(
+            Request.LeaseId,
+            Request.LeaseRevision,
+            Request.TransitionRevision
+        ) == ESharInputContextLeaseResult::EnhancedInputUnavailable
+    );
+    TestTrue(
         TEXT("Commit fails closed before Enhanced Player Input exists"),
-        Input->CommitLease(Request.LeaseId, Request.LeaseRevision)
-            == ESharInputContextLeaseResult::EnhancedInputUnavailable
+        Input->CommitLease(
+            Request.LeaseId,
+            Request.LeaseRevision,
+            Request.TransitionRevision
+        ) == ESharInputContextLeaseResult::EnhancedInputUnavailable
     );
     TestTrue(
         TEXT("Unavailable input leaves lease staged"),
@@ -122,8 +138,32 @@ bool FSharLocalPlayerInputLeaseLifecycleTest::RunTest(
         PlayerController
     );
     TestTrue(
+        TEXT("Stale transition cannot become commit-ready"),
+        Input->CheckCommitReadiness(
+            Request.LeaseId,
+            Request.LeaseRevision,
+            TEXT("sha256:stale_transition")
+        ) == ESharInputContextLeaseResult::StaleRevision
+    );
+    TestTrue(
+        TEXT("Validated staged lease becomes commit-ready"),
+        Input->CheckCommitReadiness(
+            Request.LeaseId,
+            Request.LeaseRevision,
+            Request.TransitionRevision
+        ) == ESharInputContextLeaseResult::Accepted
+    );
+    TestFalse(
+        TEXT("Readiness preflight does not install native mapping"),
+        EnhancedInput->HasMappingContext(MappingContext)
+    );
+    TestTrue(
         TEXT("Validated commit activates native mapping"),
-        Input->CommitLease(Request.LeaseId, Request.LeaseRevision)
+        Input->CommitLease(
+            Request.LeaseId,
+            Request.LeaseRevision,
+            Request.TransitionRevision
+        )
             == ESharInputContextLeaseResult::Accepted
     );
     int32 AppliedPriority = 0;
@@ -174,6 +214,7 @@ bool FSharLocalPlayerInputLeaseLifecycleTest::RunTest(
     PauseLease.ContextId = FName(TEXT("pause"));
     PauseLease.OwnerModeId = FName(TEXT("pause"));
     PauseLease.OwnerModeRevision = TEXT("sha256:pause_v1");
+    PauseLease.TransitionRevision = TEXT("sha256:enter_pause_v1");
     PauseLease.LeaseRevision = TEXT("sha256:pause_input_lease_v1");
     PauseLease.MappingContext = PauseContext;
     PauseLease.Priority = GameplayPriority + 1;
@@ -183,7 +224,11 @@ bool FSharLocalPlayerInputLeaseLifecycleTest::RunTest(
     );
     TestTrue(
         TEXT("Second context commits before local-player teardown"),
-        Input->CommitLease(PauseLease.LeaseId, PauseLease.LeaseRevision)
+        Input->CommitLease(
+            PauseLease.LeaseId,
+            PauseLease.LeaseRevision,
+            PauseLease.TransitionRevision
+        )
             == ESharInputContextLeaseResult::Accepted
     );
     TestTrue(
