@@ -327,6 +327,20 @@ world-preparation state and suppresses gameplay input. Modern recovery therefore
 cannot pretend that a new world/session/profile preparation happened merely by
 changing the active mode identity.
 
+## Entry and exit cardinality — 2026-09-15
+
+Application catalog activation now requires exactly one `Entry` mode and exactly
+one `Exit` mode. Multiple definitions of either terminal kind fail with typed
+ambiguity results before graph-edge validation can select an arbitrary instance.
+This keeps runtime bootstrap and terminal shutdown identity deterministic.
+
+`SHAR.Application.Catalog.GraphValidation` includes synthetic duplicate-entry
+and
+duplicate-exit catalogs. The preserved reference has one `CONTEXT_ENTRY`, one
+`CONTEXT_EXIT`, and one indexed context slot for each; the modern catalog keeps
+that observable single-start/single-terminal shape without copying the legacy
+context table design.
+
 ## Root gameplay catalog foundation — 2026-09-13
 
 The first code-first runtime slice now establishes the missing root catalog

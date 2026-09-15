@@ -173,6 +173,7 @@ catalog definition and transition-graph validation.
 Every definition declares allowed predecessor and successor modes. The catalog
 validator rejects:
 
+- a missing or ambiguous entry or exit mode;
 - missing entry or exit reachability;
 - a required mode with no valid predecessor;
 - transition cycles that cannot be cancelled or completed;

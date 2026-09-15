@@ -48,7 +48,9 @@ enum class ESharApplicationCatalogResult : uint8
     DuplicateMode,
     AlreadyActive,
     EntryMissing,
+    EntryAmbiguous,
     ExitMissing,
+    ExitAmbiguous,
     EdgeMissing,
     EdgeNotReciprocal,
     UnreachableMode,
@@ -113,6 +115,9 @@ private:
     bool bActive = false;
 
     [[nodiscard]] const USharApplicationModeDefinition* FindModeByKind(
+        ESharApplicationModeKind ModeKind
+    ) const;
+    [[nodiscard]] int32 CountModesByKind(
         ESharApplicationModeKind ModeKind
     ) const;
     [[nodiscard]] bool AreEdgesResolvable() const;

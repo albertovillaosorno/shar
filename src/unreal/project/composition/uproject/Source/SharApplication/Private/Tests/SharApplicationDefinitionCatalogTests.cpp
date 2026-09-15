@@ -139,6 +139,32 @@ bool FSharApplicationCatalogGraphValidationTest::RunTest(
     );
     TestTrue(TEXT("Activated catalog is immutable"), ValidCatalog->IsActive());
 
+    auto* DuplicateEntryGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* DuplicateEntryCatalog =
+        MakeApplicationCatalog(
+            *DuplicateEntryGameInstance,
+            ESharApplicationCatalogShape::DuplicateEntry,
+            false
+        );
+    TestTrue(
+        TEXT("Catalog rejects more than one entry mode"),
+        DuplicateEntryCatalog->Activate()
+            == ESharApplicationCatalogResult::EntryAmbiguous
+    );
+
+    auto* DuplicateExitGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* DuplicateExitCatalog =
+        MakeApplicationCatalog(
+            *DuplicateExitGameInstance,
+            ESharApplicationCatalogShape::DuplicateExit,
+            false
+        );
+    TestTrue(
+        TEXT("Catalog rejects more than one exit mode"),
+        DuplicateExitCatalog->Activate()
+            == ESharApplicationCatalogResult::ExitAmbiguous
+    );
+
     auto* BrokenGameInstance = NewObject<UGameInstance>();
     USharApplicationModeCatalogSubsystem* BrokenCatalog =
         MakeApplicationCatalog(
