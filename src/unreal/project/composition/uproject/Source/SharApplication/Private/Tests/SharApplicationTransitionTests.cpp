@@ -120,6 +120,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
         | EAutomationTestFlags::EngineFilter
 )
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharApplicationInvalidRecoveryAuthorityTest,
+    "SHAR.Application.Transition.InvalidRecoveryAuthority",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharApplicationLifecycleOrderingTest,
     "SHAR.Application.Transition.LifecycleOrdering",
     EAutomationTestFlags::EditorContext
@@ -198,7 +206,7 @@ FSharApplicationModeRequest MakeProfileLifecycleRequest(
     return Request;
 }
 
-void PrepareLifecycleRequest(
+void PrepareThroughSourceExit(
     USharApplicationModeCoordinator& Coordinator,
     const FSharApplicationModeRequest& Request,
     const TArray<FName>& RequiredServices
@@ -228,6 +236,15 @@ void PrepareLifecycleRequest(
         Request,
         ESharApplicationLifecyclePhase::SourceExit
     ));
+}
+
+void PrepareLifecycleRequest(
+    USharApplicationModeCoordinator& Coordinator,
+    const FSharApplicationModeRequest& Request,
+    const TArray<FName>& RequiredServices
+)
+{
+    PrepareThroughSourceExit(Coordinator, Request, RequiredServices);
     Coordinator.RecordLifecycleEvidence(MakeApplicationLifecycleEvidence(
         Request,
         ESharApplicationLifecyclePhase::TargetEntry
@@ -1021,6 +1038,86 @@ bool FSharApplicationLifecycleHandoffRecoveryTest::RunTest(
         TEXT("Recovery restores the declared front-end authority"),
         Runtime.Coordinator->GetObservation().ActiveModeId
             == FName(TEXT("front_end"))
+    );
+    return true;
+}
+
+bool FSharApplicationInvalidRecoveryAuthorityTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    const TArray<FName> Services = {
+        FName(TEXT("catalog_service")),
+        FName(TEXT("world_service")),
+    };
+
+    const FSharApplicationRuntimeFixture PreparingRuntime =
+        MakeApplicationRuntime();
+    const FSharApplicationModeRequest PreparingRequest =
+        MakeApplicationRequest({
+            .RequestId = FName(TEXT("invalid_preparing_recovery")),
+            .Priority = ESharApplicationTransitionPriority::Recovery,
+            .CallerId = FName(TEXT("recovery_guard_test")),
+        });
+    PreparingRuntime.Coordinator->Submit(PreparingRequest);
+    PrepareThroughSourceExit(
+        *PreparingRuntime.Coordinator,
+        PreparingRequest,
+        Services
+    );
+    USharApplicationModeDefinition* PreparingRecovery =
+        const_cast<USharApplicationModeDefinition*>(
+            PreparingRuntime.Catalog->FindMode(FName(TEXT("front_end")))
+        );
+    PreparingRecovery->ProfilePolicy = ESharApplicationProfilePolicy::Prepare;
+    TestTrue(
+        TEXT("Corrupted recovery cannot prepare authority implicitly"),
+        PreparingRuntime.Coordinator->Resolve(MakeApplicationResolution(
+            PreparingRequest.RequestId,
+            ESharApplicationTransitionCommand::Fail
+        )) == ESharApplicationOperationResult::RecoveryInvalidAuthority
+    );
+    TestTrue(
+        TEXT("Rejected preparing recovery publishes failed terminal result"),
+        PreparingRuntime.Coordinator->GetTerminalResult(
+            PreparingRequest.RequestId
+        ) == ESharApplicationTerminalResult::Failed
+    );
+
+    const FSharApplicationRuntimeFixture MissingRuntime =
+        MakeApplicationRuntime();
+    const FSharApplicationModeRequest MissingRequest =
+        MakeApplicationRequest({
+            .RequestId = FName(TEXT("invalid_missing_recovery_authority")),
+            .Priority = ESharApplicationTransitionPriority::Recovery,
+            .CallerId = FName(TEXT("recovery_guard_test")),
+        });
+    MissingRuntime.Coordinator->Submit(MissingRequest);
+    PrepareThroughSourceExit(
+        *MissingRuntime.Coordinator,
+        MissingRequest,
+        Services
+    );
+    USharApplicationModeDefinition* MissingRecovery =
+        const_cast<USharApplicationModeDefinition*>(
+            MissingRuntime.Catalog->FindMode(FName(TEXT("front_end")))
+        );
+    MissingRecovery->WorldPolicy = ESharApplicationWorldPolicy::Own;
+    TestTrue(
+        TEXT("Corrupted recovery cannot publish missing world authority"),
+        MissingRuntime.Coordinator->Resolve(MakeApplicationResolution(
+            MissingRequest.RequestId,
+            ESharApplicationTransitionCommand::Fail
+        )) == ESharApplicationOperationResult::RecoveryInvalidAuthority
+    );
+    TestTrue(
+        TEXT("Invalid recovery leaves the prior observation coherent"),
+        MissingRuntime.Coordinator->GetObservation().ActiveModeId
+            == MissingRequest.SourceModeId
+            && MissingRuntime.Coordinator->GetObservation().WorldId.IsNone()
+            && MissingRuntime.Coordinator->GetObservation()
+                .WorldRevision.IsEmpty()
     );
     return true;
 }

@@ -55,6 +55,8 @@ enum class ESharApplicationCatalogShape : uint8
     OwnSessionFromAbsentAuthority,
     OwnProfileFromAbsentAuthority,
     RetainProfileFromAbsentAuthority,
+    RecoveryRequiresMissingAuthority,
+    RecoveryRequiresPreparation,
 };
 
 struct FSharApplicationModeFixture
@@ -214,9 +216,18 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
             FName(TEXT("world_service")),
         },
         .SuccessModeId = FName(TEXT("gameplay")),
-        .RecoveryModeId = Shape == ESharApplicationCatalogShape::RecoveryToExit
+        .RecoveryModeId =
+            Shape == ESharApplicationCatalogShape::RecoveryToExit
             ? FName(TEXT("exit"))
-            : FName(TEXT("front_end")),
+            : Shape
+                    == ESharApplicationCatalogShape::
+                        RecoveryRequiresMissingAuthority
+                ? FName(TEXT("gameplay"))
+                : Shape
+                        == ESharApplicationCatalogShape::
+                            RecoveryRequiresPreparation
+                    ? FName(TEXT("boot"))
+                    : FName(TEXT("front_end")),
         .ReturnModeId = FName(),
         .WorldPolicy = Shape
                 == ESharApplicationCatalogShape::OwnWorldFromAbsentAuthority

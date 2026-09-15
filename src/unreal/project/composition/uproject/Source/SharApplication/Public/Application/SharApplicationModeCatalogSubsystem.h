@@ -54,6 +54,7 @@ enum class ESharApplicationCatalogResult : uint8
     UnreachableMode,
     LoadingTargetMissing,
     RecoveryTargetMissing,
+    RecoveryAuthorityMismatch,
     OverlayReturnMissing,
     AuthorityPolicyMismatch,
     DefinitionNotCatalogued,
@@ -118,6 +119,7 @@ private:
     [[nodiscard]] bool AreEdgesReciprocal() const;
     [[nodiscard]] bool AreLoadingTargetsResolvable() const;
     [[nodiscard]] bool AreRecoveryTargetsResolvable() const;
+    [[nodiscard]] bool AreRecoveryAuthorityPoliciesCompatible() const;
     [[nodiscard]] bool AreOverlayReturnsResolvable() const;
     [[nodiscard]] bool AreAuthorityPoliciesCompatible() const;
     [[nodiscard]] bool IsEveryModeReachableFrom(
