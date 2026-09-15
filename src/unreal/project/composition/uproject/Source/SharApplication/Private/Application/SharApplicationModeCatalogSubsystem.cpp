@@ -252,6 +252,15 @@ static bool RequiresSessionAuthority(
         || Policy == ESharApplicationSessionPolicy::Own;
 }
 
+static bool RequiresProfileAuthority(
+    const ESharApplicationProfilePolicy Policy
+)
+{
+    return Policy == ESharApplicationProfilePolicy::Prepare
+        || Policy == ESharApplicationProfilePolicy::Retain
+        || Policy == ESharApplicationProfilePolicy::Own;
+}
+
 bool
 USharApplicationModeCatalogSubsystem::AreAuthorityPoliciesCompatible() const
 {
@@ -287,7 +296,15 @@ USharApplicationModeCatalogSubsystem::AreAuthorityPoliciesCompatible() const
                             == ESharApplicationSessionPolicy::Own;
                     const bool bSessionCompatible = !bTargetKeepsSession
                         || RequiresSessionAuthority(Predecessor->SessionPolicy);
-                    return bWorldCompatible && bSessionCompatible;
+                    const bool bTargetKeepsProfile =
+                        Definition->ProfilePolicy
+                            == ESharApplicationProfilePolicy::Retain
+                        || Definition->ProfilePolicy
+                            == ESharApplicationProfilePolicy::Own;
+                    const bool bProfileCompatible = !bTargetKeepsProfile
+                        || RequiresProfileAuthority(Predecessor->ProfilePolicy);
+                    return bWorldCompatible && bSessionCompatible
+                        && bProfileCompatible;
                 }
             );
         }

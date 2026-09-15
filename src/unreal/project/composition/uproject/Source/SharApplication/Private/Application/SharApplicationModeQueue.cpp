@@ -99,6 +99,25 @@ bool USharApplicationModeCoordinator::IsValidSessionAuthority(
         : SessionRevision.IsEmpty();
 }
 
+bool USharApplicationModeCoordinator::RequiresProfileAuthority(
+    const USharApplicationModeDefinition& Mode
+)
+{
+    return Mode.ProfilePolicy == ESharApplicationProfilePolicy::Prepare
+        || Mode.ProfilePolicy == ESharApplicationProfilePolicy::Retain
+        || Mode.ProfilePolicy == ESharApplicationProfilePolicy::Own;
+}
+
+bool USharApplicationModeCoordinator::IsValidProfileAuthority(
+    const FString& ProfileRevision,
+    const USharApplicationModeDefinition& Mode
+)
+{
+    return RequiresProfileAuthority(Mode)
+        ? IsRevisionToken(ProfileRevision)
+        : ProfileRevision.IsEmpty();
+}
+
 bool USharApplicationModeCoordinator::IsValidRequest(
     const FSharApplicationModeRequest& Request
 )
@@ -118,12 +137,14 @@ bool USharApplicationModeCoordinator::IsValidRequest(
         || !bWorldPairValid;
     const bool bSessionRevisionValid = Request.SessionRevision.IsEmpty()
         || IsRevisionToken(Request.SessionRevision);
+    const bool bProfileRevisionValid = Request.ProfileRevision.IsEmpty()
+        || IsRevisionToken(Request.ProfileRevision);
     const bool bInvalidRevision =
         !IsRevisionToken(Request.CatalogRevision)
         || !IsRevisionToken(Request.SourceModeRevision)
         || !IsRevisionToken(Request.TargetModeRevision)
         || !bSessionRevisionValid
-        || !IsRevisionToken(Request.ProfileRevision)
+        || !bProfileRevisionValid
         || !IsRevisionToken(Request.RequestRevision);
     const bool bInvalidDeadline =
         !FMath::IsFinite(Request.DeadlineSeconds)
@@ -145,22 +166,17 @@ bool USharApplicationModeCoordinator::IsValidInitialObservation(
     {
         return false;
     }
-    if (!IsValidWorldAuthority(
+    return IsValidWorldAuthority(
         InitialObservation.WorldId,
         InitialObservation.WorldRevision,
         ActiveMode
-    ) || !IsValidSessionAuthority(
+    ) && IsValidSessionAuthority(
         InitialObservation.SessionRevision,
         ActiveMode
-    ))
-    {
-        return false;
-    }
-    if (ActiveMode.ModeKind == ESharApplicationModeKind::Entry)
-    {
-        return InitialObservation.ProfileRevision.IsEmpty();
-    }
-    return IsRevisionToken(InitialObservation.ProfileRevision);
+    ) && IsValidProfileAuthority(
+        InitialObservation.ProfileRevision,
+        ActiveMode
+    );
 }
 
 bool USharApplicationModeCoordinator::IsTerminalState(
@@ -317,7 +333,8 @@ USharApplicationModeCoordinator::ClassifySubmission(
         Request.WorldId,
         Request.WorldRevision,
         *Target
-    ) || !IsValidSessionAuthority(Request.SessionRevision, *Target))
+    ) || !IsValidSessionAuthority(Request.SessionRevision, *Target)
+        || !IsValidProfileAuthority(Request.ProfileRevision, *Target))
     {
         return ESharApplicationOperationResult::InvalidRequest;
     }
@@ -337,6 +354,15 @@ USharApplicationModeCoordinator::ClassifySubmission(
         || Target->SessionPolicy == ESharApplicationSessionPolicy::Own;
     if (bSourceHasSession && bTargetKeepsSession
         && Request.SessionRevision != Observation.SessionRevision)
+    {
+        return ESharApplicationOperationResult::StaleRevision;
+    }
+    const bool bSourceHasProfile = RequiresProfileAuthority(*Source);
+    const bool bTargetKeepsProfile =
+        Target->ProfilePolicy == ESharApplicationProfilePolicy::Retain
+        || Target->ProfilePolicy == ESharApplicationProfilePolicy::Own;
+    if (bSourceHasProfile && bTargetKeepsProfile
+        && Request.ProfileRevision != Observation.ProfileRevision)
     {
         return ESharApplicationOperationResult::StaleRevision;
     }

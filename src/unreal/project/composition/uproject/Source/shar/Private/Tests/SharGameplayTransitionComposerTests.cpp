@@ -174,7 +174,7 @@ FComposerApplicationFixture MakeComposerApplication(UGameInstance& GameInstance)
     Initial.ActiveModeRevision = TEXT("sha256:loading_gameplay_v1");
     Initial.WorldId = FName(TEXT("springfield_world"));
     Initial.WorldRevision = TEXT("sha256:springfield_world_v1");
-    Initial.ProfileRevision = TEXT("sha256:profile_v1");
+    Initial.ProfileRevision.Reset();
     Initial.SessionRevision = TEXT("sha256:gameplay_session_v1");
     Coordinator->Configure(Catalog, Initial);
     return {Catalog, Coordinator};
@@ -193,7 +193,7 @@ FSharApplicationModeRequest MakeGameplayApplicationRequest()
     Request.SourceModeRevision = TEXT("sha256:loading_gameplay_v1");
     Request.TargetModeRevision = TEXT("sha256:gameplay_v1");
     Request.SessionRevision = TEXT("sha256:gameplay_session_v1");
-    Request.ProfileRevision = TEXT("sha256:profile_v1");
+    Request.ProfileRevision.Reset();
     Request.WorldId = FName(TEXT("springfield_world"));
     Request.WorldRevision = TEXT("sha256:springfield_world_v1");
     Request.RequestRevision = TEXT("sha256:commit_gameplay_v1");

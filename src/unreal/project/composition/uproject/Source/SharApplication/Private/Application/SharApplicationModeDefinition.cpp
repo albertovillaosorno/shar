@@ -177,7 +177,8 @@ static void AppendOwnershipErrors(
     }
     const bool bRetainsAuthority =
         Definition.WorldPolicy == ESharApplicationWorldPolicy::Retain
-        || Definition.SessionPolicy == ESharApplicationSessionPolicy::Retain;
+        || Definition.SessionPolicy == ESharApplicationSessionPolicy::Retain
+        || Definition.ProfilePolicy == ESharApplicationProfilePolicy::Retain;
     if (bRetainsAuthority && Definition.RecoveryModeId.IsNone())
     {
         AddModeError(

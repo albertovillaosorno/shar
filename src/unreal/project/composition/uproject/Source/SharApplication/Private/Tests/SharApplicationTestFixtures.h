@@ -53,6 +53,8 @@ enum class ESharApplicationCatalogShape : uint8
     RetainSessionFromAbsentAuthority,
     OwnWorldFromAbsentAuthority,
     OwnSessionFromAbsentAuthority,
+    OwnProfileFromAbsentAuthority,
+    RetainProfileFromAbsentAuthority,
 };
 
 struct FSharApplicationModeFixture
@@ -69,6 +71,8 @@ struct FSharApplicationModeFixture
         ESharApplicationWorldPolicy::None;
     ESharApplicationSessionPolicy SessionPolicy =
         ESharApplicationSessionPolicy::None;
+    ESharApplicationProfilePolicy ProfilePolicy =
+        ESharApplicationProfilePolicy::None;
     ESharApplicationProgressionPolicy ProgressionPolicy =
         ESharApplicationProgressionPolicy::None;
     bool bDemonstrationMode = false;
@@ -133,6 +137,7 @@ inline USharApplicationModeDefinition* MakeApplicationMode(
     Definition->ReturnModeId = Fixture.ReturnModeId;
     Definition->WorldPolicy = Fixture.WorldPolicy;
     Definition->SessionPolicy = Fixture.SessionPolicy;
+    Definition->ProfilePolicy = Fixture.ProfilePolicy;
     Definition->ProgressionPolicy = Fixture.ProgressionPolicy;
     Definition->bDemonstrationMode = Fixture.bDemonstrationMode;
     return Definition;
@@ -147,6 +152,21 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
         .ModeId = FName(TEXT("entry")),
         .ModeKind = ESharApplicationModeKind::Entry,
         .PredecessorIds = {},
+        .SuccessorIds = {FName(TEXT("boot"))},
+        .RequiredServiceIds = {},
+        .SuccessModeId = FName(),
+        .RecoveryModeId = FName(),
+        .ReturnModeId = FName(),
+        .WorldPolicy = ESharApplicationWorldPolicy::None,
+        .SessionPolicy = ESharApplicationSessionPolicy::None,
+        .ProfilePolicy = ESharApplicationProfilePolicy::None,
+        .ProgressionPolicy = ESharApplicationProgressionPolicy::None,
+        .bDemonstrationMode = false,
+    }));
+    Modes.Add(MakeApplicationMode({
+        .ModeId = FName(TEXT("boot")),
+        .ModeKind = ESharApplicationModeKind::Boot,
+        .PredecessorIds = {FName(TEXT("entry"))},
         .SuccessorIds = {FName(TEXT("front_end"))},
         .RequiredServiceIds = {},
         .SuccessModeId = FName(),
@@ -154,13 +174,17 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
         .ReturnModeId = FName(),
         .WorldPolicy = ESharApplicationWorldPolicy::None,
         .SessionPolicy = ESharApplicationSessionPolicy::None,
-        .ProgressionPolicy = ESharApplicationProgressionPolicy::None,
+        .ProfilePolicy = Shape
+                == ESharApplicationCatalogShape::OwnProfileFromAbsentAuthority
+            ? ESharApplicationProfilePolicy::None
+            : ESharApplicationProfilePolicy::Prepare,
+        .ProgressionPolicy = ESharApplicationProgressionPolicy::ReadOnly,
         .bDemonstrationMode = false,
     }));
     Modes.Add(MakeApplicationMode({
         .ModeId = FName(TEXT("front_end")),
         .ModeKind = ESharApplicationModeKind::FrontEnd,
-        .PredecessorIds = {FName(TEXT("entry"))},
+        .PredecessorIds = {FName(TEXT("boot"))},
         .SuccessorIds = {FName(TEXT("loading_gameplay"))},
         .RequiredServiceIds = {},
         .SuccessModeId = FName(),
@@ -168,6 +192,11 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
         .ReturnModeId = FName(),
         .WorldPolicy = ESharApplicationWorldPolicy::None,
         .SessionPolicy = ESharApplicationSessionPolicy::None,
+        .ProfilePolicy = Shape
+                == ESharApplicationCatalogShape::
+                    RetainProfileFromAbsentAuthority
+            ? ESharApplicationProfilePolicy::None
+            : ESharApplicationProfilePolicy::Own,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::ReadOnly,
         .bDemonstrationMode = false,
     }));
@@ -197,6 +226,7 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
                 == ESharApplicationCatalogShape::OwnSessionFromAbsentAuthority
             ? ESharApplicationSessionPolicy::None
             : ESharApplicationSessionPolicy::Prepare,
+        .ProfilePolicy = ESharApplicationProfilePolicy::Retain,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::ReadOnly,
         .bDemonstrationMode = false,
     }));
@@ -227,6 +257,7 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
                     RetainSessionFromAbsentAuthority
             ? ESharApplicationSessionPolicy::None
             : ESharApplicationSessionPolicy::Own,
+        .ProfilePolicy = ESharApplicationProfilePolicy::Retain,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::Durable,
         .bDemonstrationMode = false,
     }));
@@ -244,6 +275,7 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
             : FName(TEXT("gameplay")),
         .WorldPolicy = ESharApplicationWorldPolicy::Retain,
         .SessionPolicy = ESharApplicationSessionPolicy::Retain,
+        .ProfilePolicy = ESharApplicationProfilePolicy::Retain,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::ReadOnly,
         .bDemonstrationMode = false,
     }));
@@ -258,6 +290,7 @@ inline TArray<USharApplicationModeDefinition*> MakeApplicationModes(
         .ReturnModeId = FName(),
         .WorldPolicy = ESharApplicationWorldPolicy::TearDown,
         .SessionPolicy = ESharApplicationSessionPolicy::TearDown,
+        .ProfilePolicy = ESharApplicationProfilePolicy::TearDown,
         .ProgressionPolicy = ESharApplicationProgressionPolicy::None,
         .bDemonstrationMode = false,
     }));

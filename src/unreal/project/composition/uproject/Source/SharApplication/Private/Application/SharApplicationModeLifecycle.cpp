@@ -465,6 +465,10 @@ USharApplicationModeCoordinator::RecoverAfterHandoff(
     {
         Observation.SessionRevision.Reset();
     }
+    if (!RequiresProfileAuthority(*Recovery))
+    {
+        Observation.ProfileRevision.Reset();
+    }
     return PublishTerminal(
         Snapshot,
         ESharApplicationTransitionState::Recovered,
