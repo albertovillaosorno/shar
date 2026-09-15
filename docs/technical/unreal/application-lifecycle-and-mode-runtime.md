@@ -350,17 +350,17 @@ Gameplay-session authority follows each mode definition's `SessionPolicy`.
 
 `Retain` additionally requires exact identity with the source observation; it
 cannot replace the retained session. The same exact-match rule applies to a
-retained world identity and revision. A transition from a retaining source to a
-`Retain` or `Own` target preserves that identity as well. Replacing retained
-authority requires an explicit preparation or teardown boundary rather than an
-ordinary resume edge.
+retained world identity and revision. `Own` promotes authority already prepared,
+retained, or owned by the source; it cannot substitute a different identity at
+the commit boundary. Replacing authority requires an explicit target `Prepare`
+or `TearDown` boundary rather than an ordinary ownership handoff.
 
-Catalog activation rejects a `Retain` target when any declared predecessor does
-not publish the corresponding world or gameplay-session authority. This keeps
-unsatisfiable lifecycle edges out of the active graph instead of deferring them
-to a request that can never pass revision fencing. Session policy remains
-independent from world policy so either authority can fail closed on its own
-lifecycle boundary.
+Catalog activation rejects a `Retain` or `Own` target when any declared
+predecessor does not publish the corresponding world or gameplay-session
+authority. This keeps unsatisfiable lifecycle edges out of the active graph
+instead of deferring them to a request that can never pass revision fencing.
+Session policy remains independent from world policy so either authority can
+fail closed on its own lifecycle boundary.
 
 Entry additionally has no profile authority. Other mode kinds still require a
 concrete profile revision until profile-selection absence is modeled separately.
@@ -569,8 +569,8 @@ Preparation includes:
 - final cross-subsystem read-back.
 
 The active mode changes to gameplay only after every required authority agrees
-on
-the same session and world revision.
+on the same session and world revision. `SessionPolicy::Own` and
+`WorldPolicy::Own` promote those prepared revisions; commit cannot replace them.
 
 ## Active gameplay mode
 

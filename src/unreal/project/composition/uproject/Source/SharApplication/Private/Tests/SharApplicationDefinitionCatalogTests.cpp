@@ -194,6 +194,32 @@ bool FSharApplicationCatalogGraphValidationTest::RunTest(
         MissingSessionAuthorityCatalog->Activate()
             == ESharApplicationCatalogResult::AuthorityPolicyMismatch
     );
+
+    auto* MissingOwnedWorldGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* MissingOwnedWorldCatalog =
+        MakeApplicationCatalog(
+            *MissingOwnedWorldGameInstance,
+            ESharApplicationCatalogShape::OwnWorldFromAbsentAuthority,
+            false
+        );
+    TestTrue(
+        TEXT("Owned world requires authority on every predecessor"),
+        MissingOwnedWorldCatalog->Activate()
+            == ESharApplicationCatalogResult::AuthorityPolicyMismatch
+    );
+
+    auto* MissingOwnedSessionGameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* MissingOwnedSessionCatalog =
+        MakeApplicationCatalog(
+            *MissingOwnedSessionGameInstance,
+            ESharApplicationCatalogShape::OwnSessionFromAbsentAuthority,
+            false
+        );
+    TestTrue(
+        TEXT("Owned session requires authority on every predecessor"),
+        MissingOwnedSessionCatalog->Activate()
+            == ESharApplicationCatalogResult::AuthorityPolicyMismatch
+    );
     return true;
 }
 

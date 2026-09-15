@@ -321,34 +321,21 @@ USharApplicationModeCoordinator::ClassifySubmission(
     {
         return ESharApplicationOperationResult::InvalidRequest;
     }
-    if (Target->WorldPolicy == ESharApplicationWorldPolicy::Retain
-        && (Request.WorldId != Observation.WorldId
-            || Request.WorldRevision != Observation.WorldRevision))
-    {
-        return ESharApplicationOperationResult::StaleRevision;
-    }
-    if (Target->SessionPolicy == ESharApplicationSessionPolicy::Retain
-        && Request.SessionRevision != Observation.SessionRevision)
-    {
-        return ESharApplicationOperationResult::StaleRevision;
-    }
-    const bool bSourceRetainsWorld =
-        Source->WorldPolicy == ESharApplicationWorldPolicy::Retain;
+    const bool bSourceHasWorld = RequiresWorldAuthority(*Source);
     const bool bTargetKeepsWorld =
         Target->WorldPolicy == ESharApplicationWorldPolicy::Retain
         || Target->WorldPolicy == ESharApplicationWorldPolicy::Own;
-    if (bSourceRetainsWorld && bTargetKeepsWorld
+    if (bSourceHasWorld && bTargetKeepsWorld
         && (Request.WorldId != Observation.WorldId
             || Request.WorldRevision != Observation.WorldRevision))
     {
         return ESharApplicationOperationResult::StaleRevision;
     }
-    const bool bSourceRetainsSession =
-        Source->SessionPolicy == ESharApplicationSessionPolicy::Retain;
+    const bool bSourceHasSession = RequiresSessionAuthority(*Source);
     const bool bTargetKeepsSession =
         Target->SessionPolicy == ESharApplicationSessionPolicy::Retain
         || Target->SessionPolicy == ESharApplicationSessionPolicy::Own;
-    if (bSourceRetainsSession && bTargetKeepsSession
+    if (bSourceHasSession && bTargetKeepsSession
         && Request.SessionRevision != Observation.SessionRevision)
     {
         return ESharApplicationOperationResult::StaleRevision;
