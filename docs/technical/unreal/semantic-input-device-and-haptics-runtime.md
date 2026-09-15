@@ -167,6 +167,12 @@ a released lease, or attempting to adopt a mapping already owned outside the
 lease fails without changing active input. Subsystem teardown releases every
 active mapping before discarding lease records.
 
+Each lease also carries the application transition revision that staged it.
+`CheckCommitReadiness` validates that revision, staged state, live Enhanced
+Player Input, and mapping exclusivity without installing the mapping. Gameplay
+composition publishes input readiness only after that preflight succeeds, and
+`CommitLease` presents the same transition revision after application commit.
+
 World teardown, application-mode exit, local-player removal, feature
 deactivation, focus loss where required, and cancellation release affected
 leases. A released context cannot continue receiving hidden input.

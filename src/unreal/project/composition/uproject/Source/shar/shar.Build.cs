@@ -65,6 +65,8 @@ public class shar : ModuleRules
                 "EnhancedInput",
                 "SharContent",
                 "SharApplication",
+                "SharInput",
+                "SharLoading",
             }
         );
         PrivateDependencyModuleNames.Add("EngineSettings");

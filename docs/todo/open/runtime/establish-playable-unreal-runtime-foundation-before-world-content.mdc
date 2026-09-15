@@ -60,7 +60,7 @@ context, and active context controls input availability.
   GameInstance startup state machine.
 - [ ] Preserve requested-versus-committed transition semantics and ordered
   source exit before target entry.
-- [ ] Bind loading readiness, world readiness, and input policy to the gameplay
+- [x] Bind loading readiness, world readiness, and input policy to the gameplay
   transition without making asset availability the state-machine authority.
 - [x] Add the minimal project-owned gameplay bootstrap classes required by
   Unreal, including the controller and representative player pawn boundary.
@@ -118,6 +118,30 @@ strings) until boot establishes real revisioned state. Synthetic `*_none*`
 revisions are test fixtures, not production identities. `USharRuntimeBootstrap`
 now derives the initial mode identity and revision from the loaded `Entry`
 definition rather than accepting an externally constructed observation.
+
+## Correlated gameplay readiness — 2026-09-14
+
+The root `USharGameplayTransitionComposer` now correlates Application,
+Loading,
+World Readiness, and per-local-player Input without owning parallel mode state.
+Application requests publish `WorldId`; world barriers and input leases carry
+the same transition revision used by the load request. Read-only snapshots let
+the composition root verify each authority rather than trust duplicate claims.
+
+Input now exposes a side-effect-free commit-readiness preflight. Loading can
+stage a gameplay mapping, but the mapping remains absent from Enhanced Input
+until the application coordinator commits gameplay. The composer then activates
+input, publishes loading success, and completes the application transition.
+Partial post-commit input failure releases active mappings and follows the
+target
+mode's declared recovery path.
+
+`SHAR.Runtime.GameplayTransition.ReadinessAndCommit` uses transient native
+runtime objects and synthetic definitions only. It rejects a fully ready world
+barrier from a stale transition without activating input, then proves the
+correlated path keeps `loading_gameplay` authoritative through readiness and
+activates gameplay input only after gameplay commit. World readiness separately
+rejects checkpoint callbacks carrying a stale transition revision.
 
 ## Root gameplay catalog foundation — 2026-09-13
 

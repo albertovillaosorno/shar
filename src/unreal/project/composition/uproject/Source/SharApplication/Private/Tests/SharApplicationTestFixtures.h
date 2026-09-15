@@ -330,6 +330,7 @@ inline FSharApplicationModeRequest MakeApplicationRequest(
     Request.TargetModeRevision = TEXT("sha256:loading_gameplay_v1");
     Request.SessionRevision = TEXT("sha256:gameplay_session_v1");
     Request.ProfileRevision = TEXT("sha256:profile_v1");
+    Request.WorldId = FName(TEXT("springfield_world"));
     Request.WorldRevision = TEXT("sha256:springfield_world_v1");
     Request.RequestRevision = TEXT("sha256:transition_v1");
     Request.ReturnModeId = FName(TEXT("front_end"));

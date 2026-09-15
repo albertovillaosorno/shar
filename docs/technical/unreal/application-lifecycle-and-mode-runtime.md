@@ -449,6 +449,20 @@ disabled.
 A loading callback is accepted only when transition, destination, world, bundle,
 and service revisions still match.
 
+Gameplay readiness composition carries one application `RequestRevision` through
+the load request, world-readiness barrier, and every staged local-player input
+lease. The root composition adapter reads each authority's snapshot rather than
+accepting duplicate caller claims. It records loading, world, and input service
+evidence only when catalog, world, mode, and transition revisions all match.
+
+Input readiness is side-effect free. A staged mapping context must be
+commit-ready
+against live Enhanced Input while remaining absent from the native mapping set.
+After the application coordinator commits gameplay, the adapter activates those
+leases, publishes loading success, and completes the application transition. A
+stale transition is rejected before commit; partial post-commit input failure
+releases activated mappings and enters the declared application recovery path.
+
 The loading plan follows the
 <!-- markdownlint-disable-next-line MD013 -->
 [native asset load request and streaming

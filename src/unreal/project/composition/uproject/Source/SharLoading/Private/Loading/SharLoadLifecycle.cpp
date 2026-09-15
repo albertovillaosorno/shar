@@ -180,6 +180,20 @@ ESharLoadTerminalResult USharLoadCoordinatorSubsystem::GetTerminalResult(
         : Snapshot->TerminalResult;
 }
 
+bool USharLoadCoordinatorSubsystem::GetRequestSnapshot(
+    const FName& RequestId,
+    FSharLoadRequestSnapshot& OutSnapshot
+) const
+{
+    const FSharLoadRequestSnapshot* Snapshot = FindRequest(RequestId);
+    if (Snapshot == nullptr)
+    {
+        return false;
+    }
+    OutSnapshot = *Snapshot;
+    return true;
+}
+
 FSharLoadProgress USharLoadCoordinatorSubsystem::GetProgress(
     const FName& RequestId
 ) const

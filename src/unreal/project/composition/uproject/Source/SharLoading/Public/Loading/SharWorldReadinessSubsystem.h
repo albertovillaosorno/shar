@@ -47,6 +47,7 @@ enum class ESharWorldReadinessResult : uint8
     CheckpointMissing,
     DuplicateCheckpoint,
     StaleWorld,
+    StaleTransition,
     AlreadyReady,
     NotReady,
 };
@@ -65,6 +66,9 @@ struct SHARLOADING_API FSharWorldReadinessBarrier
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
     FString WorldRevision;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
+    FString TransitionRevision;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Checkpoint")
     TArray<FName> RequiredCheckpointIds;
 };
@@ -82,6 +86,9 @@ struct SHARLOADING_API FSharWorldCheckpointCompletion
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
     FString WorldRevision;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Revision")
+    FString TransitionRevision;
 };
 
 USTRUCT(BlueprintType)
@@ -97,6 +104,9 @@ struct SHARLOADING_API FSharWorldReadinessSnapshot
 
     UPROPERTY(BlueprintReadOnly, Category = "Revision")
     FString WorldRevision;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Revision")
+    FString TransitionRevision;
 
     UPROPERTY(BlueprintReadOnly, Category = "Checkpoint")
     TArray<FName> RequiredCheckpointIds;
@@ -142,6 +152,12 @@ public:
     UFUNCTION(BlueprintPure, Category = "SHAR|Loading")
     [[nodiscard]] int32 GetRequiredCheckpointCount(
         const FName& BarrierId
+    ) const;
+
+    UFUNCTION(BlueprintPure, Category = "SHAR|Loading")
+    bool GetBarrierSnapshot(
+        const FName& BarrierId,
+        FSharWorldReadinessSnapshot& OutSnapshot
     ) const;
 
     UFUNCTION(BlueprintCallable, Category = "SHAR|Loading")

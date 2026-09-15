@@ -119,6 +119,7 @@ FSharApplicationModeRequest MakeLifecycleRequest(
     Request.TargetModeRevision = ModeRevision(TargetModeId);
     Request.SessionRevision = TEXT("sha256:gameplay_session_v1");
     Request.ProfileRevision = TEXT("sha256:profile_v1");
+    Request.WorldId = FName(TEXT("springfield_world"));
     Request.WorldRevision = TEXT("sha256:springfield_world_v1");
     Request.RequestRevision = FString::Printf(
         TEXT("sha256:%s_v1"),

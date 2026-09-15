@@ -35,6 +35,7 @@
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
 
+#include "Runtime/SharGameplayTransitionComposer.h"
 #include "Runtime/SharRuntimeAssetLoader.h"
 #include "Runtime/SharRuntimeBootstrap.h"
 
@@ -54,6 +55,10 @@ public:
     UFUNCTION(BlueprintPure, Category = "SHAR|Runtime")
     [[nodiscard]] USharRuntimeAssetLoader* GetRuntimeAssetLoader() const;
 
+    UFUNCTION(BlueprintPure, Category = "SHAR|Runtime")
+    [[nodiscard]] USharGameplayTransitionComposer*
+    GetGameplayTransitionComposer() const;
+
 private:
     void StartRuntimeAssetLoading();
     void HandleRuntimeAssetLoadTerminal(
@@ -66,4 +71,7 @@ private:
 
     UPROPERTY(Transient)
     TObjectPtr<USharRuntimeAssetLoader> RuntimeAssetLoader;
+
+    UPROPERTY(Transient)
+    TObjectPtr<USharGameplayTransitionComposer> GameplayTransitionComposer;
 };

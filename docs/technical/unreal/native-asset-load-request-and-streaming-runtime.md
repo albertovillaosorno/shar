@@ -208,6 +208,12 @@ A request follows these phases:
 Loading data is not success. Success requires the declared readiness barrier and
 accepted owning transition.
 
+A gameplay world-readiness barrier carries both its world revision and the
+application transition revision that owns preparation. Checkpoint completion
+must match both. Root gameplay composition also requires the load request,
+world barrier, and staged input leases to carry the application request revision
+before it publishes service readiness.
+
 ## Result model
 
 Every request reaches one terminal status:

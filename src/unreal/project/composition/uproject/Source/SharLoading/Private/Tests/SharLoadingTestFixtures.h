@@ -164,6 +164,7 @@ inline FSharWorldReadinessBarrier MakeWorldReadinessBarrier()
     Barrier.BarrierId = FName(TEXT("springfield_gameplay_ready"));
     Barrier.WorldId = FName(TEXT("springfield_world"));
     Barrier.WorldRevision = TEXT("sha256:world_v1");
+    Barrier.TransitionRevision = TEXT("sha256:gameplay_transition_v1");
     Barrier.RequiredCheckpointIds = {
         FName(TEXT("actors_ready")),
         FName(TEXT("collision_ready")),
