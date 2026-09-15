@@ -80,6 +80,25 @@ bool USharApplicationModeCoordinator::IsValidWorldAuthority(
     return WorldId.IsNone() && WorldRevision.IsEmpty();
 }
 
+bool USharApplicationModeCoordinator::RequiresSessionAuthority(
+    const USharApplicationModeDefinition& Mode
+)
+{
+    return Mode.SessionPolicy == ESharApplicationSessionPolicy::Prepare
+        || Mode.SessionPolicy == ESharApplicationSessionPolicy::Retain
+        || Mode.SessionPolicy == ESharApplicationSessionPolicy::Own;
+}
+
+bool USharApplicationModeCoordinator::IsValidSessionAuthority(
+    const FString& SessionRevision,
+    const USharApplicationModeDefinition& Mode
+)
+{
+    return RequiresSessionAuthority(Mode)
+        ? IsRevisionToken(SessionRevision)
+        : SessionRevision.IsEmpty();
+}
+
 bool USharApplicationModeCoordinator::IsValidRequest(
     const FSharApplicationModeRequest& Request
 )
@@ -97,11 +116,13 @@ bool USharApplicationModeCoordinator::IsValidRequest(
         || !IsCanonicalApplicationIdentity(Request.CallerId)
         || !IsCanonicalOrNone(Request.ReturnModeId)
         || !bWorldPairValid;
+    const bool bSessionRevisionValid = Request.SessionRevision.IsEmpty()
+        || IsRevisionToken(Request.SessionRevision);
     const bool bInvalidRevision =
         !IsRevisionToken(Request.CatalogRevision)
         || !IsRevisionToken(Request.SourceModeRevision)
         || !IsRevisionToken(Request.TargetModeRevision)
-        || !IsRevisionToken(Request.SessionRevision)
+        || !bSessionRevisionValid
         || !IsRevisionToken(Request.ProfileRevision)
         || !IsRevisionToken(Request.RequestRevision);
     const bool bInvalidDeadline =
@@ -128,17 +149,18 @@ bool USharApplicationModeCoordinator::IsValidInitialObservation(
         InitialObservation.WorldId,
         InitialObservation.WorldRevision,
         ActiveMode
+    ) || !IsValidSessionAuthority(
+        InitialObservation.SessionRevision,
+        ActiveMode
     ))
     {
         return false;
     }
     if (ActiveMode.ModeKind == ESharApplicationModeKind::Entry)
     {
-        return InitialObservation.ProfileRevision.IsEmpty()
-            && InitialObservation.SessionRevision.IsEmpty();
+        return InitialObservation.ProfileRevision.IsEmpty();
     }
-    return IsRevisionToken(InitialObservation.ProfileRevision)
-        && IsRevisionToken(InitialObservation.SessionRevision);
+    return IsRevisionToken(InitialObservation.ProfileRevision);
 }
 
 bool USharApplicationModeCoordinator::IsTerminalState(
@@ -288,7 +310,7 @@ USharApplicationModeCoordinator::ClassifySubmission(
         Request.WorldId,
         Request.WorldRevision,
         *Target
-    ))
+    ) || !IsValidSessionAuthority(Request.SessionRevision, *Target))
     {
         return ESharApplicationOperationResult::InvalidRequest;
     }

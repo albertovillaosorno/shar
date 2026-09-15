@@ -191,8 +191,28 @@ fabricated replacement identity.
 Recovery now reconciles the observation with the recovery mode's world policy.
 Returning to `front_end` or `exit` clears the stale gameplay world identity and
 revision rather than carrying destroyed world authority across the lifecycle
-boundary. Profile and session absence remain separate policy work and are not
-broadened by this change.
+boundary. Profile absence remains separate policy work.
+
+## Gameplay-session authority policy — 2026-09-15
+
+Application session observations now follow a separate `SessionPolicy` instead
+of forcing every non-entry mode to carry a fabricated gameplay-session revision.
+`Prepare`, `Retain`, and `Own` require a real revision. `None` and `TearDown`
+require absence, and sentinel revisions such as `sha256:session_none_v1` are
+rejected.
+
+The canonical runtime fixtures declare no gameplay session for `entry` or
+`front_end`, preparation for `loading_gameplay`, ownership for `gameplay`,
+retention for `pause`, and teardown for `exit`. Transition submission validates
+the target session policy independently from world policy.
+
+Recovery to `front_end` or `exit` now clears stale gameplay-session authority in
+addition to stale world authority.
+`SHAR.Application.Configuration.SessionAuthorityPolicy` proves front-end and
+teardown absence, loading and active session requirements, sentinel rejection,
+and recovery cleanup. Profile
+selection remains intentionally unchanged until its own authority policy is
+modeled.
 
 ## Root gameplay catalog foundation — 2026-09-13
 

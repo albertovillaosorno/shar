@@ -222,7 +222,9 @@ already-exited gameplay authority.
 Failure after commit follows the same recovery contract. When recovery selects a
 mode other than the failed source or target, the resulting observation uses that
 recovery definition's own revision token; it never reuses the failed target's
-revision as recovery identity. A loading-screen animation or transport callback
+revision as recovery identity. World and session authority are reconciled with
+the recovery mode policies, so a recovery without either authority cannot
+retain those stale revisions. A loading-screen animation or transport callback
 is not readiness evidence by itself.
 
 ## Mode requests and frame execution
@@ -338,9 +340,14 @@ World authority follows each mode definition's `WorldPolicy`. `Prepare`,
 `None` and `TearDown` require `WorldId` to be `None` and the world revision
 to be empty; sentinel identities such as `no_gameplay_world` are invalid.
 
-Entry additionally has no profile or session authority. Other mode kinds still
-require concrete profile and session revisions until those absence policies are
-modeled separately.
+Gameplay-session authority follows each mode definition's `SessionPolicy`.
+`Prepare`, `Retain`, and `Own` require one real session revision. `None` and
+`TearDown` require the session revision to be empty; sentinel revisions such as
+`sha256:session_none_v1` are invalid. This policy is independent from world
+ownership so either authority can fail closed on its own lifecycle boundary.
+
+Entry additionally has no profile authority. Other mode kinds still require a
+concrete profile revision until profile-selection absence is modeled separately.
 
 `exit` is a terminal transition plan. It:
 
@@ -437,8 +444,9 @@ Front-end entry requires:
 
 Returning from gameplay, demo, or super sprint must cancel world-bound handles
 before front-end commit. The committed front end therefore exposes no gameplay
-world identity or revision. Recovery to front end clears any stale gameplay
-world observation instead of carrying it across the teardown boundary.
+world identity, world revision, or gameplay-session revision. Recovery to front
+end clears stale world and session observations instead of carrying destroyed
+gameplay authority across the teardown boundary.
 
 Front-end presentation cannot infer completion or unlock state from the previous
 mode.
@@ -458,6 +466,8 @@ released screen or dismiss a newer loading state.
 ## Loading-mode contract
 
 Every loading mode is a preparation transaction, not an active gameplay mode.
+A gameplay-loading definition uses `SessionPolicy::Prepare`: the request carries
+the destination session revision while the source mode remains authoritative.
 The common loading plan owns:
 
 - destination request and transition identity;
@@ -548,8 +558,10 @@ the same session and world revision.
 
 ## Active gameplay mode
 
-The committed gameplay mode activates one verified session composition. Its
-lifecycle lease set includes:
+The committed gameplay mode activates one verified session composition and uses
+`SessionPolicy::Own`. Pause uses `SessionPolicy::Retain` so resume cannot invent
+or replace the retained gameplay-session revision. Its lifecycle lease set
+includes:
 
 - world and Runtime Data Layer composition;
 - mission and objective execution;
@@ -855,7 +867,7 @@ Required tests include:
 - graph reachability and invalid-edge rejection;
 - boot success, optional-media fallback, and required-media failure;
 - configuration load, migration, quarantine, and defaulting;
-- front-end readiness and gameplay-world absence;
+- front-end readiness plus gameplay-world and gameplay-session absence;
 - gameplay loading success, failure, timeout, cancellation, and rollback;
 - pause and resume lease restoration;
 - operating-system suspend and resume reconciliation;
@@ -872,6 +884,7 @@ Required tests include:
 - Application mode is a stable identity, not an array ordinal.
 - One transition transaction owns each mode change.
 - Preparation completion is verified before commit.
+- Gameplay-session presence or absence follows the committed mode policy.
 - Input, audio, world, and presentation ownership uses move-only leases.
 - Demo sessions cannot mutate durable progression.
 - Platform suspension is not the same as player pause.
