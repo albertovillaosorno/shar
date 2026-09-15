@@ -204,7 +204,9 @@ rejected.
 The canonical runtime fixtures declare no gameplay session for `entry` or
 `front_end`, preparation for `loading_gameplay`, ownership for `gameplay`,
 retention for `pause`, and teardown for `exit`. Transition submission validates
-the target session policy independently from world policy.
+the target session policy independently from world policy. Retained world and
+session authority must exactly match the source observation rather than merely
+carrying another syntactically valid revision.
 
 Recovery to `front_end` or `exit` now clears stale gameplay-session authority in
 addition to stale world authority.

@@ -458,8 +458,27 @@ bool FSharApplicationSessionAuthorityPolicyTest::RunTest(
         FName(TEXT("gameplay")),
         FName(TEXT("pause"))
     );
+    FSharApplicationModeRequest WrongSessionPause = PauseRequest;
+    WrongSessionPause.RequestId = FName(TEXT("pause_replaces_session"));
+    WrongSessionPause.RequestRevision =
+        TEXT("sha256:pause_replaces_session_v1");
+    WrongSessionPause.SessionRevision = TEXT("sha256:other_session_v1");
     TestTrue(
-        TEXT("Session-retaining pause accepts the gameplay session"),
+        TEXT("Session-retaining pause rejects a replacement session"),
+        RetainCoordinator->Submit(WrongSessionPause)
+            == ESharApplicationOperationResult::StaleRevision
+    );
+    FSharApplicationModeRequest WrongWorldPause = PauseRequest;
+    WrongWorldPause.RequestId = FName(TEXT("pause_replaces_world"));
+    WrongWorldPause.RequestRevision = TEXT("sha256:pause_replaces_world_v1");
+    WrongWorldPause.WorldRevision = TEXT("sha256:other_world_v1");
+    TestTrue(
+        TEXT("World-retaining pause rejects a replacement world"),
+        RetainCoordinator->Submit(WrongWorldPause)
+            == ESharApplicationOperationResult::StaleRevision
+    );
+    TestTrue(
+        TEXT("Retaining pause accepts matching world and session authority"),
         RetainCoordinator->Submit(PauseRequest)
             == ESharApplicationOperationResult::Accepted
     );

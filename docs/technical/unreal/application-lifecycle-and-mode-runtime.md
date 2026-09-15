@@ -343,8 +343,12 @@ to be empty; sentinel identities such as `no_gameplay_world` are invalid.
 Gameplay-session authority follows each mode definition's `SessionPolicy`.
 `Prepare`, `Retain`, and `Own` require one real session revision. `None` and
 `TearDown` require the session revision to be empty; sentinel revisions such as
-`sha256:session_none_v1` are invalid. This policy is independent from world
-ownership so either authority can fail closed on its own lifecycle boundary.
+`sha256:session_none_v1` are invalid.
+
+`Retain` additionally requires exact identity with the source observation; it
+cannot replace the retained session. The same exact-match rule applies to a
+retained world identity and revision. Session policy remains independent from
+world policy so either authority can fail closed on its own lifecycle boundary.
 
 Entry additionally has no profile authority. Other mode kinds still require a
 concrete profile revision until profile-selection absence is modeled separately.

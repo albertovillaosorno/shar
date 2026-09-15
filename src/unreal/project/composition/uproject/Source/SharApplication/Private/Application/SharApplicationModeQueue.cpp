@@ -314,6 +314,17 @@ USharApplicationModeCoordinator::ClassifySubmission(
     {
         return ESharApplicationOperationResult::InvalidRequest;
     }
+    if (Target->WorldPolicy == ESharApplicationWorldPolicy::Retain
+        && (Request.WorldId != Observation.WorldId
+            || Request.WorldRevision != Observation.WorldRevision))
+    {
+        return ESharApplicationOperationResult::StaleRevision;
+    }
+    if (Target->SessionPolicy == ESharApplicationSessionPolicy::Retain
+        && Request.SessionRevision != Observation.SessionRevision)
+    {
+        return ESharApplicationOperationResult::StaleRevision;
+    }
     if (!Catalog->IsTransitionAllowed(
         Request.SourceModeId,
         Request.TargetModeId
