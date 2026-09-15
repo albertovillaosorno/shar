@@ -1,17 +1,17 @@
 # SHAR
 
-**Project title:** SHAR
+> Project started: July 14, 2026
 
-**Project started:** July 14, 2026
-
-**Project description:** SHAR rebuilds a lawful local copy of
-*The Simpsons: Hit & Run* as a native Unreal Engine game. This repository does
-not include the original game or its assets.
+SHAR rebuilds a lawful local copy of *The Simpsons: Hit & Run* as a native
+Unreal Engine game. This repository does not include the original game or its
+assets.
 
 > **Status: paused.** Development was paused on September 15, 2026. For now,
 > this project will not receive new commits. The repository will remain
 > available and will not be archived.
->
+
+<!-- -->
+
 > The lightweight player flow described below is the intended final product.
 > Parts are still pending. Every unfinished surface names its owning TODO so the
 > README can describe the destination without pretending unfinished code exists.
