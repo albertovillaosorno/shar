@@ -288,8 +288,8 @@ inline FSharApplicationModeObservation MakeInitialApplicationObservation()
     FSharApplicationModeObservation Observation;
     Observation.ActiveModeId = FName(TEXT("front_end"));
     Observation.ActiveModeRevision = TEXT("sha256:front_end_v1");
-    Observation.WorldId = FName(TEXT("no_gameplay_world"));
-    Observation.WorldRevision = TEXT("sha256:world_none_v1");
+    Observation.WorldId = FName();
+    Observation.WorldRevision.Reset();
     Observation.ProfileRevision = TEXT("sha256:profile_v1");
     Observation.SessionRevision = TEXT("sha256:session_v1");
     return Observation;

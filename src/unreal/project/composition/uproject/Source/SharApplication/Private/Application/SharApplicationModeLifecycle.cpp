@@ -456,6 +456,11 @@ USharApplicationModeCoordinator::RecoverAfterHandoff(
     }
     Observation.ActiveModeId = Recovery->CanonicalId;
     Observation.ActiveModeRevision = Recovery->RevisionToken;
+    if (!RequiresWorldAuthority(*Recovery))
+    {
+        Observation.WorldId = FName();
+        Observation.WorldRevision.Reset();
+    }
     return PublishTerminal(
         Snapshot,
         ESharApplicationTransitionState::Recovered,

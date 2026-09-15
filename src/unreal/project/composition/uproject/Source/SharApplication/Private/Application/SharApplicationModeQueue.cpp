@@ -57,25 +57,52 @@ bool USharApplicationModeCoordinator::IsRevisionToken(
     return Revision.StartsWith(TEXT("sha256:"));
 }
 
+bool USharApplicationModeCoordinator::RequiresWorldAuthority(
+    const USharApplicationModeDefinition& Mode
+)
+{
+    return Mode.WorldPolicy == ESharApplicationWorldPolicy::Prepare
+        || Mode.WorldPolicy == ESharApplicationWorldPolicy::Retain
+        || Mode.WorldPolicy == ESharApplicationWorldPolicy::Own;
+}
+
+bool USharApplicationModeCoordinator::IsValidWorldAuthority(
+    const FName& WorldId,
+    const FString& WorldRevision,
+    const USharApplicationModeDefinition& Mode
+)
+{
+    if (RequiresWorldAuthority(Mode))
+    {
+        return IsCanonicalApplicationIdentity(WorldId)
+            && IsRevisionToken(WorldRevision);
+    }
+    return WorldId.IsNone() && WorldRevision.IsEmpty();
+}
+
 bool USharApplicationModeCoordinator::IsValidRequest(
     const FSharApplicationModeRequest& Request
 )
 {
+    const bool bHasWorldAuthority = !Request.WorldId.IsNone();
+    const bool bWorldPairValid = bHasWorldAuthority
+        ? IsCanonicalApplicationIdentity(Request.WorldId)
+            && IsRevisionToken(Request.WorldRevision)
+        : Request.WorldRevision.IsEmpty();
     const bool bInvalidIdentity =
         !IsCanonicalApplicationIdentity(Request.RequestId)
         || !IsCanonicalApplicationIdentity(Request.SourceModeId)
         || !IsCanonicalApplicationIdentity(Request.TargetModeId)
         || !IsCanonicalApplicationIdentity(Request.ReasonId)
         || !IsCanonicalApplicationIdentity(Request.CallerId)
-        || !IsCanonicalApplicationIdentity(Request.WorldId)
-        || !IsCanonicalOrNone(Request.ReturnModeId);
+        || !IsCanonicalOrNone(Request.ReturnModeId)
+        || !bWorldPairValid;
     const bool bInvalidRevision =
         !IsRevisionToken(Request.CatalogRevision)
         || !IsRevisionToken(Request.SourceModeRevision)
         || !IsRevisionToken(Request.TargetModeRevision)
         || !IsRevisionToken(Request.SessionRevision)
         || !IsRevisionToken(Request.ProfileRevision)
-        || !IsRevisionToken(Request.WorldRevision)
         || !IsRevisionToken(Request.RequestRevision);
     const bool bInvalidDeadline =
         !FMath::IsFinite(Request.DeadlineSeconds)
@@ -97,16 +124,20 @@ bool USharApplicationModeCoordinator::IsValidInitialObservation(
     {
         return false;
     }
+    if (!IsValidWorldAuthority(
+        InitialObservation.WorldId,
+        InitialObservation.WorldRevision,
+        ActiveMode
+    ))
+    {
+        return false;
+    }
     if (ActiveMode.ModeKind == ESharApplicationModeKind::Entry)
     {
-        return InitialObservation.WorldId.IsNone()
-            && InitialObservation.WorldRevision.IsEmpty()
-            && InitialObservation.ProfileRevision.IsEmpty()
+        return InitialObservation.ProfileRevision.IsEmpty()
             && InitialObservation.SessionRevision.IsEmpty();
     }
-    return IsCanonicalApplicationIdentity(InitialObservation.WorldId)
-        && IsRevisionToken(InitialObservation.WorldRevision)
-        && IsRevisionToken(InitialObservation.ProfileRevision)
+    return IsRevisionToken(InitialObservation.ProfileRevision)
         && IsRevisionToken(InitialObservation.SessionRevision);
 }
 
@@ -247,9 +278,19 @@ USharApplicationModeCoordinator::ClassifySubmission(
     {
         return ESharApplicationOperationResult::InvalidRequest;
     }
-    if (Catalog->FindMode(Request.TargetModeId) == nullptr)
+    const USharApplicationModeDefinition* Target =
+        Catalog->FindMode(Request.TargetModeId);
+    if (Target == nullptr)
     {
         return ESharApplicationOperationResult::ModeMissing;
+    }
+    if (!IsValidWorldAuthority(
+        Request.WorldId,
+        Request.WorldRevision,
+        *Target
+    ))
+    {
+        return ESharApplicationOperationResult::InvalidRequest;
     }
     if (!Catalog->IsTransitionAllowed(
         Request.SourceModeId,

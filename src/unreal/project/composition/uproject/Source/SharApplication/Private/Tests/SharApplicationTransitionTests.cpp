@@ -48,6 +48,14 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
         | EAutomationTestFlags::EngineFilter
 )
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+    FSharApplicationWorldAuthorityPolicyTest,
+    "SHAR.Application.Configuration.WorldAuthorityPolicy",
+    EAutomationTestFlags::EditorContext
+        | EAutomationTestFlags::ClientContext
+        | EAutomationTestFlags::CommandletContext
+        | EAutomationTestFlags::EngineFilter
+)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
     FSharApplicationTransitionSuccessTest,
     "SHAR.Application.Transition.SuccessLifecycle",
     EAutomationTestFlags::EditorContext
@@ -249,12 +257,116 @@ bool FSharApplicationEntryAuthorityAbsenceTest::RunTest(
     FSharApplicationModeObservation FrontEndObservation;
     FrontEndObservation.ActiveModeId = FName(TEXT("front_end"));
     FrontEndObservation.ActiveModeRevision = TEXT("sha256:front_end_v1");
+    FrontEndObservation.ProfileRevision = TEXT("sha256:profile_v1");
+    FrontEndObservation.SessionRevision = TEXT("sha256:session_v1");
     auto* FrontEndCoordinator = NewObject<USharApplicationModeCoordinator>(
         GameInstance
     );
-    TestFalse(
-        TEXT("Non-entry mode still requires concrete revisions"),
+    TestTrue(
+        TEXT("Front end accepts absent gameplay-world authority"),
         FrontEndCoordinator->Configure(Catalog, FrontEndObservation)
+    );
+    FSharApplicationModeObservation FabricatedFrontEnd = FrontEndObservation;
+    FabricatedFrontEnd.WorldId = FName(TEXT("no_gameplay_world"));
+    FabricatedFrontEnd.WorldRevision = TEXT("sha256:world_none_v1");
+    auto* FabricatedFrontEndCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    TestFalse(
+        TEXT("Front end rejects fabricated world authority"),
+        FabricatedFrontEndCoordinator->Configure(Catalog, FabricatedFrontEnd)
+    );
+    return true;
+}
+
+bool FSharApplicationWorldAuthorityPolicyTest::RunTest(
+    const FString& Parameters
+)
+{
+    (void)Parameters;
+    auto* GameInstance = NewObject<UGameInstance>();
+    USharApplicationModeCatalogSubsystem* Catalog = MakeApplicationCatalog(
+        *GameInstance,
+        ESharApplicationCatalogShape::Valid,
+        true
+    );
+    auto* Coordinator = NewObject<USharApplicationModeCoordinator>(
+        GameInstance
+    );
+    FSharApplicationModeObservation GameplayObservation;
+    GameplayObservation.ActiveModeId = FName(TEXT("gameplay"));
+    GameplayObservation.ActiveModeRevision = TEXT("sha256:gameplay_v1");
+    GameplayObservation.WorldId = FName(TEXT("springfield_world"));
+    GameplayObservation.WorldRevision = TEXT("sha256:springfield_world_v1");
+    GameplayObservation.ProfileRevision = TEXT("sha256:profile_v1");
+    GameplayObservation.SessionRevision = TEXT("sha256:session_v1");
+    TestTrue(
+        TEXT("World-owning gameplay requires concrete world authority"),
+        Coordinator->Configure(Catalog, GameplayObservation)
+    );
+    FSharApplicationModeObservation MissingWorldGameplay = GameplayObservation;
+    MissingWorldGameplay.WorldId = FName();
+    MissingWorldGameplay.WorldRevision.Reset();
+    auto* MissingWorldGameplayCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    TestFalse(
+        TEXT("World-owning gameplay rejects absent world authority"),
+        MissingWorldGameplayCoordinator->Configure(
+            Catalog,
+            MissingWorldGameplay
+        )
+    );
+
+    auto* FrontEndCoordinator =
+        NewObject<USharApplicationModeCoordinator>(GameInstance);
+    TestTrue(
+        TEXT("Front end configures without gameplay-world authority"),
+        FrontEndCoordinator->Configure(
+            Catalog,
+            MakeInitialApplicationObservation()
+        )
+    );
+    FSharApplicationModeRequest MissingWorldLoading = MakeApplicationRequest({
+        .RequestId = FName(TEXT("loading_without_world")),
+        .Priority = ESharApplicationTransitionPriority::Gameplay,
+        .CallerId = FName(TEXT("world_policy_test")),
+    });
+    MissingWorldLoading.WorldId = FName();
+    MissingWorldLoading.WorldRevision.Reset();
+    TestTrue(
+        TEXT("World-preparing loading rejects absent world authority"),
+        FrontEndCoordinator->Submit(MissingWorldLoading)
+            == ESharApplicationOperationResult::InvalidRequest
+    );
+
+    FSharApplicationModeRequest ExitRequest;
+    ExitRequest.RequestId = FName(TEXT("exit_without_world"));
+    ExitRequest.SourceModeId = GameplayObservation.ActiveModeId;
+    ExitRequest.TargetModeId = FName(TEXT("exit"));
+    ExitRequest.ReasonId = FName(TEXT("quit_game"));
+    ExitRequest.CallerId = FName(TEXT("world_policy_test"));
+    ExitRequest.Priority = ESharApplicationTransitionPriority::FatalExit;
+    ExitRequest.CatalogRevision = TEXT("sha256:application_catalog_v1");
+    ExitRequest.SourceModeRevision = GameplayObservation.ActiveModeRevision;
+    ExitRequest.TargetModeRevision = TEXT("sha256:exit_v1");
+    ExitRequest.SessionRevision = GameplayObservation.SessionRevision;
+    ExitRequest.ProfileRevision = GameplayObservation.ProfileRevision;
+    ExitRequest.RequestRevision = TEXT("sha256:exit_without_world_v1");
+    ExitRequest.DeadlineSeconds = DefaultApplicationDeadlineSeconds;
+    TestTrue(
+        TEXT("World-teardown target requires absent committed world authority"),
+        Coordinator->Submit(ExitRequest)
+            == ESharApplicationOperationResult::Accepted
+    );
+
+    FSharApplicationModeRequest FabricatedExit = ExitRequest;
+    FabricatedExit.RequestId = FName(TEXT("exit_with_fake_world"));
+    FabricatedExit.RequestRevision = TEXT("sha256:exit_with_fake_world_v1");
+    FabricatedExit.WorldId = FName(TEXT("no_gameplay_world"));
+    FabricatedExit.WorldRevision = TEXT("sha256:world_none_v1");
+    TestTrue(
+        TEXT("World-teardown target rejects fabricated world authority"),
+        Coordinator->Submit(FabricatedExit)
+            == ESharApplicationOperationResult::InvalidRequest
     );
     return true;
 }
@@ -423,6 +535,11 @@ bool FSharApplicationTransitionPostCommitRecoveryTest::RunTest(
             == Request.SourceModeRevision
     );
     TestTrue(
+        TEXT("Front-end recovery clears gameplay-world authority"),
+        Runtime.Coordinator->GetObservation().WorldId.IsNone()
+            && Runtime.Coordinator->GetObservation().WorldRevision.IsEmpty()
+    );
+    TestTrue(
         TEXT("Post-commit failure publishes recovered terminal result"),
         Runtime.Coordinator->GetTerminalResult(Request.RequestId)
             == ESharApplicationTerminalResult::Recovered
@@ -489,6 +606,10 @@ bool FSharApplicationTransitionThirdModeRecoveryRevisionTest::RunTest(
     TestTrue(
         TEXT("Third recovery does not reuse failed target revision"),
         Recovered.ActiveModeRevision != Request.TargetModeRevision
+    );
+    TestTrue(
+        TEXT("Exit recovery does not retain gameplay-world authority"),
+        Recovered.WorldId.IsNone() && Recovered.WorldRevision.IsEmpty()
     );
     return true;
 }

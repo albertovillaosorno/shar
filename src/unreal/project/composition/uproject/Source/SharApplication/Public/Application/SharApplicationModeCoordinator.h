@@ -447,6 +447,14 @@ private:
         ESharApplicationTransitionState State
     );
     [[nodiscard]] static bool IsRevisionToken(const FString& Revision);
+    [[nodiscard]] static bool RequiresWorldAuthority(
+        const USharApplicationModeDefinition& Mode
+    );
+    [[nodiscard]] static bool IsValidWorldAuthority(
+        const FName& WorldId,
+        const FString& WorldRevision,
+        const USharApplicationModeDefinition& Mode
+    );
     [[nodiscard]] static bool IsValidRequest(
         const FSharApplicationModeRequest& Request
     );
