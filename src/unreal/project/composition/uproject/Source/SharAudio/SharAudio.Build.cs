@@ -2,7 +2,7 @@
 // jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharAudio/SharAudio.Build.cs
 // Copyright © 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Boundary: audio definition and lease-state dependencies only.
 // jig-ignore-next-line: exact syntax is indivisible
 // ADR: docs/adr/unreal/architecture/aaa-native-content-and-gameplay-foundation.md

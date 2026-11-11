@@ -2,7 +2,7 @@
 name = "rtf"
 version.workspace = true
 edition = "2024"
-license = "MIT"
+license = "Apache-2.0"
 description = "From-scratch RTF to Markdown converter for the pipeline."
 publish = false
 

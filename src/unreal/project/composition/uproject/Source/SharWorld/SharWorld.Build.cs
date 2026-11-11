@@ -2,7 +2,7 @@
 // jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharWorld/SharWorld.Build.cs
 // Copyright © 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // jig-ignore-next-line: exact syntax is indivisible
 // Boundary: world definition and clock dependencies only; no mission, vehicle, UI, or editor implementation dependencies.
 // jig-ignore-next-line: exact syntax is indivisible

@@ -23,7 +23,7 @@ records, package metadata, and compliance inventories.
 
 ## Repository Use And Scope
 
-SHAR uses SPDX identifiers such as `MIT` to state an intended license identity
+SHAR uses SPDX identifiers such as `Apache-2.0` to state an intended license identity
 in source headers. The identifier is machine-readable shorthand; the repository
 license file and applicable notices remain controlling for the licensed
 material.

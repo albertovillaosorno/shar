@@ -48,7 +48,7 @@ decompressed content remain separate.
 ## License Or Terms Basis
 
 No standalone public license or specification grant for LZR or LZRF has been
-verified. The repository MIT License does not apply to historical code,
+verified. The repository Apache-2.0 License does not apply to historical code,
 compressed content, proprietary tools, patents, trade secrets, or third-party
 contracts.
 

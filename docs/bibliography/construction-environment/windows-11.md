@@ -26,7 +26,7 @@ permanent compatibility range.
 ## Repository Use And Scope
 
 Windows is a supported target and possible host environment, not a repository
-dependency or a component distributed under the SHAR MIT License.
+dependency or a component distributed under the SHAR Apache-2.0 License.
 Platform-specific builds may require a lawful, user-provided Windows
 installation
 and separately licensed Microsoft tooling.

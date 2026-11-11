@@ -24,8 +24,8 @@ repository.
 
 GitHub hosts the public repository. Hosting does not replace an explicit
 repository license and does not grant rights in third-party content. The SHAR
-MIT License applies only to material the repository owner has authority to
-license.
+Apache-2.0 License applies only to material the repository owner has authority
+to license.
 
 ## Provenance And Version History
 

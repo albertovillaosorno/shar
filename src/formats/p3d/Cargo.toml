@@ -2,7 +2,7 @@
 name = "p3d"
 version.workspace = true
 edition = "2024"
-license = "MIT"
+license = "Apache-2.0"
 description = "Lossless Pure3D inspection and extraction for normalization."
 publish = false
 

@@ -70,7 +70,7 @@ reviewed historical toolchain was identified. This is a bounded research result,
 not proof that no private agreement, permission, or later license has ever
 existed.
 
-The repository MIT License applies only to material the repository owner has
+The repository Apache-2.0 License applies only to material the repository owner has
 authority to license. It does not absorb upstream code, documentation, assets,
 marks, patents, trade secrets, or contractual restrictions.
 

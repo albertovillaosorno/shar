@@ -2,7 +2,7 @@
 // jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharMissions/SharMissions.Build.cs
 // Copyright © 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // jig-ignore-next-line: exact syntax is indivisible
 // Boundary: mission and save composition only; shared progression authority comes from SharProgression.
 // jig-ignore-next-line: exact syntax is indivisible

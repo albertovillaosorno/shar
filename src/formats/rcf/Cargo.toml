@@ -2,7 +2,7 @@
 name = "rcf"
 version.workspace = true
 edition = "2024"
-license = "MIT"
+license = "Apache-2.0"
 description = "From-scratch RCF archive extractor for the pipeline."
 publish = false
 

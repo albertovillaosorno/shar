@@ -1,7 +1,7 @@
 # Unreal Engine
 
 This non-governing record documents a proprietary engine dependency and does not
-apply the SHAR MIT License to Unreal Engine code, content, tools, plugins,
+apply the SHAR Apache-2.0 License to Unreal Engine code, content, tools, plugins,
 examples, or documentation.
 
 ## Review Status And Scope

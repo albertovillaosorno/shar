@@ -2,7 +2,7 @@
 
 This non-governing record documents Epic Games, Inc. as an organization,
 technology provider, publisher, licensor, and platform operator. It does not
-apply the SHAR MIT License to Epic software, services, content, documentation,
+apply the SHAR Apache-2.0 License to Epic software, services, content, documentation,
 accounts, marks, or other intellectual property.
 
 ## Review Status And Scope

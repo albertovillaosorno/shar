@@ -2,7 +2,7 @@
 // jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharLoading/SharLoading.Build.cs
 // Copyright © 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // jig-ignore-next-line: exact syntax is indivisible
 // Boundary: typed load-plan coordination and world-readiness barriers only; Asset Manager, package, and streaming adapters remain external.
 // jig-ignore-next-line: exact syntax is indivisible

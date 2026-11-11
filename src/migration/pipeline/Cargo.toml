@@ -2,7 +2,7 @@
 name = "pipeline"
 version.workspace = true
 edition = "2024"
-license = "MIT"
+license = "Apache-2.0"
 description = "Official ordered extraction pipeline for local SHAR game assets."
 publish = false
 

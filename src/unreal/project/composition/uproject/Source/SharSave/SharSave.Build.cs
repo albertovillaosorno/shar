@@ -2,7 +2,7 @@
 // jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharSave/SharSave.Build.cs
 // Copyright © 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // jig-ignore-next-line: exact syntax is indivisible
 // Boundary: portable save schema, migration, slot, and transaction coordination only; domain snapshots and platform storage remain external.
 // Specification: docs/technical/unreal/platform-save-storage-and-lifecycle.md

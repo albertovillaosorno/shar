@@ -2,7 +2,7 @@
 // jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharModding/SharModding.Build.cs
 // Copyright © 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // jig-ignore-next-line: exact syntax is indivisible
 // Boundary: mod descriptor and activation-planning dependencies only; no concrete gameplay modules.
 // jig-ignore-next-line: exact syntax is indivisible

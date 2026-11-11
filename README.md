@@ -441,8 +441,10 @@ platform holders, or Epic Games. You are responsible for obtaining lawful game
 input and for the licenses/permissions applicable to mods or assets you install,
 convert, modify, or redistribute.
 
-Repository-owned material is available under the MIT License in
-[`LICENSE-MIT`](LICENSE-MIT).
+Original repository-owned material is licensed under the Apache License,
+Version 2.0, in [`LICENSE`](LICENSE). Earlier MIT grants remain valid for
+previously licensed copies; external software and game materials retain their
+independent licenses and rights.
 
 ## README images
 

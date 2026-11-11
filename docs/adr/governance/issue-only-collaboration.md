@@ -16,7 +16,7 @@ used or accepted as a repository workflow.
 
 Authorized maintainers and agents investigate issues, change the repository
 directly under canonical validation, and record accurate history. Downstream
-users remain free to fork the MIT-licensed source.
+users remain free to fork the Apache-2.0-licensed source.
 
 ## Consequences
 

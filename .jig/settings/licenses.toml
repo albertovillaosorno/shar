@@ -1,4 +1,4 @@
 domain = "licenses"
 schema_version = 1
-files = ["LICENSE-MIT"]
-spdx_expression = "MIT"
+files = ["LICENSE"]
+spdx_expression = "Apache-2.0"

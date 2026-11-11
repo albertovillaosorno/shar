@@ -25,7 +25,7 @@ paths = [".github/"]
 paths = [".jig/"]
 
 [role.root_governance]
-paths = [".editorconfig", ".env.example", ".gitattributes", ".gitignore", "AGENTS.md", "Cargo.lock", "Cargo.toml", "LICENSE-MIT", "README.md", "ROADMAP.md", "TODO.md"]
+paths = [".editorconfig", ".env.example", ".gitattributes", ".gitignore", "AGENTS.md", "Cargo.lock", "Cargo.toml", "LICENSE", "README.md", "ROADMAP.md", "TODO.md"]
 
 [role.skills]
 paths = ["skills/"]

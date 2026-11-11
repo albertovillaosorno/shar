@@ -25,7 +25,7 @@ members = [
 version = "26.7.0"
 edition = "2024"
 rust-version = "1.97.1"
-license = "MIT"
+license = "Apache-2.0"
 
 [workspace.lints.rust]
 # Compiler warnings are binary failures. Unsafe Rust is categorically outside

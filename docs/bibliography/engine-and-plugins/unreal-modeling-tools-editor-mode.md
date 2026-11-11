@@ -1,7 +1,7 @@
 # Unreal Modeling Tools Editor Mode
 
 This non-governing record documents an enabled Epic-provided editor plugin and
-does not make its source or tools part of the SHAR MIT-licensed code.
+does not make its source or tools part of the SHAR Apache-2.0-licensed code.
 
 ## Review Status And Scope
 

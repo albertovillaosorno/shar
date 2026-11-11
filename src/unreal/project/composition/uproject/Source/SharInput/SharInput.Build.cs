@@ -2,7 +2,7 @@
 // jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharInput/SharInput.Build.cs
 // Copyright © 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Boundary: per-local-player input leases and Enhanced Input adaptation.
 // jig-ignore-next-line: specification path is indivisible
 // Specification: docs/technical/unreal/semantic-input-device-and-haptics-runtime.md

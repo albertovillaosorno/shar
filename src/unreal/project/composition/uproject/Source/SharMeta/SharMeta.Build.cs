@@ -2,7 +2,7 @@
 // jig-ignore-next-line: exact syntax is indivisible
 // Path: src/unreal/project/composition/uproject/Source/SharMeta/SharMeta.Build.cs
 // Copyright © 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // jig-ignore-next-line: exact syntax is indivisible
 // Boundary: immutable meta-catalog schemas and activation only; cheat execution, credits playback, calendar selection, UI, and persistence remain external.
 // Specification: docs/technical/unreal/progression-collectibles-and-cheats.md

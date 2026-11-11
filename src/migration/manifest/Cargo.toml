@@ -2,7 +2,7 @@
 name = "game_manifest"
 version.workspace = true
 edition = "2024"
-license = "MIT"
+license = "Apache-2.0"
 # jig-ignore-next-line: exact value is indivisible
 description = "Generates and validates the game/ content manifest for the pipeline."
 publish = false

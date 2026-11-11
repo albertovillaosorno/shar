@@ -1,7 +1,7 @@
 # Unreal Native MCP Plugins
 
 This non-governing record documents enabled Epic-provided plugin identities
-without copying plugin source or treating them as MIT-licensed SHAR components.
+without copying plugin source or treating them as Apache-2.0-licensed SHAR components.
 
 ## Review Status And Scope
 

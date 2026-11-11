@@ -1,7 +1,7 @@
 // File: sharClient.Target.cs
 // Path: src/unreal/project/composition/uproject/Source/sharClient.Target.cs
 // Copyright © 2026 Alberto Villa Osorno.
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // jig-ignore-next-line: exact syntax is indivisible
 // Boundary: desktop client target declaration only; no hosted-service assumptions.
 // jig-ignore-next-line: exact syntax is indivisible

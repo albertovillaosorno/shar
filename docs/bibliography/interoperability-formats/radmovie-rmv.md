@@ -44,7 +44,7 @@ repository material to the extent supported by authorship evidence and law.
 ## License Or Terms Basis
 
 No standalone public specification license or redistribution grant for this
-proprietary subject has been verified. The SHAR MIT License applies only to
+proprietary subject has been verified. The SHAR Apache-2.0 License applies only to
 material the repository owner has authority to license and does not absorb
 upstream expression, assets, marks, patents, trade secrets, or contracts.
 
